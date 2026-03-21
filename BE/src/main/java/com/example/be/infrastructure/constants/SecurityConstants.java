@@ -1,0 +1,15 @@
+package com.example.be.infrastructure.constants;
+
+public final class SecurityConstants {
+    private SecurityConstants() {}
+
+    public static final String JWT_HEADER = "Authorization";
+    public static final String JWT_PREFIX = "Bearer ";
+    
+    public static final String[] PUBLIC_URLS = {
+        "/auth/**",
+        "/h2-console/**",
+        "/swagger-ui/**",
+        "/v3/api-docs/**"
+    };
+}

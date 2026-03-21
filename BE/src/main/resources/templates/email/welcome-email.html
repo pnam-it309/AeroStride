@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{email/base-template :: body}">
+<head>
+    <title>Welcome to AeroStride</title>
+</head>
+<body>
+    <div th:fragment="content">
+        <h2>Chào mừng, <span th:text="${name}">Người dùng</span>!</h2>
+        <p>Cảm ơn bạn đã tham gia cộng đồng <strong>AeroStride</strong>. Chúng tôi rất vui mừng được đồng hành cùng bạn trên hành trình quản lý và trải nghiệm dịch vụ hàng không hiện đại.</p>
+        <p>Tài khoản của bạn đã được khởi tạo thành công. Bây giờ bạn có thể khám phá các tính năng của chúng tôi ngay lập tức.</p>
+        
+        <a href="https://aerostride.com/login" class="button">Đăng nhập ngay</a>
+        
+        <p style="margin-top: 30px;">Trân trọng,<br>Đội ngũ AeroStride</p>
+    </div>
+</body>
+</html>
