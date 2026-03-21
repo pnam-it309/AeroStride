@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: aerostride-db
+    restart: "no"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - aerostride-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${MYSQL_USER}", "-p${MYSQL_PASSWORD}"]
+      timeout: 10s
+      retries: 5
+      interval: 10s
+
+  backend:
+    build:
+      context: ../BE
+      dockerfile: ../docker/BE.Dockerfile
+      target: development
+    container_name: aerostride-be
+    restart: "on-failure:3"
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../BE:/app
+      - /app/.gradle
+      - /app/build
+    networks:
+      - aerostride-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:alpine
+    container_name: aerostride-redis
+    restart: "no"
+    ports:
+      - "6379:6379"
+    networks:
+      - aerostride-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/FE.Dockerfile
+      target: development
+    container_name: aerostride-fe
+    restart: "no"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../FE:/app
+      - /app/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - aerostride-net
+
+networks:
+  aerostride-net:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local

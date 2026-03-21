@@ -1,0 +1,38 @@
+{
+  "name": "fe",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "format": "oxfmt src/"
+  },
+  "dependencies": {
+    "@phosphor-icons/vue": "^2.2.1",
+    "@phosphor-icons/web": "^2.1.2",
+    "@vee-validate/rules": "^4.15.1",
+    "axios": "^1.13.6",
+    "jwt-decode": "^4.0.0",
+    "pinia": "^3.0.4",
+    "vee-validate": "^4.15.1",
+    "vue": "^3.5.29",
+    "vue-router": "^5.0.3",
+    "yup": "^1.7.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.1",
+    "@tailwindcss/vite": "^4.2.1",
+    "@vitejs/plugin-vue": "^6.0.4",
+    "autoprefixer": "^10.4.27",
+    "oxfmt": "^0.35.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.1",
+    "vite": "^7.3.1",
+    "vite-plugin-vue-devtools": "^8.0.6"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

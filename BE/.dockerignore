@@ -1,0 +1,10 @@
+# .dockerignore for Backend
+.gradle
+.idea
+build
+out
+bin
+*.log
+*.swp
+*.bak
+.DS_Store

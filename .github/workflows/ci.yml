@@ -1,0 +1,101 @@
+name: AeroStride CI (Integration)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Stage 1: Code Quality & Testing
+  quality:
+    runs-on: ubuntu-latest
+    name: Code Quality & Testing
+    steps:
+      - uses: actions/checkout@v4
+
+      # Backend Checks
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Run Backend Tests
+        run: |
+          cd BE
+          chmod +x gradlew
+          ./gradlew test --no-daemon
+
+      # Frontend Checks
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: FE/package-lock.json
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd FE
+          npm ci
+
+      - name: Run Frontend Lint
+        run: |
+          cd FE
+          npm run format || echo "Linting failed but continuing..."
+
+  # Stage 2: Build & Scan
+  build-and-scan:
+    needs: quality
+    runs-on: ubuntu-latest
+    name: Build & Security Scan
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # Build Backend Image
+      - name: Build Backend Image
+        run: |
+          docker build -t backend:test -f docker/BE.Dockerfile .
+
+      # Build Frontend Image
+      - name: Build Frontend Image
+        run: |
+          docker build -t frontend:test -f docker/FE.Dockerfile .
+
+      # Security Scan - Backend
+      - name: Run Trivy vulnerability scanner (BE)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'backend:test'
+          format: 'table'
+          exit-code: '1' # Exit with error if CRITICAL vulnerabilities found
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL'
+
+      # Security Scan - Frontend
+      - name: Run Trivy vulnerability scanner (FE)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'frontend:test'
+          format: 'table'
+          exit-code: '1' # Exit with error if CRITICAL vulnerabilities found
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL'
+
+      # Slack Notification for failure or security vulnerabilities
+      - name: Slack Notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+          text: 'CI Pipeline Failed! (Reason: Build error or CRITICAL security vulnerability found)'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        if: failure()

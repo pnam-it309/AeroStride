@@ -1,0 +1,41 @@
+package com.example.be.utils;
+
+import java.text.Normalizer;
+import java.util.Locale;
+import java.util.regex.Pattern;
+
+/**
+ * Utility for generating URL-friendly slugs from strings.
+ * Specially designed to handle Vietnamese characters for the AeroStride project.
+ */
+public final class SlugUtils {
+
+    private static final Pattern NONLATIN = Pattern.compile("[^\\w-]");
+    private static final Pattern WHITESPACE = Pattern.compile("[\\s]+");
+
+    private SlugUtils() {
+        // Prevent instantiation
+    }
+
+    /**
+     * Converts an input string (e.g., shoe name) into a normalized slug.
+     * Example: "Nike Air Force 1" -> "nike-air-force-1"
+     *
+     * @param input Raw text to convert
+     * @return URL-friendly slug
+     */
+    public static String generateSlug(String input) {
+        if (input == null || input.isEmpty()) {
+            return "";
+        }
+
+        // Remove Vietnamese accents/diacritics
+        String nowhitespace = WHITESPACE.matcher(input).replaceAll("-");
+        String normalized = Normalizer.normalize(nowhitespace, Normalizer.Form.NFD);
+        String slug = NONLATIN.matcher(normalized).replaceAll("");
+
+        return slug.toLowerCase(Locale.ENGLISH)
+                .replaceAll("-{2,}", "-") // Remove double dashes
+                .replaceAll("^-|-$", ""); // Remove leading/trailing dashes
+    }
+}

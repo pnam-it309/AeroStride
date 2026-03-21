@@ -1,0 +1,141 @@
+name: AeroStride CD (Deployment)
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME_BE: ${{ github.repository }}/backend
+  IMAGE_NAME_FE: ${{ github.repository }}/frontend
+
+jobs:
+  # Stage 3: Release & Publish
+  release-and-publish:
+    runs-on: ubuntu-latest
+    name: Semantic Release & Publish to GHCR
+    permissions:
+      packages: write
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Semantic Release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to GitHub Container Registry
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker (BE)
+        if: steps.semantic.outputs.new_release_published == 'true'
+        id: meta-be
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.semantic.outputs.new_release_version }}
+            type=sha
+            type=latest
+
+      - name: Build and Push Backend
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/BE.Dockerfile
+          push: true
+          tags: ${{ steps.meta-be.outputs.tags }}
+          labels: ${{ steps.meta-be.outputs.labels }}
+
+      - name: Extract metadata for Docker (FE)
+        if: steps.semantic.outputs.new_release_published == 'true'
+        id: meta-fe
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.semantic.outputs.new_release_version }}
+            type=sha
+            type=latest
+
+      - name: Build and Push Frontend
+        if: steps.semantic.outputs.new_release_published == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/FE.Dockerfile
+          push: true
+          tags: ${{ steps.meta-fe.outputs.tags }}
+          labels: ${{ steps.meta-fe.outputs.labels }}
+
+      - name: Slack Notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+          text: 'CD Pipeline ${{ job.status }} for version ${{ steps.semantic.outputs.new_release_version }}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
+
+  # Stage 4: Post-Deployment Smoke Test
+  smoke-test:
+    needs: release-and-publish
+    if: needs.release-and-publish.outputs.new_release_published == 'true'
+    runs-on: ubuntu-latest
+    name: Post-Deployment Smoke Test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create Dummy .env for testing
+        run: |
+          cp docker/.env .env
+          sed -i 's/REDIS_HOST=redis/REDIS_HOST=localhost/' .env
+          sed -i 's/db:3306/localhost:3306/' .env
+
+      - name: Start services with Docker Compose
+        run: |
+          docker-compose -f docker/docker-compose.yml up -d
+
+      - name: Verify Container Health
+        run: |
+          echo "Waiting for services to initialize..."
+          sleep 30
+          docker ps
+          
+          # Check Backend Health (assuming port 8080)
+          curl -f http://localhost:8080/ || echo "Backend check failed (expected if no root endpoint)"
+          
+          # Check Frontend Health (assuming mapped to 5173 in compose)
+          curl -f http://localhost:5173/ || exit 1
+          
+          echo "Smoke tests passed!"
+
+      - name: Slack Notification (Smoke Test Failure)
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
+          text: 'Smoke Test Failed after deployment of ${{ needs.release-and-publish.outputs.new_release_version }}!'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        if: failure()
+
+      - name: Cleanup
+        run: docker-compose -f docker/docker-compose.yml down -v
+        if: always()

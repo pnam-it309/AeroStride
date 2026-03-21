@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --color-obsidian: #0F172A;
+  --color-aurora: #06b6d4;
+  --color-cloud: #F8FAFC;
+  
+  --font-display: "Plus Jakarta Sans", sans-serif;
+  --font-body: "Inter", sans-serif;
+  
+  --shadow-glow: 0 0 20px rgba(6, 182, 212, 0.4);
+}
+
+@layer base {
+  body {
+    @apply bg-white text-gray-900 font-body antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold text-gray-900;
+  }
+}
+
+/* Custom Global Utilities */
+@utility glass-panel {
+  background-color: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@utility aurora-glow {
+  --tw-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+  box-shadow: var(--tw-inset) 0 0 0 calc(0px + var(--tw-shadow-ring-offset)) var(--tw-shadow-ring-color), var(--tw-inset) 0 0 0 calc(var(--tw-shadow-ring-width) + var(--tw-shadow-ring-offset)) var(--tw-shadow-ring-color), var(--tw-shadow);
+  transition-property: box-shadow;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+
+  &:hover {
+    --tw-shadow: 0 0 25px rgba(6, 182, 212, 0.5);
+    box-shadow: var(--tw-inset) 0 0 0 calc(0px + var(--tw-shadow-ring-offset)) var(--tw-shadow-ring-color), var(--tw-inset) 0 0 0 calc(var(--tw-shadow-ring-width) + var(--tw-shadow-ring-offset)) var(--tw-shadow-ring-color), var(--tw-shadow);
+  }
+}
+
+/* Page Transitions */
+.page-slide-enter-active,
+.page-slide-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-slide-enter-from {
+  opacity: 0;
+  transform: translateX(30px) scale(0.98);
+}
+
+.page-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-30px) scale(0.98);
+}
