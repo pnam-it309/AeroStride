@@ -49,7 +49,7 @@ const router = createRouter({
       path: '/:pathMatch(.*)*',
       redirect: ROUTES.ADMIN.ERRORS.E404,
     },
-    { path: ROUTES.HOME, redirect: ROUTES.ADMIN.DASHBOARD },
+    { path: ROUTES.HOME, redirect: ROUTES.AUTH.LOGIN },
   ],
 })
 

@@ -397,6 +397,7 @@ CREATE TABLE giao_dich_thanh_toan (
     du_lieu_phan_hoi TEXT,
     thoi_gian_tao BIGINT,
     thoi_gian_cap_nhat BIGINT,
+    trang_thai INT,
     ghi_chu TEXT,
     FOREIGN KEY (id_hoa_don) REFERENCES hoa_don(id),
     FOREIGN KEY (id_phuong_thuc_thanh_toan) REFERENCES phuong_thuc_thanh_toan(id)

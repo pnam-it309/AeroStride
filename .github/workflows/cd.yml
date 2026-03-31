@@ -107,8 +107,7 @@ jobs:
       - name: Create Dummy .env for testing
         run: |
           cp docker/.env .env
-          sed -i 's/REDIS_HOST=redis/REDIS_HOST=localhost/' .env
-          sed -i 's/db:3306/localhost:3306/' .env
+          cat .env # Verification of file contents for logs
 
       - name: Fix permissions for gradlew (for smoke test)
         run: chmod +x BE/gradlew

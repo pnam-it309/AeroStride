@@ -18,9 +18,11 @@ public class BeApplication {
                 .ignoreIfMissing()
                 .load();
 
-        // Populate system properties so Spring's ${...} can find them
+        // Populate system properties only if not already set by environment variables
         for (DotenvEntry entry : dotenv.entries()) {
-            System.setProperty(entry.getKey(), entry.getValue());
+            if (System.getProperty(entry.getKey()) == null && System.getenv(entry.getKey()) == null) {
+                System.setProperty(entry.getKey(), entry.getValue());
+            }
         }
 
         SpringApplication.run(BeApplication.class, args);
