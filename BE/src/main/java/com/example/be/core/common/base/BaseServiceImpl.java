@@ -1,7 +1,7 @@
 package com.example.be.core.common.base;
 
-import com.example.be.infrastructure.constants.EntityStatus;
-import com.example.be.repository.base.BaseRepository;
+import com.example.be.infrastructure.constants.TrangThai;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +16,7 @@ import java.util.Optional;
  */
 public abstract class BaseServiceImpl<T extends PrimaryEntity, ID extends Serializable> implements BaseService<T, ID> {
 
-    protected abstract BaseRepository<T, ID> getRepository();
+    protected abstract JpaRepository<T, ID> getRepository();
 
     @Override
     public List<T> findAll() {
@@ -57,7 +57,7 @@ public abstract class BaseServiceImpl<T extends PrimaryEntity, ID extends Serial
     @Transactional
     public void deleteById(ID id) {
         getRepository().findById(id).ifPresent(entity -> {
-            entity.setStatus(EntityStatus.DELETED);
+            entity.setTrangThai(TrangThai.DA_XOA);
             getRepository().save(entity);
         });
     }

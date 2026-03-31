@@ -1,6 +1,6 @@
 package com.example.be.infrastructure.batch;
 
-import com.example.be.infrastructure.exceptions.ExcelProcessingException;
+import lombok.Setter;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +17,9 @@ public class ExcelItemReader<T> implements ItemReader<T> {
     private final String filePath;
     private Workbook workbook;
     private Iterator<Row> rowIterator;
+    
+    @Setter
+    private ExcelRowMapper<T> rowMapper;
 
     public ExcelItemReader(@Value("${batch.excel.file-path:}") String filePath) {
         this.filePath = filePath;
@@ -28,9 +31,11 @@ public class ExcelItemReader<T> implements ItemReader<T> {
             initReader();
         }
 
-        if (rowIterator.hasNext()) {
+        if (rowIterator != null && rowIterator.hasNext()) {
             Row row = rowIterator.next();
-            return mapRowToDto(row);
+            if (rowMapper != null) {
+                return rowMapper.mapRow(row);
+            }
         }
 
         close();
@@ -38,26 +43,28 @@ public class ExcelItemReader<T> implements ItemReader<T> {
     }
 
     private void initReader() throws IOException {
-        FileInputStream fis = new FileInputStream(new File(filePath));
-        this.workbook = WorkbookFactory.create(fis);
-        Sheet sheet = workbook.getSheetAt(0);
-        this.rowIterator = sheet.rowIterator();
+        if (filePath == null || filePath.isEmpty()) return;
         
-        // Skip header row if necessary
-        if (this.rowIterator.hasNext()) {
-            this.rowIterator.next();
-        }
-    }
+        File file = new File(filePath);
+        if (!file.exists()) return;
 
-    @SuppressWarnings("unchecked")
-    private T mapRowToDto(Row row) {
-        // TODO: Implement generic or specific row mapping logic
-        return (T) row.toString(); 
+        try (FileInputStream fis = new FileInputStream(file)) {
+            this.workbook = WorkbookFactory.create(fis);
+            Sheet sheet = workbook.getSheetAt(0);
+            this.rowIterator = sheet.rowIterator();
+            
+            // Skip header row
+            if (this.rowIterator.hasNext()) {
+                this.rowIterator.next();
+            }
+        }
     }
 
     private void close() throws IOException {
         if (workbook != null) {
             workbook.close();
+            workbook = null;
+            rowIterator = null;
         }
     }
 }

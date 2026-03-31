@@ -36,6 +36,9 @@ public class VnPayServiceImpl implements PaymentService {
     @Value("${vnpay.client_ip}")
     private String clientIp;
 
+    @Value("${app.api_prefix}")
+    private String apiPrefix;
+
     @Override
     public String createPaymentUrl(PaymentRequest request) {
         log.info("Generating VNPay URL for order: {}", request.getOrderId());
@@ -45,7 +48,7 @@ public class VnPayServiceImpl implements PaymentService {
         String vnp_TmnCode = tmnCode;
         
         // Construct return URL using Base URL and API Version constant
-        String returnUrl = baseUrl + RoutesConstant.API_PREFIX + "/payment/vnpay-callback";
+        String returnUrl = baseUrl + apiPrefix + "/payment/vnpay-callback";
         
         // VNPay amount is multiplied by 100
         long amount = request.getAmount().multiply(new BigDecimal(100)).longValue();

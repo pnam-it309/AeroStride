@@ -7,8 +7,7 @@ public final class SecurityConstants {
     public static final String JWT_PREFIX = "Bearer ";
     
     public static final String[] PUBLIC_URLS = {
-        "/auth/**",
-        "/h2-console/**",
+        RoutesConstant.AUTH + "/**",
         "/swagger-ui/**",
         "/v3/api-docs/**"
     };

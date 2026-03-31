@@ -1,0 +1,51 @@
+package com.example.be.entity;
+
+import com.example.be.core.common.base.BaseCodeNameEntity;
+import com.example.be.infrastructure.constants.VaiTro;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "nhan_vien")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@AttributeOverrides({
+    @AttributeOverride(name = "ma", column = @Column(name = "ma_nhan_vien")),
+    @AttributeOverride(name = "ten", column = @Column(name = "ten_nhan_vien"))
+})
+public class NhanVien extends BaseCodeNameEntity {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_phan_quyen")
+    private PhanQuyen phanQuyen;
+
+    @Column(name = "email", unique = true)
+    private String email;
+
+    @Column(name = "sdt")
+    private String sdt;
+
+    @Column(name = "ngay_sinh")
+    private LocalDate ngaySinh;
+
+    @Column(name = "gioi_tinh")
+    private Boolean gioiTinh;
+
+    @Column(name = "ten_tai_khoan", unique = true)
+    private String tenTaiKhoan;
+
+    @Column(name = "mat_khau")
+    private String matKhau;
+
+    @Column(name = "hinh_anh")
+    private String hinhAnh;
+
+    @Column(name = "xoa_mem")
+    private Boolean xoaMem;
+
+}

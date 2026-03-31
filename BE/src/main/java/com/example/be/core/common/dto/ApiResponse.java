@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import com.example.be.infrastructure.exceptions.ErrorSeverity;
 
 @Data
 @Builder

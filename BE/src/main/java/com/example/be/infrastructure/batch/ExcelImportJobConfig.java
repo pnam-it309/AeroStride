@@ -1,6 +1,6 @@
 package com.example.be.infrastructure.batch;
 
-import com.example.be.core.common.constants.BatchConstants;
+import com.example.be.infrastructure.constants.BatchConstants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;

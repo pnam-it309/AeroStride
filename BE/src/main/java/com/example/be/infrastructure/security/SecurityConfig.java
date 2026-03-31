@@ -1,6 +1,7 @@
 package com.example.be.infrastructure.security;
 
 import com.example.be.infrastructure.constants.RoutesConstant;
+import com.example.be.infrastructure.constants.SecurityConstants;
 import com.example.be.infrastructure.security.exception.CustomAccessDeniedHandler;
 import com.example.be.infrastructure.security.exception.CustomAuthenticationEntryPoint;
 import com.example.be.infrastructure.security.router.*;
@@ -8,10 +9,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -40,6 +45,16 @@ public class SecurityConfig {
     public String ALLOWED_ORIGIN;
 
     @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
@@ -51,7 +66,7 @@ public class SecurityConfig {
             config.setAllowCredentials(true);
         } else {
             config.addAllowedOriginPattern("*");
-            config.setAllowCredentials(true);
+            config.setAllowCredentials(false);
         }
         
         source.registerCorsConfiguration("/**", config);
@@ -86,8 +101,9 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
                 .requestMatchers(RoutesConstant.API_PREFIX + "/**").authenticated()
-                .anyRequest().permitAll());
+                .anyRequest().denyAll());
                 
         return http.build();
     }

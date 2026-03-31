@@ -23,36 +23,6 @@ const router = createRouter({
       component: AdminLayout,
       meta: { requiresAuth: true },
       children: [
-        { 
-          path: 'dashboard', 
-          name: 'AdminDashboard',
-          component: () => import('../pages/admin/Dashboard.vue'),
-          meta: { title: 'Dashboard' }
-        },
-        { 
-          path: 'products', 
-          name: 'Products',
-          component: () => import('../pages/admin/Products.vue'),
-          meta: { title: 'Products' }
-        },
-        { 
-          path: 'orders', 
-          name: 'Orders',
-          component: () => import('../pages/admin/Orders.vue'),
-          meta: { title: 'Orders' }
-        },
-        { 
-          path: 'customers', 
-          name: 'Customers',
-          component: () => import('../pages/admin/Customers.vue'),
-          meta: { title: 'Customers' }
-        },
-        { 
-          path: 'payment-result', 
-          name: 'PaymentResult',
-          component: () => import('../pages/admin/PaymentResult.vue'),
-          meta: { title: 'Kết quả thanh toán' }
-        },
 
         // Error Pages
         {
