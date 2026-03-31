@@ -6,7 +6,6 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/AeroStride/',
   plugins: [
     tailwindcss(),
     vue(),
@@ -14,7 +13,7 @@ export default defineConfig({
   envDir: 'env',
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
   server: {
@@ -22,9 +21,19 @@ export default defineConfig({
     port: 5173,
     watch: {
       usePolling: true,
+      interval: 1000,
     },
     hmr: {
+      host: 'localhost',
       clientPort: 5173,
+    },
+    strictPort: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080/api/v1',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
     },
   },
 })

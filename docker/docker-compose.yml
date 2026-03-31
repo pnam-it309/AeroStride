@@ -36,6 +36,7 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
       SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+      SPRING_FLYWAY_CLEAN_DISABLED: "false"
     depends_on:
       db:
         condition: service_healthy
@@ -46,15 +47,14 @@ services:
     volumes:
       - ../BE:/app
       - /app/.gradle
-      - /app/build
     networks:
       - aerostride-net
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 300s
 
   redis:
     image: redis:alpine
