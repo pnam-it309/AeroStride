@@ -8,7 +8,7 @@ group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 description = 'BE'
 
-ext['spring-security.version'] = '6.5.0'
+ext['spring-security.version'] = '6.5.1'
 
 java {
     toolchain {

@@ -110,6 +110,9 @@ jobs:
           sed -i 's/REDIS_HOST=redis/REDIS_HOST=localhost/' .env
           sed -i 's/db:3306/localhost:3306/' .env
 
+      - name: Fix permissions for gradlew (for smoke test)
+        run: chmod +x BE/gradlew
+
       - name: Start services with Docker Compose
         run: |
           docker compose -f docker/docker-compose.yml up -d
