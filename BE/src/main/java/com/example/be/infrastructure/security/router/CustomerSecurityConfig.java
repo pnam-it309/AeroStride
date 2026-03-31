@@ -9,7 +9,7 @@ public class CustomerSecurityConfig {
 
     public void configure(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers(RoutesConstant.CUSTOMER + "/**").hasRole("CUSTOMER")
+                .requestMatchers(RoutesConstant.CUSTOMER + "/**").hasRole("KHACH_HANG")
         );
     }
 }

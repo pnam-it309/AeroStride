@@ -1,27 +1,45 @@
 package com.example.be.entity;
 
-import com.example.be.core.common.base.PrimaryEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
+/**
+ * RefreshToken - Stores JWT refresh tokens.
+ * Can be linked to either KhachHang or NhanVien (only one will be non-null).
+ */
 @Entity
-@Table(name = "refresh_tokens")
+@Table(name = "refresh_token")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RefreshToken extends PrimaryEntity {
+public class RefreshToken {
 
-    @Column(nullable = false, unique = true)
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @Column(name = "token", unique = true, nullable = false)
     private String token;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Column(name = "expiry_date", nullable = false)
+    private Instant expiryDate;
 
-    @Column(nullable = false)
-    private LocalDateTime expiryDate;
+    /**
+     * Link to KhachHang (nullable - only set if token belongs to a customer).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_khach_hang")
+    private KhachHang khachHang;
+
+    /**
+     * Link to NhanVien (nullable - only set if token belongs to a staff/admin).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_nhan_vien")
+    private NhanVien nhanVien;
+
 }

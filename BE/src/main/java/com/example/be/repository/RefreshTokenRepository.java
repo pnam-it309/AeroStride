@@ -1,17 +1,21 @@
 package com.example.be.repository;
 
 import com.example.be.entity.RefreshToken;
-import com.example.be.repository.base.BaseRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Repository
-public interface RefreshTokenRepository extends BaseRepository<RefreshToken, String> {
+public interface RefreshTokenRepository extends JpaRepository<RefreshToken, String> {
 
-    /**
-     * Delete tokens where expiry date is before the given time.
-     * Uses Spring Data JPA method name derivation to avoid @Query.
-     */
-    void deleteByExpiryDateBefore(LocalDateTime now);
+    Optional<RefreshToken> findByToken(String token);
+
+    @Modifying
+    void deleteByKhachHangId(String khachHangId);
+
+    @Modifying
+    void deleteByNhanVienId(String nhanVienId);
+
 }

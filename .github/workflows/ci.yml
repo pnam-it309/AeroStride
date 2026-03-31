@@ -51,6 +51,8 @@ jobs:
     needs: quality
     runs-on: ubuntu-latest
     name: Build & Security Scan
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
     permissions:
       contents: read
       security-events: write
@@ -96,6 +98,4 @@ jobs:
           status: ${{ job.status }}
           fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
           text: 'CI Pipeline Failed! (Reason: Build error or CRITICAL security vulnerability found)'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-        if: failure()
+        if: failure() && env.SLACK_WEBHOOK_URL != ''

@@ -3,7 +3,7 @@ package com.example.be.infrastructure.constants;
 public final class RoutesConstant {
     private RoutesConstant() {}
 
-    public static final String API_PREFIX = "/api/v1";
+    public static final String API_PREFIX = "${app.api_prefix:/api/v1}";
     
     // Auth routes
     public static final String AUTH = API_PREFIX + "/auth";

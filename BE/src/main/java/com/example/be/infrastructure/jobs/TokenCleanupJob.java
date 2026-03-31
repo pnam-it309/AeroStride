@@ -1,28 +1,35 @@
 package com.example.be.infrastructure.jobs;
 
-import com.example.be.core.security.SecurityService;
+import com.example.be.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
+/**
+ * TokenCleanupJob
+ * Runs at 2 AM daily to delete expired JWT refresh tokens from the DB.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class TokenCleanupJob {
 
-    private final SecurityService securityService;
+    private final RefreshTokenRepository refreshTokenRepository;
 
-    /**
-     * Runs at 2 AM daily to clean up expired JWT refresh tokens and OTPs.
-     * Cron: "0 0 2 * * *"
-     */
     @Scheduled(cron = "0 0 2 * * *")
+    @Transactional
     public void execute() {
         log.info("Cron Job [TokenCleanupJob] - Started");
         try {
-            securityService.cleanupExpiredTokens();
-            log.info("Cron Job [TokenCleanupJob] - Finished successfully");
+            var expired = refreshTokenRepository.findAll().stream()
+                    .filter(t -> t.getExpiryDate().isBefore(Instant.now()))
+                    .toList();
+            refreshTokenRepository.deleteAll(expired);
+            log.info("Cron Job [TokenCleanupJob] - Deleted {} expired tokens", expired.size());
         } catch (Exception e) {
             log.error("Cron Job [TokenCleanupJob] - Failed with error: {}", e.getMessage());
         }

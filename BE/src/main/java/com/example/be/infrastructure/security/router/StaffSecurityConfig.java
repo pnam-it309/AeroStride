@@ -9,7 +9,7 @@ public class StaffSecurityConfig {
 
     public void configure(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers(RoutesConstant.STAFF + "/**").hasAnyRole("STAFF", "ADMIN")
+                .requestMatchers(RoutesConstant.STAFF + "/**").hasAnyRole("NHAN_VIEN", "QUAN_TRI_VIEN")
         );
     }
 }

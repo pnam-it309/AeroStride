@@ -14,6 +14,8 @@ jobs:
   release-and-publish:
     runs-on: ubuntu-latest
     name: Semantic Release & Publish to GHCR
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
     permissions:
       packages: write
       contents: write
@@ -89,9 +91,7 @@ jobs:
           status: ${{ job.status }}
           fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
           text: 'CD Pipeline ${{ job.status }} for version ${{ steps.semantic.outputs.new_release_version }}'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-        if: always()
+        if: always() && env.SLACK_WEBHOOK_URL != ''
 
   # Stage 4: Post-Deployment Smoke Test
   smoke-test:
@@ -99,6 +99,8 @@ jobs:
     if: needs.release-and-publish.outputs.new_release_published == 'true'
     runs-on: ubuntu-latest
     name: Post-Deployment Smoke Test
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
     steps:
       - uses: actions/checkout@v4
 
@@ -132,9 +134,7 @@ jobs:
           status: failure
           fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
           text: 'Smoke Test Failed after deployment of ${{ needs.release-and-publish.outputs.new_release_version }}!'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-        if: failure()
+        if: failure() && env.SLACK_WEBHOOK_URL != ''
 
       - name: Cleanup
         run: docker-compose -f docker/docker-compose.yml down -v
