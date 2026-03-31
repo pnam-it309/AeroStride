@@ -1,3 +1,10 @@
+## [1.0.4](https://github.com/pnam-it309/AeroStride/compare/v1.0.3...v1.0.4) (2026-03-31)
+
+
+### Bug Fixes
+
+* **cd:** update docker-compose and upgrade spring-security to 6.5.0 ([a276358](https://github.com/pnam-it309/AeroStride/commit/a27635897eb162ae32be05e4e98f2f895ce06ec2))
+
 ## [1.0.3](https://github.com/pnam-it309/AeroStride/compare/v1.0.2...v1.0.3) (2026-03-31)
 
 
