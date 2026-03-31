@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/pnam-it309/AeroStride/compare/v1.0.2...v1.0.3) (2026-03-31)
+
+
+### Bug Fixes
+
+* **security:** upgrade spring boot to 3.4.6 to resolve vulnerabilities ([0eb5c8d](https://github.com/pnam-it309/AeroStride/commit/0eb5c8d89706c3c4b0f66f5dc5990160afaa7dff))
+
 ## [1.0.2](https://github.com/pnam-it309/AeroStride/compare/v1.0.1...v1.0.2) (2026-03-31)
 
 
