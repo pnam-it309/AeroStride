@@ -1,3 +1,10 @@
+## [1.0.5](https://github.com/pnam-it309/AeroStride/compare/v1.0.4...v1.0.5) (2026-03-31)
+
+
+### Bug Fixes
+
+* upgrade spring-security to 6.5.1 and fix gradlew permissions for CI volume mount ([ae2e399](https://github.com/pnam-it309/AeroStride/commit/ae2e3999604f9f49c785b75a3e9ab597bfd70910))
+
 ## [1.0.4](https://github.com/pnam-it309/AeroStride/compare/v1.0.3...v1.0.4) (2026-03-31)
 
 
