@@ -1,3 +1,10 @@
+## [1.0.6](https://github.com/pnam-it309/AeroStride/compare/v1.0.5...v1.0.6) (2026-03-31)
+
+
+### Bug Fixes
+
+* refine ci test environment and database connection ([3e2da9a](https://github.com/pnam-it309/AeroStride/commit/3e2da9ad79eab2db645ffadb767a699ef1d2a5a7))
+
 ## [1.0.5](https://github.com/pnam-it309/AeroStride/compare/v1.0.4...v1.0.5) (2026-03-31)
 
 
