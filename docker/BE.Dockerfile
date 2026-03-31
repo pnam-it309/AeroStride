@@ -3,14 +3,14 @@ FROM gradle:8.5-jdk17 AS build
 WORKDIR /app
 
 # Copy only the dependency files first to leverage Docker layer caching
-COPY gradle/ gradle/
-COPY gradlew build.gradle settings.gradle ./
+COPY BE/gradle/ gradle/
+COPY BE/gradlew BE/build.gradle BE/settings.gradle ./
 
 # Download dependencies
 RUN ./gradlew dependencies --no-daemon || true
 
 # Copy the source code
-COPY src/ src/
+COPY BE/src/ src/
 
 # Development stage (for hot-reloading)
 FROM build AS development

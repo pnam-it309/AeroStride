@@ -24,8 +24,8 @@ services:
 
   backend:
     build:
-      context: ../BE
-      dockerfile: ../docker/BE.Dockerfile
+      context: ..
+      dockerfile: docker/BE.Dockerfile
       target: development
     container_name: aerostride-be
     restart: "on-failure:3"
