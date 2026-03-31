@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/pnam-it309/AeroStride/compare/v1.0.1...v1.0.2) (2026-03-31)
+
+
+### Bug Fixes
+
+* **docker:** add chmod +x for gradlew ([c3f2fe0](https://github.com/pnam-it309/AeroStride/commit/c3f2fe064c1d6e7a82457d20093a8d0fd4d27815))
+
 ## [1.0.1](https://github.com/pnam-it309/AeroStride/compare/v1.0.0...v1.0.1) (2026-03-31)
 
 
