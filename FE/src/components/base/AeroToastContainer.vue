@@ -1,11 +1,11 @@
 <script setup>
-import { useToast } from '@/composable/useToast';
-const { toasts, removeToast } = useToast();
+import { useToast } from '@/composable/useToast'
+const { toasts, removeToast } = useToast()
 </script>
 
 <template>
   <div class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
-    <TransitionGroup 
+    <TransitionGroup
       enter-active-class="transform transition duration-300 ease-out"
       enter-from-class="translate-x-full opacity-0"
       enter-to-class="translate-x-0 opacity-100"
@@ -13,14 +13,16 @@ const { toasts, removeToast } = useToast();
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div 
-        v-for="toast in toasts" 
+      <div
+        v-for="toast in toasts"
         :key="toast.id"
         class="pointer-events-auto px-6 py-3 rounded-xl shadow-2xl border flex items-center min-w-[300px]"
         :class="[
-          toast.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 
-          toast.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 
-          'bg-blue-50 border-blue-200 text-blue-800'
+          toast.type === 'success'
+            ? 'bg-green-50 border-green-200 text-green-800'
+            : toast.type === 'error'
+              ? 'bg-red-50 border-red-200 text-red-800'
+              : 'bg-blue-50 border-blue-200 text-blue-800',
         ]"
       >
         <div class="mr-3">

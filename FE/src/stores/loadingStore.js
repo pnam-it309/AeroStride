@@ -5,7 +5,7 @@ export const useLoadingStore = defineStore('loading', () => {
   const isOverlayLoading = ref(false)
   const isProgressBarLoading = ref(false)
   const progress = ref(0)
-  
+
   let progressInterval = null
 
   const showOverlay = (show = true) => {
@@ -15,9 +15,9 @@ export const useLoadingStore = defineStore('loading', () => {
   const startProgress = () => {
     isProgressBarLoading.value = true
     progress.value = 0
-    
+
     if (progressInterval) clearInterval(progressInterval)
-    
+
     progressInterval = setInterval(() => {
       if (progress.value < 90) {
         progress.value += Math.random() * 10
@@ -45,7 +45,7 @@ export const useLoadingStore = defineStore('loading', () => {
     showOverlay,
     startProgress,
     finishProgress,
-    failProgress
+    failProgress,
   }
 })
 

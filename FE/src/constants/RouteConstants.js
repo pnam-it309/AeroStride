@@ -22,8 +22,8 @@ export const ROUTES = {
       E403: '/admin/error/403',
       E404: '/admin/error/404',
       E500: '/admin/error/500',
-    }
+    },
   },
-};
+}
 
-export default ROUTES;
+export default ROUTES

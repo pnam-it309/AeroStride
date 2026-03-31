@@ -1,6 +1,6 @@
-import { reactive, onMounted, computed } from 'vue';
-import api from '@/services/api';
-import { useSafeApi } from './useSafeApi';
+import { reactive, onMounted, computed } from 'vue'
+import api from '@/services/api'
+import { useSafeApi } from './useSafeApi'
 
 /**
  * useDataTable
@@ -13,10 +13,10 @@ export function useDataTable(endpoint, options = {}) {
     page: 1,
     size: 10,
     sortBy: options.defaultSortBy || 'id',
-    sortDirection: options.defaultSortDirection || 'desc'
-  });
+    sortDirection: options.defaultSortDirection || 'desc',
+  })
 
-  const filters = reactive(options.initialFilters || {});
+  const filters = reactive(options.initialFilters || {})
 
   // Define the API call function for useSafeApi
   const apiCall = () => {
@@ -26,58 +26,58 @@ export function useDataTable(endpoint, options = {}) {
         size: pagination.size,
         sortBy: pagination.sortBy,
         sortDirection: pagination.sortDirection,
-        ...filters
-      }
-    });
-  };
+        ...filters,
+      },
+    })
+  }
 
   const {
     data: responseData,
     loading,
     error,
     execute: fetchData,
-    isRetrying
+    isRetrying,
   } = useSafeApi(apiCall, {
     cacheKey: options.cacheKey || `table_${endpoint.replace(/\//g, '_')}`,
-    initialData: { content: [], totalElements: 0 }
-  });
+    initialData: { content: [], totalElements: 0 },
+  })
 
   // Computed properties to match the expected interface
-  const items = computed(() => responseData.value?.content || []);
-  const total = computed(() => responseData.value?.totalElements || 0);
+  const items = computed(() => responseData.value?.content || [])
+  const total = computed(() => responseData.value?.totalElements || 0)
 
   const handlePageChange = (newPage) => {
-    pagination.page = newPage;
-    fetchData();
-  };
+    pagination.page = newPage
+    fetchData()
+  }
 
   const handlePageSizeChange = (newSize) => {
-    pagination.size = newSize;
-    pagination.page = 1;
-    fetchData();
-  };
+    pagination.size = newSize
+    pagination.page = 1
+    fetchData()
+  }
 
   const handleSort = (key) => {
     if (pagination.sortBy === key) {
-      pagination.sortDirection = pagination.sortDirection === 'asc' ? 'desc' : 'asc';
+      pagination.sortDirection = pagination.sortDirection === 'asc' ? 'desc' : 'asc'
     } else {
-      pagination.sortBy = key;
-      pagination.sortDirection = 'desc';
+      pagination.sortBy = key
+      pagination.sortDirection = 'desc'
     }
-    fetchData();
-  };
+    fetchData()
+  }
 
   const applyFilters = (newFilters) => {
-    Object.assign(filters, newFilters);
-    pagination.page = 1;
-    fetchData();
-  };
+    Object.assign(filters, newFilters)
+    pagination.page = 1
+    fetchData()
+  }
 
   onMounted(() => {
     if (options.immediate !== false) {
-      fetchData();
+      fetchData()
     }
-  });
+  })
 
   return {
     items,
@@ -91,7 +91,6 @@ export function useDataTable(endpoint, options = {}) {
     handlePageChange,
     handlePageSizeChange,
     handleSort,
-    applyFilters
-  };
+    applyFilters,
+  }
 }
-

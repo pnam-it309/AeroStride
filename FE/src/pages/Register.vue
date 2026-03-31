@@ -9,13 +9,14 @@ const schema = yup.object({
   name: yup.string().required().min(2),
   email: yup.string().required().email(),
   password: yup.string().required().min(6),
-  confirmPassword: yup.string()
+  confirmPassword: yup
+    .string()
     .required()
-    .oneOf([yup.ref('password')], 'Mật khẩu xác nhận không khớp')
+    .oneOf([yup.ref('password')], 'Mật khẩu xác nhận không khớp'),
 })
 
 const { handleSubmit, defineField, errors } = useForm({
-  validationSchema: schema
+  validationSchema: schema,
 })
 
 const [name] = defineField('name')
@@ -64,15 +65,15 @@ const onRegister = handleSubmit((values) => {
         :error="errors.confirmPassword"
       />
 
-      <AeroButton class="w-full h-12" glow type="submit">
-        Sign Up
-      </AeroButton>
+      <AeroButton class="w-full h-12" glow type="submit"> Sign Up </AeroButton>
     </form>
 
     <div class="text-center">
       <p class="text-sm text-cloud/50">
-        Already have an account? 
-        <router-link :to="ROUTES.AUTH.LOGIN" class="text-aurora font-bold hover:underline">Log in</router-link>
+        Already have an account?
+        <router-link :to="ROUTES.AUTH.LOGIN" class="text-aurora font-bold hover:underline"
+          >Log in</router-link
+        >
       </p>
     </div>
   </div>

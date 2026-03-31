@@ -12,16 +12,14 @@ const navItems = ADMIN_NAV_ITEMS
 
 <template>
   <div class="flex h-screen bg-white">
-
-    <AdminSidebar 
-      :is-sidebar-open="isSidebarOpen" 
-      :nav-items="navItems" 
-    />
+    <AdminSidebar :is-sidebar-open="isSidebarOpen" :nav-items="navItems" />
 
     <!-- Main -->
     <div class="flex flex-col flex-1 overflow-hidden">
-
-      <AdminHeader @toggle-sidebar="isSidebarOpen = !isSidebarOpen" :is-sidebar-open="isSidebarOpen" />
+      <AdminHeader
+        @toggle-sidebar="isSidebarOpen = !isSidebarOpen"
+        :is-sidebar-open="isSidebarOpen"
+      />
 
       <!-- Content (One Point View: Standardized for all pages) -->
       <main class="flex-1 overflow-hidden px-12 py-8 flex flex-col">
@@ -35,9 +33,7 @@ const navItems = ADMIN_NAV_ITEMS
           </router-view>
         </div>
       </main>
-
     </div>
-
   </div>
 </template>
 <style scoped>

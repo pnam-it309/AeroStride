@@ -1,9 +1,9 @@
-import axios from 'axios';
-import useAuthStore from '@/stores/authStore';
-import { useToast } from '@/composable/useToast';
-import router from '@/router';
-import { ROUTES } from '@/constants';
-import { useLoadingStore } from '@/stores/loadingStore';
+import axios from 'axios'
+import useAuthStore from '@/stores/authStore'
+import { useToast } from '@/composable/useToast'
+import router from '@/router'
+import { ROUTES } from '@/constants'
+import { useLoadingStore } from '@/stores/loadingStore'
 
 /**
  * Global Axios Instance
@@ -15,9 +15,9 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-});
+})
 
-const toast = useToast();
+const toast = useToast()
 
 /**
  * Request Interceptor
@@ -25,29 +25,29 @@ const toast = useToast();
  */
 api.interceptors.request.use(
   (config) => {
-    const authStore = useAuthStore();
-    const loadingStore = useLoadingStore();
+    const authStore = useAuthStore()
+    const loadingStore = useLoadingStore()
 
     // Start progress bar for every request
-    loadingStore.startProgress();
+    loadingStore.startProgress()
 
     // Show full overlay if requested in config
     if (config.showOverlay) {
-      loadingStore.showOverlay(true);
+      loadingStore.showOverlay(true)
     }
 
     if (authStore.token) {
-      config.headers.Authorization = `Bearer ${authStore.token}`;
+      config.headers.Authorization = `Bearer ${authStore.token}`
     }
-    return config;
+    return config
   },
   (error) => {
-    const loadingStore = useLoadingStore();
-    loadingStore.failProgress();
-    loadingStore.showOverlay(false);
-    return Promise.reject(error);
-  }
-);
+    const loadingStore = useLoadingStore()
+    loadingStore.failProgress()
+    loadingStore.showOverlay(false)
+    return Promise.reject(error)
+  },
+)
 
 /**
  * Response Interceptor
@@ -55,72 +55,72 @@ api.interceptors.request.use(
  */
 api.interceptors.response.use(
   (response) => {
-    const loadingStore = useLoadingStore();
-    loadingStore.finishProgress();
-    loadingStore.showOverlay(false);
+    const loadingStore = useLoadingStore()
+    loadingStore.finishProgress()
+    loadingStore.showOverlay(false)
 
-    const apiResponse = response.data;
+    const apiResponse = response.data
     // Extract data if it follows the ApiResponse wrapper
     if (apiResponse && Object.prototype.hasOwnProperty.call(apiResponse, 'success')) {
       if (!apiResponse.success) {
-        return Promise.reject(apiResponse);
+        return Promise.reject(apiResponse)
       }
-      return apiResponse.data;
+      return apiResponse.data
     }
-    
-    return apiResponse;
+
+    return apiResponse
   },
   (error) => {
-    const authStore = useAuthStore();
-    const loadingStore = useLoadingStore();
-    const { response } = error;
+    const authStore = useAuthStore()
+    const loadingStore = useLoadingStore()
+    const { response } = error
 
-    loadingStore.failProgress();
-    loadingStore.showOverlay(false);
+    loadingStore.failProgress()
+    loadingStore.showOverlay(false)
 
     if (response) {
-      const { status, data } = response;
-      const message = data?.message || 'Có lỗi xảy ra, vui lòng thử lại.';
-      const errorTitle = data?.error || 'Lỗi';
+      const { status, data } = response
+      const message = data?.message || 'Có lỗi xảy ra, vui lòng thử lại.'
+      const errorTitle = data?.error || 'Lỗi'
 
       switch (status) {
         case 401:
-          toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-          authStore.logout();
-          router.push(ROUTES.AUTH.LOGIN);
-          break;
+          toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+          authStore.logout()
+          router.push(ROUTES.AUTH.LOGIN)
+          break
 
         case 403:
-          toast.error('Bạn không có quyền truy cập tính năng này.');
-          router.push(ROUTES.ADMIN.ERRORS.E403);
-          break;
+          toast.error('Bạn không có quyền truy cập tính năng này.')
+          router.push(ROUTES.ADMIN.ERRORS.E403)
+          break
 
         case 400:
-          toast.error(message);
-          break;
+          toast.error(message)
+          break
 
         case 404:
-          // Optional: Only redirect to 404 page for page-level 404s, 
+          // Optional: Only redirect to 404 page for page-level 404s,
           // usually API 404s just show a toast.
-          toast.error(message);
-          break;
+          toast.error(message)
+          break
 
         case 500:
-          toast.error(`Lỗi hệ thống: ${message}`);
-          router.push(ROUTES.ADMIN.ERRORS.E500);
-          break;
+          toast.error(`Lỗi hệ thống: ${message}`)
+          router.push(ROUTES.ADMIN.ERRORS.E500)
+          break
 
         default:
-          toast.error(message);
+          toast.error(message)
       }
     } else if (error.request) {
-      toast.error('Không thể kết nối tới máy chủ. Vui lòng kiểm tra internet.');
+      toast.error('Không thể kết nối tới máy chủ. Vui lòng kiểm tra internet.')
     } else {
-      toast.error('Lỗi cấu hình yêu cầu.');
+      toast.error('Lỗi cấu hình yêu cầu.')
     }
 
-    return Promise.reject(error);
-  }
-);
+    return Promise.reject(error)
+  },
+)
 
-export default api;
+export default api
