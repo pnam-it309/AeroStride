@@ -5,6 +5,7 @@ WORKDIR /app
 # Copy only the dependency files first to leverage Docker layer caching
 COPY BE/gradle/ gradle/
 COPY BE/gradlew BE/build.gradle BE/settings.gradle ./
+RUN chmod +x gradlew
 
 # Download dependencies
 RUN ./gradlew dependencies --no-daemon || true
