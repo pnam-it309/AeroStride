@@ -16,41 +16,40 @@ const router = createRouter({
         { path: 'login', name: 'Login', component: () => import('../pages/Login.vue') },
         { path: 'register', name: 'Register', component: () => import('../pages/Register.vue') },
       ],
-      redirect: ROUTES.AUTH.LOGIN
+      redirect: ROUTES.AUTH.LOGIN,
     },
     {
       path: ROUTES.ADMIN.BASE,
       component: AdminLayout,
       meta: { requiresAuth: true },
       children: [
-
         // Error Pages
         {
           path: 'error/403',
           name: 'Error403',
           component: () => import('../pages/admin/errors/403/Error403.vue'),
-          meta: { title: '403 Forbidden' }
+          meta: { title: '403 Forbidden' },
         },
         {
           path: 'error/404',
           name: 'Error404',
           component: () => import('../pages/admin/errors/404/Error404.vue'),
-          meta: { title: '404 Not Found' }
+          meta: { title: '404 Not Found' },
         },
         {
           path: 'error/500',
           name: 'Error500',
           component: () => import('../pages/admin/errors/500/Error500.vue'),
-          meta: { title: '500 Server Error' }
+          meta: { title: '500 Server Error' },
         },
       ],
-      redirect: ROUTES.ADMIN.DASHBOARD
+      redirect: ROUTES.ADMIN.DASHBOARD,
     },
-    { 
-      path: '/:pathMatch(.*)*', 
-      redirect: ROUTES.ADMIN.ERRORS.E404 
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: ROUTES.ADMIN.ERRORS.E404,
     },
-    { path: ROUTES.HOME, redirect: ROUTES.ADMIN.DASHBOARD }
+    { path: ROUTES.HOME, redirect: ROUTES.ADMIN.DASHBOARD },
   ],
 })
 
@@ -70,4 +69,3 @@ router.afterEach(() => {
 setupRouteGuards(router)
 
 export default router
-

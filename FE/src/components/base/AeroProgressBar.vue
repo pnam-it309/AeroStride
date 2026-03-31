@@ -7,11 +7,11 @@ const { isProgressBarLoading, progress } = storeToRefs(loadingStore)
 </script>
 
 <template>
-  <div 
+  <div
     v-if="isProgressBarLoading"
     class="fixed top-0 left-0 right-0 z-[9999] h-1 bg-gray-100/10 overflow-hidden"
   >
-    <div 
+    <div
       class="h-full bg-gradient-to-r from-aurora via-aurora/80 to-aurora shadow-[0_0_10px_rgba(var(--aurora-rgb),0.5)] transition-all duration-300 ease-out"
       :style="{ width: progress + '%' }"
     ></div>

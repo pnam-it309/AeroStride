@@ -17,7 +17,9 @@
       </div>
       <!-- Background Glows -->
       <div class="absolute -top-40 -left-40 w-96 h-96 bg-aurora/10 rounded-full blur-[100px]"></div>
-      <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-aurora/5 rounded-full blur-[100px]"></div>
+      <div
+        class="absolute -bottom-40 -right-40 w-96 h-96 bg-aurora/5 rounded-full blur-[100px]"
+      ></div>
     </div>
 
     <!-- Right: Auth Content -->

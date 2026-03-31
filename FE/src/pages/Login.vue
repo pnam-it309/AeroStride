@@ -13,11 +13,11 @@ const authStore = useAuthStore()
 
 const schema = yup.object({
   email: yup.string().required().email(),
-  password: yup.string().required().min(6)
+  password: yup.string().required().min(6),
 })
 
 const { handleSubmit, defineField, errors } = useForm({
-  validationSchema: schema
+  validationSchema: schema,
 })
 
 const [email] = defineField('email')
@@ -26,12 +26,12 @@ const [password] = defineField('password')
 const onSubmit = handleSubmit(async (values) => {
   const loadingStore = useLoadingStore()
   loadingStore.showOverlay(true)
-  
+
   try {
     console.log('Login success (mock):', values)
     // Simulate network delay for premium feel
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
+    await new Promise((resolve) => setTimeout(resolve, 1500))
+
     authStore.setToken('mock-jwt-token')
     router.push(ROUTES.ADMIN.DASHBOARD)
   } finally {
@@ -64,20 +64,22 @@ const onSubmit = handleSubmit(async (values) => {
           :error="errors.password"
         />
         <div class="text-right">
-          <a href="#" class="text-xs text-aurora/70 hover:text-aurora transition-colors">Forgot password?</a>
+          <a href="#" class="text-xs text-aurora/70 hover:text-aurora transition-colors"
+            >Forgot password?</a
+          >
         </div>
       </div>
 
-      <AeroButton class="w-full h-12" glow type="submit">
-        Sign In
-      </AeroButton>
+      <AeroButton class="w-full h-12" glow type="submit"> Sign In </AeroButton>
     </form>
-...
+    ...
 
     <div class="text-center">
       <p class="text-sm text-cloud/50">
-        Don't have an account? 
-        <router-link :to="ROUTES.AUTH.REGISTER" class="text-aurora font-bold hover:underline">Create one</router-link>
+        Don't have an account?
+        <router-link :to="ROUTES.AUTH.REGISTER" class="text-aurora font-bold hover:underline"
+          >Create one</router-link
+        >
       </p>
     </div>
   </div>
