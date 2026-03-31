@@ -112,7 +112,7 @@ jobs:
 
       - name: Start services with Docker Compose
         run: |
-          docker-compose -f docker/docker-compose.yml up -d
+          docker compose -f docker/docker-compose.yml up -d
 
       - name: Verify Container Health
         run: |
@@ -137,5 +137,5 @@ jobs:
         if: failure() && env.SLACK_WEBHOOK_URL != ''
 
       - name: Cleanup
-        run: docker-compose -f docker/docker-compose.yml down -v
+        run: docker compose -f docker/docker-compose.yml down -v
         if: always()
