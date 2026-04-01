@@ -31,7 +31,7 @@ const { isOverlayLoading } = storeToRefs(loadingStore)
         <!-- Text with Shimmer -->
         <div class="flex flex-col items-center">
           <span class="text-xs font-black text-white uppercase tracking-[0.4em] animate-pulse">
-            Processing
+            Đang tải
           </span>
           <div class="h-0.5 w-12 bg-aurora mt-2 rounded-full overflow-hidden">
             <div class="h-full bg-white/40 w-full animate-shimmer scale-x-50"></div>

@@ -10,14 +10,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -36,7 +42,7 @@ public class SecurityConfig {
     private final CustomerSecurityConfig customerSecurityConfig;
     private final ExcelSecurityConfig excelSecurityConfig;
     private final TestRedisSecurityConfig testSecurityConfig;
-    
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
@@ -46,7 +52,16 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
+        String idForEncode = "bcrypt";
+        Map<String, PasswordEncoder> encoders = new HashMap<>();
+        BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder(10);
+        encoders.put(idForEncode, bcrypt);
+        
+        DelegatingPasswordEncoder delegatingPasswordEncoder = new DelegatingPasswordEncoder(idForEncode, encoders);
+        // Quan trọng: Nếu không tìm thấy {id}, mặc định dùng BCrypt để so khớp
+        delegatingPasswordEncoder.setDefaultPasswordEncoderForMatches(bcrypt);
+        
+        return delegatingPasswordEncoder;
     }
 
     @Bean
@@ -55,12 +70,22 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder);
+        // Quan trọng: Set false để không ghi đè UsernameNotFoundException thành BadCredentialsException
+        authProvider.setHideUserNotFoundExceptions(false);
+        return authProvider;
+    }
+
+    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        
+
         if (ALLOWED_ORIGIN != null && !ALLOWED_ORIGIN.equals("*") && !ALLOWED_ORIGIN.isEmpty()) {
             config.setAllowedOrigins(List.of(ALLOWED_ORIGIN.split(",")));
             config.setAllowCredentials(true);
@@ -68,7 +93,7 @@ public class SecurityConfig {
             config.addAllowedOriginPattern("*");
             config.setAllowCredentials(false);
         }
-        
+
         source.registerCorsConfiguration("/**", config);
         return source;
     }
@@ -80,7 +105,7 @@ public class SecurityConfig {
         http.formLogin(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
         http.sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        
+
         http.exceptionHandling(e -> {
             e.accessDeniedHandler(customAccessDeniedHandler);
             e.authenticationEntryPoint(customAuthenticationEntryPoint);
@@ -104,7 +129,7 @@ public class SecurityConfig {
                 .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
                 .requestMatchers(RoutesConstant.API_PREFIX + "/**").authenticated()
                 .anyRequest().denyAll());
-                
+
         return http.build();
     }
 

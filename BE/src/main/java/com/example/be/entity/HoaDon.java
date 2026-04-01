@@ -1,6 +1,9 @@
 package com.example.be.entity;
 
-import com.example.be.core.common.base.PrimaryEntity;
+import com.example.be.core.common.base.AuditEntity;
+import com.example.be.core.common.base.IsIdentified;
+import com.example.be.infrastructure.constants.EntityProperties;
+import com.example.be.infrastructure.constants.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,7 +16,15 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class HoaDon extends PrimaryEntity {
+public class HoaDon extends AuditEntity implements IsIdentified {
+
+    @Id
+    @Column(length = EntityProperties.LENGTH_ID, updatable = false)
+    private String id;
+
+    @Column(name = "trang_thai")
+    @Enumerated(EnumType.ORDINAL)
+    private OrderStatus trangThai;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_phieu_giam_gia")

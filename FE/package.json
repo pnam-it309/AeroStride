@@ -16,6 +16,7 @@
     "@vee-validate/rules": "^4.15.1",
     "axios": "^1.13.6",
     "jwt-decode": "^4.0.0",
+    "lucide-vue-next": "^1.0.0",
     "pinia": "^3.0.4",
     "sockjs-client": "^1.6.1",
     "vee-validate": "^4.15.1",

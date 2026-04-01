@@ -13,6 +13,8 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, String> {
 
     Optional<NhanVien> findByEmail(String email);
 
+    Optional<NhanVien> findByTenTaiKhoanOrEmail(String tenTaiKhoan, String email);
+
     boolean existsByTenTaiKhoan(String tenTaiKhoan);
 
     boolean existsByEmail(String email);

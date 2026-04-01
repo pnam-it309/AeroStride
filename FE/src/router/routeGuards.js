@@ -5,7 +5,7 @@ import useAuthStore from '@/stores/authStore'
  * Navigation guards to protect routes and handle authorization.
  */
 export const setupRouteGuards = (router) => {
-  router.beforeEach((to, from, next) => {
+  router.beforeEach((to) => {
     const authStore = useAuthStore()
 
     // Check if the route requires authentication
@@ -17,16 +17,15 @@ export const setupRouteGuards = (router) => {
 
     if (requiresAuth && !authStore.isLogin) {
       // Not logged in, redirect to login
-      next({ path: '/auth/login', query: { redirect: to.fullPath } })
+      return { path: '/auth/login', query: { redirect: to.fullPath } }
     } else if (isGuestOnly && authStore.isLogin) {
       // Already logged in, redirect to dashboard if trying to access auth pages
-      next({ path: '/admin/dashboard' })
+      return { path: '/admin/dashboard' }
     } else {
       // Set page title if available
       if (to.meta.title) {
         document.title = `${to.meta.title} | AeroStride`
       }
-      next()
     }
   })
 }

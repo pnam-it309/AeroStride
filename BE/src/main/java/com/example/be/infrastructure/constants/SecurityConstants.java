@@ -9,6 +9,7 @@ public final class SecurityConstants {
     public static final String[] PUBLIC_URLS = {
         RoutesConstant.AUTH + "/**",
         "/swagger-ui/**",
-        "/v3/api-docs/**"
+        "/v3/api-docs/**",
+        "/ws/**"
     };
 }
