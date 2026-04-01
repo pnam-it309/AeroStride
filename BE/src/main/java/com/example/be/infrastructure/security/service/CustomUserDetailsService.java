@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -31,12 +32,14 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final KhachHangRepository khachHangRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    @Transactional(readOnly = true)
+    public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
         // 1. Check staff/admin table first (CMS users)
-        NhanVien nhanVien = nhanVienRepository.findByTenTaiKhoan(username).orElse(null);
+        NhanVien nhanVien = nhanVienRepository.findByTenTaiKhoanOrEmail(identifier, identifier).orElse(null);
         if (nhanVien != null) {
             VaiTro role = VaiTro.NHAN_VIEN;
-            if (nhanVien.getPhanQuyen() != null && "ROLE_ADMIN".equals(nhanVien.getPhanQuyen().getMa())) {
+            // ma_phan_quyen = 'ADMIN' in SQL mapping to getMa() in Java
+            if (nhanVien.getPhanQuyen() != null && "ADMIN".equals(nhanVien.getPhanQuyen().getMa())) {
                 role = VaiTro.QUAN_TRI_VIEN;
             }
             return buildUserDetails(
@@ -47,9 +50,9 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         // 2. Fall back to customer table (web users)
-        KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
+        KhachHang khachHang = khachHangRepository.findByTenTaiKhoanOrEmail(identifier, identifier)
                 .orElseThrow(() -> new UsernameNotFoundException(
-                        "Không tìm thấy tài khoản: " + username));
+                        "Không tìm thấy tài khoản: " + identifier));
 
         return buildUserDetails(
                 khachHang.getTenTaiKhoan(),

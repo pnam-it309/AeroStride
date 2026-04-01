@@ -12,7 +12,9 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 @RestControllerAdvice
 @Slf4j
@@ -45,7 +47,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ApiResponse<Object>> handleUnauthorizedException(UnauthorizedException e, HttpServletRequest request) {
         log.warn("Unauthorized access at {}: {}", request.getRequestURI(), e.getMessage());
-        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "ERR_UNAUTHORIZED", "Please log in to continue.", request.getRequestURI(), ErrorSeverity.RECOVERABLE);
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "ERR_UNAUTHORIZED", "Vui lòng đăng nhập để tiếp tục.", request.getRequestURI(), ErrorSeverity.RECOVERABLE);
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleUsernameNotFoundException(UsernameNotFoundException e, HttpServletRequest request) {
+        log.warn("User not found at {}: {}", request.getRequestURI(), e.getMessage());
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "ERR_USER_NOT_FOUND", "Tài khoản (Email) không tồn tại trong hệ thống.", request.getRequestURI(), ErrorSeverity.RECOVERABLE);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ApiResponse<Object>> handleBadCredentialsException(BadCredentialsException e, HttpServletRequest request) {
+        log.warn("Wrong password attempt at {}: {}", request.getRequestURI(), e.getMessage());
+        return buildErrorResponse(HttpStatus.UNAUTHORIZED, "ERR_WRONG_PASSWORD", "Mật khẩu không chính xác. Vui lòng kiểm tra lại.", request.getRequestURI(), ErrorSeverity.RECOVERABLE);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

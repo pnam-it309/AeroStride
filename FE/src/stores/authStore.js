@@ -41,34 +41,27 @@ const useAuthStore = defineStore('authUser', () => {
     localStorageUtils.set(AUTHENCATION_STORAGE_REFRESH_TOKEN, refreshToken.value)
   }
 
-  const login = (tokenData) => {
-    if (!tokenData) {
+  const login = (authData) => {
+    if (!authData) {
       return false
     }
 
-    let parsedData
-    try {
-      parsedData = JSON.parse(atob(tokenData))
-    } catch (e) {
-      console.error('Failed to parse login token data:', e)
-      return false
+    const { accessToken, refreshToken, username, role } = authData
+
+    if (accessToken) {
+      const decoded = decodeToken(accessToken)
+      // Combine decoded JWT data with additional info from API
+      setUser({
+        ...decoded,
+        username: username || decoded.sub,
+        role: role || (decoded.role ? decoded.role : 'GUEST'),
+      })
+      setToken(accessToken, refreshToken)
+      return true
     }
 
-    const access_token = parsedData?.accessToken
-    const refresh_token = parsedData?.refreshToken
-
-    if (access_token) {
-      const decoded = decodeToken(access_token)
-      setUser(decoded)
-      setToken(access_token, refresh_token)
-    }
-
-    if (user.value == null) {
-      logout()
-      return false
-    }
-
-    return true
+    logout()
+    return false
   }
 
   const logout = () => {

@@ -45,23 +45,12 @@ const handleLogout = () => {
           {{ route.meta.title || 'Overview' }}
         </h2>
         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] mt-1 ml-0.5"
-          >Control Center</span
+          >Trung tâm quản lí</span
         >
       </div>
     </div>
 
     <div class="flex items-center gap-8">
-      <div
-        class="hidden md:flex items-center bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-100 focus-within:border-aurora/50 transition-colors"
-      >
-        <input
-          type="text"
-          placeholder="Global Search..."
-          class="bg-transparent border-none outline-none text-sm w-64 text-gray-900 font-bold placeholder:text-gray-300"
-        />
-        <span class="text-gray-300">⌘K</span>
-      </div>
-
       <div class="flex items-center gap-4 pl-8 border-l border-gray-100">
         <button
           @click="handleLogout"

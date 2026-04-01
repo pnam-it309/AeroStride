@@ -2,19 +2,23 @@
 
 -- 1. Bảng Phân Quyền (phan_quyen)
 INSERT INTO phan_quyen (id, ma_phan_quyen, ten_phan_quyen, quyen_han, mo_ta, trang_thai, ngay_tao) VALUES
-('pq1', 'ROLE_ADMIN', 'Quản trị viên', 'FULL_ACCESS', 'Quyền cao nhất hệ thống', 0, 1711814400000),
-('pq2', 'ROLE_STAFF', 'Nhân viên', 'STAFF_ACCESS', 'Quyền nhân viên bán hàng', 0, 1711814400000),
-('pq3', 'ROLE_MANAGER', 'Quản lý', 'MANAGER_ACCESS', 'Quyền quản lý cửa hàng', 0, 1711814400000),
-('pq4', 'ROLE_WAREHOUSE', 'Thủ kho', 'WAREHOUSE_ACCESS', 'Quyền quản lý kho hàng', 0, 1711814400000),
-('pq5', 'ROLE_SHIPPER', 'Giao hàng', 'SHIPPER_ACCESS', 'Quyền nhân viên giao nhận', 0, 1711814400000);
+('pq1', 'ADMIN', 'Quản trị viên', 'FULL_ACCESS', 'Quyền cao nhất hệ thống', 0, 1711814400000),
+('pq2', 'STAFF', 'Nhân viên', 'STAFF_ACCESS', 'Quyền nhân viên bán hàng', 0, 1711814400000),
+('pq3', 'MANAGER', 'Quản lý', 'MANAGER_ACCESS', 'Quyền quản lý cửa hàng', 0, 1711814400000),
+('pq4', 'WAREHOUSE', 'Thủ kho', 'WAREHOUSE_ACCESS', 'Quyền quản lý kho hàng', 0, 1711814400000),
+('pq5', 'SHIPPER', 'Giao hàng', 'SHIPPER_ACCESS', 'Quyền nhân viên giao nhận', 0, 1711814400000);
 
 -- 2. Bảng Nhân Viên (nhan_vien)
 INSERT INTO nhan_vien (id, id_phan_quyen, ma_nhan_vien, ten_nhan_vien, email, sdt, ngay_sinh, gioi_tinh, ten_tai_khoan, mat_khau, hinh_anh, xoa_mem, trang_thai, ngay_tao) VALUES
-('nv1', 'pq1', 'NV001', 'Admin Hệ Thống', 'admin@aerostride.com', '0123456789', '1990-01-01', 1, 'admin', '$2a$10$XQ8n.yG1O6X7Y9uL0jF5Ze', 'admin.jpg', 0, 0, 1711814400000),
-('nv2', 'pq2', 'NV002', 'Nguyễn Văn Staff', 'staff1@aerostride.com', '0987654321', '1995-05-20', 1, 'staff1', 'password123', 'staff1.jpg', 0, 0, 1711814400000),
-('nv3', 'pq3', 'NV003', 'Trần Thị Manager', 'manager@aerostride.com', '0912345678', '1988-10-15', 0, 'manager', 'password123', 'manager.jpg', 0, 0, 1711814400000),
-('nv4', 'pq2', 'NV004', 'Lê Văn Bán Hàng', 'staff2@aerostride.com', '0922334455', '1998-02-14', 1, 'staff2', 'password123', 'staff2.jpg', 0, 0, 1711814400000),
-('nv5', 'pq4', 'NV005', 'Phạm Thủ Kho', 'warehouse@aerostride.com', '0933445566', '1992-07-30', 1, 'warehouse', 'password123', 'warehouse.jpg', 0, 0, 1711814400000);
+('nv1', 'pq1', 'NV001', 'Admin Hệ Thống', 'nickhunter3009@gmail.com', '0123456789', '1990-01-01', 1, 'admin', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'admin.jpg', 0, 0, 1711814400000),
+('nv2', 'pq1', 'NV002', 'Admin Hệ Thống', 'phitrang082006@gmail.com', '0123456789', '1990-01-01', 0, 'admin1', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'admin.jpg', 0, 0, 1711814400000),
+('nv3', 'pq1', 'NV003', 'Admin Hệ Thống', 't818721@gmail.com', '0123456789', '1990-01-01', 0, 'admin2', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'admin.jpg', 0, 0, 1711814400000),
+('nv4', 'pq1', 'NV004', 'Admin Hệ Thống', 'nguyenhuyducbg19062002@gmail.com', '0123456789', '1990-01-01', 1, 'admin3', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'admin.jpg', 0, 0, 1711814400000),
+('nv5', 'pq1', 'NV005', 'Admin Hệ Thống', 'yent6969@gmail.com', '0123456789', '1990-01-01', 0, 'admin4', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'admin.jpg', 0, 0, 1711814400000),
+('nv6', 'pq2', 'NV006', 'Nguyễn Văn Staff', 'staff1@aerostride.com', '0987654321', '1995-05-20', 1, 'staff1', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'staff1.jpg', 0, 0, 1711814400000),
+('nv7', 'pq3', 'NV007', 'Trần Thị Manager', 'manager@aerostride.com', '0912345678', '1988-10-15', 0, 'manager', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'manager.jpg', 0, 0, 1711814400000),
+('nv8', 'pq2', 'NV008', 'Lê Văn Bán Hàng', 'staff2@aerostride.com', '0922334455', '1998-02-14', 1, 'staff2', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'staff2.jpg', 0, 0, 1711814400000),
+('nv9', 'pq4', 'NV009', 'Phạm Thủ Kho', 'warehouse@aerostride.com', '0933445566', '1992-07-30', 1, 'warehouse', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'warehouse.jpg', 0, 0, 1711814400000);
 
 -- 3. Bảng Địa Chỉ (dia_chi)
 INSERT INTO dia_chi (id, ma_dia_chi, tinh, thanh_pho, phuong_xa, dia_chi_chi_tiet, ten_nguoi_nhan, sdt_nguoi_nhan, trang_thai, ngay_tao) VALUES
@@ -26,11 +30,11 @@ INSERT INTO dia_chi (id, ma_dia_chi, tinh, thanh_pho, phuong_xa, dia_chi_chi_tie
 
 -- 4. Bảng Khách Hàng (khach_hang)
 INSERT INTO khach_hang (id, id_dia_chi, ma_nguoi_dung, ten_nguoi_dung, email, ten_tai_khoan, mat_khau, gioi_tinh, sdt, ngay_sinh, hinh_anh, ghi_chu, trang_thai, ngay_tao) VALUES
-('kh1', 'dc1', 'KH001', 'Nguyễn Khách 1', 'khach1@gmail.com', 'khach1', 'password123', 1, '0901112222', '1993-12-01', 'kh1.jpg', 'Khách hay mua hàng', 0, 1711814400000),
-('kh2', 'dc2', 'KH002', 'Trần Anh Khách', 'khach2@gmail.com', 'khach2', 'password123', 1, '0902223333', '1991-03-15', 'kh2.jpg', NULL, 0, 1711814400000),
-('kh3', 'dc3', 'KH003', 'Lê Khách 3', 'khach3@gmail.com', 'khach3', 'password123', 0, '0903334444', '1995-07-20', 'kh3.jpg', NULL, 0, 1711814400000),
-('kh4', 'dc4', 'KH004', 'Phạm Khách 4', 'khach4@gmail.com', 'khach4', 'password123', 0, '0904445555', '1998-05-10', 'kh4.jpg', NULL, 0, 1711814400000),
-('kh5', 'dc5', 'KH005', 'Hoàng Khách 5', 'khach5@gmail.com', 'khach5', 'password123', 1, '0905556666', '1990-11-25', 'kh5.jpg', NULL, 0, 1711814400000);
+('kh1', 'dc1', 'KH001', 'Nguyễn Khách 1', 'khach1@gmail.com', 'khach1', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0901112222', '1993-12-01', 'kh1.jpg', 'Khách hay mua hàng', 0, 1711814400000),
+('kh2', 'dc2', 'KH002', 'Trần Anh Khách', 'khach2@gmail.com', 'khach2', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0902223333', '1991-03-15', 'kh2.jpg', NULL, 0, 1711814400000),
+('kh3', 'dc3', 'KH003', 'Lê Khách 3', 'khach3@gmail.com', 'khach3', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0903334444', '1995-07-20', 'kh3.jpg', NULL, 0, 1711814400000),
+('kh4', 'dc4', 'KH004', 'Phạm Khách 4', 'khach4@gmail.com', 'khach4', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0904445555', '1998-05-10', 'kh4.jpg', NULL, 0, 1711814400000),
+('kh5', 'dc5', 'KH005', 'Hoàng Khách 5', 'khach5@gmail.com', 'khach5', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0905556666', '1990-11-25', 'kh5.jpg', NULL, 0, 1711814400000);
 
 -- 5. Bảng Thương Hiệu (thuong_hieu)
 INSERT INTO thuong_hieu (id, ma_thuong_hieu, ten_thuong_hieu, trang_thai, xoa_mem, ngay_tao) VALUES
@@ -48,7 +52,7 @@ INSERT INTO danh_muc (id, ma_danh_muc, ten_danh_muc, trang_thai, xoa_mem, ngay_t
 ('dm4', 'DM004', 'Giày Sneaker', 0, 0, 1711814400000),
 ('dm5', 'DM005', 'Giày Lười', 0, 0, 1711814400000);
 
--- 7. Bảng Cổ Giày (co_giay)
+-- 7. Bảng cỡ Giày (co_giay)
 INSERT INTO co_giay (id, ma_co_giay, ten_co_giay, trang_thai, xoa_mem, ngay_tao) VALUES
 ('cg1', 'CG001', 'Cổ Thấp', 0, 0, 1711814400000),
 ('cg2', 'CG002', 'Cổ Trung', 0, 0, 1711814400000),

@@ -1,3 +1,4 @@
+import { defineRule, configure } from 'vee-validate'
 import { validationUtil } from './validationUtil'
 
 /**
@@ -6,43 +7,39 @@ import { validationUtil } from './validationUtil'
 export const setupValidation = () => {
   // Standard rules
   defineRule('required', (value) => {
-    if (validationUtil.isEmpty(value)) return 'Trường này là bắt buộc.'
-    return true
+    return !validationUtil.isEmpty(value)
   })
 
   defineRule('email', (value) => {
-    if (!validationUtil.isEmail(value)) return 'Email không hợp lệ.'
-    return true
+    return !value || validationUtil.isEmail(value)
   })
 
   defineRule('min', (value, [min]) => {
-    if (!validationUtil.isMinLength(value, min)) return `Phải có ít nhất ${min} ký tự.`
-    return true
+    return !value || validationUtil.isMinLength(value, min)
   })
 
   defineRule('max', (value, [max]) => {
-    if (!validationUtil.isMaxLength(value, max)) return `Không được vượt quá ${max} ký tự.`
-    return true
+    return !value || validationUtil.isMaxLength(value, max)
   })
 
   defineRule('confirmed', (value, [target]) => {
-    if (value !== target) return 'Xác nhận mật khẩu chưa khớp.'
-    return true
+    return value === target
   })
 
-  // Custom configuration
+  // Custom configuration for error messages
   configure({
-    generateMessage: localize({
-      vi: {
-        messages: {
-          required: 'Trường này là bắt buộc.',
-          email: 'Email không hợp lệ.',
-          min: 'Phải có ít nhất 0:{min} ký tự.',
-          max: 'Không được vượt quá 0:{max} ký tự.',
-          confirmed: 'Xác nhận mật khẩu chưa khớp.',
-        },
-      },
-    }),
+    generateMessage: (ctx) => {
+      const messages = {
+        required: 'Trường này là bắt buộc.',
+        email: 'Email không hợp lệ.',
+        min: `Phải có ít nhất ${ctx.rule.params[0]} ký tự.`,
+        max: `Không được vượt quá ${ctx.rule.params[0]} ký tự.`,
+        confirmed: 'Xác nhận mật khẩu chưa khớp.',
+      }
+
+      const message = messages[ctx.rule.name]
+      return message ? message : `Trường ${ctx.field} không hợp lệ.`
+    },
     validateOnInput: true, // Validate as the user types
   })
 }

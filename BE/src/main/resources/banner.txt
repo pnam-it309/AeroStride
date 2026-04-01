@@ -1,0 +1,9 @@
+${AnsiColor.BRIGHT_BLUE}
+     ___                         ${AnsiColor.BRIGHT_CYAN}_____ _        _     _      
+    /   |  ___  _ __ ___   ___  ${AnsiColor.BRIGHT_CYAN}/  ___| |_ _ __(_) __| | ___ 
+   / /| | / _ \| '__/ _ \ / _ \ ${AnsiColor.BRIGHT_CYAN}\___ \| __| '__| |/ _` |/ _ \
+  / ___ ||  __/| | | (_) | (_) |${AnsiColor.BRIGHT_CYAN}____) | |_| |  | | (_| |  __/
+ /_/   |_|\___||_|  \___/ \___/ ${AnsiColor.BRIGHT_CYAN}|____/ \__|_|  |_|\__,_|\___|
+
+ ${AnsiColor.BRIGHT_YELLOW}:: AeroStride Backend :: ${AnsiColor.BRIGHT_MAGENTA}Premium Architecture :: ${AnsiColor.BRIGHT_GREEN}${spring-boot.version}
+ ${AnsiColor.DEFAULT}
