@@ -21,4 +21,28 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminNhanVienServiceImpl implements AdminNhanVienService {
 
+    @Override
+    public PageResponse<AdminNhanVienResponse> search(PageRequest pageRequest) {
+        throw new UnsupportedOperationException("AdminNhanVienService.search is not implemented yet");
+    }
+
+    @Override
+    public AdminNhanVienResponse getOne(String id) {
+        throw new UnsupportedOperationException("AdminNhanVienService.getOne is not implemented yet");
+    }
+
+    @Override
+    public AdminNhanVienResponse create(AdminNhanVienRequest request) {
+        throw new UnsupportedOperationException("AdminNhanVienService.create is not implemented yet");
+    }
+
+    @Override
+    public AdminNhanVienResponse update(String id, AdminNhanVienRequest request) {
+        throw new UnsupportedOperationException("AdminNhanVienService.update is not implemented yet");
+    }
+
+    @Override
+    public Boolean delete(String id) {
+        throw new UnsupportedOperationException("AdminNhanVienService.delete is not implemented yet");
+    }
 }

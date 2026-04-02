@@ -20,4 +20,28 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
 
+    @Override
+    public PageResponse<AdminPhieuGiamGiaResponse> search(PageRequest pageRequest) {
+        throw new UnsupportedOperationException("AdminPhieuGiamGiaService.search is not implemented yet");
+    }
+
+    @Override
+    public AdminPhieuGiamGiaResponse getOne(String id) {
+        throw new UnsupportedOperationException("AdminPhieuGiamGiaService.getOne is not implemented yet");
+    }
+
+    @Override
+    public AdminPhieuGiamGiaResponse create(AdminPhieuGiamGiaRequest request) {
+        throw new UnsupportedOperationException("AdminPhieuGiamGiaService.create is not implemented yet");
+    }
+
+    @Override
+    public AdminPhieuGiamGiaResponse update(String id, AdminPhieuGiamGiaRequest request) {
+        throw new UnsupportedOperationException("AdminPhieuGiamGiaService.update is not implemented yet");
+    }
+
+    @Override
+    public Boolean delete(String id) {
+        throw new UnsupportedOperationException("AdminPhieuGiamGiaService.delete is not implemented yet");
+    }
 }

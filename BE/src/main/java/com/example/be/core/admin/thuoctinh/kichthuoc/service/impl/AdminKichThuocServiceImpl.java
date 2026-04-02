@@ -2,22 +2,14 @@ package com.example.be.core.admin.thuoctinh.kichthuoc.service.impl;
 
 import com.example.be.core.admin.thuoctinh.kichthuoc.repository.AdminKichThuocRepository;
 import com.example.be.core.admin.thuoctinh.kichthuoc.service.AdminKichThuocService;
-import com.example.be.core.admin.thuoctinh.model.request.AdminAttributeRequest;
-import com.example.be.core.admin.thuoctinh.model.response.AdminAttributeResponse;
-import com.example.be.core.common.dto.PageRequest;
-import com.example.be.core.common.dto.PageResponse;
+import com.example.be.core.admin.thuoctinh.service.impl.AdminAttributeCrudSupport;
 import com.example.be.entity.KichThuoc;
-import com.example.be.infrastructure.constants.TrangThai;
-import com.example.be.infrastructure.exceptions.RestApiException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.stream.Collectors;
-
 @Service
-@RequiredArgsConstructor
-public class AdminKichThuocServiceImpl implements AdminKichThuocService {
+public class AdminKichThuocServiceImpl extends AdminAttributeCrudSupport<KichThuoc> implements AdminKichThuocService {
 
+    public AdminKichThuocServiceImpl(AdminKichThuocRepository repository) {
+        super(repository, KichThuoc::new, KichThuoc::getGiaTriKichThuoc, KichThuoc::setGiaTriKichThuoc, KichThuoc::setXoaMem, "kich thuoc");
+    }
 }

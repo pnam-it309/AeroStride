@@ -36,6 +36,8 @@ public final class MaGenerator {
             case "ChatLieu" -> "CL";
             case "DeGiay" -> "DE";
             case "CoGiay" -> "CG";
+            case "XuatXu" -> "XX";
+            case "MucDichChay" -> "MD";
             case "FormDang" -> "FD";
             case "GioHang" -> "GH";
             case "HinhThucThanhToan" -> "HT";

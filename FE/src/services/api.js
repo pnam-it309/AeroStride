@@ -107,7 +107,9 @@ api.interceptors.response.use(
 
         case 500:
           toast.error(`Lỗi hệ thống: ${message}`)
-          router.push(ROUTES.ADMIN.ERRORS.E500)
+          if (!error.config?.skipErrorRedirect) {
+            router.push(ROUTES.ADMIN.ERRORS.E500)
+          }
           break
 
         default:
