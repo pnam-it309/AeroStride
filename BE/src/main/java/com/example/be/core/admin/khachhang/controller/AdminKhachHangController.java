@@ -1,6 +1,7 @@
 package com.example.be.core.admin.khachhang.controller;
 
 import com.example.be.core.admin.khachhang.model.request.AdminKhachHangRequest;
+import com.example.be.core.admin.khachhang.model.response.AdminKhachHangResponse;
 import com.example.be.core.admin.khachhang.service.AdminKhachHangService;
 import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.core.common.dto.PageRequest;
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_KHACH_HANG)
 @RequiredArgsConstructor
@@ -19,8 +22,8 @@ public class AdminKhachHangController {
     private AdminKhachHangService adminKhachHangService;
 
     @GetMapping("/hien-thi")
-    public ResponseEntity<?> hienThi() {
-        return ResponseEntity.ok(ApiResponse.success(adminKhachHangService.hienThi()));
+    public List<AdminKhachHangResponse> hienThi() {
+        return adminKhachHangService.hienThi();
     }
     @GetMapping("/phan-trang")
     public ResponseEntity<?> phanTrang(AdminKhachHangRequest request) {
