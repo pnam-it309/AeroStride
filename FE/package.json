@@ -10,6 +10,7 @@
     "format": "oxfmt src/"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.2.0",
     "@phosphor-icons/vue": "^2.2.1",
     "@phosphor-icons/web": "^2.1.2",
     "@stomp/stompjs": "^7.3.0",

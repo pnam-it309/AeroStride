@@ -47,7 +47,7 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
         return adminKhachHangRepository.timKiem(request.getKeyword(), pageable);
     }
 
-    //lọc theo trạng thái
+    //lọc
     @Override
     public Page<AdminKhachHangResponse> locKH(AdminKhachHangRequest request) {
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize());

@@ -1,17 +1,18 @@
-import './assets/index.css'
-import '@phosphor-icons/web/bold' // Import Phosphor Bold icons via NPM
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import { setupValidation } from '@/utils/validation'
+import "./assets/index.css";
+import "@phosphor-icons/web/bold"; // Import Phosphor Bold icons via NPM
+import "@fortawesome/fontawesome-free/css/all.css";
+import { createApp } from "vue";
+import { createPinia } from "pinia";
+import { setupValidation } from "@/utils/validation";
 
-import App from './App.vue'
-import router from './router'
+import App from "./App.vue";
+import router from "./router";
 
-setupValidation() // Register Vee-Validate rules
+setupValidation(); // Register Vee-Validate rules
 
-const app = createApp(App)
+const app = createApp(App);
 
-app.use(createPinia())
-app.use(router)
+app.use(createPinia());
+app.use(router);
 
-app.mount('#app')
+app.mount("#app");

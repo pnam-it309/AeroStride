@@ -107,7 +107,7 @@
               <td class="px-6 py-2 text-right">Thao tác</td>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-50 text-xs">
+          <tbody class="divide-y divide-gray-50 text-sm">
             <tr
               v-for="(item, index) in customerList"
               :key="item?.id"
@@ -127,9 +127,6 @@
                 <div class="flex items-center space-x-3">
                   <div>
                     <div class="font-bold text-gray-800">{{ item.ten }}</div>
-                    <div class="text-[11px] text-gray-400 font-mono">
-                      {{ item.ma }}
-                    </div>
                   </div>
                 </div>
               </td>
