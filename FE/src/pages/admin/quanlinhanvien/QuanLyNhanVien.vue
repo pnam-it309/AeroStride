@@ -82,6 +82,7 @@
         </div>
         <div class="flex items-center space-x-4">
           <button
+            @click="handleCreate"
             class="bg-gray-900 hover:bg-black text-white font-bold py-2 px-6 rounded-xl flex items-center space-x-2 transition shadow-lg text-sm"
           >
             <span>+ Thêm nhân viên</span>
@@ -323,6 +324,10 @@ const selectedEmployee = ref(null);
 const handleDetail = (item) => {
   selectedEmployee.value = item; // gán nhân viên cần xem
   showDetailModal.value = true; // bật modal
+};
+
+const handleCreate = () => {
+  router.push({ name: "EmployeeCreate" });
 };
 </script>
 

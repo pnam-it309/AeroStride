@@ -135,6 +135,13 @@ const router = createRouter({
           component: () =>
             import("../pages/admin/quanlinhanvien/EmployeeEdit.vue"),
         },
+        // add
+        {
+          path: "quan-ly-nhan-vien/add",
+          name: "EmployeeCreate",
+          component: () =>
+            import("../pages/admin/quanlinhanvien/EmployeeCreate.vue"),
+        },
         // Error Pages
         {
           path: "error/403",
