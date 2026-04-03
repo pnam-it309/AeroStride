@@ -9,7 +9,7 @@ public class AdminSecurityConfig {
 
     public void configure(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers(RoutesConstant.ADMIN + "/**").hasRole("QUAN_TRI_VIEN")
+                .requestMatchers(RoutesConstant.ADMIN + "/**").hasAuthority("ROLE_QUAN_TRI_VIEN")
         );
     }
 }
