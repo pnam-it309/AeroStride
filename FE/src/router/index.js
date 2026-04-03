@@ -31,6 +31,12 @@ const router = createRouter({
           meta: { title: 'Thống kê' },
         },
         {
+          path: 'ban-hang',
+          name: 'AdminPOS',
+          component: () => import('../pages/admin/banhang/BanHang.vue'),
+          meta: { title: 'Bán hàng tại quầy' },
+        },
+        {
           path: 'quan-ly-san-pham',
           name: 'AdminProducts',
           component: () => import('../pages/admin/quanlisanpham/QuanLySanPham.vue'),

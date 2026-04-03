@@ -12,6 +12,12 @@ export const ADMIN_NAV_ITEMS = [
     description: 'Tổng quan hệ thống',
   },
   {
+    name: 'Bán Hàng',
+    icon: 'Store',
+    path: ROUTES.ADMIN.POS,
+    description: 'Bán hàng tại quầy',
+  },
+  {
     name: 'Hóa đơn',
     icon: 'ShoppingBag',
     path: ROUTES.ADMIN.ORDERS,
