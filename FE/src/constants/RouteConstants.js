@@ -29,6 +29,7 @@ export const ROUTES = {
     EMPLOYEES: '/admin/quan-ly-nhan-vien',
     PROMOTIONS: '/admin/quan-ly-dot-giam-gia',
     VOUCHERS: '/admin/quan-ly-phieu-giam-gia',
+    POS: '/admin/ban-hang',
     PAYMENT_RESULT: '/admin/ket-qua-thanh-toan',
     EXAMPLE: '/admin/vi-du',
     ERRORS: {
