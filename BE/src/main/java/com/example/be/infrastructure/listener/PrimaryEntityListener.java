@@ -33,12 +33,16 @@ public class PrimaryEntityListener {
     private void setMaIfEmpty(Object entity) {
         try {
             Field maField = null;
-            for (Field field : entity.getClass().getDeclaredFields()) {
-                String name = field.getName();
-                if (name.equals("ma") || (name.startsWith("ma") && !name.equals("matKhau"))) {
-                    maField = field;
-                    break;
+            Class<?> currentClass = entity.getClass();
+            while (currentClass != null && currentClass != Object.class && maField == null) {
+                for (Field field : currentClass.getDeclaredFields()) {
+                    String name = field.getName();
+                    if (name.equals("ma") || (name.startsWith("ma") && !name.equals("matKhau"))) {
+                        maField = field;
+                        break;
+                    }
                 }
+                currentClass = currentClass.getSuperclass();
             }
             
             if (maField != null) {

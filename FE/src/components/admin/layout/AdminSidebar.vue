@@ -36,10 +36,22 @@ const toggleExpand = (itemName) => {
 
 const isExpanded = (itemName) => expandedItems.value.includes(itemName)
 
+const matchesPath = (targetPath) => {
+  if (!targetPath) return false
+  return route.path === targetPath || route.path.startsWith(`${targetPath}/`)
+}
+
+const hasActiveChildren = (children = []) => {
+  return children.some((child) => {
+    if (matchesPath(child.path)) return true
+    return hasActiveChildren(child.children || [])
+  })
+}
+
 const isActive = (item) => {
-  if (route.path === item.path) return true
+  if (matchesPath(item.path)) return true
   if (item.children) {
-    return item.children.some(child => route.path === child.path)
+    return hasActiveChildren(item.children)
   }
   return false
 }
@@ -47,7 +59,7 @@ const isActive = (item) => {
 // Initial state: Expand parents that have active children
 onMounted(() => {
   props.navItems.forEach(item => {
-    if (item.children && item.children.some(child => route.path === child.path)) {
+    if (item.children && hasActiveChildren(item.children)) {
       if (!isExpanded(item.name)) expandedItems.value.push(item.name)
     }
   })
@@ -159,16 +171,39 @@ onMounted(() => {
                 </div>
              </div>
              <div class="flex flex-col space-y-1.5">
-                <router-link
-                  v-for="child in item.children"
-                  :key="child.name"
-                  :to="child.path"
-                  class="flex items-center gap-4 px-4 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-wider transition-all duration-300 group/child relative overflow-hidden"
-                  :class="route.path === child.path ? 'bg-aurora/5 text-aurora ring-1 ring-aurora/10' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50 shadow-sm hover:shadow-md'"
-                >
-                   <div class="w-1.5 h-1.5 rounded-full transition-all" :class="route.path === child.path ? 'bg-aurora scale-125 shadow-glow' : 'bg-gray-300 shadow-sm group-hover/child:bg-aurora'"></div>
-                   {{ child.name }}
-                </router-link>
+                <template v-for="child in item.children" :key="child.name">
+                  <router-link
+                    v-if="!child.children"
+                    :to="child.path"
+                    class="flex items-center gap-4 px-4 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-wider transition-all duration-300 group/child relative overflow-hidden"
+                    :class="matchesPath(child.path) ? 'bg-aurora/5 text-aurora ring-1 ring-aurora/10' : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50 shadow-sm hover:shadow-md'"
+                  >
+                     <div class="w-1.5 h-1.5 rounded-full transition-all" :class="matchesPath(child.path) ? 'bg-aurora scale-125 shadow-glow' : 'bg-gray-300 shadow-sm group-hover/child:bg-aurora'"></div>
+                     {{ child.name }}
+                  </router-link>
+                  <div v-else class="rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-3">
+                    <router-link
+                      :to="child.path"
+                      class="flex items-center gap-3 px-2 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition"
+                      :class="isActive(child) ? 'text-aurora' : 'text-slate-500 hover:text-slate-900'"
+                    >
+                      <div class="h-1.5 w-1.5 rounded-full" :class="isActive(child) ? 'bg-aurora shadow-glow' : 'bg-slate-300'" />
+                      {{ child.name }}
+                    </router-link>
+                    <div class="mt-2 ml-4 flex flex-col space-y-1.5 border-l border-slate-200 pl-4">
+                      <router-link
+                        v-for="grandChild in child.children"
+                        :key="grandChild.name"
+                        :to="grandChild.path"
+                        class="flex items-center gap-3 rounded-xl px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] transition"
+                        :class="matchesPath(grandChild.path) ? 'bg-aurora/5 text-aurora' : 'text-slate-400 hover:bg-white hover:text-slate-900'"
+                      >
+                        <div class="h-1.5 w-1.5 rounded-full" :class="matchesPath(grandChild.path) ? 'bg-aurora shadow-glow' : 'bg-slate-300'" />
+                        {{ grandChild.name }}
+                      </router-link>
+                    </div>
+                  </div>
+                </template>
              </div>
           </div>
 
@@ -183,23 +218,58 @@ onMounted(() => {
               v-if="isSidebarOpen && isExpanded(item.name)"
               class="ml-14 mt-1 mb-3 flex flex-col space-y-1 pl-4 border-l-2 border-gray-100/50"
             >
-              <router-link
-                v-for="child in item.children"
-                :key="child.name"
-                :to="child.path"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-200 relative group/child"
-                :class="route.path === child.path
-                  ? 'text-aurora bg-aurora/5'
-                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'"
-              >
-                <div
-                  class="w-1.5 h-1.5 rounded-full transition-all flex-shrink-0"
-                  :class="route.path === child.path
-                    ? 'bg-aurora scale-125 shadow-[0_0_8px_rgba(6,182,212,0.6)]'
-                    : 'bg-gray-300 group-hover/child:bg-aurora'"
-                />
-                {{ child.name }}
-              </router-link>
+              <template v-for="child in item.children" :key="child.name">
+                <router-link
+                  v-if="!child.children"
+                  :to="child.path"
+                  class="flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-bold uppercase tracking-[0.15em] transition-all duration-200 relative group/child"
+                  :class="matchesPath(child.path)
+                    ? 'text-aurora bg-aurora/5'
+                    : 'text-gray-400 hover:text-gray-900 hover:bg-gray-50'"
+                >
+                  <div
+                    class="w-1.5 h-1.5 rounded-full transition-all flex-shrink-0"
+                    :class="matchesPath(child.path)
+                      ? 'bg-aurora scale-125 shadow-[0_0_8px_rgba(6,182,212,0.6)]'
+                      : 'bg-gray-300 group-hover/child:bg-aurora'"
+                  />
+                  {{ child.name }}
+                </router-link>
+                <div v-else class="space-y-1 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-3">
+                  <router-link
+                    :to="child.path"
+                    class="flex items-center gap-3 rounded-xl px-3 py-2 text-[11px] font-black uppercase tracking-[0.16em] transition"
+                    :class="isActive(child) ? 'bg-white text-aurora shadow-sm' : 'text-slate-500 hover:bg-white hover:text-slate-900'"
+                  >
+                    <div
+                      class="w-1.5 h-1.5 rounded-full transition-all flex-shrink-0"
+                      :class="isActive(child)
+                        ? 'bg-aurora scale-125 shadow-[0_0_8px_rgba(6,182,212,0.6)]'
+                        : 'bg-slate-300'"
+                    />
+                    {{ child.name }}
+                  </router-link>
+                  <div class="ml-4 flex flex-col space-y-1 border-l border-slate-200 pl-4">
+                    <router-link
+                      v-for="grandChild in child.children"
+                      :key="grandChild.name"
+                      :to="grandChild.path"
+                      class="flex items-center gap-3 rounded-xl px-3 py-2 text-[10px] font-bold uppercase tracking-[0.16em] transition"
+                      :class="matchesPath(grandChild.path)
+                        ? 'bg-white text-aurora shadow-sm'
+                        : 'text-slate-400 hover:bg-white hover:text-slate-900'"
+                    >
+                      <div
+                        class="w-1.5 h-1.5 rounded-full transition-all flex-shrink-0"
+                        :class="matchesPath(grandChild.path)
+                          ? 'bg-aurora scale-125 shadow-[0_0_8px_rgba(6,182,212,0.6)]'
+                          : 'bg-slate-300'"
+                      />
+                      {{ grandChild.name }}
+                    </router-link>
+                  </div>
+                </div>
+              </template>
             </div>
           </transition>
         </div>
