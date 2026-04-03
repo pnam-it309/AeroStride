@@ -1,23 +1,25 @@
-import axios from "axios";
-const BASE_URL = "http://localhost:8080/api/v1/admin/khach-hang";
+import api from './api'
 
-// 🔍 filter + phân trang
-export const filterKhachHang = async (filters) => {
-  let token = localStorage.getItem("auth_token");
-  token = token?.replace(/"/g, "");
+const ENDPOINT = '/admin/khach-hang'
 
-  //kỉem tra token đã được lấy đúng chưa
-  console.log("TOKEN gửi đi:", token);
+export const filterKhachHang = (params) => api.get(`${ENDPOINT}/filter`, { params })
 
-  const res = await axios.get(
-    "http://localhost:8080/api/v1/admin/khach-hang/filter",
-    {
-      params: filters,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  );
+export const getKhachHangById = (id) => api.get(`${ENDPOINT}/detail/${id}`)
 
-  return res.data;
-};
+export const updateKhachHang = (id, payload) => api.put(`${ENDPOINT}/update/${id}`, payload)
+
+export const createKhachHang = (payload) => api.post(`${ENDPOINT}/add`, payload)
+
+export const doiTrangThaiKhachHang = (id, trangThai) => 
+  api.patch(`${ENDPOINT}/${id}/trang-thai`, null, { params: { trangThai } })
+
+export const deleteKhachHang = (id) => api.delete(`${ENDPOINT}/delete/${id}`)
+
+export default {
+  filterKhachHang,
+  getKhachHangById,
+  updateKhachHang,
+  createKhachHang,
+  doiTrangThaiKhachHang,
+  deleteKhachHang,
+}

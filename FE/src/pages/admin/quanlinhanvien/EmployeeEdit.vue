@@ -222,8 +222,7 @@ const fetchNhanVien = async () => {
     loading.value = true;
     const res = await NhanVienService.getNhanVienById(id);
 
-    // BE trả { success, data, message } → lấy res.data.data
-    const data = res.data?.data ?? res.data;
+    const data = res;
 
     form.ma = data.ma || "";
     form.ten = data.ten || "";

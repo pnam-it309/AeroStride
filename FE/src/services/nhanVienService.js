@@ -1,54 +1,25 @@
-import axios from "axios";
-const BASE_URL = "http://localhost:8080/api/v1/admin/nhan-vien";
+import api from './api'
 
-const getToken = () => localStorage.getItem("auth_token")?.replace(/"/g, "");
+const ENDPOINT = '/admin/nhan-vien'
 
-const authHeader = () => ({
-  Authorization: `Bearer ${getToken()}`,
-});
+export const filterNhanVien = (params) => api.get(`${ENDPOINT}/filter`, { params })
 
-// 🔍 filter + phân trang
-export const filterNhanVien = async (filters) => {
-  let token = localStorage.getItem("auth_token")?.replace(/"/g, "");
+export const getNhanVienById = (id) => api.get(`${ENDPOINT}/detail/${id}`)
 
-  const params = {
-    page: filters.page,
-    size: filters.size,
-    keyword: filters.keyword || undefined,
-    gioiTinh: filters.gioiTinh != null ? filters.gioiTinh : undefined,
-    trangThai: filters.trangThai || undefined,
-  };
+export const updateNhanVien = (id, payload) => api.put(`${ENDPOINT}/update/${id}`, payload)
 
-  const res = await axios.get(`${BASE_URL}/filter`, {
-    params,
-    headers: { Authorization: `Bearer ${token}` },
-  });
+export const createNhanVien = (payload) => api.post(`${ENDPOINT}/add`, payload)
 
-  return res.data;
-};
+export const doiTrangThaiNhanVien = (id, trangThai) => 
+  api.patch(`${ENDPOINT}/${id}/trang-thai`, null, { params: { trangThai } })
 
-export const getNhanVienById = (id) =>
-  axios.get(`${BASE_URL}/detail/${id}`, {
-    headers: authHeader(),
-  });
+export const deleteNhanVien = (id) => api.delete(`${ENDPOINT}/delete/${id}`)
 
-export const updateNhanVien = (id, payload) =>
-  axios.put(`${BASE_URL}/update/${id}`, payload, {
-    headers: {
-      ...authHeader(),
-      "Content-Type": "application/json",
-    },
-  });
-
-export const createNhanVien = (payload) =>
-  axios.post(`${BASE_URL}/create`, payload, {
-    headers: {
-      ...authHeader(),
-      "Content-Type": "application/json",
-    },
-  });
-export const doiTrangThaiNhanVien = (id, trangThai) =>
-  axios.patch(`${BASE_URL}/${id}/trang-thai`, null, {
-    params: { trangThai },
-    headers: authHeader(),
-  });
+export default {
+  filterNhanVien,
+  getNhanVienById,
+  updateNhanVien,
+  createNhanVien,
+  doiTrangThaiNhanVien,
+  deleteNhanVien,
+}

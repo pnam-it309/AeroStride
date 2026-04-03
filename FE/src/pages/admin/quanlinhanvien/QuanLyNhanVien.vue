@@ -275,8 +275,7 @@ const fetchData = async () => {
 
     console.log("Response Backend:", res);
 
-    // ✔ Lấy đúng dữ liệu từ backend wrapper
-    const pageData = res.data; // data nằm trong res.data
+    const pageData = res;
     employeeList.value = pageData?.content || [];
     totalPages.value = pageData?.totalPages || 0;
   } catch (error) {
