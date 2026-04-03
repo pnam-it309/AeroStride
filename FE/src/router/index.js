@@ -94,12 +94,21 @@ const router = createRouter({
           component: () => import("../pages/admin/quanlithuoctinh/CoGiay.vue"),
           meta: { title: "Cỡ giày" },
         },
+        
+        // --- QUẢN LÝ HÓA ĐƠN ---
         {
           path: "quan-ly-hoa-don",
           name: "AdminOrders",
           component: () =>
             import("../pages/admin/quanlihoadon/QuanLyHoaDon.vue"),
           meta: { title: "Quản lý hóa đơn" },
+        },
+        {
+          path: "quan-ly-hoa-don/chi-tiet/:id",
+          name: "AdminOrderDetail",
+          component: () =>
+            import("../pages/admin/quanlihoadon/ChiTietHoaDon.vue"),
+          meta: { title: "Chi tiết hóa đơn" },
         },
         {
           path: "quan-ly-khach-hang",
