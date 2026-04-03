@@ -11,6 +11,7 @@ import java.util.List;
 
 public interface AdminNhanVienService {
 <<<<<<< HEAD
+<<<<<<< HEAD
     List<AdminNhanVienResponse> hienThi();
 
     Page<AdminNhanVienResponse> phanTrang(AdminNhanVienRequest request);
@@ -30,5 +31,7 @@ public interface AdminNhanVienService {
     void delete(String id);
 =======
 >>>>>>> origin/feature/khuyen-mai
+=======
+>>>>>>> origin/feat/quanlyhoadon
 
 }
