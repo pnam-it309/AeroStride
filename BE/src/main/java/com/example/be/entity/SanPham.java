@@ -1,8 +1,12 @@
 package com.example.be.entity;
 
 import com.example.be.core.common.base.BaseCodeNameEntity;
+import com.example.be.infrastructure.constants.GioiTinhKhachHang;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "san_pham")
@@ -26,8 +30,12 @@ public class SanPham extends BaseCodeNameEntity {
     private DanhMuc danhMuc;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_mau_sac")
-    private MauSac mauSac;
+    @JoinColumn(name = "id_xuat_xu")
+    private XuatXu xuatXu;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_muc_dich_chay")
+    private MucDichChay mucDichChay;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_chat_lieu")
@@ -41,13 +49,24 @@ public class SanPham extends BaseCodeNameEntity {
     @JoinColumn(name = "id_co_giay")
     private CoGiay coGiay;
 
-    @Column(name = "anh_chinh")
-    private String anhChinh;
+    @Column(name = "gioi_tinh_khach_hang")
+    @Enumerated(EnumType.STRING)
+    private GioiTinhKhachHang gioiTinhKhachHang;
+
+    @Column(name = "mo_ta_ngan")
+    private String moTaNgan;
+
+    @Column(name = "hinh_anh")
+    private String hinhAnh;
 
     @Column(name = "mo_ta_chi_tiet")
     private String moTaChiTiet;
 
     @Column(name = "xoa_mem")
     private Boolean xoaMem;
+
+    @OneToMany(mappedBy = "sanPham", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<ChiTietSanPham> chiTietSanPhams = new ArrayList<>();
 
 }

@@ -1,25 +1,44 @@
 package com.example.be.core.admin.dotgiamgia.service.impl;
 
 import com.example.be.core.admin.dotgiamgia.model.request.AdminDotGiamGiaRequest;
-import com.example.be.core.admin.dotgiamgia.model.request.AdminDotGiamGiaSearchRequest;
 import com.example.be.core.admin.dotgiamgia.model.response.AdminDotGiamGiaResponse;
 import com.example.be.core.admin.dotgiamgia.repository.AdminDotGiamGiaRepository;
 import com.example.be.core.admin.dotgiamgia.service.AdminDotGiamGiaService;
-import com.example.be.core.common.dto.PageResponse;
 import com.example.be.entity.DotGiamGia;
-import com.example.be.infrastructure.constants.TrangThai;
-import com.example.be.infrastructure.exceptions.RestApiException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
-
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
 
+    private final AdminDotGiamGiaRepository repo;
 
+    @Override
+    public Page<AdminDotGiamGiaResponse> phanTrang(Integer pageNo, Integer pageSize, String keyword) {
+        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by("id").descending());
+        return repo.phanTrang(keyword, pageable);
+    }
+
+    @Override
+    public void add(AdminDotGiamGiaRequest req) {
+        DotGiamGia d = new DotGiamGia();
+        BeanUtils.copyProperties(req, d);
+        repo.save(d);
+    }
+
+    @Override
+    public void update(AdminDotGiamGiaRequest req, Long id) { // ✅ sửa Long
+        DotGiamGia d = repo.findById(id)
+            .orElseThrow(() -> new RuntimeException("Không tìm thấy đợt giảm giá"));
+        BeanUtils.copyProperties(req, d);
+        repo.save(d);
+    }
+
+    @Override
+    public void delete(Long id) { // ✅ sửa Long
+        repo.deleteById(id);
+    }
 }

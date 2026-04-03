@@ -25,6 +25,8 @@ public final class RoutesConstant {
     public static final String ADMIN_THUOC_TINH_KICH_THUOC = ADMIN_THUOC_TINH + "/kich-thuoc";
     public static final String ADMIN_THUOC_TINH_DE_GIAY = ADMIN_THUOC_TINH + "/de-giay";
     public static final String ADMIN_THUOC_TINH_CO_GIAY = ADMIN_THUOC_TINH + "/co-giay";
+    public static final String ADMIN_THUOC_TINH_XUAT_XU = ADMIN_THUOC_TINH + "/xuat-xu";
+    public static final String ADMIN_THUOC_TINH_MUC_DICH_CHAY = ADMIN_THUOC_TINH + "/muc-dich-chay";
     
     // Staff routes
     public static final String STAFF = API_PREFIX + "/staff";

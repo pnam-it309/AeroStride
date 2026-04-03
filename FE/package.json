@@ -10,11 +10,12 @@
     "format": "oxfmt src/"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.2.0",
     "@phosphor-icons/vue": "^2.2.1",
     "@phosphor-icons/web": "^2.1.2",
     "@stomp/stompjs": "^7.3.0",
     "@vee-validate/rules": "^4.15.1",
-    "axios": "^1.13.6",
+    "axios": "^1.14.0",
     "jwt-decode": "^4.0.0",
     "lucide-vue-next": "^1.0.0",
     "pinia": "^3.0.4",

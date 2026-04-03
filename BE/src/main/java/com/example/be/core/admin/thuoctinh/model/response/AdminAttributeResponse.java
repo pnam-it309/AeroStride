@@ -11,6 +11,8 @@ public class AdminAttributeResponse {
     private String id;
     private String ma;
     private String ten;
-    private Integer trangThai;
+    private String moTa;
+    private String trangThai;
     private Long ngayTao;
+    private Long ngayCapNhat;
 }

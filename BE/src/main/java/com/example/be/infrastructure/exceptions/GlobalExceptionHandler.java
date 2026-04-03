@@ -44,6 +44,12 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.NOT_FOUND, "ERR_NOT_FOUND", e.getMessage(), request.getRequestURI(), ErrorSeverity.RECOVERABLE);
     }
 
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ApiResponse<Object>> handleDuplicateResourceException(DuplicateResourceException e, HttpServletRequest request) {
+        log.warn("Duplicate resource at {}: {}", request.getRequestURI(), e.getMessage());
+        return buildErrorResponse(HttpStatus.CONFLICT, "ERR_DUPLICATE_RESOURCE", e.getMessage(), request.getRequestURI(), ErrorSeverity.RECOVERABLE);
+    }
+
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ApiResponse<Object>> handleUnauthorizedException(UnauthorizedException e, HttpServletRequest request) {
         log.warn("Unauthorized access at {}: {}", request.getRequestURI(), e.getMessage());
