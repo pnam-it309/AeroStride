@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 public interface AdminNhanVienService {
+<<<<<<< HEAD
     List<AdminNhanVienResponse> hienThi();
 
     Page<AdminNhanVienResponse> phanTrang(AdminNhanVienRequest request);
@@ -27,5 +28,7 @@ public interface AdminNhanVienService {
     void doiTrangThai(String id, TrangThai trangThai);
 
     void delete(String id);
+=======
+>>>>>>> origin/feature/khuyen-mai
 
 }

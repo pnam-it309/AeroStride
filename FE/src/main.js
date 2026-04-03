@@ -1,6 +1,7 @@
 import "./assets/index.css";
-import "@phosphor-icons/web/bold"; // Import Phosphor Bold icons via NPM
+import "@phosphor-icons/web/bold"; 
 import "@fortawesome/fontawesome-free/css/all.css";
+import 'element-plus/dist/index.css' 
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import { setupValidation } from "@/utils/validation";
