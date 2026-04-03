@@ -252,8 +252,7 @@ const fetchData = async () => {
 
     console.log("Response từ Backend:", res);
 
-    // 👇 FIX ĐÚNG
-    const pageData = res.data;
+    const pageData = res;
 
     customerList.value = pageData.content || [];
     totalPages.value = pageData.totalPages || 0;

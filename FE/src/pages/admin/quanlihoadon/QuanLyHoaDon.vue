@@ -1,22 +1,19 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { getOrders } from '@/services/hoaDonService';
 
 const router = useRouter();
+const loading = ref(false);
 
-// 1. Dữ liệu mẫu (Sau này em sẽ thay bằng dữ liệu gọi từ AdminHoaDonService.getPage)
 const pageResponse = ref({
-  content: [
-    { id: 'HD00291', nhanVien: 'Nguyễn Thị S', khachHang: 'Nguyễn Văn A', ngayTao: '16:40 23/12/2025', tongTien: 900000, loaiDon: 'TẠI QUẦY', trangThai: 'Hoàn thành' },
-    { id: 'HD00292', nhanVien: 'Nguyễn Thị S', khachHang: 'Nguyễn Văn A', ngayTao: '16:42 23/12/2025', tongTien: 2940000, loaiDon: 'ONLINE', trangThai: 'Chờ xác nhận' },
-  ],
-  totalPages: 5,
-  totalElements: 48,
-  number: 0, // Trang hiện tại (0 là trang 1)
+  content: [],
+  totalPages: 0,
+  totalElements: 0,
+  number: 0,
   size: 10
 });
 
-// 2. Bộ lọc tìm kiếm (Khớp với AdminHoaDonRequest)
 const filters = ref({
   search: '',
   tenKhachHang: '',
@@ -27,37 +24,53 @@ const filters = ref({
   size: 10
 });
 
-// 3. Các hàm định dạng hiển thị
+const fetchData = async () => {
+  loading.value = true;
+  try {
+    const res = await getOrders(filters.value);
+    pageResponse.value = res;
+  } catch (error) {
+    console.error("Lỗi lấy danh sách hóa đơn:", error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(fetchData);
+
 const formatCurrency = (value) => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value || 0);
 };
 
 const getStatusClass = (status) => {
   const map = {
-    'Chờ xác nhận': 'bg-blue-50 text-blue-500 border-blue-100',
-    'Đã xác nhận': 'bg-cyan-50 text-cyan-600 border-cyan-100',
-    'Đang xử lí': 'bg-orange-50 text-orange-500 border-orange-100',
-    'Hoàn thành': 'bg-green-50 text-green-500 border-green-100',
-    'Đã hủy': 'bg-red-50 text-red-500 border-red-100'
+    'CHO_XAC_NHAN': 'bg-blue-50 text-blue-500 border-blue-100',
+    'DA_XAC_NHAN': 'bg-cyan-50 text-cyan-600 border-cyan-100',
+    'DANG_XU_LI': 'bg-orange-50 text-orange-500 border-orange-100',
+    'HOAN_THANH': 'bg-green-50 text-green-500 border-green-100',
+    'DA_HUY': 'bg-red-50 text-red-500 border-red-100'
   };
   return map[status] || 'bg-gray-50 text-gray-400 border-gray-100';
 };
 
-// 4. Xử lý sự kiện
 const handleViewDetail = (id) => {
   router.push({ name: 'AdminOrderDetail', params: { id: id } });
 };
 
 const handleReset = () => {
   filters.value = { search: '', tenKhachHang: '', trangThai: '', loaiDon: '', ngayTao: '', page: 0, size: 10 };
-  console.log("Đã làm mới bộ lọc");
+  fetchData();
+};
+
+const handleFilter = () => {
+  filters.value.page = 0;
+  fetchData();
 };
 
 const goToPage = (p) => {
   if (p >= 0 && p < pageResponse.value.totalPages) {
-    pageResponse.value.number = p;
-    console.log("Chuyển sang trang:", p + 1);
-    // Tại đây em sẽ gọi hàm API fetch dữ liệu mới từ Backend
+    filters.value.page = p;
+    fetchData();
   }
 };
 </script>
@@ -111,6 +124,9 @@ const goToPage = (p) => {
           <label class="text-[11px] font-semibold text-gray-400 ml-1">Ngày tạo</label>
           <input v-model="filters.ngayTao" type="date" class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none focus:border-cyan-400" />
         </div>
+        <button @click="handleFilter" class="bg-cyan-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-cyan-600 transition active:scale-95 shadow-lg shadow-cyan-100 mr-2">
+          <i class="fas fa-search text-[10px]"></i> Áp dụng
+        </button>
         <button @click="handleReset" class="bg-slate-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-black transition active:scale-95 shadow-lg shadow-slate-100">
           <i class="fas fa-sync-alt text-[10px]"></i> Làm mới bộ lọc
         </button>
@@ -118,7 +134,10 @@ const goToPage = (p) => {
     </div>
 
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
+      <div v-if="loading" class="p-20 text-center text-gray-400">
+        <i class="fas fa-spinner fa-spin mr-2"></i> Đang tải dữ liệu...
+      </div>
+      <div v-else class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-slate-50 text-[10px] text-gray-400 font-bold uppercase tracking-widest border-b border-gray-100">
