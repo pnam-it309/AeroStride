@@ -7,6 +7,7 @@ import com.example.be.core.storage.dto.FileUploadResult;
 import com.example.be.infrastructure.exceptions.StorageProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.util.Map;
 
 @Service
+@Profile("!local")
 @RequiredArgsConstructor
 @Slf4j
 public class CloudinaryStorageServiceImpl implements StorageService {

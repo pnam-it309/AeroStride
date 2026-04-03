@@ -1,10 +1,7 @@
 package com.example.be.core.admin.thuoctinh.kichthuoc.service;
 
-import com.example.be.core.admin.thuoctinh.model.request.AdminAttributeRequest;
-import com.example.be.core.admin.thuoctinh.model.response.AdminAttributeResponse;
-import com.example.be.core.common.dto.PageRequest;
-import com.example.be.core.common.dto.PageResponse;
+import com.example.be.core.admin.thuoctinh.service.AdminAttributeManagementService;
 
-public interface AdminKichThuocService {
+public interface AdminKichThuocService extends AdminAttributeManagementService {
 
 }

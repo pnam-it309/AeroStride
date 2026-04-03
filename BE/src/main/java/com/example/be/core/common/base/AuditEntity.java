@@ -9,17 +9,17 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Setter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 public abstract class AuditEntity {
 
+    @CreatedDate
     @Column(name = "ngay_tao", nullable = false, updatable = false)
     private Long ngayTao;
 
+    @LastModifiedDate
     @Column(name = "ngay_cap_nhat")
     private Long ngayCapNhat;
 
