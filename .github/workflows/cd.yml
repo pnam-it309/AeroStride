@@ -132,6 +132,6 @@ jobs:
           text: 'Deployment to Dell PC ${{ job.status }}'
         if: always() && env.SLACK_WEBHOOK_URL != ''
 
-      - name: Cleanup Stale Objects
-        run: docker system prune -f
+      - name: Cleanup old images
+        run: docker image prune -f
         if: always()
