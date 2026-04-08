@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/pnam-it309/AeroStride/compare/v1.2.0...v1.2.1) (2026-04-08)
+
+
+### Bug Fixes
+
+* lowercase docker image names and add missing mysql env vars ([f31e63f](https://github.com/pnam-it309/AeroStride/commit/f31e63f1e448b89b891cc9627343a4987a042a3d))
+
 # [1.2.0](https://github.com/pnam-it309/AeroStride/compare/v1.1.0...v1.2.0) (2026-04-08)
 
 
