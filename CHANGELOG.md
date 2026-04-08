@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/pnam-it309/AeroStride/compare/v1.2.2...v1.2.3) (2026-04-08)
+
+
+### Bug Fixes
+
+* switch to hash routing mode for github pages compatibility ([31dede0](https://github.com/pnam-it309/AeroStride/commit/31dede044eb49c588c039256f659d7c915935a49))
+
 ## [1.2.2](https://github.com/pnam-it309/AeroStride/compare/v1.2.1...v1.2.2) (2026-04-08)
 
 
