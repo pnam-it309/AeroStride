@@ -30,6 +30,8 @@ jobs:
           npm ci
 
       - name: Build
+        env:
+          VITE_API_URL: https://devel-abstract-meyer-its.trycloudflare.com/api/v1
         run: |
           cd FE
           npm run build
