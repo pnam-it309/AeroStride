@@ -1,6 +1,8 @@
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useLoaderStore } from '@/stores/loader';
+import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 
 const router = useRouter();
 const loaderStore = useLoaderStore();
