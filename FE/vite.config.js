@@ -1,42 +1,42 @@
-import { fileURLToPath, URL } from 'node:url'
+import { fileURLToPath, URL } from 'url';
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import vuetify from 'vite-plugin-vuetify';
 
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import tailwindcss from '@tailwindcss/vite'
-
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
-  define: {
-    global: 'window',
-  },
-  plugins: [
-    tailwindcss(),
-    vue(),
-  ],
-  envDir: 'env',
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    plugins: [
+        vue(),
+        vuetify({
+            autoImport: true,
+            styles: { configFile: 'src/scss/variables.scss' }
+        })
+    ],
+    resolve: {
+        alias: {
+            '@': fileURLToPath(new URL('./src', import.meta.url))
+        }
     },
-  },
-  server: {
-    host: '0.0.0.0',
-    port: 5173,
-    watch: {
-      usePolling: true,
-      interval: 1000,
+    css: {
+        preprocessorOptions: {
+            scss: {}
+        }
     },
-    hmr: {
-      host: 'localhost',
-      clientPort: 5173,
+    optimizeDeps: {
+        exclude: ['vuetify'],
+        entries: ['./src/**/*.vue']
     },
-    strictPort: true,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080/api/v1',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
+    build: {
+        rollupOptions: {
+            treeshake: false
+        }
     },
-  },
-})
+    server: {
+        watch: {
+            usePolling: true,
+        },
+        host: true,
+        strictPort: true,
+        port: 5173,
+    }
+});

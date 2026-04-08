@@ -36,7 +36,7 @@ public class AdminPhieuGiamGiaController {
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<?> delete(@RequestParam Integer id) {
+    public ResponseEntity<?> delete(@RequestParam String id) {
         service.delete(id);
         return ResponseEntity.ok(ApiResponse.success("Xóa thành công!"));
     }
@@ -49,7 +49,7 @@ public class AdminPhieuGiamGiaController {
 
     @PutMapping("/update")
     public ResponseEntity<?> update(@RequestBody AdminPhieuGiamGiaRequest req,
-                                    @RequestParam Integer id) {
+                                    @RequestParam String id) {
         service.update(req, id);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật thành công!"));
     }

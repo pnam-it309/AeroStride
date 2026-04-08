@@ -4,14 +4,14 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY FE/package*.json ./
-RUN npm ci
+# Use npm install instead of ci because the lockfile is out of sync
+RUN npm install
 
 # Copy source code
 COPY FE/ .
 
 # Development stage (for hot-reloading)
 FROM build AS development
-# Note: Vite needs to listen on 0.0.0.0 to be accessible outside the container
 EXPOSE 5173
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
 

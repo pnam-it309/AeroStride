@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @Builder
 public class AdminPhieuGiamGiaResponse {
 
-    private Integer id;
+    private String id;
     private String ma;
     private String ten;
 

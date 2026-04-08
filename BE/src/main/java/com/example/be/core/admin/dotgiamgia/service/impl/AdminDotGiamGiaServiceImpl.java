@@ -30,7 +30,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     }
 
     @Override
-    public void update(AdminDotGiamGiaRequest req, Long id) { // ✅ sửa Long
+    public void update(AdminDotGiamGiaRequest req, String id) {
         DotGiamGia d = repo.findById(id)
             .orElseThrow(() -> new RuntimeException("Không tìm thấy đợt giảm giá"));
         BeanUtils.copyProperties(req, d);
@@ -38,7 +38,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     }
 
     @Override
-    public void delete(Long id) { // ✅ sửa Long
+    public void delete(String id) {
         repo.deleteById(id);
     }
 }

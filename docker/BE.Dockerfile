@@ -1,23 +1,26 @@
 # Stage 1: Base/Build stage
-FROM gradle:8.5-jdk17 AS build
+FROM gradle:8.5-jdk17-alpine AS build
 WORKDIR /app
+
+# Install curl for healthchecks
+RUN apk add --no-cache curl
 
 # Copy only the dependency files first to leverage Docker layer caching
 COPY BE/gradle/ gradle/
-COPY BE/gradlew BE/build.gradle BE/settings.gradle ./
+COPY BE/gradlew BE/build.gradle BE/settings.gradle BE/gradle.properties* ./
 RUN chmod +x gradlew
 
-# Download dependencies
-RUN ./gradlew dependencies --no-daemon || true
+# Download dependencies (this will be cached unless gradle files change)
+RUN ./gradlew dependencies --no-daemon --build-cache || true
 
 # Copy the source code
 COPY BE/src/ src/
 
 # Development stage (for hot-reloading)
 FROM build AS development
-# Note: we don't build the jar here, we'll run via gradlew bootRun in Compose
 EXPOSE 8080
-ENTRYPOINT ["./gradlew", "bootRun", "--no-daemon"]
+# Removed --configuration-cache to prevent environment leak issues in dev
+ENTRYPOINT ["./gradlew", "bootRun", "-t", "--no-daemon"]
 
 # Stage 2: Runtime stage (Production)
 FROM eclipse-temurin:17-jre-alpine AS production

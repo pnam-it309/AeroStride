@@ -7,6 +7,7 @@ import com.example.be.infrastructure.security.dto.AuthResponse;
 import com.example.be.infrastructure.security.dto.LoginRequest;
 import com.example.be.infrastructure.security.dto.TokenRefreshRequest;
 import com.example.be.infrastructure.security.service.RefreshTokenService;
+import com.example.be.core.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
         log.info("LOGIN ATTEMPT: User [{}] with password length [{}]", loginRequest.getUsername(), 
                 loginRequest.getPassword() != null ? loginRequest.getPassword().length() : 0);
 
@@ -44,26 +45,29 @@ public class AuthController {
 
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
 
-        return ResponseEntity.ok(AuthResponse.builder()
+        AuthResponse authResponse = AuthResponse.builder()
                 .accessToken(jwt)
                 .refreshToken(refreshToken.getToken())
                 .username(userDetails.getUsername())
                 .role(role)
-                .build());
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(authResponse, "Đăng nhập thành công"));
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
+    public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
         return refreshTokenService.findByToken(request.getRefreshToken())
                 .map(refreshTokenService::verifyExpiration)
                 .map(token -> {
                     String username = refreshTokenService.getUsernameFromToken(token);
                     String newAccessToken = jwtTokenProvider.generateToken(username);
-                    return ResponseEntity.ok(AuthResponse.builder()
+                    AuthResponse authResponse = AuthResponse.builder()
                             .accessToken(newAccessToken)
                             .refreshToken(request.getRefreshToken())
                             .username(username)
-                            .build());
+                            .build();
+                    return ResponseEntity.ok(ApiResponse.success(authResponse));
                 })
                 .orElseThrow(() -> new RuntimeException("Refresh token không hợp lệ!"));
     }

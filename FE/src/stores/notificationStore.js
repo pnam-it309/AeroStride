@@ -1,63 +1,65 @@
-import { defineStore } from 'pinia'
-import { Client } from '@stomp/stompjs'
-import SockJS from 'sockjs-client'
-import { ref } from 'vue'
+import { defineStore } from 'pinia';
+import webSocketService from '@/services/auth/websocketService';
 
-export const useNotificationStore = defineStore('notification', () => {
-  const notifications = ref([])
-  const isConnected = ref(false)
-  let stompClient = null
+export const useNotificationStore = defineStore('notification', {
+    state: () => ({
+        notifications: [],
+        isConnected: false,
+    }),
+    
+    getters: {
+        unreadCount: (state) => state.notifications.filter(n => !n.read).length,
+    },
+    
+    actions: {
+        init() {
+            if (!this.isConnected) {
+                this.connect();
+            }
+        },
 
-  const connect = () => {
-    const wsUrl = import.meta.env.VITE_WS_URL || 'http://localhost:8080/ws'
-    const socket = new SockJS(wsUrl)
-    stompClient = new Client({
-      webSocketFactory: () => socket,
-      reconnectDelay: 5000,
-      onConnect: () => {
-        isConnected.value = true
-        stompClient.subscribe('/topic/notifications', (message) => {
-          const notification = JSON.parse(message.body)
-          notifications.value.push(notification)
-        })
-      },
-      onDisconnect: () => {
-        isConnected.value = false
-      },
-    })
+        connect() {
+            webSocketService.connect((message) => {
+                this.addNotification(message);
+            });
+            this.isConnected = true;
+        },
 
-    stompClient.activate()
-  }
+        addNotification(message) {
+            const notification = {
+                id: Date.now(),
+                title: message.title || 'Thông báo mới',
+                message: message.message || message.body || 'Bạn có một thông báo mới',
+                type: message.type || 'info',
+                timestamp: new Date(),
+                read: false,
+            };
+            this.notifications.unshift(notification);
+            
+            // Limit stored notifications
+            if (this.notifications.length > 50) {
+                this.notifications.pop();
+            }
+        },
 
-  const subscribeToUser = (username) => {
-    if (!stompClient) return
-    stompClient.subscribe(`/user/${username}/queue/notifications`, (message) => {
-      const notification = JSON.parse(message.body)
-      notifications.value.push(notification)
-    })
-  }
+        markAsRead(id) {
+            const index = this.notifications.findIndex(n => n.id === id);
+            if (index !== -1) {
+                this.notifications[index].read = true;
+            }
+        },
 
-  const sendMessage = (text) => {
-    if (stompClient && isConnected.value) {
-      stompClient.publish({
-        destination: '/app/send-notification',
-        body: JSON.stringify(text),
-      })
+        markAllAsRead() {
+            this.notifications.forEach(n => (n.read = true));
+        },
+
+        clearAll() {
+            this.notifications = [];
+        },
+
+        disconnect() {
+            webSocketService.disconnect();
+            this.isConnected = false;
+        }
     }
-  }
-
-  const disconnect = () => {
-    if (stompClient) {
-      stompClient.deactivate()
-    }
-  }
-
-  return {
-    notifications,
-    isConnected,
-    connect,
-    subscribeToUser,
-    sendMessage,
-    disconnect,
-  }
-})
+});
