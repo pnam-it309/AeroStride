@@ -17,7 +17,6 @@
 *.swo
 
 # Docker
-docker/
 .dockerignore
 
 # Misc
