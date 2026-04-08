@@ -12,7 +12,7 @@ export default defineConfig({
             styles: { configFile: 'src/scss/variables.scss' }
         })
     ],
-    base: '/AeroStride/',
+    base: './',
     resolve: {
         alias: {
             '@': fileURLToPath(new URL('./src', import.meta.url))
