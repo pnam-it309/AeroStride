@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface AdminPhieuGiamGiaRepository extends JpaRepository<PhieuGiamGia, Integer> {
+public interface AdminPhieuGiamGiaRepository extends JpaRepository<PhieuGiamGia, String> {
 
     @Query("""
 SELECT new com.example.be.core.admin.phieugiamgia.model.response.AdminPhieuGiamGiaResponse(

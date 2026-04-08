@@ -7,11 +7,13 @@ import com.example.be.core.admin.banhang.model.response.AdminBanHangKhachHangRes
 import com.example.be.core.admin.banhang.model.response.BanHangSanPhamResponse;
 import com.example.be.core.admin.banhang.service.AdminBanHangService;
 import com.example.be.core.common.dto.ApiResponse;
+import com.example.be.entity.PhieuGiamGia;
 import com.example.be.infrastructure.constants.RoutesConstant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController

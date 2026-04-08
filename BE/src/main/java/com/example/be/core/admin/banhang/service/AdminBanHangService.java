@@ -5,7 +5,9 @@ import com.example.be.core.admin.banhang.model.request.AdminBanHangHoaDonChiTiet
 import com.example.be.core.admin.banhang.model.response.AdminBanHangHoaDonResponse;
 import com.example.be.core.admin.banhang.model.response.BanHangSanPhamResponse;
 import com.example.be.core.admin.banhang.model.response.AdminBanHangKhachHangResponse;
+import com.example.be.entity.PhieuGiamGia;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface AdminBanHangService {

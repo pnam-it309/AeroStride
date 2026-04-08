@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class AdminDotGiamGiaResponse {
 
-    private Long id;
+    private String id;
     private String ma;
     private String ten;
     private String loaiGiamGia;

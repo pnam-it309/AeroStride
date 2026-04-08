@@ -49,7 +49,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
 
     @Override
     public PageResponse<AdminAttributeResponse> search(String keyword, String trangThai, PageRequest pageRequest) {
-        int page = Math.max(0, pageRequest.getPage() - 1);
+        int page = Math.max(0, pageRequest.getPage());
         int size = pageRequest.getSize() > 0 ? pageRequest.getSize() : 10;
         String sortBy = StringUtils.hasText(pageRequest.getSortBy()) ? pageRequest.getSortBy() : "ngayTao";
         Sort.Direction direction = "asc".equalsIgnoreCase(pageRequest.getSortDirection())

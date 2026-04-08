@@ -6,7 +6,7 @@ import org.springframework.data.domain.*;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
-public interface AdminDotGiamGiaRepository extends JpaRepository<DotGiamGia, Long> {
+public interface AdminDotGiamGiaRepository extends JpaRepository<DotGiamGia, String> {
 
     @Query("""
     SELECT new com.example.be.core.admin.dotgiamgia.model.response.AdminDotGiamGiaResponse(

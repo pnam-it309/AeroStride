@@ -14,9 +14,9 @@ public interface AdminPhieuGiamGiaService {
 
     Page<AdminPhieuGiamGiaResponse> phanTrang(Integer pageNo, Integer pageSize, String keyword);
 
-    void delete(Integer id);
+    void delete(String id);
 
     void add(AdminPhieuGiamGiaRequest req);
 
-    void update(AdminPhieuGiamGiaRequest req, Integer id);
+    void update(AdminPhieuGiamGiaRequest req, String id);
 }

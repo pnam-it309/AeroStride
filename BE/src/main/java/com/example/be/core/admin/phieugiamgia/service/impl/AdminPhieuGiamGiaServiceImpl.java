@@ -42,7 +42,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     }
 
     @Override
-    public void delete(Integer id) {
+    public void delete(String id) {
         repo.deleteById(id);
     }
 
@@ -56,7 +56,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     }
 
     @Override
-    public void update(AdminPhieuGiamGiaRequest req, Integer id) {
+    public void update(AdminPhieuGiamGiaRequest req, String id) {
         PhieuGiamGia p = repo.findById(id).get();
         BeanUtils.copyProperties(req, p);
         repo.save(p);

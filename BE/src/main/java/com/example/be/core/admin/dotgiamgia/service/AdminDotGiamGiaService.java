@@ -10,7 +10,7 @@ public interface AdminDotGiamGiaService {
 
     void add(AdminDotGiamGiaRequest req);
 
-    void update(AdminDotGiamGiaRequest req, Long id);
+    void update(AdminDotGiamGiaRequest req, String id);
 
-    void delete(Long id);
+    void delete(String id);
 }

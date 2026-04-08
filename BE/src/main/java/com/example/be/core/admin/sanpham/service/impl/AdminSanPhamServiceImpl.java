@@ -510,7 +510,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     }
 
     private Pageable buildPageable(SearchProductRequest request) {
-        int page = Math.max(0, request.getPage() - 1);
+        int page = Math.max(0, request.getPage());
         int size = request.getSize() <= 0 ? 10 : request.getSize();
         String sortBy = resolveSortBy(request.getSortBy());
         Sort.Direction direction = "asc".equalsIgnoreCase(request.getSortDirection())

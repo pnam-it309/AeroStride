@@ -1,5 +1,5 @@
 -- ==============================================================================
--- V1: Full Initial Schema + Role System + Refresh Token
+-- V1: Full Initial Schema + Role System + Refresh Token + Product Module Alignment
 -- ==============================================================================
 
 -- Bảng Phân Quyền
@@ -29,7 +29,7 @@ CREATE TABLE nhan_vien (
     ten_tai_khoan VARCHAR(100) UNIQUE,
     mat_khau VARCHAR(255),
     hinh_anh VARCHAR(500),
-    xoa_mem BIT,
+    xoa_mem BIT DEFAULT 0,
     trang_thai INT,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
@@ -89,12 +89,36 @@ CREATE TABLE refresh_token (
 );
 
 -- Các bảng thuộc tính sản phẩm
+CREATE TABLE xuat_xu (
+    id VARCHAR(36) PRIMARY KEY,
+    ma_xuat_xu VARCHAR(50) UNIQUE,
+    ten_xuat_xu VARCHAR(255),
+    trang_thai INT,
+    xoa_mem BIT DEFAULT 0,
+    ngay_tao BIGINT,
+    ngay_cap_nhat BIGINT,
+    nguoi_tao VARCHAR(100),
+    nguoi_cap_nhat VARCHAR(100)
+);
+
+CREATE TABLE muc_dich_chay (
+    id VARCHAR(36) PRIMARY KEY,
+    ma_muc_dich_chay VARCHAR(50) UNIQUE,
+    ten_muc_dich_chay VARCHAR(255),
+    trang_thai INT,
+    xoa_mem BIT DEFAULT 0,
+    ngay_tao BIGINT,
+    ngay_cap_nhat BIGINT,
+    nguoi_tao VARCHAR(100),
+    nguoi_cap_nhat VARCHAR(100)
+);
+
 CREATE TABLE thuong_hieu (
     id VARCHAR(36) PRIMARY KEY,
     ma_thuong_hieu VARCHAR(50) UNIQUE,
     ten_thuong_hieu VARCHAR(255),
     trang_thai INT,
-    xoa_mem BIT,
+    xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
     nguoi_tao VARCHAR(100),
@@ -106,7 +130,7 @@ CREATE TABLE danh_muc (
     ma_danh_muc VARCHAR(50) UNIQUE,
     ten_danh_muc VARCHAR(255),
     trang_thai INT,
-    xoa_mem BIT,
+    xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
     nguoi_tao VARCHAR(100),
@@ -118,7 +142,7 @@ CREATE TABLE co_giay (
     ma_co_giay VARCHAR(50) UNIQUE,
     ten_co_giay VARCHAR(255),
     trang_thai INT,
-    xoa_mem BIT,
+    xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
     nguoi_tao VARCHAR(100),
@@ -130,7 +154,7 @@ CREATE TABLE chat_lieu (
     ma_chat_lieu VARCHAR(50) UNIQUE,
     ten_chat_lieu VARCHAR(255),
     trang_thai INT,
-    xoa_mem BIT,
+    xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
     nguoi_tao VARCHAR(100),
@@ -142,7 +166,7 @@ CREATE TABLE de_giay (
     ma_de_giay VARCHAR(50) UNIQUE,
     ten_de_giay VARCHAR(255),
     trang_thai INT,
-    xoa_mem BIT,
+    xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
     nguoi_tao VARCHAR(100),
@@ -155,7 +179,7 @@ CREATE TABLE kich_thuoc (
     ten_kich_thuoc VARCHAR(255),
     gia_tri_kich_thuoc VARCHAR(50),
     trang_thai INT,
-    xoa_mem BIT,
+    xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
     nguoi_tao VARCHAR(100),
@@ -168,7 +192,7 @@ CREATE TABLE mau_sac (
     ten_mau_sac VARCHAR(255),
     ma_mau_hex VARCHAR(10),
     trang_thai INT,
-    xoa_mem BIT,
+    xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
     nguoi_tao VARCHAR(100),
@@ -180,23 +204,27 @@ CREATE TABLE san_pham (
     id VARCHAR(36) PRIMARY KEY,
     id_thuong_hieu VARCHAR(36),
     id_danh_muc VARCHAR(36),
-    id_mau_sac VARCHAR(36),
+    id_xuat_xu VARCHAR(36),
+    id_muc_dich_chay VARCHAR(36),
     id_chat_lieu VARCHAR(36),
     id_de_giay VARCHAR(36),
     id_co_giay VARCHAR(36),
     ma_san_pham VARCHAR(50) UNIQUE,
     ten_san_pham VARCHAR(255),
-    anh_chinh VARCHAR(255),
+    gioi_tinh_khach_hang VARCHAR(20) NOT NULL,
+    hinh_anh VARCHAR(255),
+    mo_ta_ngan TEXT,
     mo_ta_chi_tiet TEXT,
     trang_thai INT,
-    xoa_mem BIT,
+    xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
     nguoi_tao VARCHAR(100),
     nguoi_cap_nhat VARCHAR(100),
     FOREIGN KEY (id_thuong_hieu) REFERENCES thuong_hieu(id),
     FOREIGN KEY (id_danh_muc) REFERENCES danh_muc(id),
-    FOREIGN KEY (id_mau_sac) REFERENCES mau_sac(id),
+    FOREIGN KEY (id_xuat_xu) REFERENCES xuat_xu(id),
+    FOREIGN KEY (id_muc_dich_chay) REFERENCES muc_dich_chay(id),
     FOREIGN KEY (id_chat_lieu) REFERENCES chat_lieu(id),
     FOREIGN KEY (id_de_giay) REFERENCES de_giay(id),
     FOREIGN KEY (id_co_giay) REFERENCES co_giay(id)
@@ -213,14 +241,15 @@ CREATE TABLE chi_tiet_san_pham (
     gia_nhap DECIMAL(20,2),
     gia_ban DECIMAL(20,2),
     trang_thai INT,
-    xoa_mem BIT,
+    xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
     nguoi_tao VARCHAR(100),
     nguoi_cap_nhat VARCHAR(100),
     FOREIGN KEY (id_san_pham) REFERENCES san_pham(id),
     FOREIGN KEY (id_kich_thuoc) REFERENCES kich_thuoc(id),
-    FOREIGN KEY (id_mau_sac) REFERENCES mau_sac(id)
+    FOREIGN KEY (id_mau_sac) REFERENCES mau_sac(id),
+    CONSTRAINT uk_ctsp_san_pham_mau_kich_thuoc_xoa_mem UNIQUE (id_san_pham, id_mau_sac, id_kich_thuoc, xoa_mem)
 );
 
 -- Bảng Ảnh Chi Tiết Sản Phẩm
@@ -230,7 +259,7 @@ CREATE TABLE anh_chi_tiet_san_pham (
     duong_dan_anh VARCHAR(500),
     hinh_anh_dai_dien BIT,
     mo_ta TEXT,
-    xoa_mem BIT,
+    xoa_mem BIT DEFAULT 0,
     trang_thai INT,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
@@ -302,7 +331,7 @@ CREATE TABLE phieu_giam_gia_ca_nhan (
     ngay_nhan BIGINT,
     da_su_dung BIT,
     ngay_su_dung BIGINT,
-    xoa_mem BIT,
+    xoa_mem BIT DEFAULT 0,
     trang_thai INT,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,

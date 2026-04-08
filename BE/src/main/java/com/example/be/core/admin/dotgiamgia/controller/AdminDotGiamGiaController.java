@@ -26,7 +26,7 @@ public class AdminDotGiamGiaController {
         @RequestParam(defaultValue = "5") Integer pageSize,
         @RequestParam(defaultValue = "") String keyword
     ) {
-        return ResponseEntity.ok(service.phanTrang(pageNo, pageSize, keyword));
+        return ResponseEntity.ok(ApiResponse.success(service.phanTrang(pageNo, pageSize, keyword)));
     }
 
     @PostMapping("/add")
@@ -36,12 +36,12 @@ public class AdminDotGiamGiaController {
 
     @PutMapping("/update")
     public void update(@RequestBody AdminDotGiamGiaRequest req,
-                       @RequestParam Long id) {
+                       @RequestParam String id) {
         service.update(req, id);
     }
 
     @DeleteMapping("/delete")
-    public void delete(@RequestParam Long id) {
+    public void delete(@RequestParam String id) {
         service.delete(id);
     }
 
