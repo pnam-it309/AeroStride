@@ -1,3 +1,10 @@
+## [1.2.4](https://github.com/pnam-it309/AeroStride/compare/v1.2.3...v1.2.4) (2026-04-09)
+
+
+### Bug Fixes
+
+* **ci:** use direct docker build in CI and update Trivy image refs ([b68c4c7](https://github.com/pnam-it309/AeroStride/commit/b68c4c7d79f115f9c9dcc837d24493e5b9051c27))
+
 ## [1.2.3](https://github.com/pnam-it309/AeroStride/compare/v1.2.2...v1.2.3) (2026-04-09)
 
 
