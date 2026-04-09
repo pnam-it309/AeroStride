@@ -17,6 +17,8 @@ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
 
 # Stage 2: Runtime stage (Production)
 FROM build AS builder
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:alpine AS production
