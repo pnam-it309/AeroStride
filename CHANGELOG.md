@@ -1,3 +1,10 @@
+## [1.2.5](https://github.com/pnam-it309/AeroStride/compare/v1.2.4...v1.2.5) (2026-04-09)
+
+
+### Bug Fixes
+
+* update CORS and Nginx proxy headers to troubleshoot 405 error ([fb0cfe0](https://github.com/pnam-it309/AeroStride/commit/fb0cfe0fac006cfe1320fc1efd7ad4d2dc21819d))
+
 ## [1.2.4](https://github.com/pnam-it309/AeroStride/compare/v1.2.3...v1.2.4) (2026-04-09)
 
 
