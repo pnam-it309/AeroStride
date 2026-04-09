@@ -83,16 +83,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
+        config.addAllowedOriginPattern("*");
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-
-        if (ALLOWED_ORIGIN != null && !ALLOWED_ORIGIN.equals("*") && !ALLOWED_ORIGIN.isEmpty()) {
-            config.setAllowedOrigins(List.of(ALLOWED_ORIGIN.split(",")));
-            config.setAllowCredentials(true);
-        } else {
-            config.addAllowedOriginPattern("*");
-            config.setAllowCredentials(false);
-        }
+        config.setAllowCredentials(true);
 
         source.registerCorsConfiguration("/**", config);
         return source;
