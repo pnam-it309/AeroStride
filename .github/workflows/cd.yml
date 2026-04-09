@@ -122,9 +122,9 @@ jobs:
           BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:latest
           FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:latest
         run: |
-          docker compose -f docker/docker-compose.yml pull backend
-          docker compose -f docker/docker-compose.yml pull frontend
-          docker compose -f docker/docker-compose.yml up -d --remove-orphans
+          sudo docker-compose -f docker/docker-compose.yml pull backend
+          sudo docker-compose -f docker/docker-compose.yml pull frontend
+          sudo docker-compose -f docker/docker-compose.yml up -d --remove-orphans
 
       - name: Slack Notification (Deployment Status)
         uses: 8398a7/action-slack@v3
@@ -135,5 +135,5 @@ jobs:
         if: always() && env.SLACK_WEBHOOK_URL != ''
 
       - name: Cleanup old images
-        run: docker image prune -f
+        run: sudo docker image prune -f
         if: always()
