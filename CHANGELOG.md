@@ -1,3 +1,27 @@
+# [1.1.0](https://github.com/pnam-it309/AeroStride/compare/v1.0.0...v1.1.0) (2026-04-09)
+
+
+### Bug Fixes
+
+* add missing imports in LoginForm.vue after JS conversion ([9a496bf](https://github.com/pnam-it309/AeroStride/commit/9a496bfb687ffeb2ef5b67a7682a2527e0295c48))
+* add redis for tests ([3c10920](https://github.com/pnam-it309/AeroStride/commit/3c10920f529baeb514c92c12241c602284a42cd4))
+* **cd:** update docker-compose and upgrade spring-security to 6.5.0 ([a276358](https://github.com/pnam-it309/AeroStride/commit/a27635897eb162ae32be05e4e98f2f895ce06ec2))
+* **cd:** use type=raw for latest tag ([5bcc91a](https://github.com/pnam-it309/AeroStride/commit/5bcc91a90c3d0d7d1c9c01e2df492b0512c05e36))
+* **docker:** add chmod +x for gradlew ([c3f2fe0](https://github.com/pnam-it309/AeroStride/commit/c3f2fe064c1d6e7a82457d20093a8d0fd4d27815))
+* lowercase docker image names and add missing mysql env vars ([f31e63f](https://github.com/pnam-it309/AeroStride/commit/f31e63f1e448b89b891cc9627343a4987a042a3d))
+* refine ci test environment and database connection ([3e2da9a](https://github.com/pnam-it309/AeroStride/commit/3e2da9ad79eab2db645ffadb767a699ef1d2a5a7))
+* **security:** upgrade spring boot to 3.4.6 to resolve vulnerabilities ([0eb5c8d](https://github.com/pnam-it309/AeroStride/commit/0eb5c8d89706c3c4b0f66f5dc5990160afaa7dff))
+* switch to hash routing mode for github pages compatibility ([31dede0](https://github.com/pnam-it309/AeroStride/commit/31dede044eb49c588c039256f659d7c915935a49))
+* upgrade spring-security to 6.5.1 and fix gradlew permissions for CI volume mount ([ae2e399](https://github.com/pnam-it309/AeroStride/commit/ae2e3999604f9f49c785b75a3e9ab597bfd70910))
+
+
+### Features
+
+* add auto deploy to github pages and fix 404 paths ([f0f26f4](https://github.com/pnam-it309/AeroStride/commit/f0f26f4c55f11838eaffce6541080895a350bfd9))
+* hoan thien quan ly hoa don_Huyen ([3bbe9d1](https://github.com/pnam-it309/AeroStride/commit/3bbe9d1628a178b5ad57688ece3ab076602de199))
+* hoan thien quan ly hoa don_Huyen ([a48e82e](https://github.com/pnam-it309/AeroStride/commit/a48e82e671955d3781eb24ad4cde6bdae7c98ea5))
+* standardize admin module API communication and restore management screens. \- Added hoaDonService.js. \- Updated controllers for vouchers and orders to use ApiResponse. \- Standardized all services to use central api.js. \- Updated frontend components for consistency. ([182d4cd](https://github.com/pnam-it309/AeroStride/commit/182d4cd8e1b8ffd7e8b7b39dad7bc6b308f7c3fa))
+
 # 1.0.0 (2026-04-09)
 
 
