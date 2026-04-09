@@ -1,13 +1,83 @@
+/* Typography & Font Consistency */
+html, body, .v-application {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Global Font Size Rules */
+.text-h1 { font-size: 1.75rem !important; font-weight: 600; line-height: 1.2 !important; }
+.text-h2 { font-size: 1.5rem !important; font-weight: 600; line-height: 1.2 !important; }
+.text-h3 { font-size: 1.25rem !important; font-weight: 600; line-height: 1.2 !important; }
+.text-h4 { font-size: 1.1rem !important; font-weight: 600; line-height: 1.2 !important; }
+.text-h5 { font-size: 1rem !important; font-weight: 500; line-height: 1.2 !important; }
+.text-h6 { font-size: 0.9rem !important; font-weight: 500; line-height: 1.2 !important; }
+.text-body-1, .text-subtitle-1 { font-size: 0.9rem !important; line-height: 1.5 !important; }
+.text-body-2, .text-subtitle-2 { font-size: 0.8rem !important; line-height: 1.5 !important; }
+.text-caption { font-size: 0.75rem !important; }
+
+/* Table Styling */
+.v-table {
+    background: transparent !important;
+    .v-table__wrapper {
+        border-radius: 12px;
+        table {
+            border-spacing: 0;
+            thead {
+                tr {
+                    th {
+                        background-color: #f8f9fa !important; // Light background "bọc lại"
+                        border-bottom: 1px solid rgba(var(--v-border-color), 0.1) !important;
+                        color: rgb(var(--v-theme-grey900)) !important; // Same as body but slightly emphasized
+                        font-weight: 600 !important;
+                        text-transform: none !important; // No uppercase
+                        font-size: 0.95rem !important;
+                        height: 50px !important;
+                        &::first-letter {
+                            text-transform: uppercase !important; // Only capitalize first letter
+                        }
+                    }
+                }
+            }
+            tbody {
+                tr {
+                    td {
+                        font-size: 0.9rem !important;
+                        height: 50px !important;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* Hide Scrollbar globally */
+html, body, .v-application {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
+/* Allow internal scrollbars for data scrolling but keep them minimal or hidden */
+.scrollnavbar, .v-table__wrapper, .perfect-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Expand content width */
+.maxWidth {
+    max-width: 1600px !important; // Increased for better table space
+    width: 95% !important;
+    margin: 0 auto;
+}
+
 html {
     .bg-success,.bg-primary,.bg-secondary,.bg-warning,.bg-error,.bg-info,.bg-indigo{
         color: white !important;
     }
-    .text-h1,.text-h2,.text-h3,.text-h4,.text-h5,.text-h6{
-        color: rgb(var(--v-theme-grey200));
-    }
 }
 
-//Button Bg Shadow
 .v-btn--elevated{
     &.bg-primary{
         box-shadow: 0 4px 12px rgba(var(--v-theme-primary),0.3);
@@ -21,60 +91,9 @@ html {
 .v-divider{
     opacity: 1;
 }
-.avtar-border {
-    border: 2px solid rgb(var(--v-theme-surface)) !important;
-}
 .subtext{
-    font-size: $font-size-root;
+    font-size: 0.9rem;
     line-height: 1.75rem;
-}
-.border-right {
-    border-right: 1px solid rgba(var(--v-border-color), 1) !important;
-}
-.color-inherit{
-    color: inherit;
-}
-
-.line-clamp{
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    width: 100%;
-    max-width: 200px;
-}
-.v-badge__badge{
-    height: 17px;
-    width: 17px;
-    font-size: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: auto;
-    padding: 0;
-}
-.no-scrollbar{
-    height: calc(100vh - 315px);
-}
-.add-class .ps__thumb-x{
-    display: none !important;
-}
-
-
-.v-table>.v-table__wrapper>table>tbody>tr>th,
-.v-table>.v-table__wrapper>table>thead>tr>th,
-.v-table>.v-table__wrapper>table>tfoot>tr>th {
-    font-weight: 600;
-}
-.v-table .v-table__wrapper > table > thead > tr > th{
-    font-size: 16px;
-}
-
-.v-table .v-table__wrapper > table > tbody > tr > td{
-    font-size: 14px;
-}
-.h-100vh{
-    height: 100vh;
 }
 .gap-3{
     gap:10px;
