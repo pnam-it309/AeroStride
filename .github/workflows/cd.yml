@@ -115,7 +115,9 @@ jobs:
 
       - name: Create Production .env
         run: |
-          cp docker/.env .env
+          echo "${{ secrets.DOCKER_ENV }}" > docker/.env
+          # Đảm bảo file tồn tại ở cả root và docker/ nếu cần
+          cp docker/.env .env || touch .env
 
       - name: Pull and Start Services
         env:
