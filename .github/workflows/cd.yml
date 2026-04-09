@@ -124,9 +124,9 @@ jobs:
           BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:latest
           FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:latest
         run: |
-          sudo docker compose -f docker/docker-compose.yml pull backend
-          sudo docker compose -f docker/docker-compose.yml pull frontend
-          sudo docker compose -f docker/docker-compose.yml up -d --remove-orphans
+          docker compose -f docker/docker-compose.yml pull backend
+          docker compose -f docker/docker-compose.yml pull frontend
+          docker compose -f docker/docker-compose.yml up -d --remove-orphans
 
       - name: Slack Notification (Deployment Status)
         uses: 8398a7/action-slack@v3
