@@ -47,7 +47,7 @@ const handleRefresh = async () => {
 
 const confirmToggleStatus = (item) => {
   confirmDialog.value = {
-    show: true, title: 'THAY ĐỔI TRẠNG THÁI',
+    show: true, title: 'Thay đổi trạng thái',
     message: `Bạn có muốn đổi trạng thái của Voucher [${item.ma}]?`,
     color: 'warning',
     action: async () => {
@@ -64,7 +64,7 @@ const confirmToggleStatus = (item) => {
 
 const confirmSaveVoucher = () => {
   confirmDialog.value = {
-    show: true, title: isEditMode.value ? 'CẬP NHẬT PHIẾU' : 'TẠO VOUCHER',
+    show: true, title: isEditMode.value ? 'Cập nhật khách hàng' : 'Thêm khách hàng',
     message: `Bạn có chắc muốn lưu phiếu giảm giá [${voucherForm.value.code}]?`,
     color: 'success',
     action: async () => {
@@ -92,7 +92,7 @@ const editVoucher = (v) => { selectedVoucher.value = v; voucherForm.value = { ..
 const openCreateDialog = () => { voucherForm.value = { code: '', name: '', description: '', discountType: 'percentage', discountValue: '', usageLimit: '', usedCount: 0, startDate: '', endDate: '', status: 'active' }; isEditMode.value = false; showVoucherDialog.value = true; };
 const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 const getDiscountDisplay = (v) => v.loaiPhieu === 'PHAN_TRAM' ? { val: `${v.phanTramGiamGia || 0}%`, color: 'indigo' } : { val: formatCurrency(v.soTienGiam || 0), color: 'emerald' };
-const getVoucherStatusLabel = (v) => { const now = new Date().getTime(); if (now < v.ngayBatDau) return { text: 'CHƯA DIỄN RA', color: 'amber' }; if (now > v.ngayKetThuc) return { text: 'HẾT HẠN', color: 'grey' }; return { text: 'ĐANG HOẠT ĐỘNG', color: 'success' }; };
+const getVoucherStatusLabel = (v) => { const now = new Date().getTime(); if (now < v.ngayBatDau) return { text: 'Chưa diễn ra', color: 'amber' }; if (now > v.ngayKetThuc) return { text: 'Hết hạn', color: 'grey' }; return { text: 'Đang hoạt động', color: 'success' }; };
 
 onMounted(() => loadVouchers());
 </script>
@@ -102,33 +102,33 @@ onMounted(() => loadVouchers());
     <!-- Header -->
     <v-row class="mb-4">
       <v-col cols="12">
-        <h2 class="text-h3 font-weight-black tracking-tight text-dark mb-1">Quản lý phiếu giảm giá</h2>
+        <h2 class="text-h4 font-weight-bold text-dark mb-1">Quản lý phiếu giảm giá</h2>
         <div class="text-subtitle-1 text-medium-emphasis">Hệ thống khuyến mãi và mã ưu đãi AeroStride</div>
       </v-col>
     </v-row>
 
     <!-- 1. FILTER -->
     <AdminFilter :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-      <v-col cols="12" md="4"><v-text-field v-model="filters.keyword" placeholder="Mã hoặc tên phiếu..." variant="outlined" density="comfortable" hide-details prepend-inner-icon="mdi-magnify" class="font-weight-black" @keyup.enter="loadVouchers"></v-text-field></v-col>
-      <v-col cols="12" md="3"><v-select v-model="filters.loaiPhieu" :items="[{title:'Tất cả loại',value:null}, {title:'Giảm theo %',value:'PHAN_TRAM'}, {title:'Giảm theo VNĐ',value:'TIEN_MAT'}]" variant="outlined" density="comfortable" hide-details class="font-weight-black" @update:model-value="loadVouchers"></v-select></v-col>
+      <v-col cols="12" md="4"><v-text-field v-model="filters.keyword" placeholder="Mã hoặc tên phiếu..." variant="outlined" density="comfortable" hide-details prepend-inner-icon="mdi-magnify" class="font-weight-medium" @keyup.enter="loadVouchers"></v-text-field></v-col>
+      <v-col cols="12" md="3"><v-select v-model="filters.loaiPhieu" :items="[{title:'Tất cả loại',value:null}, {title:'Giảm theo %',value:'PHAN_TRAM'}, {title:'Giảm theo VNĐ',value:'TIEN_MAT'}]" variant="outlined" density="comfortable" hide-details class="font-weight-medium" @update:model-value="loadVouchers"></v-select></v-col>
     </AdminFilter>
 
     <!-- 2. TABLE -->
-    <AdminTable title="DANH SÁCH VOUCHER" addButtonText="Thêm phiếu" :headers="[{text:'Mã & Tên phiếu', align:'center'}, {text:'Giá trị giảm', align:'center'}, {text:'Sử dụng / Giới hạn', align:'center'}, {text:'Trạng thái', align:'center'}, {text:'Thao tác', align:'center'}]" :items="vouchers" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog">
+    <AdminTable title="Danh sách voucher" addButtonText="Thêm phiếu" :headers="[{text:'Mã & Tên phiếu', align:'center'}, {text:'Giá trị giảm', align:'center'}, {text:'Sử dụng / Giới hạn', align:'center'}, {text:'Trạng thái', align:'center'}, {text:'Thao tác', align:'center'}]" :items="vouchers" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog">
       <template #row="{ item }">
         <tr class="data-row">
           <td class="data-cell">
             <div class="d-flex align-center justify-center">
               <div class="voucher-stub mr-3"><TicketIcon size="24" class="text-primary" /></div>
               <div class="text-left">
-                <div class="text-subtitle-1 font-weight-black text-primary">{{ item.ma }}</div>
-                <div class="text-caption font-weight-bold text-dark">{{ item.ten }}</div>
+                <div class="text-subtitle-1 font-weight-bold text-primary">{{ item.ma }}</div>
+                <div class="text-caption font-weight-medium text-dark">{{ item.ten }}</div>
               </div>
             </div>
           </td>
-          <td class="data-cell" style="text-align: center;"><v-chip :color="getDiscountDisplay(item).color" variant="flat" size="small" class="font-weight-black px-4">{{ getDiscountDisplay(item).val }}</v-chip></td>
-          <td class="data-cell" style="text-align: center;"><div class="text-subtitle-2 font-weight-black text-dark">{{ item.usedCount || 0 }} / <span class="text-grey">{{ item.soLuong || '∞' }}</span></div><v-progress-linear :model-value="item.soLuong ? (item.usedCount / item.soLuong)*100 : 0" color="primary" height="4" class="mt-1" rounded="0"></v-progress-linear></td>
-          <td class="data-cell" style="text-align: center;"><v-chip :color="getVoucherStatusLabel(item).color" size="x-small" variant="flat" class="font-weight-black px-4">{{ getVoucherStatusLabel(item).text }}</v-chip></td>
+          <td class="data-cell" style="text-align: center;"><v-chip :color="getDiscountDisplay(item).color" variant="flat" size="small" class="font-weight-bold px-4">{{ getDiscountDisplay(item).val }}</v-chip></td>
+          <td class="data-cell" style="text-align: center;"><div class="text-subtitle-2 font-weight-bold text-dark">{{ item.usedCount || 0 }} / <span class="text-grey">{{ item.soLuong || '∞' }}</span></div><v-progress-linear :model-value="item.soLuong ? (item.usedCount / item.soLuong)*100 : 0" color="primary" height="4" class="mt-1" rounded="0"></v-progress-linear></td>
+          <td class="data-cell" style="text-align: center;"><v-chip :color="getVoucherStatusLabel(item).color" size="x-small" variant="flat" class="font-weight-bold px-4">{{ getVoucherStatusLabel(item).text }}</v-chip></td>
           <td class="data-cell" style="text-align: center;">
             <div class="d-flex align-center justify-center">
               <v-switch :model-value="item.trangThai === 'DANG_HOAT_DONG' || item.status === 'active'" color="success" inset hide-details density="compact" class="tight-switch" @click.stop="confirmToggleStatus(item)"></v-switch>
@@ -145,12 +145,12 @@ onMounted(() => loadVouchers());
     <!-- Dialog (SQUARE) -->
     <v-dialog v-model="showVoucherDialog" max-width="700">
       <v-card class="rounded-0 border shadow-2xl">
-        <v-card-title class="pa-4 font-weight-black border-b bg-primary-lighten-5 text-primary uppercase">{{ isEditMode ? 'CẬP NHẬT PHIẾU' : 'TẠO VOUCHER MỚI' }}</v-card-title>
+        <v-card-title class="pa-4 font-weight-bold border-b bg-grey-lighten-4 text-primary">{{ isEditMode ? 'Cập nhật phiếu' : 'Tạo voucher mới' }}</v-card-title>
         <v-card-text class="pa-6">
           <v-form>
             <v-row>
-              <v-col cols="12" md="6"><v-text-field v-model="voucherForm.code" label="Mã Voucher" variant="outlined" class="font-weight-black text-uppercase" rounded="0"></v-text-field></v-col>
-              <v-col cols="12" md="6"><v-text-field v-model="voucherForm.name" label="Tên phiếu" variant="outlined" class="font-weight-black" rounded="0"></v-text-field></v-col>
+              <v-col cols="12" md="6"><v-text-field v-model="voucherForm.code" label="Mã voucher" variant="outlined" class="font-weight-medium" rounded="0"></v-text-field></v-col>
+              <v-col cols="12" md="6"><v-text-field v-model="voucherForm.name" label="Tên phiếu" variant="outlined" class="font-weight-medium" rounded="0"></v-text-field></v-col>
               <v-col cols="12" md="6"><v-select v-model="voucherForm.discountType" label="Loại ưu đãi" :items="[{title:'Phần trăm (%)',value:'percentage'},{title:'Số tiền mặt (VNĐ)',value:'fixed'}]" variant="outlined" rounded="0"></v-select></v-col>
               <v-col cols="12" md="6"><v-text-field v-model="voucherForm.discountValue" label="Giá trị giảm" variant="outlined" type="number" class="font-weight-black" rounded="0"></v-text-field></v-col>
             </v-row>

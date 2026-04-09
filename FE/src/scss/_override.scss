@@ -1,38 +1,62 @@
 /* Typography & Font Consistency */
 html, body, .v-application {
     font-family: 'Plus Jakarta Sans', sans-serif !important;
+    text-transform: none !important;
 }
 
-/* Global Font Size Rules */
-.text-h1 { font-size: 1.75rem !important; font-weight: 600; line-height: 1.2 !important; }
-.text-h2 { font-size: 1.5rem !important; font-weight: 600; line-height: 1.2 !important; }
-.text-h3 { font-size: 1.25rem !important; font-weight: 600; line-height: 1.2 !important; }
-.text-h4 { font-size: 1.1rem !important; font-weight: 600; line-height: 1.2 !important; }
-.text-h5 { font-size: 1rem !important; font-weight: 500; line-height: 1.2 !important; }
-.text-h6 { font-size: 0.9rem !important; font-weight: 500; line-height: 1.2 !important; }
-.text-body-1, .text-subtitle-1 { font-size: 0.9rem !important; line-height: 1.5 !important; }
-.text-body-2, .text-subtitle-2 { font-size: 0.8rem !important; line-height: 1.5 !important; }
-.text-caption { font-size: 0.75rem !important; }
+/* Force Vuetify components to respect lowercase rules */
+.v-btn, .v-tab, .v-chip, .v-list-item-title, .v-card-title, .text-uppercase, .uppercase {
+    text-transform: none !important;
+    letter-spacing: normal !important;
+}
+
+/* Global Font Size Rules (Standardized for professional dashboard) */
+.text-h1 { font-size: 1.6rem !important; font-weight: 700; line-height: 1.2 !important; }
+.text-h2 { font-size: 1.4rem !important; font-weight: 700; line-height: 1.2 !important; }
+.text-h3 { font-size: 1.25rem !important; font-weight: 700; line-height: 1.2 !important; }
+.text-h4 { font-size: 1.1rem !important; font-weight: 700; line-height: 1.2 !important; }
+.text-h5 { font-size: 1rem !important; font-weight: 600; line-height: 1.2 !important; }
+.text-h6 { font-size: 0.9rem !important; font-weight: 600; line-height: 1.2 !important; }
+
+/* Content font (matching sidebar logic) */
+.text-body-1, .text-subtitle-1, .v-list-item-title, .v-btn {
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    line-height: 1.5 !important;
+}
+
+.text-body-2, .text-subtitle-2 { 
+    font-size: 0.85rem !important; 
+    font-weight: 400 !important;
+    line-height: 1.5 !important; 
+}
+
+.text-caption { 
+    font-size: 0.75rem !important; 
+    font-weight: 400;
+}
 
 /* Table Styling */
 .v-table {
     background: transparent !important;
     .v-table__wrapper {
-        border-radius: 12px;
+        border-radius: 8px;
         table {
             border-spacing: 0;
             thead {
                 tr {
                     th {
-                        background-color: #f8f9fa !important; // Light background "bọc lại"
-                        border-bottom: 1px solid rgba(var(--v-border-color), 0.1) !important;
-                        color: rgb(var(--v-theme-grey900)) !important; // Same as body but slightly emphasized
+                        background-color: #f8fafc !important; // Match sidebar light feel
+                        border-bottom: 1px solid #e2e8f0 !important;
+                        color: #475569 !important;
                         font-weight: 600 !important;
-                        text-transform: none !important; // No uppercase
-                        font-size: 0.95rem !important;
-                        height: 50px !important;
+                        text-transform: none !important;
+                        font-size: 0.875rem !important; // Match sidebar size
+                        height: 48px !important;
+                        
+                        /* Capitalize first letter logic */
                         &::first-letter {
-                            text-transform: uppercase !important; // Only capitalize first letter
+                            text-transform: uppercase !important;
                         }
                     }
                 }
@@ -40,8 +64,9 @@ html, body, .v-application {
             tbody {
                 tr {
                     td {
-                        font-size: 0.9rem !important;
-                        height: 50px !important;
+                        font-size: 0.875rem !important;
+                        height: 52px !important;
+                        color: #334155 !important;
                     }
                 }
             }
@@ -49,27 +74,34 @@ html, body, .v-application {
     }
 }
 
+/* Inputs & Form Fields */
+.v-field {
+    font-size: 0.875rem !important;
+}
+
 /* Hide Scrollbar globally */
 html, body, .v-application {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-}
-
-::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
-}
-
-/* Allow internal scrollbars for data scrolling but keep them minimal or hidden */
-.scrollnavbar, .v-table__wrapper, .perfect-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
 
+::-webkit-scrollbar {
+    display: none;
+}
+
 /* Expand content width */
 .maxWidth {
-    max-width: 1600px !important; // Increased for better table space
-    width: 95% !important;
+    max-width: 1800px !important;
+    width: 98% !important;
     margin: 0 auto;
+}
+
+/* Titles - Capitalize first letter */
+.v-card-title, h1, h2, h3, h4, .text-h6 {
+    text-transform: none !important;
+    &::first-letter {
+        text-transform: uppercase !important;
+    }
 }
 
 html {
@@ -80,21 +112,12 @@ html {
 
 .v-btn--elevated{
     &.bg-primary{
-        box-shadow: 0 4px 12px rgba(var(--v-theme-primary),0.3);
+        box-shadow: 0 4px 6px -1px rgba(var(--v-theme-primary), 0.1), 0 2px 4px -2px rgba(var(--v-theme-primary), 0.1) !important;
     }
 }
 
 .border,
 .v-divider {
-    border-color: rgba(var(--v-border-color), 1) !important;
-}
-.v-divider{
-    opacity: 1;
-}
-.subtext{
-    font-size: 0.9rem;
-    line-height: 1.75rem;
-}
-.gap-3{
-    gap:10px;
+    border-color: #e2e8f0 !important;
+    opacity: 1 !important;
 }

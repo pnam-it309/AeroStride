@@ -47,7 +47,7 @@ const handleRefresh = async () => {
 
 const confirmToggleStatus = (item) => {
   confirmDialog.value = {
-    show: true, title: 'THAY ĐỔI TRẠNG THÁI',
+    show: true, title: 'Thay đổi trạng thái',
     message: `Bạn có muốn đổi trạng thái của chiến dịch [${item.ten}]?`,
     color: 'warning',
     action: async () => {
@@ -64,7 +64,7 @@ const confirmToggleStatus = (item) => {
 
 const confirmSaveCampaign = () => {
   confirmDialog.value = {
-    show: true, title: isEditMode.value ? 'CẬP NHẬT CHIẾN DỊCH' : 'TẠO CHIẾN DỊCH',
+    show: true, title: isEditMode.value ? 'Cập nhật chiến dịch' : 'Tạo chiến dịch',
     message: `Bạn có muốn lưu thông tin đợt giảm giá [${campaignForm.value.name}]?`,
     color: 'success',
     action: async () => {
@@ -93,7 +93,7 @@ const openCreateDialog = () => { campaignForm.value = { name: '', description: '
 const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 const formatDate = (timestamp) => timestamp ? new Date(timestamp).toLocaleDateString('vi-VN') : 'N/A';
 const getDiscountDisplay = (c) => c.loaiGiamGia === 'PHAN_TRAM' ? { val: `${c.soTienGiam}%`, color: 'orange' } : { val: formatCurrency(c.soTienGiam), color: 'green' };
-const getCampaignStatusLabel = (c) => { const now = new Date().getTime(); if (now < c.ngayBatDau) return { text: 'SẮP DIỄN RA', color: 'warning' }; if (now > c.ngayKetThuc) return { text: 'ĐÃ KẾT THÚC', color: 'grey' }; return { text: 'ĐANG DIỄN RA', color: 'success' }; };
+const getCampaignStatusLabel = (c) => { const now = new Date().getTime(); if (now < c.ngayBatDau) return { text: 'Sắp diễn ra', color: 'warning' }; if (now > c.ngayKetThuc) return { text: 'Đã kết thúc', color: 'grey' }; return { text: 'Đang diễn ra', color: 'success' }; };
 
 onMounted(() => loadCampaigns());
 </script>
@@ -115,7 +115,7 @@ onMounted(() => loadCampaigns());
     </AdminFilter>
 
     <!-- 2. TABLE -->
-    <AdminTable title="DANH SÁCH CHIẾN DỊCH" addButtonText="Tạo chiến dịch" :headers="[{text:'Thông tin chiến dịch', align:'center'}, {text:'Giá trị giảm', align:'center'}, {text:'Thời gian', align:'center'}, {text:'Trạng thái', align:'center'}, {text:'Thao tác', align:'center'}]" :items="campaigns" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog">
+    <AdminTable title="Danh sách chiến dịch" addButtonText="Tạo chiến dịch" :headers="[{text:'Thông tin chiến dịch', align:'center'}, {text:'Giá trị giảm', align:'center'}, {text:'Thời gian', align:'center'}, {text:'Trạng thái', align:'center'}, {text:'Thao tác', align:'center'}]" :items="campaigns" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog">
       <template #row="{ item }">
         <tr class="data-row">
           <td class="data-cell">
@@ -143,7 +143,7 @@ onMounted(() => loadCampaigns());
     <!-- Dialog (SQUARE) -->
     <v-dialog v-model="showCampaignDialog" max-width="700">
       <v-card class="rounded-0 border shadow-2xl">
-        <v-card-title class="pa-4 font-weight-black border-b bg-grey-lighten-4 uppercase text-primary">{{ isEditMode ? 'CẬP NHẬT CHIẾN DỊCH' : 'TẠO ĐỢT GIẢM GIÁ MỚI' }}</v-card-title>
+        <v-card-title class="pa-4 font-weight-black border-b bg-grey-lighten-4 text-primary">{{ isEditMode ? 'Cập nhật chiến dịch' : 'Tạo đợt giảm giá mới' }}</v-card-title>
         <v-card-text class="pa-6">
           <v-form>
             <v-row>

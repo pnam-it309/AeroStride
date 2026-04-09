@@ -116,7 +116,7 @@ const loadItems = async () => {
 const confirmSaveItem = () => {
   const modeText = isEditMode.value ? 'CẬP NHẬT' : 'THÊM MỚI';
   confirmDialog.value = {
-    show: true, title: `XÁC NHẬN ${modeText}`,
+    show: true, title: `Xác nhận ${modeText.toLowerCase()}`,
     message: `Bạn có chắc muốn lưu [${itemForm.value.ten}] vào danh sách ${getCurrentTabTitle()}?`,
     color: 'success',
     action: async () => {
@@ -171,7 +171,7 @@ const updateItem = async () => {
 
 const confirmChangeStatus = (item) => {
   confirmDialog.value = {
-    show: true, title: 'XÁC NHẬN TRẠNG THÁI',
+    show: true, title: 'Xác nhận trạng thái',
     message: `Bạn có muốn đổi trạng thái của [${item.ten}]?`,
     color: 'warning',
     action: async () => {
@@ -217,7 +217,7 @@ watch(selectedTab, (n) => { router.replace(`/thuoc-tinh/${reverseRouteMap[n]}`);
     <!-- Header -->
     <v-row class="mb-4">
       <v-col cols="12">
-        <h2 class="text-h3 font-weight-black tracking-tight text-dark mb-1">Quản lý thuộc tính</h2>
+        <h2 class="text-h4 font-weight-bold text-dark mb-1">Quản lý thuộc tính</h2>
         <div class="text-subtitle-1 text-medium-emphasis">Thiết lập linh hoạt các thông số cơ bản cho hệ thống
           AeroStride</div>
       </v-col>
@@ -248,7 +248,7 @@ watch(selectedTab, (n) => { router.replace(`/thuoc-tinh/${reverseRouteMap[n]}`);
     </AdminFilter>
 
     <!-- 2. TABLE -->
-    <AdminTable :title="`DANH SÁCH ${getCurrentTabTitle().toUpperCase()}`"
+    <AdminTable :title="`Danh sách ${getCurrentTabTitle().toLowerCase()}`"
       :addButtonText="`Thêm ${getCurrentTabTitle().toLowerCase()}`" :headers="tableHeaders"
       :items="dataRefs[selectedTab].value" :total-count="pagination.totalElements" :loading="loading"
       @add="openCreateDialog">
@@ -259,7 +259,7 @@ watch(selectedTab, (n) => { router.replace(`/thuoc-tinh/${reverseRouteMap[n]}`);
           <td class="data-cell" style="text-align: center;">
             <v-chip :color="(item.trangThai === 0 || item.trangThai === '0') ? 'success' : 'error'" size="x-small"
               variant="flat" class="font-weight-black px-4">{{ (item.trangThai === 0 || item.trangThai === '0') ?
-                'HOẠT ĐỘNG' : 'NGỪNG HOẠT ĐỘNG' }}</v-chip>
+                'Hoạt động' : 'Ngừng hoạt động' }}</v-chip>
           </td>
           <td class="data-cell" style="text-align: center;">
             <div class="d-flex align-center justify-center">
@@ -286,7 +286,7 @@ watch(selectedTab, (n) => { router.replace(`/thuoc-tinh/${reverseRouteMap[n]}`);
     <!-- DIALOG (SQUARE) -->
     <v-dialog v-model="showDialog" max-width="500">
       <v-card class="rounded-0 border shadow-2xl">
-        <v-card-title class="pa-4 font-weight-black border-b bg-grey-lighten-4 uppercase text-primary">{{ isEditMode ?'CẬP NHẬT' : 'THÊM MỚI' }} {{ getCurrentTabTitle() }}</v-card-title>
+        <v-card-title class="pa-4 font-weight-black border-b bg-grey-lighten-4 text-primary">{{ isEditMode ? 'Cập nhật' : 'Thêm mới' }} {{ getCurrentTabTitle().toLowerCase() }}</v-card-title>
         <v-card-text class="pa-6">
           <v-form>
             <v-text-field v-model="itemForm.ten" :label="`Tên ${getCurrentTabTitle()}`" variant="outlined"

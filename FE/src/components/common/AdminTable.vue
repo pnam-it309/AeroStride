@@ -2,7 +2,7 @@
 import { PlusIcon, SearchIcon, DownloadIcon, LayoutGridIcon } from 'vue-tabler-icons';
 
 defineProps({
-  title: { type: String, default: 'DANH SÁCH' },
+  title: { type: String, default: 'Danh sách' },
   headers: { type: Array, default: () => [] },
   items: { type: Array, default: () => [] },
   loading: { type: Boolean, default: false },
@@ -21,7 +21,7 @@ const emit = defineEmits(['add', 'export']);
     <div class="table-toolbar d-flex align-center justify-space-between pa-4 border-b">
       <div class="d-flex align-center">
         <LayoutGridIcon size="20" class="text-primary mr-3" />
-        <h3 class="text-h6 font-weight-black text-dark tracking-tight uppercase">{{ title }}</h3>
+        <h3 class="text-h6 font-weight-black text-dark tracking-tight">{{ title }}</h3>
       </div>
         <div class="d-flex align-center gap-2">
           <v-btn
@@ -33,7 +33,7 @@ const emit = defineEmits(['add', 'export']);
             class="px-6 font-weight-black"
             @click="$emit('add')"
           >
-            THÊM MỚI
+            Thêm mới
           </v-btn>
           
           <v-btn
@@ -78,11 +78,11 @@ const emit = defineEmits(['add', 'export']);
             <td :colspan="headers.length" class="empty-state py-16 text-center">
               <div v-if="loading" class="d-flex flex-column align-center">
                 <v-progress-circular indeterminate color="primary" size="48" width="6" class="mb-4" />
-                <span class="text-subtitle-1 font-weight-black text-medium-emphasis">ĐANG TẢI DỮ LIỆU...</span>
+                <span class="text-subtitle-1 font-weight-black text-medium-emphasis">Đang tải dữ liệu...</span>
               </div>
               <div v-else class="d-flex flex-column align-center">
                 <v-icon :icon="emptyIcon" size="64" color="grey-lighten-2" class="mb-2" />
-                <span class="text-subtitle-1 font-weight-black text-medium-emphasis uppercase">{{ emptyText }}</span>
+                <span class="text-subtitle-1 font-weight-black text-medium-emphasis">{{ emptyText }}</span>
               </div>
             </td>
           </tr>
@@ -129,10 +129,10 @@ const emit = defineEmits(['add', 'export']);
   z-index: 10;
   background: #f8fafc;
   color: #0f172a; /* ĐEN ĐẬM */
-  padding: 18px 12px;
-  font-size: 13px;
-  font-weight: 800;
-  text-transform: uppercase;
+  padding: 14px 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: none;
   border-bottom: 2px solid #e2e8f0;
   letter-spacing: 0.05em;
   white-space: nowrap;

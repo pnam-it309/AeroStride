@@ -61,7 +61,7 @@ const handleRefresh = async () => {
 
 const confirmChangeStatus = (item) => {
   confirmDialog.value = {
-    show: true, title: 'THAY ĐỔI TRẠNG THÁI',
+    show: true, title: 'Thay đổi trạng thái',
     message: `Bạn có chắc muốn đổi trạng thái của nhân viên [${item.ten}]?`,
     color: 'warning',
     action: async () => {
@@ -77,7 +77,7 @@ const confirmChangeStatus = (item) => {
 
 const confirmSaveEmployee = () => {
   confirmDialog.value = {
-    show: true, title: isEditMode.value ? 'CẬP NHẬT NHÂN VIÊN' : 'THÊM NHÂN VIÊN',
+    show: true, title: isEditMode.value ? 'Cập nhật nhân viên' : 'Thêm nhân viên',
     message: `Bạn có chắc chắn muốn lưu thông tin nhân viên [${employeeForm.value.ten}]?`,
     color: 'success',
     action: async () => {
@@ -113,7 +113,7 @@ onMounted(() => loadEmployees());
     <!-- Header -->
     <v-row class="mb-4">
       <v-col cols="12">
-        <h2 class="text-h3 font-weight-black tracking-tight text-dark mb-1">Quản lý nhân viên</h2>
+        <h2 class="text-h4 font-weight-bold text-dark mb-1">Quản lý nhân viên</h2>
         <div class="text-subtitle-1 text-medium-emphasis">Điều hành đội ngũ nhân sự hệ thống AeroStride</div>
       </v-col>
     </v-row>
@@ -126,7 +126,7 @@ onMounted(() => loadEmployees());
     </AdminFilter>
 
     <!-- 2. TABLE -->
-    <AdminTable title="DANH SÁCH NHÂN VIÊN" addButtonText="Thêm nhân viên" :headers="tableHeaders" :items="employees" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog">
+    <AdminTable title="Danh sách nhân viên" addButtonText="Thêm nhân viên" :headers="tableHeaders" :items="employees" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog">
       <template #row="{ item }">
         <tr class="data-row">
           <td class="data-cell">
@@ -142,8 +142,8 @@ onMounted(() => loadEmployees());
             <div class="text-subtitle-2 font-weight-bold text-dark mb-1">{{ item.email || '-' }}</div>
             <div class="text-caption font-weight-bold text-medium-emphasis d-flex align-center justify-center font-weight-black"><v-icon size="x-small" class="mr-1">mdi-phone</v-icon> {{ item.sdt }}</div>
           </td>
-          <td class="data-cell" style="text-align: center;"><v-chip variant="flat" :color="item.gioiTinh ? 'blue-lighten-4' : 'pink-lighten-4'" size="x-small" class="font-weight-black px-4">{{ item.gioiTinh ? 'NAM' : 'NỮ' }}</v-chip></td>
-          <td class="data-cell" style="text-align: center;"><v-chip :color="item.trangThai === 'DANG_HOAT_DONG' ? 'success' : 'error'" size="x-small" variant="flat" class="font-weight-black px-4">{{ item.trangThai === 'DANG_HOAT_DONG' ? 'WORKING' : 'RESIGNED' }}</v-chip></td>
+          <td class="data-cell" style="text-align: center;"><v-chip variant="flat" :color="item.gioiTinh ? 'blue-lighten-4' : 'pink-lighten-4'" size="x-small" class="font-weight-black px-4">{{ item.gioiTinh ? 'Nam' : 'Nữ' }}</v-chip></td>
+          <td class="data-cell" style="text-align: center;"><v-chip :color="item.trangThai === 'DANG_HOAT_DONG' ? 'success' : 'error'" size="x-small" variant="flat" class="font-weight-black px-4">{{ item.trangThai === 'DANG_HOAT_DONG' ? 'Đang làm việc' : 'Đã nghỉ việc' }}</v-chip></td>
           <td class="data-cell" style="text-align: center;">
             <div class="d-flex align-center justify-center">
               <v-switch :model-value="item.trangThai === 'DANG_HOAT_DONG'" color="success" inset hide-details density="compact" class="tight-switch" @click.stop="confirmChangeStatus(item)"></v-switch>
@@ -160,7 +160,7 @@ onMounted(() => loadEmployees());
     <!-- Dialog (SQUARE) -->
     <v-dialog v-model="showEmployeeDialog" max-width="700">
       <v-card class="rounded-0 border shadow-2xl">
-        <v-card-title class="pa-4 font-weight-black border-b bg-grey-lighten-4 uppercase text-primary">{{ isEditMode ? 'CẬP NHẬT NHÂN VIÊN' : 'THÊM NHÂN VIÊN MỚI' }}</v-card-title>
+        <v-card-title class="pa-4 font-weight-black border-b bg-grey-lighten-4 text-primary">{{ isEditMode ? 'Cập nhật nhân viên' : 'Thêm nhân viên mới' }}</v-card-title>
         <v-card-text class="pa-6">
           <v-form>
             <v-row>

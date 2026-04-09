@@ -46,7 +46,7 @@ const pageSizes = [5, 10, 15, 20];
     <div class="d-flex align-center gap-4">
       <!-- Page Size Selector -->
       <div class="d-flex align-center mr-6">
-        <span class="text-caption font-weight-black mr-2 text-uppercase">Số dòng:</span>
+        <span class="text-caption font-weight-black mr-2">Số dòng:</span>
         <select 
           v-model.number="size" 
           class="page-size-select font-weight-black"

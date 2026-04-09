@@ -63,9 +63,7 @@ const sDrawer = ref(true); // Trạng thái mở rộng (true) hoặc mini (fals
 </template>
 
 <style scoped>
-.maxWidth {
-    max-width: 1200px;
-}
+
 .shadow-sm {
     box-shadow: 0 2px 15px -3px rgba(0,0,0,0.07),0 4px 6px -2px rgba(0,0,0,0.05) !important;
 }

@@ -4,10 +4,10 @@ import { AlertTriangleIcon, InfoCircleIcon, CheckIcon } from 'vue-tabler-icons';
 
 const props = defineProps({
   show: { type: Boolean, default: false },
-  title: { type: String, default: 'XÁC NHẬN THAO TÁC' },
+  title: { type: String, default: 'Xác nhận thao tác' },
   message: { type: String, default: 'Bạn có chắc chắn muốn thực hiện hành động này không?' },
-  confirmText: { type: String, default: 'ĐỒNG Ý' },
-  cancelText: { type: String, default: 'HỦY BỎ' },
+  confirmText: { type: String, default: 'Đồng ý' },
+  cancelText: { type: String, default: 'Hủy bỏ' },
   color: { type: String, default: 'primary' },
   loading: { type: Boolean, default: false }
 });
@@ -45,7 +45,7 @@ const handleCancel = () => {
             <InfoCircleIcon v-else size="32" class="text-primary" />
           </div>
           <div>
-            <h3 class="text-h6 font-weight-black text-dark uppercase tracking-wide">{{ title }}</h3>
+            <h3 class="text-h6 font-weight-black text-dark tracking-wide">{{ title }}</h3>
             <p class="text-subtitle-2 text-medium-emphasis mt-1">{{ message }}</p>
           </div>
         </div>

@@ -82,7 +82,7 @@ const handleRefresh = async () => {
 const confirmToggleStatus = (product) => {
   confirmDialog.value = {
     show: true,
-    title: 'XÁC NHẬN TRẠNG THÁI',
+    title: 'Xác nhận trạng thái',
     message: `Bạn có chắc chắn muốn thay đổi trạng thái sản phẩm [${product.tenSanPham}]?`,
     color: 'warning',
     action: async () => {
@@ -115,7 +115,7 @@ onMounted(() => loadProducts());
     <!-- Header -->
     <v-row class="mb-4">
       <v-col cols="12">
-        <h2 class="text-h3 font-weight-black tracking-tight text-dark mb-1">Quản lý sản phẩm</h2>
+        <h2 class="text-h4 font-weight-bold text-dark mb-1">Quản lý sản phẩm</h2>
         <div class="text-subtitle-1 text-medium-emphasis">Hệ thống quản lý chuỗi cung ứng AeroStride</div>
       </v-col>
     </v-row>
@@ -144,7 +144,7 @@ onMounted(() => loadProducts());
 
     <!-- 2. TABLE -->
     <AdminTable
-      title="DANH SÁCH SẢN PHẨM"
+      title="Danh sách sản phẩm"
       :headers="[
         { text: 'Thông tin sản phẩm', align: 'center' ,width: '200px'},
         { text: 'Phân loại', align: 'center', width: '180px' },
@@ -185,7 +185,7 @@ onMounted(() => loadProducts());
               variant="flat"
               class="font-weight-black px-4"
             >
-              {{ item.trangThai === 'DANG_HOAT_DONG' ? 'ĐANG BÁN' : 'NGỪNG BÁN' }}
+              {{ item.trangThai === 'DANG_HOAT_DONG' ? 'Đang bán' : 'Ngừng bán' }}
             </v-chip>
           </td>
 
