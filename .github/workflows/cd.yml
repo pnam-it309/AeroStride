@@ -84,6 +84,8 @@ jobs:
           push: true
           tags: ${{ steps.meta-fe.outputs.tags }}
           labels: ${{ steps.meta-fe.outputs.labels }}
+          build-args: |
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
 
       - name: Slack Notification
         uses: 8398a7/action-slack@v3

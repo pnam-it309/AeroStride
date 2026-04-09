@@ -20,8 +20,8 @@ const sDrawer = ref(true); // Trạng thái mở rộng (true) hoặc mini (fals
         :rail="!sDrawer"
         permanent
         app 
-        class="leftSidebar ml-sm-5 mt-sm-5 bg-containerBg rounded-xl" 
-        elevation="10"
+        class="leftSidebar bg-containerBg border-r" 
+        elevation="0"
         :width="270"
         rail-width="75"
         style="overflow: hidden !important;"
