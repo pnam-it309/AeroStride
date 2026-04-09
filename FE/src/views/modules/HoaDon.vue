@@ -73,12 +73,12 @@ const formatDate = (timestamp) => {
 
 const getStatusInfo = (status) => {
   switch (status) {
-    case 1: return { text: 'CHỜ XÁC NHẬN', color: 'warning' };
-    case 2: return { text: 'ĐÃ XÁC NHẬN', color: 'info' };
-    case 3: return { text: 'ĐANG GIAO', color: 'primary' };
-    case 4: return { text: 'HOÀN THÀNH', color: 'success' };
-    case 5: return { text: 'ĐÃ HỦY', color: 'error' };
-    default: return { text: 'KHÔNG XÁC ĐỊNH', color: 'grey' };
+    case 1: return { text: 'Chờ xác nhận', color: 'warning' };
+    case 2: return { text: 'Đã xác nhận', color: 'info' };
+    case 3: return { text: 'Đang giao', color: 'primary' };
+    case 4: return { text: 'Hoàn thành', color: 'success' };
+    case 5: return { text: 'Đã hủy', color: 'error' };
+    default: return { text: 'Không xác định', color: 'grey' };
   }
 };
 
@@ -95,7 +95,7 @@ onMounted(() => loadOrders());
     <!-- Header -->
     <v-row class="mb-4">
       <v-col cols="12">
-        <h2 class="text-h3 font-weight-black tracking-tight text-dark mb-1">Quản lý hóa đơn</h2>
+        <h2 class="text-h4 font-weight-bold text-dark mb-1">Quản lý hóa đơn</h2>
         <div class="text-subtitle-1 text-medium-emphasis">Theo dõi dòng tiền và trạng thái đơn hàng AeroStride</div>
       </v-col>
     </v-row>
@@ -138,7 +138,7 @@ onMounted(() => loadOrders());
 
     <!-- 2. TABLE -->
     <AdminTable
-      title="DANH SÁCH ĐƠN HÀNG"
+      title="Danh sách đơn hàng"
       :showAddButton="false"
       :headers="tableHeaders"
       :items="orders"
@@ -200,7 +200,7 @@ onMounted(() => loadOrders());
         <v-card-title class="pa-5 d-flex justify-space-between align-center border-b bg-grey-lighten-4">
           <div class="d-flex align-center">
             <ReceiptIcon size="24" class="mr-3 text-primary" />
-            <span class="font-weight-black uppercase">CHI TIẾT HÓA ĐƠN #{{ selectedOrder.maHoaDon }}</span>
+            <span class="font-weight-black">Chi tiết hóa đơn #{{ selectedOrder.maHoaDon }}</span>
           </div>
           <v-chip :color="getStatusInfo(selectedOrder.trangThai).color" variant="flat" class="font-weight-bold px-6">
             {{ getStatusInfo(selectedOrder.trangThai).text }}
