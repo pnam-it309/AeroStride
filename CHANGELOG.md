@@ -1,3 +1,10 @@
+## [1.2.11](https://github.com/pnam-it309/AeroStride/compare/v1.2.10...v1.2.11) (2026-04-10)
+
+
+### Bug Fixes
+
+* **docker:** optimize docker-compose for production and port mapping ([2aa08d4](https://github.com/pnam-it309/AeroStride/commit/2aa08d41f6af3b5eb528c1f9ee0245cb61fdf3a0))
+
 ## [1.2.10](https://github.com/pnam-it309/AeroStride/compare/v1.2.9...v1.2.10) (2026-04-10)
 
 
