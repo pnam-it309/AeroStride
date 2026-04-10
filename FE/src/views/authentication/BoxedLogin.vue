@@ -4,19 +4,18 @@ import LoginForm from '@/components/auth/LoginForm.vue';
 </script>
 
 <template>
-    <div class="auth-wrapper mesh-bg">
-        <v-container fluid class="pa-0 h-100vh">
-            <v-row class="h-100vh g-0 align-center justify-center">
+    <div class="auth-wrapper mesh-bg h-100vh overflow-hidden">
+        <v-container fluid class="pa-0 h-100">
+            <v-row no-gutters class="h-100 align-center justify-center">
                 <!-- Main Login Card -->
-                <v-col cols="11" sm="8" md="10" lg="10" xl="8" class="relative z-index-2">
-                    <v-card class="glass-container overflow-hidden elevation-24">
-                        <v-row class="g-0">
+                <v-col cols="11" sm="9" md="10" lg="10" xl="8" class="relative z-index-2">
+                    <v-card class="glass-container overflow-hidden elevation-24 mt-n12">
+                        <v-row no-gutters>
                             <!-- Visual Branding Side -->
-                            <v-col cols="12" lg="7" class="d-none d-lg-flex flex-column align-center justify-center visual-side pa-10 text-center relative">
+                            <v-col cols="12" lg="7" class="d-none d-lg-flex flex-column align-center justify-center visual-side pa-10 text-center relative overflow-hidden">
                                 <div class="floating-elements">
                                     <div class="shape s1"></div>
                                     <div class="shape s2"></div>
-                                    <div class="shape s3"></div>
                                 </div>
                                 
                                 <div class="content-up relative z-index-2 w-100">
@@ -91,7 +90,14 @@ import LoginForm from '@/components/auth/LoginForm.vue';
         radial-gradient(at 100% 0%, rgba(224, 195, 252, 0.4) 0px, transparent 50%),
         radial-gradient(at 100% 100%, rgba(142, 197, 252, 0.4) 0px, transparent 50%),
         radial-gradient(at 0% 100%, rgba(224, 195, 252, 0.4) 0px, transparent 50%);
-    overflow: hidden;
+    overflow: hidden !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
 }
 
 /* GLASSMORPHISM CONTAINER */
@@ -100,6 +106,7 @@ import LoginForm from '@/components/auth/LoginForm.vue';
     backdrop-filter: blur(25px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 40px !important;
+    max-height: 90vh;
 }
 
 .visual-side {
