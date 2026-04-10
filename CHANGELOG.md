@@ -1,3 +1,10 @@
+## [1.2.9](https://github.com/pnam-it309/AeroStride/compare/v1.2.8...v1.2.9) (2026-04-10)
+
+
+### Bug Fixes
+
+* **cd:** force build and deploy latest image on every push to main ([41932fc](https://github.com/pnam-it309/AeroStride/commit/41932fc971c82c043b3a4458864405a1dbc066f7))
+
 ## [1.2.8](https://github.com/pnam-it309/AeroStride/compare/v1.2.7...v1.2.8) (2026-04-10)
 
 
