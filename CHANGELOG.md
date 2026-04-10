@@ -1,3 +1,10 @@
+## [1.2.14](https://github.com/pnam-it309/AeroStride/compare/v1.2.13...v1.2.14) (2026-04-10)
+
+
+### Bug Fixes
+
+* **cd:** use docker-compose instead of docker compose for compatibility ([ad3e226](https://github.com/pnam-it309/AeroStride/commit/ad3e22607006b56b2bab0ad36fab293ae5729ca7))
+
 ## [1.2.13](https://github.com/pnam-it309/AeroStride/compare/v1.2.12...v1.2.13) (2026-04-10)
 
 
