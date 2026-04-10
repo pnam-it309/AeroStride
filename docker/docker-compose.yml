@@ -26,7 +26,6 @@ services:
     build:
       context: ..
       dockerfile: docker/BE.Dockerfile
-      target: development
     container_name: aerostride-be
     restart: always
     env_file:
@@ -35,6 +34,7 @@ services:
       SPRING_PROFILES_ACTIVE: mysql
       SPRING_FLYWAY_CLEAN_DISABLED: "false"
       SPRING_FLYWAY_CLEAN_ON_VALIDATION_ERROR: "true"
+      SERVER_FORWARD_HEADERS_STRATEGY: native
     depends_on:
       db:
         condition: service_started
@@ -42,10 +42,6 @@ services:
         condition: service_started
     ports:
       - "8080:8080"
-    volumes:
-      - ../BE:/app
-      - be-build:/app/build
-      - be-gradle:/app/.gradle
     networks:
       - aerostride-net
     healthcheck:
@@ -74,13 +70,11 @@ services:
     build:
       context: ..
       dockerfile: docker/FE.Dockerfile
-      target: development
     container_name: aerostride-fe
     restart: always
     ports:
-      - "5173:5173"
+      - "80:8080"
     volumes:
-      - ../FE:/app
       - fe-node-modules:/app/node_modules
     depends_on:
       backend:
