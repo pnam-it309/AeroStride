@@ -27,10 +27,10 @@ WORKDIR /usr/share/nginx/html
 # Copy the built assets from the build stage
 COPY --from=builder /app/dist .
 
-# Copy custom nginx configuration for SPA routing
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+# Copy custom nginx configuration for SPA routing (as a template for env var substitution)
+COPY docker/nginx.conf /etc/nginx/templates/default.conf.template
 
-# Expose the unprivileged port
+# Default port (can be overridden by environment variable NGINX_PORT)
 EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]

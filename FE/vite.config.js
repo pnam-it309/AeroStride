@@ -39,5 +39,12 @@ export default defineConfig({
         host: true,
         strictPort: true,
         port: 5173,
+        proxy: {
+            '/api': {
+                target: `http://backend:${process.env.BACKEND_PORT || 8080}`,
+                changeOrigin: true,
+                secure: false,
+            }
+        }
     }
 });

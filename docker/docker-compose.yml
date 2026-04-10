@@ -10,7 +10,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_ROOT_HOST: '%'
     ports:
-      - "3307:3306"
+      - "${MYSQL_PORT_HOST:-3307}:${MYSQL_PORT_INTERNAL:-3306}"
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
@@ -35,17 +35,18 @@ services:
       SPRING_FLYWAY_CLEAN_DISABLED: "false"
       SPRING_FLYWAY_CLEAN_ON_VALIDATION_ERROR: "true"
       SERVER_FORWARD_HEADERS_STRATEGY: native
+      SERVER_PORT: ${BE_PORTInternal:-8080}
     depends_on:
       db:
         condition: service_started
       redis:
         condition: service_started
     ports:
-      - "8080:8080"
+      - "${BE_PORTExternal:-8080}:${BE_PORTInternal:-8080}"
     networks:
       - aerostride-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${BE_PORTInternal:-8080}/actuator/health"]
       interval: 20s
       timeout: 10s
       retries: 15
@@ -56,7 +57,7 @@ services:
     container_name: aerostride-redis
     restart: always
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     networks:
       - aerostride-net
     healthcheck:
@@ -73,7 +74,7 @@ services:
     container_name: aerostride-fe
     restart: always
     ports:
-      - "80:8080"
+      - "${FE_PORTExternal:-80}:${FE_PORTInternal:-8080}"
     volumes:
       - fe-node-modules:/app/node_modules
     depends_on:
@@ -81,6 +82,8 @@ services:
         condition: service_started
     environment:
       - VITE_API_URL=${VITE_API_URL}
+      - BACKEND_PORT=${BE_PORTInternal:-8080}
+      - NGINX_PORT=${FE_PORTInternal:-8080}
     networks:
       - aerostride-net
 

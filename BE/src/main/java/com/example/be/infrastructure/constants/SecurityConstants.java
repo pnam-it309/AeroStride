@@ -11,6 +11,7 @@ public final class SecurityConstants {
         "/uploads/**",
         "/swagger-ui/**",
         "/v3/api-docs/**",
-        "/ws/**"
+        "/ws/**",
+        "/actuator/**"
     };
 }
