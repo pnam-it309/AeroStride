@@ -32,11 +32,12 @@ USER spring:spring
 
 # Build the application
 FROM build AS builder
-RUN ./gradlew bootJar --no-daemon
+RUN ./gradlew bootJar --no-daemon && \
+    cp build/libs/*.jar /app/app.jar
 
 FROM production AS release
-# Copy the specific executable jar created by the bootJar task
-COPY --from=builder --chown=spring:spring /app/build/libs/app.jar app.jar
+# Copy the fixed app.jar from the builder stage
+COPY --from=builder --chown=spring:spring /app/app.jar app.jar
 
 # Expose the application port
 EXPOSE 8080
