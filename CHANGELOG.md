@@ -1,3 +1,10 @@
+## [1.2.8](https://github.com/pnam-it309/AeroStride/compare/v1.2.7...v1.2.8) (2026-04-10)
+
+
+### Bug Fixes
+
+* **nginx:** add production domain names and improve proxy headers ([fa6c127](https://github.com/pnam-it309/AeroStride/commit/fa6c127bbb725724fc0c22e7eb13c24376a32e4c))
+
 ## [1.2.7](https://github.com/pnam-it309/AeroStride/compare/v1.2.6...v1.2.7) (2026-04-10)
 
 
