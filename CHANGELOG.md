@@ -1,3 +1,10 @@
+## [1.2.13](https://github.com/pnam-it309/AeroStride/compare/v1.2.12...v1.2.13) (2026-04-10)
+
+
+### Bug Fixes
+
+* **ui:** eliminate vertical scroll and white space on login page ([f429c40](https://github.com/pnam-it309/AeroStride/commit/f429c40aff336c651cfa6821b3c20f4676db3afe))
+
 ## [1.2.12](https://github.com/pnam-it309/AeroStride/compare/v1.2.11...v1.2.12) (2026-04-10)
 
 
