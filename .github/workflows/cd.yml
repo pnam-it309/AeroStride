@@ -55,13 +55,14 @@ jobs:
             type=raw,value=latest
 
       - name: Build and Push Backend
-        if: steps.semantic.outputs.new_release_published == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/BE.Dockerfile
           push: true
-          tags: ${{ steps.meta-be.outputs.tags }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:latest
+            ${{ steps.meta-be.outputs.tags }}
           labels: ${{ steps.meta-be.outputs.labels }}
 
       - name: Extract metadata for Docker (FE)
@@ -76,13 +77,14 @@ jobs:
             type=raw,value=latest
 
       - name: Build and Push Frontend
-        if: steps.semantic.outputs.new_release_published == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/FE.Dockerfile
           push: true
-          tags: ${{ steps.meta-fe.outputs.tags }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:latest
+            ${{ steps.meta-fe.outputs.tags }}
           labels: ${{ steps.meta-fe.outputs.labels }}
           build-args: |
             VITE_API_URL=${{ secrets.VITE_API_URL }}
@@ -98,7 +100,6 @@ jobs:
   # Stage 4: Deployment to Self-hosted Runner (Dell PC)
   deploy:
     needs: release-and-publish
-    if: needs.release-and-publish.outputs.new_release_published == 'true'
     runs-on: self-hosted
     name: Deploy to On-Premise Server
     env:

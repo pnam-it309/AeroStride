@@ -30,12 +30,12 @@ WORKDIR /app
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
-# Copy the jar from the build stage (requires a build task)
-# We need to run the build in the 'build' stage first
+# Build the application
 FROM build AS builder
-RUN ./gradlew build -x test --no-daemon
+RUN ./gradlew bootJar --no-daemon
 
 FROM production AS release
+# Copy the specific executable jar created by the bootJar task
 COPY --from=builder --chown=spring:spring /app/build/libs/app.jar app.jar
 
 # Expose the application port
