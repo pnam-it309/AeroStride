@@ -1,3 +1,10 @@
+## [1.2.6](https://github.com/pnam-it309/AeroStride/compare/v1.2.5...v1.2.6) (2026-04-10)
+
+
+### Bug Fixes
+
+* **security:** resolve 405 login error by fixing CORS OPTIONS order and FE redirect logic ([0177e91](https://github.com/pnam-it309/AeroStride/commit/0177e9123bb762b532363bbec21a1f97f51cdd28))
+
 ## [1.2.5](https://github.com/pnam-it309/AeroStride/compare/v1.2.4...v1.2.5) (2026-04-09)
 
 
