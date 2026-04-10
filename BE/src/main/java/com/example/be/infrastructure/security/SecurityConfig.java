@@ -4,7 +4,6 @@ import com.example.be.infrastructure.constants.RoutesConstant;
 import com.example.be.infrastructure.constants.SecurityConstants;
 import com.example.be.infrastructure.security.exception.CustomAccessDeniedHandler;
 import com.example.be.infrastructure.security.exception.CustomAuthenticationEntryPoint;
-import com.example.be.infrastructure.security.router.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -35,13 +34,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
 public class SecurityConfig {
-
-    private final AuthenticationSecurityConfig authenticationSecurityConfig;
-    private final StaffSecurityConfig staffSecurityConfig;
-    private final AdminSecurityConfig adminSecurityConfig;
-    private final CustomerSecurityConfig customerSecurityConfig;
-    private final ExcelSecurityConfig excelSecurityConfig;
-    private final TestRedisSecurityConfig testSecurityConfig;
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
@@ -108,20 +100,22 @@ public class SecurityConfig {
         // Add JWT filter
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        // Test configuration
-        testSecurityConfig.configure(http);
-
-        // Modular route configurations
-        authenticationSecurityConfig.configure(http);
-        staffSecurityConfig.configure(http);
-        adminSecurityConfig.configure(http);
-        customerSecurityConfig.configure(http);
-        excelSecurityConfig.configure(http);
-
         http.authorizeHttpRequests(auth -> auth
+                // Allow all OPTIONS requests (CORS preflight)
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                
+                // Public endpoints
                 .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
+                
+                // Modular route configurations (ordered before general authenticated prefix)
+                .requestMatchers(RoutesConstant.STAFF + "/**").hasAnyRole("NHAN_VIEN", "QUAN_TRI_VIEN")
+                .requestMatchers(RoutesConstant.ADMIN + "/**").hasRole("QUAN_TRI_VIEN")
+                .requestMatchers(RoutesConstant.CUSTOMER + "/**").hasRole("KHACH_HANG")
+                
+                // General authenticated prefix
                 .requestMatchers(RoutesConstant.API_PREFIX + "/**").authenticated()
+                
+                // Deny all other requests
                 .anyRequest().denyAll());
 
         return http.build();

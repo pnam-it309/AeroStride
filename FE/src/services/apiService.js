@@ -52,11 +52,14 @@ api.interceptors.response.use(
     } catch (e) {}
 
     if (error.response?.status === 401) {
-      // Token expired or invalid, redirect to login
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      window.location.href = '/auth/login';
+      const isLoginRequest = error.config.url.includes('/auth/login');
+      if (!isLoginRequest) {
+        // Token expired or invalid, redirect to login
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        window.location.href = '/auth/login';
+      }
     }
     return Promise.reject(error);
   }
