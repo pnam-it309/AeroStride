@@ -1,3 +1,10 @@
+## [1.2.10](https://github.com/pnam-it309/AeroStride/compare/v1.2.9...v1.2.10) (2026-04-10)
+
+
+### Bug Fixes
+
+* **docker:** nuclear option for jar naming and copying ([41ed2fe](https://github.com/pnam-it309/AeroStride/commit/41ed2fec35f87e9fff7714a2f53e527868e39d62))
+
 ## [1.2.9](https://github.com/pnam-it309/AeroStride/compare/v1.2.8...v1.2.9) (2026-04-10)
 
 
