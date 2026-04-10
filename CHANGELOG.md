@@ -1,3 +1,10 @@
+## [1.2.7](https://github.com/pnam-it309/AeroStride/compare/v1.2.6...v1.2.7) (2026-04-10)
+
+
+### Bug Fixes
+
+* **docker:** ensure single app.jar is produced and correctly copied in Dockerfile ([9506573](https://github.com/pnam-it309/AeroStride/commit/9506573361e0dc236846487fc2d795037c399292))
+
 ## [1.2.6](https://github.com/pnam-it309/AeroStride/compare/v1.2.5...v1.2.6) (2026-04-10)
 
 
