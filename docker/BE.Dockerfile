@@ -36,7 +36,7 @@ FROM build AS builder
 RUN ./gradlew build -x test --no-daemon
 
 FROM production AS release
-COPY --from=builder --chown=spring:spring /app/build/libs/*.jar app.jar
+COPY --from=builder --chown=spring:spring /app/build/libs/app.jar app.jar
 
 # Expose the application port
 EXPOSE 8080
