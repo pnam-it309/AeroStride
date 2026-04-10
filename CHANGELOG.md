@@ -1,3 +1,10 @@
+## [1.2.12](https://github.com/pnam-it309/AeroStride/compare/v1.2.11...v1.2.12) (2026-04-10)
+
+
+### Bug Fixes
+
+* **cd:** ensure ghcr login always run to prevent unauthorized push ([51ac8d1](https://github.com/pnam-it309/AeroStride/commit/51ac8d11bd9cf542a828f38d01f288c14b90ca81))
+
 ## [1.2.11](https://github.com/pnam-it309/AeroStride/compare/v1.2.10...v1.2.11) (2026-04-10)
 
 
