@@ -1,3 +1,10 @@
+## [1.2.8](https://github.com/pnam-it309/AeroStride/compare/v1.2.7...v1.2.8) (2026-04-11)
+
+
+### Bug Fixes
+
+* resolve nginx 405 error and align role check logic ([ee00607](https://github.com/pnam-it309/AeroStride/commit/ee00607d63c3d8834369d30ef160cf9064084c0f))
+
 ## [1.2.7](https://github.com/pnam-it309/AeroStride/compare/v1.2.6...v1.2.7) (2026-04-11)
 
 
