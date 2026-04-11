@@ -131,7 +131,22 @@ onMounted(init);
                 <v-select v-model="form.loaiPhieu" label="Loại ưu đãi *" :items="[{title:'Phần trăm (%)',value:'PHAN_TRAM'},{title:'Số tiền mặt (VNĐ)',value:'TIEN_MAT'}]" variant="outlined"></v-select>
               </v-col>
               <v-col cols="12" md="6">
-                <v-text-field v-model.number="form.loaiPhieu === 'PHAN_TRAM' ? form.phanTramGiamGia : form.soTienGiam" :label="form.loaiPhieu === 'PHAN_TRAM' ? 'Giá trị giảm (%) *' : 'Số tiền giảm (₫) *'" variant="outlined" type="number" :suffix="form.loaiPhieu === 'PHAN_TRAM' ? '%' : '₫'"></v-text-field>
+                <v-text-field 
+                  v-if="form.loaiPhieu === 'PHAN_TRAM'"
+                  v-model.number="form.phanTramGiamGia" 
+                  label="Giá trị giảm (%) *" 
+                  variant="outlined" 
+                  type="number" 
+                  suffix="%"
+                ></v-text-field>
+                <v-text-field 
+                  v-else
+                  v-model.number="form.soTienGiam" 
+                  label="Số tiền giảm (₫) *" 
+                  variant="outlined" 
+                  type="number" 
+                  suffix="₫"
+                ></v-text-field>
               </v-col>
               <v-col cols="12" md="6">
                 <v-text-field v-model.number="form.soLuong" label="Số lượng phát hành *" variant="outlined" type="number" prepend-inner-icon="mdi-numeric"></v-text-field>
