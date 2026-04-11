@@ -124,11 +124,14 @@ jobs:
           BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:latest
           FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:latest
         run: |
-          # Pull latest images before restarting
+          # Pull latest images
           docker compose -f docker/docker-compose.yml --env-file docker/.env pull
           
-          # Deploy services
-          docker compose -f docker/docker-compose.yml --env-file docker/.env up -d --remove-orphans
+          # Clean up old containers to avoid state conflicts
+          docker compose -f docker/docker-compose.yml --env-file docker/.env down --remove-orphans
+          
+          # Start services with fresh containers
+          docker compose -f docker/docker-compose.yml --env-file docker/.env up -d --force-recreate
 
       - name: Slack Notification (Deployment Status)
         uses: 8398a7/action-slack@v3
