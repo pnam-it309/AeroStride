@@ -1,3 +1,10 @@
+## [1.2.9](https://github.com/pnam-it309/AeroStride/compare/v1.2.8...v1.2.9) (2026-04-11)
+
+
+### Bug Fixes
+
+* **nginx:** use priority prefix match for api to avoid 405 errors ([f8249cb](https://github.com/pnam-it309/AeroStride/commit/f8249cb510d77b042b4f32809ac9cf8896e4aa13))
+
 ## [1.2.8](https://github.com/pnam-it309/AeroStride/compare/v1.2.7...v1.2.8) (2026-04-11)
 
 
