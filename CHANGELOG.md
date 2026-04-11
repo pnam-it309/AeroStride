@@ -1,3 +1,10 @@
+## [1.2.7](https://github.com/pnam-it309/AeroStride/compare/v1.2.6...v1.2.7) (2026-04-11)
+
+
+### Bug Fixes
+
+* **cd:** use down and force-recreate to solve docker daemon race conditions ([67bc6cd](https://github.com/pnam-it309/AeroStride/commit/67bc6cdc081a6667f740390f2c32e92bdc8c0e3c))
+
 ## [1.2.6](https://github.com/pnam-it309/AeroStride/compare/v1.2.5...v1.2.6) (2026-04-11)
 
 
