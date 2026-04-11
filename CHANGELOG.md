@@ -1,3 +1,10 @@
+## [1.2.10](https://github.com/pnam-it309/AeroStride/compare/v1.2.9...v1.2.10) (2026-04-11)
+
+
+### Bug Fixes
+
+* **nginx:** handle OPTIONS and simplify proxy to resolve 405 error ([8d2f412](https://github.com/pnam-it309/AeroStride/commit/8d2f412f960edef048cc75c2804cd8062edbf36e))
+
 ## [1.2.9](https://github.com/pnam-it309/AeroStride/compare/v1.2.8...v1.2.9) (2026-04-11)
 
 
