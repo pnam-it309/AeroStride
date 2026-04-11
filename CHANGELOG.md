@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/pnam-it309/AeroStride/compare/v1.2.0...v1.2.1) (2026-04-11)
+
+
+### Bug Fixes
+
+* **nginx:** update api prefix location to /api/v1/ and ensure trailing slash for proxy_pass ([964304f](https://github.com/pnam-it309/AeroStride/commit/964304f5540c0968b0369d6b9741717d29915965))
+
 # [1.2.0](https://github.com/pnam-it309/AeroStride/compare/v1.1.0...v1.2.0) (2026-04-11)
 
 
