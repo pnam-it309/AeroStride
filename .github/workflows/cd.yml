@@ -124,7 +124,7 @@ jobs:
           BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:latest
           FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:latest
         run: |
-         docker compose -f docker/docker-compose.yml --env-file docker/.env pull backend
+          docker compose -f docker/docker-compose.yml --env-file docker/.env pull backend
           docker compose -f docker/docker-compose.yml --env-file docker/.env pull frontend
           docker compose -f docker/docker-compose.yml --env-file docker/.env up -d --remove-orphans
 
