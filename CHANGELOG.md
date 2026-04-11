@@ -1,3 +1,10 @@
+## [1.2.6](https://github.com/pnam-it309/AeroStride/compare/v1.2.5...v1.2.6) (2026-04-11)
+
+
+### Bug Fixes
+
+* **ci:** provide strong fallback for JWT_SECRET to satisfy HS512 ([00fa7b2](https://github.com/pnam-it309/AeroStride/commit/00fa7b275c8e36435634fcb374525026ffb29da1))
+
 ## [1.2.5](https://github.com/pnam-it309/AeroStride/compare/v1.2.4...v1.2.5) (2026-04-11)
 
 
