@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/pnam-it309/AeroStride/compare/v1.1.0...v1.2.0) (2026-04-11)
+
+
+### Features
+
+* **infra:** cleanup and simplify docker-compose production config ([0d15eaf](https://github.com/pnam-it309/AeroStride/commit/0d15eafe08d920dcf0af7f951288b8c23f9602ce))
+
 # [1.1.0](https://github.com/pnam-it309/AeroStride/compare/v1.0.2...v1.1.0) (2026-04-11)
 
 
