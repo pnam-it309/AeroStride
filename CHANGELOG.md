@@ -1,3 +1,10 @@
+## [1.2.4](https://github.com/pnam-it309/AeroStride/compare/v1.2.3...v1.2.4) (2026-04-11)
+
+
+### Bug Fixes
+
+* **ci:** fix indentation in cd.yml ([7e480b8](https://github.com/pnam-it309/AeroStride/commit/7e480b89dc6ad50cb6c62e97e4bc03963c7ff4fd))
+
 ## [1.2.3](https://github.com/pnam-it309/AeroStride/compare/v1.2.2...v1.2.3) (2026-04-11)
 
 
