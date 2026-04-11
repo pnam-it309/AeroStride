@@ -17,15 +17,17 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+      SERVER_PORT: ${BACKEND_PORT}
     depends_on:
       redis:
         condition: service_healthy
     ports:
-      - "${BACKEND_PORT:-8080}:${BACKEND_PORT:-8080}"
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
     networks:
       - aerostride-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT:-8080}/api/v1/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT}/api/v1/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -36,10 +38,10 @@ services:
     container_name: aerostride-fe
     restart: always
     environment:
-      - BACKEND_PORT=${BACKEND_PORT:-8080}
-      - NGINX_PORT=${NGINX_PORT:-8080}
+      - BACKEND_PORT=${BACKEND_PORT}
+      - NGINX_PORT=${NGINX_PORT}
     ports:
-      - "${FE_PORTExternal:-80}:${NGINX_PORT:-8080}"
+      - "${FE_PORTExternal}:${NGINX_PORT}"
     depends_on:
       backend:
         condition: service_started
