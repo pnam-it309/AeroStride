@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/pnam-it309/AeroStride/compare/v1.2.2...v1.2.3) (2026-04-11)
+
+
+### Bug Fixes
+
+* **infra:** add fallback default ports to prevent invalid proto errors in CI ([ba68ebc](https://github.com/pnam-it309/AeroStride/commit/ba68ebcb6ffdeab1d8feff1d5f0f1cc6cace5e44))
+
 ## [1.2.2](https://github.com/pnam-it309/AeroStride/compare/v1.2.1...v1.2.2) (2026-04-11)
 
 
