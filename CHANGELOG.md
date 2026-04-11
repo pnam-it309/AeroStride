@@ -1,3 +1,10 @@
+## [1.2.5](https://github.com/pnam-it309/AeroStride/compare/v1.2.4...v1.2.5) (2026-04-11)
+
+
+### Bug Fixes
+
+* **docker:** update docker-compose configuration and dependencies ([dc54839](https://github.com/pnam-it309/AeroStride/commit/dc54839efc46525e15bc360117c2d34f1767f8a8))
+
 ## [1.2.4](https://github.com/pnam-it309/AeroStride/compare/v1.2.3...v1.2.4) (2026-04-11)
 
 
