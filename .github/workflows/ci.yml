@@ -8,6 +8,9 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+  MYSQL_DATABASE: aerostride_db_test
+  MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'root' }}
+  REDIS_PORT: 6379
 
 jobs:
   # Stage 1: Code Quality & Testing
@@ -18,8 +21,8 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: aerostride_db
+          MYSQL_ROOT_PASSWORD: ${{ env.MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE: ${{ env.MYSQL_DATABASE }}
         ports:
           - 3306:3306
         options: >-
@@ -50,14 +53,14 @@ jobs:
 
       - name: Run Backend Tests
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/aerostride_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/${{ env.MYSQL_DATABASE }}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
           SPRING_DATASOURCE_USERNAME: root
-          SPRING_DATASOURCE_PASSWORD: root
+          SPRING_DATASOURCE_PASSWORD: ${{ env.MYSQL_ROOT_PASSWORD }}
           SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
           SPRING_JPA_HIBERNATE_DDL_AUTO: none
           REDIS_HOST: 127.0.0.1
-          REDIS_PORT: 6379
-          JWT_SECRET: 5j7kV165x77tjozwIkHFeOyCSpXG5StPuzcuf9oFPVE=
+          REDIS_PORT: ${{ env.REDIS_PORT }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
           MAIL_HOST: localhost
           MAIL_PORT: 587
         run: |
