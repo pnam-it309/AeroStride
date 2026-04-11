@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/pnam-it309/AeroStride/compare/v1.0.2...v1.1.0) (2026-04-11)
+
+
+### Features
+
+* **infra:** move database to external AWS RDS and remove local mysql from docker-compose ([18b567a](https://github.com/pnam-it309/AeroStride/commit/18b567a48f377931cfbacf286924319526995d9b))
+
 ## [1.0.2](https://github.com/pnam-it309/AeroStride/compare/v1.0.1...v1.0.2) (2026-04-11)
 
 
