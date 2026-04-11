@@ -90,7 +90,7 @@ public class RefreshTokenService {
     public VaiTro getVaiTroFromToken(RefreshToken token) {
         if (token.getNhanVien() != null) {
             NhanVien nv = token.getNhanVien();
-            if (nv.getPhanQuyen() != null && "ROLE_ADMIN".equals(nv.getPhanQuyen().getMa())) {
+            if (nv.getPhanQuyen() != null && "ADMIN".equals(nv.getPhanQuyen().getMa())) {
                 return VaiTro.QUAN_TRI_VIEN;
             }
             return VaiTro.NHAN_VIEN;
