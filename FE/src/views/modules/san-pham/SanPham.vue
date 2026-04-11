@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
 
@@ -8,9 +9,10 @@ import AdminFilter from '@/components/common/AdminFilter.vue';
 import AdminTable from '@/components/common/AdminTable.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
-import { EditIcon, BoxIcon } from 'vue-tabler-icons';
+import { EditIcon, BoxIcon, EyeIcon } from 'vue-tabler-icons';
 
 const { addNotification } = useNotifications();
+const router = useRouter();
 
 const loading = ref(false);
 const isRefreshing = ref(false);
@@ -154,7 +156,7 @@ onMounted(() => loadProducts());
       ]"
       :items="products"
       :loading="loading"
-      @add="() => {}"
+      @add="router.push('/san-pham/form')"
     >
       <template #row="{ item }">
         <tr class="data-row">
@@ -191,15 +193,18 @@ onMounted(() => loadProducts());
 
           <td class="data-cell" style="text-align: center;">
             <div class="d-flex align-center justify-center">
+              <v-btn icon variant="tonal" size="32" color="info" class="rounded-lg mr-2" @click="router.push(`/san-pham/form/${item.id}`)">
+                <EyeIcon size="18" />
+              </v-btn>
+              <v-btn icon variant="tonal" size="32" color="primary" class="rounded-lg mr-4" @click="router.push(`/san-pham/form/${item.id}`)">
+                <EditIcon size="18" />
+              </v-btn>
               <v-switch
                 :model-value="item.trangThai === 'DANG_HOAT_DONG'"
                 color="success" inset hide-details density="compact"
                 class="tight-switch"
                 @click.stop="confirmToggleStatus(item)"
               ></v-switch>
-              <v-btn icon variant="tonal" size="32" color="primary" class="rounded-0" @click.stop="">
-                <EditIcon size="18" />
-              </v-btn>
             </div>
           </td>
         </tr>

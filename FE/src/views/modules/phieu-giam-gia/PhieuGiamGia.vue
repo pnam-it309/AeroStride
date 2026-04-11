@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { dichVuPhieuGiamGia } from '@/services/admin/dichVuPhieuGiamGia';
 
 // REUSABLE COMPONENTS
@@ -7,16 +8,13 @@ import AdminFilter from '@/components/common/AdminFilter.vue';
 import AdminTable from '@/components/common/AdminTable.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
-import { EditIcon, TicketIcon } from 'vue-tabler-icons';
+import { EditIcon, TicketIcon, EyeIcon } from 'vue-tabler-icons';
 
+const router = useRouter();
 const loading = ref(false);
 const isRefreshing = ref(false);
 const vouchers = ref([]);
-const showVoucherDialog = ref(false);
-const selectedVoucher = ref(null);
-const isEditMode = ref(false);
 
-const voucherForm = ref({ code: '', name: '', description: '', discountType: 'percentage', discountValue: '', usageLimit: '', usedCount: 0, startDate: '', endDate: '', status: 'active' });
 const pagination = ref({ page: 1, size: 5, totalElements: 0, totalPages: 1 });
 const filters = ref({ keyword: '', loaiPhieu: null });
 
@@ -53,43 +51,17 @@ const confirmToggleStatus = (item) => {
     action: async () => {
       confirmDialog.value.loading = true;
       try {
-        const newS = (item.trangThai === 'DANG_HOAT_DONG' || item.status === 'active') ? 'inactive' : 'active';
+        const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
         await dichVuPhieuGiamGia.thayDoiTrangThaiPhieuGiamGia(item.id, newS);
-        item.trangThai = newS === 'active' ? 'DANG_HOAT_DONG' : 'KHONG_HOAT_DONG';
-        item.status = newS; confirmDialog.value.show = false;
-      } catch (e) {} finally { confirmDialog.value.loading = false; }
-    }
-  };
-};
-
-const confirmSaveVoucher = () => {
-  confirmDialog.value = {
-    show: true, title: isEditMode.value ? 'Cập nhật khách hàng' : 'Thêm khách hàng',
-    message: `Bạn có chắc muốn lưu phiếu giảm giá [${voucherForm.value.code}]?`,
-    color: 'success',
-    action: async () => {
-      confirmDialog.value.loading = true;
-      try {
-        if (isEditMode.value) await updateVoucher(); else await createVoucher();
+        item.trangThai = newS;
         confirmDialog.value.show = false;
       } catch (e) {} finally { confirmDialog.value.loading = false; }
     }
   };
 };
 
-const updateVoucher = async () => {
-  const updated = await dichVuPhieuGiamGia.capNhatPhieuGiamGia(selectedVoucher.value.id, voucherForm.value);
-  const idx = vouchers.value.findIndex(v => v.id === selectedVoucher.value.id);
-  if (idx !== -1) vouchers.value[idx] = updated; showVoucherDialog.value = false;
-};
-
-const createVoucher = async () => {
-  const created = await dichVuPhieuGiamGia.taoPhieuGiamGia(voucherForm.value);
-  vouchers.value.unshift(created); showVoucherDialog.value = false; loadVouchers();
-};
-
-const editVoucher = (v) => { selectedVoucher.value = v; voucherForm.value = { ...v }; isEditMode.value = true; showVoucherDialog.value = true; };
-const openCreateDialog = () => { voucherForm.value = { code: '', name: '', description: '', discountType: 'percentage', discountValue: '', usageLimit: '', usedCount: 0, startDate: '', endDate: '', status: 'active' }; isEditMode.value = false; showVoucherDialog.value = true; };
+const editVoucher = (v) => { router.push(`/phieu-giam-gia/form/${v.id}`); };
+const openCreateDialog = () => { router.push('/phieu-giam-gia/form'); };
 const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 const getDiscountDisplay = (v) => v.loaiPhieu === 'PHAN_TRAM' ? { val: `${v.phanTramGiamGia || 0}%`, color: 'indigo' } : { val: formatCurrency(v.soTienGiam || 0), color: 'emerald' };
 const getVoucherStatusLabel = (v) => { const now = new Date().getTime(); if (now < v.ngayBatDau) return { text: 'Chưa diễn ra', color: 'amber' }; if (now > v.ngayKetThuc) return { text: 'Hết hạn', color: 'grey' }; return { text: 'Đang hoạt động', color: 'success' }; };
@@ -131,8 +103,9 @@ onMounted(() => loadVouchers());
           <td class="data-cell" style="text-align: center;"><v-chip :color="getVoucherStatusLabel(item).color" size="x-small" variant="flat" class="font-weight-bold px-4">{{ getVoucherStatusLabel(item).text }}</v-chip></td>
           <td class="data-cell" style="text-align: center;">
             <div class="d-flex align-center justify-center">
-              <v-switch :model-value="item.trangThai === 'DANG_HOAT_DONG' || item.status === 'active'" color="success" inset hide-details density="compact" class="tight-switch" @click.stop="confirmToggleStatus(item)"></v-switch>
-              <v-btn icon variant="tonal" size="32" color="primary" class="rounded-0" @click.stop="editVoucher(item)"><EditIcon size="18" /></v-btn>
+              <v-btn icon variant="tonal" size="32" color="info" class="rounded-lg mr-2" @click.stop="editVoucher(item)"><EyeIcon size="18" /></v-btn>
+              <v-btn icon variant="tonal" size="32" color="primary" class="rounded-lg mr-4" @click.stop="editVoucher(item)"><EditIcon size="18" /></v-btn>
+              <v-switch :model-value="item.trangThai === 'DANG_HOAT_DONG'" color="success" inset hide-details density="compact" class="tight-switch" @click.stop="confirmToggleStatus(item)"></v-switch>
             </div>
           </td>
         </tr>
@@ -141,29 +114,6 @@ onMounted(() => loadVouchers());
         <AdminPagination v-model="pagination.page" v-model:page-size="pagination.size" :total-pages="pagination.totalPages" :total-elements="pagination.totalElements" :current-size="vouchers.length" @change="loadVouchers" />
       </template>
     </AdminTable>
-
-    <!-- Dialog (SQUARE) -->
-    <v-dialog v-model="showVoucherDialog" max-width="700">
-      <v-card class="rounded-0 border shadow-2xl">
-        <v-card-title class="pa-4 font-weight-bold border-b bg-grey-lighten-4 text-primary">{{ isEditMode ? 'Cập nhật phiếu' : 'Tạo voucher mới' }}</v-card-title>
-        <v-card-text class="pa-6">
-          <v-form>
-            <v-row>
-              <v-col cols="12" md="6"><v-text-field v-model="voucherForm.code" label="Mã voucher" variant="outlined" class="font-weight-medium" rounded="0"></v-text-field></v-col>
-              <v-col cols="12" md="6"><v-text-field v-model="voucherForm.name" label="Tên phiếu" variant="outlined" class="font-weight-medium" rounded="0"></v-text-field></v-col>
-              <v-col cols="12" md="6"><v-select v-model="voucherForm.discountType" label="Loại ưu đãi" :items="[{title:'Phần trăm (%)',value:'percentage'},{title:'Số tiền mặt (VNĐ)',value:'fixed'}]" variant="outlined" rounded="0"></v-select></v-col>
-              <v-col cols="12" md="6"><v-text-field v-model="voucherForm.discountValue" label="Giá trị giảm" variant="outlined" type="number" class="font-weight-black" rounded="0"></v-text-field></v-col>
-            </v-row>
-          </v-form>
-        </v-card-text>
-        <v-divider></v-divider>
-        <v-card-actions class="pa-4 bg-grey-lighten-4">
-          <v-spacer></v-spacer>
-          <v-btn variant="text" class="text-none font-weight-black" @click="showVoucherDialog = false">Hủy bỏ</v-btn>
-          <v-btn color="primary" variant="flat" rounded="0" class="px-8 text-none font-weight-black" @click="confirmSaveVoucher">Xác nhận</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
 
     <!-- SHARED CONFIRM -->
     <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message" :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />

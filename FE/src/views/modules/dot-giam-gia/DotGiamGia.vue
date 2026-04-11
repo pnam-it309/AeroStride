@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 
 // REUSABLE COMPONENTS
@@ -7,16 +8,13 @@ import AdminFilter from '@/components/common/AdminFilter.vue';
 import AdminTable from '@/components/common/AdminTable.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
-import { EditIcon, GiftIcon } from 'vue-tabler-icons';
+import { EditIcon, GiftIcon, EyeIcon } from 'vue-tabler-icons';
 
+const router = useRouter();
 const loading = ref(false);
 const isRefreshing = ref(false);
 const campaigns = ref([]);
-const showCampaignDialog = ref(false);
-const selectedCampaign = ref(null);
-const isEditMode = ref(false);
 
-const campaignForm = ref({ name: '', description: '', discountType: 'percentage', discountValue: '', startDate: '', endDate: '', status: 'active' });
 const pagination = ref({ page: 1, size: 5, totalElements: 0, totalPages: 1 });
 const filters = ref({ keyword: '', loaiGiamGia: null });
 
@@ -53,43 +51,17 @@ const confirmToggleStatus = (item) => {
     action: async () => {
       confirmDialog.value.loading = true;
       try {
-        const newS = (item.trangThai === 'DANG_HOAT_DONG' || item.status === 'active') ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
+        const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
         await dichVuDotGiamGia.thayDoiTrangThaiDotGiamGia(item.id, newS);
-        item.trangThai = newS; item.status = newS === 'DANG_HOAT_DONG' ? 'active' : 'inactive';
+        item.trangThai = newS;
         confirmDialog.value.show = false;
       } catch (e) {} finally { confirmDialog.value.loading = false; }
     }
   };
 };
 
-const confirmSaveCampaign = () => {
-  confirmDialog.value = {
-    show: true, title: isEditMode.value ? 'Cập nhật chiến dịch' : 'Tạo chiến dịch',
-    message: `Bạn có muốn lưu thông tin đợt giảm giá [${campaignForm.value.name}]?`,
-    color: 'success',
-    action: async () => {
-      confirmDialog.value.loading = true;
-      try {
-        if (isEditMode.value) await updateCampaign(); else await createCampaign();
-        confirmDialog.value.show = false;
-      } catch (e) {} finally { confirmDialog.value.loading = false; }
-    }
-  };
-};
-
-const updateCampaign = async () => {
-  const updated = await dichVuDotGiamGia.capNhatDotGiamGia(selectedCampaign.value.id, campaignForm.value);
-  const idx = campaigns.value.findIndex(c => c.id === selectedCampaign.value.id);
-  if (idx !== -1) campaigns.value[idx] = updated; showCampaignDialog.value = false;
-};
-
-const createCampaign = async () => {
-  const created = await dichVuDotGiamGia.taoDotGiamGia(campaignForm.value);
-  campaigns.value.unshift(created); showCampaignDialog.value = false; loadCampaigns();
-};
-
-const editCampaign = (c) => { selectedCampaign.value = c; campaignForm.value = { ...c }; isEditMode.value = true; showCampaignDialog.value = true; };
-const openCreateDialog = () => { campaignForm.value = { name: '', description: '', discountType: 'percentage', discountValue: '', startDate: '', endDate: '', status: 'active' }; isEditMode.value = false; showCampaignDialog.value = true; };
+const editCampaign = (c) => { router.push(`/dot-giam-gia/form/${c.id}`); };
+const openCreateDialog = () => { router.push('/dot-giam-gia/form'); };
 const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 const formatDate = (timestamp) => timestamp ? new Date(timestamp).toLocaleDateString('vi-VN') : 'N/A';
 const getDiscountDisplay = (c) => c.loaiGiamGia === 'PHAN_TRAM' ? { val: `${c.soTienGiam}%`, color: 'orange' } : { val: formatCurrency(c.soTienGiam), color: 'green' };
@@ -129,8 +101,9 @@ onMounted(() => loadCampaigns());
           <td class="data-cell"><v-chip :color="getCampaignStatusLabel(item).color" size="x-small" variant="flat" class="font-weight-black px-4">{{ getCampaignStatusLabel(item).text }}</v-chip></td>
           <td class="data-cell">
             <div class="d-flex align-center justify-center">
-              <v-switch :model-value="item.trangThai === 'DANG_HOAT_DONG' || item.status === 'active'" color="success" inset hide-details density="compact" class="tight-switch" @click.stop="confirmToggleStatus(item)"></v-switch>
-              <v-btn icon variant="tonal" size="32" color="primary" class="rounded-0" @click.stop="editCampaign(item)"><EditIcon size="18" /></v-btn>
+              <v-btn icon variant="tonal" size="32" color="info" class="rounded-lg mr-2" @click.stop="editCampaign(item)"><EyeIcon size="18" /></v-btn>
+              <v-btn icon variant="tonal" size="32" color="primary" class="rounded-lg mr-4" @click.stop="editCampaign(item)"><EditIcon size="18" /></v-btn>
+              <v-switch :model-value="item.trangThai === 'DANG_HOAT_DONG'" color="success" inset hide-details density="compact" class="tight-switch" @click.stop="confirmToggleStatus(item)"></v-switch>
             </div>
           </td>
         </tr>
@@ -139,30 +112,6 @@ onMounted(() => loadCampaigns());
         <AdminPagination v-model="pagination.page" v-model:page-size="pagination.size" :total-pages="pagination.totalPages" :total-elements="pagination.totalElements" :current-size="campaigns.length" @change="loadCampaigns" />
       </template>
     </AdminTable>
-
-    <!-- Dialog (SQUARE) -->
-    <v-dialog v-model="showCampaignDialog" max-width="700">
-      <v-card class="rounded-0 border shadow-2xl">
-        <v-card-title class="pa-4 font-weight-black border-b bg-grey-lighten-4 text-primary">{{ isEditMode ? 'Cập nhật chiến dịch' : 'Tạo đợt giảm giá mới' }}</v-card-title>
-        <v-card-text class="pa-6">
-          <v-form>
-            <v-row>
-              <v-col cols="12"><v-text-field v-model="campaignForm.name" label="Tên đợt giảm giá" variant="outlined" class="font-weight-black" rounded="0"></v-text-field></v-col>
-              <v-col cols="12" md="6"><v-select v-model="campaignForm.discountType" label="Loại giảm giá" :items="[{title:'Giảm theo %',value:'percentage'},{title:'Giảm theo tiền',value:'fixed'}]" variant="outlined" rounded="0"></v-select></v-col>
-              <v-col cols="12" md="6"><v-text-field v-model="campaignForm.discountValue" label="Giá trị giảm" variant="outlined" type="number" class="font-weight-black" rounded="0"></v-text-field></v-col>
-              <v-col cols="12" md="6"><v-text-field v-model="campaignForm.startDate" label="Ngày bắt đầu" variant="outlined" type="datetime-local" rounded="0"></v-text-field></v-col>
-              <v-col cols="12" md="6"><v-text-field v-model="campaignForm.endDate" label="Ngày kết thúc" variant="outlined" type="datetime-local" rounded="0"></v-text-field></v-col>
-            </v-row>
-          </v-form>
-        </v-card-text>
-        <v-divider></v-divider>
-        <v-card-actions class="pa-4 bg-grey-lighten-4">
-          <v-spacer></v-spacer>
-          <v-btn variant="text" class="text-none font-weight-black" @click="showCampaignDialog = false">Đóng</v-btn>
-          <v-btn color="primary" variant="flat" rounded="0" class="px-8 text-none font-weight-black" @click="confirmSaveCampaign">Xác nhận</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
 
     <!-- SHARED CONFIRM -->
     <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message" :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
 
 // Reusable Components
@@ -8,6 +9,7 @@ import AdminTable from '@/components/common/AdminTable.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import { EyeIcon, ReceiptIcon } from 'vue-tabler-icons';
 
+const router = useRouter();
 const loading = ref(false);
 const isRefreshing = ref(false);
 const orders = ref([]);
@@ -83,8 +85,7 @@ const getStatusInfo = (status) => {
 };
 
 const viewOrderDetail = (order) => {
-  selectedOrder.value = order;
-  showOrderDetailDialog.value = true;
+  router.push(`/hoa-don/chi-tiet/${order.id}`);
 };
 
 onMounted(() => loadOrders());
