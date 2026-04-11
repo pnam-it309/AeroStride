@@ -98,12 +98,12 @@ onMounted(() => loadCustomers());
 <template>
   <v-container fluid class="pa-6 gray-bg min-h-screen font-body">
     <!-- Header -->
-    <v-row class="mb-4">
-      <v-col cols="12">
-        <h2 class="text-h3 font-weight-black tracking-tight text-dark mb-1">Quản lý khách hàng</h2>
-        <div class="text-subtitle-1 text-medium-emphasis">Gìn giữ và phát triển cộng đồng người dùng AeroStride</div>
-      </v-col>
-    </v-row>
+    <div class="d-flex justify-space-between align-center mb-6">
+      <div>
+        <h1 class="text-h4 font-weight-bold">Quản lý khách hàng</h1>
+        <p class="text-subtitle-1 text-medium-emphasis">Thông tin khách hàng và lịch sử mua sắm</p>
+      </div>
+    </div>
 
     <!-- 1. FILTER -->
     <AdminFilter :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">

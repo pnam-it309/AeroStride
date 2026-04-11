@@ -72,12 +72,15 @@ onMounted(() => loadVouchers());
 <template>
   <v-container fluid class="pa-6 gray-bg min-h-screen font-body">
     <!-- Header -->
-    <v-row class="mb-4">
-      <v-col cols="12">
-        <h2 class="text-h4 font-weight-bold text-dark mb-1">Quản lý phiếu giảm giá</h2>
-        <div class="text-subtitle-1 text-medium-emphasis">Hệ thống khuyến mãi và mã ưu đãi AeroStride</div>
-      </v-col>
-    </v-row>
+    <div class="d-flex justify-space-between align-center mb-6">
+      <div>
+        <h1 class="text-h4 font-weight-bold">Phiếu giảm giá</h1>
+        <p class="text-subtitle-1 text-medium-emphasis">Danh sách mã voucher và phiếu ưu đãi khách hàng</p>
+      </div>
+      <v-btn color="primary" prepend-icon="mdi-plus" class="text-none font-weight-bold px-6 rounded-lg" @click="router.push('/phieu-giam-gia/form')">
+        Tạo voucher
+      </v-btn>
+    </div>
 
     <!-- 1. FILTER -->
     <AdminFilter :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">

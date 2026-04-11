@@ -73,12 +73,15 @@ onMounted(() => loadCampaigns());
 <template>
   <v-container fluid class="pa-6 gray-bg min-h-screen font-body">
     <!-- Header -->
-    <v-row class="mb-4">
-      <v-col cols="12">
-        <h2 class="text-h3 font-weight-black tracking-tight text-dark mb-1">Quản lý đợt giảm giá</h2>
-        <div class="text-subtitle-1 text-medium-emphasis">Thiết lập các chương trình khuyến mãi AeroStride</div>
-      </v-col>
-    </v-row>
+    <div class="d-flex justify-space-between align-center mb-6">
+      <div>
+        <h1 class="text-h4 font-weight-bold">Đợt giảm giá</h1>
+        <p class="text-subtitle-1 text-medium-emphasis">Chiến dịch ưu đãi và sự kiện khuyến mãi</p>
+      </div>
+      <v-btn color="primary" prepend-icon="mdi-plus" class="text-none font-weight-bold px-6 rounded-lg" @click="router.push('/dot-giam-gia/form')">
+        Tạo chiến dịch
+      </v-btn>
+    </div>
 
     <!-- 1. FILTER -->
     <AdminFilter :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">

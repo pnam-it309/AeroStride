@@ -177,10 +177,10 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
           <ChevronLeftIcon size="24" />
         </v-btn>
         <div>
-          <h2 class="text-h4 font-weight-black text-slate-900">
+          <h2 class="text-h4 font-weight-bold">
             {{ isEditMode ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới' }}
           </h2>
-          <div class="text-subtitle-1 text-slate-500">Cấu hình thông tin chi tiết và biến thể sản phẩm AeroStride</div>
+          <p class="text-subtitle-1 text-medium-emphasis">Cấu hình thông tin chi tiết và biến thể sản phẩm</p>
         </div>
       </div>
       <div class="d-flex gap-3">

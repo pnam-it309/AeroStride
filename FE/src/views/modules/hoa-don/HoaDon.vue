@@ -94,12 +94,12 @@ onMounted(() => loadOrders());
 <template>
   <v-container fluid class="pa-6 gray-bg min-h-screen font-body">
     <!-- Header -->
-    <v-row class="mb-4">
-      <v-col cols="12">
-        <h2 class="text-h4 font-weight-bold text-dark mb-1">Quản lý hóa đơn</h2>
-        <div class="text-subtitle-1 text-medium-emphasis">Theo dõi dòng tiền và trạng thái đơn hàng AeroStride</div>
-      </v-col>
-    </v-row>
+    <div class="d-flex justify-space-between align-center mb-6">
+      <div>
+        <h1 class="text-h4 font-weight-bold">Quản lý hóa đơn</h1>
+        <p class="text-subtitle-1 text-medium-emphasis">Tra cứu lịch sử đơn hàng và trạng thái giao dịch</p>
+      </div>
+    </div>
 
     <!-- 1. FILTER -->
     <AdminFilter :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">

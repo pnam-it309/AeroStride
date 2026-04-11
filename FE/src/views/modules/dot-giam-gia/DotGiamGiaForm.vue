@@ -85,10 +85,10 @@ onMounted(init);
           <ChevronLeftIcon size="24" />
         </v-btn>
         <div>
-          <h2 class="text-h4 font-weight-black text-slate-900">
+          <h2 class="text-h4 font-weight-bold">
             {{ isEditMode ? 'Cập nhật chiến dịch' : 'Tạo đợt giảm giá mới' }}
           </h2>
-          <div class="text-subtitle-1 text-slate-500">Thiết lập chương trình khuyến mãi cho hệ thống AeroStride</div>
+          <p class="text-subtitle-1 text-medium-emphasis">Thiết lập chương trình khuyến mãi cho hệ thống</p>
         </div>
       </div>
       <div class="d-flex gap-3">

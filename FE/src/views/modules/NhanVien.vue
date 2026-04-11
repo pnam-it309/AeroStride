@@ -111,12 +111,12 @@ onMounted(() => loadEmployees());
 <template>
   <v-container fluid class="pa-6 gray-bg min-h-screen font-body">
     <!-- Header -->
-    <v-row class="mb-4">
-      <v-col cols="12">
-        <h2 class="text-h4 font-weight-bold text-dark mb-1">Quản lý nhân viên</h2>
-        <div class="text-subtitle-1 text-medium-emphasis">Điều hành đội ngũ nhân sự hệ thống AeroStride</div>
-      </v-col>
-    </v-row>
+    <div class="d-flex justify-space-between align-center mb-6">
+      <div>
+        <h1 class="text-h4 font-weight-bold">Quản lý nhân viên</h1>
+        <p class="text-subtitle-1 text-medium-emphasis">Hồ sơ nhân sự và phân quyền hệ thống</p>
+      </div>
+    </div>
 
     <!-- 1. FILTER -->
     <AdminFilter :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">

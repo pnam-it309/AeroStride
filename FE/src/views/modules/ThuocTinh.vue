@@ -215,13 +215,12 @@ watch(selectedTab, (n) => { router.replace(`/thuoc-tinh/${reverseRouteMap[n]}`);
 <template>
   <v-container fluid class="pa-6 gray-bg min-h-screen font-body">
     <!-- Header -->
-    <v-row class="mb-4">
-      <v-col cols="12">
-        <h2 class="text-h4 font-weight-bold text-dark mb-1">Quản lý thuộc tính</h2>
-        <div class="text-subtitle-1 text-medium-emphasis">Thiết lập linh hoạt các thông số cơ bản cho hệ thống
-          AeroStride</div>
-      </v-col>
-    </v-row>
+    <div class="d-flex justify-space-between align-center mb-6">
+      <div>
+        <h1 class="text-h4 font-weight-bold">Thuộc tính sản phẩm</h1>
+        <p class="text-subtitle-1 text-medium-emphasis">Quản lý các thông số kỹ thuật và đặc tính sản phẩm</p>
+      </div>
+    </div>
 
     <!-- SQUARE Tabs -->
     <v-card class="rounded-0 mb-6 border shadow-none" elevation="0">
