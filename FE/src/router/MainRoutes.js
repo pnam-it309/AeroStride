@@ -19,7 +19,7 @@ const MainRoutes = {
         {
             name: 'SanPham',
             path: '/san-pham',
-            component: () => import('@/views/modules/SanPham.vue')
+            component: () => import('@/views/modules/san-pham/SanPham.vue')
         },
         {
             name: 'SanPhamForm',
@@ -34,7 +34,7 @@ const MainRoutes = {
         {
             name: 'HoaDon',
             path: '/hoa-don',
-            component: () => import('@/views/modules/HoaDon.vue')
+            component: () => import('@/views/modules/hoa-don/HoaDon.vue')
         },
         {
             name: 'HoaDonChiTiet',
@@ -49,7 +49,7 @@ const MainRoutes = {
         {
             name: 'DotGiamGia',
             path: '/dot-giam-gia',
-            component: () => import('@/views/modules/DotGiamGia.vue')
+            component: () => import('@/views/modules/dot-giam-gia/DotGiamGia.vue')
         },
         {
             name: 'DotGiamGiaForm',
@@ -59,7 +59,7 @@ const MainRoutes = {
         {
             name: 'PhieuGiamGia',
             path: '/phieu-giam-gia',
-            component: () => import('@/views/modules/PhieuGiamGia.vue')
+            component: () => import('@/views/modules/phieu-giam-gia/PhieuGiamGia.vue')
         },
         {
             name: 'PhieuGiamGiaForm',
