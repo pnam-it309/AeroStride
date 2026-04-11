@@ -1,26 +1,6 @@
 # version: '3.8' (Obsolete in Compose V2)
 
 services:
-  db:
-    image: mysql:8.0
-    container_name: aerostride-db
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_ROOT_HOST: '%'
-    ports:
-      - "${MYSQL_PORT_HOST:-3307}:${MYSQL_PORT_INTERNAL:-3306}"
-    volumes:
-      - mysql-data:/var/lib/mysql
-    networks:
-      - aerostride-net
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${MYSQL_USER}", "-p${MYSQL_PASSWORD}"]
-      timeout: 10s
-      retries: 5
-      interval: 10s
-
   backend:
     image: ${BACKEND_IMAGE:-aerostride-be:latest}
     build:
@@ -31,14 +11,20 @@ services:
     env_file:
       - .env
     environment:
-      SPRING_PROFILES_ACTIVE: mysql
+      # Profile must be 'mysql' as configured in Spring Boot
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-mysql}
+      # Database Connection (Explicit overrides from .env)
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      # Infrastructure
       SPRING_FLYWAY_CLEAN_DISABLED: "false"
       SPRING_FLYWAY_CLEAN_ON_VALIDATION_ERROR: "true"
       SERVER_FORWARD_HEADERS_STRATEGY: native
       SERVER_PORT: ${BE_PORTInternal:-8080}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
     depends_on:
-      db:
-        condition: service_started
       redis:
         condition: service_started
     ports:
@@ -81,7 +67,7 @@ services:
       backend:
         condition: service_started
     environment:
-      - VITE_API_URL=${VITE_API_URL}
+      - VITE_API_URL=${VITE_API_URL:-/api/v1}
       - BACKEND_PORT=${BE_PORTInternal:-8080}
       - NGINX_PORT=${FE_PORTInternal:-8080}
     networks:
@@ -92,7 +78,4 @@ networks:
     driver: bridge
 
 volumes:
-  mysql-data:
-  be-build:
-  be-gradle:
   fe-node-modules:
