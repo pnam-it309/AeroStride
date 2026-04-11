@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/pnam-it309/AeroStride/compare/v1.0.0...v1.0.1) (2026-04-11)
+
+
+### Bug Fixes
+
+* resolve v-model syntax error in PhieuGiamGiaForm.vue to fix production build ([ac1db6e](https://github.com/pnam-it309/AeroStride/commit/ac1db6e7d78b4eda27287e17cd90513372a13ff2))
+
 # 1.0.0 (2026-04-11)
 
 
