@@ -1,81 +1,50 @@
-# version: '3.8' (Obsolete in Compose V2)
-
 services:
   backend:
-    image: ${BACKEND_IMAGE:-aerostride-be:latest}
-    build:
-      context: ..
-      dockerfile: docker/BE.Dockerfile
+    image: ${BACKEND_IMAGE}
     container_name: aerostride-be
     restart: always
     env_file:
       - .env
     environment:
-      # Profile must be 'mysql' as configured in Spring Boot
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-mysql}
-      # Database Connection (Explicit overrides from .env)
+      # Spring Boot sẽ ưu tiên các biến này [cite: 4]
+      SERVER_PORT: ${BACKEND_PORT}
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      # Infrastructure
-      SPRING_FLYWAY_CLEAN_DISABLED: "false"
-      SPRING_FLYWAY_CLEAN_ON_VALIDATION_ERROR: "true"
-      SERVER_FORWARD_HEADERS_STRATEGY: native
-      SERVER_PORT: ${BE_PORTInternal:-8080}
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
-    depends_on:
-      redis:
-        condition: service_started
     ports:
-      - "${BE_PORTExternal:-8080}:${BE_PORTInternal:-8080}"
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
     networks:
       - aerostride-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${BE_PORTInternal:-8080}/actuator/health"]
-      interval: 20s
+      test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT}/api/v1/actuator/health"]
+      interval: 30s
       timeout: 10s
-      retries: 15
+      retries: 5
       start_period: 60s
 
   redis:
     image: redis:alpine
     container_name: aerostride-redis
     restart: always
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     networks:
       - aerostride-net
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   frontend:
-    image: ${FRONTEND_IMAGE:-aerostride-fe:latest}
-    build:
-      context: ..
-      dockerfile: docker/FE.Dockerfile
+    image: ${FRONTEND_IMAGE}
     container_name: aerostride-fe
     restart: always
+    environment:
+      # Các biến này sẽ được nhúng vào /etc/nginx/conf.d/default.conf [cite: 6]
+      - BACKEND_PORT=${BACKEND_PORT}
+      - NGINX_PORT=${NGINX_PORT}
     ports:
-      - "${FE_PORTExternal:-80}:${FE_PORTInternal:-8080}"
-    volumes:
-      - fe-node-modules:/app/node_modules
+      - "${FE_PORTExternal:-80}:${NGINX_PORT}"
     depends_on:
       backend:
         condition: service_started
-    environment:
-      - VITE_API_URL=${VITE_API_URL:-/api/v1}
-      - BACKEND_PORT=${BE_PORTInternal:-8080}
-      - NGINX_PORT=${FE_PORTInternal:-8080}
     networks:
       - aerostride-net
 
 networks:
   aerostride-net:
     driver: bridge
-
-volumes:
-  fe-node-modules:
