@@ -60,7 +60,7 @@ jobs:
           SPRING_JPA_HIBERNATE_DDL_AUTO: none
           REDIS_HOST: 127.0.0.1
           REDIS_PORT: ${{ env.REDIS_PORT }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'AeroStride_Super_Long_Secret_Key_For_HS512_Signing_Must_Be_At_Least_64_Bytes_Long_!!!' }}
           MAIL_HOST: localhost
           MAIL_PORT: 587
         run: |
