@@ -8,6 +8,7 @@ import com.example.be.core.admin.khachhang.service.AdminDiaChiService;
 import com.example.be.utils.ExcelUtils;
 import com.example.be.utils.MaGenerator;
 import com.example.be.entity.KhachHang;
+import com.example.be.entity.DiaChi;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.repository.DiaChiRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.List;
@@ -81,6 +83,7 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     }
 
     @Override
+    @Transactional
     public AdminKhachHangResponse add(AdminKhachHangRequest request) {
         if (request.getMa() != null && !request.getMa().trim().isEmpty()) {
             if (adminKhachHangRepository.existsByMa(request.getMa()))
@@ -100,15 +103,33 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
         if (request.getMatKhau() != null && !request.getMatKhau().isBlank())
             kh.setMatKhau(passwordEncoder.encode(request.getMatKhau()));
 
-        if (request.getIdDiaChi() != null)
-            kh.setDiaChi(diaChiRepository.findById(request.getIdDiaChi())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ")));
-
         adminKhachHangRepository.save(kh);
+
+        // Handle address
+        if (request.getIdDiaChi() != null) {
+            DiaChi dc = diaChiRepository.findById(request.getIdDiaChi())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
+            dc.setKhachHang(kh);
+            dc.setLaMacDinh(true);
+            diaChiRepository.save(dc);
+        } else if (request.getTinh() != null && !request.getTinh().trim().isEmpty()) {
+            DiaChi dc = new DiaChi();
+            dc.setKhachHang(kh);
+            dc.setTinh(request.getTinh());
+            dc.setThanhPho(request.getThanhPho());
+            dc.setPhuongXa(request.getPhuongXa());
+            dc.setDiaChiChiTiet(request.getDiaChiChiTiet());
+            dc.setLaMacDinh(true);
+            dc.setTenNguoiNhan(kh.getTen());
+            dc.setSdtNguoiNhan(kh.getSdt());
+            diaChiRepository.save(dc);
+        }
+
         return adminKhachHangRepository.detail(kh.getId());
     }
 
     @Override
+    @Transactional
     public AdminKhachHangResponse update(String id, AdminKhachHangRequest req) {
         KhachHang kh = adminKhachHangRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
@@ -125,11 +146,16 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
         if (req.getMatKhau() != null && !req.getMatKhau().isBlank())
             kh.setMatKhau(passwordEncoder.encode(req.getMatKhau()));
 
-        if (req.getIdDiaChi() != null)
-            kh.setDiaChi(diaChiRepository.findById(req.getIdDiaChi())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ")));
-
         adminKhachHangRepository.save(kh);
+
+        if (req.getIdDiaChi() != null) {
+            DiaChi dc = diaChiRepository.findById(req.getIdDiaChi())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
+            dc.setKhachHang(kh);
+            dc.setLaMacDinh(true);
+            diaChiRepository.save(dc);
+        }
+
         return adminKhachHangRepository.detail(kh.getId());
     }
 
