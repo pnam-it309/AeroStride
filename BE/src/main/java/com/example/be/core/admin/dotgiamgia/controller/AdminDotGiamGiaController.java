@@ -7,18 +7,26 @@ import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.infrastructure.constants.RoutesConstant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+ 
+import java.util.List;
 
 @RestController
-//@RequestMapping(RoutesConstant.ADMIN_DOT_GIAM_GIA)
-@RequestMapping("/api/v1/admin/dot-giam-gia")
+@RequestMapping(RoutesConstant.ADMIN_DOT_GIAM_GIA)
 @CrossOrigin("*")
 @RequiredArgsConstructor
 public class AdminDotGiamGiaController {
 
     @Autowired
     private AdminDotGiamGiaService service;
+
+    @GetMapping("/detail/{id}")
+    public ResponseEntity<?> detail(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(service.findById(id)));
+    }
 
     @GetMapping("/phan-trang")
     public ResponseEntity<?> phanTrang(
@@ -40,9 +48,33 @@ public class AdminDotGiamGiaController {
         service.update(req, id);
     }
 
+    @PutMapping("/status/{id}")
+    public ResponseEntity<?> updateStatus(@PathVariable String id, @RequestParam com.example.be.infrastructure.constants.TrangThai status) {
+        service.updateStatus(id, status);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công!"));
+    }
+
     @DeleteMapping("/delete")
     public void delete(@RequestParam String id) {
         service.delete(id);
     }
 
+    @GetMapping("/export-excel")
+    public ResponseEntity<byte[]> exportExcel() {
+        byte[] excelContent = service.exportExcel();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=danh_sach_dot_giam_gia.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(excelContent);
+    }
+ 
+    @GetMapping("/san-pham-ap-dung")
+    public ResponseEntity<?> layDanhSachSanPhamApDung() {
+        return ResponseEntity.ok(ApiResponse.success(service.getAvailableVariants()));
+    }
+ 
+    @GetMapping("/bien-the-ap-dung/{id}")
+    public ResponseEntity<?> layDanhSachBienTheApDung(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(service.getAppliedVariants(id)));
+    }
 }

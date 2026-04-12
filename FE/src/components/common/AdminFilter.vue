@@ -27,6 +27,7 @@ const emit = defineEmits(['refresh', 'search']);
             @click="emit('refresh')"
           >
             <RefreshIcon size="22" :class="{ 'spin-icon': isRefreshing }" />
+            <v-tooltip activator="parent" location="top">Làm mới bộ lọc</v-tooltip>
           </v-btn>
         </v-col>
       </v-row>
@@ -45,8 +46,6 @@ const emit = defineEmits(['refresh', 'search']);
 :deep(.v-field) {
   border-radius: 6px !important; /* BO TRÒN NHẸ */
   border-width: 1px !important;
-  font-weight: 800 !important;
-  color: #1e293b !important;
 }
 
 :deep(.v-field--variant-outlined .v-field__outline) {

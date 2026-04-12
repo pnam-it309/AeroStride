@@ -8,8 +8,8 @@ import MainView from './Main.vue';
         <v-app style="overflow: hidden !important;">
             <MainView />
             <v-main style="height: 100vh; overflow: hidden !important;">
-                <v-container fluid class="page-wrapper bg-background px-4 pt-4" style="height: 100%; overflow: hidden !important;">
-                    <div class="maxWidth" style="height: 100%; overflow: hidden !important; margin: 0 auto;">
+                <v-container fluid class="page-wrapper bg-background px-4 pt-4" style="height: 100%; overflow-y: auto !important; overflow-x: hidden;">
+                    <div class="maxWidth" style="margin: 0 auto;">
                         <RouterView />
                     </div>
                 </v-container>

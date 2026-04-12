@@ -17,5 +17,23 @@ export const dichVuHoaDon = {
   async capNhatTrangThaiHoaDon(id, status) {
     const response = await api.put(`/admin/hoa-don/${id}/status`, null, { params: { status } });
     return response.data.data;
+  },
+
+  // Lấy số lượng theo trạng thái
+  async laySoLuongHoaDon() {
+    const response = await api.get('/admin/hoa-don/counts');
+    return response.data.data;
+  },
+
+  // Xuất Excel
+  async xuatExcelHoaDon(params) {
+    const response = await api.get('/admin/hoa-don/export-excel', { params, responseType: 'blob' });
+    return response.data;
+  },
+
+  // In hóa đơn (trả về HTML)
+  async inHoaDon(id) {
+    const response = await api.get(`/admin/hoa-don/${id}/print`);
+    return response.data; // Đây là nội dung HTML
   }
 };

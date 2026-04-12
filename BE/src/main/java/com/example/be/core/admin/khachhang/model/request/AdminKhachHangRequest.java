@@ -23,6 +23,11 @@ public class AdminKhachHangRequest {
     private String hinhAnh;
     private String ghiChu;
 
+    private String tinh;
+    private String thanhPho;
+    private String phuongXa;
+    private String diaChiChiTiet;
+
     private String idDiaChi;
 
 

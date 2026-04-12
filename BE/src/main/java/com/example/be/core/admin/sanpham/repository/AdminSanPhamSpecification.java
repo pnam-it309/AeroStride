@@ -54,4 +54,32 @@ public final class AdminSanPhamSpecification {
         }
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("trangThai"), trangThai);
     }
+
+    public static Specification<SanPham> hasGioiTinhKhachHang(String gioiTinh) {
+        if (!StringUtils.hasText(gioiTinh)) {
+            return null;
+        }
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("gioiTinhKhachHang"), gioiTinh.trim());
+    }
+
+    public static Specification<SanPham> hasXuatXu(String xuatXuId) {
+        if (!StringUtils.hasText(xuatXuId)) {
+            return null;
+        }
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("xuatXu").get("id"), xuatXuId.trim());
+    }
+
+    public static Specification<SanPham> hasMucDichChay(String mucDichChayId) {
+        if (!StringUtils.hasText(mucDichChayId)) {
+            return null;
+        }
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("mucDichChay").get("id"), mucDichChayId.trim());
+    }
+
+    public static Specification<SanPham> hasChatLieu(String chatLieuId) {
+        if (!StringUtils.hasText(chatLieuId)) {
+            return null;
+        }
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("chatLieu").get("id"), chatLieuId.trim());
+    }
 }

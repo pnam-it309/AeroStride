@@ -24,16 +24,16 @@ const AuthRoutes = {
             name: 'Logout',
             path: '/auth/logout',
             beforeEnter: async (to, from, next) => {
-                const { useLoaderStore } = await import('@/stores/loader');
-                const loaderStore = useLoaderStore();
-                loaderStore.showOverlay('Hệ thống đang đăng xuất...');
+                const { useUIStore } = await import('@/stores/ui');
+                const uiStore = useUIStore();
+                uiStore.showLoading('Hệ thống đang đăng xuất...');
                 
                 const { dichVuXacThuc } = await import('@/services/auth/dichVuXacThuc');
                 
                 // Add a small delay for the 'Restart' feel
                 setTimeout(async () => {
                     await dichVuXacThuc.dangXuat();
-                    loaderStore.hideOverlay();
+                    uiStore.hideLoading();
                     next('/auth/login');
                 }, 1500);
             }

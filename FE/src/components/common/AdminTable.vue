@@ -8,11 +8,15 @@ defineProps({
   loading: { type: Boolean, default: false },
   addButtonText: { type: String, default: 'Thêm mới' },
   showAddButton: { type: Boolean, default: true },
+  showExportButton: { type: Boolean, default: false },
+  showImportButton: { type: Boolean, default: false },
+  showTemplateButton: { type: Boolean, default: false },
+  exportButtonText: { type: String, default: 'Xuất Excel' },
   emptyText: { type: String, default: 'Không có dữ liệu hiển thị' },
   emptyIcon: { type: String, default: 'mdi-package-variant' }
 });
 
-const emit = defineEmits(['add', 'export']);
+const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
 </script>
 
 <template>
@@ -21,38 +25,53 @@ const emit = defineEmits(['add', 'export']);
     <div class="table-toolbar d-flex align-center justify-space-between pa-4 border-b">
       <div class="d-flex align-center">
         <LayoutGridIcon size="20" class="text-primary mr-3" />
-        <h3 class="text-h6 font-weight-black text-dark tracking-tight">{{ title }}</h3>
+        <h3 class="text-h6 font-weight-bold text-dark tracking-tight">{{ title }}</h3>
       </div>
         <div class="d-flex align-center gap-2">
+          <v-btn
+            v-if="showTemplateButton"
+            prepend-icon="mdi-download"
+            variant="flat"
+            color="light-blue-lighten-5"
+            height="40"
+            class="px-4 font-weight-bold text-light-blue-darken-2"
+            @click="$emit('downloadTemplate')"
+          >
+            Tải mẫu
+          </v-btn>
+          <v-btn
+            v-if="showImportButton"
+            prepend-icon="mdi-upload"
+            variant="flat"
+            color="success"
+            height="40"
+            class="px-4 font-weight-bold"
+            @click="$emit('import')"
+          >
+            Nhập Excel
+          </v-btn>
+          <v-btn
+            v-if="showExportButton"
+            prepend-icon="mdi-microsoft-excel"
+            variant="tonal"
+            color="success"
+            height="40"
+            class="px-4 font-weight-bold"
+            @click="$emit('export')"
+          >
+            {{ exportButtonText }}
+          </v-btn>
           <v-btn
             v-if="showAddButton"
             prepend-icon="mdi-plus"
             variant="flat"
             color="primary"
             height="40"
-            class="px-6 font-weight-black"
+            class="px-6 font-weight-bold"
             @click="$emit('add')"
           >
-            Thêm mới
+            {{ addButtonText }}
           </v-btn>
-          
-          <v-btn
-            icon="mdi-refresh"
-            variant="outlined"
-            size="small"
-            color="grey-darken-1"
-            class="rounded-sm border-2"
-            @click="$emit('refresh')"
-          ></v-btn>
-          
-          <v-btn
-            icon="mdi-export"
-            variant="outlined"
-            size="small"
-            color="grey-darken-1"
-            class="rounded-sm border-2"
-            @click="$emit('export')"
-          ></v-btn>
         </div>
     </div>
 
@@ -63,7 +82,7 @@ const emit = defineEmits(['add', 'export']);
           <tr>
             <th v-for="(header, idx) in headers" 
                 :key="idx" 
-                :style="{ textAlign: header.align || 'center', width: header.width || 'auto' }"
+                :style="{ textAlign: 'center', width: header.width || 'auto' }"
                 class="header-cell"
             >
               {{ header.text || header }}
@@ -78,11 +97,11 @@ const emit = defineEmits(['add', 'export']);
             <td :colspan="headers.length" class="empty-state py-16 text-center">
               <div v-if="loading" class="d-flex flex-column align-center">
                 <v-progress-circular indeterminate color="primary" size="48" width="6" class="mb-4" />
-                <span class="text-subtitle-1 font-weight-black text-medium-emphasis">Đang tải dữ liệu...</span>
+                <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">Đang tải dữ liệu...</span>
               </div>
               <div v-else class="d-flex flex-column align-center">
                 <v-icon :icon="emptyIcon" size="64" color="grey-lighten-2" class="mb-2" />
-                <span class="text-subtitle-1 font-weight-black text-medium-emphasis">{{ emptyText }}</span>
+                <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">{{ emptyText }}</span>
               </div>
             </td>
           </tr>
@@ -152,11 +171,21 @@ const emit = defineEmits(['add', 'export']);
   font-size: 15px;
   color: #1e293b;
   vertical-align: middle;
-  text-align: center !important; /* ÉP TOÀN BỘ CĂN GIỮA */
+  text-align: center !important; /* ÉP TOÀN BỘ CĂN GIỮA TRÊN TOÀN HỆ THỐNG */
 }
 
-.add-btn, .export-btn {
-  border-radius: 0 !important; /* VUÔNG GÓC HOÀN TOÀN */
+/* Force all flex containers inside data cells to center */
+:deep(.data-cell .d-flex) {
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+:deep(.data-cell .text-left) {
+  text-align: center !important;
+}
+
+:deep(.v-btn) {
+  border-radius: 3px !important;
 }
 
 /* Pagination container spacing */

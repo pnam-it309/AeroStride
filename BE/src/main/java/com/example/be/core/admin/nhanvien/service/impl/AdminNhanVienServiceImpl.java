@@ -4,9 +4,11 @@ import com.example.be.core.admin.nhanvien.model.request.AdminNhanVienRequest;
 import com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse;
 import com.example.be.core.admin.nhanvien.repository.AdminNhanVienRepository;
 import com.example.be.core.admin.nhanvien.service.AdminNhanVienService;
+import com.example.be.core.notification.EmailService;
 import com.example.be.entity.NhanVien;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.repository.PhanQuyenRepository;
+import com.example.be.utils.ExcelUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,7 +16,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.example.be.utils.MaGenerator;
 
+
+import java.io.IOException;
 import java.util.List;
 
 
@@ -27,6 +32,8 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     private PhanQuyenRepository phanQuyenRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public List<AdminNhanVienResponse> hienThi(){
@@ -78,9 +85,14 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
             throw new RuntimeException("Tên tài khoản đã tồn tại");
 
         NhanVien nv = toEntity(request);
+        if (nv.getMa() == null || nv.getMa().trim().isEmpty()) {
+            nv.setMa(MaGenerator.generate(NhanVien.class));
+        }
 
-        if (request.getMatKhau() != null && !request.getMatKhau().isBlank())
-            nv.setMatKhau(passwordEncoder.encode(request.getMatKhau()));
+
+        // Admin cannot set password manually
+        String tempPassword = java.util.UUID.randomUUID().toString();
+        nv.setMatKhau(passwordEncoder.encode(tempPassword));
 
         if (request.getIdPhanQuyen() != null)
             nv.setPhanQuyen(phanQuyenRepository.findById(request.getIdPhanQuyen())
@@ -88,6 +100,10 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
 
         nv.setTrangThai(TrangThai.DANG_HOAT_DONG);
         adminNhanVienRepository.save(nv);
+
+        // Send password reset email to the staff
+        emailService.sendPasswordResetEmail(nv.getEmail(), tempPassword);
+
         return adminNhanVienRepository.detail(nv.getId());
     }
 
@@ -106,9 +122,8 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
 
         updateEntity(nv, request);
 
-        if (request.getMatKhau() != null && !request.getMatKhau().isBlank())
-            nv.setMatKhau(passwordEncoder.encode(request.getMatKhau()));
-
+        // Admin cannot update password manually
+        
         if (request.getIdPhanQuyen() != null)
             nv.setPhanQuyen(phanQuyenRepository.findById(request.getIdPhanQuyen())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phân quyền")));
@@ -137,6 +152,28 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         adminNhanVienRepository.save(nv);
     }
 
+    @Override
+    public byte[] exportExcel() {
+        List<AdminNhanVienResponse> data = adminNhanVienRepository.hienThi();
+        String[] headers = {"STT", "Mã", "Tên", "Email", "SĐT", "Ngày sinh", "Giới tính", "Chức vụ", "Trạng thái"};
+        
+        try {
+            return ExcelUtils.exportToExcel("Danh sách nhân viên", headers, data, item -> new Object[]{
+                data.indexOf(item) + 1,
+                item.getMa(),
+                item.getTen(),
+                item.getEmail(),
+                item.getSdt(),
+                item.getNgaySinh(),
+                item.getGioiTinh(),
+                item.getTenPhanQuyen(),
+                item.getTrangThai() == TrangThai.DANG_HOAT_DONG ? "Đang làm việc" : "Đã nghỉ việc"
+            });
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi xuất file Excel: " + e.getMessage());
+        }
+    }
+
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────
     private NhanVien toEntity(AdminNhanVienRequest request) {
         NhanVien nv = new NhanVien();
@@ -162,4 +199,8 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         nv.setHinhAnh(req.getHinhAnh());
     }
 
+    @Override
+    public List<com.example.be.entity.PhanQuyen> getAllPhanQuyen() {
+        return phanQuyenRepository.findAll();
+    }
 }

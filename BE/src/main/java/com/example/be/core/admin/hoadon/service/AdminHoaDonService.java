@@ -12,4 +12,10 @@ public interface AdminHoaDonService {
     HoaDon detail(String id);
 
     HoaDon updateStatus(String id, Integer status);
+
+    java.util.Map<String, Long> getCounts();
+
+    byte[] exportExcel(AdminHoaDonRequest request);
+
+    String generateInvoiceHtml(String id);
 }

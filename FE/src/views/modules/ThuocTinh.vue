@@ -53,7 +53,7 @@ const brands = ref([]); const categories = ref([]); const colors = ref([]);
 const sizes = ref([]); const materials = ref([]); const soles = ref([]);
 const collars = ref([]); const origins = ref([]); const purposes = ref([]);
 
-const itemForm = ref({ ten: '', moTa: '', trangThai: 0 });
+const itemForm = ref({ ten: '', moTa: '', trangThai: 'DANG_HOAT_DONG', maMauHex: '#000000', giaTriKichThuoc: '' });
 
 const tabs = [
   { value: 'brands', title: 'Thương hiệu', icon: 'mdi-tag' },
@@ -75,10 +75,11 @@ const services = {
 const dataRefs = { brands, categories, colors, sizes, materials, soles, collars, origins, purposes };
 
 const tableHeaders = [
-  { text: 'Tên thuộc tính', align: 'center', width: '150px' },
-  { text: 'Mô tả chi tiết', align: 'center', width: '150px' },
-  { text: 'Trạng thái', align: 'center', width: '180px' },
-  { text: 'Thao tác', align: 'center', width: '150px' }
+  { text: 'Mã', align: 'center', width: '120px' },
+  { text: 'Tên thuộc tính', align: 'center', width: '200px' },
+  { text: 'Mô tả chi tiết', align: 'center', width: '250px' },
+  { text: 'Trạng thái', align: 'center', width: '150px' },
+  { text: 'Thao tác', align: 'center', width: '120px' }
 ];
 
 const loadItems = async () => {
@@ -184,7 +185,7 @@ const confirmChangeStatus = (item) => {
 
 const changeItemStatus = async (item) => {
   const service = services[selectedTab.value];
-  const newS = (item.trangThai === 0 || item.trangThai === '0') ? 1 : 0;
+  const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
   const pld = { ...item, trangThai: newS };
   switch (selectedTab.value) {
     case 'brands': await service.capNhatThuongHieu(item.id, pld); break;
@@ -201,7 +202,7 @@ const changeItemStatus = async (item) => {
   addNotification({ title: 'Đổi trạng thái', subtitle: `Thuộc tính [${item.ten}] đã chuyển trạng thái.`, icon: 'InfoCircleIcon', color: 'warning' });
 };
 
-const resetForm = () => { itemForm.value = { ten: '', moTa: '', trangThai: 0 }; selectedItem.value = null; };
+const resetForm = () => { itemForm.value = { ten: '', moTa: '', trangThai: 'DANG_HOAT_DONG', maMauHex: '#000000', giaTriKichThuoc: '' }; selectedItem.value = null; };
 const openCreateDialog = () => { resetForm(); isEditMode.value = false; showDialog.value = true; };
 const handleRefresh = async () => { isRefreshing.value = true; searchQuery.value = ''; statusFilter.value = null; pagination.value.page = 1; await loadItems(); setTimeout(() => { isRefreshing.value = false; }, 800); };
 const editItem = (item) => { selectedItem.value = item; itemForm.value = { ...item }; isEditMode.value = true; showDialog.value = true; };
@@ -225,8 +226,8 @@ watch(selectedTab, (n) => { router.replace(`/thuoc-tinh/${reverseRouteMap[n]}`);
     <!-- SQUARE Tabs -->
     <v-card class="rounded-0 mb-6 border shadow-none" elevation="0">
       <v-tabs v-model="selectedTab" grow color="primary" @update:model-value="loadItems">
-        <v-tab v-for="tab in tabs" :key="tab.value" :value="tab.value" class="text-none font-weight-black square-tab">
-          <v-icon start size="small">{{ tab.icon }}</v-icon> {{ tab.title }}
+        <v-tab v-for="tab in tabs" :key="tab.value" :value="tab.value" class="text-none font-weight-medium square-tab">
+          <v-icon start >{{ tab.icon }}</v-icon> {{ tab.title }}
         </v-tab>
       </v-tabs>
     </v-card>
@@ -234,14 +235,14 @@ watch(selectedTab, (n) => { router.replace(`/thuoc-tinh/${reverseRouteMap[n]}`);
     <!-- 1. FILTER -->
     <AdminFilter :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
       <v-col cols="12" md="4">
-        <v-text-field v-model="searchQuery" placeholder="Tìm tên thuộc tính..." variant="outlined" density="comfortable"
-          hide-details prepend-inner-icon="mdi-magnify" class="font-weight-black" rounded="md"
+        <v-text-field v-model="searchQuery" :label="`Tìm kiếm ${getCurrentTabTitle().toLowerCase()}`" :placeholder="`Vui lòng nhập ${getCurrentTabTitle().toLowerCase()}...`" persistent-placeholder variant="outlined" density="comfortable"
+          hide-details prepend-inner-icon="mdi-magnify" class="font-weight-medium" rounded="lg"
           @keyup.enter="loadItems"></v-text-field>
       </v-col>
       <v-col cols="12" md="3">
-        <v-select v-model="statusFilter"
+        <v-select v-model="statusFilter" label="Trạng thái"
           :items="[{ title: 'Tất cả trạng thái', value: null }, { title: 'Hoạt động', value: 'DANG_HOAT_DONG' }, { title: 'Không hoạt động', value: 'KHONG_HOAT_DONG' }]"
-          variant="outlined" density="comfortable" hide-details class="font-weight-black" rounded="md"
+          variant="outlined" density="comfortable" hide-details class="font-weight-medium" rounded="lg"
           @update:model-value="loadItems"></v-select>
       </v-col>
     </AdminFilter>
@@ -253,19 +254,25 @@ watch(selectedTab, (n) => { router.replace(`/thuoc-tinh/${reverseRouteMap[n]}`);
       @add="openCreateDialog">
       <template #row="{ item }">
         <tr class="data-row">
-          <td class="data-cell font-weight-black text-dark">{{ item.ten }}</td>
+          <td class="data-cell" style="text-align: center;">
+            <v-chip color="primary" variant="tonal" size="small" class="font-weight-bold">{{ item.ma }}</v-chip>
+          </td>
+          <td class="data-cell font-weight-medium text-dark">{{ item.ten }}</td>
           <td class="data-cell text-medium-emphasis">{{ item.moTa || '-' }}</td>
           <td class="data-cell" style="text-align: center;">
-            <v-chip :color="(item.trangThai === 0 || item.trangThai === '0') ? 'success' : 'error'" size="x-small"
-              variant="flat" class="font-weight-black px-4">{{ (item.trangThai === 0 || item.trangThai === '0') ?
+            <v-chip :color="item.trangThai === 'DANG_HOAT_DONG' ? 'success' : 'error'" 
+              variant="flat" class="font-weight-medium px-4">{{ item.trangThai === 'DANG_HOAT_DONG' ?
                 'Hoạt động' : 'Ngừng hoạt động' }}</v-chip>
           </td>
           <td class="data-cell" style="text-align: center;">
-            <div class="d-flex align-center justify-center">
-              <v-switch :model-value="item.trangThai === 0 || item.trangThai === '0'" color="success" inset hide-details
-                density="compact" class="tight-switch" @click.stop="confirmChangeStatus(item)"></v-switch>
-              <v-btn icon variant="tonal" size="32" color="primary" class="rounded-0" @click.stop="editItem(item)">
+            <div class="d-flex align-center justify-center gap-2">
+              <v-switch :model-value="item.trangThai === 'DANG_HOAT_DONG'" color="success" inset hide-details
+                density="compact" :readonly="item.trangThai !== 'DANG_HOAT_DONG'" class="tight-switch" @click.stop="item.trangThai === 'DANG_HOAT_DONG' ? confirmChangeStatus(item) : null">
+                <v-tooltip activator="parent" location="top">Đổi trạng thái</v-tooltip>
+              </v-switch>
+              <v-btn icon variant="tonal" size="32" color="primary" class="rounded-lg" @click.stop="editItem(item)">
                 <EditIcon size="18" />
+                <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
               </v-btn>
             </div>
           </td>
@@ -285,23 +292,42 @@ watch(selectedTab, (n) => { router.replace(`/thuoc-tinh/${reverseRouteMap[n]}`);
     <!-- DIALOG (SQUARE) -->
     <v-dialog v-model="showDialog" max-width="500">
       <v-card class="rounded-0 border shadow-2xl">
-        <v-card-title class="pa-4 font-weight-black border-b bg-grey-lighten-4 text-primary">{{ isEditMode ? 'Cập nhật' : 'Thêm mới' }} {{ getCurrentTabTitle().toLowerCase() }}</v-card-title>
+        <v-card-title class="pa-4 font-weight-medium border-b bg-grey-lighten-4 text-primary">{{ isEditMode ? 'Cập nhật' : 'Thêm mới' }} {{ getCurrentTabTitle().toLowerCase() }}</v-card-title>
         <v-card-text class="pa-6">
           <v-form>
-            <v-text-field v-model="itemForm.ten" :label="`Tên ${getCurrentTabTitle()}`" variant="outlined"
-              class="mb-4 font-weight-black" rounded="0"></v-text-field>
-            <v-textarea v-model="itemForm.moTa" label="Mô tả" variant="outlined" rows="3" class="mb-4 font-weight-black"
+            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Mã {{ getCurrentTabTitle() }} <span class="text-caption text-primary">(Hệ thống tự tạo)</span></div>
+            <v-text-field v-model="itemForm.ma" readonly placeholder="Hệ thống tự tạo..." variant="outlined"
+              class="mb-4 font-weight-black" rounded="0" density="comfortable" hide-details></v-text-field>
+
+            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tên {{ getCurrentTabTitle() }} *</div>
+            <v-text-field v-model="itemForm.ten" placeholder="Nhập tên..." variant="outlined"
+              class="mb-4 font-weight-medium" rounded="0" density="comfortable" hide-details></v-text-field>
+
+            <!-- Color Specific -->
+            <div v-if="selectedTab === 'colors'" class="mb-4">
+              <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Mã màu (Hex)</div>
+              <div class="d-flex align-center gap-4">
+                <v-text-field v-model="itemForm.maMauHex" variant="outlined" density="comfortable" hide-details rounded="0"></v-text-field>
+                <input type="color" v-model="itemForm.maMauHex" style="width: 48px; height: 48px; border: 1px solid #ddd; padding: 2px">
+              </div>
+            </div>
+
+            <!-- Size Specific -->
+            <div v-if="selectedTab === 'sizes'" class="mb-4">
+              <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Giá trị kích thước (Số)</div>
+              <v-text-field v-model="itemForm.giaTriKichThuoc" type="number" placeholder="Ví dụ: 42" variant="outlined" density="comfortable" hide-details rounded="0"></v-text-field>
+            </div>
+
+            <v-textarea v-model="itemForm.moTa" label="Mô tả" variant="outlined" rows="3" class="mb-4 font-weight-medium"
               rounded="0"></v-textarea>
-            <v-select v-model="itemForm.trangThai" label="Trạng thái"
-              :items="[{ title: 'Hoạt động', value: 0 }, { title: 'Không hoạt động', value: 1 }]" variant="outlined"
-              class="font-weight-black" rounded="0"></v-select>
+
           </v-form>
         </v-card-text>
         <v-divider></v-divider>
         <v-card-actions class="pa-4 bg-grey-lighten-4">
           <v-spacer></v-spacer>
-          <v-btn variant="text" class="text-none font-weight-black" @click="showDialog = false">Hủy bỏ</v-btn>
-          <v-btn color="primary" variant="flat" rounded="0" class="px-8 text-none font-weight-black"
+          <v-btn variant="text" class="text-none font-weight-medium" @click="showDialog = false">Hủy bỏ</v-btn>
+          <v-btn color="primary" variant="flat" rounded="0" class="px-8 text-none font-weight-medium"
             @click="confirmSaveItem" :disabled="!itemForm.ten">Xác nhận</v-btn>
         </v-card-actions>
       </v-card>
@@ -336,6 +362,6 @@ watch(selectedTab, (n) => { router.replace(`/thuoc-tinh/${reverseRouteMap[n]}`);
 }
 
 :deep(.v-btn) {
-  border-radius: 0 !important;
+  border-radius: 3px !important;
 }
 </style>

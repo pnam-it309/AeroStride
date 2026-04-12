@@ -213,14 +213,14 @@ onMounted(() => {
                   icon="mdi-eye"
                   variant="text"
                   color="info"
-                  size="small"
+                  
                   @click="previewFile(file)"
                 ></v-btn>
                 <v-btn
                   icon="mdi-download"
                   variant="text"
                   color="success"
-                  size="small"
+                  
                   :href="dichVuFile.layUrlFile(file.filePath)"
                   target="_blank"
                 ></v-btn>
@@ -228,7 +228,7 @@ onMounted(() => {
                   icon="mdi-delete"
                   variant="text"
                   color="error"
-                  size="small"
+                  
                   @click="deleteFile(file.id)"
                 ></v-btn>
               </div>

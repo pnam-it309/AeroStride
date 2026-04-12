@@ -2,6 +2,7 @@ package com.example.be.core.admin.dotgiamgia.model.request;
 
 import lombok.Getter;
 import lombok.Setter;
+import java.util.List;
 
 import java.math.BigDecimal;
 
@@ -22,4 +23,6 @@ public class AdminDotGiamGiaRequest {
     private Integer mucUuTien;
 
     private Integer trangThai;
+ 
+    private List<String> listIdChiTietSanPham;
 }

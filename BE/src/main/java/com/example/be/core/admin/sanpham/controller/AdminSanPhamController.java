@@ -17,6 +17,8 @@ import com.example.be.core.common.dto.PageResponse;
 import com.example.be.infrastructure.constants.RoutesConstant;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -103,5 +105,29 @@ public class AdminSanPhamController {
     public ResponseEntity<ApiResponse<Void>> deleteVariantImage(@PathVariable String imageId) {
         adminSanPhamService.deleteVariantImage(imageId);
         return ResponseEntity.ok(ApiResponse.success(null, "Xoa mem anh bien the thanh cong"));
+    }
+
+    @GetMapping("/export-excel")
+    public ResponseEntity<byte[]> exportExcel() {
+        byte[] excelContent = adminSanPhamService.exportExcel();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=danh_sach_san_pham.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(excelContent);
+    }
+
+    @GetMapping("/download-template")
+    public ResponseEntity<byte[]> downloadTemplate() {
+        byte[] data = adminSanPhamService.downloadTemplate();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=template_nhap_san_pham.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(data);
+    }
+
+    @PostMapping("/import-excel")
+    public ResponseEntity<String> importExcel(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        adminSanPhamService.importExcel(file);
+        return ResponseEntity.ok("Import thành công");
     }
 }

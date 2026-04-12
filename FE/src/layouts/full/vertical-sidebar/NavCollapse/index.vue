@@ -2,7 +2,7 @@
 import NavItem from '../NavItem/index.vue';
 import Icon from '../Icon.vue';
 
-const props = defineProps({ item: Object, level: Number, hideTitle: Boolean });
+const props = defineProps({ item: Object, level: { type: Number, default: 1 }, hideTitle: Boolean });
 </script>
 
 <template>

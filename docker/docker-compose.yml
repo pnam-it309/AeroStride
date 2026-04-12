@@ -12,36 +12,54 @@ services:
       retries: 5
 
   backend:
-    image: ${BACKEND_IMAGE:-aerostride-be:latest}
+    image: ${BACKEND_IMAGE:-aerostride-be:dev}
+    build:
+      context: ..
+      dockerfile: docker/BE.Dockerfile
+      target: ${DOCKER_BE_TARGET:-production}
     container_name: aerostride-be
     restart: always
     env_file:
       - .env
     environment:
-      SERVER_PORT: ${BACKEND_PORT:-8080}
+      SERVER_PORT: ${SERVER_PORT:-8080}
     depends_on:
       redis:
         condition: service_healthy
     ports:
-      - "${BACKEND_PORT:-8080}:${BACKEND_PORT:-8080}"
+      - "${BACKEND_PORT:-8080}:${BE_INTERNAL_PORT:-8080}"
+    volumes:
+      - ${DOCKER_BE_VOL_APP:-./.docker_ignore:/app_ignore}
+      - ${DOCKER_BE_VOL_BUILD:-/app/build}
+      - ${DOCKER_BE_VOL_GRADLE:-/app/.gradle}
     networks:
       - aerostride-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT:-8080}/api/v1/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${BE_INTERNAL_PORT:-8080}/api/v1/actuator/health"]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 3
       start_period: 60s
 
   frontend:
-    image: ${FRONTEND_IMAGE:-aerostride-fe:latest}
+    image: ${FRONTEND_IMAGE:-aerostride-fe:dev}
+    build:
+      context: ..
+      dockerfile: docker/FE.Dockerfile
+      target: ${DOCKER_FE_TARGET:-production}
+      args:
+        - VITE_API_URL=${VITE_API_URL}
     container_name: aerostride-fe
     restart: always
     environment:
+      - BACKEND_HOST=aerostride-be
       - BACKEND_PORT=${BACKEND_PORT:-8080}
       - NGINX_PORT=${NGINX_PORT:-8080}
     ports:
-      - "${FE_PORTExternal:-80}:${NGINX_PORT:-8080}"
+      - "${FE_PORTExternal:-80}:${FE_INTERNAL_PORT:-8080}"
+    volumes:
+      - ${DOCKER_FE_VOL_APP:-./.docker_ignore:/app_ignore}
+      - ${DOCKER_FE_VOL_NODE:-/app/node_modules}
     depends_on:
       backend:
         condition: service_started

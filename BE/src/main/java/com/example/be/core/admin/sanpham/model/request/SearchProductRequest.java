@@ -13,6 +13,10 @@ public class SearchProductRequest extends PageRequest {
     private String danhMucId;
     private String thuongHieuId;
     private TrangThai trangThai;
+    private String gioiTinhKhachHang;
+    private String xuatXuId;
+    private String mucDichChayId;
+    private String chatLieuId;
 
     public SearchProductRequest() {
         setPage(1);

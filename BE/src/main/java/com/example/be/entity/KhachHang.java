@@ -19,10 +19,6 @@ import java.time.LocalDate;
 })
 public class KhachHang extends BaseCodeNameEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_dia_chi")
-    private DiaChi diaChi;
-
     @Column(name = "email", unique = true)
     private String email;
 

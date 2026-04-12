@@ -19,4 +19,10 @@ public interface AdminPhieuGiamGiaService {
     void add(AdminPhieuGiamGiaRequest req);
 
     void update(AdminPhieuGiamGiaRequest req, String id);
+
+    byte[] exportExcel();
+
+    byte[] downloadTemplate();
+
+    void importExcel(org.springframework.web.multipart.MultipartFile file);
 }

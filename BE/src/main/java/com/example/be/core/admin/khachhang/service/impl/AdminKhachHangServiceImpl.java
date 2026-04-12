@@ -4,6 +4,7 @@ import com.example.be.core.admin.khachhang.model.request.AdminKhachHangRequest;
 import com.example.be.core.admin.khachhang.model.response.AdminKhachHangResponse;
 import com.example.be.core.admin.khachhang.repository.AdminKhachHangRepository;
 import com.example.be.core.admin.khachhang.service.AdminKhachHangService;
+import com.example.be.utils.ExcelUtils;
 import org.springframework.data.domain.PageRequest;
 import com.example.be.entity.KhachHang;
 import com.example.be.infrastructure.constants.TrangThai;
@@ -14,7 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.example.be.utils.MaGenerator;
 
+import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -23,9 +26,9 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     @Autowired
     private AdminKhachHangRepository adminKhachHangRepository;
     @Autowired
-    private DiaChiRepository diaChiRepository;
-    @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private com.example.be.core.admin.khachhang.service.AdminDiaChiService adminDiaChiService;
 
     // getAll
     @Override
@@ -63,8 +66,10 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     @Override
     public AdminKhachHangResponse detail(String id) {
         AdminKhachHangResponse response = adminKhachHangRepository.detail(id);
-        if (response == null)
+        if (response == null) {
             throw new RuntimeException("Không tìm thấy khách hàng");
+        }
+        response.setAddresses(adminDiaChiService.getByKhachHangId(id));
         return response;
     }
     // ── CREATE ────────────────────────────────────────────────────────────
@@ -78,15 +83,13 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
             throw new RuntimeException("Tên tài khoản đã tồn tại");
 
         KhachHang kh = toEntity(request);
+        if (kh.getMa() == null || kh.getMa().trim().isEmpty()) {
+            kh.setMa(MaGenerator.generate(KhachHang.class));
+        }
         kh.setTrangThai(TrangThai.DANG_HOAT_DONG);
 
         if (request.getMatKhau() != null && !request.getMatKhau().isBlank())
             kh.setMatKhau(passwordEncoder.encode(request.getMatKhau()));
-
-        if (request.getIdDiaChi() != null)
-            kh.setDiaChi(diaChiRepository.findById(request.getIdDiaChi())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ")));
-
 
         adminKhachHangRepository.save(kh);
         return adminKhachHangRepository.detail(kh.getId());
@@ -109,12 +112,6 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
 
         if (req.getMatKhau() != null && !req.getMatKhau().isBlank())
             kh.setMatKhau(passwordEncoder.encode(req.getMatKhau()));
-
-        if (req.getIdDiaChi() != null)
-            kh.setDiaChi(diaChiRepository.findById(req.getIdDiaChi())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ")));
-        else
-            kh.setDiaChi(null);
 
         adminKhachHangRepository.save(kh);
         return adminKhachHangRepository.detail(kh.getId());
@@ -150,6 +147,27 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
         kh.setHinhAnh(req.getHinhAnh());
         kh.setGhiChu(req.getGhiChu());
         return kh;
+    }
+
+    @Override
+    public byte[] exportExcel() {
+        List<AdminKhachHangResponse> data = adminKhachHangRepository.hienThi();
+        String[] headers = {"STT", "Mã", "Tên", "Email", "SĐT", "Ngày sinh", "Giới tính", "Trạng thái"};
+        
+        try {
+            return ExcelUtils.exportToExcel("Danh sách khách hàng", headers, data, item -> new Object[]{
+                data.indexOf(item) + 1,
+                item.getMa(),
+                item.getTen(),
+                item.getEmail(),
+                item.getSdt(),
+                item.getNgaySinh(),
+                item.getGioiTinh(),
+                item.getTrangThai() == TrangThai.DANG_HOAT_DONG ? "Đang hoạt động" : "Ngừng hoạt động"
+            });
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi xuất file Excel: " + e.getMessage());
+        }
     }
 
     private void updateEntity(KhachHang kh, AdminKhachHangRequest req) {

@@ -235,16 +235,19 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         BigDecimal discounted = total;
         if (hoaDon.getPhieuGiamGia() != null) {
             PhieuGiamGia v = hoaDon.getPhieuGiamGia();
-            if (total.compareTo(v.getDonHangToiThieu()) >= 0) {
-                // Calculation logic
+            BigDecimal threshold = v.getDonHangToiThieu() != null ? v.getDonHangToiThieu() : BigDecimal.ZERO;
+            
+            if (total.compareTo(threshold) >= 0) {
                 BigDecimal val = BigDecimal.ZERO;
                 if ("PERCENT".equals(v.getLoaiPhieu())) {
-                    val = total.multiply(BigDecimal.valueOf(v.getPhanTramGiamGia())).divide(BigDecimal.valueOf(100));
+                    Integer percent = v.getPhanTramGiamGia() != null ? v.getPhanTramGiamGia() : 0;
+                    val = total.multiply(BigDecimal.valueOf(percent)).divide(BigDecimal.valueOf(100));
+                    
                     if (v.getGiamToiDa() != null && val.compareTo(v.getGiamToiDa()) > 0) {
                         val = v.getGiamToiDa();
                     }
                 } else {
-                    val = v.getSoTienGiam();
+                    val = v.getSoTienGiam() != null ? v.getSoTienGiam() : BigDecimal.ZERO;
                 }
                 discounted = total.subtract(val);
                 if (discounted.compareTo(BigDecimal.ZERO) < 0) discounted = BigDecimal.ZERO;

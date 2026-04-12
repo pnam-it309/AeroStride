@@ -65,5 +65,27 @@ export const dichVuSanPham = {
   async xoaBienTheSanPham(productId, variantId) {
     const response = await api.delete(`/admin/san-pham/${productId}/variants/${variantId}`);
     return response.data;
+  },
+
+  // Xuất Excel
+  async xuatExcelSanPham() {
+    const response = await api.get('/admin/san-pham/export-excel', { responseType: 'blob' });
+    return response.data;
+  },
+
+  // Tải template Excel
+  async taiTemplateExcel() {
+    const response = await api.get('/admin/san-pham/download-template', { responseType: 'blob' });
+    return response.data;
+  },
+
+  // Nhập Excel
+  async nhapExcelSanPham(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/admin/san-pham/import-excel', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
   }
 };

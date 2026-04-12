@@ -47,6 +47,8 @@ import com.example.be.repository.MauSacRepository;
 import com.example.be.repository.MucDichChayRepository;
 import com.example.be.repository.ThuongHieuRepository;
 import com.example.be.repository.XuatXuRepository;
+import com.example.be.utils.ExcelUtils;
+import com.example.be.utils.MaGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -57,13 +59,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -114,7 +126,11 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         validateVariantRequests(request.getVariants());
 
         String normalizedProductCode = normalizeCode(request.getMaSanPham());
-        if (normalizedProductCode != null && adminSanPhamRepository.existsByMaIgnoreCaseAndXoaMemFalse(normalizedProductCode)) {
+        if (normalizedProductCode == null || normalizedProductCode.trim().isEmpty()) {
+            normalizedProductCode = MaGenerator.generate(SanPham.class);
+        }
+
+        if (adminSanPhamRepository.existsByMaIgnoreCaseAndXoaMemFalse(normalizedProductCode)) {
             throw new DuplicateResourceException("Ma san pham da ton tai: " + normalizedProductCode);
         }
 
@@ -132,7 +148,11 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
                 .and(AdminSanPhamSpecification.hasKeyword(request.getKeyword()))
                 .and(AdminSanPhamSpecification.hasDanhMuc(request.getDanhMucId()))
                 .and(AdminSanPhamSpecification.hasThuongHieu(request.getThuongHieuId()))
-                .and(AdminSanPhamSpecification.hasTrangThai(request.getTrangThai()));
+                .and(AdminSanPhamSpecification.hasTrangThai(request.getTrangThai()))
+                .and(AdminSanPhamSpecification.hasGioiTinhKhachHang(request.getGioiTinhKhachHang()))
+                .and(AdminSanPhamSpecification.hasXuatXu(request.getXuatXuId()))
+                .and(AdminSanPhamSpecification.hasMucDichChay(request.getMucDichChayId()))
+                .and(AdminSanPhamSpecification.hasChatLieu(request.getChatLieuId()));
 
         Page<SanPham> sanPhamPage = adminSanPhamRepository.findAll(specification, buildPageable(request));
         Map<String, ProductVariantStatisticsProjection> statisticsByProductId = loadStatisticsMap(sanPhamPage.getContent());
@@ -735,5 +755,149 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             return deGiay.getXoaMem();
         }
         return Boolean.FALSE;
+    }
+    @Override
+    public byte[] exportExcel() {
+        Specification<SanPham> specification = Specification.where(AdminSanPhamSpecification.notDeleted());
+        List<SanPham> sanPhams = adminSanPhamRepository.findAll(specification);
+        Map<String, ProductVariantStatisticsProjection> statisticsByProductId = loadStatisticsMap(sanPhams);
+
+        List<ProductResponse> data = sanPhams.stream()
+                .map(sanPham -> adminSanPhamMapper.toProductResponse(sanPham, statisticsByProductId.get(sanPham.getId())))
+                .toList();
+
+        String[] headers = {"STT", "Mã SP", "Tên sản phẩm", "Danh mục", "Thương hiệu", "Hành động", "Sẵn có", "Số lượng", "Trạng thái"};
+
+        try {
+            return ExcelUtils.exportToExcel("Danh sách sản phẩm", headers, data, item -> new Object[]{
+                data.indexOf(item) + 1,
+                item.getMaSanPham(),
+                item.getTenSanPham(),
+                item.getTenDanhMuc(),
+                item.getTenThuongHieu(),
+                item.getTongBienThe() > 0 ? item.getTongBienThe() + " biến thể" : "Chưa có biến thể",
+                "Xem chi tiết",
+                item.getTongSoLuongTon(),
+                item.getTrangThai() == TrangThai.DANG_HOAT_DONG ? "Đang kinh doanh" : "Ngừng kinh doanh"
+            });
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi xuất file Excel: " + e.getMessage());
+        }
+    }
+    @Override
+    public byte[] downloadTemplate() {
+        String[] headers = {
+            "Mã sản phẩm", "Tên sản phẩm", "Mô tả ngắn", 
+            "Mô tả chi tiết", "Giới tính (NAM/NU/UNISEX)", 
+            "Danh mục", "Thương hiệu", "Xuất xứ", 
+            "Mục đích chạy", "Cổ giày", "Chất liệu", "Đế giày"
+        };
+        
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Template Nhập Sản Phẩm");
+            Row headerRow = sheet.createRow(0);
+            
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font font = workbook.createFont();
+            font.setBold(true);
+            headerStyle.setFont(font);
+            headerStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+                sheet.autoSizeColumn(i);
+            }
+
+            // Example row
+            Row exampleRow = sheet.createRow(1);
+            exampleRow.createCell(0).setCellValue("SP_AUTO_001");
+            exampleRow.createCell(1).setCellValue("Giày Chạy Bộ Aero v1");
+            exampleRow.createCell(2).setCellValue("Giày chạy bộ cao cấp");
+            exampleRow.createCell(3).setCellValue("Mô tả chi tiết về sản phẩm...");
+            exampleRow.createCell(4).setCellValue("NAM");
+            exampleRow.createCell(5).setCellValue("Giày Chạy Bộ");
+            exampleRow.createCell(6).setCellValue("AeroStride");
+            exampleRow.createCell(7).setCellValue("Việt Nam");
+            exampleRow.createCell(8).setCellValue("Chạy Road");
+            exampleRow.createCell(9).setCellValue("Cổ Thấp");
+            exampleRow.createCell(10).setCellValue("Mesh");
+            exampleRow.createCell(11).setCellValue("Cao Su");
+
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi tạo template: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void importExcel(MultipartFile file) {
+        try (InputStream is = file.getInputStream(); Workbook workbook = new XSSFWorkbook(is)) {
+            Sheet sheet = workbook.getSheetAt(0);
+            Iterator<Row> rows = sheet.iterator();
+            
+            // Skip header
+            if (rows.hasNext()) rows.next();
+            
+            // Load caches for rapid lookup
+            Map<String, DanhMuc> categoryMap = danhMucRepository.findAll().stream()
+                .collect(Collectors.toMap(e -> e.getTen().toLowerCase(), e -> e, (e1, e2) -> e1));
+            Map<String, ThuongHieu> brandMap = thuongHieuRepository.findAll().stream()
+                .collect(Collectors.toMap(e -> e.getTen().toLowerCase(), e -> e, (e1, e2) -> e1));
+            Map<String, XuatXu> originMap = xuatXuRepository.findAll().stream()
+                .collect(Collectors.toMap(e -> e.getTen().toLowerCase(), e -> e, (e1, e2) -> e1));
+            Map<String, MucDichChay> purposeMap = mucDichChayRepository.findAll().stream()
+                .collect(Collectors.toMap(e -> e.getTen().toLowerCase(), e -> e, (e1, e2) -> e1));
+            Map<String, CoGiay> collarMap = coGiayRepository.findAll().stream()
+                .collect(Collectors.toMap(e -> e.getTen().toLowerCase(), e -> e, (e1, e2) -> e1));
+            Map<String, ChatLieu> materialMap = chatLieuRepository.findAll().stream()
+                .collect(Collectors.toMap(e -> e.getTen().toLowerCase(), e -> e, (e1, e2) -> e1));
+            Map<String, DeGiay> soleMap = deGiayRepository.findAll().stream()
+                .collect(Collectors.toMap(e -> e.getTen().toLowerCase(), e -> e, (e1, e2) -> e1));
+
+            List<SanPham> sanPhamsToSave = new ArrayList<>();
+
+            while (rows.hasNext()) {
+                Row row = rows.next();
+                String ma = ExcelUtils.getCellValueAsString(row.getCell(0));
+                String ten = ExcelUtils.getCellValueAsString(row.getCell(1));
+                
+                if (!StringUtils.hasText(ten)) continue;
+
+                SanPham sp = new SanPham();
+                sp.setMa(StringUtils.hasText(ma) ? ma.toUpperCase() : "SP_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                sp.setTen(ten);
+                sp.setMoTaNgan(ExcelUtils.getCellValueAsString(row.getCell(2)));
+                sp.setMoTaChiTiet(ExcelUtils.getCellValueAsString(row.getCell(3)));
+                
+                String genderStr = ExcelUtils.getCellValueAsString(row.getCell(4)).toUpperCase();
+                try {
+                    sp.setGioiTinhKhachHang(GioiTinhKhachHang.valueOf(genderStr));
+                } catch (Exception e) {
+                    sp.setGioiTinhKhachHang(GioiTinhKhachHang.UNISEX);
+                }
+
+                sp.setDanhMuc(categoryMap.get(ExcelUtils.getCellValueAsString(row.getCell(5)).toLowerCase()));
+                sp.setThuongHieu(brandMap.get(ExcelUtils.getCellValueAsString(row.getCell(6)).toLowerCase()));
+                sp.setXuatXu(originMap.get(ExcelUtils.getCellValueAsString(row.getCell(7)).toLowerCase()));
+                sp.setMucDichChay(purposeMap.get(ExcelUtils.getCellValueAsString(row.getCell(8)).toLowerCase()));
+                sp.setCoGiay(collarMap.get(ExcelUtils.getCellValueAsString(row.getCell(9)).toLowerCase()));
+                sp.setChatLieu(materialMap.get(ExcelUtils.getCellValueAsString(row.getCell(10)).toLowerCase()));
+                sp.setDeGiay(soleMap.get(ExcelUtils.getCellValueAsString(row.getCell(11)).toLowerCase()));
+                
+                sp.setTrangThai(TrangThai.DANG_HOAT_DONG);
+                sp.setXoaMem(false);
+                sanPhamsToSave.add(sp);
+            }
+            
+            adminSanPhamRepository.saveAll(sanPhamsToSave);
+            
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi đọc file Excel: " + e.getMessage());
+        }
     }
 }

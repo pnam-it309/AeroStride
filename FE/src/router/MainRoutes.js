@@ -14,7 +14,7 @@ const MainRoutes = {
         {
             name: 'BanHang',
             path: '/ban-hang',
-            component: () => import('@/views/modules/BanHang.vue')
+            component: () => import('@/views/modules/banhang/BanHang.vue')
         },
         {
             name: 'SanPham',
@@ -27,9 +27,24 @@ const MainRoutes = {
             component: () => import('@/views/modules/san-pham/SanPhamForm.vue')
         },
         {
+            name: 'SanPhamDetail',
+            path: '/san-pham/detail/:id',
+            component: () => import('@/views/modules/san-pham/SanPhamForm.vue')
+        },
+        {
             name: 'KhachHang',
             path: '/khach-hang',
-            component: () => import('@/views/modules/KhachHang.vue')
+            component: () => import('@/views/modules/khachhang/KhachHang.vue')
+        },
+        {
+            name: 'KhachHangForm',
+            path: '/khach-hang/form/:id?',
+            component: () => import('@/views/modules/khachhang/KhachHangForm.vue')
+        },
+        {
+            name: 'KhachHangDetail',
+            path: '/khach-hang/detail/:id',
+            component: () => import('@/views/modules/khachhang/KhachHangForm.vue')
         },
         {
             name: 'HoaDon',
@@ -44,7 +59,17 @@ const MainRoutes = {
         {
             name: 'NhanVien',
             path: '/nhan-vien',
-            component: () => import('@/views/modules/NhanVien.vue')
+            component: () => import('@/views/modules/nhanvien/NhanVien.vue')
+        },
+        {
+            name: 'NhanVienForm',
+            path: '/nhan-vien/form/:id?',
+            component: () => import('@/views/modules/nhanvien/NhanVienForm.vue')
+        },
+        {
+            name: 'NhanVienDetail',
+            path: '/nhan-vien/detail/:id',
+            component: () => import('@/views/modules/nhanvien/NhanVienForm.vue')
         },
         {
             name: 'DotGiamGia',
@@ -57,6 +82,11 @@ const MainRoutes = {
             component: () => import('@/views/modules/dot-giam-gia/DotGiamGiaForm.vue')
         },
         {
+            name: 'DotGiamGiaDetail',
+            path: '/dot-giam-gia/detail/:id',
+            component: () => import('@/views/modules/dot-giam-gia/DotGiamGiaForm.vue')
+        },
+        {
             name: 'PhieuGiamGia',
             path: '/phieu-giam-gia',
             component: () => import('@/views/modules/phieu-giam-gia/PhieuGiamGia.vue')
@@ -64,6 +94,11 @@ const MainRoutes = {
         {
             name: 'PhieuGiamGiaForm',
             path: '/phieu-giam-gia/form/:id?',
+            component: () => import('@/views/modules/phieu-giam-gia/PhieuGiamGiaForm.vue')
+        },
+        {
+            name: 'PhieuGiamGiaDetail',
+            path: '/phieu-giam-gia/detail/:id',
             component: () => import('@/views/modules/phieu-giam-gia/PhieuGiamGiaForm.vue')
         },
         {

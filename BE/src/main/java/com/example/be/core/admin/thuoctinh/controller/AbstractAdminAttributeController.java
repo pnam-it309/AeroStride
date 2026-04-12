@@ -22,7 +22,7 @@ public abstract class AbstractAdminAttributeController {
     public ResponseEntity<ApiResponse<PageResponse<AdminAttributeResponse>>> search(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String trangThai,
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "ngayTao") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDirection
@@ -41,7 +41,7 @@ public abstract class AbstractAdminAttributeController {
         return ResponseEntity.ok(ApiResponse.success(service.getById(id), "Lay chi tiet thuoc tinh thanh cong"));
     }
 
-    @PostMapping
+    @PostMapping("/add")
     public ResponseEntity<ApiResponse<AdminAttributeResponse>> create(@Valid @RequestBody AdminAttributeRequest request) {
         return ResponseEntity.ok(ApiResponse.success(service.create(request), "Tao thuoc tinh thanh cong"));
     }

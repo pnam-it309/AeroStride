@@ -18,6 +18,7 @@ SELECT new com.example.be.core.admin.phieugiamgia.model.response.AdminPhieuGiamG
     p.ma,
     p.ten,
     p.loaiPhieu,
+    p.hinhThuc,
     p.phanTramGiamGia,
     p.soTienGiam,
     p.soLuong,
@@ -25,7 +26,8 @@ SELECT new com.example.be.core.admin.phieugiamgia.model.response.AdminPhieuGiamG
     p.giamToiDa,
     p.ngayBatDau,
     p.ngayKetThuc,
-    p.ghiChu
+    p.ghiChu,
+    CAST(p.trangThai AS String)
 )
 FROM PhieuGiamGia p
 """)
@@ -33,8 +35,8 @@ FROM PhieuGiamGia p
 
     @Query("""
     SELECT new com.example.be.core.admin.phieugiamgia.model.response.AdminPhieuGiamGiaResponse(
-        p.id, p.ma, p.ten, p.loaiPhieu, p.phanTramGiamGia, p.soTienGiam,
-        p.soLuong, p.donHangToiThieu, p.giamToiDa, p.ngayBatDau, p.ngayKetThuc, p.ghiChu
+        p.id, p.ma, p.ten, p.loaiPhieu, p.hinhThuc, p.phanTramGiamGia, p.soTienGiam,
+        p.soLuong, p.donHangToiThieu, p.giamToiDa, p.ngayBatDau, p.ngayKetThuc, p.ghiChu, CAST(p.trangThai AS String)
     )
     FROM PhieuGiamGia p WHERE p.ma = :ma
 """)
@@ -42,9 +44,9 @@ FROM PhieuGiamGia p
 
     @Query("""
         SELECT new com.example.be.core.admin.phieugiamgia.model.response.AdminPhieuGiamGiaResponse(
-            p.id, p.ma, p.ten, p.loaiPhieu, p.phanTramGiamGia, p.soTienGiam,
+            p.id, p.ma, p.ten, p.loaiPhieu, p.hinhThuc, p.phanTramGiamGia, p.soTienGiam,
             p.soLuong, p.donHangToiThieu, p.giamToiDa,
-            p.ngayBatDau, p.ngayKetThuc, p.ghiChu
+            p.ngayBatDau, p.ngayKetThuc, p.ghiChu, CAST(p.trangThai AS String)
         )
         FROM PhieuGiamGia p
         WHERE (:keyword IS NULL OR :keyword = ''

@@ -19,8 +19,10 @@ COPY BE/src/ src/
 # Development stage (for hot-reloading)
 FROM build AS development
 EXPOSE 8080
-# Removed --configuration-cache to prevent environment leak issues in dev
-ENTRYPOINT ["./gradlew", "bootRun", "-t", "--no-daemon"]
+# Configure Gradle environment for speed and reliability
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=true -Dorg.gradle.vfs.watch=true"
+
+ENTRYPOINT ["./gradlew", "bootRun", "-t"]
 
 # Stage 2: Runtime stage (Production)
 FROM eclipse-temurin:17-jre-alpine AS production

@@ -4,8 +4,8 @@ import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        user: JSON.parse(localStorage.getItem('user')) || null,
-        accessToken: localStorage.getItem('accessToken') || null,
+        user: JSON.parse(sessionStorage.getItem('user')) || null,
+        accessToken: sessionStorage.getItem('accessToken') || null,
         loading: false,
         error: null
     }),

@@ -5,6 +5,8 @@ import com.example.be.core.admin.phieugiamgia.service.AdminPhieuGiamGiaService;
 import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.infrastructure.constants.RoutesConstant;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,5 +54,28 @@ public class AdminPhieuGiamGiaController {
                                     @RequestParam String id) {
         service.update(req, id);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật thành công!"));
+    }
+
+    @GetMapping("/export-excel")
+    public ResponseEntity<byte[]> exportExcel() {
+        byte[] excelContent = service.exportExcel();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=danh_sach_phieu_giam_gia.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(excelContent);
+    }
+    @GetMapping("/download-template")
+    public ResponseEntity<byte[]> downloadTemplate() {
+        byte[] data = service.downloadTemplate();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=template_voucher.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(data);
+    }
+
+    @PostMapping("/import-excel")
+    public ResponseEntity<?> importExcel(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        service.importExcel(file);
+        return ResponseEntity.ok(ApiResponse.success("Import thành công!"));
     }
 }

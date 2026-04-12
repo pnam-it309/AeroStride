@@ -1,11 +1,11 @@
 <script setup>
 import Icon from '../Icon.vue';
-const props = defineProps({ item: Object, level: Number, hideTitle: Boolean });
+const props = defineProps({ item: Object, level: { type: Number, default: 1 }, hideTitle: Boolean });
 </script>
 
 <template>
     <!---Single Item-->
-    <div class="mb-1">
+    <div class="mb-1" :style="{ paddingLeft: level > 1 ? (level - 1) * 24 + 'px' : '0px' }">
         <v-list-item  :to="item.type === 'external' ? '' : item.to" :href="item.type === 'external' ? item.to : ''" rounded
             :class="'  bg-hover-' + item.BgColor" :color="item.BgColor" :ripple="false" :disabled="item.disabled"
             :target="item.type === 'external' ? '_blank' : ''">

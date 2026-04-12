@@ -1,9 +1,7 @@
 package com.example.be.entity;
 
 import com.example.be.core.common.base.PrimaryEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
@@ -35,5 +33,13 @@ public class DiaChi extends PrimaryEntity {
 
     @Column(name = "sdt_nguoi_nhan")
     private String sdtNguoiNhan;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_khach_hang")
+    private KhachHang khachHang;
+
+    @Builder.Default
+    @Column(name = "la_mac_dinh")
+    private Boolean laMacDinh = false;
 
 }

@@ -1,32 +1,46 @@
 <script setup>
 import { ref, shallowRef } from 'vue';
+import { useUIStore } from '@/stores/ui';
+import { storeToRefs } from 'pinia';
+
+// Menu & Header Components
 import sidebarItems from './vertical-sidebar/sidebarItem';
 import NavGroup from './vertical-sidebar/NavGroup/index.vue';
 import NavItem from './vertical-sidebar/NavItem/index.vue';
 import NavCollapse from './vertical-sidebar/NavCollapse/index.vue';
 import Logo from './logo/Logo.vue';
-import { Menu2Icon } from 'vue-tabler-icons';
 import NotificationDD from './vertical-header/NotificationDD.vue';
 import ProfileDD from './vertical-header/ProfileDD.vue';
+import { Menu2Icon } from 'vue-tabler-icons';
+
+const uiStore = useUIStore();
+const { sidebarCollapsed } = storeToRefs(uiStore);
+const { toggleSidebar } = uiStore;
 
 const sidebarMenu = shallowRef(sidebarItems);
-const sDrawer = ref(true); // Trạng thái mở rộng (true) hoặc mini (false)
 </script>
 
 <template>
     <!-- BIẾN SIDEBAR THÀNH CHẾ ĐỘ RAIL (MINI) KHI TẮT -->
     <v-navigation-drawer 
         left 
-        :rail="!sDrawer"
+        :rail="sidebarCollapsed"
         permanent
         app 
-        class="leftSidebar bg-containerBg border-r" 
+        class="leftSidebar bg-containerBg" 
         elevation="0"
-        :width="270"
+        :width="265"
         rail-width="75"
-        style="overflow: hidden !important;"
+        style="
+            overflow: hidden !important;
+            margin: 16px;
+            height: calc(100vh - 32px) !important;
+            border-radius: 16px !important;
+            border: 1px solid rgba(0,0,0,0.05) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
+        "
     >
-        <div class="pa-4 d-flex justify-center border-b" v-if="sDrawer">
+        <div class="pa-4 d-flex justify-center border-b" v-if="!sidebarCollapsed">
             <Logo />
         </div>
         <div class="pa-4 d-flex justify-center border-b" v-else>
@@ -36,9 +50,9 @@ const sDrawer = ref(true); // Trạng thái mở rộng (true) hoặc mini (fals
         <perfect-scrollbar class="scrollnavbar bg-containerBg" :style="{ height: 'calc(100vh - 120px)' }">
             <v-list class="py-4 px-2 bg-containerBg">
                 <template v-for="(item, i) in sidebarMenu">
-                    <NavGroup :item="item" v-if="item.header && sDrawer" :key="item.title" />
-                    <NavCollapse :item="item" v-else-if="item.children" :hide-title="!sDrawer" />
-                    <NavItem :item="item" v-else class="leftPadding" :hide-title="!sDrawer" />
+                    <NavGroup :item="item" v-if="item.header && !sidebarCollapsed" :key="item.title" />
+                    <NavCollapse :item="item" v-else-if="item.children" :hide-title="sidebarCollapsed" />
+                    <NavItem :item="item" v-else class="leftPadding" :hide-title="sidebarCollapsed" />
                 </template>
             </v-list>
         </perfect-scrollbar>
@@ -49,7 +63,7 @@ const sDrawer = ref(true); // Trạng thái mở rộng (true) hoặc mini (fals
         <div class="maxWidth mx-auto w-100 bg-white rounded-xl shadow-sm d-flex align-center px-4 py-2" style="height: 60px; border: 1px solid rgba(0,0,0,0.05);">
             <div class="d-flex align-center justify-space-between w-100">
                 <div class="d-flex align-center">
-                    <v-btn class="text-muted mr-1" @click="sDrawer = !sDrawer" icon variant="flat">
+                    <v-btn class="text-muted mr-1" @click="toggleSidebar" icon variant="flat">
                         <Menu2Icon size="22" stroke-width="2" />
                     </v-btn>
                     <NotificationDD />

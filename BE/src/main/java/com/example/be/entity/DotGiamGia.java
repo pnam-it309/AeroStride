@@ -41,4 +41,7 @@ public class DotGiamGia extends BaseCodeNameEntity {
     @Column(name = "muc_uu_tien")
     private Integer mucUuTien;
 
+    @Column(name = "mo_ta", length = 1000)
+    private String moTa;
+
 }

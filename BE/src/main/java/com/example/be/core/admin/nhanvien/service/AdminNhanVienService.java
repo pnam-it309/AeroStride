@@ -27,4 +27,8 @@ public interface AdminNhanVienService {
     void doiTrangThai(String id, TrangThai trangThai);
 
     void delete(String id);
+
+    byte[] exportExcel();
+ 
+    List<com.example.be.entity.PhanQuyen> getAllPhanQuyen();
 }

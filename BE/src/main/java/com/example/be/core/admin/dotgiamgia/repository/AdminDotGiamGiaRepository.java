@@ -18,7 +18,9 @@ public interface AdminDotGiamGiaRepository extends JpaRepository<DotGiamGia, Str
         d.dieuKienGiamGia,
         d.ngayBatDau,
         d.ngayKetThuc,
-        d.mucUuTien
+        d.mucUuTien,
+        CAST(d.trangThai AS String),
+        d.moTa
     )
     FROM DotGiamGia d
     WHERE (:keyword IS NULL OR :keyword = ''
@@ -30,4 +32,23 @@ public interface AdminDotGiamGiaRepository extends JpaRepository<DotGiamGia, Str
         @Param("keyword") String keyword,
         Pageable pageable
     );
+
+    @Query("""
+    SELECT new com.example.be.core.admin.dotgiamgia.model.response.AdminDotGiamGiaResponse(
+        d.id,
+        d.ma,
+        d.ten,
+        d.loaiGiamGia,
+        d.soTienGiam,
+        d.dieuKienGiamGia,
+        d.ngayBatDau,
+        d.ngayKetThuc,
+        d.mucUuTien,
+        CAST(d.trangThai AS String),
+        d.moTa
+    )
+    FROM DotGiamGia d
+    WHERE d.id = :id
+""")
+    AdminDotGiamGiaResponse getDetailById(@Param("id") String id);
 }

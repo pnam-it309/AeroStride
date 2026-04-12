@@ -9,6 +9,8 @@ import com.example.be.infrastructure.constants.RoutesConstant;
 import com.example.be.infrastructure.constants.TrangThai;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -67,6 +69,13 @@ public class AdminKhachHangController {
         adminKhachHangService.delete(id);
         return ResponseEntity.ok(ApiResponse.success("Xóa thành công!"));
     }
-
+    @GetMapping("/export-excel")
+    public ResponseEntity<byte[]> exportExcel() {
+        byte[] excelContent = adminKhachHangService.exportExcel();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=danh_sach_khach_hang.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(excelContent);
+    }
 
 }

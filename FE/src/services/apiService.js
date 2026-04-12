@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useLoaderStore } from '@/stores/loader';
+import { useUIStore } from '@/stores/ui';
 
 let API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
@@ -19,30 +19,29 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     try {
-        const loaderStore = useLoaderStore();
-        const method = config.method.toLowerCase();
+        const uiStore = useUIStore();
         
-        if (['post', 'put', 'delete'].includes(method)) {
-            // Tác vụ quan trọng -> Bật Full-page Loader
-            loaderStore.showLoader();
+        // Mặc định mọi request đều dùng Progress Bar ở trên
+        // Chỉ dùng Overlay khi flag 'bigOp' được bật hoặc là tác vụ hệ thống (đã được gọi thủ công)
+        if (config.bigOp) {
+            uiStore.showLoading(config.loadingMessage || 'Đang xử lý...');
         } else {
-            // Tác vụ đọc dữ liệu -> Chỉ chạy Progress Bar
-            loaderStore.startProgress();
+            uiStore.startProgress();
         }
     } catch (e) {
         console.warn('LoaderStore not ready');
     }
 
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => {
-    const loaderStore = useLoaderStore();
-    loaderStore.stopProgress();
-    loaderStore.hideLoader();
+    const uiStore = useUIStore();
+    uiStore.stopProgress();
+    uiStore.hideLoading();
     return Promise.reject(error);
   }
 );
@@ -51,17 +50,17 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     try {
-        const loaderStore = useLoaderStore();
-        loaderStore.stopProgress();
-        loaderStore.hideLoader();
+        const uiStore = useUIStore();
+        uiStore.stopProgress();
+        uiStore.hideLoading();
     } catch (e) {}
     return response;
   },
   async (error) => {
     try {
-        const loaderStore = useLoaderStore();
-        loaderStore.stopProgress();
-        loaderStore.hideLoader();
+        const uiStore = useUIStore();
+        uiStore.stopProgress();
+        uiStore.hideLoading();
     } catch (e) {}
 
     if (error.response) {
@@ -69,7 +68,7 @@ api.interceptors.response.use(
       const isLoginRequest = error.config.url.includes('/auth/login');
 
       if (status === 401 && !isLoginRequest) {
-        localStorage.clear(); // Xóa sạch để đảm bảo an toàn
+        sessionStorage.clear(); // Xóa sạch để đảm bảo an toàn
         window.location.href = '/auth/login';
       } else if (status === 403) {
         console.error('Bạn không có quyền thực hiện hành động này');

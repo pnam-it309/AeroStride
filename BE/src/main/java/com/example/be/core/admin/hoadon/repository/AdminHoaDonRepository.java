@@ -21,8 +21,11 @@ public interface AdminHoaDonRepository extends HoaDonRepository {
                 hd.soDienThoaiNguoiNhan,
                 nv.ten,
                 hd.loaiDon,
+                hd.phiVanChuyen,
                 hd.tongTien,
-                CAST(hd.trangThai AS int)
+                hd.tongTienSauGiam,
+                CAST(hd.trangThai AS int),
+                hd.ghiChu
             )
             FROM HoaDon hd
             LEFT JOIN hd.khachHang kh
@@ -41,4 +44,10 @@ public interface AdminHoaDonRepository extends HoaDonRepository {
             ORDER BY hd.ngayTao DESC
             """)
     Page<AdminHoaDonResponse> getAllHoaDon(Pageable pageable, @Param("req") AdminHoaDonRequest req);
+
+    @Query("SELECT CAST(hd.trangThai AS int) as status, COUNT(hd) as count FROM HoaDon hd GROUP BY hd.trangThai")
+    java.util.List<java.util.Map<String, Object>> countByTrangThai();
+
+    @Query("SELECT COUNT(hd) FROM HoaDon hd")
+    long countAll();
 }

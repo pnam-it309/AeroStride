@@ -13,6 +13,7 @@ public class AdminPhieuGiamGiaRequest {
     private String ten;
 
     private String loaiPhieu;
+    private String hinhThuc;
     private Integer phanTramGiamGia;
     private BigDecimal soTienGiam;
 
@@ -25,4 +26,6 @@ public class AdminPhieuGiamGiaRequest {
     private Long ngayKetThuc;
 
     private String ghiChu;
+
+    private java.util.List<String> listIdKhachHang;
 }

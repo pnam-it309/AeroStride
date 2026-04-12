@@ -47,5 +47,17 @@ export const dichVuNhanVien = {
   async thayDoiTrangThaiNhanVien(id, status) {
     const response = await api.put(`/admin/nhan-vien/status/${id}`, { status });
     return response.data.data;
+  },
+
+  // Xuất Excel
+  async xuatExcelNhanVien() {
+    const response = await api.get('/admin/nhan-vien/export-excel', { responseType: 'blob' });
+    return response.data;
+  },
+ 
+  // Lấy danh sách phân quyền
+  async layDanhSachPhanQuyen() {
+    const response = await api.get('/admin/nhan-vien/phan-quyen');
+    return response.data.data;
   }
 };

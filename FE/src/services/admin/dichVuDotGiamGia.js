@@ -39,7 +39,25 @@ export const dichVuDotGiamGia = {
 
   // Thay đổi trạng thái đợt giảm giá
   async thayDoiTrangThaiDotGiamGia(id, status) {
-    const response = await api.put(`/admin/dot-giam-gia/status/${id}`, { status });
+    const response = await api.put(`/admin/dot-giam-gia/status/${id}`, null, { params: { status } });
+    return response.data;
+  },
+
+  // Lấy danh sách sản phẩm để áp dụng (Dropdown)
+  async layDanhSachSanPhamApDung() {
+    const response = await api.get('/admin/dot-giam-gia/san-pham-ap-dung');
     return response.data.data;
+  },
+
+  // Lấy danh sách biến thể đã áp dụng cho đợt giảm giá
+  async layDanhSachBienTheApDung(id) {
+    const response = await api.get(`/admin/dot-giam-gia/bien-the-ap-dung/${id}`);
+    return response.data.data;
+  },
+
+  // Xuất Excel
+  async xuatExcelDotGiamGia() {
+    const response = await api.get('/admin/dot-giam-gia/export-excel', { responseType: 'blob' });
+    return response.data;
   }
 };

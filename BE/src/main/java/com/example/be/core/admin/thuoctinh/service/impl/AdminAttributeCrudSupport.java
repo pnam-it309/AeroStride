@@ -1,6 +1,7 @@
 package com.example.be.core.admin.thuoctinh.service.impl;
 
 import com.example.be.core.admin.thuoctinh.model.request.AdminAttributeRequest;
+import com.example.be.utils.MaGenerator;
 import com.example.be.core.admin.thuoctinh.model.response.AdminAttributeResponse;
 import com.example.be.core.admin.thuoctinh.repository.AdminAttributeCrudRepository;
 import com.example.be.core.admin.thuoctinh.service.AdminAttributeManagementService;
@@ -121,7 +122,11 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
     }
 
     private void applyData(E entity, AdminAttributeRequest request) {
-        entity.setMa(normalize(request.getMa()));
+        String ma = normalize(request.getMa());
+        if (!StringUtils.hasText(ma)) {
+            ma = MaGenerator.generate(entity.getClass());
+        }
+        entity.setMa(ma);
         entity.setTen(requireText(request.getTen(), "Ten " + entityDisplayName + " khong duoc de trong"));
         entity.setTrangThai(Optional.ofNullable(parseTrangThai(request.getTrangThai())).orElse(TrangThai.DANG_HOAT_DONG));
         extraValueSetter.accept(entity, normalize(request.getMoTa()));

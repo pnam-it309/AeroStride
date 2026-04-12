@@ -159,7 +159,7 @@ onMounted(() => {
               <div class="d-flex align-center mt-2">
                 <v-icon 
                   :color="getGrowthColor(revenueStats.growthRate)" 
-                  size="small"
+                  
                   :icon="getGrowthIcon(revenueStats.growthRate)"
                 ></v-icon>
                 <span 
@@ -243,7 +243,7 @@ onMounted(() => {
                     <div class="d-flex align-center">
                       <v-icon 
                         :color="getGrowthColor(product.growth)" 
-                        size="small"
+                        
                         :icon="getGrowthIcon(product.growth)"
                       ></v-icon>
                       <span 

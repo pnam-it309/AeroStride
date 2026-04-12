@@ -17,6 +17,7 @@ public class AdminPhieuGiamGiaResponse {
     private String ten;
 
     private String loaiPhieu;
+    private String hinhThuc;
     private Integer phanTramGiamGia;
     private BigDecimal soTienGiam;
 
@@ -29,4 +30,5 @@ public class AdminPhieuGiamGiaResponse {
     private Long ngayKetThuc;
 
     private String ghiChu;
+    private String trangThai;
 }

@@ -26,4 +26,5 @@ public interface AdminKhachHangService {
 
     void delete(String id);
 
+    byte[] exportExcel();
 }

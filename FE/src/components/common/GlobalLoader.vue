@@ -1,9 +1,9 @@
 <script setup>
-import { useLoaderStore } from '@/stores/loader';
+import { useUIStore } from '@/stores/ui';
 import { storeToRefs } from 'pinia';
 
-const loaderStore = useLoaderStore();
-const { overlay, progressBar, message } = storeToRefs(loaderStore);
+const uiStore = useUIStore();
+const { globalLoading: overlay, progressBar, loadingMessage: message } = storeToRefs(uiStore);
 </script>
 
 <template>

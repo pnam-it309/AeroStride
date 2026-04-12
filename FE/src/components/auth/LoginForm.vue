@@ -1,11 +1,11 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useLoaderStore } from '@/stores/loader';
+import { useUIStore } from '@/stores/ui';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 
 const router = useRouter();
-const loaderStore = useLoaderStore();
+const uiStore = useUIStore();
 const checkbox = ref(false);
 const loading = ref(false);
 const errorMessage = ref('');
@@ -25,15 +25,12 @@ const handleLogin = async () => {
   errorMessage.value = '';
 
   try {
+    uiStore.showLoading('Đang xác thực thông tin quản trị...');
     const response = await dichVuXacThuc.dangNhap(loginForm.value);
     
-    // Show premium overlay because this is an 'important' action
-    loaderStore.showOverlay('Chào mừng trở lại, Admin!');
-    
-    setTimeout(() => {
-        loaderStore.hideOverlay();
-        router.push('/main');
-    }, 1800);
+    // Explicitly hide after successful auth to trigger transition
+    uiStore.hideLoading();
+    router.push('/main');
   } catch (error) {
     errorMessage.value = error.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
   } finally {

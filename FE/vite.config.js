@@ -9,7 +9,7 @@ export default defineConfig({
         vue(),
         vuetify({
             autoImport: true,
-            styles: { configFile: 'src/scss/variables.scss' }
+            styles: { configFile: 'src/scss/_variables.scss' }
         })
     ],
     base: './',
@@ -25,23 +25,35 @@ export default defineConfig({
     },
     optimizeDeps: {
         exclude: ['vuetify'],
-        entries: ['./src/**/*.vue']
+        include: [
+            'axios',
+            'pinia',
+            'vue',
+            'vue-router',
+            'vue-tabler-icons',
+            '@vuelidate/core',
+            '@vuelidate/validators'
+        ],
+        entries: ['./index.html', './src/**/*.{js,vue}']
     },
     build: {
         rollupOptions: {
-            treeshake: false
-        }
+            treeshake: true
+        },
+        sourcemap: false,
+        chunkSizeWarningLimit: 1000
     },
     server: {
         watch: {
             usePolling: true,
+            interval: 1000, // Kiểm tra file mỗi 1s để tránh quá tải CPU Windows
         },
         host: true,
         strictPort: true,
         port: 5173,
         proxy: {
             '/api': {
-                target: `http://backend:${process.env.BACKEND_PORT || 8080}`,
+                target: `http://${process.env.BACKEND_HOST || 'localhost'}:${process.env.BACKEND_PORT || 8080}`,
                 changeOrigin: true,
                 secure: false,
             }

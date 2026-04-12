@@ -11,6 +11,8 @@ import com.example.be.infrastructure.constants.TrangThai;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -64,7 +66,18 @@ public class AdminNhanVienController {
         adminNhanVienService.delete(id);
         return ResponseEntity.ok(ApiResponse.success("Xóa thành công!"));
     }
+    @GetMapping("/export-excel")
+    public ResponseEntity<byte[]> exportExcel() {
+        byte[] excelContent = adminNhanVienService.exportExcel();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=danh_sach_nhan_vien.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(excelContent);
+    }
 
-
+    @GetMapping("/phan-quyen")
+    public ResponseEntity<?> getPhanQuyens() {
+        return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.getAllPhanQuyen()));
+    }
 
 }

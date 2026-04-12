@@ -15,7 +15,7 @@ export const dichVuThuongHieu = {
     return response.data.data;
   },
   async capNhatThuongHieu(id, data) {
-    const response = await api.put(`/admin/thuoc-tinh/thuong-hieu/update/${id}`, data);
+    const response = await api.put(`/admin/thuoc-tinh/thuong-hieu/${id}`, data);
     return response.data.data;
   },
   async xoaThuongHieu(id) {
@@ -34,7 +34,7 @@ export const dichVuDanhMuc = {
     return response.data.data;
   },
   async capNhatDanhMuc(id, data) {
-    const response = await api.put(`/admin/thuoc-tinh/danh-muc/update/${id}`, data);
+    const response = await api.put(`/admin/thuoc-tinh/danh-muc/${id}`, data);
     return response.data.data;
   },
   async xoaDanhMuc(id) {
@@ -53,7 +53,7 @@ export const dichVuMauSac = {
     return response.data.data;
   },
   async capNhatMauSac(id, data) {
-    const response = await api.put(`/admin/thuoc-tinh/mau-sac/update/${id}`, data);
+    const response = await api.put(`/admin/thuoc-tinh/mau-sac/${id}`, data);
     return response.data.data;
   },
   async xoaMauSac(id) {
@@ -72,7 +72,7 @@ export const dichVuKichThuoc = {
     return response.data.data;
   },
   async capNhatKichThuoc(id, data) {
-    const response = await api.put(`/admin/thuoc-tinh/kich-thuoc/update/${id}`, data);
+    const response = await api.put(`/admin/thuoc-tinh/kich-thuoc/${id}`, data);
     return response.data.data;
   },
   async xoaKichThuoc(id) {
@@ -91,7 +91,7 @@ export const dichVuChatLieu = {
     return response.data.data;
   },
   async capNhatChatLieu(id, data) {
-    const response = await api.put(`/admin/thuoc-tinh/chat-lieu/update/${id}`, data);
+    const response = await api.put(`/admin/thuoc-tinh/chat-lieu/${id}`, data);
     return response.data.data;
   },
   async xoaChatLieu(id) {
@@ -110,7 +110,7 @@ export const dichVuDeGiay = {
     return response.data.data;
   },
   async capNhatDeGiay(id, data) {
-    const response = await api.put(`/admin/thuoc-tinh/de-giay/update/${id}`, data);
+    const response = await api.put(`/admin/thuoc-tinh/de-giay/${id}`, data);
     return response.data.data;
   },
   async xoaDeGiay(id) {
@@ -129,7 +129,7 @@ export const dichVuCoGiay = {
     return response.data.data;
   },
   async capNhatCoGiay(id, data) {
-    const response = await api.put(`/admin/thuoc-tinh/co-giay/update/${id}`, data);
+    const response = await api.put(`/admin/thuoc-tinh/co-giay/${id}`, data);
     return response.data.data;
   },
   async xoaCoGiay(id) {
@@ -148,7 +148,7 @@ export const dichVuXuatXu = {
     return response.data.data;
   },
   async capNhatXuatXu(id, data) {
-    const response = await api.put(`/admin/thuoc-tinh/xuat-xu/update/${id}`, data);
+    const response = await api.put(`/admin/thuoc-tinh/xuat-xu/${id}`, data);
     return response.data.data;
   },
   async xoaXuatXu(id) {
@@ -167,7 +167,7 @@ export const dichVuMucDichChay = {
     return response.data.data;
   },
   async capNhatMucDichChay(id, data) {
-    const response = await api.put(`/admin/thuoc-tinh/muc-dich-chay/update/${id}`, data);
+    const response = await api.put(`/admin/thuoc-tinh/muc-dich-chay/${id}`, data);
     return response.data.data;
   },
   async xoaMucDichChay(id) {

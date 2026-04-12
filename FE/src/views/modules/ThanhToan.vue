@@ -226,7 +226,7 @@ onMounted(() => {
               <td>
                 <v-chip 
                   :color="getStatusColor(transaction.status)"
-                  size="small"
+                  
                   variant="tonal"
                 >
                   {{ getStatusText(transaction.status) }}
@@ -238,13 +238,13 @@ onMounted(() => {
                   icon="mdi-eye"
                   variant="text"
                   color="info"
-                  size="small"
+                  
                 ></v-btn>
                 <v-btn
                   icon="mdi-cash-refund"
                   variant="text"
                   color="warning"
-                  size="small"
+                  
                   v-if="transaction.status === 'success'"
                   @click="refundPayment(transaction.id)"
                 ></v-btn>
@@ -284,7 +284,7 @@ onMounted(() => {
               <div class="mt-3">
                 <v-chip 
                   :color="method.status === 'active' ? 'success' : 'error'"
-                  size="small"
+                  
                   variant="tonal"
                 >
                   {{ method.status === 'active' ? 'Hoạt động' : 'Không hoạt động' }}

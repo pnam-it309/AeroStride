@@ -47,5 +47,11 @@ export const dichVuPhieuGiamGia = {
   async taoMaPhieuGiamGia(voucherId, quantity) {
     const response = await api.post(`/admin/phieu-giam-gia/${voucherId}/generate-codes`, { quantity });
     return response.data.data;
+  },
+
+  // Xuất Excel
+  async xuatExcelPhieuGiamGia() {
+    const response = await api.get('/admin/phieu-giam-gia/export-excel', { responseType: 'blob' });
+    return response.data;
   }
 };

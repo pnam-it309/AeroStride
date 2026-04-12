@@ -26,6 +26,9 @@ public class PhieuGiamGia extends BaseCodeNameEntity {
     @Column(name = "loai_phieu")
     private String loaiPhieu;
 
+    @Column(name = "hinh_thuc")
+    private String hinhThuc; // CONG_KHAI, CA_NHAN
+
     @Column(name = "phan_tram_giam_gia")
     private Integer phanTramGiamGia;
 
