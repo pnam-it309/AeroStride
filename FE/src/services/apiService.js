@@ -15,15 +15,22 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token and start progress bar
+// Request interceptor: Phân loại Loader
 api.interceptors.request.use(
   (config) => {
-    // Start progress bar
     try {
         const loaderStore = useLoaderStore();
-        loaderStore.startProgress();
+        const method = config.method.toLowerCase();
+        
+        if (['post', 'put', 'delete'].includes(method)) {
+            // Tác vụ quan trọng -> Bật Full-page Loader
+            loaderStore.showLoader();
+        } else {
+            // Tác vụ đọc dữ liệu -> Chỉ chạy Progress Bar
+            loaderStore.startProgress();
+        }
     } catch (e) {
-        console.warn('LoaderStore not ready yet');
+        console.warn('LoaderStore not ready');
     }
 
     const token = localStorage.getItem('accessToken');
@@ -33,20 +40,20 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    try {
-        const loaderStore = useLoaderStore();
-        loaderStore.stopProgress();
-    } catch (e) {}
+    const loaderStore = useLoaderStore();
+    loaderStore.stopProgress();
+    loaderStore.hideLoader();
     return Promise.reject(error);
   }
 );
 
-// Response interceptor to handle common errors and stop progress bar
+// Response interceptor: Tắt Loader và Xử lý lỗi tập trung
 api.interceptors.response.use(
   (response) => {
     try {
         const loaderStore = useLoaderStore();
         loaderStore.stopProgress();
+        loaderStore.hideLoader();
     } catch (e) {}
     return response;
   },
@@ -54,18 +61,23 @@ api.interceptors.response.use(
     try {
         const loaderStore = useLoaderStore();
         loaderStore.stopProgress();
+        loaderStore.hideLoader();
     } catch (e) {}
 
-    if (error.response?.status === 401) {
+    if (error.response) {
+      const status = error.response.status;
       const isLoginRequest = error.config.url.includes('/auth/login');
-      if (!isLoginRequest) {
-        // Token expired or invalid, redirect to login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
+
+      if (status === 401 && !isLoginRequest) {
+        localStorage.clear(); // Xóa sạch để đảm bảo an toàn
         window.location.href = '/auth/login';
+      } else if (status === 403) {
+        console.error('Bạn không có quyền thực hiện hành động này');
+      } else if (status === 500) {
+        console.error('Lỗi máy chủ (500). Vui lòng liên hệ Admin.');
       }
     }
+
     return Promise.reject(error);
   }
 );
