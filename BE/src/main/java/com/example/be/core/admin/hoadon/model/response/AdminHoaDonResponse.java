@@ -13,7 +13,7 @@ public class AdminHoaDonResponse {
     private Long ngayTao;
     private String tenKhachHang;
     private String soDienThoai;
-    private String tenNhanVien;
+    private String maNhanVien;
     private String loaiDon;
     private BigDecimal phiVanChuyen;
     private BigDecimal tongTien;
@@ -22,7 +22,7 @@ public class AdminHoaDonResponse {
     private String ghiChu;
 
     public AdminHoaDonResponse(String id, String maHoaDon, Long ngayTao, String tenKhachHang,
-                               String soDienThoai, String tenNhanVien, String loaiDon,
+                               String soDienThoai, String maNhanVien, String loaiDon,
                                BigDecimal phiVanChuyen, BigDecimal tongTien, BigDecimal tongTienSauGiam,
                                Integer trangThai, String ghiChu) {
         this.id = id;
@@ -30,7 +30,7 @@ public class AdminHoaDonResponse {
         this.ngayTao = ngayTao;
         this.tenKhachHang = tenKhachHang;
         this.soDienThoai = soDienThoai;
-        this.tenNhanVien = tenNhanVien;
+        this.maNhanVien = maNhanVien;
         this.loaiDon = loaiDon;
         this.phiVanChuyen = phiVanChuyen;
         this.tongTien = tongTien;
