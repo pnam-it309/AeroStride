@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/pnam-it309/AeroStride/compare/v1.1.0...v1.1.1) (2026-04-12)
+
+
+### Bug Fixes
+
+* **dot-giam-gia:** fix status deserialization error and form confirmation ([9fe8122](https://github.com/pnam-it309/AeroStride/commit/9fe8122052cdbb09120dc9b6d232708ba689c987))
+
 # [1.1.0](https://github.com/pnam-it309/AeroStride/compare/v1.0.2...v1.1.0) (2026-04-12)
 
 
