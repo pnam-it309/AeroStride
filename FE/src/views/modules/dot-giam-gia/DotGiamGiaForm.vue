@@ -5,8 +5,7 @@ import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { useNotifications } from '@/services/notificationService';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import {
-  ChevronLeftIcon, DeviceFloppyIcon, CalendarIcon, 
-  GiftIcon, InfoCircleIcon, TagIcon
+  CalendarIcon, GiftIcon, InfoCircleIcon, TagIcon, BoxIcon
 } from 'vue-tabler-icons';
 
 const route = useRoute();
@@ -379,6 +378,15 @@ onMounted(init);
 
       </v-col>
     </v-row>
+
+    <AdminConfirm
+      v-model:show="confirmDialog.show"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      :color="confirmDialog.color"
+      :loading="confirmDialog.loading"
+      @confirm="confirmDialog.action"
+    />
   </v-container>
 </template>
 

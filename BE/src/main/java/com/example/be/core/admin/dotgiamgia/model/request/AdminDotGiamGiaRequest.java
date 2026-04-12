@@ -6,6 +6,8 @@ import java.util.List;
 
 import java.math.BigDecimal;
 
+import com.example.be.infrastructure.constants.TrangThai;
+
 @Getter
 @Setter
 public class AdminDotGiamGiaRequest {
@@ -22,7 +24,7 @@ public class AdminDotGiamGiaRequest {
 
     private Integer mucUuTien;
 
-    private Integer trangThai;
+    private TrangThai trangThai;
  
     private List<String> listIdChiTietSanPham;
 }
