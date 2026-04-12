@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/pnam-it309/AeroStride/compare/v1.0.2...v1.1.0) (2026-04-12)
+
+
+### Features
+
+* update api service with loaders and add testing framework ([ad3ee4a](https://github.com/pnam-it309/AeroStride/commit/ad3ee4a81645b2a6afb6b5d6617d20179767d8d3))
+
 ## [1.0.2](https://github.com/pnam-it309/AeroStride/compare/v1.0.1...v1.0.2) (2026-04-11)
 
 
