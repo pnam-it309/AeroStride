@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/pnam-it309/AeroStride/compare/v1.1.1...v1.1.2) (2026-04-12)
+
+
+### Bug Fixes
+
+* **admin:** resolve compilation errors in KhachHang service ([c52553f](https://github.com/pnam-it309/AeroStride/commit/c52553f3f2771ea0e9d6ce948d56285aa7e1e867))
+
 ## [1.1.1](https://github.com/pnam-it309/AeroStride/compare/v1.1.0...v1.1.1) (2026-04-12)
 
 
