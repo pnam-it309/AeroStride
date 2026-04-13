@@ -5,7 +5,7 @@ const props = defineProps({ item: Object, level: Number });
 <template>
   <component
     :is="item"
-    size="20"
+    size="18"
     stroke-width="1.5"
     class="iconClass"
   ></component>

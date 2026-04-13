@@ -7,17 +7,17 @@ const props = defineProps({ item: Object, level: { type: Number, default: 1 }, h
     <!---Single Item-->
     <div class="mb-1" :style="{ paddingLeft: level > 1 ? (level - 1) * 24 + 'px' : '0px' }">
         <v-list-item  :to="item.type === 'external' ? '' : item.to" :href="item.type === 'external' ? item.to : ''" rounded
-            :class="'  bg-hover-' + item.BgColor" :color="item.BgColor" :ripple="false" :disabled="item.disabled"
+            class="sidebar-link" :ripple="false" :disabled="item.disabled"
             :target="item.type === 'external' ? '_blank' : ''">
             <!---If icon-->
             <template v-slot:prepend>
-                <div :class="'navbox  bg-hover-' + item.BgColor" :color="item.BgColor">
+                <div class="navbox">
                     <span class="icon-box">
-                        <Icon :item="item.icon" :level="level" :class="'position-relative z-index-2 texthover-' + item.BgColor" />
+                        <Icon :item="item.icon" :level="level" class="position-relative z-index-2" />
                     </span>
                 </div>
             </template>
-            <v-list-item-title v-if="!hideTitle" class="text-subtitle-1 font-weight-medium" :color="item.BgColor">{{ item.title}}</v-list-item-title>
+            <v-list-item-title v-if="!hideTitle" class="sidebar-item-title font-weight-medium">{{ item.title}}</v-list-item-title>
             <!---If Caption-->
             <v-list-item-subtitle v-if="item.subCaption && !hideTitle" class="text-caption mt-n1 hide-menu">
                 {{ item.subCaption }}
@@ -32,3 +32,9 @@ const props = defineProps({ item: Object, level: { type: Number, default: 1 }, h
         </v-list-item>
     </div>
 </template>
+
+<style scoped>
+.sidebar-item-title {
+    font-size: 15px !important;
+}
+</style>

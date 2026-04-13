@@ -11,7 +11,7 @@ const chartOptions = computed(() => {
         chart: {
             height: 170,
             type: "donut",
-            fontFamily: "Plus Jakarta Sans', sans-serif",
+            fontFamily: "'Inter', sans-serif",
             foreColor: "#c6d1e9",
         },
 

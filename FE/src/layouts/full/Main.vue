@@ -22,32 +22,31 @@ const sidebarMenu = shallowRef(sidebarItems);
 
 <template>
     <!-- BIẾN SIDEBAR THÀNH CHẾ ĐỘ RAIL (MINI) KHI TẮT -->
-    <v-navigation-drawer 
-        left 
+    <v-navigation-drawer
+        left
         :rail="sidebarCollapsed"
         permanent
-        app 
-        class="leftSidebar bg-containerBg" 
+        app
+        class="leftSidebar bg-containerBg"
         elevation="0"
-        :width="265"
-        rail-width="75"
+        :width="236"
+        rail-width="68"
         style="
             overflow: hidden !important;
-            margin: 16px;
-            height: calc(100vh - 32px) !important;
-            border-radius: 16px !important;
-            border: 1px solid rgba(0,0,0,0.05) !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
+            margin: 0;
+            height: 100vh !important;
+            border-radius: 0 !important;
+            border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
         "
     >
-        <div class="pa-4 d-flex justify-center border-b" v-if="!sidebarCollapsed">
+        <div class="sidebar-logo-wrap d-flex justify-center border-b" v-if="!sidebarCollapsed">
             <Logo />
         </div>
-        <div class="pa-4 d-flex justify-center border-b" v-else>
+        <div class="sidebar-logo-wrap d-flex justify-center border-b" v-else>
             <v-avatar size="32" color="primary" class="rounded-0 text-white font-weight-black">A</v-avatar>
         </div>
 
-        <perfect-scrollbar class="scrollnavbar bg-containerBg" :style="{ height: 'calc(100vh - 120px)' }">
+        <perfect-scrollbar class="scrollnavbar bg-containerBg" :style="{ height: 'calc(100vh - 136px)' }">
             <v-list class="py-4 px-2 bg-containerBg">
                 <template v-for="(item, i) in sidebarMenu">
                     <NavGroup :item="item" v-if="item.header && !sidebarCollapsed" :key="item.title" />
@@ -59,16 +58,23 @@ const sidebarMenu = shallowRef(sidebarItems);
     </v-navigation-drawer>
 
     <!-- HEADER: TỰ ĐỘNG CĂN THEO SIDEBAR VÀ NỘI DUNG -->
-    <v-app-bar flat color="transparent" height="70" app class="px-sm-5 px-4" style="box-shadow: none !important; border: none !important; background: transparent !important;">
-        <div class="maxWidth mx-auto w-100 bg-white rounded-xl shadow-sm d-flex align-center px-4 py-2" style="height: 60px; border: 1px solid rgba(0,0,0,0.05);">
+    <v-app-bar
+        flat
+        color="white"
+        height="64"
+        app
+        class="px-sm-4 px-3"
+        style="box-shadow: none !important; border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important; background: white !important"
+    >
+        <div class="maxWidth mx-auto w-100 d-flex align-center px-1 py-0" style="height: 56px">
             <div class="d-flex align-center justify-space-between w-100">
                 <div class="d-flex align-center">
                     <v-btn class="text-muted mr-1" @click="toggleSidebar" icon variant="flat">
                         <Menu2Icon size="22" stroke-width="2" />
                     </v-btn>
-                    <NotificationDD />
                 </div>
-                <div>
+                <div class="d-flex align-center">
+                    <NotificationDD />
                     <ProfileDD />
                 </div>
             </div>
@@ -77,11 +83,6 @@ const sidebarMenu = shallowRef(sidebarItems);
 </template>
 
 <style scoped>
-
-.shadow-sm {
-    box-shadow: 0 2px 15px -3px rgba(0,0,0,0.07),0 4px 6px -2px rgba(0,0,0,0.05) !important;
-}
-
 /* TRIỆT TIÊU THANH CUỘN THỨ 2 CỦA VUETIFY */
 :deep(.v-navigation-drawer__content) {
     overflow: hidden !important;
@@ -89,5 +90,11 @@ const sidebarMenu = shallowRef(sidebarItems);
 
 :deep(.v-navigation-drawer) {
     overflow: hidden !important;
+}
+
+.sidebar-logo-wrap {
+    padding: 12px 8px;
+    min-height: 128px;
+    align-items: center;
 }
 </style>

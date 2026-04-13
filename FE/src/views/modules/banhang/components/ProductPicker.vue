@@ -33,18 +33,14 @@ let html5QrcodeScanner = null;
 const startScanner = () => {
     showScanner.value = true;
     setTimeout(() => {
-        html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", 
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            /* verbose= */ false
-        );
+        html5QrcodeScanner = new Html5QrcodeScanner('reader', { fps: 10, qrbox: { width: 250, height: 250 } }, /* verbose= */ false);
         html5QrcodeScanner.render(onScanSuccess, onScanFailure);
     }, 300);
 };
 
 const stopScanner = () => {
     if (html5QrcodeScanner) {
-        html5QrcodeScanner.clear().catch(error => console.error("Failed to clear scanner", error));
+        html5QrcodeScanner.clear().catch((error) => console.error('Failed to clear scanner', error));
         html5QrcodeScanner = null;
     }
     showScanner.value = false;
@@ -57,11 +53,11 @@ const onScanSuccess = async (decodedText) => {
         const results = await dichVuDonHang.searchSanPham(decodedText);
         if (results && results.length > 0) {
             // Nếu tìm thấy đúng 1 sản phẩm khớp mã, thêm luôn
-            const exactMatch = results.find(p => p.maChiTietSanPham === decodedText) || results[0];
+            const exactMatch = results.find((p) => p.maChiTietSanPham === decodedText) || results[0];
             emit('add-product', exactMatch);
         }
     } catch (e) {
-        console.error("Scan error:", e);
+        console.error('Scan error:', e);
     }
 };
 
@@ -70,7 +66,7 @@ const onScanFailure = (error) => {
 };
 
 // Hỗ trợ súng quét mã (Barcode Scanner giả lập bàn phím)
-let barcodeBuffer = "";
+let barcodeBuffer = '';
 let lastKeyTime = 0;
 
 const handleGlobalKeyDown = (e) => {
@@ -79,13 +75,13 @@ const handleGlobalKeyDown = (e) => {
 
     const currentTime = new Date().getTime();
     if (currentTime - lastKeyTime > 100) {
-        barcodeBuffer = "";
+        barcodeBuffer = '';
     }
 
     if (e.key === 'Enter') {
         if (barcodeBuffer.length > 3) {
             onScanSuccess(barcodeBuffer);
-            barcodeBuffer = "";
+            barcodeBuffer = '';
         }
     } else if (e.key.length === 1) {
         barcodeBuffer += e.key;
@@ -123,7 +119,7 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
                 class="rounded-lg shadow-sm flex-grow-1"
                 @input="onSearch"
             ></v-text-field>
-            <v-btn icon color="primary" variant="flat" size="56" class="rounded-lg" @click="startScanner">
+            <v-btn icon color="#2E4E8E" variant="flat" size="56" class="rounded-lg" @click="startScanner">
                 <QrcodeIcon size="24" />
             </v-btn>
         </div>
@@ -136,21 +132,14 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
                     <v-btn icon variant="text" @click="stopScanner"><XIcon /></v-btn>
                 </div>
                 <div id="reader" style="width: 100%"></div>
-                <div class="mt-4 text-center text-caption text-grey">
-                    Đưa mã QR hoặc Barcode của sản phẩm vào khung hình
-                </div>
+                <div class="mt-4 text-center text-caption text-grey">Đưa mã QR hoặc Barcode của sản phẩm vào khung hình</div>
             </v-card>
         </v-dialog>
 
         <!-- Search Results Dropdown -->
         <v-card v-if="results.length > 0" class="search-overlay mt-2 shadow-xl border overflow-hidden">
             <v-list class="pa-0">
-                <v-list-item 
-                    v-for="p in results" 
-                    :key="p.id" 
-                    class="pa-4 border-b hover-active"
-                    @click="selectProduct(p)"
-                >
+                <v-list-item v-for="p in results" :key="p.id" class="pa-4 border-b hover-active" @click="selectProduct(p)">
                     <template v-slot:prepend>
                         <v-avatar color="grey-lighten-4" rounded="lg" size="48">
                             <BoxIcon size="24" class="text-grey-darken-1" />
@@ -160,15 +149,15 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
                     <v-list-item-title class="font-weight-bold text-subtitle-1">
                         {{ p.tenSanPham }}
                     </v-list-item-title>
-                    
+
                     <v-list-item-subtitle class="mt-1 d-flex gap-2">
                         <v-chip size="x-small" label color="primary" variant="tonal">
                             {{ p.tenMauSac }}
                         </v-chip>
-                        <v-chip size="x-small" label color="secondary" variant="tonal">
-                             Size {{ p.tenKichThuoc }}
-                        </v-chip>
-                        <span class="text-caption ml-2">Tồn: <b>{{ p.soLuongTon }}</b></span>
+                        <v-chip size="x-small" label color="secondary" variant="tonal"> Size {{ p.tenKichThuoc }} </v-chip>
+                        <span class="text-caption ml-2"
+                            >Tồn: <b>{{ p.soLuongTon }}</b></span
+                        >
                     </v-list-item-subtitle>
 
                     <template v-slot:append>
@@ -180,7 +169,7 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
                 </v-list-item>
             </v-list>
         </v-card>
-        
+
         <v-card v-else-if="search && !loading && search.length >= 2" class="search-overlay mt-2 pa-6 text-center text-grey">
             Không tìm thấy sản phẩm nào khớp với "{{ search }}"
         </v-card>

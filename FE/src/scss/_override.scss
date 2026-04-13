@@ -1,22 +1,54 @@
 /* Typography & Font Consistency */
-html, body, .v-application {
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
+html,
+body,
+.v-application {
+    font-family: 'Inter', sans-serif !important;
     text-transform: none !important;
 }
 
 /* Force Vuetify components to respect lowercase rules */
-.v-btn, .v-tab, .v-chip, .v-list-item-title, .v-card-title, .text-uppercase, .uppercase {
+.v-btn,
+.v-tab,
+.v-chip,
+.v-list-item-title,
+.v-card-title,
+.text-uppercase,
+.uppercase {
     text-transform: none !important;
     letter-spacing: normal !important;
 }
 
 /* Global Font Size Rules (Standardized for professional dashboard) */
-.text-h1 { font-size: 1.8rem !important; font-weight: 700; line-height: 1.2 !important; }
-.text-h2 { font-size: 1.6rem !important; font-weight: 700; line-height: 1.2 !important; }
-.text-h3 { font-size: 1.4rem !important; font-weight: 700; line-height: 1.2 !important; }
-.text-h4 { font-size: 1.25rem !important; font-weight: 700; line-height: 1.2 !important; }
-.text-h5 { font-size: 1.15rem !important; font-weight: 600; line-height: 1.2 !important; }
-.text-h6 { font-size: 1.05rem !important; font-weight: 600; line-height: 1.2 !important; }
+.text-h1 {
+    font-size: 1.8rem !important;
+    font-weight: 700;
+    line-height: 1.2 !important;
+}
+.text-h2 {
+    font-size: 1.6rem !important;
+    font-weight: 700;
+    line-height: 1.2 !important;
+}
+.text-h3 {
+    font-size: 1.4rem !important;
+    font-weight: 700;
+    line-height: 1.2 !important;
+}
+.text-h4 {
+    font-size: 1.25rem !important;
+    font-weight: 700;
+    line-height: 1.2 !important;
+}
+.text-h5 {
+    font-size: 1.15rem !important;
+    font-weight: 600;
+    line-height: 1.2 !important;
+}
+.text-h6 {
+    font-size: 1.05rem !important;
+    font-weight: 600;
+    line-height: 1.2 !important;
+}
 
 /* Global Chip Styling - Make them determined by font size */
 .v-chip {
@@ -28,20 +60,23 @@ html, body, .v-application {
 }
 
 /* Content font (matching sidebar logic) */
-.text-body-1, .text-subtitle-1, .v-list-item-title, .v-btn {
+.text-body-1,
+.text-subtitle-1,
+.v-list-item-title {
     font-size: 1.05rem !important;
     font-weight: 500 !important;
     line-height: 1.5 !important;
 }
 
-.text-body-2, .text-subtitle-2 { 
-    font-size: 0.95rem !important; 
+.text-body-2,
+.text-subtitle-2 {
+    font-size: 0.95rem !important;
     font-weight: 400 !important;
-    line-height: 1.5 !important; 
+    line-height: 1.5 !important;
 }
 
-.text-caption { 
-    font-size: 0.85rem !important; 
+.text-caption {
+    font-size: 0.85rem !important;
     font-weight: 400;
 }
 
@@ -62,7 +97,7 @@ html, body, .v-application {
                         text-transform: none !important;
                         font-size: 1.05rem !important; // Increased from 0.875
                         height: 52px !important;
-                        
+
                         /* Capitalize first letter logic */
                         &::first-letter {
                             text-transform: uppercase !important;
@@ -86,7 +121,7 @@ html, body, .v-application {
 /* Inputs & Form Fields */
 .v-field {
     font-size: 1rem !important; // Increased from 0.875
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-family: 'Inter', sans-serif !important;
     font-weight: 500 !important;
 }
 
@@ -101,7 +136,9 @@ html, body, .v-application {
 }
 
 /* Hide Scrollbar globally */
-html, body, .v-application {
+html,
+body,
+.v-application {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
@@ -118,7 +155,12 @@ html, body, .v-application {
 }
 
 /* Titles - Capitalize first letter */
-.v-card-title, h1, h2, h3, h4, .text-h6 {
+.v-card-title,
+h1,
+h2,
+h3,
+h4,
+.text-h6 {
     text-transform: none !important;
     font-weight: 700 !important;
     &::first-letter {
@@ -127,13 +169,19 @@ html, body, .v-application {
 }
 
 html {
-    .bg-success,.bg-primary,.bg-secondary,.bg-warning,.bg-error,.bg-info,.bg-indigo{
+    .bg-success,
+    .bg-primary,
+    .bg-secondary,
+    .bg-warning,
+    .bg-error,
+    .bg-info,
+    .bg-indigo {
         color: white !important;
     }
 }
 
-.v-btn--elevated{
-    &.bg-primary{
+.v-btn--elevated {
+    &.bg-primary {
         box-shadow: 0 4px 6px -1px rgba(var(--v-theme-primary), 0.1), 0 2px 4px -2px rgba(var(--v-theme-primary), 0.1) !important;
     }
 }
@@ -142,4 +190,24 @@ html {
 .v-divider {
     border-color: #e2e8f0 !important;
     opacity: 1 !important;
+}
+
+/* Global color sync for admin module pages */
+.page-title,
+h1.text-h5,
+h1.text-h4,
+h5.text-h5,
+h5.text-h4,
+.module-page-title {
+    color: #0f172a !important;
+}
+
+.native-admin-table .header-cell,
+.v-table thead tr th {
+    color: #0f172a !important;
+}
+
+.filter-field-label {
+    color: #1e3a8a !important;
+    font-weight: 700 !important;
 }
