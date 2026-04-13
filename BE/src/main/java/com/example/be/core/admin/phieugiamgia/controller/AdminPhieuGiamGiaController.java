@@ -57,7 +57,8 @@ public class AdminPhieuGiamGiaController {
     }
 
     @PutMapping("/status/{id}")
-    public ResponseEntity<?> updateStatus(@PathVariable String id, @RequestParam com.example.be.infrastructure.constants.TrangThai status) {
+    public ResponseEntity<?> updateStatus(@PathVariable String id, @RequestBody java.util.Map<String, String> body) {
+        com.example.be.infrastructure.constants.TrangThai status = com.example.be.infrastructure.constants.TrangThai.valueOf(body.get("status"));
         service.updateStatus(id, status);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công!"));
     }

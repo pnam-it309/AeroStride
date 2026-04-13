@@ -232,7 +232,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     public void updateStatus(String id, TrangThai status) {
         SanPham sanPham = getProductOrThrow(id);
         sanPham.setTrangThai(status);
-        adminSanPhamRepository.save(sanPham);
+        adminSanPhamRepository.saveAndFlush(sanPham);
     }
 
     @Override

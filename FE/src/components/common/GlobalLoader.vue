@@ -10,13 +10,11 @@ const { globalLoading: overlay, progressBar, loadingMessage: message } = storeTo
   <div>
     <!-- TOP PROGRESS BAR (FOR NORMAL LOADING) -->
     <v-progress-linear
-      v-if="progressBar"
+      :active="progressBar"
       indeterminate
       color="primary"
-      height="4"
-      class="top-progress"
-      fixed
-      top
+      height="3"
+      class="top-progress-bar"
     ></v-progress-linear>
 
     <!-- FULL SCREEN OVERLAY (FOR IMPORTANT RELOADS) -->
@@ -47,8 +45,14 @@ const { globalLoading: overlay, progressBar, loadingMessage: message } = storeTo
 </template>
 
 <style scoped>
-.top-progress {
-  z-index: 9999;
+.top-progress-bar {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999999 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 .global-overlay {

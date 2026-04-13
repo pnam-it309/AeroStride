@@ -14,7 +14,11 @@ import MainView from './Main.vue';
                     style="height: 100%; overflow-y: auto !important; overflow-x: hidden"
                 >
                     <div class="content-shell">
-                        <RouterView />
+                        <RouterView v-slot="{ Component }">
+                            <transition name="page-fade" mode="out-in">
+                                <component :is="Component" />
+                            </transition>
+                        </RouterView>
                     </div>
                 </v-container>
             </v-main>
@@ -61,5 +65,23 @@ body {
 .content-shell {
     width: 100%;
     margin: 0;
+}
+
+/* Optimized Smooth Page Transition */
+.page-fade-enter-active,
+.page-fade-leave-active {
+    transition: 
+        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-fade-enter-from {
+    opacity: 0;
+    transform: translateY(8px);
+}
+
+.page-fade-leave-to {
+    opacity: 0;
+    transform: translateY(-8px);
 }
 </style>

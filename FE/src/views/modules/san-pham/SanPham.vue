@@ -60,9 +60,9 @@ const toNumber = (value, fallback = 0) => {
 
 const isActiveStatus = (status) => {
     if (status === null || status === undefined) return false;
-    if (typeof status === 'number') return status === 0 || status === 1;
+    if (typeof status === 'number') return status === 0;
     const normalized = String(status).toUpperCase();
-    return normalized === 'DANG_HOAT_DONG' || normalized === 'ACTIVE' || normalized === 'HOAT_DONG' || normalized === '1';
+    return normalized === 'DANG_HOAT_DONG' || normalized === 'ACTIVE' || normalized === 'HOAT_DONG' || normalized === '0';
 };
 
 const getDisplayStatus = (status) => {
@@ -210,18 +210,23 @@ const confirmToggleStatus = (product) => {
             try {
                 const newS = isActiveStatus(product.trangThai) ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
                 await dichVuSanPham.thayDoiTrangThai(product.id, newS);
-                product.trangThai = newS;
+                
+                // Actual persistence assurance: reload from server
+                await loadProducts();
+                
                 addNotification({
-                    title: 'Cập nhật trạng thái',
-                    subtitle: `Sản phẩm [${getProductName(product)}] đã chuyển sang ${
-                        newS === 'DANG_HOAT_DONG' ? 'Hoạt động' : 'Ngừng hoạt động'
-                    }`,
-                    icon: 'InfoCircleIcon',
-                    color: 'primary'
+                    title: 'Thành công',
+                    subtitle: `Đã cập nhật trạng thái sản phẩm [${product.tenSanPham}]`,
+                    color: 'success'
                 });
                 confirmDialog.value.show = false;
             } catch (e) {
                 console.error(e);
+                addNotification({
+                    title: 'Lỗi',
+                    subtitle: 'Không thể cập nhật trạng thái',
+                    color: 'error'
+                });
             } finally {
                 confirmDialog.value.loading = false;
             }
@@ -301,161 +306,98 @@ onBeforeUnmount(() => {
     <v-container fluid class="pa-4 gray-bg min-h-screen font-body">
         <!-- Header -->
         <div class="mb-2">
-            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Sản phẩm</h1>
+            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lí sản phẩm</h1>
         </div>
 
         <!-- 1. FILTER -->
-        <div class="filter-top invoice-filter-shell">
-            <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
+        <div class="filter-top">
+            <AdminFilter @refresh="handleRefresh" :loading="isRefreshing">
                 <!-- Search -->
-                <v-col cols="12" md="3" class="filter-cell">
-                    <div class="filter-field-label">Tìm kiếm</div>
+                <v-col cols="12" md="3">
+                    <div class="filter-label">Tìm kiếm</div>
                     <v-text-field
                         v-model="filters.keyword"
-                        placeholder="Tìm theo tên sản phẩm, mã sản phẩm..."
-                        persistent-placeholder
+                        placeholder="Mã hoặc tên sản phẩm..."
+                        prepend-inner-icon="mdi-magnify"
                         variant="outlined"
                         density="compact"
                         hide-details
-                        prepend-inner-icon="mdi-magnify"
-                        class="font-weight-bold"
-                        @input="scheduleSearch"
-                        @keyup.enter="loadProducts"
+                        clearable
+                        class="compact-input"
+                        @update:model-value="scheduleSearch"
                     ></v-text-field>
                 </v-col>
 
-                <!-- Thương Hiệu -->
-                <v-col cols="12" md="2" class="filter-cell">
-                    <div class="filter-field-label">Thương hiệu</div>
-                    <v-select
-                        v-model="filters.thuongHieu"
-                        placeholder="Thương hiệu"
-                        :items="[
-                            { title: 'Tất cả thương hiệu', value: null },
-                            ...filterOptions.thuongHieus.map((t) => ({ title: t.ten, value: t.id }))
-                        ]"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        class="font-weight-bold"
-                        @update:model-value="loadProducts"
-                    ></v-select>
-                </v-col>
-
-                <!-- Danh Mục -->
-                <v-col cols="12" md="2" class="filter-cell">
-                    <div class="filter-field-label">Danh mục</div>
+                <!-- Danh mục -->
+                <v-col cols="12" md="2">
+                    <div class="filter-label">Danh mục</div>
                     <v-select
                         v-model="filters.danhMuc"
-                        placeholder="Danh mục"
                         :items="[
                             { title: 'Tất cả danh mục', value: null },
-                            ...filterOptions.danhMucs.map((d) => ({ title: d.ten, value: d.id }))
+                            ...filterOptions.danhMucs.map(d => ({ title: d.ten, value: d.id }))
                         ]"
                         variant="outlined"
                         density="compact"
                         hide-details
-                        class="font-weight-bold"
+                        class="compact-input"
                         @update:model-value="loadProducts"
                     ></v-select>
                 </v-col>
 
-                <!-- Trạng Thái -->
-                <v-col cols="12" md="2" class="filter-cell">
-                    <div class="filter-field-label">Trạng thái</div>
+                <!-- Thương hiệu -->
+                <v-col cols="12" md="2">
+                    <div class="filter-label">Thương hiệu</div>
+                    <v-select
+                        v-model="filters.thuongHieu"
+                        :items="[
+                            { title: 'Tất cả thương hiệu', value: null },
+                            ...filterOptions.thuongHieus.map(t => ({ title: t.ten, value: t.id }))
+                        ]"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
+                        @update:model-value="loadProducts"
+                    ></v-select>
+                </v-col>
+
+                <!-- Giới tính -->
+                <v-col cols="12" md="2">
+                    <div class="filter-label">Giới tính</div>
+                    <v-select
+                        v-model="filters.gioiTinh"
+                        :items="[
+                            { title: 'Tất cả', value: null },
+                            { title: 'Nam', value: 'NAM' },
+                            { title: 'Nữ', value: 'NU' },
+                            { title: 'Trẻ em', value: 'TRE_EM' },
+                            { title: 'Unisex', value: 'UNISEX' }
+                        ]"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
+                        @update:model-value="loadProducts"
+                    ></v-select>
+                </v-col>
+
+                <!-- Trạng thái -->
+                <v-col cols="12" md="2">
+                    <div class="filter-label">Trạng thái</div>
                     <v-select
                         v-model="filters.trangThai"
-                        placeholder="Trạng thái"
                         :items="[
-                            { title: 'Tất cả trạng thái', value: null },
-                            { title: 'Đang bán', value: 'DANG_HOAT_DONG' },
-                            { title: 'Ngừng bán', value: 'KHONG_HOAT_DONG' }
+                            { title: 'Tất cả', value: null },
+                            { title: 'Hoạt động', value: 'DANG_HOAT_DONG' },
+                            { title: 'Ngừng hoạt động', value: 'KHONG_HOAT_DONG' }
                         ]"
                         variant="outlined"
                         density="compact"
                         hide-details
-                        class="font-weight-bold"
+                        class="compact-input"
                         @update:model-value="loadProducts"
                     ></v-select>
-                </v-col>
-
-                <!-- Chất Liệu -->
-                <v-col cols="12" md="3" class="filter-cell">
-                    <div class="filter-field-label">Chất liệu</div>
-                    <v-select
-                        v-model="filters.chatLieu"
-                        placeholder="Chất liệu"
-                        :items="[
-                            { title: 'Tất cả chất liệu', value: null },
-                            ...filterOptions.chatLieus.map((c) => ({ title: c.ten, value: c.id }))
-                        ]"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        class="font-weight-bold"
-                        @update:model-value="loadProducts"
-                    ></v-select>
-                </v-col>
-
-                <!-- Khoảng Giá -->
-                <v-col cols="12" md="6" class="filter-cell price-filter-cell">
-                    <div class="filter-field-label">Khoảng giá (0Đ - 100.000.000Đ)</div>
-                    <div class="price-slider-wrap">
-                        <v-range-slider
-                            v-model="filters.khoangGia"
-                            :min="MIN_PRICE"
-                            :max="MAX_PRICE"
-                            :step="PRICE_STEP"
-                            color="primary"
-                            track-color="blue-lighten-4"
-                            hide-details
-                            class="price-range-slider primary-range-slider"
-                            @end="loadProducts"
-                        ></v-range-slider>
-                        <div class="price-live-values">
-                            {{ formatRangePrice(filters.khoangGia[0]) }} - {{ formatRangePrice(filters.khoangGia[1]) }}
-                        </div>
-                        <div class="price-endpoints">
-                            <span>0</span>
-                            <span>100.000.000</span>
-                        </div>
-                    </div>
-                </v-col>
-
-                <!-- Giới Tính -->
-                <v-col cols="12" md="3" offset-md="1" class="filter-cell gender-filter-cell">
-                    <div class="gender-inline-row">
-                        <div class="filter-field-label gender-inline-title">Giới tính</div>
-                        <div class="gender-native-group" role="radiogroup" aria-label="Giới tính">
-                            <label class="gender-option">
-                                <input
-                                    type="radio"
-                                    name="genderFilter"
-                                    :checked="filters.gioiTinh === null"
-                                    @change="setGenderFilter(null)"
-                                />
-                                <span>Tất cả</span>
-                            </label>
-                            <label class="gender-option">
-                                <input
-                                    type="radio"
-                                    name="genderFilter"
-                                    :checked="filters.gioiTinh === 'NAM'"
-                                    @change="setGenderFilter('NAM')"
-                                />
-                                <span>Nam</span>
-                            </label>
-                            <label class="gender-option">
-                                <input
-                                    type="radio"
-                                    name="genderFilter"
-                                    :checked="filters.gioiTinh === 'NU'"
-                                    @change="setGenderFilter('NU')"
-                                />
-                                <span>Nữ</span>
-                            </label>
-                        </div>
-                    </div>
                 </v-col>
             </AdminFilter>
         </div>
@@ -529,16 +471,17 @@ onBeforeUnmount(() => {
 
                     <td class="data-cell action-cell" style="text-align: center">
                         <div class="d-flex align-center justify-center action-controls">
-                            <v-switch
-                                :model-value="isActiveStatus(item.trangThai)"
-                                color="#1e3a8a"
-                                hide-details
-                                density="compact"
-                                class="tight-switch action-switch"
-                                @click.stop="confirmToggleStatus(item)"
-                            >
-                                <v-tooltip activator="parent" location="top">Đổi trạng thái</v-tooltip>
-                            </v-switch>
+                            <div class="switch-wrapper">
+                                <v-switch
+                                    :model-value="isActiveStatus(item.trangThai)"
+                                    color="#1e3a8a"
+                                    hide-details
+                                    density="compact"
+                                    class="tight-switch action-switch"
+                                    @click.prevent.stop="confirmToggleStatus(item)"
+                                />
+                                <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
+                            </div>
                             <v-btn
                                 icon
                                 variant="text"
@@ -776,26 +719,35 @@ onBeforeUnmount(() => {
     box-shadow: none !important;
 }
 
-:deep(.action-cell .action-switch .v-selection-control__wrapper) {
-    width: 36px !important;
-    min-width: 36px !important;
-    height: 22px !important;
+.switch-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 :deep(.action-cell .action-switch .v-switch__track) {
-    background: #d9e6fb !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
     opacity: 1 !important;
-    min-height: 17px !important;
-    max-height: 17px !important;
-    height: 18px !important;
-    min-width: 30px !important;
-    width: 30px !important;
+    min-height: 18px !important;
+    max-height: 18px !important;
+    width: 32px !important;
+}
+
+:deep(.action-cell .action-switch .v-selection-control--dirty .v-switch__track) {
+    background: #d9e6fb !important;
+    border-color: #d9e6fb !important;
 }
 
 :deep(.action-cell .action-switch .v-switch__thumb) {
-    background: #2a5fb8 !important;
+    background: #94a3b8 !important;
     width: 14px !important;
     height: 14px !important;
+    box-shadow: none !important;
+}
+
+:deep(.action-cell .action-switch .v-selection-control--dirty .v-switch__thumb) {
+    background: #1e3a8a !important;
 }
 
 :deep(.native-admin-table .header-cell) {

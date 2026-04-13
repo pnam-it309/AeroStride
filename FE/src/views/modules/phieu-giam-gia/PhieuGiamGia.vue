@@ -18,7 +18,13 @@ const vouchers = ref([]);
 const searchDebounce = ref(null);
 
 const pagination = ref({ page: 1, size: 5, totalElements: 0, totalPages: 1 });
-const filters = ref({ keyword: '', loaiPhieu: null, hinhThuc: null });
+const filters = ref({ 
+    keyword: '', 
+    loaiPhieu: null, 
+    hinhThuc: null,
+    startDate: null,
+    endDate: null
+});
 
 // Confirmation Logic
 const confirmDialog = ref({ show: false, title: '', message: '', color: 'primary', action: null, loading: false });
@@ -173,8 +179,10 @@ const getHinhThucLabel = (value) => {
     return value ? String(value) : '--';
 };
 const isActiveStatus = (status) => {
-    const normalized = String(status ?? '').toUpperCase();
-    return normalized === 'DANG_HOAT_DONG' || normalized === 'HOAT_DONG' || normalized === 'ACTIVE' || normalized === '1';
+    if (status === null || status === undefined) return false;
+    if (typeof status === 'number') return status === 0;
+    const normalized = String(status).toUpperCase();
+    return normalized === 'DANG_HOAT_DONG' || normalized === 'ACTIVE' || normalized === 'HOAT_DONG' || normalized === '0';
 };
 const getStatusChipClass = (status) => (isActiveStatus(status) ? 'status-chip-active' : 'status-chip-inactive');
 const getDisplayStatus = (status) => (isActiveStatus(status) ? 'Hoạt động' : 'Ngừng hoạt động');
@@ -191,59 +199,79 @@ onBeforeUnmount(() => {
 <template>
     <v-container fluid class="pa-4 gray-bg min-h-screen font-body">
         <!-- Header -->
-        <div class="mb-2">
-            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Phiếu giảm giá</h1>
+        <div class="mb-6">
+            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lí phiếu giảm giá</h1>
         </div>
 
         <!-- 1. FILTER -->
         <div class="filter-top invoice-filter-shell">
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-                <v-col cols="12" md="5" class="filter-cell">
+                <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm</div>
                     <v-text-field
                         v-model="filters.keyword"
-                        placeholder="Nhập mã hoặc tên phiếu..."
-                        persistent-placeholder
+                        placeholder="Mã hoặc tên phiếu..."
                         variant="outlined"
                         density="compact"
                         hide-details
                         prepend-inner-icon="mdi-magnify"
-                        class="font-weight-medium"
+                        class="compact-input"
                         @input="scheduleSearch"
-                        @keyup.enter="loadVouchers"
                     ></v-text-field>
                 </v-col>
-                <v-col cols="12" md="3" class="filter-cell">
+                <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Loại phiếu</div>
-                    <v-select
+                    <v-radio-group
                         v-model="filters.loaiPhieu"
-                        :items="[
-                            { title: 'Tất cả loại', value: null },
-                            { title: 'Giảm theo %', value: 'PHAN_TRAM' },
-                            { title: 'Giảm theo VNĐ', value: 'TIEN_MAT' }
-                        ]"
-                        variant="outlined"
-                        density="compact"
+                        inline
                         hide-details
-                        class="font-weight-medium"
-                        @update:model-value="loadVouchers"
-                    ></v-select>
+                        density="compact"
+                        class="compact-radio-group mt-0"
+                        @update:model-value="scheduleSearch"
+                    >
+                        <v-radio label="%" value="PHAN_TRAM" class="mr-1"></v-radio>
+                        <v-radio label="VNĐ" value="TIEN_MAT"></v-radio>
+                    </v-radio-group>
                 </v-col>
-                <v-col cols="12" md="3" class="filter-cell">
+                <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Hình thức</div>
                     <v-select
                         v-model="filters.hinhThuc"
                         :items="[
-                            { title: 'Tất cả hình thức', value: null },
+                            { title: 'Tất cả', value: null },
                             { title: 'Công khai', value: 'CONG_KHAI' },
                             { title: 'Cá nhân', value: 'CA_NHAN' }
                         ]"
                         variant="outlined"
                         density="compact"
                         hide-details
-                        class="font-weight-medium"
-                        @update:model-value="loadVouchers"
+                        class="compact-input"
+                        @update:model-value="scheduleSearch"
                     ></v-select>
+                </v-col>
+                <v-col cols="12" md="2" class="filter-cell">
+                    <div class="filter-field-label">Từ ngày</div>
+                    <v-text-field
+                        v-model="filters.startDate"
+                        type="date"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
+                        @change="scheduleSearch"
+                    ></v-text-field>
+                </v-col>
+                <v-col cols="12" md="2" class="filter-cell">
+                    <div class="filter-field-label">Đến ngày</div>
+                    <v-text-field
+                        v-model="filters.endDate"
+                        type="date"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
+                        @change="scheduleSearch"
+                    ></v-text-field>
                 </v-col>
             </AdminFilter>
         </div>
@@ -296,16 +324,17 @@ onBeforeUnmount(() => {
                     </td>
                     <td class="data-cell action-cell" style="text-align: center">
                         <div class="d-flex align-center justify-center action-controls">
-                            <v-switch
-                                :model-value="isActiveStatus(item.trangThai)"
-                                color="#1e3a8a"
-                                hide-details
-                                density="compact"
-                                class="tight-switch action-switch"
-                                @click.stop="confirmToggleStatus(item)"
-                            >
-                                <v-tooltip activator="parent" location="top">Đổi trạng thái</v-tooltip>
-                            </v-switch>
+                            <div class="switch-wrapper">
+                                <v-switch
+                                    :model-value="isActiveStatus(item.trangThai)"
+                                    color="#1e3a8a"
+                                    hide-details
+                                    density="compact"
+                                    class="tight-switch action-switch"
+                                    @click.prevent.stop="confirmToggleStatus(item)"
+                                />
+                                <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
+                            </div>
                             <v-btn
                                 icon
                                 variant="text"
@@ -501,24 +530,35 @@ onBeforeUnmount(() => {
     display: none !important;
 }
 
-:deep(.action-cell .action-switch .v-selection-control__wrapper) {
-    width: 36px !important;
-    min-width: 36px !important;
-    height: 22px !important;
+.switch-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 :deep(.action-cell .action-switch .v-switch__track) {
-    background: #d9e6fb !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
     opacity: 1 !important;
-    min-height: 17px !important;
-    max-height: 17px !important;
-    width: 30px !important;
+    min-height: 18px !important;
+    max-height: 18px !important;
+    width: 32px !important;
+}
+
+:deep(.action-cell .action-switch .v-selection-control--dirty .v-switch__track) {
+    background: #d9e6fb !important;
+    border-color: #d9e6fb !important;
 }
 
 :deep(.action-cell .action-switch .v-switch__thumb) {
-    background: #2a5fb8 !important;
+    background: #94a3b8 !important;
     width: 14px !important;
     height: 14px !important;
+    box-shadow: none !important;
+}
+
+:deep(.action-cell .action-switch .v-selection-control--dirty .v-switch__thumb) {
+    background: #1e3a8a !important;
 }
 
 .filter-top :deep(.filter-reset-col) {

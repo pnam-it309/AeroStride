@@ -162,11 +162,12 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     }
 
     @Override
+    @Transactional
     public void doiTrangThai(String id, TrangThai trangThai) {
         KhachHang kh = adminKhachHangRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
         kh.setTrangThai(trangThai);
-        adminKhachHangRepository.save(kh);
+        adminKhachHangRepository.saveAndFlush(kh);
     }
 
     @Override

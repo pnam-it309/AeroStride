@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
+@Transactional(readOnly = true)
 public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
 
     @Autowired
@@ -129,6 +130,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     }
 
     @Override
+    @Transactional
     public void update(AdminPhieuGiamGiaRequest req, String id) {
         PhieuGiamGia p = repo.findById(id).get();
         BeanUtils.copyProperties(req, p);
@@ -136,11 +138,12 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     }
 
     @Override
+    @Transactional
     public void updateStatus(String id, com.example.be.infrastructure.constants.TrangThai status) {
         PhieuGiamGia p = repo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu giảm giá!"));
         p.setTrangThai(status);
-        repo.save(p);
+        repo.saveAndFlush(p);
     }
     @Override
     public byte[] exportExcel() {
