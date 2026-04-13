@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/pnam-it309/AeroStride/compare/v1.1.3...v1.2.0) (2026-04-13)
+
+
+### Features
+
+* chuẩn hóa bộ lọc admin, sửa lỗi đồng bộ trạng thái BE và tối ưu hiệu ứng loading ([f536a1c](https://github.com/pnam-it309/AeroStride/commit/f536a1c764826aa406784c0045af7898c01e0fc3))
+
 ## [1.1.3](https://github.com/pnam-it309/AeroStride/compare/v1.1.2...v1.1.3) (2026-04-13)
 
 
