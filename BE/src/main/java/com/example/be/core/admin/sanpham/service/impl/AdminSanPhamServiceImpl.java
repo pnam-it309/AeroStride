@@ -74,6 +74,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -98,6 +99,15 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     private final KichThuocRepository kichThuocRepository;
 
     private final AdminSanPhamMapper adminSanPhamMapper;
+
+    @Override
+    public List<ProductVariantResponse> getVariantsByProductId(String productId) {
+        return adminChiTietSanPhamRepository
+                .findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(productId)
+                .stream()
+                .map(this::mapVariant)
+                .toList();
+    }
 
     @Override
     public ProductFormOptionsResponse getFormOptions() {
@@ -181,7 +191,33 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
         applyProductData(sanPham, request, normalizedProductCode);
         adminSanPhamRepository.save(sanPham);
+
+        // Update variants if provided in the request
+        // Note: UpdateProductRequest doesn't have variants field in current implementation
+        // This functionality can be added later if needed
+        // if (request.getVariants() != null) {
+        //     updateVariantsForProduct(sanPham, request.getVariants());
+        // }
+
         return buildProductDetailResponse(id);
+    }
+
+    private void updateVariantsForProduct(SanPham sanPham, List<ProductVariantRequest> variantRequests) {
+        // Simple implementation: delete old NOT in list and update/add new
+        // For now, let's use the safer approach of updating existing or adding new
+        for (ProductVariantRequest variantRequest : variantRequests) {
+            String mauSacId = variantRequest.getIdMauSac();
+            String kichThuocId = variantRequest.getIdKichThuoc();
+            
+            Optional<ChiTietSanPham> existing = adminChiTietSanPhamRepository
+                .findBySanPhamIdAndMauSacIdAndKichThuocIdAndXoaMemFalse(sanPham.getId(), mauSacId, kichThuocId);
+            
+            if (existing.isPresent()) {
+                createOrUpdateVariant(existing.get(), sanPham, variantRequest);
+            } else {
+                createOrUpdateVariant(null, sanPham, variantRequest);
+            }
+        }
     }
 
     @Override
@@ -189,6 +225,14 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     public void deleteProduct(String id) {
         SanPham sanPham = getProductOrThrow(id);
         softDeleteProduct(sanPham);
+    }
+
+    @Override
+    @Transactional
+    public void updateStatus(String id, TrangThai status) {
+        SanPham sanPham = getProductOrThrow(id);
+        sanPham.setTrangThai(status);
+        adminSanPhamRepository.save(sanPham);
     }
 
     @Override

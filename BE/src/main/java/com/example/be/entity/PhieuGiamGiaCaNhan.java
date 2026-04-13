@@ -1,6 +1,7 @@
 package com.example.be.entity;
 
 import com.example.be.core.common.base.PrimaryEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,6 +12,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class PhieuGiamGiaCaNhan extends PrimaryEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

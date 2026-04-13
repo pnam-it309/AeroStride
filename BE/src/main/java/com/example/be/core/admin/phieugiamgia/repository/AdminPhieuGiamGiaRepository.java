@@ -38,9 +38,9 @@ FROM PhieuGiamGia p
         p.id, p.ma, p.ten, p.loaiPhieu, p.hinhThuc, p.phanTramGiamGia, p.soTienGiam,
         p.soLuong, p.donHangToiThieu, p.giamToiDa, p.ngayBatDau, p.ngayKetThuc, p.ghiChu, CAST(p.trangThai AS String)
     )
-    FROM PhieuGiamGia p WHERE p.ma = :ma
+    FROM PhieuGiamGia p WHERE p.id = :id
 """)
-    AdminPhieuGiamGiaResponse detail(String ma);
+    AdminPhieuGiamGiaResponse detail(String id);
 
     @Query("""
         SELECT new com.example.be.core.admin.phieugiamgia.model.response.AdminPhieuGiamGiaResponse(

@@ -7,8 +7,10 @@ import com.example.be.core.admin.nhanvien.service.AdminNhanVienService;
 import com.example.be.core.notification.EmailService;
 import com.example.be.entity.NhanVien;
 import com.example.be.infrastructure.constants.TrangThai;
+import com.example.be.infrastructure.exceptions.DuplicateResourceException;
 import com.example.be.repository.PhanQuyenRepository;
 import com.example.be.utils.ExcelUtils;
+import com.example.be.utils.MaGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,8 +18,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.example.be.utils.MaGenerator;
-
 
 import java.io.IOException;
 import java.util.List;
@@ -78,17 +78,16 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     @Override
     public AdminNhanVienResponse add(AdminNhanVienRequest request) {
         if (adminNhanVienRepository.existsByMa(request.getMa()))
-            throw new RuntimeException("Mã nhân viên đã tồn tại");
+            throw new DuplicateResourceException("Mã nhân viên này đã tồn tại.");
         if (adminNhanVienRepository.existsByEmail(request.getEmail()))
-            throw new RuntimeException("Email đã tồn tại");
+            throw new DuplicateResourceException("Email này đã được sử dụng bởi một nhân viên khác.");
         if (adminNhanVienRepository.existsByTenTaiKhoan(request.getTenTaiKhoan()))
-            throw new RuntimeException("Tên tài khoản đã tồn tại");
+            throw new DuplicateResourceException("Tên tài khoản này đã tồn tại.");
 
         NhanVien nv = toEntity(request);
         if (nv.getMa() == null || nv.getMa().trim().isEmpty()) {
             nv.setMa(MaGenerator.generate(NhanVien.class));
         }
-
 
         // Admin cannot set password manually
         String tempPassword = java.util.UUID.randomUUID().toString();

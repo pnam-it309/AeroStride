@@ -23,9 +23,9 @@ public class AdminPhieuGiamGiaController {
         return ResponseEntity.ok(ApiResponse.success(service.hienThi()));
     }
 
-    @GetMapping("/detail")
-    public ResponseEntity<?> detail(@RequestParam("ma") String ma) {
-        return ResponseEntity.ok(ApiResponse.success(service.detail(ma)));
+    @GetMapping("/detail/{id}")
+    public ResponseEntity<?> detail(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(service.detail(id)));
     }
 
     @GetMapping("/phan-trang")
@@ -37,8 +37,8 @@ public class AdminPhieuGiamGiaController {
         return ResponseEntity.ok(ApiResponse.success(service.phanTrang(pageNo, pageSize, keyword)));
     }
 
-    @DeleteMapping("/delete")
-    public ResponseEntity<?> delete(@RequestParam String id) {
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.ok(ApiResponse.success("Xóa thành công!"));
     }
@@ -49,11 +49,17 @@ public class AdminPhieuGiamGiaController {
         return ResponseEntity.ok(ApiResponse.success("Thêm thành công!"));
     }
 
-    @PutMapping("/update")
+    @PutMapping("/update/{id}")
     public ResponseEntity<?> update(@RequestBody AdminPhieuGiamGiaRequest req,
-                                    @RequestParam String id) {
+                                    @PathVariable String id) {
         service.update(req, id);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật thành công!"));
+    }
+
+    @PutMapping("/status/{id}")
+    public ResponseEntity<?> updateStatus(@PathVariable String id, @RequestParam com.example.be.infrastructure.constants.TrangThai status) {
+        service.updateStatus(id, status);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công!"));
     }
 
     @GetMapping("/export-excel")

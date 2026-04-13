@@ -5,6 +5,7 @@ import com.example.be.infrastructure.constants.VaiTro;
 import jakarta.persistence.*;
 import lombok.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDate;
 
 @Entity
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @AttributeOverrides({
     @AttributeOverride(name = "ma", column = @Column(name = "ma_nhan_vien")),
     @AttributeOverride(name = "ten", column = @Column(name = "ten_nhan_vien"))

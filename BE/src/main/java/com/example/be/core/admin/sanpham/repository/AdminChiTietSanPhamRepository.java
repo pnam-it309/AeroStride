@@ -26,6 +26,8 @@ public interface AdminChiTietSanPhamRepository extends ChiTietSanPhamRepository 
     @EntityGraph(attributePaths = {"sanPham", "mauSac", "kichThuoc"})
     List<ChiTietSanPham> findAllByXoaMemFalse();
 
+    Optional<ChiTietSanPham> findBySanPhamIdAndMauSacIdAndKichThuocIdAndXoaMemFalse(String sanPhamId, String mauSacId, String kichThuocId);
+
     boolean existsBySanPhamIdAndMauSacIdAndKichThuocIdAndXoaMemFalse(String sanPhamId, String mauSacId, String kichThuocId);
 
     boolean existsBySanPhamIdAndMauSacIdAndKichThuocIdAndXoaMemFalseAndIdNot(

@@ -38,14 +38,16 @@ public class AdminDotGiamGiaController {
     }
 
     @PostMapping("/add")
-    public void add(@RequestBody AdminDotGiamGiaRequest req) {
+    public ResponseEntity<?> add(@RequestBody AdminDotGiamGiaRequest req) {
         service.add(req);
+        return ResponseEntity.ok(ApiResponse.success(null, "Thêm đợt giảm giá thành công!"));
     }
 
-    @PutMapping("/update")
-    public void update(@RequestBody AdminDotGiamGiaRequest req,
-                       @RequestParam String id) {
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> update(@RequestBody AdminDotGiamGiaRequest req,
+                       @PathVariable String id) {
         service.update(req, id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật đợt giảm giá thành công!"));
     }
 
     @PutMapping("/status/{id}")
@@ -54,9 +56,10 @@ public class AdminDotGiamGiaController {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công!"));
     }
 
-    @DeleteMapping("/delete")
-    public void delete(@RequestParam String id) {
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<?> delete(@PathVariable String id) {
         service.delete(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Xóa đợt giảm giá thành công!"));
     }
 
     @GetMapping("/export-excel")

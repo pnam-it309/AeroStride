@@ -20,6 +20,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.be.infrastructure.exceptions.DuplicateResourceException;
+
 import java.io.IOException;
 import java.util.List;
 
@@ -87,12 +89,12 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     public AdminKhachHangResponse add(AdminKhachHangRequest request) {
         if (request.getMa() != null && !request.getMa().trim().isEmpty()) {
             if (adminKhachHangRepository.existsByMa(request.getMa()))
-                throw new RuntimeException("Mã khách hàng đã tồn tại");
+                throw new DuplicateResourceException("Mã khách hàng này đã tồn tại trong hệ thống.");
         }
         if (adminKhachHangRepository.existsByEmail(request.getEmail()))
-            throw new RuntimeException("Email đã tồn tại");
+            throw new DuplicateResourceException("Email này đã được sử dụng bởi một khách hàng khác.");
         if (adminKhachHangRepository.existsByTenTaiKhoan(request.getTenTaiKhoan()))
-            throw new RuntimeException("Tên tài khoản đã tồn tại");
+            throw new DuplicateResourceException("Tên tài khoản này đã tồn tại. Vui lòng chọn tên khác.");
 
         KhachHang kh = toEntity(request);
         if (kh.getMa() == null || kh.getMa().trim().isEmpty()) {

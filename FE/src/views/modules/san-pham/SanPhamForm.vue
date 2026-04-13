@@ -5,8 +5,9 @@ import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
 import {
   ChevronLeftIcon, DeviceFloppyIcon, PlusIcon, TrashIcon,
-  PhotoIcon, InfoCircleIcon, BoxIcon, SettingsIcon
+  PhotoIcon, InfoCircleIcon, BoxIcon, SettingsIcon, ArrowLeftIcon
 } from 'vue-tabler-icons';
+import AdminConfirm from '@/components/common/AdminConfirm.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -14,6 +15,15 @@ const { addNotification } = useNotifications();
 
 const loading = ref(false);
 const saving = ref(false);
+
+const confirmDialog = ref({
+  show: false,
+  title: '',
+  message: '',
+  color: 'primary',
+  action: null,
+  loading: false
+});
 const isEditMode = computed(() => !!route.params.id && !route.path.includes('/detail'));
 const isDetailView = computed(() => route.path.includes('/detail'));
 
@@ -55,18 +65,29 @@ const variants = ref([]);
 const loadProduct = async (id) => {
   try {
     const data = await dichVuSanPham.layChiTietSanPham(id);
-    product.value = { ...data, hinhAnhs: data.hinhAnhs || [] };
+    product.value = { 
+      ...data, 
+      hinhAnhs: data.hinhAnhs || (data.hinhAnh ? [{ url: data.hinhAnh, isMain: true }] : []) 
+    };
     
-    // Load variants separately to handle potential 500 errors gracefully
-    try {
-      const vars = await dichVuSanPham.layBienTheSanPham(id);
-      variants.value = vars || [];
-    } catch (variantError) {
-      console.error('Error loading variants:', variantError);
-      addNotification({ title: 'Lỗi biến thể', subtitle: 'Không thể tải danh sách biến thể sản phẩm', color: 'warning' });
+    // Load variants (combined from detail or separate fetch)
+    let rawVariants = data.variants || [];
+    if (rawVariants.length === 0) {
+      try {
+        const fallbackVars = await dichVuSanPham.layBienTheSanPham(id);
+        if (fallbackVars) rawVariants = fallbackVars;
+      } catch (e) {
+        console.warn('Could not fetch variants from separate endpoint', e);
+      }
     }
+
+    variants.value = rawVariants.map(v => ({
+      ...v,
+      soLuongTon: v.soLuong, 
+      sku: v.maChiTietSanPham 
+    }));
   } catch (error) {
-    throw error; // Re-throw to be caught by onMounted's catch block
+    throw error;
   }
 };
 
@@ -114,16 +135,18 @@ const generateVariants = () => {
       const existing = variants.value.find(v => v.idMauSac === colorId && v.idKichThuoc === sizeId);
       
       if (!existing) {
-        newVariants.push({
-          idMauSac: colorId,
-          tenMauSac: color.ten,
-          idKichThuoc: sizeId,
-          tenKichThuoc: size.ten,
-          giaNhap: 0,
-          giaBan: 0,
-          soLuongTon: 0,
-          sku: `${(product.value.tenSanPham || 'PRO').substring(0, 3).toUpperCase()}-${color.ten.substring(0, 2).toUpperCase()}-${size.ten}`
-        });
+          newVariants.push({
+            idMauSac: colorId,
+            tenMauSac: color.ten,
+            idKichThuoc: sizeId,
+            tenKichThuoc: size.ten,
+            giaNhap: 0,
+            giaBan: 0,
+            soLuong: 0,
+            soLuongTon: 0,
+            maChiTietSanPham: `${(product.value.tenSanPham || 'PRO').substring(0, 3).toUpperCase()}-${color.ten.substring(0, 2).toUpperCase()}-${size.ten}`,
+            sku: `${(product.value.tenSanPham || 'PRO').substring(0, 3).toUpperCase()}-${color.ten.substring(0, 2).toUpperCase()}-${size.ten}`
+          });
       } else {
         newVariants.push(existing);
       }
@@ -137,7 +160,7 @@ const removeVariant = (index) => {
 };
 
 // SAVE LOGIC
-const handleSave = async () => {
+const handleSave = () => {
   if (!product.value.tenSanPham || !product.value.idThuongHieu || !product.value.idDanhMuc) {
     addNotification({ title: 'Lỗi', subtitle: 'Vui lòng điền đủ thông tin bắt buộc', color: 'error' });
     return;
@@ -148,26 +171,40 @@ const handleSave = async () => {
     return;
   }
 
-  saving.value = true;
-  try {
-    const payload = {
-      ...product.value,
-      bienThes: variants.value
-    };
+  confirmDialog.value = {
+    show: true,
+    title: isEditMode.value ? 'Xác nhận cập nhật' : 'Xác nhận thêm mới',
+    message: isEditMode.value ? 'Bạn có chắc chắn muốn cập nhật thông tin sản phẩm này?' : 'Bạn có chắc chắn muốn thêm sản phẩm mới này?',
+    color: 'success',
+    action: async () => {
+        confirmDialog.value.loading = true;
+        try {
+            const payload = {
+                ...product.value,
+                hinhAnh: product.value.hinhAnhs.find(i => i.isMain)?.url || product.value.hinhAnhs[0]?.url || '',
+                variants: variants.value.map(v => ({
+                    ...v,
+                    soLuong: v.soLuongTon,
+                    maChiTietSanPham: v.sku
+                }))
+            };
 
-    if (isEditMode.value) {
-      await dichVuSanPham.capNhatSanPham(route.params.id, payload);
-      addNotification({ title: 'Thành công', subtitle: 'Cập nhật sản phẩm hoàn tất', color: 'success' });
-    } else {
-      await dichVuSanPham.taoSanPham(payload);
-      addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm mới', color: 'success' });
+            if (isEditMode.value) {
+                await dichVuSanPham.capNhatSanPham(route.params.id, payload);
+                addNotification({ title: 'Thành công', subtitle: 'Cập nhật sản phẩm hoàn tất', color: 'success' });
+            } else {
+                await dichVuSanPham.taoSanPham(payload);
+                addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm mới', color: 'success' });
+            }
+            confirmDialog.value.show = false;
+            router.push('/san-pham');
+        } catch (error) {
+            addNotification({ title: 'Lỗi', subtitle: 'Không thể lưu sản phẩm', color: 'error' });
+        } finally {
+            confirmDialog.value.loading = false;
+        }
     }
-    router.push('/san-pham');
-  } catch (error) {
-    addNotification({ title: 'Lỗi', subtitle: 'Không thể lưu sản phẩm', color: 'error' });
-  } finally {
-    saving.value = false;
-  }
+  };
 };
 
 
@@ -342,12 +379,12 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
                     </td>
                     <td class="text-right font-weight-bold text-grey">{{ formatCurrency(v.giaNhap) }}</td>
                     <td class="text-right font-weight-black text-error">{{ formatCurrency(v.giaBan) }}</td>
-                    <td class="text-center">
-                       <v-chip :color="v.soLuongTon > 10 ? 'success' : 'orange'" size="x-small" variant="flat" class="font-weight-bold">
-                          {{ v.soLuongTon }} SP
-                       </v-chip>
-                    </td>
-                    <td class="text-center text-caption font-family-mono">{{ v.sku }}</td>
+                     <td class="text-center">
+                        <v-chip :color="(v.soLuong || v.soLuongTon) > 10 ? 'success' : 'orange'" size="x-small" variant="flat" class="font-weight-bold">
+                           {{ v.soLuong || v.soLuongTon || 0 }} SP
+                        </v-chip>
+                     </td>
+                     <td class="text-center text-caption font-family-mono">{{ v.maChiTietSanPham || v.sku }}</td>
                  </tr>
                </tbody>
             </v-table>
@@ -526,6 +563,16 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
 
       </v-col>
     </v-row>
+
+    <!-- Confirmation Dialog -->
+    <AdminConfirm
+      v-model:show="confirmDialog.show"
+      :title="confirmDialog.title"
+      :message="confirmDialog.message"
+      :color="confirmDialog.color"
+      :loading="confirmDialog.loading"
+      @confirm="confirmDialog.action"
+    />
   </v-container>
 </template>
 

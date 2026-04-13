@@ -53,8 +53,8 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     }
 
     @Override
-    public AdminPhieuGiamGiaResponse detail(String ma) {
-        return repo.detail(ma);
+    public AdminPhieuGiamGiaResponse detail(String id) {
+        return repo.detail(id);
     }
 
     @Override
@@ -132,6 +132,14 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     public void update(AdminPhieuGiamGiaRequest req, String id) {
         PhieuGiamGia p = repo.findById(id).get();
         BeanUtils.copyProperties(req, p);
+        repo.save(p);
+    }
+
+    @Override
+    public void updateStatus(String id, com.example.be.infrastructure.constants.TrangThai status) {
+        PhieuGiamGia p = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu giảm giá!"));
+        p.setTrangThai(status);
         repo.save(p);
     }
     @Override
