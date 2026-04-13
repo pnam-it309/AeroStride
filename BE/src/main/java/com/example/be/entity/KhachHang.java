@@ -45,5 +45,8 @@ public class KhachHang extends BaseCodeNameEntity {
     @Column(name = "ghi_chu")
     private String ghiChu;
 
+    @ManyToOne
+    @JoinColumn(name = "id_dia_chi", referencedColumnName ="id")
+    private DiaChi diaChi;
 
 }

@@ -47,6 +47,23 @@ const productColumns = [
     { key: "thanhTien", label: "Tổng cộng", width: "130px" },
 ];
 
+const getStatusInfo = (status) => {
+    switch (status) {
+        case 1:
+            return { text: 'Chờ xác nhận', color: 'warning', icon: 'mdi-clock-outline' };
+        case 2:
+            return { text: 'Đã xác nhận', color: 'info', icon: 'mdi-check-circle-outline' };
+        case 3:
+            return { text: 'Đang giao', color: 'primary', icon: 'mdi-truck-delivery-outline' };
+        case 4:
+            return { text: 'Hoàn thành', color: 'success', icon: 'mdi-checkbox-marked-circle-outline' };
+        case 5:
+            return { text: 'Đã hủy', color: 'error', icon: 'mdi-cancel' };
+        default:
+            return { text: 'Không xác định', color: 'grey', icon: 'mdi-help-circle-outline' };
+    }
+};
+
 const loadOrderDetail = async () => {
     loading.value = true;
     try {
@@ -114,16 +131,20 @@ const timelineSteps = computed(() => {
 });
 
 const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
-const formatDate = (date) => date ? new Date(date).toLocaleString('vi-VN') : 'N/A';
+const formatDate = (date) => (date ? new Date(date).toLocaleString('vi-VN') : 'N/A');
 
 const openStatusDialog = () => {
     selectedStatus.value = order.value.trangThai;
     statusDialogOpen.value = true;
 };
 
-const requestStatusUpdate = () => {
-    if (selectedStatus.value === order.value.trangThai) return;
-    pendingStatus.value = selectedStatus.value;
+const requestStatusUpdate = (status) => {
+    if (status) {
+        pendingStatus.value = status;
+    } else {
+        if (selectedStatus.value === order.value.trangThai) return;
+        pendingStatus.value = selectedStatus.value;
+    }
     statusDialogOpen.value = false;
     confirmNoticeOpen.value = true;
 };
@@ -154,33 +175,53 @@ onMounted(loadOrderDetail);
                     <v-btn icon variant="tonal" color="primary" class="mr-4 rounded-lg" @click="router.back()">
                         <ChevronLeftIcon size="24" />
                     </v-btn>
-                    <div>
-                        <h2 class="text-h4 font-weight-bold text-slate-900">Hóa đơn #{{ order.maHoaDon }}</h2>
+                    <div v-if="loaded">
+                        <div class="d-flex align-center">
+                            <h2 class="text-h4 font-weight-bold text-slate-900 mr-4">Hóa đơn #{{ order.maHoaDon }}</h2>
+                            <v-chip :color="getStatusTone(order.trangThai)" variant="flat" class="font-weight-bold px-4">
+                                {{ getStatusLabel(order.trangThai) }}
+                            </v-chip>
+                        </div>
                         <div class="d-flex align-center mt-1 text-slate-500">
                             <CalendarIcon size="16" class="mr-2" />
                             <span>Ngày tạo: {{ formatDate(order.ngayTao) }}</span>
                         </div>
                     </div>
                 </div>
-                <div class="header-right">
-                    <v-chip :color="getStatusTone(order.trangThai)" variant="flat" class="font-weight-bold px-6 py-4 mr-4">
-                        {{ getStatusLabel(order.trangThai) }}
-                    </v-chip>
-                    
-                    <v-btn v-if="order.trangThai < 4" color="primary" variant="flat" class="rounded-lg px-6 font-weight-bold mr-3" height="44" @click="openStatusDialog">
-                        <EditIcon size="18" class="mr-2" />
-                        Cập nhật trạng thái
-                    </v-btn>
-
-                    <v-btn variant="outlined" color="slate-600" class="rounded-lg px-6 font-weight-bold" height="44">
+                <div class="header-right d-flex gap-3">
+                    <v-btn variant="outlined" color="#2E4E8E" class="rounded-lg px-6 font-weight-bold" height="44">
                         <PrinterIcon size="18" class="mr-2" />
                         In hóa đơn
                     </v-btn>
+                    
+                    <v-menu v-if="order && order.trangThai < 4">
+                        <template v-slot:activator="{ props }">
+                            <v-btn color="primary" variant="flat" class="rounded-lg px-6 font-weight-bold" height="44" v-bind="props" :loading="updatingStatus">
+                                <EditIcon size="18" class="mr-2" />
+                                Cập nhật trạng thái
+                            </v-btn>
+                        </template>
+                        <v-list class="rounded-lg shadow-xl">
+                            <v-list-item v-if="order.trangThai === 1" @click="requestStatusUpdate(2)" prepend-icon="mdi-check">
+                                <v-list-item-title>Xác nhận đơn hàng</v-list-item-title>
+                            </v-list-item>
+                            <v-list-item v-if="order.trangThai === 2" @click="requestStatusUpdate(3)" prepend-icon="mdi-truck">
+                                <v-list-item-title>Giao hàng</v-list-item-title>
+                            </v-list-item>
+                            <v-list-item v-if="order.trangThai === 3" @click="requestStatusUpdate(4)" prepend-icon="mdi-check-all">
+                                <v-list-item-title>Đã giao & Hoàn thành</v-list-item-title>
+                            </v-list-item>
+                            <v-divider></v-divider>
+                            <v-list-item @click="requestStatusUpdate(5)" color="error" prepend-icon="mdi-close">
+                                <v-list-item-title class="text-error">Hủy đơn hàng</v-list-item-title>
+                            </v-list-item>
+                        </v-list>
+                    </v-menu>
                 </div>
             </div>
         </v-card>
 
-        <!-- Timeline -->
+        <!-- Timeline Progress -->
         <v-card class="premium-card mb-6 pa-6 overflow-hidden">
             <div class="timeline-wrap">
                 <div v-for="(step, index) in timelineSteps" :key="index" class="timeline-step" :class="step.state">
@@ -199,9 +240,10 @@ onMounted(loadOrderDetail);
             </div>
         </v-card>
 
-        <v-row>
-            <!-- Details & Items -->
+        <v-row v-if="loaded">
+            <!-- Left Column: Items & History -->
             <v-col cols="12" lg="8">
+                <!-- Products -->
                 <v-card class="premium-card mb-6 overflow-hidden">
                     <div class="card-title pa-5 border-b d-flex align-center bg-slate-50">
                         <PackageIcon size="20" class="mr-3 text-primary" />
@@ -259,7 +301,104 @@ onMounted(loadOrderDetail);
                     </div>
                 </v-card>
 
-                <!-- Transaction History -->
+                <!-- Status History Logs -->
+                <v-card class="premium-card mb-6">
+                    <div class="card-title pa-5 border-b d-flex align-center bg-slate-50">
+                        <CalendarIcon size="20" class="mr-3 text-primary" />
+                        <span class="font-weight-bold text-slate-800">Lịch sử đơn hàng</span>
+                    </div>
+                    <v-card-text class="pa-6">
+                        <v-timeline side="end" align="start" density="compact">
+                            <v-timeline-item
+                                v-for="(log, idx) in order.listsLichSuHoaDon"
+                                :key="idx"
+                                :dot-color="getStatusInfo(log.trangThaiMoi).color"
+                                size="small"
+                            >
+                                <div class="d-flex justify-space-between">
+                                    <div>
+                                        <div class="font-weight-bold">{{ getStatusInfo(log.trangThaiMoi).text }}</div>
+                                        <div class="text-body-2 text-slate-600">{{ log.ghiChu || 'Cập nhật trạng thái hệ thống' }}</div>
+                                        <div class="text-caption text-primary mt-1">
+                                            Người thực hiện: {{ log.nguoiThucHien || 'Hệ thống' }}
+                                        </div>
+                                    </div>
+                                    <div class="text-caption text-slate-400">{{ formatDate(log.ngayTao) }}</div>
+                                </div>
+                            </v-timeline-item>
+                            <v-timeline-item v-if="!order.listsLichSuHoaDon || order.listsLichSuHoaDon.length === 0" dot-color="success" size="small">
+                                <div class="d-flex justify-space-between">
+                                    <div>
+                                        <div class="font-weight-bold">Khởi tạo đơn hàng</div>
+                                        <div class="text-caption text-slate-500">Đơn hàng được ghi nhận vào hệ thống</div>
+                                    </div>
+                                    <div class="text-caption text-slate-400">{{ formatDate(order.ngayTao) }}</div>
+                                </div>
+                            </v-timeline-item>
+                        </v-timeline>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+
+            <!-- Right Column: Customer & Shipping -->
+            <v-col cols="12" lg="4">
+                <v-card class="premium-card mb-6">
+                    <div class="card-title pa-5 border-b d-flex align-center bg-slate-50">
+                        <UserIcon size="20" class="mr-3 text-primary" />
+                        <span class="font-weight-bold text-slate-800">Thông tin khách hàng</span>
+                    </div>
+                    <v-card-text class="pa-6">
+                        <div class="d-flex align-center mb-6">
+                            <v-avatar color="primary" size="64" class="mr-4 rounded-2xl shadow-lg">
+                                <span class="text-h5 text-white font-weight-bold">{{ (order.tenKhachHang || 'K').charAt(0) }}</span>
+                            </v-avatar>
+                            <div>
+                                <div class="text-h6 font-weight-bold text-slate-900">{{ order.tenKhachHang || 'Khách lẻ' }}</div>
+                                <div class="d-flex align-center text-slate-500 mt-1">
+                                    <v-icon size="16" class="mr-2">mdi-phone-outline</v-icon>
+                                    <span>{{ order.soDienThoai || 'Chưa có SĐT' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <v-divider class="mb-6 border-opacity-10"></v-divider>
+                        <div class="info-group mb-6">
+                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Email</div>
+                            <div class="text-body-1 text-slate-700 font-weight-medium">{{ order.email || 'N/A' }}</div>
+                        </div>
+                    </v-card-text>
+                </v-card>
+
+                <v-card class="premium-card mb-6">
+                    <div class="card-title pa-5 border-b d-flex align-center bg-slate-50">
+                        <TruckIcon size="20" class="mr-3 text-primary" />
+                        <span class="font-weight-bold text-slate-800">Thông tin vận chuyển</span>
+                    </div>
+                    <v-card-text class="pa-6">
+                        <div class="info-group mb-6">
+                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Loại đơn hàng</div>
+                            <v-chip variant="tonal" color="primary" class="font-weight-bold">
+                                {{ order.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi' }}
+                            </v-chip>
+                        </div>
+                        <v-divider class="mb-6 border-opacity-10"></v-divider>
+                        <div class="info-group mb-6">
+                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Địa chỉ nhận</div>
+                            <div class="text-body-1 text-slate-700 d-flex align-start">
+                                <MapPinIcon size="18" class="mr-2 text-error mt-1" />
+                                <span>{{ order.diaChi || 'Khách nhận tại quầy' }}</span>
+                            </div>
+                        </div>
+                        <v-divider class="mb-6 border-opacity-10"></v-divider>
+                        <div class="info-group">
+                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Ghi chú</div>
+                            <div class="text-body-2 text-slate-600 italic pa-3 bg-slate-50 rounded-lg">
+                                {{ order.ghiChu || 'Không có ghi chú' }}
+                            </div>
+                        </div>
+                    </v-card-text>
+                </v-card>
+
+                <!-- Payment Info -->
                 <v-card class="premium-card">
                     <div class="card-title pa-5 border-b d-flex align-center bg-slate-50">
                         <CreditCardIcon size="20" class="mr-3 text-primary" />
@@ -293,93 +432,12 @@ onMounted(loadOrderDetail);
                     </v-card-text>
                 </v-card>
             </v-col>
-
-            <!-- Customer & Shipping -->
-            <v-col cols="12" lg="4">
-                <v-card class="premium-card mb-6">
-                    <div class="card-title pa-5 border-b d-flex align-center bg-slate-50">
-                        <UserIcon size="20" class="mr-3 text-primary" />
-                        <span class="font-weight-bold text-slate-800">Thông tin khách hàng</span>
-                    </div>
-                    <v-card-text class="pa-6">
-                        <div class="d-flex align-center mb-6">
-                            <v-avatar color="primary" size="64" class="mr-4 rounded-2xl shadow-lg">
-                                <span class="text-h5 text-white font-weight-bold">{{ (order.tenKhachHang || 'K').charAt(0) }}</span>
-                            </v-avatar>
-                            <div>
-                                <div class="text-h6 font-weight-bold text-slate-900">{{ order.tenKhachHang || 'Khách lẻ' }}</div>
-                                <div class="d-flex align-center text-slate-500 mt-1">
-                                    <v-icon size="16" class="mr-2">mdi-phone-outline</v-icon>
-                                    <span>{{ order.soDienThoai || 'Chưa có SĐT' }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <v-divider class="mb-6 border-opacity-10"></v-divider>
-                        <div class="info-group mb-6">
-                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Email</div>
-                            <div class="text-body-1 text-slate-700 font-weight-medium">{{ order.email || 'N/A' }}</div>
-                        </div>
-                    </v-card-text>
-                </v-card>
-
-                <v-card class="premium-card">
-                    <div class="card-title pa-5 border-b d-flex align-center bg-slate-50">
-                        <TruckIcon size="20" class="mr-3 text-primary" />
-                        <span class="font-weight-bold text-slate-800">Thông tin vận chuyển</span>
-                    </div>
-                    <v-card-text class="pa-6">
-                        <div class="info-group mb-6">
-                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Loại đơn hàng</div>
-                            <v-chip variant="tonal" color="primary" class="font-weight-bold">
-                                {{ order.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi' }}
-                            </v-chip>
-                        </div>
-                        <v-divider class="mb-6 border-opacity-10"></v-divider>
-                        <div class="info-group mb-6">
-                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Địa chỉ nhận</div>
-                            <div class="text-body-1 text-slate-700 d-flex align-start">
-                                <MapPinIcon size="18" class="mr-2 text-error mt-1" />
-                                <span>{{ order.diaChi || 'Khách nhận tại quầy' }}</span>
-                            </div>
-                        </div>
-                        <v-divider class="mb-6 border-opacity-10"></v-divider>
-                        <div class="info-group">
-                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Ghi chú</div>
-                            <div class="text-body-2 text-slate-600 italic pa-3 bg-slate-50 rounded-lg">
-                                {{ order.ghiChu || 'Không có ghi chú' }}
-                            </div>
-                        </div>
-                    </v-card-text>
-                </v-card>
-            </v-col>
         </v-row>
-
-        <!-- Status Update Dialog -->
-        <v-dialog v-model="statusDialogOpen" max-width="500" persistent>
-            <v-card class="rounded-2xl">
-                <v-card-title class="pa-6 pb-0 font-weight-bold">Cập nhật trạng thái</v-card-title>
-                <v-card-text class="pa-6">
-                    <v-select
-                        v-model="selectedStatus"
-                        label="Chọn trạng thái đơn hàng"
-                        :items="[
-                            { title: 'Đã xác nhận', value: 2 },
-                            { title: 'Đang giao hàng', value: 3 },
-                            { title: 'Hoàn thành', value: 4 },
-                            { title: 'Hủy đơn', value: 5 }
-                        ]"
-                        variant="outlined"
-                        rounded="xl"
-                        density="comfortable"
-                    ></v-select>
-                </v-card-text>
-                <v-card-actions class="pa-6 pt-0">
-                    <v-spacer></v-spacer>
-                    <v-btn variant="text" color="slate-500" @click="statusDialogOpen = false" class="rounded-lg font-weight-bold">Hủy</v-btn>
-                    <v-btn color="primary" variant="flat" @click="requestStatusUpdate" class="rounded-lg font-weight-bold px-6 shadow-md">Xác nhận</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
+        
+        <div v-else-if="loading" class="d-flex flex-column align-center justify-center py-16">
+            <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+            <div class="mt-4 text-slate-500">Đang tải thông tin hóa đơn...</div>
+        </div>
 
         <!-- Confirm Dialog -->
         <v-dialog v-model="confirmNoticeOpen" max-width="400" persistent>
@@ -404,6 +462,7 @@ onMounted(loadOrderDetail);
     border-radius: 20px !important;
     border: 1px solid #e2e8f0 !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+    background: white;
 }
 
 .header-section {
@@ -486,4 +545,5 @@ onMounted(loadOrderDetail);
 .bg-slate-50 { background-color: #f8fafc; }
 .border-b { border-bottom: 1px solid #f1f5f9; }
 .gap-4 { gap: 16px; }
+.gap-3 { gap: 12px; }
 </style>

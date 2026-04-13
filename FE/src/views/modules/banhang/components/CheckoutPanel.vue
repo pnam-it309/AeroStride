@@ -34,7 +34,7 @@ const handleCheckout = () => {
                     density="compact"
                     hide-details
                     prepend-inner-icon="mdi-ticket-percent"
-                    @update:model-value="val => emit('apply-voucher', val)"
+                    @update:model-value="(val) => emit('apply-voucher', val)"
                 ></v-select>
             </div>
 
@@ -47,7 +47,7 @@ const handleCheckout = () => {
 
             <div class="d-flex justify-space-between align-center mb-2">
                 <span class="text-h6 font-weight-bold">Tổng thanh toán:</span>
-                <span class="text-h4 font-weight-bold text-primary">{{ formatCurrency(order?.tongTienSauGiam) }}</span>
+                <span class="text-h4 font-weight-bold text-#2E4E8E">{{ formatCurrency(order?.tongTienSauGiam) }}</span>
             </div>
         </div>
 
@@ -55,12 +55,7 @@ const handleCheckout = () => {
             <p class="text-subtitle-2 font-weight-bold mb-3 d-flex align-center">
                 <Receipt2Icon size="18" class="mr-1" /> Hình thức thanh toán
             </p>
-            <v-btn-toggle
-                v-model="checkoutData.paymentMethod"
-                mandatory
-                color="primary"
-                class="d-flex w-100 gap-2 payment-toggle"
-            >
+            <v-btn-toggle v-model="checkoutData.paymentMethod" mandatory color="#2E4E8E" class="d-flex w-100 gap-2 payment-toggle">
                 <v-btn value="CASH" variant="outlined" class="flex-grow-1 h-14 rounded-lg border-2">
                     <div class="d-flex flex-column align-center">
                         <CashIcon size="20" class="mb-1" />
@@ -92,19 +87,12 @@ const handleCheckout = () => {
             </div>
         </div>
 
-        <v-textarea
-            v-model="checkoutData.note"
-            label="Ghi chú hóa đơn"
-            variant="outlined"
-            rows="2"
-            class="mb-6"
-            hide-details
-        ></v-textarea>
+        <v-textarea v-model="checkoutData.note" label="Ghi chú hóa đơn" variant="outlined" rows="2" class="mb-6" hide-details></v-textarea>
 
         <v-btn
             block
-            color="primary"
-            height="72"
+            color="#2E4E8E"
+            height="20"
             class="text-h6 font-weight-bold rounded-xl btn-checkout shadow-lg"
             :loading="loading"
             :disabled="!order?.listsHoaDonChiTiet?.length"
@@ -116,10 +104,14 @@ const handleCheckout = () => {
 </template>
 
 <style scoped>
-.h-14 { height: 56px !important; }
-.payment-toggle { background: transparent !important; }
+.h-14 {
+    height: 56px !important;
+}
+.payment-toggle {
+    background: transparent !important;
+}
 .btn-checkout {
-    background: linear-gradient(45deg, rgb(var(--v-theme-primary)), #3b82f6) !important;
+    background: linear-gradient(45deg, rgb(var(--v-theme-#2E4E8E)), #346ac0) !important;
 }
 .pricing-summary {
     border-color: #cbd5e1 !important;

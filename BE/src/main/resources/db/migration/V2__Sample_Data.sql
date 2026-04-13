@@ -132,7 +132,7 @@ INSERT INTO anh_chi_tiet_san_pham (id, id_chi_tiet_san_pham, duong_dan_anh, hinh
 INSERT INTO dot_giam_gia (id, ma_dot_giam_gia, ten_dot_giam_gia, loai_giam_gia, so_tien_giam, dieu_kien_giam_gia, ngay_bat_dau, ngay_ket_thuc, muc_uu_tien, trang_thai, ngay_tao) VALUES
 ('dg1', 'DGG01', 'Sale Hè Rực Rỡ', 'PERCENTAGE', 20.00, 500000.00, 1711814400000, 1714492800000, 1, 0, 1711814400000),
 ('dg2', 'DGG02', 'Mừng Khai Trương', 'FIXED_AMOUNT', 100000.00, 1000000.00, 1711814400000, 1711900800000, 2, 0, 1711814400000),
-('dg3', 'DGG03', 'Black Friday', 'PERCENTAGE', 50.00, 0.00, 1732814400000, 1732900800000, 1, 0, 1711814400000),
+('dg3', 'DGG03', 'Black Friday', 'PERCENTAGE' , 50.00, 0.00, 1732814400000, 1732900800000, 1, 0, 1711814400000),
 ('dg4', 'DGG04', 'Sale Thu Đông', 'PERCENTAGE', 15.00, 1000000.00, 1725120000000, 1730390400000, 3, 0, 1711814400000),
 ('dg5', 'DGG05', 'Xả Kho Cuối Năm', 'FIXED_AMOUNT', 200000.00, 500000.00, 1734201600000, 1735584000000, 1, 0, 1711814400000);
 

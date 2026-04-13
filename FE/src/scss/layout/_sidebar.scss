@@ -67,9 +67,9 @@
     /*General Menu css*/
     .v-list-group__items .v-list-item,
     .v-list-item {
-        border-radius: $border-radius-root + 3px;
-        padding-inline-start: calc(12px + var(--indent-padding) / 10) !important;
-        margin: 0 0 2px;
+        border-radius: 12px;
+        padding-inline-start: calc(10px + var(--indent-padding) / 12) !important;
+        margin: 0 0 6px;
 
         .v-list-item__prepend {
             margin-inline-end: 13px;
@@ -125,19 +125,19 @@
         }
 
         .icon-box {
-            height: 40px;
-            width: 40px;
+            height: 34px;
+            width: 34px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: $border-radius-root + 3px;
+            border-radius: 10px;
             transition: all 0.2s ease-in-out;
         }
 
         .v-list-item--density-default.v-list-item--one-line {
-            padding-top: 5px;
-            padding-bottom: 5px;
-            min-height: 40px !important;
+            padding-top: 4px;
+            padding-bottom: 4px;
+            min-height: 36px !important;
         }
 
         .v-list-item--density-default:not(.v-list-item--nav).v-list-item--one-line {
@@ -189,9 +189,9 @@
                         color: rgb(var(--v-theme-#{$color})) !important;
                     }
                     .navbox:before {
-                        background-color: rgba(var(--v-theme-#{$color}), 12%) !important;
-                        width: calc(100% + 16px);
-                        border-radius: 0 24px 24px 0;
+                        background-color: rgba(var(--v-theme-#{$color}), 14%) !important;
+                        width: calc(100% - 6px);
+                        border-radius: 12px;
                         z-index: -1;
                     }
                 }
@@ -209,11 +209,44 @@
                     content: "";
                     width: 0;
                     height: 100%;
-                    transition: all 0.4s ease-in-out;
+                    transition: all 0.25s ease-in-out;
                     z-index: -1;
-                    border-radius: 0px;
-                    left: -16px;
+                    border-radius: 12px;
+                    left: 2px;
                 }
+            }
+        }
+
+        .sidebar-link {
+            color: #0f172a !important;
+
+            .v-list-item-title,
+            .v-list-item__prepend,
+            .v-list-item__append,
+            .iconClass {
+                color: inherit !important;
+            }
+
+            &:hover {
+                color: #0f172a !important;
+            }
+
+            &:hover .navbox:before {
+                width: 0 !important;
+                background-color: transparent !important;
+            }
+
+            &.v-list-item--active,
+            &.v-list-item--active:hover {
+                color: #1e3a8a !important;
+                background-color: #dbeafe !important;
+            }
+
+            &.v-list-item--active .navbox:before,
+            &.v-list-item--active:hover .navbox:before {
+                width: 0 !important;
+                background-color: transparent !important;
+                border-radius: 12px !important;
             }
         }
     }

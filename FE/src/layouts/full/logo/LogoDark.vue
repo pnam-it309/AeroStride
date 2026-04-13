@@ -17,8 +17,8 @@ import logo from '@/assets/images/logos/logo.jpg';
     width: 100%;
 }
 .logo-img {
-    max-width: 150px;
-    max-height: 120px;
+    max-width: 182px;
+    max-height: 138px;
     height: auto;
     object-fit: contain;
     display: block;
