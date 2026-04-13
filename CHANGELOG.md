@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/pnam-it309/AeroStride/compare/v1.1.2...v1.1.3) (2026-04-13)
+
+
+### Bug Fixes
+
+* various backend and frontend updates, cleanup redundant frontend files ([bf20b9b](https://github.com/pnam-it309/AeroStride/commit/bf20b9b448d456fefc1641b51c052e8c9fd4cbba))
+
 ## [1.1.2](https://github.com/pnam-it309/AeroStride/compare/v1.1.1...v1.1.2) (2026-04-12)
 
 
