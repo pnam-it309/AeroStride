@@ -6,6 +6,12 @@ import lombok.*;
 
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "hoa_don_chi_tiet")
 @Getter
@@ -13,6 +19,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class HoaDonChiTiet extends PrimaryEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -81,18 +81,18 @@ const sidebarItem = [
     BgColor: 'secondary',
     to: '/nhan-vien'
   },
-  {
-    title: 'Thanh toán',
-    icon: CreditCardIcon,
-    BgColor: 'teal',
-    to: '/thanh-toan'
-  },
-  {
-    title: 'Quản lý file',
-    icon: FolderIcon,
-    BgColor: 'indigo',
-    to: '/quan-ly-file'
-  },
+  // {
+  //   title: 'Thanh toán',
+  //   icon: CreditCardIcon,
+  //   BgColor: 'teal',
+  //   to: '/thanh-toan'
+  // },
+  // {
+  //   title: 'Quản lý file',
+  //   icon: FolderIcon,
+  //   BgColor: 'indigo',
+  //   to: '/quan-ly-file'
+  // },
   {
     title: 'Đăng xuất',
     icon: LogoutIcon,

@@ -19,7 +19,13 @@ const activeCustomerTab = ref('ONLINE');
 const router = useRouter();
 
 const pagination = ref({ page: 1, size: 5, totalElements: 0, totalPages: 1 });
-const filters = ref({ keyword: '', trangThai: null, gioiTinh: null });
+const filters = ref({ 
+    keyword: '', 
+    trangThai: null, 
+    gioiTinh: null,
+    startDate: null,
+    endDate: null
+});
 
 const customerTabs = [
     { key: 'ONLINE', label: 'Khách hàng online' },
@@ -132,6 +138,13 @@ const getAddressSummary = (item) => {
         .join(', ');
 
     return composedAddress || 'Chưa cập nhật';
+};
+
+const isActiveStatus = (status) => {
+    if (status === null || status === undefined) return false;
+    if (typeof status === 'number') return status === 0;
+    const normalized = String(status).toUpperCase();
+    return normalized === 'DANG_HOAT_DONG' || normalized === 'ACTIVE' || normalized === 'HOAT_DONG' || normalized === '0';
 };
 
 const formatNgayTao = (value) => {
@@ -304,31 +317,43 @@ watch(baseFilteredCustomers, () => {
 <template>
     <v-container fluid class="pa-6 gray-bg min-h-screen font-body">
         <!-- Header -->
-        <div class="d-flex justify-space-between align-center mb-6">
-            <div>
-                <h5 class="text-h5 font-weight-bold">Quản lý khách hàng</h5>
-            </div>
+        <div class="mb-6">
+            <h5 class="text-h5 font-weight-bold">Quản lí khách hàng</h5>
         </div>
 
         <!-- 1. FILTER -->
         <div class="filter-top invoice-filter-shell">
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-                <v-col cols="12" md="5" class="filter-cell">
+                <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm</div>
                     <v-text-field
                         v-model="filters.keyword"
                         placeholder="Tên, SĐT, Email..."
-                        persistent-placeholder
                         variant="outlined"
                         density="compact"
                         hide-details
                         prepend-inner-icon="mdi-magnify"
-                        class="font-weight-bold"
+                        class="compact-input"
                         @input="handleLocalFilterChange"
-                        @keyup.enter="handleLocalFilterChange"
                     ></v-text-field>
                 </v-col>
-                <v-col cols="12" md="3" class="filter-cell">
+                <v-col cols="12" md="2" class="filter-cell">
+                    <div class="filter-field-label">Giới tính</div>
+                    <v-select
+                        v-model="filters.gioiTinh"
+                        :items="[
+                            { title: 'Tất cả', value: null },
+                            { title: 'Nam', value: true },
+                            { title: 'Nữ', value: false }
+                        ]"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
+                        @update:model-value="handleLocalFilterChange"
+                    ></v-select>
+                </v-col>
+                <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select
                         v-model="filters.trangThai"
@@ -340,25 +365,33 @@ watch(baseFilteredCustomers, () => {
                         variant="outlined"
                         density="compact"
                         hide-details
-                        class="font-weight-bold"
+                        class="compact-input"
                         @update:model-value="handleLocalFilterChange"
                     ></v-select>
                 </v-col>
-                <v-col cols="12" md="3" class="filter-cell">
-                    <div class="filter-field-label">Giới tính</div>
-                    <v-select
-                        v-model="filters.gioiTinh"
-                        :items="[
-                            { title: 'Tất cả giới tính', value: null },
-                            { title: 'Nam', value: true },
-                            { title: 'Nữ', value: false }
-                        ]"
+                <v-col cols="12" md="2" class="filter-cell">
+                    <div class="filter-field-label">Từ ngày</div>
+                    <v-text-field
+                        v-model="filters.startDate"
+                        type="date"
                         variant="outlined"
                         density="compact"
                         hide-details
-                        class="font-weight-bold"
-                        @update:model-value="handleLocalFilterChange"
-                    ></v-select>
+                        class="compact-input"
+                        @change="handleLocalFilterChange"
+                    ></v-text-field>
+                </v-col>
+                <v-col cols="12" md="2" class="filter-cell">
+                    <div class="filter-field-label">Đến ngày</div>
+                    <v-text-field
+                        v-model="filters.endDate"
+                        type="date"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
+                        @change="handleLocalFilterChange"
+                    ></v-text-field>
                 </v-col>
             </AdminFilter>
         </div>
@@ -439,17 +472,17 @@ watch(baseFilteredCustomers, () => {
                     <td class="data-cell center-cell">{{ formatNgayTao(item.ngayTao) }}</td>
                     <td class="data-cell center-cell action-cell">
                         <div class="d-flex align-center justify-center action-controls">
-                            <v-switch
-                                :model-value="item.trangThai === 'DANG_HOAT_DONG'"
-                                color="#1e3a8a"
-                                hide-details
-                                density="compact"
-                                :readonly="item.trangThai !== 'DANG_HOAT_DONG'"
-                                class="tight-switch action-switch"
-                                @click.stop="item.trangThai === 'DANG_HOAT_DONG' ? confirmChangeStatus(item) : null"
-                            >
-                                <v-tooltip activator="parent" location="top">Đổi trạng thái</v-tooltip>
-                            </v-switch>
+                            <div class="switch-wrapper">
+                                <v-switch
+                                    :model-value="isActiveStatus(item.trangThai)"
+                                    color="#1e3a8a"
+                                    hide-details
+                                    density="compact"
+                                    class="tight-switch action-switch"
+                                    @click.prevent.stop="confirmChangeStatus(item)"
+                                />
+                                <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
+                            </div>
                             <v-btn
                                 icon
                                 variant="text"
@@ -739,26 +772,35 @@ watch(baseFilteredCustomers, () => {
     box-shadow: none !important;
 }
 
-:deep(.action-cell .action-switch .v-selection-control__wrapper) {
-    width: 36px !important;
-    min-width: 36px !important;
-    height: 22px !important;
+.switch-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 :deep(.action-cell .action-switch .v-switch__track) {
-    background: #d9e6fb !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
     opacity: 1 !important;
-    min-height: 17px !important;
-    max-height: 17px !important;
-    height: 18px !important;
-    min-width: 30px !important;
-    width: 30px !important;
+    min-height: 18px !important;
+    max-height: 18px !important;
+    width: 32px !important;
+}
+
+:deep(.action-cell .action-switch .v-selection-control--dirty .v-switch__track) {
+    background: #d9e6fb !important;
+    border-color: #d9e6fb !important;
 }
 
 :deep(.action-cell .action-switch .v-switch__thumb) {
-    background: #2a5fb8 !important;
+    background: #94a3b8 !important;
     width: 14px !important;
     height: 14px !important;
+    box-shadow: none !important;
+}
+
+:deep(.action-cell .action-switch .v-selection-control--dirty .v-switch__thumb) {
+    background: #1e3a8a !important;
 }
 
 /* Force chip text sizes so Vuetify defaults do not make this screen look larger */

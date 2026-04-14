@@ -80,11 +80,12 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     }
 
     @Override
+    @Transactional
     public void updateStatus(String id, com.example.be.infrastructure.constants.TrangThai status) {
         DotGiamGia d = repo.findById(id)
             .orElseThrow(() -> new RuntimeException("Không tìm thấy đợt giảm giá"));
         d.setTrangThai(status);
-        repo.save(d);
+        repo.saveAndFlush(d);
     }
 
     @Override

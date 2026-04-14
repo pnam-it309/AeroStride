@@ -10,7 +10,7 @@ public interface AdminPhieuGiamGiaService {
 
     List<AdminPhieuGiamGiaResponse> hienThi();
 
-    AdminPhieuGiamGiaResponse detail(String ma);
+    AdminPhieuGiamGiaResponse detail(String id);
 
     Page<AdminPhieuGiamGiaResponse> phanTrang(Integer pageNo, Integer pageSize, String keyword);
 
@@ -19,6 +19,8 @@ public interface AdminPhieuGiamGiaService {
     void add(AdminPhieuGiamGiaRequest req);
 
     void update(AdminPhieuGiamGiaRequest req, String id);
+
+    void updateStatus(String id, com.example.be.infrastructure.constants.TrangThai status);
 
     byte[] exportExcel();
 

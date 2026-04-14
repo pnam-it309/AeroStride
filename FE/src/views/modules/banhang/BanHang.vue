@@ -9,6 +9,7 @@ import ProductPicker from './components/ProductPicker.vue';
 import CartTable from './components/CartTable.vue';
 import CustomerSelector from './components/CustomerSelector.vue';
 import CheckoutPanel from './components/CheckoutPanel.vue';
+import AdminConfirm from '@/components/common/AdminConfirm.vue';
 
 const { addNotification } = useNotifications();
 
@@ -23,6 +24,16 @@ const checkoutData = ref({
     paymentMethod: 'CASH',
     receivedAmount: 0,
     note: ''
+});
+
+// Confirmation Logic
+const confirmDialog = ref({
+    show: false,
+    title: '',
+    message: '',
+    color: 'primary',
+    action: null,
+    loading: false
 });
 
 const selectedOrder = computed(() => orders.value[activeOrderIndex.value] || null);
@@ -71,17 +82,29 @@ const closeOrder = async (orderId, index) => {
 };
 
 // Logic: Sản phẩm
-const onAddProduct = async (product) => {
-    try {
-        const updated = await dichVuDonHang.addSanPham(selectedOrder.value.id, {
-            idChiTietSanPham: product.id,
-            soLuong: 1
-        });
-        updateOrderInList(updated);
-        addNotification({ title: 'Thêm thành công', subtitle: product.tenSanPham, color: 'success' });
-    } catch (e) {
-        addNotification({ title: 'Hết hàng', subtitle: 'Sản phẩm không đủ số lượng', color: 'error' });
-    }
+const onAddProduct = (product) => {
+    confirmDialog.value = {
+        show: true,
+        title: 'Xác nhận thêm sản phẩm',
+        message: `Bạn có chắc chắn muốn thêm [${product.tenSanPham}] vào giỏ hàng?`,
+        color: 'success',
+        action: async () => {
+            confirmDialog.value.loading = true;
+            try {
+                const updated = await dichVuDonHang.addSanPham(selectedOrder.value.id, {
+                    idChiTietSanPham: product.id,
+                    soLuong: 1
+                });
+                updateOrderInList(updated);
+                addNotification({ title: 'Thêm thành công', subtitle: product.tenSanPham, color: 'success' });
+                confirmDialog.value.show = false;
+            } catch (e) {
+                addNotification({ title: 'Lỗi', subtitle: 'Sản phẩm không đủ số lượng hoặc lỗi hệ thống', color: 'error' });
+            } finally {
+                confirmDialog.value.loading = false;
+            }
+        }
+    };
 };
 
 const onUpdateQty = async (item, delta) => {
@@ -238,6 +261,16 @@ const updateOrderInList = (updated) => {
                 </div>
             </v-col>
         </v-row>
+
+        <!-- Confirmation Dialog -->
+        <AdminConfirm 
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="confirmDialog.action"
+        />
     </v-container>
 </template>
 

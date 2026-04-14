@@ -12,8 +12,11 @@ import com.example.be.core.admin.sanpham.model.response.ProductResponse;
 import com.example.be.core.admin.sanpham.model.response.ProductVariantImageResponse;
 import com.example.be.core.admin.sanpham.model.response.ProductVariantResponse;
 import com.example.be.core.common.dto.PageResponse;
+import java.util.List;
 
 public interface AdminSanPhamService {
+
+    List<ProductVariantResponse> getVariantsByProductId(String productId);
 
     ProductFormOptionsResponse getFormOptions();
 
@@ -26,6 +29,8 @@ public interface AdminSanPhamService {
     ProductDetailResponse updateProduct(String id, UpdateProductRequest request);
 
     void deleteProduct(String id);
+
+    void updateStatus(String id, com.example.be.infrastructure.constants.TrangThai status);
 
     ProductVariantResponse addVariant(String productId, ProductVariantRequest request);
 

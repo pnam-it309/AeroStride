@@ -61,6 +61,13 @@ public class AdminNhanVienController {
         adminNhanVienService.doiTrangThai(id,trangThai);
         return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công!"));
     }
+
+    @PutMapping("/status/{id}")
+    public ResponseEntity<?> updateStatus(@PathVariable String id, @RequestParam TrangThai status) {
+        adminNhanVienService.doiTrangThai(id, status);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công!"));
+    }
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> delete(@PathVariable String id) {
         adminNhanVienService.delete(id);

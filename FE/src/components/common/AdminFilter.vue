@@ -12,20 +12,24 @@ const emit = defineEmits(['refresh', 'search']);
 <template>
     <v-card class="filter-card mb-2 p-3 border shadow-none" elevation="0">
         <v-card-text class="pa-3 pa-md-4">
-            <div class="filter-title text-slate-900 mb-2">{{ title }}</div>
+            <div class="filter-header d-flex align-center mb-3">
+                <v-icon color="primary" class="mr-2 filter-main-icon">mdi-filter-variant</v-icon>
+                <div class="filter-title text-slate-900">{{ title }}</div>
+            </div>
 
             <v-row dense align="start" class="filter-grid">
                 <slot></slot>
-                <v-col cols="12" sm="12" md="2" class="filter-reset-col d-flex align-end justify-end">
+                <v-col cols="12" sm="12" md="1" class="filter-reset-col d-flex align-end justify-end">
                     <v-btn
                         variant="outlined"
                         color="primary"
-                        class="reset-btn"
-                        :icon="isRefreshing ? 'mdi-loading' : 'mdi-refresh'"
-                        :title="resetText"
+                        class="reset-btn px-0"
                         :disabled="loading || isRefreshing"
                         @click="emit('refresh')"
-                    />
+                    >
+                        <v-icon color="primary" size="18">{{ isRefreshing ? 'mdi-loading' : 'mdi-refresh' }}</v-icon>
+                        <v-tooltip activator="parent" location="top">Làm mới bộ lọc</v-tooltip>
+                    </v-btn>
                 </v-col>
             </v-row>
         </v-card-text>
@@ -120,6 +124,20 @@ const emit = defineEmits(['refresh', 'search']);
 
 :deep(.reset-btn .v-icon) {
     font-size: 18px;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reset-btn:hover {
+    background: #eef2ff !important;
+    border-color: #1e3a8a !important;
+}
+
+.reset-btn:hover :deep(.v-icon) {
+    transform: rotate(-180deg);
+}
+
+.filter-main-icon {
+    font-size: 20px;
 }
 
 :deep(.reset-btn .mdi-loading) {

@@ -59,10 +59,11 @@ public class EmailServiceImpl implements EmailService {
             
         } catch (MessagingException | MailException e) {
             log.error("Failed to send email to: {}. Error: {}", request.getTo(), e.getMessage());
-            throw new EmailProcessingException("Error processing email for: " + request.getTo(), e);
+            // Log but do not throw to prevent transaction rollback in caller
         }
     }
 
+    @Async("mailExecutor")
     @Override
     public void sendWelcomeEmail(String to, String name) {
         Map<String, Object> variables = new HashMap<>();
@@ -76,9 +77,10 @@ public class EmailServiceImpl implements EmailService {
                 .variables(variables)
                 .build();
         
-        sendHtmlEmail(request);
+        this.sendHtmlEmail(request);
     }
 
+    @Async("mailExecutor")
     @Override
     public void sendPasswordResetEmail(String to, String token) {
         Map<String, Object> variables = new HashMap<>();
@@ -88,10 +90,10 @@ public class EmailServiceImpl implements EmailService {
         EmailRequest request = EmailRequest.builder()
                 .to(to)
                 .subject("AeroStride - Password Reset")
-                .templateName("password-reset") // Assuming we might add this or just for architectural completeness
+                .templateName("password-reset")
                 .variables(variables)
                 .build();
         
-        sendHtmlEmail(request);
+        this.sendHtmlEmail(request);
     }
 }

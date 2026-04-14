@@ -1,5 +1,8 @@
 package com.example.be.core.admin.sanpham.controller;
 
+import java.util.List;
+import java.util.Map;
+
 import com.example.be.core.admin.sanpham.model.request.CreateProductRequest;
 import com.example.be.core.admin.sanpham.model.request.ProductVariantImageRequest;
 import com.example.be.core.admin.sanpham.model.request.ProductVariantRequest;
@@ -61,6 +64,22 @@ public class AdminSanPhamController {
     public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable String id) {
         adminSanPhamService.deleteProduct(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Xoa mem san pham thanh cong"));
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<Void>> updateStatus(
+            @PathVariable String id,
+            @RequestBody Map<String, String> body
+    ) {
+        String statusStr = body.get("status");
+        com.example.be.infrastructure.constants.TrangThai status = com.example.be.infrastructure.constants.TrangThai.valueOf(statusStr);
+        adminSanPhamService.updateStatus(id, status);
+        return ResponseEntity.ok(ApiResponse.success(null, "Cap nhat trang thai thanh cong"));
+    }
+
+    @GetMapping("/{id}/variants")
+    public ResponseEntity<ApiResponse<List<ProductVariantResponse>>> getVariantsByProductId(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getVariantsByProductId(id), "Lay danh sach bien the thanh cong"));
     }
 
     @PostMapping("/{id}/variants")

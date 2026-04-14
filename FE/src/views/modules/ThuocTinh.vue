@@ -165,12 +165,23 @@ const attributeMeta = {
     }
 };
 
+const filteredItems = computed(() => {
+    const list = dataRefs[selectedTab.value]?.value || [];
+    if (!searchQuery.value) return list;
+    const q = searchQuery.value.toLowerCase().trim();
+    return list.filter((item) => {
+        const name = getItemName(item).toLowerCase();
+        const code = getItemCode(item).toLowerCase();
+        return name.includes(q) || code.includes(q);
+    });
+});
+
 const currentMeta = computed(() => attributeMeta[selectedTab.value] || attributeMeta.brands);
 
 const tableHeaders = computed(() => [
     { text: 'STT', align: 'center', width: '8%' },
     { text: currentMeta.value.codeLabel, align: 'left', width: '18%' },
-    { text: currentMeta.value.nameLabel, align: 'left', width: '32%' },
+    { text: currentMeta.value.nameLabel, align: 'left', width: '20%' },
     { text: 'Trạng thái', align: 'center', width: '15%' },
     { text: 'Ngày tạo', align: 'center', width: '17%' },
     { text: 'Hành động', align: 'center', width: '10%' }
@@ -189,9 +200,10 @@ const getItemCode = (item) => String(pickFirst(item, currentMeta.value.codeKeys)
 const getItemName = (item) => String(pickFirst(item, currentMeta.value.nameKeys));
 
 const isActiveStatus = (status) => {
-    if (typeof status === 'number') return status === 0 || status === 1;
-    const normalized = String(status ?? '').toUpperCase();
-    return normalized === 'DANG_HOAT_DONG' || normalized === 'HOAT_DONG' || normalized === 'ACTIVE' || normalized === '1';
+    if (status === null || status === undefined) return false;
+    if (typeof status === 'number') return status === 0;
+    const normalized = String(status).toUpperCase();
+    return normalized === 'DANG_HOAT_DONG' || normalized === 'ACTIVE' || normalized === 'HOAT_DONG' || normalized === '0';
 };
 
 const getDisplayStatus = (status) => (isActiveStatus(status) ? 'Hoạt động' : 'Ngừng hoạt động');
@@ -486,32 +498,30 @@ watch(selectedTab, (n) => {
         <!-- Header -->
         <div class="d-flex justify-space-between align-center mb-4">
             <div>
-                <h1 class="text-h4 font-weight-bold">Thuộc tính sản phẩm</h1>
+                <h1 class="text-h4 font-weight-bold">Quản lí {{ getCurrentTabTitle() }}</h1>
             </div>
         </div>
 
         <!-- 1. FILTER -->
         <div class="filter-top invoice-filter-shell">
             <AdminFilter title="Bộ lọc thuộc tính" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-                <v-col cols="12" md="6">
-                    <div class="filter-field-label">Tìm kiếm</div>
+                <v-col cols="12" md="4" class="filter-cell">
+                    <div class="filter-field-label">Tìm kiếm nhanh</div>
                     <v-text-field
                         v-model="searchQuery"
-                        :placeholder="`Tìm tên ${getCurrentTabTitle().toLowerCase()}...`"
-                        persistent-placeholder
+                        placeholder="Nhập tên hoặc mã thuộc tính..."
                         variant="outlined"
                         density="compact"
                         hide-details
                         prepend-inner-icon="mdi-magnify"
-                        class="font-weight-bold search-field"
+                        class="compact-input font-weight-bold"
                         @keyup.enter="loadItems"
                     ></v-text-field>
                 </v-col>
-                <v-col cols="12" md="4">
+                <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select
                         v-model="statusFilter"
-                        placeholder="Tất cả trạng thái"
                         :items="[
                             { title: 'Tất cả trạng thái', value: null },
                             { title: 'Hoạt động', value: 'DANG_HOAT_DONG' },
@@ -520,7 +530,7 @@ watch(selectedTab, (n) => {
                         variant="outlined"
                         density="compact"
                         hide-details
-                        class="font-weight-bold"
+                        class="compact-input font-weight-bold"
                         @update:model-value="loadItems"
                     ></v-select>
                 </v-col>
@@ -562,16 +572,17 @@ watch(selectedTab, (n) => {
                     <td class="data-cell" style="text-align: center">{{ formatDateTime(getCreatedAt(item)) }}</td>
                     <td class="data-cell action-cell" style="text-align: center">
                         <div class="d-flex align-center justify-center action-controls">
-                            <v-switch
-                                :model-value="isActiveStatus(item.trangThai)"
-                                color="#1e3a8a"
-                                hide-details
-                                density="compact"
-                                class="tight-switch action-switch"
-                                @click.stop="confirmChangeStatus(item)"
-                            >
-                                <v-tooltip activator="parent" location="top">Đổi trạng thái</v-tooltip>
-                            </v-switch>
+                            <div class="switch-wrapper">
+                                <v-switch
+                                    :model-value="isActiveStatus(item.trangThai)"
+                                    color="#1e3a8a"
+                                    hide-details
+                                    density="compact"
+                                    class="tight-switch action-switch"
+                                    @click.prevent.stop="confirmChangeStatus(item)"
+                                />
+                                <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
+                            </div>
                             <v-btn
                                 icon
                                 variant="text"
@@ -879,18 +890,35 @@ watch(selectedTab, (n) => {
     height: 22px !important;
 }
 
+.switch-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 :deep(.action-cell .action-switch .v-switch__track) {
-    background: #d9e6fb !important;
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
     opacity: 1 !important;
-    min-height: 17px !important;
-    max-height: 17px !important;
-    width: 30px !important;
+    min-height: 18px !important;
+    max-height: 18px !important;
+    width: 32px !important;
+}
+
+:deep(.action-cell .action-switch .v-selection-control--dirty .v-switch__track) {
+    background: #d9e6fb !important;
+    border-color: #d9e6fb !important;
 }
 
 :deep(.action-cell .action-switch .v-switch__thumb) {
-    background: #2a5fb8 !important;
+    background: #94a3b8 !important;
     width: 14px !important;
     height: 14px !important;
+    box-shadow: none !important;
+}
+
+:deep(.action-cell .action-switch .v-selection-control--dirty .v-switch__thumb) {
+    background: #1e3a8a !important;
 }
 
 :deep(.attr-status-chip) {
