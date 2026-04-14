@@ -167,7 +167,7 @@ onBeforeUnmount(() => {
         <!-- Header -->
         <div class="mb-2">
             <div>
-                <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Đợt giảm giá</h1>
+                <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lý đợt giảm giá</h1>
             </div>
         </div>
 

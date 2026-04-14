@@ -301,7 +301,7 @@ onBeforeUnmount(() => {
     <v-container fluid class="pa-4 gray-bg min-h-screen font-body">
         <!-- Header -->
         <div class="mb-2">
-            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Sản phẩm</h1>
+            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lý sản phẩm</h1>
         </div>
 
         <!-- 1. FILTER -->

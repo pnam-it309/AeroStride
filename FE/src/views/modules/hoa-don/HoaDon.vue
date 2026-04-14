@@ -276,7 +276,7 @@ onMounted(() => loadOrders());
 <template>
     <v-container fluid class="pa-4 gray-bg min-h-screen font-body">
         <div class="mb-2">
-            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Hóa đơn</h1>
+            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lý hóa đơn</h1>
         </div>
 
         <div class="filter-top invoice-filter-shell">
