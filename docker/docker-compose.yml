@@ -1,4 +1,4 @@
-version: '3.8'
+# version: '3.8' (Obsolete in Compose V2)
 
 services:
   db:
@@ -8,8 +8,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3307:3306"
     volumes:
@@ -31,31 +29,35 @@ services:
     container_name: aerostride-be
     restart: "on-failure:3"
     environment:
+      SPRING_PROFILES_ACTIVE: mysql
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO}
       SPRING_DATA_REDIS_HOST: ${REDIS_HOST}
       SPRING_DATA_REDIS_PORT: ${REDIS_PORT}
+      SPRING_CACHE_TYPE: ${SPRING_CACHE_TYPE}
       SPRING_FLYWAY_CLEAN_DISABLED: "false"
+      SPRING_FLYWAY_CLEAN_ON_VALIDATION_ERROR: "true"
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_started
       redis:
-        condition: service_healthy
+        condition: service_started
     ports:
       - "8080:8080"
     volumes:
       - ../BE:/app
-      - /app/.gradle
+      - be-build:/app/build
+      - be-gradle:/app/.gradle
     networks:
       - aerostride-net
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
-      interval: 30s
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 20s
       timeout: 10s
-      retries: 20
-      start_period: 300s
+      retries: 15
+      start_period: 60s
 
   redis:
     image: redis:alpine
@@ -83,10 +85,10 @@ services:
       - "5173:5173"
     volumes:
       - ../FE:/app
-      - /app/node_modules
+      - fe-node-modules:/app/node_modules
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
     networks:
       - aerostride-net
 
@@ -96,4 +98,6 @@ networks:
 
 volumes:
   mysql-data:
-    driver: local
+  be-build:
+  be-gradle:
+  fe-node-modules:

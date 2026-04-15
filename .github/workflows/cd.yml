@@ -6,8 +6,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME_BE: ${{ github.repository }}/backend
-  IMAGE_NAME_FE: ${{ github.repository }}/frontend
+  IMAGE_NAME_BE: pnam-it309/aerostride/backend
+  IMAGE_NAME_FE: pnam-it309/aerostride/frontend
 
 jobs:
   # Stage 3: Release & Publish
@@ -120,7 +120,8 @@ jobs:
           BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:latest
           FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:latest
         run: |
-          docker compose -f docker/docker-compose.yml pull
+          docker compose -f docker/docker-compose.yml pull backend
+          docker compose -f docker/docker-compose.yml pull frontend
           docker compose -f docker/docker-compose.yml up -d --remove-orphans
 
       - name: Slack Notification (Deployment Status)

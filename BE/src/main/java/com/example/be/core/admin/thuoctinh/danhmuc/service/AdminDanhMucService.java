@@ -1,10 +1,7 @@
 package com.example.be.core.admin.thuoctinh.danhmuc.service;
 
-import com.example.be.core.admin.thuoctinh.model.request.AdminAttributeRequest;
-import com.example.be.core.admin.thuoctinh.model.response.AdminAttributeResponse;
-import com.example.be.core.common.dto.PageRequest;
-import com.example.be.core.common.dto.PageResponse;
+import com.example.be.core.admin.thuoctinh.service.AdminAttributeManagementService;
 
-public interface AdminDanhMucService {
+public interface AdminDanhMucService extends AdminAttributeManagementService {
 
 }

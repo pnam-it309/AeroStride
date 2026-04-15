@@ -27,5 +27,4 @@ public interface AdminNhanVienService {
     void doiTrangThai(String id, TrangThai trangThai);
 
     void delete(String id);
-
 }
