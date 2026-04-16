@@ -1,70 +1,104 @@
 import api from '../apiService';
 
+const unwrap = (response) => response?.data?.data ?? response?.data ?? null;
+
 export const dichVuSanPham = {
   // Lấy options cho form sản phẩm
   async layOptionsForm() {
     const response = await api.get('/admin/san-pham/form-options');
-    return response.data.data;
+    return unwrap(response);
   },
 
   // Lấy danh sách sản phẩm
   async layDanhSachSanPham(params) {
     const response = await api.get('/admin/san-pham', { params });
-    return response.data.data;
+    return unwrap(response);
   },
 
   // Lấy chi tiết sản phẩm
   async layChiTietSanPham(id) {
     const response = await api.get(`/admin/san-pham/${id}`);
-    return response.data.data;
+    return unwrap(response);
   },
 
   // Tạo sản phẩm mới
   async taoSanPham(productData) {
     const response = await api.post('/admin/san-pham', productData);
-    return response.data.data;
+    return unwrap(response);
   },
 
   // Cập nhật sản phẩm
   async capNhatSanPham(id, productData) {
     const response = await api.put(`/admin/san-pham/${id}`, productData);
-    return response.data.data;
+    return unwrap(response);
   },
 
   // Xóa sản phẩm
   async xoaSanPham(id) {
     const response = await api.delete(`/admin/san-pham/${id}`);
-    return response.data;
+    return unwrap(response);
   },
 
   // Thay đổi trạng thái sản phẩm
   async thayDoiTrangThai(id, status) {
     const response = await api.put(`/admin/san-pham/${id}/status`, { status });
-    return response.data.data;
+    return unwrap(response);
   },
 
   // Lấy biến thể của sản phẩm
   async layBienTheSanPham(productId) {
     const response = await api.get(`/admin/san-pham/${productId}/variants`);
-    return response.data.data;
+    return unwrap(response);
   },
 
   // Thêm biến thể sản phẩm
   async themBienTheSanPham(productId, variantData) {
     const response = await api.post(`/admin/san-pham/${productId}/variants`, variantData);
-    return response.data.data;
+    return unwrap(response);
   },
 
   // Cập nhật biến thể sản phẩm
-  async capNhatBienTheSanPham(productId, variantId, variantData) {
-    const response = await api.put(`/admin/san-pham/${productId}/variants/${variantId}`, variantData);
-    return response.data.data;
+  async capNhatBienTheSanPham(variantId, variantData) {
+    const response = await api.put(`/admin/san-pham/variants/${variantId}`, variantData);
+    return unwrap(response);
   },
 
   // Xóa biến thể sản phẩm
-  async xoaBienTheSanPham(productId, variantId) {
-    const response = await api.delete(`/admin/san-pham/${productId}/variants/${variantId}`);
-    return response.data;
+  async xoaBienTheSanPham(variantId) {
+    const response = await api.delete(`/admin/san-pham/variants/${variantId}`);
+    return unwrap(response);
+  },
+
+  // Thêm ảnh cho biến thể
+  async themAnhBienThe(variantId, imageData) {
+    const response = await api.post(`/admin/san-pham/variants/${variantId}/images`, imageData);
+    return unwrap(response);
+  },
+
+  // Cập nhật ảnh biến thể
+  async capNhatAnhBienThe(imageId, imageData) {
+    const response = await api.put(`/admin/san-pham/variant-images/${imageId}`, imageData);
+    return unwrap(response);
+  },
+
+  // Xóa ảnh biến thể
+  async xoaAnhBienThe(imageId) {
+    const response = await api.delete(`/admin/san-pham/variant-images/${imageId}`);
+    return unwrap(response);
+  },
+
+  // Upload file ảnh sản phẩm hoặc biến thể
+  async taiLenTepSanPham(file, folder = 'aerostride/products') {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+
+    const response = await api.post('/storage/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return unwrap(response);
   },
 
   // Xuất Excel

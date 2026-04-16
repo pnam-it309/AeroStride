@@ -10,7 +10,8 @@ import AdminTable from '@/components/common/AdminTable.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import { downloadFile } from '@/utils/fileUtils';
-import { EditIcon, EyeIcon } from 'vue-tabler-icons';
+import { resolveMediaUrl } from '@/utils/mediaUrl';
+import { EditIcon } from 'vue-tabler-icons';
 
 const { addNotification } = useNotifications();
 const router = useRouter();
@@ -22,7 +23,6 @@ const products = ref([]);
 const searchDebounce = ref(null);
 const MIN_PRICE = 0;
 const MAX_PRICE = 100000000;
-const PRICE_STEP = 500000;
 
 // Pagination logic
 const pagination = ref({
@@ -79,6 +79,9 @@ const getBrandName = (item) => item?.tenThuongHieu ?? item?.ten_thuong_hieu ?? '
 const getCategoryName = (item) => item?.tenDanhMuc ?? item?.ten_danh_muc ?? '--';
 const getQuantity = (item) => toNumber(item?.tongSoLuongTon ?? item?.soLuongTon ?? item?.soLuong ?? item?.tong_so_luong_ton, 0);
 const getPrice = (item) => toNumber(item?.giaBanThapNhat ?? item?.giaBan ?? item?.gia_ban ?? item?.giaBanNiemYet ?? item?.gia, 0);
+const getMaxPrice = (item) => toNumber(item?.giaBanCaoNhat ?? item?.gia_ban_cao_nhat ?? item?.giaBanThapNhat ?? item?.giaBan ?? item?.gia, 0);
+const getVariantCount = (item) => toNumber(item?.tongBienThe ?? item?.tong_bien_the, 0);
+const getProductImage = (item) => resolveMediaUrl(item?.hinhAnh, 'aerostride/products/main') || 'https://placehold.co/120x120/f8fafc/94a3b8?text=SP';
 
 // Confirmation Logic
 const confirmDialog = ref({
@@ -199,32 +202,27 @@ const handleImport = async (event) => {
     }
 };
 
-const confirmToggleStatus = (product) => {
+const requestDeleteProduct = (product) => {
     confirmDialog.value = {
         show: true,
-        title: 'Xác nhận trạng thái',
-        message: `Bạn có chắc chắn muốn thay đổi trạng thái sản phẩm [${product.tenSanPham}]?`,
-        color: 'warning',
+        title: 'Xóa sản phẩm',
+        message: `Bạn có chắc muốn xóa mềm sản phẩm [${product.tenSanPham}] không?`,
+        color: 'error',
         action: async () => {
             confirmDialog.value.loading = true;
             try {
-                const newS = isActiveStatus(product.trangThai) ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
-                await dichVuSanPham.thayDoiTrangThai(product.id, newS);
-                
-                // Actual persistence assurance: reload from server
-                await loadProducts();
-                
+                await dichVuSanPham.xoaSanPham(product.id);
                 addNotification({
-                    title: 'Thành công',
-                    subtitle: `Đã cập nhật trạng thái sản phẩm [${product.tenSanPham}]`,
+                    title: 'Đã xóa sản phẩm',
+                    subtitle: `Sản phẩm [${product.tenSanPham}] đã được xóa mềm`,
                     color: 'success'
                 });
                 confirmDialog.value.show = false;
-            } catch (e) {
-                console.error(e);
+                await loadProducts();
+            } catch (error) {
                 addNotification({
-                    title: 'Lỗi',
-                    subtitle: 'Không thể cập nhật trạng thái',
+                    title: 'Lỗi xóa sản phẩm',
+                    subtitle: 'Không thể xóa sản phẩm này',
                     color: 'error'
                 });
             } finally {
@@ -232,10 +230,6 @@ const confirmToggleStatus = (product) => {
             }
         }
     };
-};
-
-const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 };
 
 const formatPricePlain = (amount) => {
@@ -255,10 +249,6 @@ const formatDateTime = (value) => {
     return `${d}/${m}/${y} ${hh}:${mm}`;
 };
 
-const formatRangePrice = (amount) => {
-    return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
-};
-
 const scheduleSearch = () => {
     if (searchDebounce.value) {
         clearTimeout(searchDebounce.value);
@@ -267,23 +257,6 @@ const scheduleSearch = () => {
     searchDebounce.value = setTimeout(() => {
         loadProducts();
     }, 350);
-};
-
-const setGenderFilter = (value) => {
-    filters.value.gioiTinh = value;
-    pagination.value.page = 1;
-    loadProducts();
-};
-
-const getCategoryColor = (name) => {
-    if (!name) return 'grey';
-    const n = name.toLowerCase();
-    if (n.includes('chạy bộ')) return 'blue';
-    if (n.includes('thể thao')) return 'orange';
-    if (n.includes('sneaker')) return 'indigo';
-    if (n.includes('thời trang')) return 'purple';
-    if (n.includes('đá bóng')) return 'green';
-    return 'blue-grey';
 };
 
 const getStatusChipClass = (status) => {
@@ -305,8 +278,22 @@ onBeforeUnmount(() => {
 <template>
     <v-container fluid class="pa-4 gray-bg min-h-screen font-body">
         <!-- Header -->
-        <div class="mb-2">
-            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lí sản phẩm</h1>
+        <div class="mb-2 d-flex align-center justify-space-between flex-wrap gap-3">
+            <div>
+                <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lí sản phẩm</h1>
+                <div class="text-body-2 text-medium-emphasis mt-1">
+                    Màn này quản lý thông tin sản phẩm chính, còn SKU và ảnh biến thể được tách sang màn riêng.
+                </div>
+            </div>
+            <v-btn
+                variant="outlined"
+                color="primary"
+                prepend-icon="mdi-shape-outline"
+                class="text-none"
+                @click="router.push({ name: 'SanPhamVariants' })"
+            >
+                Quản lý biến thể
+            </v-btn>
         </div>
 
         <!-- 1. FILTER -->
@@ -314,7 +301,7 @@ onBeforeUnmount(() => {
             <AdminFilter @refresh="handleRefresh" :loading="isRefreshing">
                 <!-- Search -->
                 <v-col cols="12" md="3">
-                    <div class="filter-label">Tìm kiếm</div>
+                    <div class="filter-field-label">Tìm kiếm</div>
                     <v-text-field
                         v-model="filters.keyword"
                         placeholder="Mã hoặc tên sản phẩm..."
@@ -330,7 +317,7 @@ onBeforeUnmount(() => {
 
                 <!-- Danh mục -->
                 <v-col cols="12" md="2">
-                    <div class="filter-label">Danh mục</div>
+                    <div class="filter-field-label">Danh mục</div>
                     <v-select
                         v-model="filters.danhMuc"
                         :items="[
@@ -347,7 +334,7 @@ onBeforeUnmount(() => {
 
                 <!-- Thương hiệu -->
                 <v-col cols="12" md="2">
-                    <div class="filter-label">Thương hiệu</div>
+                    <div class="filter-field-label">Thương hiệu</div>
                     <v-select
                         v-model="filters.thuongHieu"
                         :items="[
@@ -364,7 +351,7 @@ onBeforeUnmount(() => {
 
                 <!-- Giới tính -->
                 <v-col cols="12" md="2">
-                    <div class="filter-label">Giới tính</div>
+                    <div class="filter-field-label">Giới tính</div>
                     <v-select
                         v-model="filters.gioiTinh"
                         :items="[
@@ -384,7 +371,7 @@ onBeforeUnmount(() => {
 
                 <!-- Trạng thái -->
                 <v-col cols="12" md="2">
-                    <div class="filter-label">Trạng thái</div>
+                    <div class="filter-field-label">Trạng thái</div>
                     <v-select
                         v-model="filters.trangThai"
                         :items="[
@@ -407,52 +394,56 @@ onBeforeUnmount(() => {
             title="Danh sách sản phẩm"
             addButtonText="Thêm sản phẩm"
             :headers="[
-                { text: 'STT', align: 'center', width: '70px' },
-                { text: 'Mã sản phẩm', align: 'left', width: '130px' },
-                { text: 'Tên sản phẩm', align: 'left', width: '200px' },
-                { text: 'Tên thương hiệu', align: 'left', width: '150px' },
-                { text: 'Danh mục', align: 'left', width: '150px' },
-                { text: 'Số lượng', align: 'center', width: '100px' },
-                { text: 'Giá', align: 'center', width: '120px' },
-                { text: 'Trạng thái', align: 'center', width: '130px' },
-                { text: 'Ngày tạo', align: 'center', width: '150px' },
-                { text: 'Hành động', align: 'center', width: '130px' }
+                { text: 'Sản phẩm', align: 'left', width: '34%' },
+                { text: 'Thuộc tính', align: 'left', width: '22%' },
+                { text: 'Tồn kho và giá', align: 'left', width: '20%' },
+                { text: 'Trạng thái', align: 'center', width: '12%' },
+                { text: 'Hành động', align: 'center', width: '12%' }
             ]"
             :items="products"
             :loading="loading"
+            :show-export-button="true"
+            :show-import-button="true"
+            :show-template-button="true"
             @add="router.push({ name: 'SanPhamForm' })"
             @export="handleExport"
             @import="$refs.fileInput.click()"
             @download-template="handleDownloadTemplate"
         >
-            <template #row="{ item, index }">
+            <template #row="{ item }">
                 <tr class="data-row">
-                    <td class="data-cell text-center">
-                        {{ (pagination.page - 1) * pagination.size + index + 1 }}
+                    <td class="data-cell text-left">
+                        <div class="product-summary-cell">
+                            <v-avatar size="52" rounded="lg" class="product-avatar">
+                                <v-img :src="getProductImage(item)" cover />
+                            </v-avatar>
+                            <div class="min-w-0">
+                                <div class="text-caption product-code">{{ getProductCode(item) }}</div>
+                                <div class="font-weight-bold text-dark product-name">{{ getProductName(item) }}</div>
+                                <div class="text-caption text-medium-emphasis mt-1">
+                                    {{ getCategoryName(item) }} • {{ getBrandName(item) }}
+                                </div>
+                            </div>
+                        </div>
                     </td>
 
-                    <td class="data-cell text-left col-left-tight">
-                        {{ getProductCode(item) }}
+                    <td class="data-cell text-left">
+                        <div class="font-weight-medium text-dark">{{ item.gioiTinhKhachHang || '--' }}</div>
+                        <div class="text-caption text-medium-emphasis mt-1">
+                            {{ item.tenXuatXu || '--' }} • {{ item.tenMucDichChay || '--' }}
+                        </div>
+                        <div class="text-caption text-medium-emphasis mt-1">
+                            {{ formatDateTime(resolveCreatedAt(item)) }}
+                        </div>
                     </td>
 
-                    <td class="data-cell text-left col-left-tight">
-                        {{ getProductName(item) }}
-                    </td>
-
-                    <td class="data-cell text-left col-left-tight">
-                        {{ getBrandName(item) }}
-                    </td>
-
-                    <td class="data-cell text-left col-left-tight">
-                        {{ getCategoryName(item) }}
-                    </td>
-
-                    <td class="data-cell text-center">
-                        {{ getQuantity(item) }}
-                    </td>
-
-                    <td class="data-cell text-center price-value">
-                        {{ formatPricePlain(getPrice(item)) }}
+                    <td class="data-cell text-left">
+                        <div class="font-weight-bold text-dark">{{ getVariantCount(item) }} biến thể</div>
+                        <div class="text-caption text-medium-emphasis mt-1">{{ getQuantity(item) }} đôi</div>
+                        <div class="price-value mt-1">
+                            {{ formatPricePlain(getPrice(item)) }}
+                            <span v-if="getMaxPrice(item) !== getPrice(item)"> - {{ formatPricePlain(getMaxPrice(item)) }}</span>
+                        </div>
                     </td>
 
                     <td class="data-cell text-center">
@@ -465,33 +456,18 @@ onBeforeUnmount(() => {
                         </v-chip>
                     </td>
 
-                    <td class="data-cell text-center">
-                        {{ formatDateTime(resolveCreatedAt(item)) }}
-                    </td>
-
                     <td class="data-cell action-cell" style="text-align: center">
                         <div class="d-flex align-center justify-center action-controls">
-                            <div class="switch-wrapper">
-                                <v-switch
-                                    :model-value="isActiveStatus(item.trangThai)"
-                                    color="#1e3a8a"
-                                    hide-details
-                                    density="compact"
-                                    class="tight-switch action-switch"
-                                    @click.prevent.stop="confirmToggleStatus(item)"
-                                />
-                                <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
-                            </div>
                             <v-btn
                                 icon
                                 variant="text"
                                 size="28"
                                 color="#2aa6a1"
                                 class="rounded-lg action-icon-btn"
-                                @click="router.push({ name: 'SanPhamDetail', params: { id: item.id } })"
+                                @click="router.push({ name: 'SanPhamVariants', query: { productId: item.id } })"
                             >
-                                <EyeIcon size="15" />
-                                <v-tooltip activator="parent" location="top">Xem chi tiết</v-tooltip>
+                                <v-icon size="18">mdi-shape-outline</v-icon>
+                                <v-tooltip activator="parent" location="top">Quản lý biến thể</v-tooltip>
                             </v-btn>
                             <v-btn
                                 icon
@@ -503,6 +479,17 @@ onBeforeUnmount(() => {
                             >
                                 <EditIcon size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
+                            </v-btn>
+                            <v-btn
+                                icon
+                                variant="text"
+                                size="28"
+                                color="#dc2626"
+                                class="rounded-lg action-icon-btn"
+                                @click="requestDeleteProduct(item)"
+                            >
+                                <v-icon size="18">mdi-delete-outline</v-icon>
+                                <v-tooltip activator="parent" location="top">Xóa mềm</v-tooltip>
                             </v-btn>
                         </div>
                     </td>
@@ -673,13 +660,28 @@ onBeforeUnmount(() => {
     accent-color: #1e3a8a;
 }
 
-.tight-switch {
-    transform: none;
-    width: 36px;
-}
-
 .action-controls {
     gap: 6px;
+}
+
+.product-summary-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.product-avatar {
+    border: 1px solid #dbe4ef;
+    background: #ffffff;
+}
+
+.product-code {
+    color: #1e3a8a !important;
+    font-weight: 700 !important;
+}
+
+.product-name {
+    line-height: 1.35;
 }
 
 :deep(.action-cell .action-icon-btn) {
@@ -709,47 +711,6 @@ onBeforeUnmount(() => {
     display: none !important;
 }
 
-:deep(.action-cell .action-switch .v-switch__track),
-:deep(.action-cell .action-switch .v-selection-control),
-:deep(.action-cell .action-switch .v-selection-control__wrapper),
-:deep(.action-cell .action-switch .v-selection-control__input),
-:deep(.action-cell .action-switch .v-switch__thumb) {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-.switch-wrapper {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-:deep(.action-cell .action-switch .v-switch__track) {
-    background: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    opacity: 1 !important;
-    min-height: 18px !important;
-    max-height: 18px !important;
-    width: 32px !important;
-}
-
-:deep(.action-cell .action-switch .v-selection-control--dirty .v-switch__track) {
-    background: #d9e6fb !important;
-    border-color: #d9e6fb !important;
-}
-
-:deep(.action-cell .action-switch .v-switch__thumb) {
-    background: #94a3b8 !important;
-    width: 14px !important;
-    height: 14px !important;
-    box-shadow: none !important;
-}
-
-:deep(.action-cell .action-switch .v-selection-control--dirty .v-switch__thumb) {
-    background: #1e3a8a !important;
-}
-
 :deep(.native-admin-table .header-cell) {
     font-size: 13px !important;
     font-weight: 700 !important;
@@ -771,38 +732,6 @@ onBeforeUnmount(() => {
     font-size: 13px !important;
     font-weight: 600 !important;
     line-height: 1.35 !important;
-}
-
-:deep(.native-admin-table .data-cell.col-left-tight) {
-    text-align: left !important;
-    padding-left: 6px !important;
-}
-
-:deep(.native-admin-table .header-cell:nth-child(1)),
-:deep(.native-admin-table .header-cell:nth-child(2)),
-:deep(.native-admin-table .header-cell:nth-child(3)),
-:deep(.native-admin-table .header-cell:nth-child(4)),
-:deep(.native-admin-table .header-cell:nth-child(5)) {
-    text-align: left !important;
-    padding-left: 6px !important;
-}
-
-:deep(.native-admin-table .header-cell:nth-child(1)),
-:deep(.native-admin-table .data-cell:nth-child(1)) {
-    text-align: center !important;
-    padding-left: 0 !important;
-}
-
-:deep(.native-admin-table .header-cell:nth-child(8)),
-:deep(.native-admin-table .header-cell:nth-child(10)) {
-    text-align: center !important;
-    padding-left: 0 !important;
-}
-
-:deep(.native-admin-table .data-cell:nth-child(8)),
-:deep(.native-admin-table .data-cell:nth-child(10)) {
-    text-align: center !important;
-    padding-left: 0 !important;
 }
 
 :deep(.native-admin-table .total-price-text) {

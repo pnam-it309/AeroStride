@@ -5,6 +5,7 @@ import com.example.be.core.storage.StorageService;
 import com.example.be.core.storage.dto.FileUploadResult;
 import com.example.be.infrastructure.constants.RoutesConstant;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,7 +23,7 @@ public class FileController {
         return ResponseEntity.ok(ApiResponse.success(java.util.Collections.emptyList()));
     }
 
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<FileUploadResult>> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "folder", defaultValue = "aerostride/general") String folder) {

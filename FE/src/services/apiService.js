@@ -11,7 +11,7 @@ if (API_BASE_URL.endsWith('/')) {
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    Accept: 'application/json',
   },
 });
 
@@ -36,6 +36,17 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Let the browser generate the multipart boundary automatically.
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      if (typeof config.headers?.set === 'function') {
+        config.headers.set('Content-Type', undefined);
+      } else if (config.headers) {
+        delete config.headers['Content-Type'];
+        delete config.headers['content-type'];
+      }
+    }
+
     return config;
   },
   (error) => {
