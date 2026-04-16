@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/pnam-it309/AeroStride/compare/v1.3.0...v1.3.1) (2026-04-16)
+
+
+### Bug Fixes
+
+* phiếu giảm giá và đợt giảm giá ([9e1200e](https://github.com/pnam-it309/AeroStride/commit/9e1200eb6efaf39b35c71b4f72b9454955f4f39f))
+
 # [1.3.0](https://github.com/pnam-it309/AeroStride/compare/v1.2.0...v1.3.0) (2026-04-16)
 
 
