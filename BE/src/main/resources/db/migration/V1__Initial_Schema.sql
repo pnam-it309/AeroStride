@@ -38,23 +38,6 @@ CREATE TABLE nhan_vien (
     FOREIGN KEY (id_phan_quyen) REFERENCES phan_quyen(id)
 );
 
--- Bảng Địa Chỉ
-CREATE TABLE dia_chi (
-    id VARCHAR(36) PRIMARY KEY,
-    ma_dia_chi VARCHAR(50) UNIQUE,
-    tinh VARCHAR(100),
-    thanh_pho VARCHAR(100),
-    phuong_xa VARCHAR(100),
-    dia_chi_chi_tiet VARCHAR(255),
-    ten_nguoi_nhan VARCHAR(255),
-    sdt_nguoi_nhan VARCHAR(15),
-    trang_thai INT,
-    ngay_tao BIGINT,
-    ngay_cap_nhat BIGINT,
-    nguoi_tao VARCHAR(100),
-    nguoi_cap_nhat VARCHAR(100)
-);
-
 -- Bảng Khách Hàng (có vai_tro: KHACH_HANG)
 CREATE TABLE khach_hang (
     id VARCHAR(36) PRIMARY KEY,
@@ -73,9 +56,34 @@ CREATE TABLE khach_hang (
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
     nguoi_tao VARCHAR(100),
-    nguoi_cap_nhat VARCHAR(100),
-    FOREIGN KEY (id_dia_chi) REFERENCES dia_chi(id)
+    nguoi_cap_nhat VARCHAR(100)
 );
+
+
+-- Bảng Địa Chỉ
+CREATE TABLE dia_chi (
+    id VARCHAR(36) PRIMARY KEY,
+    id_khach_hang VARCHAR(40),
+    ma_dia_chi VARCHAR(50) UNIQUE,
+    tinh VARCHAR(100),
+    thanh_pho VARCHAR(100),
+    phuong_xa VARCHAR(100),
+    dia_chi_chi_tiet VARCHAR(255),
+    ten_nguoi_nhan VARCHAR(255),
+    sdt_nguoi_nhan VARCHAR(15),
+    trang_thai INT,
+    la_mac_dinh BIT DEFAULT b'0',
+    ngay_tao BIGINT,
+    ngay_cap_nhat BIGINT,
+    nguoi_tao VARCHAR(100),
+    nguoi_cap_nhat VARCHAR(100),
+    CONSTRAINT fk_dc_kh
+     FOREIGN KEY (id_khach_hang) REFERENCES khach_hang(id)
+);
+
+ALTER TABLE khach_hang
+    ADD CONSTRAINT fk_kh_dc
+        FOREIGN KEY (id_dia_chi) REFERENCES dia_chi(id);
 
 -- Bảng Refresh Token (liên kết với khach_hang hoặc nhan_vien)
 CREATE TABLE refresh_token (

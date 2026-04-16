@@ -1,69 +1,74 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content)">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${title}">AeroStride Notification</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f6;
-            margin: 0;
-            padding: 0;
-            color: #333;
-        }
-        .container {
-            max-width: 600px;
-            margin: 40px auto;
-            background-color: #ffffff;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: #ffffff;
-            padding: 30px;
-            text-align: center;
-        }
-        .content {
-            padding: 40px;
-            line-height: 1.6;
-        }
-        .footer {
-            background-color: #f9f9f9;
-            color: #888;
-            text-align: center;
-            padding: 20px;
-            font-size: 12px;
-            border-top: 1px solid #eeeeee;
-        }
-        .button {
-            display: inline-block;
-            padding: 12px 24px;
-            background-color: #2a5298;
-            color: #ffffff !important;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: bold;
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title}">AeroStride Notification</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f7f6;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: #ffffff;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .content {
+      padding: 40px;
+      line-height: 1.6;
+    }
+
+    .footer {
+      background-color: #f9f9f9;
+      color: #888;
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      border-top: 1px solid #eeeeee;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #2a5298;
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 th:text="${title}">AeroStride</h1>
-        </div>
-        <div class="content">
-            <div th:replace="${content}">
-                <!-- Content will be injected here -->
-            </div>
-        </div>
-        <div class="footer">
-            &copy; 2026 AeroStride Team. All rights reserved.<br>
-            Cần hỗ trợ? Liên hệ <a href="mailto:support@aerostride.com">support@aerostride.com</a>
-        </div>
-    </div>
+<div class="container">
+  <div class="header">
+    <h1 th:text="${title}">AeroStride</h1>
+  </div>
+  <div class="content">
+    <th:block th:insert="${content} ?: ~{}"></th:block>
+  </div>
+  </div>
+  <div class="footer">
+    &copy; 2026 AeroStride Team. All rights reserved.
+    Cần hỗ trợ? Liên hệ <a href="mailto:support@aerostride.com">support@aerostride.com</a>
+  </div>
+</div>
+
 </body>
 </html>

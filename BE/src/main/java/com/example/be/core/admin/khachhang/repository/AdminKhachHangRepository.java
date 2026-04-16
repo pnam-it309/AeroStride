@@ -23,22 +23,10 @@ public interface AdminKhachHangRepository extends JpaRepository<KhachHang,String
     boolean existsByTenTaiKhoanAndIdNot(String tenTaiKhoan, String id);
     boolean existsByMaAndIdNot(String ma, String id);
 
-    @Query("""
-    SELECT new com.example.be.core.admin.khachhang.model.response.AdminKhachHangResponse(
-        kh.id, kh.ma, kh.ten, kh.email, kh.tenTaiKhoan,
-        kh.gioiTinh, kh.sdt, kh.ngaySinh, kh.hinhAnh, kh.ghiChu,
-        kh.trangThai, kh.ngayTao, kh.ngayCapNhat,
-        CONCAT(
-            COALESCE(dc.diaChiChiTiet, ''), ', ',
-            COALESCE(dc.phuongXa, ''), ', ',
-            COALESCE(dc.thanhPho, ''), ', ',
-            COALESCE(dc.tinh, '')
-        )
-    )
-    FROM KhachHang kh
-    LEFT JOIN kh.diaChi dc
-    """)
-    List<AdminKhachHangResponse> hienThi();
+
+    @Query("SELECT k.ma FROM KhachHang k")
+    List<String> findAllMa();
+
 
     @Query("""
     SELECT new com.example.be.core.admin.khachhang.model.response.AdminKhachHangResponse(
@@ -54,7 +42,26 @@ public interface AdminKhachHangRepository extends JpaRepository<KhachHang,String
     )
     FROM KhachHang kh
     LEFT JOIN kh.diaChi dc
-    WHERE kh.id = :id
+        ORDER BY kh.ngayTao DESC
+    """)
+    List<AdminKhachHangResponse> hienThi();
+
+    @Query("""
+    SELECT new com.example.be.core.admin.khachhang.model.response.AdminKhachHangResponse(
+        kh.id, kh.ma, kh.ten, kh.email, kh.tenTaiKhoan,
+        kh.gioiTinh, kh.sdt, kh.ngaySinh, kh.hinhAnh, kh.ghiChu,
+        kh.trangThai, kh.ngayTao, kh.ngayCapNhat,
+        CONCAT(
+            COALESCE(dc.diaChiChiTiet, ''), ', ',
+            COALESCE(dc.phuongXa, ''), ', ',
+            COALESCE(dc.thanhPho, ''), ', ',
+            COALESCE(dc.tinh, '')
+        )
+    )
+
+        FROM KhachHang kh
+            LEFT JOIN kh.diaChi dc
+            WHERE kh.id = :id
     """)
     AdminKhachHangResponse detail(@Param("id") String id);
 

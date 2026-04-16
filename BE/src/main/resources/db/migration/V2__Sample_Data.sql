@@ -20,21 +20,27 @@ INSERT INTO nhan_vien (id, id_phan_quyen, ma_nhan_vien, ten_nhan_vien, email, sd
 ('nv8', 'pq2', 'NV008', 'Lê Văn Bán Hàng', 'staff2@aerostride.com', '0922334455', '1998-02-14', 1, 'staff2', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'staff2.jpg', 0, 0, 1711814400000),
 ('nv9', 'pq4', 'NV009', 'Phạm Thủ Kho', 'warehouse@aerostride.com', '0933445566', '1992-07-30', 1, 'warehouse', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 'warehouse.jpg', 0, 0, 1711814400000);
 
--- 3. Bảng Địa Chỉ (dia_chi)
-INSERT INTO dia_chi (id, ma_dia_chi, tinh, thanh_pho, phuong_xa, dia_chi_chi_tiet, ten_nguoi_nhan, sdt_nguoi_nhan, trang_thai, ngay_tao) VALUES
-('dc1', 'DC001', 'Hà Nội', 'Quận Cầu Giấy', 'Phường Dịch Vọng', 'Số 123 Cầu Giấy', 'Nguyễn Khách 1', '0901112222', 0, 1711814400000),
-('dc2', 'DC002', 'TP.HCM', 'Quận 1', 'Phường Bến Nghé', '45 Lê Lợi', 'Trần Anh Khách', '0902223333', 0, 1711814400000),
-('dc3', 'DC003', 'Đà Nẵng', 'Quận Hải Châu', 'Phường Hòa Cường Bắc', '78 Phan Châu Trình', 'Lê Khách 3', '0903334444', 0, 1711814400000),
-('dc4', 'DC004', 'Hải Phòng', 'Quận Hồng Bàng', 'Phường Hoàng Văn Thụ', '90 Đinh Tiên Hoàng', 'Phạm Khách 4', '0904445555', 0, 1711814400000),
-('dc5', 'DC005', 'Cần Thơ', 'Quận Ninh Kiều', 'Phường An Lạc', '12 Nguyễn Trãi', 'Hoàng Khách 5', '0905556666', 0, 1711814400000);
-
 -- 4. Bảng Khách Hàng (khach_hang)
 INSERT INTO khach_hang (id, id_dia_chi, ma_nguoi_dung, ten_nguoi_dung, email, ten_tai_khoan, mat_khau, gioi_tinh, sdt, ngay_sinh, hinh_anh, ghi_chu, trang_thai, ngay_tao) VALUES
-('kh1', 'dc1', 'KH001', 'Nguyễn Khách 1', 'khach1@gmail.com', 'khach1', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0901112222', '1993-12-01', 'kh1.jpg', 'Khách hay mua hàng', 0, 1711814400000),
-('kh2', 'dc2', 'KH002', 'Trần Anh Khách', 'khach2@gmail.com', 'khach2', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0902223333', '1991-03-15', 'kh2.jpg', NULL, 0, 1711814400000),
-('kh3', 'dc3', 'KH003', 'Lê Khách 3', 'khach3@gmail.com', 'khach3', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0903334444', '1995-07-20', 'kh3.jpg', NULL, 0, 1711814400000),
-('kh4', 'dc4', 'KH004', 'Phạm Khách 4', 'khach4@gmail.com', 'khach4', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0904445555', '1998-05-10', 'kh4.jpg', NULL, 0, 1711814400000),
-('kh5', 'dc5', 'KH005', 'Hoàng Khách 5', 'khach5@gmail.com', 'khach5', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0905556666', '1990-11-25', 'kh5.jpg', NULL, 0, 1711814400000);
+('kh1', NULL, 'KH001', 'Nguyễn Khách 1', 'khach1@gmail.com', 'khach1', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0901112222', '1993-12-01', 'kh1.jpg', 'Khách hay mua hàng', 0, 1711814400000),
+('kh2', NULL, 'KH002', 'Trần Anh Khách', 'khach2@gmail.com', 'khach2', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0902223333', '1991-03-15', 'kh2.jpg', NULL, 0, 1711814400000),
+('kh3', NULL, 'KH003', 'Lê Khách 3', 'khach3@gmail.com', 'khach3', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0903334444', '1995-07-20', 'kh3.jpg', NULL, 0, 1711814400000),
+('kh4', NULL, 'KH004', 'Phạm Khách 4', 'khach4@gmail.com', 'khach4', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0904445555', '1998-05-10', 'kh4.jpg', NULL, 0, 1711814400000),
+('kh5', NULL, 'KH005', 'Hoàng Khách 5', 'khach5@gmail.com', 'khach5', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0905556666', '1990-11-25', 'kh5.jpg', NULL, 0, 1711814400000);
+
+-- 3. Bảng Địa Chỉ (dia_chi)
+INSERT INTO dia_chi (id,id_khach_hang, ma_dia_chi, tinh, thanh_pho, phuong_xa, dia_chi_chi_tiet, ten_nguoi_nhan, sdt_nguoi_nhan, trang_thai,la_mac_dinh, ngay_tao) VALUES
+('dc1','kh1', 'DC001', 'Hà Nội', 'Quận Cầu Giấy', 'Phường Dịch Vọng', 'Số 123 Cầu Giấy', 'Nguyễn Khách 1', '0901112222', 0,1, 1711814400000),
+('dc2','kh2', 'DC002', 'TP.HCM', 'Quận 1', 'Phường Bến Nghé', '45 Lê Lợi', 'Trần Anh Khách', '0902223333', 0,1, 1711814400000),
+('dc3','kh3', 'DC003', 'Đà Nẵng', 'Quận Hải Châu', 'Phường Hòa Cường Bắc', '78 Phan Châu Trình', 'Lê Khách 3', '0903334444', 0,1, 1711814400000),
+('dc4','kh4', 'DC004', 'Hải Phòng', 'Quận Hồng Bàng', 'Phường Hoàng Văn Thụ', '90 Đinh Tiên Hoàng', 'Phạm Khách 4', '0904445555', 0,1, 1711814400000),
+('dc5','kh5', 'DC005', 'Cần Thơ', 'Quận Ninh Kiều', 'Phường An Lạc', '12 Nguyễn Trãi', 'Hoàng Khách 5', '0905556666', 0,1, 1711814400000);
+
+UPDATE khach_hang SET id_dia_chi = 'dc1' WHERE id = 'kh1';
+UPDATE khach_hang SET id_dia_chi = 'dc2' WHERE id = 'kh2';
+UPDATE khach_hang SET id_dia_chi = 'dc3' WHERE id = 'kh3';
+UPDATE khach_hang SET id_dia_chi = 'dc4' WHERE id = 'kh4';
+UPDATE khach_hang SET id_dia_chi = 'dc5' WHERE id = 'kh5';
 
 -- 5. Bảng Xuất xứ (xuat_xu)
 INSERT INTO xuat_xu (id, ma_xuat_xu, ten_xuat_xu, trang_thai, xoa_mem, ngay_tao) VALUES
@@ -199,3 +205,10 @@ INSERT INTO giao_dich_thanh_toan (id, id_hoa_don, id_phuong_thuc_thanh_toan, ma_
 ('gd3', 'hd3', 'pt1', 'GD003', 1200000.00, 'PAYMENT', NULL, 'REF003', NULL, NULL, NULL, NULL, 1711860000000, 1, 'Tiền mặt'),
 ('gd4', 'hd4', 'pt3', 'GD004', 2150000.00, 'PAYMENT', 'MOMO999', 'REF004', NULL, NULL, 1711873600000, NULL, 1711870000000, 0, 'Đang chờ MoMo'),
 ('gd5', 'hd5', 'pt1', 'GD005', 1500000.00, 'PAYMENT', NULL, 'REF005', NULL, NULL, NULL, NULL, 1711880000000, 1, 'Khách lẻ trả tiền mặt');
+
+-- update id_dia_chi
+-- UPDATE dia_chi SET id_khach_hang = 'kh1' WHERE id = 'dc1';
+-- UPDATE dia_chi SET id_khach_hang = 'kh2' WHERE id = 'dc2';
+-- UPDATE dia_chi SET id_khach_hang = 'kh3' WHERE id = 'dc3';
+-- UPDATE dia_chi SET id_khach_hang = 'kh4' WHERE id = 'dc4';
+-- UPDATE dia_chi SET id_khach_hang = 'kh5' WHERE id = 'dc5';
