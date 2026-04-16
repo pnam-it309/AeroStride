@@ -5,6 +5,7 @@ import com.example.be.core.admin.khachhang.model.response.AdminKhachHangResponse
 import com.example.be.core.admin.khachhang.repository.AdminKhachHangRepository;
 import com.example.be.core.admin.khachhang.service.AdminKhachHangService;
 import com.example.be.core.admin.khachhang.service.AdminDiaChiService;
+import com.example.be.core.admin.khachhang.service.EmailService;
 import com.example.be.utils.ExcelUtils;
 import com.example.be.utils.MaGenerator;
 import com.example.be.entity.KhachHang;
@@ -40,6 +41,9 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
 
     @Autowired
     private AdminDiaChiService adminDiaChiService;
+
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public List<AdminKhachHangResponse> hienThi() {
@@ -93,41 +97,106 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
         }
         if (adminKhachHangRepository.existsByEmail(request.getEmail()))
             throw new DuplicateResourceException("Email này đã được sử dụng bởi một khách hàng khác.");
-        if (adminKhachHangRepository.existsByTenTaiKhoan(request.getTenTaiKhoan()))
+        // Bỏ qua check tenTaiKhoan khi blank - hệ thống sẽ tự sinh bên dưới
+        if (request.getTenTaiKhoan() != null && !request.getTenTaiKhoan().isBlank()
+                && adminKhachHangRepository.existsByTenTaiKhoan(request.getTenTaiKhoan()))
             throw new DuplicateResourceException("Tên tài khoản này đã tồn tại. Vui lòng chọn tên khác.");
 
         KhachHang kh = toEntity(request);
+
         if (kh.getMa() == null || kh.getMa().trim().isEmpty()) {
-            kh.setMa(MaGenerator.generate(KhachHang.class));
+            kh.setMa(taoMaKhachHang());
         }
         kh.setTrangThai(TrangThai.DANG_HOAT_DONG);
 
-        if (request.getMatKhau() != null && !request.getMatKhau().isBlank())
-            kh.setMatKhau(passwordEncoder.encode(request.getMatKhau()));
+        // Luôn tự sinh tenTaiKhoan và matKhau tạm - ghi đè nếu FE có gửi
+        String tenTaiKhoan;
+        do {
+            tenTaiKhoan = taoTenTaiKhoan(request.getTen()) + (int)(Math.random()*1000);
+        } while (adminKhachHangRepository.existsByTenTaiKhoan(tenTaiKhoan));
+        String matKhauTam = taoMatKhauTam();
+
+        kh.setTenTaiKhoan(tenTaiKhoan);
+        kh.setMatKhau(passwordEncoder.encode(matKhauTam));
+        kh.setTrangThai(TrangThai.DANG_HOAT_DONG);
 
         adminKhachHangRepository.save(kh);
 
         // Handle address
-        if (request.getIdDiaChi() != null) {
-            DiaChi dc = diaChiRepository.findById(request.getIdDiaChi())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
-            dc.setKhachHang(kh);
-            dc.setLaMacDinh(true);
-            diaChiRepository.save(dc);
-        } else if (request.getTinh() != null && !request.getTinh().trim().isEmpty()) {
-            DiaChi dc = new DiaChi();
-            dc.setKhachHang(kh);
+        DiaChi dc = null;
+        if (request.getTinh() != null && !request.getTinh().trim().isEmpty()) {
+            dc = new DiaChi();
             dc.setTinh(request.getTinh());
             dc.setThanhPho(request.getThanhPho());
             dc.setPhuongXa(request.getPhuongXa());
             dc.setDiaChiChiTiet(request.getDiaChiChiTiet());
-            dc.setLaMacDinh(true);
             dc.setTenNguoiNhan(kh.getTen());
             dc.setSdtNguoiNhan(kh.getSdt());
-            diaChiRepository.save(dc);
+            dc.setKhachHang(kh);
+            dc.setLaMacDinh(true);
+            dc = diaChiRepository.save(dc); // Lưu và nhận lại object có ID địa chỉ
+        } else if (request.getIdDiaChi() != null) {
+            dc = diaChiRepository.findById(request.getIdDiaChi())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ"));
+            dc.setKhachHang(kh);
+            dc.setLaMacDinh(true);
+            dc = diaChiRepository.save(dc);
         }
 
-        return adminKhachHangRepository.detail(kh.getId());
+        if (dc != null) {
+            kh.setDiaChi(dc); // Hoặc kh.setIdDiaChi(dc.getId()) tùy vào Entity của bạn
+            adminKhachHangRepository.save(kh);
+        }
+
+        // Gửi email async - không block
+        emailService.guiEmailTaiKhoan(
+            request.getEmail(),
+            request.getTen(),
+            tenTaiKhoan,
+            matKhauTam  // gửi plain text, không encode
+        );
+
+        return this.detail(kh.getId());
+    }
+
+    private String taoMaKhachHang() {
+        List<String> danhSachMa = adminKhachHangRepository.findAllMa(); // Hàm SELECT k.ma FROM KhachHang k
+        if (danhSachMa.isEmpty()) return "KH01";
+
+        int max = 0;
+        for (String ma : danhSachMa) {
+            try {
+                // Tách số sau chữ KH
+                int so = Integer.parseInt(ma.substring(2).trim());
+                if (so > max) max = so;
+            } catch (Exception e) {}
+        }
+        return String.format("KH%02d", max + 1);
+    }
+
+    private String taoTenTaiKhoan(String hoTen) {
+        if (hoTen == null || hoTen.isBlank()) return "user";
+        String[] parts = hoTen.trim().split("\\s+");
+        String ten = xoaDau(parts[parts.length - 1]).toLowerCase();
+        StringBuilder vietTat = new StringBuilder();
+        for (int i = 0; i < parts.length - 1; i++) {
+            vietTat.append(xoaDau(String.valueOf(parts[i].charAt(0))).toLowerCase());
+        }
+        return ten + vietTat;
+    }
+
+    private String taoMatKhauTam() {
+        String chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#";
+        StringBuilder sb = new StringBuilder();
+        java.util.Random rnd = new java.util.Random();
+        for (int i = 0; i < 10; i++) sb.append(chars.charAt(rnd.nextInt(chars.length())));
+        return sb.toString();
+    }
+
+    private String xoaDau(String s) {
+        String result = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
+        result = result.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+        return result.replace("đ", "d").replace("Đ", "D");
     }
 
     @Override
@@ -182,7 +251,7 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     public byte[] exportExcel() {
         List<AdminKhachHangResponse> data = adminKhachHangRepository.hienThi();
         String[] headers = {"STT", "Mã", "Tên", "Email", "SĐT", "Ngày sinh", "Giới tính", "Trạng thái"};
-        
+
         try {
             return ExcelUtils.exportToExcel("Danh sách khách hàng", headers, data, item -> new Object[]{
                 data.indexOf(item) + 1,

@@ -4,13 +4,13 @@ import com.example.be.core.admin.nhanvien.model.request.AdminNhanVienRequest;
 import com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse;
 import com.example.be.core.admin.nhanvien.repository.AdminNhanVienRepository;
 import com.example.be.core.admin.nhanvien.service.AdminNhanVienService;
-import com.example.be.core.notification.EmailService;
+
+import com.example.be.core.admin.nhanvien.service.NhanVienEmailService;
 import com.example.be.entity.NhanVien;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.exceptions.DuplicateResourceException;
 import com.example.be.repository.PhanQuyenRepository;
 import com.example.be.utils.ExcelUtils;
-import com.example.be.utils.MaGenerator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +34,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
-    private EmailService emailService;
+    private NhanVienEmailService emailService;
 
     @Override
     public List<AdminNhanVienResponse> hienThi(){
@@ -76,23 +76,38 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     }
 
     // ── CREATE ────────────────────────────────────────────────────────────
+    // ── CREATE ────────────────────────────────────────────────────────────
     @Override
+    @Transactional
     public AdminNhanVienResponse add(AdminNhanVienRequest request) {
-        if (adminNhanVienRepository.existsByMa(request.getMa()))
-            throw new DuplicateResourceException("Mã nhân viên này đã tồn tại.");
-        if (adminNhanVienRepository.existsByEmail(request.getEmail()))
-            throw new DuplicateResourceException("Email này đã được sử dụng bởi một nhân viên khác.");
-        if (adminNhanVienRepository.existsByTenTaiKhoan(request.getTenTaiKhoan()))
-            throw new DuplicateResourceException("Tên tài khoản này đã tồn tại.");
-
-        NhanVien nv = toEntity(request);
-        if (nv.getMa() == null || nv.getMa().trim().isEmpty()) {
-            nv.setMa(MaGenerator.generate(NhanVien.class));
+        // Kiểm tra ma - bỏ qua nếu blank, hệ thống tự sinh
+        if (request.getMa() != null && !request.getMa().trim().isEmpty()) {
+            if (adminNhanVienRepository.existsByMa(request.getMa()))
+                throw new DuplicateResourceException("Mã nhân viên này đã tồn tại.");
         }
 
-        // Admin cannot set password manually
-        String tempPassword = java.util.UUID.randomUUID().toString();
-        nv.setMatKhau(passwordEncoder.encode(tempPassword));
+        if (adminNhanVienRepository.existsByEmail(request.getEmail()))
+            throw new DuplicateResourceException("Email này đã được sử dụng bởi một nhân viên khác.");
+
+        // Bỏ qua check tenTaiKhoan từ request - hệ thống tự sinh bên dưới
+        NhanVien nv = toEntity(request);
+
+        // Tự sinh mã nếu trống
+        if (nv.getMa() == null || nv.getMa().trim().isEmpty()) {
+            nv.setMa(taoMaNhanVien());
+        }
+
+        // Tự sinh tenTaiKhoan unique
+        String tenTaiKhoan;
+        do {
+            tenTaiKhoan = taoTenTaiKhoan(request.getTen()) + (int)(Math.random() * 1000);
+        } while (adminNhanVienRepository.existsByTenTaiKhoan(tenTaiKhoan));
+
+        // Tự sinh mật khẩu tạm (plain text để gửi mail, encode để lưu DB)
+        String matKhauTam = taoMatKhauTam();
+
+        nv.setTenTaiKhoan(tenTaiKhoan);
+        nv.setMatKhau(passwordEncoder.encode(matKhauTam));
 
         if (request.getIdPhanQuyen() != null)
             nv.setPhanQuyen(phanQuyenRepository.findById(request.getIdPhanQuyen())
@@ -101,10 +116,57 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         nv.setTrangThai(TrangThai.DANG_HOAT_DONG);
         adminNhanVienRepository.save(nv);
 
-        // Send password reset email to the staff
-        emailService.sendPasswordResetEmail(nv.getEmail(), tempPassword);
+        String tenVaiTro = (nv.getPhanQuyen() != null) ? nv.getPhanQuyen().getTen() : "Nhân viên";
+
+        emailService.guiEmailTaiKhoanNhanVien(
+            request.getEmail(),
+            request.getTen(),
+            tenTaiKhoan,
+            matKhauTam,
+            tenVaiTro
+        );
 
         return adminNhanVienRepository.detail(nv.getId());
+    }
+
+    // ── HELPER METHODS ────────────────────────────────────────────────────
+    private String taoMaNhanVien() {
+        List<String> danhSachMa = adminNhanVienRepository.findAllMa();
+        if (danhSachMa.isEmpty()) return "NV01";
+
+        int max = 0;
+        for (String ma : danhSachMa) {
+            try {
+                int so = Integer.parseInt(ma.substring(2).trim());
+                if (so > max) max = so;
+            } catch (Exception ignored) {}
+        }
+        return String.format("NV%02d", max + 1);
+    }
+
+    private String taoTenTaiKhoan(String hoTen) {
+        if (hoTen == null || hoTen.isBlank()) return "nhanvien";
+        String[] parts = hoTen.trim().split("\\s+");
+        String ten = xoaDau(parts[parts.length - 1]).toLowerCase();
+        StringBuilder vietTat = new StringBuilder();
+        for (int i = 0; i < parts.length - 1; i++) {
+            vietTat.append(xoaDau(String.valueOf(parts[i].charAt(0))).toLowerCase());
+        }
+        return ten + vietTat;
+    }
+
+    private String taoMatKhauTam() {
+        String chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#";
+        StringBuilder sb = new StringBuilder();
+        java.util.Random rnd = new java.util.Random();
+        for (int i = 0; i < 10; i++) sb.append(chars.charAt(rnd.nextInt(chars.length())));
+        return sb.toString();
+    }
+
+    private String xoaDau(String s) {
+        String result = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
+        result = result.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");
+        return result.replace("đ", "d").replace("Đ", "D");
     }
 
     // ── UPDATE ────────────────────────────────────────────────────────────

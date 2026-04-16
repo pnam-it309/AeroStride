@@ -333,7 +333,7 @@ onMounted(() => loadEmployees());
 <style scoped>
 .gray-bg { /* Removed background */ }
 .text-dark {
-    color: #0f172a !important;
+    color: #000000 !important;
 }
 .font-body {
     font-family: 'Inter', sans-serif;
@@ -342,7 +342,7 @@ onMounted(() => loadEmployees());
 .filter-field-label {
     font-size: 13px;
     font-weight: 700;
-    color: #334155;
+    color: #000000 !important;
     margin-bottom: 6px;
 }
 
@@ -536,3 +536,6 @@ onMounted(() => loadEmployees());
     width: 36px;
 }
 </style>
+
+
+

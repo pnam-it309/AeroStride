@@ -153,6 +153,16 @@ const handleSave = () => {
                 if (p) payload.tinh = p.name;
                 if (d) payload.thanhPho = d.name;
                 if (w) payload.phuongXa = w.name;
+                // validate address fields
+                if (!payload.tinh || !payload.thanhPho || !payload.phuongXa || !payload.diaChiChiTiet) {
+                    addNotification({
+                        title: 'Thiếu thông tin',
+                        subtitle: 'Vui lòng nhập đầy đủ địa chỉ',
+                        color: 'warning'
+                    });
+                    saving.value = false;
+                    return;
+                }
 
                 if (isEditMode.value) {
                     await dichVuKhachHang.capNhatKhachHang(route.params.id, payload);
@@ -197,12 +207,15 @@ watch(
 const loadAddresses = async (khId) => {
     try {
         const data = await dichVuKhachHang.layDanhSachDiaChi(khId);
-        listDiaChi.ref = data; // Note: data is response.data from service
+        console.log('DATA DIA CHI:', data);
+
+        listDiaChi.value = Array.isArray(data) ? data : data?.content ?? data?.data ?? [];
+
+        console.log('LIST DIA CHI:', listDiaChi.value);
     } catch (e) {
         console.error(e);
     }
 };
-
 const openAddrDialog = (item = null) => {
     if (item) {
         isEditAddr.value = true;
@@ -253,6 +266,16 @@ const saveAddress = async () => {
     }
 };
 
+const defaultAddress = computed(() => {
+    if (!listDiaChi.value || listDiaChi.value.length === 0) return null;
+
+    // ưu tiên mặc định
+    const macDinh = listDiaChi.value.find((x) => x.laMacDinh === true);
+
+    // nếu không có thì lấy cái đầu
+    return macDinh || listDiaChi.value[0];
+});
+
 const handleSetDefault = async (id) => {
     try {
         await dichVuKhachHang.datDiaChiMacDinh(id);
@@ -297,13 +320,6 @@ onMounted(() => {
                 <h1 class="text-h4 font-weight-bold">
                     {{ isDetailView ? 'Hồ sơ khách hàng' : isEditMode ? 'Cập nhật thông tin' : 'Thêm khách hàng mới' }}
                 </h1>
-                <p class="text-subtitle-1 text-medium-emphasis">
-                    {{
-                        isDetailView
-                            ? 'Chi tiết lịch sử và thông tin liên hệ khách hàng'
-                            : 'Hệ thống quản lý thông tin khách hàng & địa điểm giao hàng'
-                    }}
-                </p>
             </div>
             <v-spacer></v-spacer>
             <div class="d-flex gap-2">
@@ -394,33 +410,46 @@ onMounted(() => {
                             <span class="font-weight-black">Danh sách địa chỉ nhận hàng</span>
                         </div>
                         <v-chip color="info" size="small" variant="tonal" class="font-weight-bold">
-                            {{ listDiaChi.ref?.length || 0 }} Địa chỉ
+                            {{ listDiaChi.length || 0 }} Địa chỉ
                         </v-chip>
                     </v-card-title>
                     <v-card-text class="pa-0">
-                        <div v-if="!listDiaChi.ref || listDiaChi.ref.length === 0" class="text-center py-16">
+                        <!-- Không có địa chỉ -->
+                        <div v-if="!listDiaChi || listDiaChi.length === 0" class="text-center py-16">
                             <v-icon size="48" color="grey-lighten-2">mdi-map-marker-off</v-icon>
                             <div class="mt-4 text-grey">Khách hàng chưa đăng ký địa chỉ nhận hàng</div>
                         </div>
-                        <div
-                            v-else
-                            v-for="(addr, idx) in listDiaChi.ref"
-                            :key="addr.id"
-                            class="pa-6 d-flex align-start border-b hover-bg-light transition-all"
-                        >
+
+                        <!-- Hiển thị 1 địa chỉ -->
+                        <div v-else class="pa-6 d-flex align-start border-b">
                             <v-avatar color="primary-lighten-5" class="mr-4">
                                 <v-icon color="primary" size="20">mdi-map-marker</v-icon>
                             </v-avatar>
+
                             <div class="flex-grow-1">
                                 <div class="d-flex align-center gap-2 mb-1">
-                                    <span class="font-weight-black text-dark text-h6">{{ addr.tenNguoiNhan }}</span>
-                                    <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="flat" class="font-weight-bold"
-                                        >MẶC ĐỊNH</v-chip
+                                    <span class="font-weight-black text-dark text-h6">
+                                        {{ defaultAddress.tenNguoiNhan }}
+                                    </span>
+
+                                    <v-chip
+                                        v-if="defaultAddress.laMacDinh"
+                                        color="success"
+                                        size="x-small"
+                                        variant="flat"
+                                        class="font-weight-bold"
                                     >
+                                        MẶC ĐỊNH
+                                    </v-chip>
                                 </div>
-                                <div class="text-subtitle-1 font-weight-bold text-primary mb-1">{{ addr.sdtNguoiNhan }}</div>
+
+                                <div class="text-subtitle-1 font-weight-bold text-primary mb-1">
+                                    {{ defaultAddress.sdtNguoiNhan }}
+                                </div>
+
                                 <div class="text-body-1 text-medium-emphasis">
-                                    {{ addr.diaChiChiTiet }}, {{ addr.phuongXa }}, {{ addr.thanhPho }}, {{ addr.tinh }}
+                                    {{ defaultAddress.diaChiChiTiet }}, {{ defaultAddress.phuongXa }}, {{ defaultAddress.thanhPho }},
+                                    {{ defaultAddress.tinh }}
                                 </div>
                             </div>
                         </div>
@@ -558,8 +587,57 @@ onMounted(() => {
                         >
                     </v-card-title>
                     <v-card-text class="pa-6">
-                        <div v-if="!isEditMode && !isDetailView" class="text-center py-4 bg-grey-lighten-4 rounded-xl mb-4">
-                            <div class="text-caption text-medium-emphasis">Bạn sẽ thêm địa chỉ chi tiết sau khi tạo khách hàng</div>
+                        <div v-if="!isEditMode && !isDetailView" class="mb-4">
+                            <v-row>
+                                <v-col cols="12" md="4">
+                                    <v-autocomplete
+                                        v-model="customerForm.tinh"
+                                        :items="provinces"
+                                        item-title="name"
+                                        item-value="code"
+                                        label="Tỉnh"
+                                        @update:model-value="
+                                            (val) => {
+                                                customerForm.thanhPho = null;
+                                                customerForm.phuongXa = null;
+                                                if (val) fetchDistricts(val);
+                                            }
+                                        "
+                                    />
+                                </v-col>
+
+                                <v-col cols="12" md="4">
+                                    <v-autocomplete
+                                        v-model="customerForm.thanhPho"
+                                        :items="districts"
+                                        item-title="name"
+                                        item-value="code"
+                                        label="Quận"
+                                        :disabled="!customerForm.tinh"
+                                        @update:model-value="
+                                            (val) => {
+                                                customerForm.phuongXa = null;
+                                                if (val) fetchWards(val);
+                                            }
+                                        "
+                                    />
+                                </v-col>
+
+                                <v-col cols="12" md="4">
+                                    <v-autocomplete
+                                        v-model="customerForm.phuongXa"
+                                        :items="wards"
+                                        item-title="name"
+                                        item-value="code"
+                                        label="Phường"
+                                        :disabled="!customerForm.thanhPho"
+                                    />
+                                </v-col>
+
+                                <v-col cols="12">
+                                    <v-textarea v-model="customerForm.diaChiChiTiet" label="Địa chỉ chi tiết" />
+                                </v-col>
+                            </v-row>
                         </div>
 
                         <div v-else-if="listDiaChi.length === 0" class="text-center py-8">
@@ -656,33 +734,6 @@ onMounted(() => {
                             density="compact"
                             hide-details
                             class="font-weight-medium"
-                        ></v-text-field>
-                    </v-card-text>
-                </v-card>
-
-                <v-card class="rounded-xl border shadow-sm" elevation="0">
-                    <v-card-title class="pa-6 border-b font-weight-bold">Bảo mật tài khoản</v-card-title>
-                    <v-card-text class="pa-6">
-                        <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tên đăng nhập</div>
-                        <v-text-field
-                            v-model="customerForm.tenTaiKhoan"
-                            :readonly="true"
-                            placeholder="Username"
-                            variant="outlined"
-                            density="comfortable"
-                            class="font-weight-medium mb-4"
-                            hide-details
-                        ></v-text-field>
-                        <div v-if="!isDetailView" class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Mật khẩu</div>
-                        <v-text-field
-                            v-if="!isDetailView"
-                            v-model="customerForm.matKhau"
-                            type="password"
-                            variant="outlined"
-                            density="comfortable"
-                            class="font-weight-medium"
-                            placeholder="••••••••"
-                            hide-details
                         ></v-text-field>
                     </v-card-text>
                 </v-card>
@@ -838,7 +889,7 @@ onMounted(() => {
     font-family: 'Inter', sans-serif;
 }
 .text-dark {
-    color: #1e293b !important;
+    color: #000000 !important;
 }
 .gap-2 {
     gap: 8px;

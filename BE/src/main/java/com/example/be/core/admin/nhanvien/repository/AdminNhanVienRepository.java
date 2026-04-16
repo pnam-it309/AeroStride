@@ -22,6 +22,9 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
     boolean existsByTenTaiKhoanAndIdNot(String tenTaiKhoan, String id);
     boolean existsByMaAndIdNot(String ma, String id);
 
+    @Query("SELECT nv.ma FROM NhanVien nv")
+    List<String> findAllMa();
+
     @Query("""
         SELECT new com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse(
                 nv.id, nv.ma, nv.ten, nv.email, nv.tenTaiKhoan,
