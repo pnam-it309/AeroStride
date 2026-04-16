@@ -47,7 +47,7 @@ const iconMap = {
           :key="item.id"
           class="border-b notification-item pa-4"
           :active="item.isNew"
-          active-color="primary"
+          color="primary"
         >
           <template v-slot:prepend>
             <div :class="`bg-${item.color}-lighten-4 pa-2 mr-4 rounded-0 d-flex align-center justify-center`" style="width: 40px; height: 40px;">

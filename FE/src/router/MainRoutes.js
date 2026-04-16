@@ -22,6 +22,11 @@ const MainRoutes = {
             component: () => import('@/views/modules/san-pham/SanPham.vue')
         },
         {
+            name: 'SanPhamVariants',
+            path: '/san-pham/bien-the',
+            component: () => import('@/views/modules/san-pham/SanPhamVariants.vue')
+        },
+        {
             name: 'SanPhamForm',
             path: '/san-pham/form/:id?',
             component: () => import('@/views/modules/san-pham/SanPhamForm.vue')

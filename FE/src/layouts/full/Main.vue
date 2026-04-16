@@ -1,5 +1,5 @@
 <script setup>
-import { ref, shallowRef } from 'vue';
+import { computed, ref, shallowRef } from 'vue';
 import { useUIStore } from '@/stores/ui';
 import { storeToRefs } from 'pinia';
 
@@ -12,12 +12,28 @@ import Logo from './logo/Logo.vue';
 import NotificationDD from './vertical-header/NotificationDD.vue';
 import ProfileDD from './vertical-header/ProfileDD.vue';
 import { Menu2Icon } from 'vue-tabler-icons';
+import { useNotifications } from '@/services/notificationService';
 
 const uiStore = useUIStore();
 const { sidebarCollapsed } = storeToRefs(uiStore);
 const { toggleSidebar } = uiStore;
 
 const sidebarMenu = shallowRef(sidebarItems);
+const { toast, hideToast } = useNotifications();
+
+const toastColor = computed(() => {
+    if (toast.value.color === 'error') return 'error';
+    if (toast.value.color === 'warning') return 'warning';
+    if (toast.value.color === 'info') return 'info';
+    return 'success';
+});
+
+const toastIcon = computed(() => {
+    if (toast.value.color === 'error') return 'mdi-alert-circle-outline';
+    if (toast.value.color === 'warning') return 'mdi-alert-outline';
+    if (toast.value.color === 'info') return 'mdi-information-outline';
+    return 'mdi-check-circle-outline';
+});
 </script>
 
 <template>
@@ -27,27 +43,33 @@ const sidebarMenu = shallowRef(sidebarItems);
         :rail="sidebarCollapsed"
         permanent
         app
-        class="leftSidebar bg-containerBg"
+        class="leftSidebar admin-sidebar"
         elevation="0"
-        :width="236"
-        rail-width="68"
+        :width="292"
+        rail-width="84"
         style="
             overflow: hidden !important;
             margin: 0;
             height: 100vh !important;
             border-radius: 0 !important;
-            border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+            border-right: 1px solid #e2e8f0 !important;
         "
     >
-        <div class="sidebar-logo-wrap d-flex justify-center border-b" v-if="!sidebarCollapsed">
-            <Logo />
+        <div class="sidebar-logo-wrap border-b" v-if="!sidebarCollapsed">
+            <div class="sidebar-brand-card">
+                <Logo />
+                <div class="sidebar-brand-meta">
+                    <div class="sidebar-brand-title">AeroStride</div>
+                    <div class="sidebar-brand-subtitle">Bảng điều khiển quản trị</div>
+                </div>
+            </div>
         </div>
         <div class="sidebar-logo-wrap d-flex justify-center border-b" v-else>
-            <v-avatar size="32" color="primary" class="rounded-0 text-white font-weight-black">A</v-avatar>
+            <v-avatar size="42" color="primary" class="sidebar-rail-avatar text-white font-weight-black">A</v-avatar>
         </div>
 
-        <perfect-scrollbar class="scrollnavbar bg-containerBg" :style="{ height: 'calc(100vh - 136px)' }">
-            <v-list class="py-4 px-2 bg-containerBg">
+        <perfect-scrollbar class="scrollnavbar admin-sidebar-scroll" :style="{ height: 'calc(100vh - 148px)' }">
+            <v-list class="py-4 px-3 admin-sidebar-list">
                 <template v-for="(item, i) in sidebarMenu">
                     <NavGroup :item="item" v-if="item.header && !sidebarCollapsed" :key="item.title" />
                     <NavCollapse :item="item" v-else-if="item.children" :hide-title="sidebarCollapsed" />
@@ -61,10 +83,10 @@ const sidebarMenu = shallowRef(sidebarItems);
     <v-app-bar
         flat
         color="white"
-        height="64"
+        height="70"
         app
-        class="px-sm-4 px-3"
-        style="box-shadow: none !important; border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important; background: white !important"
+        class="px-sm-4 px-3 admin-topbar"
+        style="box-shadow: none !important; border-bottom: 1px solid #e2e8f0 !important; background: white !important"
     >
         <div class="maxWidth mx-auto w-100 d-flex align-center px-1 py-0" style="height: 56px">
             <div class="d-flex align-center justify-space-between w-100">
@@ -80,6 +102,26 @@ const sidebarMenu = shallowRef(sidebarItems);
             </div>
         </div>
     </v-app-bar>
+
+    <v-snackbar
+        :key="toast.id"
+        :model-value="toast.show"
+        :color="toastColor"
+        location="top right"
+        timeout="3200"
+        rounded="lg"
+        elevation="8"
+        min-width="340"
+        @update:model-value="(value) => { if (!value) hideToast(); }"
+    >
+        <div class="d-flex align-start ga-3">
+            <v-icon :icon="toastIcon" size="22" class="mt-1"></v-icon>
+            <div class="flex-grow-1">
+                <div class="font-weight-bold">{{ toast.title }}</div>
+                <div v-if="toast.subtitle" class="text-body-2 mt-1 snackbar-subtitle">{{ toast.subtitle }}</div>
+            </div>
+        </div>
+    </v-snackbar>
 </template>
 
 <style scoped>
@@ -92,9 +134,137 @@ const sidebarMenu = shallowRef(sidebarItems);
     overflow: hidden !important;
 }
 
+.snackbar-subtitle {
+    opacity: 0.95;
+}
+
 .sidebar-logo-wrap {
-    padding: 12px 8px;
-    min-height: 128px;
+    padding: 16px 14px;
+    min-height: 132px;
+    display: flex;
     align-items: center;
+    justify-content: center;
+    background: #ffffff;
+}
+
+.sidebar-brand-card {
+    width: 100%;
+    border: 1px solid #dce7fb;
+    border-radius: 28px;
+    background: linear-gradient(180deg, #f9fbff 0%, #f4f8ff 100%);
+    padding: 18px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+}
+
+.sidebar-brand-meta {
+    text-align: center;
+}
+
+.sidebar-brand-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.sidebar-brand-subtitle {
+    margin-top: 2px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.sidebar-rail-avatar {
+    border-radius: 16px !important;
+    box-shadow: 0 8px 18px rgba(30, 58, 138, 0.18);
+}
+
+:deep(.admin-sidebar) {
+    background: #ffffff !important;
+}
+
+:deep(.admin-sidebar-list) {
+    background: #ffffff !important;
+}
+
+:deep(.sidebar-link) {
+    min-height: 58px !important;
+    border-radius: 22px !important;
+    margin-bottom: 6px !important;
+    padding-inline: 12px !important;
+    color: #334155 !important;
+    transition: all 0.18s ease !important;
+}
+
+:deep(.sidebar-link:hover) {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+}
+
+:deep(.sidebar-link .navbox) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+:deep(.sidebar-link .icon-box) {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    transition: all 0.18s ease;
+}
+
+:deep(.sidebar-link .v-list-item-title) {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+}
+
+:deep(.sidebar-link .v-list-item-subtitle) {
+    margin-top: 2px !important;
+    color: #94a3b8 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+}
+
+:deep(.sidebar-link.v-list-item--active),
+:deep(.v-list-group--open > .v-list-group__items + .v-list-group__header .sidebar-link),
+:deep(.v-list-group--open > .sidebar-link),
+:deep(.v-list-group--open > .v-list-group__header .sidebar-link) {
+    background: #edf4ff !important;
+    color: #1f5fbf !important;
+    box-shadow: 0 4px 12px rgba(31, 95, 191, 0.08);
+}
+
+:deep(.sidebar-link.v-list-item--active .icon-box),
+:deep(.v-list-group--open > .v-list-group__header .sidebar-link .icon-box) {
+    background: #ffffff !important;
+    border-color: #d9e7ff !important;
+    color: #1f5fbf !important;
+}
+
+:deep(.v-list-group__items .sidebar-link) {
+    min-height: 46px !important;
+    border-radius: 16px !important;
+    padding-inline-start: 10px !important;
+}
+
+:deep(.v-list-group__items .sidebar-link .icon-box) {
+    width: 32px;
+    height: 32px;
+    border-radius: 12px;
+}
+
+:deep(.v-list-group__items .sidebar-link .v-list-item-title) {
+    font-size: 14px !important;
+    font-weight: 600 !important;
 }
 </style>

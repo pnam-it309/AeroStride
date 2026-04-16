@@ -5,9 +5,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 
@@ -36,6 +38,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Object>> handleSystemException(SystemException e, HttpServletRequest request) {
         log.error("SYSTEM CRITICAL at {}: {}", request.getRequestURI(), e.getMessage());
         return buildErrorResponse(e.getStatus(), e.getErrorCode(), "A system error occurred. Please try again later.", request.getRequestURI(), ErrorSeverity.FATAL);
+    }
+
+    @ExceptionHandler(StorageProcessingException.class)
+    public ResponseEntity<ApiResponse<Object>> handleStorageProcessingException(StorageProcessingException e, HttpServletRequest request) {
+        log.error("STORAGE ERROR at {}: {}", request.getRequestURI(), e.getMessage(), e);
+        return buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "ERR_STORAGE_PROCESSING",
+                e.getMessage(),
+                request.getRequestURI(),
+                ErrorSeverity.RUNTIME
+        );
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -82,6 +96,30 @@ public class GlobalExceptionHandler {
                 .orElse("Validation failed");
         log.warn("Validation error at {}: {}", request.getRequestURI(), message);
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "ERR_VAL_INVALID_PARAMS", message, request.getRequestURI(), ErrorSeverity.SYNTAX);
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMultipartException(MultipartException e, HttpServletRequest request) {
+        log.warn("Multipart request error at {}: {}", request.getRequestURI(), e.getMessage());
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                "ERR_MULTIPART_REQUEST",
+                "Yeu cau tai tep khong hop le. Vui long chon lai anh va thu lai.",
+                request.getRequestURI(),
+                ErrorSeverity.SYNTAX
+        );
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleNoResourceFoundException(NoResourceFoundException e, HttpServletRequest request) {
+        log.warn("Static resource not found at {}: {}", request.getRequestURI(), e.getMessage());
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                "ERR_STATIC_RESOURCE_NOT_FOUND",
+                "Tai nguyen khong ton tai.",
+                request.getRequestURI(),
+                ErrorSeverity.RECOVERABLE
+        );
     }
 
     @ExceptionHandler(Exception.class)

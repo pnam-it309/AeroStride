@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
+import { resolveMediaUrl } from '@/utils/mediaUrl';
 import {
   ChevronLeftIcon, DeviceFloppyIcon, PlusIcon, TrashIcon,
   PhotoIcon, InfoCircleIcon, BoxIcon, SettingsIcon, ArrowLeftIcon
@@ -15,6 +16,10 @@ const { addNotification } = useNotifications();
 
 const loading = ref(false);
 const saving = ref(false);
+const productImageUploading = ref(false);
+const productImageInput = ref(null);
+const localProductPreviewUrl = ref('');
+const productImageLoadError = ref(false);
 
 const confirmDialog = ref({
   show: false,
@@ -60,14 +65,81 @@ const product = ref({
 const selectedColors = ref([]);
 const selectedSizes = ref([]);
 const variants = ref([]);
+const productImagePlaceholder = 'https://placehold.co/480x480/f8fafc/94a3b8?text=AeroStride';
+
+const normalizeProductImages = (data) => {
+    if (Array.isArray(data?.hinhAnhs) && data.hinhAnhs.length > 0) {
+        return data.hinhAnhs
+            .map((image, index) => ({
+                url: image?.url || image?.duongDanAnh || '',
+                isMain: Boolean(image?.isMain ?? image?.hinhAnhDaiDien ?? index === 0)
+            }))
+            .filter((image) => image.url);
+    }
+
+    if (data?.hinhAnh) {
+        return [{ url: data.hinhAnh, isMain: true }];
+    }
+
+    return [];
+};
+
+const revokeLocalProductPreview = () => {
+    if (localProductPreviewUrl.value?.startsWith('blob:')) {
+        URL.revokeObjectURL(localProductPreviewUrl.value);
+    }
+    localProductPreviewUrl.value = '';
+};
+
+const setLocalProductPreview = (file) => {
+    revokeLocalProductPreview();
+    localProductPreviewUrl.value = URL.createObjectURL(file);
+};
+
+const getMainProductImageValue = () => product.value.hinhAnhs.find((image) => image.isMain)?.url || product.value.hinhAnhs[0]?.url || '';
+const mainProductImageSrc = computed(() => localProductPreviewUrl.value || resolveMediaUrl(getMainProductImageValue(), 'aerostride/products/main') || productImagePlaceholder);
+const productImageDisplaySrc = computed(() => (productImageLoadError.value ? productImagePlaceholder : mainProductImageSrc.value));
+const hasProductImagePreview = computed(() => Boolean(localProductPreviewUrl.value || getMainProductImageValue()));
+
+const getVariantThumbnail = (variant) => {
+    const images = Array.isArray(variant?.images) ? variant.images : [];
+    const variantImage = images.find((image) => image.hinhAnhDaiDien)?.duongDanAnh || images[0]?.duongDanAnh || '';
+    return resolveMediaUrl(variantImage, 'aerostride/products/variants') || mainProductImageSrc.value;
+};
+
+const handleProductImageRenderError = () => {
+    productImageLoadError.value = true;
+};
+
+const getApiErrorMessage = (error, fallback) => error?.response?.data?.message || error?.response?.data?.error || fallback;
+
+const requiredProductFields = [
+    'tenSanPham',
+    'idThuongHieu',
+    'idDanhMuc',
+    'idXuatXu',
+    'idChatLieu',
+    'idDeGiay',
+    'idCoGiay',
+    'idMucDichChay',
+    'gioiTinhKhachHang'
+];
+
+const hasMissingRequiredProductField = () => requiredProductFields.some((field) => !product.value[field]);
+
+watch(mainProductImageSrc, () => {
+    productImageLoadError.value = false;
+});
 
 // INITIALIZE
 const loadProduct = async (id) => {
     try {
         const data = await dichVuSanPham.layChiTietSanPham(id);
+        revokeLocalProductPreview();
+        productImageLoadError.value = false;
         product.value = { 
           ...data, 
-          hinhAnhs: data.hinhAnhs || (data.hinhAnh ? [{ url: data.hinhAnh, isMain: true }] : []) 
+          hinhAnhs: normalizeProductImages(data)
         };
         
         // Load variants separately to handle potential 500 errors gracefully
@@ -122,6 +194,10 @@ onMounted(async () => {
     }
 });
 
+onBeforeUnmount(() => {
+    revokeLocalProductPreview();
+});
+
 // VARIANT GENERATION
 const generateVariants = () => {
     if (selectedColors.value.length === 0 || selectedSizes.value.length === 0) {
@@ -148,8 +224,8 @@ const generateVariants = () => {
                     giaBan: 0,
                     soLuong: 0,
                     soLuongTon: 0,
-                    maChiTietSanPham: `${(product.value.tenSanPham || 'PRO').substring(0, 3).toUpperCase()}-${color.ten.substring(0, 2).toUpperCase()}-${size.ten}`,
-                    sku: `${(product.value.tenSanPham || 'PRO').substring(0, 3).toUpperCase()}-${color.ten.substring(0, 2).toUpperCase()}-${size.ten}`
+                    maChiTietSanPham: null,
+                    sku: ''
                 });
             } else {
                 newVariants.push(existing);
@@ -163,10 +239,68 @@ const removeVariant = (index) => {
     variants.value.splice(index, 1);
 };
 
+const openProductImagePicker = () => {
+    if (isDetailView.value || productImageUploading.value) return;
+    productImageInput.value?.click();
+};
+
+const clearProductImage = () => {
+    revokeLocalProductPreview();
+    productImageLoadError.value = false;
+    product.value.hinhAnhs = [];
+};
+
+const handleProductImageUpload = async (event) => {
+    const file = event?.target?.files?.[0];
+    if (!file) return;
+
+    const resetInput = () => {
+        if (event?.target) event.target.value = '';
+    };
+
+    if (!file.type.startsWith('image/')) {
+        addNotification({ title: 'Sai định dạng', subtitle: 'Vui lòng chọn file ảnh hợp lệ', color: 'warning' });
+        resetInput();
+        return;
+    }
+
+    const maxFileSize = 5 * 1024 * 1024;
+    if (file.size > maxFileSize) {
+        addNotification({ title: 'Ảnh quá lớn', subtitle: 'Vui lòng chọn ảnh nhỏ hơn 5MB', color: 'warning' });
+        resetInput();
+        return;
+    }
+
+    setLocalProductPreview(file);
+    productImageLoadError.value = false;
+    productImageUploading.value = true;
+    try {
+        const result = await dichVuSanPham.taiLenTepSanPham(file, 'aerostride/products/main');
+        const fileUrl = result?.fileUrl?.trim();
+
+        if (!fileUrl) {
+            throw new Error('Missing fileUrl');
+        }
+
+        product.value.hinhAnhs = [{ url: fileUrl, isMain: true }];
+        addNotification({ title: 'Tải ảnh thành công', subtitle: 'Ảnh đại diện sản phẩm đã được cập nhật', color: 'success' });
+    } catch (error) {
+        revokeLocalProductPreview();
+        addNotification({
+            title: 'Lỗi tải ảnh',
+            subtitle: getApiErrorMessage(error, 'Không thể tải ảnh sản phẩm lên hệ thống'),
+            color: 'error'
+        });
+    } finally {
+        productImageUploading.value = false;
+        resetInput();
+    }
+};
+
 // SAVE LOGIC
 const handleSave = () => {
-  if (!product.value.tenSanPham || !product.value.idThuongHieu || !product.value.idDanhMuc) {
-    addNotification({ title: 'Lỗi', subtitle: 'Vui lòng điền đủ thông tin bắt buộc', color: 'error' });
+  if (hasMissingRequiredProductField()) {
+    addNotification({ title: 'Thiếu thông tin', subtitle: 'Vui lòng điền đầy đủ các trường bắt buộc của sản phẩm', color: 'error' });
     return;
   }
 
@@ -181,30 +315,40 @@ const handleSave = () => {
     message: isEditMode.value ? 'Bạn có chắc chắn muốn cập nhật thông tin sản phẩm này?' : 'Bạn có chắc chắn muốn thêm sản phẩm mới này?',
     color: 'success',
     action: async () => {
+        saving.value = true;
         confirmDialog.value.loading = true;
         try {
             const payload = {
                 ...product.value,
-                hinhAnh: product.value.hinhAnhs.find(i => i.isMain)?.url || product.value.hinhAnhs[0]?.url || '',
-                variants: variants.value.map(v => ({
+                maSanPham: product.value.maSanPham?.trim() || null,
+                hinhAnh: getMainProductImageValue() || null
+            };
+
+            if (!isEditMode.value) {
+                payload.variants = variants.value.map(v => ({
                     ...v,
                     soLuong: v.soLuongTon,
-                    maChiTietSanPham: v.sku
-                }))
-            };
+                    maChiTietSanPham: v.sku?.trim() || null
+                }));
+            }
 
             if (isEditMode.value) {
                 await dichVuSanPham.capNhatSanPham(route.params.id, payload);
-                addNotification({ title: 'Thành công', subtitle: 'Cập nhật sản phẩm hoàn tất', color: 'success' });
+                addNotification({ title: 'Cập nhật sản phẩm thành công', subtitle: 'Thông tin sản phẩm đã được lưu', color: 'success' });
             } else {
                 await dichVuSanPham.taoSanPham(payload);
-                addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm mới', color: 'success' });
+                addNotification({ title: 'Thêm sản phẩm thành công', subtitle: 'Sản phẩm mới đã được tạo', color: 'success' });
             }
             confirmDialog.value.show = false;
             router.push('/san-pham');
         } catch (error) {
-            addNotification({ title: 'Lỗi', subtitle: 'Không thể lưu sản phẩm', color: 'error' });
+            addNotification({
+                title: 'Lỗi lưu sản phẩm',
+                subtitle: getApiErrorMessage(error, 'Không thể lưu sản phẩm'),
+                color: 'error'
+            });
         } finally {
+            saving.value = false;
             confirmDialog.value.loading = false;
         }
     }
@@ -231,6 +375,17 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
       </div>
       <v-spacer></v-spacer>
       <div class="d-flex gap-2">
+        <v-btn
+          v-if="route.params.id"
+          variant="outlined"
+          color="#2E4E8E"
+          prepend-icon="mdi-shape-outline"
+          class="text-none font-weight-bold px-6 rounded-lg"
+          height="44"
+          @click="router.push({ name: 'SanPhamVariants', query: { productId: route.params.id } })"
+        >
+          Quản lý biến thể
+        </v-btn>
         <v-btn
           v-if="!isDetailView"
           color="#2E4E8E"
@@ -280,10 +435,11 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
         <v-card class="rounded-xl border shadow-none mb-6">
           <div class="pa-6 text-center">
             <v-img 
-              :src="(product.hinhAnhs || []).find(i => i.isMain)?.url || product.hinhAnhs?.[0]?.url || 'https://via.placeholder.com/300'" 
+              :src="productImageDisplaySrc"
               height="280" 
               cover 
               class="rounded-xl mb-4 border"
+              @error="handleProductImageRenderError"
             ></v-img>
             <h2 class="text-h5 font-weight-black mb-2">{{ product.tenSanPham }}</h2>
             <v-chip 
@@ -371,7 +527,7 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
                     <td class="py-4">
                        <div class="d-flex align-center">
                           <v-avatar color="grey-lighten-4" size="40" class="mr-3 rounded-lg border">
-                             <v-img :src="product.hinhAnhs.find(i => i.isMain)?.url || product.hinhAnhs[0]?.url"></v-img>
+                             <v-img :src="getVariantThumbnail(v)"></v-img>
                           </v-avatar>
                           <div>
                              <div class="font-weight-black text-dark">{{ v.tenMauSac }}</div>
@@ -512,7 +668,13 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
                         <v-text-field v-model="variant.soLuongTon" type="number" variant="underlined" density="compact" hide-details></v-text-field>
                     </td>
                     <td class="pa-4">
-                        <v-text-field v-model="variant.sku" variant="underlined" density="compact" hide-details></v-text-field>
+                        <v-text-field
+                            v-model="variant.sku"
+                            variant="underlined"
+                            density="compact"
+                            hide-details
+                            placeholder="Để trống để hệ thống tự sinh"
+                        ></v-text-field>
                     </td>
                     <td class="pa-4 text-center">
                         <v-btn icon variant="text" color="error" size="small" @click="variants.splice(idx, 1)">
@@ -535,23 +697,58 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
         <v-card class="rounded-xl border shadow-none mb-6">
           <v-card-title class="pa-5 border-b d-flex align-center">
             <PhotoIcon size="20" class="mr-2 text-primary" />
-            <span class="font-weight-medium">Hình ảnh sản phẩm</span>
+            <span class="font-weight-medium">Ảnh đại diện sản phẩm</span>
           </v-card-title>
           <v-card-text class="pa-6">
-            <div class="image-upload-zone d-flex flex-column align-center justify-center border-dashed border-2 rounded-lg pa-8 mb-4 cursor-pointer">
+            <input
+              ref="productImageInput"
+              type="file"
+              accept="image/*"
+              class="d-none"
+              @change="handleProductImageUpload"
+            />
+
+            <div
+              class="image-upload-zone d-flex flex-column align-center justify-center border-dashed border-2 rounded-lg pa-8 mb-4"
+              :class="{ 'is-uploading': productImageUploading, 'is-readonly': isDetailView }"
+              @click="openProductImagePicker"
+            >
               <PhotoIcon size="48" class="text-grey mb-2" />
-              <div class="text-subtitle-2 font-weight-bold">Tải hình ảnh lên</div>
-              <div class="text-caption text-grey">Định dạng JPG, PNG. Tối đa 5MB.</div>
+              <div class="text-subtitle-2 font-weight-bold">
+                {{ productImageUploading ? 'Đang tải ảnh...' : (hasProductImagePreview ? 'Thay ảnh đại diện' : 'Tải ảnh đại diện lên') }}
+              </div>
+              <div class="text-caption text-grey text-center">
+                JPG, PNG, WEBP. Tối đa 5MB. Hệ thống hiện lưu 1 ảnh đại diện cho sản phẩm.
+              </div>
             </div>
-            
-            <div class="d-flex flex-wrap gap-2">
-              <v-avatar v-for="(img, idx) in product.hinhAnhs" :key="idx" size="70" class="rounded-lg border position-relative overflow-visible">
-                 <v-img :src="img.url" cover></v-img>
-                 <v-chip v-if="img.isMain" size="x-small" color="primary" variant="flat" class="position-absolute" style="top:-8px; left:-8px; font-size:8px; height:16px; padding:0 4px; z-index:10">Chính</v-chip>
-                 <v-btn icon color="error" size="x-small" class="position-absolute" style="top:-10px; right:-10px; width:20px; height:20px" @click="product.hinhAnhs.splice(idx, 1)">
-                   <v-icon size="12">mdi-close</v-icon>
-                 </v-btn>
-              </v-avatar>
+
+            <div v-if="hasProductImagePreview" class="product-image-preview">
+              <v-img
+                :src="productImageDisplaySrc"
+                height="220"
+                cover
+                class="rounded-lg border"
+                @error="handleProductImageRenderError"
+              ></v-img>
+              <div class="d-flex align-center justify-space-between mt-3 gap-3">
+                <div>
+                  <div class="text-subtitle-2 font-weight-bold text-dark">Ảnh đang dùng</div>
+                  <div class="text-caption text-medium-emphasis image-url-preview">{{ getMainProductImageValue() || 'Ảnh đang chọn từ máy' }}</div>
+                </div>
+                <v-btn
+                  v-if="!isDetailView"
+                  variant="text"
+                  color="error"
+                  class="text-none"
+                  @click.stop="clearProductImage"
+                >
+                  Gỡ ảnh
+                </v-btn>
+              </div>
+            </div>
+
+            <div v-else class="text-body-2 text-medium-emphasis">
+              Chưa có ảnh đại diện. Tải lên để hình sản phẩm và phần chi tiết biến thể hiển thị đúng hơn.
             </div>
           </v-card-text>
         </v-card>
@@ -587,10 +784,31 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
 .image-upload-zone {
     transition: all 0.2s ease;
     background: #f8fafc;
+    cursor: pointer;
 }
 .image-upload-zone:hover {
     background: #f1f5f9;
     border-color: rgb(var(--v-theme-primary));
+}
+.image-upload-zone.is-readonly {
+    cursor: default;
+}
+.image-upload-zone.is-readonly:hover {
+    background: #f8fafc;
+    border-color: inherit;
+}
+.image-upload-zone.is-uploading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+.product-image-preview {
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #ffffff;
+    padding: 12px;
+}
+.image-url-preview {
+    word-break: break-all;
 }
 .gap-3 { gap: 12px; }
 .gap-2 { gap: 8px; }
