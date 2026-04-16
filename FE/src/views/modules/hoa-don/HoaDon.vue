@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
+import { PATH } from '@/router/routePaths';
 import { useRouter } from 'vue-router';
 import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
 
@@ -19,12 +20,29 @@ const counts = ref({ all: 0, pending: 0, confirmed: 0, shipping: 0, completed: 0
 const showOrderDetailDialog = ref(false);
 const selectedOrder = ref(null);
 
+const getTodayDate = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+};
+
+const getThirtyDaysAgoDate = () => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
 const filters = ref({
     keyword: '',
     trangThai: TAB_ALL,
-    fromDate: '',
-    toDate: ''
+    fromDate: getTodayDate(),
+    toDate: getTodayDate(),
+    sortDirection: 'DESC'
 });
+
+const sortOptions = [
+    { title: 'Mới nhất', value: 'DESC' },
+    { title: 'Cũ nhất', value: 'ASC' }
+];
 
 const fromDateFieldRef = ref(null);
 const toDateFieldRef = ref(null);
@@ -52,7 +70,12 @@ const tableHeaders = [
 
 const loadCounts = async () => {
     try {
-        const data = await dichVuHoaDon.laySoLuongHoaDon();
+        const params = {
+            search: filters.value.keyword || undefined,
+            tuNgay: filters.value.fromDate || undefined,
+            denNgay: filters.value.toDate || undefined
+        };
+        const data = await dichVuHoaDon.laySoLuongHoaDon(params);
         counts.value = {
             all: data.all || 0,
             pending: data['1'] || 0,
@@ -83,12 +106,16 @@ const loadOrders = async () => {
             page: pagination.value.page > 0 ? pagination.value.page - 1 : 0,
             size: pagination.value.size,
             search: filters.value.keyword || undefined,
+            tuNgay: filters.value.fromDate || undefined,
+            denNgay: filters.value.toDate || undefined,
+            sortDirection: filters.value.sortDirection,
             ...(normalizedTrangThai !== null ? { trangThai: normalizedTrangThai } : {})
         };
         const response = await dichVuHoaDon.layHoaDonPhanTrang(params);
         orders.value = response.content || response;
-        pagination.value.totalElements = response.totalElements || orders.value.length;
-        pagination.value.totalPages = response.totalPages || 1;
+        const total = response.totalElements || orders.value.length;
+        pagination.value.totalElements = total;
+        pagination.value.totalPages = response.totalPages || Math.ceil(total / pagination.value.size) || 1;
 
         // Tải lại count để số liệu luôn mới
         loadCounts();
@@ -101,7 +128,13 @@ const loadOrders = async () => {
 
 const handleRefresh = async () => {
     isRefreshing.value = true;
-    filters.value = { keyword: '', trangThai: TAB_ALL, fromDate: '', toDate: '' };
+    filters.value = { 
+        keyword: '', 
+        trangThai: TAB_ALL, 
+        fromDate: getTodayDate(), 
+        toDate: getTodayDate(),
+        sortDirection: 'DESC'
+    };
     pagination.value.page = 1;
     await loadOrders();
     setTimeout(() => (isRefreshing.value = false), 800);
@@ -123,7 +156,7 @@ const scheduleSearch = () => {
 };
 
 watch(
-    () => [filters.value.keyword, filters.value.fromDate, filters.value.toDate],
+    () => [filters.value.keyword, filters.value.fromDate, filters.value.toDate, filters.value.sortDirection],
     () => scheduleSearch()
 );
 
@@ -132,6 +165,9 @@ const handleExport = async () => {
         const normalizedTrangThai = normalizeTrangThai(filters.value.trangThai);
         const params = {
             search: filters.value.keyword || undefined,
+            tuNgay: filters.value.fromDate || undefined,
+            denNgay: filters.value.toDate || undefined,
+            sortDirection: filters.value.sortDirection,
             ...(normalizedTrangThai !== null ? { trangThai: normalizedTrangThai } : {})
         };
         const blob = await dichVuHoaDon.xuatExcelHoaDon(params);
@@ -267,16 +303,16 @@ const getStatusChipClass = (status) => {
 };
 
 const viewOrderDetail = (order) => {
-    router.push(`/hoa-don/chi-tiet/${order.id}`);
+    router.push(`${PATH.HOA_DON_CHI_TIET}/${order.id}`);
 };
 
 onMounted(() => loadOrders());
 </script>
 
 <template>
-    <v-container fluid class="pa-4 gray-bg min-h-screen font-body">
+    <v-container fluid class="pa-4 animate-fade-in font-body" style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
         <div class="mb-2">
-            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lí hóa đơn</h1>
+            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lý hóa đơn</h1>
         </div>
 
         <div class="filter-top invoice-filter-shell">
@@ -297,6 +333,25 @@ onMounted(() => loadOrders());
                 </v-col>
 
                 <v-col cols="12" md="3">
+                    <div class="filter-field-label">Hiển thị</div>
+                    <v-select
+                        v-model="filters.sortDirection"
+                        :items="sortOptions"
+                        item-title="title"
+                        item-value="value"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="font-weight-bold sort-field"
+                        @update:model-value="scheduleSearch"
+                    >
+                        <template v-slot:prepend-inner>
+                            <v-icon size="20" color="primary">mdi-sort</v-icon>
+                        </template>
+                    </v-select>
+                </v-col>
+
+                <v-col cols="12" md="2">
                     <div class="filter-field-label">Từ ngày</div>
                     <v-text-field
                         ref="fromDateFieldRef"
@@ -312,7 +367,7 @@ onMounted(() => loadOrders());
                     ></v-text-field>
                 </v-col>
 
-                <v-col cols="12" md="3">
+                <v-col cols="12" md="2">
                     <div class="filter-field-label">Đến ngày</div>
                     <v-text-field
                         ref="toDateFieldRef"
@@ -506,7 +561,7 @@ onMounted(() => loadOrders());
                                 icon
                                 variant="text"
                                 size="28"
-                                color="#2aa6a1"
+                                color="slate-700"
                                 class="rounded-lg action-icon-btn"
                                 @click.stop="viewOrderDetail(item)"
                             >
@@ -599,9 +654,7 @@ onMounted(() => loadOrders());
 </template>
 
 <style scoped>
-.gray-bg {
-    background-color: #f5f7fb;
-}
+.gray-bg { /* Removed background */ }
 .text-dark {
     color: #0f172a !important;
 }

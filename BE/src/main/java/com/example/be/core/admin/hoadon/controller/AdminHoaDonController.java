@@ -33,9 +33,24 @@ public class AdminHoaDonController {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.updateStatus(id, status)));
     }
 
+    @PutMapping("/{id}/info")
+    public ResponseEntity<?> updateInfo(@PathVariable String id, @RequestBody com.example.be.core.admin.hoadon.model.request.AdminUpdateHoaDonRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.updateInfo(id, request)));
+    }
+
+    @PutMapping("/{id}/products")
+    public ResponseEntity<?> updateHdct(@PathVariable String id, @RequestBody com.example.be.core.admin.hoadon.model.request.AdminUpdateHdctRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.updateHdct(id, request)));
+    }
+
+    @DeleteMapping("/{id}/products/{idHdct}")
+    public ResponseEntity<?> removeHdct(@PathVariable String id, @PathVariable String idHdct) {
+        return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.removeHdct(id, idHdct)));
+    }
+
     @GetMapping("/counts")
-    public ResponseEntity<?> getCounts() {
-        return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.getCounts()));
+    public ResponseEntity<?> getCounts(AdminHoaDonRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.getCounts(request)));
     }
 
     @GetMapping("/export-excel")

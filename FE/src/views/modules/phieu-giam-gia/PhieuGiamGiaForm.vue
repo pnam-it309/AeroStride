@@ -62,30 +62,52 @@ const init = async () => {
     }
 };
 
-const handleSave = async () => {
-    saving.value = true;
-    try {
-        const payload = {
-            ...form.value,
-            donHangToiThieu: form.value.giatriToiThieu,
-            hinhThuc: form.value.loaiHienThi,
-            ngayBatDau: new Date(form.value.ngayBatDau).getTime(),
-            ngayKetThuc: new Date(form.value.ngayKetThuc).getTime()
-        };
+// Confirmation Logic
+const confirmDialog = ref({
+    show: false,
+    title: '',
+    message: '',
+    color: 'primary',
+    action: null,
+    loading: false
+});
 
-        if (isEditMode.value) {
-            await dichVuPhieuGiamGia.capNhatPhieuGiamGia(route.params.id, payload);
-            addNotification({ title: 'Thành công', subtitle: 'Cấu hình voucher hoàn tất', color: 'success' });
-        } else {
-            await dichVuPhieuGiamGia.taoPhieuGiamGia(payload);
-            addNotification({ title: 'Thành công', subtitle: 'Đã tạo voucher mới', color: 'success' });
+const handleSave = () => {
+    confirmDialog.value = {
+        show: true,
+        title: isEditMode.value ? 'Cập nhật Voucher' : 'Thiết lập Voucher mới',
+        message: `Xác nhận lưu thông tin Voucher [${form.value.ten || 'Không tên'}]?`,
+        color: 'primary',
+        action: async () => {
+            confirmDialog.value.loading = true;
+            saving.value = true;
+            try {
+                const payload = {
+                    ...form.value,
+                    donHangToiThieu: form.value.giatriToiThieu,
+                    hinhThuc: form.value.loaiHienThi,
+                    ngayBatDau: new Date(form.value.ngayBatDau).getTime(),
+                    ngayKetThuc: new Date(form.value.ngayKetThuc).getTime(),
+                    listIdKhachHang: form.value.loaiHienThi === 'CA_NHAN' ? form.value.listIdKhachHang : []
+                };
+
+                if (isEditMode.value) {
+                    await dichVuPhieuGiamGia.capNhatPhieuGiamGia(route.params.id, payload);
+                    addNotification({ title: 'Thành công', subtitle: 'Cấu hình voucher hoàn tất', color: 'success' });
+                } else {
+                    await dichVuPhieuGiamGia.taoPhieuGiamGia(payload);
+                    addNotification({ title: 'Thành công', subtitle: 'Đã tạo voucher mới', color: 'success' });
+                }
+                confirmDialog.value.show = false;
+                router.push('/phieu-giam-gia');
+            } catch (e) {
+                addNotification({ title: 'Lỗi', subtitle: 'Lỗi khi lưu dữ liệu', color: 'error' });
+            } finally {
+                saving.value = false;
+                confirmDialog.value.loading = false;
+            }
         }
-        router.push('/phieu-giam-gia');
-    } catch (e) {
-        addNotification({ title: 'Lỗi', subtitle: 'Lỗi khi lưu dữ liệu', color: 'error' });
-    } finally {
-        saving.value = false;
-    }
+    };
 };
 
 onMounted(init);
@@ -370,6 +392,16 @@ onMounted(init);
                 </v-card>
             </v-col>
         </v-row>
+
+        <!-- SHARED CONFIRM -->
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="confirmDialog.action"
+        />
     </v-container>
 </template>
 

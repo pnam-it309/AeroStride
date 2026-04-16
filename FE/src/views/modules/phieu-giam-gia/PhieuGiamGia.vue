@@ -42,8 +42,9 @@ const loadVouchers = async () => {
         const response = await dichVuPhieuGiamGia.layPhieuGiamGiaPhanTrang(params);
         const data = response?.data?.content || response?.content || response?.data || response;
         vouchers.value = Array.isArray(data) ? data : [];
-        pagination.value.totalElements = response?.data?.totalElements || response?.totalElements || vouchers.value.length;
-        pagination.value.totalPages = response?.data?.totalPages || response?.totalPages || 1;
+        const total = response?.data?.totalElements || response?.totalElements || vouchers.value.length;
+        pagination.value.totalElements = total;
+        pagination.value.totalPages = response?.data?.totalPages || response?.totalPages || Math.ceil(total / pagination.value.size) || 1;
     } catch (error) {
         console.error(error);
     } finally {
@@ -197,10 +198,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <v-container fluid class="pa-4 gray-bg min-h-screen font-body">
+    <v-container fluid class="pa-4 animate-fade-in font-body" style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
         <!-- Header -->
         <div class="mb-6">
-            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lí phiếu giảm giá</h1>
+            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lý phiếu giảm giá</h1>
         </div>
 
         <!-- 1. FILTER -->
@@ -339,7 +340,7 @@ onBeforeUnmount(() => {
                                 icon
                                 variant="text"
                                 size="28"
-                                color="#2aa6a1"
+                                color="slate-700"
                                 class="rounded-lg action-icon-btn"
                                 @click.stop="router.push({ name: 'PhieuGiamGiaDetail', params: { id: item.id } })"
                             >
@@ -350,7 +351,7 @@ onBeforeUnmount(() => {
                                 icon
                                 variant="text"
                                 size="28"
-                                color="#5f6f82"
+                                color="slate-700"
                                 class="rounded-lg action-icon-btn"
                                 @click.stop="router.push({ name: 'PhieuGiamGiaForm', params: { id: item.id } })"
                             >
@@ -386,9 +387,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.gray-bg {
-    background-color: #f5f7fb;
-}
+.gray-bg { /* Removed background */ }
 .text-dark {
     color: #0f172a !important;
 }

@@ -4,6 +4,7 @@ import com.example.be.core.common.base.AuditEntity;
 import com.example.be.core.common.base.IsIdentified;
 import com.example.be.infrastructure.constants.EntityProperties;
 import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.infrastructure.listener.PrimaryEntityListener;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -18,9 +19,11 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@EntityListeners(PrimaryEntityListener.class)
 public class HoaDon extends AuditEntity implements IsIdentified {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(length = EntityProperties.LENGTH_ID, updatable = false)
     private String id;
 
@@ -74,4 +77,12 @@ public class HoaDon extends AuditEntity implements IsIdentified {
     @Column(name = "ghi_chu")
     private String ghiChu;
 
+    @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY)
+    private java.util.List<HoaDonChiTiet> listsHoaDonChiTiet;
+
+    @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY)
+    private java.util.List<LichSuTrangThaiHoaDon> listsLichSuHoaDon;
+
+    @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY)
+    private java.util.List<GiaoDichThanhToan> listsGiaoDichThanhToan;
 }

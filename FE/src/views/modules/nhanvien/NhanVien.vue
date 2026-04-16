@@ -96,8 +96,9 @@ const loadEmployees = async () => {
         };
         const response = await dichVuNhanVien.layNhanVienPhanTrang(params);
         employees.value = response.content || response;
-        pagination.value.totalElements = response.totalElements || employees.value.length;
-        pagination.value.totalPages = response.totalPages || 1;
+        const total = response.totalElements || employees.value.length;
+        pagination.value.totalElements = total;
+        pagination.value.totalPages = response.totalPages || Math.ceil(total / pagination.value.size) || 1;
     } catch (error) {
         console.error(error);
     } finally {
@@ -147,10 +148,10 @@ onMounted(() => loadEmployees());
 </script>
 
 <template>
-    <v-container fluid class="pa-6 gray-bg min-h-screen font-body">
+    <v-container fluid class="pa-4 animate-fade-in font-body" style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
         <!-- Header -->
         <div class="mb-6">
-            <h5 class="text-h5 font-weight-bold">Quản lí nhân viên</h5>
+            <h5 class="text-h5 font-weight-bold">Quản lý nhân viên</h5>
         </div>
 
         <!-- 1. FILTER -->
@@ -283,7 +284,7 @@ onMounted(() => loadEmployees());
                                 icon
                                 variant="text"
                                 size="28"
-                                color="#5f6f82"
+                                color="slate-700"
                                 class="rounded-lg action-icon-btn"
                                 @click.stop="router.push(`/nhan-vien/form/${item.id}`)"
                             >
@@ -293,7 +294,7 @@ onMounted(() => loadEmployees());
                             <div class="switch-wrapper">
                                 <v-switch
                                     :model-value="isActiveStatus(item.trangThai)"
-                                    color="#1e3a8a"
+                                    color="slate-700"
                                     hide-details
                                     density="compact"
                                     class="tight-switch action-switch"
@@ -330,9 +331,7 @@ onMounted(() => loadEmployees());
 </template>
 
 <style scoped>
-.gray-bg {
-    background-color: #f5f7fb;
-}
+.gray-bg { /* Removed background */ }
 .text-dark {
     color: #0f172a !important;
 }

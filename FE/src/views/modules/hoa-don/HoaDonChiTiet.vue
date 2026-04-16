@@ -6,8 +6,11 @@ import { useNotifications } from "@/services/notificationService";
 import {
     ChevronLeftIcon, PrinterIcon, EditIcon, CalendarIcon,
     PackageIcon, UserIcon, MapPinIcon, CreditCardIcon, TruckIcon,
-    CircleCheckIcon, CircleXIcon, CheckIcon
+    CircleCheckIcon, CircleXIcon, CheckIcon, TrashIcon,
+    PlusIcon
 } from "vue-tabler-icons";
+import ProductPicker from "../banhang/components/ProductPicker.vue";
+import AdminConfirm from "@/components/common/AdminConfirm.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -18,8 +21,29 @@ const loading = ref(false);
 const updatingStatus = ref(false);
 const statusDialogOpen = ref(false);
 const selectedStatus = ref("");
-const confirmNoticeOpen = ref(false);
 const pendingStatus = ref("");
+
+// Confirmation Logic
+const confirmDialog = ref({
+    show: false,
+    title: '',
+    message: '',
+    color: 'primary',
+    action: null,
+    loading: false
+});
+
+// Editing State
+const infoDialogOpen = ref(false);
+const productsDialogOpen = ref(false);
+const editInfoForm = ref({
+    soDienThoaiNguoiNhan: "",
+    diaChiNguoiNhan: "",
+    ghiChu: "",
+    idKhachHang: null
+});
+const updatingInfo = ref(false);
+const updatingItems = ref(false);
 
 const order = ref({
     id: "",
@@ -139,40 +163,124 @@ const openStatusDialog = () => {
 };
 
 const requestStatusUpdate = (status) => {
-    if (status) {
-        pendingStatus.value = status;
-    } else {
+    let targetStatus = status;
+    if (!targetStatus) {
         if (selectedStatus.value === order.value.trangThai) return;
-        pendingStatus.value = selectedStatus.value;
+        targetStatus = selectedStatus.value;
     }
-    statusDialogOpen.value = false;
-    confirmNoticeOpen.value = true;
+
+    confirmDialog.value = {
+        show: true,
+        title: 'Cập nhật trạng thái',
+        message: `Xác nhận chuyển đơn hàng sang trạng thái [${getStatusLabel(targetStatus)}]?`,
+        color: 'primary',
+        action: async () => {
+            confirmDialog.value.loading = true;
+            try {
+                await dichVuHoaDon.capNhatTrangThaiHoaDon(order.value.id, targetStatus);
+                addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật trạng thái đơn hàng', color: 'success' });
+                await loadOrderDetail();
+                confirmDialog.value.show = false;
+                statusDialogOpen.value = false;
+            } catch (error) {
+                addNotification({ title: 'Lỗi', subtitle: 'Cập nhật thất bại', color: 'error' });
+            } finally {
+                confirmDialog.value.loading = false;
+            }
+        }
+    };
 };
 
-const executeStatusUpdate = async () => {
-    updatingStatus.value = true;
+const openEditInfo = () => {
+    editInfoForm.value = {
+        soDienThoaiNguoiNhan: order.value.soDienThoai,
+        diaChiNguoiNhan: order.value.diaChi,
+        ghiChu: order.value.ghiChu,
+        idKhachHang: order.value.khachHang?.id
+    };
+    infoDialogOpen.value = true;
+};
+
+const saveInfoUpdate = async () => {
+    updatingInfo.value = true;
     try {
-        await dichVuHoaDon.capNhatTrangThaiHoaDon(order.value.id, pendingStatus.value);
-        addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật trạng thái đơn hàng', color: 'success' });
+        await dichVuHoaDon.capNhatThongTinHoaDon(order.value.id, editInfoForm.value);
+        addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật thông tin hóa đơn', color: 'success' });
         await loadOrderDetail();
-        confirmNoticeOpen.value = false;
+        infoDialogOpen.value = false;
     } catch (error) {
         addNotification({ title: 'Lỗi', subtitle: 'Cập nhật thất bại', color: 'error' });
     } finally {
-        updatingStatus.value = false;
+        updatingInfo.value = false;
     }
+};
+
+const handleAddProduct = async (product) => {
+    updatingItems.value = true;
+    try {
+        await dichVuHoaDon.capNhatSanPhamHoaDon(order.value.id, {
+            idChiTietSanPham: product.id,
+            soLuong: 1
+        });
+        addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm vào hóa đơn', color: 'success' });
+        await loadOrderDetail();
+    } catch (error) {
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể thêm sản phẩm', color: 'error' });
+    } finally {
+        updatingItems.value = false;
+    }
+};
+
+const updateItemQuantity = async (item, newQty) => {
+    if (newQty < 1) return;
+    updatingItems.value = true;
+    try {
+        await dichVuHoaDon.capNhatSanPhamHoaDon(order.value.id, {
+            idChiTietSanPham: item.idChiTietSanPham,
+            soLuong: newQty
+        });
+        await loadOrderDetail();
+    } catch (error) {
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể cập nhật số lượng', color: 'error' });
+    } finally {
+        updatingItems.value = false;
+    }
+};
+
+const removeItem = (idHdct) => {
+    confirmDialog.value = {
+        show: true,
+        title: 'Xác nhận xóa',
+        message: 'Bạn có chắc chắn muốn xóa sản phẩm này khỏi hóa đơn?',
+        color: 'error',
+        action: async () => {
+            confirmDialog.value.loading = true;
+            updatingItems.value = true;
+            try {
+                await dichVuHoaDon.xoaSanPhamHoaDon(order.value.id, idHdct);
+                addNotification({ title: 'Thành công', subtitle: 'Đã xóa sản phẩm', color: 'success' });
+                await loadOrderDetail();
+                confirmDialog.value.show = false;
+            } catch (error) {
+                addNotification({ title: 'Lỗi', subtitle: 'Không thể xóa sản phẩm', color: 'error' });
+            } finally {
+                updatingItems.value = false;
+                confirmDialog.value.loading = false;
+            }
+        }
+    };
 };
 
 onMounted(loadOrderDetail);
 </script>
 
 <template>
-    <v-container fluid class="pa-6 gray-bg min-h-screen">
+    <v-container fluid class="pa-6 animate-fade-in min-h-screen">
         <!-- Header -->
         <v-card class="premium-card mb-6 pa-6">
             <div class="header-section">
                 <div class="header-left">
-                    <v-btn icon variant="tonal" color="primary" class="mr-4 rounded-lg" @click="router.back()">
+                    <v-btn icon variant="text" color="slate-600" class="mr-4 rounded-lg" @click="router.back()" style="background-color: transparent !important;">
                         <ChevronLeftIcon size="24" />
                     </v-btn>
                     <div v-if="loaded">
@@ -245,9 +353,22 @@ onMounted(loadOrderDetail);
             <v-col cols="12" lg="8">
                 <!-- Products -->
                 <v-card class="premium-card mb-6 overflow-hidden">
-                    <div class="card-title pa-5 border-b d-flex align-center bg-slate-50">
-                        <PackageIcon size="20" class="mr-3 text-primary" />
-                        <span class="font-weight-bold text-slate-800">Sản phẩm đã đặt</span>
+                    <div class="card-title pa-5 border-b d-flex align-center justify-space-between bg-slate-50">
+                        <div class="d-flex align-center">
+                            <PackageIcon size="20" class="mr-3 text-primary" />
+                            <span class="font-weight-bold text-slate-800">Sản phẩm đã đặt</span>
+                        </div>
+                        <v-btn
+                            v-if="order.trangThai < 3"
+                            variant="tonal"
+                            color="primary"
+                            size="small"
+                            class="px-4 font-weight-bold rounded-lg"
+                            @click="productsDialogOpen = true"
+                        >
+                            <PlusIcon size="16" class="mr-2" />
+                            Thay đổi sản phẩm
+                        </v-btn>
                     </div>
                     <v-table class="premium-table">
                         <thead>
@@ -343,9 +464,21 @@ onMounted(loadOrderDetail);
             <!-- Right Column: Customer & Shipping -->
             <v-col cols="12" lg="4">
                 <v-card class="premium-card mb-6">
-                    <div class="card-title pa-5 border-b d-flex align-center bg-slate-50">
-                        <UserIcon size="20" class="mr-3 text-primary" />
-                        <span class="font-weight-bold text-slate-800">Thông tin khách hàng</span>
+                    <div class="card-title pa-5 border-b d-flex align-center justify-space-between bg-slate-50">
+                        <div class="d-flex align-center">
+                            <UserIcon size="20" class="mr-3 text-primary" />
+                            <span class="font-weight-bold text-slate-800">Thông tin khách hàng</span>
+                        </div>
+                        <v-btn
+                            v-if="order.trangThai < 3"
+                            icon
+                            variant="text"
+                            color="primary"
+                            size="small"
+                            @click="openEditInfo"
+                        >
+                            <EditIcon size="20" />
+                        </v-btn>
                     </div>
                     <v-card-text class="pa-6">
                         <div class="d-flex align-center mb-6">
@@ -439,25 +572,111 @@ onMounted(loadOrderDetail);
             <div class="mt-4 text-slate-500">Đang tải thông tin hóa đơn...</div>
         </div>
 
-        <!-- Confirm Dialog -->
-        <v-dialog v-model="confirmNoticeOpen" max-width="400" persistent>
-            <v-card class="rounded-2xl text-center pa-6">
-                <div class="text-center mb-4">
-                    <v-icon color="warning" size="64">mdi-alert-circle-outline</v-icon>
-                </div>
-                <h3 class="text-h5 font-weight-bold mb-2">Xác nhận thay đổi?</h3>
-                <p class="text-slate-500 mb-6">Hành động này sẽ cập nhật trạng thái đơn hàng và không thể hoàn tác.</p>
-                <div class="d-flex gap-4">
-                    <v-btn block variant="tonal" height="48" class="rounded-xl font-weight-bold" color="slate-500" @click="confirmNoticeOpen = false">Hủy bỏ</v-btn>
-                    <v-btn block color="primary" variant="flat" height="48" class="rounded-xl font-weight-bold shadow-lg" :loading="updatingStatus" @click="executeStatusUpdate">Xác nhận ngay</v-btn>
-                </div>
+        <!-- SHARED CONFIRM -->
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="confirmDialog.action"
+        />
+
+        <!-- Edit Info Dialog -->
+        <v-dialog v-model="infoDialogOpen" max-width="500">
+            <v-card class="rounded-2xl">
+                <v-card-title class="pa-5 border-b font-weight-bold">
+                    Cập nhật thông tin nhận hàng
+                </v-card-title>
+                <v-card-text class="pa-6">
+                    <v-text-field
+                        v-model="editInfoForm.soDienThoaiNguoiNhan"
+                        label="Số điện thoại"
+                        placeholder="Nhập số điện thoại"
+                        variant="outlined"
+                        class="mb-4"
+                    ></v-text-field>
+                    <v-textarea
+                        v-model="editInfoForm.diaChiNguoiNhan"
+                        label="Địa chỉ"
+                        placeholder="Nhập địa chỉnhận hàng"
+                        variant="outlined"
+                        rows="3"
+                        class="mb-4"
+                    ></v-textarea>
+                    <v-textarea
+                        v-model="editInfoForm.ghiChu"
+                        label="Ghi chú"
+                        placeholder="Ghi chú về đơn hàng"
+                        variant="outlined"
+                        rows="2"
+                    ></v-textarea>
+                </v-card-text>
+                <v-card-actions class="pa-6 pt-0">
+                    <v-btn variant="tonal" color="slate-500" class="rounded-xl px-6" @click="infoDialogOpen = false">Đóng</v-btn>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" variant="flat" class="rounded-xl px-8" :loading="updatingInfo" @click="saveInfoUpdate">Lưu thay đổi</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Edit Products Dialog -->
+        <v-dialog v-model="productsDialogOpen" max-width="1000">
+            <v-card class="rounded-2xl overflow-hidden">
+                <v-card-title class="pa-5 border-b font-weight-bold d-flex align-center">
+                    Quản lý danh sách sản phẩm
+                    <v-spacer></v-spacer>
+                    <v-btn icon variant="text" @click="productsDialogOpen = false"><CircleXIcon /></v-btn>
+                </v-card-title>
+                <v-card-text class="pa-0">
+                    <div class="pa-6 bg-slate-50">
+                        <ProductPicker @add-product="handleAddProduct" />
+                    </div>
+                    
+                    <v-divider></v-divider>
+                    
+                    <v-table class="items-table px-6">
+                        <thead>
+                            <tr>
+                                <th class="py-4">Sản phẩm</th>
+                                <th class="text-center py-4">Số lượng</th>
+                                <th class="text-right py-4">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="item in order.listsHoaDonChiTiet" :key="item.id">
+                                <td class="py-4">
+                                    <div class="font-weight-bold">{{ item.tenSanPham }}</div>
+                                    <div class="text-caption text-slate-500">{{ item.tenMauSac }} | {{ item.tenKichThuoc }}</div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex align-center justify-center">
+                                        <v-btn icon size="x-small" variant="tonal" @click="updateItemQuantity(item, item.soLuong - 1)">-</v-btn>
+                                        <span class="mx-3 font-weight-bold">{{ item.soLuong }}</span>
+                                        <v-btn icon size="x-small" variant="tonal" @click="updateItemQuantity(item, item.soLuong + 1)">+</v-btn>
+                                    </div>
+                                </td>
+                                <td class="text-right">
+                                    <v-btn icon color="error" variant="text" size="small" @click="removeItem(item.id)">
+                                        <TrashIcon />
+                                    </v-btn>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </v-table>
+                </v-card-text>
+                <v-card-actions class="pa-6 border-t bg-slate-50">
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" variant="flat" class="px-8 rounded-xl font-weight-bold" @click="productsDialogOpen = false">Hoàn tất</v-btn>
+                </v-card-actions>
             </v-card>
         </v-dialog>
     </v-container>
 </template>
 
 <style scoped>
-.gray-bg { background-color: #f8fafc; }
+.animate-fade-in { animation: fadeIn 0.5s ease-in; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .premium-card {
     border-radius: 20px !important;
     border: 1px solid #e2e8f0 !important;

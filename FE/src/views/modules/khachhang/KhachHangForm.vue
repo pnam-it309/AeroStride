@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
+import { PATH } from '@/router/routePaths';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { useNotifications } from '@/services/notificationService';
@@ -286,10 +287,10 @@ onMounted(() => {
 </script>
 
 <template>
-    <v-container fluid class="pa-6 gray-bg min-h-screen font-body">
+    <v-container fluid class="pa-6 animate-fade-in min-h-screen font-body">
         <!-- Header -->
         <div class="d-flex align-center mb-6">
-            <v-btn icon variant="tonal" color="secondary" class="mr-4 rounded-lg" @click="router.push('/khach-hang')">
+            <v-btn icon variant="text" color="slate-600" class="mr-4 rounded-lg" @click="router.push(PATH.KHACH_HANG)" style="background-color: transparent !important;">
                 <ArrowLeftIcon size="20" />
             </v-btn>
             <div>
@@ -832,9 +833,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.gray-bg {
-    background-color: #f8fafc;
-}
+.gray-bg { /* Removed background */ }
 .font-body {
     font-family: 'Inter', sans-serif;
 }

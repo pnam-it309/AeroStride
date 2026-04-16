@@ -49,4 +49,7 @@ public class KhachHang extends BaseCodeNameEntity {
     @JoinColumn(name = "id_dia_chi", referencedColumnName ="id")
     private DiaChi diaChi;
 
+    @Column(name = "xoa_mem")
+    private Boolean xoaMem;
+
 }

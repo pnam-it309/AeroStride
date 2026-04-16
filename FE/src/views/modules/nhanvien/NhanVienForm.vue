@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
+import { PATH } from '@/router/routePaths';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import { useNotifications } from '@/services/notificationService';
@@ -109,10 +110,10 @@ onMounted(async () => {
 </script>
 
 <template>
-    <v-container fluid class="pa-6 gray-bg min-h-screen font-body">
+    <v-container fluid class="pa-6 animate-fade-in min-h-screen font-body">
         <!-- Breadcrumbs / Header -->
         <div class="d-flex align-center mb-6">
-            <v-btn icon variant="tonal" color="secondary" class="mr-4 rounded-lg" @click="router.push('/nhan-vien')">
+            <v-btn icon variant="text" color="slate-600" class="mr-4 rounded-lg" @click="router.push(PATH.NHAN_VIEN)" style="background-color: transparent !important;">
                 <ArrowLeftIcon size="20" />
             </v-btn>
             <div>
@@ -413,9 +414,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.gray-bg {
-    background-color: #f8fafc;
-}
 .font-body {
     font-family: 'Inter', sans-serif;
 }

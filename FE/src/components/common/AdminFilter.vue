@@ -19,11 +19,11 @@ const emit = defineEmits(['refresh', 'search']);
 
             <v-row dense align="start" class="filter-grid">
                 <slot></slot>
-                <v-col cols="12" sm="12" md="1" class="filter-reset-col d-flex align-end justify-end">
+                <v-col cols="auto" class="filter-reset-col ml-auto align-self-end pb-1">
                     <v-btn
                         variant="outlined"
                         color="primary"
-                        class="reset-btn px-0"
+                        class="reset-btn"
                         :disabled="loading || isRefreshing"
                         @click="emit('refresh')"
                     >
@@ -155,7 +155,6 @@ const emit = defineEmits(['refresh', 'search']);
 
 .filter-reset-col {
     flex: 0 0 auto;
-    align-self: flex-start;
     padding-bottom: 4px;
 }
 </style>

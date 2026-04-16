@@ -2,6 +2,8 @@
 -- V1: Full Initial Schema + Role System + Refresh Token + Product Module Alignment
 -- ==============================================================================
 
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- Bảng Phân Quyền
 CREATE TABLE phan_quyen (
     id VARCHAR(36) PRIMARY KEY,
@@ -52,7 +54,10 @@ CREATE TABLE dia_chi (
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
     nguoi_tao VARCHAR(100),
-    nguoi_cap_nhat VARCHAR(100)
+    nguoi_cap_nhat VARCHAR(100),
+    id_khach_hang VARCHAR(36),
+    la_mac_dinh BIT DEFAULT 0,
+    FOREIGN KEY (id_khach_hang) REFERENCES khach_hang(id)
 );
 
 -- Bảng Khách Hàng (có vai_tro: KHACH_HANG)
@@ -74,6 +79,7 @@ CREATE TABLE khach_hang (
     ngay_cap_nhat BIGINT,
     nguoi_tao VARCHAR(100),
     nguoi_cap_nhat VARCHAR(100),
+    xoa_mem BIT DEFAULT 0,
     FOREIGN KEY (id_dia_chi) REFERENCES dia_chi(id)
 );
 
@@ -279,6 +285,7 @@ CREATE TABLE dot_giam_gia (
     ngay_bat_dau BIGINT,
     ngay_ket_thuc BIGINT,
     muc_uu_tien INT,
+    mo_ta TEXT,
     trang_thai INT,
     ngay_tao BIGINT,
     ngay_cap_nhat BIGINT,
@@ -307,6 +314,7 @@ CREATE TABLE phieu_giam_gia (
     ma_phieu_giam_gia VARCHAR(50) UNIQUE,
     ten_phieu VARCHAR(255),
     loai_phieu VARCHAR(50),
+    hinh_thuc VARCHAR(50),
     phan_tram_giam_gia INT,
     so_tien_giam DECIMAL(20,2),
     so_luong INT,
@@ -431,3 +439,5 @@ CREATE TABLE giao_dich_thanh_toan (
     FOREIGN KEY (id_hoa_don) REFERENCES hoa_don(id),
     FOREIGN KEY (id_phuong_thuc_thanh_toan) REFERENCES phuong_thuc_thanh_toan(id)
 );
+
+SET FOREIGN_KEY_CHECKS = 1;

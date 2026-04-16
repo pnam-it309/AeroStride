@@ -315,10 +315,10 @@ watch(baseFilteredCustomers, () => {
 </script>
 
 <template>
-    <v-container fluid class="pa-6 gray-bg min-h-screen font-body">
+    <v-container fluid class="pa-4 animate-fade-in font-body" style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
         <!-- Header -->
         <div class="mb-6">
-            <h5 class="text-h5 font-weight-bold">Quản lí khách hàng</h5>
+            <h5 class="text-h5 font-weight-bold">Quản lý khách hàng</h5>
         </div>
 
         <!-- 1. FILTER -->
@@ -534,9 +534,7 @@ watch(baseFilteredCustomers, () => {
 </template>
 
 <style scoped>
-.gray-bg {
-    background-color: #f5f7fb;
-}
+.gray-bg { /* Removed background */ }
 .text-dark {
     color: #0f172a !important;
 }

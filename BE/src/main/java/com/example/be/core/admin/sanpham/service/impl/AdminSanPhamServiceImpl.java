@@ -232,7 +232,14 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     public void updateStatus(String id, TrangThai status) {
         SanPham sanPham = getProductOrThrow(id);
         sanPham.setTrangThai(status);
-        adminSanPhamRepository.saveAndFlush(sanPham);
+        adminSanPhamRepository.save(sanPham);
+
+        // Cascade status to all variants
+        List<ChiTietSanPham> variants = adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalse(id);
+        for (ChiTietSanPham variant : variants) {
+            variant.setTrangThai(status);
+        }
+        adminChiTietSanPhamRepository.saveAll(variants);
     }
 
     @Override

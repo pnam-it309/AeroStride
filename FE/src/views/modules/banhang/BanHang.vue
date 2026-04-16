@@ -72,13 +72,27 @@ const createNewOrder = async () => {
     }
 };
 
-const closeOrder = async (orderId, index) => {
-    try {
-        await dichVuDonHang.xoaDonHang(orderId);
-        orders.value.splice(index, 1);
-        activeOrderIndex.value = Math.max(0, orders.value.length - 1);
-        if (orders.value.length === 0) await createNewOrder();
-    } catch (e) {}
+const closeOrder = (orderId, index) => {
+    confirmDialog.value = {
+        show: true,
+        title: 'Xác nhận xóa hóa đơn',
+        message: 'Bạn có chắc chắn muốn xóa hóa đơn chờ này không? Dữ liệu giỏ hàng sẽ bị mất.',
+        color: 'error',
+        action: async () => {
+            confirmDialog.value.loading = true;
+            try {
+                await dichVuDonHang.xoaDonHang(orderId);
+                orders.value.splice(index, 1);
+                activeOrderIndex.value = Math.max(0, orders.value.length - 1);
+                if (orders.value.length === 0) await createNewOrder();
+                confirmDialog.value.show = false;
+            } catch (e) {
+                addNotification({ title: 'Lỗi', subtitle: 'Không thể xóa hóa đơn', color: 'error' });
+            } finally {
+                confirmDialog.value.loading = false;
+            }
+        }
+    };
 };
 
 // Logic: Sản phẩm
@@ -118,12 +132,26 @@ const onUpdateQty = async (item, delta) => {
     }
 };
 
-const onRemoveItem = async (item) => {
-    try {
-        await dichVuDonHang.removeSanPham(selectedOrder.value.id, item.id);
-        const data = await dichVuDonHang.layDonHangCho();
-        orders.value = data || [];
-    } catch (e) {}
+const onRemoveItem = (item) => {
+    confirmDialog.value = {
+        show: true,
+        title: 'Xác nhận xóa sản phẩm',
+        message: `Bạn có chắc chắn muốn xóa [${item.tenSanPham}] khỏi giỏ hàng?`,
+        color: 'warning',
+        action: async () => {
+            confirmDialog.value.loading = true;
+            try {
+                await dichVuDonHang.removeSanPham(selectedOrder.value.id, item.id);
+                const data = await dichVuDonHang.layDonHangCho();
+                orders.value = data || [];
+                confirmDialog.value.show = false;
+            } catch (e) {
+                addNotification({ title: 'Lỗi', subtitle: 'Không thể xóa sản phẩm', color: 'error' });
+            } finally {
+                confirmDialog.value.loading = false;
+            }
+        }
+    };
 };
 
 // Logic: Khách hàng & Voucher
@@ -155,40 +183,51 @@ const onApplyVoucher = async (voucherId) => {
 };
 
 // Logic: Thanh toán
-const onCheckout = async () => {
+const onCheckout = () => {
     if (checkoutData.value.paymentMethod === 'CASH' && checkoutData.value.receivedAmount < selectedOrder.value.tongTienSauGiam) {
         addNotification({ title: 'Cảnh báo', subtitle: 'Khách chưa đưa đủ tiền', color: 'warning' });
         return;
     }
 
-    isProcessing.value = true;
-    try {
-        const isCash = checkoutData.value.paymentMethod === 'CASH';
-        const payload = {
-            idKhachHang: selectedOrder.value.idKhachHang,
-            idPhieuGiamGia: selectedOrder.value.idPhieuGiamGia,
-            tongTien: selectedOrder.value.tongTien,
-            tongTienSauGiam: selectedOrder.value.tongTienSauGiam,
-            loaiDon: 'TAI_QUAY',
-            ghiChu: checkoutData.value.note,
-            tienMat: isCash ? selectedOrder.value.tongTienSauGiam : 0,
-            tienChuyenKhoan: isCash ? 0 : selectedOrder.value.tongTienSauGiam
-        };
-        await dichVuDonHang.checkout(selectedOrder.value.id, payload);
-        addNotification({ title: 'Thành công', subtitle: 'Hóa đơn đã được thanh toán', color: 'success' });
-        
-        orders.value.splice(activeOrderIndex.value, 1);
-        if (orders.value.length === 0) await createNewOrder();
-        activeOrderIndex.value = 0;
-        
-        // Reset checkout data
-        checkoutData.value.receivedAmount = 0;
-        checkoutData.value.note = '';
-    } catch (e) {
-        addNotification({ title: 'Lỗi', subtitle: 'Thanh toán thất bại', color: 'error' });
-    } finally {
-        isProcessing.value = false;
-    }
+    confirmDialog.value = {
+        show: true,
+        title: 'Xác nhận thanh toán',
+        message: `Bạn xác nhận thanh toán hóa đơn với tổng tiền [${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrder.value.tongTienSauGiam)}]?`,
+        color: 'primary',
+        action: async () => {
+            confirmDialog.value.loading = true;
+            isProcessing.value = true;
+            try {
+                const isCash = checkoutData.value.paymentMethod === 'CASH';
+                const payload = {
+                    idKhachHang: selectedOrder.value.idKhachHang,
+                    idPhieuGiamGia: selectedOrder.value.idPhieuGiamGia,
+                    tongTien: selectedOrder.value.tongTien,
+                    tongTienSauGiam: selectedOrder.value.tongTienSauGiam,
+                    loaiDon: 'TAI_QUAY',
+                    ghiChu: checkoutData.value.note,
+                    tienMat: isCash ? selectedOrder.value.tongTienSauGiam : 0,
+                    tienChuyenKhoan: isCash ? 0 : selectedOrder.value.tongTienSauGiam
+                };
+                await dichVuDonHang.checkout(selectedOrder.value.id, payload);
+                addNotification({ title: 'Thành công', subtitle: 'Hóa đơn đã được thanh toán', color: 'success' });
+                
+                orders.value.splice(activeOrderIndex.value, 1);
+                if (orders.value.length === 0) await createNewOrder();
+                activeOrderIndex.value = 0;
+                
+                // Reset checkout data
+                checkoutData.value.receivedAmount = 0;
+                checkoutData.value.note = '';
+                confirmDialog.value.show = false;
+            } catch (e) {
+                addNotification({ title: 'Lỗi', subtitle: 'Thanh toán thất bại', color: 'error' });
+            } finally {
+                isProcessing.value = false;
+                confirmDialog.value.loading = false;
+            }
+        }
+    };
 };
 
 // Helpers

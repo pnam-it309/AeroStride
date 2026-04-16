@@ -39,15 +39,43 @@ public interface AdminHoaDonRepository extends HoaDonRepository {
             AND (:#{#req.trangThai} IS NULL OR CAST(hd.trangThai AS int) = :#{#req.trangThai})
             AND (:#{#req.loaiDon} IS NULL OR :#{#req.loaiDon} = ''
                 OR hd.loaiDon = :#{#req.loaiDon})
-            AND (:#{#req.ngayTao} IS NULL OR :#{#req.ngayTao} = ''
-                OR CAST(hd.ngayTao AS date) = CAST(:#{#req.ngayTao} AS date))
-            ORDER BY hd.ngayTao DESC
+            AND (:#{#req.tuNgayLong} IS NULL OR hd.ngayTao >= :#{#req.tuNgayLong})
+            AND (:#{#req.denNgayLong} IS NULL OR hd.ngayTao <= :#{#req.denNgayLong})
             """)
     Page<AdminHoaDonResponse> getAllHoaDon(Pageable pageable, @Param("req") AdminHoaDonRequest req);
 
-    @Query("SELECT CAST(hd.trangThai AS int) as status, COUNT(hd) as count FROM HoaDon hd GROUP BY hd.trangThai")
-    java.util.List<java.util.Map<String, Object>> countByTrangThai();
+    @Query(value = """
+            SELECT CAST(hd.trangThai AS int) as status, COUNT(hd) as count 
+            FROM HoaDon hd
+            LEFT JOIN hd.khachHang kh
+            WHERE (:#{#req.search} IS NULL OR :#{#req.search} = ''
+                OR hd.maHoaDon LIKE %:#{#req.search}%
+                OR kh.ten LIKE %:#{#req.search}%
+                OR hd.soDienThoaiNguoiNhan LIKE %:#{#req.search}%)
+            AND (:#{#req.tenKhachHang} IS NULL OR :#{#req.tenKhachHang} = ''
+                OR kh.ten LIKE %:#{#req.tenKhachHang}%)
+            AND (:#{#req.loaiDon} IS NULL OR :#{#req.loaiDon} = ''
+                OR hd.loaiDon = :#{#req.loaiDon})
+            AND (:#{#req.tuNgayLong} IS NULL OR hd.ngayTao >= :#{#req.tuNgayLong})
+            AND (:#{#req.denNgayLong} IS NULL OR hd.ngayTao <= :#{#req.denNgayLong})
+            GROUP BY hd.trangThai
+            """)
+    java.util.List<java.util.Map<String, Object>> countByTrangThai(@Param("req") AdminHoaDonRequest req);
 
-    @Query("SELECT COUNT(hd) FROM HoaDon hd")
-    long countAll();
+    @Query(value = """
+            SELECT COUNT(hd) 
+            FROM HoaDon hd
+            LEFT JOIN hd.khachHang kh
+            WHERE (:#{#req.search} IS NULL OR :#{#req.search} = ''
+                OR hd.maHoaDon LIKE %:#{#req.search}%
+                OR kh.ten LIKE %:#{#req.search}%
+                OR hd.soDienThoaiNguoiNhan LIKE %:#{#req.search}%)
+            AND (:#{#req.tenKhachHang} IS NULL OR :#{#req.tenKhachHang} = ''
+                OR kh.ten LIKE %:#{#req.tenKhachHang}%)
+            AND (:#{#req.loaiDon} IS NULL OR :#{#req.loaiDon} = ''
+                OR hd.loaiDon = :#{#req.loaiDon})
+            AND (:#{#req.tuNgayLong} IS NULL OR hd.ngayTao >= :#{#req.tuNgayLong})
+            AND (:#{#req.denNgayLong} IS NULL OR hd.ngayTao <= :#{#req.denNgayLong})
+            """)
+    long countWithFilter(@Param("req") AdminHoaDonRequest req);
 }
