@@ -1,9 +1,9 @@
 # Stage 1: Base/Build stage
-FROM gradle:8.5-jdk17-alpine AS build
+FROM gradle:8.5-jdk17 AS build
 WORKDIR /app
 
 # Install curl for healthchecks
-RUN apk add --no-cache curl
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Copy only the dependency files first to leverage Docker layer caching
 COPY BE/gradle/ gradle/
@@ -19,10 +19,12 @@ COPY BE/src/ src/
 # Development stage (for hot-reloading)
 FROM build AS development
 EXPOSE 8080
-# Configure Gradle environment for speed and reliability
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=true -Dorg.gradle.vfs.watch=true"
+# Disable VFS watch because it's unstable on Windows mount and causes 'unreadable directory' errors
+# We include JVM args here to match gradle.properties and avoid single-use daemon forks
+ENV GRADLE_OPTS="-Xmx1g -XX:TieredStopAtLevel=1 -Dfile.encoding=UTF-8 -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false"
 
-ENTRYPOINT ["./gradlew", "bootRun", "-t"]
+# Use a safer sequential execution to avoid file locks
+ENTRYPOINT ["sh", "-c", "./gradlew classes --no-daemon && (./gradlew bootRun --no-daemon & while true; do sleep 15; ./gradlew classes --no-daemon; done)"]
 
 # Stage 2: Runtime stage (Production)
 FROM eclipse-temurin:17-jre-alpine AS production

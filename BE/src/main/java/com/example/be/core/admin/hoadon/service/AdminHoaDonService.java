@@ -13,7 +13,13 @@ public interface AdminHoaDonService {
 
     HoaDon updateStatus(String id, Integer status);
 
-    java.util.Map<String, Long> getCounts();
+    HoaDon updateInfo(String id, com.example.be.core.admin.hoadon.model.request.AdminUpdateHoaDonRequest request);
+
+    HoaDon updateHdct(String id, com.example.be.core.admin.hoadon.model.request.AdminUpdateHdctRequest request);
+
+    HoaDon removeHdct(String id, String idHdct);
+
+    java.util.Map<String, Long> getCounts(AdminHoaDonRequest request);
 
     byte[] exportExcel(AdminHoaDonRequest request);
 

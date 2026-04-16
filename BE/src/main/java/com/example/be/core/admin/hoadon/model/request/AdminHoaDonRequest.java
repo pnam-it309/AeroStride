@@ -18,6 +18,16 @@ public class AdminHoaDonRequest {
 
     private String ngayTao;       // Nhận chuỗi "yyyy-MM-dd" từ input type="date" của FE
 
+    private String tuNgay;
+
+    private String denNgay;
+
+    private Long tuNgayLong;
+
+    private Long denNgayLong;
+
+    private String sortDirection = "DESC"; // Mặc định mới nhất
+
     private Integer page = 0;     // Mặc định trang đầu tiên
 
     private Integer size = 10;    // Mặc định 10 bản ghi/trang

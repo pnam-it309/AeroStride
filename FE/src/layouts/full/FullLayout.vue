@@ -5,13 +5,13 @@ import MainView from './Main.vue';
 
 <template>
     <v-locale-provider>
-        <v-app style="overflow: hidden !important">
+        <v-app style="height: 100vh; overflow: hidden !important; background-color: #ffffff;">
             <MainView />
-            <v-main style="height: 100vh; overflow: hidden !important">
+            <v-main style="height: 100vh; overflow: hidden !important;">
                 <v-container
                     fluid
-                    class="page-wrapper bg-background px-0 pt-2"
-                    style="height: 100%; overflow-y: auto !important; overflow-x: hidden"
+                    class="page-wrapper px-0 pt-0 pb-0"
+                    style="height: 100%; overflow: hidden !important; display: flex; flex-direction: column;"
                 >
                     <div class="content-shell">
                         <RouterView v-slot="{ Component }">
@@ -36,17 +36,17 @@ body {
 
 /* Global compact mode for page content spacing */
 .page-wrapper .pa-6 {
-    padding-top: 12px !important;
-    padding-right: 10px !important;
-    padding-bottom: 12px !important;
-    padding-left: 4px !important;
+    padding-top: 20px !important;
+    padding-right: 24px !important;
+    padding-bottom: 20px !important;
+    padding-left: 24px !important;
 }
 
 .page-wrapper .pa-4 {
-    padding-top: 10px !important;
-    padding-right: 10px !important;
-    padding-bottom: 10px !important;
-    padding-left: 4px !important;
+    padding-top: 16px !important;
+    padding-right: 20px !important;
+    padding-bottom: 16px !important;
+    padding-left: 20px !important;
 }
 
 .page-wrapper .mb-6 {
@@ -64,6 +64,11 @@ body {
 
 .content-shell {
     width: 100%;
+    height: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
     margin: 0;
 }
 

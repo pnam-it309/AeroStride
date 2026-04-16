@@ -43,30 +43,6 @@ export const dichVuSanPham = {
     return response.data.data;
   },
 
-  // Lấy biến thể của sản phẩm
-  async layBienTheSanPham(productId) {
-    const response = await api.get(`/admin/san-pham/${productId}/variants`);
-    return response.data.data;
-  },
-
-  // Thêm biến thể sản phẩm
-  async themBienTheSanPham(productId, variantData) {
-    const response = await api.post(`/admin/san-pham/${productId}/variants`, variantData);
-    return response.data.data;
-  },
-
-  // Cập nhật biến thể sản phẩm
-  async capNhatBienTheSanPham(productId, variantId, variantData) {
-    const response = await api.put(`/admin/san-pham/${productId}/variants/${variantId}`, variantData);
-    return response.data.data;
-  },
-
-  // Xóa biến thể sản phẩm
-  async xoaBienTheSanPham(productId, variantId) {
-    const response = await api.delete(`/admin/san-pham/${productId}/variants/${variantId}`);
-    return response.data;
-  },
-
   // Xuất Excel
   async xuatExcelSanPham() {
     const response = await api.get('/admin/san-pham/export-excel', { responseType: 'blob' });

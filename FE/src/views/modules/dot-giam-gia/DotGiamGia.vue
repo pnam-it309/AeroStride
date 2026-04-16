@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { PATH } from '@/router/routePaths';
 import { useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 
@@ -122,10 +123,10 @@ const getLoaiGiamGiaLabel = (type) => {
 };
 
 const editCampaign = (c) => {
-    router.push(`/dot-giam-gia/form/${c.id}`);
+    router.push(`${PATH.DOT_GIAM_GIA_FORM}/${c.id}`);
 };
 const openCreateDialog = () => {
-    router.push({ name: 'DotGiamGiaForm' });
+    router.push(PATH.DOT_GIAM_GIA_FORM);
 };
 const formatNumber = (value) => {
     const n = Number(value);
@@ -174,10 +175,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <v-container fluid class="pa-4 gray-bg min-h-screen font-body">
+    <v-container fluid class="pa-4 animate-fade-in font-body" style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
         <!-- Header -->
         <div class="mb-6">
-            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lí đợt giảm giá</h1>
+            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lý đợt giảm giá</h1>
         </div>
 
         <!-- 1. FILTER -->
@@ -316,7 +317,7 @@ onBeforeUnmount(() => {
                             <div class="switch-wrapper">
                                 <v-switch
                                     :model-value="isActiveStatus(item.trangThai)"
-                                    color="#1e3a8a"
+                                    color="slate-700"
                                     hide-details
                                     density="compact"
                                     class="tight-switch action-switch"
@@ -328,7 +329,7 @@ onBeforeUnmount(() => {
                                 icon
                                 variant="text"
                                 size="28"
-                                color="#2aa6a1"
+                                color="slate-700"
                                 class="rounded-lg action-icon-btn"
                                 @click.stop="router.push({ name: 'DotGiamGiaDetail', params: { id: item.id } })"
                             >
@@ -339,7 +340,7 @@ onBeforeUnmount(() => {
                                 icon
                                 variant="text"
                                 size="28"
-                                color="#5f6f82"
+                                color="slate-700"
                                 class="rounded-lg action-icon-btn"
                                 @click.stop="router.push({ name: 'DotGiamGiaForm', params: { id: item.id } })"
                             >
@@ -375,9 +376,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.gray-bg {
-    background-color: #f5f7fb;
-}
+.gray-bg { /* Removed background */ }
 .text-dark {
     color: #0f172a !important;
 }

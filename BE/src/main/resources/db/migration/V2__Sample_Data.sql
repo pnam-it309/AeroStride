@@ -1,5 +1,3 @@
--- Dữ liệu mẫu hoàn chỉnh (Full Sample Data - 5 bản ghi mỗi bảng)
-
 -- 1. Bảng Phân Quyền (phan_quyen)
 INSERT INTO phan_quyen (id, ma_phan_quyen, ten_phan_quyen, quyen_han, mo_ta, trang_thai, ngay_tao) VALUES
 ('pq1', 'ADMIN', 'Quản trị viên', 'FULL_ACCESS', 'Quyền cao nhất hệ thống', 0, 1711814400000),

@@ -13,7 +13,8 @@ import {
   FolderIcon,
   LoginIcon, 
   UserPlusIcon,
-  LogoutIcon
+  LogoutIcon,
+  BoxIcon
 } from 'vue-tabler-icons';
 
 const sidebarItem = [
@@ -30,19 +31,22 @@ const sidebarItem = [
     to: '/ban-hang'
   },
   {
-    title: 'Hóa đơn',
+    title: 'Quản lý hóa đơn',
     icon: ReceiptIcon,
     BgColor: 'warning',
     to: '/hoa-don'
   },
   {
-    title: 'Sản phẩm',
+    title: 'Quản lý sản phẩm',
     icon: PackageIcon,
     BgColor: 'info',
-    to: '/san-pham'
+    children: [
+      { title: 'Sản phẩm', icon: PackageIcon, to: '/san-pham', BgColor: 'info' },
+      { title: 'Biến thể sản phẩm', icon: BoxIcon, to: '/san-pham/bien-the', BgColor: 'success' }
+    ]
   },
   {
-    title: 'Thuộc tính',
+    title: 'Quản lý thuộc tính',
     icon: ShapeIcon,
     BgColor: 'purple',
     children: [
@@ -58,25 +62,25 @@ const sidebarItem = [
     ]
   },
   {
-    title: 'Đợt giảm giá',
+    title: 'Quản lý đợt giảm giá',
     icon: TagIcon,
     BgColor: 'orange',
     to: '/dot-giam-gia'
   },
   {
-    title: 'Phiếu giảm giá',
+    title: 'Quản lý phiếu giảm giá',
     icon: TicketIcon,
     BgColor: 'pink',
     to: '/phieu-giam-gia'
   },
   {
-    title: 'Khách hàng',
+    title: 'Quản lý khách hàng',
     icon: UsersIcon,
     BgColor: 'primary',
     to: '/khach-hang'
   },
   {
-    title: 'Nhân viên',
+    title: 'Quản lý nhân viên',
     icon: UserCheckIcon,
     BgColor: 'secondary',
     to: '/nhan-vien'

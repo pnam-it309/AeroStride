@@ -1,3 +1,5 @@
+import { PATH } from './routePaths';
+
 const MainRoutes = {
     path: '/main',
     meta: {
@@ -13,102 +15,102 @@ const MainRoutes = {
         // AeroStride Module Routes
         {
             name: 'BanHang',
-            path: '/ban-hang',
+            path: PATH.BAN_HANG,
             component: () => import('@/views/modules/banhang/BanHang.vue')
         },
         {
             name: 'SanPham',
-            path: '/san-pham',
+            path: PATH.SAN_PHAM,
             component: () => import('@/views/modules/san-pham/SanPham.vue')
         },
         {
-            name: 'SanPhamForm',
-            path: '/san-pham/form/:id?',
-            component: () => import('@/views/modules/san-pham/SanPhamForm.vue')
+            name: 'BienTheSanPham',
+            path: PATH.BIEN_THE_SAN_PHAM,
+            component: () => import('@/views/modules/san-pham/BienTheSanPham.vue')
         },
         {
-            name: 'SanPhamDetail',
-            path: '/san-pham/detail/:id',
+            name: 'SanPhamForm',
+            path: `${PATH.SAN_PHAM_FORM}/:id?`,
             component: () => import('@/views/modules/san-pham/SanPhamForm.vue')
         },
         {
             name: 'KhachHang',
-            path: '/khach-hang',
+            path: PATH.KHACH_HANG,
             component: () => import('@/views/modules/khachhang/KhachHang.vue')
         },
         {
             name: 'KhachHangForm',
-            path: '/khach-hang/form/:id?',
+            path: `${PATH.KHACH_HANG_FORM}/:id?`,
             component: () => import('@/views/modules/khachhang/KhachHangForm.vue')
         },
         {
             name: 'KhachHangDetail',
-            path: '/khach-hang/detail/:id',
+            path: `${PATH.KHACH_HANG_DETAIL}/:id`,
             component: () => import('@/views/modules/khachhang/KhachHangForm.vue')
         },
         {
             name: 'HoaDon',
-            path: '/hoa-don',
+            path: PATH.HOA_DON,
             component: () => import('@/views/modules/hoa-don/HoaDon.vue')
         },
         {
             name: 'HoaDonChiTiet',
-            path: '/hoa-don/chi-tiet/:id',
+            path: `${PATH.HOA_DON_CHI_TIET}/:id`,
             component: () => import('@/views/modules/hoa-don/HoaDonChiTiet.vue')
         },
         {
             name: 'NhanVien',
-            path: '/nhan-vien',
+            path: PATH.NHAN_VIEN,
             component: () => import('@/views/modules/nhanvien/NhanVien.vue')
         },
         {
             name: 'NhanVienForm',
-            path: '/nhan-vien/form/:id?',
+            path: `${PATH.NHAN_VIEN_FORM}/:id?`,
             component: () => import('@/views/modules/nhanvien/NhanVienForm.vue')
         },
         {
             name: 'NhanVienDetail',
-            path: '/nhan-vien/detail/:id',
+            path: `${PATH.NHAN_VIEN_DETAIL}/:id`,
             component: () => import('@/views/modules/nhanvien/NhanVienForm.vue')
         },
         {
             name: 'DotGiamGia',
-            path: '/dot-giam-gia',
+            path: PATH.DOT_GIAM_GIA,
             component: () => import('@/views/modules/dot-giam-gia/DotGiamGia.vue')
         },
         {
             name: 'DotGiamGiaForm',
-            path: '/dot-giam-gia/form/:id?',
+            path: `${PATH.DOT_GIAM_GIA_FORM}/:id?`,
             component: () => import('@/views/modules/dot-giam-gia/DotGiamGiaForm.vue')
         },
         {
             name: 'DotGiamGiaDetail',
-            path: '/dot-giam-gia/detail/:id',
+            path: `${PATH.DOT_GIAM_GIA_DETAIL}/:id`,
             component: () => import('@/views/modules/dot-giam-gia/DotGiamGiaForm.vue')
         },
         {
             name: 'PhieuGiamGia',
-            path: '/phieu-giam-gia',
+            path: PATH.PHIEU_GIAM_GIA,
             component: () => import('@/views/modules/phieu-giam-gia/PhieuGiamGia.vue')
         },
         {
             name: 'PhieuGiamGiaForm',
-            path: '/phieu-giam-gia/form/:id?',
+            path: `${PATH.PHIEU_GIAM_GIA_FORM}/:id?`,
             component: () => import('@/views/modules/phieu-giam-gia/PhieuGiamGiaForm.vue')
         },
         {
             name: 'PhieuGiamGiaDetail',
-            path: '/phieu-giam-gia/detail/:id',
+            path: `${PATH.PHIEU_GIAM_GIA_DETAIL}/:id`,
             component: () => import('@/views/modules/phieu-giam-gia/PhieuGiamGiaForm.vue')
         },
         {
             name: 'ThuocTinh',
-            path: '/thuoc-tinh/:tab?',
-            component: () => import('@/views/modules/ThuocTinh.vue')
+            path: `${PATH.THUOC_TINH}/:tab?`,
+            component: () => import('@/views/modules/thuoctinh/ThuocTinh.vue')
         },
         {
             name: 'ThanhToan',
-            path: '/thanh-toan',
+            path: PATH.THANH_TOAN,
             component: () => import('@/views/modules/ThanhToan.vue')
         },
         {
@@ -118,7 +120,7 @@ const MainRoutes = {
         },
         {
             name: 'ThongKe',
-            path: '/thong-ke',
+            path: PATH.THONG_KE,
             component: () => import('@/views/modules/ThongKe.vue')
         },
         // Original UI Components (can be removed later if not needed)

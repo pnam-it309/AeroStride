@@ -11,7 +11,7 @@ defineProps({
     showExportButton: { type: Boolean, default: false },
     showImportButton: { type: Boolean, default: false },
     showTemplateButton: { type: Boolean, default: false },
-    exportButtonText: { type: String, default: 'Xuất Excel' },
+    exportButtonText: { type: String, default: 'Tải Excel' },
     emptyText: { type: String, default: 'Không có dữ liệu hiển thị' },
     emptyIcon: { type: String, default: 'mdi-package-variant' }
 });
@@ -123,99 +123,86 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
 
 <style scoped>
 .admin-table-container {
+    display: flex; /* Kích hoạt flexbox */
+    flex-direction: column; /* Sắp xếp theo chiều dọc */
+    height: 100%; /* Chiếm hết chiều cao cha */
+    min-height: 450px; /* Chiều cao tối thiểu để không bị quá lùn */
     background: white;
-    border: 1px solid #dbe4ef !important;
-    border-radius: 8px !important;
-    overflow: hidden;
-    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    overflow: hidden; /* Quan trọng để không bị tràn footer */
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
 }
 
 .table-toolbar {
+    flex: none; /* Cố định kích thước, không bị co */
     background: #ffffff;
-}
-
-.table-wrapper {
-    overflow-x: auto;
-    background: white;
+    padding: 14px 20px !important;
 }
 
 .table-top {
+    flex: none; /* Cố định phần filter bên trên (nếu có) */
     background: #ffffff;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.table-wrapper {
+    flex: 1 1 auto; /* Tự động chiếm hết không gian trống ở giữa */
+    overflow: auto; /* Tự sinh thanh cuộn (dọc/ngang) khi nội dung lớn hơn vùng này */
+    position: relative;
+    background: white;
 }
 
 .native-admin-table {
     width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto; 
 }
 
 .header-cell {
-    z-index: 10;
+    position: sticky; /* Giữ header luôn ở trên cùng khi cuộn dọc */
+    top: 0;
+    z-index: 20;
     background: #f8fafc;
-    color: #0f172a; /* ĐEN ĐẬM */
-    padding: 14px 12px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    text-transform: none;
-    border-bottom: 2px solid #e2e8f0;
-    letter-spacing: 0.05em;
+    color: #475569;
+    padding: 12px 16px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    border-bottom: 2px solid #f1f5f9;
+    letter-spacing: 0.025em;
     white-space: nowrap;
 }
 
-:deep(.data-row) {
-    transition: all 0.2s ease;
+:deep(.data-cell) {
+    padding: 10px 16px; /* Giảm nhẹ padding dọc để chứa được nhiều dòng hơn khi zoom */
+    font-size: 0.875rem;
+    color: #1e293b;
+    vertical-align: middle;
     border-bottom: 1px solid #f1f5f9;
 }
 
-:deep(.data-row:hover) {
-    background-color: #f8fafc;
-}
-
-:deep(.data-cell) {
-    padding: 12px 10px;
-    font-size: 15px;
-    color: #1e293b;
-    vertical-align: middle;
-    text-align: left;
-}
-
-:deep(.v-btn) {
-    border-radius: 10px !important;
-}
-
-/* Pagination container spacing */
 .pagination-footer {
-    background: #fdfdfd;
-    padding: 0 14px 12px 14px;
+    flex: none; /* Luôn luôn nằm ở dưới cùng và không bị mất */
+    background: #ffffff;
+    padding: 12px 20px;
+    border-top: 1px solid #f1f5f9;
+    z-index: 10;
+}
+
+/* Các tùy chỉnh phụ khác */
+:deep(.v-btn) {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 600;
 }
 
 :deep(.tight-switch) {
-    flex: none !important;
-    width: 40px !important;
-    margin: 0 !important;
-    display: inline-flex !important;
-    transform: scale(0.85);
-}
-
-:deep(.tight-switch .v-selection-control) {
-    min-height: unset !important;
-}
-
-:deep(.v-btn.rounded-0) {
-    flex: none !important;
+    transform: scale(0.8);
 }
 
 :deep(.add-btn-primary) {
-    background-color: #1e3a8a !important;
-    color: #ffffff !important;
-    border-color: #1e3a8a !important;
-}
-
-:deep(.add-btn-primary:hover),
-:deep(.add-btn-primary:focus),
-:deep(.add-btn-primary:active) {
-    background-color: #1d4ed8 !important;
-    border-color: #1d4ed8 !important;
+    background: linear-gradient(135deg, #2563eb 100%) !important;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2) !important;
 }
 </style>

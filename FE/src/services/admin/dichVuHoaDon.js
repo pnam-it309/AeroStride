@@ -19,9 +19,27 @@ export const dichVuHoaDon = {
     return response.data.data;
   },
 
+  // Cập nhật thông tin giao hàng/khách hàng
+  async capNhatThongTinHoaDon(id, data) {
+    const response = await api.put(`/admin/hoa-don/${id}/info`, data);
+    return response.data.data;
+  },
+
+  // Thêm/Cập nhật sản phẩm trong hóa đơn
+  async capNhatSanPhamHoaDon(id, data) {
+    const response = await api.put(`/admin/hoa-don/${id}/products`, data);
+    return response.data.data;
+  },
+
+  // Xóa sản phẩm khỏi hóa đơn
+  async xoaSanPhamHoaDon(id, idHdct) {
+    const response = await api.delete(`/admin/hoa-don/${id}/products/${idHdct}`);
+    return response.data.data;
+  },
+
   // Lấy số lượng theo trạng thái
-  async laySoLuongHoaDon() {
-    const response = await api.get('/admin/hoa-don/counts');
+  async laySoLuongHoaDon(params) {
+    const response = await api.get('/admin/hoa-don/counts', { params });
     return response.data.data;
   },
 

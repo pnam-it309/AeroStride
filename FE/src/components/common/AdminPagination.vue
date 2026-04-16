@@ -25,40 +25,45 @@ const size = computed({
     set: async (val) => {
         emit('update:pageSize', val);
         emit('update:page-size', val);
-        emit('update:modelValue', 1); // Reset to page 1
+        emit('update:modelValue', 1);
         await nextTick();
         emit('change');
     }
 });
 
+const pageSizes = [5, 10, 20, 50, 100];
+
 const startItem = computed(() => (page.value - 1) * props.pageSize + 1);
-const endItem = computed(() => startItem.value + props.currentSize - 1);
-const shouldShowPagination = computed(() => props.totalElements > 5);
+const endItem = computed(() => Math.min(startItem.value + props.currentSize - 1, props.totalElements));
+const shouldShowPagination = computed(() => props.totalElements > 0);
 const hasPrev = computed(() => page.value > 1);
 const hasNext = computed(() => page.value < props.totalPages);
 
-const pageSizes = [5, 10, 15, 20];
+const visiblePages = computed(() => {
+    const total = props.totalPages || 1;
+    const current = page.value;
+    const maxVisible = 5;
+    let start = Math.max(1, current - Math.floor(maxVisible / 2));
+    let end = Math.min(total, start + maxVisible - 1);
+    if (end - start + 1 < maxVisible) start = Math.max(1, end - maxVisible + 1);
+    const pages = [];
+    for (let i = start; i <= end; i++) pages.push(i);
+    return pages;
+});
 
-const goPrev = async () => {
-    if (!hasPrev.value) return;
-    page.value = page.value - 1;
-};
-
-const goNext = async () => {
-    if (!hasNext.value) return;
-    page.value = page.value + 1;
-};
+const goPrev = async () => { if (hasPrev.value) page.value--; };
+const goNext = async () => { if (hasNext.value) page.value++; };
+const goToPage = async (p) => { if (p >= 1 && p <= props.totalPages) page.value = p; };
 </script>
 
 <template>
     <div class="pagination-shell d-flex align-center justify-space-between pt-2 px-1 border-t">
         <div class="pagination-summary text-medium-emphasis">
-            Đang hiển thị {{ currentSize }} bản ghi trong tổng {{ totalElements }} kết quả
+            Đang hiển thị <strong>{{ startItem }}-{{ endItem }}</strong> trong tổng <strong>{{ totalElements }}</strong> kết quả
         </div>
 
         <div v-if="shouldShowPagination" class="d-flex align-center flex-wrap justify-end gap-2">
-            <!-- Page Size Selector -->
-            <div class="d-flex align-center mr-1">
+            <div class="d-flex align-center mr-2">
                 <span class="pagination-label mr-2">Hiển thị</span>
                 <select v-model.number="size" class="page-size-select">
                     <option v-for="s in pageSizes" :key="s" :value="s">{{ s }} dòng</option>
@@ -67,7 +72,15 @@ const goNext = async () => {
 
             <div class="mini-pager" aria-label="Pagination">
                 <button type="button" class="pager-btn" :disabled="!hasPrev" @click="goPrev">&lt;</button>
-                <button type="button" class="pager-page" aria-current="page">{{ page }}</button>
+                <template v-if="visiblePages[0] > 1">
+                    <button type="button" class="pager-btn" @click="goToPage(1)">1</button>
+                    <span v-if="visiblePages[0] > 2" class="pager-ellipsis">...</span>
+                </template>
+                <button v-for="p in visiblePages" :key="p" type="button" :class="['pager-btn', { 'pager-active': p === page }]" @click="goToPage(p)">{{ p }}</button>
+                <template v-if="visiblePages[visiblePages.length - 1] < totalPages">
+                    <span v-if="visiblePages[visiblePages.length - 1] < totalPages - 1" class="pager-ellipsis">...</span>
+                    <button type="button" class="pager-btn" @click="goToPage(totalPages)">{{ totalPages }}</button>
+                </template>
                 <button type="button" class="pager-btn" :disabled="!hasNext" @click="goNext">&gt;</button>
             </div>
         </div>
@@ -80,71 +93,62 @@ const goNext = async () => {
 }
 
 .pagination-summary {
-    font-size: 12px !important;
+    font-size: 13px !important;
 }
-
+.pagination-summary strong {
+    color: #1e3a8a;
+    font-weight: 700;
+}
 .pagination-label {
-    font-size: 12px;
+    font-size: 13px;
     color: #475569;
     font-weight: 500;
 }
-
 .page-size-select {
     border: 1px solid #cbd5e1;
-    padding: 4px 10px;
-    border-radius: 9px;
+    padding: 2px 8px;
+    border-radius: 8px;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     line-height: 1.2;
     outline: none;
     cursor: pointer;
     background: #ffffff;
     color: #0f172a;
     appearance: auto;
-    transition: all 0.2s;
 }
-
-.page-size-select:focus {
-    border-color: #94a3b8;
-}
-
 .mini-pager {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
-
-.pager-btn,
-.pager-page {
-    width: 31px;
-    min-width: 31px;
-    height: 31px;
+.pager-btn {
+    min-width: 32px;
+    height: 32px;
     border-radius: 8px;
     border: 1px solid #dbe4ef;
     font-size: 12px;
     font-weight: 700;
-    line-height: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     background: #ffffff;
     color: #334155;
+    cursor: pointer;
 }
-
-.pager-page {
+.pager-active {
     border-color: #1e3a8a;
     background-color: #1e3a8a;
     color: #ffffff !important;
 }
-
-.pager-btn {
-    background: #f8fafc;
-    color: #64748b;
-    cursor: pointer;
-}
-
 .pager-btn:disabled {
     color: #cbd5e1;
     cursor: not-allowed;
+    background: #f8fafc;
+}
+.pager-ellipsis {
+    color: #94a3b8;
+    font-size: 12px;
+    padding: 0 2px;
 }
 </style>
