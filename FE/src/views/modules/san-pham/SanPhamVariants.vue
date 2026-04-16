@@ -33,6 +33,7 @@ const imageDialog = ref({ show: false, mode: 'create', data: null, variantId: nu
 const confirmDialog = ref({ show: false, title: '', message: '', color: 'primary', action: null, loading: false });
 
 const placeholderImage = 'https://placehold.co/120x120/f8fafc/94a3b8?text=SKU';
+const getApiErrorMessage = (error, fallback) => error?.response?.data?.message || error?.response?.data?.error || fallback;
 
 const formatNumber = (value) => new Intl.NumberFormat('vi-VN').format(Number(value || 0));
 const formatCurrency = (value) => {
@@ -159,7 +160,11 @@ const submitVariant = async (payload) => {
         variantDialog.value.show = false;
         await loadSelectedProduct();
     } catch (error) {
-        addNotification({ title: 'Lỗi lưu biến thể', subtitle: 'Không thể lưu dữ liệu biến thể', color: 'error' });
+        addNotification({
+            title: 'Lỗi lưu biến thể',
+            subtitle: getApiErrorMessage(error, 'Không thể lưu dữ liệu biến thể'),
+            color: 'error'
+        });
     } finally {
         variantDialogLoading.value = false;
     }
@@ -179,7 +184,11 @@ const requestDeleteVariant = (variant) => {
                 confirmDialog.value.show = false;
                 await loadSelectedProduct();
             } catch (error) {
-                addNotification({ title: 'Lỗi xóa biến thể', subtitle: 'Không thể xóa biến thể này', color: 'error' });
+                addNotification({
+                    title: 'Lỗi xóa biến thể',
+                    subtitle: getApiErrorMessage(error, 'Không thể xóa biến thể này'),
+                    color: 'error'
+                });
             } finally {
                 confirmDialog.value.loading = false;
             }
@@ -210,7 +219,11 @@ const submitImage = async (payload) => {
         imageDialog.value.show = false;
         await loadSelectedProduct();
     } catch (error) {
-        addNotification({ title: 'Lỗi lưu ảnh', subtitle: 'Không thể lưu ảnh biến thể', color: 'error' });
+        addNotification({
+            title: 'Lỗi lưu ảnh',
+            subtitle: getApiErrorMessage(error, 'Không thể lưu ảnh biến thể'),
+            color: 'error'
+        });
     } finally {
         imageDialogLoading.value = false;
     }

@@ -113,6 +113,20 @@ const handleProductImageRenderError = () => {
 
 const getApiErrorMessage = (error, fallback) => error?.response?.data?.message || error?.response?.data?.error || fallback;
 
+const requiredProductFields = [
+    'tenSanPham',
+    'idThuongHieu',
+    'idDanhMuc',
+    'idXuatXu',
+    'idChatLieu',
+    'idDeGiay',
+    'idCoGiay',
+    'idMucDichChay',
+    'gioiTinhKhachHang'
+];
+
+const hasMissingRequiredProductField = () => requiredProductFields.some((field) => !product.value[field]);
+
 watch(mainProductImageSrc, () => {
     productImageLoadError.value = false;
 });
@@ -210,8 +224,8 @@ const generateVariants = () => {
                     giaBan: 0,
                     soLuong: 0,
                     soLuongTon: 0,
-                    maChiTietSanPham: `${(product.value.tenSanPham || 'PRO').substring(0, 3).toUpperCase()}-${color.ten.substring(0, 2).toUpperCase()}-${size.ten}`,
-                    sku: `${(product.value.tenSanPham || 'PRO').substring(0, 3).toUpperCase()}-${color.ten.substring(0, 2).toUpperCase()}-${size.ten}`
+                    maChiTietSanPham: null,
+                    sku: ''
                 });
             } else {
                 newVariants.push(existing);
@@ -285,8 +299,8 @@ const handleProductImageUpload = async (event) => {
 
 // SAVE LOGIC
 const handleSave = () => {
-  if (!product.value.tenSanPham || !product.value.idThuongHieu || !product.value.idDanhMuc) {
-    addNotification({ title: 'Lỗi', subtitle: 'Vui lòng điền đủ thông tin bắt buộc', color: 'error' });
+  if (hasMissingRequiredProductField()) {
+    addNotification({ title: 'Thiếu thông tin', subtitle: 'Vui lòng điền đầy đủ các trường bắt buộc của sản phẩm', color: 'error' });
     return;
   }
 
@@ -306,6 +320,7 @@ const handleSave = () => {
         try {
             const payload = {
                 ...product.value,
+                maSanPham: product.value.maSanPham?.trim() || null,
                 hinhAnh: getMainProductImageValue() || null
             };
 
@@ -313,21 +328,25 @@ const handleSave = () => {
                 payload.variants = variants.value.map(v => ({
                     ...v,
                     soLuong: v.soLuongTon,
-                    maChiTietSanPham: v.sku
+                    maChiTietSanPham: v.sku?.trim() || null
                 }));
             }
 
             if (isEditMode.value) {
                 await dichVuSanPham.capNhatSanPham(route.params.id, payload);
-                addNotification({ title: 'Thành công', subtitle: 'Cập nhật sản phẩm hoàn tất', color: 'success' });
+                addNotification({ title: 'Cập nhật sản phẩm thành công', subtitle: 'Thông tin sản phẩm đã được lưu', color: 'success' });
             } else {
                 await dichVuSanPham.taoSanPham(payload);
-                addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm mới', color: 'success' });
+                addNotification({ title: 'Thêm sản phẩm thành công', subtitle: 'Sản phẩm mới đã được tạo', color: 'success' });
             }
             confirmDialog.value.show = false;
             router.push('/san-pham');
         } catch (error) {
-            addNotification({ title: 'Lỗi', subtitle: 'Không thể lưu sản phẩm', color: 'error' });
+            addNotification({
+                title: 'Lỗi lưu sản phẩm',
+                subtitle: getApiErrorMessage(error, 'Không thể lưu sản phẩm'),
+                color: 'error'
+            });
         } finally {
             saving.value = false;
             confirmDialog.value.loading = false;
@@ -649,7 +668,13 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
                         <v-text-field v-model="variant.soLuongTon" type="number" variant="underlined" density="compact" hide-details></v-text-field>
                     </td>
                     <td class="pa-4">
-                        <v-text-field v-model="variant.sku" variant="underlined" density="compact" hide-details></v-text-field>
+                        <v-text-field
+                            v-model="variant.sku"
+                            variant="underlined"
+                            density="compact"
+                            hide-details
+                            placeholder="Để trống để hệ thống tự sinh"
+                        ></v-text-field>
                     </td>
                     <td class="pa-4 text-center">
                         <v-btn icon variant="text" color="error" size="small" @click="variants.splice(idx, 1)">

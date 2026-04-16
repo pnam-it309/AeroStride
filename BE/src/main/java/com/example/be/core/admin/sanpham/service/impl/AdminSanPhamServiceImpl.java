@@ -412,6 +412,9 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         MauSac mauSac = resolveMauSac(request.getIdMauSac());
         KichThuoc kichThuoc = resolveKichThuoc(request.getIdKichThuoc());
         String normalizedVariantCode = normalizeCode(request.getMaChiTietSanPham());
+        if (normalizedVariantCode == null && existingVariant == null) {
+            normalizedVariantCode = generateUniqueVariantCode();
+        }
 
         validateVariantUniqueness(sanPham.getId(), mauSac.getId(), kichThuoc.getId(), existingVariant != null ? existingVariant.getId() : null);
         if (normalizedVariantCode != null) {
@@ -436,6 +439,16 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             createImagesForVariant(variant, request.getImages());
         }
         return variant;
+    }
+
+    private String generateUniqueVariantCode() {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            String generatedCode = MaGenerator.generate(ChiTietSanPham.class);
+            if (!adminChiTietSanPhamRepository.existsByMaChiTietSanPhamIgnoreCaseAndXoaMemFalse(generatedCode)) {
+                return generatedCode;
+            }
+        }
+        return "CT" + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase(Locale.ROOT);
     }
 
     private void createImagesForVariant(ChiTietSanPham variant, List<ProductVariantImageRequest> imageRequests) {

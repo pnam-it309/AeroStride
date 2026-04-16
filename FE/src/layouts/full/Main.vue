@@ -1,5 +1,5 @@
 <script setup>
-import { ref, shallowRef } from 'vue';
+import { computed, ref, shallowRef } from 'vue';
 import { useUIStore } from '@/stores/ui';
 import { storeToRefs } from 'pinia';
 
@@ -12,12 +12,28 @@ import Logo from './logo/Logo.vue';
 import NotificationDD from './vertical-header/NotificationDD.vue';
 import ProfileDD from './vertical-header/ProfileDD.vue';
 import { Menu2Icon } from 'vue-tabler-icons';
+import { useNotifications } from '@/services/notificationService';
 
 const uiStore = useUIStore();
 const { sidebarCollapsed } = storeToRefs(uiStore);
 const { toggleSidebar } = uiStore;
 
 const sidebarMenu = shallowRef(sidebarItems);
+const { toast, hideToast } = useNotifications();
+
+const toastColor = computed(() => {
+    if (toast.value.color === 'error') return 'error';
+    if (toast.value.color === 'warning') return 'warning';
+    if (toast.value.color === 'info') return 'info';
+    return 'success';
+});
+
+const toastIcon = computed(() => {
+    if (toast.value.color === 'error') return 'mdi-alert-circle-outline';
+    if (toast.value.color === 'warning') return 'mdi-alert-outline';
+    if (toast.value.color === 'info') return 'mdi-information-outline';
+    return 'mdi-check-circle-outline';
+});
 </script>
 
 <template>
@@ -86,6 +102,26 @@ const sidebarMenu = shallowRef(sidebarItems);
             </div>
         </div>
     </v-app-bar>
+
+    <v-snackbar
+        :key="toast.id"
+        :model-value="toast.show"
+        :color="toastColor"
+        location="top right"
+        timeout="3200"
+        rounded="lg"
+        elevation="8"
+        min-width="340"
+        @update:model-value="(value) => { if (!value) hideToast(); }"
+    >
+        <div class="d-flex align-start ga-3">
+            <v-icon :icon="toastIcon" size="22" class="mt-1"></v-icon>
+            <div class="flex-grow-1">
+                <div class="font-weight-bold">{{ toast.title }}</div>
+                <div v-if="toast.subtitle" class="text-body-2 mt-1 snackbar-subtitle">{{ toast.subtitle }}</div>
+            </div>
+        </div>
+    </v-snackbar>
 </template>
 
 <style scoped>
@@ -96,6 +132,10 @@ const sidebarMenu = shallowRef(sidebarItems);
 
 :deep(.v-navigation-drawer) {
     overflow: hidden !important;
+}
+
+.snackbar-subtitle {
+    opacity: 0.95;
 }
 
 .sidebar-logo-wrap {
