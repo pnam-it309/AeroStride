@@ -314,7 +314,7 @@ onBeforeUnmount(() => {
             <AdminFilter @refresh="handleRefresh" :loading="isRefreshing">
                 <!-- Search -->
                 <v-col cols="12" md="3">
-                    <div class="filter-label">Tìm kiếm</div>
+                    <div class="filter-field-label">Tìm kiếm</div>
                     <v-text-field
                         v-model="filters.keyword"
                         placeholder="Mã hoặc tên sản phẩm..."
@@ -330,7 +330,7 @@ onBeforeUnmount(() => {
 
                 <!-- Danh mục -->
                 <v-col cols="12" md="2">
-                    <div class="filter-label">Danh mục</div>
+                    <div class="filter-field-label">Danh mục</div>
                     <v-select
                         v-model="filters.danhMuc"
                         :items="[
@@ -347,7 +347,7 @@ onBeforeUnmount(() => {
 
                 <!-- Thương hiệu -->
                 <v-col cols="12" md="2">
-                    <div class="filter-label">Thương hiệu</div>
+                    <div class="filter-field-label">Thương hiệu</div>
                     <v-select
                         v-model="filters.thuongHieu"
                         :items="[
@@ -364,7 +364,7 @@ onBeforeUnmount(() => {
 
                 <!-- Giới tính -->
                 <v-col cols="12" md="2">
-                    <div class="filter-label">Giới tính</div>
+                    <div class="filter-field-label">Giới tính</div>
                     <v-select
                         v-model="filters.gioiTinh"
                         :items="[
@@ -384,7 +384,7 @@ onBeforeUnmount(() => {
 
                 <!-- Trạng thái -->
                 <v-col cols="12" md="2">
-                    <div class="filter-label">Trạng thái</div>
+                    <div class="filter-field-label">Trạng thái</div>
                     <v-select
                         v-model="filters.trangThai"
                         :items="[
@@ -543,7 +543,7 @@ onBeforeUnmount(() => {
     background-color: #f5f7fb;
 }
 .text-dark {
-    color: #0f172a !important;
+    color: #000000 !important;
 }
 .font-body {
     font-family: 'Inter', sans-serif;
@@ -554,7 +554,7 @@ onBeforeUnmount(() => {
 .filter-field-label {
     font-size: 13px;
     font-weight: 700;
-    color: #334155;
+    color: #000000 !important;
     margin-bottom: 6px;
 }
 
@@ -834,3 +834,7 @@ onBeforeUnmount(() => {
     border-color: #f9c7c3 !important;
 }
 </style>
+
+
+
+

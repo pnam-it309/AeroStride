@@ -603,7 +603,7 @@ onMounted(() => loadOrders());
     background-color: #f5f7fb;
 }
 .text-dark {
-    color: #0f172a !important;
+    color: #000000 !important;
 }
 .font-body {
     font-family: 'Inter', sans-serif;
@@ -904,8 +904,8 @@ onMounted(() => loadOrders());
 .filter-field-label {
     font-size: 13px;
     font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 4px;
+    color: #000000 !important;
+    margin-bottom: 6px;
 }
 
 .filter-top :deep(.date-field .v-field__append-inner) {
@@ -938,3 +938,6 @@ onMounted(() => loadOrders());
     justify-content: flex-end !important;
 }
 </style>
+
+
+

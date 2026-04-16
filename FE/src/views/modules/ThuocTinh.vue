@@ -724,7 +724,7 @@ watch(selectedTab, (n) => {
 }
 
 .text-dark {
-    color: #0f172a !important;
+    color: #000000 !important;
 }
 
 .tight-switch {
@@ -776,8 +776,8 @@ watch(selectedTab, (n) => {
 .filter-field-label {
     font-size: 13px;
     font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 4px;
+    color: #000000;
+    margin-bottom: 6px;
 }
 
 .filter-top :deep(.search-field input::placeholder) {
@@ -941,3 +941,6 @@ watch(selectedTab, (n) => {
     border-color: #f3dfc6 !important;
 }
 </style>
+
+
+

@@ -5,7 +5,7 @@ const props = defineProps({ item: Object, level: { type: Number, default: 1 }, h
 
 <template>
     <!---Single Item-->
-    <div class="mb-1" :style="{ paddingLeft: level > 1 ? (level - 1) * 24 + 'px' : '0px' }">
+    <div class="mb-2" :style="{ paddingLeft: level > 1 ? (level - 1) * 24 + 'px' : '0px' }">
         <v-list-item  :to="item.type === 'external' ? '' : item.to" :href="item.type === 'external' ? item.to : ''" rounded
             class="sidebar-link" :ripple="false" :disabled="item.disabled"
             :target="item.type === 'external' ? '_blank' : ''">

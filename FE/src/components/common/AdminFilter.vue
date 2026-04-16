@@ -13,24 +13,32 @@ const emit = defineEmits(['refresh', 'search']);
     <v-card class="filter-card mb-2 p-3 border shadow-none" elevation="0">
         <v-card-text class="pa-3 pa-md-4">
             <div class="filter-header d-flex align-center mb-3">
-                <v-icon color="primary" class="mr-2 filter-main-icon">mdi-filter-variant</v-icon>
+                <v-icon color="#000000" class="mr-2 filter-main-icon">mdi-filter-variant</v-icon>
                 <div class="filter-title text-slate-900">{{ title }}</div>
             </div>
 
-            <v-row dense align="start" class="filter-grid">
+            <v-row dense align="end" class="filter-grid">
+                <!-- Các ô filter -->
                 <slot></slot>
-                <v-col cols="12" sm="12" md="1" class="filter-reset-col d-flex align-end justify-end">
+
+                <!-- Spacer đẩy nút sang phải -->
+                <div class="flex-grow-1"></div>
+
+                <!-- Nút refresh -->
+                <div class="filter-reset-wrap">
                     <v-btn
                         variant="outlined"
-                        color="primary"
-                        class="reset-btn px-0"
+                        color="#000000"
+                        class="reset-btn"
                         :disabled="loading || isRefreshing"
                         @click="emit('refresh')"
                     >
-                        <v-icon color="primary" size="18">{{ isRefreshing ? 'mdi-loading' : 'mdi-refresh' }}</v-icon>
-                        <v-tooltip activator="parent" location="top">Làm mới bộ lọc</v-tooltip>
+                        <v-icon size="18">
+                            {{ isRefreshing ? 'mdi-loading' : 'mdi-refresh' }}
+                        </v-icon>
+                        <v-tooltip activator="parent" location="top"> Làm mới bộ lọc </v-tooltip>
                     </v-btn>
-                </v-col>
+                </div>
             </v-row>
         </v-card-text>
     </v-card>
@@ -50,7 +58,7 @@ const emit = defineEmits(['refresh', 'search']);
 .filter-title {
     font-size: 16px;
     font-weight: 700;
-    color: #1e3a8a;
+    color: #000000;
 }
 
 :deep(.filter-grid) {

@@ -579,7 +579,7 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
 .form-field-label {
     font-size: 13px;
     font-weight: 700;
-    color: #334155;
+    color: #000000;
     margin-bottom: 6px;
     margin-left: 4px;
 }
@@ -617,3 +617,6 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
 .line-height-relaxed { line-height: 1.6; }
 .font-family-mono { font-family: monospace; }
 </style>
+
+
+
