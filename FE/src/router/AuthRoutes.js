@@ -15,6 +15,12 @@ const AuthRoutes = {
             component: () => import('@/views/authentication/BoxedLogin.vue')
         },
         {
+            name: 'ForgotPassword',
+            path: '/auth/forgot-password',
+            beforeEnter: requireGuest,
+            component: () => import('@/views/authentication/ForgotPassword.vue')
+        },
+        {
             name: 'Register',
             path: '/auth/register',
             beforeEnter: requireGuest,

@@ -4,6 +4,7 @@ import com.example.be.entity.NhanVien;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -19,4 +20,7 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, String> {
 
     boolean existsByEmail(String email);
 
+    List<NhanVien> findByResetStatus(NhanVien.ResetStatus resetStatus);
+
+    List<NhanVien> id(String id);
 }

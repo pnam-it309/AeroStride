@@ -6,6 +6,9 @@ import { useNotifications } from '@/services/notificationService';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import { ArrowLeftIcon, DeviceFloppyIcon, UserIcon } from 'vue-tabler-icons';
 
+import QrcodeStream from '@/components/common/CCCDQRScanner';
+import { parseCCCDQR } from '@/utils/cccdQR';
+
 const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
@@ -28,6 +31,30 @@ const employeeForm = ref({
     trangThai: 'DANG_HOAT_DONG',
     hinhAnh: ''
 });
+
+// Quét QR CCCD
+const showQR = ref(false);
+function onDecodeQR(result) {
+    // Parse dữ liệu QR
+    const info = parseCCCDQR(result);
+    if (info) {
+        employeeForm.value.ten = info.ten;
+        employeeForm.value.ngaySinh = info.ngaySinh;
+        employeeForm.value.sdt = info.sdt;
+        employeeForm.value.diaChi = info.diaChi;
+        // Nếu có mã, gán vào ma
+        if (info.ma) employeeForm.value.ma = info.ma;
+        // Nếu có giới tính
+        if (typeof info.gioiTinh === 'boolean') employeeForm.value.gioiTinh = info.gioiTinh;
+        addNotification({ title: 'Thành công', subtitle: 'Đã quét và điền thông tin từ CCCD', color: 'success' });
+    } else {
+        addNotification({ title: 'Lỗi', subtitle: 'Không nhận diện được dữ liệu QR', color: 'error' });
+    }
+    showQR.value = false;
+}
+function onInitQR(promise) {
+    promise.catch(console.error);
+}
 
 const roles = ref([]);
 
@@ -124,6 +151,16 @@ onMounted(async () => {
             <div class="d-flex gap-2">
                 <v-btn
                     v-if="!isDetailView"
+                    color="success"
+                    prepend-icon="mdi-qrcode-scan"
+                    class="font-weight-bold px-8 rounded-lg"
+                    height="44"
+                    @click="showQR = true"
+                >
+                    Quét QR CCCD
+                </v-btn>
+                <v-btn
+                    v-if="!isDetailView"
                     color="#2E4E8E"
                     prepend-icon="mdi-content-save"
                     class="text-none font-weight-bold px-8 rounded-lg"
@@ -146,6 +183,21 @@ onMounted(async () => {
                 </v-btn>
             </div>
         </div>
+
+        <!-- Dialog quét QR CCCD -->
+        <v-dialog v-model="showQR" max-width="500">
+            <v-card>
+                <v-card-title class="font-weight-bold">Quét mã QR CCCD</v-card-title>
+                <v-card-text>
+                    <QrcodeStream @decode="onDecodeQR" @init="onInitQR" />
+                    <div class="text-caption mt-2">Đưa mã QR CCCD vào camera để tự động nhận diện thông tin.</div>
+                </v-card-text>
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="error" @click="showQR = false">Đóng</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
         <v-row v-if="loading">
             <v-col cols="12" class="text-center py-16">
@@ -330,26 +382,13 @@ onMounted(async () => {
                     </v-card-title>
                     <v-card-text class="pa-6">
                         <v-row>
-                            <v-col cols="12" md="6">
-                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tên đăng nhập</div>
-                                <v-text-field
-                                    v-model="employeeForm.tenTaiKhoan"
-                                    :readonly="true"
-                                    placeholder="Username"
-                                    variant="outlined"
-                                    density="comfortable"
-                                    class="font-weight-medium"
-                                    hide-details
-                                ></v-text-field>
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Lưu ý bảo mật</div>
-                                <div class="pa-4 bg-amber-lighten-5 rounded-lg border-amber-lighten-3 border">
-                                    <p class="text-caption text-amber-darken-4 font-weight-bold mb-0">
-                                        <v-icon start size="16">mdi-information</v-icon>
-                                        Hệ thống sẽ tự động gửi email thiết lập mật khẩu đến địa chỉ email của nhân viên. Admin không thể
-                                        đặt mật khẩu thủ công.
-                                    </p>
+                            <v-col cols="12">
+                                <div class="pa-4 bg-amber-lighten-5 rounded-lg border-amber-lighten-3 border d-flex align-center">
+                                    <v-icon start size="20" color="info" class="mr-2">mdi-information</v-icon>
+                                    <span class="text-body-1 font-weight-bold text-amber-darken-4">
+                                        Hệ thống sẽ tự động gửi email thiết lập tài khoản và mật khẩu đến địa chỉ email của nhân viên. Admin
+                                        không thể tạo tài khoản và mật khẩu thủ công.
+                                    </span>
                                 </div>
                             </v-col>
                             <v-col cols="12">
@@ -429,6 +468,3 @@ onMounted(async () => {
     border-radius: 8px !important;
 }
 </style>
-
-
-

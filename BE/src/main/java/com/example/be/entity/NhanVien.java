@@ -7,6 +7,7 @@ import lombok.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "nhan_vien")
@@ -49,5 +50,17 @@ public class NhanVien extends BaseCodeNameEntity {
 
     @Column(name = "xoa_mem")
     private Boolean xoaMem;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reset_status")
+    private ResetStatus resetStatus; // PENDING / null
+
+    @Column(name = "reset_requested_at")
+    private LocalDateTime resetRequestedAt;
+
+    public enum ResetStatus {
+        PENDING,
+        APPROVED
+    }
 
 }

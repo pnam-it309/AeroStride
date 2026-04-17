@@ -174,10 +174,9 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
 
 :deep(.data-cell) {
     padding: 12px 10px;
-    font-size: 15px;
+    font-size: 14px;
     color: #1e293b;
     vertical-align: middle;
-    text-align: left;
 }
 
 :deep(.v-btn) {
