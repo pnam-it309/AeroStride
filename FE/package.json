@@ -25,6 +25,7 @@
         "qrcode.vue": "^3.4.1",
         "vite-plugin-vuetify": "1.0.2",
         "vue": "3.2.31",
+        "vue-qrcode-reader": "^5.7.3",
         "vue-router": "4.0.12",
         "vue-scrollto": "^2.20.0",
         "vue-tabler-icons": "2.9.0",

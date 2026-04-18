@@ -494,7 +494,7 @@ watch(
                             {{ item.gioiTinh === true ? 'Nam' : item.gioiTinh === false ? 'Nữ' : '-' }}
                         </v-chip>
                     </td>
-                    <td class="data-cell">
+                    <td class="data-cell contact-cell">
                         <div class="info-line">{{ item.sdt || '-' }}</div>
                         <div v-if="hasValue(item.email)" class="info-line mt-1 d-flex align-center">
                             <v-icon size="13" class="mr-1">mdi-email-outline</v-icon>{{ item.email }}
@@ -833,9 +833,17 @@ watch(
 </template>
 
 <style scoped>
-.gray-bg { /* Removed background */ }
-.text-dark {
-    color: #0f172a !important;
+:deep(.contact-cell),
+.contact-cell {
+    text-align: left !important;
+    padding-left: 6px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.gray-bg {
+    background-color: #f5f7fb;
+
 }
 .font-body {
     font-family: 'Inter', sans-serif;

@@ -182,6 +182,14 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
     border-bottom: 1px solid #f1f5f9;
 }
 
+:deep(.data-row:hover) {
+    background-color: #f8fafc;
+}
+
+:deep(.v-btn) {
+    border-radius: 10px !important;
+}
+
 .pagination-footer {
     flex: none; /* Luôn luôn nằm ở dưới cùng và không bị mất */
     background: #ffffff;
