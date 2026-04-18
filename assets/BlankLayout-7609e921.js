@@ -1,0 +1,1 @@
+import{_,o as e,h as t,w as a,b as o,af as n,i as c,u,ag as l,ah as r}from"./index-6c5b6bde.js";const p={setup(d){return(f,i)=>(e(),t(l,null,{default:a(()=>[o(u(r),null,{default:a(({Component:s})=>[o(n,{name:"page-fade",mode:"out-in"},{default:a(()=>[(e(),t(c(s)))]),_:2},1024)]),_:1})]),_:1}))}},x=_(p,[["__scopeId","data-v-ce40b9a0"]]);export{x as default};
