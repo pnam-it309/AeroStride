@@ -132,7 +132,8 @@ onMounted(init);
             <v-btn icon="mdi-arrow-left" variant="text" @click="router.back()" class="mr-2"></v-btn>
             <h2 class="text-subtitle-1 font-weight-bold uppercase">THÊM PHIẾU GIẢM GIÁ</h2>
             <v-spacer></v-spacer>
-            <v-btn color="blue-darken-2" class="text-none px-8 text-white elevation-1" @click="handleSave" :loading="saving">
+            <v-btn color="blue-darken-2" class="text-none px-8 text-white elevation-1" @click="handleSave"
+                :loading="saving">
                 {{ isEditMode ? 'Cập nhật' : 'Tạo mới' }}
             </v-btn>
         </div>
@@ -142,28 +143,15 @@ onMounted(init);
                 <v-row>
                     <v-col cols="12">
                         <label class="label-custom">Mã phiếu giảm giá *</label>
-                        <v-text-field
-                            v-model="form.ma"
-                            readonly
-                            placeholder="Mã tự động tạo..."
-                            variant="outlined"
-                            density="comfortable"
-                            class="mt-1 readonly-field"
-                            bg-color="#f8f9fa"
-                            hide-details
-                        ></v-text-field>
+                        <v-text-field v-model="form.ma" readonly placeholder="Mã tự động tạo..." variant="outlined"
+                            density="comfortable" class="mt-1 readonly-field" bg-color="#f8f9fa"
+                            hide-details></v-text-field>
                     </v-col>
 
                     <v-col cols="12">
                         <label class="label-custom">Tên chương trình giảm giá</label>
-                        <v-text-field
-                            v-model="form.ten"
-                            placeholder="Nhập tên phiếu..."
-                            variant="outlined"
-                            density="comfortable"
-                            class="mt-1"
-                            hide-details
-                        ></v-text-field>
+                        <v-text-field v-model="form.ten" placeholder="Nhập tên phiếu..." variant="outlined"
+                            density="comfortable" class="mt-1" hide-details></v-text-field>
                     </v-col>
 
                     <v-col cols="12" md="4">
@@ -175,102 +163,52 @@ onMounted(init);
                     </v-col>
 
                     <v-col cols="12" md="4">
-                        <label class="label-custom">Giá trị giảm {{ form.loaiPhieu === 'TIEN_MAT' ? '(VNĐ)' : '(%)' }}</label>
-                        <v-text-field
-                            v-if="form.loaiPhieu === 'TIEN_MAT'"
-                            v-model.number="form.soTienGiam"
-                            type="number"
-                            variant="outlined"
-                            density="comfortable"
-                            class="mt-1"
-                            hide-details
-                        ></v-text-field>
-                        <v-text-field
-                            v-else
-                            v-model.number="form.phanTramGiamGia"
-                            type="number"
-                            variant="outlined"
-                            density="comfortable"
-                            class="mt-1"
-                            hide-details
-                        ></v-text-field>
+                        <label class="label-custom">Giá trị giảm {{ form.loaiPhieu === 'TIEN_MAT' ? '(VNĐ)' : '(%)'
+                            }}</label>
+                        <v-text-field v-if="form.loaiPhieu === 'TIEN_MAT'" v-model.number="form.soTienGiam"
+                            type="number" variant="outlined" density="comfortable" class="mt-1"
+                            hide-details></v-text-field>
+                        <v-text-field v-else v-model.number="form.phanTramGiamGia" type="number" variant="outlined"
+                            density="comfortable" class="mt-1" hide-details></v-text-field>
                     </v-col>
 
                     <v-col cols="12" md="4">
                         <label class="label-custom">Giảm tối đa (VNĐ)</label>
-                        <v-text-field
-                            v-model.number="form.giamToiDa"
-                            :disabled="form.loaiPhieu === 'TIEN_MAT'"
-                            type="number"
-                            variant="outlined"
-                            density="comfortable"
-                            class="mt-1"
-                            hide-details
-                            :bg-color="form.loaiPhieu === 'TIEN_MAT' ? '#f0f0f0' : ''"
-                        ></v-text-field>
+                        <v-text-field v-model.number="form.giamToiDa" :disabled="form.loaiPhieu === 'TIEN_MAT'"
+                            type="number" variant="outlined" density="comfortable" class="mt-1" hide-details
+                            :bg-color="form.loaiPhieu === 'TIEN_MAT' ? '#f0f0f0' : ''"></v-text-field>
                     </v-col>
 
-                   <v-col cols="12" md="6">
-    <div class="d-flex align-center">
-        <label class="label-custom">Số lượng phiếu</label>
-        <v-switch
-            v-model="isInfinite"
-            label="Vô hạn"
-            color="primary"
-            density="compact"
-            hide-details
-            class="ms-8" 
-        ></v-switch>
-    </div>
-    <v-text-field
-        v-model.number="form.soLuong"
-        :disabled="isInfinite"
-        :placeholder="isInfinite ? 'Vô hạn' : '0'"
-        type="number"
-        variant="outlined"
-        density="comfortable"
-        class="mt-1"
-        hide-details
-    ></v-text-field>
-</v-col>
+                    <v-col cols="12" md="6">
+                        <div class="d-flex align-center">
+                            <label class="label-custom">Số lượng phiếu</label>
+                            <v-switch v-model="isInfinite" label="Vô hạn" color="primary" density="compact" hide-details
+                                class="ms-8"></v-switch>
+                        </div>
+                        <v-text-field v-model.number="form.soLuong" :disabled="isInfinite"
+                            :placeholder="isInfinite ? 'Vô hạn' : '0'" type="number" variant="outlined"
+                            density="comfortable" class="mt-1" hide-details></v-text-field>
+                    </v-col>
                     <v-col cols="12" md="6">
                         <div class="d-flex align-center">
                             <label class="label-custom">Giá trị hóa đơn tối thiểu</label>
                             <v-spacer></v-spacer>
                             <v-switch style="visibility: hidden" density="compact" hide-details class="ms-2"></v-switch>
                         </div>
-                        <v-text-field
-                            v-model.number="form.giatriToiThieu"
-                            type="number"
-                            variant="outlined"
-                            density="comfortable"
-                            class="mt-1"
-                            hide-details
-                        ></v-text-field>
+                        <v-text-field v-model.number="form.giatriToiThieu" type="number" variant="outlined"
+                            density="comfortable" class="mt-1" hide-details></v-text-field>
                     </v-col>
 
                     <v-col cols="12" md="6">
                         <label class="label-custom">Ngày bắt đầu</label>
-                        <v-text-field
-                            v-model="form.ngayBatDau"
-                            type="datetime-local"
-                            variant="outlined"
-                            density="comfortable"
-                            class="mt-1"
-                            hide-details
-                        ></v-text-field>
+                        <v-text-field v-model="form.ngayBatDau" type="datetime-local" variant="outlined"
+                            density="comfortable" class="mt-1" hide-details></v-text-field>
                     </v-col>
 
                     <v-col cols="12" md="6">
                         <label class="label-custom">Ngày kết thúc</label>
-                        <v-text-field
-                            v-model="form.ngayKetThuc"
-                            type="datetime-local"
-                            variant="outlined"
-                            density="comfortable"
-                            class="mt-1"
-                            hide-details
-                        ></v-text-field>
+                        <v-text-field v-model="form.ngayKetThuc" type="datetime-local" variant="outlined"
+                            density="comfortable" class="mt-1" hide-details></v-text-field>
                     </v-col>
 
                     <v-col cols="12">
@@ -283,14 +221,8 @@ onMounted(init);
 
                     <v-col cols="12">
                         <label class="label-custom">Mô tả / Điều kiện áp dụng</label>
-                        <v-textarea
-                            v-model="form.moTa"
-                            placeholder="Nhập ghi chú chi tiết về phiếu giảm giá..."
-                            variant="outlined"
-                            rows="3"
-                            class="mt-1"
-                            hide-details
-                        ></v-textarea>
+                        <v-textarea v-model="form.moTa" placeholder="Nhập ghi chú chi tiết về phiếu giảm giá..."
+                            variant="outlined" rows="3" class="mt-1" hide-details></v-textarea>
                     </v-col>
                 </v-row>
             </v-card-text>
@@ -301,21 +233,17 @@ onMounted(init);
                 <div class="pa-5 bg-white border-b">
                     <div class="text-subtitle-1 font-weight-bold">Danh sách khách hàng nhận phiếu</div>
                     <div class="text-caption text-blue-darken-2 font-weight-medium">
-                        Đã chọn: <span class="text-red font-weight-bold">{{ selectedCustomerIds.length }}</span> khách hàng
+                        Đã chọn: <span class="text-red font-weight-bold">{{ selectedCustomerIds.length }}</span> khách
+                        hàng
                     </div>
 
                     <div class="d-flex align-center mt-4 flex-wrap gap-2">
-                        <v-text-field
-                            v-model="searchGlobal"
-                            prepend-inner-icon="mdi-magnify"
-                            placeholder="Tìm theo mã, tên, SĐT..."
-                            variant="outlined"
-                            density="compact"
-                            hide-details
-                            style="max-width: 400px"
-                        ></v-text-field>
+                        <v-text-field v-model="searchGlobal" prepend-inner-icon="mdi-magnify"
+                            placeholder="Tìm theo mã, tên, SĐT..." variant="outlined" density="compact" hide-details
+                            style="max-width: 400px"></v-text-field>
                         <v-spacer></v-spacer>
-                        <v-btn variant="outlined" class="text-none border-dashed px-4" @click="isSelectAll = !isSelectAll">
+                        <v-btn variant="outlined" class="text-none border-dashed px-4"
+                            @click="isSelectAll = !isSelectAll">
                             Chọn tất cả bản ghi
                         </v-btn>
                     </div>
@@ -339,7 +267,8 @@ onMounted(init);
                     <tbody>
                         <tr v-for="item in filteredCustomers" :key="item.id">
                             <td class="text-center">
-                                <v-checkbox-btn v-model="selectedCustomerIds" :value="item.id" color="primary"></v-checkbox-btn>
+                                <v-checkbox-btn v-model="selectedCustomerIds" :value="item.id"
+                                    color="primary"></v-checkbox-btn>
                             </td>
                             <td>{{ item.maKh || 'KH-' + item.id }}</td>
                             <td class="font-weight-bold">{{ item.ten }}</td>
@@ -347,14 +276,16 @@ onMounted(init);
                             <td class="text-grey">{{ item.email }}</td>
                             <td>{{ item.ngaySinh || '-' }}</td>
                             <td>07/03/2026</td>
-                            <td class="font-weight-bold text-blue-darken-2">{{ item.tongChiTieu?.toLocaleString() || '0' }}đ</td>
+                            <td class="font-weight-bold text-blue-darken-2">{{ item.tongChiTieu?.toLocaleString() || '0'
+                                }}đ</td>
                         </tr>
                     </tbody>
                 </v-table>
 
                 <div class="pa-4 d-flex align-center border-t bg-grey-lighten-5">
                     <span class="text-body-2 text-grey-darken-1">
-                        Đang hiển thị {{ filteredCustomers.length > 5 ? 5 : filteredCustomers.length }} bản ghi trong tổng
+                        Đang hiển thị {{ filteredCustomers.length > 5 ? 5 : filteredCustomers.length }} bản ghi trong
+                        tổng
                         {{ filteredCustomers.length }} kết quả
                     </span>
                     <v-spacer></v-spacer>
@@ -367,7 +298,8 @@ onMounted(init);
                         </select>
 
                         <div v-if="filteredCustomers.length > 5" class="pagination-buttons">
-                            <v-btn icon="mdi-chevron-left" variant="outlined" size="x-small" class="rounded mr-1" disabled></v-btn>
+                            <v-btn icon="mdi-chevron-left" variant="outlined" size="x-small" class="rounded mr-1"
+                                disabled></v-btn>
                             <v-btn variant="flat" size="x-small" class="rounded active-page-btn mr-1">1</v-btn>
                             <v-btn icon="mdi-chevron-right" variant="outlined" size="x-small" class="rounded"></v-btn>
                         </div>
@@ -377,14 +309,8 @@ onMounted(init);
         </v-expand-transition>
 
         <!-- SHARED CONFIRM -->
-        <AdminConfirm
-            v-model:show="confirmDialog.show"
-            :title="confirmDialog.title"
-            :message="confirmDialog.message"
-            :color="confirmDialog.color"
-            :loading="confirmDialog.loading"
-            @confirm="confirmDialog.action"
-        />
+        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
+            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
     </v-container>
 </template>
 
@@ -451,6 +377,3 @@ onMounted(init);
     --v-field-border-opacity: 0.15;
 }
 </style>
-
-
-

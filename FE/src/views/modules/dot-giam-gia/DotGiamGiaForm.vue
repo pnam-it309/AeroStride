@@ -401,7 +401,6 @@ onMounted(init);
     border-bottom: 1px solid #f1f5f9 !important;
     font-size: 0.9rem;
 }
-</style>
 
 .color-dot {
     width: 10px;

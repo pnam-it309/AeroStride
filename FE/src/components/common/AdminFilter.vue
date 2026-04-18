@@ -19,21 +19,17 @@ const emit = defineEmits(['refresh', 'search']);
 
             <v-row dense align="end" class="filter-grid">
                 <!-- Các ô filter -->
-                <slot></slot>
-                <v-col cols="auto" class="filter-reset-col ml-auto align-self-end pb-1">
-                    <v-btn
-                        variant="outlined"
-                        color="primary"
-                        class="reset-btn"
-                        :disabled="loading || isRefreshing"
-                        @click="emit('refresh')"
-                    >
-                        <v-icon size="18">
-                            {{ isRefreshing ? 'mdi-loading' : 'mdi-refresh' }}
-                        </v-icon>
-                        <v-tooltip activator="parent" location="top"> Làm mới bộ lọc </v-tooltip>
-                    </v-btn>
-                </div>
+                <slot>
+                    <v-col cols="auto" class="filter-reset-col ml-auto align-self-end pb-1">
+                        <v-btn variant="outlined" color="primary" class="reset-btn" :disabled="loading || isRefreshing"
+                            @click="emit('refresh')">
+                            <v-icon size="18">
+                                {{ isRefreshing ? 'mdi-loading' : 'mdi-refresh' }}
+                            </v-icon>
+                            <v-tooltip activator="parent" location="top"> Làm mới bộ lọc </v-tooltip>
+                        </v-btn>
+                    </v-col>
+                </slot>
             </v-row>
         </v-card-text>
     </v-card>
@@ -151,6 +147,7 @@ const emit = defineEmits(['refresh', 'search']);
     from {
         transform: rotate(0deg);
     }
+
     to {
         transform: rotate(360deg);
     }

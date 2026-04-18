@@ -10,7 +10,7 @@ import AdminTable from '@/components/common/AdminTable.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import { downloadFile } from '@/utils/fileUtils';
-import { EditIcon, EyeIcon } from 'vue-tabler-icons';
+import { EditIcon } from 'vue-tabler-icons';
 
 const router = useRouter();
 const loading = ref(false);
@@ -325,17 +325,6 @@ onBeforeUnmount(() => {
                                 />
                                 <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
                             </div>
-                            <v-btn
-                                icon
-                                variant="text"
-                                size="28"
-                                color="slate-700"
-                                class="rounded-lg action-icon-btn"
-                                @click.stop="router.push({ name: 'DotGiamGiaDetail', params: { id: item.id } })"
-                            >
-                                <EyeIcon size="15" />
-                                <v-tooltip activator="parent" location="top">Xem chi tiết</v-tooltip>
-                            </v-btn>
                             <v-btn
                                 icon
                                 variant="text"
