@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/pnam-it309/AeroStride/compare/v1.3.1...v1.4.0) (2026-04-21)
+
+
+### Features
+
+* **admin:** Hoàn thiện tính năng Thêm nhanh và chuẩn hóa giao diện người dùng ([98b9da1](https://github.com/pnam-it309/AeroStride/commit/98b9da186d8721cb8361279492ca17fb279dc17a))
+
 ## [1.3.1](https://github.com/pnam-it309/AeroStride/compare/v1.3.0...v1.3.1) (2026-04-16)
 
 
