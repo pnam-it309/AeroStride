@@ -108,11 +108,15 @@
     color: #fff !important;
 }
 
-.v-btn.text-white *,
-.v-btn.text-white .v-icon,
-.v-btn.text-white svg {
+.v-btn.text-white {
     color: #fff !important;
-    stroke: #fff !important;
+
+    .v-btn__content,
+    .v-icon,
+    svg {
+        color: #fff !important;
+        stroke: #fff !important;
+    }
 }
 
 /* 3. CARDS & SECTIONS */
@@ -269,17 +273,25 @@
 }
 
 /* Order Type Chips (White text) */
-.order-type-offline { background: #f97316 !important; color: #ffffff !important; border-color: transparent !important; }
-.order-type-online { background: #10b981 !important; color: #ffffff !important; border-color: transparent !important; }
+.order-type-offline {
+    background: #f97316 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+}
 
-/* Global Chip Text Override */
-:deep(.v-chip), .v-chip {
+.order-type-online {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+}
+
+/* Global Chip Text Override - Cleaned Up */
+.v-chip.text-white {
     color: #fff !important;
-    * { color: #fff !important; }
+
     .v-chip__content,
-    .v-chip__content span,
-    .v-chip__label {
-        color: #ffffff !important;
+    .v-chip__content span {
+        color: #fff !important;
     }
 }
 
@@ -564,39 +576,70 @@
 
 .admin-tabs {
     border-bottom: 1px solid #e2e8f0 !important;
+    display: flex !important;
+    justify-content: center !important; /* Căn giữa toàn bộ thanh tab */
+    background: #fff;
+
+    .v-tabs-bar {
+        height: 48px !important;
+    }
 
     .v-tab {
         height: 48px !important;
-        font-size: 14px !important;
-        font-weight: 800 !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
         color: #64748b !important;
-        padding: 0 24px !important;
+        padding: 0 20px !important;
         letter-spacing: 0.01em !important;
         opacity: 0.7;
-        transition: all 0.2s ease;
+        transition: all 0.3s ease;
+        text-transform: none !important;
+
+        /* Căn giữa nội dung bên trong tab */
+        .v-btn__content {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            height: 100% !important;
+            line-height: 1 !important; /* Ngăn chữ bị thục xuống do line-height lớn */
+            width: 100%;
+        }
 
         .v-icon {
-            margin-right: 8px;
+            margin-right: 8px !important;
+            margin-bottom: 0 !important;
+            margin-top: -1px !important; /* Tinh chỉnh icon lên 1px để cân với text */
             font-size: 18px;
         }
 
+        .v-tab-item-label {
+            line-height: 1 !important;
+            margin-top: -1px !important; /* Kéo text lên 1px nếy cần */
+        }
+
         &.v-tab--selected {
-            color: #000 !important;
+            color: #3b82f6 !important; /* Đổi sang màu xanh cho premium */
             opacity: 1;
 
             &::after {
                 content: '';
                 position: absolute;
                 bottom: 0;
-                left: 0;
-                right: 0;
+                left: 15%; /* Co ngắn thanh indicator lại cho tinh tế */
+                right: 15%;
                 height: 3px;
-                background: #000;
+                background: #3b82f6; /* Màu xanh đồng bộ */
                 border-radius: 3px 3px 0 0;
             }
         }
+
+        &:hover {
+            opacity: 1;
+            color: #000;
+        }
     }
 }
+
 
 /* 8. AVATARS & IMAGES */
 .avatar-hover {
@@ -865,7 +908,7 @@
             color: #ffffff !important;
             background: #ffffff !important;
             opacity: 1 !important;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
         }
     }
 }

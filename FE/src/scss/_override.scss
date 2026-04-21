@@ -1,36 +1,7 @@
 html,
 body,
 .v-application {
-    font-family: 'Inter', sans-serif !important;
     text-transform: none !important;
-    color: #000 !important;
-}
-
-/* Aggressive Global Black Text Enforcing */
-.v-application {
-    &,
-    .v-btn__content,
-    .v-chip__content,
-    .v-tab,
-    .v-list-item-title,
-    .v-card-title,
-    .v-field__input,
-    .v-field__label,
-    .v-select__selection-text,
-    .v-breadcrumbs-item,
-    .text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6,
-    .text-subtitle-1, .text-subtitle-2, .text-body-1, .text-body-2, .text-caption,
-    .text-primary, .text-secondary, .text-info, .text-success, .text-warning, .text-error,
-    .text-slate-900, .text-slate-800, .text-slate-700, .text-slate-600, .text-slate-500, .text-slate-400,
-    .price-value, .total-price-text, .max-discount-value,
-    .data-cell, .header-cell, .native-admin-table th, .native-admin-table td,
-    .pagination-summary, .pagination-label, .pagination-summary strong,
-    .filter-field-label, .field-label, .info-line, .contact-line,
-    .tab-item, .v-tab--selected,
-    .gender-chip, .status-chip,
-    .node, .timeline-step span {
-        color: #000 !important;
-    }
 }
 
 /* Force Vuetify components to respect lowercase rules */
@@ -164,18 +135,6 @@ body,
     opacity: 0.7 !important;
 }
 
-/* Hide Scrollbar globally */
-html,
-body,
-.v-application {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-::-webkit-scrollbar {
-    display: none;
-}
-
 /* Expand content width */
 .maxWidth {
     max-width: 1800px !important;
@@ -288,5 +247,5 @@ h5.text-h4,
 }
 
 .text-error {
-    color: #000 !important;
+    color: #fb977d !important;
 }
