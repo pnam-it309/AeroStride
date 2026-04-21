@@ -57,7 +57,7 @@ const goToPage = async (p) => { if (p >= 1 && p <= props.totalPages) page.value 
 </script>
 
 <template>
-    <div class="pagination-shell d-flex align-center justify-space-between pt-2 px-1 border-t">
+    <div class="pagination-shell d-flex align-center justify-space-between">
         <div class="pagination-summary text-medium-emphasis">
             Đang hiển thị <strong>{{ startItem }}-{{ endItem }}</strong> trong tổng <strong>{{ totalElements }}</strong> kết quả
         </div>
@@ -96,12 +96,12 @@ const goToPage = async (p) => { if (p >= 1 && p <= props.totalPages) page.value 
     font-size: 13px !important;
 }
 .pagination-summary strong {
-    color: #1e3a8a;
+    color: #000;
     font-weight: 700;
 }
 .pagination-label {
     font-size: 13px;
-    color: #475569;
+    color: #000;
     font-weight: 500;
 }
 .page-size-select {
@@ -114,7 +114,7 @@ const goToPage = async (p) => { if (p >= 1 && p <= props.totalPages) page.value 
     outline: none;
     cursor: pointer;
     background: #ffffff;
-    color: #0f172a;
+    color: #000;
     appearance: auto;
 }
 .mini-pager {
@@ -133,7 +133,7 @@ const goToPage = async (p) => { if (p >= 1 && p <= props.totalPages) page.value 
     align-items: center;
     justify-content: center;
     background: #ffffff;
-    color: #334155;
+    color: #000;
     cursor: pointer;
 }
 .pager-active {

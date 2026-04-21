@@ -19,4 +19,9 @@ export const PATH = {
     THUOC_TINH: '/thuoc-tinh',
     THANH_TOAN: '/thanh-toan',
     THONG_KE: '/thong-ke',
+    // Auth
+    LOGIN: '/auth/login',
+    REGISTER: '/auth/register',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    LOGOUT: '/auth/logout',
 };

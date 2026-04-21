@@ -1,13 +1,14 @@
 package com.example.be.core.admin.dotgiamgia.service;
 
 import com.example.be.core.admin.dotgiamgia.model.request.AdminDotGiamGiaRequest;
+import com.example.be.core.admin.dotgiamgia.model.request.AdminDotGiamGiaSearchRequest;
 import com.example.be.core.admin.dotgiamgia.model.response.AdminDotGiamGiaResponse;
 import org.springframework.data.domain.Page;
 import java.util.List;
 
 public interface AdminDotGiamGiaService {
 
-    Page<AdminDotGiamGiaResponse> phanTrang(Integer pageNo, Integer pageSize, String keyword);
+    Page<AdminDotGiamGiaResponse> search(AdminDotGiamGiaSearchRequest request);
 
     void add(AdminDotGiamGiaRequest req);
 

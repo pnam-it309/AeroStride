@@ -6,6 +6,7 @@ import com.example.be.infrastructure.constants.EntityProperties;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.listener.PrimaryEntityListener;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -78,11 +79,14 @@ public class HoaDon extends AuditEntity implements IsIdentified {
     private String ghiChu;
 
     @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("hoaDon")
     private java.util.List<HoaDonChiTiet> listsHoaDonChiTiet;
 
     @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("hoaDon")
     private java.util.List<LichSuTrangThaiHoaDon> listsLichSuHoaDon;
 
     @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("hoaDon")
     private java.util.List<GiaoDichThanhToan> listsGiaoDichThanhToan;
 }

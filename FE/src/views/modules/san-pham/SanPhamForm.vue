@@ -4,16 +4,16 @@ import { PATH } from '@/router/routePaths';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
+import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import {
-  ChevronLeftIcon, DeviceFloppyIcon, PlusIcon, TrashIcon,
-  PhotoIcon, InfoCircleIcon, BoxIcon, SettingsIcon, ArrowLeftIcon
+    ChevronLeftIcon, DeviceFloppyIcon, PlusIcon, TrashIcon,
+    PhotoIcon, InfoCircleIcon, BoxIcon, SettingsIcon, ArrowLeftIcon
 } from 'vue-tabler-icons';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
-import AttributeQuickAddModal from './components/AttributeQuickAddModal.vue';
-import { 
-    dichVuThuongHieu, dichVuDanhMuc, dichVuXuatXu, 
-    dichVuChatLieu, dichVuDeGiay, dichVuCoGiay, 
-    dichVuMucDichChay 
+import {
+    dichVuThuongHieu, dichVuDanhMuc, dichVuXuatXu,
+    dichVuChatLieu, dichVuDeGiay, dichVuCoGiay,
+    dichVuMucDichChay
 } from '@/services/product/dichVuThuocTinh';
 
 const route = useRoute();
@@ -24,12 +24,12 @@ const loading = ref(false);
 const saving = ref(false);
 
 const confirmDialog = ref({
-  show: false,
-  title: '',
-  message: '',
-  color: 'primary',
-  action: null,
-  loading: false
+    show: false,
+    title: '',
+    message: '',
+    color: 'primary',
+    action: null,
+    loading: false
 });
 const isEditMode = computed(() => !!route.params.id);
 
@@ -44,69 +44,81 @@ const purposes = ref([]);
 const colors = ref([]);
 const sizes = ref([]);
 
-// QUICK ADD STATE
-const quickAdd = ref({
-    show: false,
-    type: '',
-    title: '',
-    service: null,
-    targetField: ''
-});
 
-const openQuickAdd = (type, title, service, field) => {
-    quickAdd.value = {
-        show: true,
-        type,
-        title,
-        service: {
-            taoEntity: async (data) => {
-                const res = await service[`tao${type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('')}`](data);
-                return res;
-            }
-        },
-        targetField: field
+const onKeyUpEnter = (event, field, service, type, label) => {
+    const val = event.target.value?.trim();
+    if (!val) return;
+
+    const lists = {
+        'THUONG_HIEU': brands.value,
+        'DANH_MUC': categories.value,
+        'XUAT_XU': origins.value,
+        'CHAT_LIEU': materials.value,
+        'DE_GIAY': soles.value,
+        'CO_GIAY': collars.value,
+        'MUC_DICH_CHAY': purposes.value
     };
+    const list = lists[type] || [];
+    const exists = list.some(item => item.ten?.toLowerCase() === val.toLowerCase());
+
+    if (!exists) {
+        autoCreateAttribute(val, field, service, type, label);
+    }
 };
 
-const handleQuickAddSaved = async (newEntity) => {
-    // Refresh options to get the new list
-    const opts = await dichVuSanPham.layOptionsForm();
-    brands.value = opts.thuongHieus || [];
-    categories.value = opts.danhMucs || [];
-    origins.value = opts.xuatXus || [];
-    purposes.value = opts.mucDichChays || [];
-    collars.value = opts.coGiays || [];
-    materials.value = opts.chatLieus || [];
-    soles.value = opts.deGiays || [];
-
-    // Auto select the new entity
-    product.value[quickAdd.value.targetField] = newEntity.id;
+const fetchFormOptions = async () => {
+    try {
+        // Try aggregate endpoint first
+        const opts = await dichVuSanPham.layOptionsForm().catch(() => null);
+        if (opts) {
+            brands.value = opts.thuongHieus || [];
+            categories.value = opts.danhMucs || [];
+            origins.value = opts.xuatXus || [];
+            purposes.value = opts.mucDichChays || [];
+            collars.value = opts.coGiays || [];
+            materials.value = opts.chatLieus || [];
+            soles.value = opts.deGiays || [];
+        } else {
+            // Fallback: fetch individually if form-options fails
+            const [b, c, o, p, col, m, s] = await Promise.all([
+                dichVuThuongHieu.layThuongHieu({ size: 1000 }),
+                dichVuDanhMuc.layDanhMuc({ size: 1000 }),
+                dichVuXuatXu.layXuatXu({ size: 1000 }),
+                dichVuMucDichChay.layMucDichChay({ size: 1000 }),
+                dichVuCoGiay.layCoGiay({ size: 1000 }),
+                dichVuChatLieu.layChatLieu({ size: 1000 }),
+                dichVuDeGiay.layDeGiay({ size: 1000 })
+            ]);
+            brands.value = b.content || b || [];
+            categories.value = c.content || c || [];
+            origins.value = o.content || o || [];
+            purposes.value = p.content || p || [];
+            collars.value = col.content || col || [];
+            materials.value = m.content || m || [];
+            soles.value = s.content || s || [];
+        }
+    } catch (error) {
+        console.error('Lỗi khi tải options:', error);
+        addNotification({ title: 'Cảnh báo', subtitle: 'Không thể tải đầy đủ thuộc tính', color: 'warning' });
+    }
 };
 
-const autoCreateAttribute = async (val, field, service, type) => {
-    if (typeof val !== 'string' || !val.trim()) return;
-    
-    // Found that it's a new string, auto create
+const autoCreateAttribute = async (val, field, service, type, label) => {
     try {
         const payload = { ten: val, ma: '', moTa: `Tự động thêm từ sản phẩm` };
         const methodName = `tao${type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('')}`;
         const newEntity = await service[methodName](payload);
-        
-        // Refresh options
-        const opts = await dichVuSanPham.layOptionsForm();
-        brands.value = opts.thuongHieus || [];
-        categories.value = opts.danhMucs || [];
-        origins.value = opts.xuatXus || [];
-        purposes.value = opts.mucDichChays || [];
-        collars.value = opts.coGiays || [];
-        materials.value = opts.chatLieus || [];
-        soles.value = opts.deGiays || [];
 
-        // Set the new ID
+        // Refresh options using the resilient fetcher
+        await fetchFormOptions();
+
+        // Select the new entity
         product.value[field] = newEntity.id;
-        addNotification({ title: 'Thành công', subtitle: `Đã tự động thêm ${val}`, color: 'success' });
+        addNotification({ title: 'Thành công', subtitle: `Đã thêm nhanh ${label}: ${val}`, color: 'success' });
     } catch (error) {
-        addNotification({ title: 'Lỗi', subtitle: 'Không thể tự động thêm thuộc tính', color: 'error' });
+        console.error(error);
+        addNotification({ title: 'Lỗi', subtitle: `Không thể thêm nhanh ${label}`, color: 'error' });
+        product.value[field] = null;
     }
 };
 
@@ -128,26 +140,10 @@ const product = ref({
     moTaChiTiet: ''
 });
 
-const selectedColors = ref([]);
-const selectedSizes = ref([]);
-// Removed variants from here to focus on product metadata
-
-// INITIALIZE
 const loadProduct = async (id) => {
     try {
         const data = await dichVuSanPham.layChiTietSanPham(id);
         product.value = { ...data };
-        
-        try {
-            const vars = await dichVuSanPham.layBienTheSanPham(id);
-            variants.value = (vars || []).map(v => ({
-              ...v,
-              soLuongTon: v.soLuong, 
-              sku: v.maChiTietSanPham || v.sku
-            }));
-        } catch (variantError) {
-            console.error('Error loading variants:', variantError);
-        }
     } catch (error) {
         throw error;
     }
@@ -156,16 +152,9 @@ const loadProduct = async (id) => {
 onMounted(async () => {
     loading.value = true;
     try {
-        const opts = await dichVuSanPham.layOptionsForm();
-        brands.value = opts.thuongHieus || [];
-        categories.value = opts.danhMucs || [];
-        origins.value = opts.xuatXus || [];
-        purposes.value = opts.mucDichChays || [];
-        collars.value = opts.coGiays || [];
-        materials.value = opts.chatLieus || [];
-        soles.value = opts.deGiays || [];
-        colors.value = opts.mauSacs || [];
-        sizes.value = opts.kichThuocs || [];
+        await fetchFormOptions();
+        // colors and sizes might still need specific handling if not in aggregate
+        // Assuming they are available or handled elsewhere
 
         if (route.params.id) {
             await loadProduct(route.params.id);
@@ -178,309 +167,265 @@ onMounted(async () => {
     }
 });
 
-// Variant generation logic removed from this screen
-
 const rules = {
     required: value => !!value || 'Trường này là bắt buộc',
     min0: value => value >= 0 || 'Giá trị không được nhỏ hơn 0',
     sku: value => !!value || 'SKU không được để trống'
 };
 
-const handleSave = () => {
-  if (!product.value.tenSanPham || !product.value.idThuongHieu || !product.value.idDanhMuc) {
-    addNotification({ title: 'Lỗi', subtitle: 'Vui lòng điền đủ thông tin bắt buộc', color: 'error' });
-    return;
-  }
+const attributeConfig = [
+    { field: 'idThuongHieu', service: dichVuThuongHieu, type: 'THUONG_HIEU', label: 'thương hiệu' },
+    { field: 'idDanhMuc', service: dichVuDanhMuc, type: 'DANH_MUC', label: 'danh mục' },
+    { field: 'idXuatXu', service: dichVuXuatXu, type: 'XUAT_XU', label: 'xuất xứ' },
+    { field: 'idChatLieu', service: dichVuChatLieu, type: 'CHAT_LIEU', label: 'chất liệu' },
+    { field: 'idDeGiay', service: dichVuDeGiay, type: 'DE_GIAY', label: 'đế giày' },
+    { field: 'idCoGiay', service: dichVuCoGiay, type: 'CO_GIAY', label: 'cổ giày' },
+    { field: 'idMucDichChay', service: dichVuMucDichChay, type: 'MUC_DICH_CHAY', label: 'mục đích sử dụng' }
+];
 
-  // Variants are managed in a separate screen
+const handleSave = async () => {
+    if (!product.value.tenSanPham || !product.value.idThuongHieu || !product.value.idDanhMuc) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng điền đủ thông tin bắt buộc', color: 'error' });
+        return;
+    }
 
-  confirmDialog.value = {
-    show: true,
-    title: isEditMode.value ? 'Xác nhận cập nhật' : 'Xác nhận thêm mới',
-    message: isEditMode.value ? 'Bạn có chắc chắn muốn cập nhật thông tin sản phẩm này?' : 'Bạn có chắc chắn muốn thêm sản phẩm mới này?',
-    color: 'success',
-    action: async () => {
-        confirmDialog.value.loading = true;
-        try {
-            const payload = {
-                ...product.value,
-                variants: [] // Variants handled elsewhere
-            };
+    let needsRefresh = false;
+    const pendingUpdates = [];
 
-            if (isEditMode.value) {
-                await dichVuSanPham.capNhatSanPham(route.params.id, payload);
-                addNotification({ title: 'Thành công', subtitle: 'Cập nhật sản phẩm hoàn tất', color: 'success' });
-            } else {
-                await dichVuSanPham.taoSanPham(payload);
-                addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm mới', color: 'success' });
+    for (const config of attributeConfig) {
+        const val = product.value[config.field];
+        if (typeof val === 'string' && val.trim()) {
+            try {
+                const payload = { ten: val, ma: '', moTa: `Tự động tạo khi lưu sản phẩm` };
+                const methodName = `tao${config.type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('')}`;
+                const res = await config.service[methodName](payload);
+                pendingUpdates.push({ field: config.field, id: res.id });
+                needsRefresh = true;
+            } catch (e) {
+                addNotification({ title: 'Lỗi', subtitle: `Không thể tạo tự động ${config.label}`, color: 'error' });
+                return;
             }
-            confirmDialog.value.show = false;
-            router.push('/san-pham');
-        } catch (error) {
-            addNotification({ title: 'Lỗi', subtitle: 'Không thể lưu sản phẩm', color: 'error' });
-        } finally {
-            confirmDialog.value.loading = false;
         }
     }
-  };
+
+    if (needsRefresh) {
+        await fetchFormOptions();
+
+        for (const update of pendingUpdates) {
+            product.value[update.field] = update.id;
+        }
+    }
+
+    confirmDialog.value = {
+        show: true,
+        title: isEditMode.value ? 'Xác nhận cập nhật' : 'Xác nhận thêm mới',
+        message: isEditMode.value ? 'Bạn có chắc chắn muốn cập nhật thông tin sản phẩm này?' : 'Bạn có chắc chắn muốn thêm sản phẩm mới này?',
+        color: 'success',
+        action: async () => {
+            confirmDialog.value.loading = true;
+            try {
+                const payload = {
+                    ...product.value,
+                    variants: []
+                };
+
+                if (isEditMode.value) {
+                    await dichVuSanPham.capNhatSanPham(route.params.id, payload);
+                    addNotification({ title: 'Thành công', subtitle: 'Cập nhật sản phẩm hoàn tất', color: 'success' });
+                } else {
+                    await dichVuSanPham.taoSanPham(payload);
+                    addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm mới', color: 'success' });
+                }
+                confirmDialog.value.show = false;
+                router.push(PATH.SAN_PHAM);
+            } catch (error) {
+                addNotification({ title: 'Lỗi', subtitle: 'Không thể lưu sản phẩm', color: 'error' });
+            } finally {
+                confirmDialog.value.loading = false;
+            }
+        }
+    };
 };
 </script>
 
 <template>
-  <div class="pa-4 animate-fade-in min-h-screen">
-    <!-- Header -->
-    <div class="d-flex align-center justify-space-between mb-6">
-        <div class="d-flex align-center gap-4">
-            <v-btn icon variant="text" color="slate-600" @click="router.push(PATH.SAN_PHAM)" class="rounded-xl" style="background-color: transparent !important;">
-                <ArrowLeftIcon size="20" />
-            </v-btn>
-            <div>
-                <h1 class="text-h5 font-weight-bold text-slate-900 mb-1">
-                    {{ isEditMode ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm mới' }}
-                </h1>
-                <p class="text-subtitle-2 text-slate-500 font-weight-medium">Thiết lập thông tin kho hàng và biến thể chi tiết.</p>
+    <v-container fluid class="pa-6 animate-fade-in overflow-y-auto" style="height: 100vh;">
+        <!-- Breadcrumbs -->
+        <AdminBreadcrumbs :items="[
+            { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
+            { title: 'Danh sách sản phẩm', disabled: false, to: PATH.SAN_PHAM },
+            { title: isEditMode ? 'Cập nhật' : 'Thêm mới', disabled: true }
+        ]" />
+
+        <!-- Action Header -->
+        <div class="d-flex align-center justify-space-between mb-8 mt-4">
+            <div class="d-flex align-center gap-4">
+                <v-btn icon variant="flat" @click="router.push(PATH.SAN_PHAM)" class="btn-back-header">
+                    <ArrowLeftIcon size="20" />
+                </v-btn>
+            </div>
+            <div class="d-flex gap-3">
+                <v-btn v-if="isEditMode" variant="outlined" color="primary"
+                    class="text-none font-weight-bold px-6 rounded-lg h-11 border-2"
+                    @click="router.push({ name: 'BienTheSanPham', query: { productId: route.params.id } })">
+                    <BoxIcon size="18" class="mr-2" /> Quản lý biến thể
+                </v-btn>
+                <v-btn color="primary" variant="flat"
+                    class="text-none font-weight-black text-white px-8 rounded-lg h-11 elevation-4" :loading="saving"
+                    @click="handleSave">
+                    <DeviceFloppyIcon size="18" class="mr-2 text-white" /> Lưu thông tin
+                </v-btn>
             </div>
         </div>
-        <div class="d-flex gap-3">
-             <v-btn
-                v-if="isEditMode"
-                variant="outlined"
-                color="primary"
-                class="text-none font-weight-bold px-6 rounded-xl h-11"
-                @click="router.push({ name: 'BienTheSanPham', query: { productId: route.params.id } })"
-            >
-                <BoxIcon size="18" class="mr-2" /> Quản lý biến thể
-            </v-btn>
-            <v-btn
-                color="primary"
-                variant="flat"
-                class="text-none font-weight-black px-8 rounded-xl h-11 shadow-lg"
-                :loading="saving"
-                @click="handleSave"
-            >
-                <DeviceFloppyIcon size="18" class="mr-2" /> Lưu thông tin
-            </v-btn>
-        </div>
-    </div>
 
-    <v-row v-if="loading">
-      <v-col cols="12" class="text-center py-16">
-        <v-progress-circular indeterminate color="primary" size="64" />
-        <div class="mt-4 text-subtitle-1 font-weight-bold text-slate-500">Đang tải thông tin sản phẩm...</div>
-      </v-col>
-    </v-row>
+        <v-row v-if="loading">
+            <v-col cols="12" class="text-center py-16">
+                <v-progress-circular indeterminate color="primary" size="64" />
+                <div class="mt-4 text-subtitle-1 font-weight-bold text-slate-500">Đang tải thông tin sản phẩm...</div>
+            </v-col>
+        </v-row>
 
-    <v-row v-else>
-      <!-- Main Info -->
-      <v-col cols="12">
-        <!-- General Info -->
-        <v-card class="rounded-xl border shadow-none mb-6 overflow-hidden">
-          <div class="px-6 py-4 bg-slate-50/50 border-b d-flex align-center">
-            <InfoCircleIcon size="18" class="mr-2 text-primary" />
-            <span class="font-weight-bold text-slate-700">Thông tin cơ bản</span>
-          </div>
-          <v-card-text class="pa-6">
-            <v-row>
-              <v-col cols="12" md="6">
-                <div class="form-field-label">Mã sản phẩm <span class="text-caption text-primary font-italic">(Hệ thống tự tạo)</span></div>
-                <v-text-field v-model="product.maSanPham" readonly placeholder="SP-XXXX" variant="outlined" density="comfortable" hide-details class="custom-input font-family-mono"></v-text-field>
-              </v-col>
-              <v-col cols="12" md="6">
-                <div class="form-field-label">Tên sản phẩm *</div>
-                <v-text-field v-model="product.tenSanPham" placeholder="Nhập tên sản phẩm..." :rules="[rules.required]" variant="outlined" density="comfortable" hide-details="auto"></v-text-field>
-              </v-col>
-              <v-col cols="12" md="6">
-                <div class="form-field-label">Thương hiệu * <span class="text-caption font-weight-regular opacity-60">(Gõ mới để thêm nhanh)</span></div>
-                <v-combobox 
-                    v-model="product.idThuongHieu" 
-                    :items="brands" 
-                    item-title="ten" 
-                    item-value="id" 
-                    :rules="[rules.required]" 
-                    placeholder="Tìm hoặc gõ tên mới..." 
-                    variant="outlined" 
-                    density="comfortable" 
-                    hide-details="auto"
-                    :return-object="false"
-                    @update:model-value="(val) => autoCreateAttribute(val, 'idThuongHieu', dichVuThuongHieu, 'THUONG_HIEU')"
-                ></v-combobox>
-              </v-col>
-              <v-col cols="12" md="6">
-                <div class="form-field-label">Danh mục * <span class="text-caption font-weight-regular opacity-60">(Gõ mới để thêm nhanh)</span></div>
-                <v-combobox 
-                    v-model="product.idDanhMuc" 
-                    :items="categories" 
-                    item-title="ten" 
-                    item-value="id" 
-                    :rules="[rules.required]" 
-                    placeholder="Tìm hoặc gõ tên mới..." 
-                    variant="outlined" 
-                    density="comfortable" 
-                    hide-details="auto"
-                    :return-object="false"
-                    @update:model-value="(val) => autoCreateAttribute(val, 'idDanhMuc', dichVuDanhMuc, 'DANH_MUC')"
-                ></v-combobox>
-              </v-col>
-              <v-col cols="12" md="6">
-                <div class="form-field-label">Xuất xứ *</div>
-                <v-combobox 
-                    v-model="product.idXuatXu" 
-                    :items="origins" 
-                    item-title="ten" 
-                    item-value="id" 
-                    :rules="[rules.required]" 
-                    placeholder="Chọn hoặc gõ mới..." 
-                    variant="outlined" 
-                    density="comfortable" 
-                    hide-details="auto"
-                    :return-object="false"
-                    @update:model-value="(val) => autoCreateAttribute(val, 'idXuatXu', dichVuXuatXu, 'XUAT_XU')"
-                ></v-combobox>
-              </v-col>
-              <v-col cols="12" md="6">
-                <div class="form-field-label">Chất liệu *</div>
-                <v-combobox 
-                    v-model="product.idChatLieu" 
-                    :items="materials" 
-                    item-title="ten" 
-                    item-value="id" 
-                    :rules="[rules.required]" 
-                    placeholder="Chọn hoặc gõ mới..." 
-                    variant="outlined" 
-                    density="comfortable" 
-                    hide-details="auto"
-                    :return-object="false"
-                    @update:model-value="(val) => autoCreateAttribute(val, 'idChatLieu', dichVuChatLieu, 'CHAT_LIEU')"
-                ></v-combobox>
-              </v-col>
-              <v-col cols="12" md="4">
-                <div class="form-field-label">Loại đế *</div>
-                <v-combobox 
-                    v-model="product.idDeGiay" 
-                    :items="soles" 
-                    item-title="ten" 
-                    item-value="id" 
-                    :rules="[rules.required]" 
-                    variant="outlined" 
-                    density="comfortable" 
-                    hide-details="auto"
-                    :return-object="false"
-                    @update:model-value="(val) => autoCreateAttribute(val, 'idDeGiay', dichVuDeGiay, 'DE_GIAY')"
-                ></v-combobox>
-              </v-col>
-              <v-col cols="12" md="4">
-                <div class="form-field-label">Loại cổ *</div>
-                <v-combobox 
-                    v-model="product.idCoGiay" 
-                    :items="collars" 
-                    item-title="ten" 
-                    item-value="id" 
-                    :rules="[rules.required]" 
-                    variant="outlined" 
-                    density="comfortable" 
-                    hide-details="auto"
-                    :return-object="false"
-                    @update:model-value="(val) => autoCreateAttribute(val, 'idCoGiay', dichVuCoGiay, 'CO_GIAY')"
-                ></v-combobox>
-              </v-col>
-              <v-col cols="12" md="4">
-                <div class="form-field-label">Mục đích sử dụng *</div>
-                <v-combobox 
-                    v-model="product.idMucDichChay" 
-                    :items="purposes" 
-                    item-title="ten" 
-                    item-value="id" 
-                    :rules="[rules.required]" 
-                    variant="outlined" 
-                    density="comfortable" 
-                    hide-details="auto"
-                    :return-object="false"
-                    @update:model-value="(val) => autoCreateAttribute(val, 'idMucDichChay', dichVuMucDichChay, 'MUC_DICH_CHAY')"
-                ></v-combobox>
-              </v-col>
-              <v-col cols="12" md="4">
-                <div class="form-field-label">Đối tượng sử dụng *</div>
-                <v-select v-model="product.gioiTinhKhachHang" :items="[{title:'Nam',value:'NAM'},{title:'Nữ',value:'NU'},{title:'Unisex',value:'UNISEX'}]" variant="outlined" density="comfortable" hide-details></v-select>
-              </v-col>
-              <v-col cols="12">
-                <div class="form-field-label">Mô tả ngắn</div>
-                <v-textarea v-model="product.moTaNgan" variant="outlined" rows="2" placeholder="Tóm tắt đặc điểm nổi bật..." hide-details></v-textarea>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
+        <v-row v-else class="form-grid pb-16">
+            <!-- Left Column: Primary Content -->
+            <v-col cols="12" lg="8">
+                <!-- 1. General Identification -->
+                <v-card class="premium-card mb-6">
+                    <v-card-text class="pa-8">
+                        <div class="section-header d-flex align-center mb-6">
+                            <div class="icon-blob bg-blue-lighten-5 mr-3">
+                                <InfoCircleIcon size="18" class="text-primary" />
+                            </div>
+                            <span class="text-subtitle-1 font-weight-black text-slate-800">Thông tin cơ bản</span>
+                        </div>
 
-        <!-- Variant Generator removed -->
-      </v-col>
+                        <v-row>
+                            <v-col cols="12" md="4">
+                                <div class="field-label">Mã sản phẩm</div>
+                                <v-text-field v-model="product.maSanPham" readonly placeholder="SP-XXXX"
+                                    variant="outlined" density="comfortable" class="custom-input mono-font bg-slate-50"
+                                    hide-details></v-text-field>
+                            </v-col>
+                            <v-col cols="12" md="8">
+                                <div class="field-label">Tên sản phẩm <span class="text-red">*</span></div>
+                                <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Giày Nike Air..."
+                                    :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    hide-details="auto"></v-text-field>
+                            </v-col>
+                            <v-col cols="12">
+                                <div class="field-label">Mô tả ngắn</div>
+                                <v-textarea v-model="product.moTaNgan" variant="outlined" rows="3"
+                                    placeholder="Tóm tắt đặc điểm nổi bật..." hide-details
+                                    class="custom-textarea"></v-textarea>
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
 
-    </v-row>
+                <!-- 2. Detailed Attributes -->
+                <v-card class="premium-card mb-6">
+                    <v-card-text class="pa-8">
+                        <div class="section-header d-flex align-center mb-6">
+                            <div class="icon-blob bg-amber-lighten-5 mr-3">
+                                <SettingsIcon size="18" class="text-amber-darken-2" />
+                            </div>
+                            <span class="text-subtitle-1 font-weight-black text-slate-800">Thuộc tính kỹ thuật</span>
+                        </div>
 
-    <!-- Confirmation Dialog -->
-    <AdminConfirm
-      v-model:show="confirmDialog.show"
-      :title="confirmDialog.title"
-      :message="confirmDialog.message"
-      :color="confirmDialog.color"
-      :loading="confirmDialog.loading"
-      @confirm="confirmDialog.action"
-    />
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <div class="field-label">Xuất xứ <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idXuatXu" :items="origins" item-title="ten" item-value="id"
+                                    :rules="[rules.required]" placeholder="Chọn xuất xứ..." variant="outlined"
+                                    density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu', dichVuXuatXu, 'XUAT_XU', 'xuất xứ')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="6">
+                                <div class="field-label">Chất liệu <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idChatLieu" :items="materials" item-title="ten"
+                                    item-value="id" :rules="[rules.required]" placeholder="Chọn chất liệu..."
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu', dichVuChatLieu, 'CHAT_LIEU', 'chất liệu')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="field-label">Loại đế <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idDeGiay" :items="soles" item-title="ten" item-value="id"
+                                    :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay', dichVuDeGiay, 'DE_GIAY', 'đế giày')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="field-label">Loại cổ <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idCoGiay" :items="collars" item-title="ten" item-value="id"
+                                    :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay', dichVuCoGiay, 'CO_GIAY', 'cổ giày')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idMucDichChay" :items="purposes" item-title="ten"
+                                    item-value="id" :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay', dichVuMucDichChay, 'MUC_DICH_CHAY', 'mục đích sử dụng')"></v-combobox>
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
+            </v-col>
 
-    <!-- Attribute Quick Add Modal -->
-    <AttributeQuickAddModal
-        v-model:show="quickAdd.show"
-        :type="quickAdd.type"
-        :title="quickAdd.title"
-        :service="quickAdd.service"
-        @saved="handleQuickAddSaved"
-    />
-  </div>
+            <!-- Right Column -->
+            <v-col cols="12" lg="4">
+                <v-card class="premium-card mb-6">
+                    <v-card-text class="pa-8">
+                        <div class="section-header d-flex align-center mb-6">
+                            <div class="icon-blob bg-emerald-lighten-5 mr-3">
+                                <BoxIcon size="18" class="text-emerald-darken-2" />
+                            </div>
+                            <span class="text-subtitle-1 font-weight-black text-slate-800">Phân loại</span>
+                        </div>
+
+                        <v-row>
+                            <v-col cols="12">
+                                <div class="field-label">Thương hiệu <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idThuongHieu" :items="brands" item-title="ten"
+                                    item-value="id" :rules="[rules.required]" placeholder="Tìm thương hiệu..."
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu', dichVuThuongHieu, 'THUONG_HIEU', 'thương hiệu')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12">
+                                <div class="field-label">Danh mục <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idDanhMuc" :items="categories" item-title="ten"
+                                    item-value="id" :rules="[rules.required]" placeholder="Chọn danh mục..."
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc', dichVuDanhMuc, 'DANH_MUC', 'danh mục')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12">
+                                <div class="field-label">Đối tượng sử dụng <span class="text-red">*</span></div>
+                                <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary"
+                                    variant="outlined" density="comfortable" class="w-100 rounded-lg custom-toggle">
+                                    <v-btn value="NAM" class="flex-grow-1 font-weight-bold">Nam</v-btn>
+                                    <v-btn value="NU" class="flex-grow-1 font-weight-bold">Nữ</v-btn>
+                                    <v-btn value="UNISEX" class="flex-grow-1 font-weight-bold">Unisex</v-btn>
+                                </v-btn-toggle>
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
+
+            </v-col>
+        </v-row>
+
+        <!-- Confirmation Dialog -->
+        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
+            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
+    </v-container>
 </template>
 
 <style scoped>
-.gray-bg { /* Removed background */ }
-
-.form-field-label {
-    font-size: 13px;
-    font-weight: 700;
-    color: #475569;
-    margin-bottom: 6px;
-    margin-left: 2px;
-}
-
-.image-upload-zone {
-    transition: all 0.3s ease;
-    background: #fdfdfe;
-    border-color: #e2e8f0;
-}
-.image-upload-zone:hover {
-    background: #f1f5f9;
-    border-color: #1e3a8a;
-}
-
-:deep(.v-field) {
-    border-radius: 12px !important;
-}
-
-:deep(.v-autocomplete :not(.v-field--focused).v-field__outline), 
-:deep(.v-text-field :not(.v-field--focused).v-field__outline) {
-    color: #e2e8f0 !important;
-}
-
-.font-family-mono { font-family: 'Fira Code', monospace; }
-
-.custom-variant-table th {
-    background: #f8fafc !important;
-    font-size: 0.75rem !important;
-}
-
-.gap-1 { gap: 4px; }
-.gap-3 { gap: 12px; }
-.gap-4 { gap: 16px; }
-
-:deep(.modern-chips .v-chip) {
-    border-radius: 8px !important;
+/* Redundant local styles removed - now using global _admin-common.scss */
+@media (min-width: 1280px) {
+    .sticky-sidebar {
+        position: sticky;
+        top: 0;
+    }
 }
 </style>
-
-
-

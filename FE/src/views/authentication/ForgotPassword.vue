@@ -16,7 +16,7 @@ const handleSubmit = async () => {
   }
   loading.value = true;
   try {
-    await api.post(`/api/reset-password-requests/request`, null, { params: { email: email.value } });
+    await api.post(`/reset-password-requests/request`, null, { params: { email: email.value } });
     addNotification({ title: 'Thành công', subtitle: 'Yêu cầu đã được gửi tới admin. Vui lòng chờ xác nhận!', color: 'success' });
     router.push('/auth/login');
   } catch (e) {

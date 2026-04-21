@@ -11,9 +11,10 @@ import com.example.be.core.admin.banhang.service.AdminBanHangService;
 import com.example.be.entity.*;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.constants.TrangThai;
-import com.example.be.infrastructure.exceptions.RestApiException;
+import com.example.be.infrastructure.exceptions.BusinessException;
+import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.utils.HelperUtils;
-import com.example.be.utils.MaGenerator;
+import com.example.be.utils.CodeUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,20 +37,19 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     public List<AdminBanHangHoaDonResponse> getHoaDonCho() {
-        List<HoaDon> list = hoaDonRepository.findAllByTrangThaiAndLoaiDon(OrderStatus.PENDING_PAYMENT, "TAI_QUAY");
-        return list.stream().map(this::mapToHoaDonResponse).collect(Collectors.toList());
+        return hoaDonRepository.findAllByTrangThaiAndLoaiDon(OrderStatus.PENDING_PAYMENT, "TAI_QUAY")
+                .stream().map(this::mapToHoaDonResponse).collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public AdminBanHangHoaDonResponse createHoaDon() {
-        long count = hoaDonRepository.countByTrangThaiAndLoaiDon(OrderStatus.PENDING_PAYMENT, "TAI_QUAY");
-        if (count >= 5) {
-            throw new RestApiException("Tối đa 5 hóa đơn chờ.");
+        if (hoaDonRepository.countByTrangThaiAndLoaiDon(OrderStatus.PENDING_PAYMENT, "TAI_QUAY") >= 5) {
+            throw new BusinessException("Tối đa 5 hóa đơn chờ.");
         }
         HoaDon hoaDon = new HoaDon();
         hoaDon.setId(HelperUtils.generateUUID());
-        hoaDon.setMaHoaDon(MaGenerator.generate(HoaDon.class));
+        hoaDon.setMaHoaDon(CodeUtils.generateRandom(HoaDon.class));
         hoaDon.setTrangThai(OrderStatus.PENDING_PAYMENT);
         hoaDon.setLoaiDon("TAI_QUAY");
         hoaDon.setNgayTao(System.currentTimeMillis());
@@ -62,7 +62,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Override
     @Transactional
     public void deleteHoaDon(String id) {
-        HoaDon hd = hoaDonRepository.findById(id).orElseThrow(() -> new RestApiException("Không tìm thấy hóa đơn."));
+        HoaDon hd = hoaDonRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại"));
         hoaDonChiTietRepository.deleteAll(hoaDonChiTietRepository.findAllByHoaDon(hd));
         hoaDonRepository.delete(hd);
     }
@@ -70,12 +70,12 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Override
     @Transactional
     public AdminBanHangHoaDonResponse addSanPham(String idHoaDon, AdminBanHangHoaDonChiTietRequest request) {
-        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon).orElseThrow(() -> new RestApiException("Hóa đơn không tồn tại."));
+        HoaDon hoaDon = getHoaDonOrThrow(idHoaDon);
         ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(request.getIdChiTietSanPham())
-                .orElseThrow(() -> new RestApiException("Sản phẩm không tồn tại."));
+                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
 
         if (ctsp.getSoLuong() < request.getSoLuong()) {
-            throw new RestApiException("Sản phẩm không đủ số lượng.");
+            throw new BusinessException("Sản phẩm không đủ số lượng tồn kho.");
         }
 
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findByHoaDonAndChiTietSanPham(hoaDon, ctsp);
@@ -86,9 +86,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                     .hoaDon(hoaDon)
                     .chiTietSanPham(ctsp)
                     .soLuong(request.getSoLuong())
-                    .donGia(ctsp.getGiaBan()) // Luôn lấy giá hiện tại khi thêm vào
+                    .donGia(ctsp.getGiaBan())
                     .build();
-            // ID handled automatically? Let's be safe.
             hdct.setId(HelperUtils.generateUUID());
             hdct.setTrangThai(TrangThai.DANG_HOAT_DONG);
             hdct.setNgayTao(System.currentTimeMillis());
@@ -102,101 +101,95 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Override
     @Transactional
     public AdminBanHangHoaDonResponse updateSoLuong(String idHoaDon, String idHoaDonChiTiet, Integer soLuong) {
-        HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHoaDonChiTiet).orElseThrow(() -> new RestApiException("Không tìm thấy sản phẩm trong hóa đơn."));
+        HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHoaDonChiTiet)
+                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tìm thấy trong hóa đơn"));
+        
         if (soLuong <= 0) {
             hoaDonChiTietRepository.delete(hdct);
         } else {
             if (hdct.getChiTietSanPham().getSoLuong() < soLuong) {
-                throw new RestApiException("Sản phẩm không đủ số lượng.");
+                throw new BusinessException("Sản phẩm không đủ số lượng.");
             }
             hdct.setSoLuong(soLuong);
             hoaDonChiTietRepository.save(hdct);
         }
-        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon).orElseThrow(() -> new RestApiException("Hóa đơn không tồn tại."));
-        updateHoaDonTotals(hoaDon);
-        return mapToHoaDonResponse(hoaDon);
+        updateHoaDonTotals(getHoaDonOrThrow(idHoaDon));
+        return mapToHoaDonResponse(getHoaDonOrThrow(idHoaDon));
     }
 
     @Override
     public void removeHoaDonChiTiet(String idHoaDon, String idHoaDonChiTiet) {
-        hoaDonChiTietRepository.deleteById(idHoaDonChiTiet);
-        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon).orElse(null);
-        if (hoaDon != null) {
-            updateHoaDonTotals(hoaDon);
+        if (!hoaDonChiTietRepository.existsById(idHoaDonChiTiet)) {
+            throw new ResourceNotFoundException("Không tìm thấy sản phẩm chi tiết");
         }
+        hoaDonChiTietRepository.deleteById(idHoaDonChiTiet);
+        updateHoaDonTotals(getHoaDonOrThrow(idHoaDon));
     }
 
     @Override
     @Transactional
     public AdminBanHangHoaDonResponse setKhachHang(String idHoaDon, String idKhachHang) {
-        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon).orElseThrow(() -> new RestApiException("Hóa đơn không tồn tại."));
-        KhachHang khachHang = null;
+        HoaDon hd = getHoaDonOrThrow(idHoaDon);
+        KhachHang kh = null;
         if (idKhachHang != null && !idKhachHang.isEmpty()) {
-            khachHang = khachHangRepository.findById(idKhachHang).orElseThrow(() -> new RestApiException("Khách hàng không tồn tại."));
+            kh = khachHangRepository.findById(idKhachHang).orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tồn tại"));
         }
-        hoaDon.setKhachHang(khachHang);
-        hoaDonRepository.save(hoaDon);
-        return mapToHoaDonResponse(hoaDon);
+        hd.setKhachHang(kh);
+        hoaDonRepository.save(hd);
+        return mapToHoaDonResponse(hd);
     }
 
     @Override
     @Transactional
     public AdminBanHangHoaDonResponse setPhieuGiamGia(String idHoaDon, String idPhieuGiamGia) {
-        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon).orElseThrow(() -> new RestApiException("Hóa đơn không tồn tại."));
+        HoaDon hd = getHoaDonOrThrow(idHoaDon);
         PhieuGiamGia voucher = null;
         if (idPhieuGiamGia != null && !idPhieuGiamGia.isEmpty()) {
-            voucher = phieuGiamGiaRepository.findById(idPhieuGiamGia).orElseThrow(() -> new RestApiException("Voucher không tồn tại."));
+            voucher = phieuGiamGiaRepository.findById(idPhieuGiamGia).orElseThrow(() -> new ResourceNotFoundException("Voucher không tồn tại"));
         }
-        hoaDon.setPhieuGiamGia(voucher);
-        hoaDonRepository.save(hoaDon);
-        updateHoaDonTotals(hoaDon);
-        return mapToHoaDonResponse(hoaDon);
+        hd.setPhieuGiamGia(voucher);
+        updateHoaDonTotals(hd);
+        return mapToHoaDonResponse(hd);
     }
 
     @Override
     @Transactional
     public void checkout(String idHoaDon, AdminBanHangCheckoutRequest request) {
-        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon).orElseThrow(() -> new RestApiException("Hóa đơn không tồn tại."));
-        List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hoaDon);
+        HoaDon hd = getHoaDonOrThrow(idHoaDon);
+        List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
         if (details.isEmpty()) {
-            throw new RestApiException("Hóa đơn trống.");
+            throw new BusinessException("Hóa đơn trống.");
         }
 
-        // Logic trừ tồn kho và validate Stock
         for (HoaDonChiTiet d : details) {
             ChiTietSanPham ct = d.getChiTietSanPham();
             if (ct.getSoLuong() < d.getSoLuong()) {
-                throw new RestApiException("Sản phẩm " + ct.getSanPham().getTen() + " không đủ tồn kho.");
+                throw new BusinessException("Sản phẩm " + ct.getSanPham().getTen() + " không đủ tồn kho.");
             }
             ct.setSoLuong(ct.getSoLuong() - d.getSoLuong());
             chiTietSanPhamRepository.save(ct);
         }
 
-        // Cập nhật thông tin hóa đơn
-        hoaDon.setTrangThai(OrderStatus.DELIVERED); // TAI_QUAY chốt xong là Delivered hoặc Processing? 
-        // POS usually means delivered immediately.
-        hoaDon.setLoaiDon(request.getLoaiDon());
-        hoaDon.setPhiVanChuyen(request.getPhiVanChuyen() != null ? request.getPhiVanChuyen() : BigDecimal.ZERO);
-        hoaDon.setTongTien(request.getTongTien());
-        hoaDon.setTongTienSauGiam(request.getTongTienSauGiam());
-        hoaDon.setGhiChu(request.getGhiChu());
-        hoaDon.setNgayCapNhat(System.currentTimeMillis());
-        hoaDonRepository.save(hoaDon);
+        hd.setTrangThai(OrderStatus.DELIVERED); 
+        hd.setLoaiDon(request.getLoaiDon());
+        hd.setPhiVanChuyen(request.getPhiVanChuyen() != null ? request.getPhiVanChuyen() : BigDecimal.ZERO);
+        hd.setTongTien(request.getTongTien());
+        hd.setTongTienSauGiam(request.getTongTienSauGiam());
+        hd.setGhiChu(request.getGhiChu());
+        hd.setNgayCapNhat(System.currentTimeMillis());
+        hoaDonRepository.save(hd);
 
-        // Xử lý thanh toán (Mixed)
         if (request.getTienMat() != null && request.getTienMat().compareTo(BigDecimal.ZERO) > 0) {
-            createGiaoDich(hoaDon, "TIEN_MAT", request.getTienMat(), null);
+            createGiaoDich(hd, "TIEN_MAT", request.getTienMat(), null);
         }
         if (request.getTienChuyenKhoan() != null && request.getTienChuyenKhoan().compareTo(BigDecimal.ZERO) > 0) {
-            createGiaoDich(hoaDon, "CHUYEN_KHOAN", request.getTienChuyenKhoan(), request.getMaGiaoDich());
+            createGiaoDich(hd, "CHUYEN_KHOAN", request.getTienChuyenKhoan(), request.getMaGiaoDich());
         }
     }
 
     @Override
     public List<BanHangSanPhamResponse> searchSanPham(String keyword) {
-        // Simple search logic
-        List<ChiTietSanPham> list = chiTietSanPhamRepository.searchByKeyword(keyword);
-        return list.stream().map(ct -> BanHangSanPhamResponse.builder()
+        return chiTietSanPhamRepository.searchByKeyword(keyword).stream().map(ct -> BanHangSanPhamResponse.builder()
                 .id(ct.getId())
                 .tenSanPham(ct.getSanPham().getTen())
                 .maChiTietSanPham(ct.getMaChiTietSanPham())
@@ -209,8 +202,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     public List<AdminBanHangKhachHangResponse> searchKhachHang(String keyword) {
-        List<KhachHang> list = khachHangRepository.searchByKeyword(keyword);
-        return list.stream().map(kh -> AdminBanHangKhachHangResponse.builder()
+        return khachHangRepository.searchByKeyword(keyword).stream().map(kh -> AdminBanHangKhachHangResponse.builder()
                 .id(kh.getId())
                 .tenKhachHang(kh.getTen())
                 .sdt(kh.getSdt())
@@ -224,28 +216,28 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 TrangThai.DANG_HOAT_DONG, tongTien);
     }
 
-    // Help Methods
-    private void updateHoaDonTotals(HoaDon hoaDon) {
-        List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hoaDon);
+    private HoaDon getHoaDonOrThrow(String id) {
+        return hoaDonRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại"));
+    }
+
+    private void updateHoaDonTotals(HoaDon hd) {
+        List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
         BigDecimal total = details.stream()
                 .map(d -> d.getDonGia().multiply(BigDecimal.valueOf(d.getSoLuong())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        hoaDon.setTongTien(total);
+        hd.setTongTien(total);
         
         BigDecimal discounted = total;
-        if (hoaDon.getPhieuGiamGia() != null) {
-            PhieuGiamGia v = hoaDon.getPhieuGiamGia();
+        if (hd.getPhieuGiamGia() != null) {
+            PhieuGiamGia v = hd.getPhieuGiamGia();
             BigDecimal threshold = v.getDonHangToiThieu() != null ? v.getDonHangToiThieu() : BigDecimal.ZERO;
             
             if (total.compareTo(threshold) >= 0) {
                 BigDecimal val = BigDecimal.ZERO;
-                if ("PERCENT".equals(v.getLoaiPhieu())) {
+                if ("PHAN_TRAM".equalsIgnoreCase(v.getLoaiPhieu()) || "PERCENT".equalsIgnoreCase(v.getLoaiPhieu())) {
                     Integer percent = v.getPhanTramGiamGia() != null ? v.getPhanTramGiamGia() : 0;
                     val = total.multiply(BigDecimal.valueOf(percent)).divide(BigDecimal.valueOf(100));
-                    
-                    if (v.getGiamToiDa() != null && val.compareTo(v.getGiamToiDa()) > 0) {
-                        val = v.getGiamToiDa();
-                    }
+                    if (v.getGiamToiDa() != null && val.compareTo(v.getGiamToiDa()) > 0) val = v.getGiamToiDa();
                 } else {
                     val = v.getSoTienGiam() != null ? v.getSoTienGiam() : BigDecimal.ZERO;
                 }
@@ -253,19 +245,18 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 if (discounted.compareTo(BigDecimal.ZERO) < 0) discounted = BigDecimal.ZERO;
             }
         }
-        hoaDon.setTongTienSauGiam(discounted);
-        hoaDonRepository.save(hoaDon);
+        hd.setTongTienSauGiam(discounted);
+        hoaDonRepository.save(hd);
     }
 
-    private void createGiaoDich(HoaDon hoaDon, String maPTTT, BigDecimal soTien, String maGiaoDichNgoai) {
+    private void createGiaoDich(HoaDon hd, String maPTTT, BigDecimal soTien, String maGiaoDichNgoai) {
         PhuongThucThanhToan pt = phuongThucThanhToanRepository.findByMa(maPTTT);
         if (pt == null) {
-            // Default setup if missing
             pt = new PhuongThucThanhToan(maPTTT, maPTTT.equals("TIEN_MAT") ? "Tiền mặt" : "Chuyển khoản");
             phuongThucThanhToanRepository.save(pt);
         }
         GiaoDichThanhToan gd = GiaoDichThanhToan.builder()
-                .hoaDon(hoaDon)
+                .hoaDon(hd)
                 .phuongThucThanhToan(pt)
                 .soTien(soTien)
                 .maGiaoDichNgoai(maGiaoDichNgoai)
@@ -278,17 +269,17 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     }
 
     private AdminBanHangHoaDonResponse mapToHoaDonResponse(HoaDon hd) {
-        List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
-        List<AdminBanHangHoaDonChiTietResponse> detailDTOs = details.stream().map(d -> AdminBanHangHoaDonChiTietResponse.builder()
-                .id(d.getId())
-                .idChiTietSanPham(d.getChiTietSanPham().getId())
-                .tenSanPham(d.getChiTietSanPham().getSanPham().getTen())
-                .tenMauSac(d.getChiTietSanPham().getMauSac().getTen())
-                .tenKichThuoc(d.getChiTietSanPham().getKichThuoc().getTen())
-                .soLuong(d.getSoLuong())
-                .donGia(d.getDonGia())
-                .thanhTien(d.getDonGia().multiply(BigDecimal.valueOf(d.getSoLuong())))
-                .build()).collect(Collectors.toList());
+        List<AdminBanHangHoaDonChiTietResponse> detailDTOs = hoaDonChiTietRepository.findAllByHoaDon(hd).stream()
+                .map(d -> AdminBanHangHoaDonChiTietResponse.builder()
+                    .id(d.getId())
+                    .idChiTietSanPham(d.getChiTietSanPham().getId())
+                    .tenSanPham(d.getChiTietSanPham().getSanPham().getTen())
+                    .tenMauSac(d.getChiTietSanPham().getMauSac().getTen())
+                    .tenKichThuoc(d.getChiTietSanPham().getKichThuoc().getTen())
+                    .soLuong(d.getSoLuong())
+                    .donGia(d.getDonGia())
+                    .thanhTien(d.getDonGia().multiply(BigDecimal.valueOf(d.getSoLuong())))
+                    .build()).collect(Collectors.toList());
 
         return AdminBanHangHoaDonResponse.builder()
                 .id(hd.getId())

@@ -3,30 +3,81 @@ import { computed, ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 
-import AdminFilter from '@/components/common/AdminFilter.vue';
-import AdminTable from '@/components/common/AdminTable.vue';
-import AdminPagination from '@/components/common/AdminPagination.vue';
-import AdminConfirm from '@/components/common/AdminConfirm.vue';
+import { useUIStore } from '@/stores/ui';
+import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import { downloadFile } from '@/utils/fileUtils';
+import { formatDateTime } from '@/utils/formatters';
+import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
 import { EditIcon, EyeIcon, MapPinIcon } from 'vue-tabler-icons';
 import axios from 'axios';
 
-const loading = ref(false);
+import { useAdminTable } from '@/composables/useAdminTable';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import { useNotifications } from '@/services/notificationService';
+
 const isRefreshing = ref(false);
-const allCustomers = ref([]);
+
+const {
+    items: allCustomers,
+    loading,
+    pagination,
+    filters,
+    loadData: loadCustomers,
+    handleFilter: handleLocalFilterChange,
+    handleReset
+} = useAdminTable(dichVuKhachHang.layKhachHangPhanTrang, { search: '', gioiTinh: null, trangThai: null });
+
+const handleRefresh = async () => {
+    isRefreshing.value = true;
+    handleReset();
+    setTimeout(() => (isRefreshing.value = false), 800);
+};
+
+const handleExport = async () => {
+    try {
+        const blob = await dichVuKhachHang.xuatExcelKhachHang();
+        downloadFile(blob, 'danh_sach_khach_hang.xlsx');
+    } catch (error) {
+        console.error('Lỗi xuất Excel:', error);
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Không thể xuất Excel khách hàng',
+            color: 'error'
+        });
+    }
+};
+
 const router = useRouter();
+const uiStore = useUIStore();
+const { addNotification } = useNotifications();
 
-const pagination = ref({ page: 1, size: 5, totalElements: 0, totalPages: 1 });
-const filters = ref({ keyword: '', trangThai: null, gioiTinh: null });
+// Use composables
+const { confirmDialog, setConfirm, clearConfirm, handleConfirm } = useConfirmDialog();
 
-// ─── Confirm Dialog ───────────────────────────────────────────────
-const confirmDialog = ref({ show: false, title: '', message: '', color: 'primary', action: null, loading: false });
+// Move declarations used in watcher up
+const addrDialog = ref(false);
+const selectedKH = ref(null);
+
+const customerBreadcrumbs = [
+    { title: 'Quản lý tài khoản', disabled: false, href: '#' },
+    { title: 'Khách hàng', disabled: true }
+];
+
+watch(addrDialog, (isOpen) => {
+    if (isOpen) {
+        uiStore.setBreadcrumbs([
+            { title: 'Quản lý tài khoản', disabled: false, href: '#' },
+            { title: 'Khách hàng', disabled: false, to: '/khach-hang' },
+            { title: `Địa chỉ: ${selectedKH.value?.ten || ''}`, disabled: true }
+        ]);
+    } else {
+        uiStore.setBreadcrumbs(customerBreadcrumbs);
+    }
+});
 
 // ─── Address Dialog ───────────────────────────────────────────────
-const addrDialog = ref(false);
 const addrLoading = ref(false);
 const addrSaving = ref(false);
-const selectedKH = ref(null); // khách hàng đang mở dialog
 const listDiaChi = ref([]);
 
 const provinces = ref([]);
@@ -103,14 +154,17 @@ const openAddrDialog = async (item) => {
 };
 
 const loadAddresses = async (khId) => {
-    console.log('ID gửi lên:', khId);
     addrLoading.value = true;
     try {
         const res = await dichVuKhachHang.layDanhSachDiaChi(khId);
-        console.log('API địa chỉ:', res);
         listDiaChi.value = res?.content || res?.data || res || [];
     } catch (e) {
-        console.error(e);
+        console.error('Error loading addresses:', e);
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Không thể tải danh sách địa chỉ',
+            color: 'error'
+        });
         listDiaChi.value = [];
     } finally {
         addrLoading.value = false;
@@ -163,7 +217,12 @@ const saveAddress = async () => {
         showAddrForm.value = false;
         await loadAddresses(selectedKH.value.id);
     } catch (e) {
-        console.error(e);
+        console.error('Error saving address:', e);
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Không thể lưu địa chỉ',
+            color: 'error'
+        });
     } finally {
         addrSaving.value = false;
     }
@@ -174,85 +233,34 @@ const handleSetDefault = async (addrId) => {
         await dichVuKhachHang.datDiaChiMacDinh(addrId);
         await loadAddresses(selectedKH.value.id);
     } catch (e) {
-        console.error(e);
+        console.error('Error setting default address:', e);
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Không thể đặt địa chỉ mặc định',
+            color: 'error'
+        });
     }
 };
 
 const handleDeleteAddr = (addrId) => {
-    confirmDialog.value = {
-        show: true,
+    setConfirm({
         title: 'Xóa địa chỉ',
         message: 'Bạn có chắc muốn xóa địa chỉ này không?',
         color: 'error',
-        loading: false,
         action: async () => {
-            confirmDialog.value.loading = true;
             try {
                 await dichVuKhachHang.xoaDiaChi(addrId);
-                confirmDialog.value.show = false;
                 await loadAddresses(selectedKH.value.id);
-            } finally {
-                confirmDialog.value.loading = false;
+            } catch (e) {
+                console.error('Error deleting address:', e);
+                addNotification({
+                    title: 'Lỗi',
+                    subtitle: 'Không thể xóa địa chỉ',
+                    color: 'error'
+                });
             }
         }
-    };
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────
-const normalizeText = (v) =>
-    String(v ?? '')
-        .trim()
-        .toLowerCase();
-const hasValue = (v) => normalizeText(v).length > 0;
-
-const extractCustomerList = (response) => {
-    if (Array.isArray(response)) return response;
-    if (Array.isArray(response?.content)) return response.content;
-    if (Array.isArray(response?.data)) return response.data;
-    if (Array.isArray(response?.data?.content)) return response.data.content;
-    return [];
-};
-
-const isActiveStatus = (status) => {
-    if (status === null || status === undefined) return false;
-    if (typeof status === 'number') return status === 0;
-    const n = String(status).toUpperCase();
-    return n === 'DANG_HOAT_DONG' || n === 'ACTIVE' || n === '0';
-};
-
-const formatNgayTao = (value) => {
-    if (value === null || value === undefined || value === '') return '-';
-    const num = Number(value);
-    if (!Number.isNaN(num)) {
-        const ts = num < 1_000_000_000_000 ? num * 1000 : num;
-        const d = new Date(ts);
-        if (Number.isNaN(d.getTime())) return '-';
-        const p = (n) => String(n).padStart(2, '0');
-        return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
-    }
-    return String(value);
-};
-
-const matchesFilters = (item) => {
-    const kw = normalizeText(filters.value.keyword);
-    const pool = [item?.ma, item?.ten, item?.email, item?.sdt, item?.tenTaiKhoan].map(normalizeText).join(' ');
-    const okKw = !kw || pool.includes(kw);
-    const okTT = !filters.value.trangThai || item?.trangThai === filters.value.trangThai;
-    const okGT = filters.value.gioiTinh === null || item?.gioiTinh === filters.value.gioiTinh;
-    return okKw && okTT && okGT;
-};
-
-const filteredCustomers = computed(() => allCustomers.value.filter(matchesFilters));
-
-const pagedCustomers = computed(() => {
-    const start = (pagination.value.page - 1) * pagination.value.size;
-    return filteredCustomers.value.slice(start, start + pagination.value.size);
-});
-
-const applyPaginationMeta = () => {
-    pagination.value.totalElements = filteredCustomers.value.length;
-    pagination.value.totalPages = Math.max(1, Math.ceil(filteredCustomers.value.length / pagination.value.size));
-    if (pagination.value.page > pagination.value.totalPages) pagination.value.page = 1;
+    });
 };
 
 const tableHeaders = [
@@ -260,48 +268,17 @@ const tableHeaders = [
     { text: 'Mã khách hàng', align: 'center', width: '110px' },
     { text: 'Tên khách hàng', align: 'center', width: '100px' },
     { text: 'Giới tính', align: 'center', width: '110px' },
-    { text: 'Thông tin liên hệ', align: 'left', width: '150px' },
+    { text: 'Thông tin liên hệ', align: 'center', width: '150px' },
     { text: 'Địa chỉ', align: 'center', width: '200px' },
     { text: 'Trạng thái', align: 'center', width: '100px' },
-    { text: 'Ngày tạo', align: 'center', width: '120px' },
     { text: 'Hành động', align: 'center', width: '140px' }
 ];
 
-// ─── Load & events ────────────────────────────────────────────────
-const loadCustomers = async () => {
-    loading.value = true;
-    try {
-        const response = await dichVuKhachHang.layTatCaKhachHang();
-        allCustomers.value = extractCustomerList(response);
-        applyPaginationMeta();
-    } catch (e) {
-        console.error(e);
-    } finally {
-        loading.value = false;
-    }
-};
+onMounted(() => {
+    loadCustomers();
+});
 
-const handleRefresh = async () => {
-    isRefreshing.value = true;
-    filters.value = { keyword: '', trangThai: null, gioiTinh: null };
-    pagination.value.page = 1;
-    await loadCustomers();
-    setTimeout(() => (isRefreshing.value = false), 800);
-};
-
-const handleLocalFilterChange = () => {
-    pagination.value.page = 1;
-    applyPaginationMeta();
-};
-
-const handleExport = async () => {
-    try {
-        const blob = await dichVuKhachHang.xuatExcelKhachHang();
-        downloadFile(blob, 'danh_sach_khach_hang.xlsx');
-    } catch (e) {
-        console.error(e);
-    }
-};
+const hasValue = (v) => v && String(v).trim().length > 0;
 
 const getAddressSummary = (item) => {
     const defaultAddress = getDefaultAddress(item);
@@ -356,36 +333,23 @@ const getDefaultAddress = (item) => {
 };
 
 const confirmChangeStatus = (item) => {
-    confirmDialog.value = {
-        show: true,
+    setConfirm({
         title: 'Thay đổi trạng thái',
         message: `Bạn có chắc muốn đổi trạng thái của khách hàng [${item.ten}]?`,
         color: 'warning',
-        loading: false,
         action: async () => {
-            confirmDialog.value.loading = true;
             try {
                 const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
                 await dichVuKhachHang.thayDoiTrangThaiKhachHang(item.id, newS);
                 item.trangThai = newS;
-                confirmDialog.value.show = false;
-            } finally {
-                confirmDialog.value.loading = false;
+            } catch (e) {
+                console.error(e);
             }
         }
-    };
+    });
 };
 
 onMounted(() => loadCustomers());
-watch(
-    () => pagination.value.size,
-    () => {
-        pagination.value.page = 1;
-        applyPaginationMeta();
-    }
-);
-watch(() => pagination.value.page, applyPaginationMeta);
-watch(filteredCustomers, applyPaginationMeta);
 
 // addr form watchers
 watch(
@@ -407,10 +371,10 @@ watch(
 
 <template>
     <v-container fluid class="pa-4 animate-fade-in font-body" style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
-        <!-- Header -->
-        <div class="mb-6">
-            <h5 class="text-h5 font-weight-bold">Quản lý khách hàng</h5>
-        </div>
+        <!-- Breadcrumbs -->
+        <AdminBreadcrumbs :items="customerBreadcrumbs" />
+
+        <div class="mb-2"></div>
 
         <!-- Filter -->
         <div class="filter-top invoice-filter-shell">
@@ -419,7 +383,7 @@ watch(
                 <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm</div>
                     <v-text-field
-                        v-model="filters.keyword"
+                        v-model="filters.search"
                         placeholder="Tên, SĐT, Email, Mã..."
                         variant="outlined"
                         density="compact"
@@ -474,7 +438,7 @@ watch(
             addButtonText="Thêm khách hàng"
             show-export-button
             :headers="tableHeaders"
-            :items="pagedCustomers"
+            :items="allCustomers"
             :total-count="pagination.totalElements"
             :loading="loading"
             @add="router.push({ name: 'KhachHangForm' })"
@@ -495,31 +459,60 @@ watch(
                         </v-chip>
                     </td>
                     <td class="data-cell contact-cell">
-                        <div class="info-line">{{ item.sdt || '-' }}</div>
-                        <div v-if="hasValue(item.email)" class="info-line mt-1 d-flex align-center">
-                            <v-icon size="13" class="mr-1">mdi-email-outline</v-icon>{{ item.email }}
+                        <div class="d-inline-flex flex-column align-start">
+                            <div class="info-line font-weight-bold mb-1">{{ item.sdt || '-' }}</div>
+                            <div v-if="hasValue(item.email)" class="info-line d-flex align-center text-slate-500">
+                                <v-icon size="14" class="mr-2">mdi-email-outline</v-icon>{{ item.email }}
+                            </div>
                         </div>
                     </td>
                     <td class="data-cell">
                         <div class="line-clamp-2" :title="getAddressSummary(item)">{{ getAddressSummary(item) }}</div>
                     </td>
-                    <td class="data-cell center-cell">
+                    <td class="data-cell">
                         <v-chip
                             size="small"
                             variant="flat"
-                            :class="['status-chip', item.trangThai === 'DANG_HOAT_DONG' ? 'status-chip-active' : 'status-chip-inactive']"
+                            :color="getStatusColor(item.trangThai)"
+                            class="px-4 status-chip"
                         >
-                            {{ item.trangThai === 'DANG_HOAT_DONG' ? 'Hoạt động' : 'Ngừng hoạt động' }}
+                            {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
-                    <td class="data-cell center-cell">{{ formatNgayTao(item.ngayTao) }}</td>
                     <td class="data-cell center-cell action-cell">
                         <div class="d-flex align-center justify-center action-controls">
+                            <!-- Địa chỉ -->
+                            <v-btn
+                                variant="text"
+                                class="action-icon-btn"
+                                @click.stop="openAddrDialog(item)"
+                            >
+                                <MapPinIcon />
+                                <v-tooltip activator="parent" location="top">Quản lý địa chỉ</v-tooltip>
+                            </v-btn>
+                            <!-- Xem chi tiết -->
+                            <v-btn
+                                variant="text"
+                                class="action-icon-btn"
+                                @click.stop="router.push({ name: 'KhachHangDetail', params: { id: item.id } })"
+                            >
+                                <EyeIcon />
+                                <v-tooltip activator="parent" location="top">Xem chi tiết</v-tooltip>
+                            </v-btn>
+                            <!-- Chỉnh sửa -->
+                            <v-btn
+                                variant="text"
+                                class="action-icon-btn"
+                                @click.stop="router.push({ name: 'KhachHangForm', params: { id: item.id } })"
+                            >
+                                <EditIcon />
+                                <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
+                            </v-btn>
                             <!-- Switch trạng thái -->
                             <div class="switch-wrapper">
                                 <v-switch
                                     :model-value="isActiveStatus(item.trangThai)"
-                                    color="#1e3a8a"
+                                    color="#000"
                                     hide-details
                                     density="compact"
                                     class="tight-switch action-switch"
@@ -527,42 +520,6 @@ watch(
                                 />
                                 <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
                             </div>
-                            <!-- Địa chỉ -->
-                            <v-btn
-                                icon
-                                variant="text"
-                                size="28"
-                                color="#0e7490"
-                                class="rounded-lg action-icon-btn"
-                                @click.stop="openAddrDialog(item)"
-                            >
-                                <MapPinIcon size="15" />
-                                <v-tooltip activator="parent" location="top">Quản lý địa chỉ</v-tooltip>
-                            </v-btn>
-                            <!-- Xem chi tiết -->
-                            <v-btn
-                                icon
-                                variant="text"
-                                size="28"
-                                color="#2aa6a1"
-                                class="rounded-lg action-icon-btn"
-                                @click.stop="router.push({ name: 'KhachHangDetail', params: { id: item.id } })"
-                            >
-                                <EyeIcon size="15" />
-                                <v-tooltip activator="parent" location="top">Xem chi tiết</v-tooltip>
-                            </v-btn>
-                            <!-- Chỉnh sửa -->
-                            <v-btn
-                                icon
-                                variant="text"
-                                size="28"
-                                color="#5f6f82"
-                                class="rounded-lg action-icon-btn"
-                                @click.stop="router.push({ name: 'KhachHangForm', params: { id: item.id } })"
-                            >
-                                <EditIcon size="15" />
-                                <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
-                            </v-btn>
                         </div>
                     </td>
                 </tr>
@@ -570,11 +527,11 @@ watch(
 
             <template #pagination>
                 <AdminPagination
-                    v-model="pagination.page"
+                    v-model:page="pagination.page"
                     v-model:page-size="pagination.size"
                     :total-pages="pagination.totalPages"
                     :total-elements="pagination.totalElements"
-                    :current-size="pagedCustomers.length"
+                    :current-size="allCustomers.length"
                     @change="handleLocalFilterChange"
                 />
             </template>
@@ -587,13 +544,14 @@ watch(
             :message="confirmDialog.message"
             :color="confirmDialog.color"
             :loading="confirmDialog.loading"
-            @confirm="confirmDialog.action"
+            @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)"
         />
 
         <!-- ═══════════════════════════════════════════════════
          Dialog Quản lý địa chỉ (2 cột: danh sách | form)
          ═══════════════════════════════════════════════════ -->
-        <v-dialog v-model="addrDialog" max-width="960" scrollable>
+        <v-dialog v-model="addrDialog" max-width="960" scrollable transition="dialog-bottom-transition">
             <v-card class="rounded-xl">
                 <!-- Tiêu đề dialog -->
                 <v-card-title class="d-flex align-center pa-5 border-b">
@@ -803,7 +761,7 @@ watch(
                                     </v-col>
                                     <v-col cols="12" class="mt-2">
                                         <v-btn
-                                            color="#2E4E8E"
+                                            color="#000"
                                             variant="flat"
                                             block
                                             class="text-none font-weight-bold rounded-lg"
@@ -833,115 +791,13 @@ watch(
 </template>
 
 <style scoped>
-:deep(.contact-cell),
+/* Scoped styles removed in favor of global _admin-common.scss */
 .contact-cell {
     text-align: left !important;
-    padding-left: 6px !important;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
 }
-.gray-bg {
-    background-color: #f5f7fb;
-
-}
-.font-body {
-    font-family: 'Inter', sans-serif;
-}
-.text-dark {
-    color: #000 !important;
-}
-
-.filter-field-label {
-    font-size: 13px;
-    font-weight: 700;
-    color: #000 !important;
-    margin-bottom: 6px;
-}
-.field-label {
-    font-size: 12px;
-    font-weight: 700;
-    color: #334155;
-    margin-bottom: 4px;
-    margin-left: 2px;
-}
-.invoice-filter-shell {
-    margin-bottom: 8px;
-}
-
-.info-line {
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.35;
-    color: #1e293b;
-}
-.center-cell {
-    text-align: center;
-}
-
-.gender-chip {
-    min-width: 34px;
-    height: 24px !important;
-    border-radius: 999px !important;
-    font-size: 13px;
-    font-weight: 700;
-    padding: 0 8px !important;
-}
-.gender-chip-male {
-    background: #eef4ff;
-    color: #4a6fae;
-}
-.gender-chip-female {
-    background: #fff3e8;
-    color: #b97745;
-}
-
-.status-chip {
-    border-radius: 999px !important;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 0 12px !important;
-    min-height: 28px !important;
-}
-.status-chip-active {
-    background: #f2f7ff;
-    color: #4e73ad;
-    border: 1px solid #dbe7fb;
-}
-.status-chip-inactive {
-    background: #fff1f2;
-    color: #b77986;
-    border: 1px solid #f8dde1;
-}
-
-.action-controls {
-    gap: 4px;
-}
-:deep(.action-cell .action-icon-btn) {
-    background: transparent !important;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    min-width: 28px !important;
-    width: 28px !important;
-    height: 28px !important;
-    padding: 0 !important;
-}
-:deep(.action-cell .action-icon-btn:hover),
-:deep(.action-cell .action-icon-btn:focus) {
-    background: transparent !important;
-    box-shadow: none !important;
-}
-:deep(.action-cell .action-icon-btn .v-btn__overlay),
-:deep(.action-cell .action-icon-btn .v-ripple__container) {
-    display: none !important;
-}
-:deep(.native-admin-table .data-cell) {
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    padding-left: 6px !important;
-}
-
 .line-clamp-2 {
     display: -webkit-box;
     line-clamp: 2;
@@ -949,51 +805,10 @@ watch(
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-
-.tight-switch {
-    transform: none;
-    width: 36px;
-}
-.switch-wrapper {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-:deep(.action-cell .action-switch .v-switch__track) {
-    background: #fff !important;
-    border: 1px solid #cbd5e1 !important;
-    opacity: 1 !important;
-    min-height: 18px !important;
-    max-height: 18px !important;
-    width: 32px !important;
-}
-:deep(.action-cell .action-switch .v-selection-control--dirty .v-switch__track) {
-    background: #d9e6fb !important;
-    border-color: #d9e6fb !important;
-}
-:deep(.action-cell .action-switch .v-switch__thumb) {
-    background: #94a3b8 !important;
-    width: 14px !important;
-    height: 14px !important;
-    box-shadow: none !important;
-}
-:deep(.action-cell .action-switch .v-selection-control--dirty .v-switch__thumb) {
-    background: #1e3a8a !important;
-}
-
 .addr-card {
     transition: box-shadow 0.15s;
 }
 .addr-card:hover {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-:deep(.gender-chip .v-chip__content) {
-    font-size: 13px !important;
-    font-weight: 700 !important;
-}
-:deep(.status-chip .v-chip__content) {
-    font-size: 13px !important;
-    font-weight: 600 !important;
 }
 </style>

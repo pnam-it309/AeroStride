@@ -53,13 +53,10 @@ const handleSave = async () => {
 </script>
 
 <template>
-  <v-dialog :model-value="show" @update:model-value="emit('update:show', $event)" max-width="450">
+  <v-dialog :model-value="show" @update:model-value="emit('update:show', $event)" max-width="450" scrollable transition="dialog-bottom-transition">
     <v-card class="rounded-xl overflow-hidden">
-      <div class="px-6 py-4 bg-slate-50 border-b d-flex align-center justify-space-between">
+      <div class="px-6 py-4 bg-slate-50 border-b">
         <h3 class="font-weight-bold text-slate-800">Thêm {{ title }} mới</h3>
-        <v-btn icon variant="text" size="small" @click="emit('update:show', false)">
-          <XIcon size="20" />
-        </v-btn>
       </div>
       
       <v-card-text class="pa-6">

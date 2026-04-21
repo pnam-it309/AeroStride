@@ -19,12 +19,12 @@ COPY BE/src/ src/
 # Development stage (for hot-reloading)
 FROM build AS development
 EXPOSE 8080
-# Disable VFS watch because it's unstable on Windows mount and causes 'unreadable directory' errors
-# We include JVM args here to match gradle.properties and avoid single-use daemon forks
-ENV GRADLE_OPTS="-Xmx1g -XX:TieredStopAtLevel=1 -Dfile.encoding=UTF-8 -Dorg.gradle.vfs.watch=false -Dorg.gradle.daemon=false"
+# Enable VFS watch by default, but GRADLE_OPTS should match gradle.properties
+ENV GRADLE_OPTS="-Xmx2g -XX:MaxMetaspaceSize=512m -XX:TieredStopAtLevel=1 -Dfile.encoding=UTF-8 -Dorg.gradle.vfs.watch=true"
 
-# Use a safer sequential execution to avoid file locks
-ENTRYPOINT ["sh", "-c", "./gradlew classes --no-daemon && (./gradlew bootRun --no-daemon & while true; do sleep 15; ./gradlew classes --no-daemon; done)"]
+# Use continuous build for classes to support hot-reloading efficiently with the daemon.
+# This prevents the 'loop' lag by letting Gradle handle file watching natively.
+ENTRYPOINT ["sh", "-c", "./gradlew classes && (./gradlew classes --continuous & ./gradlew bootRun)"]
 
 # Stage 2: Runtime stage (Production)
 FROM eclipse-temurin:17-jre-alpine AS production

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { dichVuFile } from '@/services/core/dichVuFile';
+import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 
 const loading = ref(false);
 const files = ref([]);
@@ -130,179 +131,185 @@ onMounted(() => {
   loadFiles();
 });
 </script>
-
 <template>
-  <div>
+  <div class="pa-6 font-body">
+    <!-- Breadcrumbs -->
+    <AdminBreadcrumbs
+        :items="[
+            { title: 'Quản lý hệ thống', disabled: false, href: '#' },
+            { title: 'Quản lý File', disabled: true }
+        ]"
+    />
+
+    <div class="mb-4"></div>
+
     <!-- Header -->
-    <div class="d-flex justify-space-between align-center mb-6">
+    <div class="header-section mb-6">
       <div>
-        <h1 class="text-h4 font-weight-bold">Quản lý file</h1>
-        <p class="text-subtitle-1 text-medium-emphasis">Quản lý tài liệu và media</p>
+        <h1 class="text-h4 font-black text-dark mb-1">Quản lý Tài nguyên</h1>
+        <p class="text-subtitle-1 text-slate-500 font-bold">Lưu trữ và quản lý tệp tin hệ thống</p>
       </div>
       <v-btn 
         color="primary" 
         size="large"
+        class="font-bold rounded-lg px-6"
         @click="uploadDialog = true"
       >
-        <v-icon start>mdi-upload</v-icon>
-        Tải lên file
+        <v-icon start size="20">mdi-upload</v-icon>
+        Tải lên tài liệu
       </v-btn>
     </div>
 
     <!-- Upload Area -->
     <v-card 
-      elevation="2" 
-      class="mb-4"
+      class="premium-card mb-6 overflow-hidden"
       :class="{ 'border-primary border-2': dragging }"
       @dragover="handleDragOver"
       @dragleave="handleDragLeave"
       @drop="handleDrop"
     >
-      <v-card-text class="text-center pa-8">
-        <v-icon size="64" color="primary" class="mb-4">mdi-cloud-upload</v-icon>
-        <h3 class="text-h5 font-weight-medium mb-2">Kéo và thả file vào đây</h3>
-        <p class="text-body-2 text-medium-emphasis mb-4">Hoặc nhấn vào nút tải lên để chọn file</p>
-        <v-btn color="primary" variant="tonal" @click="uploadDialog = true">
-          <v-icon start>mdi-upload</v-icon>
-          Chọn file
+      <v-card-text class="text-center pa-12 bg-slate-50">
+        <div class="icon-blob bg-primary-light mx-auto mb-4" style="width: 80px; height: 80px;">
+          <v-icon size="40" color="primary">mdi-cloud-upload</v-icon>
+        </div>
+        <h3 class="text-h5 font-black text-dark mb-2">Kéo & Thả tệp tin vào đây</h3>
+        <p class="text-body-1 text-slate-500 font-bold mb-6">Hệ thống tự động phân loại và lưu trữ an toàn</p>
+        <v-btn color="primary" variant="tonal" class="font-bold px-8" height="44" @click="uploadDialog = true">
+          <v-icon start size="18">mdi-folder-open</v-icon>
+          Duyệt từ máy tính
         </v-btn>
       </v-card-text>
     </v-card>
 
     <!-- Files Grid -->
-    <v-card elevation="2">
-      <v-card-text>
+    <v-card class="premium-card">
+      <div class="card-title-bar">
+        <span class="font-bold text-dark text-uppercase" style="font-size: 13px; letter-spacing: 0.05em;">Danh sách tệp tin</span>
+        <v-icon color="slate-400">mdi-file-multiple</v-icon>
+      </div>
+      <v-card-text class="pa-6">
         <v-row v-if="loading">
-          <v-col cols="12" class="text-center py-8">
+          <v-col cols="12" class="text-center py-12">
             <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
           </v-col>
         </v-row>
         
         <v-row v-else-if="files.length === 0">
-          <v-col cols="12" class="text-center py-8">
-            <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-folder-open</v-icon>
-            <h3 class="text-h5 font-weight-medium mb-2">Chưa có file nào</h3>
-            <p class="text-body-2 text-medium-emphasis">Tải lên file đầu tiên để bắt đầu</p>
+          <v-col cols="12" class="text-center py-12">
+            <v-icon size="64" color="slate-200" class="mb-4">mdi-folder-open</v-icon>
+            <h3 class="text-h5 font-black text-slate-300">Thư mục trống</h3>
+            <p class="text-body-2 text-slate-400 font-bold">Bắt đầu bằng việc tải lên tệp tin mới</p>
           </v-col>
         </v-row>
 
         <v-row v-else>
-          <v-col 
-            v-for="file in files" 
-            :key="file.id"
-            cols="12" 
-            sm="6" 
-            md="4" 
-            lg="3"
-          >
-            <v-card variant="tonal" class="pa-4 text-center" hover>
-              <v-icon 
-                :icon="getFileIcon(file.fileName)" 
-                size="48" 
-                color="primary"
-                class="mb-3"
-              ></v-icon>
-              <div class="text-subtitle-1 font-weight-medium text-truncate mb-1">
+          <v-col v-for="file in files" :key="file.id" cols="12" sm="6" md="4" lg="3">
+            <v-card class="pa-5 text-center border rounded-xl hover-addr-card h-100 bg-white">
+              <div class="icon-blob bg-slate-50 mx-auto mb-4" style="width: 64px; height: 64px;">
+                <v-icon :icon="getFileIcon(file.fileName)" size="32" color="primary"></v-icon>
+              </div>
+              <div class="text-subtitle-1 font-black text-dark text-truncate mb-1 px-2" :title="file.fileName">
                 {{ file.fileName }}
               </div>
-              <div class="text-caption text-medium-emphasis mb-3">
+              <div class="text-caption text-slate-400 font-bold mb-4">
                 {{ formatFileSize(file.fileSize) }}
               </div>
-              <div class="d-flex justify-center gap-1">
-                <v-btn
-                  icon="mdi-eye"
-                  variant="text"
-                  color="info"
-                  
-                  @click="previewFile(file)"
-                ></v-btn>
-                <v-btn
-                  icon="mdi-download"
-                  variant="text"
-                  color="success"
-                  
-                  :href="dichVuFile.layUrlFile(file.filePath)"
-                  target="_blank"
-                ></v-btn>
-                <v-btn
-                  icon="mdi-delete"
-                  variant="text"
-                  color="error"
-                  
-                  @click="deleteFile(file.id)"
-                ></v-btn>
+              <div class="d-flex justify-center action-controls">
+                <v-btn icon class="action-icon-btn" color="info" @click="previewFile(file)">
+                  <v-icon size="18">mdi-eye</v-icon>
+                </v-btn>
+                <v-btn icon class="action-icon-btn" color="success" :href="dichVuFile.layUrlFile(file.filePath)" target="_blank">
+                  <v-icon size="18">mdi-download</v-icon>
+                </v-btn>
+                <v-btn icon class="action-icon-btn" color="error" @click="deleteFile(file.id)">
+                  <v-icon size="18">mdi-delete</v-icon>
+                </v-btn>
               </div>
             </v-card>
           </v-col>
         </v-row>
 
         <!-- Pagination -->
-        <v-pagination
-          v-if="pagination.total > pagination.itemsPerPage"
-          v-model="pagination.page"
-          :length="Math.ceil(pagination.total / pagination.itemsPerPage)"
-          @update:model-value="loadFiles"
-          class="mt-4"
-        ></v-pagination>
+        <div class="mt-8 d-flex justify-center">
+          <v-pagination
+            v-if="pagination.total > pagination.itemsPerPage"
+            v-model="pagination.page"
+            :length="Math.ceil(pagination.total / pagination.itemsPerPage)"
+            @update:model-value="loadFiles"
+            density="compact"
+            active-color="primary"
+          ></v-pagination>
+        </div>
       </v-card-text>
     </v-card>
 
     <!-- Upload Dialog -->
-    <v-dialog v-model="uploadDialog" max-width="500">
-      <v-card>
-        <v-card-title>Tải lên file</v-card-title>
-        <v-card-text>
+    <v-dialog v-model="uploadDialog" max-width="500" transition="dialog-bottom-transition">
+      <v-card class="rounded-xl pa-2">
+        <v-card-title class="font-black text-dark text-h5 pa-6">Tải lên dữ liệu</v-card-title>
+        <v-card-text class="pa-6 pt-0">
           <v-file-input
-            label="Chọn file"
+            label="Chọn tệp tin"
             multiple
             show-size
             variant="outlined"
+            density="comfortable"
+            prepend-icon=""
+            prepend-inner-icon="mdi-paperclip"
+            class="rounded-lg"
             @change="handleFileUpload"
           ></v-file-input>
-          <p class="text-caption text-medium-emphasis">
-            Hỗ trợ các định dạng: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, GIF, MP4, MP3, ZIP
-          </p>
+          <div class="bg-slate-50 pa-4 rounded-lg mt-4 border">
+            <p class="text-caption text-slate-500 font-bold leading-relaxed">
+              <v-icon size="14" class="mr-1">mdi-information-outline</v-icon>
+              Hệ thống tối ưu cho PDF, Word, Excel, Hình ảnh (JPG, PNG) và các tệp nén (ZIP, RAR).
+            </p>
+          </div>
         </v-card-text>
-        <v-card-actions>
+        <v-card-actions class="pa-6">
           <v-spacer></v-spacer>
-          <v-btn @click="uploadDialog = false">Đóng</v-btn>
+          <v-btn variant="text" class="font-bold px-6" @click="uploadDialog = false">Hủy bỏ</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- Preview Dialog -->
-    <v-dialog v-model="previewDialog" max-width="800">
-      <v-card v-if="selectedFile">
-        <v-card-title class="d-flex justify-space-between align-center">
-          <span>{{ selectedFile.fileName }}</span>
-          <v-btn icon="mdi-close" @click="previewDialog = false"></v-btn>
+    <v-dialog v-model="previewDialog" max-width="600" transition="dialog-bottom-transition">
+      <v-card v-if="selectedFile" class="rounded-xl pa-2">
+        <v-card-title class="d-flex justify-space-between align-center pa-6">
+          <span class="font-black text-dark">{{ selectedFile.fileName }}</span>
+          <v-btn icon="mdi-close" variant="text" @click="previewDialog = false"></v-btn>
         </v-card-title>
-        <v-card-text>
-          <div class="text-center">
-            <v-icon 
-              :icon="getFileIcon(selectedFile.fileName)" 
-              size="120" 
-              color="primary"
-              class="mb-4"
-            ></v-icon>
-            <p class="text-body-1 mb-2">{{ selectedFile.fileName }}</p>
-            <p class="text-body-2 text-medium-emphasis mb-4">
-              Kích thước: {{ formatFileSize(selectedFile.fileSize) }}
-            </p>
-            <v-btn 
-              color="primary" 
-              :href="dichVuFile.layUrlFile(selectedFile.filePath)"
-              target="_blank"
-            >
-              <v-icon start>mdi-download</v-icon>
-              Tải về
-            </v-btn>
+        <v-card-text class="pa-8 text-center pt-0">
+          <div class="icon-blob bg-primary-light mx-auto mb-6" style="width: 120px; height: 120px;">
+            <v-icon :icon="getFileIcon(selectedFile.fileName)" size="64" color="primary"></v-icon>
           </div>
+          <p class="text-h6 font-black text-dark mb-1">{{ selectedFile.fileName }}</p>
+          <p class="text-body-1 text-slate-400 font-bold mb-8">
+            Dung lượng: {{ formatFileSize(selectedFile.fileSize) }}
+          </p>
+          <v-btn 
+            color="primary" 
+            size="large"
+            block
+            class="font-bold rounded-lg"
+            :href="dichVuFile.layUrlFile(selectedFile.filePath)"
+            target="_blank"
+          >
+            <v-icon start>mdi-download</v-icon>
+            Tải về ngay
+          </v-btn>
         </v-card-text>
       </v-card>
     </v-dialog>
   </div>
 </template>
+
+<style scoped>
+.bg-primary-light { background: #eff6ff; }
+.border-primary { border-color: #3b82f6 !important; }
+.border-2 { border-width: 2px !important; }
+</style>
 
 
 

@@ -24,16 +24,13 @@ const updateFormField = (field, value) => {
             <!-- Header accent bar -->
             <div class="h-1-5 w-full bg-primary accent-bar"></div>
             
-            <v-card-title class="px-8 py-6 border-b d-flex align-center justify-space-between bg-slate-50/50">
+            <v-card-title class="px-8 py-6 border-b bg-slate-50/50">
                 <div>
                     <h3 class="text-h5 font-weight-black text-slate-900 tracking-tight">
                         {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }} {{ title.toLowerCase() }}
                     </h3>
                     <p class="text-subtitle-2 text-slate-500 font-weight-medium mt-1">Thiết lập các thông tin cơ bản cho thuộc tính.</p>
                 </div>
-                <v-btn icon variant="text" color="slate-400" @click="closeModal" class="rounded-lg">
-                    <XIcon size="24" />
-                </v-btn>
             </v-card-title>
 
             <v-card-text class="pa-8">
@@ -138,12 +135,12 @@ const updateFormField = (field, value) => {
                 <v-btn
                     color="primary"
                     variant="flat"
-                    class="px-8 rounded-xl font-weight-black h-11"
+                    class="px-8 rounded-xl font-weight-black h-11 text-white"
                     @click="handleSave"
                     :disabled="!form?.ten"
                 >
                     <template #prepend>
-                        <DeviceFloppyIcon size="18" />
+                        <DeviceFloppyIcon size="18" class="text-white" />
                     </template>
                     Lưu thông tin
                 </v-btn>

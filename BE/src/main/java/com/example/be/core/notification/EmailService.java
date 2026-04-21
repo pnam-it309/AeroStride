@@ -3,7 +3,7 @@ package com.example.be.core.notification;
 import com.example.be.core.notification.dto.EmailRequest;
 
 public interface EmailService {
-    
+
     /**
      * Sends an HTML email based on a Thymeleaf template.
      * @param request The email request containing recipient, subject, template, and variables.
@@ -23,4 +23,25 @@ public interface EmailService {
      * @param token Reset token.
      */
     void sendPasswordResetEmail(String to, String token);
+
+    /**
+     * Sends account credentials email to a newly created KhachHang.
+     * @param to          Recipient email.
+     * @param tenKhachHang Customer's display name.
+     * @param tenTaiKhoan  Generated username.
+     * @param matKhau      Plain-text temporary password.
+     */
+    void guiEmailTaiKhoanKhachHang(String to, String tenKhachHang,
+                                   String tenTaiKhoan, String matKhau);
+
+    /**
+     * Sends account credentials email to a newly created NhanVien.
+     * @param to          Recipient email.
+     * @param tenNhanVien Employee's display name.
+     * @param tenTaiKhoan Generated username.
+     * @param matKhau     Plain-text temporary password.
+     * @param vaiTro      Role/position label.
+     */
+    void guiEmailTaiKhoanNhanVien(String to, String tenNhanVien,
+                                  String tenTaiKhoan, String matKhau, String vaiTro);
 }

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{email/base-template :: layout(~{::#main-content})}">
+<head>
+    <title>AeroStride - Tài khoản nhân viên</title>
+</head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+
+<div id="main-content">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding: 10px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:white;border-radius:12px;overflow:hidden;
+                          border:1px solid #e2e8f0;">
+          <tr>
+            <td style="background:#2E4E8E;padding:28px;text-align:center;">
+              <h1 style="color:white;margin:0;font-size:24px;
+                                   letter-spacing:1px;">⚡ AeroStride Admin</h1>
+              <p style="color:#93c5fd;margin:6px 0 0;font-size:13px;">
+                Quản trị hệ thống & Vận hành
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:36px 40px;">
+              <p style="font-size:16px;color:#1e293b;margin:0 0 12px;">
+                Xin chào <strong th:text="${tenNhanVien}">Nhân viên</strong>,
+              </p>
+              <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 24px;">
+                Chào mừng bạn gia nhập đội ngũ <strong>AeroStride</strong>! Tài khoản nhân viên của bạn đã được thiết lập thành công.
+                Dưới đây là thông tin định danh để truy cập trang quản trị:
+              </p>
+
+
+              <table width="100%" cellpadding="0" cellspacing="0"
+                     style="background:#f8fafc;border-radius:10px;
+                                      border-left:4px solid #2E4E8E;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:24px;">
+                    <p style="margin:0 0 10px;font-size:14px;color:#475569;">
+                      🎭 <strong style="color:#1e293b;">Vai trò:</strong>
+                      &nbsp;
+                      <span style="font-size:14px;font-weight:bold;color:#1e3a8a;"
+                            th:text="${vaiTro}">MANAGER</span>
+                    </p>
+                    <p style="margin:0 0 10px;font-size:14px;color:#475569;">
+                      👤 <strong style="color:#1e293b;">Tên đăng nhập:</strong>
+                      &nbsp;
+                      <span style="font-size:15px;font-weight:bold;
+                                                     color:#2E4E8E;letter-spacing:0.5px;"
+                            th:text="${tenTaiKhoan}">username</span>
+                    </p>
+                    <p style="margin:0;font-size:14px;color:#475569;">
+                      🔑 <strong style="color:#1e293b;">Mật khẩu tạm thời:</strong>
+                      &nbsp;
+                      <span style="font-size:15px;font-weight:bold;
+                                                     color:#2E4E8E;letter-spacing:1px;"
+                            th:text="${matKhau}">password</span>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <div style="text-align: center;">
+                <a href="https://aerostride.com/admin/login" class="button">Truy cập Trang Quản Trị</a>
+              </div>
+
+              <table width="100%" cellpadding="0" cellspacing="0"
+                     style="background:#fff7ed;border-radius:8px;
+                                      border:1px solid #fed7aa;margin: 28px 0;">
+                <tr>
+                  <td style="padding:14px 18px;font-size:13px;color:#9a3412;">
+                    ⚠️ Đây là tài khoản đặc quyền. Vui lòng <strong>đổi mật khẩu ngay lập tức</strong>
+                    sau khi đăng nhập lần đầu và tuyệt đối không chia sẻ thông tin này.
+                  </td>
+                </tr>
+              </table>
+
+              <p style="color:#94a3b8;font-size:12px;margin:0;">
+                Nếu bạn cần hỗ trợ về kỹ thuật hoặc phân quyền, vui lòng liên hệ Bộ phận IT.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#f8fafc;padding:20px;text-align:center;
+                                border-top:1px solid #e2e8f0;">
+              <p style="margin:0;font-size:12px;color:#94a3b8;">
+                © 2025 AeroStride Admin Dashboard · Bảo mật Nội bộ
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>
+
+</body>
+</html>

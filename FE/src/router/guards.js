@@ -1,10 +1,11 @@
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
+import { PATH } from './routePaths';
 
 export function requireAuth(to, from, next) {
   if (dichVuXacThuc.daDangNhap()) {
     next();
   } else {
-    next('/auth/login');
+    next(PATH.LOGIN);
   }
 }
 
@@ -12,7 +13,7 @@ export function requireGuest(to, from, next) {
   if (!dichVuXacThuc.daDangNhap()) {
     next();
   } else {
-    next('/main');
+    next(PATH.DASHBOARD);
   }
 }
 
@@ -21,7 +22,7 @@ export function requireRole(role) {
     if (dichVuXacThuc.daDangNhap() && dichVuXacThuc.coVaiTro(role)) {
       next();
     } else {
-      next('/auth/login');
+      next(PATH.LOGIN);
     }
   };
 }

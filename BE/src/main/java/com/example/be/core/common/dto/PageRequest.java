@@ -10,12 +10,22 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PageRequest {
-    private int page;
-    private int size;
+    @Builder.Default
+    private Integer page = 0;
+    @Builder.Default
+    private Integer size = 10;
     private String sortBy;
     private String sortDirection;
 
-    public static PageRequest of(int page, int size) {
+    public void setPageNo(Integer pageNo) {
+        this.page = pageNo;
+    }
+
+    public void setPageSize(Integer pageSize) {
+        this.size = pageSize;
+    }
+
+    public static PageRequest of(Integer page, Integer size) {
         return new PageRequest(page, size, null, null);
     }
 }

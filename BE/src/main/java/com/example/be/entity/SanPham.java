@@ -2,6 +2,9 @@ package com.example.be.entity;
 
 import com.example.be.core.common.base.BaseCodeNameEntity;
 import com.example.be.infrastructure.constants.GioiTinhKhachHang;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,6 +22,7 @@ import java.util.List;
     @AttributeOverride(name = "ma", column = @Column(name = "ma_san_pham")),
     @AttributeOverride(name = "ten", column = @Column(name = "ten_san_pham"))
 })
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class SanPham extends BaseCodeNameEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -67,6 +71,7 @@ public class SanPham extends BaseCodeNameEntity {
 
     @OneToMany(mappedBy = "sanPham", fetch = FetchType.LAZY)
     @Builder.Default
+    @JsonIgnoreProperties("sanPham")
     private List<ChiTietSanPham> chiTietSanPhams = new ArrayList<>();
 
 }

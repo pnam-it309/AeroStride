@@ -41,6 +41,9 @@ public class VnPayServiceImpl implements PaymentService {
 
     @Override
     public String createPaymentUrl(PaymentRequest request) {
+        // SECURITY FIX: Validate input parameters
+        validatePaymentRequest(request);
+        
         log.info("Generating VNPay URL for order: {}", request.getOrderId());
         
         String vnp_Version = "2.1.0";
@@ -106,22 +109,73 @@ public class VnPayServiceImpl implements PaymentService {
         
         return vnpUrl + "?" + queryUrl;
     }
+    
+    /**
+     * Validates payment request parameters before sending to VNPay
+     * SECURITY: Prevents invalid or malicious payment requests
+     */
+    private void validatePaymentRequest(PaymentRequest request) {
+        // Validate Order ID
+        if (request.getOrderId() == null || request.getOrderId().trim().isEmpty()) {
+            throw new IllegalArgumentException("Order ID cannot be empty");
+        }
+        
+        if (request.getOrderId().length() > 100) {
+            throw new IllegalArgumentException("Order ID exceeds maximum length");
+        }
+        
+        // Validate Amount
+        if (request.getAmount() == null) {
+            throw new IllegalArgumentException("Amount cannot be null");
+        }
+        
+        if (request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than 0");
+        }
+        
+        // VNPay maximum amount limit (999,999,99 VND = 999,999.99 when divided by 100)
+        BigDecimal maxAmount = new BigDecimal("9999999.99");
+        if (request.getAmount().compareTo(maxAmount) > 0) {
+            throw new IllegalArgumentException("Amount exceeds maximum allowed limit of " + maxAmount);
+        }
+        
+        // Validate Order Info
+        if (request.getOrderInfo() == null || request.getOrderInfo().trim().isEmpty()) {
+            throw new IllegalArgumentException("Order info cannot be empty");
+        }
+        
+        if (request.getOrderInfo().length() > 1000) {
+            throw new IllegalArgumentException("Order info exceeds maximum length");
+        }
+        
+        log.info("Payment request validation successful for order: {} with amount: {}", 
+                request.getOrderId(), request.getAmount());
+    }
 
     @Override
     public boolean verifyPayment(Map<String, String> params) {
         log.info("Verifying VNPay signature");
-        String vnp_SecureHash = params.get("vnp_SecureHash");
-        params.remove("vnp_SecureHashType");
-        params.remove("vnp_SecureHash");
         
-        List<String> fieldNames = new ArrayList<>(params.keySet());
+        // Extract secure hash before removing it from params
+        String vnp_SecureHash = params.get("vnp_SecureHash");
+        if (vnp_SecureHash == null || vnp_SecureHash.isEmpty()) {
+            log.error("VNPay secure hash is missing from callback");
+            return false;
+        }
+        
+        // Create a copy of params to avoid modifying the original
+        Map<String, String> paramsCopy = new HashMap<>(params);
+        paramsCopy.remove("vnp_SecureHashType");
+        paramsCopy.remove("vnp_SecureHash");
+        
+        List<String> fieldNames = new ArrayList<>(paramsCopy.keySet());
         Collections.sort(fieldNames);
         
         StringBuilder hashData = new StringBuilder();
         Iterator<String> itr = fieldNames.iterator();
         while (itr.hasNext()) {
             String fieldName = itr.next();
-            String fieldValue = params.get(fieldName);
+            String fieldValue = paramsCopy.get(fieldName);
             if ((fieldValue != null) && (fieldValue.length() > 0)) {
                 hashData.append(fieldName);
                 hashData.append('=');
@@ -133,7 +187,15 @@ public class VnPayServiceImpl implements PaymentService {
         }
         
         String checkSum = hmacSHA512(hashSecret, hashData.toString());
-        return checkSum.equalsIgnoreCase(vnp_SecureHash);
+        boolean isValid = checkSum.equalsIgnoreCase(vnp_SecureHash);
+        
+        if (!isValid) {
+            log.error("VNPay signature verification failed. Expected: {}, Got: {}", checkSum, vnp_SecureHash);
+        } else {
+            log.info("VNPay signature verification successful");
+        }
+        
+        return isValid;
     }
 
     private String hmacSHA512(final String key, final String data) {

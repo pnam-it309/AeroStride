@@ -1,40 +1,41 @@
 import api from '../apiService';
+import { API_ADMIN } from '@/constants/apiPaths';
 
 export const dichVuDonHang = {
   // Lấy danh sách hóa đơn chờ
   async layDonHangCho() {
-    const response = await api.get('/admin/ban-hang');
+    const response = await api.get(API_ADMIN.BAN_HANG);
     return response.data.data;
   },
 
   // Tạo hóa đơn mới
   async taoDonHang() {
-    const response = await api.post('/admin/ban-hang');
+    const response = await api.post(API_ADMIN.BAN_HANG);
     return response.data.data;
   },
 
   // Xóa hóa đơn chờ
   async xoaDonHang(id) {
-    const response = await api.delete(`/admin/ban-hang/${id}`);
+    const response = await api.delete(`${API_ADMIN.BAN_HANG}/${id}`);
     return response.data;
   },
 
   // Tìm kiếm sản phẩm
   async searchSanPham(keyword = '') {
-    const response = await api.get('/admin/ban-hang/search-san-pham', { params: { keyword } });
+    const response = await api.get(`${API_ADMIN.BAN_HANG}/search-san-pham`, { params: { keyword } });
     return response.data.data;
   },
 
   // Thêm sản phẩm vào hóa đơn
   async addSanPham(idHoaDon, payload) {
     // payload: { idChiTietSanPham, soLuong }
-    const response = await api.post(`/admin/ban-hang/${idHoaDon}/add-product`, payload);
+    const response = await api.post(`${API_ADMIN.BAN_HANG}/${idHoaDon}/add-product`, payload);
     return response.data.data;
   },
 
   // Cập nhật số lượng
   async updateSoLuong(idHoaDon, idHdct, soLuong) {
-    const response = await api.put(`/admin/ban-hang/${idHoaDon}/update-quantity/${idHdct}`, null, {
+    const response = await api.put(`${API_ADMIN.BAN_HANG}/${idHoaDon}/update-quantity/${idHdct}`, null, {
       params: { soLuong }
     });
     return response.data.data;
@@ -42,19 +43,19 @@ export const dichVuDonHang = {
 
   // Xóa sản phẩm khỏi hóa đơn
   async removeSanPham(idHoaDon, idHdct) {
-    const response = await api.delete(`/admin/ban-hang/${idHoaDon}/remove-product/${idHdct}`);
+    const response = await api.delete(`${API_ADMIN.BAN_HANG}/${idHoaDon}/remove-product/${idHdct}`);
     return response.data;
   },
 
   // Tìm kiếm khách hàng
   async searchKhachHang(keyword = '') {
-    const response = await api.get('/admin/ban-hang/search-khach-hang', { params: { keyword } });
+    const response = await api.get(`${API_ADMIN.BAN_HANG}/search-khach-hang`, { params: { keyword } });
     return response.data.data;
   },
 
   // Set khách hàng cho hóa đơn
   async setKhachHang(idHoaDon, idKhachHang = null) {
-    const response = await api.put(`/admin/ban-hang/${idHoaDon}/khach-hang`, null, {
+    const response = await api.put(`${API_ADMIN.BAN_HANG}/${idHoaDon}/khach-hang`, null, {
       params: { idKhachHang }
     });
     return response.data.data;
@@ -62,13 +63,13 @@ export const dichVuDonHang = {
 
   // Lấy danh sách voucher phù hợp
   async getVouchers(tongTien) {
-    const response = await api.get('/admin/ban-hang/vouchers', { params: { tongTien } });
+    const response = await api.get(`${API_ADMIN.BAN_HANG}/vouchers`, { params: { tongTien } });
     return response.data.data;
   },
 
   // Set voucher cho hóa đơn
   async setVoucher(idHoaDon, idVoucher = null) {
-    const response = await api.put(`/admin/ban-hang/${idHoaDon}/voucher`, null, {
+    const response = await api.put(`${API_ADMIN.BAN_HANG}/${idHoaDon}/voucher`, null, {
       params: { idVoucher }
     });
     return response.data.data;
@@ -76,8 +77,7 @@ export const dichVuDonHang = {
 
   // Checkout (Thanh toán)
   async checkout(idHoaDon, checkoutData) {
-    // checkoutData: { loaiHoaDon, idKhachHang, idPhieuGiamGia, tongTien, soTienGiam, tongTienSauGiam, hinhThucThanhToan, ghiChu }
-    const response = await api.post(`/admin/ban-hang/${idHoaDon}/checkout`, checkoutData);
+    const response = await api.post(`${API_ADMIN.BAN_HANG}/${idHoaDon}/checkout`, checkoutData);
     return response.data;
   }
 };

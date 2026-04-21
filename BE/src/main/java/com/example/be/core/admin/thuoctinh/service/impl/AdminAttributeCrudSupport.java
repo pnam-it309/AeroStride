@@ -1,7 +1,6 @@
 package com.example.be.core.admin.thuoctinh.service.impl;
 
 import com.example.be.core.admin.thuoctinh.model.request.AdminAttributeRequest;
-import com.example.be.utils.MaGenerator;
 import com.example.be.core.admin.thuoctinh.model.response.AdminAttributeResponse;
 import com.example.be.core.admin.thuoctinh.repository.AdminAttributeCrudRepository;
 import com.example.be.core.admin.thuoctinh.service.AdminAttributeManagementService;
@@ -9,7 +8,10 @@ import com.example.be.core.common.base.BaseCodeNameEntity;
 import com.example.be.core.common.dto.PageRequest;
 import com.example.be.core.common.dto.PageResponse;
 import com.example.be.infrastructure.constants.TrangThai;
-import com.example.be.infrastructure.exceptions.RestApiException;
+import com.example.be.infrastructure.exceptions.BusinessException;
+import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
+import com.example.be.utils.CodeUtils;
+import com.example.be.utils.SearchUtils;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -124,7 +126,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
     private void applyData(E entity, AdminAttributeRequest request) {
         String ma = normalize(request.getMa());
         if (!StringUtils.hasText(ma)) {
-            ma = MaGenerator.generate(entity.getClass());
+            ma = CodeUtils.generateRandom(entity.getClass());
         }
         entity.setMa(ma);
         entity.setTen(requireText(request.getTen(), "Ten " + entityDisplayName + " khong duoc de trong"));
@@ -147,7 +149,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
             }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         })) {
-            throw new RestApiException("Ma " + entityDisplayName + " da ton tai");
+            throw new BusinessException("Ma " + entityDisplayName + " da ton tai");
         }
 
         if (repository.exists((root, query, criteriaBuilder) -> {
@@ -163,7 +165,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
             }
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         })) {
-            throw new RestApiException("Ten " + entityDisplayName + " da ton tai");
+            throw new BusinessException("Ten " + entityDisplayName + " da ton tai");
         }
     }
 
@@ -175,7 +177,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
                         criteriaBuilder.isFalse(root.get("xoaMem"))
                 ),
                 criteriaBuilder.notEqual(root.get("trangThai"), TrangThai.DA_XOA)
-        )).orElseThrow(() -> new RestApiException("Khong tim thay " + entityDisplayName));
+        )).orElseThrow(() -> new ResourceNotFoundException("Khong tim thay " + entityDisplayName));
     }
 
     private TrangThai parseTrangThai(String value) {
@@ -185,7 +187,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
         try {
             return TrangThai.valueOf(value.trim().toUpperCase());
         } catch (IllegalArgumentException exception) {
-            throw new RestApiException("Trang thai khong hop le");
+            throw new BusinessException("Trang thai khong hop le");
         }
     }
 
@@ -199,7 +201,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
     private String requireText(String value, String message) {
         String normalized = normalize(value);
         if (!StringUtils.hasText(normalized)) {
-            throw new RestApiException(message);
+            throw new BusinessException(message);
         }
         return normalized;
     }

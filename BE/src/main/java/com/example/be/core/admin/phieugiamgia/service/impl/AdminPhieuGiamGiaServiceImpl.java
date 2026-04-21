@@ -9,44 +9,36 @@ import com.example.be.core.notification.dto.EmailRequest;
 import com.example.be.entity.KhachHang;
 import com.example.be.entity.PhieuGiamGia;
 import com.example.be.entity.PhieuGiamGiaCaNhan;
-import com.example.be.infrastructure.notification.EmailServiceImpl;
+import com.example.be.infrastructure.constants.TrangThai;
+import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
+import com.example.be.infrastructure.exceptions.SystemException;
 import com.example.be.repository.KhachHangRepository;
 import com.example.be.repository.PhieuGiamGiaCaNhanRepository;
+import com.example.be.utils.AccountUtils;
 import com.example.be.utils.ExcelUtils;
-import com.example.be.utils.MaGenerator;
+import com.example.be.utils.PaginationUtils;
+import com.example.be.utils.SearchUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-
-@RequiredArgsConstructor
 @Service
-@Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
 
-    @Autowired
-    private AdminPhieuGiamGiaRepository repo;
-
-    @Autowired
-    private KhachHangRepository khachHangRepository;
-
-    @Autowired
-    private PhieuGiamGiaCaNhanRepository phieuGiamGiaCaNhanRepository;
-
-    @Autowired
-    private EmailService emailService;
+    private final AdminPhieuGiamGiaRepository repo;
+    private final KhachHangRepository khachHangRepository;
+    private final PhieuGiamGiaCaNhanRepository phieuGiamGiaCaNhanRepository;
+    private final EmailService emailService;
 
     @Override
     public List<AdminPhieuGiamGiaResponse> hienThi() {
@@ -55,18 +47,24 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
 
     @Override
     public AdminPhieuGiamGiaResponse detail(String id) {
-        return repo.detail(id);
+        AdminPhieuGiamGiaResponse res = repo.detail(id);
+        if (res == null) {
+            throw new ResourceNotFoundException("Không tìm thấy phiếu giảm giá với id: " + id);
+        }
+        return res;
     }
 
     @Override
-    public Page<AdminPhieuGiamGiaResponse> phanTrang(Integer pageNo, Integer pageSize, String keyword) {
-        // Sắp xếp theo ID giảm dần hoặc ngayTao giảm dần để dữ liệu mới luôn ở trên cùng
-        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by("id").descending());
-        return repo.phanTrang(keyword, pageable);
+    public Page<AdminPhieuGiamGiaResponse> phanTrang(AdminPhieuGiamGiaRequest req) {
+        return SearchUtils.execute(req, pageable -> repo.phanTrang(req.getKeyword(), pageable));
     }
 
     @Override
+    @Transactional
     public void delete(String id) {
+        if (!repo.existsById(id)) {
+            throw new ResourceNotFoundException("Không tìm thấy phiếu giảm giá để xóa");
+        }
         repo.deleteById(id);
     }
 
@@ -78,14 +76,12 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         
         // Tự động sinh mã nếu trống
         if (p.getMa() == null || p.getMa().trim().isEmpty()) {
-            p.setMa(MaGenerator.generate(PhieuGiamGia.class));
+            // Using placeholder logic or common generator
+            p.setMa("PGG" + System.currentTimeMillis() % 100000); 
         }
         
-        if ("CA_NHAN".equals(req.getHinhThuc())) {
-            // Cho phiếu cá nhân, số lượng = số khách hàng được chọn
-            if (req.getListIdKhachHang() != null) {
-                p.setSoLuong(req.getListIdKhachHang().size());
-            }
+        if ("CA_NHAN".equals(req.getHinhThuc()) && req.getListIdKhachHang() != null) {
+            p.setSoLuong(req.getListIdKhachHang().size());
         }
         
         repo.save(p);
@@ -93,8 +89,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         // Xử lý phiếu cá nhân
         if ("CA_NHAN".equals(req.getHinhThuc()) && req.getListIdKhachHang() != null) {
             for (String khId : req.getListIdKhachHang()) {
-                KhachHang kh = khachHangRepository.findById(khId).orElse(null);
-                if (kh != null) {
+                khachHangRepository.findById(khId).ifPresent(kh -> {
                     PhieuGiamGiaCaNhan pgn = PhieuGiamGiaCaNhan.builder()
                             .khachHang(kh)
                             .phieuGiamGia(p)
@@ -103,26 +98,28 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                             .daSuDung(false)
                             .build();
                     phieuGiamGiaCaNhanRepository.save(pgn);
-                    
-                    // Gửi email cho khách hàng
                     sendVoucherEmail(kh, p);
-                }
+                });
             }
         }
     }
 
     private void sendVoucherEmail(KhachHang kh, PhieuGiamGia p) {
         Map<String, Object> variables = new HashMap<>();
-        variables.getOrDefault("name", kh.getTen());
+        variables.put("name", kh.getTen());
         variables.put("voucherCode", p.getMa());
         variables.put("voucherName", p.getTen());
         variables.put("discountValue", p.getPhanTramGiamGia() != null ? p.getPhanTramGiamGia() + "%" : p.getSoTienGiam() + " VNĐ");
         variables.put("minOrder", p.getDonHangToiThieu());
-        variables.put("expiryDate", new java.util.Date(p.getNgayKetThuc() != null ? p.getNgayKetThuc() : System.currentTimeMillis()).toLocaleString());
+        
+        // Better date formatting
+        java.time.Instant expiryInstant = java.time.Instant.ofEpochMilli(p.getNgayKetThuc() != null ? p.getNgayKetThuc() : System.currentTimeMillis());
+        java.time.LocalDateTime expiryDate = java.time.LocalDateTime.ofInstant(expiryInstant, java.time.ZoneId.systemDefault());
+        variables.put("expiryDate", expiryDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
 
         EmailRequest emailRequest = EmailRequest.builder()
                 .to(kh.getEmail())
-                .subject("AeroStride - Bạn nhận được phiếu giảm giá mới!")
+                .subject("🎉 AeroStride - Bạn nhận được phiếu giảm giá mới!")
                 .templateName("voucher-email")
                 .variables(variables)
                 .build();
@@ -132,22 +129,25 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     @Override
     @Transactional
     public void update(AdminPhieuGiamGiaRequest req, String id) {
-        PhieuGiamGia p = repo.findById(id).get();
+        PhieuGiamGia p = repo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu giảm giá để cập nhật"));
         BeanUtils.copyProperties(req, p);
+        p.setId(id); // Ensure ID is preserved
         repo.save(p);
     }
 
     @Override
     @Transactional
-    public void updateStatus(String id, com.example.be.infrastructure.constants.TrangThai status) {
+    public void updateStatus(String id, TrangThai status) {
         PhieuGiamGia p = repo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu giảm giá!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu giảm giá!"));
         p.setTrangThai(status);
         repo.saveAndFlush(p);
     }
+
     @Override
     public byte[] exportExcel() {
-        Pageable pageable = PageRequest.of(0, Integer.MAX_VALUE, Sort.by("id").descending());
+        Pageable pageable = PaginationUtils.createPageable(0, Integer.MAX_VALUE, "id", "desc");
         List<AdminPhieuGiamGiaResponse> data = repo.phanTrang(null, pageable).getContent();
         
         String[] headers = {"STT", "Mã", "Tên", "Giá trị giảm", "Giảm tối đa", "Điều kiện", "Số lượng", "Ngày bắt đầu", "Ngày kết thúc", "Trạng thái"};
@@ -163,10 +163,10 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                 item.getSoLuong(),
                 item.getNgayBatDau(),
                 item.getNgayKetThuc(),
-                "DANG_HOAT_DONG".equals(item.getTrangThai()) ? "Đang hoạt động" : "Ngừng hoạt động"
+                "DANG_HOAT_DONG".equalsIgnoreCase(item.getTrangThai()) ? "Đang hoạt động" : "Ngừng hoạt động"
             });
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi xuất file Excel: " + e.getMessage());
+            throw new SystemException("Lỗi xuất file Excel: " + e.getMessage());
         }
     }
 
@@ -178,15 +178,17 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                 "VOUCHER_NEW", "Giảm giá khai trương", "PHAN_TRAM", 10, 200000, 100, "CONG_KHAI", "12/04/2026", "20/04/2026"
             });
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi tải template: " + e.getMessage());
+            throw new SystemException("Lỗi tải template: " + e.getMessage());
         }
     }
 
     @Override
     @Transactional
-    public void importExcel(org.springframework.web.multipart.MultipartFile file) {
+    public void importExcel(MultipartFile file) {
         try (org.apache.poi.ss.usermodel.Workbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook(file.getInputStream())) {
             org.apache.poi.ss.usermodel.Sheet sheet = workbook.getSheetAt(0);
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
+            
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 org.apache.poi.ss.usermodel.Row row = sheet.getRow(i);
                 if (row == null) continue;
@@ -197,7 +199,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                 p.setLoaiPhieu(ExcelUtils.getCellValueAsString(row.getCell(2)));
                 
                 String valStr = ExcelUtils.getCellValueAsString(row.getCell(3));
-                if ("PHAN_TRAM".equals(p.getLoaiPhieu())) {
+                if ("PHAN_TRAM".equalsIgnoreCase(p.getLoaiPhieu())) {
                     p.setPhanTramGiamGia(Integer.parseInt(valStr));
                 } else {
                     p.setSoTienGiam(new java.math.BigDecimal(valStr));
@@ -207,15 +209,14 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                 p.setSoLuong(Integer.parseInt(ExcelUtils.getCellValueAsString(row.getCell(5))));
                 p.setHinhThuc(ExcelUtils.getCellValueAsString(row.getCell(6)));
                 
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
                 p.setNgayBatDau(sdf.parse(ExcelUtils.getCellValueAsString(row.getCell(7))).getTime());
                 p.setNgayKetThuc(sdf.parse(ExcelUtils.getCellValueAsString(row.getCell(8))).getTime());
                 
-                p.setTrangThai(com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG);
+                p.setTrangThai(TrangThai.DANG_HOAT_DONG);
                 repo.save(p);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi nhập Excel Voucher: " + e.getMessage());
+            throw new SystemException("Lỗi nhập Excel Voucher: " + e.getMessage());
         }
     }
 }

@@ -15,9 +15,11 @@ import AdminFilter from '@/components/common/AdminFilter.vue'
 import AdminTable from '@/components/common/AdminTable.vue'
 import AdminPagination from '@/components/common/AdminPagination.vue'
 import AdminConfirm from '@/components/common/AdminConfirm.vue'
+import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue'
 import { useNotifications } from '@/services/notificationService'
 import { dichVuSanPham } from '@/services/product/dichVuSanPham'
 import { dichVuBienThe } from '@/services/product/dichVuBienThe'
+import { dichVuMauSac, dichVuKichThuoc } from '@/services/product/dichVuThuocTinh'
 import VariantFormModal from './components/VariantFormModal.vue'
 import VariantImageModal from './components/VariantImageModal.vue'
 import VariantManagementDrawer from './components/VariantManagementDrawer.vue'
@@ -52,7 +54,7 @@ const pagination = reactive({
 
 const variantModal = reactive({ open: false, mode: 'create', submitting: false, variant: null })
 const imageModal = reactive({ open: false, mode: 'create', submitting: false, image: null, variantId: '' })
-const variantDrawer = reactive({ open: false, variant: null })
+const variantDrawer = reactive({ open: false, variant: null, initialTab: 0 })
 const qrDialog = reactive({ open: false, value: '' })
 const showQrScanner = ref(false)
 
@@ -97,8 +99,11 @@ const getStatusLabel = (status) => {
 const isActiveStatus = (status) => status === 'DANG_HOAT_DONG';
 
 const selectedProductSummary = computed(() => {
+  if (!selectedProductId.value || selectedProductId.value === 'ALL') {
+    return { title: 'Tất cả sản phẩm', subtitle: `Tổng số ${formatNumber(selectedProduct.value?.variants?.length || 0)} biến thể`, maSanPham: '' }
+  }
   if (!selectedProduct.value) {
-    return { title: 'Chưa chọn sản phẩm', subtitle: 'Chọn sản phẩm để quản lý biến thể', maSanPham: '' }
+    return { title: 'Đang tải...', subtitle: 'Vui lòng đợi', maSanPham: '' }
   }
   return {
     title: selectedProduct.value.tenSanPham,
@@ -126,13 +131,29 @@ const paginatedVariants = computed(() => {
 
 const fetchFormOptions = async () => {
   try {
-    const response = await dichVuSanPham.layOptionsForm()
-    formOptions.value = {
-      mauSacs: response.mauSacs || [],
-      kichThuocs: response.kichThuocs || [],
-      trangThais: response.trangThais || [],
+    // Try aggregate endpoint first
+    const response = await dichVuSanPham.layOptionsForm().catch(() => null)
+    if (response) {
+      formOptions.value = {
+        mauSacs: response.mauSacs || [],
+        kichThuocs: response.kichThuocs || [],
+        trangThais: response.trangThais || [],
+      }
+    } else {
+      // Fallback: fetch individually if aggregate fails
+      const [m, k] = await Promise.all([
+        dichVuMauSac.layMauSac({ size: 1000 }),
+        dichVuKichThuoc.layKichThuoc({ size: 1000 })
+      ])
+      formOptions.value = {
+        mauSacs: m.content || m || [],
+        kichThuocs: k.content || k || [],
+        trangThais: ['DANG_HOAT_DONG', 'KHONG_HOAT_DONG'] // Default statuses
+      }
     }
-  } catch (error) { }
+  } catch (error) {
+    console.error('Lỗi khi tải options:', error)
+  }
 }
 
 const fetchProductOptions = async () => {
@@ -143,12 +164,20 @@ const fetchProductOptions = async () => {
 }
 
 const fetchSelectedProduct = async (productId) => {
-  if (!productId) { selectedProduct.value = null; return; }
   loading.value = true
   try {
-    selectedProduct.value = await dichVuSanPham.layChiTietSanPham(productId)
+    if (!productId || productId === 'ALL') {
+      const allVariants = await dichVuBienThe.layTatCaBienThe()
+      selectedProduct.value = {
+        tenSanPham: 'Tất cả sản phẩm',
+        variants: allVariants || []
+      }
+    } else {
+      selectedProduct.value = await dichVuSanPham.layChiTietSanPham(productId)
+    }
   } catch (error) {
     selectedProduct.value = null
+    addNotification({ title: 'Lỗi', subtitle: 'Không thể tải danh sách biến thể', color: 'error' })
   } finally {
     loading.value = false
   }
@@ -182,6 +211,12 @@ const handleVariantSubmit = (payload) => {
       }
     }
   };
+}
+
+const openImageModal = (item) => {
+  variantDrawer.variant = item;
+  variantDrawer.initialTab = 1; // Tab 1 is Images
+  variantDrawer.open = true;
 }
 
 const handleStatusChange = (item) => {
@@ -228,34 +263,40 @@ const getVariantThumbnail = (item) => {
 onMounted(async () => {
   await Promise.all([fetchFormOptions(), fetchProductOptions()])
   const routeProductId = route.query.productId?.toString()
-  selectedProductId.value = routeProductId || (productOptions.value.length > 0 ? productOptions.value[0].id : '')
+  selectedProductId.value = routeProductId || 'ALL'
 })
 
 watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
 </script>
 
 <template>
-  <div class="pa-4 animate-fade-in d-flex flex-column overflow-hidden" style="height: calc(100vh - 20px);">
+  <v-container fluid class="pa-4 animate-fade-in font-body"
+    style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
+    <!-- Breadcrumbs -->
+    <AdminBreadcrumbs :items="[
+      { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
+      { title: 'Biến thể', disabled: false, to: '/san-pham' },
+      { title: selectedProductSummary.title, disabled: true }
+    ]" />
+
+    <div class="mb-4"></div>
+
     <!-- Header -->
-    <div class="flex-none mb-3">
-      <div class="d-flex justify-space-between align-center">
-        <div class="d-flex align-center gap-2">
-          <v-btn icon variant="text" color="slate-600" @click="router.push({ name: 'SanPham' })" class="rounded-xl"
-            size="small">
-            <ArrowLeftIcon size="18" />
-          </v-btn>
-          <h1 class="text-h5 font-weight-bold text-slate-900 mb-0">Quản Lý Biến Thể</h1>
-        </div>
-        <div class="rounded-lg border border-slate-200 bg-white px-3 py-1 shadow-sm d-flex align-center bg-slate-50">
-          <div class="d-flex align-center gap-2">
-            <v-avatar color="primary" variant="tonal" size="28" rounded="lg">
-              <PackageIcon size="14" />
-            </v-avatar>
-            <div>
-              <p class="text-overline font-weight-bold text-slate-400 mb-0" style="font-size: 8px !important;">Sản phẩm
-                đang chọn</p>
-              <h2 class="text-caption font-weight-bold text-primary mb-0">{{ selectedProductSummary.title }}</h2>
-            </div>
+    <div class="header-section mb-6">
+      <div class="d-flex align-center gap-3">
+        <v-btn v-if="selectedProductId && selectedProductId !== 'ALL'" icon variant="flat"
+          @click="router.push({ name: 'SanPham' })" class="btn-back-header">
+          <ArrowLeftIcon size="20" />
+        </v-btn>
+
+        <div v-if="selectedProductId && selectedProductId !== 'ALL'"
+          class="premium-card px-4 py-2 bg-slate-50 d-flex align-center shadow-none border">
+          <v-avatar color="primary" variant="flat" size="32" rounded="lg" class="mr-3">
+            <PackageIcon size="18" color="white" />
+          </v-avatar>
+          <div>
+            <p class="text-overline font-black text-slate-400 mb-0" style="line-height: 1;">Mã Sản Phẩm</p>
+            <h2 class="text-body-2 font-black text-dark mb-0">{{ selectedProductSummary.maSanPham }}</h2>
           </div>
         </div>
       </div>
@@ -263,92 +304,106 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
 
     <!-- Filter -->
     <div class="flex-none mb-4">
-      <AdminFilter title="Bộ lọc biến thể" @refresh="resetFilters" :loading="loading" class="compact-filter-card">
-        <v-col cols="12" md="2" class="py-1">
-          <div class="filter-label">Sản phẩm</div>
-          <v-autocomplete v-model="selectedProductId" :items="productOptions" item-title="tenSanPham" item-value="id"
-            variant="outlined" density="compact" hide-details class="compact-input"></v-autocomplete>
+      <AdminFilter title="Bộ lọc nâng cao" @refresh="resetFilters" :loading="loading">
+        <v-col cols="12" md="2">
+          <div class="filter-field-label">Sản phẩm</div>
+          <v-autocomplete v-model="selectedProductId"
+            :items="[{ tenSanPham: 'Tất cả sản phẩm', id: 'ALL' }, ...productOptions]" item-title="tenSanPham"
+            item-value="id" variant="outlined" density="compact" hide-details></v-autocomplete>
         </v-col>
-        <v-col cols="12" md="3" class="py-1">
-          <div class="filter-label">Tìm kiếm nhanh</div>
+        <v-col cols="12" md="3">
+          <div class="filter-field-label">Tìm kiếm nhanh</div>
           <v-text-field v-model="filters.keyword" placeholder="Mã SKU, màu, size..." prepend-inner-icon="mdi-magnify"
-            variant="outlined" density="compact" hide-details clearable class="compact-input"></v-text-field>
+            variant="outlined" density="compact" hide-details clearable></v-text-field>
         </v-col>
-        <v-col cols="12" md="2" class="py-1">
-          <div class="filter-label">Màu sắc</div>
+        <v-col cols="12" md="2">
+          <div class="filter-field-label">Màu sắc</div>
           <v-select v-model="filters.mauSacId"
-            :items="[{ title: 'Tất cả', value: '' }, ...formOptions.mauSacs.map(m => ({ title: m.ten, value: m.id }))]"
-            variant="outlined" density="compact" hide-details class="compact-input"></v-select>
+            :items="[{ title: 'Tất cả mầu', value: '' }, ...formOptions.mauSacs.map(m => ({ title: m.ten, value: m.id }))]"
+            variant="outlined" density="compact" hide-details></v-select>
         </v-col>
-        <v-col cols="12" md="2" class="py-1">
-          <div class="filter-label">Kích thước</div>
+        <v-col cols="12" md="2">
+          <div class="filter-field-label">Kích thước</div>
           <v-select v-model="filters.kichThuocId"
-            :items="[{ title: 'Tất cả', value: '' }, ...formOptions.kichThuocs.map(k => ({ title: k.ten, value: k.id }))]"
-            variant="outlined" density="compact" hide-details class="compact-input"></v-select>
+            :items="[{ title: 'Tất cả size', value: '' }, ...formOptions.kichThuocs.map(k => ({ title: k.ten, value: k.id }))]"
+            variant="outlined" density="compact" hide-details></v-select>
         </v-col>
-        <v-col cols="12" md="2" class="py-1">
-          <div class="filter-label">Trạng thái</div>
+        <v-col cols="12" md="3">
+          <div class="filter-field-label">Trạng thái kinh doanh</div>
           <v-select v-model="filters.trangThai"
-            :items="[{ title: 'Tất cả', value: '' }, ...formOptions.trangThais.map(s => ({ title: getStatusLabel(s), value: s }))]"
-            variant="outlined" density="compact" hide-details class="compact-input"></v-select>
+            :items="[{ title: 'Tất cả trạng thái', value: '' }, ...formOptions.trangThais.map(s => ({ title: getStatusLabel(s), value: s }))]"
+            variant="outlined" density="compact" hide-details></v-select>
         </v-col>
       </AdminFilter>
     </div>
 
+    <!-- Table content -->
     <div class="flex-grow-1 min-h-0">
-      <AdminTable title="Danh sách biến thể" :headers="[
-        { text: 'STT', align: 'center', width: '50px' },
-        { text: 'Ảnh', align: 'center', width: '70px' },
-        { text: 'Mã SKU', align: 'center', width: '150px' },
-        { text: 'Màu sắc', align: 'center', width: '100px' },
-        { text: 'Kích thước', align: 'center', width: '80px' },
-        { text: 'Giá bán', align: 'center', width: '130px' },
-        { text: 'Trạng thái', align: 'center', width: '120px' },
-        { text: 'Thao tác', align: 'center', width: '130px' }
-      ]" :items="paginatedVariants" :loading="loading" :showAddButton="!!selectedProductId"
-        addButtonText="Thêm biến thể" @add="openCreateVariantModal" class="h-100">
+      <AdminTable title="Danh mục biến thể" :headers="[
+        { text: 'STT', align: 'center', width: '60px' },
+        { text: 'Hình ảnh', align: 'center', width: '80px' },
+        { text: 'Mã SKU', align: 'left', width: '150px' },
+        { text: 'Màu sắc', align: 'center', width: '120px' },
+        { text: 'Kích thước', align: 'center', width: '100px' },
+        { text: 'Giá bán niêm yết', align: 'center', width: '150px' },
+        { text: 'Trạng thái', align: 'center', width: '140px' },
+        { text: 'Thao tác', align: 'center', width: '140px' }
+      ]" :items="paginatedVariants" :loading="loading"
+        :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'" addButtonText="Thêm biến thể"
+        @add="openCreateVariantModal" class="h-100">
+
         <template #top>
-          <div class="px-4 py-1 bg-slate-50 border-b d-flex align-center justify-space-between">
-            <span class="text-caption font-weight-bold text-slate-500">Hiển thị {{ paginatedVariants.length }} kết
-              quả</span>
-            <v-btn size="x-small" variant="text" color="primary" @click="fetchSelectedProduct(selectedProductId)"
-              :loading="loading">
-              <RefreshIcon size="12" class="mr-1" /> Tải lại
+          <div class="px-6 py-2 bg-slate-50 border-b d-flex align-center justify-space-between">
+            <span class="text-caption font-bold text-slate-500">Tìm thấy {{ filteredVariants.length }} biến thể tương
+              ứng</span>
+            <v-btn size="x-small" variant="text" color="primary" class="font-bold"
+              @click="fetchSelectedProduct(selectedProductId)" :loading="loading">
+              <RefreshIcon size="14" class="mr-1" /> Đồng bộ dữ liệu
             </v-btn>
           </div>
         </template>
 
         <template #row="{ item, index }">
           <tr class="data-row">
-            <td class="data-cell text-center">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
-            <td class="data-cell text-center">
-              <v-avatar rounded="lg" size="36" class="border bg-slate-50 shadow-sm"><v-img
-                  :src="getVariantThumbnail(item)" cover></v-img></v-avatar>
+            <td class="data-cell text-center text-slate-400">{{ (pagination.page - 1) * pagination.size + index + 1 }}
             </td>
-            <td class="data-cell text-center font-weight-bold text-slate-900">{{ item.maChiTietSanPham }}</td>
-            <td class="data-cell text-center"><v-chip size="x-small" variant="tonal" class="font-weight-bold">{{
-              item.tenMauSac }}</v-chip></td>
-            <td class="data-cell text-center"><v-chip size="x-small" variant="flat" color="slate-100"
-                class="font-weight-black">{{ item.tenKichThuoc }}</v-chip></td>
-            <td class="data-cell text-center font-weight-black text-primary">{{ formatCurrency(item.giaBan) }}</td>
             <td class="data-cell text-center">
-              <v-chip size="x-small" :color="isActiveStatus(item.trangThai) ? 'success' : 'warning'" variant="tonal"
-                class="font-weight-bold">
+              <v-avatar rounded="lg" size="44" class="border bg-slate-50 shadow-sm avatar-hover">
+                <v-img :src="getVariantThumbnail(item)" cover></v-img>
+              </v-avatar>
+            </td>
+            <td class="data-cell text-left font-black text-dark"><span class="mono-font">{{ item.maChiTietSanPham
+            }}</span></td>
+            <td class="data-cell text-center">
+              <v-chip size="small" variant="flat" color="slate-700" class="font-weight-black text-white status-chip">{{
+                item.tenMauSac }}</v-chip>
+            </td>
+            <td class="data-cell text-center">
+              <v-chip size="small" variant="flat" color="blue-grey-darken-2"
+                class="font-weight-black text-white status-chip">{{ item.tenKichThuoc }}</v-chip>
+            </td>
+            <td class="data-cell font-black text-primary">{{ formatCurrency(item.giaBan) }}</td>
+            <td class="data-cell">
+              <v-chip size="small" :color="isActiveStatus(item.trangThai) ? 'success' : 'warning'" variant="flat"
+                class="status-chip font-weight-black text-white">
                 {{ getStatusLabel(item.trangThai) }}
               </v-chip>
             </td>
-            <td class="data-cell text-center">
+            <td class="data-cell">
               <div class="d-flex align-center justify-center action-controls">
-                <v-btn icon size="28" variant="text" color="slate-700"
-                  @click="variantModal.variant = item; variantModal.mode = 'edit'; variantModal.open = true"
-                  class="action-icon-btn">
-                  <PencilIcon size="15" />
-                  <v-tooltip activator="parent" location="top">Sửa</v-tooltip>
+                <v-btn variant="text" class="action-icon-btn"
+                  @click="variantModal.variant = item; variantModal.mode = 'edit'; variantModal.open = true">
+                  <PencilIcon />
+                  <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                 </v-btn>
-                <div class="switch-wrapper d-flex align-center">
-                  <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details density="compact"
-                    class="action-switch-compact ms-0" @click.prevent.stop="handleStatusChange(item)" />
-                  <v-tooltip activator="parent" location="top">Trạng thái</v-tooltip>
+                <v-btn variant="text" class="action-icon-btn" @click="openImageModal(item)">
+                  <PhotoIcon />
+                  <v-tooltip activator="parent" location="top">Thư viện ảnh</v-tooltip>
+                </v-btn>
+                <div class="switch-wrapper">
+                  <v-switch :model-value="isActiveStatus(item.trangThai)" color="#000" hide-details density="compact"
+                    class="tight-switch action-switch" @click.prevent.stop="handleStatusChange(item)" />
+                  <v-tooltip activator="parent" location="top">Bật/Tắt kinh doanh</v-tooltip>
                 </div>
               </div>
             </td>
@@ -356,7 +411,8 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
         </template>
 
         <template #pagination>
-          <AdminPagination v-model="pagination.page" :page-size="pagination.size" :total-pages="totalPages"
+          <AdminPagination v-model="pagination.page" :page-size="pagination.size"
+            @update:pageSize="pagination.size = $event" :total-pages="totalPages"
             :total-elements="filteredVariants.length" :current-size="paginatedVariants.length" />
         </template>
       </AdminTable>
@@ -367,15 +423,16 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
       :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
 
     <VariantFormModal :open="variantModal.open" :mode="variantModal.mode" :variant="variantModal.variant"
-      :options="formOptions" :submitting="variantModal.submitting" @close="variantModal.open = false"
-      @submit="handleVariantSubmit" />
+      :options="formOptions" :submitting="variantModal.submitting" :productCode="selectedProductSummary.maSanPham"
+      @close="variantModal.open = false" @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
     <VariantManagementDrawer v-model:show="variantDrawer.open" :variant="variantDrawer.variant"
-      @saved="fetchSelectedProduct(selectedProductId)" />
+      :initialTab="variantDrawer.initialTab" @saved="fetchSelectedProduct(selectedProductId)" />
     <QrScanner v-model:show="showQrScanner" @scan="handleQrScan" />
-  </div>
+  </v-container>
 </template>
 
 <style scoped>
+/* Scoped styles removed in favor of global _admin-common.scss */
 .flex-none {
   flex: none;
 }
@@ -386,89 +443,5 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
 
 .min-h-0 {
   min-height: 0;
-}
-
-.filter-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: #64748b;
-  margin-bottom: 2px;
-}
-
-:deep(.compact-input .v-field__input) {
-  min-height: 36px !important;
-  padding: 0 12px !important;
-  font-size: 13px;
-}
-
-:deep(.compact-input .v-field) {
-  border-radius: 8px !important;
-}
-
-:deep(.data-cell) {
-  padding: 10px 8px !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  text-align: center !important;
-}
-
-:deep(.header-cell) {
-  padding: 12px 8px !important;
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  text-align: center !important;
-}
-
-.action-switch-compact {
-  display: inline-flex;
-  margin: 0 !important;
-}
-
-:deep(.v-selection-control__wrapper) {
-  width: 32px !important;
-  height: 18px !important;
-  margin: 0 !important;
-}
-
-:deep(.action-switch-compact .v-switch__track) {
-  background: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
-  opacity: 1 !important;
-  height: 18px !important;
-  width: 32px !important;
-  border-radius: 99px !important;
-}
-
-:deep(.action-switch-compact .v-selection-control--dirty .v-switch__track) {
-  background: #d9e6fb !important;
-  border-color: #d9e6fb !important;
-}
-
-:deep(.action-switch-compact .v-switch__thumb) {
-  background: #94a3b8 !important;
-  width: 14px !important;
-  height: 14px !important;
-  box-shadow: none !important;
-}
-
-:deep(.action-switch-compact .v-selection-control--dirty .v-switch__thumb) {
-  background: #1e3a8a !important;
-}
-
-.action-controls {
-  gap: 8px;
-}
-
-:deep(.action-icon-btn) {
-  background: transparent !important;
-  min-width: 28px !important;
-  width: 28px !important;
-  height: 28px !important;
-  padding: 0 !important;
-}
-
-:deep(.action-icon-btn:hover) {
-  background-color: #f1f5f9 !important;
-  transform: translateY(-2px);
 }
 </style>

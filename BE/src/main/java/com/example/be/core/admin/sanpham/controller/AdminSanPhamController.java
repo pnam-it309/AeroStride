@@ -32,7 +32,7 @@ public class AdminSanPhamController {
 
     private final AdminSanPhamService adminSanPhamService;
 
-    @GetMapping("/form-options")
+    @GetMapping(RoutesConstant.FORM_OPTIONS)
     public ResponseEntity<ApiResponse<ProductFormOptionsResponse>> getFormOptions() {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getFormOptions(), "Lay du lieu form san pham thanh cong"));
     }
@@ -47,12 +47,12 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getProducts(request), "Lay danh sach san pham thanh cong"));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(RoutesConstant.ID)
     public ResponseEntity<ApiResponse<ProductDetailResponse>> getProductDetail(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getProductDetail(id), "Lay chi tiet san pham thanh cong"));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(RoutesConstant.ID)
     public ResponseEntity<ApiResponse<ProductDetailResponse>> updateProduct(
             @PathVariable String id,
             @Valid @RequestBody UpdateProductRequest request
@@ -60,13 +60,13 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.updateProduct(id, request), "Cap nhat san pham thanh cong"));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(RoutesConstant.ID)
     public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable String id) {
         adminSanPhamService.deleteProduct(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Xoa mem san pham thanh cong"));
     }
 
-    @PutMapping("/{id}/status")
+    @PutMapping(RoutesConstant.STATUS_ALT)
     public ResponseEntity<ApiResponse<Void>> updateStatus(
             @PathVariable String id,
             @RequestBody Map<String, String> body
@@ -77,12 +77,17 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(null, "Cap nhat trang thai thanh cong"));
     }
 
-    @GetMapping("/{id}/variants")
+    @GetMapping(RoutesConstant.VARIANTS_SUB)
     public ResponseEntity<ApiResponse<List<ProductVariantResponse>>> getVariantsByProductId(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getVariantsByProductId(id), "Lay danh sach bien the thanh cong"));
     }
 
-    @PostMapping("/{id}/variants")
+    @GetMapping(RoutesConstant.VARIANTS)
+    public ResponseEntity<ApiResponse<List<ProductVariantResponse>>> getAllVariants() {
+        return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getAllVariants(), "Lay tat ca danh sach bien the thanh cong"));
+    }
+
+    @PostMapping(RoutesConstant.VARIANTS_SUB)
     public ResponseEntity<ApiResponse<ProductVariantResponse>> addVariant(
             @PathVariable String id,
             @Valid @RequestBody ProductVariantRequest request
@@ -90,7 +95,7 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.addVariant(id, request), "Them bien the thanh cong"));
     }
 
-    @PutMapping("/variants/{variantId}")
+    @PutMapping(RoutesConstant.VARIANT_ID)
     public ResponseEntity<ApiResponse<ProductVariantResponse>> updateVariant(
             @PathVariable String variantId,
             @Valid @RequestBody ProductVariantRequest request
@@ -98,13 +103,13 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.updateVariant(variantId, request), "Cap nhat bien the thanh cong"));
     }
 
-    @DeleteMapping("/variants/{variantId}")
+    @DeleteMapping(RoutesConstant.VARIANT_ID)
     public ResponseEntity<ApiResponse<Void>> deleteVariant(@PathVariable String variantId) {
         adminSanPhamService.deleteVariant(variantId);
         return ResponseEntity.ok(ApiResponse.success(null, "Xoa mem bien the thanh cong"));
     }
 
-    @PostMapping("/variants/{variantId}/images")
+    @PostMapping(RoutesConstant.VARIANT_IMAGES)
     public ResponseEntity<ApiResponse<ProductVariantImageResponse>> addVariantImage(
             @PathVariable String variantId,
             @Valid @RequestBody ProductVariantImageRequest request
@@ -112,7 +117,7 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.addVariantImage(variantId, request), "Them anh bien the thanh cong"));
     }
 
-    @PutMapping("/variant-images/{imageId}")
+    @PutMapping(RoutesConstant.VARIANT_IMAGE_ID)
     public ResponseEntity<ApiResponse<ProductVariantImageResponse>> updateVariantImage(
             @PathVariable String imageId,
             @Valid @RequestBody UpdateProductVariantImageRequest request
@@ -120,13 +125,13 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.updateVariantImage(imageId, request), "Cap nhat anh bien the thanh cong"));
     }
 
-    @DeleteMapping("/variant-images/{imageId}")
+    @DeleteMapping(RoutesConstant.VARIANT_IMAGE_ID)
     public ResponseEntity<ApiResponse<Void>> deleteVariantImage(@PathVariable String imageId) {
         adminSanPhamService.deleteVariantImage(imageId);
         return ResponseEntity.ok(ApiResponse.success(null, "Xoa mem anh bien the thanh cong"));
     }
 
-    @GetMapping("/export-excel")
+    @GetMapping(RoutesConstant.EXPORT_EXCEL)
     public ResponseEntity<byte[]> exportExcel() {
         byte[] excelContent = adminSanPhamService.exportExcel();
         return ResponseEntity.ok()
@@ -135,7 +140,7 @@ public class AdminSanPhamController {
                 .body(excelContent);
     }
 
-    @GetMapping("/download-template")
+    @GetMapping(RoutesConstant.DOWNLOAD_TEMPLATE)
     public ResponseEntity<byte[]> downloadTemplate() {
         byte[] data = adminSanPhamService.downloadTemplate();
         return ResponseEntity.ok()
@@ -144,7 +149,7 @@ public class AdminSanPhamController {
                 .body(data);
     }
 
-    @PostMapping("/import-excel")
+    @PostMapping(RoutesConstant.IMPORT_EXCEL)
     public ResponseEntity<String> importExcel(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
         adminSanPhamService.importExcel(file);
         return ResponseEntity.ok("Import thành công");

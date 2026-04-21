@@ -34,18 +34,18 @@ public class AdminBanHangController {
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.createHoaDon()));
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(RoutesConstant.ID)
     public ResponseEntity<ApiResponse<Void>> deleteHoaDon(@PathVariable String id) {
         adminBanHangService.deleteHoaDon(id);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @PostMapping("/{id}/add-product")
+    @PostMapping(RoutesConstant.ADD_PRODUCT)
     public ResponseEntity<ApiResponse<AdminBanHangHoaDonResponse>> addProduct(@PathVariable String id, @RequestBody AdminBanHangHoaDonChiTietRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.addSanPham(id, request)));
     }
 
-    @PutMapping("/{id}/update-quantity/{idHdct}")
+    @PutMapping(RoutesConstant.UPDATE_QUANTITY)
     public ResponseEntity<ApiResponse<AdminBanHangHoaDonResponse>> updateQuantity(
             @PathVariable String id,
             @PathVariable String idHdct,
@@ -53,39 +53,39 @@ public class AdminBanHangController {
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.updateSoLuong(id, idHdct, soLuong)));
     }
 
-    @DeleteMapping("/{id}/remove-product/{idHdct}")
+    @DeleteMapping(RoutesConstant.REMOVE_PRODUCT)
     public ResponseEntity<ApiResponse<Void>> removeProduct(@PathVariable String id, @PathVariable String idHdct) {
         adminBanHangService.removeHoaDonChiTiet(id, idHdct);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @PutMapping("/{id}/khach-hang")
+    @PutMapping(RoutesConstant.KHACH_HANG_SUB)
     public ResponseEntity<ApiResponse<AdminBanHangHoaDonResponse>> setKhachHang(@PathVariable String id, @RequestParam(required = false) String idKhachHang) {
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.setKhachHang(id, idKhachHang)));
     }
 
-    @PutMapping("/{id}/voucher")
+    @PutMapping(RoutesConstant.VOUCHER_SUB)
     public ResponseEntity<ApiResponse<AdminBanHangHoaDonResponse>> setVoucher(@PathVariable String id, @RequestParam(required = false) String idVoucher) {
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.setPhieuGiamGia(id, idVoucher)));
     }
 
-    @PostMapping("/{id}/checkout")
+    @PostMapping(RoutesConstant.CHECKOUT)
     public ResponseEntity<ApiResponse<Void>> checkout(@PathVariable String id, @RequestBody AdminBanHangCheckoutRequest request) {
         adminBanHangService.checkout(id, request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @GetMapping("/search-san-pham")
+    @GetMapping(RoutesConstant.SEARCH_SAN_PHAM)
     public ResponseEntity<ApiResponse<List<BanHangSanPhamResponse>>> searchSanPham(@RequestParam(defaultValue = "") String keyword) {
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.searchSanPham(keyword)));
     }
 
-    @GetMapping("/search-khach-hang")
+    @GetMapping(RoutesConstant.SEARCH_KHACH_HANG)
     public ResponseEntity<ApiResponse<List<AdminBanHangKhachHangResponse>>> searchKhachHang(@RequestParam(defaultValue = "") String keyword) {
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.searchKhachHang(keyword)));
     }
 
-    @GetMapping("/vouchers")
+    @GetMapping(RoutesConstant.VOUCHERS)
     public ResponseEntity<ApiResponse<List<PhieuGiamGia>>> getVouchers(@RequestParam BigDecimal tongTien) {
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.getVouchers(tongTien)));
     }

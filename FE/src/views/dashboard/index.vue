@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
+import { PATH } from '@/router/routePaths';
 
 const router = useRouter();
 const loading = ref(false);
@@ -129,7 +130,7 @@ onMounted(() => {
                             size="large" 
                             color="primary" 
                             variant="tonal"
-                            @click="navigateToModule('/main/ban-hang')"
+                            @click="navigateToModule(PATH.BAN_HANG)"
                             class="pa-4"
                         >
                             <v-icon start>mdi-point-of-sale</v-icon>
@@ -142,7 +143,7 @@ onMounted(() => {
                             size="large" 
                             color="success" 
                             variant="tonal"
-                            @click="navigateToModule('/main/san-pham')"
+                            @click="navigateToModule(PATH.SAN_PHAM)"
                             class="pa-4"
                         >
                             <v-icon start>mdi-package-variant</v-icon>
@@ -155,7 +156,7 @@ onMounted(() => {
                             size="large" 
                             color="info" 
                             variant="tonal"
-                            @click="navigateToModule('/main/khach-hang')"
+                            @click="navigateToModule(PATH.KHACH_HANG)"
                             class="pa-4"
                         >
                             <v-icon start>mdi-account-group</v-icon>
@@ -168,7 +169,7 @@ onMounted(() => {
                             size="large" 
                             color="warning" 
                             variant="tonal"
-                            @click="navigateToModule('/main/hoa-don')"
+                            @click="navigateToModule(PATH.HOA_DON)"
                             class="pa-4"
                         >
                             <v-icon start>mdi-receipt</v-icon>
@@ -187,7 +188,7 @@ onMounted(() => {
                     <v-btn 
                         variant="tonal" 
                         color="primary"
-                        @click="navigateToModule('/main/hoa-don')"
+                        @click="navigateToModule(PATH.HOA_DON)"
                     >
                         Xem tất cả
                     </v-btn>

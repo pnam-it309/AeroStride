@@ -4,11 +4,15 @@ import com.example.be.core.admin.phieugiamgia.model.request.AdminPhieuGiamGiaReq
 import com.example.be.core.admin.phieugiamgia.service.AdminPhieuGiamGiaService;
 import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.infrastructure.constants.RoutesConstant;
+import com.example.be.infrastructure.constants.TrangThai;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_PHIEU_GIAM_GIA)
@@ -18,52 +22,43 @@ public class AdminPhieuGiamGiaController {
 
     private final AdminPhieuGiamGiaService service;
 
-    @GetMapping("/hien-thi")
-    public ResponseEntity<?> hienThi() {
-        return ResponseEntity.ok(ApiResponse.success(service.hienThi()));
+    @GetMapping({RoutesConstant.HIEN_THI, RoutesConstant.PHAN_TRANG}) // Compatibility Aliases
+    public ResponseEntity<ApiResponse<?>> search(AdminPhieuGiamGiaRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(service.phanTrang(request)));
     }
 
-    @GetMapping("/detail/{id}")
-    public ResponseEntity<?> detail(@PathVariable String id) {
+    @GetMapping(RoutesConstant.DETAIL) // Compatibility Alias
+    public ResponseEntity<ApiResponse<?>> detail(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success(service.detail(id)));
     }
 
-    @GetMapping("/phan-trang")
-    public ResponseEntity<?> phanTrang(
-            @RequestParam(value = "pageNo", defaultValue = "0", required = false) Integer pageNo,
-            @RequestParam(value = "pageSize", defaultValue = "5", required = false) Integer pageSize,
-            @RequestParam(value = "keyword", defaultValue = "", required = false) String keyword
-    ) {
-        return ResponseEntity.ok(ApiResponse.success(service.phanTrang(pageNo, pageSize, keyword)));
-    }
-
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> delete(@PathVariable String id) {
-        service.delete(id);
-        return ResponseEntity.ok(ApiResponse.success("Xóa thành công!"));
-    }
-
-    @PostMapping("/add")
-    public ResponseEntity<?> add(@RequestBody AdminPhieuGiamGiaRequest req) {
+    @PostMapping(RoutesConstant.ADD) // Compatibility Alias
+    public ResponseEntity<ApiResponse<Void>> add(@RequestBody AdminPhieuGiamGiaRequest req) {
         service.add(req);
-        return ResponseEntity.ok(ApiResponse.success("Thêm thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Thêm thành công!"));
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<?> update(@RequestBody AdminPhieuGiamGiaRequest req,
-                                    @PathVariable String id) {
+    @PutMapping(RoutesConstant.UPDATE) // Compatibility Alias
+    public ResponseEntity<ApiResponse<Void>> update(@RequestBody AdminPhieuGiamGiaRequest req, @PathVariable String id) {
         service.update(req, id);
-        return ResponseEntity.ok(ApiResponse.success("Cập nhật thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật thành công!"));
     }
 
-    @PutMapping("/status/{id}")
-    public ResponseEntity<?> updateStatus(@PathVariable String id, @RequestBody java.util.Map<String, String> body) {
-        com.example.be.infrastructure.constants.TrangThai status = com.example.be.infrastructure.constants.TrangThai.valueOf(body.get("status"));
+    @DeleteMapping(RoutesConstant.DELETE) // Compatibility Alias
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
+        service.delete(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Xóa thành công!"));
+    }
+
+    @PatchMapping(RoutesConstant.STATUS_ALT)
+    @PutMapping(RoutesConstant.STATUS) // Compatibility Alias (Backward compatibility for PUT)
+    public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id, @RequestBody Map<String, String> body) {
+        TrangThai status = TrangThai.valueOf(body.get("status"));
         service.updateStatus(id, status);
-        return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật trạng thái thành công!"));
     }
 
-    @GetMapping("/export-excel")
+    @GetMapping(RoutesConstant.EXPORT_EXCEL)
     public ResponseEntity<byte[]> exportExcel() {
         byte[] excelContent = service.exportExcel();
         return ResponseEntity.ok()
@@ -71,7 +66,8 @@ public class AdminPhieuGiamGiaController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(excelContent);
     }
-    @GetMapping("/download-template")
+
+    @GetMapping(RoutesConstant.DOWNLOAD_TEMPLATE)
     public ResponseEntity<byte[]> downloadTemplate() {
         byte[] data = service.downloadTemplate();
         return ResponseEntity.ok()
@@ -80,9 +76,9 @@ public class AdminPhieuGiamGiaController {
                 .body(data);
     }
 
-    @PostMapping("/import-excel")
-    public ResponseEntity<?> importExcel(@RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+    @PostMapping(RoutesConstant.IMPORT_EXCEL)
+    public ResponseEntity<ApiResponse<Void>> importExcel(@RequestParam("file") MultipartFile file) {
         service.importExcel(file);
-        return ResponseEntity.ok(ApiResponse.success("Import thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Import thành công!"));
     }
 }

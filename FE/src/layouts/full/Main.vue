@@ -14,7 +14,7 @@ import ProfileDD from './vertical-header/ProfileDD.vue';
 import { Menu2Icon } from 'vue-tabler-icons';
 
 const uiStore = useUIStore();
-const { sidebarCollapsed } = storeToRefs(uiStore);
+const { sidebarCollapsed, breadcrumbs } = storeToRefs(uiStore);
 const { toggleSidebar } = uiStore;
 
 const sidebarMenu = shallowRef(sidebarItems);
@@ -69,9 +69,15 @@ const sidebarMenu = shallowRef(sidebarItems);
         <div class="maxWidth mx-auto w-100 d-flex align-center px-1 py-0" style="height: 56px">
             <div class="d-flex align-center justify-space-between w-100">
                 <div class="d-flex align-center">
-                    <v-btn class="text-muted mr-1" @click="toggleSidebar" icon variant="flat">
+                    <v-btn class="mr-3 header-toggle-btn" @click="toggleSidebar" icon variant="text" color="slate-600">
                         <Menu2Icon size="22" stroke-width="2" />
                     </v-btn>
+                    
+                    <v-breadcrumbs v-if="breadcrumbs.length" :items="breadcrumbs" class="pa-0 breadcrumbs-header">
+                        <template v-slot:divider>
+                            <v-icon size="small" color="grey-lighten-1">mdi-chevron-right</v-icon>
+                        </template>
+                    </v-breadcrumbs>
                 </div>
                 <div class="d-flex align-center">
                     <NotificationDD />
@@ -90,6 +96,31 @@ const sidebarMenu = shallowRef(sidebarItems);
 
 :deep(.v-navigation-drawer) {
     overflow: hidden !important;
+}
+
+.header-toggle-btn {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.header-toggle-btn:hover {
+    color: #475569 !important;
+    background: transparent !important;
+    transform: rotate(90deg) scale(1.1);
+}
+
+.header-toggle-btn :deep(.v-btn__overlay),
+.header-toggle-btn :deep(.v-btn__underlay),
+.header-toggle-btn :deep(.v-ripple__container) {
+    display: none !important;
+}
+
+.header-toggle-btn:focus, 
+.header-toggle-btn:active, 
+.header-toggle-btn:focus-visible {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
 
 .sidebar-logo-wrap {
@@ -168,5 +199,26 @@ const sidebarMenu = shallowRef(sidebarItems);
 /* Animation cho text menu khi rail đổi trạng thái */
 :deep(.v-list-item-title) {
     transition: opacity 0.3s ease;
+}
+/* Breadcrumbs in Header */
+:deep(.breadcrumbs-header) {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+:deep(.breadcrumbs-header .v-breadcrumbs-item) {
+    padding: 0;
+    color: #475569 !important; /* Slate 600 */
+    opacity: 1 !important;
+}
+
+:deep(.breadcrumbs-header .v-breadcrumbs-item--disabled) {
+    opacity: 1 !important;
+    color: #0f172a !important; /* Slate 900 for current page */
+}
+
+:deep(.breadcrumbs-header .v-breadcrumbs-divider) {
+    padding: 0 4px;
+    color: #94a3b8;
 }
 </style>

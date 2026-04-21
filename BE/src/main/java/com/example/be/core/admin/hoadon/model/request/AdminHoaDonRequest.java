@@ -1,11 +1,13 @@
 package com.example.be.core.admin.hoadon.model.request;
 
+import com.example.be.core.common.dto.PageRequest;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class AdminHoaDonRequest {
+public class AdminHoaDonRequest extends PageRequest {
+    
     private String search;        // Tìm kiếm nhanh (thường là Mã hóa đơn)
 
     private String tenKhachHang;  // Lọc riêng theo tên khách hàng
@@ -26,9 +28,5 @@ public class AdminHoaDonRequest {
 
     private Long denNgayLong;
 
-    private String sortDirection = "DESC"; // Mặc định mới nhất
-
-    private Integer page = 0;     // Mặc định trang đầu tiên
-
-    private Integer size = 10;    // Mặc định 10 bản ghi/trang
+    // fields like page, size, sortDirection, sortBy are now inherited from PageRequest
 }

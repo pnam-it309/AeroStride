@@ -33,4 +33,9 @@ import RegisterForm from '@/components/auth/RegisterForm.vue';
                 </v-col>
             </v-row>
         </v-container>
-    </div></template>
+    </div>
+</template>
+
+<style scoped>
+@import '@/scss/pages/_auth-layout.scss';
+</style>

@@ -1,90 +1,74 @@
 package com.example.be.core.admin.nhanvien.controller;
 
-import com.example.be.core.admin.khachhang.model.request.AdminKhachHangRequest;
 import com.example.be.core.admin.nhanvien.model.request.AdminNhanVienRequest;
-import com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse;
 import com.example.be.core.admin.nhanvien.service.AdminNhanVienService;
 import com.example.be.core.common.dto.ApiResponse;
-import com.example.be.core.common.dto.PageRequest;
 import com.example.be.infrastructure.constants.RoutesConstant;
 import com.example.be.infrastructure.constants.TrangThai;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_NHAN_VIEN)
 @RequiredArgsConstructor
+@CrossOrigin("*")
 public class AdminNhanVienController {
-    @Autowired
-    private AdminNhanVienService adminNhanVienService;
 
-    @GetMapping("/hien-thi")
-    public List<AdminNhanVienResponse> hienThi() {
-        return adminNhanVienService.hienThi();
+    private final AdminNhanVienService adminNhanVienService;
+
+    @GetMapping({RoutesConstant.HIEN_THI, RoutesConstant.PHAN_TRANG, RoutesConstant.TIM_KIEM}) // Aliases for FE compatibility
+    public ResponseEntity<ApiResponse<?>> search(AdminNhanVienRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.search(request)));
     }
 
-    @GetMapping("/phan-trang")
-    public ResponseEntity<?> phanTrang(AdminNhanVienRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.phanTrang(request)));
-    }
-    @GetMapping("/tim-kiem")
-    public ResponseEntity<?> timKiem(AdminNhanVienRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.timKiem(request)));
-    }
-    @GetMapping("/filter")
-    public ResponseEntity<?> filter(AdminNhanVienRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.locNV(request)));
-    }
-    @GetMapping("/detail/{id}")
-    public ResponseEntity<?> detail(@PathVariable String id) {
+    @GetMapping(RoutesConstant.DETAIL) // Compatibility Alias
+    public ResponseEntity<ApiResponse<?>> detail(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.detail(id)));
     }
-    @PostMapping("/add")
-    public ResponseEntity<?> add(@RequestBody AdminNhanVienRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.add(request)));
-    }
-    @PutMapping("/update/{id}")
-    public ResponseEntity<?> update(@PathVariable String id,
-                                    @RequestBody AdminNhanVienRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.update(id,request)));
-    }
-    @PatchMapping("/{id}/trang-thai")
-    public ResponseEntity<?> doiTrangThai(@PathVariable String id,
-                                          @RequestParam TrangThai trangThai){
-        adminNhanVienService.doiTrangThai(id,trangThai);
-        return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công!"));
+
+    @PostMapping(RoutesConstant.ADD) // Compatibility Alias
+    public ResponseEntity<ApiResponse<Void>> add(@RequestBody AdminNhanVienRequest request) {
+        adminNhanVienService.add(request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Thêm nhân viên thành công!"));
     }
 
-    @PutMapping("/status/{id}")
-    public ResponseEntity<?> updateStatus(@PathVariable String id, @RequestParam TrangThai status) {
-        adminNhanVienService.doiTrangThai(id, status);
-        return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công!"));
+    @PutMapping(RoutesConstant.UPDATE) // Compatibility Alias
+    public ResponseEntity<ApiResponse<Void>> update(@PathVariable String id, @RequestBody AdminNhanVienRequest request) {
+        adminNhanVienService.update(id, request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật nhân viên thành công!"));
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> delete(@PathVariable String id) {
+    @DeleteMapping(RoutesConstant.DELETE) // Compatibility Alias
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         adminNhanVienService.delete(id);
-        return ResponseEntity.ok(ApiResponse.success("Xóa thành công!"));
-    }
-    @GetMapping("/export-excel")
-    public ResponseEntity<byte[]> exportExcel() {
-        byte[] excelContent = adminNhanVienService.exportExcel();
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=danh_sach_nhan_vien.xlsx")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(excelContent);
+        return ResponseEntity.ok(ApiResponse.success(null, "Xóa nhân viên thành công!"));
     }
 
-    @GetMapping("/phan-quyen")
-    public ResponseEntity<?> getPhanQuyens() {
+    @PatchMapping(RoutesConstant.STATUS_ALT)
+    @PutMapping(RoutesConstant.STATUS) // Compatibility Alias (Old FE uses PUT for status)
+    public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id, @RequestBody java.util.Map<String, String> body) {
+        TrangThai status = TrangThai.valueOf(body.get("status"));
+        adminNhanVienService.doiTrangThai(id, status);
+        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật trạng thái thành công!"));
+    }
+
+    @PostMapping(RoutesConstant.AVATAR)
+    public ResponseEntity<ApiResponse<String>> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.uploadAvatar(file)));
+    }
+
+    @GetMapping(RoutesConstant.EXPORT_EXCEL)
+    public ResponseEntity<byte[]> exportExcel() {
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=nhan_vien.xlsx")
+                .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
+                .body(adminNhanVienService.exportExcel());
+    }
+
+    @GetMapping(RoutesConstant.PHAN_QUYEN)
+    public ResponseEntity<ApiResponse<?>> layDanhSachPhanQuyen() {
         return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.getAllPhanQuyen()));
     }
-
 }

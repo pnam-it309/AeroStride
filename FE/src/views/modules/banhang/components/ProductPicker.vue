@@ -125,7 +125,7 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
         </div>
 
         <!-- QR Scanner Dialog -->
-        <v-dialog v-model="showScanner" max-width="500">
+        <v-dialog v-model="showScanner" max-width="500" transition="dialog-bottom-transition">
             <v-card class="rounded-xl pa-4">
                 <div class="d-flex justify-space-between align-center mb-4">
                     <span class="text-h6 font-weight-bold">Quét mã sản phẩm</span>

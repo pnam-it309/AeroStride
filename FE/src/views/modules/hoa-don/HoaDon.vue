@@ -10,29 +10,50 @@ import AdminTable from '@/components/common/AdminTable.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import { downloadFile } from '@/utils/fileUtils';
 import { EyeIcon, ReceiptIcon, PrinterIcon } from 'vue-tabler-icons';
+import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
+import { useAdminTable } from '@/composables/useAdminTable';
+import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
 
 const router = useRouter();
 const TAB_ALL = 'ALL';
-const loading = ref(false);
-const isRefreshing = ref(false);
-const orders = ref([]);
-const counts = ref({ all: 0, pending: 0, confirmed: 0, shipping: 0, completed: 0, cancelled: 0 });
-const showOrderDetailDialog = ref(false);
-const selectedOrder = ref(null);
 
 const getTodayDate = () => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 };
 
-const getThirtyDaysAgoDate = () => {
-    const date = new Date();
-    date.setDate(date.getDate() - 30);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+const normalizeTrangThai = (value) => {
+    if (value === null || value === undefined || value === '' || value === 'null' || value === 'all' || value === TAB_ALL) {
+        return null;
+    }
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue : null;
 };
 
-const filters = ref({
-    keyword: '',
+const {
+    items: orders,
+    loading,
+    pagination,
+    filters,
+    loadData: loadOrders,
+    handleFilter: handleSearch,
+    handleReset
+} = useAdminTable(async (p) => {
+    const nTrangThai = normalizeTrangThai(p.trangThai);
+    const params = {
+        page: p.page,
+        size: p.size,
+        search: p.search || undefined,
+        tuNgay: p.fromDate || undefined,
+        denNgay: p.toDate || undefined,
+        sortDirection: p.sortDirection,
+        ...(nTrangThai !== null ? { trangThai: nTrangThai } : {})
+    };
+    const res = await dichVuHoaDon.layHoaDonPhanTrang(params);
+    loadCounts(); 
+    return res;
+}, {
+    search: '',
     trangThai: TAB_ALL,
     fromDate: getTodayDate(),
     toDate: getTodayDate(),
@@ -44,15 +65,10 @@ const sortOptions = [
     { title: 'Cũ nhất', value: 'ASC' }
 ];
 
-const fromDateFieldRef = ref(null);
-const toDateFieldRef = ref(null);
-
-const pagination = ref({
-    page: 1,
-    size: 5,
-    totalElements: 0,
-    totalPages: 1
-});
+const isRefreshing = ref(false);
+const counts = ref({ all: 0, pending: 0, confirmed: 0, shipping: 0, completed: 0, cancelled: 0 });
+const showOrderDetailDialog = ref(false);
+const selectedOrder = ref(null);
 
 const tableHeaders = [
     { text: 'STT', align: 'center', width: '50px' },
@@ -64,7 +80,6 @@ const tableHeaders = [
     { text: 'Mã nhân viên', align: 'left', width: '140px' },
     { text: 'Tổng tiền', align: 'left', width: '100px' },
     { text: 'Trạng thái', align: 'left', width: '120px' },
-    { text: 'Ngày tạo', align: 'left', width: '120px' },
     { text: 'Hành động', align: 'center', width: '90px' }
 ];
 
@@ -90,81 +105,29 @@ const loadCounts = async () => {
     }
 };
 
-const normalizeTrangThai = (value) => {
-    if (value === null || value === undefined || value === '' || value === 'null' || value === 'all' || value === TAB_ALL) {
-        return null;
-    }
-    const numericValue = Number(value);
-    return Number.isFinite(numericValue) ? numericValue : null;
-};
 
-const loadOrders = async () => {
-    loading.value = true;
-    try {
-        const normalizedTrangThai = normalizeTrangThai(filters.value.trangThai);
-        const params = {
-            page: pagination.value.page > 0 ? pagination.value.page - 1 : 0,
-            size: pagination.value.size,
-            search: filters.value.keyword || undefined,
-            tuNgay: filters.value.fromDate || undefined,
-            denNgay: filters.value.toDate || undefined,
-            sortDirection: filters.value.sortDirection,
-            ...(normalizedTrangThai !== null ? { trangThai: normalizedTrangThai } : {})
-        };
-        const response = await dichVuHoaDon.layHoaDonPhanTrang(params);
-        orders.value = response.content || response;
-        const total = response.totalElements || orders.value.length;
-        pagination.value.totalElements = total;
-        pagination.value.totalPages = response.totalPages || Math.ceil(total / pagination.value.size) || 1;
-
-        // Tải lại count để số liệu luôn mới
-        loadCounts();
-    } catch (error) {
-        console.error(error);
-    } finally {
-        loading.value = false;
-    }
-};
 
 const handleRefresh = async () => {
     isRefreshing.value = true;
-    filters.value = { 
-        keyword: '', 
-        trangThai: TAB_ALL, 
-        fromDate: getTodayDate(), 
-        toDate: getTodayDate(),
-        sortDirection: 'DESC'
-    };
-    pagination.value.page = 1;
-    await loadOrders();
+    handleReset();
     setTimeout(() => (isRefreshing.value = false), 800);
 };
 
 const handleTabChange = async (value) => {
     filters.value.trangThai = value ?? TAB_ALL;
-    pagination.value.page = 1;
-    await loadOrders();
-};
-
-let searchTimer = null;
-const scheduleSearch = () => {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => {
-        pagination.value.page = 1;
-        loadOrders();
-    }, 350);
+    handleSearch();
 };
 
 watch(
-    () => [filters.value.keyword, filters.value.fromDate, filters.value.toDate, filters.value.sortDirection],
-    () => scheduleSearch()
+    () => [filters.value.search, filters.value.fromDate, filters.value.toDate, filters.value.sortDirection],
+    () => handleSearch()
 );
 
 const handleExport = async () => {
     try {
         const normalizedTrangThai = normalizeTrangThai(filters.value.trangThai);
         const params = {
-            search: filters.value.keyword || undefined,
+            search: filters.value.search || undefined,
             tuNgay: filters.value.fromDate || undefined,
             denNgay: filters.value.toDate || undefined,
             sortDirection: filters.value.sortDirection,
@@ -177,22 +140,7 @@ const handleExport = async () => {
     }
 };
 
-const formatPrice = (amount) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-};
 
-const formatCurrency = (amount) => formatPrice(amount);
-
-const formatDate = (date) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-};
 
 const getRowNumber = (index) => (pagination.value.page - 1) * pagination.value.size + index + 1;
 
@@ -255,18 +203,9 @@ const handlePrint = async (orderId) => {
     }
 };
 
-const formatDateTime = (timestamp) => {
-    if (!timestamp) return 'N/A';
-    return new Date(timestamp).toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-};
 
-const getStatusInfo = (status) => {
+const getStatusInfo = (s) => {
+    const status = Number(s);
     switch (status) {
         case 1:
             return { text: 'Chờ xác nhận', color: 'warning' };
@@ -278,12 +217,15 @@ const getStatusInfo = (status) => {
             return { text: 'Hoàn thành', color: 'success' };
         case 5:
             return { text: 'Đã hủy', color: 'error' };
+        case 6:
+            return { text: 'Chờ giao', color: 'orange' };
         default:
             return { text: 'Không xác định', color: 'grey' };
     }
 };
 
-const getStatusChipClass = (status) => {
+const getStatusChipClass = (s) => {
+    const status = Number(s);
     switch (status) {
         case 1:
             return 'status-chip-pending';
@@ -311,16 +253,22 @@ onMounted(() => loadOrders());
 
 <template>
     <v-container fluid class="pa-4 animate-fade-in font-body" style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
-        <div class="mb-2">
-            <h1 class="page-title text-h5 font-weight-bold text-slate-900 mb-0">Quản lý hóa đơn</h1>
-        </div>
+        <!-- Breadcrumbs -->
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý bán hàng', disabled: false, href: '#' },
+                { title: 'Hóa đơn', disabled: true }
+            ]"
+        />
+
+        <div class="mb-2"></div>
 
         <div class="filter-top invoice-filter-shell">
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-                <v-col cols="12" md="5">
+                <v-col cols="12" md="4">
                     <div class="filter-field-label">Tìm kiếm</div>
                     <v-text-field
-                        v-model="filters.keyword"
+                        v-model="filters.search"
                         placeholder="Tìm theo mã hóa đơn / khách hàng"
                         persistent-placeholder
                         variant="outlined"
@@ -328,11 +276,11 @@ onMounted(() => loadOrders());
                         hide-details
                         prepend-inner-icon="mdi-magnify"
                         class="font-weight-bold search-field"
-                        @input="scheduleSearch"
+                        @input="handleSearch"
                     ></v-text-field>
                 </v-col>
 
-                <v-col cols="12" md="3">
+                <v-col cols="12" md="2">
                     <div class="filter-field-label">Hiển thị</div>
                     <v-select
                         v-model="filters.sortDirection"
@@ -343,7 +291,7 @@ onMounted(() => loadOrders());
                         density="compact"
                         hide-details
                         class="font-weight-bold sort-field"
-                        @update:model-value="scheduleSearch"
+                        @update:model-value="handleSearch"
                     >
                         <template v-slot:prepend-inner>
                             <v-icon size="20" color="primary">mdi-sort</v-icon>
@@ -363,7 +311,7 @@ onMounted(() => loadOrders());
                         append-inner-icon="mdi-calendar-month-outline"
                         hide-details
                         @click:append-inner="openFromDatePicker"
-                        @input="scheduleSearch"
+                        @input="handleSearch"
                     ></v-text-field>
                 </v-col>
 
@@ -379,7 +327,7 @@ onMounted(() => loadOrders());
                         append-inner-icon="mdi-calendar-month-outline"
                         hide-details
                         @click:append-inner="openToDatePicker"
-                        @input="scheduleSearch"
+                        @input="handleSearch"
                     ></v-text-field>
                 </v-col>
             </AdminFilter>
@@ -401,7 +349,7 @@ onMounted(() => loadOrders());
                     bg-color="transparent"
                     color="primary"
                     grow
-                    class="equal-tabs"
+                    class="equal-tabs admin-tabs"
                     @update:model-value="handleTabChange"
                     height="54"
                 >
@@ -411,9 +359,8 @@ onMounted(() => loadOrders());
                         <v-chip
                             v-if="hasCount(counts.all)"
                             size="x-small"
-                            color="error"
                             class="ml-2 font-weight-bold tab-count-chip"
-                            variant="flat"
+                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
                         >
                             {{ counts.all }}
                         </v-chip>
@@ -424,9 +371,8 @@ onMounted(() => loadOrders());
                         <v-chip
                             v-if="hasCount(counts.pending)"
                             size="x-small"
-                            color="error"
                             class="ml-2 font-weight-bold tab-count-chip"
-                            variant="flat"
+                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
                         >
                             {{ counts.pending }}
                         </v-chip>
@@ -437,9 +383,8 @@ onMounted(() => loadOrders());
                         <v-chip
                             v-if="hasCount(counts.confirmed)"
                             size="x-small"
-                            color="error"
                             class="ml-2 font-weight-bold tab-count-chip"
-                            variant="flat"
+                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
                         >
                             {{ counts.confirmed }}
                         </v-chip>
@@ -450,9 +395,8 @@ onMounted(() => loadOrders());
                         <v-chip
                             v-if="hasCount(counts.shipping)"
                             size="x-small"
-                            color="error"
                             class="ml-2 font-weight-bold tab-count-chip"
-                            variant="flat"
+                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
                         >
                             {{ counts.shipping }}
                         </v-chip>
@@ -463,9 +407,8 @@ onMounted(() => loadOrders());
                         <v-chip
                             v-if="hasCount(counts.delivering)"
                             size="x-small"
-                            color="error"
                             class="ml-2 font-weight-bold tab-count-chip"
-                            variant="flat"
+                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
                         >
                             {{ counts.delivering }}
                         </v-chip>
@@ -476,9 +419,8 @@ onMounted(() => loadOrders());
                         <v-chip
                             v-if="hasCount(counts.completed)"
                             size="x-small"
-                            color="error"
                             class="ml-2 font-weight-bold tab-count-chip"
-                            variant="flat"
+                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
                         >
                             {{ counts.completed }}
                         </v-chip>
@@ -489,9 +431,8 @@ onMounted(() => loadOrders());
                         <v-chip
                             v-if="hasCount(counts.cancelled)"
                             size="x-small"
-                            color="error"
                             class="ml-2 font-weight-bold tab-count-chip"
-                            variant="flat"
+                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
                         >
                             {{ counts.cancelled }}
                         </v-chip>
@@ -501,13 +442,13 @@ onMounted(() => loadOrders());
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell stt-cell">{{ getRowNumber(index) }}</td>
+                    <td class="data-cell stt-cell text-slate-400 font-weight-medium">{{ getRowNumber(index) }}</td>
 
-                    <td class="data-cell text-left col-left-tight">
+                    <td class="data-cell col-left-tight">
                         <div class="text-caption font-weight-medium text-dark">{{ item.maHoaDon }}</div>
                     </td>
 
-                    <td class="data-cell text-left col-left-tight">
+                    <td class="data-cell col-left-tight">
                         <div class="text-caption font-weight-medium text-dark">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
                     </td>
 
@@ -517,9 +458,9 @@ onMounted(() => loadOrders());
 
                     <td class="data-cell">
                         <v-chip
-                            :class="['font-weight-bold mb-1 order-type-chip', getOrderTypeClass(item.loaiDon)]"
+                            :class="['font-weight-black text-white status-chip', getOrderTypeClass(item.loaiDon)]"
                             variant="flat"
-                            size="x-small"
+                            size="small"
                         >
                             {{ getOrderTypeLabel(item.loaiDon) }}
                         </v-chip>
@@ -537,13 +478,13 @@ onMounted(() => loadOrders());
 
                     <td class="data-cell price-value">
                         <div class="text-subtitle-2 font-weight-black total-price-text">
-                            {{ formatPrice(item.tongTienSauGiam || item.tongTien) }}
+                            {{ formatCurrency(item.tongTienSauGiam || item.tongTien) }}
                         </div>
                     </td>
 
                     <td class="data-cell status-cell">
                         <v-chip
-                            :class="['font-weight-bold px-2 status-chip', getStatusChipClass(item.trangThai)]"
+                            :class="['font-weight-black text-white status-chip', getStatusChipClass(item.trangThai)]"
                             variant="flat"
                             size="small"
                         >
@@ -551,9 +492,7 @@ onMounted(() => loadOrders());
                         </v-chip>
                     </td>
 
-                    <td class="data-cell">
-                        <div class="text-caption font-weight-medium text-dark">{{ formatDateTime(item.ngayTao) }}</div>
-                    </td>
+
 
                     <td class="data-cell action-cell" style="text-align: center">
                         <div class="d-flex align-center justify-center action-group action-controls">
@@ -562,7 +501,7 @@ onMounted(() => loadOrders());
                                 variant="text"
                                 size="28"
                                 color="slate-700"
-                                class="rounded-lg action-icon-btn"
+                                class="rounded-md action-icon-btn"
                                 @click.stop="viewOrderDetail(item)"
                             >
                                 <EyeIcon size="15" />
@@ -578,7 +517,6 @@ onMounted(() => loadOrders());
                     v-model="pagination.page"
                     :page-size="pagination.size"
                     @update:pageSize="pagination.size = $event"
-                    @update:page-size="pagination.size = $event"
                     :total-pages="pagination.totalPages"
                     :total-elements="pagination.totalElements"
                     :current-size="orders.length"
@@ -588,8 +526,8 @@ onMounted(() => loadOrders());
         </AdminTable>
 
         <!-- Detail Dialog -->
-        <v-dialog v-model="showOrderDetailDialog" max-width="850">
-            <v-card class="rounded-lg overflow-hidden" v-if="selectedOrder">
+        <v-dialog v-model="showOrderDetailDialog" max-width="850" transition="dialog-bottom-transition">
+            <v-card class="rounded-md overflow-hidden" v-if="selectedOrder">
                 <v-card-title class="pa-5 d-flex justify-space-between align-center border-b bg-grey-lighten-4">
                     <div class="d-flex align-center">
                         <ReceiptIcon size="24" class="mr-3 text-primary" />
@@ -654,341 +592,25 @@ onMounted(() => loadOrders());
 </template>
 
 <style scoped>
-.gray-bg { /* Removed background */ }
-.text-dark {
-    color: #000000 !important;
-}
-.font-body {
-    font-family: 'Inter', sans-serif;
-}
+/* Scoped styles removed in favor of global _admin-common.scss */
 .back-btn {
     border-radius: 12px !important;
     width: 42px;
     height: 42px;
-}
-.tab-item {
-    min-height: 54px;
-}
-.equal-tabs :deep(.v-slide-group__content) {
-    width: 100%;
-}
-.equal-tabs :deep(.v-tab) {
-    flex: 1 1 0;
-    max-width: none;
-}
-
-.equal-tabs :deep(.v-tab.v-btn) {
-    min-height: 46px !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    letter-spacing: 0 !important;
-    line-height: 1.1 !important;
-}
-
-.equal-tabs :deep(.v-tab .v-btn__content) {
-    gap: 4px;
-}
-
-.equal-tabs :deep(.v-tab .v-icon) {
-    font-size: 14px !important;
-}
-
-.equal-tabs :deep(.v-tab .v-chip) {
-    font-size: 0.68rem !important;
-    min-height: 18px !important;
-    padding: 0 6px !important;
-}
-
-.equal-tabs :deep(.v-tab .tab-count-chip) {
-    background-color: #ff0000 !important;
-    color: #ffffff !important;
-    opacity: 1 !important;
-    border: none !important;
-}
-
-.equal-tabs :deep(.v-tab) {
-    color: #0f172a !important;
-    background: transparent !important;
-}
-
-.equal-tabs :deep(.v-tab .v-icon) {
-    color: inherit !important;
-}
-
-.equal-tabs :deep(.v-tab--selected) {
-    color: #1e3a8a !important;
-    background: transparent !important;
-}
-
-.equal-tabs :deep(.v-tab--selected .tab-count-chip) {
-    background-color: #1e3a8a !important;
-    color: #ffffff !important;
-}
-
-:deep(.native-admin-table .header-cell) {
-    font-size: 13px !important;
-    font-weight: 700 !important;
-    text-align: left !important;
-    padding-left: 6px !important;
-}
-
-:deep(.native-admin-table .data-cell) {
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    color: #0f172a !important;
-    text-align: left !important;
-    padding-left: 6px !important;
-}
-
-:deep(.native-admin-table .data-cell .text-subtitle-2),
-:deep(.native-admin-table .data-cell .text-caption),
-:deep(.native-admin-table .data-cell .text-body-2),
-:deep(.native-admin-table .data-cell .text-subtitle-1) {
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    line-height: 1.35 !important;
-}
-
-:deep(.native-admin-table .data-cell:nth-child(2)),
-:deep(.native-admin-table .data-cell:nth-child(3)),
-:deep(.native-admin-table .data-cell:nth-child(4)),
-:deep(.native-admin-table .data-cell:nth-child(6)),
-:deep(.native-admin-table .data-cell:nth-child(7)),
-:deep(.native-admin-table .data-cell:nth-child(10)) {
-    color: #0f172a !important;
-    font-weight: 700 !important;
-}
-
-:deep(.native-admin-table .data-cell.col-left-tight) {
-    text-align: left !important;
-    padding-left: 6px !important;
-}
-
-:deep(.native-admin-table .header-cell:nth-child(2)),
-:deep(.native-admin-table .header-cell:nth-child(3)),
-:deep(.native-admin-table .header-cell:nth-child(4)) {
-    text-align: left !important;
-    padding-left: 6px !important;
-}
-
-:deep(.native-admin-table .header-cell:nth-child(1)),
-:deep(.native-admin-table .data-cell.stt-cell) {
-    text-align: center !important;
-    padding-left: 0 !important;
-}
-
-:deep(.native-admin-table .header-cell:nth-child(9)) {
-    text-align: left !important;
-    padding-left: 6px !important;
-    padding-right: 6px !important;
-}
-
-:deep(.native-admin-table .header-cell:nth-child(11)) {
-    text-align: center !important;
-    padding-left: 6px !important;
-    padding-right: 6px !important;
-}
-
-:deep(.native-admin-table .data-cell:nth-child(11)) {
-    text-align: center !important;
-    padding-left: 0 !important;
-}
-
-:deep(.native-admin-table .data-cell.status-cell) {
-    display: flex !important;
-    justify-content: flex-start !important;
-    align-items: center !important;
-    text-align: left !important;
-    padding-left: 6px !important;
-}
-
-:deep(.native-admin-table .data-cell.status-cell .status-chip) {
-    display: inline-flex !important;
-    margin: 0 !important;
-}
-
-:deep(.native-admin-table .total-price-text) {
-    color: #1e3a8a !important;
-    font-weight: bold !important;
-}
-
-:deep(.native-admin-table .price-value) {
-    color: #1e3a8a !important;
-    font-weight: 700 !important;
-}
-
-:deep(.order-type-chip) {
-    min-height: 24px !important;
-    padding: 0 12px !important;
-    border-radius: 6px !important;
-    letter-spacing: 0.04em;
-    font-size: 0.8rem !important;
-    font-weight: 700 !important;
-    border: 1px solid transparent !important;
-}
-
-:deep(.order-type-chip.order-type-offline) {
-    background-color: #fff4e5 !important;
-    color: #b26a00 !important;
-    border-color: #f4c98a !important;
-}
-
-:deep(.order-type-chip.order-type-online) {
-    background-color: #e8f7ee !important;
-    color: #157347 !important;
-    border-color: #b9e7ca !important;
-}
-
-:deep(.status-chip) {
-    border-radius: 999px !important;
-    border: 1px solid transparent !important;
-    box-shadow: none !important;
-    font-size: 13px !important;
-    min-height: 28px !important;
-}
-
-:deep(.status-chip.status-chip-pending) {
-    background-color: #fff7e8 !important;
-    color: #b45309 !important;
-    border-color: #f6d8a8 !important;
-}
-
-:deep(.status-chip.status-chip-confirmed) {
-    background-color: #ecf3ff !important;
-    color: #1d4ed8 !important;
-    border-color: #c9dcff !important;
-}
-
-:deep(.status-chip.status-chip-delivering) {
-    background-color: #eef2ff !important;
-    color: #3730a3 !important;
-    border-color: #d5dcff !important;
-}
-
-:deep(.status-chip.status-chip-waiting-delivery) {
-    background-color: #fff4e5 !important;
-    color: #b26a00 !important;
-    border-color: #f4c98a !important;
-}
-
-:deep(.status-chip.status-chip-completed) {
-    background-color: #e8f7ee !important;
-    color: #0f766e !important;
-    border-color: #b9e7ca !important;
-}
-
-:deep(.status-chip.status-chip-cancelled) {
-    background-color: #feeceb !important;
-    color: #dc2626 !important;
-    border-color: #f9c7c3 !important;
-}
-
-:deep(.status-chip.status-chip-unknown) {
-    background-color: #f1f5f9 !important;
-    color: #475569 !important;
-    border-color: #dbe4ef !important;
-}
-.action-group {
-    min-width: 64px;
-}
-
-.action-controls {
-    gap: 6px;
-}
-
-:deep(.action-cell .action-icon-btn) {
-    background: transparent !important;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    min-width: 28px !important;
-    width: 28px !important;
-    height: 28px !important;
-    padding: 0 !important;
-}
-
-:deep(.action-cell .action-icon-btn:hover),
-:deep(.action-cell .action-icon-btn:focus),
-:deep(.action-cell .action-icon-btn:focus-visible),
-:deep(.action-cell .action-icon-btn:active) {
-    background: transparent !important;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-}
-
-:deep(.action-cell .action-icon-btn .v-btn__overlay),
-:deep(.action-cell .action-icon-btn .v-btn__underlay),
-:deep(.action-cell .action-icon-btn .v-ripple__container) {
-    display: none !important;
 }
 .filter-top {
     position: sticky;
     top: 8px;
     z-index: 6;
 }
-.invoice-filter-shell :deep(.filter-card) {
-    border-radius: 14px !important;
-    margin-bottom: 8px !important;
-}
-.invoice-filter-shell :deep(.v-card-text) {
-    padding-top: 12px !important;
-    padding-bottom: 12px !important;
-}
-.invoice-filter-shell :deep(.filter-header) {
-    margin-bottom: 12px !important;
-}
 .page-title {
     line-height: 1.1;
 }
-.filter-top :deep(.v-card-text) {
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
+.action-group {
+    min-width: 64px;
 }
-.filter-top :deep(.filter-header) {
-    margin-bottom: 8px !important;
-}
-.filter-top :deep(.v-field) {
-    min-height: 40px;
-}
-.filter-top :deep(.v-input__control) {
-    min-height: 40px;
-}
-.filter-field-label {
-    font-size: 13px;
-    font-weight: 700;
-    color: #000000 !important;
-    margin-bottom: 6px;
-}
-
-.filter-top :deep(.date-field .v-field__append-inner) {
-    padding-inline-end: 6px;
-}
-
-.filter-top :deep(.date-field input[type='date'])::-webkit-calendar-picker-indicator {
-    opacity: 0;
-    width: 0;
-    margin: 0;
-    padding: 0;
-    pointer-events: none;
-}
-
-.filter-top :deep(.date-field input[type='date']) {
-    padding-right: 0;
-}
-
-.filter-top :deep(.search-field input::placeholder) {
-    font-size: 13px !important;
-}
-
-/* Invoice-specific reset button placement (do not affect other modules) */
-.filter-top :deep(.filter-reset-col) {
-    margin-left: auto !important;
-    flex: 0 0 8.333333% !important;
-    max-width: 8.333333% !important;
-    width: 8.333333% !important;
-    align-self: flex-end !important;
-    justify-content: flex-end !important;
+.stt-cell {
+    text-align: center !important;
 }
 </style>
 

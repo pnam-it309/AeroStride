@@ -3,13 +3,13 @@ package com.example.be.core.admin.thongke.service.impl;
 import com.example.be.core.admin.thongke.model.response.AdminThongKeResponse;
 import com.example.be.core.admin.thongke.repository.AdminThongKeRepository;
 import com.example.be.core.admin.thongke.service.AdminThongKeService;
+import com.example.be.utils.AccountUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,43 +19,40 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
 
     private final AdminThongKeRepository thongKeRepository;
 
-    // OrderStatus ordinal: PENDING_PAYMENT=0, PROCESSING=1, SHIPPED=2, DELIVERED=3, CANCELLED=4, REFUNDED=5
-
     @Override
     public AdminThongKeResponse getTongQuan(LocalDate tuNgay, LocalDate denNgay) {
-        Long tuNgayMs = tuNgay != null ? tuNgay.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() : null;
-        Long denNgayMs = denNgay != null ? denNgay.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() : null;
+        // DRY: Sử dụng AccountUtils để parse date đồng nhất
+        Long tuNgayMs = AccountUtils.parseDateToLong(tuNgay != null ? tuNgay.toString() : null, false);
+        Long denNgayMs = AccountUtils.parseDateToLong(denNgay != null ? denNgay.toString() : null, true);
 
         BigDecimal tongDoanhThu = thongKeRepository.sumDoanhThu(tuNgayMs, denNgayMs);
         Long tongDonHang = thongKeRepository.countTongDon(tuNgayMs, denNgayMs);
-        Long donHoanThanh = thongKeRepository.countByTrangThai(3, tuNgayMs, denNgayMs); // DELIVERED
+        Long donHoanThanh = thongKeRepository.countByTrangThai(3, tuNgayMs, denNgayMs); // OrderStatus.DELIVERED
         Long donChoXacNhan = thongKeRepository.countByTrangThai(0, tuNgayMs, denNgayMs); // PENDING_PAYMENT
         Long donDangGiao = thongKeRepository.countByTrangThai(2, tuNgayMs, denNgayMs);  // SHIPPED
         Long donDaHuy = thongKeRepository.countByTrangThai(4, tuNgayMs, denNgayMs);     // CANCELLED
 
-        // Tổng khách hàng (không lọc theo ngày)
         Long tongKhachHang = thongKeRepository.count();
 
         return AdminThongKeResponse.builder()
-                .tongDoanhThu(tongDoanhThu)
-                .tongDonHang(tongDonHang)
-                .donHangHoanThanh(donHoanThanh)
-                .donHangChoXacNhan(donChoXacNhan)
-                .donHangDangGiao(donDangGiao)
-                .donHangDaHuy(donDaHuy)
+                .tongDoanhThu(tongDoanhThu != null ? tongDoanhThu : BigDecimal.ZERO)
+                .tongDonHang(tongDonHang != null ? tongDonHang : 0L)
+                .donHangHoanThanh(donHoanThanh != null ? donHoanThanh : 0L)
+                .donHangChoXacNhan(donChoXacNhan != null ? donChoXacNhan : 0L)
+                .donHangDangGiao(donDangGiao != null ? donDangGiao : 0L)
+                .donHangDaHuy(donDaHuy != null ? donDaHuy : 0L)
                 .tongKhachHang(tongKhachHang)
-                .sanPhamSapHet(0L) // TODO: kết nối sau khi có API sản phẩm
+                .sanPhamSapHet(0L) 
                 .build();
     }
 
     @Override
     public List<AdminThongKeResponse.DoanhThuNgay> getDoanhThuTheoNgay(LocalDate tuNgay, LocalDate denNgay) {
-        // Mặc định: 30 ngày gần nhất
         if (tuNgay == null) tuNgay = LocalDate.now().minusDays(29);
         if (denNgay == null) denNgay = LocalDate.now();
 
-        Long tuNgayMs = tuNgay.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
-        Long denNgayMs = denNgay.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli();
+        Long tuNgayMs = AccountUtils.parseDateToLong(tuNgay.toString(), false);
+        Long denNgayMs = AccountUtils.parseDateToLong(denNgay.toString(), true);
 
         List<Object[]> rows = thongKeRepository.getDoanhThuTheoNgay(tuNgayMs, denNgayMs);
         List<AdminThongKeResponse.DoanhThuNgay> result = new ArrayList<>();

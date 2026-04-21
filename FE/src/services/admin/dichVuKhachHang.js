@@ -1,45 +1,46 @@
 import api from '../apiService';
+import { API_ADMIN } from '@/constants/apiPaths';
 
 export const dichVuKhachHang = {
     // Lấy tất cả khách hàng
     async layTatCaKhachHang() {
-        const response = await api.get('/admin/khach-hang/hien-thi');
+        const response = await api.get(`${API_ADMIN.KHACH_HANG}/hien-thi`);
         return response.data?.data || response.data;
     },
 
     // Lấy khách hàng có phân trang
     async layKhachHangPhanTrang(params) {
-        const response = await api.get('/admin/khach-hang/phan-trang', { params });
+        const response = await api.get(`${API_ADMIN.KHACH_HANG}/phan-trang`, { params });
         return response.data.data;
     },
 
     // Tìm kiếm khách hàng
     async timKiemKhachHang(params) {
-        const response = await api.get('/admin/khach-hang/tim-kiem', { params });
+        const response = await api.get(`${API_ADMIN.KHACH_HANG}/tim-kiem`, { params });
         return response.data.data;
     },
 
     // Lọc khách hàng
     async locKhachHang(params) {
-        const response = await api.get('/admin/khach-hang/filter', { params });
+        const response = await api.get(`${API_ADMIN.KHACH_HANG}/filter`, { params });
         return response.data.data;
     },
 
     // Lấy chi tiết khách hàng
     async layChiTietKhachHang(id) {
-        const response = await api.get(`/admin/khach-hang/detail/${id}`);
+        const response = await api.get(`${API_ADMIN.KHACH_HANG}/detail/${id}`);
         return response.data.data;
     },
 
     // Tạo khách hàng mới
     async taoKhachHang(customerData) {
-        const response = await api.post('/admin/khach-hang/add', customerData);
+        const response = await api.post(`${API_ADMIN.KHACH_HANG}/add`, customerData);
         return response.data.data;
     },
 
     // Cập nhật khách hàng
     async capNhatKhachHang(id, customerData) {
-        const response = await api.put(`/admin/khach-hang/update/${id}`, customerData);
+        const response = await api.put(`${API_ADMIN.KHACH_HANG}/update/${id}`, customerData);
         return response.data.data;
     },
 
@@ -47,9 +48,9 @@ export const dichVuKhachHang = {
     async thayDoiTrangThaiKhachHang(id, trangThai) {
         const payload = { trangThai };
         const attempts = [
-            () => api.patch(`/admin/khach-hang/update-trang-thai/${id}`, payload),
-            () => api.put(`/admin/khach-hang/update-trang-thai/${id}`, payload),
-            () => api.patch(`/admin/khach-hang/trang-thai/${id}`, payload)
+            () => api.patch(`${API_ADMIN.KHACH_HANG}/update-trang-thai/${id}`, payload),
+            () => api.put(`${API_ADMIN.KHACH_HANG}/update-trang-thai/${id}`, payload),
+            () => api.patch(`${API_ADMIN.KHACH_HANG}/trang-thai/${id}`, payload)
         ];
 
         let lastError;
@@ -67,39 +68,39 @@ export const dichVuKhachHang = {
 
     // Xóa khách hàng
     async xoaKhachHang(id) {
-        const response = await api.delete(`/admin/khach-hang/delete/${id}`);
+        const response = await api.delete(`${API_ADMIN.KHACH_HANG}/delete/${id}`);
         return response.data;
     },
 
     // Xuất Excel
     async xuatExcelKhachHang() {
-        const response = await api.get('/admin/khach-hang/export-excel', { responseType: 'blob' });
+        const response = await api.get(`${API_ADMIN.KHACH_HANG}/export-excel`, { responseType: 'blob' });
         return response.data;
     },
 
     // --- DIA CHI ---
     async layDanhSachDiaChi(khId) {
-        const response = await api.get(`/admin/dia-chi/khach-hang/${khId}`);
+        const response = await api.get(`${API_ADMIN.DIA_CHI}/khach-hang/${khId}`);
         return response.data;
     },
 
     async taoDiaChi(data) {
-        const response = await api.post('/admin/dia-chi/add', data);
+        const response = await api.post(`${API_ADMIN.DIA_CHI}/add`, data);
         return response.data;
     },
 
     async capNhatDiaChi(id, data) {
-        const response = await api.put(`/admin/dia-chi/update/${id}`, data);
+        const response = await api.put(`${API_ADMIN.DIA_CHI}/update/${id}`, data);
         return response.data;
     },
 
     async xoaDiaChi(id) {
-        const response = await api.delete(`/admin/dia-chi/delete/${id}`);
+        const response = await api.delete(`${API_ADMIN.DIA_CHI}/delete/${id}`);
         return response.data;
     },
 
     async datDiaChiMacDinh(id) {
-        const response = await api.patch(`/admin/dia-chi/set-default/${id}`);
+        const response = await api.patch(`${API_ADMIN.DIA_CHI}/set-default/${id}`);
         return response.data;
     }
 };

@@ -1,7 +1,8 @@
 <script setup>
 import { EditIcon } from 'vue-tabler-icons';
-import AdminTable from '@/components/common/AdminTable.vue';
-import AdminPagination from '@/components/common/AdminPagination.vue';
+import { AdminTable, AdminPagination } from '@/components/common';
+import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
+import { formatDateTime } from '@/utils/formatters';
 
 const props = defineProps({
     title: String,
@@ -15,27 +16,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['add', 'edit', 'change-status', 'load-items', 'update:tab', 'update:page', 'update:size']);
-
-const isActiveStatus = (status) => {
-    if (status === null || status === undefined) return false;
-    if (typeof status === 'number') return status === 0;
-    const normalized = String(status).toUpperCase();
-    return normalized === 'DANG_HOAT_DONG' || normalized === 'ACTIVE' || normalized === 'HOAT_DONG' || normalized === '0';
-};
-
-const getDisplayStatus = (status) => (isActiveStatus(status) ? 'Hoạt động' : 'Ngừng hoạt động');
-
-const formatDateTime = (value) => {
-    if (!value) return '--';
-    const date = typeof value === 'number' ? new Date(value) : new Date(String(value));
-    if (Number.isNaN(date.getTime())) return '--';
-    const d = String(date.getDate()).padStart(2, '0');
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const y = date.getFullYear();
-    const hh = String(date.getHours()).padStart(2, '0');
-    const mm = String(date.getMinutes()).padStart(2, '0');
-    return `${d}/${m}/${y} ${hh}:${mm}`;
-};
 
 const pickFirst = (item, keys, fallback = '--') => {
     for (const key of keys) {
@@ -66,8 +46,8 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                 <v-tabs 
                     :model-value="tab"
                     @update:model-value="emit('update:tab', $event)"
-                    color="primary" 
-                    class="attribute-tabs" 
+                    color="#000" 
+                    class="admin-tabs" 
                     grow 
                     density="compact"
                 >
@@ -89,14 +69,13 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                     </td>
                     <td class="data-cell text-center">
                         <v-chip
-                            variant="tonal"
+                            variant="flat"
                             size="x-small"
                             class="font-weight-bold"
-                            :color="isActiveStatus(item.trangThai) ? 'success' : 'warning'"
-                            >{{ getDisplayStatus(item.trangThai) }}</v-chip
+                            :color="getStatusColor(item.trangThai)"
+                            >{{ getStatusLabel(item.trangThai) }}</v-chip
                         >
                     </td>
-                    <td class="data-cell text-center text-slate-500" style="font-size: 11px;">{{ formatDateTime(getCreatedAt(item)) }}</td>
                     <td class="data-cell text-center">
                         <div class="d-flex align-center justify-center action-controls">
                             <!-- Edit Button -->
@@ -116,10 +95,10 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                             <div class="switch-wrapper d-flex align-center">
                                 <v-switch
                                     :model-value="isActiveStatus(item.trangThai)"
-                                    color="primary"
+                                    color="#000"
                                     hide-details
                                     density="compact"
-                                    class="action-switch-compact ms-0"
+                                    class="tight-switch action-switch"
                                     @click.prevent.stop="emit('change-status', item)"
                                 />
                                 <v-tooltip activator="parent" location="top">Trạng thái</v-tooltip>
@@ -145,100 +124,5 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
 </template>
 
 <style scoped>
-:deep(.data-cell) {
-    padding: 10px 8px !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    text-align: center !important;
-    vertical-align: middle !important;
-}
-
-:deep(.header-cell) {
-    padding: 12px 8px !important;
-    font-size: 13px !important;
-    font-weight: 700 !important;
-    text-align: center !important;
-    border-bottom: 2px solid #e2e8f0 !important;
-}
-
-:deep(.attribute-tabs) {
-    border-bottom: 1px solid #e2e8f0;
-}
-
-:deep(.attribute-tabs .v-tab) {
-    font-size: 13px !important;
-    font-weight: 700 !important;
-    min-height: 48px !important;
-    text-transform: none !important;
-    letter-spacing: 0 !important;
-}
-
-.action-switch-compact {
-    display: inline-flex;
-    margin: 0 !important;
-}
-
-:deep(.action-switch-compact .v-selection-control) {
-    min-height: 0 !important;
-}
-
-:deep(.v-selection-control__wrapper) {
-    width: 32px !important;
-    height: 18px !important;
-    margin: 0 !important;
-}
-
-:deep(.action-switch-compact .v-switch__track) {
-    background: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    opacity: 1 !important;
-    min-height: 18px !important;
-    max-height: 18px !important;
-    width: 32px !important;
-    border-radius: 99px !important;
-}
-
-:deep(.action-switch-compact .v-selection-control--dirty .v-switch__track) {
-    background: #d9e6fb !important;
-    border-color: #d9e6fb !important;
-    opacity: 1 !important;
-}
-
-:deep(.action-switch-compact .v-switch__thumb) {
-    background: #94a3b8 !important;
-    width: 14px !important;
-    height: 14px !important;
-    box-shadow: none !important;
-}
-
-:deep(.action-switch-compact .v-selection-control--dirty .v-switch__thumb) {
-    background: #1e3a8a !important;
-}
-
-.action-controls {
-    gap: 8px;
-}
-
-:deep(.action-icon-btn) {
-    background: transparent !important;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    min-width: 28px !important;
-    width: 28px !important;
-    height: 28px !important;
-    padding: 0 !important;
-    transition: all 0.2s ease-in-out;
-}
-
-:deep(.action-icon-btn .v-btn__overlay),
-:deep(.action-icon-btn .v-btn__underlay),
-:deep(.action-icon-btn .v-ripple__container) {
-    display: none !important;
-}
-
-.action-icon-btn:hover {
-    background-color: #f1f5f9 !important;
-    transform: translateY(-2px);
-}
+/* Scoped styles removed in favor of global _admin-common.scss */
 </style>

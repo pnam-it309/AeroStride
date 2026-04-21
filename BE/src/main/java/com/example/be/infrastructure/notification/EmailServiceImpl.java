@@ -96,4 +96,45 @@ public class EmailServiceImpl implements EmailService {
         
         this.sendHtmlEmail(request);
     }
+
+    @Async("mailExecutor")
+    @Override
+    public void guiEmailTaiKhoanKhachHang(String to, String tenKhachHang,
+                                          String tenTaiKhoan, String matKhau) {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("title", "Xác nhận tài khoản AeroStride");
+        variables.put("tenKhachHang", tenKhachHang);
+        variables.put("tenTaiKhoan", tenTaiKhoan);
+        variables.put("matKhau", matKhau);
+
+        EmailRequest request = EmailRequest.builder()
+                .to(to)
+                .subject(" Tài khoản AeroStride của bạn đã được tạo")
+                .templateName("tai-khoan-khach-hang")
+                .variables(variables)
+                .build();
+
+        this.sendHtmlEmail(request);
+    }
+
+    @Async("mailExecutor")
+    @Override
+    public void guiEmailTaiKhoanNhanVien(String to, String tenNhanVien,
+                                         String tenTaiKhoan, String matKhau, String vaiTro) {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("title", "Chào mừng nhân viên AeroStride");
+        variables.put("tenNhanVien", tenNhanVien);
+        variables.put("tenTaiKhoan", tenTaiKhoan);
+        variables.put("matKhau", matKhau);
+        variables.put("vaiTro", vaiTro != null ? vaiTro : "Nhân viên");
+
+        EmailRequest request = EmailRequest.builder()
+                .to(to)
+                .subject("Tài khoản nhân viên AeroStride của bạn đã được tạo")
+                .templateName("tai-khoan-nhan-vien")
+                .variables(variables)
+                .build();
+
+        this.sendHtmlEmail(request);
+    }
 }

@@ -7,5 +7,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AdminDotGiamGiaSearchRequest extends PageRequest {
-
+    private String keyword;
+    private com.example.be.infrastructure.constants.TrangThai trangThai;
 }

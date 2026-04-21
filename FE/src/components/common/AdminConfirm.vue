@@ -66,7 +66,7 @@ const handleCancel = () => {
         <v-btn 
           :color="color" 
           variant="flat" 
-          class="font-weight-black text-none px-8" 
+          class="font-weight-black text-none px-8 text-white" 
           rounded="0"
           :loading="loading"
           @click="handleConfirm"

@@ -11,7 +11,8 @@ import { dichVuFile } from '@/services/core/dichVuFile';
 
 const props = defineProps({
   show: Boolean,
-  variant: Object
+  variant: Object,
+  initialTab: { type: Number, default: 0 }
 });
 
 const emit = defineEmits(['update:show', 'saved']);
@@ -41,6 +42,12 @@ watch(() => props.variant, (v) => {
         images.value = v.images || [];
     }
 }, { immediate: true });
+
+watch(() => props.show, (isShow) => {
+    if (isShow) {
+        activeTab.value = props.initialTab;
+    }
+});
 
 const handleUpdateStatus = async () => {
     submitting.value = true;
@@ -88,11 +95,14 @@ const handleFileChange = async (event) => {
        const uploadResult = await dichVuFile.taiLenFile(file);
        
        // 2. Save to database for this variant
-       await dichVuBienThe.themAnh(props.variant.id, {
+       const newImage = await dichVuBienThe.themAnh(props.variant.id, {
            duongDanAnh: uploadResult.fileUrl,
            moTa: `Ảnh của ${props.variant.maChiTietSanPham}`,
            hinhAnhDaiDien: images.value.length === 0
        });
+
+       // Update local list for instant feedback
+       images.value.push(newImage);
 
        addNotification({ title: 'Thành công', subtitle: 'Đã tải lên và lưu ảnh', color: 'success' });
        emit('saved');
@@ -108,6 +118,10 @@ const deleteImage = async (imgId) => {
     if (!confirm('Xác nhận xóa ảnh này?')) return;
     try {
         await dichVuBienThe.xoaAnh(imgId);
+        
+        // Update local list for instant feedback
+        images.value = images.value.filter(img => img.id !== imgId);
+        
         addNotification({ title: 'Thành công', subtitle: 'Đã xóa ảnh', color: 'success' });
         emit('saved');
     } catch (error) {
@@ -118,6 +132,13 @@ const deleteImage = async (imgId) => {
 const setMainImage = async (imgId) => {
      try {
         await dichVuBienThe.datAnhChinh(props.variant.id, imgId);
+        
+        // Update local list for instant feedback
+        images.value = images.value.map(img => ({
+            ...img,
+            hinhAnhDaiDien: img.id === imgId
+        }));
+        
         addNotification({ title: 'Thành công', subtitle: 'Đã đặt làm ảnh chính', color: 'success' });
         emit('saved');
     } catch (error) {

@@ -1,6 +1,8 @@
 package com.example.be.entity;
 
 import com.example.be.core.common.base.PrimaryEntity;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,10 +13,12 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class AnhChiTietSanPham extends PrimaryEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_chi_tiet_san_pham")
+    @JsonBackReference(value = "ctsp-anh")
     private ChiTietSanPham chiTietSanPham;
 
     @Column(name = "duong_dan_anh")

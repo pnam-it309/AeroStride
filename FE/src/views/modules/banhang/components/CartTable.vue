@@ -69,35 +69,22 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
 </template>
 
 <style scoped>
-.pos-table :deep(th) {
-    background: #f8fafc !important;
-    color: #64748b !important;
-    font-weight: 700 !important;
-    text-transform: uppercase;
-    font-size: 0.75rem !important;
-    letter-spacing: 0.05em;
-}
-
-.item-row:hover {
-    background-color: #f8fafc;
-}
-
+/* Scoped styles removed in favor of global _admin-common.scss */
 .qty-control {
     background: #f1f5f9;
     border-radius: 8px;
     display: inline-flex;
+    align-center: center !important; /* Fixed typo from original logic */
     align-items: center;
     padding: 2px;
 }
-
 .qty-value {
     min-width: 32px;
     font-weight: 700;
     text-align: center;
 }
-
-.gap-2 {
-    gap: 8px;
+.item-row:hover {
+    background-color: #f8fafc;
 }
 </style>
 

@@ -3,10 +3,17 @@ import { ref, onMounted, watch, computed } from 'vue';
 import { PATH } from '@/router/routePaths';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
+import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { useNotifications } from '@/services/notificationService';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import { ArrowLeftIcon, UserIcon, MapPinIcon, NoteIcon } from 'vue-tabler-icons';
 import axios from 'axios';
+
+import { dichVuFile } from '@/services/core/dichVuFile';
+import QrcodeStream from '@/components/common/CCCDQRScanner';
+import { parseCCCDQR } from '@/utils/cccdQR';
+
+const FB_DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
 const route = useRoute();
 const router = useRouter();
@@ -50,6 +57,33 @@ const customerForm = ref({
     hinhAnh: ''
 });
 
+// Quét QR CCCD
+const showQR = ref(false);
+function onDetectQR(detectedCodes) {
+    if (!detectedCodes || detectedCodes.length === 0) return;
+    const result = detectedCodes[0].rawValue;
+    
+    const info = parseCCCDQR(result);
+    if (info) {
+        customerForm.value.ten = info.ten;
+        customerForm.value.ngaySinh = info.ngaySinh;
+        customerForm.value.gioiTinh = info.gioiTinh;
+        if (info.sdt) customerForm.value.sdt = info.sdt;
+        // Map address if possible, or just place in detailed address for user to confirm
+        customerForm.value.diaChiChiTiet = info.diaChi;
+        
+        addNotification({ title: 'Thành công', subtitle: 'Đã quét và điền thông tin từ CCCD', color: 'success' });
+    } else {
+        addNotification({ title: 'Lỗi', subtitle: 'Không nhận diện được dữ liệu QR', color: 'error' });
+    }
+    showQR.value = false;
+}
+function onInitQR(promise) {
+    promise.catch((error) => {
+        console.error('QR initialization error:', error);
+    });
+}
+
 // Location Data
 const provinces = ref([]);
 const districts = ref([]);
@@ -62,7 +96,12 @@ const fetchProvinces = async () => {
         const res = await axios.get('https://provinces.open-api.vn/api/p/');
         provinces.value = res.data;
     } catch (e) {
-        console.error(e);
+        console.error('Error loading provinces:', e);
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Không thể tải danh sách tỉnh/thành phố',
+            color: 'error'
+        });
     } finally {
         loadingLocations.value.provinces = false;
     }
@@ -75,7 +114,12 @@ const fetchDistricts = async (provinceCode) => {
         const res = await axios.get(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
         districts.value = res.data.districts;
     } catch (e) {
-        console.error(e);
+        console.error('Error loading districts:', e);
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Không thể tải danh sách quận/huyện',
+            color: 'error'
+        });
     } finally {
         loadingLocations.value.districts = false;
     }
@@ -88,7 +132,12 @@ const fetchWards = async (districtCode) => {
         const res = await axios.get(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
         wards.value = res.data.wards;
     } catch (e) {
-        console.error(e);
+        console.error('Error loading wards:', e);
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Không thể tải danh sách phường/xã',
+            color: 'error'
+        });
     } finally {
         loadingLocations.value.wards = false;
     }
@@ -171,7 +220,7 @@ const handleSave = () => {
                     await dichVuKhachHang.taoKhachHang(payload);
                     addNotification({ title: 'Thành công', subtitle: 'Đã thêm khách hàng mới', color: 'success' });
                 }
-                router.push('/khach-hang');
+                router.push(PATH.KHACH_HANG);
             } catch (error) {
                 console.error('Error saving customer:', error);
                 addNotification({
@@ -184,7 +233,32 @@ const handleSave = () => {
                 confirmDialog.value.show = false;
             }
         }
-    };
+    }
+};
+
+const fileInput = ref(null);
+const uploading = ref(false);
+
+const handleFileClick = () => {
+    if (isDetailView.value) return;
+    fileInput.value.click();
+};
+
+const onFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    uploading.value = true;
+    try {
+        const res = await dichVuFile.taiLenFile(file);
+        // Safely extract URL if response is an object { url: '...' } or just the string
+        customerForm.value.hinhAnh = typeof res === 'object' ? res.url || res.data || res.secure_url : res;
+        addNotification({ title: 'Thành công', subtitle: 'Đã tải lên ảnh đại diện', color: 'success' });
+    } catch (error) {
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể tải lên ảnh', color: 'error' });
+    } finally {
+        uploading.value = false;
+    }
 };
 
 watch(
@@ -207,13 +281,16 @@ watch(
 const loadAddresses = async (khId) => {
     try {
         const data = await dichVuKhachHang.layDanhSachDiaChi(khId);
-        console.log('DATA DIA CHI:', data);
 
         listDiaChi.value = Array.isArray(data) ? data : data?.content ?? data?.data ?? [];
 
-        console.log('LIST DIA CHI:', listDiaChi.value);
     } catch (e) {
-        console.error(e);
+        console.error('Error loading addresses:', e);
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Không thể tải danh sách địa chỉ',
+            color: 'error'
+        });
     }
 };
 const openAddrDialog = (item = null) => {
@@ -281,7 +358,12 @@ const handleSetDefault = async (id) => {
         await dichVuKhachHang.datDiaChiMacDinh(id);
         loadAddresses(route.params.id);
     } catch (e) {
-        console.error(e);
+        console.error('Error setting default address:', e);
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Không thể đặt địa chỉ mặc định',
+            color: 'error'
+        });
     }
 };
 
@@ -310,48 +392,67 @@ onMounted(() => {
 </script>
 
 <template>
-    <v-container fluid class="pa-6 animate-fade-in min-h-screen font-body">
-        <!-- Header -->
-        <div class="d-flex align-center mb-6">
-            <v-btn icon variant="text" color="slate-600" class="mr-4 rounded-lg" @click="router.push(PATH.KHACH_HANG)" style="background-color: transparent !important;">
-                <ArrowLeftIcon size="20" />
-            </v-btn>
-            <div>
-                <h1 class="text-h4 font-weight-bold">
-                    {{ isDetailView ? 'Hồ sơ khách hàng' : isEditMode ? 'Cập nhật thông tin' : 'Thêm khách hàng mới' }}
-                </h1>
-            </div>
-            <v-spacer></v-spacer>
-            <div class="d-flex gap-2">
-                <v-btn
-                    v-if="!isDetailView"
-                    color="#2E4E8E"
-                    prepend-icon="mdi-content-save"
-                    class="text-none font-weight-bold px-8 rounded-lg"
-                    height="44"
-                    :loading="saving"
-                    @click="handleSave"
-                >
-                    Lưu khách hàng
+    <v-container fluid class="pa-6 animate-fade-in overflow-y-auto font-body" style="height: 100vh;">
+        <!-- Breadcrumbs -->
+        <AdminBreadcrumbs :items="[
+            { title: 'Quản lý tài khoản', disabled: false, href: '#' },
+            { title: 'Khách hàng', disabled: false, to: PATH.KHACH_HANG },
+            { title: isDetailView ? 'Chi tiết' : isEditMode ? 'Cập nhật' : 'Thêm mới', disabled: true }
+        ]" />
+
+        <!-- Action Header -->
+        <div class="d-flex align-center justify-space-between mb-8 mt-4">
+            <div class="d-flex align-center gap-4">
+                <v-btn icon variant="flat" @click="router.push(PATH.KHACH_HANG)" class="btn-back-header">
+                    <ArrowLeftIcon size="20" />
                 </v-btn>
-                <v-btn
-                    v-if="isDetailView"
-                    color="#2E4E8E"
-                    variant="elevated"
-                    prepend-icon="mdi-pencil"
-                    class="text-none font-weight-bold px-10 rounded-lg"
-                    height="44"
-                    @click="router.push(`/khach-hang/form/${route.params.id}`)"
-                >
+            </div>
+            <div class="d-flex gap-3">
+                <v-btn v-if="!isDetailView" color="success" variant="flat"
+                    class="text-none font-weight-black text-white px-8 rounded-xl h-11 elevation-4" @click="showQR = true">
+                    <v-icon size="20" class="mr-2 text-white">mdi-qrcode-scan</v-icon>
+                    Quét QR CCCD
+                </v-btn>
+                <v-btn v-if="!isDetailView" color="primary" variant="flat"
+                    class="text-none font-weight-black text-white px-8 rounded-xl h-11 elevation-4" :loading="saving"
+                    @click="handleSave">
+                    <v-icon size="18" class="mr-2 text-white">mdi-check-all</v-icon>
+                    Lưu hồ sơ khách hàng
+                </v-btn>
+                <v-btn v-if="isDetailView" color="primary" variant="flat"
+                    class="text-none font-weight-black text-white px-8 rounded-xl h-11 elevation-4"
+                    @click="router.push(`${PATH.KHACH_HANG_FORM}/${route.params.id}`)">
+                    <v-icon size="18" class="mr-2 text-white">mdi-pencil</v-icon>
                     Chỉnh sửa hồ sơ
                 </v-btn>
             </div>
         </div>
 
+        <!-- Dialog quét QR CCCD -->
+        <v-dialog v-model="showQR" max-width="500" transition="dialog-bottom-transition">
+            <v-card class="premium-card">
+                <v-card-title class="pa-6 font-weight-black border-b">
+                    <v-icon start color="success" class="mr-2">mdi-qrcode-scan</v-icon>
+                    Quét mã QR CCCD
+                </v-card-title>
+                <v-card-text class="pa-6">
+                    <div class="border-4 border-dashed rounded-lg overflow-hidden mb-4">
+                        <QrcodeStream @detect="onDetectQR" @init="onInitQR" />
+                    </div>
+                    <div class="text-caption font-weight-bold text-slate-400 text-center">Đưa mã QR CCCD vào camera để tự động nhận diện thông tin.</div>
+                </v-card-text>
+                <v-divider></v-divider>
+                <v-card-actions class="pa-4 bg-slate-50">
+                    <v-spacer></v-spacer>
+                    <v-btn color="slate-400" variant="text" class="text-none font-weight-bold" @click="showQR = false">Hủy bỏ</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
         <v-row v-if="loading">
             <v-col cols="12" class="text-center py-16">
-                <v-progress-circular indeterminate color="#2E4E8E" size="64" width="6"></v-progress-circular>
-                <div class="mt-4 text-h6 font-weight-medium">Đang tải hồ sơ khách hàng...</div>
+                <v-progress-circular indeterminate color="primary" size="64" width="6"></v-progress-circular>
+                <div class="mt-4 text-subtitle-1 font-weight-bold text-slate-500">Đang tải hồ sơ khách hàng...</div>
             </v-col>
         </v-row>
 
@@ -359,42 +460,55 @@ onMounted(() => {
         <v-row v-else-if="isDetailView">
             <v-col cols="12" lg="4">
                 <!-- Customer Profile Summary -->
-                <v-card class="rounded-xl border shadow-none mb-6 text-center pa-8">
-                    <v-avatar size="150" color="#2E4E8E" class="mb-4 border shadow-sm">
-                        <v-img v-if="customerForm.hinhAnh" :src="customerForm.hinhAnh"></v-img>
-                        <v-icon v-else size="64" color="primary">mdi-account</v-icon>
-                    </v-avatar>
-                    <h2 class="text-h5 font-weight-black mb-1 text-dark">{{ customerForm.ten }}</h2>
-                    <div class="text-subtitle-2 text-medium-emphasis mb-4">{{ customerForm.email }}</div>
+                <v-card class="premium-card mb-6 text-center">
+                    <v-card-text class="pa-8">
+                        <v-avatar size="140" color="blue-lighten-5" class="mb-4 border-xl border-white elevation-4">
+                            <v-img :src="customerForm.hinhAnh || FB_DEFAULT_AVATAR"></v-img>
+                        </v-avatar>
+                        <h2 class="text-h5 font-weight-black mb-1 text-slate-800">{{ customerForm.ten }}</h2>
+                        <div class="text-subtitle-2 font-weight-bold text-slate-400 mb-6">{{ customerForm.email }}</div>
 
-                    <v-chip
-                        :color="customerForm.trangThai === 'DANG_HOAT_DONG' ? 'success' : 'error'"
-                        variant="flat"
-                        class="px-6 font-weight-bold mb-4"
-                    >
-                        {{ customerForm.trangThai === 'DANG_HOAT_DONG' ? 'Đang hoạt động' : 'Tạm dừng / Khóa' }}
-                    </v-chip>
+                        <v-chip :color="customerForm.trangThai === 'DANG_HOAT_DONG' ? 'success' : 'error'" variant="flat"
+                            class="px-8 font-weight-black rounded-lg mb-8">
+                            {{ customerForm.trangThai === 'DANG_HOAT_DONG' ? 'Đang hoạt động' : 'Tạm dừng / Khóa' }}
+                        </v-chip>
 
-                    <v-divider class="my-6"></v-divider>
+                        <v-divider class="mb-6 opacity-50"></v-divider>
 
-                    <div class="d-flex justify-center flex-column gap-2 text-left">
-                        <div class="d-flex align-center">
-                            <v-icon color="success" size="18" class="mr-3">mdi-phone</v-icon>
-                            <span class="text-subtitle-2 font-weight-bold text-dark">SĐT: </span>
-                            <span class="ml-2 text-subtitle-2 font-weight-black">{{ customerForm.sdt }}</span>
+                        <div class="text-left">
+                            <div class="d-flex align-center mb-4 bg-slate-50 pa-3 rounded-xl border">
+                                <div class="icon-blob bg-success-lighten-4 mr-3">
+                                    <v-icon color="success" size="18">mdi-phone</v-icon>
+                                </div>
+                                <div>
+                                    <div class="text-caption font-weight-bold text-slate-400">SỐ ĐIỆN THOẠI</div>
+                                    <div class="text-subtitle-2 font-weight-black text-slate-700">{{ customerForm.sdt }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-center bg-slate-50 pa-3 rounded-xl border">
+                                <div class="icon-blob bg-info-lighten-4 mr-3">
+                                    <v-icon color="info" size="18">mdi-calendar-range</v-icon>
+                                </div>
+                                <div>
+                                    <div class="text-caption font-weight-bold text-slate-400">NGÀY SINH</div>
+                                    <div class="text-subtitle-2 font-weight-black text-slate-700">{{ customerForm.ngaySinh
+                                        || 'Chưa cập nhật' }}</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="d-flex align-center mt-2">
-                            <v-icon color="info" size="18" class="mr-3">mdi-calendar-range</v-icon>
-                            <span class="text-subtitle-2 font-weight-bold text-dark">Ngày sinh: </span>
-                            <span class="ml-2 text-subtitle-2 font-weight-black">{{ customerForm.ngaySinh || 'Chưa cập nhật' }}</span>
-                        </div>
-                    </div>
+                    </v-card-text>
                 </v-card>
 
-                <v-card class="rounded-xl border shadow-none">
-                    <v-card-title class="pa-5 border-b font-weight-bold text-subtitle-1">Ghi chú hệ thống</v-card-title>
-                    <v-card-text class="pa-6">
-                        <div class="text-body-2 text-medium-emphasis">
+                <v-card class="premium-card">
+                    <v-card-text class="pa-8">
+                        <div class="section-header d-flex align-center mb-4">
+                            <div class="icon-blob bg-slate-100 mr-3">
+                                <NoteIcon size="18" class="text-slate-600" />
+                            </div>
+                            <span class="text-subtitle-1 font-weight-black text-slate-800">Ghi chú hệ thống</span>
+                        </div>
+                        <div class="text-body-2 font-weight-medium text-slate-500 leading-relaxed">
                             {{ customerForm.ghiChu || 'Chưa có ghi chú nào cho khách hàng này.' }}
                         </div>
                     </v-card-text>
@@ -403,53 +517,42 @@ onMounted(() => {
 
             <v-col cols="12" lg="8">
                 <!-- Delivery Address Dashboard -->
-                <v-card class="rounded-xl border shadow-none mb-6 pb-2">
-                    <v-card-title class="pa-6 border-b d-flex align-center justify-space-between">
-                        <div class="d-flex align-center">
-                            <MapPinIcon class="mr-3 text-primary" size="24" />
-                            <span class="font-weight-black">Danh sách địa chỉ nhận hàng</span>
+                <v-card class="premium-card mb-6 pb-2">
+                    <v-card-text class="pa-8">
+                        <div class="section-header d-flex align-center mb-6">
+                            <div class="icon-blob bg-blue-lighten-5 mr-3">
+                                <MapPinIcon class="text-primary" size="20" />
+                            </div>
+                            <span class="text-subtitle-1 font-weight-black text-slate-800">Danh sách địa chỉ nhận hàng</span>
+                            <v-chip color="primary" size="small" variant="tonal" class="ml-3 font-weight-black">
+                                {{ listDiaChi.length || 0 }} Địa chỉ
+                            </v-chip>
                         </div>
-                        <v-chip color="info" size="small" variant="tonal" class="font-weight-bold">
-                            {{ listDiaChi.length || 0 }} Địa chỉ
-                        </v-chip>
-                    </v-card-title>
-                    <v-card-text class="pa-0">
+
+                        <v-divider class="mb-6 opacity-30"></v-divider>
+
                         <!-- Không có địa chỉ -->
-                        <div v-if="!listDiaChi || listDiaChi.length === 0" class="text-center py-16">
-                            <v-icon size="48" color="grey-lighten-2">mdi-map-marker-off</v-icon>
-                            <div class="mt-4 text-grey">Khách hàng chưa đăng ký địa chỉ nhận hàng</div>
+                        <div v-if="!listDiaChi || listDiaChi.length === 0" class="text-center py-16 bg-slate-50 rounded-xl border-dashed border">
+                            <v-icon size="48" color="slate-200">mdi-map-marker-off</v-icon>
+                            <div class="mt-4 text-slate-400 font-weight-bold">Khách hàng chưa đăng ký địa chỉ nhận hàng</div>
                         </div>
 
-                        <!-- Hiển thị 1 địa chỉ -->
-                        <div v-else class="pa-6 d-flex align-start border-b">
-                            <v-avatar color="primary-lighten-5" class="mr-4">
-                                <v-icon color="primary" size="20">mdi-map-marker</v-icon>
+                        <!-- Hiển thị toàn bộ địa chỉ -->
+                        <div v-else v-for="addr in listDiaChi" :key="addr.id"
+                            class="mb-4 pa-5 border rounded-xl d-flex align-center gap-4 bg-white shadow-sm hover-addr-card transition-all">
+                            <v-avatar color="primary" class="mr-2 elevation-2" size="36">
+                                <v-icon color="white" size="18">mdi-map-marker</v-icon>
                             </v-avatar>
-
                             <div class="flex-grow-1">
                                 <div class="d-flex align-center gap-2 mb-1">
-                                    <span class="font-weight-black text-dark text-h6">
-                                        {{ defaultAddress.tenNguoiNhan }}
-                                    </span>
-
-                                    <v-chip
-                                        v-if="defaultAddress.laMacDinh"
-                                        color="success"
-                                        size="x-small"
-                                        variant="flat"
-                                        class="font-weight-bold"
-                                    >
-                                        MẶC ĐỊNH
-                                    </v-chip>
+                                    <span class="font-weight-black text-slate-800">{{ addr.tenNguoiNhan }}</span>
+                                    <span class="text-caption font-weight-bold text-slate-400 px-2 border-l ml-1"> {{
+                                        addr.sdtNguoiNhan }}</span>
+                                    <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="flat"
+                                        class="ml-2 font-weight-black px-3">MẶC ĐỊNH</v-chip>
                                 </div>
-
-                                <div class="text-subtitle-1 font-weight-bold text-primary mb-1">
-                                    {{ defaultAddress.sdtNguoiNhan }}
-                                </div>
-
-                                <div class="text-body-1 text-medium-emphasis">
-                                    {{ defaultAddress.diaChiChiTiet }}, {{ defaultAddress.phuongXa }}, {{ defaultAddress.thanhPho }},
-                                    {{ defaultAddress.tinh }}
+                                <div class="text-body-2 font-weight-bold text-slate-500">
+                                    {{ addr.diaChiChiTiet }}, {{ addr.phuongXa }}, {{ addr.thanhPho }}, {{ addr.tinh }}
                                 </div>
                             </div>
                         </div>
@@ -457,18 +560,31 @@ onMounted(() => {
                 </v-card>
 
                 <!-- Account Security Block -->
-                <v-card class="rounded-xl border shadow-none pb-2">
-                    <v-card-title class="pa-6 border-b font-weight-black">Thông tin tài khoản truy cập</v-card-title>
-                    <v-card-text class="pa-6">
+                <v-card class="premium-card">
+                    <v-card-text class="pa-8">
+                        <div class="section-header d-flex align-center mb-6">
+                            <div class="icon-blob bg-slate-100 mr-3">
+                                <v-icon color="slate-600" size="18">mdi-shield-account</v-icon>
+                            </div>
+                            <span class="text-subtitle-1 font-weight-black text-slate-800">Thông tin tài khoản</span>
+                        </div>
                         <v-row>
                             <v-col cols="12" md="6">
-                                <div class="text-caption font-weight-bold text-medium-emphasis mb-1">TÊN ĐĂNG NHẬP</div>
-                                <div class="text-h6 font-weight-black text-dark">{{ customerForm.tenTaiKhoan || 'Chưa thiết lập' }}</div>
+                                <div class="bg-slate-50 pa-4 rounded-xl border">
+                                    <div class="text-caption font-weight-bold text-slate-400 mb-1">TÊN ĐĂNG NHẬP</div>
+                                    <div class="text-h6 font-weight-black text-primary">{{ customerForm.tenTaiKhoan ||
+                                        'Chưa thiết lập' }}</div>
+                                </div>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="text-caption font-weight-bold text-medium-emphasis mb-1">MẬT KHẨU</div>
-                                <div class="text-subtitle-1 text-medium-emphasis italic font-italic font-weight-medium">
-                                    Dữ liệu được mã hóa bảo mật
+                                <div class="bg-slate-50 pa-4 rounded-xl border d-flex align-center">
+                                    <div class="flex-grow-1">
+                                        <div class="text-caption font-weight-bold text-slate-400 mb-1">MẬT KHẨU</div>
+                                        <div class="text-subtitle-2 text-slate-400 italic font-italic font-weight-bold">
+                                            Dữ liệu được mã hóa bảo mật
+                                        </div>
+                                    </div>
+                                    <v-icon color="slate-300">mdi-lock-check</v-icon>
                                 </div>
                             </v-col>
                         </v-row>
@@ -478,281 +594,227 @@ onMounted(() => {
         </v-row>
 
         <!-- FORM VIEW (CREATE/EDIT) -->
-        <v-row v-else>
+        <v-row v-else class="pb-16">
             <v-col cols="12" lg="8">
                 <!-- Basic Info -->
-                <v-card class="rounded-xl border shadow-sm mb-6" elevation="0">
-                    <v-card-title class="pa-6 border-b d-flex align-center">
-                        <UserIcon class="mr-3 text-primary" size="24" />
-                        <span class="font-weight-bold">Thông tin cá nhân</span>
-                    </v-card-title>
-                    <v-card-text class="pa-6">
+                <v-card class="premium-card mb-6">
+                    <v-card-text class="pa-8">
+                        <div class="section-header d-flex align-center mb-6">
+                            <div class="icon-blob bg-blue-lighten-5 mr-3">
+                                <UserIcon class="text-primary" size="20" />
+                            </div>
+                            <span class="text-subtitle-1 font-weight-black text-slate-800">Thông tin cá nhân</span>
+                        </div>
+
                         <v-row>
                             <v-col cols="12" md="4">
-                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">
-                                    Mã khách hàng <span class="text-caption text-#2E4E8E">(Hệ thống tự tạo)</span>
-                                </div>
-                                <v-text-field
-                                    v-model="customerForm.ma"
-                                    readonly
-                                    placeholder="KH-XXXX"
-                                    variant="outlined"
-                                    density="comfortable"
-                                    class="font-weight-black"
-                                    hide-details
-                                ></v-text-field>
+                                <div class="field-label">Mã khách hàng</div>
+                                <v-text-field v-model="customerForm.ma" readonly placeholder="KH-XXXX" variant="outlined"
+                                    density="comfortable" class="font-weight-black bg-slate-50 mono-font"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="8">
-                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Họ và tên *</div>
-                                <v-text-field
-                                    v-model="customerForm.ten"
-                                    :readonly="isDetailView"
-                                    placeholder="Ví dụ: Nguyễn Văn A"
-                                    variant="outlined"
-                                    density="comfortable"
-                                    class="font-weight-medium"
-                                    hide-details
-                                ></v-text-field>
+                                <div class="field-label">Họ và tên *</div>
+                                <v-text-field v-model="customerForm.ten" :readonly="isDetailView"
+                                    placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" density="comfortable"
+                                    class="font-weight-bold" hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Email *</div>
-                                <v-text-field
-                                    v-model="customerForm.email"
-                                    :readonly="isDetailView"
-                                    placeholder="khachhang@gmail.com"
-                                    variant="outlined"
-                                    density="comfortable"
-                                    class="font-weight-medium"
-                                    hide-details
-                                ></v-text-field>
+                                <div class="field-label">Email *</div>
+                                <v-text-field v-model="customerForm.email" :readonly="isDetailView"
+                                    placeholder="khachhang@gmail.com" variant="outlined" density="comfortable"
+                                    class="font-weight-bold" hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Số điện thoại *</div>
-                                <v-text-field
-                                    v-model="customerForm.sdt"
-                                    :readonly="isDetailView"
-                                    placeholder="09xx.xxx.xxx"
-                                    variant="outlined"
-                                    density="comfortable"
-                                    class="font-weight-medium"
-                                    hide-details
-                                ></v-text-field>
+                                <div class="field-label">Số điện thoại *</div>
+                                <v-text-field v-model="customerForm.sdt" :readonly="isDetailView"
+                                    placeholder="09xx.xxx.xxx" variant="outlined" density="comfortable"
+                                    class="font-weight-bold" hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Ngày sinh</div>
-                                <v-text-field
-                                    v-model="customerForm.ngaySinh"
-                                    :readonly="isDetailView"
-                                    type="date"
-                                    variant="outlined"
-                                    density="comfortable"
-                                    class="font-weight-medium"
-                                    hide-details
-                                ></v-text-field>
+                                <div class="field-label">Ngày sinh</div>
+                                <v-text-field v-model="customerForm.ngaySinh" :readonly="isDetailView" type="date"
+                                    variant="outlined" density="comfortable" class="font-weight-bold"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Giới tính</div>
-                                <v-select
-                                    v-model="customerForm.gioiTinh"
-                                    :readonly="isDetailView"
-                                    :items="[
-                                        { title: 'Nam', value: true },
-                                        { title: 'Nữ', value: false }
-                                    ]"
-                                    variant="outlined"
-                                    density="comfortable"
-                                    class="font-weight-medium"
-                                    hide-details
-                                ></v-select>
+                                <div class="field-label">Giới tính</div>
+                                <v-select v-model="customerForm.gioiTinh" :readonly="isDetailView" :items="[
+                                    { title: 'Nam', value: true },
+                                    { title: 'Nữ', value: false }
+                                ]" variant="outlined" density="comfortable" class="font-weight-bold"
+                                    hide-details></v-select>
                             </v-col>
                         </v-row>
                     </v-card-text>
                 </v-card>
 
                 <!-- Address Info Card -->
-                <v-card class="rounded-xl border shadow-sm mb-6" elevation="0">
-                    <v-card-title class="pa-6 border-b d-flex align-center">
-                        <MapPinIcon class="mr-3 text-primary" size="24" />
-                        <span class="font-weight-bold">Sổ địa chỉ</span>
-                        <v-spacer></v-spacer>
-                        <v-btn
-                            v-if="isEditMode"
-                            color="primary"
-                            variant="tonal"
-                            size="small"
-                            class="text-none"
-                            prepend-icon="mdi-plus"
-                            @click="openAddrDialog()"
-                            >Thêm địa chỉ</v-btn
-                        >
-                    </v-card-title>
-                    <v-card-text class="pa-6">
-                        <div v-if="!isEditMode && !isDetailView" class="mb-4">
+                <v-card class="premium-card mb-6">
+                    <v-card-text class="pa-8">
+                        <div class="section-header d-flex align-center mb-6">
+                            <div class="icon-blob bg-amber-lighten-5 mr-3">
+                                <MapPinIcon class="text-amber-darken-3" size="20" />
+                            </div>
+                            <span class="text-subtitle-1 font-weight-black text-slate-800">Sổ địa chỉ</span>
+                            <v-spacer></v-spacer>
+                            <v-btn v-if="isEditMode" color="primary" variant="tonal" size="small"
+                                class="text-none font-weight-black rounded-lg" prepend-icon="mdi-plus"
+                                @click="openAddrDialog()">
+                                Thêm địa chỉ mới
+                            </v-btn>
+                        </div>
+
+                        <div v-if="!isEditMode && !isDetailView" class="mb-4 bg-slate-50 pa-6 rounded-xl border-dashed border">
                             <v-row>
                                 <v-col cols="12" md="4">
-                                    <v-autocomplete
-                                        v-model="customerForm.tinh"
-                                        :items="provinces"
-                                        item-title="name"
-                                        item-value="code"
-                                        label="Tỉnh"
-                                        @update:model-value="
-                                            (val) => {
-                                                customerForm.thanhPho = null;
-                                                customerForm.phuongXa = null;
-                                                if (val) fetchDistricts(val);
-                                            }
-                                        "
-                                    />
+                                    <v-autocomplete v-model="customerForm.tinh" :items="provinces" item-title="name"
+                                        item-value="code" label="Tỉnh / Thành phố" variant="outlined" density="comfortable"
+                                        @update:model-value="(val) => { customerForm.thanhPho = null; customerForm.phuongXa = null; if (val) fetchDistricts(val); }" />
                                 </v-col>
 
                                 <v-col cols="12" md="4">
-                                    <v-autocomplete
-                                        v-model="customerForm.thanhPho"
-                                        :items="districts"
-                                        item-title="name"
-                                        item-value="code"
-                                        label="Quận"
+                                    <v-autocomplete v-model="customerForm.thanhPho" :items="districts" item-title="name"
+                                        item-value="code" label="Quận / Huyện" variant="outlined" density="comfortable"
                                         :disabled="!customerForm.tinh"
-                                        @update:model-value="
-                                            (val) => {
-                                                customerForm.phuongXa = null;
-                                                if (val) fetchWards(val);
-                                            }
-                                        "
-                                    />
+                                        @update:model-value="(val) => { customerForm.phuongXa = null; if (val) fetchWards(val); }" />
                                 </v-col>
 
                                 <v-col cols="12" md="4">
-                                    <v-autocomplete
-                                        v-model="customerForm.phuongXa"
-                                        :items="wards"
-                                        item-title="name"
-                                        item-value="code"
-                                        label="Phường"
-                                        :disabled="!customerForm.thanhPho"
-                                    />
+                                    <v-autocomplete v-model="customerForm.phuongXa" :items="wards" item-title="name"
+                                        item-value="code" label="Phường / Xã" variant="outlined" density="comfortable"
+                                        :disabled="!customerForm.thanhPho" />
                                 </v-col>
 
                                 <v-col cols="12">
-                                    <v-textarea v-model="customerForm.diaChiChiTiet" label="Địa chỉ chi tiết" />
+                                    <v-textarea v-model="customerForm.diaChiChiTiet" label="Địa chỉ cụ thể (Số nhà, đường...)"
+                                        variant="outlined" rows="2" hide-details />
                                 </v-col>
                             </v-row>
                         </div>
 
-                        <div v-else-if="listDiaChi.length === 0" class="text-center py-8">
-                            <v-icon size="48" color="grey-lighten-2">mdi-map-marker-off</v-icon>
-                            <div class="mt-2 text-medium-emphasis">Chưa có địa chỉ nào</div>
+                        <div v-else-if="listDiaChi.length === 0" class="text-center py-12 bg-slate-50 rounded-xl border-dashed border">
+                            <v-icon size="48" color="slate-200">mdi-map-marker-off</v-icon>
+                            <div class="mt-2 text-slate-400 font-weight-bold">Chưa có địa chỉ nào được đăng ký</div>
                         </div>
 
-                        <div
-                            v-else
-                            v-for="addr in listDiaChi"
-                            :key="addr.id"
-                            class="mb-4 pa-4 border rounded-xl d-flex align-center gap-4 hover-addr"
-                        >
-                            <v-avatar color="primary-lighten-5" class="mr-2">
-                                <v-icon color="primary" size="20">mdi-map-marker</v-icon>
+                        <div v-else v-for="addr in listDiaChi" :key="addr.id"
+                            class="mb-4 pa-5 border rounded-xl d-flex align-center gap-4 bg-white shadow-sm hover-addr-card transition-all">
+                            <v-avatar color="primary" class="mr-2 elevation-2" size="36">
+                                <v-icon color="white" size="18">mdi-map-marker</v-icon>
                             </v-avatar>
                             <div class="flex-grow-1">
                                 <div class="d-flex align-center gap-2 mb-1">
-                                    <span class="font-weight-bold text-dark">{{ addr.tenNguoiNhan }}</span>
-                                    <span class="text-caption text-medium-emphasis">| {{ addr.sdtNguoiNhan }}</span>
-                                    <v-chip size="x-small" color="primary" variant="tonal" class="ml-2 px-2 font-weight-bold">{{
-                                        addr.maDiaChi
-                                    }}</v-chip>
-                                    <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="flat" class="ml-1"
-                                        >Mặc định</v-chip
-                                    >
+                                    <span class="font-weight-black text-slate-800">{{ addr.tenNguoiNhan }}</span>
+                                    <span class="text-caption font-weight-bold text-slate-400 px-2 border-l ml-1"> {{
+                                        addr.sdtNguoiNhan }}</span>
+                                    <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="flat"
+                                        class="ml-2 font-weight-black px-3">MẶC ĐỊNH</v-chip>
                                 </div>
-                                <div class="text-subtitle-2 text-medium-emphasis">
+                                <div class="text-body-2 font-weight-bold text-slate-500">
                                     {{ addr.diaChiChiTiet }}, {{ addr.phuongXa }}, {{ addr.thanhPho }}, {{ addr.tinh }}
                                 </div>
                             </div>
                             <div class="d-flex align-center gap-1" v-if="!isDetailView">
                                 <v-btn icon variant="text" size="small" color="primary" @click="openAddrDialog(addr)"
-                                    ><v-icon>mdi-pencil</v-icon></v-btn
-                                >
-                                <v-btn
-                                    v-if="!addr.laMacDinh"
-                                    icon
-                                    variant="text"
-                                    size="small"
-                                    color="error"
-                                    @click="handleDeleteAddr(addr.id)"
-                                    ><v-icon>mdi-delete</v-icon></v-btn
-                                >
-                                <v-btn
-                                    v-if="!addr.laMacDinh"
-                                    variant="tonal"
-                                    size="small"
-                                    color="info"
-                                    class="text-none ml-2"
-                                    @click="handleSetDefault(addr.id)"
-                                    >Đặt mặc định</v-btn
-                                >
+                                    class="action-icon-btn">
+                                    <v-icon size="18">mdi-pencil</v-icon>
+                                </v-btn>
+                                <v-btn v-if="!addr.laMacDinh" icon variant="text" size="small" color="error"
+                                    @click="handleDeleteAddr(addr.id)" class="action-icon-btn">
+                                    <v-icon size="18">mdi-delete</v-icon>
+                                </v-btn>
+                                <v-btn v-if="!addr.laMacDinh" variant="tonal" size="x-small" color="info"
+                                    class="text-none ml-2 font-weight-black h-8 px-3 rounded-lg"
+                                    @click="handleSetDefault(addr.id)">
+                                    Mặc định
+                                </v-btn>
                             </div>
                         </div>
                     </v-card-text>
                 </v-card>
 
                 <!-- Notes -->
-                <v-card class="rounded-xl border shadow-sm" elevation="0">
-                    <v-card-title class="pa-6 border-b d-flex align-center">
-                        <NoteIcon class="mr-3 text-primary" size="24" />
-                        <span class="font-weight-bold">Ghi chú</span>
-                    </v-card-title>
-                    <v-card-text class="pa-6">
-                        <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Ghi chú thêm</div>
-                        <v-textarea
-                            v-model="customerForm.ghiChu"
-                            :readonly="isDetailView"
-                            placeholder="Ghi chú về khách hàng..."
-                            variant="outlined"
-                            rows="2"
-                            class="font-weight-medium"
-                            hide-details
-                        ></v-textarea>
+                <v-card class="premium-card">
+                    <v-card-text class="pa-8">
+                        <div class="section-header d-flex align-center mb-6">
+                            <div class="icon-blob bg-slate-100 mr-3">
+                                <NoteIcon class="text-slate-600" size="20" />
+                            </div>
+                            <span class="text-subtitle-1 font-weight-black text-slate-800">Ghi chú & Thông tin thêm</span>
+                        </div>
+                        <v-textarea v-model="customerForm.ghiChu" :readonly="isDetailView"
+                            placeholder="Ghi chú về khách hàng (Sở thích, lưu ý giao hàng...)" variant="outlined" rows="3"
+                            class="font-weight-bold" hide-details></v-textarea>
                     </v-card-text>
                 </v-card>
             </v-col>
 
             <v-col cols="12" lg="4">
-                <v-card class="rounded-xl border shadow-sm mb-6" elevation="0">
-                    <v-card-title class="pa-6 border-b">Ảnh đại diện</v-card-title>
-                    <v-card-text class="pa-6 text-center">
-                        <v-avatar size="150" color="grey-lighten-4" class="mb-4 border border-dashed rounded-lg">
-                            <v-img v-if="customerForm.hinhAnh" :src="customerForm.hinhAnh"></v-img>
-                            <v-icon v-else size="64" color="grey-lighten-1">mdi-account-plus</v-icon>
-                        </v-avatar>
-                        <div v-if="!isDetailView" class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">URL Hình ảnh</div>
-                        <v-text-field
-                            v-if="!isDetailView"
-                            v-model="customerForm.hinhAnh"
-                            placeholder="https://..."
-                            variant="outlined"
-                            density="compact"
-                            hide-details
-                            class="font-weight-medium"
-                        ></v-text-field>
+                <v-card class="premium-card mb-6">
+                    <v-card-text class="pa-8 text-center">
+                        <div class="section-header d-flex align-center mb-6 text-left">
+                            <div class="icon-blob bg-blue-lighten-5 mr-3">
+                                <v-icon color="primary" size="18">mdi-camera</v-icon>
+                            </div>
+                            <span class="text-subtitle-1 font-weight-black text-slate-800">Ảnh chân dung</span>
+                        </div>
+
+                        <div class="position-relative d-inline-block mx-auto mb-6">
+                            <v-avatar size="160" color="blue-lighten-5"
+                                class="border-xl border-white elevation-6 cursor-pointer avatar-hover transition-all overflow-hidden"
+                                @click="handleFileClick">
+                                <v-img :src="customerForm.hinhAnh || FB_DEFAULT_AVATAR" cover>
+                                    <template v-slot:placeholder>
+                                        <v-row class="fill-height ma-0" align="center" justify="center">
+                                            <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                                        </v-row>
+                                    </template>
+                                </v-img>
+                                <div v-if="uploading" class="upload-overlay d-flex align-center justify-center">
+                                    <v-progress-circular indeterminate size="40" color="white"
+                                        width="5"></v-progress-circular>
+                                </div>
+                            </v-avatar>
+                            <div v-if="!isDetailView" class="camera-icon-bubble" @click="handleFileClick">
+                                <v-icon color="white" size="20">mdi-camera-plus</v-icon>
+                            </div>
+                        </div>
+                        <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="onFileChange" />
+
+                        <div v-if="!isDetailView" class="text-left">
+                            <div class="field-label">Liên kết ảnh (URL)</div>
+                            <v-text-field v-if="!isDetailView" v-model="customerForm.hinhAnh"
+                                placeholder="Dán URL ảnh hoặc nhấn vào vòng tròn phía trên" variant="outlined"
+                                density="comfortable" hide-details class="font-weight-medium bg-slate-50"></v-text-field>
+                            <p class="text-caption font-weight-bold text-slate-400 mt-2 px-1">Gợi ý: Sử dụng ảnh .jpg hoặc
+                                .png chất lượng cao.</p>
+                        </div>
+                    </v-card-text>
+                </v-card>
+
+                <v-card class="premium-card bg-primary-lighten-5 border-primary-lighten-4">
+                    <v-card-text class="pa-8">
+                        <div class="d-flex align-center mb-4">
+                            <v-icon color="primary" size="24" class="mr-3">mdi-shield-check</v-icon>
+                            <span class="text-subtitle-1 font-weight-black text-primary">Bảo mật tài khoản</span>
+                        </div>
+                        <p class="text-body-2 font-weight-bold text-slate-600 mb-0">Hệ thống sẽ tự động khởi tạo các thông số bảo mật khi hồ sơ được tạo thành công.</p>
                     </v-card-text>
                 </v-card>
             </v-col>
         </v-row>
 
         <!-- SHARED CONFIRM -->
-        <AdminConfirm
-            v-model:show="confirmDialog.show"
-            :title="confirmDialog.title"
-            :message="confirmDialog.message"
-            :color="confirmDialog.color"
-            @confirm="confirmDialog.action"
-        />
+        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
+            :color="confirmDialog.color" @confirm="confirmDialog.action" />
 
         <!-- ADDRESS DIALOG -->
-        <v-dialog v-model="addrDialog" max-width="600">
-            <v-card class="rounded-xl border shadow-2xl">
-                <v-card-title class="pa-4 font-weight-bold border-b text-primary">{{
+        <v-dialog v-model="addrDialog" max-width="600" transition="dialog-bottom-transition">
+            <v-card class="premium-card elevation-24">
+                <v-card-title class="pa-6 font-weight-black border-b text-primary d-flex align-center">
+                    <v-icon start class="mr-3">mdi-map-marker-plus</v-icon>
+                    {{
                     isEditAddr ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới'
                 }}</v-card-title>
                 <v-card-text class="pa-6">
@@ -884,34 +946,13 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.gray-bg { /* Removed background */ }
-.font-body {
-    font-family: 'Inter', sans-serif;
-}
-.text-dark {
-    color: #000000 !important;
-}
-.gap-2 {
-    gap: 8px;
-}
+/* Scoped styles removed in favor of global _admin-common.scss */
 .italic {
     font-style: italic;
 }
-.hover-bg-light:hover {
-    background-color: #f8fafc;
-}
-.transition-all {
-    transition: all 0.2s ease;
-}
-:deep(.v-btn) {
-    border-radius: 8px !important;
-}
-.hover-addr {
-    transition: all 0.2s;
-}
-.hover-addr:hover {
-    background-color: #f1f5f9;
-    border-color: #cbd5e1 !important;
-    transform: translateY(-1px);
+.camera-icon-bubble {
+    border: 4px solid #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 </style>

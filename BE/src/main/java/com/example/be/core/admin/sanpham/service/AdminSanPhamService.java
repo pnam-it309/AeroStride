@@ -17,6 +17,7 @@ import java.util.List;
 public interface AdminSanPhamService {
 
     List<ProductVariantResponse> getVariantsByProductId(String productId);
+    List<ProductVariantResponse> getAllVariants();
 
     ProductFormOptionsResponse getFormOptions();
 

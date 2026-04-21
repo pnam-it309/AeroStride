@@ -14,28 +14,28 @@ public class AdminDiaChiController {
 
     private final AdminDiaChiService service;
 
-    @GetMapping("/khach-hang/{khId}")
+    @GetMapping(RoutesConstant.KHACH_HANG_DETAIL)
     public ResponseEntity<?> getByKhachHang(@PathVariable String khId) {
         return ResponseEntity.ok(service.getByKhachHangId(khId));
     }
 
-    @PostMapping("/add")
+    @PostMapping(RoutesConstant.ADD)
     public ResponseEntity<?> add(@RequestBody AdminDiaChiRequest request) {
         return ResponseEntity.ok(service.add(request));
     }
 
-    @PutMapping("/update/{id}")
+    @PutMapping(RoutesConstant.UPDATE)
     public ResponseEntity<?> update(@PathVariable String id, @RequestBody AdminDiaChiRequest request) {
         return ResponseEntity.ok(service.update(id, request));
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping(RoutesConstant.DELETE)
     public ResponseEntity<?> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/set-default/{id}")
+    @PatchMapping(RoutesConstant.SET_DEFAULT)
     public ResponseEntity<?> setDefault(@PathVariable String id) {
         service.setDefault(id);
         return ResponseEntity.ok().build();

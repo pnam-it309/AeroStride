@@ -3,7 +3,7 @@ package com.example.be.infrastructure.listener;
 import com.example.be.core.common.base.PrimaryEntity;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.utils.HelperUtils;
-import com.example.be.utils.MaGenerator;
+import com.example.be.utils.CodeUtils;
 import jakarta.persistence.PrePersist;
 import java.lang.reflect.Field;
 import java.util.UUID;
@@ -49,7 +49,7 @@ public class PrimaryEntityListener {
                 maField.setAccessible(true);
                 Object value = maField.get(entity);
                 if (value == null || value.toString().isEmpty()) {
-                    maField.set(entity, MaGenerator.generate(entity.getClass()));
+                    maField.set(entity, CodeUtils.generateRandom(entity.getClass()));
                 }
             }
         } catch (Exception e) {

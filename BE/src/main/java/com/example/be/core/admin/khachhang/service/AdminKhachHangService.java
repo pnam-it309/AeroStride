@@ -8,13 +8,16 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 public interface AdminKhachHangService {
+
+    /** Lấy tất cả khách hàng không phân trang (dùng cho export, select). */
     List<AdminKhachHangResponse> hienThi();
 
-    Page<AdminKhachHangResponse> phanTrang(AdminKhachHangRequest request);
-
-    Page<AdminKhachHangResponse> timKiem(AdminKhachHangRequest request);
-
-    Page<AdminKhachHangResponse> locKH(AdminKhachHangRequest request);
+    /**
+     * Tìm kiếm + lọc + phân trang khách hàng.
+     * Gộp 3 method cũ (phanTrang / timKiem / locKH) thành 1.
+     * Khi keyword/trangThai/gioiTinh là null → trả toàn bộ.
+     */
+    Page<AdminKhachHangResponse> search(AdminKhachHangRequest request);
 
     AdminKhachHangResponse detail(String id);
 

@@ -1,6 +1,9 @@
 package com.example.be.entity;
 
 import com.example.be.core.common.base.PrimaryEntity;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,10 +26,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ChiTietSanPham extends PrimaryEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_san_pham")
+    @JsonIgnoreProperties("chiTietSanPhams")
     private SanPham sanPham;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -54,14 +59,17 @@ public class ChiTietSanPham extends PrimaryEntity {
 
     @OneToMany(mappedBy = "chiTietSanPham", fetch = FetchType.LAZY)
     @Builder.Default
+    @JsonIgnoreProperties("chiTietSanPham")
     private List<AnhChiTietSanPham> anhChiTietSanPhams = new ArrayList<>();
 
     @OneToMany(mappedBy = "chiTietSanPham", fetch = FetchType.LAZY)
     @Builder.Default
+    @JsonIgnoreProperties("chiTietSanPham")
     private List<ChiTietDotGiamGia> chiTietDotGiamGias = new ArrayList<>();
 
     @OneToMany(mappedBy = "chiTietSanPham", fetch = FetchType.LAZY)
     @Builder.Default
+    @JsonIgnoreProperties("chiTietSanPham")
     private List<HoaDonChiTiet> hoaDonChiTiets = new ArrayList<>();
 
 }

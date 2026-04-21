@@ -1,11 +1,8 @@
 package com.example.be.entity;
 
+
 import com.example.be.core.common.base.PrimaryEntity;
-import jakarta.persistence.*;
-import lombok.*;
-
-import java.math.BigDecimal;
-
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,10 +21,12 @@ public class HoaDonChiTiet extends PrimaryEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_hoa_don")
+    @JsonIgnoreProperties("listsHoaDonChiTiet")
     private HoaDon hoaDon;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_chi_tiet_san_pham")
+    @JsonIgnoreProperties("hoaDonChiTiets")
     private ChiTietSanPham chiTietSanPham;
 
     @Column(name = "ma_hoa_don_chi_tiet", unique = true)

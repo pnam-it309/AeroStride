@@ -1,9 +1,36 @@
-/* Typography & Font Consistency */
 html,
 body,
 .v-application {
     font-family: 'Inter', sans-serif !important;
     text-transform: none !important;
+    color: #000 !important;
+}
+
+/* Aggressive Global Black Text Enforcing */
+.v-application {
+    &,
+    .v-btn__content,
+    .v-chip__content,
+    .v-tab,
+    .v-list-item-title,
+    .v-card-title,
+    .v-field__input,
+    .v-field__label,
+    .v-select__selection-text,
+    .v-breadcrumbs-item,
+    .text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6,
+    .text-subtitle-1, .text-subtitle-2, .text-body-1, .text-body-2, .text-caption,
+    .text-primary, .text-secondary, .text-info, .text-success, .text-warning, .text-error,
+    .text-slate-900, .text-slate-800, .text-slate-700, .text-slate-600, .text-slate-500, .text-slate-400,
+    .price-value, .total-price-text, .max-discount-value,
+    .data-cell, .header-cell, .native-admin-table th, .native-admin-table td,
+    .pagination-summary, .pagination-label, .pagination-summary strong,
+    .filter-field-label, .field-label, .info-line, .contact-line,
+    .tab-item, .v-tab--selected,
+    .gender-chip, .status-chip,
+    .node, .timeline-step span {
+        color: #000 !important;
+    }
 }
 
 /* Force Vuetify components to respect lowercase rules */
@@ -11,11 +38,13 @@ body,
 .v-tab,
 .v-chip,
 .v-list-item-title,
-.v-card-title,
-.text-uppercase,
-.uppercase {
+.v-card-title {
     text-transform: none !important;
     letter-spacing: normal !important;
+}
+
+.v-tab {
+    font-size: 0.95rem !important; /* Refined for dashboard use */
 }
 
 /* Global Font Size Rules (Standardized for professional dashboard) */
@@ -92,7 +121,7 @@ body,
                     th {
                         background-color: #f8fafc !important; // Match sidebar light feel
                         border-bottom: 1px solid #e2e8f0 !important;
-                        color: #475569 !important;
+                        color: #000 !important;
                         font-weight: 600 !important;
                         text-transform: none !important;
                         font-size: 1.05rem !important; // Increased from 0.875
@@ -110,7 +139,7 @@ body,
                     td {
                         font-size: 1rem !important; // Increased from 0.875
                         height: 60px !important; // More space for larger text
-                        color: #334155 !important;
+                        color: #000 !important;
                     }
                 }
             }
@@ -176,7 +205,7 @@ html {
     .bg-error,
     .bg-info,
     .bg-indigo {
-        color: white !important;
+        color: #000 !important;
     }
 }
 
@@ -199,15 +228,65 @@ h1.text-h4,
 h5.text-h5,
 h5.text-h4,
 .module-page-title {
-    color: #0f172a !important;
+    color: #000 !important;
 }
 
 .native-admin-table .header-cell,
 .v-table thead tr th {
-    color: #0f172a !important;
+    color: #000 !important;
 }
 
-.filter-field-label {
-    color: #1e3a8a !important;
-    font-weight: 700 !important;
+/* Numeric Badges & Count Chips - Absolute Monochrome Suppression */
+/* This rule is designed to crush ALL internal Vuetify color mappings for badges in tabs */
+.v-application .v-tabs .v-chip.tab-count-chip {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #000000 !important;
+    
+    /* Zero out all Vuetify color variables */
+    --v-chip-background: 255, 255, 255 !important;
+    --v-chip-color: 0, 0, 0 !important;
+    --v-theme-error: 255, 255, 255 !important;
+    --v-theme-primary: 255, 255, 255 !important;
+    --v-theme-surface-variant: 255, 255, 255 !important;
+    --v-theme-on-error: 0, 0, 0 !important;
+    --v-theme-on-primary: 0, 0, 0 !important;
+    
+    min-width: 24px !important;
+    height: 24px !important;
+    padding: 0 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 4px !important; // Sharp professional look
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    margin-left: 8px !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+}
+
+/* Block selection inversion - Stay white even when active */
+.v-application .v-tabs .v-tab--selected .tab-count-chip,
+.v-application .v-tabs .v-tab--active .tab-count-chip,
+.v-application .v-tabs .v-chip.tab-count-chip.v-chip--selected {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-color: #000000 !important;
+    --v-chip-background: 255, 255, 255 !important;
+    --v-chip-color: 0, 0, 0 !important;
+}
+
+/* Catch any flat/tonal variants that might bypass background rules */
+.v-application .v-tabs .tab-count-chip.v-chip--variant-flat,
+.v-application .v-tabs .tab-count-chip.v-chip--variant-tonal {
+    --v-chip-background: 255, 255, 255 !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+.text-error {
+    color: #000 !important;
 }

@@ -16,33 +16,34 @@ import {
   LogoutIcon,
   BoxIcon
 } from 'vue-tabler-icons';
+import { PATH } from '@/router/routePaths';
 
 const sidebarItem = [
  {
     title: 'Thống kê',
     icon: ChartBarIcon,
     BgColor: 'error',
-    to: '/thong-ke'
+    to: PATH.THONG_KE
   },
   {
     title: 'Bán hàng',
     icon: BasketIcon,
     BgColor: 'success',
-    to: '/ban-hang'
+    to: PATH.BAN_HANG
   },
   {
     title: 'Quản lý hóa đơn',
     icon: ReceiptIcon,
     BgColor: 'warning',
-    to: '/hoa-don'
+    to: PATH.HOA_DON
   },
   {
     title: 'Quản lý sản phẩm',
     icon: PackageIcon,
     BgColor: 'info',
     children: [
-      { title: 'Sản phẩm', icon: PackageIcon, to: '/san-pham', BgColor: 'info' },
-      { title: 'Biến thể sản phẩm', icon: BoxIcon, to: '/san-pham/bien-the', BgColor: 'success' }
+      { title: 'Sản phẩm', icon: PackageIcon, to: PATH.SAN_PHAM, BgColor: 'info' },
+      { title: 'Biến thể sản phẩm', icon: BoxIcon, to: PATH.BIEN_THE_SAN_PHAM, BgColor: 'success' }
     ]
   },
   {
@@ -50,40 +51,40 @@ const sidebarItem = [
     icon: ShapeIcon,
     BgColor: 'purple',
     children: [
-      { title: 'Thương hiệu', icon: TagIcon, to: '/thuoc-tinh/thuong-hieu', BgColor: 'purple' },
-      { title: 'Danh mục', icon: TagIcon, to: '/thuoc-tinh/danh-muc', BgColor: 'purple' },
-      { title: 'Xuất xứ', icon: TagIcon, to: '/thuoc-tinh/xuat-xu', BgColor: 'purple' },
-      { title: 'Mục đích chạy', icon: TagIcon, to: '/thuoc-tinh/muc-dich-chay', BgColor: 'purple' },
-      { title: 'Chất liệu', icon: TagIcon, to: '/thuoc-tinh/chat-lieu', BgColor: 'purple' },
-      { title: 'Đế giày', icon: TagIcon, to: '/thuoc-tinh/de-giay', BgColor: 'purple' },
-      { title: 'Cổ giày', icon: TagIcon, to: '/thuoc-tinh/co-giay', BgColor: 'purple' },
-      { title: 'Màu sắc', icon: TagIcon, to: '/thuoc-tinh/mau-sac', BgColor: 'purple' },
-      { title: 'Kích thước', icon: TagIcon, to: '/thuoc-tinh/kich-thuoc', BgColor: 'purple' }
+      { title: 'Thương hiệu', icon: TagIcon, to: `${PATH.THUOC_TINH}/thuong-hieu`, BgColor: 'purple' },
+      { title: 'Danh mục', icon: TagIcon, to: `${PATH.THUOC_TINH}/danh-muc`, BgColor: 'purple' },
+      { title: 'Xuất xứ', icon: TagIcon, to: `${PATH.THUOC_TINH}/xuat-xu`, BgColor: 'purple' },
+      { title: 'Mục đích chạy', icon: TagIcon, to: `${PATH.THUOC_TINH}/muc-dich-chay`, BgColor: 'purple' },
+      { title: 'Chất liệu', icon: TagIcon, to: `${PATH.THUOC_TINH}/chat-lieu`, BgColor: 'purple' },
+      { title: 'Đế giày', icon: TagIcon, to: `${PATH.THUOC_TINH}/de-giay`, BgColor: 'purple' },
+      { title: 'Cổ giày', icon: TagIcon, to: `${PATH.THUOC_TINH}/co-giay`, BgColor: 'purple' },
+      { title: 'Màu sắc', icon: TagIcon, to: `${PATH.THUOC_TINH}/mau-sac`, BgColor: 'purple' },
+      { title: 'Kích thước', icon: TagIcon, to: `${PATH.THUOC_TINH}/kich-thuoc`, BgColor: 'purple' }
     ]
-  },
-  {
-    title: 'Quản lý đợt giảm giá',
-    icon: TagIcon,
-    BgColor: 'orange',
-    to: '/dot-giam-gia'
   },
   {
     title: 'Quản lý phiếu giảm giá',
     icon: TicketIcon,
     BgColor: 'pink',
-    to: '/phieu-giam-gia'
+    to: PATH.PHIEU_GIAM_GIA
+  },
+  {
+    title: 'Quản lý đợt giảm giá',
+    icon: TagIcon,
+    BgColor: 'orange',
+    to: PATH.DOT_GIAM_GIA
   },
   {
     title: 'Quản lý khách hàng',
     icon: UsersIcon,
     BgColor: 'primary',
-    to: '/khach-hang'
+    to: PATH.KHACH_HANG
   },
   {
     title: 'Quản lý nhân viên',
     icon: UserCheckIcon,
     BgColor: 'secondary',
-    to: '/nhan-vien'
+    to: PATH.NHAN_VIEN
   },
   // {
   //   title: 'Thanh toán',
@@ -101,7 +102,7 @@ const sidebarItem = [
     title: 'Đăng xuất',
     icon: LogoutIcon,
     BgColor: 'grey',
-    to: '/auth/logout'
+    to: PATH.LOGOUT
   }
 ];
 

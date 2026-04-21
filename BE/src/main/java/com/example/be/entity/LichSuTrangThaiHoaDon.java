@@ -1,6 +1,8 @@
 package com.example.be.entity;
 
 import com.example.be.core.common.base.PrimaryEntity;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,6 +17,7 @@ public class LichSuTrangThaiHoaDon extends PrimaryEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_hoa_don")
+    @JsonIgnoreProperties("listsLichSuHoaDon")
     private HoaDon hoaDon;
 
     @Column(name = "trang_thai_cu")

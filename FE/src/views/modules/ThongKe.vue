@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 
 const loading = ref(false);
 const selectedPeriod = ref('month');
@@ -96,52 +97,59 @@ onMounted(() => {
   loadStatistics();
 });
 </script>
-
 <template>
-  <div>
-    <!-- Header -->
-    <div class="d-flex justify-space-between align-center mb-6">
-      <div>
-        <h1 class="text-h4 font-weight-bold">Thống kê & Báo cáo</h1>
-        <p class="text-subtitle-1 text-medium-emphasis">Phân tích dữ liệu kinh doanh</p>
-      </div>
-    </div>
+  <div class="pa-6 font-body">
+    <!-- Breadcrumbs -->
+    <AdminBreadcrumbs
+        :items="[
+            { title: 'Quản lý bán hàng', disabled: false, href: '#' },
+            { title: 'Thống kê', disabled: true }
+        ]"
+    />
+
+    <div class="mb-4"></div>
 
     <!-- Period Selector -->
-    <v-card elevation="2" class="mb-4">
-      <v-card-text>
+    <v-card class="premium-card mb-6">
+      <v-card-text class="pa-6">
         <v-row align="center">
           <v-col cols="12" md="3">
+            <div class="filter-field-label">Kỳ thống kê</div>
             <v-select
               v-model="selectedPeriod"
               :items="periodOptions"
-              label="Kỳ thống kê"
               variant="outlined"
+              density="compact"
+              hide-details
               @update:model-value="loadStatistics"
             ></v-select>
           </v-col>
           <v-col cols="12" md="2">
+            <div class="filter-field-label">Năm</div>
             <v-select
               v-model="selectedYear"
               :items="Array.from({length: 5}, (_, i) => new Date().getFullYear() - i)"
-              label="Năm"
               variant="outlined"
+              density="compact"
+              hide-details
               @update:model-value="loadStatistics"
             ></v-select>
           </v-col>
           <v-col cols="12" md="2" v-if="selectedPeriod === 'month'">
+            <div class="filter-field-label">Tháng</div>
             <v-select
               v-model="selectedMonth"
               :items="Array.from({length: 12}, (_, i) => ({ title: `Tháng ${i + 1}`, value: i + 1 }))"
-              label="Tháng"
               variant="outlined"
+              density="compact"
+              hide-details
               @update:model-value="loadStatistics"
             ></v-select>
           </v-col>
-          <v-col cols="12" md="2">
-            <v-btn color="primary" variant="tonal" @click="loadStatistics" class="mt-1">
-              <v-icon start>mdi-refresh</v-icon>
-              Làm mới
+          <v-col cols="12" md="auto" class="ml-auto align-self-end">
+            <v-btn color="primary" variant="flat" @click="loadStatistics" class="px-6 font-bold" height="40">
+              <v-icon start size="18">mdi-refresh</v-icon>
+              Cập nhật dữ liệu
             </v-btn>
           </v-col>
         </v-row>
@@ -149,164 +157,150 @@ onMounted(() => {
     </v-card>
 
     <!-- Revenue Statistics -->
-    <v-row class="mb-4">
+    <v-row class="mb-2">
       <v-col cols="12" sm="6" md="3">
-        <v-card elevation="2" class="pa-4">
-          <div class="d-flex align-center justify-space-between">
-            <div>
-              <p class="text-subtitle-2 text-medium-emphasis mb-1">Tổng doanh thu</p>
-              <p class="text-h4 font-weight-bold text-primary">{{ formatCurrency(revenueStats.totalRevenue) }}</p>
-              <div class="d-flex align-center mt-2">
-                <v-icon 
-                  :color="getGrowthColor(revenueStats.growthRate)" 
-                  
-                  :icon="getGrowthIcon(revenueStats.growthRate)"
-                ></v-icon>
-                <span 
-                  :class="'text-' + getGrowthColor(revenueStats.growthRate)"
-                  class="text-caption ml-1"
-                >
-                  {{ Math.abs(revenueStats.growthRate) }}%
-                </span>
-              </div>
+        <v-card class="premium-card pa-6 h-100">
+          <div class="d-flex align-center justify-space-between mb-4">
+            <div class="icon-blob bg-primary-light">
+              <v-icon color="primary">mdi-currency-usd</v-icon>
             </div>
-            <v-icon size="40" color="primary">mdi-currency-usd</v-icon>
+          </div>
+          <div>
+            <p class="text-caption text-slate-500 font-bold text-uppercase mb-1">Tổng doanh thu</p>
+            <p class="text-h5 font-black text-dark">{{ formatCurrency(revenueStats.totalRevenue) }}</p>
+            <div class="d-flex align-center mt-2">
+              <v-chip size="x-small" :color="getGrowthColor(revenueStats.growthRate)" variant="flat" class="font-bold px-2">
+                <v-icon start size="12" :icon="getGrowthIcon(revenueStats.growthRate)"></v-icon>
+                {{ Math.abs(revenueStats.growthRate) }}%
+              </v-chip>
+              <span class="text-caption text-slate-400 ml-2">So với kỳ trước</span>
+            </div>
           </div>
         </v-card>
       </v-col>
 
       <v-col cols="12" sm="6" md="3">
-        <v-card elevation="2" class="pa-4">
-          <div class="d-flex align-center justify-space-between">
-            <div>
-              <p class="text-subtitle-2 text-medium-emphasis mb-1">Tổng đơn hàng</p>
-              <p class="text-h4 font-weight-bold text-success">{{ formatNumber(revenueStats.totalOrders) }}</p>
-              <p class="text-caption text-medium-emphasis mt-1">Trong kỳ</p>
+        <v-card class="premium-card pa-6 h-100">
+          <div class="d-flex align-center justify-space-between mb-4">
+            <div class="icon-blob bg-success-light">
+              <v-icon color="success">mdi-shopping</v-icon>
             </div>
-            <v-icon size="40" color="success">mdi-shopping</v-icon>
+          </div>
+          <div>
+            <p class="text-caption text-slate-500 font-bold text-uppercase mb-1">Tổng đơn hàng</p>
+            <p class="text-h5 font-black text-dark">{{ formatNumber(revenueStats.totalOrders) }}</p>
+            <p class="text-caption text-slate-400 mt-2">Trong thời gian này</p>
           </div>
         </v-card>
       </v-col>
 
       <v-col cols="12" sm="6" md="3">
-        <v-card elevation="2" class="pa-4">
-          <div class="d-flex align-center justify-space-between">
-            <div>
-              <p class="text-subtitle-2 text-medium-emphasis mb-1">Giá trị trung bình</p>
-              <p class="text-h4 font-weight-bold text-info">{{ formatCurrency(revenueStats.averageOrderValue) }}</p>
-              <p class="text-caption text-medium-emphasis mt-1">Mỗi đơn hàng</p>
+        <v-card class="premium-card pa-6 h-100">
+          <div class="d-flex align-center justify-space-between mb-4">
+            <div class="icon-blob bg-info-light">
+              <v-icon color="info">mdi-chart-line</v-icon>
             </div>
-            <v-icon size="40" color="info">mdi-chart-line</v-icon>
+          </div>
+          <div>
+            <p class="text-caption text-slate-500 font-bold text-uppercase mb-1">Giá trị trung bình</p>
+            <p class="text-h5 font-black text-dark">{{ formatCurrency(revenueStats.averageOrderValue) }}</p>
+            <p class="text-caption text-slate-400 mt-2">Mỗi đơn hàng thành công</p>
           </div>
         </v-card>
       </v-col>
 
       <v-col cols="12" sm="6" md="3">
-        <v-card elevation="2" class="pa-4">
-          <div class="d-flex align-center justify-space-between">
-            <div>
-              <p class="text-subtitle-2 text-medium-emphasis mb-1">Tỷ lệ tăng trưởng</p>
-              <p class="text-h4 font-weight-bold" :class="'text-' + getGrowthColor(revenueStats.growthRate)">
-                {{ revenueStats.growthRate }}%
-              </p>
-              <p class="text-caption text-medium-emphasis mt-1">So với kỳ trước</p>
+        <v-card class="premium-card pa-6 h-100">
+          <div class="d-flex align-center justify-space-between mb-4">
+            <div class="icon-blob bg-warning-light">
+              <v-icon color="warning">mdi-trending-up</v-icon>
             </div>
-            <v-icon 
-              size="40" 
-              :color="getGrowthColor(revenueStats.growthRate)"
-              :icon="getGrowthIcon(revenueStats.growthRate)"
-            ></v-icon>
+          </div>
+          <div>
+            <p class="text-caption text-slate-500 font-bold text-uppercase mb-1">Tỷ lệ tăng trưởng</p>
+            <p class="text-h5 font-black" :class="'text-' + getGrowthColor(revenueStats.growthRate)">
+              {{ revenueStats.growthRate }}%
+            </p>
+            <p class="text-caption text-slate-400 mt-2">Hiệu suất kinh doanh</p>
           </div>
         </v-card>
       </v-col>
     </v-row>
 
+    <div class="mb-4"></div>
+
     <v-row>
       <!-- Top Products -->
       <v-col cols="12" lg="6">
-        <v-card elevation="2">
-          <v-card-title>
-            <span>Sản phẩm bán chạy</span>
-          </v-card-title>
-          <v-card-text>
-            <v-list>
-              <v-list-item v-for="(product, index) in topProducts" :key="product.name">
-                <template v-slot:prepend>
-                  <div class="text-h6 font-weight-bold text-primary mr-3">{{ index + 1 }}</div>
-                </template>
-                <v-list-item-title class="font-weight-medium">{{ product.name }}</v-list-item-title>
-                <v-list-item-subtitle>
-                  {{ formatNumber(product.quantity) }} đã bán • {{ formatCurrency(product.revenue) }}
-                </v-list-item-subtitle>
-                <template v-slot:append>
-                  <div class="text-right">
-                    <div class="d-flex align-center">
-                      <v-icon 
-                        :color="getGrowthColor(product.growth)" 
-                        
-                        :icon="getGrowthIcon(product.growth)"
-                      ></v-icon>
-                      <span 
-                        :class="'text-' + getGrowthColor(product.growth)"
-                        class="text-caption ml-1"
-                      >
-                        {{ Math.abs(product.growth) }}%
-                      </span>
-                    </div>
-                  </div>
-                </template>
-              </v-list-item>
-            </v-list>
-          </v-card-text>
+        <v-card class="premium-card h-100">
+          <div class="card-title-bar">
+            <span class="font-bold text-dark text-uppercase" style="font-size: 13px; letter-spacing: 0.05em;">Sản phẩm bán chạy</span>
+            <v-icon color="slate-400">mdi-crown-outline</v-icon>
+          </div>
+          <v-list class="pa-4">
+            <v-list-item v-for="(product, index) in topProducts" :key="product.name" class="rounded-lg mb-2 bg-slate-50">
+              <template v-slot:prepend>
+                <div class="text-h6 font-black text-primary mr-4" style="min-width: 24px;">{{ index + 1 }}</div>
+              </template>
+              <v-list-item-title class="font-bold text-slate-900">{{ product.name }}</v-list-item-title>
+              <v-list-item-subtitle class="font-bold">
+                {{ formatNumber(product.quantity) }} sản phẩm <span class="mx-1">•</span> {{ formatCurrency(product.revenue) }}
+              </v-list-item-subtitle>
+              <template v-slot:append>
+                <v-chip size="x-small" :color="getGrowthColor(product.growth)" variant="tonal" class="font-bold px-2">
+                  {{ product.growth >= 0 ? '+' : '' }}{{ product.growth }}%
+                </v-chip>
+              </template>
+            </v-list-item>
+          </v-list>
         </v-card>
       </v-col>
 
       <!-- Sales by Category -->
       <v-col cols="12" lg="6">
-        <v-card elevation="2">
-          <v-card-title>
-            <span>Doanh thu theo danh mục</span>
-          </v-card-title>
-          <v-card-text>
-            <div v-for="category in salesByCategory" :key="category.name" class="mb-3">
-              <div class="d-flex justify-space-between align-center mb-1">
-                <span class="font-weight-medium">{{ category.name }}</span>
-                <span class="text-primary font-weight-medium">{{ formatCurrency(category.value) }}</span>
+        <v-card class="premium-card h-100">
+          <div class="card-title-bar">
+            <span class="font-bold text-dark text-uppercase" style="font-size: 13px; letter-spacing: 0.05em;">Doanh thu theo danh mục</span>
+            <v-icon color="slate-400">mdi-chart-pie</v-icon>
+          </div>
+          <v-card-text class="pa-6">
+            <div v-for="category in salesByCategory" :key="category.name" class="mb-6">
+              <div class="d-flex justify-space-between align-center mb-2">
+                <span class="font-bold text-slate-700">{{ category.name }}</span>
+                <span class="text-primary font-black">{{ formatCurrency(category.value) }}</span>
               </div>
               <v-progress-linear
                 :model-value="category.percentage"
                 color="primary"
-                height="8"
+                height="10"
                 rounded
               ></v-progress-linear>
               <div class="text-right mt-1">
-                <span class="text-caption text-medium-emphasis">{{ category.percentage }}%</span>
+                <span class="text-caption text-slate-400 font-bold">{{ category.percentage }}%</span>
               </div>
             </div>
           </v-card-text>
         </v-card>
       </v-col>
 
-      <!-- Monthly Revenue Chart -->
+      <!-- Monthly Revenue Grid -->
       <v-col cols="12">
-        <v-card elevation="2">
-          <v-card-title>
-            <span>Doanh thu theo tháng</span>
-          </v-card-title>
-          <v-card-text>
+        <v-card class="premium-card">
+          <div class="card-title-bar">
+            <span class="font-bold text-dark text-uppercase" style="font-size: 13px; letter-spacing: 0.05em;">Doanh thu theo tháng (Năm {{ selectedYear }})</span>
+            <v-icon color="slate-400">mdi-calendar-month</v-icon>
+          </div>
+          <v-card-text class="pa-6">
             <v-row>
               <v-col 
                 v-for="month in monthlyRevenue" 
                 :key="month.month"
-                cols="12" 
-                sm="6" 
-                md="4" 
-                lg="3"
+                cols="12" sm="6" md="3" lg="2"
               >
-                <v-card variant="tonal" color="primary" class="pa-3 text-center">
-                  <div class="text-h6 font-weight-bold text-primary">{{ month.month }}</div>
-                  <div class="text-subtitle-1 font-weight-medium">{{ formatCurrency(month.revenue) }}</div>
-                </v-card>
+                <div class="pa-4 text-center rounded-lg border bg-slate-50 hover-addr-card h-100">
+                  <div class="text-caption text-slate-500 font-bold text-uppercase mb-2">{{ month.month }}</div>
+                  <div class="text-subtitle-1 font-black text-dark">{{ formatCurrency(month.revenue) }}</div>
+                </div>
               </v-col>
             </v-row>
           </v-card-text>
@@ -315,6 +309,13 @@ onMounted(() => {
     </v-row>
   </div>
 </template>
+
+<style scoped>
+.bg-info-light { background: #e0f2fe; }
+.bg-warning-light { background: #fff7ed; }
+.bg-primary-light { background: #eff6ff; }
+.bg-success-light { background: #ecfdf5; }
+</style>
 
 
 

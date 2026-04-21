@@ -1,4 +1,5 @@
 <script setup>
+import { PATH } from '@/router/routePaths';
 const profileDD = [
   {
     avatar: 'mdi-account-outline',
@@ -20,7 +21,7 @@ const profileDD = [
 const handleLogout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
-  window.location.href = '/auth/login';
+  window.location.href = PATH.LOGIN;
 };
 </script>
 

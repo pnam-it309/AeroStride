@@ -12,7 +12,7 @@ public interface AdminPhieuGiamGiaService {
 
     AdminPhieuGiamGiaResponse detail(String id);
 
-    Page<AdminPhieuGiamGiaResponse> phanTrang(Integer pageNo, Integer pageSize, String keyword);
+    Page<AdminPhieuGiamGiaResponse> phanTrang(AdminPhieuGiamGiaRequest request);
 
     void delete(String id);
 

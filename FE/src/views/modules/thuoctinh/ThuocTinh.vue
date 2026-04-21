@@ -14,6 +14,7 @@ import {
     dichVuMucDichChay
 } from '@/services/product/dichVuThuocTinh';
 import { useNotifications } from '@/services/notificationService';
+import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 
 // REUSABLE COMPONENTS
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
@@ -169,10 +170,9 @@ const currentMeta = computed(() => attributeMeta[selectedTab.value] || attribute
 
 const tableHeaders = computed(() => [
     { text: 'STT', align: 'center', width: '50px' },
-    { text: currentMeta.value.codeLabel, align: 'center', width: '120px' },
-    { text: currentMeta.value.nameLabel, align: 'center', width: '220px' },
+    { text: currentMeta.value.codeLabel, align: 'left', width: '120px' },
+    { text: currentMeta.value.nameLabel, align: 'left', width: '220px' },
     { text: 'Trạng thái', align: 'center', width: '130px' },
-    { text: 'Ngày tạo', align: 'center', width: '160px' },
     { text: 'Thao tác', align: 'center', width: '120px' }
 ]);
 
@@ -400,10 +400,15 @@ watch(selectedTab, (n) => {
 <template>
     <v-container fluid class="pa-4 animate-fade-in d-flex flex-column overflow-hidden font-body"
         style="height: calc(100vh - 20px);">
-        <!-- Header -->
-        <div class="flex-none mb-3">
-            <h1 class="text-h5 font-weight-bold text-slate-900 mb-0">Quản lý {{ getCurrentTabTitle() }}</h1>
-        </div>
+        <!-- Breadcrumbs -->
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
+                { title: getCurrentTabTitle(), disabled: true }
+            ]"
+        />
+
+        <div class="mb-2"></div>
 
         <!-- 1. FILTER -->
         <AttributeFilter v-model:searchQuery="searchQuery" v-model:statusFilter="statusFilter" :loading="loading"

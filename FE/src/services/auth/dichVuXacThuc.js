@@ -1,9 +1,10 @@
 import api from '../apiService';
+import { API_AUTH } from '@/constants/apiPaths';
 
 export const dichVuXacThuc = {
   // Đăng nhập
   async dangNhap(loginData) {
-    const response = await api.post('/auth/login', loginData, { 
+    const response = await api.post(API_AUTH.LOGIN, loginData, { 
       bigOp: true, 
       loadingMessage: 'Đang xác thực bảo mật...' 
     });
@@ -22,7 +23,7 @@ export const dichVuXacThuc = {
     if (!refreshToken) {
       throw new Error('Không có refresh token');
     }
-    const response = await api.post('/auth/refresh-token', { refreshToken });
+    const response = await api.post(API_AUTH.REFRESH, { refreshToken });
     if (response.data.data) {
       const { accessToken, refreshToken: newRefreshToken } = response.data.data;
       sessionStorage.setItem('accessToken', accessToken);
@@ -36,7 +37,7 @@ export const dichVuXacThuc = {
   // Đăng xuất
   async dangXuat() {
     try {
-      await api.post('/auth/logout');
+      await api.post(API_AUTH.LOGOUT);
     } catch (error) {
       console.error('Lỗi đăng xuất:', error);
     } finally {

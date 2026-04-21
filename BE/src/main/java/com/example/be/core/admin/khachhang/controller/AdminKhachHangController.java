@@ -1,81 +1,62 @@
 package com.example.be.core.admin.khachhang.controller;
 
 import com.example.be.core.admin.khachhang.model.request.AdminKhachHangRequest;
-import com.example.be.core.admin.khachhang.model.response.AdminKhachHangResponse;
 import com.example.be.core.admin.khachhang.service.AdminKhachHangService;
 import com.example.be.core.common.dto.ApiResponse;
-import com.example.be.core.common.dto.PageRequest;
 import com.example.be.infrastructure.constants.RoutesConstant;
 import com.example.be.infrastructure.constants.TrangThai;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_KHACH_HANG)
 @RequiredArgsConstructor
+@CrossOrigin("*")
 public class AdminKhachHangController {
-    @Autowired
-    private AdminKhachHangService adminKhachHangService;
 
-    @GetMapping("/hien-thi")
-    public List<AdminKhachHangResponse> hienThi() {
-        return adminKhachHangService.hienThi();
-    }
-    @GetMapping("/phan-trang")
-    public ResponseEntity<?> phanTrang(AdminKhachHangRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(adminKhachHangService.phanTrang(request)));
+    private final AdminKhachHangService adminKhachHangService;
+
+    @GetMapping({"/hien-thi", "/phan-trang", "/tim-kiem"}) // Aliases for FE compatibility
+    public ResponseEntity<ApiResponse<?>> search(AdminKhachHangRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(adminKhachHangService.search(request)));
     }
 
-    @GetMapping("/tim-kiem")
-    public ResponseEntity<?> timKiem(AdminKhachHangRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(adminKhachHangService.timKiem(request)));
-    }
-
-    @GetMapping("/filter")
-    public ResponseEntity<?> locKH(AdminKhachHangRequest req) {
-        return ResponseEntity.ok(ApiResponse.success(adminKhachHangService.locKH(req)));
-    }
-
-    @GetMapping("/detail/{id}")
-    public ResponseEntity<?> detail(@PathVariable String id) {
+    @GetMapping(RoutesConstant.DETAIL) // Compatibility Alias
+    public ResponseEntity<ApiResponse<?>> detail(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success(adminKhachHangService.detail(id)));
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<?> create(@RequestBody AdminKhachHangRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(adminKhachHangService.add(request)));
+    @PostMapping(RoutesConstant.ADD) // Compatibility Alias
+    public ResponseEntity<ApiResponse<Void>> add(@RequestBody AdminKhachHangRequest request) {
+        adminKhachHangService.add(request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Thêm khách hàng thành công!"));
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<?> update(@PathVariable String id,
-                                    @RequestBody AdminKhachHangRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(adminKhachHangService.update(id, request)));
+    @PutMapping(RoutesConstant.UPDATE) // Compatibility Alias
+    public ResponseEntity<ApiResponse<Void>> update(@PathVariable String id, @RequestBody AdminKhachHangRequest request) {
+        adminKhachHangService.update(id, request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật khách hàng thành công!"));
     }
 
-    @PatchMapping("/{id}/trang-thai")
-    public ResponseEntity<?> doiTrangThai(@PathVariable String id,
-                                          @RequestParam TrangThai trangThai) {
-        adminKhachHangService.doiTrangThai(id, trangThai);
-        return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công!"));
-    }
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> delete(@PathVariable String id) {
+    @DeleteMapping(RoutesConstant.DELETE) // Compatibility Alias
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         adminKhachHangService.delete(id);
-        return ResponseEntity.ok(ApiResponse.success("Xóa thành công!"));
-    }
-    @GetMapping("/export-excel")
-    public ResponseEntity<byte[]> exportExcel() {
-        byte[] excelContent = adminKhachHangService.exportExcel();
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=danh_sach_khach_hang.xlsx")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(excelContent);
+        return ResponseEntity.ok(ApiResponse.success(null, "Xóa khách hàng thành công!"));
     }
 
+    @PutMapping(RoutesConstant.STATUS) // Compatibility Alias
+    public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id, @RequestBody java.util.Map<String, String> body) {
+        TrangThai status = TrangThai.valueOf(body.get("status"));
+        adminKhachHangService.doiTrangThai(id, status);
+        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật trạng thái thành công!"));
+    }
+
+    @GetMapping(RoutesConstant.EXPORT_EXCEL)
+    public ResponseEntity<byte[]> exportExcel() {
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=khach_hang.xlsx")
+                .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
+                .body(adminKhachHangService.exportExcel());
+    }
 }

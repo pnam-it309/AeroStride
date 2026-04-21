@@ -29,7 +29,9 @@ api.interceptors.request.use(
             uiStore.startProgress();
         }
     } catch (e) {
-        console.warn('LoaderStore not ready');
+        if (import.meta.env.DEV) {
+            console.warn('LoaderStore not ready');
+        }
     }
 
     const token = sessionStorage.getItem('accessToken');
@@ -71,9 +73,13 @@ api.interceptors.response.use(
         sessionStorage.clear(); // Xóa sạch để đảm bảo an toàn
         window.location.href = '/auth/login';
       } else if (status === 403) {
-        console.error('Bạn không có quyền thực hiện hành động này');
+        if (import.meta.env.DEV) {
+          console.error('Bạn không có quyền thực hiện hành động này');
+        }
       } else if (status === 500) {
-        console.error('Lỗi máy chủ (500). Vui lòng liên hệ Admin.');
+        if (import.meta.env.DEV) {
+          console.error('Lỗi máy chủ (500). Vui lòng liên hệ Admin.');
+        }
       }
     }
 

@@ -25,9 +25,6 @@ const { globalLoading: overlay, progressBar, loadingMessage: message } = storeTo
       scrim="#ffffff"
     >
       <div class="text-center">
-        <div class="logo-container mb-6 animate-pulse">
-            <img src="@/assets/images/logos/logo.jpg" alt="Logo" class="loader-logo" />
-        </div>
         <v-progress-circular
           indeterminate
           color="primary"

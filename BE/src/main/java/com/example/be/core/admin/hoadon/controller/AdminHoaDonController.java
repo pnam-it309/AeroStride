@@ -1,6 +1,8 @@
 package com.example.be.core.admin.hoadon.controller;
 
 import com.example.be.core.admin.hoadon.model.request.AdminHoaDonRequest;
+import com.example.be.core.admin.hoadon.model.request.AdminUpdateHdctRequest;
+import com.example.be.core.admin.hoadon.model.request.AdminUpdateHoaDonRequest;
 import com.example.be.core.admin.hoadon.service.AdminHoaDonService;
 import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.infrastructure.constants.RoutesConstant;
@@ -18,42 +20,43 @@ public class AdminHoaDonController {
 
     private final AdminHoaDonService adminHoaDonService;
 
-    @GetMapping
-    public ResponseEntity<?> getPage(AdminHoaDonRequest request) {
+    @GetMapping({RoutesConstant.HIEN_THI, RoutesConstant.PHAN_TRANG}) // Aliases for FE compatibility
+    public ResponseEntity<ApiResponse<?>> getPage(AdminHoaDonRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.getPage(request)));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> detail(@PathVariable String id) {
+    @GetMapping(RoutesConstant.DETAIL) // Compatibility Alias
+    public ResponseEntity<ApiResponse<?>> detail(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.detail(id)));
     }
 
-    @PutMapping("/{id}/status")
-    public ResponseEntity<?> updateStatus(@PathVariable String id, @RequestParam Integer status) {
+    @PatchMapping(RoutesConstant.STATUS_ALT)
+    @PutMapping(RoutesConstant.STATUS) // Compatibility Alias
+    public ResponseEntity<ApiResponse<?>> updateStatus(@PathVariable String id, @RequestParam Integer status) {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.updateStatus(id, status)));
     }
 
-    @PutMapping("/{id}/info")
-    public ResponseEntity<?> updateInfo(@PathVariable String id, @RequestBody com.example.be.core.admin.hoadon.model.request.AdminUpdateHoaDonRequest request) {
+    @PutMapping(RoutesConstant.INFO)
+    public ResponseEntity<ApiResponse<?>> updateInfo(@PathVariable String id, @RequestBody AdminUpdateHoaDonRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.updateInfo(id, request)));
     }
 
-    @PutMapping("/{id}/products")
-    public ResponseEntity<?> updateHdct(@PathVariable String id, @RequestBody com.example.be.core.admin.hoadon.model.request.AdminUpdateHdctRequest request) {
+    @PutMapping(RoutesConstant.PRODUCTS)
+    public ResponseEntity<ApiResponse<?>> updateHdct(@PathVariable String id, @RequestBody AdminUpdateHdctRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.updateHdct(id, request)));
     }
 
-    @DeleteMapping("/{id}/products/{idHdct}")
-    public ResponseEntity<?> removeHdct(@PathVariable String id, @PathVariable String idHdct) {
+    @DeleteMapping(RoutesConstant.PRODUCTS_DETAIL)
+    public ResponseEntity<ApiResponse<?>> removeHdct(@PathVariable String id, @PathVariable String idHdct) {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.removeHdct(id, idHdct)));
     }
 
-    @GetMapping("/counts")
-    public ResponseEntity<?> getCounts(AdminHoaDonRequest request) {
+    @GetMapping(RoutesConstant.COUNTS)
+    public ResponseEntity<ApiResponse<?>> getCounts(AdminHoaDonRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.getCounts(request)));
     }
 
-    @GetMapping("/export-excel")
+    @GetMapping(RoutesConstant.EXPORT_EXCEL)
     public ResponseEntity<byte[]> exportExcel(AdminHoaDonRequest request) {
         byte[] excelContent = adminHoaDonService.exportExcel(request);
         return ResponseEntity.ok()
@@ -61,7 +64,8 @@ public class AdminHoaDonController {
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .body(excelContent);
     }
-    @GetMapping("/{id}/print")
+
+    @GetMapping(RoutesConstant.PRINT)
     public ResponseEntity<String> printInvoice(@PathVariable String id) {
         String html = adminHoaDonService.generateInvoiceHtml(id);
         return ResponseEntity.ok()

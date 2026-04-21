@@ -1,4 +1,5 @@
 import { requireGuest } from './guards';
+import { PATH } from './routePaths';
 
 const AuthRoutes = {
     path: '/auth',
@@ -10,25 +11,25 @@ const AuthRoutes = {
 
         {
             name: 'Login',
-            path: '/auth/login',
+            path: PATH.LOGIN,
             beforeEnter: requireGuest,
             component: () => import('@/views/authentication/BoxedLogin.vue')
         },
         {
             name: 'ForgotPassword',
-            path: '/auth/forgot-password',
+            path: PATH.FORGOT_PASSWORD,
             beforeEnter: requireGuest,
             component: () => import('@/views/authentication/ForgotPassword.vue')
         },
         {
             name: 'Register',
-            path: '/auth/register',
+            path: PATH.REGISTER,
             beforeEnter: requireGuest,
             component: () => import('@/views/authentication/BoxedRegister.vue')
         },
         {
             name: 'Logout',
-            path: '/auth/logout',
+            path: PATH.LOGOUT,
             beforeEnter: async (to, from, next) => {
                 const { useUIStore } = await import('@/stores/ui');
                 const uiStore = useUIStore();
@@ -40,7 +41,7 @@ const AuthRoutes = {
                 setTimeout(async () => {
                     await dichVuXacThuc.dangXuat();
                     uiStore.hideLoading();
-                    next('/auth/login');
+                    next(PATH.LOGIN);
                 }, 1500);
             }
         }

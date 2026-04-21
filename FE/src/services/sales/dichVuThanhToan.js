@@ -1,9 +1,10 @@
 import api from '../apiService';
+import { API_COMMON } from '@/constants/apiPaths';
 
 export const dichVuThanhToan = {
   // Lấy tất cả phương thức thanh toán
   async layPhuongThucThanhToan() {
-    // const response = await api.get('/payment/methods');
+    // const response = await api.get(`${API_COMMON.PAYMENT}/methods`);
     // return response.data.data;
     return new Promise(resolve => setTimeout(() => resolve([
       { id: 1, name: 'VNPay', description: 'Cổng thanh toán VNPay', icon: 'mdi-credit-card', status: 'active' },
@@ -13,7 +14,7 @@ export const dichVuThanhToan = {
 
   // Lấy giao dịch thanh toán
   async layGiaoDichThanhToan(params) {
-    // const response = await api.get('/payment/transactions', { params });
+    // const response = await api.get(`${API_COMMON.PAYMENT}/transactions`, { params });
     // return response.data.data;
     return new Promise(resolve => setTimeout(() => resolve({
       content: [
@@ -26,19 +27,19 @@ export const dichVuThanhToan = {
 
   // Xử lý thanh toán
   async xuLyThanhToan(paymentData) {
-    const response = await api.post('/payment/process', paymentData);
+    const response = await api.post(`${API_COMMON.PAYMENT}/process`, paymentData);
     return response.data.data;
   },
 
   // Hoàn tiền
   async hoanTien(paymentId, refundData) {
-    const response = await api.post(`/payment/${paymentId}/refund`, refundData);
+    const response = await api.post(`${API_COMMON.PAYMENT}/${paymentId}/refund`, refundData);
     return response.data.data;
   },
 
   // Lấy thống kê thanh toán
   async layThongKeThanhToan() {
-    // const response = await api.get('/payment/statistics');
+    // const response = await api.get(`${API_COMMON.PAYMENT}/statistics`);
     // return response.data.data;
     return new Promise(resolve => setTimeout(() => resolve({
       totalRevenue: 25000000,

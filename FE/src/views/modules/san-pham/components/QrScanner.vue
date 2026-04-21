@@ -56,7 +56,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <v-dialog :model-value="show" @update:model-value="emit('update:show', $event)" max-width="500">
+  <v-dialog :model-value="show" @update:model-value="emit('update:show', $event)" max-width="500" transition="dialog-bottom-transition">
     <v-card class="rounded-xl overflow-hidden">
       <div class="px-6 py-4 bg-slate-900 text-white d-flex align-center justify-space-between">
         <div class="d-flex align-center gap-2">
@@ -89,7 +89,7 @@ onBeforeUnmount(() => {
     background: white;
 }
 #qr-reader__dashboard_section_csr button {
-    background: #1e3a8a;
+    background: #000;
     color: white;
     padding: 8px 16px;
     border-radius: 8px;

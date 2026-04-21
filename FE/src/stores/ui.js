@@ -153,6 +153,15 @@ export const useUIStore = defineStore('ui', () => {
   const notificationCount = ref(0);
   const hasNotifications = computed(() => notificationCount.value > 0);
 
+  // ==========================================
+  // BREADCRUMBS STATE
+  // ==========================================
+  const breadcrumbs = ref([]);
+
+  const setBreadcrumbs = (items) => {
+    breadcrumbs.value = items;
+  };
+
   return {
     // Sidebar
     sidebarCollapsed,
@@ -182,6 +191,10 @@ export const useUIStore = defineStore('ui', () => {
     // Notifications
     notificationCount,
     hasNotifications,
+
+    // Breadcrumbs
+    breadcrumbs,
+    setBreadcrumbs,
   };
 });
 

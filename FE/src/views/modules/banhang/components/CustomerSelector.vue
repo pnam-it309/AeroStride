@@ -224,7 +224,7 @@ const submitQuickAdd = async () => {
             </v-card>
         </div>
 
-        <v-dialog v-model="showQuickAddDialog" max-width="520">
+        <v-dialog v-model="showQuickAddDialog" max-width="520" transition="dialog-bottom-transition">
             <v-card>
                 <v-card-title class="text-subtitle-1 font-weight-bold">Thêm hoặc nhận diện khách hàng</v-card-title>
                 <v-card-text>
