@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/pnam-it309/AeroStride/compare/v1.4.0...v1.5.0) (2026-04-22)
+
+
+### Features
+
+* **hoadon:** Cập nhật quản lý hóa đơn v2 và tối ưu hóa UI/UX ([09e4690](https://github.com/pnam-it309/AeroStride/commit/09e4690c76353a102cdc5d13f7f11602098f13d4))
+
 # [1.4.0](https://github.com/pnam-it309/AeroStride/compare/v1.3.1...v1.4.0) (2026-04-21)
 
 
