@@ -12,6 +12,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import com.example.be.core.admin.sanpham.mapper.AdminSanPhamMapper;
+import com.example.be.core.admin.sanpham.repository.AdminChiTietSanPhamRepository;
+import com.example.be.repository.ChiTietDotGiamGiaRepository;
+import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -21,6 +25,15 @@ class AdminDotGiamGiaServiceImplTest {
 
     @Mock
     private AdminDotGiamGiaRepository repo;
+
+    @Mock
+    private AdminChiTietSanPhamRepository chiTietSanPhamRepo;
+
+    @Mock
+    private AdminSanPhamMapper mapper;
+
+    @Mock
+    private ChiTietDotGiamGiaRepository chiTietDotGiamGiaRepo;
 
     @InjectMocks
     private AdminDotGiamGiaServiceImpl service;
@@ -50,7 +63,7 @@ class AdminDotGiamGiaServiceImplTest {
     void update_ShouldThrowException_WhenNotFound() {
         when(repo.findById("999")).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> service.update(testRequest, "999"));
+        assertThrows(ResourceNotFoundException.class, () -> service.update(testRequest, "999"));
     }
 
     @Test
@@ -65,6 +78,7 @@ class AdminDotGiamGiaServiceImplTest {
 
     @Test
     void delete_ShouldCallRepository() {
+        when(repo.existsById("1")).thenReturn(true);
         service.delete("1");
 
         verify(repo).deleteById("1");

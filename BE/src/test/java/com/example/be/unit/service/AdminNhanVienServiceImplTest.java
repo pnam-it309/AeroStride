@@ -11,14 +11,16 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse;
+
 @ExtendWith(MockitoExtension.class)
 class AdminNhanVienServiceImplTest {
     @Mock private AdminNhanVienRepository repository;
     @Mock private PasswordEncoder passwordEncoder;
     @InjectMocks private AdminNhanVienServiceImpl service;
-    @Test void testFindById() {
-        NhanVien entity = new NhanVien();
-        when(repository.findById("1")).thenReturn(Optional.of(entity));
-        assertTrue(service.findById("1").isPresent());
+    @Test void testDetail() {
+        AdminNhanVienResponse mockResponse = mock(AdminNhanVienResponse.class);
+        when(repository.detail("1")).thenReturn(mockResponse);
+        assertNotNull(service.detail("1"));
     }
 }

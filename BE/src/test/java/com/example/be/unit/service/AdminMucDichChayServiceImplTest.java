@@ -7,6 +7,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
+import org.springframework.data.jpa.domain.Specification;
+import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -14,9 +16,12 @@ import static org.mockito.Mockito.*;
 class AdminMucDichChayServiceImplTest {
     @Mock private AdminMucDichChayRepository repository;
     @InjectMocks private AdminMucDichChayServiceImpl service;
-    @Test void testFindById() {
+    @Test void testGetById() {
         MucDichChay entity = new MucDichChay();
-        when(repository.findById(1L)).thenReturn(Optional.of(entity));
-        assertTrue(service.findById(1L).isPresent());
+        entity.setId("1");
+        entity.setMa("MDC1");
+        entity.setTen("Purpose 1");
+        when(repository.findOne(any(Specification.class))).thenReturn(Optional.of(entity));
+        assertNotNull(service.getById("1"));
     }
 }
