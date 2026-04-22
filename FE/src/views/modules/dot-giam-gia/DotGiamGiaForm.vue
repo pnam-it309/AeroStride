@@ -314,7 +314,7 @@ onMounted(init);
                                     class="compact-input"></v-text-field>
                             </v-col>
                             <v-col cols="12" sm="1" class="pl-sm-1 d-flex align-center justify-end">
-                                <v-btn icon variant="tonal" color="error" class="rounded-lg h-10 w-10 font-weight-bold" @click="searchQuery = ''; searchCode = ''; selectionPage = 1">
+                                <v-btn icon variant="tonal" color="error" class="rounded-lg h-10 w-10 font-weight-bold reset-btn" @click="searchQuery = ''; searchCode = ''; selectionPage = 1">
                                     <v-icon size="20">mdi-refresh</v-icon>
                                     <v-tooltip activator="parent" location="top">Làm mới bộ lọc</v-tooltip>
                                 </v-btn>
@@ -435,9 +435,14 @@ onMounted(init);
                                 <tr v-for="(item, index) in filteredSelectedDetails" :key="item.id">
                                     <td class="text-center text-slate-400 font-weight-bold">{{ index + 1 }}</td>
                                     <td class="text-center py-2">
-                                        <v-avatar rounded="lg" size="48" class="border">
-                                            <v-img :src="item.anhMauc" cover></v-img>
-                                        </v-avatar>
+                                        <div class="product-image-container d-inline-block position-relative">
+                                            <v-avatar rounded="lg" size="48" class="border">
+                                                <v-img :src="item.anhMauc" cover></v-img>
+                                            </v-avatar>
+                                            <div v-if="form.soTienGiam > 0" class="discount-badge">
+                                                -{{ form.soTienGiam }}%
+                                            </div>
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="font-weight-black text-slate-800">{{ item.tenSanPhamDayDu }}</div>
@@ -535,5 +540,33 @@ onMounted(init);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 4px;
+}
+
+.product-image-container {
+    position: relative;
+    padding: 2px;
+}
+
+.discount-badge {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    background: linear-gradient(135deg, #ff4d4d 0%, #f70000 100%);
+    color: white;
+    font-size: 9px;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 20px;
+    box-shadow: 0 2px 6px rgba(247, 0, 0, 0.4);
+    border: 1.5px solid white;
+    z-index: 2;
+    white-space: nowrap;
+    animation: badge-pulse 2s infinite;
+}
+
+@keyframes badge-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 </style>

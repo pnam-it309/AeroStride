@@ -13,6 +13,7 @@ import { EyeIcon, ReceiptIcon, PrinterIcon } from 'vue-tabler-icons';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { useAdminTable } from '@/composables/useAdminTable';
 import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
+import { getOrderStatusMeta } from '@/utils/orderStatus';
 
 const router = useRouter();
 const TAB_ALL = 'ALL';
@@ -66,7 +67,15 @@ const sortOptions = [
 ];
 
 const isRefreshing = ref(false);
-const counts = ref({ all: 0, pending: 0, confirmed: 0, shipping: 0, completed: 0, cancelled: 0 });
+const counts = ref({
+    all: 0,
+    pendingPayment: 0,
+    processing: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+    refunded: 0
+});
 const showOrderDetailDialog = ref(false);
 const selectedOrder = ref(null);
 
@@ -93,12 +102,13 @@ const loadCounts = async () => {
         const data = await dichVuHoaDon.laySoLuongHoaDon(params);
         counts.value = {
             all: data.all || 0,
-            pending: data['1'] || 0,
-            confirmed: data['2'] || 0,
-            shipping: data['6'] || 0,
-            delivering: data['3'] || 0,
-            completed: data['4'] || 0,
-            cancelled: data['5'] || 0
+            // BE uses OrderStatus ordinal (EnumType.ORDINAL): 0..5
+            pendingPayment: data['0'] || 0,
+            processing: data['1'] || 0,
+            shipped: data['2'] || 0,
+            delivered: data['3'] || 0,
+            cancelled: data['4'] || 0,
+            refunded: data['5'] || 0
         };
     } catch (e) {
         console.error('Error counts:', e);
@@ -204,45 +214,7 @@ const handlePrint = async (orderId) => {
 };
 
 
-const getStatusInfo = (s) => {
-    const status = Number(s);
-    switch (status) {
-        case 1:
-            return { text: 'Chờ xác nhận', color: 'warning' };
-        case 2:
-            return { text: 'Đã xác nhận', color: 'info' };
-        case 3:
-            return { text: 'Đang giao', color: 'primary' };
-        case 4:
-            return { text: 'Hoàn thành', color: 'success' };
-        case 5:
-            return { text: 'Đã hủy', color: 'error' };
-        case 6:
-            return { text: 'Chờ giao', color: 'orange' };
-        default:
-            return { text: 'Không xác định', color: 'grey' };
-    }
-};
-
-const getStatusChipClass = (s) => {
-    const status = Number(s);
-    switch (status) {
-        case 1:
-            return 'status-chip-pending';
-        case 2:
-            return 'status-chip-confirmed';
-        case 3:
-            return 'status-chip-delivering';
-        case 4:
-            return 'status-chip-completed';
-        case 5:
-            return 'status-chip-cancelled';
-        case 6:
-            return 'status-chip-waiting-delivery';
-        default:
-            return 'status-chip-unknown';
-    }
-};
+const getStatusMeta = (s) => getOrderStatusMeta(s);
 
 const viewOrderDetail = (order) => {
     router.push(`${PATH.HOA_DON_CHI_TIET}/${order.id}`);
@@ -356,86 +328,85 @@ onMounted(() => loadOrders());
                     <v-tab :value="TAB_ALL" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-view-grid-outline</v-icon>
                         Tất cả
-                        <v-chip
+                        <v-avatar
                             v-if="hasCount(counts.all)"
-                            size="x-small"
-                            class="ml-2 font-weight-bold tab-count-chip"
-                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
+                            size="24"
+                            class="ml-2 tab-count-avatar tab-count-all font-weight-black"
                         >
                             {{ counts.all }}
-                        </v-chip>
+                        </v-avatar>
+                    </v-tab>
+                    <v-tab :value="0" class="text-none font-weight-bold px-2 tab-item">
+                        <v-icon start size="16">mdi-cash-clock</v-icon>
+                        Chờ thanh toán
+                        <v-avatar
+                            v-if="hasCount(counts.pendingPayment)"
+                            size="24"
+                            color="#f59e0b"
+                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
+                        >
+                            {{ counts.pendingPayment }}
+                        </v-avatar>
                     </v-tab>
                     <v-tab :value="1" class="text-none font-weight-bold px-2 tab-item">
-                        <v-icon start size="16">mdi-clock-outline</v-icon>
-                        Chờ xác nhận
-                        <v-chip
-                            v-if="hasCount(counts.pending)"
-                            size="x-small"
-                            class="ml-2 font-weight-bold tab-count-chip"
-                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
+                        <v-icon start size="16">mdi-progress-clock</v-icon>
+                        Đang xử lý
+                        <v-avatar
+                            v-if="hasCount(counts.processing)"
+                            size="24"
+                            color="#3b82f6"
+                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
                         >
-                            {{ counts.pending }}
-                        </v-chip>
+                            {{ counts.processing }}
+                        </v-avatar>
                     </v-tab>
                     <v-tab :value="2" class="text-none font-weight-bold px-2 tab-item">
-                        <v-icon start size="16">mdi-check-circle-outline</v-icon>
-                        Đã xác nhận
-                        <v-chip
-                            v-if="hasCount(counts.confirmed)"
-                            size="x-small"
-                            class="ml-2 font-weight-bold tab-count-chip"
-                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
-                        >
-                            {{ counts.confirmed }}
-                        </v-chip>
-                    </v-tab>
-                    <v-tab :value="6" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-truck-fast-outline</v-icon>
-                        Chờ giao
-                        <v-chip
-                            v-if="hasCount(counts.shipping)"
-                            size="x-small"
-                            class="ml-2 font-weight-bold tab-count-chip"
-                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
+                        Đã gửi hàng
+                        <v-avatar
+                            v-if="hasCount(counts.shipped)"
+                            size="24"
+                            color="#f97316"
+                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
                         >
-                            {{ counts.shipping }}
-                        </v-chip>
+                            {{ counts.shipped }}
+                        </v-avatar>
                     </v-tab>
                     <v-tab :value="3" class="text-none font-weight-bold px-2 tab-item">
-                        <v-icon start size="16">mdi-truck-delivery-outline</v-icon>
-                        Đang giao
-                        <v-chip
-                            v-if="hasCount(counts.delivering)"
-                            size="x-small"
-                            class="ml-2 font-weight-bold tab-count-chip"
-                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
+                        <v-icon start size="16">mdi-checkbox-marked-circle-outline</v-icon>
+                        Đã giao
+                        <v-avatar
+                            v-if="hasCount(counts.delivered)"
+                            size="24"
+                            color="#10b981"
+                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
                         >
-                            {{ counts.delivering }}
-                        </v-chip>
+                            {{ counts.delivered }}
+                        </v-avatar>
                     </v-tab>
                     <v-tab :value="4" class="text-none font-weight-bold px-2 tab-item">
-                        <v-icon start size="16">mdi-checkbox-marked-circle-outline</v-icon>
-                        Hoàn thành
-                        <v-chip
-                            v-if="hasCount(counts.completed)"
-                            size="x-small"
-                            class="ml-2 font-weight-bold tab-count-chip"
-                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
-                        >
-                            {{ counts.completed }}
-                        </v-chip>
-                    </v-tab>
-                    <v-tab :value="5" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-close-circle-outline</v-icon>
                         Đã hủy
-                        <v-chip
+                        <v-avatar
                             v-if="hasCount(counts.cancelled)"
-                            size="x-small"
-                            class="ml-2 font-weight-bold tab-count-chip"
-                            style="background-color: #ffffff !important; color: #000000 !important; border: 1px solid #000000 !important; opacity: 1 !important; border-radius: 4px !important;"
+                            size="24"
+                            color="#ef4444"
+                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
                         >
                             {{ counts.cancelled }}
-                        </v-chip>
+                        </v-avatar>
+                    </v-tab>
+                    <v-tab :value="5" class="text-none font-weight-bold px-2 tab-item">
+                        <v-icon start size="16">mdi-cash-refund</v-icon>
+                        Hoàn tiền
+                        <v-avatar
+                            v-if="hasCount(counts.refunded)"
+                            size="24"
+                            color="#6366f1"
+                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
+                        >
+                            {{ counts.refunded }}
+                        </v-avatar>
                     </v-tab>
                 </v-tabs>
             </template>
@@ -483,13 +454,19 @@ onMounted(() => loadOrders());
                     </td>
 
                     <td class="data-cell status-cell">
-                        <v-chip
-                            :class="['font-weight-black text-white status-chip', getStatusChipClass(item.trangThai)]"
-                            variant="flat"
-                            size="small"
-                        >
-                            {{ getStatusInfo(item.trangThai).text }}
-                        </v-chip>
+                        <template v-if="getStatusMeta(item.trangThai)">
+                            <v-chip
+                                :class="['font-weight-black text-white status-chip', getStatusMeta(item.trangThai).chipClass]"
+                                variant="flat"
+                                size="small"
+                            >
+                                <v-icon start size="16">{{ getStatusMeta(item.trangThai).icon }}</v-icon>
+                                {{ getStatusMeta(item.trangThai).text }}
+                            </v-chip>
+                        </template>
+                        <template v-else>
+                            <span class="text-caption text-medium-emphasis">—</span>
+                        </template>
                     </td>
 
 
@@ -533,9 +510,16 @@ onMounted(() => loadOrders());
                         <ReceiptIcon size="24" class="mr-3 text-primary" />
                         <span class="font-weight-medium">Chi tiết hóa đơn #{{ selectedOrder.maHoaDon }}</span>
                     </div>
-                    <v-chip :color="getStatusInfo(selectedOrder.trangThai).color" variant="flat" class="font-weight-bold px-6">
-                        {{ getStatusInfo(selectedOrder.trangThai).text }}
+                    <v-chip
+                        v-if="getStatusMeta(selectedOrder.trangThai)"
+                        :color="getStatusMeta(selectedOrder.trangThai).color"
+                        variant="flat"
+                        class="font-weight-bold px-6"
+                    >
+                        <v-icon start size="18">{{ getStatusMeta(selectedOrder.trangThai).icon }}</v-icon>
+                        {{ getStatusMeta(selectedOrder.trangThai).text }}
                     </v-chip>
+                    <v-chip v-else color="grey" variant="flat" class="font-weight-bold px-6">—</v-chip>
                 </v-card-title>
 
                 <v-card-text class="pa-6">
@@ -592,7 +576,6 @@ onMounted(() => loadOrders());
 </template>
 
 <style scoped>
-/* Scoped styles removed in favor of global _admin-common.scss */
 .back-btn {
     border-radius: 12px !important;
     width: 42px;

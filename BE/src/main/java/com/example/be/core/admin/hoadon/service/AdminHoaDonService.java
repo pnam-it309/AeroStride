@@ -11,7 +11,7 @@ public interface AdminHoaDonService {
 
     HoaDon detail(String id);
 
-    HoaDon updateStatus(String id, Integer status);
+    HoaDon updateStatus(String id, Integer status, String note);
 
     HoaDon updateInfo(String id, com.example.be.core.admin.hoadon.model.request.AdminUpdateHoaDonRequest request);
 

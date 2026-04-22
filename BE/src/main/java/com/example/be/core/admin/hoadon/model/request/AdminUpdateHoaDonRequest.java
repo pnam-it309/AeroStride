@@ -10,4 +10,5 @@ public class AdminUpdateHoaDonRequest {
     private String diaChiNguoiNhan;
     private String ghiChu;
     private String idKhachHang;
+    private String idNhanVien;
 }

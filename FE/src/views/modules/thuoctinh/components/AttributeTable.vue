@@ -46,13 +46,13 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                 <v-tabs 
                     :model-value="tab"
                     @update:model-value="emit('update:tab', $event)"
-                    color="#000" 
-                    class="admin-tabs" 
+                    color="primary" 
+                    class="equal-tabs admin-tabs" 
                     grow 
-                    density="compact"
+                    height="54"
                 >
-                    <v-tab v-for="tabItem in tabs" :key="tabItem.value" :value="tabItem.value" class="text-none font-weight-bold attr-tab-item">
-                        <v-icon start size="14">{{ tabItem.icon }}</v-icon>
+                    <v-tab v-for="tabItem in tabs" :key="tabItem.value" :value="tabItem.value" class="text-none font-weight-bold px-4 tab-item">
+                        <v-icon start size="16">{{ tabItem.icon }}</v-icon>
                         {{ tabItem.title }}
                     </v-tab>
                 </v-tabs>

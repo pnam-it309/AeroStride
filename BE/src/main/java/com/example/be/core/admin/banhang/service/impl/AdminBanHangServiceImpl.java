@@ -16,6 +16,7 @@ import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.utils.HelperUtils;
 import com.example.be.utils.CodeUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,7 +49,6 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             throw new BusinessException("Tối đa 5 hóa đơn chờ.");
         }
         HoaDon hoaDon = new HoaDon();
-        hoaDon.setId(HelperUtils.generateUUID());
         hoaDon.setMaHoaDon(CodeUtils.generateRandom(HoaDon.class));
         hoaDon.setTrangThai(OrderStatus.PENDING_PAYMENT);
         hoaDon.setLoaiDon("TAI_QUAY");
@@ -88,7 +88,6 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                     .soLuong(request.getSoLuong())
                     .donGia(ctsp.getGiaBan())
                     .build();
-            hdct.setId(HelperUtils.generateUUID());
             hdct.setTrangThai(TrangThai.DANG_HOAT_DONG);
             hdct.setNgayTao(System.currentTimeMillis());
         }
@@ -189,15 +188,27 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     public List<BanHangSanPhamResponse> searchSanPham(String keyword) {
-        return chiTietSanPhamRepository.searchByKeyword(keyword).stream().map(ct -> BanHangSanPhamResponse.builder()
-                .id(ct.getId())
-                .tenSanPham(ct.getSanPham().getTen())
-                .maChiTietSanPham(ct.getMaChiTietSanPham())
-                .tenMauSac(ct.getMauSac().getTen())
-                .tenKichThuoc(ct.getKichThuoc().getTen())
-                .soLuongTon(ct.getSoLuong())
-                .giaBan(ct.getGiaBan())
-                .build()).collect(Collectors.toList());
+        // Limit results to avoid loading the whole DB when keyword is empty
+        return chiTietSanPhamRepository
+                .searchByKeywordLite(keyword, PageRequest.of(0, 100))
+                .getContent()
+                .stream()
+                .map(ct -> BanHangSanPhamResponse.builder()
+                        .id(ct.getId())
+                        .tenSanPham(ct.getSanPham() != null ? ct.getSanPham().getTen() : null)
+                        .maSanPham(ct.getSanPham() != null ? ct.getSanPham().getMa() : null)
+                        .maChiTietSanPham(ct.getMaChiTietSanPham())
+                        .tenDanhMuc(ct.getSanPham() != null && ct.getSanPham().getDanhMuc() != null ? ct.getSanPham().getDanhMuc().getTen() : null)
+                        .tenThuongHieu(ct.getSanPham() != null && ct.getSanPham().getThuongHieu() != null ? ct.getSanPham().getThuongHieu().getTen() : null)
+                        .tenChatLieu(ct.getSanPham() != null && ct.getSanPham().getChatLieu() != null ? ct.getSanPham().getChatLieu().getTen() : null)
+                        .tenDeGiay(ct.getSanPham() != null && ct.getSanPham().getDeGiay() != null ? ct.getSanPham().getDeGiay().getTen() : null)
+                        .tenMauSac(ct.getMauSac() != null ? ct.getMauSac().getTen() : null)
+                        .tenKichThuoc(ct.getKichThuoc() != null ? ct.getKichThuoc().getTen() : null)
+                        .soLuongTon(ct.getSoLuong())
+                        .giaBan(ct.getGiaBan())
+                        .hinhAnh(ct.getSanPham() != null ? ct.getSanPham().getHinhAnh() : null)
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override

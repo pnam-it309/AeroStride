@@ -59,16 +59,20 @@ watch(() => selectedOrder.value?.id, (id) => {
 
 // Logic: Hóa đơn
 const createNewOrder = async () => {
+    if (isProcessing.value) return; // Prevent double clicks
     if (orders.value.length >= 5) {
         addNotification({ title: 'Giới hạn', subtitle: 'Tối đa 5 hóa đơn chờ', color: 'warning' });
         return;
     }
+    isProcessing.value = true;
     try {
         const newOrder = await dichVuDonHang.taoDonHang();
         orders.value.push(newOrder);
         activeOrderIndex.value = orders.value.length - 1;
     } catch (e) {
         addNotification({ title: 'Lỗi', subtitle: 'Không thể tạo đơn mới', color: 'error' });
+    } finally {
+        isProcessing.value = false;
     }
 };
 

@@ -1,24 +1,83 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { SearchIcon, ShoppingCartIcon, BoxIcon, QrcodeIcon, XIcon } from 'vue-tabler-icons';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { BoxIcon, QrcodeIcon, XIcon } from 'vue-tabler-icons';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
+import AdminTable from '@/components/common/AdminTable.vue';
+import AdminPagination from '@/components/common/AdminPagination.vue';
+import AdminFilter from '@/components/common/AdminFilter.vue';
+import {
+    dichVuDanhMuc,
+    dichVuMauSac,
+    dichVuChatLieu,
+    dichVuKichThuoc,
+    dichVuDeGiay,
+    dichVuThuongHieu
+} from '@/services/product/dichVuThuocTinh';
 
-const props = defineProps(['activeOrderId']);
+const props = defineProps({
+    activeOrderId: String,
+    loadingExternal: Boolean
+});
 const emit = defineEmits(['add-product']);
 
-const search = ref('');
+const keyword = ref('');
 const results = ref([]);
 const loading = ref(false);
+const hasSearched = ref(false);
+
+const page = ref(1);
+const pageSize = ref(10);
+
+const filters = ref({
+    danhMuc: 'ALL',
+    mauSac: 'ALL',
+    chatLieu: 'ALL',
+    kichCo: 'ALL',
+    deGiay: 'ALL',
+    thuongHieu: 'ALL'
+});
+
+const filterOptions = ref({
+    danhMuc: [],
+    mauSac: [],
+    chatLieu: [],
+    kichCo: [],
+    deGiay: [],
+    thuongHieu: []
+});
+
+const loadFilterOptions = async () => {
+    try {
+        const [dm, ms, cl, kc, dg, th] = await Promise.all([
+            dichVuDanhMuc.layDanhMuc({ size: 1000 }),
+            dichVuMauSac.layMauSac({ size: 1000 }),
+            dichVuChatLieu.layChatLieu({ size: 1000 }),
+            dichVuKichThuoc.layKichThuoc({ size: 1000 }),
+            dichVuDeGiay.layDeGiay({ size: 1000 }),
+            dichVuThuongHieu.layThuongHieu({ size: 1000 })
+        ]);
+
+        const pick = (res) => res?.content || res || [];
+        filterOptions.value = {
+            danhMuc: pick(dm).map((x) => x?.ten).filter(Boolean),
+            mauSac: pick(ms).map((x) => x?.ten).filter(Boolean),
+            chatLieu: pick(cl).map((x) => x?.ten).filter(Boolean),
+            kichCo: pick(kc).map((x) => x?.ten).filter(Boolean),
+            deGiay: pick(dg).map((x) => x?.ten).filter(Boolean),
+            thuongHieu: pick(th).map((x) => x?.ten).filter(Boolean)
+        };
+    } catch (e) {
+        console.error('Load filter options failed:', e);
+    }
+};
 
 const onSearch = async () => {
-    if (!search.value || search.value.length < 2) {
-        results.value = [];
-        return;
-    }
+    hasSearched.value = true;
     loading.value = true;
     try {
-        const data = await dichVuDonHang.searchSanPham(search.value);
+        const data = await dichVuDonHang.searchSanPham(keyword.value || '');
         results.value = data || [];
+        page.value = 1;
     } catch (e) {
         console.error(e);
     } finally {
@@ -91,6 +150,8 @@ const handleGlobalKeyDown = (e) => {
 
 onMounted(() => {
     window.addEventListener('keydown', handleGlobalKeyDown);
+    loadFilterOptions();
+    onSearch(); // Load all products by default
 });
 
 onUnmounted(() => {
@@ -99,30 +160,186 @@ onUnmounted(() => {
 
 const selectProduct = (p) => {
     emit('add-product', p);
-    search.value = '';
-    results.value = [];
+    // keep keyword/results for fast adding multiple items like the sample UX
 };
 
 const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
+
+const filteredResults = computed(() => {
+    const rs = results.value || [];
+    const f = filters.value;
+    const match = (key, val) => {
+        if (val === 'ALL') return true;
+        return String(key || '') === String(val);
+    };
+
+    return rs.filter((x) => {
+        return (
+            match(x.tenDanhMuc, f.danhMuc) &&
+            match(x.tenMauSac, f.mauSac) &&
+            match(x.tenChatLieu, f.chatLieu) &&
+            match(x.tenKichThuoc, f.kichCo) &&
+            match(x.tenDeGiay, f.deGiay) &&
+            match(x.tenThuongHieu, f.thuongHieu)
+        );
+    });
+});
+
+const totalElements = computed(() => filteredResults.value.length);
+const totalPages = computed(() => Math.max(1, Math.ceil(totalElements.value / pageSize.value)));
+const pagedResults = computed(() => {
+    const start = (page.value - 1) * pageSize.value;
+    return filteredResults.value.slice(start, start + pageSize.value);
+});
+
+const imageSrc = (p) => {
+    const src = p?.hinhAnh;
+    if (!src) return null;
+    return src;
+};
+
+const tableHeaders = [
+    { text: 'Ảnh', align: 'left', width: '80px' },
+    { text: 'Tên', align: 'left' },
+    { text: 'Mã', align: 'left', width: '110px' },
+    { text: 'Danh mục', align: 'left', width: '140px' },
+    { text: 'Thương hiệu', align: 'left', width: '140px' },
+    { text: 'Màu sắc', align: 'left', width: '120px' },
+    { text: 'Chất liệu', align: 'left', width: '120px' },
+    { text: 'Size', align: 'left', width: '80px' },
+    { text: 'Giá', align: 'right', width: '120px' },
+    { text: 'Thao tác', align: 'center', width: '110px' }
+];
 </script>
 
 <template>
-    <div class="product-picker position-relative">
-        <div class="d-flex gap-2">
-            <v-text-field
-                v-model="search"
-                placeholder="Tìm sản phẩm bằng tên, mã, barcode..."
-                variant="outlined"
-                prepend-inner-icon="mdi-magnify"
-                hide-details
-                bg-color="white"
-                class="rounded-lg shadow-sm flex-grow-1"
-                @input="onSearch"
-            ></v-text-field>
-            <v-btn icon color="#2E4E8E" variant="flat" size="56" class="rounded-lg" @click="startScanner">
-                <QrcodeIcon size="24" />
-            </v-btn>
-        </div>
+    <div class="product-picker">
+        <!-- 1. Bộ lọc đồng bộ -->
+        <AdminFilter title="Tìm kiếm & Lọc sản phẩm" :loading="loading" @refresh="onSearch">
+            <!-- Tìm kiếm -->
+            <v-col cols="12" md="4">
+                <div class="filter-field-label">Tìm kiếm</div>
+                <v-text-field
+                    v-model="keyword"
+                    placeholder="Nhập tên hoặc mã sản phẩm..."
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    bg-color="white"
+                    prepend-inner-icon="mdi-magnify"
+                    @keydown.enter="onSearch"
+                    class="compact-input"
+                >
+                    <template #append-inner>
+                        <v-btn icon color="primary" variant="text" size="small" class="mr-n2" @click="startScanner">
+                            <QrcodeIcon size="20" />
+                        </v-btn>
+                    </template>
+                </v-text-field>
+            </v-col>
+
+            <!-- Danh mục -->
+            <v-col cols="12" md="2">
+                <div class="filter-field-label">Danh mục</div>
+                <v-select
+                    v-model="filters.danhMuc"
+                    :items="['ALL', ...filterOptions.danhMuc]"
+                    density="compact"
+                    hide-details
+                    variant="outlined"
+                    class="compact-input"
+                >
+                    <template #selection="{ item }">
+                        <span class="text-truncate">{{ item?.title === 'ALL' ? 'Tất cả' : item?.title }}</span>
+                    </template>
+                </v-select>
+            </v-col>
+
+            <!-- Thương hiệu -->
+            <v-col cols="12" md="2">
+                <div class="filter-field-label">Thương hiệu</div>
+                <v-select
+                    v-model="filters.thuongHieu"
+                    :items="['ALL', ...filterOptions.thuongHieu]"
+                    density="compact"
+                    hide-details
+                    variant="outlined"
+                    class="compact-input"
+                >
+                    <template #selection="{ item }">
+                        <span class="text-truncate">{{ item?.title === 'ALL' ? 'Tất cả' : item?.title }}</span>
+                    </template>
+                </v-select>
+            </v-col>
+
+            <!-- Màu sắc -->
+            <v-col cols="12" md="2">
+                <div class="filter-field-label">Màu sắc</div>
+                <v-select
+                    v-model="filters.mauSac"
+                    :items="['ALL', ...filterOptions.mauSac]"
+                    density="compact"
+                    hide-details
+                    variant="outlined"
+                    class="compact-input"
+                >
+                    <template #selection="{ item }">
+                        <span class="text-truncate">{{ item?.title === 'ALL' ? 'Tất cả' : item?.title }}</span>
+                    </template>
+                </v-select>
+            </v-col>
+
+            <!-- Chất liệu -->
+            <v-col cols="12" md="2">
+                <div class="filter-field-label">Chất liệu</div>
+                <v-select
+                    v-model="filters.chatLieu"
+                    :items="['ALL', ...filterOptions.chatLieu]"
+                    density="compact"
+                    hide-details
+                    variant="outlined"
+                    class="compact-input"
+                >
+                    <template #selection="{ item }">
+                        <span class="text-truncate">{{ item?.title === 'ALL' ? 'Tất cả' : item?.title }}</span>
+                    </template>
+                </v-select>
+            </v-col>
+
+            <!-- Kích cỡ -->
+            <v-col cols="12" md="2">
+                <div class="filter-field-label">Kích cỡ</div>
+                <v-select
+                    v-model="filters.kichCo"
+                    :items="['ALL', ...filterOptions.kichCo]"
+                    density="compact"
+                    hide-details
+                    variant="outlined"
+                    class="compact-input"
+                >
+                    <template #selection="{ item }">
+                        <span class="text-truncate">{{ item?.title === 'ALL' ? 'Tất cả' : item?.title }}</span>
+                    </template>
+                </v-select>
+            </v-col>
+
+            <!-- Đế giày -->
+            <v-col cols="12" md="2">
+                <div class="filter-field-label">Đế giày</div>
+                <v-select
+                    v-model="filters.deGiay"
+                    :items="['ALL', ...filterOptions.deGiay]"
+                    density="compact"
+                    hide-details
+                    variant="outlined"
+                    class="compact-input"
+                >
+                    <template #selection="{ item }">
+                        <span class="text-truncate">{{ item?.title === 'ALL' ? 'Tất cả' : item?.title }}</span>
+                    </template>
+                </v-select>
+            </v-col>
+        </AdminFilter>
 
         <!-- QR Scanner Dialog -->
         <v-dialog v-model="showScanner" max-width="500" transition="dialog-bottom-transition">
@@ -136,64 +353,94 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
             </v-card>
         </v-dialog>
 
-        <!-- Search Results Dropdown -->
-        <v-card v-if="results.length > 0" class="search-overlay mt-2 shadow-xl border overflow-hidden">
-            <v-list class="pa-0">
-                <v-list-item v-for="p in results" :key="p.id" class="pa-4 border-b hover-active" @click="selectProduct(p)">
-                    <template v-slot:prepend>
-                        <v-avatar color="grey-lighten-4" rounded="lg" size="48">
-                            <BoxIcon size="24" class="text-grey-darken-1" />
-                        </v-avatar>
-                    </template>
+        <div class="mt-2 table-wrapper-picker">
+            <AdminTable
+                title="Kết quả tìm kiếm"
+                :headers="tableHeaders"
+                :items="pagedResults"
+                :loading="loading"
+                :showAddButton="false"
+                :emptyText="hasSearched ? 'Không tìm thấy sản phẩm phù hợp' : 'Nhập từ khóa hoặc bấm TÌM KIẾM'"
+                emptyIcon="mdi-magnify"
+            >
+                <template #row="{ item: p }">
+                    <tr>
+                        <td>
+                            <v-avatar rounded="lg" size="56" color="grey-lighten-4">
+                                <v-img v-if="imageSrc(p)" :src="imageSrc(p)" cover />
+                                <BoxIcon v-else size="22" class="text-grey-darken-1" />
+                            </v-avatar>
+                        </td>
+                        <td>
+                            <div class="font-weight-bold">{{ p.tenSanPham }}</div>
+                            <div class="text-caption text-slate-500">Tồn: <b>{{ p.soLuongTon }}</b></div>
+                        </td>
+                        <td class="text-caption font-weight-bold">{{ p.maChiTietSanPham }}</td>
+                        <td class="text-caption">{{ p.tenDanhMuc || '—' }}</td>
+                        <td class="text-caption">{{ p.tenThuongHieu || '—' }}</td>
+                        <td class="text-caption">{{ p.tenMauSac || '—' }}</td>
+                        <td class="text-caption">{{ p.tenChatLieu || '—' }}</td>
+                        <td class="text-caption">{{ p.tenKichThuoc || '—' }}</td>
+                        <td class="text-right font-weight-bold text-error">{{ formatCurrency(p.giaBan) }}</td>
+                        <td class="text-center">
+                            <v-btn
+                                color="black"
+                                size="small"
+                                variant="flat"
+                                class="font-weight-black"
+                                :disabled="Number(p.soLuongTon) <= 0 || loadingExternal"
+                                :loading="loadingExternal"
+                                @click="selectProduct(p)"
+                            >
+                                CHỌN
+                            </v-btn>
+                        </td>
+                    </tr>
+                </template>
 
-                    <v-list-item-title class="font-weight-bold text-subtitle-1">
-                        {{ p.tenSanPham }}
-                    </v-list-item-title>
-
-                    <v-list-item-subtitle class="mt-1 d-flex gap-2">
-                        <v-chip size="x-small" label color="primary" variant="tonal">
-                            {{ p.tenMauSac }}
-                        </v-chip>
-                        <v-chip size="x-small" label color="secondary" variant="tonal"> Size {{ p.tenKichThuoc }} </v-chip>
-                        <span class="text-caption ml-2"
-                            >Tồn: <b>{{ p.soLuongTon }}</b></span
-                        >
-                    </v-list-item-subtitle>
-
-                    <template v-slot:append>
-                        <div class="text-right">
-                            <div class="text-h6 font-weight-bold text-primary">{{ formatCurrency(p.giaBan) }}</div>
-                            <div class="text-caption text-grey">{{ p.maChiTietSanPham }}</div>
-                        </div>
-                    </template>
-                </v-list-item>
-            </v-list>
-        </v-card>
-
-        <v-card v-else-if="search && !loading && search.length >= 2" class="search-overlay mt-2 pa-6 text-center text-grey">
-            Không tìm thấy sản phẩm nào khớp với "{{ search }}"
-        </v-card>
+                <template #pagination>
+                    <AdminPagination
+                        v-model="page"
+                        :page-size="pageSize"
+                        :total-pages="totalPages"
+                        :total-elements="totalElements"
+                        :current-size="pagedResults.length"
+                        @update:pageSize="pageSize = $event"
+                    />
+                </template>
+            </AdminTable>
+        </div>
     </div>
 </template>
 
 <style scoped>
-.search-overlay {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 999;
-    max-height: 500px;
+.table-wrapper-picker {
+    max-height: 470px;
     overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
 }
 
-.hover-active:hover {
-    background-color: var(--v-secondary-lighten-5);
-    cursor: pointer;
+.filter-field-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 4px;
 }
 
-.gap-2 {
-    gap: 8px;
+.compact-input :deep(.v-field) {
+    border-radius: 8px !important;
+}
+
+.product-picker :deep(.filter-card) {
+    margin-bottom: 16px !important;
+    background-color: #f8fafc !important;
+}
+
+@media (max-width: 960px) {
+    .table-wrapper-picker {
+        max-height: 350px;
+    }
 }
 </style>
 

@@ -14,10 +14,7 @@ import com.example.be.entity.LichSuTrangThaiHoaDon;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.infrastructure.exceptions.SystemException;
-import com.example.be.repository.ChiTietSanPhamRepository;
-import com.example.be.repository.HoaDonChiTietRepository;
-import com.example.be.repository.KhachHangRepository;
-import com.example.be.repository.LichSuTrangThaiHoaDonRepository;
+import com.example.be.repository.*;
 import com.example.be.utils.ExcelUtils;
 import com.example.be.utils.HelperUtils;
 import com.example.be.utils.CodeUtils;
@@ -45,9 +42,11 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     private final AdminHoaDonRepository repository;
     private final HoaDonChiTietRepository hoaDonChiTietRepository;
     private final LichSuTrangThaiHoaDonRepository lichSuTrangThaiHoaDonRepository;
+    private final NhanVienRepository nhanVienRepository;
     private final ChiTietSanPhamRepository chiTietSanPhamRepository;
     private final KhachHangRepository khachHangRepository;
     private final TemplateEngine templateEngine;
+
 
     @Override
     public Page<AdminHoaDonResponse> getPage(AdminHoaDonRequest req) {
@@ -60,7 +59,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         if (req.getTenKhachHang() != null && req.getTenKhachHang().trim().isEmpty()) req.setTenKhachHang(null);
         if (req.getLoaiDon() != null && req.getLoaiDon().trim().isEmpty()) req.setLoaiDon(null);
         if (req.getNgayTao() != null && req.getNgayTao().trim().isEmpty()) req.setNgayTao(null);
-        
+
         req.setTuNgayLong(parseDateToLong(req.getTuNgay(), false));
         req.setDenNgayLong(parseDateToLong(req.getDenNgay(), true));
     }
@@ -85,12 +84,12 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
 
     @Override
     @Transactional
-    public HoaDon updateStatus(String id, Integer status) {
+    public HoaDon updateStatus(String id, Integer status, String note) {
         HoaDon hd = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
-        
+
         OrderStatus oldStatus = hd.getTrangThai();
         OrderStatus newStatus;
-        
+
         if (status != null && status >= 0 && status < OrderStatus.values().length) {
             newStatus = OrderStatus.values()[status];
         } else {
@@ -107,7 +106,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 .hoaDon(hd)
                 .trangThaiCu(oldStatus != null ? oldStatus.ordinal() : null)
                 .trangThaiMoi(newStatus.ordinal())
-                .ghiChu("Cập nhật trạng thái từ hệ thống quản trị")
+                .ghiChu(note != null && !note.trim().isEmpty() ? note : "Cập nhật trạng thái từ hệ thống quản trị")
                 .nguoiThucHien("ADMIN")
                 .build();
         history.setNgayTao(System.currentTimeMillis());
@@ -130,18 +129,22 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     @Transactional
     public HoaDon updateInfo(String id, AdminUpdateHoaDonRequest request) {
         HoaDon hd = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
-        
+
         hd.setSoDienThoaiNguoiNhan(request.getSoDienThoaiNguoiNhan());
         hd.setDiaChiNguoiNhan(request.getDiaChiNguoiNhan());
         hd.setGhiChu(request.getGhiChu());
-        
+
         if (request.getIdKhachHang() != null) {
             hd.setKhachHang(khachHangRepository.findById(request.getIdKhachHang()).orElse(null));
         }
-        
+
+        if (request.getIdNhanVien() != null) {
+            hd.setNhanVien(nhanVienRepository.findById(request.getIdNhanVien()).orElse(null));
+        }
+
         hd.setNgayCapNhat(System.currentTimeMillis());
         logHistory(hd, "Cập nhật thông tin giao hàng/khách hàng");
-        
+
         return repository.save(hd);
     }
 
@@ -153,7 +156,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm chi tiết"));
 
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findByHoaDonAndChiTietSanPham(hd, ctsp);
-        
+
         if (hdct != null) {
             hdct.setSoLuong(request.getSoLuong());
         } else {
@@ -163,14 +166,13 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                     .soLuong(request.getSoLuong())
                     .donGia(ctsp.getGiaBan())
                     .build();
-            hdct.setId(HelperUtils.generateUUID());
             hdct.setMaHoaDonChiTiet(CodeUtils.generateRandom(HoaDonChiTiet.class));
             hdct.setNgayTao(System.currentTimeMillis());
         }
-        
+
         hoaDonChiTietRepository.save(hdct);
         logHistory(hd, "Thay đổi sản phẩm: " + ctsp.getSanPham().getTen() + " (SL: " + request.getSoLuong() + ")");
-        
+
         return recalculateTotal(hd);
     }
 
@@ -200,9 +202,9 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         java.math.BigDecimal total = details.stream()
                 .map(d -> d.getDonGia().multiply(java.math.BigDecimal.valueOf(d.getSoLuong())))
                 .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
-        
+
         hd.setTongTien(total);
-        hd.setTongTienSauGiam(total); 
+        hd.setTongTienSauGiam(total);
         hd.setNgayCapNhat(System.currentTimeMillis());
         return repository.save(hd);
     }
@@ -210,7 +212,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     @Override
     public Map<String, Long> getCounts(AdminHoaDonRequest req) {
         prepareRequest(req);
-        
+
         Map<String, Long> counts = new HashMap<>();
         counts.put("all", repository.countWithFilter(req));
 

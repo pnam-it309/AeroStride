@@ -15,9 +15,9 @@ export const dichVuHoaDon = {
   },
 
   // Cập nhật trạng thái
-  async capNhatTrangThaiHoaDon(id, status) {
+  async capNhatTrangThaiHoaDon(id, status, note) {
     // Backend supports PATCH /{id}/status or PUT /status/{id}
-    const response = await api.patch(`${API_ADMIN.HOA_DON}/${id}/status`, null, { params: { status } });
+    const response = await api.patch(`${API_ADMIN.HOA_DON}/${id}/status`, null, { params: { status, note } });
     return response.data.data;
   },
 

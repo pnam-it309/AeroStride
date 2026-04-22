@@ -32,8 +32,8 @@ public class AdminHoaDonController {
 
     @PatchMapping(RoutesConstant.STATUS_ALT)
     @PutMapping(RoutesConstant.STATUS) // Compatibility Alias
-    public ResponseEntity<ApiResponse<?>> updateStatus(@PathVariable String id, @RequestParam Integer status) {
-        return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.updateStatus(id, status)));
+    public ResponseEntity<ApiResponse<?>> updateStatus(@PathVariable String id, @RequestParam Integer status, @RequestParam(required = false) String note) {
+        return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.updateStatus(id, status, note)));
     }
 
     @PutMapping(RoutesConstant.INFO)

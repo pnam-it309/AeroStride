@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits, ref, watch } from 'vue';
 import { AlertTriangleIcon, InfoCircleIcon, CheckIcon } from 'vue-tabler-icons';
 
 const props = defineProps({
@@ -9,13 +9,22 @@ const props = defineProps({
   confirmText: { type: String, default: 'Đồng ý' },
   cancelText: { type: String, default: 'Hủy bỏ' },
   color: { type: String, default: 'primary' },
-  loading: { type: Boolean, default: false }
+  loading: { type: Boolean, default: false },
+  showInput: { type: Boolean, default: false },
+  inputLabel: { type: String, default: 'Ghi chú' },
+  inputRequired: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['update:show', 'confirm', 'cancel']);
 
+const inputValue = ref('');
+
+watch(() => props.show, (val) => {
+  if (val) inputValue.value = '';
+});
+
 const handleConfirm = () => {
-  emit('confirm');
+  emit('confirm', inputValue.value);
 };
 
 const handleCancel = () => {
@@ -49,6 +58,22 @@ const handleCancel = () => {
             <p class="text-subtitle-2 text-medium-emphasis mt-1">{{ message }}</p>
           </div>
         </div>
+
+        <div v-if="showInput" class="mt-4">
+          <v-textarea
+            v-model="inputValue"
+            :label="inputLabel"
+            variant="outlined"
+            density="comfortable"
+            hide-details
+            rows="3"
+            class="rounded-0"
+            :placeholder="`Nhập ${inputLabel.toLowerCase()}...`"
+          ></v-textarea>
+          <div v-if="inputRequired && !inputValue" class="text-caption text-error mt-1">
+            * Vui lòng nhập {{ inputLabel.toLowerCase() }}
+          </div>
+        </div>
       </v-card-text>
 
       <v-divider></v-divider>
@@ -69,6 +94,7 @@ const handleCancel = () => {
           class="font-weight-black text-none px-8 text-white" 
           rounded="0"
           :loading="loading"
+          :disabled="inputRequired && !inputValue"
           @click="handleConfirm"
         >
           {{ confirmText }}

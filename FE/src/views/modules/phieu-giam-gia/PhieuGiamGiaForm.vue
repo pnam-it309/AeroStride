@@ -254,20 +254,21 @@ onMounted(init);
                                     suffix="VNĐ" variant="outlined" density="comfortable" hide-details
                                     :class="form.loaiPhieu === 'TIEN_MAT' ? 'bg-slate-50' : ''"></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="4">
-                                <div class="d-flex align-center h-11 mb-2">
+                            <v-col cols="12" md="6">
+                                <div class="d-flex align-center gap-4 mb-2" style="height: 24px;">
                                     <div class="field-label mb-0">Số lượng</div>
-                                    <v-spacer></v-spacer>
                                     <v-switch v-model="isInfinite" label="Vô hạn" color="primary" density="compact"
-                                        hide-details class="custom-mini-switch"></v-switch>
+                                        hide-details class="custom-mini-switch ml-2"></v-switch>
                                 </div>
                                 <v-text-field v-model.number="form.soLuong"
                                     :disabled="isInfinite || form.loaiHienThi === 'CA_NHAN'" variant="outlined"
-                                    density="comfortable" hide-details class="h-11-field"></v-text-field>
+                                    density="comfortable" hide-details></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="8">
-                                <div class="field-label h-11 d-flex align-center">Đơn tối thiểu</div>
-                                <v-text-field v-model.number="form.giatriToiThieu" type="number" suffix="VNĐ" variant="outlined"
+                            <v-col cols="12" md="6">
+                                <div class="d-flex align-center mb-2" style="height: 24px;">
+                                    <div class="field-label mb-0">Đơn tối thiểu (VNĐ)</div>
+                                </div>
+                                <v-text-field v-model.number="form.giatriToiThieu" type="number" placeholder="0" variant="outlined"
                                     density="comfortable" hide-details></v-text-field>
                             </v-col>
                         </v-row>
@@ -357,19 +358,7 @@ onMounted(init);
                                 <v-text-field v-model="form.ngayKetThuc" type="datetime-local" variant="outlined"
                                     density="comfortable" hide-details></v-text-field>
                             </v-col>
-                            <v-col cols="12">
-                                <div class="field-label">Trạng thái</div>
-                                <v-select v-model="form.trangThai"
-                                    :items="[{ title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' }, { title: 'Tạm ngưng', value: 'NGUNG_HOAT_DONG' }]"
-                                    variant="outlined" density="comfortable" hide-details>
-                                    <template v-slot:selection="{ item }">
-                                        <v-chip :color="item.value === 'DANG_HOAT_DONG' ? 'success' : 'error'"
-                                            size="small" class="font-weight-black px-4">
-                                            {{ item.title }}
-                                        </v-chip>
-                                    </template>
-                                </v-select>
-                            </v-col>
+
                         </v-row>
                     </v-card-text>
                 </v-card>
@@ -408,5 +397,16 @@ onMounted(init);
 
 .modern-table :deep(.v-checkbox-btn) {
     min-height: auto !important;
+}
+
+:deep(.custom-mini-switch) {
+    .v-selection-control {
+        min-height: unset !important;
+    }
+    .v-label {
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        padding-inline-start: 8px !important;
+    }
 }
 </style>

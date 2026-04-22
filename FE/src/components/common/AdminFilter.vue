@@ -44,9 +44,6 @@ const emit = defineEmits(['refresh', 'search']);
 :deep(.v-field--variant-outlined .v-field__outline) {
     color: #d5deea !important;
 }
-.reset-btn :deep(.v-icon) {
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
 :deep(.reset-btn .mdi-loading) {
     animation: filter-spin 1s linear infinite;
 }
