@@ -271,7 +271,7 @@ const handleSave = async () => {
                     <BoxIcon size="18" class="mr-2" /> Quản lý biến thể
                 </v-btn>
                 <v-btn color="primary" variant="flat"
-                    class="text-none font-weight-black text-white px-8 rounded-lg h-11 elevation-4" :loading="saving"
+                    class="text-none font-weight-bold text-white px-8 rounded-lg h-11 elevation-4" :loading="saving"
                     @click="handleSave">
                     <DeviceFloppyIcon size="18" class="mr-2 text-white" /> Lưu thông tin
                 </v-btn>
@@ -281,7 +281,7 @@ const handleSave = async () => {
         <v-row v-if="loading">
             <v-col cols="12" class="text-center py-16">
                 <v-progress-circular indeterminate color="primary" size="64" />
-                <div class="mt-4 text-subtitle-1 font-weight-bold text-slate-500">Đang tải thông tin sản phẩm...</div>
+                <div class="mt-4 text-subtitle-1 font-weight-medium text-slate-500">Đang tải thông tin sản phẩm...</div>
             </v-col>
         </v-row>
 
@@ -295,7 +295,7 @@ const handleSave = async () => {
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
                                 <InfoCircleIcon size="18" class="text-primary" />
                             </div>
-                            <span class="text-subtitle-1 font-weight-black text-slate-800">Thông tin cơ bản</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin cơ bản</span>
                         </div>
 
                         <v-row>
@@ -328,7 +328,7 @@ const handleSave = async () => {
                             <div class="icon-blob bg-amber-lighten-5 mr-3">
                                 <SettingsIcon size="18" class="text-amber-darken-2" />
                             </div>
-                            <span class="text-subtitle-1 font-weight-black text-slate-800">Thuộc tính kỹ thuật</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thuộc tính kỹ thuật</span>
                         </div>
 
                         <v-row>
@@ -380,7 +380,7 @@ const handleSave = async () => {
                             <div class="icon-blob bg-emerald-lighten-5 mr-3">
                                 <BoxIcon size="18" class="text-emerald-darken-2" />
                             </div>
-                            <span class="text-subtitle-1 font-weight-black text-slate-800">Phân loại</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Phân loại</span>
                         </div>
 
                         <v-row>
@@ -402,9 +402,9 @@ const handleSave = async () => {
                                 <div class="field-label">Đối tượng sử dụng <span class="text-red">*</span></div>
                                 <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary"
                                     variant="outlined" density="comfortable" class="w-100 rounded-lg custom-toggle">
-                                    <v-btn value="NAM" class="flex-grow-1 font-weight-bold">Nam</v-btn>
-                                    <v-btn value="NU" class="flex-grow-1 font-weight-bold">Nữ</v-btn>
-                                    <v-btn value="UNISEX" class="flex-grow-1 font-weight-bold">Unisex</v-btn>
+                                    <v-btn value="NAM" class="flex-grow-1">Nam</v-btn>
+                                    <v-btn value="NU" class="flex-grow-1">Nữ</v-btn>
+                                    <v-btn value="UNISEX" class="flex-grow-1">Unisex</v-btn>
                                 </v-btn-toggle>
                             </v-col>
                         </v-row>

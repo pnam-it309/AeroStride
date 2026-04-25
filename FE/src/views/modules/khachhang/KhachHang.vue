@@ -268,7 +268,7 @@ const tableHeaders = [
     { text: 'Mã khách hàng', align: 'center', width: '110px' },
     { text: 'Tên khách hàng', align: 'center', width: '100px' },
     { text: 'Giới tính', align: 'center', width: '110px' },
-    { text: 'Thông tin liên hệ', align: 'center', width: '150px' },
+    { text: 'Thông tin liên hệ', align: 'left', width: '220px' },
     { text: 'Địa chỉ', align: 'center', width: '200px' },
     { text: 'Trạng thái', align: 'center', width: '100px' },
     { text: 'Hành động', align: 'center', width: '140px' }
@@ -451,16 +451,16 @@ watch(
                     <td class="data-cell text-center">{{ item.ten || '-' }}</td>
                     <td class="data-cell center-cell">
                         <v-chip
-                            size="x-small"
-                            variant="flat"
+                            size="small"
+                            variant="tonal"
                             :class="['gender-chip', item.gioiTinh ? 'gender-chip-male' : 'gender-chip-female']"
                         >
                             {{ item.gioiTinh === true ? 'Nam' : item.gioiTinh === false ? 'Nữ' : '-' }}
                         </v-chip>
                     </td>
-                    <td class="data-cell contact-cell">
+                    <td class="data-cell contact-cell text-left px-4">
                         <div class="d-inline-flex flex-column align-start">
-                            <div class="info-line font-weight-bold mb-1">{{ item.sdt || '-' }}</div>
+                            <div class="info-line mb-1">{{ item.sdt || '-' }}</div>
                             <div v-if="hasValue(item.email)" class="info-line d-flex align-center text-slate-500">
                                 <v-icon size="14" class="mr-2">mdi-email-outline</v-icon>{{ item.email }}
                             </div>
@@ -472,7 +472,7 @@ watch(
                     <td class="data-cell">
                         <v-chip
                             size="small"
-                            variant="flat"
+                            variant="tonal"
                             :color="getStatusColor(item.trangThai)"
                             class="px-4 status-chip"
                         >

@@ -69,7 +69,7 @@ const tableHeaders = [
     { text: 'Tên nhân viên', align: 'center', width: '140px' },
     { text: 'Tên tài khoản', align: 'center', width: '120px' },
     { text: 'Giới tính', align: 'center', width: '130px' },
-    { text: 'Thông tin liên hệ', align: 'center', width: '230px' },
+    { text: 'Thông tin liên hệ', align: 'left', width: '220px' },
     { text: 'Chức vụ', align: 'center', width: '100px' },
     { text: 'Trạng thái', align: 'center', width: '130px' },
     { text: 'Hành động', align: 'center', width: '110px' }
@@ -233,19 +233,19 @@ onMounted(() => {
                     <td class="data-cell">{{ item.tenTaiKhoan || '-' }}</td>
                     <td class="data-cell">
                         <v-chip
-                            size="x-small"
-                            variant="flat"
+                            size="small"
+                            variant="tonal"
                             :class="['gender-chip', item.gioiTinh ? 'gender-chip-male' : 'gender-chip-female']"
                         >
                             {{ item.gioiTinh === true ? 'Nam' : 'Nữ' }}
                         </v-chip>
                     </td>
 
-                    <td class="data-cell">
+                    <td class="data-cell contact-cell text-left px-4">
                         <div class="d-inline-flex flex-column align-start">
                             <div class="contact-info-item d-flex align-center mb-1">
                                 <v-icon size="14" class="mr-2 text-slate-400">mdi-phone</v-icon>
-                                <span class="font-weight-bold">{{ item.sdt }}</span>
+                                <span>{{ item.sdt }}</span>
                             </div>
                             <div class="contact-info-item d-flex align-center text-slate-500">
                                 <v-icon size="14" class="mr-2">mdi-email-outline</v-icon>
@@ -259,7 +259,7 @@ onMounted(() => {
                         <template v-if="tab === 0">
                             <v-chip
                                 size="small"
-                                variant="flat"
+                                variant="tonal"
                                 :color="getStatusColor(item.trangThai)"
                                 class="px-4 status-chip"
                             >
@@ -267,7 +267,7 @@ onMounted(() => {
                             </v-chip>
                         </template>
                         <template v-else>
-                            <span class="text-caption font-weight-bold text-primary">{{ formatDateTime(item.resetRequestedAt) }}</span>
+                            <span class="text-caption text-primary">{{ formatDateTime(item.resetRequestedAt) }}</span>
                         </template>
                     </td>
 

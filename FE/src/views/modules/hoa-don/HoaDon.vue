@@ -56,8 +56,8 @@ const {
 }, {
     search: '',
     trangThai: TAB_ALL,
-    fromDate: getTodayDate(),
-    toDate: getTodayDate(),
+    fromDate: null,
+    toDate: null,
     sortDirection: 'DESC'
 });
 
@@ -80,16 +80,16 @@ const showOrderDetailDialog = ref(false);
 const selectedOrder = ref(null);
 
 const tableHeaders = [
-    { text: 'STT', align: 'center', width: '50px' },
-    { text: 'Mã hóa đơn', align: 'left', width: '120px' },
-    { text: 'Khách hàng', align: 'left', width: '150px' },
-    { text: 'Số điện thoại', align: 'left', width: '120px' },
-    { text: 'Loại hóa đơn', align: 'left', width: '120px' },
-    { text: 'Loại thanh toán', align: 'left', width: '140px' },
-    { text: 'Mã nhân viên', align: 'left', width: '140px' },
-    { text: 'Tổng tiền', align: 'left', width: '100px' },
-    { text: 'Trạng thái', align: 'left', width: '120px' },
-    { text: 'Hành động', align: 'center', width: '90px' }
+    { text: 'STT', align: 'center', width: '60px' },
+    { text: 'Mã hóa đơn', align: 'center', width: '130px' },
+    { text: 'Khách hàng', align: 'center', width: '160px' },
+    { text: 'Số điện thoại', align: 'center', width: '130px' },
+    { text: 'Loại hóa đơn', align: 'center', width: '130px' },
+    { text: 'Loại thanh toán', align: 'center', width: '150px' },
+    { text: 'Mã nhân viên', align: 'center', width: '150px' },
+    { text: 'Tổng tiền', align: 'center', width: '120px' },
+    { text: 'Trạng thái', align: 'center', width: '140px' },
+    { text: 'Hành động', align: 'center', width: '100px' }
 ];
 
 const loadCounts = async () => {
@@ -247,7 +247,7 @@ onMounted(() => loadOrders());
                         density="compact"
                         hide-details
                         prepend-inner-icon="mdi-magnify"
-                        class="font-weight-bold search-field"
+                        class="search-field"
                         @input="handleSearch"
                     ></v-text-field>
                 </v-col>
@@ -262,7 +262,7 @@ onMounted(() => loadOrders());
                         variant="outlined"
                         density="compact"
                         hide-details
-                        class="font-weight-bold sort-field"
+                        class="sort-field"
                         @update:model-value="handleSearch"
                     >
                         <template v-slot:prepend-inner>
@@ -331,7 +331,7 @@ onMounted(() => loadOrders());
                         <v-avatar
                             v-if="hasCount(counts.all)"
                             size="24"
-                            class="ml-2 tab-count-avatar tab-count-all font-weight-black"
+                            class="ml-2 tab-count-avatar tab-count-all"
                         >
                             {{ counts.all }}
                         </v-avatar>
@@ -342,8 +342,7 @@ onMounted(() => loadOrders());
                         <v-avatar
                             v-if="hasCount(counts.pendingPayment)"
                             size="24"
-                            color="#f59e0b"
-                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
+                            class="ml-2 tab-count-avatar font-weight-regular"
                         >
                             {{ counts.pendingPayment }}
                         </v-avatar>
@@ -354,8 +353,7 @@ onMounted(() => loadOrders());
                         <v-avatar
                             v-if="hasCount(counts.processing)"
                             size="24"
-                            color="#3b82f6"
-                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
+                            class="ml-2 tab-count-avatar font-weight-regular"
                         >
                             {{ counts.processing }}
                         </v-avatar>
@@ -366,8 +364,7 @@ onMounted(() => loadOrders());
                         <v-avatar
                             v-if="hasCount(counts.shipped)"
                             size="24"
-                            color="#f97316"
-                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
+                            class="ml-2 tab-count-avatar font-weight-regular"
                         >
                             {{ counts.shipped }}
                         </v-avatar>
@@ -378,8 +375,7 @@ onMounted(() => loadOrders());
                         <v-avatar
                             v-if="hasCount(counts.delivered)"
                             size="24"
-                            color="#10b981"
-                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
+                            class="ml-2 tab-count-avatar font-weight-regular"
                         >
                             {{ counts.delivered }}
                         </v-avatar>
@@ -390,8 +386,7 @@ onMounted(() => loadOrders());
                         <v-avatar
                             v-if="hasCount(counts.cancelled)"
                             size="24"
-                            color="#ef4444"
-                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
+                            class="ml-2 tab-count-avatar font-weight-regular"
                         >
                             {{ counts.cancelled }}
                         </v-avatar>
@@ -402,8 +397,7 @@ onMounted(() => loadOrders());
                         <v-avatar
                             v-if="hasCount(counts.refunded)"
                             size="24"
-                            color="#6366f1"
-                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
+                            class="ml-2 tab-count-avatar font-weight-regular"
                         >
                             {{ counts.refunded }}
                         </v-avatar>
@@ -413,51 +407,51 @@ onMounted(() => loadOrders());
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell stt-cell text-slate-400 font-weight-medium">{{ getRowNumber(index) }}</td>
+                    <td class="data-cell stt-cell text-slate-400">{{ getRowNumber(index) }}</td>
 
-                    <td class="data-cell col-left-tight">
-                        <div class="text-caption font-weight-medium text-dark">{{ item.maHoaDon }}</div>
+                    <td class="data-cell text-center">
+                        <div class="text-caption text-dark">{{ item.maHoaDon }}</div>
                     </td>
 
-                    <td class="data-cell col-left-tight">
-                        <div class="text-caption font-weight-medium text-dark">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
+                    <td class="data-cell text-center">
+                        <div class="text-caption text-dark">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
                     </td>
 
-                    <td class="data-cell col-left-tight">
-                        <div class="text-caption font-weight-medium text-dark">{{ item.soDienThoai || 'N/A' }}</div>
+                    <td class="data-cell text-center">
+                        <div class="text-caption text-dark">{{ item.soDienThoai || 'N/A' }}</div>
                     </td>
 
-                    <td class="data-cell">
+                    <td class="data-cell text-center">
                         <v-chip
-                            :class="['font-weight-black text-white status-chip', getOrderTypeClass(item.loaiDon)]"
-                            variant="flat"
+                            :class="['px-3', getOrderTypeClass(item.loaiDon)]"
+                            variant="tonal"
                             size="small"
                         >
                             {{ getOrderTypeLabel(item.loaiDon) }}
                         </v-chip>
                     </td>
 
-                    <td class="data-cell">
-                        <div class="text-caption font-weight-medium text-dark">{{ getPaymentLabel(item) }}</div>
+                    <td class="data-cell text-center">
+                        <div class="text-caption text-dark">{{ getPaymentLabel(item) }}</div>
                     </td>
 
-                    <td class="data-cell">
-                        <div class="text-caption font-weight-medium text-dark">
+                    <td class="data-cell text-center">
+                        <div class="text-caption text-dark">
                             {{ item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống' }}
                         </div>
                     </td>
 
-                    <td class="data-cell price-value">
-                        <div class="text-subtitle-2 font-weight-black total-price-text">
+                    <td class="data-cell text-center price-value">
+                        <div class="text-subtitle-2 total-price-text">
                             {{ formatCurrency(item.tongTienSauGiam || item.tongTien) }}
                         </div>
                     </td>
 
-                    <td class="data-cell status-cell">
+                    <td class="data-cell text-center status-cell">
                         <template v-if="getStatusMeta(item.trangThai)">
                             <v-chip
-                                :class="['font-weight-black text-white status-chip', getStatusMeta(item.trangThai).chipClass]"
-                                variant="flat"
+                                :class="['px-3', getStatusMeta(item.trangThai).chipClass]"
+                                variant="tonal"
                                 size="small"
                             >
                                 <v-icon start size="16">{{ getStatusMeta(item.trangThai).icon }}</v-icon>

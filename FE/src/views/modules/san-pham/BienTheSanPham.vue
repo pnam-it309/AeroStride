@@ -295,8 +295,8 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
             <PackageIcon size="18" color="white" />
           </v-avatar>
           <div>
-            <p class="text-overline font-black text-slate-400 mb-0" style="line-height: 1;">Mã Sản Phẩm</p>
-            <h2 class="text-body-2 font-black text-dark mb-0">{{ selectedProductSummary.maSanPham }}</h2>
+            <p class="text-overline font-bold text-slate-400 mb-0" style="line-height: 1;">Mã Sản Phẩm</p>
+            <h2 class="text-body-2 font-bold text-dark mb-0">{{ selectedProductSummary.maSanPham }}</h2>
           </div>
         </div>
       </div>
@@ -372,20 +372,21 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
                 <v-img :src="getVariantThumbnail(item)" cover></v-img>
               </v-avatar>
             </td>
-            <td class="data-cell text-left font-black text-dark"><span class="mono-font">{{ item.maChiTietSanPham
-            }}</span></td>
-            <td class="data-cell text-center">
-              <v-chip size="small" variant="flat" color="slate-700" class="font-weight-black text-white status-chip">{{
-                item.tenMauSac }}</v-chip>
+            <td class="data-cell text-left px-6">
+              <div class="text-slate-800" style="font-size: 13px;">{{ item.maChiTietSanPham }}</div>
             </td>
             <td class="data-cell text-center">
-              <v-chip size="small" variant="flat" color="blue-grey-darken-2"
-                class="font-weight-black text-white status-chip">{{ item.tenKichThuoc }}</v-chip>
+              <div class="text-slate-600" style="font-size: 13px;">{{ item.tenMauSac }}</div>
             </td>
-            <td class="data-cell font-black text-primary">{{ formatCurrency(item.giaBan) }}</td>
+            <td class="data-cell text-center">
+              <div class="text-slate-600" style="font-size: 13px;">{{ item.tenKichThuoc }}</div>
+            </td>
+            <td class="data-cell text-center">
+              <div class="text-primary" style="font-size: 13px;">{{ formatCurrency(item.giaBan) }}</div>
+            </td>
             <td class="data-cell">
-              <v-chip size="small" :color="isActiveStatus(item.trangThai) ? 'success' : 'warning'" variant="flat"
-                class="status-chip font-weight-black text-white">
+              <v-chip size="small" :color="isActiveStatus(item.trangThai) ? 'success' : 'warning'" variant="tonal"
+                class="status-chip">
                 {{ getStatusLabel(item.trangThai) }}
               </v-chip>
             </td>

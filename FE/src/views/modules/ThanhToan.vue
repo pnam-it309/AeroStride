@@ -118,8 +118,8 @@ onMounted(() => {
     <!-- Header -->
     <div class="header-section mb-8">
       <div>
-        <h1 class="text-h4 font-black text-dark mb-1">Quản lý thanh toán</h1>
-        <p class="text-subtitle-1 text-slate-500 font-bold">Quản lý giao dịch và phương thức thanh toán hệ thống</p>
+        <h1 class="text-h4 font-bold text-dark mb-1">Quản lý thanh toán</h1>
+        <p class="text-subtitle-1 text-slate-500">Quản lý giao dịch và phương thức thanh toán hệ thống</p>
       </div>
     </div>
 
@@ -133,8 +133,8 @@ onMounted(() => {
             </div>
           </div>
           <div>
-            <p class="text-caption text-slate-500 font-bold text-uppercase mb-1">Tổng doanh thu</p>
-            <p class="text-h5 font-black text-dark">{{ formatCurrency(statistics.totalRevenue) }}</p>
+            <p class="text-caption text-slate-500 text-uppercase mb-1">Tổng doanh thu</p>
+            <p class="text-h5 font-bold text-dark">{{ formatCurrency(statistics.totalRevenue) }}</p>
           </div>
         </v-card>
       </v-col>
@@ -146,8 +146,8 @@ onMounted(() => {
             </div>
           </div>
           <div>
-            <p class="text-caption text-slate-500 font-bold text-uppercase mb-1">Doanh thu hôm nay</p>
-            <p class="text-h5 font-black text-dark">{{ formatCurrency(statistics.todayRevenue) }}</p>
+            <p class="text-caption text-slate-500 text-uppercase mb-1">Doanh thu hôm nay</p>
+            <p class="text-h5 font-bold text-dark">{{ formatCurrency(statistics.todayRevenue) }}</p>
           </div>
         </v-card>
       </v-col>
@@ -159,8 +159,8 @@ onMounted(() => {
             </div>
           </div>
           <div>
-            <p class="text-caption text-slate-500 font-bold text-uppercase mb-1">Thành công</p>
-            <p class="text-h5 font-black text-dark">{{ statistics.successfulPayments }} GD</p>
+            <p class="text-caption text-slate-500 text-uppercase mb-1">Thành công</p>
+            <p class="text-h5 font-bold text-dark">{{ statistics.successfulPayments }} GD</p>
           </div>
         </v-card>
       </v-col>
@@ -172,8 +172,8 @@ onMounted(() => {
             </div>
           </div>
           <div>
-            <p class="text-caption text-slate-500 font-bold text-uppercase mb-1">Số tiền hoàn</p>
-            <p class="text-h5 font-black text-dark">{{ formatCurrency(statistics.refundAmount) }}</p>
+            <p class="text-caption text-slate-500 text-uppercase mb-1">Số tiền hoàn</p>
+            <p class="text-h5 font-bold text-dark">{{ formatCurrency(statistics.refundAmount) }}</p>
           </div>
         </v-card>
       </v-col>
@@ -183,8 +183,8 @@ onMounted(() => {
     <v-card class="premium-card mt-6">
       <v-tabs v-model="selectedTab" class="equal-tabs bg-slate-50" color="primary" 
               @update:model-value="selectedTab === 'methods' ? loadPaymentMethods() : loadTransactions()">
-        <v-tab value="transactions" class="font-bold">Giao dịch hệ thống</v-tab>
-        <v-tab value="methods" class="font-bold">Phương thức thanh toán</v-tab>
+        <v-tab value="transactions">Giao dịch hệ thống</v-tab>
+        <v-tab value="methods">Phương thức thanh toán</v-tab>
       </v-tabs>
 
       <v-divider></v-divider>
@@ -228,16 +228,16 @@ onMounted(() => {
               <tr v-else-if="transactions.length === 0">
                 <td colspan="7" class="text-center py-12">
                   <v-icon size="48" color="slate-200" class="mb-4">mdi-receipt-outline</v-icon>
-                  <p class="text-slate-500 font-bold">Không tìm thấy giao dịch nào</p>
+                  <p class="text-slate-500">Không tìm thấy giao dịch nào</p>
                 </td>
               </tr>
               <tr v-for="transaction in transactions" :key="transaction.id" class="data-row">
                 <td class="data-cell"><span class="mono-font">{{ transaction.transactionCode }}</span></td>
                 <td class="data-cell">{{ transaction.customerName }}</td>
-                <td class="data-cell text-right font-black text-primary">{{ formatCurrency(transaction.amount) }}</td>
+                <td class="data-cell text-right text-primary">{{ formatCurrency(transaction.amount) }}</td>
                 <td class="data-cell">{{ transaction.paymentMethod }}</td>
                 <td class="data-cell">
-                  <v-chip :color="getStatusColor(transaction.status)" variant="flat" size="small" class="status-chip font-bold px-3">
+                  <v-chip :color="getStatusColor(transaction.status)" variant="tonal" size="small" class="status-chip px-3">
                     {{ getStatusText(transaction.status) }}
                   </v-chip>
                 </td>
@@ -280,11 +280,11 @@ onMounted(() => {
                 <div class="icon-blob" :class="method.status === 'active' ? 'bg-primary-light' : 'bg-slate-200'">
                   <v-icon :color="method.status === 'active' ? 'primary' : 'slate-500'">{{ method.icon }}</v-icon>
                 </div>
-                <v-chip :color="method.status === 'active' ? 'success' : 'error'" variant="flat" size="x-small" class="font-bold">
+                <v-chip :color="method.status === 'active' ? 'success' : 'error'" variant="tonal" size="x-small">
                   {{ method.status === 'active' ? 'Hoạt động' : 'Đã tắt' }}
                 </v-chip>
               </div>
-              <h3 class="text-h6 font-black text-dark mb-1">{{ method.name }}</h3>
+              <h3 class="text-h6 font-bold text-dark mb-1">{{ method.name }}</h3>
               <p class="text-body-2 text-slate-500 leading-relaxed">{{ method.description }}</p>
             </v-card>
           </v-col>
