@@ -1,5 +1,6 @@
-package com.example.be.infrastructure.security.service;
+package com.example.be.unit.service;
 
+import com.example.be.infrastructure.security.service.TokenBlacklistService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,6 +69,7 @@ class TokenBlacklistServiceTest {
     @Test
     void isBlacklisted_WhenRedisFails_ShouldCheckFallback() {
         String token = "fail-token";
+        doThrow(new RuntimeException("Redis down")).when(valueOperations).set(any(), any(), any());
         when(redisTemplate.hasKey(token)).thenThrow(new RuntimeException("Redis down"));
 
         // Blacklist it first (will go to fallback due to fail)

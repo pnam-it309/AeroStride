@@ -1,8 +1,9 @@
-package com.example.be.core.admin.khachhang.service.impl;
+package com.example.be.unit.service;
 
 import com.example.be.core.admin.khachhang.model.request.AdminKhachHangRequest;
 import com.example.be.core.admin.khachhang.model.response.AdminKhachHangResponse;
 import com.example.be.core.admin.khachhang.repository.AdminKhachHangRepository;
+import com.example.be.core.admin.khachhang.service.impl.AdminKhachHangServiceImpl;
 import com.example.be.entity.KhachHang;
 import com.example.be.infrastructure.constants.TrangThai;
 import org.junit.jupiter.api.BeforeEach;
@@ -85,7 +86,7 @@ class AdminKhachHangServiceImplTest {
         when(repository.existsByMa(any())).thenReturn(false);
         when(repository.existsByEmail(any())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
-        
+
         AdminKhachHangResponse mockResponse = mock(AdminKhachHangResponse.class);
         when(repository.detail(any())).thenReturn(mockResponse);
 

@@ -1,7 +1,8 @@
-package com.example.be.core.admin.dotgiamgia.service.impl;
+package com.example.be.unit.service;
 
 import com.example.be.core.admin.dotgiamgia.model.request.AdminDotGiamGiaRequest;
 import com.example.be.core.admin.dotgiamgia.repository.AdminDotGiamGiaRepository;
+import com.example.be.core.admin.dotgiamgia.service.impl.AdminDotGiamGiaServiceImpl;
 import com.example.be.entity.DotGiamGia;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

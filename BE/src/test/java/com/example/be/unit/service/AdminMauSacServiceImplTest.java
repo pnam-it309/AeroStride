@@ -1,6 +1,7 @@
-package com.example.be.core.admin.thuoctinh.mausac.service.impl;
+package com.example.be.unit.service;
 
 import com.example.be.core.admin.thuoctinh.mausac.repository.AdminMauSacRepository;
+import com.example.be.core.admin.thuoctinh.mausac.service.impl.AdminMauSacServiceImpl;
 import com.example.be.entity.MauSac;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,7 +50,7 @@ class AdminMauSacServiceImplTest {
     @Test
     void testDelete_ShouldSoftDelete() {
         when(repository.findOne(any(Specification.class))).thenReturn(Optional.of(testTarget));
-        
+
         service.delete("1");
 
         verify(repository).save(testTarget);
@@ -60,7 +61,7 @@ class AdminMauSacServiceImplTest {
         AdminAttributeRequest request = new AdminAttributeRequest();
         request.setTen("Red");
         request.setMoTa("#FF0000");
-                
+
         when(repository.save(any(MauSac.class))).thenReturn(testTarget);
 
         var result = service.create(request);

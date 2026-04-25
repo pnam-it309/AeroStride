@@ -51,7 +51,6 @@ public class AdminPhieuGiamGiaController {
     }
 
     @PatchMapping(RoutesConstant.STATUS_ALT)
-    @PutMapping(RoutesConstant.STATUS) // Compatibility Alias (Backward compatibility for PUT)
     public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id, @RequestBody Map<String, String> body) {
         TrangThai status = TrangThai.valueOf(body.get("status"));
         service.updateStatus(id, status);

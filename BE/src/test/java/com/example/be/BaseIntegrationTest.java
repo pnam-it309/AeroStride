@@ -20,6 +20,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 public abstract class BaseIntegrationTest {
 
+    static {
+        // Configure Testcontainers for Docker Desktop on Windows
+        System.setProperty("docker.host", "npipe:////./pipe/docker_cli");
+    }
+
     @Autowired
     protected MockMvc mockMvc;
 
@@ -39,7 +44,7 @@ public abstract class BaseIntegrationTest {
         registry.add("spring.datasource.password", mysql::getPassword);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
     }
-    
+
     // Global helper for complex JSON mapping if needed
     protected String asJsonString(final Object obj) {
         try {

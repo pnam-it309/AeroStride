@@ -1,5 +1,6 @@
-package com.example.be.core.admin.thuoctinh.thuonghieu.service.impl;
+package com.example.be.unit.service;
 import com.example.be.core.admin.thuoctinh.thuonghieu.repository.AdminThuongHieuRepository;
+import com.example.be.core.admin.thuoctinh.thuonghieu.service.impl.AdminThuongHieuServiceImpl;
 import com.example.be.entity.ThuongHieu;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

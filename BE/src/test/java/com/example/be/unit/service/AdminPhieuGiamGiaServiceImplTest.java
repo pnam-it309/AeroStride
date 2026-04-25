@@ -1,5 +1,6 @@
-package com.example.be.core.admin.phieugiamgia.service.impl;
+package com.example.be.unit.service;
 import com.example.be.core.admin.phieugiamgia.repository.AdminPhieuGiamGiaRepository;
+import com.example.be.core.admin.phieugiamgia.service.impl.AdminPhieuGiamGiaServiceImpl;
 import com.example.be.entity.PhieuGiamGia;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,9 +25,9 @@ class AdminPhieuGiamGiaServiceImplTest {
     @Mock private KhachHangRepository khachHangRepository;
     @Mock private PhieuGiamGiaCaNhanRepository phieuGiamGiaCaNhanRepository;
     @Mock private EmailService emailService;
-    
+
     @InjectMocks private AdminPhieuGiamGiaServiceImpl service;
-    
+
     @Test void testDetail() {
         AdminPhieuGiamGiaResponse mockResponse = mock(AdminPhieuGiamGiaResponse.class);
         when(repository.detail("1")).thenReturn(mockResponse);
