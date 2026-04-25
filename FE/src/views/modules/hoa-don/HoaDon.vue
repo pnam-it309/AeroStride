@@ -16,8 +16,6 @@ import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
 import { getOrderStatusMeta } from '@/utils/orderStatus';
 
 const router = useRouter();
-const fromDateFieldRef = ref(null);
-const toDateFieldRef = ref(null);
 const TAB_ALL = 'ALL';
 
 const getTodayDate = () => {
@@ -71,14 +69,12 @@ const sortOptions = [
 const isRefreshing = ref(false);
 const counts = ref({
     all: 0,
-    choThanhToan: 0,
-    choXacNhan: 0,
-    choGiaoHang: 0,
-    dangVanChuyen: 0,
-    daGiaoHang: 0,
-    daThanhToan: 0,
-    hoanThanh: 0,
-    daHuy: 0
+    pendingPayment: 0,
+    processing: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+    refunded: 0
 });
 const showOrderDetailDialog = ref(false);
 const selectedOrder = ref(null);
@@ -87,11 +83,10 @@ const tableHeaders = [
     { text: 'STT', align: 'center', width: '50px' },
     { text: 'Mã hóa đơn', align: 'left', width: '100px' },
     { text: 'Khách hàng', align: 'left', width: '130px' },
-    { text: 'Mã nhân viên', align: 'left', width: '110px' },
-    { text: 'Tên nhân viên', align: 'left', width: '130px' },
     { text: 'Số điện thoại', align: 'left', width: '100px' },
     { text: 'Loại hóa đơn', align: 'center', width: '110px' },
     { text: 'Loại thanh toán', align: 'left', width: '140px' },
+    { text: 'Mã nhân viên', align: 'left', width: '140px' },
     { text: 'Tổng tiền', align: 'left', width: '100px' },
     { text: 'Trạng thái', align: 'center', width: '160px' },
     { text: 'Hành động', align: 'center', width: '90px' }
@@ -100,21 +95,20 @@ const tableHeaders = [
 const loadCounts = async () => {
     try {
         const params = {
-            search: filters.value.search || undefined,
+            search: filters.value.keyword || undefined,
             tuNgay: filters.value.fromDate || undefined,
             denNgay: filters.value.toDate || undefined
         };
         const data = await dichVuHoaDon.laySoLuongHoaDon(params);
         counts.value = {
             all: data.all || 0,
-            choThanhToan: data['0'] || 0,
-            choXacNhan: data['1'] || 0,
-            choGiaoHang: data['2'] || 0,
-            dangVanChuyen: data['3'] || 0,
-            daGiaoHang: data['4'] || 0,
-            daThanhToan: data['5'] || 0,
-            hoanThanh: data['6'] || 0,
-            daHuy: data['7'] || 0
+            // BE uses OrderStatus ordinal (EnumType.ORDINAL): 0..5
+            pendingPayment: data['0'] || 0,
+            processing: data['1'] || 0,
+            shipped: data['2'] || 0,
+            delivered: data['3'] || 0,
+            cancelled: data['4'] || 0,
+            refunded: data['5'] || 0
         };
     } catch (e) {
         console.error('Error counts:', e);
@@ -346,57 +340,67 @@ onMounted(() => loadOrders());
                     <v-tab :value="0" class="text-none px-2 tab-item">
                         <v-icon start size="16">mdi-cash-clock</v-icon>
                         Chờ thanh toán
-                        <v-avatar v-if="hasCount(counts.choThanhToan)" size="22" class="ml-2 tab-count-avatar">
-                            {{ counts.choThanhToan }}
+                        <v-avatar
+                            v-if="hasCount(counts.pendingPayment)"
+                            size="22"
+                            class="ml-2 tab-count-avatar"
+                        >
+                            {{ counts.pendingPayment }}
                         </v-avatar>
                     </v-tab>
                     <v-tab :value="1" class="text-none px-2 tab-item">
                         <v-icon start size="16">mdi-progress-clock</v-icon>
-                        Chờ xác nhận
-                        <v-avatar v-if="hasCount(counts.choXacNhan)" size="22" class="ml-2 tab-count-avatar">
-                            {{ counts.choXacNhan }}
+                        Đang xử lý
+                        <v-avatar
+                            v-if="hasCount(counts.processing)"
+                            size="22"
+                            class="ml-2 tab-count-avatar"
+                        >
+                            {{ counts.processing }}
                         </v-avatar>
                     </v-tab>
                     <v-tab :value="2" class="text-none px-2 tab-item">
-                        <v-icon start size="16">mdi-truck-delivery-outline</v-icon>
-                        Chờ giao hàng
-                        <v-avatar v-if="hasCount(counts.choGiaoHang)" size="22" class="ml-2 tab-count-avatar">
-                            {{ counts.choGiaoHang }}
+                        <v-icon start size="16">mdi-truck-fast-outline</v-icon>
+                        Đã gửi hàng
+                        <v-avatar
+                            v-if="hasCount(counts.shipped)"
+                            size="22"
+                            class="ml-2 tab-count-avatar"
+                        >
+                            {{ counts.shipped }}
                         </v-avatar>
                     </v-tab>
                     <v-tab :value="3" class="text-none px-2 tab-item">
-                        <v-icon start size="16">mdi-truck-fast-outline</v-icon>
-                        Đang vận chuyển
-                        <v-avatar v-if="hasCount(counts.dangVanChuyen)" size="22" class="ml-2 tab-count-avatar">
-                            {{ counts.dangVanChuyen }}
+                        <v-icon start size="16">mdi-checkbox-marked-circle-outline</v-icon>
+                        Đã giao
+                        <v-avatar
+                            v-if="hasCount(counts.delivered)"
+                            size="22"
+                            class="ml-2 tab-count-avatar"
+                        >
+                            {{ counts.delivered }}
                         </v-avatar>
                     </v-tab>
                     <v-tab :value="4" class="text-none px-2 tab-item">
-                        <v-icon start size="16">mdi-package-variant-closed-check</v-icon>
-                        Đã giao hàng
-                        <v-avatar v-if="hasCount(counts.daGiaoHang)" size="22" class="ml-2 tab-count-avatar">
-                            {{ counts.daGiaoHang }}
+                        <v-icon start size="16">mdi-close-circle-outline</v-icon>
+                        Đã hủy
+                        <v-avatar
+                            v-if="hasCount(counts.cancelled)"
+                            size="22"
+                            class="ml-2 tab-count-avatar"
+                        >
+                            {{ counts.cancelled }}
                         </v-avatar>
                     </v-tab>
                     <v-tab :value="5" class="text-none px-2 tab-item">
-                        <v-icon start size="16">mdi-currency-usd</v-icon>
-                        Đã thanh toán
-                        <v-avatar v-if="hasCount(counts.daThanhToan)" size="22" class="ml-2 tab-count-avatar">
-                            {{ counts.daThanhToan }}
-                        </v-avatar>
-                    </v-tab>
-                    <v-tab :value="6" class="text-none px-2 tab-item">
-                        <v-icon start size="16">mdi-checkbox-marked-circle-outline</v-icon>
-                        Hoàn thành
-                        <v-avatar v-if="hasCount(counts.hoanThanh)" size="22" class="ml-2 tab-count-avatar">
-                            {{ counts.hoanThanh }}
-                        </v-avatar>
-                    </v-tab>
-                    <v-tab :value="7" class="text-none px-2 tab-item">
-                        <v-icon start size="16">mdi-close-circle-outline</v-icon>
-                        Đã hủy
-                        <v-avatar v-if="hasCount(counts.daHuy)" size="22" class="ml-2 tab-count-avatar">
-                            {{ counts.daHuy }}
+                        <v-icon start size="16">mdi-cash-refund</v-icon>
+                        Hoàn tiền
+                        <v-avatar
+                            v-if="hasCount(counts.refunded)"
+                            size="22"
+                            class="ml-2 tab-count-avatar"
+                        >
+                            {{ counts.refunded }}
                         </v-avatar>
                     </v-tab>
                 </v-tabs>
@@ -412,14 +416,6 @@ onMounted(() => loadOrders());
 
                     <td class="data-cell col-left-tight">
                         <div class="text-dark">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
-                    </td>
-
-                    <td class="data-cell">
-                        <div class="text-dark">{{ item.maNhanVien || 'N/A' }}</div>
-                    </td>
-
-                    <td class="data-cell">
-                        <div class="text-dark">{{ item.tenNhanVien || 'Hệ thống' }}</div>
                     </td>
 
                     <td class="data-cell col-left-tight">
@@ -438,6 +434,12 @@ onMounted(() => loadOrders());
 
                     <td class="data-cell">
                         <div class="text-dark">{{ getPaymentLabel(item) }}</div>
+                    </td>
+
+                    <td class="data-cell">
+                        <div class="text-dark">
+                            {{ item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống' }}
+                        </div>
                     </td>
 
                     <td class="data-cell price-value">
@@ -507,12 +509,12 @@ onMounted(() => loadOrders());
                         v-if="getStatusMeta(selectedOrder.trangThai)"
                         :color="getStatusMeta(selectedOrder.trangThai).color"
                         variant="flat"
-                        class="font-weight-medium px-6"
+                        class="font-weight-bold px-6"
                     >
                         <v-icon start size="18">{{ getStatusMeta(selectedOrder.trangThai).icon }}</v-icon>
                         {{ getStatusMeta(selectedOrder.trangThai).text }}
                     </v-chip>
-                    <v-chip v-else color="grey" variant="flat" class="font-weight-medium px-6">—</v-chip>
+                    <v-chip v-else color="grey" variant="flat" class="font-weight-bold px-6">—</v-chip>
                 </v-card-title>
 
                 <v-card-text class="pa-6">
@@ -588,19 +590,7 @@ onMounted(() => loadOrders());
 .stt-cell {
     text-align: center !important;
 }
-
-/* Hide native date picker icon so it only opens via the custom icon click */
-:deep(.date-field input::-webkit-calendar-picker-indicator) {
-    display: none;
-    -webkit-appearance: none;
-}
-
-/* Ensure the date input doesn't trigger native picker on simple click/focus in some browsers */
-:deep(.date-field input) {
-    position: relative;
-}
 </style>
-
 
 
 

@@ -3,7 +3,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { dichVuPhieuGiamGia } from '@/services/admin/dichVuPhieuGiamGia';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
-import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
+import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
 
 // REUSABLE COMPONENTS
 import AdminFilter from '@/components/common/AdminFilter.vue';
@@ -36,16 +36,6 @@ const {
 });
 
 const isRefreshing = ref(false);
-
-// Tính trạng thái theo thời gian thực (ngày bắt đầu / kết thúc)
-const getDiscountTimeStatus = (item) => {
-    const now = Date.now();
-    const start = item.ngayBatDau ? new Date(item.ngayBatDau).getTime() : null;
-    const end = item.ngayKetThuc ? new Date(item.ngayKetThuc).getTime() : null;
-    if (start && now < start) return { label: 'Sắp diễn ra', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' };
-    if (end && now > end)   return { label: 'Kết thúc',    color: '#ef4444', bg: 'rgba(239,68,68,0.1)' };
-    return { label: 'Hoạt động', color: '#10b981', bg: 'rgba(16,185,129,0.1)' };
-};
 
 // Confirmation Logic
 const confirmDialog = ref({ show: false, title: '', message: '', color: 'primary', action: null, loading: false });
@@ -118,10 +108,10 @@ const getLoaiPhieuLabel = (type) => {
     return type || '--';
 };
 const getHinhThucValue = (item) => {
-    return item?.hinhThuc ?? item?.hinh_thuc ?? item?.loaiHienThi ?? item?.phanLoai ?? null;
+    return item?.hinhThuc ?? item?.loaiHienThi ?? item?.phanLoai ?? item?.hinh_thuc ?? null;
 };
 const getHinhThucLabel = (value) => {
-    if (value === null || value === undefined || value === '') return 'Công khai';
+    if (value === null || value === undefined) return '--';
     const normalized = String(value).toUpperCase().replace(/[\s_]/g, '');
     if (normalized === 'CONGKHAI' || normalized === 'PUBLIC' || normalized === 'ALL' || normalized === '0' || normalized === 'FALSE') return 'Công khai';
     if (normalized === 'CANHAN' || normalized === 'PRIVATE' || normalized === 'PERSONAL' || normalized === '1' || normalized === 'TRUE') return 'Cá nhân';
@@ -193,23 +183,23 @@ onMounted(() => loadVouchers());
 
         <!-- 2. TABLE -->
         <AdminTable title="Danh sách phiếu giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
-            { text: 'STT', align: 'center', width: '60px' },
-            { text: 'Mã phiếu', align: 'center', width: '130px' },
-            { text: 'Tên phiếu', align: 'center' },
-            { text: 'Loại phiếu', align: 'center', width: '120px' },
-            { text: 'Hình thức', align: 'center', width: '130px' },
-            { text: 'Giá trị giảm', align: 'center' },
-            { text: 'Đơn tối thiểu', align: 'center', width: '140px' },
-            { text: 'Số lượng', align: 'center', width: '90px' },
-            { text: 'Thời gian áp dụng', align: 'center', width: '180px' },
-            { text: 'Trạng thái', align: 'center', width: '140px' },
+            { text: 'STT', align: 'center', width: '50px' },
+            { text: 'Mã phiếu', align: 'center', width: '120px' },
+            { text: 'Tên phiếu', align: 'left', width: '170px' },
+            { text: 'Loại phiếu', align: 'center', width: '110px' },
+            { text: 'Hình thức', align: 'center', width: '120px' },
+            { text: 'Giá trị giảm', align: 'left', width: '160px' },
+            { text: 'Đơn tối thiểu', align: 'left', width: '120px' },
+            { text: 'Số lượng', align: 'center', width: '110px' },
+            { text: 'Thời gian áp dụng', align: 'left', width: '170px' },
+            { text: 'Trạng thái', align: 'center', width: '130px' },
             { text: 'Hành động', align: 'center', width: '110px' }
         ]" :items="vouchers" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog"
             @export="handleExport">
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell text-center text-slate-400 font-weight-medium">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
-                    <td class="data-cell text-center font-weight-medium text-primary">{{ item.ma || '--' }}</td>
+                    <td class="data-cell text-center font-weight-medium">{{ item.ma || '--' }}</td>
                     <td class="data-cell text-left font-weight-medium">{{ item.ten || '--' }}</td>
                     <td class="data-cell text-center font-weight-medium">
                         {{ getLoaiPhieuLabel(item.loaiPhieu) }}
@@ -228,20 +218,20 @@ onMounted(() => loadVouchers());
                     </td>
                     <td class="data-cell text-left">
                         <div class="font-weight-bold text-primary">Giảm {{ getDiscountDisplay(item) }}</div>
-                        <div class="max-discount-value font-weight-medium text-slate-500"
+                        <div class="max-discount-value font-weight-medium"
                             v-if="item.loaiPhieu === 'PHAN_TRAM' || item.loaiPhieu === 'PERCENTAGE'">Tối đa: {{
                                 getMaxDiscountDisplay(item) }}</div>
                     </td>
                     <td class="data-cell text-left">
-                        <div class="price-value font-weight-bold text-slate-700">{{ formatCurrency(item.donHangToiThieu) }}</div>
+                        <div class="price-value font-weight-bold text-primary">{{ formatCurrency(item.donHangToiThieu) }}</div>
                     </td>
                     <td class="data-cell text-center font-weight-medium text-slate-700">
                         {{ item.soLuong === -1 ? '∞' : item.soLuong }}
                     </td>
                     <td class="data-cell text-left">
                         <div class="d-flex flex-column align-start">
-                            <div class="font-weight-medium text-slate-700" style="font-size: 12.5px">{{ formatDateTime(item.ngayBatDau) }}</div>
-                            <div class="font-weight-medium text-slate-400" style="font-size: 11px">đến {{ formatDateTime(item.ngayKetThuc) }}</div>
+                            <div class="font-weight-medium text-slate-700">{{ formatDateTime(item.ngayBatDau) }}</div>
+                            <div class="font-weight-medium text-slate-400">đến {{ formatDateTime(item.ngayKetThuc) }}</div>
                         </div>
                     </td>
                     <td class="data-cell text-center">
@@ -252,7 +242,7 @@ onMounted(() => loadVouchers());
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
-                    <td class="data-cell action-cell text-center">
+                    <td class="data-cell action-cell" style="text-align: center">
                         <div class="d-flex align-center justify-center action-controls">
                             <v-btn icon variant="text" :ripple="false" size="28" color="slate-700"
                                 class="action-icon-btn"
@@ -307,4 +297,3 @@ onMounted(() => loadVouchers());
     color: #15803d !important;
 }
 </style>
-

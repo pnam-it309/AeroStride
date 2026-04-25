@@ -222,7 +222,7 @@
 .field-label,
 .filter-field-label {
     font-size: 13px;
-    font-weight: 500 !important;
+    font-weight: 700;
     color: #000 !important;
     margin-bottom: 8px;
     letter-spacing: 0.03em;
@@ -239,7 +239,7 @@
     height: 24px !important;
     border-radius: 999px !important;
     font-size: 11px !important;
-    font-weight: 500;
+    font-weight: 800;
     padding: 0 10px !important;
     display: inline-flex !important;
     justify-content: center;
@@ -264,13 +264,13 @@
 .status-chip-confirmed, .status-chip-active {
     background-color: #f0f1ff !important; /* Xanh cực nhạt */
     color: #1e257c !important; /* Chữ xanh đậm chủ đạo */
-    font-weight: 500 !important;
+    font-weight: 700 !important;
 }
 
 .status-chip-cancelled, .status-chip-inactive {
     background-color: #f8fafc !important; /* Xám cực nhạt */
     color: #64748b !important;
-    font-weight: 500 !important;
+    font-weight: 700 !important;
 }
 
 /* Ép màu xanh đậm thương hiệu cho Switch (Vuetify 3) */
@@ -308,7 +308,7 @@
 .status-chip {
     border-radius: 12px !important; /* Tăng lên 8px để mềm mại hơn theo yêu cầu */
     font-size: 13px !important;
-    font-weight: 500 !important;
+    font-weight: 700 !important;
     padding: 0 16px !important;
     min-height: 28px !important;
     width: 130px !important;
@@ -365,7 +365,7 @@
     border-radius: 4px !important;
     width: 85px !important; /* Ngắn lại cho gọn */
     font-size: 13px !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
     border: 1px solid transparent !important;
     display: inline-flex !important;
     align-items: center;
@@ -488,7 +488,7 @@
         color: #1d2025 !important;
         padding: 14px 16px !important;
         font-size: 13px !important;
-        font-weight: 500 !important;
+        font-weight: 700 !important;
         border-bottom: 2px solid #e2e8f0;
         letter-spacing: 0.05em;
         white-space: nowrap;
@@ -549,13 +549,13 @@
 
 .filter-title {
     font-size: 16px;
-    font-weight: 600 !important;
+    font-weight: 700;
     color: #1d2025;
 }
 
 .filter-field-label {
     font-size: 12px;
-    font-weight: 500 !important;
+    font-weight: 700;
     color: #64748b;
     margin-bottom: 6px;
     letter-spacing: 0.02em;
@@ -618,7 +618,7 @@
     padding-right: 24px !important;
     border-radius: 10px !important;
     font-size: 14px !important;
-    font-weight: 600 !important;
+    font-weight: 800 !important;
     letter-spacing: 0.01em !important;
     background: #3b82f6 !important;
     box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
@@ -654,7 +654,7 @@
     padding: 0 20px !important;
     border-radius: 10px !important;
     font-size: 14px !important;
-    font-weight: 600 !important;
+    font-weight: 800 !important;
     background: #f1f5f9 !important;
     color: #334155 !important;
     border: 1px solid #e2e8f0 !important;
@@ -685,7 +685,7 @@
     padding: 0 16px !important;
     border-radius: 10px !important;
     font-size: 13px !important;
-    font-weight: 600 !important;
+    font-weight: 800 !important;
     color: #ef4444 !important;
     border: 1px solid #fee2e2 !important;
     background: #fffcfc !important;
@@ -707,7 +707,7 @@
     padding: 0 24px !important;
     border-radius: 10px !important;
     font-size: 14px !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
     color: #1e257c !important;
     border: 1.5px solid #1e257c !important;
     background: #ffffff !important;
@@ -747,7 +747,7 @@
     .v-tab {
         height: 48px !important;
         font-size: 13px !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         color: #1d2025 !important;
         padding: 0 20px !important;
         letter-spacing: 0.01em !important;
@@ -1063,7 +1063,7 @@
         padding: 0 10px;
 
         .label {
-            font-weight: 600;
+            font-weight: 800;
             font-size: 14px;
             color: #0f172a;
             margin-bottom: 2px;
