@@ -20,6 +20,7 @@ import { useNotifications } from '@/services/notificationService'
 import { dichVuSanPham } from '@/services/product/dichVuSanPham'
 import { dichVuBienThe } from '@/services/product/dichVuBienThe'
 import { dichVuMauSac, dichVuKichThuoc } from '@/services/product/dichVuThuocTinh'
+import logoPlaceholder from '@/assets/images/logos/logo-light.svg'
 import VariantFormModal from './components/VariantFormModal.vue'
 import VariantImageModal from './components/VariantImageModal.vue'
 import VariantManagementDrawer from './components/VariantManagementDrawer.vue'
@@ -254,10 +255,20 @@ const handleQrScan = (code) => {
   addNotification({ title: 'Quét mã thành công', subtitle: `Mã: ${code}`, color: 'success' })
 }
 
+const normalizeImageUrl = (value) => {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  return value.duongDanAnh || value.url || value.fileUrl || value.secure_url || value.data || ''
+}
+
 const getVariantThumbnail = (item) => {
-  if (item?.urlAnh) return item.urlAnh
-  if (item?.hinhAnh && item.hinhAnh.length > 0) return item.hinhAnh[0].url
-  return '/placeholder-product.png'
+  const mainImage = item?.images?.find((image) => image?.hinhAnhDaiDien)
+  const fallbackImage = item?.images?.[0] || item?.hinhAnh?.[0] || item?.hinhAnh
+
+  return normalizeImageUrl(item?.urlAnh)
+    || normalizeImageUrl(mainImage)
+    || normalizeImageUrl(fallbackImage)
+    || logoPlaceholder
 }
 
 onMounted(async () => {
