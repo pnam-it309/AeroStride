@@ -473,8 +473,7 @@ watch(
                         <v-chip
                             size="small"
                             variant="flat"
-                            :color="getStatusColor(item.trangThai)"
-                            class="px-4 status-chip"
+                            :class="['status-chip', item.trangThai === 'DANG_HOAT_DONG' ? 'status-chip-active' : 'status-chip-inactive']"
                         >
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
@@ -512,7 +511,7 @@ watch(
                             <div class="switch-wrapper">
                                 <v-switch
                                     :model-value="isActiveStatus(item.trangThai)"
-                                    color="#000"
+                                    color="primary"
                                     hide-details
                                     density="compact"
                                     class="tight-switch action-switch"
@@ -761,7 +760,7 @@ watch(
                                     </v-col>
                                     <v-col cols="12" class="mt-2">
                                         <v-btn
-                                            color="#000"
+                                            color="primary"
                                             variant="flat"
                                             block
                                             class="text-none font-weight-bold rounded-lg"

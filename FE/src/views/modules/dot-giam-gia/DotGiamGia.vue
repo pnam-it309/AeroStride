@@ -98,7 +98,7 @@ onMounted(() => loadCampaigns());
         <!-- 1. FILTER -->
         <div class="filter-top invoice-filter-shell">
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-                <v-col cols="12" md="3" class="filter-cell">
+                <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm</div>
                     <v-text-field v-model="filters.search" placeholder="Tên chiến dịch..." variant="outlined"
                         density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
@@ -106,7 +106,7 @@ onMounted(() => loadCampaigns());
                 </v-col>
 
 
-                <v-col cols="12" md="2" class="filter-cell">
+                <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select v-model="filters.trangThai" :items="[
                         { title: 'Tất cả trạng thái', value: null },
@@ -116,13 +116,13 @@ onMounted(() => loadCampaigns());
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
 
-                <v-col cols="12" md="2" class="filter-cell">
+                <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Từ ngày</div>
                     <v-text-field v-model="filters.startDate" type="date" variant="outlined" density="compact"
                         hide-details class="compact-input" @change="handleSearch"></v-text-field>
                 </v-col>
 
-                <v-col cols="12" md="2" class="filter-cell">
+                <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Đến ngày</div>
                     <v-text-field v-model="filters.endDate" type="date" variant="outlined" density="compact"
                         hide-details class="compact-input" @change="handleSearch"></v-text-field>
@@ -133,11 +133,11 @@ onMounted(() => loadCampaigns());
         <!-- 2. TABLE -->
         <AdminTable title="Danh sách chiến dịch" addButtonText="Tạo mới" show-export-button :headers="[
             { text: 'STT', align: 'center', width: '60px' },
-            { text: 'Mã giảm giá', align: 'center', width: '100px' },
-            { text: 'Tên đợt giảm giá', align: 'center', width: '200px' },
-            { text: 'Giá trị giảm', align: 'center', width: '150px' },
-            { text: 'Đơn hàng tối thiểu', align: 'center', width: '150px' },
-            { text: 'Thời gian áp dụng', align: 'center', width: '160px' },
+            { text: 'Mã', align: 'center', width: '120px' },
+            { text: 'Tên đợt giảm giá', align: 'left', width: '180px' },
+            { text: 'Giá trị giảm', align: 'left', width: '150px' },
+            { text: 'Đơn tối thiểu', align: 'left', width: '150px' },
+            { text: 'Thời gian áp dụng', align: 'left', width: '180px' },
             { text: 'Mức ưu tiên', align: 'center', width: '100px' },
             { text: 'Trạng thái', align: 'center', width: '130px' },
             { text: 'Hành động', align: 'center', width: '130px' }
@@ -145,30 +145,35 @@ onMounted(() => loadCampaigns());
             @add="router.push(PATH.DOT_GIAM_GIA_FORM)" @export="handleExport">
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell">
+                    <td class="data-cell text-center text-slate-400 font-weight-medium">
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
-                    <td class="data-cell">
+                    <td class="data-cell text-center font-weight-medium">
                         {{ item.ma }}
                     </td>
-                    <td class="data-cell">
+                    <td class="data-cell text-left font-weight-medium">
                         {{ item.ten || '--' }}
                     </td>
-                    <td class="data-cell">
-                        <div>Giảm {{ getDiscountValueDisplay(item) }}</div>
+                    <td class="data-cell text-left">
+                        <div class="font-weight-bold text-primary">Giảm {{ getDiscountValueDisplay(item) }}</div>
                     </td>
-                    <td class="data-cell">{{ formatCurrency(item.dieuKienGiamGia) }}</td>
-                    <td class="data-cell">
-                        <div class="d-inline-flex flex-column align-start">
-                            <div class="text-caption font-weight-bold">Từ {{ formatDateTime(item.ngayBatDau) }}</div>
-                            <div class="text-caption text-slate-500">Đến {{ formatDateTime(item.ngayKetThuc) }}</div>
+                    <td class="data-cell text-left">
+                        <div class="font-weight-bold text-primary">{{ formatCurrency(item.dieuKienGiamGia) }}</div>
+                    </td>
+                    <td class="data-cell text-left">
+                        <div class="d-flex flex-column align-start">
+                            <div class="font-weight-medium text-slate-700">{{ formatDateTime(item.ngayBatDau) }}</div>
+                            <div class="font-weight-medium text-slate-400">đến {{ formatDateTime(item.ngayKetThuc) }}</div>
                         </div>
                     </td>
-                    <td class="data-cell">
+                    <td class="data-cell text-center font-weight-medium">
                         {{ item.mucUuTien ?? '--' }}
                     </td>
-                    <td class="data-cell">
-                        <v-chip :color="getStatusColor(item.trangThai)" variant="flat" class="px-4 status-chip">
+                    <td class="data-cell text-center">
+                        <v-chip
+                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']"
+                            variant="flat" 
+                            size="small">
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
@@ -180,7 +185,7 @@ onMounted(() => loadCampaigns());
                                 <v-tooltip activator="parent" location="top" text="Chỉnh sửa"></v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
-                                <v-switch :model-value="isActiveStatus(item.trangThai)" color="#000" hide-details
+                                <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details
                                     density="compact" class="tight-switch action-switch"
                                     @click.prevent.stop="confirmToggleStatus(item)" />
                                 <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái"></v-tooltip>
@@ -216,5 +221,19 @@ onMounted(() => loadCampaigns());
     position: sticky;
     top: 8px;
     z-index: 6;
+}
+
+:deep(.data-cell), :deep(.data-cell *) {
+    font-size: 13px !important;
+}
+
+:deep(.status-chip-active) {
+    background-color: #f0f1ff !important;
+    color: #1e257c !important;
+}
+
+:deep(.status-chip-inactive) {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
 }
 </style>

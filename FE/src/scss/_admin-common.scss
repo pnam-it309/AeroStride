@@ -3,13 +3,86 @@
    Everything for the Admin UI should go here to keep .vue files clean.
    ========================================================================== */
 
+/* 0. SIDEBAR GLOBAL CUSTOMIZATION - PREMIUM PASTEL STYLE (STATIC) */
+.v-navigation-drawer .v-list-item.sidebar-link {
+    transition: none !important; /* Loại bỏ mọi hiệu ứng "chảy màu" hay chuyển động */
+    margin-bottom: 4px !important;
+    border-radius: 12px !important;
+    margin-left: 12px !important;
+    margin-right: 12px !important;
+    color: #475569 !important;
+}
+
+/* Tắt hoàn toàn Ripple (loang màu) của Vuetify */
+.v-navigation-drawer .v-list-item.sidebar-link .v-ripple__container {
+    display: none !important;
+}
+
+/* Hiệu ứng HOVER và ACTIVE: Hiện ngay nền xanh nhạt tĩnh, không loang lổ */
+.v-navigation-drawer .v-list-item.sidebar-link:hover,
+.v-navigation-drawer .v-list-item.sidebar-link.v-list-item--active {
+    background-color: #f0f1ff !important; 
+    color: #1e257c !important;
+    transition: none !important;
+}
+
+/* Loại bỏ hoàn toàn lớp phủ overlay */
+.v-navigation-drawer .v-list-item.sidebar-link .v-list-item__overlay {
+    display: none !important;
+}
+
+/* Ép màu Icon và Chữ đồng bộ - Luôn tĩnh */
+.v-navigation-drawer .v-list-item.sidebar-link:hover .v-list-item-title,
+.v-navigation-drawer .v-list-item.sidebar-link:hover .v-icon,
+.v-navigation-drawer .v-list-item.sidebar-link.v-list-item--active .v-list-item-title,
+.v-navigation-drawer .v-list-item.sidebar-link.v-list-item--active .v-icon {
+    color: #1e257c !important;
+    opacity: 1 !important;
+    transition: none !important;
+}
+
+
+
+/* Ép màu cho tất cả các thành phần bên trong khi hover hoặc active */
+.v-navigation-drawer .v-list-item:hover .v-list-item-title,
+.v-navigation-drawer .v-list-item:hover .v-icon,
+.v-navigation-drawer .v-list-item:hover .icon-box,
+.v-navigation-drawer .v-list-item--active .v-list-item-title,
+.v-navigation-drawer .v-list-item--active .v-icon,
+.v-navigation-drawer .v-list-item--active .icon-box {
+    color: #1e257c !important;
+    opacity: 1 !important;
+}
+
+.v-navigation-drawer .v-list-item--active .v-list-item-title {
+    font-weight: 700 !important;
+}
+
+
+/* Đảm bảo overlay có cùng bo góc */
+.v-navigation-drawer .v-list-item__overlay {
+    border-radius: 12px !important;
+}
+
+/* Icon rotation cho sub-menu */
+.v-navigation-drawer .v-list-group--active > .v-list-item .v-list-item__append i {
+    transform: rotate(180deg);
+}
+
+/* Hiệu ứng cho sub-menu items */
+.v-navigation-drawer .v-list-group__items {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 12px;
+    margin: 4px 12px !important;
+}
+
 /* 1. LAYOUT & TYPOGRAPHY */
 .font-body {
     font-family: 'Inter', 'Outfit', sans-serif !important;
 }
 
 .text-dark {
-    color: #000000 !important;
+    color: #1d2025 !important;
 }
 
 .gray-bg {
@@ -188,101 +261,129 @@
     color: #ffffff !important;
 }
 
+.status-chip-confirmed, .status-chip-active {
+    background-color: #f0f1ff !important; /* Xanh cực nhạt */
+    color: #1e257c !important; /* Chữ xanh đậm chủ đạo */
+    font-weight: 700 !important;
+}
+
+.status-chip-cancelled, .status-chip-inactive {
+    background-color: #f8fafc !important; /* Xám cực nhạt */
+    color: #64748b !important;
+    font-weight: 700 !important;
+}
+
+/* Ép màu xanh đậm thương hiệu cho Switch (Vuetify 3) */
+/* Khi trạng thái là ON (Bật) */
+.v-switch.v-selection-control--dirty .v-switch__track {
+    background-color: #1e257c !important;
+    opacity: 0.4 !important;
+}
+
+.v-switch.v-selection-control--dirty .v-switch__thumb {
+    background-color: #1e257c !important;
+    color: #1e257c !important;
+}
+
+.v-switch.v-selection-control--dirty .v-selection-control__wrapper {
+    color: #1e257c !important;
+}
+
+/* Khi trạng thái là OFF (Tắt) */
+.v-switch:not(.v-selection-control--dirty) .v-switch__track {
+    background-color: #94a3b8 !important; /* Màu xám slate */
+    opacity: 0.3 !important;
+}
+
+.v-switch:not(.v-selection-control--dirty) .v-switch__thumb {
+    background-color: #f1f5f9 !important; /* Màu xám trắng */
+    color: #f1f5f9 !important;
+}
+
+.v-switch:not(.v-selection-control--dirty) .v-selection-control__wrapper {
+    color: #94a3b8 !important;
+}
+
+
 .status-chip {
-    border-radius: 999px !important;
-    font-size: 11px !important;
-    font-weight: 800;
-    padding: 0 12px !important;
-    min-height: 26px !important;
+    border-radius: 12px !important; /* Tăng lên 8px để mềm mại hơn theo yêu cầu */
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    padding: 0 16px !important;
+    min-height: 28px !important;
+    width: 130px !important;
     display: inline-flex !important;
-    justify-content: center;
-    align-items: center;
-    color: #ffffff !important;
-
-    .v-chip__content {
-        color: #ffffff !important;
-    }
-}
-
-.status-chip-active {
-    background: #3b82f6 !important;
-    color: #ffffff !important;
+    align-items: center !important;
+    justify-content: center !important;
     border: none !important;
+    box-shadow: none !important;
+    text-transform: none !important;
 }
 
-.status-chip-inactive {
-    background: #64748b !important;
-    color: #ffffff !important;
-    border: none !important;
-}
-
-/* Specialized Invoice Statuses (White text for contrast) */
+/* Specialized Invoice Statuses (Pastel style) */
 .status-chip-pending {
-    background: #f59e0b !important;
-    color: #ffffff !important;
-    border-color: transparent !important;
+    background: #fff7ed !important;
+    color: #c2410c !important;
 }
 
 .status-chip-confirmed {
-    background: #3b82f6 !important;
-    color: #ffffff !important;
-    border-color: transparent !important;
+    background: #f0f1ff !important;
+    color: #1e257c !important;
 }
 
 .status-chip-delivering {
-    background: #6366f1 !important;
-    color: #ffffff !important;
-    border-color: transparent !important;
+    background: #eff6ff !important;
+    color: #1e40af !important;
 }
 
 .status-chip-waiting-delivery {
-    background: #f97316 !important;
-    color: #ffffff !important;
-    border-color: transparent !important;
+    background: #fffbeb !important;
+    color: #92400e !important;
 }
 
 .status-chip-completed {
-    background: #10b981 !important;
-    color: #ffffff !important;
-    border-color: transparent !important;
+    background: #f0fdf4 !important;
+    color: #166534 !important;
 }
 
 .status-chip-cancelled {
-    background: #ef4444 !important;
-    color: #ffffff !important;
-    border-color: transparent !important;
+    background: #fef2f2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fee2e2 !important;
+    .v-chip__content { color: #991b1b !important; }
 }
 
 .status-chip-unknown {
-    background: #94a3b8 !important;
-    color: #ffffff !important;
-    border-color: transparent !important;
+    background: #f8fafc !important;
+    color: #475569 !important;
 }
 
 /* Order Type Chips */
 .order-type-chip {
-    min-height: 22px !important;
+    min-height: 28px !important;
     padding: 0 10px !important;
-    border-radius: 6px !important;
-    font-size: 11px !important;
-    font-weight: 800 !important;
+    border-radius: 4px !important;
+    width: 85px !important; /* Ngắn lại cho gọn */
+    font-size: 13px !important;
+    font-weight: 600 !important;
     border: 1px solid transparent !important;
     display: inline-flex !important;
     align-items: center;
-    color: #ffffff !important;
 }
 
-/* Order Type Chips (White text) */
+/* Order Type Chips (Pastel style) */
 .order-type-offline {
-    background: #f97316 !important;
-    color: #ffffff !important;
-    border-color: transparent !important;
+    background: #fff7ed !important;
+    color: #9a3412 !important;
+    border: 1px solid #ffedd5 !important;
+    .v-chip__content { color: #9a3412 !important; }
 }
 
 .order-type-online {
-    background: #10b981 !important;
-    color: #ffffff !important;
-    border-color: transparent !important;
+    background: #f0fdf4 !important;
+    color: #166534 !important;
+    border: 1px solid #dcfce7 !important;
+    .v-chip__content { color: #166534 !important; }
 }
 
 /* Global Chip Text Override - Cleaned Up */
@@ -297,11 +398,11 @@
 
 /* 6. TABS */
 .equal-tabs {
-    :deep(.v-slide-group__content) {
+    .v-slide-group__content {
         width: 100%;
     }
 
-    :deep(.v-tab) {
+    .v-tab {
         flex: 1 1 0;
         max-width: none;
         height: 52px !important;
@@ -320,6 +421,19 @@
     color: #ffffff !important;
     font-size: 10px !important;
     font-weight: 800 !important;
+}
+
+.tab-count-avatar {
+    font-size: 11px !important;
+    font-weight: 400 !important;
+    color: #ffffff !important;
+    background-color: #ef4444 !important;
+    transition: all 0.3s ease;
+}
+
+.v-tab--selected .tab-count-avatar {
+    color: #1e257c !important;
+    background-color: rgba(30, 37, 124, 0.1) !important;
 }
 
 /* 7. ADMIN TABLE & FILTER COMPONENTS (Core) */
@@ -371,28 +485,26 @@
         top: 0;
         z-index: 30;
         background: #f8fafc;
-        color: #475569 !important;
+        color: #1d2025 !important;
         padding: 14px 16px !important;
         font-size: 13px !important;
-        font-weight: 800 !important;
+        font-weight: 700 !important;
         border-bottom: 2px solid #e2e8f0;
         letter-spacing: 0.05em;
         white-space: nowrap;
-        text-align: center !important;
-        /* Force center for all headers */
+        text-align: center;
         text-transform: none !important;
     }
 
     .data-cell {
-        padding: 12px 16px !important;
+        padding: 16px 16px !important; /* Tăng padding để dòng thoáng hơn */
         font-size: 13px !important;
-        color: #1e293b;
-        text-align: center !important;
-        /* Force center */
+        font-weight: 500 !important;
+        color: #1d2025 !important;
         vertical-align: middle;
         border-bottom: 1px solid #f1f5f9;
-        font-weight: 600;
         background: white;
+        text-align: left;
     }
 
     .data-row:hover .data-cell {
@@ -418,20 +530,58 @@
     border: 1px solid #e2e8f0 !important;
     border-radius: 12px !important;
     width: 100%;
+
+    .v-field__input {
+        font-weight: 400 !important;
+        color: #475569 !important;
+        font-size: 13px !important;
+    }
+
+    .v-field__outline {
+        --v-field-border-opacity: 0.6 !important;
+    }
+
+    input::placeholder {
+        font-weight: 400 !important;
+        opacity: 0.5 !important;
+    }
 }
 
 .filter-title {
     font-size: 16px;
-    font-weight: 800;
-    color: #0f172a;
+    font-weight: 700;
+    color: #1d2025;
 }
 
 .filter-field-label {
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 700;
     color: #64748b;
     margin-bottom: 6px;
     letter-spacing: 0.02em;
+}
+
+/* Tinh chỉnh ô nhập ngày tháng */
+.date-field {
+    input::-webkit-calendar-picker-indicator {
+        background: transparent;
+        bottom: 0;
+        color: transparent;
+        cursor: pointer;
+        height: auto;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: auto;
+        z-index: 1;
+    }
+
+    .v-field__append-inner {
+        padding-top: 0 !important;
+        align-items: center !important;
+        opacity: 0.8;
+    }
 }
 
 .reset-btn {
@@ -506,12 +656,12 @@
     font-size: 14px !important;
     font-weight: 800 !important;
     background: #f1f5f9 !important;
-    color: #000 !important;
+    color: #334155 !important;
     border: 1px solid #e2e8f0 !important;
     transition: all 0.2s ease !important;
 
     .v-btn__content {
-        color: #000 !important;
+        color: #334155 !important;
     }
 
     .v-btn__prepend {
@@ -557,14 +707,14 @@
     padding: 0 24px !important;
     border-radius: 10px !important;
     font-size: 14px !important;
-    font-weight: 800 !important;
-    color: #000 !important;
-    border: 1.5px solid #000 !important;
+    font-weight: 700 !important;
+    color: #1e257c !important;
+    border: 1.5px solid #1e257c !important;
     background: #ffffff !important;
     transition: all 0.2s ease !important;
 
     .v-btn__content {
-        color: #000 !important;
+        color: #1e257c !important;
     }
 
     .v-btn__prepend {
@@ -598,10 +748,10 @@
         height: 48px !important;
         font-size: 13px !important;
         font-weight: 700 !important;
-        color: #64748b !important;
+        color: #1d2025 !important;
         padding: 0 20px !important;
         letter-spacing: 0.01em !important;
-        opacity: 0.7;
+        opacity: 1;
         transition: all 0.3s ease;
         text-transform: none !important;
         position: relative;
@@ -629,19 +779,18 @@
         }
 
         &.v-tab--selected {
-            color: #3b82f6 !important;
+            color: #1e257c !important;
             opacity: 1;
+            background: #f0f1ff !important;
 
             &::after {
                 content: '';
                 position: absolute;
-                bottom: 6px;
-                left: 15%;
-                right: 15%;
-                height: 4px;
-                background: #3b82f6;
-                border-radius: 20px;
-                box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: #1e257c;
                 z-index: 1;
             }
         }
@@ -898,7 +1047,7 @@
         }
         
         &.done .timeline-info .label {
-            color: #64748b; /* Muted label for done steps */
+            color: #64748b;
         }
         
         &.active.warning .timeline-info .label { color: #f59e0b; }
@@ -1104,4 +1253,4 @@
             background: #cbd5e1;
         }
     }
-}
+}

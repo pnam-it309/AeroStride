@@ -314,7 +314,7 @@ onMounted(init);
                                     class="compact-input"></v-text-field>
                             </v-col>
                             <v-col cols="12" sm="1" class="pl-sm-1 d-flex align-center justify-end">
-                                <v-btn icon variant="tonal" color="error" class="rounded-lg h-10 w-10 font-weight-bold reset-btn" @click="searchQuery = ''; searchCode = ''; selectionPage = 1">
+                                <v-btn icon variant="tonal" color="primary" class="rounded-lg h-10 w-10 font-weight-bold reset-btn" @click="searchQuery = ''; searchCode = ''; selectionPage = 1">
                                     <v-icon size="20">mdi-refresh</v-icon>
                                     <v-tooltip activator="parent" location="top">Làm mới bộ lọc</v-tooltip>
                                 </v-btn>
@@ -488,14 +488,40 @@ onMounted(init);
 
 <style scoped>
 /* Local style overrides - using global premium design system */
-.modern-table :deep(th) {
-    background: #f8fafc !important;
-    font-size: 12px !important;
-    font-weight: 700 !important;
+:deep(.v-container.font-body),
+:deep(.v-card),
+:deep(.v-table),
+:deep(.v-table__wrapper table),
+:deep(.v-table__wrapper table tbody tr td),
+:deep(.v-table__wrapper table thead tr th),
+:deep(.v-label),
+.field-label,
+.field-label-small {
+    font-size: 13px !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+}
+
+/* Làm nhạt màu chữ trong các ô input */
+:deep(.v-field__input), 
+:deep(.v-select__selection), 
+:deep(.v-text-field input),
+:deep(.v-textarea textarea),
+:deep(input),
+:deep(textarea) {
+    color: #475569 !important;
+    font-size: 13px !important;
+}
+
+:deep(.v-table__wrapper table tbody tr td *) {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #1d2025 !important;
+}
+
+:deep(.v-table__wrapper table thead tr th *) {
     color: #64748b !important;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    vertical-align: middle !important;
+    font-weight: 700 !important;
 }
 
 .modern-table :deep(td) {
@@ -526,47 +552,40 @@ onMounted(init);
     text-transform: none !important;
     font-weight: 700 !important;
 }
+:deep(.v-field__input), 
+:deep(.v-select__selection), 
+:deep(.v-text-field input),
+:deep(.v-textarea textarea),
+:deep(.modern-table td),
+:deep(.modern-table th),
+.field-label,
+.field-label-small {
+    font-size: 13px !important;
+}
+
 .field-label {
-    font-size: 13px;
     font-weight: 700;
-    color: #475569;
+    color: #1d2025 !important;
     margin-bottom: 6px;
 }
 
 .field-label-small {
-    font-size: 11px;
-    font-weight: 800;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: 700;
+    color: #1d2025 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
     margin-bottom: 4px;
 }
 
-.product-image-container {
-    position: relative;
-    padding: 2px;
+.font-weight-black {
+    font-weight: 700 !important;
 }
 
-.discount-badge {
-    position: absolute;
-    top: -5px;
-    right: -10px;
-    background: linear-gradient(135deg, #ff4d4d 0%, #f70000 100%);
-    color: white;
-    font-size: 9px;
-    font-weight: 900;
-    padding: 2px 6px;
-    border-radius: 20px;
-    box-shadow: 0 2px 6px rgba(247, 0, 0, 0.4);
-    border: 1.5px solid white;
-    z-index: 2;
-    white-space: nowrap;
-    animation: badge-pulse 2s infinite;
+.font-weight-bold {
+    font-weight: 600 !important;
 }
 
-@keyframes badge-pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+.text-slate-400 {
+    color: #64748b !important;
 }
 </style>

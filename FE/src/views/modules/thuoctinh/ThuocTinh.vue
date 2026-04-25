@@ -170,8 +170,8 @@ const currentMeta = computed(() => attributeMeta[selectedTab.value] || attribute
 
 const tableHeaders = computed(() => [
     { text: 'STT', align: 'center', width: '50px' },
-    { text: currentMeta.value.codeLabel, align: 'left', width: '120px' },
-    { text: currentMeta.value.nameLabel, align: 'left', width: '220px' },
+    { text: currentMeta.value.codeLabel, align: 'center', width: '120px' },
+    { text: currentMeta.value.nameLabel, align: 'center', width: '220px' },
     { text: 'Trạng thái', align: 'center', width: '130px' },
     { text: 'Thao tác', align: 'center', width: '120px' }
 ]);
@@ -446,5 +446,9 @@ watch(selectedTab, (n) => {
 <style scoped>
 .font-body {
     font-family: 'Inter', sans-serif;
+}
+
+:deep(.data-cell), :deep(.data-cell *) {
+    font-size: 13px !important;
 }
 </style>
