@@ -175,14 +175,17 @@ const timelineSteps = computed(() => {
     }
 
     const currentIndex = status === null ? -1 : steps.findIndex(s => s.key === status);
+    
+    // Chỉ hiển thị các bước từ khởi đầu cho đến trạng thái hiện tại của đơn hàng
+    // Các trạng thái sau đó sẽ bị ẩn đi theo yêu cầu của người dùng
+    const visibleSteps = currentIndex === -1 ? [] : steps.slice(0, currentIndex + 1);
+    
     const tsMap = getStatusTimestampMap.value;
 
-    return steps.map((step, index) => ({
+    return visibleSteps.map((step, index) => ({
         ...step,
         timestamp: tsMap?.[step.key] ?? null,
-        state:
-            currentIndex === -1 ? "pending" :
-                (index === currentIndex ? "active" : index < currentIndex ? "done" : "pending"),
+        state: index === currentIndex ? "active" : "done", // Tất cả các bước hiển thị đều là 'done' hoặc 'active'
         tone: getStatusTone(step.key)
     }));
 });
@@ -430,29 +433,29 @@ onMounted(() => {
             </div>
         </v-card>
 
-        <!-- Timeline Progress -->
         <v-card class="premium-card-detail mb-6 pa-6 overflow-hidden premium-timeline">
             <div class="timeline-wrap">
-                <div v-for="(step, index) in timelineSteps" :key="index" class="timeline-step"
-                    :class="[step.state, step.tone]">
-                    <div class="node-section">
-                        <div class="line left" v-if="index > 0" :class="{ active: step.state !== 'pending' }"></div>
-                        <div class="node" :class="[step.state, step.tone]">
-                            <component :is="step.icon" size="22" />
+                <transition-group name="timeline-anim">
+                    <div v-for="(step, index) in timelineSteps" :key="step.key" class="timeline-step"
+                        :class="[step.state, step.tone]">
+                        <div class="node-section">
+                            <div class="line left" v-if="index > 0" :class="{ active: true }"></div>
+                            <div class="node" :class="[step.state, step.tone]">
+                                <component :is="step.icon" size="22" />
+                            </div>
+                            <div class="line right" v-if="index < timelineSteps.length - 1"
+                                :class="{ active: true }"></div>
                         </div>
-                        <div class="line right" v-if="index < timelineSteps.length - 1"
-                            :class="{ active: timelineSteps[index + 1]?.state !== 'pending' }"></div>
-                    </div>
-                    <div class="timeline-info">
-                        <div class="label">{{ step.label }}</div>
-                        <div class="note">{{ step.note }}</div>
-                        <div v-if="step.timestamp" class="text-caption text-slate-400 mt-1">
-                            {{ formatDate(step.timestamp) }}
+                        <div class="timeline-info">
+                            <div class="label">{{ step.label }}</div>
+                            <div class="note">{{ step.note }}</div>
+                            <div v-if="step.timestamp" class="text-caption text-slate-400 mt-1">
+                                {{ formatDate(step.timestamp) }}
+                            </div>
                         </div>
                     </div>
-                </div>
+                </transition-group>
             </div>
-
         </v-card>
 
         <v-row v-if="loaded">
@@ -1026,5 +1029,25 @@ onMounted(() => {
 
 .bg-primary-light {
     background: #eff6ff;
+}
+
+/* Timeline Animation */
+.timeline-anim-enter-active,
+.timeline-anim-leave-active {
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.timeline-anim-enter-from {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+}
+
+.timeline-anim-leave-to {
+    opacity: 0;
+    transform: scale(0.8) translateY(-20px);
+}
+
+.timeline-anim-move {
+    transition: transform 0.5s ease;
 }
 </style>
