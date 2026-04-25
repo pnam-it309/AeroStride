@@ -1,0 +1,1 @@
+import{an as i}from"./index-b61b36dc.js";const o=i([]),c=()=>({notifications:o,addNotification:t=>{o.value.unshift({id:Date.now(),title:t.title||"Thông báo hệ thống",subtitle:t.subtitle||"",time:"Vừa xong",icon:t.icon||"CircleCheckIcon",color:t.color||"success",isNew:!0})},markAllAsRead:()=>{o.value.forEach(t=>t.isNew=!1)}});export{c as u};

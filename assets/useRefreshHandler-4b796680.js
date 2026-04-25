@@ -1,0 +1,1 @@
+import{an as n}from"./index-b61b36dc.js";function l(){const e=n(!1);return{isRefreshing:e,handleRefresh:async(r,a=800)=>{if(!e.value){e.value=!0;try{r(),await new Promise(s=>setTimeout(s,a))}finally{e.value=!1}}}}}export{l as u};

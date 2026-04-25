@@ -1,0 +1,1 @@
+const o={ACTIVE:"DANG_HOAT_DONG",INACTIVE:"KHONG_HOAT_DONG"},r=e=>{if(e==null)return!1;if(typeof e=="number")return e===0;if(typeof e=="boolean")return e===!0;const n=String(e).toUpperCase();return n===o.ACTIVE||n==="ACTIVE"||n==="HOAT_DONG"||n==="0"||n==="TRUE"},t=e=>r(e)?"Hoạt động":"Ngừng hoạt động",i=e=>r(e)?"success":"warning";export{t as a,i as g,r as i};
