@@ -1002,8 +1002,8 @@ const handleSave = async () => {
                     <BoxIcon size="18" class="mr-2" /> Quản lý biến thể
                 </v-btn>
                 <v-btn color="primary" variant="flat"
-                    class="text-none font-weight-black text-white px-8 rounded-lg h-11 elevation-4"
-                    :loading="saving" @click="handleSave">
+                    class="text-none font-weight-bold text-white px-8 rounded-lg h-11 elevation-4" :loading="saving"
+                    @click="handleSave">
                     <DeviceFloppyIcon size="18" class="mr-2 text-white" /> Lưu thông tin
                 </v-btn>
             </div>
@@ -1012,7 +1012,7 @@ const handleSave = async () => {
         <v-row v-if="loading">
             <v-col cols="12" class="text-center py-16">
                 <v-progress-circular indeterminate color="primary" size="64" />
-                <div class="mt-4 text-subtitle-1 font-weight-bold text-slate-500">Đang tải thông tin sản phẩm...</div>
+                <div class="mt-4 text-subtitle-1 font-weight-medium text-slate-500">Đang tải thông tin sản phẩm...</div>
             </v-col>
         </v-row>
 
@@ -1031,6 +1031,8 @@ const handleSave = async () => {
                                     </div>
                                 </div>
                             </div>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin cơ bản</span>
+                        </div>
 
                             <v-row>
                                 <v-col cols="12">
@@ -1582,6 +1584,97 @@ const handleSave = async () => {
                         </template>
                     </v-card-text>
                 </v-card>
+
+                <!-- 2. Detailed Attributes -->
+                <v-card class="premium-card mb-6">
+                    <v-card-text class="pa-8">
+                        <div class="section-header d-flex align-center mb-6">
+                            <div class="icon-blob bg-amber-lighten-5 mr-3">
+                                <SettingsIcon size="18" class="text-amber-darken-2" />
+                            </div>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thuộc tính kỹ thuật</span>
+                        </div>
+
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <div class="field-label">Xuất xứ <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idXuatXu" :items="origins" item-title="ten" item-value="id"
+                                    :rules="[rules.required]" placeholder="Chọn xuất xứ..." variant="outlined"
+                                    density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu', dichVuXuatXu, 'XUAT_XU', 'xuất xứ')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="6">
+                                <div class="field-label">Chất liệu <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idChatLieu" :items="materials" item-title="ten"
+                                    item-value="id" :rules="[rules.required]" placeholder="Chọn chất liệu..."
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu', dichVuChatLieu, 'CHAT_LIEU', 'chất liệu')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="field-label">Loại đế <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idDeGiay" :items="soles" item-title="ten" item-value="id"
+                                    :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay', dichVuDeGiay, 'DE_GIAY', 'đế giày')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="field-label">Loại cổ <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idCoGiay" :items="collars" item-title="ten" item-value="id"
+                                    :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay', dichVuCoGiay, 'CO_GIAY', 'cổ giày')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idMucDichChay" :items="purposes" item-title="ten"
+                                    item-value="id" :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay', dichVuMucDichChay, 'MUC_DICH_CHAY', 'mục đích sử dụng')"></v-combobox>
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+
+            <!-- Right Column -->
+            <v-col cols="12" lg="4">
+                <v-card class="premium-card mb-6">
+                    <v-card-text class="pa-8">
+                        <div class="section-header d-flex align-center mb-6">
+                            <div class="icon-blob bg-emerald-lighten-5 mr-3">
+                                <BoxIcon size="18" class="text-emerald-darken-2" />
+                            </div>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Phân loại</span>
+                        </div>
+
+                        <v-row>
+                            <v-col cols="12">
+                                <div class="field-label">Thương hiệu <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idThuongHieu" :items="brands" item-title="ten"
+                                    item-value="id" :rules="[rules.required]" placeholder="Tìm thương hiệu..."
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu', dichVuThuongHieu, 'THUONG_HIEU', 'thương hiệu')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12">
+                                <div class="field-label">Danh mục <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idDanhMuc" :items="categories" item-title="ten"
+                                    item-value="id" :rules="[rules.required]" placeholder="Chọn danh mục..."
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc', dichVuDanhMuc, 'DANH_MUC', 'danh mục')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12">
+                                <div class="field-label">Đối tượng sử dụng <span class="text-red">*</span></div>
+                                <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary"
+                                    variant="outlined" density="comfortable" class="w-100 rounded-lg custom-toggle">
+                                    <v-btn value="NAM" class="flex-grow-1">Nam</v-btn>
+                                    <v-btn value="NU" class="flex-grow-1">Nữ</v-btn>
+                                    <v-btn value="UNISEX" class="flex-grow-1">Unisex</v-btn>
+                                </v-btn-toggle>
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
+
             </v-col>
         </v-row>
 

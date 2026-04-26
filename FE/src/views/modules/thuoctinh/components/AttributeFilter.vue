@@ -59,7 +59,7 @@ const handleSearch = () => emit('search');
 <style scoped>
 .filter-label {
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 600;
     color: #64748b;
     margin-bottom: 2px;
     margin-left: 2px;

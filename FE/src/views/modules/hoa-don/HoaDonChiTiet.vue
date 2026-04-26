@@ -371,12 +371,12 @@ onMounted(() => {
                             <ChevronLeftIcon size="28" />
                         </v-btn>
                         <v-chip v-if="loaded && getOrderStatusMeta(order.trangThai)"
-                            :color="getStatusTone(order.trangThai)" variant="flat" class="font-bold px-4 status-chip">
+                            :color="getStatusTone(order.trangThai)" variant="flat" class="font-weight-bold px-4 status-chip">
                             {{ getStatusLabel(order.trangThai) }}
                         </v-chip>
                     </div>
                     <div v-if="loaded" class="text-caption text-slate-500 mt-1 d-flex align-center">
-                        Nhân viên tiếp nhận: <span class="font-weight-bold text-slate-700 ml-1">{{ receptionistLabel }}</span>
+                        Nhân viên tiếp nhận: <span class="font-weight-medium text-slate-700 ml-1">{{ receptionistLabel }}</span>
                         <v-btn icon variant="text" size="x-small" color="primary" class="ml-1" @click="openEditReceptionist">
                             <EditIcon size="14" />
                         </v-btn>
@@ -398,7 +398,7 @@ onMounted(() => {
 
                     <v-menu v-if="order && getOrderStatus() !== null && getOrderStatus() < 3">
                         <template v-slot:activator="{ props }">
-                            <v-btn color="primary" variant="flat" class="rounded-lg px-6 font-bold btn-white-text"
+                            <v-btn color="primary" variant="flat" class="rounded-lg px-6 font-weight-bold btn-white-text"
                                 height="44" v-bind="props" :loading="updatingStatus">
                                 <EditIcon size="18" class="mr-2" />
                                 Cập nhật trạng thái
@@ -425,7 +425,7 @@ onMounted(() => {
                             <v-divider></v-divider>
                             <v-list-item v-if="getOrderStatus() !== 4 && getOrderStatus() !== 5"
                                 @click="requestStatusUpdate(4)" color="error" prepend-icon="mdi-close">
-                                <v-list-item-title class="text-error font-bold">Hủy đơn hàng</v-list-item-title>
+                                <v-list-item-title class="text-error font-weight-bold">Hủy đơn hàng</v-list-item-title>
                             </v-list-item>
                         </v-list>
                     </v-menu>
@@ -485,11 +485,11 @@ onMounted(() => {
                                         <div class="text-h6 font-weight-bold text-slate-900">{{ order.tenKhachHang ||
                                             'Khách lẻ'
                                             }}</div>
-                                        <div class="text-caption text-slate-500 font-weight-bold">Mã KH: {{
+                                        <div class="text-caption text-slate-500 font-weight-medium">Mã KH: {{
                                             order.khachHang?.maKhachHang || 'N/A' }}</div>
                                         <div class="d-flex align-center text-slate-500 mt-1">
                                             <v-icon size="16" class="mr-2">mdi-phone-outline</v-icon>
-                                            <span>{{ order.soDienThoai || 'Chưa có SĐT' }}</span>
+                                            <span class="font-weight-medium">{{ order.soDienThoai || 'Chưa có SĐT' }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -508,7 +508,7 @@ onMounted(() => {
                                         <span class="info-label">Hạng khách hàng:</span>
                                         <div class="info-value">
                                             <v-chip size="x-small" color="primary" variant="flat"
-                                                class="font-weight-bold text-white">Thành viên</v-chip>
+                                                class="font-weight-medium text-white">Thành viên</v-chip>
                                         </div>
                                     </div>
                                 </div>
@@ -525,8 +525,8 @@ onMounted(() => {
                             <span class="font-weight-bold text-slate-800">Sản phẩm đã đặt</span>
                         </div>
                         <v-btn v-if="getOrderStatus() !== null && getOrderStatus() < 3" variant="tonal" color="primary"
-                            size="small" class="px-4 font-weight-bold rounded-md" @click="productsDialogOpen = true">
-                            <PlusIcon size="16" class="mr-2" />
+                            size="small" class="px-4 font-weight-medium rounded-md" @click="productsDialogOpen = true">
+                            <v-icon size="16" class="mr-2">mdi-plus</v-icon>
                             Thêm / sửa sản phẩm
                         </v-btn>
                     </div>
@@ -548,7 +548,7 @@ onMounted(() => {
                                                 <v-icon size="24" color="primary">mdi-shoe-sneaker</v-icon>
                                             </div>
                                             <div>
-                                                <div class="font-weight-bold text-slate-800">{{ item.tenSanPham }}</div>
+                                                <div class="font-weight-medium text-slate-800">{{ item.tenSanPham }}</div>
                                                 <div class="text-caption text-slate-500">Màu: {{ item.tenMauSac }} |
                                                     Size:
                                                     {{
@@ -571,7 +571,7 @@ onMounted(() => {
                                             {{ item.soLuong }}
                                         </template>
                                     </td>
-                                    <td class="text-right text-slate-700">{{ formatCurrency(item.donGia) }}</td>
+                                    <td class="text-right text-slate-700 font-weight-medium">{{ formatCurrency(item.donGia) }}</td>
                                     <td class="text-right font-weight-bold text-primary">{{
                                         formatCurrency(item.thanhTien)
                                         }}</td>
@@ -605,7 +605,7 @@ onMounted(() => {
                                                 Người thực hiện: {{ log.nguoiThucHien || 'ADMIN' }}
                                             </div>
                                         </div>
-                                        <div class="text-caption text-slate-400 font-weight-bold text-right"
+                                        <div class="text-caption text-slate-400 font-weight-medium text-right"
                                             style="min-width: 140px;">
                                             {{ formatDate(log.ngayTao) }}
                                         </div>
@@ -620,7 +620,7 @@ onMounted(() => {
                                                 thống
                                             </div>
                                         </div>
-                                        <div class="text-caption text-slate-400 font-weight-bold text-right"
+                                        <div class="text-caption text-slate-400 font-weight-medium text-right"
                                             style="min-width: 140px;">
                                             {{ formatDate(order.ngayTao) }}
                                         </div>
@@ -655,7 +655,7 @@ onMounted(() => {
                             </div>
                             <div class="summary-row mb-2">
                                 <span class="text-slate-500 font-weight-medium">Phí vận chuyển:</span>
-                                <span class="text-body-1 font-weight-bold text-slate-800">{{
+                                <span class="text-body-1 font-weight-medium text-slate-800">{{
                                     formatCurrency(order.phiVanChuyen || 0)
                                 }}</span>
                             </div>
@@ -684,25 +684,25 @@ onMounted(() => {
                     </div>
                     <v-card-text class="pa-6">
                         <div class="info-group mb-6">
-                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Loại đơn hàng
+                            <div class="text-caption text-slate-400 font-weight-medium text-uppercase mb-2">Loại đơn hàng
                             </div>
-                            <v-chip variant="tonal" color="primary" class="font-weight-bold">
+                            <v-chip variant="tonal" color="primary" class="font-weight-medium">
                                 {{ order.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi' }}
                             </v-chip>
                         </div>
                         <v-divider class="mb-6 border-opacity-10"></v-divider>
                         <div class="info-group mb-6">
-                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Địa chỉ nhận
+                            <div class="text-caption text-slate-400 font-weight-medium text-uppercase mb-2">Địa chỉ nhận
                             </div>
-                            <div class="text-body-1 text-slate-700 d-flex align-start">
+                            <div class="text-body-1 text-slate-700 d-flex align-start font-weight-medium">
                                 <MapPinIcon size="18" class="mr-2 text-error mt-1" />
                                 <span>{{ order.diaChi || 'Khách nhận tại quầy' }}</span>
                             </div>
                         </div>
                         <v-divider class="mb-6 border-opacity-10"></v-divider>
                         <div class="info-group">
-                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Ghi chú</div>
-                            <div class="text-body-2 text-slate-600 italic pa-3 bg-slate-50 rounded-lg">
+                            <div class="text-caption text-slate-400 font-weight-medium text-uppercase mb-2">Ghi chú</div>
+                            <div class="text-body-2 text-slate-600 italic pa-3 bg-slate-50 rounded-lg font-weight-medium">
                                 {{ order.ghiChu || 'Không có ghi chú' }}
                             </div>
                         </div>
@@ -739,7 +739,7 @@ onMounted(() => {
                                         <div class="text-h6 font-weight-bold text-primary">{{ formatCurrency(pay.soTien)
                                         }}
                                         </div>
-                                        <div class="text-caption text-slate-400">{{ formatDate(pay.ngayTao) }}</div>
+                                        <div class="text-caption text-slate-400 font-weight-medium">{{ formatDate(pay.ngayTao) }}</div>
                                     </div>
                                 </div>
                             </div>

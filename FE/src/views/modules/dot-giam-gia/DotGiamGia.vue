@@ -4,7 +4,7 @@ import { PATH } from '@/router/routePaths';
 import { useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
-import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
+import { isActiveStatus } from '@/utils/statusUtils';
 
 // REUSABLE COMPONENTS
 import AdminFilter from '@/components/common/AdminFilter.vue';
@@ -36,6 +36,16 @@ const {
 });
 
 const isRefreshing = ref(false);
+
+// Tính trạng thái theo thời gian thực (ngày bắt đầu / kết thúc)
+const getDiscountTimeStatus = (item) => {
+    const now = Date.now();
+    const start = item.ngayBatDau ? new Date(item.ngayBatDau).getTime() : null;
+    const end = item.ngayKetThuc ? new Date(item.ngayKetThuc).getTime() : null;
+    if (start && now < start) return { label: 'Sắp diễn ra', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' };
+    if (end && now > end)   return { label: 'Kết thúc',    color: '#ef4444', bg: 'rgba(239,68,68,0.1)' };
+    return { label: 'Hoạt động', color: '#10b981', bg: 'rgba(16,185,129,0.1)' };
+};
 
 // Confirmation Logic
 const confirmDialog = ref({ show: false, title: '', message: '', color: 'primary', action: null, loading: false });
@@ -100,7 +110,7 @@ onMounted(() => loadCampaigns());
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm</div>
-                    <v-text-field v-model="filters.search" placeholder="Tên chiến dịch..." variant="outlined"
+                    <v-text-field v-model="filters.search" placeholder="Tên đợt giảm giá..." variant="outlined"
                         density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
                         @input="handleSearch"></v-text-field>
                 </v-col>
@@ -131,14 +141,13 @@ onMounted(() => loadCampaigns());
         </div>
 
         <!-- 2. TABLE -->
-        <AdminTable title="Danh sách chiến dịch" addButtonText="Tạo mới" show-export-button :headers="[
+        <AdminTable title="Danh sách đợt giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
             { text: 'STT', align: 'center', width: '60px' },
             { text: 'Mã giảm giá', align: 'center', width: '100px' },
             { text: 'Tên đợt giảm giá', align: 'center', width: '200px' },
             { text: 'Giá trị giảm', align: 'center', width: '150px' },
-            { text: 'Đơn hàng tối thiểu', align: 'center', width: '150px' },
-            { text: 'Thời gian áp dụng', align: 'center', width: '160px' },
-            { text: 'Mức ưu tiên', align: 'center', width: '100px' },
+            { text: 'Ngày bắt đầu', align: 'center', width: '150px' },
+            { text: 'Ngày kết thúc', align: 'center', width: '150px' },
             { text: 'Trạng thái', align: 'center', width: '130px' },
             { text: 'Hành động', align: 'center', width: '130px' }
         ]" :items="campaigns" :total-count="pagination.totalElements" :loading="loading"
@@ -154,23 +163,16 @@ onMounted(() => loadCampaigns());
                     <td class="data-cell">
                         {{ item.ten || '--' }}
                     </td>
-                    <td class="data-cell">
-                        <div>Giảm {{ getDiscountValueDisplay(item) }}</div>
+                    <td class="data-cell text-center">
+                        <div class="text-primary">Giảm {{ getDiscountValueDisplay(item) }}</div>
                     </td>
-                    <td class="data-cell">{{ formatCurrency(item.dieuKienGiamGia) }}</td>
-                    <td class="data-cell">
-                        <div class="d-inline-flex flex-column align-start">
-                            <div class="text-caption font-weight-bold">Từ {{ formatDateTime(item.ngayBatDau) }}</div>
-                            <div class="text-caption text-slate-500">Đến {{ formatDateTime(item.ngayKetThuc) }}</div>
-                        </div>
-                    </td>
-                    <td class="data-cell">
-                        {{ item.mucUuTien ?? '--' }}
-                    </td>
-                    <td class="data-cell">
-                        <v-chip :color="getStatusColor(item.trangThai)" variant="flat" class="px-4 status-chip">
-                            {{ getStatusLabel(item.trangThai) }}
-                        </v-chip>
+                    <td class="data-cell text-center">{{ formatDateTime(item.ngayBatDau) }}</td>
+                    <td class="data-cell text-center">{{ formatDateTime(item.ngayKetThuc) }}</td>
+                    <td class="data-cell text-center">
+                        <span class="discount-status-chip"
+                            :style="{ color: getDiscountTimeStatus(item).color, background: getDiscountTimeStatus(item).bg }">
+                            {{ getDiscountTimeStatus(item).label }}
+                        </span>
                     </td>
                     <td class="data-cell action-cell" style="text-align: center">
                         <div class="d-flex align-center justify-center action-controls">

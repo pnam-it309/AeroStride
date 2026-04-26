@@ -169,10 +169,10 @@ const attributeMeta = {
 const currentMeta = computed(() => attributeMeta[selectedTab.value] || attributeMeta.brands);
 
 const tableHeaders = computed(() => [
-    { text: 'STT', align: 'center', width: '50px' },
-    { text: currentMeta.value.codeLabel, align: 'left', width: '120px' },
-    { text: currentMeta.value.nameLabel, align: 'left', width: '220px' },
-    { text: 'Trạng thái', align: 'center', width: '130px' },
+    { text: 'STT', align: 'center', width: '60px' },
+    { text: currentMeta.value.codeLabel, align: 'center', width: '180px' },
+    { text: currentMeta.value.nameLabel, align: 'center', width: '240px' },
+    { text: 'Trạng thái', align: 'center', width: '140px' },
     { text: 'Thao tác', align: 'center', width: '120px' }
 ]);
 

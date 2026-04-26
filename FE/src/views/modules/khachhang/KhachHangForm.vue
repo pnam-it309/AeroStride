@@ -252,7 +252,7 @@ const onFileChange = async (e) => {
     try {
         const res = await dichVuFile.taiLenFile(file);
         // Safely extract URL if response is an object { url: '...' } or just the string
-        customerForm.value.hinhAnh = typeof res === 'object' ? res.url || res.data || res.secure_url : res;
+        customerForm.value.hinhAnh = typeof res === 'object' ? res.fileUrl || res.url || res.data || res.secure_url : res;
         addNotification({ title: 'Thành công', subtitle: 'Đã tải lên ảnh đại diện', color: 'success' });
     } catch (error) {
         addNotification({ title: 'Lỗi', subtitle: 'Không thể tải lên ảnh', color: 'error' });
@@ -409,18 +409,18 @@ onMounted(() => {
             </div>
             <div class="d-flex gap-3">
                 <v-btn v-if="!isDetailView" color="success" variant="flat"
-                    class="text-none font-weight-black text-white px-8 rounded-xl h-11 elevation-4" @click="showQR = true">
+                    class="text-none font-weight-bold text-white px-8 rounded-xl h-11 elevation-4" @click="showQR = true">
                     <v-icon size="20" class="mr-2 text-white">mdi-qrcode-scan</v-icon>
                     Quét QR CCCD
                 </v-btn>
                 <v-btn v-if="!isDetailView" color="primary" variant="flat"
-                    class="text-none font-weight-black text-white px-8 rounded-xl h-11 elevation-4" :loading="saving"
+                    class="text-none font-weight-bold text-white px-8 rounded-xl h-11 elevation-4" :loading="saving"
                     @click="handleSave">
                     <v-icon size="18" class="mr-2 text-white">mdi-check-all</v-icon>
                     Lưu hồ sơ khách hàng
                 </v-btn>
                 <v-btn v-if="isDetailView" color="primary" variant="flat"
-                    class="text-none font-weight-black text-white px-8 rounded-xl h-11 elevation-4"
+                    class="text-none font-weight-bold text-white px-8 rounded-xl h-11 elevation-4"
                     @click="router.push(`${PATH.KHACH_HANG_FORM}/${route.params.id}`)">
                     <v-icon size="18" class="mr-2 text-white">mdi-pencil</v-icon>
                     Chỉnh sửa hồ sơ
@@ -430,8 +430,8 @@ onMounted(() => {
 
         <!-- Dialog quét QR CCCD -->
         <v-dialog v-model="showQR" max-width="500" transition="dialog-bottom-transition">
-            <v-card class="premium-card">
-                <v-card-title class="pa-6 font-weight-black border-b">
+            <v-card class="filter-card elevation-0">
+                <v-card-title class="pa-6 font-weight-bold border-b">
                     <v-icon start color="success" class="mr-2">mdi-qrcode-scan</v-icon>
                     Quét mã QR CCCD
                 </v-card-title>
@@ -444,7 +444,7 @@ onMounted(() => {
                 <v-divider></v-divider>
                 <v-card-actions class="pa-4 bg-slate-50">
                     <v-spacer></v-spacer>
-                    <v-btn color="slate-400" variant="text" class="text-none font-weight-bold" @click="showQR = false">Hủy bỏ</v-btn>
+                    <v-btn color="slate-400" variant="text" class="text-none font-weight-medium" @click="showQR = false">Hủy bỏ</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -452,7 +452,7 @@ onMounted(() => {
         <v-row v-if="loading">
             <v-col cols="12" class="text-center py-16">
                 <v-progress-circular indeterminate color="primary" size="64" width="6"></v-progress-circular>
-                <div class="mt-4 text-subtitle-1 font-weight-bold text-slate-500">Đang tải hồ sơ khách hàng...</div>
+                <div class="mt-4 text-subtitle-1 font-weight-medium text-slate-500">Đang tải hồ sơ khách hàng...</div>
             </v-col>
         </v-row>
 
@@ -460,16 +460,16 @@ onMounted(() => {
         <v-row v-else-if="isDetailView">
             <v-col cols="12" lg="4">
                 <!-- Customer Profile Summary -->
-                <v-card class="premium-card mb-6 text-center">
+                <v-card class="filter-card elevation-0 mb-6 text-center">
                     <v-card-text class="pa-8">
                         <v-avatar size="140" color="blue-lighten-5" class="mb-4 border-xl border-white elevation-4">
                             <v-img :src="customerForm.hinhAnh || FB_DEFAULT_AVATAR"></v-img>
                         </v-avatar>
-                        <h2 class="text-h5 font-weight-black mb-1 text-slate-800">{{ customerForm.ten }}</h2>
-                        <div class="text-subtitle-2 font-weight-bold text-slate-400 mb-6">{{ customerForm.email }}</div>
+                        <h2 class="text-h5 font-weight-bold mb-1 text-slate-800">{{ customerForm.ten }}</h2>
+                        <div class="text-subtitle-2 font-weight-medium text-slate-400 mb-6">{{ customerForm.email }}</div>
 
                         <v-chip :color="customerForm.trangThai === 'DANG_HOAT_DONG' ? 'success' : 'error'" variant="flat"
-                            class="px-8 font-weight-black rounded-lg mb-8">
+                            class="px-8 font-weight-medium rounded-lg mb-8">
                             {{ customerForm.trangThai === 'DANG_HOAT_DONG' ? 'Đang hoạt động' : 'Tạm dừng / Khóa' }}
                         </v-chip>
 
@@ -481,8 +481,8 @@ onMounted(() => {
                                     <v-icon color="success" size="18">mdi-phone</v-icon>
                                 </div>
                                 <div>
-                                    <div class="text-caption font-weight-bold text-slate-400">SỐ ĐIỆN THOẠI</div>
-                                    <div class="text-subtitle-2 font-weight-black text-slate-700">{{ customerForm.sdt }}
+                                    <div class="text-caption font-weight-medium text-slate-400 uppercase tracking-wider">SỐ ĐIỆN THOẠI</div>
+                                    <div class="text-subtitle-2 font-weight-bold text-slate-700">{{ customerForm.sdt }}
                                     </div>
                                 </div>
                             </div>
@@ -491,8 +491,8 @@ onMounted(() => {
                                     <v-icon color="info" size="18">mdi-calendar-range</v-icon>
                                 </div>
                                 <div>
-                                    <div class="text-caption font-weight-bold text-slate-400">NGÀY SINH</div>
-                                    <div class="text-subtitle-2 font-weight-black text-slate-700">{{ customerForm.ngaySinh
+                                    <div class="text-caption font-weight-medium text-slate-400 uppercase tracking-wider">NGÀY SINH</div>
+                                    <div class="text-subtitle-2 font-weight-bold text-slate-700">{{ customerForm.ngaySinh
                                         || 'Chưa cập nhật' }}</div>
                                 </div>
                             </div>
@@ -500,13 +500,13 @@ onMounted(() => {
                     </v-card-text>
                 </v-card>
 
-                <v-card class="premium-card">
+                <v-card class="filter-card elevation-0">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-4">
                             <div class="icon-blob bg-slate-100 mr-3">
                                 <NoteIcon size="18" class="text-slate-600" />
                             </div>
-                            <span class="text-subtitle-1 font-weight-black text-slate-800">Ghi chú hệ thống</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Ghi chú hệ thống</span>
                         </div>
                         <div class="text-body-2 font-weight-medium text-slate-500 leading-relaxed">
                             {{ customerForm.ghiChu || 'Chưa có ghi chú nào cho khách hàng này.' }}
@@ -517,14 +517,14 @@ onMounted(() => {
 
             <v-col cols="12" lg="8">
                 <!-- Delivery Address Dashboard -->
-                <v-card class="premium-card mb-6 pb-2">
+                <v-card class="filter-card elevation-0 mb-6 pb-2">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
                                 <MapPinIcon class="text-primary" size="20" />
                             </div>
-                            <span class="text-subtitle-1 font-weight-black text-slate-800">Danh sách địa chỉ nhận hàng</span>
-                            <v-chip color="primary" size="small" variant="tonal" class="ml-3 font-weight-black">
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách địa chỉ nhận hàng</span>
+                            <v-chip color="primary" size="small" variant="tonal" class="ml-3 font-weight-medium">
                                 {{ listDiaChi.length || 0 }} Địa chỉ
                             </v-chip>
                         </div>
@@ -534,7 +534,7 @@ onMounted(() => {
                         <!-- Không có địa chỉ -->
                         <div v-if="!listDiaChi || listDiaChi.length === 0" class="text-center py-16 bg-slate-50 rounded-xl border-dashed border">
                             <v-icon size="48" color="slate-200">mdi-map-marker-off</v-icon>
-                            <div class="mt-4 text-slate-400 font-weight-bold">Khách hàng chưa đăng ký địa chỉ nhận hàng</div>
+                            <div class="mt-4 text-slate-400 font-weight-medium">Khách hàng chưa đăng ký địa chỉ nhận hàng</div>
                         </div>
 
                         <!-- Hiển thị toàn bộ địa chỉ -->
@@ -545,13 +545,13 @@ onMounted(() => {
                             </v-avatar>
                             <div class="flex-grow-1">
                                 <div class="d-flex align-center gap-2 mb-1">
-                                    <span class="font-weight-black text-slate-800">{{ addr.tenNguoiNhan }}</span>
-                                    <span class="text-caption font-weight-bold text-slate-400 px-2 border-l ml-1"> {{
+                                    <span class="font-weight-bold text-slate-800">{{ addr.tenNguoiNhan }}</span>
+                                    <span class="text-caption font-weight-medium text-slate-400 px-2 border-l ml-1"> {{
                                         addr.sdtNguoiNhan }}</span>
                                     <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="flat"
-                                        class="ml-2 font-weight-black px-3">MẶC ĐỊNH</v-chip>
+                                        class="ml-2 font-weight-medium px-3">MẶC ĐỊNH</v-chip>
                                 </div>
-                                <div class="text-body-2 font-weight-bold text-slate-500">
+                                <div class="text-body-2 font-weight-medium text-slate-500">
                                     {{ addr.diaChiChiTiet }}, {{ addr.phuongXa }}, {{ addr.thanhPho }}, {{ addr.tinh }}
                                 </div>
                             </div>
@@ -560,7 +560,7 @@ onMounted(() => {
                 </v-card>
 
                 <!-- Account Security Block -->
-                <v-card class="premium-card">
+                <v-card class="filter-card elevation-0">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-slate-100 mr-3">
@@ -571,16 +571,16 @@ onMounted(() => {
                         <v-row>
                             <v-col cols="12" md="6">
                                 <div class="bg-slate-50 pa-4 rounded-xl border">
-                                    <div class="text-caption font-weight-bold text-slate-400 mb-1">TÊN ĐĂNG NHẬP</div>
-                                    <div class="text-h6 font-weight-black text-primary">{{ customerForm.tenTaiKhoan ||
+                                    <div class="text-caption font-weight-medium text-slate-400 mb-1 uppercase tracking-wider">TÊN ĐĂNG NHẬP</div>
+                                    <div class="text-h6 font-weight-bold text-primary">{{ customerForm.tenTaiKhoan ||
                                         'Chưa thiết lập' }}</div>
                                 </div>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="bg-slate-50 pa-4 rounded-xl border d-flex align-center">
                                     <div class="flex-grow-1">
-                                        <div class="text-caption font-weight-bold text-slate-400 mb-1">MẬT KHẨU</div>
-                                        <div class="text-subtitle-2 text-slate-400 italic font-italic font-weight-bold">
+                                        <div class="text-caption font-weight-medium text-slate-400 mb-1 uppercase tracking-wider">MẬT KHẨU</div>
+                                        <div class="text-subtitle-2 text-slate-400 italic font-italic font-weight-medium">
                                             Dữ liệu được mã hóa bảo mật
                                         </div>
                                     </div>
@@ -597,44 +597,44 @@ onMounted(() => {
         <v-row v-else class="pb-16">
             <v-col cols="12" lg="8">
                 <!-- Basic Info -->
-                <v-card class="premium-card mb-6">
+                <v-card class="filter-card elevation-0 mb-6">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
                                 <UserIcon class="text-primary" size="20" />
                             </div>
-                            <span class="text-subtitle-1 font-weight-black text-slate-800">Thông tin cá nhân</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin cá nhân</span>
                         </div>
 
                         <v-row>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Mã khách hàng</div>
                                 <v-text-field v-model="customerForm.ma" readonly placeholder="KH-XXXX" variant="outlined"
-                                    density="comfortable" class="font-weight-black bg-slate-50 mono-font"
+                                    density="compact" class="font-weight-medium bg-slate-50 mono-font"
                                     hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="8">
                                 <div class="field-label">Họ và tên *</div>
                                 <v-text-field v-model="customerForm.ten" :readonly="isDetailView"
-                                    placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" density="comfortable"
-                                    class="font-weight-bold" hide-details></v-text-field>
+                                    placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" density="compact"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Email *</div>
                                 <v-text-field v-model="customerForm.email" :readonly="isDetailView"
-                                    placeholder="khachhang@gmail.com" variant="outlined" density="comfortable"
-                                    class="font-weight-bold" hide-details></v-text-field>
+                                    placeholder="khachhang@gmail.com" variant="outlined" density="compact"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Số điện thoại *</div>
                                 <v-text-field v-model="customerForm.sdt" :readonly="isDetailView"
-                                    placeholder="09xx.xxx.xxx" variant="outlined" density="comfortable"
-                                    class="font-weight-bold" hide-details></v-text-field>
+                                    placeholder="09xx.xxx.xxx" variant="outlined" density="compact"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
                                 <v-text-field v-model="customerForm.ngaySinh" :readonly="isDetailView" type="date"
-                                    variant="outlined" density="comfortable" class="font-weight-bold"
+                                    variant="outlined" density="compact" 
                                     hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
@@ -642,7 +642,7 @@ onMounted(() => {
                                 <v-select v-model="customerForm.gioiTinh" :readonly="isDetailView" :items="[
                                     { title: 'Nam', value: true },
                                     { title: 'Nữ', value: false }
-                                ]" variant="outlined" density="comfortable" class="font-weight-bold"
+                                ]" variant="outlined" density="compact" 
                                     hide-details></v-select>
                             </v-col>
                         </v-row>
@@ -650,16 +650,16 @@ onMounted(() => {
                 </v-card>
 
                 <!-- Address Info Card -->
-                <v-card class="premium-card mb-6">
+                <v-card class="filter-card elevation-0 mb-6">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-amber-lighten-5 mr-3">
                                 <MapPinIcon class="text-amber-darken-3" size="20" />
                             </div>
-                            <span class="text-subtitle-1 font-weight-black text-slate-800">Sổ địa chỉ</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Sổ địa chỉ</span>
                             <v-spacer></v-spacer>
                             <v-btn v-if="isEditMode" color="primary" variant="tonal" size="small"
-                                class="text-none font-weight-black rounded-lg" prepend-icon="mdi-plus"
+                                class="text-none font-weight-bold rounded-lg" prepend-icon="mdi-plus"
                                 @click="openAddrDialog()">
                                 Thêm địa chỉ mới
                             </v-btn>
@@ -669,20 +669,20 @@ onMounted(() => {
                             <v-row>
                                 <v-col cols="12" md="4">
                                     <v-autocomplete v-model="customerForm.tinh" :items="provinces" item-title="name"
-                                        item-value="code" label="Tỉnh / Thành phố" variant="outlined" density="comfortable"
+                                        item-value="code" label="Tỉnh / Thành phố" variant="outlined" density="compact"
                                         @update:model-value="(val) => { customerForm.thanhPho = null; customerForm.phuongXa = null; if (val) fetchDistricts(val); }" />
                                 </v-col>
 
                                 <v-col cols="12" md="4">
                                     <v-autocomplete v-model="customerForm.thanhPho" :items="districts" item-title="name"
-                                        item-value="code" label="Quận / Huyện" variant="outlined" density="comfortable"
+                                        item-value="code" label="Quận / Huyện" variant="outlined" density="compact"
                                         :disabled="!customerForm.tinh"
                                         @update:model-value="(val) => { customerForm.phuongXa = null; if (val) fetchWards(val); }" />
                                 </v-col>
 
                                 <v-col cols="12" md="4">
                                     <v-autocomplete v-model="customerForm.phuongXa" :items="wards" item-title="name"
-                                        item-value="code" label="Phường / Xã" variant="outlined" density="comfortable"
+                                        item-value="code" label="Phường / Xã" variant="outlined" density="compact"
                                         :disabled="!customerForm.thanhPho" />
                                 </v-col>
 
@@ -695,7 +695,7 @@ onMounted(() => {
 
                         <div v-else-if="listDiaChi.length === 0" class="text-center py-12 bg-slate-50 rounded-xl border-dashed border">
                             <v-icon size="48" color="slate-200">mdi-map-marker-off</v-icon>
-                            <div class="mt-2 text-slate-400 font-weight-bold">Chưa có địa chỉ nào được đăng ký</div>
+                            <div class="mt-2 text-slate-400 font-weight-medium">Chưa có địa chỉ nào được đăng ký</div>
                         </div>
 
                         <div v-else v-for="addr in listDiaChi" :key="addr.id"
@@ -725,7 +725,7 @@ onMounted(() => {
                                     <v-icon size="18">mdi-delete</v-icon>
                                 </v-btn>
                                 <v-btn v-if="!addr.laMacDinh" variant="tonal" size="x-small" color="info"
-                                    class="text-none ml-2 font-weight-black h-8 px-3 rounded-lg"
+                                    class="text-none ml-2 font-weight-bold h-8 px-3 rounded-lg"
                                     @click="handleSetDefault(addr.id)">
                                     Mặc định
                                 </v-btn>
@@ -735,29 +735,29 @@ onMounted(() => {
                 </v-card>
 
                 <!-- Notes -->
-                <v-card class="premium-card">
+                <v-card class="filter-card elevation-0">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-slate-100 mr-3">
                                 <NoteIcon class="text-slate-600" size="20" />
                             </div>
-                            <span class="text-subtitle-1 font-weight-black text-slate-800">Ghi chú & Thông tin thêm</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Ghi chú & Thông tin thêm</span>
                         </div>
                         <v-textarea v-model="customerForm.ghiChu" :readonly="isDetailView"
                             placeholder="Ghi chú về khách hàng (Sở thích, lưu ý giao hàng...)" variant="outlined" rows="3"
-                            class="font-weight-bold" hide-details></v-textarea>
+                            hide-details></v-textarea>
                     </v-card-text>
                 </v-card>
             </v-col>
 
             <v-col cols="12" lg="4">
-                <v-card class="premium-card mb-6">
+                <v-card class="filter-card elevation-0 mb-6">
                     <v-card-text class="pa-8 text-center">
                         <div class="section-header d-flex align-center mb-6 text-left">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
                                 <v-icon color="primary" size="18">mdi-camera</v-icon>
                             </div>
-                            <span class="text-subtitle-1 font-weight-black text-slate-800">Ảnh chân dung</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Ảnh chân dung</span>
                         </div>
 
                         <div class="position-relative d-inline-block mx-auto mb-6">
@@ -786,18 +786,18 @@ onMounted(() => {
                             <div class="field-label">Liên kết ảnh (URL)</div>
                             <v-text-field v-if="!isDetailView" v-model="customerForm.hinhAnh"
                                 placeholder="Dán URL ảnh hoặc nhấn vào vòng tròn phía trên" variant="outlined"
-                                density="comfortable" hide-details class="font-weight-medium bg-slate-50"></v-text-field>
-                            <p class="text-caption font-weight-bold text-slate-400 mt-2 px-1">Gợi ý: Sử dụng ảnh .jpg hoặc
+                                density="compact" hide-details class="font-weight-medium bg-slate-50"></v-text-field>
+                            <p class="text-caption font-weight-medium text-slate-400 mt-2 px-1">Gợi ý: Sử dụng ảnh .jpg hoặc
                                 .png chất lượng cao.</p>
                         </div>
                     </v-card-text>
                 </v-card>
 
-                <v-card class="premium-card bg-primary-lighten-5 border-primary-lighten-4">
+                <v-card class="filter-card elevation-0 bg-primary-lighten-5 border-primary-lighten-4">
                     <v-card-text class="pa-8">
                         <div class="d-flex align-center mb-4">
                             <v-icon color="primary" size="24" class="mr-3">mdi-shield-check</v-icon>
-                            <span class="text-subtitle-1 font-weight-black text-primary">Bảo mật tài khoản</span>
+                            <span class="text-subtitle-1 font-weight-bold text-primary">Bảo mật tài khoản</span>
                         </div>
                         <p class="text-body-2 font-weight-bold text-slate-600 mb-0">Hệ thống sẽ tự động khởi tạo các thông số bảo mật khi hồ sơ được tạo thành công.</p>
                     </v-card-text>
@@ -811,7 +811,7 @@ onMounted(() => {
 
         <!-- ADDRESS DIALOG -->
         <v-dialog v-model="addrDialog" max-width="600" transition="dialog-bottom-transition">
-            <v-card class="premium-card elevation-24">
+            <v-card class="filter-card elevation-24">
                 <v-card-title class="pa-6 font-weight-black border-b text-primary d-flex align-center">
                     <v-icon start class="mr-3">mdi-map-marker-plus</v-icon>
                     {{
@@ -825,7 +825,7 @@ onMounted(() => {
                                 v-model="addrForm.tenNguoiNhan"
                                 placeholder="Nhập tên"
                                 variant="outlined"
-                                density="comfortable"
+                                density="compact"
                                 class="font-weight-medium"
                                 hide-details
                             ></v-text-field>
@@ -836,7 +836,7 @@ onMounted(() => {
                                 v-model="addrForm.sdtNguoiNhan"
                                 placeholder="09xx..."
                                 variant="outlined"
-                                density="comfortable"
+                                density="compact"
                                 class="font-weight-medium"
                                 hide-details
                             ></v-text-field>
@@ -850,7 +850,7 @@ onMounted(() => {
                                 item-value="code"
                                 placeholder="Chọn"
                                 variant="outlined"
-                                density="comfortable"
+                                density="compact"
                                 hide-details
                                 :loading="loadingLocations.provinces"
                                 @update:model-value="
@@ -871,7 +871,7 @@ onMounted(() => {
                                 item-value="code"
                                 placeholder="Chọn"
                                 variant="outlined"
-                                density="comfortable"
+                                density="compact"
                                 hide-details
                                 :loading="loadingLocations.districts"
                                 :disabled="!addrForm.tinh"
@@ -892,7 +892,7 @@ onMounted(() => {
                                 item-value="code"
                                 placeholder="Chọn"
                                 variant="outlined"
-                                density="comfortable"
+                                density="compact"
                                 hide-details
                                 :loading="loadingLocations.wards"
                                 :disabled="!addrForm.thanhPho"

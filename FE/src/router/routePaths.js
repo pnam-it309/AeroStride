@@ -16,6 +16,7 @@ export const PATH = {
     DOT_GIAM_GIA_FORM: '/dot-giam-gia/form',
     PHIEU_GIAM_GIA: '/phieu-giam-gia',
     PHIEU_GIAM_GIA_FORM: '/phieu-giam-gia/form',
+    PHIEU_GIAM_GIA_DETAIL: '/phieu-giam-gia/detail',
     THUOC_TINH: '/thuoc-tinh',
     THANH_TOAN: '/thanh-toan',
     THONG_KE: '/thong-ke',

@@ -3,7 +3,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { dichVuPhieuGiamGia } from '@/services/admin/dichVuPhieuGiamGia';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
-import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
+import { isActiveStatus } from '@/utils/statusUtils';
 
 // REUSABLE COMPONENTS
 import AdminFilter from '@/components/common/AdminFilter.vue';
@@ -35,6 +35,16 @@ const {
 });
 
 const isRefreshing = ref(false);
+
+// Tính trạng thái theo thời gian thực (ngày bắt đầu / kết thúc)
+const getDiscountTimeStatus = (item) => {
+    const now = Date.now();
+    const start = item.ngayBatDau ? new Date(item.ngayBatDau).getTime() : null;
+    const end = item.ngayKetThuc ? new Date(item.ngayKetThuc).getTime() : null;
+    if (start && now < start) return { label: 'Sắp diễn ra', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' };
+    if (end && now > end)   return { label: 'Kết thúc',    color: '#ef4444', bg: 'rgba(239,68,68,0.1)' };
+    return { label: 'Hoạt động', color: '#10b981', bg: 'rgba(16,185,129,0.1)' };
+};
 
 // Confirmation Logic
 const confirmDialog = ref({ show: false, title: '', message: '', color: 'primary', action: null, loading: false });
@@ -140,10 +150,10 @@ onMounted(() => loadVouchers());
                         density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input" clearable
                         @update:model-value="handleSearch"></v-text-field>
                 </v-col>
-                <v-col cols="12" md="2" class="filter-cell">
+                <v-col cols="12" md="2" class="filter-cell pt-1">
                     <div class="filter-field-label">Loại phiếu</div>
                     <v-radio-group v-model="filters.loaiPhieu" inline hide-details density="compact"
-                        class="compact-radio-group mt-0" @update:model-value="handleSearch">
+                        class="compact-radio-group mt-1" @update:model-value="handleSearch">
                         <v-radio label="%" value="PHAN_TRAM" class="mr-1"></v-radio>
                         <v-radio label="VNĐ" value="TIEN_MAT"></v-radio>
                     </v-radio-group>
@@ -172,60 +182,52 @@ onMounted(() => loadVouchers());
 
         <!-- 2. TABLE -->
         <AdminTable title="Danh sách phiếu giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
-            { text: 'STT', align: 'center', width: '60px' },
-            { text: 'Mã phiếu', align: 'center', width: '110px' },
-            { text: 'Tên phiếu', align: 'center', width: '180px' },
-            { text: 'Loại phiếu', align: 'center', width: '110px' },
-            { text: 'Hình thức', align: 'center', width: '110px' },
-            { text: 'Giá trị giảm', align: 'center', width: '160px' },
-            { text: 'Đơn tối thiểu', align: 'center', width: '120px' },
+            { text: 'STT', align: 'center', width: '55px' },
+            { text: 'Mã phiếu', align: 'center', width: '120px' },
+            { text: 'Tên phiếu', align: 'center', width: '200px' },
+            { text: 'Hình thức', align: 'center', width: '120px' },
+            { text: 'Giá trị giảm', align: 'center', width: '170px' },
+            { text: 'Đơn tối thiểu', align: 'center', width: '130px' },
             { text: 'Số lượng', align: 'center', width: '90px' },
-            { text: 'Thời gian áp dụng', align: 'center', width: '190px' },
+            { text: 'Thời gian áp dụng', align: 'center', width: '200px' },
             { text: 'Trạng thái', align: 'center', width: '140px' },
             { text: 'Hành động', align: 'center', width: '110px' }
         ]" :items="vouchers" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog"
             @export="handleExport">
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center text-slate-400 font-weight-medium">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
-                    <td class="data-cell text-left col-left-tight font-weight-bold">{{ item.ma || '--' }}</td>
-                    <td class="data-cell text-left col-left-tight">{{ item.ten || '--' }}</td>
+                    <td class="data-cell text-center text-slate-400">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
+                    <td class="data-cell text-left col-left-tight">{{ item.ma || '--' }}</td>
+                    <td class="data-cell text-center">{{ item.ten || '--' }}</td>
+
                     <td class="data-cell text-center">
-                        <v-chip size="small" variant="flat"
-                            :color="item.loaiPhieu === 'PHAN_TRAM' ? 'blue-grey-darken-1' : 'indigo-darken-1'"
-                            class="font-weight-black text-white status-chip">
-                            {{ getLoaiPhieuLabel(item.loaiPhieu) }}
-                        </v-chip>
-                    </td>
-                    <td class="data-cell text-center">
-                        <v-chip size="small" variant="flat"
-                            :color="getHinhThucLabel(getHinhThucValue(item)) === 'Cá nhân' ? 'orange-darken-1' : 'teal-darken-1'"
-                            class="font-weight-black text-white status-chip">
+                        <v-chip size="small" variant="tonal"
+                            :color="getHinhThucValue(item) === 'CA_NHAN' || getHinhThucValue(item) === 'PRIVATE' ? 'purple' : getHinhThucValue(item) === 'CONG_KHAI' || getHinhThucValue(item) === 'PUBLIC' ? 'info' : 'grey'"
+                            class="px-3">
                             {{ getHinhThucLabel(getHinhThucValue(item)) }}
                         </v-chip>
                     </td>
                     <td class="data-cell text-center">
-                        <div class="font-weight-black text-primary">Giảm {{ getDiscountDisplay(item) }}</div>
+                        <div class="text-primary">Giảm {{ getDiscountDisplay(item) }}</div>
                         <div class="max-discount-value"
                             v-if="item.loaiPhieu === 'PHAN_TRAM' || item.loaiPhieu === 'PERCENTAGE'">Tối đa: {{
                                 getMaxDiscountDisplay(item) }}</div>
                     </td>
                     <td class="data-cell text-center price-value">{{ formatCurrency(item.donHangToiThieu) }}</td>
-                    <td class="data-cell text-center font-weight-black text-slate-700">
-                        {{ item.soLuong === -1 ? '∞' : item.soLuong }}
+                    <td class="data-cell text-center text-slate-700">
+                        {{ item.soLuong === -1 ? 'Vô hạn' : item.soLuong }}
                     </td>
                     <td class="data-cell">
                         <div class="d-flex flex-column align-center">
-                            <div class="text-caption font-weight-bold text-slate-700">{{ formatDateTime(item.ngayBatDau)
-                            }}</div>
+                            <div class="text-caption text-slate-700">{{ formatDateTime(item.ngayBatDau) }}</div>
                             <div class="text-caption text-slate-400">đến {{ formatDateTime(item.ngayKetThuc) }}</div>
                         </div>
                     </td>
                     <td class="data-cell text-center">
-                        <v-chip :color="getStatusColor(item.trangThai)" variant="flat" size="small"
-                            class="font-weight-black text-white status-chip">
-                            {{ getStatusLabel(item.trangThai) }}
-                        </v-chip>
+                        <span class="discount-status-chip"
+                            :style="{ color: getDiscountTimeStatus(item).color, background: getDiscountTimeStatus(item).bg }">
+                            {{ getDiscountTimeStatus(item).label }}
+                        </span>
                     </td>
                     <td class="data-cell action-cell" style="text-align: center">
                         <div class="d-flex align-center justify-center action-controls">
@@ -262,11 +264,6 @@ onMounted(() => loadVouchers());
 /* Scoped styles removed in favor of global _admin-common.scss */
 .max-discount-value {
     color: #64748b !important;
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.price-value {
-    font-weight: 700 !important;
+    font-size: 12px;
 }
 </style>

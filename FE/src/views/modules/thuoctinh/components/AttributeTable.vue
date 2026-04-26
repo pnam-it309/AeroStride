@@ -51,7 +51,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                     grow 
                     height="54"
                 >
-                    <v-tab v-for="tabItem in tabs" :key="tabItem.value" :value="tabItem.value" class="text-none font-weight-bold px-4 tab-item">
+                    <v-tab v-for="tabItem in tabs" :key="tabItem.value" :value="tabItem.value" class="text-none font-weight-medium px-4 tab-item">
                         <v-icon start size="16">{{ tabItem.icon }}</v-icon>
                         {{ tabItem.title }}
                     </v-tab>
@@ -62,16 +62,16 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                 <tr class="data-row">
                     <td class="data-cell text-center">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
                     <td class="data-cell text-center">
-                        <div class="font-weight-bold text-slate-900" style="font-size: 13px;">{{ getItemCode(item) }}</div>
+                        <div class="text-slate-900" style="font-size: 13px;">{{ getItemCode(item) }}</div>
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-slate-800 font-weight-medium">{{ getItemName(item) }}</div>
+                        <div class="text-slate-800">{{ getItemName(item) }}</div>
                     </td>
                     <td class="data-cell text-center">
                         <v-chip
-                            variant="flat"
-                            size="x-small"
-                            class="font-weight-bold"
+                            variant="tonal"
+                            size="small"
+                            class="status-chip"
                             :color="getStatusColor(item.trangThai)"
                             >{{ getStatusLabel(item.trangThai) }}</v-chip
                         >

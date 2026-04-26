@@ -55,13 +55,15 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
         <div class="table-wrapper">
             <table class="native-admin-table">
                 <thead>
-                    <tr>
-                        <th v-for="(header, idx) in headers" :key="idx"
-                            :style="{ textAlign: header.align || 'center', width: header.width || 'auto' }"
-                            class="header-cell">
-                            {{ header.text || header }}
-                        </th>
-                    </tr>
+                    <slot name="headers">
+                        <tr>
+                            <th v-for="(header, idx) in headers" :key="idx"
+                                :style="{ textAlign: header.align || 'center', width: header.width || 'auto' }"
+                                :class="['header-cell', header.align ? `text-${header.align}` : 'text-center']">
+                                {{ header.text || header }}
+                            </th>
+                        </tr>
+                    </slot>
                 </thead>
                 <tbody v-if="!loading && items.length > 0">
                     <template v-for="(item, index) in items" :key="item.id ?? index">
@@ -70,7 +72,7 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                 </tbody>
                 <tbody v-else>
                     <tr>
-                        <td :colspan="headers.length" class="empty-state py-16 text-center">
+                        <td :colspan="headers.length || 20" class="empty-state py-16 text-center">
                             <div v-if="loading" class="d-flex flex-column align-center">
                                 <v-progress-circular indeterminate color="primary" size="48" width="6" class="mb-4" />
                                 <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">Đang tải dữ

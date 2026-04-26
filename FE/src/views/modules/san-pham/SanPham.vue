@@ -330,21 +330,19 @@ onMounted(() => {
                         {{ getCategoryName(item) }}
                     </td>
 
-                    <td class="data-cell text-center">
-                        <v-chip size="small" variant="flat" color="slate-600" class="font-weight-black text-white status-chip">
-                            {{ formatNumber(getQuantity(item)) }}
-                        </v-chip>
+                    <td class="data-cell text-center text-slate-700">
+                        {{ formatNumber(getQuantity(item)) }}
                     </td>
 
                     <td class="data-cell text-center price-value px-2">
-                        <div class="font-weight-black text-primary">
+                        <div class="text-primary">
                             {{ getPriceRange(item) }}
                         </div>
                     </td>
 
                     <td class="data-cell">
-                        <v-chip :color="getStatusColor(item.trangThai)" variant="flat" size="small"
-                            class="font-weight-black text-white status-chip">
+                        <v-chip :color="getStatusColor(item.trangThai)" variant="tonal" size="small"
+                            class="px-3">
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
