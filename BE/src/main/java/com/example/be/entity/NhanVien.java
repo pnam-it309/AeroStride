@@ -48,6 +48,9 @@ public class NhanVien extends BaseCodeNameEntity {
     @Column(name = "hinh_anh")
     private String hinhAnh;
 
+    @Column(name = "diaChi")
+    private String diaChi;
+
     @Column(name = "xoa_mem")
     private Boolean xoaMem;
 

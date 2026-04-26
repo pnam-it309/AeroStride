@@ -31,10 +31,11 @@ const employeeForm = ref({
     sdt: '',
     tenTaiKhoan: '',
     ngaySinh: '',
-    idPhanQuyen: 1,
+    idPhanQuyen: null,
     gioiTinh: true,
     trangThai: 'DANG_HOAT_DONG',
-    hinhAnh: ''
+    hinhAnh: '',
+    diaChi: ''
 });
 
 // Quét QR CCCD
@@ -104,8 +105,14 @@ const handleSave = () => {
         action: async () => {
             saving.value = true;
             try {
-                const payload = { 
-                    ...employeeForm.value,
+                const payload = {
+                    ten: employeeForm.value.ten,
+                    email: employeeForm.value.email,
+                    sdt: employeeForm.value.sdt,
+                    ngaySinh: employeeForm.value.ngaySinh,
+                    gioiTinh: employeeForm.value.gioiTinh,
+                    trangThai: employeeForm.value.trangThai,
+                    diaChi: employeeForm.value.diaChi,
                     idPhanQuyen: String(employeeForm.value.idPhanQuyen)
                 };
                 if (isEditMode.value) {
@@ -159,11 +166,18 @@ onMounted(async () => {
         roles.value = rolesData.map((r) => ({
             title: r.ten,
             value: r.id,
+            ma: r.ma,
             color: getRoleColor(r.ma)
         }));
 
         if (route.params.id) {
             await loadEmployee(route.params.id);
+        } else {
+            // Nếu thêm mới, tự động chọn vai trò "Nhân viên" làm mặc định
+            const defaultRole = roles.value.find(r => r.title.toLowerCase().includes('nhân viên')) || roles.value[0];
+            if (defaultRole) {
+                employeeForm.value.idPhanQuyen = defaultRole.value;
+            }
         }
     } catch (e) {
         console.error(e);
@@ -333,6 +347,12 @@ onMounted(async () => {
                                     <div class="text-subtitle-1 font-weight-black text-slate-800">{{ new Date().toLocaleDateString('vi-VN') }}</div>
                                 </div>
                             </v-col>
+                            <v-col cols="12">
+                                <div class="pa-4 bg-slate-50 rounded-lg border mb-2">
+                                    <div class="text-caption text-slate-400 font-weight-bold mb-1 uppercase tracking-wider">ĐỊA CHỈ THƯỜNG TRÚ</div>
+                                    <div class="text-subtitle-1 font-weight-black text-slate-800">{{ employeeForm.diaChi || 'Chưa cập nhật' }}</div>
+                                </div>
+                            </v-col>
                         </v-row>
                     </v-card-text>
                 </v-card>
@@ -374,7 +394,7 @@ onMounted(async () => {
                                     class="font-weight-bold" hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Email công việc *</div>
+                                <div class="field-label">Email / Tài khoản *</div>
                                 <v-text-field v-model="employeeForm.email" :readonly="isDetailView"
                                     placeholder="name@company.com" variant="outlined" density="comfortable"
                                     class="font-weight-bold" hide-details></v-text-field>
@@ -398,6 +418,13 @@ onMounted(async () => {
                                     { title: 'Nữ', value: false }
                                 ]" variant="outlined" density="comfortable" class="font-weight-bold"
                                     hide-details></v-select>
+                            </v-col>
+                            <v-col cols="12">
+                                <div class="field-label">Địa chỉ thường trú</div>
+                                <v-textarea v-model="employeeForm.diaChi" :readonly="isDetailView"
+                                    placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố..." variant="outlined"
+                                    density="comfortable" rows="2" class="font-weight-bold"
+                                    hide-details></v-textarea>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -424,12 +451,12 @@ onMounted(async () => {
                                 </div>
                             </v-col>
                             <v-col cols="12">
-                                <div class="field-label">Vai trò & Vai hành</div>
+                                <div class="field-label">Vai trò </div>
                                 <v-select v-model="employeeForm.idPhanQuyen" :readonly="isDetailView" :items="roles"
                                     item-title="title" item-value="value" variant="outlined" density="comfortable"
                                     class="font-weight-bold" hide-details>
                                     <template #selection="{ item }">
-                                        <v-chip :color="item.raw.color" size="small" variant="flat"
+                                        <v-chip :color="item.raw.color" size="small" variant="tonal"
                                             class="px-5 font-weight-black rounded-lg h-7">{{ item.title }}</v-chip>
                                     </template>
                                 </v-select>

@@ -31,6 +31,7 @@ CREATE TABLE nhan_vien (
     ten_tai_khoan VARCHAR(100) UNIQUE,
     mat_khau VARCHAR(255),
     hinh_anh VARCHAR(500),
+    diaChi NVARCHAR(300),
     xoa_mem BIT DEFAULT 0,
     trang_thai INT,
     ngay_tao BIGINT,

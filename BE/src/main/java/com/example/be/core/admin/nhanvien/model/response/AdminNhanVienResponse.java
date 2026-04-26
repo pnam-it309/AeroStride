@@ -20,6 +20,7 @@ public class AdminNhanVienResponse {
     private String sdt;
     private LocalDate ngaySinh;
     private String hinhAnh;
+    private String diaChi;
     private TrangThai trangThai;
     private Long ngayTao;
     private Long ngayCapNhat;

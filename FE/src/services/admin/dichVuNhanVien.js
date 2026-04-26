@@ -28,14 +28,32 @@ export const dichVuNhanVien = {
 
   // Tạo nhân viên mới
   async taoNhanVien(employeeData) {
-    const response = await api.post(`${API_ADMIN.NHAN_VIEN}/add`, employeeData);
-    return response.data.data;
+    try {
+      const response = await api.post(`${API_ADMIN.NHAN_VIEN}/add`, employeeData);
+      return response.data.data;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        const response = await api.post(API_ADMIN.NHAN_VIEN, employeeData);
+        return response.data.data;
+      }
+      throw error;
+    }
   },
 
   // Cập nhật nhân viên
   async capNhatNhanVien(id, employeeData) {
-    const response = await api.put(`${API_ADMIN.NHAN_VIEN}/update/${id}`, employeeData);
-    return response.data.data;
+    try {
+      // Thử đường dẫn hiện tại
+      const response = await api.put(`${API_ADMIN.NHAN_VIEN}/update/${id}`, employeeData);
+      return response.data.data;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        // Nếu 404, thử đường dẫn chuẩn RESTful (không có /update)
+        const response = await api.put(`${API_ADMIN.NHAN_VIEN}/${id}`, employeeData);
+        return response.data.data;
+      }
+      throw error;
+    }
   },
 
   // Xóa nhân viên
