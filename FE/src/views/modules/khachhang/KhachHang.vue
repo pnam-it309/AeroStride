@@ -265,13 +265,13 @@ const handleDeleteAddr = (addrId) => {
 
 const tableHeaders = [
     { text: 'STT', align: 'center', width: '60px' },
-    { text: 'Mã khách hàng', align: 'center', width: '110px' },
-    { text: 'Tên khách hàng', align: 'center', width: '100px' },
-    { text: 'Giới tính', align: 'center', width: '110px' },
-    { text: 'Thông tin liên hệ', align: 'left', width: '220px' },
-    { text: 'Địa chỉ', align: 'center', width: '200px' },
-    { text: 'Trạng thái', align: 'center', width: '100px' },
-    { text: 'Hành động', align: 'center', width: '140px' }
+    { text: 'Mã khách hàng', align: 'center', width: '100px' },
+    { text: 'Tên khách hàng', align: 'left', width: '100px' },
+    { text: 'Giới tính', align: 'center', width: '120px' },
+    { text: 'Thông tin liên hệ', align: 'left', width: '150px' },
+    { text: 'Địa chỉ', align: 'left', width: '220px' },
+    { text: 'Trạng thái', align: 'center', width: '90px' },
+    { text: 'Hành động', align: 'center', width: '120px' }
 ];
 
 onMounted(() => {
@@ -370,11 +370,7 @@ watch(
 </script>
 
 <template>
-    <v-container
-        fluid
-        class="pa-4 animate-fade-in font-body"
-        style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important"
-    >
+    <v-container fluid class="pa-4 animate-fade-in font-body" style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs :items="customerBreadcrumbs" />
 
@@ -450,21 +446,21 @@ watch(
         >
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell center-cell">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
-                    <td class="data-cell text-center">{{ item.ma || '-' }}</td>
-                    <td class="data-cell text-center">{{ item.ten || '-' }}</td>
-                    <td class="data-cell center-cell">
+                    <td class="data-cell text-center text-slate-400 font-weight-medium">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
+                    <td class="data-cell text-center font-weight-medium">{{ item.ma || '-' }}</td>
+                    <td class="data-cell text-left font-weight-medium">{{ item.ten || '-' }}</td>
+                    <td class="data-cell text-center">
                         <v-chip
                             size="small"
-                            variant="tonal"
+                            variant="flat"
                             :class="['gender-chip', item.gioiTinh ? 'gender-chip-male' : 'gender-chip-female']"
                         >
                             {{ item.gioiTinh === true ? 'Nam' : item.gioiTinh === false ? 'Nữ' : '-' }}
                         </v-chip>
                     </td>
-                    <td class="data-cell contact-cell text-left px-4">
+                    <td class="data-cell contact-cell">
                         <div class="d-inline-flex flex-column align-start">
-                            <div class="info-line mb-1">{{ item.sdt || '-' }}</div>
+                            <div class="info-line font-weight-medium text-slate-700 mb-1">{{ item.sdt || '-' }}</div>
                             <div v-if="hasValue(item.email)" class="info-line d-flex align-center text-slate-500">
                                 <v-icon size="14" class="mr-2">mdi-email-outline</v-icon>{{ item.email }}
                             </div>
@@ -473,7 +469,7 @@ watch(
                     <td class="data-cell">
                         <div class="line-clamp-2" :title="getAddressSummary(item)">{{ getAddressSummary(item) }}</div>
                     </td>
-                    <td class="data-cell">
+                    <td class="data-cell text-center">
                         <v-chip
                             size="small"
                             variant="flat"
@@ -485,7 +481,11 @@ watch(
                     <td class="data-cell text-center action-cell">
                         <div class="d-flex align-center justify-center action-controls">
                             <!-- Địa chỉ -->
-                            <v-btn variant="text" class="action-icon-btn" @click.stop="openAddrDialog(item)">
+                            <v-btn
+                                variant="text"
+                                class="action-icon-btn"
+                                @click.stop="openAddrDialog(item)"
+                            >
                                 <MapPinIcon />
                                 <v-tooltip activator="parent" location="top">Quản lý địa chỉ</v-tooltip>
                             </v-btn>
@@ -526,12 +526,13 @@ watch(
 
             <template #pagination>
                 <AdminPagination
-                    v-model:page="pagination.page"
-                    v-model:page-size="pagination.size"
+                    v-model="pagination.page"
+                    :page-size="pagination.size"
+                    @update:page-size="pagination.size = $event"
                     :total-pages="pagination.totalPages"
                     :total-elements="pagination.totalElements"
                     :current-size="allCustomers.length"
-                    @change="handleLocalFilterChange"
+                    @change="loadCustomers"
                 />
             </template>
         </AdminTable>
@@ -550,8 +551,8 @@ watch(
         <!-- ═══════════════════════════════════════════════════
          Dialog Quản lý địa chỉ (2 cột: danh sách | form)
          ═══════════════════════════════════════════════════ -->
-        <v-dialog v-model="addrDialog" max-width="860" scrollable transition="dialog-bottom-transition">
-            <v-card class="rounded-xl">
+        <v-dialog v-model="addrDialog" max-width="1200" width="90vw" scrollable transition="dialog-bottom-transition">
+            <v-card class="rounded-xl font-body addr-dialog-card" min-height="600">
                 <!-- Tiêu đề dialog -->
                 <v-card-title class="d-flex align-center pa-5 border-b">
                     <MapPinIcon size="20" class="mr-2 text-primary" />
@@ -565,10 +566,10 @@ watch(
                 <v-card-text class="pa-4" style="max-height: 85vh; overflow: hidden">
                     <v-row no-gutters style="height: 100%">
                         <!-- ── Cột trái: Danh sách địa chỉ ── -->
-                        <v-col cols="12" md="6" style="border-right: 1px solid rgba(0, 0, 0, 0.08); overflow-y: auto; max-height: 72vh">
-                            <div class="d-flex align-center justify-space-between px-6 pt-5 pb-2">
-                                <span class="text-subtitle-1 font-weight-bold text-dark">Địa chỉ hiện tại</span>
-                                <v-chip size="small" color="info" variant="tonal" class="font-weight-medium px-3">
+                        <v-col cols="12" md="6" style="border-right: 1px solid rgba(0, 0, 0, 0.08); overflow-y: auto; max-height: 85vh" class="px-6 pt-2 pb-4">
+                            <div class="d-flex align-center justify-space-between px-5 pt-4 pb-2 sticky-sub-header bg-white">
+                                <span class="text-subtitle-2 font-weight-medium text-dark">Địa chỉ hiện tại</span>
+                                <v-chip size="small" variant="flat" class="gender-chip gender-chip-male">
                                     {{ listDiaChi.length }} địa chỉ
                                 </v-chip>
                             </div>
@@ -583,66 +584,59 @@ watch(
                             </div>
 
                             <div v-else>
-                                <div v-for="addr in listDiaChi" :key="addr.id" class="addr-card mx-5 mb-4 pa-5 border rounded-xl">
+                                <div v-for="addr in listDiaChi" :key="addr.id" class="addr-card mx-4 mb-3 pa-4 border rounded-xl">
                                     <!-- Dòng tên + badge mặc định -->
-                                    <div class="d-flex align-center gap-2 mb-2">
-                                        <span class="font-weight-bold text-dark" style="font-size: 15px">
+                                    <div class="d-flex align-center gap-2 mb-1">
+                                        <span class="font-weight-medium text-dark" style="font-size: 13px">
                                             {{ addr.tenNguoiNhan }}
                                         </span>
                                         <v-chip
                                             v-if="addr.laMacDinh"
                                             color="success"
-                                            size="small"
+                                            size="x-small"
                                             variant="flat"
-                                            class="px-3"
-                                            style="font-size: 11.5px; height: 24px; font-weight: 400"
-                                            >mặc định</v-chip
+                                            class="font-weight-bold px-2"
+                                            >Mặc định</v-chip
                                         >
                                     </div>
                                     <!-- SĐT -->
-                                    <div class="text-dark mb-1" style="font-size: 13.5px; opacity: 0.8">
-                                        <v-icon size="14" class="mr-1">mdi-phone-outline</v-icon>{{ addr.sdtNguoiNhan }}
+                                    <div class="text-caption text-medium-emphasis mb-1">
+                                        <v-icon size="12" class="mr-1">mdi-phone-outline</v-icon>{{ addr.sdtNguoiNhan }}
                                     </div>
                                     <!-- Địa chỉ đầy đủ -->
-                                    <div class="text-dark" style="line-height: 1.6; color: #334155; font-size: 13.5px">
+                                    <div class="text-caption" style="line-height: 1.5; color: #475569">
                                         {{ [addr.diaChiChiTiet, addr.phuongXa, addr.thanhPho, addr.tinh].filter(Boolean).join(', ') }}
                                     </div>
                                     <!-- Actions -->
-                                    <div class="d-flex align-center gap-2 mt-5">
+                                    <div class="d-flex align-center gap-2 mt-3">
                                         <v-btn
                                             v-if="!addr.laMacDinh"
                                             variant="tonal"
-                                            size="small"
+                                            size="x-small"
                                             color="success"
-                                            class="text-none rounded-lg px-4"
-                                            height="32"
-                                            style="font-weight: 400"
+                                            class="text-none font-weight-bold"
                                             @click="handleSetDefault(addr.id)"
                                         >
-                                            <v-icon size="16" class="mr-1">mdi-star-outline</v-icon>Đặt mặc định
+                                            <v-icon size="12" class="mr-1">mdi-star-outline</v-icon>Đặt mặc định
                                         </v-btn>
                                         <v-btn
                                             variant="tonal"
-                                            size="small"
+                                            size="x-small"
                                             color="primary"
-                                            class="text-none rounded-lg px-4"
-                                            height="32"
-                                            style="font-weight: 400"
+                                            class="text-none"
                                             @click="openEditAddrForm(addr)"
                                         >
-                                            <v-icon size="16" class="mr-1">mdi-pencil</v-icon>Sửa
+                                            <v-icon size="12" class="mr-1">mdi-pencil</v-icon>Sửa
                                         </v-btn>
                                         <v-btn
                                             v-if="!addr.laMacDinh"
                                             variant="tonal"
-                                            size="small"
+                                            size="x-small"
                                             color="error"
-                                            class="text-none rounded-lg px-4"
-                                            height="32"
-                                            style="font-weight: 400"
+                                            class="text-none"
                                             @click="handleDeleteAddr(addr.id)"
                                         >
-                                            <v-icon size="16" class="mr-1">mdi-delete-outline</v-icon>Xóa
+                                            <v-icon size="12" class="mr-1">mdi-delete-outline</v-icon>Xóa
                                         </v-btn>
                                     </div>
                                 </div>
@@ -650,17 +644,8 @@ watch(
                         </v-col>
 
                         <!-- ── Cột phải: Form thêm / sửa địa chỉ ── -->
-                        <v-col
-                            cols="12"
-                            md="6"
-                            style="overflow-y: auto; max-height: 85vh"
-                            class="px-8 pt-2 pb-4"
-                            :style="{ background: showAddrForm ? 'white' : '#fafafa' }"
-                        >
-                            <div
-                                class="px-5 pt-4 pb-2 d-flex align-center justify-space-between sticky-sub-header"
-                                :style="{ background: showAddrForm ? 'white' : '#fafafa' }"
-                            >
+                        <v-col cols="12" md="6" style="overflow-y: auto; max-height: 85vh" class="px-8 pt-2 pb-4" :style="{ background: showAddrForm ? 'white' : '#fafafa' }">
+                            <div class="px-5 pt-4 pb-2 d-flex align-center justify-space-between sticky-sub-header" :style="{ background: showAddrForm ? 'white' : '#fafafa' }">
                                 <span class="text-subtitle-2 font-weight-medium text-dark">
                                     {{ showAddrForm ? (isEditAddr ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới') : 'Thêm địa chỉ khác' }}
                                 </span>
@@ -697,7 +682,6 @@ watch(
                                             v-model="addrForm.tenNguoiNhan"
                                             placeholder="Nhập tên"
                                             variant="outlined"
-                                            density="compact"
                                             hide-details
                                         />
                                     </v-col>
@@ -707,7 +691,6 @@ watch(
                                             v-model="addrForm.sdtNguoiNhan"
                                             placeholder="09xx..."
                                             variant="outlined"
-                                            density="compact"
                                             hide-details
                                         />
                                     </v-col>
@@ -720,7 +703,6 @@ watch(
                                             item-value="code"
                                             placeholder="Chọn tỉnh"
                                             variant="outlined"
-                                            density="compact"
                                             hide-details
                                             :loading="loadingLoc.provinces"
                                         />
@@ -734,7 +716,6 @@ watch(
                                             item-value="code"
                                             placeholder="Chọn quận/huyện"
                                             variant="outlined"
-                                            density="compact"
                                             hide-details
                                             :disabled="!addrForm.tinh"
                                             :loading="loadingLoc.districts"
@@ -749,7 +730,6 @@ watch(
                                             item-value="code"
                                             placeholder="Chọn phường/xã"
                                             variant="outlined"
-                                            density="compact"
                                             hide-details
                                             :disabled="!addrForm.thanhPho"
                                             :loading="loadingLoc.wards"
@@ -780,7 +760,7 @@ watch(
                                             variant="flat"
                                             block
                                             class="text-none font-weight-bold rounded-lg"
-                                            height="40"
+                                            height="48"
                                             :loading="addrSaving"
                                             :disabled="
                                                 !addrForm.tenNguoiNhan ||
@@ -792,7 +772,7 @@ watch(
                                             "
                                             @click="saveAddress"
                                         >
-                                            {{ isEditAddr ? 'Cập nhật địa chỉ' : 'Lưu địa chỉ' }}
+                                            <span class="force-white-text">{{ isEditAddr ? 'Cập nhật địa chỉ' : 'Lưu địa chỉ' }}</span>
                                         </v-btn>
                                     </v-col>
                                 </v-row>
@@ -813,7 +793,6 @@ watch(
     flex-direction: column;
     align-items: flex-start;
 }
-
 .line-clamp-2 {
     display: -webkit-box;
     line-clamp: 2;
@@ -822,10 +801,107 @@ watch(
     overflow: hidden;
 }
 
+:deep(.data-cell), :deep(.data-cell *) {
+    font-size: 13px !important;
+}
+
+.filter-top {
+    position: sticky;
+    top: 8px;
+    z-index: 6;
+}
+
+:deep(.status-chip-active),
+:deep(.gender-chip-male) {
+    background-color: #f0f1ff !important;
+    color: #1e257c !important;
+    font-weight: 700 !important;
+}
+:deep(.status-chip-active .v-chip__content),
+:deep(.gender-chip-male .v-chip__content) {
+    color: #1e257c !important;
+}
+
+:deep(.status-chip-inactive) {
+    background-color: #f8fafc !important;
+    color: #64748b !important;
+    font-weight: 700 !important;
+}
+:deep(.status-chip-inactive .v-chip__content) {
+    color: #64748b !important;
+}
+
+:deep(.gender-chip-female) {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
+    font-weight: 700 !important;
+}
+:deep(.gender-chip-female .v-chip__content) {
+    color: #991b1b !important;
+}
+
+
+:deep(.status-chip),
+:deep(.gender-chip) {
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    padding: 0 16px !important;
+    min-height: 28px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+:deep(.gender-chip) {
+    min-width: 80px !important;
+}
+
+.addr-dialog-card :deep(.v-card-title),
+.addr-dialog-card :deep(.v-card-text),
+.addr-dialog-card :deep(.field-label),
+.addr-dialog-card :deep(.text-caption),
+.addr-dialog-card {
+    font-family: 'Inter', 'Outfit', sans-serif !important;
+}
+
+.addr-dialog-card :deep(.v-card-title),
+.addr-dialog-card :deep(.v-card-text),
+.addr-dialog-card :deep(.field-label),
+.addr-dialog-card :deep(.text-caption),
+.addr-dialog-card :deep(.v-btn__content),
+.addr-dialog-card :deep(.v-field__input),
+.addr-dialog-card :deep(.v-list-item-title),
+.addr-dialog-card :deep(span),
+.addr-dialog-card :deep(div) {
+    font-family: 'Inter', 'Outfit', sans-serif !important;
+    font-size: 14px !important;
+}
+
+.addr-dialog-card :deep(.v-card-title span) {
+    font-size: 17px !important;
+    font-weight: 700 !important;
+}
+
+:deep(.force-white-text) {
+    color: #ffffff !important;
+}
+
+/* Loại bỏ lớp phủ mờ của Vuetify trên nút bấm */
+.addr-dialog-card :deep(.v-btn__overlay),
+.addr-dialog-card :deep(.v-btn__underlay) {
+    display: none !important;
+}
+
+.addr-dialog-card :deep(.v-btn) {
+    opacity: 1 !important;
+}
+
+
+
+
 .addr-card {
     transition: box-shadow 0.15s;
 }
-
 .addr-card:hover {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
