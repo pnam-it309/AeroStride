@@ -297,52 +297,55 @@ onMounted(() => {
         <AdminTable title="Danh sách sản phẩm" addButtonText="Thêm sản phẩm" :headers="[
             { text: 'STT', align: 'center', width: '50px' },
             { text: 'Mã sản phẩm', align: 'center', width: '120px' },
-            { text: 'Tên sản phẩm', align: 'center', width: '220px' },
-            { text: 'Thương hiệu', align: 'center', width: '140px' },
-            { text: 'Danh mục', align: 'center', width: '140px' },
-            { text: 'Tổng SL', align: 'center', width: '100px' },
-            { text: 'Khoảng giá', align: 'center', width: '200px' },
+            { text: 'Tên sản phẩm', align: 'left', width: '180px' },
+            { text: 'Thương hiệu', align: 'left', width: '140px' },
+            { text: 'Danh mục', align: 'left', width: '140px' },
+            { text: 'Tổng số lượng', align: 'center', width: '120px' },
+            { text: 'Khoảng giá', align: 'left', width: '100px' },
             { text: 'Trạng thái', align: 'center', width: '130px' },
             { text: 'Hành động', align: 'center', width: '130px' }
         ]" :items="products" :loading="loading" @add="router.push({ name: 'SanPhamForm' })" @export="handleExport"
             @import="$refs.fileInput.click()" @download-template="handleDownloadTemplate">
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center">
+                    <td class="data-cell text-center font-weight-medium">
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
 
-                    <td class="data-cell text-center">
+                    <td class="data-cell text-center font-weight-medium">
                         {{ getProductCode(item) }}
                     </td>
 
-                    <td class="data-cell text-center">
-                        <div class="d-inline-block text-left" style="min-width: 180px;">
+                    <td class="data-cell text-left">
+                        <div class="text-dark font-weight-medium">
                             {{ getProductName(item) }}
                         </div>
                     </td>
 
-                    <td class="data-cell text-center">
+                    <td class="data-cell text-left font-weight-medium">
                         {{ getBrandName(item) }}
                     </td>
 
-                    <td class="data-cell text-center">
+                    <td class="data-cell text-left font-weight-medium">
                         {{ getCategoryName(item) }}
                     </td>
 
-                    <td class="data-cell text-center text-slate-700">
+                    <td class="data-cell text-center">
                         {{ formatNumber(getQuantity(item)) }}
                     </td>
 
-                    <td class="data-cell text-center price-value px-2">
-                        <div class="text-primary">
+                    <td class="data-cell text-left price-value px-2">
+                        <div class="font-weight-bold text-primary">
                             {{ getPriceRange(item) }}
                         </div>
                     </td>
 
-                    <td class="data-cell">
-                        <v-chip :color="getStatusColor(item.trangThai)" variant="tonal" size="small"
-                            class="px-3">
+                    <td class="data-cell text-center status-cell">
+                        <v-chip
+                            :class="['status-chip', item.trangThai === 'DANG_HOAT_DONG' ? 'status-chip-active' : 'status-chip-inactive']"
+                            variant="flat"
+                            size="small"
+                        >
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
@@ -361,7 +364,7 @@ onMounted(() => {
                                 <v-tooltip activator="parent" location="top" text="Chỉnh sửa"></v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
-                                <v-switch :model-value="isActiveStatus(item.trangThai)" color="#000" hide-details
+                                <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details
                                     density="compact" class="tight-switch action-switch"
                                     @click.prevent.stop="confirmToggleStatus(item)" />
                                 <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái"></v-tooltip>
@@ -430,5 +433,9 @@ onMounted(() => {
     height: 12px !important;
     background: #000 !important;
     border: 2px solid #ffffff !important;
+}
+
+:deep(.data-cell), :deep(.data-cell *) {
+    font-size: 13px !important;
 }
 </style>

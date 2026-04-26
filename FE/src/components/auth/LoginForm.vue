@@ -71,7 +71,7 @@ const handleLogin = async () => {
                 </v-col>
                 <v-col cols="12">
                     <div class="input-group">
-                        <v-label class="font-weight-black mb-2 text-uppercase text-caption tracking-wider">Mật mã bảo mật</v-label>
+                        <v-label class="font-weight-black mb-2 text-uppercase text-caption tracking-wider">Mật khẩu</v-label>
                         <v-text-field 
                             v-model="loginForm.password"
                             variant="outlined" 

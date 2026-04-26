@@ -405,7 +405,7 @@ onMounted(init);
                                     class="compact-input"></v-text-field>
                             </v-col>
                             <v-col cols="12" sm="1" class="pl-sm-1 d-flex align-center justify-end">
-                                <v-btn icon variant="tonal" color="error" class="rounded-lg h-10 w-10 reset-btn" @click="searchQuery = ''; searchCode = ''; selectionPage = 1">
+                                <v-btn icon variant="tonal" color="primary" class="rounded-lg h-10 w-10 font-weight-bold reset-btn" @click="searchQuery = ''; searchCode = ''; selectionPage = 1">
                                     <v-icon size="20">mdi-refresh</v-icon>
                                     <v-tooltip activator="parent" location="top">Làm mới bộ lọc</v-tooltip>
                                 </v-btn>
@@ -614,10 +614,51 @@ onMounted(init);
 </template>
 
 <style scoped>
-.color-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+/* Local style overrides - using global premium design system */
+:deep(.v-container.font-body),
+:deep(.v-card),
+:deep(.v-table),
+:deep(.v-table__wrapper table),
+:deep(.v-table__wrapper table tbody tr td),
+:deep(.v-table__wrapper table thead tr th),
+:deep(.v-label),
+.field-label,
+.field-label-small {
+    font-size: 13px !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+}
+
+/* Làm nhạt màu chữ trong các ô input */
+:deep(.v-field__input), 
+:deep(.v-select__selection), 
+:deep(.v-text-field input),
+:deep(.v-textarea textarea),
+:deep(input),
+:deep(textarea) {
+    color: #475569 !important;
+    font-size: 13px !important;
+}
+
+:deep(.v-table__wrapper table tbody tr td *) {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #1d2025 !important;
+}
+
+:deep(.v-table__wrapper table thead tr th *) {
+    color: #64748b !important;
+    font-weight: 700 !important;
+}
+
+.modern-table :deep(td) {
+    vertical-align: middle !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+}
+
+.modern-table :deep(.v-checkbox-btn) {
+    min-height: auto !important;
 }
 
 .selection-pagination :deep(.v-pagination__list) {
@@ -636,107 +677,42 @@ onMounted(init);
     height: 36px !important;
     margin: 4px !important;
     text-transform: none !important;
-    font-weight: 500 !important;
+    font-weight: 700 !important;
+}
+:deep(.v-field__input), 
+:deep(.v-select__selection), 
+:deep(.v-text-field input),
+:deep(.v-textarea textarea),
+:deep(.modern-table td),
+:deep(.modern-table th),
+.field-label,
+.field-label-small {
+    font-size: 13px !important;
+}
+
+.field-label {
+    font-weight: 700;
+    color: #1d2025 !important;
+    margin-bottom: 6px;
 }
 
 .field-label-small {
-    font-size: 12px;
-    font-weight: 500;
-    color: #475569;
-    letter-spacing: 0.01em;
-    margin-bottom: 6px;
-    display: block;
-}
-
-/* --- Bộ lọc chi tiết sản phẩm --- */
-.detail-filter-shell {
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    overflow: hidden;
-    background: #ffffff;
-}
-
-.detail-filter-header {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid #f1f5f9;
-    background: #f8fafc;
-}
-
-.filter-title-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #475569;
-    letter-spacing: 0.01em;
-}
-
-.detail-filter-body {
-    padding: 16px;
-}
-
-.filter-row-inner {
-    gap: 0;
-    margin-bottom: 14px;
-
-    .filter-cell {
-        padding: 0 8px 0 0;
-
-        &:last-child {
-            padding-right: 0;
-        }
-    }
-}
-
-.price-range-row {
-    border-top: 1px solid #f1f5f9;
-    padding: 14px 0 0;
-}
-
-/* Blue range slider */
-:deep(.blue-range-slider .v-slider-thumb .v-slider-thumb__surface) {
-    background: #ffffff !important;
-    border: 2.5px solid #3b82f6 !important;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
-    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-}
-
-:deep(.blue-range-slider .v-slider-thumb:hover .v-slider-thumb__surface),
-:deep(.blue-range-slider .v-slider-thumb--focused .v-slider-thumb__surface) {
-    border-color: #2563eb !important;
-    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.15) !important;
-    transform: scale(1.15) !important;
-}
-
-.price-range-value {
-    font-size: 12px;
-    font-weight: 600;
-    color: #3b82f6;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
-}
-
-.product-image-container {
-    position: relative;
-    padding: 2px;
-}
-
-.discount-badge {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #ef4444;
-    color: white;
-    font-size: 10px;
     font-weight: 700;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-    z-index: 2;
-    white-space: nowrap;
+    color: #1d2025 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    margin-bottom: 4px;
+}
+
+.font-weight-black {
+    font-weight: 700 !important;
+}
+
+.font-weight-bold {
+    font-weight: 600 !important;
+}
+
+.text-slate-400 {
+    color: #64748b !important;
 }
 </style>

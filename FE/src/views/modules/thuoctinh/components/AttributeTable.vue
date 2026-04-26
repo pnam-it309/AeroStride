@@ -62,19 +62,19 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                 <tr class="data-row">
                     <td class="data-cell text-center">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
                     <td class="data-cell text-center">
-                        <div class="text-slate-900" style="font-size: 13px;">{{ getItemCode(item) }}</div>
+                        <div class="font-weight-medium text-slate-900">{{ getItemCode(item) }}</div>
                     </td>
                     <td class="data-cell text-center">
                         <div class="text-slate-800">{{ getItemName(item) }}</div>
                     </td>
                     <td class="data-cell text-center">
                         <v-chip
-                            variant="tonal"
-                            size="small"
-                            class="status-chip"
-                            :color="getStatusColor(item.trangThai)"
-                            >{{ getStatusLabel(item.trangThai) }}</v-chip
+                            variant="flat"
+                            size="x-small"
+                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']"
                         >
+                            {{ getStatusLabel(item.trangThai) }}
+                        </v-chip>
                     </td>
                     <td class="data-cell text-center">
                         <div class="d-flex align-center justify-center action-controls">
@@ -95,7 +95,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                             <div class="switch-wrapper d-flex align-center">
                                 <v-switch
                                     :model-value="isActiveStatus(item.trangThai)"
-                                    color="#000"
+                                    color="primary"
                                     hide-details
                                     density="compact"
                                     class="tight-switch action-switch"

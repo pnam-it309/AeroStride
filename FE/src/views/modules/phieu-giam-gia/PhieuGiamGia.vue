@@ -27,11 +27,12 @@ const {
     handleFilter: handleSearch,
     handleReset
 } = useAdminTable(dichVuPhieuGiamGia.layPhieuGiamGiaPhanTrang, {
-    search: '',
+    keyword: '',
     loaiPhieu: null,
     hinhThuc: null,
-    startDate: null,
-    endDate: null
+    tuNgay: null,
+    denNgay: null,
+    trangThai: null
 });
 
 const isRefreshing = ref(false);
@@ -146,19 +147,20 @@ onMounted(() => loadVouchers());
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm</div>
-                    <v-text-field v-model="filters.search" placeholder="Mã hoặc tên phiếu..." variant="outlined"
+                    <v-text-field v-model="filters.keyword" placeholder="Mã hoặc tên phiếu..." variant="outlined"
                         density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input" clearable
-                        @update:model-value="handleSearch"></v-text-field>
+                        @input="handleSearch"></v-text-field>
                 </v-col>
-                <v-col cols="12" md="2" class="filter-cell pt-1">
+                <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Loại phiếu</div>
-                    <v-radio-group v-model="filters.loaiPhieu" inline hide-details density="compact"
-                        class="compact-radio-group mt-1" @update:model-value="handleSearch">
-                        <v-radio label="%" value="PHAN_TRAM" class="mr-1"></v-radio>
-                        <v-radio label="VNĐ" value="TIEN_MAT"></v-radio>
-                    </v-radio-group>
+                    <v-select v-model="filters.loaiPhieu" :items="[
+                        { title: 'Tất cả', value: null },
+                        { title: 'Phần trăm (%)', value: 'PHAN_TRAM' },
+                        { title: 'Tiền mặt (VNĐ)', value: 'TIEN_MAT' }
+                    ]" variant="outlined" density="compact" hide-details class="compact-input"
+                        @update:model-value="handleSearch"></v-select>
                 </v-col>
-                <v-col cols="12" md="2" class="filter-cell">
+                <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Hình thức</div>
                     <v-select v-model="filters.hinhThuc" :items="[
                         { title: 'Tất cả', value: null },
@@ -167,67 +169,88 @@ onMounted(() => loadVouchers());
                     ]" variant="outlined" density="compact" hide-details class="compact-input"
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
-                <v-col cols="12" md="2" class="filter-cell">
-                    <div class="filter-field-label">Từ ngày</div>
-                    <v-text-field v-model="filters.startDate" type="date" variant="outlined" density="compact"
-                        hide-details class="compact-input" @update:model-value="handleSearch"></v-text-field>
+                <v-col cols="12" md="3" class="filter-cell">
+                    <div class="filter-field-label">Trạng thái</div>
+                    <v-select v-model="filters.trangThai" :items="[
+                        { title: 'Tất cả', value: null },
+                        { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
+                        { title: 'Ngừng hoạt động', value: 'KHONG_HOAT_DONG' }
+                    ]" variant="outlined" density="compact" hide-details class="compact-input"
+                        @update:model-value="handleSearch"></v-select>
                 </v-col>
-                <v-col cols="12" md="2" class="filter-cell">
+                <v-col cols="12" md="3" class="filter-cell">
+                    <div class="filter-field-label">Từ ngày</div>
+                    <v-text-field v-model="filters.tuNgay" type="date" variant="outlined" density="compact"
+                        hide-details class="compact-input" @change="handleSearch" @input="handleSearch"></v-text-field>
+                </v-col>
+                <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Đến ngày</div>
-                    <v-text-field v-model="filters.endDate" type="date" variant="outlined" density="compact"
-                        hide-details class="compact-input" @update:model-value="handleSearch"></v-text-field>
+                    <v-text-field v-model="filters.denNgay" type="date" variant="outlined" density="compact"
+                        hide-details class="compact-input" @change="handleSearch" @input="handleSearch"></v-text-field>
                 </v-col>
             </AdminFilter>
         </div>
 
         <!-- 2. TABLE -->
         <AdminTable title="Danh sách phiếu giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
-            { text: 'STT', align: 'center', width: '55px' },
+            { text: 'STT', align: 'center', width: '50px' },
             { text: 'Mã phiếu', align: 'center', width: '120px' },
-            { text: 'Tên phiếu', align: 'center', width: '200px' },
+            { text: 'Tên phiếu', align: 'left', width: '170px' },
+            { text: 'Loại phiếu', align: 'center', width: '110px' },
             { text: 'Hình thức', align: 'center', width: '120px' },
-            { text: 'Giá trị giảm', align: 'center', width: '170px' },
-            { text: 'Đơn tối thiểu', align: 'center', width: '130px' },
-            { text: 'Số lượng', align: 'center', width: '90px' },
-            { text: 'Thời gian áp dụng', align: 'center', width: '200px' },
-            { text: 'Trạng thái', align: 'center', width: '140px' },
+            { text: 'Giá trị giảm', align: 'left', width: '160px' },
+            { text: 'Đơn tối thiểu', align: 'left', width: '120px' },
+            { text: 'Số lượng', align: 'center', width: '110px' },
+            { text: 'Thời gian áp dụng', align: 'left', width: '170px' },
+            { text: 'Trạng thái', align: 'center', width: '130px' },
             { text: 'Hành động', align: 'center', width: '110px' }
         ]" :items="vouchers" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog"
             @export="handleExport">
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center text-slate-400">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
-                    <td class="data-cell text-left col-left-tight">{{ item.ma || '--' }}</td>
-                    <td class="data-cell text-center">{{ item.ten || '--' }}</td>
-
+                    <td class="data-cell text-center text-slate-400 font-weight-medium">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
+                    <td class="data-cell text-center font-weight-medium">{{ item.ma || '--' }}</td>
+                    <td class="data-cell text-left font-weight-medium">{{ item.ten || '--' }}</td>
+                    <td class="data-cell text-center font-weight-medium">
+                        {{ getLoaiPhieuLabel(item.loaiPhieu) }}
+                    </td>
                     <td class="data-cell text-center">
-                        <v-chip size="small" variant="tonal"
-                            :color="getHinhThucValue(item) === 'CA_NHAN' || getHinhThucValue(item) === 'PRIVATE' ? 'purple' : getHinhThucValue(item) === 'CONG_KHAI' || getHinhThucValue(item) === 'PUBLIC' ? 'info' : 'grey'"
-                            class="px-3">
+                        <v-chip
+                            size="small"
+                            variant="flat"
+                            :class="[
+                                'status-chip',
+                                getHinhThucLabel(getHinhThucValue(item)) === 'Cá nhân' ? 'chip-private' : 'chip-public'
+                            ]"
+                        >
                             {{ getHinhThucLabel(getHinhThucValue(item)) }}
                         </v-chip>
                     </td>
-                    <td class="data-cell text-center">
-                        <div class="text-primary">Giảm {{ getDiscountDisplay(item) }}</div>
-                        <div class="max-discount-value"
+                    <td class="data-cell text-left">
+                        <div class="font-weight-bold text-primary">Giảm {{ getDiscountDisplay(item) }}</div>
+                        <div class="max-discount-value font-weight-medium"
                             v-if="item.loaiPhieu === 'PHAN_TRAM' || item.loaiPhieu === 'PERCENTAGE'">Tối đa: {{
                                 getMaxDiscountDisplay(item) }}</div>
                     </td>
-                    <td class="data-cell text-center price-value">{{ formatCurrency(item.donHangToiThieu) }}</td>
-                    <td class="data-cell text-center text-slate-700">
-                        {{ item.soLuong === -1 ? 'Vô hạn' : item.soLuong }}
+                    <td class="data-cell text-left">
+                        <div class="price-value font-weight-bold text-primary">{{ formatCurrency(item.donHangToiThieu) }}</div>
                     </td>
-                    <td class="data-cell">
-                        <div class="d-flex flex-column align-center">
-                            <div class="text-caption text-slate-700">{{ formatDateTime(item.ngayBatDau) }}</div>
-                            <div class="text-caption text-slate-400">đến {{ formatDateTime(item.ngayKetThuc) }}</div>
+                    <td class="data-cell text-center font-weight-medium text-slate-700">
+                        {{ item.soLuong === -1 ? '∞' : item.soLuong }}
+                    </td>
+                    <td class="data-cell text-left">
+                        <div class="d-flex flex-column align-start">
+                            <div class="font-weight-medium text-slate-700">{{ formatDateTime(item.ngayBatDau) }}</div>
+                            <div class="font-weight-medium text-slate-400">đến {{ formatDateTime(item.ngayKetThuc) }}</div>
                         </div>
                     </td>
                     <td class="data-cell text-center">
-                        <span class="discount-status-chip"
-                            :style="{ color: getDiscountTimeStatus(item).color, background: getDiscountTimeStatus(item).bg }">
-                            {{ getDiscountTimeStatus(item).label }}
-                        </span>
+                        <v-chip 
+                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']"
+                            variant="flat" 
+                            size="small">
+                            {{ getStatusLabel(item.trangThai) }}
+                        </v-chip>
                     </td>
                     <td class="data-cell action-cell" style="text-align: center">
                         <div class="d-flex align-center justify-center action-controls">
@@ -238,7 +261,7 @@ onMounted(() => loadVouchers());
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
-                                <v-switch :model-value="isActiveStatus(item.trangThai)" color="#000" hide-details
+                                <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details
                                     density="compact" class="tight-switch action-switch"
                                     @click.prevent.stop="confirmToggleStatus(item)" />
                                 <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
@@ -263,7 +286,24 @@ onMounted(() => loadVouchers());
 <style scoped>
 /* Scoped styles removed in favor of global _admin-common.scss */
 .max-discount-value {
-    color: #64748b !important;
-    font-size: 12px;
+    color: inherit !important;
+}
+
+.price-value {
+    font-weight: 700 !important;
+}
+
+:deep(.data-cell), :deep(.data-cell *) {
+    font-size: 13px !important;
+}
+
+:deep(.chip-private) {
+    background-color: #fff7ed !important;
+    color: #c2410c !important;
+}
+
+:deep(.chip-public) {
+    background-color: #f0fdf4 !important;
+    color: #15803d !important;
 }
 </style>

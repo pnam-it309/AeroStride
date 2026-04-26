@@ -196,7 +196,7 @@ onMounted(() => {
             @export="handleExport"
         >
             <template #top>
-                <v-tabs v-model="tab" bg-color="transparent" color="#000" height="54" align-tabs="start" class="admin-tabs">
+                <v-tabs v-model="tab" bg-color="transparent" color="primary" height="54" align-tabs="start" class="admin-tabs">
                     <v-tab :value="0" class="text-none font-weight-bold px-4 tab-item">
                         <v-icon start size="16">mdi-view-grid-outline</v-icon>
                         Danh sách nhân viên
@@ -259,9 +259,8 @@ onMounted(() => {
                         <template v-if="tab === 0">
                             <v-chip
                                 size="small"
-                                variant="tonal"
-                                :color="getStatusColor(item.trangThai)"
-                                class="px-4 status-chip"
+                                variant="flat"
+                                :class="['status-chip', item.trangThai === 'DANG_HOAT_DONG' ? 'status-chip-active' : 'status-chip-inactive']"
                             >
                                 {{ getStatusLabel(item.trangThai) }}
                             </v-chip>
@@ -282,7 +281,7 @@ onMounted(() => {
                             <div class="switch-wrapper">
                                 <v-switch
                                     :model-value="isActiveStatus(item.trangThai)"
-                                    color="#000"
+                                    color="primary"
                                     hide-details
                                     density="compact"
                                     class="tight-switch action-switch"
@@ -330,7 +329,7 @@ onMounted(() => {
     padding-left: 32px !important;
 }
 .active-chip {
-    background: #000 !important;
+    background: #1e257c !important;
     color: #fff !important;
 }
 .inactive-chip {

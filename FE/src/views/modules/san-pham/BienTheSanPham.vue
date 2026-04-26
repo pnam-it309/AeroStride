@@ -322,7 +322,7 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
             :items="[{ tenSanPham: 'Tất cả sản phẩm', id: 'ALL' }, ...productOptions]" item-title="tenSanPham"
             item-value="id" variant="outlined" density="compact" hide-details></v-autocomplete>
         </v-col>
-        <v-col cols="12" md="3">
+        <v-col cols="12" md="2">
           <div class="filter-field-label">Tìm kiếm nhanh</div>
           <v-text-field v-model="filters.keyword" placeholder="Mã SKU, màu, size..." prepend-inner-icon="mdi-magnify"
             variant="outlined" density="compact" hide-details clearable></v-text-field>
@@ -353,9 +353,10 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
       <AdminTable title="Danh mục biến thể" :headers="[
         { text: 'STT', align: 'center', width: '60px' },
         { text: 'Hình ảnh', align: 'center', width: '80px' },
-        { text: 'Mã SKU', align: 'left', width: '150px' },
+        { text: 'Mã SKU', align: 'center', width: '150px' },
         { text: 'Màu sắc', align: 'center', width: '120px' },
         { text: 'Kích thước', align: 'center', width: '100px' },
+        { text: 'Số lượng', align: 'center', width: '100px' },
         { text: 'Giá bán niêm yết', align: 'center', width: '150px' },
         { text: 'Trạng thái', align: 'center', width: '140px' },
         { text: 'Thao tác', align: 'center', width: '140px' }
@@ -383,25 +384,29 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
                 <v-img :src="getVariantThumbnail(item)" cover></v-img>
               </v-avatar>
             </td>
-            <td class="data-cell text-left px-6">
-              <div class="text-slate-800" style="font-size: 13px;">{{ item.maChiTietSanPham }}</div>
+            <td class="data-cell text-center font-weight-medium">
+              {{ item.maChiTietSanPham }}
+            </td>
+            <td class="data-cell text-center font-weight-medium text-dark">
+              {{ item.tenMauSac }}
+            </td>
+            <td class="data-cell text-center font-weight-medium text-dark">
+              {{ item.tenKichThuoc }}
+            </td>
+            <td class="data-cell text-center font-weight-medium text-dark">
+              {{ formatNumber(item.soLuong) }}
             </td>
             <td class="data-cell text-center">
-              <div class="text-slate-600" style="font-size: 13px;">{{ item.tenMauSac }}</div>
+              <span class="text-primary font-weight-bold">{{ formatCurrency(item.giaBan) }}</span>
             </td>
             <td class="data-cell text-center">
-              <div class="text-slate-600" style="font-size: 13px;">{{ item.tenKichThuoc }}</div>
-            </td>
-            <td class="data-cell text-center">
-              <div class="text-primary" style="font-size: 13px;">{{ formatCurrency(item.giaBan) }}</div>
-            </td>
-            <td class="data-cell">
-              <v-chip size="small" :color="isActiveStatus(item.trangThai) ? 'success' : 'warning'" variant="tonal"
-                class="status-chip">
+              <v-chip size="small" 
+                :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']" 
+                variant="flat">
                 {{ getStatusLabel(item.trangThai) }}
               </v-chip>
             </td>
-            <td class="data-cell">
+            <td class="data-cell text-center">
               <div class="d-flex align-center justify-center action-controls">
                 <v-btn variant="text" class="action-icon-btn"
                   @click="variantModal.variant = item; variantModal.mode = 'edit'; variantModal.open = true">
@@ -413,7 +418,7 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
                   <v-tooltip activator="parent" location="top">Thư viện ảnh</v-tooltip>
                 </v-btn>
                 <div class="switch-wrapper">
-                  <v-switch :model-value="isActiveStatus(item.trangThai)" color="#000" hide-details density="compact"
+                  <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details density="compact"
                     class="tight-switch action-switch" @click.prevent.stop="handleStatusChange(item)" />
                   <v-tooltip activator="parent" location="top">Bật/Tắt kinh doanh</v-tooltip>
                 </div>
@@ -455,5 +460,9 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
 
 .min-h-0 {
   min-height: 0;
+}
+
+:deep(.data-cell), :deep(.data-cell *) {
+  font-size: 13px !important;
 }
 </style>

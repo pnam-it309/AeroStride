@@ -5,7 +5,7 @@ const BLUE_THEME = {
         'border-color': '#e5eaef'
     },
     colors: {
-        primary: '#0085db',
+        primary: '#1e257c',
         secondary: '#707a82',
         info: '#46caeb',
         success: '#4bd08b',
@@ -17,7 +17,7 @@ const BLUE_THEME = {
         pink: '#e91e63',
         teal: '#009688',
         grey: '#9e9e9e',
-        lightprimary: '#e5f3fb',
+        lightprimary: '#f0f1ff',
         lightinfo:'#e1f5fa',
         lightsecondary: '#e7ecf0',
         lightsuccess: '#dffff3',
