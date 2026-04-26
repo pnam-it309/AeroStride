@@ -4,7 +4,7 @@ import { PATH } from '@/router/routePaths';
 import { useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
-import { isActiveStatus } from '@/utils/statusUtils';
+import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
 
 // REUSABLE COMPONENTS
 import AdminFilter from '@/components/common/AdminFilter.vue';
@@ -43,7 +43,7 @@ const getDiscountTimeStatus = (item) => {
     const start = item.ngayBatDau ? new Date(item.ngayBatDau).getTime() : null;
     const end = item.ngayKetThuc ? new Date(item.ngayKetThuc).getTime() : null;
     if (start && now < start) return { label: 'Sắp diễn ra', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' };
-    if (end && now > end)   return { label: 'Kết thúc',    color: '#ef4444', bg: 'rgba(239,68,68,0.1)' };
+    if (end && now > end) return { label: 'Kết thúc', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' };
     return { label: 'Hoạt động', color: '#10b981', bg: 'rgba(16,185,129,0.1)' };
 };
 
@@ -173,7 +173,8 @@ onMounted(() => loadCampaigns());
                     <td class="data-cell text-left">
                         <div class="d-flex flex-column align-start">
                             <div class="font-weight-medium text-slate-700">{{ formatDateTime(item.ngayBatDau) }}</div>
-                            <div class="font-weight-medium text-slate-400">đến {{ formatDateTime(item.ngayKetThuc) }}</div>
+                            <div class="font-weight-medium text-slate-400">đến {{ formatDateTime(item.ngayKetThuc) }}
+                            </div>
                         </div>
                     </td>
                     <td class="data-cell text-center font-weight-medium">
@@ -182,8 +183,7 @@ onMounted(() => loadCampaigns());
                     <td class="data-cell text-center">
                         <v-chip
                             :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']"
-                            variant="flat" 
-                            size="small">
+                            variant="flat" size="small">
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
@@ -233,7 +233,8 @@ onMounted(() => loadCampaigns());
     z-index: 6;
 }
 
-:deep(.data-cell), :deep(.data-cell *) {
+:deep(.data-cell),
+:deep(.data-cell *) {
     font-size: 13px !important;
 }
 
@@ -247,3 +248,4 @@ onMounted(() => loadCampaigns());
     color: #991b1b !important;
 }
 </style>
+

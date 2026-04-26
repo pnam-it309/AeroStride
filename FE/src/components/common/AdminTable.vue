@@ -25,7 +25,7 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
         <div class="table-toolbar d-flex align-center justify-space-between pa-3 border-b">
             <div class="d-flex align-center">
                 <LayoutGridIcon size="20" class="text-primary mr-3" />
-                <h3 class="text-h6 font-weight-bold text-dark tracking-tight">{{ title }}</h3>
+                <h3 class="text-h6 font-weight-medium text-dark tracking-tight">{{ title }}</h3>
             </div>
             <div class="d-flex align-center flex-wrap justify-end gap-2">
                 <v-btn v-if="showTemplateButton" prepend-icon="mdi-download" variant="flat" class="admin-btn-secondary"

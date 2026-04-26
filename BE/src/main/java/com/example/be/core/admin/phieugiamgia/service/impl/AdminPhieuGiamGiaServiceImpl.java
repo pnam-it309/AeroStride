@@ -56,7 +56,34 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
 
     @Override
     public Page<AdminPhieuGiamGiaResponse> phanTrang(AdminPhieuGiamGiaRequest req) {
-        return SearchUtils.execute(req, pageable -> repo.phanTrang(req.getKeyword(), pageable));
+        Long tuNgayLong = null;
+        Long denNgayLong = null;
+
+        try {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            if (req.getTuNgay() != null && !req.getTuNgay().isEmpty()) {
+                tuNgayLong = sdf.parse(req.getTuNgay()).getTime();
+            }
+            if (req.getDenNgay() != null && !req.getDenNgay().isEmpty()) {
+                // End of day
+                denNgayLong = sdf.parse(req.getDenNgay()).getTime() + 86399999L;
+            }
+        } catch (Exception e) {
+            // Ignore parse errors
+        }
+
+        final Long finalTuNgay = tuNgayLong;
+        final Long finalDenNgay = denNgayLong;
+
+        return SearchUtils.execute(req, pageable -> repo.phanTrang(
+                req.getKeyword(),
+                req.getLoaiPhieu(),
+                req.getHinhThuc(),
+                req.getTrangThai(),
+                finalTuNgay,
+                finalDenNgay,
+                pageable
+        ));
     }
 
     @Override
@@ -73,17 +100,17 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     public void add(AdminPhieuGiamGiaRequest req) {
         PhieuGiamGia p = new PhieuGiamGia();
         BeanUtils.copyProperties(req, p);
-        
+
         // Tự động sinh mã nếu trống
         if (p.getMa() == null || p.getMa().trim().isEmpty()) {
             // Using placeholder logic or common generator
-            p.setMa("PGG" + System.currentTimeMillis() % 100000); 
+            p.setMa("PGG" + System.currentTimeMillis() % 100000);
         }
-        
+
         if ("CA_NHAN".equals(req.getHinhThuc()) && req.getListIdKhachHang() != null) {
             p.setSoLuong(req.getListIdKhachHang().size());
         }
-        
+
         repo.save(p);
 
         // Xử lý phiếu cá nhân
@@ -111,7 +138,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         variables.put("voucherName", p.getTen());
         variables.put("discountValue", p.getPhanTramGiamGia() != null ? p.getPhanTramGiamGia() + "%" : p.getSoTienGiam() + " VNĐ");
         variables.put("minOrder", p.getDonHangToiThieu());
-        
+
         // Better date formatting
         java.time.Instant expiryInstant = java.time.Instant.ofEpochMilli(p.getNgayKetThuc() != null ? p.getNgayKetThuc() : System.currentTimeMillis());
         java.time.LocalDateTime expiryDate = java.time.LocalDateTime.ofInstant(expiryInstant, java.time.ZoneId.systemDefault());
@@ -148,10 +175,10 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     @Override
     public byte[] exportExcel() {
         Pageable pageable = PaginationUtils.createPageable(0, Integer.MAX_VALUE, "id", "desc");
-        List<AdminPhieuGiamGiaResponse> data = repo.phanTrang(null, pageable).getContent();
-        
+        List<AdminPhieuGiamGiaResponse> data = repo.phanTrang(null, null, null, null, null, null, pageable).getContent();
+
         String[] headers = {"STT", "Mã", "Tên", "Giá trị giảm", "Giảm tối đa", "Điều kiện", "Số lượng", "Ngày bắt đầu", "Ngày kết thúc", "Trạng thái"};
-        
+
         try {
             return ExcelUtils.exportToExcel("Danh sách phiếu giảm giá", headers, data, item -> new Object[]{
                 data.indexOf(item) + 1,
@@ -188,7 +215,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         try (org.apache.poi.ss.usermodel.Workbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook(file.getInputStream())) {
             org.apache.poi.ss.usermodel.Sheet sheet = workbook.getSheetAt(0);
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-            
+
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 org.apache.poi.ss.usermodel.Row row = sheet.getRow(i);
                 if (row == null) continue;
@@ -197,7 +224,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                 p.setMa(ExcelUtils.getCellValueAsString(row.getCell(0)));
                 p.setTen(ExcelUtils.getCellValueAsString(row.getCell(1)));
                 p.setLoaiPhieu(ExcelUtils.getCellValueAsString(row.getCell(2)));
-                
+
                 String valStr = ExcelUtils.getCellValueAsString(row.getCell(3));
                 if ("PHAN_TRAM".equalsIgnoreCase(p.getLoaiPhieu())) {
                     p.setPhanTramGiamGia(Integer.parseInt(valStr));
@@ -208,10 +235,10 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                 p.setDonHangToiThieu(new java.math.BigDecimal(ExcelUtils.getCellValueAsString(row.getCell(4))));
                 p.setSoLuong(Integer.parseInt(ExcelUtils.getCellValueAsString(row.getCell(5))));
                 p.setHinhThuc(ExcelUtils.getCellValueAsString(row.getCell(6)));
-                
+
                 p.setNgayBatDau(sdf.parse(ExcelUtils.getCellValueAsString(row.getCell(7))).getTime());
                 p.setNgayKetThuc(sdf.parse(ExcelUtils.getCellValueAsString(row.getCell(8))).getTime());
-                
+
                 p.setTrangThai(TrangThai.DANG_HOAT_DONG);
                 repo.save(p);
             }

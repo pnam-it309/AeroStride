@@ -185,7 +185,7 @@ const setMainImage = async (imgId) => {
                     {{ variant.tenMauSac }} <span class="text-slate-300 mx-1">/</span> {{ variant.tenKichThuoc }}
                 </div>
                 <div class="d-flex align-center gap-2">
-                    <v-chip size="x-small" color="primary" variant="flat" class="font-weight-bold px-2">Kho: {{ variant.soLuong }}</v-chip>
+                    <v-chip size="x-small" color="primary" variant="flat" class="font-weight-medium px-2">Kho: {{ variant.soLuong }}</v-chip>
                     <v-chip size="x-small" color="emerald" variant="tonal" class="font-weight-black">{{ formatCurrency(variant.giaBan) }}</v-chip>
                 </div>
             </div>
@@ -433,4 +433,5 @@ const setMainImage = async (imgId) => {
     margin-top: 1.5rem;
 }
 </style>
+
 

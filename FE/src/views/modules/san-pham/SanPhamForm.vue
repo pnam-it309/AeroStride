@@ -167,7 +167,7 @@ const upsertAttributeOption = (config, option) => {
         return;
     }
 
-    config.options.value = [...options, option];
+    config.options.value = [option, ...options];
 };
 
 const refreshAttributeOptions = async (config) => {
@@ -1026,94 +1026,92 @@ const handleSave = async () => {
                                     <InfoCircleIcon size="18" class="text-primary" />
                                 </div>
                                 <div>
-                                    <div class="text-h2 font-weight-black text-gradient-to-r from-blue-500 to-purple-600">
-                                         Thêm thông tin sản phẩm
+                                    <div
+                                        class="text-h2 font-weight-black text-gradient-to-r from-blue-500 to-purple-600">
+                                        Thêm thông tin sản phẩm
                                     </div>
                                 </div>
                             </div>
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin cơ bản</span>
-                        </div>
-
-                            <v-row>
-                                <v-col cols="12">
-                                    <div class="field-label">Mã</div>
-                                    <v-text-field v-model="product.maSanPham" readonly placeholder="(Tự sinh)"
-                                        variant="outlined" density="comfortable"
-                                        class="custom-input mono-font bg-slate-50" hide-details></v-text-field>
-                                </v-col>
-                                <v-col cols="12">
-                                    <div class="field-label">Sản phẩm <span class="text-red">*</span></div>
-                                    <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Nike Mercurial Vapor 15"
-                                        :rules="[rules.required]" variant="outlined" density="comfortable"
-                                        hide-details="auto"></v-text-field>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Thương hiệu <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idThuongHieu" :items="brands" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Chọn thương hiệu..."
-                                        variant="outlined" density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Xuất xứ <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idXuatXu" :items="origins" item-title="ten" item-value="id"
-                                        :rules="[rules.required]" placeholder="Chọn xuất xứ..." variant="outlined"
-                                        density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Danh mục <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idDanhMuc" :items="categories" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Chọn danh mục..."
-                                        variant="outlined" density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Chất liệu <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idChatLieu" :items="materials" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Chọn chất liệu..."
-                                        variant="outlined" density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Loại đế <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idDeGiay" :items="soles" item-title="ten" item-value="id"
-                                        :rules="[rules.required]" placeholder="Chọn loại đế..." variant="outlined"
-                                        density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Loại cổ <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idCoGiay" :items="collars" item-title="ten" item-value="id"
-                                        :rules="[rules.required]" placeholder="Chọn loại cổ..." variant="outlined"
-                                        density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idMucDichChay" :items="purposes" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Chọn mục đích..."
-                                        variant="outlined" density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12">
-                                    <div class="field-label">Đối tượng sử dụng <span class="text-red">*</span></div>
-                                    <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary"
-                                        variant="outlined" density="comfortable" class="w-100 rounded-lg custom-toggle">
-                                        <v-btn value="NAM" class="flex-grow-1 font-weight-bold">Nam</v-btn>
-                                        <v-btn value="NU" class="flex-grow-1 font-weight-bold">Nữ</v-btn>
-                                        <v-btn value="UNISEX" class="flex-grow-1 font-weight-bold">Unisex</v-btn>
-                                    </v-btn-toggle>
-                                </v-col>
-                                <v-col cols="12">
-                                    <div class="field-label">Mô tả ngắn</div>
-                                    <v-textarea v-model="product.moTaNgan" variant="outlined" rows="4"
-                                        placeholder="Mô tả ngắn cho sản phẩm..." hide-details
-                                        class="custom-textarea"></v-textarea>
-                                </v-col>
-                            </v-row>
-                        </v-card-text>
-                    </v-card>
+                <v-row>
+                    <v-col cols="12">
+                        <div class="field-label">Mã</div>
+                        <v-text-field v-model="product.maSanPham" readonly placeholder="(Tự sinh)" variant="outlined"
+                            density="comfortable" class="custom-input mono-font bg-slate-50"
+                            hide-details></v-text-field>
+                    </v-col>
+                    <v-col cols="12">
+                        <div class="field-label">Sản phẩm <span class="text-red">*</span></div>
+                        <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Nike Mercurial Vapor 15"
+                            :rules="[rules.required]" variant="outlined" density="comfortable"
+                            hide-details="auto"></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <div class="field-label">Thương hiệu <span class="text-red">*</span></div>
+                        <v-combobox v-model="product.idThuongHieu" :items="brands" item-title="ten" item-value="id"
+                            :rules="[rules.required]" placeholder="Chọn thương hiệu..." variant="outlined"
+                            density="comfortable" :return-object="false"
+                            @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"></v-combobox>
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <div class="field-label">Danh mục <span class="text-red">*</span></div>
+                        <v-combobox v-model="product.idDanhMuc" :items="categories" item-title="ten" item-value="id"
+                            :rules="[rules.required]" placeholder="Chọn danh mục..." variant="outlined"
+                            density="comfortable" :return-object="false"
+                            @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc')"></v-combobox>
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <div class="field-label">Xuất xứ <span class="text-red">*</span></div>
+                        <v-combobox v-model="product.idXuatXu" :items="origins" item-title="ten" item-value="id"
+                            :rules="[rules.required]" placeholder="Chọn xuất xứ..." variant="outlined"
+                            density="comfortable" :return-object="false"
+                            @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"></v-combobox>
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <div class="field-label">Chất liệu <span class="text-red">*</span></div>
+                        <v-combobox v-model="product.idChatLieu" :items="materials" item-title="ten" item-value="id"
+                            :rules="[rules.required]" placeholder="Chọn chất liệu..." variant="outlined"
+                            density="comfortable" :return-object="false"
+                            @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"></v-combobox>
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <div class="field-label">Loại đế <span class="text-red">*</span></div>
+                        <v-combobox v-model="product.idDeGiay" :items="soles" item-title="ten" item-value="id"
+                            :rules="[rules.required]" placeholder="Chọn loại đế..." variant="outlined"
+                            density="comfortable" :return-object="false"
+                            @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"></v-combobox>
+                    </v-col>
+                    <v-col cols="12" md="4">
+                        <div class="field-label">Loại cổ <span class="text-red">*</span></div>
+                        <v-combobox v-model="product.idCoGiay" :items="collars" item-title="ten" item-value="id"
+                            :rules="[rules.required]" placeholder="Chọn loại cổ..." variant="outlined"
+                            density="comfortable" :return-object="false"
+                            @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"></v-combobox>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                        <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
+                        <v-combobox v-model="product.idMucDichChay" :items="purposes" item-title="ten" item-value="id"
+                            :rules="[rules.required]" placeholder="Chọn mục đích..." variant="outlined"
+                            density="comfortable" :return-object="false"
+                            @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"></v-combobox>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                        <div class="field-label">Đối tượng sử dụng <span class="text-red">*</span></div>
+                        <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary" variant="outlined"
+                            density="comfortable" class="w-100 rounded-lg custom-toggle">
+                            <v-btn value="NAM" class="flex-grow-1 font-weight-bold">Nam</v-btn>
+                            <v-btn value="NU" class="flex-grow-1 font-weight-bold">Nữ</v-btn>
+                            <v-btn value="UNISEX" class="flex-grow-1 font-weight-bold">Unisex</v-btn>
+                        </v-btn-toggle>
+                    </v-col>
+                    <v-col cols="12">
+                        <div class="field-label">Mô tả ngắn</div>
+                        <v-textarea v-model="product.moTaNgan" variant="outlined" rows="4"
+                            placeholder="Mô tả ngắn cho sản phẩm..." hide-details class="custom-textarea"></v-textarea>
+                    </v-col>
+                </v-row>
+                </v-card-text>
+                </v-card>
                 </v-col>
 
                 <v-col cols="12" lg="5">
@@ -1124,7 +1122,8 @@ const handleSave = async () => {
                                     <BoxIcon size="18" class="brand-logo-icon" />
                                 </div>
                                 <div>
-                                    <div class="text-subtitle-1 font-weight-black text-slate-800">Biến thể sản phẩm</div>
+                                    <div class="text-subtitle-1 font-weight-black text-slate-800">Biến thể sản phẩm
+                                    </div>
                                 </div>
                             </div>
 
@@ -1132,7 +1131,7 @@ const handleSave = async () => {
                                 <v-col cols="12">
                                     <div class="d-flex align-center justify-space-between mb-2">
                                         <div class="field-label mb-0">Màu sắc <span class="text-red">*</span></div>
-                                        <v-chip size="small" variant="tonal" color="primary" class="font-weight-bold">
+                                        <v-chip size="small" variant="tonal" color="primary" class="font-weight-medium">
                                             {{ selectedColors.length }} màu
                                         </v-chip>
                                     </div>
@@ -1143,7 +1142,7 @@ const handleSave = async () => {
                                 <v-col cols="12">
                                     <div class="d-flex align-center justify-space-between mb-2">
                                         <div class="field-label mb-0">Kích thước <span class="text-red">*</span></div>
-                                        <v-chip size="small" variant="tonal" color="info" class="font-weight-bold">
+                                        <v-chip size="small" variant="tonal" color="info" class="font-weight-medium">
                                             {{ selectedSizes.length }} size
                                         </v-chip>
                                     </div>
@@ -1168,8 +1167,8 @@ const handleSave = async () => {
                                 </div>
                             </div>
 
-                            <v-btn block class="mt-8 create-generate-btn text-none font-weight-bold"
-                                color="primary" size="large" @click="generateVariants">
+                            <v-btn block class="mt-8 create-generate-btn text-none font-weight-bold" color="primary"
+                                size="large" @click="generateVariants">
                                 Tạo biến thể tự động
                             </v-btn>
                         </v-card-text>
@@ -1193,8 +1192,8 @@ const handleSave = async () => {
                                     <div class="field-label">Mã sản phẩm</div>
                                     <v-text-field v-model="product.maSanPham" readonly
                                         :placeholder="isEditMode ? 'SP-XXXX' : 'Hệ thống tự sinh khi lưu'"
-                                        variant="outlined" density="comfortable" class="custom-input mono-font bg-slate-50"
-                                        hide-details></v-text-field>
+                                        variant="outlined" density="comfortable"
+                                        class="custom-input mono-font bg-slate-50" hide-details></v-text-field>
                                 </v-col>
                                 <v-col cols="12" md="8">
                                     <div class="field-label">Tên sản phẩm <span class="text-red">*</span></div>
@@ -1218,76 +1217,61 @@ const handleSave = async () => {
                                 <div class="icon-blob bg-amber-lighten-5 mr-3">
                                     <SettingsIcon size="18" class="text-amber-darken-2" />
                                 </div>
-                                <span class="text-subtitle-1 font-weight-black text-slate-800">Thuộc tính kỹ thuật</span>
+                                <span class="text-subtitle-1 font-weight-black text-slate-800">Thuộc tính & Phân loại</span>
                             </div>
 
                             <v-row>
-                                <v-col cols="12" md="6">
+                                <!-- Technical Attributes -->
+                                <v-col cols="12" md="6" lg="4">
                                     <div class="field-label">Xuất xứ <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idXuatXu" :items="origins" item-title="ten" item-value="id"
-                                        :rules="[rules.required]" placeholder="Chọn xuất xứ..." variant="outlined"
-                                        density="comfortable" :return-object="false"
+                                    <v-combobox v-model="product.idXuatXu" :items="origins" item-title="ten"
+                                        item-value="id" :rules="[rules.required]" placeholder="Chọn xuất xứ..."
+                                        variant="outlined" density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"></v-combobox>
                                 </v-col>
-                                <v-col cols="12" md="6">
+                                <v-col cols="12" md="6" lg="4">
                                     <div class="field-label">Chất liệu <span class="text-red">*</span></div>
                                     <v-combobox v-model="product.idChatLieu" :items="materials" item-title="ten"
                                         item-value="id" :rules="[rules.required]" placeholder="Chọn chất liệu..."
                                         variant="outlined" density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"></v-combobox>
                                 </v-col>
-                                <v-col cols="12" md="4">
-                                    <div class="field-label">Loại đế <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idDeGiay" :items="soles" item-title="ten" item-value="id"
-                                        :rules="[rules.required]" variant="outlined" density="comfortable"
-                                        :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="4">
-                                    <div class="field-label">Loại cổ <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idCoGiay" :items="collars" item-title="ten" item-value="id"
-                                        :rules="[rules.required]" variant="outlined" density="comfortable"
-                                        :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="4">
-                                    <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idMucDichChay" :items="purposes" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" variant="outlined" density="comfortable"
-                                        :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"></v-combobox>
-                                </v-col>
-                            </v-row>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-
-                <v-col cols="12" lg="4">
-                    <v-card class="premium-card mb-6">
-                        <v-card-text class="pa-8">
-                            <div class="section-header d-flex align-center mb-6">
-                                <div class="icon-blob bg-emerald-lighten-5 mr-3">
-                                    <BoxIcon size="18" class="text-emerald-darken-2" />
-                                </div>
-                                <span class="text-subtitle-1 font-weight-black text-slate-800">Phân loại</span>
-                            </div>
-
-                            <v-row>
-                                <v-col cols="12">
+                                <v-col cols="12" md="6" lg="4">
                                     <div class="field-label">Thương hiệu <span class="text-red">*</span></div>
                                     <v-combobox v-model="product.idThuongHieu" :items="brands" item-title="ten"
                                         item-value="id" :rules="[rules.required]" placeholder="Tìm thương hiệu..."
                                         variant="outlined" density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"></v-combobox>
                                 </v-col>
-                                <v-col cols="12">
+                                <v-col cols="12" md="6" lg="4">
                                     <div class="field-label">Danh mục <span class="text-red">*</span></div>
                                     <v-combobox v-model="product.idDanhMuc" :items="categories" item-title="ten"
                                         item-value="id" :rules="[rules.required]" placeholder="Chọn danh mục..."
                                         variant="outlined" density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc')"></v-combobox>
                                 </v-col>
-                                <v-col cols="12">
+                                <v-col cols="12" md="6" lg="4">
+                                    <div class="field-label">Loại đế <span class="text-red">*</span></div>
+                                    <v-combobox v-model="product.idDeGiay" :items="soles" item-title="ten"
+                                        item-value="id" :rules="[rules.required]" variant="outlined"
+                                        density="comfortable" :return-object="false"
+                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"></v-combobox>
+                                </v-col>
+                                <v-col cols="12" md="6" lg="4">
+                                    <div class="field-label">Loại cổ <span class="text-red">*</span></div>
+                                    <v-combobox v-model="product.idCoGiay" :items="collars" item-title="ten"
+                                        item-value="id" :rules="[rules.required]" variant="outlined"
+                                        density="comfortable" :return-object="false"
+                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"></v-combobox>
+                                </v-col>
+                                <v-col cols="12" md="6" lg="6">
+                                    <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
+                                    <v-combobox v-model="product.idMucDichChay" :items="purposes" item-title="ten"
+                                        item-value="id" :rules="[rules.required]" variant="outlined"
+                                        density="comfortable" :return-object="false"
+                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"></v-combobox>
+                                </v-col>
+                                <v-col cols="12" md="6" lg="6">
                                     <div class="field-label">Đối tượng sử dụng <span class="text-red">*</span></div>
                                     <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary"
                                         variant="outlined" density="comfortable" class="w-100 rounded-lg custom-toggle">
@@ -1318,13 +1302,13 @@ const handleSave = async () => {
                                 </div>
 
                                 <div class="d-flex align-center flex-wrap gradient-header-actions">
-                                    <v-btn variant="outlined" color="white" class="text-none rounded-pill action-btn-light"
-                                        @click="applyBulkAllVariants">
+                                    <v-btn variant="outlined" color="white"
+                                        class="text-none rounded-pill action-btn-light" @click="applyBulkAllVariants">
                                         <v-icon icon="mdi-lightning-bolt-outline" size="16" class="mr-1" />
                                         Thêm nhanh tất cả
                                     </v-btn>
-                                    <v-btn variant="outlined" color="white" class="text-none rounded-pill action-btn-light"
-                                        @click="clearAllDraftVariants">
+                                    <v-btn variant="outlined" color="white"
+                                        class="text-none rounded-pill action-btn-light" @click="clearAllDraftVariants">
                                         <v-icon icon="mdi-delete-outline" size="16" class="mr-1" />
                                         Xóa tất cả
                                     </v-btn>
@@ -1335,15 +1319,18 @@ const handleSave = async () => {
                                 <v-row class="bulk-toolbar" dense>
                                     <v-col cols="12" md="3">
                                         <v-text-field v-model.number="bulkAllForm.soLuong" type="number" min="0"
-                                            variant="outlined" density="compact" hide-details placeholder="Số lượng tất cả"></v-text-field>
+                                            variant="outlined" density="compact" hide-details
+                                            placeholder="Số lượng tất cả"></v-text-field>
                                     </v-col>
                                     <v-col cols="12" md="3">
                                         <v-text-field v-model.number="bulkAllForm.giaNhap" type="number" min="0"
-                                            variant="outlined" density="compact" hide-details placeholder="Giá nhập tất cả"></v-text-field>
+                                            variant="outlined" density="compact" hide-details
+                                            placeholder="Giá nhập tất cả"></v-text-field>
                                     </v-col>
                                     <v-col cols="12" md="3">
                                         <v-text-field v-model.number="bulkAllForm.giaBan" type="number" min="0"
-                                            variant="outlined" density="compact" hide-details placeholder="Giá bán tất cả"></v-text-field>
+                                            variant="outlined" density="compact" hide-details
+                                            placeholder="Giá bán tất cả"></v-text-field>
                                     </v-col>
                                     <v-col cols="12" md="3">
                                         <div class="bulk-toolbar__hint">
@@ -1353,22 +1340,26 @@ const handleSave = async () => {
                                 </v-row>
 
                                 <div v-if="variantGroups.length > 0" class="variant-group-stack">
-                                    <div v-for="group in variantGroups" :key="group.colorId" class="variant-color-group">
+                                    <div v-for="group in variantGroups" :key="group.colorId"
+                                        class="variant-color-group">
                                         <div class="variant-color-group__header">
                                             <div class="d-flex align-center">
                                                 <span class="color-dot"></span>
                                                 <div class="font-weight-bold text-slate-800">
-                                                    {{ group.colorLabel }} <span class="text-medium-emphasis">({{ group.variants.length }} biến thể)</span>
+                                                    {{ group.colorLabel }} <span class="text-medium-emphasis">({{
+                                                        group.variants.length }} biến thể)</span>
                                                 </div>
                                             </div>
 
                                             <div class="d-flex align-center flex-wrap group-actions">
-                                                <v-text-field v-model.number="bulkByColorForms[group.colorId].soLuong" type="number" min="0"
-                                                    variant="outlined" density="compact" hide-details
-                                                    placeholder="SL nhóm" class="group-quick-field"></v-text-field>
-                                                <v-text-field v-model.number="bulkByColorForms[group.colorId].giaBan" type="number" min="0"
-                                                    variant="outlined" density="compact" hide-details
-                                                    placeholder="Giá bán nhóm" class="group-quick-field"></v-text-field>
+                                                <v-text-field v-model.number="bulkByColorForms[group.colorId].soLuong"
+                                                    type="number" min="0" variant="outlined" density="compact"
+                                                    hide-details placeholder="SL nhóm"
+                                                    class="group-quick-field"></v-text-field>
+                                                <v-text-field v-model.number="bulkByColorForms[group.colorId].giaBan"
+                                                    type="number" min="0" variant="outlined" density="compact"
+                                                    hide-details placeholder="Giá bán nhóm"
+                                                    class="group-quick-field"></v-text-field>
                                                 <v-btn size="small" class="text-none rounded-pill group-action-btn"
                                                     color="primary" variant="flat"
                                                     @click="applyBulkColorVariants(group.colorId)">
@@ -1402,16 +1393,19 @@ const handleSave = async () => {
                                                     </div>
                                                 </div>
                                                 <div>
-                                                    <v-text-field v-model.number="variantItems[variant.index].soLuong" type="number" min="0"
-                                                        variant="outlined" density="compact" hide-details placeholder="Nhập số lượng"></v-text-field>
+                                                    <v-text-field v-model.number="variantItems[variant.index].soLuong"
+                                                        type="number" min="0" variant="outlined" density="compact"
+                                                        hide-details placeholder="Nhập số lượng"></v-text-field>
                                                 </div>
                                                 <div>
-                                                    <v-text-field v-model.number="variantItems[variant.index].giaNhap" type="number" min="0"
-                                                        variant="outlined" density="compact" hide-details placeholder="Nhập giá nhập"></v-text-field>
+                                                    <v-text-field v-model.number="variantItems[variant.index].giaNhap"
+                                                        type="number" min="0" variant="outlined" density="compact"
+                                                        hide-details placeholder="Nhập giá nhập"></v-text-field>
                                                 </div>
                                                 <div>
-                                                    <v-text-field v-model.number="variantItems[variant.index].giaBan" type="number" min="0"
-                                                        variant="outlined" density="compact" hide-details placeholder="Nhập giá bán"></v-text-field>
+                                                    <v-text-field v-model.number="variantItems[variant.index].giaBan"
+                                                        type="number" min="0" variant="outlined" density="compact"
+                                                        hide-details placeholder="Nhập giá bán"></v-text-field>
                                                 </div>
                                                 <div class="variant-group-row__actions">
                                                     <v-btn icon variant="text" color="error" size="small"
@@ -1430,7 +1424,8 @@ const handleSave = async () => {
                                         </div>
 
                                         <div class="color-image-grid">
-                                            <div v-for="group in variantGroups" :key="`${group.colorId}-image`" class="color-image-card">
+                                            <div v-for="group in variantGroups" :key="`${group.colorId}-image`"
+                                                class="color-image-card">
                                                 <input :ref="(el) => setColorFileInputRef(group.colorId, el)"
                                                     type="file" accept="image/*" class="d-none"
                                                     @change="handleColorImageUpload(group.colorId, $event)" />
@@ -1448,7 +1443,8 @@ const handleSave = async () => {
 
                                                 <div class="color-image-card__preview">
                                                     <v-img v-if="getColorUploadEntry(group.colorId).url"
-                                                        :src="getColorUploadEntry(group.colorId).url" cover class="fill-height"></v-img>
+                                                        :src="getColorUploadEntry(group.colorId).url" cover
+                                                        class="fill-height"></v-img>
                                                     <div v-else class="color-image-card__empty">
                                                         <v-icon icon="mdi-image-outline" size="28" />
                                                         <span>Chưa có ảnh</span>
@@ -1458,7 +1454,8 @@ const handleSave = async () => {
                                                 <v-btn block variant="text" class="text-none font-weight-medium"
                                                     :loading="getColorUploadEntry(group.colorId).uploading"
                                                     @click="openColorImagePicker(group.colorId)">
-                                                    {{ getColorUploadEntry(group.colorId).url ? `Đổi ảnh ${group.colorLabel}` : `Thêm ảnh ${group.colorLabel}` }}
+                                                    {{ getColorUploadEntry(group.colorId).url ? `Đổi ảnh
+                                                    ${group.colorLabel}` : `Thêm ảnh ${group.colorLabel}` }}
                                                 </v-btn>
                                             </div>
                                         </div>
@@ -1473,7 +1470,8 @@ const handleSave = async () => {
                                         Chưa có biến thể nào được tạo
                                     </div>
                                     <div class="text-body-2 text-slate-500 mt-2">
-                                        Chọn màu sắc và kích thước ở card bên phải, sau đó bấm <span class="font-weight-bold">Tạo biến thể tự động</span>.
+                                        Chọn màu sắc và kích thước ở card bên phải, sau đó bấm <span
+                                            class="font-weight-bold">Tạo biến thể tự động</span>.
                                     </div>
                                 </div>
                             </div>
@@ -1486,15 +1484,17 @@ const handleSave = async () => {
                                         <PhotoIcon size="18" class="text-cyan-darken-2" />
                                     </div>
                                     <div>
-                                        <div class="text-subtitle-1 font-weight-black text-slate-800">Biến thể sản phẩm</div>
+                                        <div class="text-subtitle-1 font-weight-black text-slate-800">Biến thể sản phẩm
+                                        </div>
                                         <div class="text-body-2 text-slate-500 section-description">
-                                            Dữ liệu biến thể hiện có được giữ nguyên. Bạn có thể thêm hoặc chỉnh sửa nhanh tại đây, còn nghiệp vụ nâng cao vẫn ở màn quản lý biến thể riêng.
+                                            Dữ liệu biến thể hiện có được giữ nguyên. Bạn có thể thêm hoặc chỉnh sửa
+                                            nhanh tại đây, còn nghiệp vụ nâng cao vẫn ở màn quản lý biến thể riêng.
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="d-flex align-center flex-wrap section-toolbar__actions">
-                                    <v-chip color="primary" variant="tonal" class="font-weight-bold">
+                                    <v-chip color="primary" variant="tonal" class="font-weight-medium">
                                         {{ variantItems.length }} biến thể
                                     </v-chip>
                                     <v-btn color="primary" variant="flat" class="text-none font-weight-bold rounded-lg"
@@ -1505,7 +1505,8 @@ const handleSave = async () => {
                             </div>
 
                             <v-alert class="mt-5" color="secondary" variant="tonal" density="comfortable" rounded="lg">
-                                Với sản phẩm đã tồn tại, phần tạo biến thể theo tổ hợp không dùng để tránh ghi đè dữ liệu cũ. Luồng thêm/sửa nhanh vẫn giữ ở đây.
+                                Với sản phẩm đã tồn tại, phần tạo biến thể theo tổ hợp không dùng để tránh ghi đè dữ
+                                liệu cũ. Luồng thêm/sửa nhanh vẫn giữ ở đây.
                             </v-alert>
 
                             <div v-if="variantItems.length > 0" class="variant-table-wrap mt-6">
@@ -1545,7 +1546,7 @@ const handleSave = async () => {
                                             <td class="text-center">
                                                 <v-chip size="small"
                                                     :color="variant.trangThai === defaultVariantStatus ? 'success' : 'warning'"
-                                                    variant="flat" class="font-weight-bold text-white">
+                                                    variant="flat" class="font-weight-medium text-white">
                                                     {{ getStatusLabel(variant.trangThai) }}
                                                 </v-chip>
                                             </td>
@@ -1574,7 +1575,8 @@ const handleSave = async () => {
                                     Chưa có biến thể nào
                                 </div>
                                 <div class="text-body-2 text-slate-500 mt-2">
-                                    Bạn có thể thêm biến thể mới ngay tại form này hoặc tiếp tục dùng màn quản lý biến thể riêng.
+                                    Bạn có thể thêm biến thể mới ngay tại form này hoặc tiếp tục dùng màn quản lý biến
+                                    thể riêng.
                                 </div>
                                 <v-btn color="primary" variant="flat" class="mt-5 rounded-lg text-none font-weight-bold"
                                     @click="openCreateVariantModal">
@@ -1585,96 +1587,78 @@ const handleSave = async () => {
                     </v-card-text>
                 </v-card>
 
-                <!-- 2. Detailed Attributes -->
+                <!-- 2. Detailed Attributes & Classification -->
                 <v-card class="premium-card mb-6">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-amber-lighten-5 mr-3">
                                 <SettingsIcon size="18" class="text-amber-darken-2" />
                             </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thuộc tính kỹ thuật</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thuộc tính & Phân loại</span>
                         </div>
 
                         <v-row>
-                            <v-col cols="12" md="6">
+                            <v-col cols="12" md="6" lg="4">
                                 <div class="field-label">Xuất xứ <span class="text-red">*</span></div>
                                 <v-combobox v-model="product.idXuatXu" :items="origins" item-title="ten" item-value="id"
                                     :rules="[rules.required]" placeholder="Chọn xuất xứ..." variant="outlined"
                                     density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu', dichVuXuatXu, 'XUAT_XU', 'xuất xứ')"></v-combobox>
                             </v-col>
-                            <v-col cols="12" md="6">
+                            <v-col cols="12" md="6" lg="4">
                                 <div class="field-label">Chất liệu <span class="text-red">*</span></div>
                                 <v-combobox v-model="product.idChatLieu" :items="materials" item-title="ten"
                                     item-value="id" :rules="[rules.required]" placeholder="Chọn chất liệu..."
                                     variant="outlined" density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu', dichVuChatLieu, 'CHAT_LIEU', 'chất liệu')"></v-combobox>
                             </v-col>
-                            <v-col cols="12" md="4">
-                                <div class="field-label">Loại đế <span class="text-red">*</span></div>
-                                <v-combobox v-model="product.idDeGiay" :items="soles" item-title="ten" item-value="id"
-                                    :rules="[rules.required]" variant="outlined" density="comfortable"
-                                    :return-object="false"
-                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay', dichVuDeGiay, 'DE_GIAY', 'đế giày')"></v-combobox>
-                            </v-col>
-                            <v-col cols="12" md="4">
-                                <div class="field-label">Loại cổ <span class="text-red">*</span></div>
-                                <v-combobox v-model="product.idCoGiay" :items="collars" item-title="ten" item-value="id"
-                                    :rules="[rules.required]" variant="outlined" density="comfortable"
-                                    :return-object="false"
-                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay', dichVuCoGiay, 'CO_GIAY', 'cổ giày')"></v-combobox>
-                            </v-col>
-                            <v-col cols="12" md="4">
-                                <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
-                                <v-combobox v-model="product.idMucDichChay" :items="purposes" item-title="ten"
-                                    item-value="id" :rules="[rules.required]" variant="outlined" density="comfortable"
-                                    :return-object="false"
-                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay', dichVuMucDichChay, 'MUC_DICH_CHAY', 'mục đích sử dụng')"></v-combobox>
-                            </v-col>
-                        </v-row>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-
-            <!-- Right Column -->
-            <v-col cols="12" lg="4">
-                <v-card class="premium-card mb-6">
-                    <v-card-text class="pa-8">
-                        <div class="section-header d-flex align-center mb-6">
-                            <div class="icon-blob bg-emerald-lighten-5 mr-3">
-                                <BoxIcon size="18" class="text-emerald-darken-2" />
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Phân loại</span>
-                        </div>
-
-                        <v-row>
-                            <v-col cols="12">
+                            <v-col cols="12" md="6" lg="4">
                                 <div class="field-label">Thương hiệu <span class="text-red">*</span></div>
                                 <v-combobox v-model="product.idThuongHieu" :items="brands" item-title="ten"
                                     item-value="id" :rules="[rules.required]" placeholder="Tìm thương hiệu..."
                                     variant="outlined" density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu', dichVuThuongHieu, 'THUONG_HIEU', 'thương hiệu')"></v-combobox>
                             </v-col>
-                            <v-col cols="12">
+                            <v-col cols="12" md="6" lg="4">
                                 <div class="field-label">Danh mục <span class="text-red">*</span></div>
                                 <v-combobox v-model="product.idDanhMuc" :items="categories" item-title="ten"
                                     item-value="id" :rules="[rules.required]" placeholder="Chọn danh mục..."
                                     variant="outlined" density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc', dichVuDanhMuc, 'DANH_MUC', 'danh mục')"></v-combobox>
                             </v-col>
-                            <v-col cols="12">
+                            <v-col cols="12" md="6" lg="4">
+                                <div class="field-label">Loại đế <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idDeGiay" :items="soles" item-title="ten" item-value="id"
+                                    :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay', dichVuDeGiay, 'DE_GIAY', 'đế giày')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                                <div class="field-label">Loại cổ <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idCoGiay" :items="collars" item-title="ten" item-value="id"
+                                    :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay', dichVuCoGiay, 'CO_GIAY', 'cổ giày')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="6" lg="6">
+                                <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idMucDichChay" :items="purposes" item-title="ten"
+                                    item-value="id" :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay', dichVuMucDichChay, 'MUC_DICH_CHAY', 'mục đích sử dụng')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="6" lg="6">
                                 <div class="field-label">Đối tượng sử dụng <span class="text-red">*</span></div>
                                 <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary"
                                     variant="outlined" density="comfortable" class="w-100 rounded-lg custom-toggle">
-                                    <v-btn value="NAM" class="flex-grow-1">Nam</v-btn>
-                                    <v-btn value="NU" class="flex-grow-1">Nữ</v-btn>
-                                    <v-btn value="UNISEX" class="flex-grow-1">Unisex</v-btn>
+                                    <v-btn value="NAM" class="flex-grow-1 font-weight-bold">Nam</v-btn>
+                                    <v-btn value="NU" class="flex-grow-1 font-weight-bold">Nữ</v-btn>
+                                    <v-btn value="UNISEX" class="flex-grow-1 font-weight-bold">Unisex</v-btn>
                                 </v-btn-toggle>
                             </v-col>
                         </v-row>
                     </v-card-text>
                 </v-card>
-
             </v-col>
         </v-row>
 
@@ -1683,8 +1667,7 @@ const handleSave = async () => {
 
         <VariantFormModal :open="variantModal.open" :mode="variantModal.mode" :variant="variantModal.variant"
             :options="variantOptions" :submitting="variantModal.submitting" :productCode="product.maSanPham"
-            :lock-attributes-on-edit="isEditMode"
-            :allow-image-upload="!isEditMode || variantModal.mode === 'create'"
+            :lock-attributes-on-edit="isEditMode" :allow-image-upload="!isEditMode || variantModal.mode === 'create'"
             @close="closeVariantModal" @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
     </v-container>
 </template>
@@ -1732,7 +1715,7 @@ const handleSave = async () => {
 
 .create-config-preview__title {
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: #64748b;
@@ -1855,12 +1838,12 @@ const handleSave = async () => {
     background: #f8fafc;
     color: #64748b;
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
 }
 
-.variant-group-row + .variant-group-row {
+.variant-group-row+.variant-group-row {
     border-top: 1px solid rgba(148, 163, 184, 0.12);
 }
 
@@ -1883,7 +1866,7 @@ const handleSave = async () => {
 .variant-image-section__title {
     display: flex;
     align-items: center;
-    font-weight: 800;
+    font-weight: 600;
     color: #1f2937;
     margin-bottom: 16px;
 }
@@ -1956,7 +1939,7 @@ const handleSave = async () => {
     background: #f8fafc;
     color: #475569;
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     white-space: nowrap;
@@ -2014,3 +1997,4 @@ const handleSave = async () => {
     }
 }
 </style>
+

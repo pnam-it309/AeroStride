@@ -19,6 +19,7 @@ public interface AdminHoaDonRepository extends HoaDonRepository {
                 hd.ngayTao,
                 kh.ten,
                 hd.soDienThoaiNguoiNhan,
+                nv.ma,
                 nv.ten,
                 hd.loaiDon,
                 hd.phiVanChuyen,

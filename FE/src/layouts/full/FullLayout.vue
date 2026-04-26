@@ -5,24 +5,19 @@ import MainView from './Main.vue';
 
 <template>
     <v-locale-provider>
-        <v-app style="height: 100vh; overflow: hidden !important; background-color: #ffffff;">
-            <MainView />
-            <v-main style="height: 100vh; overflow: hidden !important;">
-                <v-container
-                    fluid
-                    class="page-wrapper px-0 pt-0 pb-0"
-                    style="height: 100%; overflow: hidden !important; display: flex; flex-direction: column;"
-                >
-                    <div class="content-shell">
-                        <RouterView v-slot="{ Component }">
-                            <transition name="page-fade" mode="out-in">
-                                <component :is="Component" />
-                            </transition>
-                        </RouterView>
-                    </div>
-                </v-container>
-            </v-main>
-        </v-app>
+        <MainView />
+        <v-main class="main-content-area">
+            <v-container fluid class="page-wrapper px-0 pt-0 pb-0"
+                style="height: 100%; overflow: hidden !important; display: flex; flex-direction: column;">
+                <div class="content-shell">
+                    <RouterView v-slot="{ Component, route }">
+                        <transition name="page-fade" mode="out-in">
+                            <component :is="Component" :key="route.path" />
+                        </transition>
+                    </RouterView>
+                </div>
+            </v-container>
+        </v-main>
     </v-locale-provider>
 </template>
 
@@ -62,6 +57,12 @@ body {
     padding-bottom: 10px !important;
 }
 
+.main-content-area {
+    height: 100vh;
+    overflow: hidden !important;
+    background-color: #ffffff;
+}
+
 .content-shell {
     width: 100%;
     height: 100%;
@@ -75,7 +76,7 @@ body {
 /* Optimized Smooth Page Transition */
 .page-fade-enter-active,
 .page-fade-leave-active {
-    transition: 
+    transition:
         opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
         transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

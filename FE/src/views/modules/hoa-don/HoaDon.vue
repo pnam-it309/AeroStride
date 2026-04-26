@@ -16,6 +16,8 @@ import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
 import { getOrderStatusMeta } from '@/utils/orderStatus';
 
 const router = useRouter();
+const fromDateFieldRef = ref(null);
+const toDateFieldRef = ref(null);
 const TAB_ALL = 'ALL';
 
 const getTodayDate = () => {
@@ -56,8 +58,8 @@ const {
 }, {
     search: '',
     trangThai: TAB_ALL,
-    fromDate: null,
-    toDate: null,
+    fromDate: getTodayDate(),
+    toDate: getTodayDate(),
     sortDirection: 'DESC'
 });
 
@@ -83,10 +85,11 @@ const tableHeaders = [
     { text: 'STT', align: 'center', width: '50px' },
     { text: 'Mã hóa đơn', align: 'left', width: '100px' },
     { text: 'Khách hàng', align: 'left', width: '130px' },
+    { text: 'Mã nhân viên', align: 'left', width: '110px' },
+    { text: 'Tên nhân viên', align: 'left', width: '130px' },
     { text: 'Số điện thoại', align: 'left', width: '100px' },
     { text: 'Loại hóa đơn', align: 'center', width: '110px' },
     { text: 'Loại thanh toán', align: 'left', width: '140px' },
-    { text: 'Mã nhân viên', align: 'left', width: '140px' },
     { text: 'Tổng tiền', align: 'left', width: '100px' },
     { text: 'Trạng thái', align: 'center', width: '160px' },
     { text: 'Hành động', align: 'center', width: '90px' }
@@ -95,7 +98,7 @@ const tableHeaders = [
 const loadCounts = async () => {
     try {
         const params = {
-            search: filters.value.keyword || undefined,
+            search: filters.value.search || undefined,
             tuNgay: filters.value.fromDate || undefined,
             denNgay: filters.value.toDate || undefined
         };
@@ -418,6 +421,14 @@ onMounted(() => loadOrders());
                         <div class="text-dark">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
                     </td>
 
+                    <td class="data-cell">
+                        <div class="text-dark">{{ item.maNhanVien || 'N/A' }}</div>
+                    </td>
+
+                    <td class="data-cell">
+                        <div class="text-dark">{{ item.tenNhanVien || 'Hệ thống' }}</div>
+                    </td>
+
                     <td class="data-cell col-left-tight">
                         <div class="text-dark">{{ item.soDienThoai || 'N/A' }}</div>
                     </td>
@@ -434,12 +445,6 @@ onMounted(() => loadOrders());
 
                     <td class="data-cell">
                         <div class="text-dark">{{ getPaymentLabel(item) }}</div>
-                    </td>
-
-                    <td class="data-cell">
-                        <div class="text-dark">
-                            {{ item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống' }}
-                        </div>
                     </td>
 
                     <td class="data-cell price-value">
@@ -509,12 +514,12 @@ onMounted(() => loadOrders());
                         v-if="getStatusMeta(selectedOrder.trangThai)"
                         :color="getStatusMeta(selectedOrder.trangThai).color"
                         variant="flat"
-                        class="font-weight-bold px-6"
+                        class="font-weight-medium px-6"
                     >
                         <v-icon start size="18">{{ getStatusMeta(selectedOrder.trangThai).icon }}</v-icon>
                         {{ getStatusMeta(selectedOrder.trangThai).text }}
                     </v-chip>
-                    <v-chip v-else color="grey" variant="flat" class="font-weight-bold px-6">—</v-chip>
+                    <v-chip v-else color="grey" variant="flat" class="font-weight-medium px-6">—</v-chip>
                 </v-card-title>
 
                 <v-card-text class="pa-6">
@@ -590,7 +595,19 @@ onMounted(() => loadOrders());
 .stt-cell {
     text-align: center !important;
 }
+
+/* Hide native date picker icon so it only opens via the custom icon click */
+:deep(.date-field input::-webkit-calendar-picker-indicator) {
+    display: none;
+    -webkit-appearance: none;
+}
+
+/* Ensure the date input doesn't trigger native picker on simple click/focus in some browsers */
+:deep(.date-field input) {
+    position: relative;
+}
 </style>
+
 
 
 

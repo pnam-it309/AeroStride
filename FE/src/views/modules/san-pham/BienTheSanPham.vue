@@ -466,3 +466,4 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
   font-size: 13px !important;
 }
 </style>
+

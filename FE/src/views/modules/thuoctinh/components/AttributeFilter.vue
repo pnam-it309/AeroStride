@@ -56,3 +56,4 @@ const handleSearch = () => emit('search');
 <style scoped>
 /* Scoped styles removed in favor of global _admin-common.scss */
 </style>
+

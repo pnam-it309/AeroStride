@@ -126,3 +126,4 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
 <style scoped>
 /* Scoped styles removed in favor of global _admin-common.scss */
 </style>
+
