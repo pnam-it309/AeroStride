@@ -78,8 +78,32 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public HoaDon detail(String id) {
-        return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn với id: " + id));
+        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn với id: " + id));
+        
+        // Force initialization of lazy collections to prevent LazyInitializationException during JSON serialization
+        if (hd.getListsHoaDonChiTiet() != null) {
+            hd.getListsHoaDonChiTiet().size();
+            // Initialize products within details
+            hd.getListsHoaDonChiTiet().forEach(item -> {
+                if (item.getChiTietSanPham() != null) {
+                    item.getChiTietSanPham().getMaChiTietSanPham(); // Init CTSP
+                    if (item.getChiTietSanPham().getSanPham() != null) item.getChiTietSanPham().getSanPham().getTen();
+                    if (item.getChiTietSanPham().getMauSac() != null) item.getChiTietSanPham().getMauSac().getTen();
+                    if (item.getChiTietSanPham().getKichThuoc() != null) item.getChiTietSanPham().getKichThuoc().getTen();
+                }
+            });
+        }
+        if (hd.getListsLichSuHoaDon() != null) hd.getListsLichSuHoaDon().size();
+        if (hd.getListsGiaoDichThanhToan() != null) hd.getListsGiaoDichThanhToan().size();
+        
+        // Initialize staff role
+        if (hd.getNhanVien() != null && hd.getNhanVien().getPhanQuyen() != null) {
+            hd.getNhanVien().getPhanQuyen().getTen();
+        }
+        
+        return hd;
     }
 
     @Override

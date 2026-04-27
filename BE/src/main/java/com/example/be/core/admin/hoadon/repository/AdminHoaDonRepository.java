@@ -82,6 +82,13 @@ public interface AdminHoaDonRepository extends HoaDonRepository {
 
     @Query("SELECT hd FROM HoaDon hd " +
            "LEFT JOIN FETCH hd.khachHang " +
+           "LEFT JOIN FETCH hd.nhanVien nv " +
+           "LEFT JOIN FETCH nv.phanQuyen " +
+           "WHERE hd.id = :id")
+    java.util.Optional<com.example.be.entity.HoaDon> findDetailById(@Param("id") String id);
+
+    @Query("SELECT hd FROM HoaDon hd " +
+           "LEFT JOIN FETCH hd.khachHang " +
            "LEFT JOIN FETCH hd.nhanVien " +
            "LEFT JOIN FETCH hd.listsGiaoDichThanhToan g " +
            "LEFT JOIN FETCH g.phuongThucThanhToan " +

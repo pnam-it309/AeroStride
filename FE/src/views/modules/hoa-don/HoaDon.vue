@@ -16,8 +16,6 @@ import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
 import { getOrderStatusMeta } from '@/utils/orderStatus';
 
 const router = useRouter();
-const fromDateFieldRef = ref(null);
-const toDateFieldRef = ref(null);
 const TAB_ALL = 'ALL';
 
 const getTodayDate = () => {
@@ -83,22 +81,21 @@ const selectedOrder = ref(null);
 
 const tableHeaders = [
     { text: 'STT', align: 'center', width: '50px' },
-    { text: 'Mã hóa đơn', align: 'left', width: '100px' },
-    { text: 'Khách hàng', align: 'left', width: '130px' },
-    { text: 'Mã nhân viên', align: 'left', width: '110px' },
-    { text: 'Tên nhân viên', align: 'left', width: '130px' },
-    { text: 'Số điện thoại', align: 'left', width: '100px' },
-    { text: 'Loại hóa đơn', align: 'center', width: '110px' },
+    { text: 'Mã hóa đơn', align: 'left', width: '120px' },
+    { text: 'Khách hàng', align: 'left', width: '150px' },
+    { text: 'Số điện thoại', align: 'left', width: '120px' },
+    { text: 'Loại hóa đơn', align: 'left', width: '120px' },
     { text: 'Loại thanh toán', align: 'left', width: '140px' },
+    { text: 'Mã nhân viên', align: 'left', width: '140px' },
     { text: 'Tổng tiền', align: 'left', width: '100px' },
-    { text: 'Trạng thái', align: 'center', width: '160px' },
+    { text: 'Trạng thái', align: 'left', width: '120px' },
     { text: 'Hành động', align: 'center', width: '90px' }
 ];
 
 const loadCounts = async () => {
     try {
         const params = {
-            search: filters.value.search || undefined,
+            search: filters.value.keyword || undefined,
             tuNgay: filters.value.fromDate || undefined,
             denNgay: filters.value.toDate || undefined
         };
@@ -240,22 +237,22 @@ onMounted(() => loadOrders());
 
         <div class="filter-top invoice-filter-shell">
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-                <v-col cols="12" md="2">
+                <v-col cols="12" md="4">
                     <div class="filter-field-label">Tìm kiếm</div>
                     <v-text-field
                         v-model="filters.search"
-                        placeholder="Tìm mã hóa đơn / khách hàng"
+                        placeholder="Tìm theo mã hóa đơn / khách hàng"
                         persistent-placeholder
                         variant="outlined"
                         density="compact"
                         hide-details
                         prepend-inner-icon="mdi-magnify"
-                        class="search-field"
+                        class="font-weight-bold search-field"
                         @input="handleSearch"
                     ></v-text-field>
                 </v-col>
 
-                <v-col cols="12" md="3">
+                <v-col cols="12" md="2">
                     <div class="filter-field-label">Hiển thị</div>
                     <v-select
                         v-model="filters.sortDirection"
@@ -265,7 +262,7 @@ onMounted(() => loadOrders());
                         variant="outlined"
                         density="compact"
                         hide-details
-                        class="sort-field"
+                        class="font-weight-bold sort-field"
                         @update:model-value="handleSearch"
                     >
                         <template v-slot:prepend-inner>
@@ -274,7 +271,7 @@ onMounted(() => loadOrders());
                     </v-select>
                 </v-col>
 
-                <v-col cols="12" md="3">
+                <v-col cols="12" md="2">
                     <div class="filter-field-label">Từ ngày</div>
                     <v-text-field
                         ref="fromDateFieldRef"
@@ -284,14 +281,13 @@ onMounted(() => loadOrders());
                         density="compact"
                         class="date-field"
                         append-inner-icon="mdi-calendar-month-outline"
-                        persistent-placeholder
                         hide-details
                         @click:append-inner="openFromDatePicker"
                         @input="handleSearch"
                     ></v-text-field>
                 </v-col>
 
-                <v-col cols="12" md="3">
+                <v-col cols="12" md="2">
                     <div class="filter-field-label">Đến ngày</div>
                     <v-text-field
                         ref="toDateFieldRef"
@@ -329,79 +325,85 @@ onMounted(() => loadOrders());
                     @update:model-value="handleTabChange"
                     height="54"
                 >
-                    <v-tab :value="TAB_ALL" class="text-none px-2 tab-item">
+                    <v-tab :value="TAB_ALL" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-view-grid-outline</v-icon>
                         Tất cả
                         <v-avatar
                             v-if="hasCount(counts.all)"
-                            size="22"
-                            class="ml-2 tab-count-avatar"
+                            size="24"
+                            class="ml-2 tab-count-avatar tab-count-all font-weight-black"
                         >
                             {{ counts.all }}
                         </v-avatar>
                     </v-tab>
-                    <v-tab :value="0" class="text-none px-2 tab-item">
+                    <v-tab :value="0" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-cash-clock</v-icon>
                         Chờ thanh toán
                         <v-avatar
                             v-if="hasCount(counts.pendingPayment)"
-                            size="22"
-                            class="ml-2 tab-count-avatar"
+                            size="24"
+                            color="#f59e0b"
+                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
                         >
                             {{ counts.pendingPayment }}
                         </v-avatar>
                     </v-tab>
-                    <v-tab :value="1" class="text-none px-2 tab-item">
+                    <v-tab :value="1" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-progress-clock</v-icon>
                         Đang xử lý
                         <v-avatar
                             v-if="hasCount(counts.processing)"
-                            size="22"
-                            class="ml-2 tab-count-avatar"
+                            size="24"
+                            color="#3b82f6"
+                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
                         >
                             {{ counts.processing }}
                         </v-avatar>
                     </v-tab>
-                    <v-tab :value="2" class="text-none px-2 tab-item">
+                    <v-tab :value="2" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-truck-fast-outline</v-icon>
                         Đã gửi hàng
                         <v-avatar
                             v-if="hasCount(counts.shipped)"
-                            size="22"
-                            class="ml-2 tab-count-avatar"
+                            size="24"
+                            color="#f97316"
+                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
                         >
                             {{ counts.shipped }}
                         </v-avatar>
                     </v-tab>
-                    <v-tab :value="3" class="text-none px-2 tab-item">
+                    <v-tab :value="3" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-checkbox-marked-circle-outline</v-icon>
                         Đã giao
                         <v-avatar
                             v-if="hasCount(counts.delivered)"
-                            size="22"
-                            class="ml-2 tab-count-avatar"
+                            size="24"
+                            color="#10b981"
+                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
                         >
                             {{ counts.delivered }}
                         </v-avatar>
                     </v-tab>
-                    <v-tab :value="4" class="text-none px-2 tab-item">
+                    <v-tab :value="4" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-close-circle-outline</v-icon>
                         Đã hủy
                         <v-avatar
                             v-if="hasCount(counts.cancelled)"
-                            size="22"
-                            class="ml-2 tab-count-avatar"
+                            size="24"
+                            color="#ef4444"
+                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
                         >
                             {{ counts.cancelled }}
                         </v-avatar>
                     </v-tab>
-                    <v-tab :value="5" class="text-none px-2 tab-item">
+                    <v-tab :value="5" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-cash-refund</v-icon>
                         Hoàn tiền
                         <v-avatar
                             v-if="hasCount(counts.refunded)"
-                            size="22"
-                            class="ml-2 tab-count-avatar"
+                            size="24"
+                            color="#6366f1"
+                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
                         >
                             {{ counts.refunded }}
                         </v-avatar>
@@ -411,31 +413,23 @@ onMounted(() => loadOrders());
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell stt-cell text-slate-400">{{ getRowNumber(index) }}</td>
+                    <td class="data-cell stt-cell text-slate-400 font-weight-medium">{{ getRowNumber(index) }}</td>
 
                     <td class="data-cell col-left-tight">
-                        <div class="text-caption text-dark">{{ item.maHoaDon }}</div>
+                        <div class="text-caption font-weight-medium text-dark">{{ item.maHoaDon }}</div>
                     </td>
 
                     <td class="data-cell col-left-tight">
-                        <div class="text-dark">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
+                        <div class="text-caption font-weight-medium text-dark">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
+                    </td>
+
+                    <td class="data-cell col-left-tight">
+                        <div class="text-caption font-weight-medium text-dark">{{ item.soDienThoai || 'N/A' }}</div>
                     </td>
 
                     <td class="data-cell">
-                        <div class="text-dark">{{ item.maNhanVien || 'N/A' }}</div>
-                    </td>
-
-                    <td class="data-cell">
-                        <div class="text-dark">{{ item.tenNhanVien || 'Hệ thống' }}</div>
-                    </td>
-
-                    <td class="data-cell col-left-tight">
-                        <div class="text-dark">{{ item.soDienThoai || 'N/A' }}</div>
-                    </td>
-
-                    <td class="data-cell text-center">
                         <v-chip
-                            :class="['status-chip', getOrderTypeClass(item.loaiDon)]"
+                            :class="['font-weight-black text-white status-chip', getOrderTypeClass(item.loaiDon)]"
                             variant="flat"
                             size="small"
                         >
@@ -444,19 +438,25 @@ onMounted(() => loadOrders());
                     </td>
 
                     <td class="data-cell">
-                        <div class="text-dark">{{ getPaymentLabel(item) }}</div>
+                        <div class="text-caption font-weight-medium text-dark">{{ getPaymentLabel(item) }}</div>
+                    </td>
+
+                    <td class="data-cell">
+                        <div class="text-caption font-weight-medium text-dark">
+                            {{ item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống' }}
+                        </div>
                     </td>
 
                     <td class="data-cell price-value">
-                        <div class="text-dark font-weight-medium">
+                        <div class="text-subtitle-2 font-weight-black total-price-text">
                             {{ formatCurrency(item.tongTienSauGiam || item.tongTien) }}
                         </div>
                     </td>
 
-                    <td class="data-cell status-cell text-center">
+                    <td class="data-cell status-cell">
                         <template v-if="getStatusMeta(item.trangThai)">
                             <v-chip
-                                :class="['status-chip', getStatusMeta(item.trangThai).chipClass]"
+                                :class="['font-weight-black text-white status-chip', getStatusMeta(item.trangThai).chipClass]"
                                 variant="flat"
                                 size="small"
                             >
@@ -514,12 +514,12 @@ onMounted(() => loadOrders());
                         v-if="getStatusMeta(selectedOrder.trangThai)"
                         :color="getStatusMeta(selectedOrder.trangThai).color"
                         variant="flat"
-                        class="font-weight-medium px-6"
+                        class="font-weight-bold px-6"
                     >
                         <v-icon start size="18">{{ getStatusMeta(selectedOrder.trangThai).icon }}</v-icon>
                         {{ getStatusMeta(selectedOrder.trangThai).text }}
                     </v-chip>
-                    <v-chip v-else color="grey" variant="flat" class="font-weight-medium px-6">—</v-chip>
+                    <v-chip v-else color="grey" variant="flat" class="font-weight-bold px-6">—</v-chip>
                 </v-card-title>
 
                 <v-card-text class="pa-6">
@@ -595,19 +595,6 @@ onMounted(() => loadOrders());
 .stt-cell {
     text-align: center !important;
 }
-
-/* Hide native date picker icon so it only opens via the custom icon click */
-:deep(.date-field input::-webkit-calendar-picker-indicator) {
-    display: none;
-    -webkit-appearance: none;
-}
-
-/* Ensure the date input doesn't trigger native picker on simple click/focus in some browsers */
-:deep(.date-field input) {
-    position: relative;
-}
 </style>
-
-
 
 

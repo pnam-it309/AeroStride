@@ -61,7 +61,7 @@ const order = ref({
     tenKhachHang: "",
     email: "",
     soDienThoai: "",
-    trangThai: 1,
+    trangThai: 'CHO_XAC_NHAN',
     ngayTao: "",
     tongTien: 0,
     tongTienSauGiam: 0,
@@ -175,14 +175,17 @@ const timelineSteps = computed(() => {
     }
 
     const currentIndex = status === null ? -1 : steps.findIndex(s => s.key === status);
+    
+    // Chỉ hiển thị các bước từ khởi đầu cho đến trạng thái hiện tại của đơn hàng
+    // Các trạng thái sau đó sẽ bị ẩn đi theo yêu cầu của người dùng
+    const visibleSteps = currentIndex === -1 ? [] : steps.slice(0, currentIndex + 1);
+    
     const tsMap = getStatusTimestampMap.value;
 
-    return steps.map((step, index) => ({
+    return visibleSteps.map((step, index) => ({
         ...step,
         timestamp: tsMap?.[step.key] ?? null,
-        state:
-            currentIndex === -1 ? "pending" :
-                (index === currentIndex ? "active" : index < currentIndex ? "done" : "pending"),
+        state: index === currentIndex ? "active" : "done", // Tất cả các bước hiển thị đều là 'done' hoặc 'active'
         tone: getStatusTone(step.key)
     }));
 });
@@ -336,7 +339,7 @@ const removeItem = (idHdct) => {
 
 const loadEmployees = async () => {
     try {
-        const data = await dichVuNhanVien.layNhanVienPhanTrang({ size: 1000, trangThai: 1 });
+        const data = await dichVuNhanVien.layNhanVienPhanTrang({ size: 1000, trangThai: 'DANG_HOAT_DONG' });
         employees.value = data.content || [];
     } catch (e) {
         console.error("Load employees failed", e);
@@ -430,29 +433,29 @@ onMounted(() => {
             </div>
         </v-card>
 
-        <!-- Timeline Progress -->
         <v-card class="premium-card-detail mb-6 pa-6 overflow-hidden premium-timeline">
             <div class="timeline-wrap">
-                <div v-for="(step, index) in timelineSteps" :key="index" class="timeline-step"
-                    :class="[step.state, step.tone]">
-                    <div class="node-section">
-                        <div class="line left" v-if="index > 0" :class="{ active: step.state !== 'pending' }"></div>
-                        <div class="node" :class="[step.state, step.tone]">
-                            <component :is="step.icon" size="22" />
+                <transition-group name="timeline-anim">
+                    <div v-for="(step, index) in timelineSteps" :key="step.key" class="timeline-step"
+                        :class="[step.state, step.tone]">
+                        <div class="node-section">
+                            <div class="line left" v-if="index > 0" :class="{ active: true }"></div>
+                            <div class="node" :class="[step.state, step.tone]">
+                                <component :is="step.icon" size="22" />
+                            </div>
+                            <div class="line right" v-if="index < timelineSteps.length - 1"
+                                :class="{ active: true }"></div>
                         </div>
-                        <div class="line right" v-if="index < timelineSteps.length - 1"
-                            :class="{ active: timelineSteps[index + 1]?.state !== 'pending' }"></div>
-                    </div>
-                    <div class="timeline-info">
-                        <div class="label">{{ step.label }}</div>
-                        <div class="note">{{ step.note }}</div>
-                        <div v-if="step.timestamp" class="text-caption text-slate-400 mt-1">
-                            {{ formatDate(step.timestamp) }}
+                        <div class="timeline-info">
+                            <div class="label">{{ step.label }}</div>
+                            <div class="note">{{ step.note }}</div>
+                            <div v-if="step.timestamp" class="text-caption text-slate-400 mt-1">
+                                {{ formatDate(step.timestamp) }}
+                            </div>
                         </div>
                     </div>
-                </div>
+                </transition-group>
             </div>
-
         </v-card>
 
         <v-row v-if="loaded">
@@ -505,7 +508,7 @@ onMounted(() => {
                                         <span class="info-label">Hạng khách hàng:</span>
                                         <div class="info-value">
                                             <v-chip size="x-small" color="primary" variant="flat"
-                                                class="font-weight-medium text-white">Thành viên</v-chip>
+                                                class="font-weight-bold text-white">Thành viên</v-chip>
                                         </div>
                                     </div>
                                 </div>
@@ -545,18 +548,11 @@ onMounted(() => {
                                                 <v-icon size="24" color="primary">mdi-shoe-sneaker</v-icon>
                                             </div>
                                             <div>
-                                                <div class="font-weight-bold text-slate-800">
-                                                    {{ item.tenSanPham || item.chiTietSanPham?.sanPham?.ten || 'Sản phẩm' }}
-                                                    <span class="text-primary ml-1" style="font-size: 0.85em">[{{ item.maChiTietSanPham || item.chiTietSanPham?.maChiTietSanPham || 'N/A' }}]</span>
-                                                </div>
-                                                <div class="text-caption text-slate-500 d-flex align-center mt-1">
-                                                    <v-chip size="x-small" variant="tonal" class="mr-2 px-2" color="slate-600">
-                                                        Màu: {{ item.tenMauSac || item.chiTietSanPham?.mauSac?.ten || '—' }}
-                                                    </v-chip>
-                                                    <v-chip size="x-small" variant="tonal" class="px-2" color="slate-600">
-                                                        Size: {{ item.tenKichThuoc || item.chiTietSanPham?.kichThuoc?.ten || '—' }}
-                                                    </v-chip>
-                                                </div>
+                                                <div class="font-weight-bold text-slate-800">{{ item.tenSanPham }}</div>
+                                                <div class="text-caption text-slate-500">Màu: {{ item.tenMauSac }} |
+                                                    Size:
+                                                    {{
+                                                        item.tenKichThuoc }}</div>
                                             </div>
                                         </div>
                                     </td>
@@ -597,41 +593,36 @@ onMounted(() => {
                             <v-timeline side="end" align="start" density="compact">
                                 <v-timeline-item v-for="(log, idx) in order.listsLichSuHoaDon" :key="idx"
                                     :dot-color="getStatusInfo(log.trangThaiMoi).color" size="small">
-                                    <div class="d-flex align-center w-100 justify-space-between">
-                                        <div style="flex: 1; min-width: 0;" class="pr-4">
-                                            <div class="font-weight-bold text-slate-800">{{ getStatusInfo(log.trangThaiMoi).text }}</div>
-                                            <div class="text-body-2 text-slate-500 mt-1">
+                                    <div class="d-flex justify-space-between w-100">
+                                        <div class="pr-10">
+                                            <div class="font-weight-bold text-slate-800">{{
+                                                getStatusInfo(log.trangThaiMoi).text
+                                                }}</div>
+                                            <div class="text-body-2 text-slate-600 mt-1">
                                                 {{ log.ghiChu || 'Cập nhật trạng thái từ hệ thống quản trị' }}
                                             </div>
-                                        </div>
-                                        
-                                        <div style="width: 280px; white-space: nowrap;" class="text-center px-4">
-                                            <div class="text-caption text-slate-500">
-                                                Người thực hiện: <span class="text-primary font-weight-bold">{{ log.nguoiThucHien || 'ADMIN' }}</span>
+                                            <div class="text-caption text-primary mt-2 font-weight-bold">
+                                                Người thực hiện: {{ log.nguoiThucHien || 'ADMIN' }}
                                             </div>
                                         </div>
-
-                                        <div style="width: 260px; white-space: nowrap;" class="text-caption text-slate-500 font-weight-medium text-right">
-                                            Thời gian: <span class="font-weight-bold">{{ formatDate(log.ngayTao) }}</span>
+                                        <div class="text-caption text-slate-400 font-weight-bold text-right"
+                                            style="min-width: 140px;">
+                                            {{ formatDate(log.ngayTao) }}
                                         </div>
                                     </div>
                                 </v-timeline-item>
                                 <v-timeline-item v-if="!order.listsLichSuHoaDon || order.listsLichSuHoaDon.length === 0"
                                     dot-color="success" size="small">
-                                    <div class="d-flex align-center w-100 justify-space-between">
-                                        <div style="flex: 1;">
+                                    <div class="d-flex justify-space-between w-100">
+                                        <div>
                                             <div class="font-weight-bold text-slate-800">Khởi tạo đơn hàng</div>
-                                            <div class="text-caption text-slate-500 mt-1">Đơn hàng được ghi nhận vào hệ thống</div>
-                                        </div>
-
-                                        <div style="width: 280px; white-space: nowrap;" class="text-center px-4">
-                                            <div class="text-caption text-slate-500">
-                                                Người thực hiện: <span class="text-primary font-weight-bold">Hệ thống</span>
+                                            <div class="text-caption text-slate-500 mt-1">Đơn hàng được ghi nhận vào hệ
+                                                thống
                                             </div>
                                         </div>
-
-                                        <div style="width: 260px; white-space: nowrap;" class="text-caption text-slate-500 font-weight-medium text-right">
-                                            Thời gian: <span class="font-weight-bold">{{ formatDate(order.ngayTao) }}</span>
+                                        <div class="text-caption text-slate-400 font-weight-bold text-right"
+                                            style="min-width: 140px;">
+                                            {{ formatDate(order.ngayTao) }}
                                         </div>
                                     </div>
                                 </v-timeline-item>
@@ -695,7 +686,7 @@ onMounted(() => {
                         <div class="info-group mb-6">
                             <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Loại đơn hàng
                             </div>
-                            <v-chip variant="tonal" color="primary" class="font-weight-medium">
+                            <v-chip variant="tonal" color="primary" class="font-weight-bold">
                                 {{ order.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi' }}
                             </v-chip>
                         </div>
@@ -841,23 +832,17 @@ onMounted(() => {
                                 <v-table class="items-table-compact">
                                     <thead>
                                         <tr>
-                                            <th class="py-3 text-caption font-weight-medium">Sản phẩm</th>
-                                            <th class="text-center py-3 text-caption font-weight-medium">SL</th>
-                                            <th class="text-right py-3 text-caption font-weight-medium">Xóa</th>
+                                            <th class="py-3 text-caption font-weight-bold">Sản phẩm</th>
+                                            <th class="text-center py-3 text-caption font-weight-bold">SL</th>
+                                            <th class="text-right py-3 text-caption font-weight-bold">Xóa</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr v-for="item in order.listsHoaDonChiTiet" :key="item.id" class="hover-row">
                                             <td class="py-3">
-                                                <div class="text-subtitle-2 font-weight-bold text-slate-800">
-                                                    {{ item.tenSanPham || item.chiTietSanPham?.sanPham?.ten || 'Sản phẩm' }}
-                                                </div>
-                                                <div class="text-caption text-slate-400 font-weight-bold">
-                                                    Mã: {{ item.maChiTietSanPham || item.chiTietSanPham?.maChiTietSanPham || 'N/A' }}
-                                                </div>
+                                                <div class="text-subtitle-2 font-weight-bold text-slate-800">{{ item.tenSanPham }}</div>
                                                 <div class="text-caption text-slate-500">
-                                                    {{ item.tenMauSac || item.chiTietSanPham?.mauSac?.ten || '—' }} | 
-                                                    {{ item.tenKichThuoc || item.chiTietSanPham?.kichThuoc?.ten || '—' }}
+                                                    {{ item.tenMauSac }} | {{ item.tenKichThuoc }}
                                                 </div>
                                                 <div class="text-caption font-weight-bold text-primary mt-1">
                                                     {{ formatCurrency(item.donGia) }}
@@ -1045,5 +1030,24 @@ onMounted(() => {
 .bg-primary-light {
     background: #eff6ff;
 }
-</style>
 
+/* Timeline Animation */
+.timeline-anim-enter-active,
+.timeline-anim-leave-active {
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.timeline-anim-enter-from {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+}
+
+.timeline-anim-leave-to {
+    opacity: 0;
+    transform: scale(0.8) translateY(-20px);
+}
+
+.timeline-anim-move {
+    transition: transform 0.5s ease;
+}
+</style>
