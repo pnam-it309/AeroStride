@@ -183,7 +183,7 @@ onMounted(init);
                     class="text-none font-weight-bold text-white px-8 rounded-lg h-11 elevation-4" @click="handleSave"
                     :loading="saving">
                     <v-icon size="18" class="mr-2 text-white">mdi-check-all</v-icon>
-                    {{ isEditMode ? 'Cập nhật thay đổi' : 'Kích hoạt Voucher' }}
+                    {{ isEditMode ? 'Cập nhật thay đổi' : 'Thêm mới phiếu giảm giá' }}
                 </v-btn>
             </div>
         </div>
