@@ -239,13 +239,13 @@ onMounted(() => loadCampaigns());
 }
 
 :deep(.status-chip-active) {
-    background-color: #f0f1ff !important;
-    color: #1e257c !important;
+    background-color: #10b9811a !important;
+    color: #10b981 !important;
 }
 
 :deep(.status-chip-inactive) {
-    background-color: #fef2f2 !important;
-    color: #991b1b !important;
+    background-color: #ef44441a !important;
+    color: #ef4444 !important;
 }
 </style>
 

@@ -429,7 +429,7 @@ onMounted(() => loadOrders());
 
                     <td class="data-cell">
                         <v-chip
-                            :class="['font-weight-black text-white status-chip', getOrderTypeClass(item.loaiDon)]"
+                            :class="['font-weight-black status-chip', getOrderTypeClass(item.loaiDon)]"
                             variant="flat"
                             size="small"
                         >
@@ -456,7 +456,7 @@ onMounted(() => loadOrders());
                     <td class="data-cell status-cell">
                         <template v-if="getStatusMeta(item.trangThai)">
                             <v-chip
-                                :class="['font-weight-black text-white status-chip', getStatusMeta(item.trangThai).chipClass]"
+                                :class="['font-weight-black status-chip', getStatusMeta(item.trangThai).chipClass]"
                                 variant="flat"
                                 size="small"
                             >

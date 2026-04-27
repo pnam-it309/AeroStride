@@ -168,7 +168,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     @Override
     public byte[] exportExcel() {
         List<AdminNhanVienResponse> data = adminNhanVienRepository.hienThi();
-        String[] headers = {"STT", "Mã", "Tên", "Email", "SĐT", "Ngày sinh", "Giới tính", "Chức vụ", "Trạng thái"};
+        String[] headers = {"STT", "Mã", "Tên", "Email", "SĐT", "Ngày sinh", "Giới tính", "Địa chỉ", "Chức vụ", "Trạng thái"};
         try {
             return ExcelUtils.exportToExcel("Danh sách nhân viên", headers, data, item -> new Object[]{
                     data.indexOf(item) + 1,
@@ -178,6 +178,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
                     item.getSdt(),
                     item.getNgaySinh(),
                     item.getGioiTinh(),
+                    item.getDiaChi(),
                     item.getTenPhanQuyen(),
                     item.getTrangThai() == TrangThai.DANG_HOAT_DONG ? "Đang làm việc" : "Đã nghỉ việc"
             });
@@ -217,6 +218,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         nv.setSdt(req.getSdt());
         nv.setNgaySinh(req.getNgaySinh());
         nv.setHinhAnh(req.getHinhAnh());
+        nv.setDiaChi(req.getDiaChi());
     }
 
     /** Small random numeric suffix to avoid username collisions. */

@@ -42,6 +42,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
 
 
     @Override
+    @Transactional(readOnly = true)
     public Page<AdminDotGiamGiaResponse> search(AdminDotGiamGiaSearchRequest request) {
         return SearchUtils.execute(request, pageable -> repo.phanTrang(request.getKeyword(), pageable));
     }
@@ -109,6 +110,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public byte[] exportExcel() {
         Pageable pageable = PaginationUtils.createPageable(0, Integer.MAX_VALUE, "id", "desc");
         List<AdminDotGiamGiaResponse> data = repo.phanTrang(null, pageable).getContent();
@@ -130,6 +132,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AdminDotGiamGiaResponse findById(String id) {
         AdminDotGiamGiaResponse res = repo.getDetailById(id);
         if (res == null) {
@@ -139,6 +142,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductVariantResponse> getAvailableVariants() {
         return chiTietSanPhamRepo.findAllByXoaMemFalse()
                 .stream()
@@ -147,6 +151,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductVariantResponse> getAppliedVariants(String campaignId) {
         return chiTietDotGiamGiaRepo.findByDotGiamGiaId(campaignId)
                 .stream()

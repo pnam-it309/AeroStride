@@ -14,16 +14,16 @@ import java.util.Optional;
 @Repository
 public interface AdminChiTietSanPhamRepository extends ChiTietSanPhamRepository {
 
-    @EntityGraph(attributePaths = {"sanPham", "mauSac", "kichThuoc"})
+    @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc"})
     Optional<ChiTietSanPham> findByIdAndXoaMemFalse(String id);
 
-    @EntityGraph(attributePaths = {"sanPham", "mauSac", "kichThuoc"})
+    @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc"})
     List<ChiTietSanPham> findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(String sanPhamId);
 
-    @EntityGraph(attributePaths = {"sanPham", "mauSac", "kichThuoc"})
+    @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc"})
     List<ChiTietSanPham> findBySanPhamIdAndXoaMemFalse(String sanPhamId);
  
-    @EntityGraph(attributePaths = {"sanPham", "mauSac", "kichThuoc"})
+    @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc"})
     List<ChiTietSanPham> findAllByXoaMemFalse();
 
     Optional<ChiTietSanPham> findBySanPhamIdAndMauSacIdAndKichThuocIdAndXoaMemFalse(String sanPhamId, String mauSacId, String kichThuocId);

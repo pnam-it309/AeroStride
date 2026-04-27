@@ -6,11 +6,7 @@ import com.example.be.core.admin.hoadon.model.request.AdminUpdateHoaDonRequest;
 import com.example.be.core.admin.hoadon.model.response.AdminHoaDonResponse;
 import com.example.be.core.admin.hoadon.repository.AdminHoaDonRepository;
 import com.example.be.core.admin.hoadon.service.AdminHoaDonService;
-import com.example.be.entity.ChiTietSanPham;
-import com.example.be.entity.HoaDon;
-import com.example.be.entity.HoaDonChiTiet;
-import com.example.be.entity.KhachHang;
-import com.example.be.entity.LichSuTrangThaiHoaDon;
+import com.example.be.entity.*;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.infrastructure.exceptions.SystemException;
@@ -85,22 +81,66 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         // Force initialization of lazy collections to prevent LazyInitializationException during JSON serialization
         if (hd.getListsHoaDonChiTiet() != null) {
             hd.getListsHoaDonChiTiet().size();
-            // Initialize products within details
+            // Initialize products and their related entities within details
             hd.getListsHoaDonChiTiet().forEach(item -> {
                 if (item.getChiTietSanPham() != null) {
-                    item.getChiTietSanPham().getMaChiTietSanPham(); // Init CTSP
-                    if (item.getChiTietSanPham().getSanPham() != null) item.getChiTietSanPham().getSanPham().getTen();
-                    if (item.getChiTietSanPham().getMauSac() != null) item.getChiTietSanPham().getMauSac().getTen();
-                    if (item.getChiTietSanPham().getKichThuoc() != null) item.getChiTietSanPham().getKichThuoc().getTen();
+                    ChiTietSanPham ctsp = item.getChiTietSanPham();
+                    ctsp.getMaChiTietSanPham(); // Init CTSP
+                    
+                    if (ctsp.getSanPham() != null) {
+                        SanPham sp = ctsp.getSanPham();
+                        sp.getTen(); // Init SanPham
+                        // Initialize all lazy attributes of SanPham that Jackson might touch
+                        if (sp.getThuongHieu() != null) sp.getThuongHieu().getTen();
+                        if (sp.getDanhMuc() != null) sp.getDanhMuc().getTen();
+                        if (sp.getXuatXu() != null) sp.getXuatXu().getTen();
+                        if (sp.getChatLieu() != null) sp.getChatLieu().getTen();
+                        if (sp.getDeGiay() != null) sp.getDeGiay().getTen();
+                        if (sp.getCoGiay() != null) sp.getCoGiay().getTen();
+                        if (sp.getMucDichChay() != null) sp.getMucDichChay().getTen();
+                    }
+                    
+                    if (ctsp.getMauSac() != null) ctsp.getMauSac().getTen();
+                    if (ctsp.getKichThuoc() != null) ctsp.getKichThuoc().getTen();
+                    
+                    // Initialize collections
+                    if (ctsp.getAnhChiTietSanPhams() != null) {
+                        ctsp.getAnhChiTietSanPhams().size();
+                    }
+                    if (ctsp.getChiTietDotGiamGias() != null) {
+                        ctsp.getChiTietDotGiamGias().size();
+                    }
                 }
             });
         }
-        if (hd.getListsLichSuHoaDon() != null) hd.getListsLichSuHoaDon().size();
-        if (hd.getListsGiaoDichThanhToan() != null) hd.getListsGiaoDichThanhToan().size();
         
-        // Initialize staff role
-        if (hd.getNhanVien() != null && hd.getNhanVien().getPhanQuyen() != null) {
-            hd.getNhanVien().getPhanQuyen().getTen();
+        if (hd.getListsLichSuHoaDon() != null) {
+            hd.getListsLichSuHoaDon().size();
+        }
+        
+        if (hd.getListsGiaoDichThanhToan() != null) {
+            hd.getListsGiaoDichThanhToan().size();
+            hd.getListsGiaoDichThanhToan().forEach(gd -> {
+                if (gd.getPhuongThucThanhToan() != null) {
+                    gd.getPhuongThucThanhToan().getTen();
+                }
+            });
+        }
+        
+        // Initialize other lazy relationships of HoaDon
+        if (hd.getPhieuGiamGia() != null) hd.getPhieuGiamGia().getTen();
+        
+        // Initialize staff role and related entities
+        if (hd.getNhanVien() != null) {
+            hd.getNhanVien().getTen();
+            if (hd.getNhanVien().getPhanQuyen() != null) {
+                hd.getNhanVien().getPhanQuyen().getTen();
+            }
+        }
+
+        // Initialize customer
+        if (hd.getKhachHang() != null) {
+            hd.getKhachHang().getTen();
         }
         
         return hd;
