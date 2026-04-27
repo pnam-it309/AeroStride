@@ -38,7 +38,7 @@
     },
     "devDependencies": {
         "@mdi/font": "^6.5.95",
-        "@rushstack/eslint-patch": "^1.1.0",
+        "@rushstack/eslint-patch": "^1.16.1",
         "@stomp/stompjs": "^7.3.0",
         "@vitejs/plugin-vue": "4.0.0",
         "@vue/eslint-config-prettier": "^7.0.0",
