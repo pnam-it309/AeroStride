@@ -6,27 +6,28 @@ updates:
     directory: "/BE"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 10
     groups:
-      backend-dependencies:
+      spring-boot:
         patterns:
-          - "*"
+          - "org.springframework.boot*"
+          - "org.springframework.security*"
 
   # Maintain dependencies for the Vue Frontend (npm)
   - package-ecosystem: "npm"
     directory: "/FE"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 10
     groups:
-      frontend-dependencies:
+      vue-ecosystem:
         patterns:
-          - "*"
+          - "vue*"
+          - "@vue*"
+          - "vite*"
 
   # Maintain GitHub Actions dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 1
-
