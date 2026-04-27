@@ -1,10 +1,12 @@
 export const ORDER_STATUS = Object.freeze({
-    PENDING_PAYMENT: 0,
-    PROCESSING: 1,
-    SHIPPED: 2,
-    DELIVERED: 3,
-    CANCELLED: 4,
-    REFUNDED: 5
+    CHO_THANH_TOAN: 0,
+    CHO_XAC_NHAN: 1,
+    CHO_GIAO_HANG: 2,
+    DANG_VAN_CHUYEN: 3,
+    DA_GIAO_HANG: 4,
+    DA_THANH_TOAN: 5,
+    HOAN_THANH: 6,
+    DA_HUY: 7
 });
 
 const toEnumKey = (value) => {
@@ -12,26 +14,19 @@ const toEnumKey = (value) => {
 
     if (typeof value === 'number' && Number.isFinite(value)) {
         switch (value) {
-            case 0:
-                return 'PENDING_PAYMENT';
-            case 1:
-                return 'PROCESSING';
-            case 2:
-                return 'SHIPPED';
-            case 3:
-                return 'DELIVERED';
-            case 4:
-                return 'CANCELLED';
-            case 5:
-                return 'REFUNDED';
-            default:
-                return null;
+            case 0: return 'CHO_THANH_TOAN';
+            case 1: return 'CHO_XAC_NHAN';
+            case 2: return 'CHO_GIAO_HANG';
+            case 3: return 'DANG_VAN_CHUYEN';
+            case 4: return 'DA_GIAO_HANG';
+            case 5: return 'DA_THANH_TOAN';
+            case 6: return 'HOAN_THANH';
+            case 7: return 'DA_HUY';
+            default: return null;
         }
     }
 
     const s = String(value).trim().toUpperCase();
-
-    // Support BE enum name or FE legacy numeric strings
     if (s in ORDER_STATUS) return s;
 
     const numericValue = Number(s);
@@ -45,7 +40,7 @@ export const getOrderStatusMeta = (value) => {
     if (!key) return null;
 
     switch (key) {
-        case 'PENDING_PAYMENT':
+        case 'CHO_THANH_TOAN':
             return {
                 key,
                 ordinal: 0,
@@ -54,50 +49,68 @@ export const getOrderStatusMeta = (value) => {
                 chipClass: 'status-chip-pending',
                 icon: 'mdi-cash-clock'
             };
-        case 'PROCESSING':
+        case 'CHO_XAC_NHAN':
             return {
                 key,
                 ordinal: 1,
-                text: 'Đang xử lý',
+                text: 'Chờ xác nhận',
                 color: 'info',
                 chipClass: 'status-chip-confirmed',
                 icon: 'mdi-progress-clock'
             };
-        case 'SHIPPED':
+        case 'CHO_GIAO_HANG':
             return {
                 key,
                 ordinal: 2,
-                text: 'Đã gửi hàng',
+                text: 'Chờ giao hàng',
                 color: 'primary',
                 chipClass: 'status-chip-waiting-delivery',
-                icon: 'mdi-truck-fast-outline'
+                icon: 'mdi-truck-delivery-outline'
             };
-        case 'DELIVERED':
+        case 'DANG_VAN_CHUYEN':
             return {
                 key,
                 ordinal: 3,
-                text: 'Đã giao',
+                text: 'Đang vận chuyển',
+                color: 'cyan',
+                chipClass: 'status-chip-delivering',
+                icon: 'mdi-truck-fast-outline'
+            };
+        case 'DA_GIAO_HANG':
+            return {
+                key,
+                ordinal: 4,
+                text: 'Đã giao hàng',
+                color: 'indigo',
+                chipClass: 'status-chip-delivered',
+                icon: 'mdi-package-variant-closed-check'
+            };
+        case 'DA_THANH_TOAN':
+            return {
+                key,
+                ordinal: 5,
+                text: 'Đã thanh toán',
+                color: 'teal',
+                chipClass: 'status-chip-paid',
+                icon: 'mdi-currency-usd'
+            };
+        case 'HOAN_THANH':
+            return {
+                key,
+                ordinal: 6,
+                text: 'Hoàn thành',
                 color: 'success',
                 chipClass: 'status-chip-completed',
                 icon: 'mdi-checkbox-marked-circle-outline'
             };
-        case 'CANCELLED':
+        case 'DA_HUY':
             return {
                 key,
-                ordinal: 4,
+                ordinal: 7,
                 text: 'Đã hủy',
                 color: 'error',
                 chipClass: 'status-chip-cancelled',
                 icon: 'mdi-close-circle-outline'
-            };
-        case 'REFUNDED':
-            return {
-                key,
-                ordinal: 5,
-                text: 'Hoàn tiền',
-                color: 'orange',
-                chipClass: 'status-chip-delivering',
-                icon: 'mdi-cash-refund'
             };
         default:
             return null;

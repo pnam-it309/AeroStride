@@ -27,10 +27,10 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
 
         BigDecimal tongDoanhThu = thongKeRepository.sumDoanhThu(tuNgayMs, denNgayMs);
         Long tongDonHang = thongKeRepository.countTongDon(tuNgayMs, denNgayMs);
-        Long donHoanThanh = thongKeRepository.countByTrangThai(3, tuNgayMs, denNgayMs); // OrderStatus.DELIVERED
-        Long donChoXacNhan = thongKeRepository.countByTrangThai(0, tuNgayMs, denNgayMs); // PENDING_PAYMENT
-        Long donDangGiao = thongKeRepository.countByTrangThai(2, tuNgayMs, denNgayMs);  // SHIPPED
-        Long donDaHuy = thongKeRepository.countByTrangThai(4, tuNgayMs, denNgayMs);     // CANCELLED
+        Long donHoanThanh = thongKeRepository.countByTrangThai(6, tuNgayMs, denNgayMs); // OrderStatus.HOAN_THANH
+        Long donChoXacNhan = thongKeRepository.countByTrangThai(1, tuNgayMs, denNgayMs); // CHO_XAC_NHAN
+        Long donDangGiao = thongKeRepository.countByTrangThai(3, tuNgayMs, denNgayMs);  // DANG_VAN_CHUYEN
+        Long donDaHuy = thongKeRepository.countByTrangThai(7, tuNgayMs, denNgayMs);     // DA_HUY
 
         Long tongKhachHang = thongKeRepository.count();
 

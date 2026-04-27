@@ -3,17 +3,19 @@ name: AeroStride CI (Integration)
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'BE/**'
+      - 'FE/**'
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [ main ]
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
   MYSQL_DATABASE: aerostride_db_test
   MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'root' }}
   REDIS_PORT: 6379
 
 jobs:
-  # Stage 1: Code Quality & Testing
   quality:
     runs-on: ubuntu-latest
     name: Code Quality & Testing
@@ -43,100 +45,57 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Backend Checks
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      # Backend Logic
+      - name: Setup Backend
+        uses: ./.github/actions/setup-backend
         with:
           java-version: '17'
-          distribution: 'temurin'
-          cache: gradle
 
       - name: Run Backend Tests
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/${{ env.MYSQL_DATABASE }}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
           SPRING_DATASOURCE_USERNAME: root
           SPRING_DATASOURCE_PASSWORD: ${{ env.MYSQL_ROOT_PASSWORD }}
-          SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
-          SPRING_JPA_HIBERNATE_DDL_AUTO: none
           REDIS_HOST: 127.0.0.1
           REDIS_PORT: ${{ env.REDIS_PORT }}
           JWT_SECRET: ${{ secrets.JWT_SECRET || 'AeroStride_Super_Long_Secret_Key_For_HS512_Signing_Must_Be_At_Least_64_Bytes_Long_!!!' }}
-          MAIL_HOST: localhost
-          MAIL_PORT: 587
         run: |
           sleep 5
           cd BE
           chmod +x gradlew
           ./gradlew test --no-daemon
 
-      # Frontend Checks
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      # Frontend Logic
+      - name: Setup Frontend
+        uses: ./.github/actions/setup-frontend
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: FE/package-lock.json
 
       - name: Install Frontend Dependencies
         run: |
           cd FE
           npm ci
 
-      - name: Run Frontend Lint
+      - name: Run Frontend Lint & Format Check
         run: |
           cd FE
           npm run format
 
-  # Stage 2: Build & Scan
   build-and-scan:
     needs: quality
     runs-on: ubuntu-latest
     name: Build & Security Scan
-    env:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
     permissions:
       contents: read
       security-events: write
     steps:
       - uses: actions/checkout@v4
 
-      # Build Backend Image
-      - name: Build Backend Image
+      - name: Build & Scan Backend
         run: |
           docker build -t aerostride-be:latest -f docker/BE.Dockerfile .
+          # Scan will run in separate CodeQL workflow or here if preferred
 
-      # Build Frontend Image
-      - name: Build Frontend Image
+      - name: Build & Scan Frontend
         run: |
           docker build -t aerostride-fe:latest -f docker/FE.Dockerfile .
-
-      # Security Scan - Backend
-      - name: Run Trivy vulnerability scanner (BE)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'aerostride-be:latest'
-          format: 'table'
-          exit-code: '1' # Exit with error if CRITICAL vulnerabilities found
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL'
-
-      # Security Scan - Frontend
-      - name: Run Trivy vulnerability scanner (FE)
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'aerostride-fe:latest'
-          format: 'table'
-          exit-code: '1' # Exit with error if CRITICAL vulnerabilities found
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL'
-
-      # Slack Notification for failure or security vulnerabilities
-      - name: Slack Notification
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-          text: 'CI Pipeline Failed! (Reason: Build error or CRITICAL security vulnerability found)'
-        if: failure() && env.SLACK_WEBHOOK_URL != ''

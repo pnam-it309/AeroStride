@@ -112,11 +112,23 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         history.setNgayTao(System.currentTimeMillis());
         lichSuTrangThaiHoaDonRepository.save(history);
 
-        if (newStatus == OrderStatus.CANCELLED) {
+        if (newStatus == OrderStatus.DA_HUY && oldStatus != OrderStatus.DA_HUY) {
             hoaDonChiTietRepository.findAllByHoaDon(hd).forEach(detail -> {
                 ChiTietSanPham ct = detail.getChiTietSanPham();
                 if (ct != null) {
                     ct.setSoLuong(ct.getSoLuong() + detail.getSoLuong());
+                    chiTietSanPhamRepository.save(ct);
+                }
+            });
+        } else if (oldStatus == OrderStatus.DA_HUY && newStatus != OrderStatus.DA_HUY) {
+            // Re-activating a cancelled order: deduct stock
+            hoaDonChiTietRepository.findAllByHoaDon(hd).forEach(detail -> {
+                ChiTietSanPham ct = detail.getChiTietSanPham();
+                if (ct != null) {
+                    if (ct.getSoLuong() < detail.getSoLuong()) {
+                        throw new com.example.be.infrastructure.exceptions.BusinessException("Sản phẩm " + ct.getSanPham().getTen() + " không đủ tồn kho để khôi phục đơn hàng.");
+                    }
+                    ct.setSoLuong(ct.getSoLuong() - detail.getSoLuong());
                     chiTietSanPhamRepository.save(ct);
                 }
             });
@@ -157,6 +169,13 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
 
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findByHoaDonAndChiTietSanPham(hd, ctsp);
 
+        int currentQty = (hdct != null) ? hdct.getSoLuong() : 0;
+        int delta = request.getSoLuong() - currentQty;
+
+        if (ctsp.getSoLuong() < delta) {
+            throw new com.example.be.infrastructure.exceptions.BusinessException("Sản phẩm không đủ số lượng tồn kho (Còn lại: " + ctsp.getSoLuong() + ")");
+        }
+
         if (hdct != null) {
             hdct.setSoLuong(request.getSoLuong());
         } else {
@@ -170,6 +189,8 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             hdct.setNgayTao(System.currentTimeMillis());
         }
 
+        ctsp.setSoLuong(ctsp.getSoLuong() - delta);
+        chiTietSanPhamRepository.save(ctsp);
         hoaDonChiTietRepository.save(hdct);
         logHistory(hd, "Thay đổi sản phẩm: " + ctsp.getSanPham().getTen() + " (SL: " + request.getSoLuong() + ")");
 
@@ -180,7 +201,16 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     @Transactional
     public HoaDon removeHdct(String id, String idHdct) {
         HoaDon hd = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
-        hoaDonChiTietRepository.deleteById(idHdct);
+        HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHdct)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm chi tiết"));
+        
+        ChiTietSanPham ct = hdct.getChiTietSanPham();
+        if (ct != null) {
+            ct.setSoLuong(ct.getSoLuong() + hdct.getSoLuong());
+            chiTietSanPhamRepository.save(ct);
+        }
+        
+        hoaDonChiTietRepository.delete(hdct);
         logHistory(hd, "Xóa sản phẩm khỏi hóa đơn");
         return recalculateTotal(hd);
     }
@@ -248,7 +278,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
 
     @Override
     public String generateInvoiceHtml(String id) {
-        HoaDon hd = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
+        HoaDon hd = repository.findForPrint(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
         List<com.example.be.entity.HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
 
         Context context = new Context();

@@ -159,32 +159,39 @@ const getStatusTimestampMap = computed(() => {
 const timelineSteps = computed(() => {
     const status = getOrderStatus();
     const steps = [
-        { key: 0, label: "Tạo đơn hàng", icon: CircleCheckIcon, note: "Đơn hàng được tạo" },
-        { key: 1, label: "Đang xử lý", icon: CheckIcon, note: "Đang chuẩn bị/duyệt đơn" },
-        { key: 2, label: "Đã gửi hàng", icon: PackageIcon, note: "Đơn đã bàn giao vận chuyển" },
-        { key: 3, label: "Đã giao", icon: TruckIcon, note: "Đơn đã giao thành công" }
+        { key: 0, label: "Chờ thanh toán", icon: CreditCardIcon, note: "Chờ khách thanh toán/xác nhận tiền" },
+        { key: 1, label: "Chờ xác nhận", icon: CheckIcon, note: "Đơn hàng mới chờ duyệt" },
+        { key: 2, label: "Chờ giao hàng", icon: PackageIcon, note: "Đã xác nhận & chuẩn bị hàng" },
+        { key: 3, label: "Đang vận chuyển", icon: TruckIcon, note: "Đơn hàng đang trên đường giao" },
+        { key: 4, label: "Đã giao hàng", icon: MapPinIcon, note: "Khách hàng đã nhận được hàng" },
+        { key: 6, label: "Hoàn thành", icon: CircleCheckIcon, note: "Giao hàng & thanh toán thành công" }
     ];
 
-    // Terminal branch
-    if (status === 4) {
-        steps.push({ key: 4, label: "Đã hủy", icon: CircleXIcon, note: "Đơn bị hủy" });
-    } else if (status === 5) {
-        steps.push({ key: 5, label: "Hoàn tiền", icon: CircleXIcon, note: "Đơn đã hoàn tiền" });
-    } else {
-        // Default end state is delivered (3). Nothing else.
+    if (status === 7) steps.push({ key: 7, label: "Đã hủy", icon: CircleXIcon, note: "Đơn hàng bị hủy" });
+    if (status === 5) steps.push({ key: 5, label: "Đã thanh toán", icon: CreditCardIcon, note: "Giao dịch thanh toán thành công" });
+
+    const currentIndex = steps.findIndex(s => s.key === status);
+    const tsMap = getStatusTimestampMap.value;
+    const result = [];
+
+    for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        let state = "pending";
+
+        if (currentIndex !== -1) {
+            if (i === currentIndex) state = "active";
+            else if (i < currentIndex) state = "done";
+        }
+
+        result.push({
+            ...step,
+            timestamp: tsMap?.[step.key] ?? null,
+            state,
+            tone: getStatusTone(step.key)
+        });
     }
 
-    const currentIndex = status === null ? -1 : steps.findIndex(s => s.key === status);
-    const tsMap = getStatusTimestampMap.value;
-
-    return steps.map((step, index) => ({
-        ...step,
-        timestamp: tsMap?.[step.key] ?? null,
-        state:
-            currentIndex === -1 ? "pending" :
-                (index === currentIndex ? "active" : index < currentIndex ? "done" : "pending"),
-        tone: getStatusTone(step.key)
-    }));
+    return result;
 });
 
 const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
@@ -251,9 +258,10 @@ const printInvoice = async () => {
         printWindow.document.write(html);
         printWindow.document.close();
         setTimeout(() => {
-            printWindow.print();
-            // printWindow.close(); // Keep open if user wants to see it
-        }, 500);
+            if (printWindow) {
+                printWindow.print();
+            }
+        }, 800);
     } catch (error) {
         addNotification({ title: 'Lỗi', subtitle: 'Không thể tạo bản in', color: 'error' });
     }

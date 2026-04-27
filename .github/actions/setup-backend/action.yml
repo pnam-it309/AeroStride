@@ -1,0 +1,27 @@
+name: 'Setup Backend'
+description: 'Set up Java, Gradle, and Caching for AeroStride BE'
+inputs:
+  java-version:
+    description: 'Java version to use'
+    required: false
+    default: '17'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ inputs.java-version }}
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Cache Gradle Packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('BE/**/*.gradle*', 'BE/gradle/wrapper/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-

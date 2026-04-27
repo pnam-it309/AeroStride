@@ -79,4 +79,12 @@ public interface AdminHoaDonRepository extends HoaDonRepository {
             AND (:#{#req.denNgayLong} IS NULL OR hd.ngayTao <= :#{#req.denNgayLong})
             """)
     long countWithFilter(@Param("req") AdminHoaDonRequest req);
+
+    @Query("SELECT hd FROM HoaDon hd " +
+           "LEFT JOIN FETCH hd.khachHang " +
+           "LEFT JOIN FETCH hd.nhanVien " +
+           "LEFT JOIN FETCH hd.listsGiaoDichThanhToan g " +
+           "LEFT JOIN FETCH g.phuongThucThanhToan " +
+           "WHERE hd.id = :id")
+    java.util.Optional<com.example.be.entity.HoaDon> findForPrint(@Param("id") String id);
 }

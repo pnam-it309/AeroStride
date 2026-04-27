@@ -38,19 +38,19 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     public List<AdminBanHangHoaDonResponse> getHoaDonCho() {
-        return hoaDonRepository.findAllByTrangThaiAndLoaiDon(OrderStatus.PENDING_PAYMENT, "TAI_QUAY")
+        return hoaDonRepository.findAllByTrangThaiAndLoaiDon(OrderStatus.CHO_THANH_TOAN, "TAI_QUAY")
                 .stream().map(this::mapToHoaDonResponse).collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public AdminBanHangHoaDonResponse createHoaDon() {
-        if (hoaDonRepository.countByTrangThaiAndLoaiDon(OrderStatus.PENDING_PAYMENT, "TAI_QUAY") >= 5) {
+        if (hoaDonRepository.countByTrangThaiAndLoaiDon(OrderStatus.CHO_THANH_TOAN, "TAI_QUAY") >= 5) {
             throw new BusinessException("Tối đa 5 hóa đơn chờ.");
         }
         HoaDon hoaDon = new HoaDon();
         hoaDon.setMaHoaDon(CodeUtils.generateRandom(HoaDon.class));
-        hoaDon.setTrangThai(OrderStatus.PENDING_PAYMENT);
+        hoaDon.setTrangThai(OrderStatus.CHO_THANH_TOAN);
         hoaDon.setLoaiDon("TAI_QUAY");
         hoaDon.setNgayTao(System.currentTimeMillis());
         hoaDon.setTongTien(BigDecimal.ZERO);
@@ -169,7 +169,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             chiTietSanPhamRepository.save(ct);
         }
 
-        hd.setTrangThai(OrderStatus.DELIVERED); 
+        hd.setTrangThai(OrderStatus.HOAN_THANH); 
         hd.setLoaiDon(request.getLoaiDon());
         hd.setPhiVanChuyen(request.getPhiVanChuyen() != null ? request.getPhiVanChuyen() : BigDecimal.ZERO);
         hd.setTongTien(request.getTongTien());

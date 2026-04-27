@@ -3,6 +3,7 @@ name: AeroStride CD (Deployment)
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 env:
   REGISTRY: ${{ secrets.DOCKER_REGISTRY || 'ghcr.io' }}
@@ -10,12 +11,9 @@ env:
   IMAGE_NAME_FE: ${{ secrets.IMAGE_NAME_FE || 'pnam-it309/aerostride/frontend' }}
 
 jobs:
-  # Stage 3: Release & Publish
   release-and-publish:
     runs-on: ubuntu-latest
-    name: Semantic Release & Publish to GHCR
-    env:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+    name: Semantic Release & Publish
     permissions:
       packages: write
       contents: write
@@ -35,112 +33,41 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log in to GitHub Container Registry
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for Docker (BE)
+      - name: Build and Push Images
         if: steps.semantic.outputs.new_release_published == 'true'
-        id: meta-be
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}
-          tags: |
-            type=semver,pattern={{version}},value=${{ steps.semantic.outputs.new_release_version }}
-            type=sha
-            type=raw,value=latest
+        run: |
+          # Backend
+          docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:${{ steps.semantic.outputs.new_release_version }} -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:latest -f docker/BE.Dockerfile .
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }} --all-tags
+          
+          # Frontend
+          docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:${{ steps.semantic.outputs.new_release_version }} -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:latest -f docker/FE.Dockerfile .
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }} --all-tags
 
-      - name: Build and Push Backend
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/BE.Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:latest
-            ${{ steps.meta-be.outputs.tags }}
-          labels: ${{ steps.meta-be.outputs.labels }}
-
-      - name: Extract metadata for Docker (FE)
-        if: steps.semantic.outputs.new_release_published == 'true'
-        id: meta-fe
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}
-          tags: |
-            type=semver,pattern={{version}},value=${{ steps.semantic.outputs.new_release_version }}
-            type=sha
-            type=raw,value=latest
-
-      - name: Build and Push Frontend
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/FE.Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:latest
-            ${{ steps.meta-fe.outputs.tags }}
-          labels: ${{ steps.meta-fe.outputs.labels }}
-          build-args: |
-            VITE_API_URL=${{ secrets.VITE_API_URL }}
-
-      - name: Slack Notification
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-          text: 'CD Pipeline ${{ job.status }} for version ${{ steps.semantic.outputs.new_release_version }}'
-        if: always() && env.SLACK_WEBHOOK_URL != ''
-
-  # Stage 4: Deployment to Self-hosted Runner (Dell PC)
   deploy:
     needs: release-and-publish
     runs-on: self-hosted
-    name: Deploy to On-Premise Server
-    env:
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+    name: Deploy to On-Premise
     steps:
       - uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create Production .env
+      - name: Update Services
         run: |
           echo "${{ secrets.DOCKER_ENV }}" > docker/.env
-          # Đảm bảo file tồn tại ở cả root và docker/ nếu cần
-          cp docker/.env .env || touch .env
-
-      - name: Pull and Start Services
-        env:
-          BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:latest
-          FRONTEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:latest
-        run: |
-          # Pull latest images
           docker compose -f docker/docker-compose.yml --env-file docker/.env pull
-          
-          # Clean up old containers to avoid state conflicts
-          docker compose -f docker/docker-compose.yml --env-file docker/.env down --remove-orphans
-          
-          # Start services with fresh containers
           docker compose -f docker/docker-compose.yml --env-file docker/.env up -d --force-recreate
-
-      - name: Slack Notification (Deployment Status)
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-          text: 'Deployment to Dell PC ${{ job.status }}'
-        if: always() && env.SLACK_WEBHOOK_URL != ''
-
-      - name: Cleanup old images
-        run: sudo docker image prune -f
-        if: always()
+          docker image prune -f
