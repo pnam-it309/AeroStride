@@ -1,4 +1,4 @@
-﻿-- Thêm Thương Hiệu Mới (Bắt đầu từ th6)
+-- Thêm Thương Hiệu Mới (Bắt đầu từ th6)
 INSERT IGNORE INTO thuong_hieu (id, ma_thuong_hieu, ten_thuong_hieu, trang_thai, xoa_mem, ngay_tao) VALUES
 ('th6', 'TH006', 'Bitis', 0, 0, 1711814500000),
 ('th7', 'TH007', 'Vans', 0, 0, 1711814500000),

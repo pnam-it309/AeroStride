@@ -30,15 +30,11 @@ const {
 
 // Debug dữ liệu
 import { watch } from 'vue';
-watch(
-    employees,
-    (newVal) => {
-        if (newVal && newVal.length > 0) {
-            console.log('Dữ liệu nhân viên mẫu:', newVal[0]);
-        }
-    },
-    { deep: true }
-);
+watch(employees, (newVal) => {
+    if (newVal && newVal.length > 0) {
+        console.log('Dữ liệu nhân viên mẫu:', newVal[0]);
+    }
+}, { deep: true });
 
 const router = useRouter();
 
@@ -80,9 +76,10 @@ const tableHeaders = [
     { text: 'Mã nhân viên', align: 'center', width: '120px' },
     { text: 'Tên nhân viên', align: 'left', width: '150px' },
     { text: 'Tên tài khoản', align: 'center', width: '120px' },
-    { text: 'Giới tính', align: 'center', width: '130px' },
-    { text: 'Thông tin liên hệ', align: 'left', width: '220px' },
-    { text: 'Chức vụ', align: 'center', width: '100px' },
+    { text: 'Giới tính', align: 'center', width: '100px' },
+    { text: 'Thông tin liên hệ', align: 'left', width: '230px' },
+    { text: 'Địa chỉ', align: 'left', width: '200px' },
+    { text: 'Chức vụ', align: 'left', width: '120px' },
     { text: 'Trạng thái', align: 'center', width: '130px' },
     { text: 'Hành động', align: 'center', width: '110px' }
 ];
@@ -134,11 +131,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <v-container
-        fluid
-        class="pa-4 animate-fade-in font-body"
-        style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important"
-    >
+    <v-container fluid class="pa-4 animate-fade-in font-body" style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs
             :items="[
@@ -250,18 +243,18 @@ onMounted(() => {
                     <td class="data-cell text-center">
                         <v-chip
                             size="small"
-                            variant="tonal"
+                            variant="flat"
                             :class="['gender-chip', item.gioiTinh ? 'gender-chip-male' : 'gender-chip-female']"
                         >
-                            {{ item.gioiTinh === true ? 'Nam' : item.gioiTinh === false ? 'Nữ' : '-' }}
+                            {{ item.gioiTinh === true ? 'Nam' : (item.gioiTinh === false ? 'Nữ' : '-') }}
                         </v-chip>
                     </td>
 
-                    <td class="data-cell contact-cell text-left px-4">
+                    <td class="data-cell">
                         <div class="d-inline-flex flex-column align-start">
                             <div class="contact-info-item d-flex align-center mb-1">
                                 <v-icon size="14" class="mr-2 text-slate-400">mdi-phone</v-icon>
-                                <span>{{ item.sdt }}</span>
+                                <span class="font-weight-bold">{{ item.sdt }}</span>
                             </div>
                             <div class="contact-info-item d-flex align-center text-slate-500">
                                 <v-icon size="14" class="mr-2">mdi-email-outline</v-icon>
@@ -279,22 +272,21 @@ onMounted(() => {
                             <v-chip
                                 size="small"
                                 variant="flat"
-                                :class="[
-                                    'status-chip',
-                                    item.trangThai === 'DANG_HOAT_DONG' ? 'status-chip-active' : 'status-chip-inactive'
-                                ]"
+                                :class="['status-chip', item.trangThai === 'DANG_HOAT_DONG' ? 'status-chip-active' : 'status-chip-inactive']"
                             >
                                 {{ getStatusLabel(item.trangThai) }}
                             </v-chip>
                         </template>
                         <template v-else>
-                            <span class="text-caption text-primary">{{ formatDateTime(item.resetRequestedAt) }}</span>
+                            <span class="text-caption font-weight-bold text-primary">{{ formatDateTime(item.resetRequestedAt) }}</span>
                         </template>
                     </td>
 
+
+
                     <td class="data-cell action-cell">
                         <div v-if="tab === 0" class="d-flex align-center justify-center action-controls">
-                            <v-btn variant="text" class="action-icon-btn" @click.stop="router.push(`${PATH.NHAN_VIEN_FORM}/${item.id}`)">
+                             <v-btn variant="text" class="action-icon-btn" @click.stop="router.push(`${PATH.NHAN_VIEN_FORM}/${item.id}`)">
                                 <EditIcon size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
@@ -314,6 +306,7 @@ onMounted(() => {
                             Reset Pass
                         </v-btn>
                     </td>
+
                 </tr>
             </template>
             <template #pagination>
