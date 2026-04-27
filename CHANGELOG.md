@@ -1,3 +1,10 @@
+## [1.7.2](https://github.com/pnam-it309/AeroStride/compare/v1.7.1...v1.7.2) (2026-04-27)
+
+
+### Bug Fixes
+
+* **hoadon:** Sửa lỗi LazyInitialization và MultipleBagFetch trong chi tiết hóa đơn ([7e3d427](https://github.com/pnam-it309/AeroStride/commit/7e3d4277dee19b92458d81de97223da536b513be))
+
 ## [1.7.1](https://github.com/pnam-it309/AeroStride/compare/v1.7.0...v1.7.1) (2026-04-27)
 
 
