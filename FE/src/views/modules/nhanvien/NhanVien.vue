@@ -28,6 +28,18 @@ const {
     handleReset
 } = useAdminTable(dichVuNhanVien.layNhanVienPhanTrang, { search: '', gioiTinh: null, trangThai: null });
 
+// Debug dữ liệu
+import { watch } from 'vue';
+watch(
+    employees,
+    (newVal) => {
+        if (newVal && newVal.length > 0) {
+            console.log('Dữ liệu nhân viên mẫu:', newVal[0]);
+        }
+    },
+    { deep: true }
+);
+
 const router = useRouter();
 
 // Use composables
@@ -66,7 +78,7 @@ async function handleResetPassword(id) {
 const tableHeaders = [
     { text: 'STT', align: 'center', width: '60px' },
     { text: 'Mã nhân viên', align: 'center', width: '120px' },
-    { text: 'Tên nhân viên', align: 'center', width: '140px' },
+    { text: 'Tên nhân viên', align: 'left', width: '150px' },
     { text: 'Tên tài khoản', align: 'center', width: '120px' },
     { text: 'Giới tính', align: 'center', width: '130px' },
     { text: 'Thông tin liên hệ', align: 'left', width: '220px' },
@@ -122,7 +134,11 @@ onMounted(() => {
 </script>
 
 <template>
-    <v-container fluid class="pa-4 animate-fade-in font-body" style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
+    <v-container
+        fluid
+        class="pa-4 animate-fade-in font-body"
+        style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important"
+    >
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs
             :items="[
@@ -196,7 +212,7 @@ onMounted(() => {
             @export="handleExport"
         >
             <template #top>
-                <v-tabs v-model="tab" bg-color="transparent" color="#000" height="54" align-tabs="start" class="admin-tabs">
+                <v-tabs v-model="tab" bg-color="transparent" color="primary" height="54" align-tabs="start" class="admin-tabs">
                     <v-tab :value="0" class="text-none font-weight-bold px-4 tab-item">
                         <v-icon start size="16">mdi-view-grid-outline</v-icon>
                         Danh sách nhân viên
@@ -231,13 +247,13 @@ onMounted(() => {
                     <td class="data-cell">{{ item.ma || '-' }}</td>
                     <td class="data-cell">{{ item.ten || '-' }}</td>
                     <td class="data-cell">{{ item.tenTaiKhoan || '-' }}</td>
-                    <td class="data-cell">
+                    <td class="data-cell text-center">
                         <v-chip
                             size="small"
                             variant="tonal"
                             :class="['gender-chip', item.gioiTinh ? 'gender-chip-male' : 'gender-chip-female']"
                         >
-                            {{ item.gioiTinh === true ? 'Nam' : 'Nữ' }}
+                            {{ item.gioiTinh === true ? 'Nam' : item.gioiTinh === false ? 'Nữ' : '-' }}
                         </v-chip>
                     </td>
 
@@ -253,15 +269,20 @@ onMounted(() => {
                             </div>
                         </div>
                     </td>
+                    <td class="data-cell text-left">
+                        {{ item.diaChi || item.diaChiChiTiet || item.dia_chi || '-' }}
+                    </td>
 
                     <td class="data-cell">{{ item.tenPhanQuyen || 'Nhân viên' }}</td>
                     <td class="data-cell">
                         <template v-if="tab === 0">
                             <v-chip
                                 size="small"
-                                variant="tonal"
-                                :color="getStatusColor(item.trangThai)"
-                                class="px-4 status-chip"
+                                variant="flat"
+                                :class="[
+                                    'status-chip',
+                                    item.trangThai === 'DANG_HOAT_DONG' ? 'status-chip-active' : 'status-chip-inactive'
+                                ]"
                             >
                                 {{ getStatusLabel(item.trangThai) }}
                             </v-chip>
@@ -271,18 +292,16 @@ onMounted(() => {
                         </template>
                     </td>
 
-
-
                     <td class="data-cell action-cell">
                         <div v-if="tab === 0" class="d-flex align-center justify-center action-controls">
-                             <v-btn variant="text" class="action-icon-btn" @click.stop="router.push(`${PATH.NHAN_VIEN_FORM}/${item.id}`)">
+                            <v-btn variant="text" class="action-icon-btn" @click.stop="router.push(`${PATH.NHAN_VIEN_FORM}/${item.id}`)">
                                 <EditIcon size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
                                 <v-switch
                                     :model-value="isActiveStatus(item.trangThai)"
-                                    color="#000"
+                                    color="primary"
                                     hide-details
                                     density="compact"
                                     class="tight-switch action-switch"
@@ -295,13 +314,13 @@ onMounted(() => {
                             Reset Pass
                         </v-btn>
                     </td>
-
                 </tr>
             </template>
             <template #pagination>
                 <AdminPagination
-                    v-model:page="pagination.page"
-                    v-model:page-size="pagination.size"
+                    v-model="pagination.page"
+                    :page-size="pagination.size"
+                    @update:page-size="pagination.size = $event"
                     :total-pages="pagination.totalPages"
                     :total-elements="pagination.totalElements"
                     :current-size="employees.length"
@@ -324,17 +343,53 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Scoped styles removed in favor of global _admin-common.scss */
-/* Specific layout tweaks for NhanVien module can remain if unique */
-.col-lien-he {
-    padding-left: 32px !important;
+/* 
+   FORCE GLOBAL OVERRIDES FOR STAFF MODULE 
+   Matching KhachHang aesthetics
+*/
+:deep(.gender-chip) {
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    padding: 0 16px !important;
+    min-height: 28px !important;
+    min-width: 80px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 500 !important;
 }
-.active-chip {
-    background: #000 !important;
-    color: #fff !important;
+:deep(.gender-chip-male) {
+    background-color: #f0f1ff !important;
+    color: #1e257c !important;
+    font-weight: 700 !important;
 }
-.inactive-chip {
-    background: #f1f5f9 !important;
-    color: #64748b !important;
+:deep(.gender-chip-female) {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
+    font-weight: 700 !important;
+}
+:deep(.gender-chip-male .v-chip__content) {
+    color: #1e257c !important;
+    font-weight: 700 !important;
+}
+:deep(.gender-chip-female .v-chip__content) {
+    color: #991b1b !important;
+    font-weight: 700 !important;
+}
+
+/* Typography & Cell Alignment */
+.data-cell {
+    font-size: 13px !important;
+    font-family: 'Inter', 'Outfit', sans-serif !important;
+    font-weight: 500 !important;
+    vertical-align: middle !important;
+}
+
+.data-row {
+    height: 56px !important;
+}
+
+.data-cell.font-weight-bold {
+    font-weight: 700 !important;
 }
 </style>
