@@ -313,7 +313,7 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
         </v-col>
         <v-col cols="12" md="3">
           <div class="filter-field-label">Tìm kiếm nhanh</div>
-          <v-text-field v-model="filters.keyword" placeholder="Mã SKU, màu, size..." prepend-inner-icon="mdi-magnify"
+          <v-text-field v-model="filters.keyword" placeholder="Mã sản phẩm chi tiết, màu, size..." prepend-inner-icon="mdi-magnify"
             variant="outlined" density="compact" hide-details clearable></v-text-field>
         </v-col>
         <v-col cols="12" md="2">
@@ -342,7 +342,7 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
       <AdminTable title="Danh mục biến thể" :headers="[
         { text: 'STT', align: 'center', width: '60px' },
         { text: 'Hình ảnh', align: 'center', width: '80px' },
-        { text: 'Mã SKU', align: 'left', width: '150px' },
+        { text: 'Mã sản phẩm chi tiết', align: 'left', width: '150px' },
         { text: 'Màu sắc', align: 'center', width: '120px' },
         { text: 'Kích thước', align: 'center', width: '100px' },
         { text: 'Giá bán niêm yết', align: 'center', width: '150px' },
