@@ -1,10 +1,3 @@
-# [1.7.0](https://github.com/pnam-it309/AeroStride/compare/v1.6.1...v1.7.0) (2026-04-27)
-
-
-### Features
-
-* **hoadon:** Cập nhật trạng thái đơn hàng, tối ưu in hóa đơn và đồng bộ dữ liệu seed ([726a41f](https://github.com/pnam-it309/AeroStride/commit/726a41f24c968d37f3a63f916e472ba1df58e62d))
-
 ## [1.6.1](https://github.com/pnam-it309/AeroStride/compare/v1.6.0...v1.6.1) (2026-04-26)
 
 
