@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, computed, nextTick } from 'vue';
+import { computed, nextTick } from 'vue';
 
 const props = defineProps({
     modelValue: { type: Number, default: 1 },

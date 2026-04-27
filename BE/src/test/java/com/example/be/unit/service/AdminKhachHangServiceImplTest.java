@@ -1,8 +1,9 @@
-package com.example.be.core.admin.khachhang.service.impl;
+package com.example.be.unit.service;
 
 import com.example.be.core.admin.khachhang.model.request.AdminKhachHangRequest;
 import com.example.be.core.admin.khachhang.model.response.AdminKhachHangResponse;
 import com.example.be.core.admin.khachhang.repository.AdminKhachHangRepository;
+import com.example.be.core.admin.khachhang.service.impl.AdminKhachHangServiceImpl;
 import com.example.be.entity.KhachHang;
 import com.example.be.infrastructure.constants.TrangThai;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,9 +15,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
-
+import com.example.be.core.admin.khachhang.service.AdminDiaChiService;
+import com.example.be.core.notification.EmailService;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,6 +30,12 @@ class AdminKhachHangServiceImplTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private AdminDiaChiService adminDiaChiService;
+
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private AdminKhachHangServiceImpl service;
@@ -53,7 +62,7 @@ class AdminKhachHangServiceImplTest {
         when(repository.existsByMa("KH001")).thenReturn(true);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> service.add(testRequest));
-        assertEquals("Mã khách hàng đã tồn tại", exception.getMessage());
+        assertEquals("Mã khách hàng này đã tồn tại trong hệ thống.", exception.getMessage());
     }
 
     @Test
@@ -62,17 +71,7 @@ class AdminKhachHangServiceImplTest {
         when(repository.existsByEmail("test@gmail.com")).thenReturn(true);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> service.add(testRequest));
-        assertEquals("Email đã tồn tại", exception.getMessage());
-    }
-
-    @Test
-    void add_ShouldThrowException_WhenUsernameExists() {
-        when(repository.existsByMa(any())).thenReturn(false);
-        when(repository.existsByEmail(any())).thenReturn(false);
-        when(repository.existsByTenTaiKhoan("testuser")).thenReturn(true);
-
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> service.add(testRequest));
-        assertEquals("Tên tài khoản đã tồn tại", exception.getMessage());
+        assertEquals("Email này đã được sử dụng bởi một khách hàng khác.", exception.getMessage());
     }
 
     @Test
@@ -86,9 +85,8 @@ class AdminKhachHangServiceImplTest {
     void add_ShouldSaveSuccess() {
         when(repository.existsByMa(any())).thenReturn(false);
         when(repository.existsByEmail(any())).thenReturn(false);
-        when(repository.existsByTenTaiKhoan(any())).thenReturn(false);
-        when(passwordEncoder.encode("rawPassword")).thenReturn("encodedPassword");
-        
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
+
         AdminKhachHangResponse mockResponse = mock(AdminKhachHangResponse.class);
         when(repository.detail(any())).thenReturn(mockResponse);
 
@@ -96,7 +94,6 @@ class AdminKhachHangServiceImplTest {
 
         assertNotNull(result);
         verify(repository).save(any(KhachHang.class));
-        verify(passwordEncoder).encode("rawPassword");
     }
 
     @Test

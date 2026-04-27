@@ -10,6 +10,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
 
   backend:
     image: ${BACKEND_IMAGE:-aerostride-be:dev}
@@ -30,17 +36,19 @@ services:
     ports:
       - "${BACKEND_PORT:-8080}:${BE_INTERNAL_PORT:-8080}"
     volumes:
-      - ${DOCKER_BE_VOL_APP:-./.docker_ignore:/app_ignore}
-      - ${DOCKER_BE_VOL_BUILD:-/app/build}
-      - ${DOCKER_BE_VOL_GRADLE:-/app/.gradle}
+      - ${DOCKER_BE_VOL_APP:-../BE:/app}
+      - be-build:/app/build
+      - be-gradle:/app/.gradle
     networks:
       - aerostride-net
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${BE_INTERNAL_PORT:-8080}/api/v1/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
 
   frontend:
     image: ${FRONTEND_IMAGE:-aerostride-fe:dev}
@@ -61,14 +69,27 @@ services:
     ports:
       - "${FE_PORTExternal:-80}:${FE_INTERNAL_PORT:-8080}"
     volumes:
-      - ${DOCKER_FE_VOL_APP:-./.docker_ignore:/app_ignore}
-      - ${DOCKER_FE_VOL_NODE:-/app/node_modules}
+      - ${DOCKER_FE_VOL_APP:-../FE:/app}
+      - fe-node-modules:/app/node_modules
     depends_on:
       backend:
         condition: service_started
     networks:
       - aerostride-net
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
 
 networks:
   aerostride-net:
     driver: bridge
+
+volumes:
+  be-build:
+  be-gradle:
+  fe-node-modules:

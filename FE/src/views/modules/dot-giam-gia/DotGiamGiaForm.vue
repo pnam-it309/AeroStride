@@ -16,7 +16,6 @@ const { addNotification } = useNotifications();
 const loading = ref(false);
 const saving = ref(false);
 const products = ref([]); 
-const selectedVariantsIds = ref([]); 
 const searchQuery = ref('');
 const searchCode = ref('');
 
@@ -51,19 +50,35 @@ const form = ref({
     trangThai: 'DANG_HOAT_DONG'
 });
 
+const activeProductIds = ref([]); // Sản phẩm đang được 'mở' để xem biến thể ở bảng dưới
+const selectedVariantsIds = ref([]); // Các biến thể thực sự được chọn để giảm giá
+
+const baseProducts = computed(() => {
+    const map = new Map();
+    products.value.forEach(p => {
+        const key = p.idSanPham || p.maSanPham || p.sanPhamMa || p.maSp || p.maChiTietSanPham || p.ma; 
+        if (!map.has(key)) {
+            map.set(key, {
+                id: p.idSanPham,
+                ma: p.maSanPham || p.sanPhamMa || p.maSp || p.maChiTietSanPham || p.ma, 
+                ten: p.tenSanPham || p.tenSanPhamDayDu,
+                variants: []
+            });
+        }
+        map.get(key).variants.push(p.id);
+    });
+    return Array.from(map.values());
+});
+
 const filteredProductsToSelect = computed(() => {
-    let result = products.value;
+    let result = baseProducts.value;
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
-        result = result.filter(p => 
-            p.tenSanPhamDayDu?.toLowerCase().includes(query)
-        );
+        result = result.filter(p => p.ten?.toLowerCase().includes(query));
     }
     if (searchCode.value) {
         const code = searchCode.value.toLowerCase();
-        result = result.filter(p => 
-            p.ma?.toLowerCase().includes(code)
-        );
+        result = result.filter(p => p.ma?.toLowerCase().includes(code));
     }
     return result;
 });
@@ -79,27 +94,79 @@ const totalSelectionPages = computed(() => {
 });
 
 // Reset page when search changes
-watch(searchQuery, () => {
-    selectionPage.value = 1;
+watch(searchQuery, () => { selectionPage.value = 1; });
+
+const isProductActive = (productId) => {
+    const product = baseProducts.value.find(p => p.id === productId);
+    const hasSelectedVariants = product && product.variants.some(vid => selectedVariantsIds.value.includes(vid));
+    return activeProductIds.value.includes(productId) || hasSelectedVariants;
+};
+
+const toggleProductActive = (productId) => {
+    const product = baseProducts.value.find(p => p.id === productId);
+    const hasSelectedVariants = product && product.variants.some(vid => selectedVariantsIds.value.includes(vid));
+    
+    const index = activeProductIds.value.indexOf(productId);
+    
+    if (index !== -1 || hasSelectedVariants) {
+        // Bỏ chọn: xóa khỏi activeProductIds VÀ xóa tất cả biến thể đã chọn
+        if (index !== -1) activeProductIds.value.splice(index, 1);
+        if (product) {
+            selectedVariantsIds.value = selectedVariantsIds.value.filter(vid => !product.variants.includes(vid));
+        }
+    } else {
+        // Chọn: thêm vào activeProductIds
+        activeProductIds.value.push(productId);
+    }
+};
+
+const isAllProductsActive = computed(() => {
+    return paginatedProductsToSelect.value.length > 0 && 
+           paginatedProductsToSelect.value.every(p => isProductActive(p.id));
 });
 
-const selectedProductsDetails = computed(() => {
-    return products.value.filter(p => selectedVariantsIds.value.includes(p.id));
+const toggleAllProductsActive = () => {
+    if (isAllProductsActive.value) {
+        paginatedProductsToSelect.value.forEach(p => {
+            const idx = activeProductIds.value.indexOf(p.id);
+            if (idx !== -1) activeProductIds.value.splice(idx, 1);
+            selectedVariantsIds.value = selectedVariantsIds.value.filter(vid => !p.variants.includes(vid));
+        });
+    } else {
+        paginatedProductsToSelect.value.forEach(p => {
+            if (!activeProductIds.value.includes(p.id)) activeProductIds.value.push(p.id);
+        });
+    }
+};
+
+// Biến thể hiển thị ở bảng dưới = (Các biến thể đã được chọn) + (Các biến thể của sản phẩm đang 'mở')
+const bottomTableVariants = computed(() => {
+    const selected = products.value.filter(p => selectedVariantsIds.value.includes(p.id));
+    const activeOnes = products.value.filter(p => activeProductIds.value.includes(p.idSanPham));
+    
+    // Hợp nhất và loại bỏ trùng lặp bằng Map
+    const map = new Map();
+    [...selected, ...activeOnes].forEach(p => map.set(p.id, p));
+    return Array.from(map.values());
 });
 
-// --- PHẦN THÊM MỚI: Logic lọc cho bảng chi tiết phía dưới ---
 const filteredSelectedDetails = computed(() => {
-    return selectedProductsDetails.value.filter(p => {
+    let result = bottomTableVariants.value;
+    
+    // Áp dụng bộ lọc
+    if (detailFilters.value.thuongHieu) result = result.filter(p => p.thuongHieu === detailFilters.value.thuongHieu);
+    if (detailFilters.value.chatLieu) result = result.filter(p => p.chatLieu === detailFilters.value.chatLieu);
+    if (detailFilters.value.kichCo) result = result.filter(p => p.kichCo == detailFilters.value.kichCo);
+    if (detailFilters.value.mauSac) result = result.filter(p => p.color === detailFilters.value.mauSac);
+    if (detailFilters.value.loaiSan) result = result.filter(p => p.loaiSan === detailFilters.value.loaiSan);
+    
+    // Lọc theo giá sau giảm
+    result = result.filter(p => {
         const giaSauGiam = calculateDiscountedPrice(p.giaGoc);
-        
-        const matchPrice = giaSauGiam >= detailFilters.value.khoangGia[0] && 
-                          giaSauGiam <= detailFilters.value.khoangGia[1];
-        
-        const matchBrand = !detailFilters.value.thuongHieu || p.thuongHieu === detailFilters.value.thuongHieu;
-        const matchSize = !detailFilters.value.kichCo || p.kichCo === detailFilters.value.kichCo;
-        
-        return matchPrice && matchBrand && matchSize;
+        return giaSauGiam >= detailFilters.value.khoangGia[0] && giaSauGiam <= detailFilters.value.khoangGia[1];
     });
+    
+    return result;
 });
 
 const calculateDiscountedPrice = (originalPrice) => {
@@ -110,7 +177,9 @@ const formatCurrency = (value) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
 
-const toggleProduct = (id) => {
+const isVariantSelected = (id) => selectedVariantsIds.value.includes(id);
+
+const toggleVariantSelection = (id) => {
     const index = selectedVariantsIds.value.indexOf(id);
     if (index > -1) {
         selectedVariantsIds.value.splice(index, 1);
@@ -119,31 +188,52 @@ const toggleProduct = (id) => {
     }
 };
 
-const removeSelectedProduct = (id) => {
-    const index = selectedVariantsIds.value.indexOf(id);
-    if (index > -1) {
-        selectedVariantsIds.value.splice(index, 1);
+const bottomTableSelection = ref([]); // Chỉ dùng cho bulk action XÓA (UI)
+
+const toggleBottomSelection = (id) => {
+    const index = bottomTableSelection.value.indexOf(id);
+    if (index === -1) bottomTableSelection.value.push(id);
+    else bottomTableSelection.value.splice(index, 1);
+};
+
+const toggleAllBottomSelection = () => {
+    const allIds = filteredSelectedDetails.value.map(p => p.id);
+    const allSelected = allIds.every(id => bottomTableSelection.value.includes(id));
+    if (allSelected) {
+        bottomTableSelection.value = bottomTableSelection.value.filter(id => !allIds.includes(id));
+    } else {
+        const newIds = allIds.filter(id => !bottomTableSelection.value.includes(id));
+        bottomTableSelection.value.push(...newIds);
     }
+};
+
+const removeBulkSelected = () => {
+    selectedVariantsIds.value = selectedVariantsIds.value.filter(id => !bottomTableSelection.value.includes(id));
+    bottomTableSelection.value = [];
 };
 
 const removeAllSelected = () => {
     selectedVariantsIds.value = [];
+    bottomTableSelection.value = [];
 };
 
 const init = async () => {
     try {
         const data = await dichVuDotGiamGia.layDanhSachSanPhamApDung();
-        products.value = (data || []).map(p => ({
+        products.value = (data || []).map((p, i) => ({
             ...p,
-            anhMauc: p.anhMauc || 'https://via.placeholder.com/40',
-            color: p.color || 'Xanh dương',
-            kichCo: p.kichCo || 41,
-            loaiSan: p.loaiSan || 'Sân cỏ nhân tạo (TF)',
-            giaGoc: p.giaBan || 2000000
+            ma: p.maChiTietSanPham || p.ma || p.maSanPham || p.sanPhamMa || p.maSp,
+            maSanPham: p.maSanPham || p.sanPhamMa || p.maSp || p.maChiTietSanPham || p.ma,
+            tenSanPham: p.tenSanPham || p.tenSanPhamDayDu || p.ten,
+            tenSanPhamDayDu: p.tenSanPhamDayDu || p.tenSanPham || p.ten,
+            anhMauc: p.urlAnh || (p.hinhAnh?.length > 0 ? p.hinhAnh[0].url : (p.anhMauc || 'https://via.placeholder.com/40')),
+            color: p.tenMauSac || p.color || '--',
+            kichCo: p.tenKichThuoc || p.kichCo || '--',
+            thuongHieu: p.sanPham?.thuongHieu?.ten || p.tenThuongHieu || p.thuongHieu || '--',
+            chatLieu: p.sanPham?.chatLieu?.ten || p.tenChatLieu || p.chatLieu || '--',
+            giaGoc: p.giaBan || 0
         }));
-    } catch (e) {
-        console.error('Error loading products:', e);
-    }
+    } catch (e) { console.error('Error loading products:', e); }
 
     if (isEditMode.value || isDetailView.value) {
         loading.value = true;
@@ -156,11 +246,12 @@ const init = async () => {
             };
             const applied = await dichVuDotGiamGia.layDanhSachBienTheApDung(route.params.id);
             selectedVariantsIds.value = applied.map((v) => v.id);
+            
+            // KHÔNG tự động 'active' ở trên để bảng dưới chỉ hiện những cái đã chọn ban đầu
+            activeProductIds.value = [];
         } catch (e) {
             addNotification({ title: 'Lỗi', subtitle: 'Không thể tải thông tin', color: 'error' });
-        } finally {
-            loading.value = false;
-        }
+        } finally { loading.value = false; }
     }
 };
 
@@ -232,7 +323,7 @@ onMounted(init);
                     prepend-icon="mdi-check-all"
                     @click="handleSave"
                     :loading="saving">
-                    {{ isEditMode ? 'Cập nhật đợt giảm giá' : 'Kích hoạt đợt giảm giá' }}
+                    {{ isEditMode ? 'Cập nhật đợt giảm giá' : 'Thêm mới đợt giảm giá' }}
                 </v-btn>
             </div>
         </div>
@@ -240,7 +331,7 @@ onMounted(init);
         <v-row v-if="loading">
             <v-col cols="12" class="text-center py-16">
                 <v-progress-circular indeterminate color="primary" size="64" />
-                <div class="mt-4 text-subtitle-1 font-weight-bold text-slate-500">Đang tải cấu hình...</div>
+                <div class="mt-4 text-subtitle-1 font-weight-medium text-slate-500">Đang tải cấu hình...</div>
             </v-col>
         </v-row>
 
@@ -252,7 +343,7 @@ onMounted(init);
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
                                 <v-icon color="primary" size="18">mdi-information-variant</v-icon>
                             </div>
-                            <span class="text-subtitle-1 font-weight-black text-slate-800">Thông tin cơ bản</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin cơ bản</span>
                         </div>
 
                         <div class="mb-4">
@@ -297,7 +388,7 @@ onMounted(init);
                             <div class="icon-blob bg-amber-lighten-5 mr-3">
                                 <v-icon color="amber-darken-3" size="18">mdi-package-variant-closed</v-icon>
                             </div>
-                            <span class="text-subtitle-1 font-weight-black text-slate-800">Chọn sản phẩm áp dụng</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Chọn sản phẩm áp dụng</span>
                         </div>
 
                         <v-row class="mb-4 d-flex align-end" no-gutters>
@@ -321,30 +412,40 @@ onMounted(init);
                             </v-col>
                         </v-row>
 
-                        <v-table class="modern-table border rounded-lg overflow-hidden" height="300px" fixed-header>
-                            <thead>
-                                <tr>
-                                    <th class="text-center" style="width: 50px">
-                                        <v-checkbox-btn density="compact" color="primary" hide-details
-                                            @change="e => { if (e.target.checked) selectedVariantsIds = [...new Set([...selectedVariantsIds, ...paginatedProductsToSelect.map(p => p.id)])]; else selectedVariantsIds = selectedVariantsIds.filter(id => !paginatedProductsToSelect.map(p => p.id).includes(id)) }"></v-checkbox-btn>
-                                    </th>
-                                    <th style="width: 120px">Mã SP</th>
-                                    <th>Tên sản phẩm</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(item, index) in paginatedProductsToSelect" :key="item.id">
-                                    <td class="text-center py-2" style="vertical-align: middle;">
-                                        <v-checkbox-btn :model-value="selectedVariantsIds.includes(item.id)"
-                                            @update:model-value="toggleProduct(item.id)" :readonly="isDetailView"
-                                            color="primary" hide-details density="compact" class="d-inline-flex"></v-checkbox-btn>
-                                    </td>
-                                    <td class="font-weight-bold text-slate-400 text-caption py-2" style="vertical-align: middle;">{{ item.ma || 'SP' +
-                                        String(index + 1).padStart(5, '0') }}</td>
-                                    <td class="font-weight-bold py-2" style="vertical-align: middle;">{{ item.tenSanPhamDayDu }}</td>
-                                </tr>
-                            </tbody>
-                        </v-table>
+                        <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="max-height: 300px;">
+                            <table class="native-admin-table">
+                                <thead>
+                                    <tr>
+                                        <th class="header-cell text-center" style="width: 60px">
+                                            <v-checkbox-btn density="compact" color="primary" hide-details
+                                                :model-value="isAllProductsActive"
+                                                @change="toggleAllProductsActive"></v-checkbox-btn>
+                                        </th>
+                                        <th class="header-cell text-center" style="width: 60px">STT</th>
+                                        <th class="header-cell text-center">Mã sản phẩm</th>
+                                        <th class="header-cell text-center">Tên sản phẩm</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(item, index) in paginatedProductsToSelect" :key="item.ma" class="data-row">
+                                        <td class="data-cell text-center">
+                                            <v-checkbox-btn :model-value="isProductActive(item.id)"
+                                                @update:model-value="toggleProductActive(item.id)" :readonly="isDetailView"
+                                                color="primary" hide-details density="compact" class="d-inline-flex"></v-checkbox-btn>
+                                        </td>
+                                        <td class="data-cell text-center text-slate-500 font-weight-medium">
+                                            {{ (selectionPage - 1) * selectionPageSize + index + 1 }}
+                                        </td>
+                                        <td class="data-cell text-center text-primary font-weight-bold text-slate-600">
+                                            {{ item.ma }}
+                                        </td>
+                                        <td class="data-cell text-center font-weight-medium">
+                                            {{ item.ten }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
 
                         <AdminPagination
                             v-model="selectionPage"
@@ -366,117 +467,143 @@ onMounted(init);
                             <div class="icon-blob bg-emerald-lighten-5 mr-3">
                                 <v-icon color="emerald-darken-2" size="18">mdi-format-list-checks</v-icon>
                             </div>
-                            <span class="text-subtitle-1 font-weight-black text-slate-800">Danh sách sản phẩm được
-                                chọn</span>
-                            <v-chip color="primary" size="small" class="ml-3 font-weight-black px-4">{{
-                                selectedVariantsIds.length }} sản phẩm</v-chip>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách chi tiết sản phẩm được chọn 
+                                <span class="text-primary ml-1">({{ selectedVariantsIds.length }})</span>
+                            </span>
                             <v-spacer></v-spacer>
+                            <v-btn v-if="bottomTableSelection.length > 0" variant="flat" color="error" class="mr-2"
+                                prepend-icon="mdi-trash-can-outline" size="small" @click="removeBulkSelected" style="height: 36px; text-transform: none;">
+                                Xóa đã chọn ({{ bottomTableSelection.length }})
+                            </v-btn>
                             <v-btn variant="flat" class="btn-danger-outline"
                                 prepend-icon="mdi-trash-can-outline" @click="removeAllSelected">
                                 Xóa tất cả
                             </v-btn>
                         </div>
 
-                        <v-row class="mb-6 bg-slate-50 pa-6 rounded-lg border border-dashed">
-                            <v-col cols="12" md="3">
-                                <div class="field-label-small">Thương hiệu</div>
-                                <v-select v-model="detailFilters.thuongHieu" :items="['Adidas', 'Nike']"
-                                    density="comfortable" variant="outlined" hide-details clearable
-                                    placeholder="Tất cả"></v-select>
-                            </v-col>
-                            <v-col cols="12" md="3">
-                                <div class="field-label-small">Chất liệu</div>
-                                <v-select v-model="detailFilters.chatLieu" :items="['Da', 'Vải']"
-                                    density="comfortable" variant="outlined" hide-details clearable
-                                    placeholder="Tất cả"></v-select>
-                            </v-col>
-                            <v-col cols="12" md="3">
-                                <div class="field-label-small">Kích cỡ</div>
-                                <v-select v-model="detailFilters.kichCo" :items="[39, 40, 41, 42, 43]"
-                                    density="comfortable" variant="outlined" hide-details clearable
-                                    placeholder="Tất cả"></v-select>
-                            </v-col>
-                            <v-col cols="12" md="3">
-                                <div class="field-label-small">Màu sắc</div>
-                                <v-select v-model="detailFilters.mauSac" :items="['Đen', 'Trắng', 'Xám', 'Xanh']"
-                                    density="comfortable" variant="outlined" hide-details clearable
-                                    placeholder="Tất cả"></v-select>
-                            </v-col>
-                            <v-col cols="12" class="pt-2">
-                                <div class="d-flex align-center bg-white pa-4 rounded-lg border">
-                                    <v-icon size="20" class="mr-4 text-primary">mdi-cash-multiple</v-icon>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex justify-space-between mb-2">
-                                            <span class="text-caption font-weight-black text-slate-600">Lọc theo giá sau giảm</span>
-                                            <span class="text-caption font-weight-black text-primary">{{
-                                                formatCurrency(detailFilters.khoangGia[0]) }} - {{
-                                                formatCurrency(detailFilters.khoangGia[1]) }}</span>
-                                        </div>
-                                        <v-range-slider v-model="detailFilters.khoangGia" :max="5000000" :min="0"
-                                            :step="100000" hide-details color="primary" track-color="slate-200"
-                                            size="small"></v-range-slider>
-                                    </div>
-                                </div>
-                            </v-col>
-                        </v-row>
+                        <!-- Bộ lọc sản phẩm chi tiết -->
+                        <div class="detail-filter-shell mb-6">
+                            <div class="detail-filter-header">
+                                <v-icon size="16" class="mr-2" color="#64748b">mdi-filter-outline</v-icon>
+                                <span class="filter-title-label">Bộ lọc</span>
+                            </div>
+                            <div class="detail-filter-body">
+                                <v-row no-gutters class="filter-row-inner">
+                                    <v-col cols="12" md="3" class="filter-cell">
+                                        <div class="filter-field-label">Thương hiệu</div>
+                                        <v-select v-model="detailFilters.thuongHieu" :items="['Adidas', 'Nike']"
+                                            density="compact" variant="outlined" hide-details clearable
+                                            placeholder="Thương hiệu" class="compact-input"></v-select>
+                                    </v-col>
+                                    <v-col cols="12" md="3" class="filter-cell">
+                                        <div class="filter-field-label">Chất liệu</div>
+                                        <v-select v-model="detailFilters.chatLieu" :items="['Da', 'Vải', 'Vải dệt']"
+                                            density="compact" variant="outlined" hide-details clearable
+                                            placeholder="Chất liệu" class="compact-input"></v-select>
+                                    </v-col>
+                                    <v-col cols="12" md="3" class="filter-cell">
+                                        <div class="filter-field-label">Kích cỡ</div>
+                                        <v-select v-model="detailFilters.kichCo" :items="[39, 40, 41, 42, 43]"
+                                            density="compact" variant="outlined" hide-details clearable
+                                            placeholder="Kích cỡ" class="compact-input"></v-select>
+                                    </v-col>
+                                    <v-col cols="12" md="3" class="filter-cell">
+                                        <div class="filter-field-label">Màu sắc</div>
+                                        <v-select v-model="detailFilters.mauSac" :items="['Đen', 'Trắng', 'Xám', 'Xanh dương', 'Xanh lá']"
+                                            density="compact" variant="outlined" hide-details clearable
+                                            placeholder="Màu sắc" class="compact-input"></v-select>
+                                    </v-col>
+                                </v-row>
 
-                        <v-table class="modern-table border rounded-lg overflow-hidden" fixed-header height="400px">
-                            <thead>
-                                <tr>
-                                    <th class="text-center" style="width: 48px">#</th>
-                                    <th class="text-center" style="width: 80px">Ảnh</th>
-                                    <th>Thông tin sản phẩm</th>
-                                    <th class="text-right">Giá bán</th>
-                                    <th class="text-center">Thuộc tính</th>
-                                    <th class="text-center" style="width: 80px">Xóa</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(item, index) in filteredSelectedDetails" :key="item.id">
-                                    <td class="text-center text-slate-400 font-weight-bold">{{ index + 1 }}</td>
-                                    <td class="text-center py-2">
-                                        <div class="product-image-container d-inline-block position-relative">
-                                            <v-avatar rounded="lg" size="48" class="border">
-                                                <v-img :src="item.anhMauc" cover></v-img>
-                                            </v-avatar>
-                                            <div v-if="form.soTienGiam > 0" class="discount-badge">
-                                                -{{ form.soTienGiam }}%
+                                <div class="price-range-row">
+                                    <div class="d-flex align-center justify-space-between mb-2">
+                                        <div class="d-flex align-center gap-2">
+                                            <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
+                                            <span class="filter-field-label mb-0" style="margin-bottom: 0 !important;">Lọc theo giá sau giảm</span>
+                                        </div>
+                                        <span class="price-range-value">{{ formatCurrency(detailFilters.khoangGia[0]) }} – {{ formatCurrency(detailFilters.khoangGia[1]) }}</span>
+                                    </div>
+                                    <v-range-slider v-model="detailFilters.khoangGia" :max="5000000" :min="0"
+                                        :step="100000" hide-details color="#3b82f6" track-color="#e2e8f0"
+                                        thumb-size="18" class="blue-range-slider"></v-range-slider>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="max-height: 400px;">
+                            <table class="native-admin-table">
+                                <thead>
+                                    <tr>
+                                        <th class="header-cell text-center" style="width: 50px">
+                                            <v-checkbox-btn density="compact" color="primary" hide-details
+                                                :model-value="filteredSelectedDetails.length > 0 && filteredSelectedDetails.every(p => bottomTableSelection.includes(p.id))"
+                                                @change="toggleAllBottomSelection"></v-checkbox-btn>
+                                        </th>
+                                        <th class="header-cell text-center" style="width: 50px">STT</th>
+                                        <th class="header-cell text-center" style="width: 80px">Ảnh</th>
+                                        <th class="header-cell text-center">Mã sản phẩm chi tiết</th>
+                                        <th class="header-cell text-center">Tên sản phẩm</th>
+                                        <th class="header-cell text-center">Giá bán</th>
+                                        <th class="header-cell text-center">Thương hiệu</th>
+                                        <th class="header-cell text-center">Chất liệu</th>
+                                        <th class="header-cell text-center">Kích cỡ</th>
+                                        <th class="header-cell text-center">Màu sắc</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(item, index) in filteredSelectedDetails" :key="item.id" class="data-row">
+                                        <td class="data-cell text-center">
+                                            <v-checkbox-btn color="primary" hide-details density="compact" 
+                                                :model-value="isVariantSelected(item.id)" @update:model-value="toggleVariantSelection(item.id)"></v-checkbox-btn>
+                                        </td>
+                                        <td class="data-cell text-center text-slate-500 font-weight-medium">{{ index + 1 }}</td>
+                                        <td class="data-cell text-center py-2">
+                                            <div class="product-image-container d-inline-block position-relative">
+                                                <v-avatar rounded="lg" size="44" class="border">
+                                                    <v-img :src="item.anhMauc" cover></v-img>
+                                                </v-avatar>
+                                                <div v-if="form.soTienGiam > 0" class="discount-badge">
+                                                    -{{ form.soTienGiam }}%
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="font-weight-black text-slate-800">{{ item.tenSanPhamDayDu }}</div>
-                                        <div class="text-caption font-weight-bold text-primary">{{ item.ma }}</div>
-                                    </td>
-                                    <td class="text-right">
-                                        <div class="text-caption text-slate-400 text-decoration-line-through">{{
-                                            formatCurrency(item.giaGoc) }}</div>
-                                        <div class="font-weight-black text-error text-subtitle-2">{{
-                                            formatCurrency(calculateDiscountedPrice(item.giaGoc)) }}</div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex align-center justify-center gap-2">
-                                            <v-chip size="x-small" variant="tonal" class="font-weight-bold">Size {{
-                                                item.kichCo }}</v-chip>
-                                            <v-chip size="x-small" variant="tonal" class="font-weight-bold">{{ item.color
-                                                }}</v-chip>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        <v-btn icon variant="text" color="error" size="small"
-                                            @click="removeSelectedProduct(item.id)" class="action-icon-btn">
-                                            <TrashIcon size="18" />
-                                        </v-btn>
-                                    </td>
-                                </tr>
-                                <tr v-if="filteredSelectedDetails.length === 0">
-                                    <td colspan="6" class="text-center py-12 text-slate-400 bg-slate-50">
-                                        <v-icon size="40" class="mb-2 opacity-50">mdi-package-variant</v-icon>
-                                        <div>Không tìm thấy sản phẩm nào phù hợp.</div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </v-table>
+                                        </td>
+                                        <td class="data-cell text-center text-primary font-weight-medium">
+                                            {{ item.ma }}
+                                        </td>
+                                        <td class="data-cell text-center font-weight-medium">
+                                            {{ item.tenSanPham }}
+                                        </td>
+                                        <td class="data-cell text-center">
+                                            <div class="text-caption text-slate-400 text-decoration-line-through">{{
+                                                formatCurrency(item.giaGoc) }}</div>
+                                            <div class="text-error font-weight-bold">{{
+                                                formatCurrency(calculateDiscountedPrice(item.giaGoc)) }}</div>
+                                        </td>
+                                        <td class="data-cell text-center">
+                                            {{ item.thuongHieu }}
+                                        </td>
+                                        <td class="data-cell text-center">
+                                            {{ item.chatLieu }}
+                                        </td>
+                                        <td class="data-cell text-center font-weight-medium">
+                                            {{ item.kichCo }}
+                                        </td>
+                                        <td class="data-cell text-center">
+                                            <div class="d-flex align-center justify-center gap-2">
+                                                <div class="color-dot" :style="{ backgroundColor: item.color === 'Xanh dương' ? '#3b82f6' : item.color === 'Xanh lá' ? '#22c55e' : item.color === 'Đen' ? '#000' : '#ccc' }"></div>
+                                                <span>{{ item.color }}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="filteredSelectedDetails.length === 0">
+                                        <td colspan="10" class="data-cell text-center py-12 text-slate-400 bg-slate-50">
+                                            <v-icon size="40" class="mb-2 opacity-50">mdi-package-variant</v-icon>
+                                            <div>Không tìm thấy sản phẩm nào phù hợp.</div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </v-card-text>
                 </v-card>
             </v-col>
@@ -589,3 +716,4 @@ onMounted(init);
     color: #64748b !important;
 }
 </style>
+

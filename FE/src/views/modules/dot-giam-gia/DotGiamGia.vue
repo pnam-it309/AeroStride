@@ -4,7 +4,7 @@ import { PATH } from '@/router/routePaths';
 import { useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
-import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
+import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
 
 // REUSABLE COMPONENTS
 import AdminFilter from '@/components/common/AdminFilter.vue';
@@ -36,6 +36,16 @@ const {
 });
 
 const isRefreshing = ref(false);
+
+// Tính trạng thái theo thời gian thực (ngày bắt đầu / kết thúc)
+const getDiscountTimeStatus = (item) => {
+    const now = Date.now();
+    const start = item.ngayBatDau ? new Date(item.ngayBatDau).getTime() : null;
+    const end = item.ngayKetThuc ? new Date(item.ngayKetThuc).getTime() : null;
+    if (start && now < start) return { label: 'Sắp diễn ra', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' };
+    if (end && now > end) return { label: 'Kết thúc', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' };
+    return { label: 'Hoạt động', color: '#10b981', bg: 'rgba(16,185,129,0.1)' };
+};
 
 // Confirmation Logic
 const confirmDialog = ref({ show: false, title: '', message: '', color: 'primary', action: null, loading: false });
@@ -100,7 +110,7 @@ onMounted(() => loadCampaigns());
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm</div>
-                    <v-text-field v-model="filters.search" placeholder="Tên chiến dịch..." variant="outlined"
+                    <v-text-field v-model="filters.search" placeholder="Tên đợt giảm giá..." variant="outlined"
                         density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
                         @input="handleSearch"></v-text-field>
                 </v-col>
@@ -131,7 +141,7 @@ onMounted(() => loadCampaigns());
         </div>
 
         <!-- 2. TABLE -->
-        <AdminTable title="Danh sách chiến dịch" addButtonText="Tạo mới" show-export-button :headers="[
+        <AdminTable title="Danh sách đợt giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
             { text: 'STT', align: 'center', width: '60px' },
             { text: 'Mã', align: 'center', width: '120px' },
             { text: 'Tên đợt giảm giá', align: 'left', width: '180px' },
@@ -163,7 +173,8 @@ onMounted(() => loadCampaigns());
                     <td class="data-cell text-left">
                         <div class="d-flex flex-column align-start">
                             <div class="font-weight-medium text-slate-700">{{ formatDateTime(item.ngayBatDau) }}</div>
-                            <div class="font-weight-medium text-slate-400">đến {{ formatDateTime(item.ngayKetThuc) }}</div>
+                            <div class="font-weight-medium text-slate-400">đến {{ formatDateTime(item.ngayKetThuc) }}
+                            </div>
                         </div>
                     </td>
                     <td class="data-cell text-center font-weight-medium">
@@ -172,8 +183,7 @@ onMounted(() => loadCampaigns());
                     <td class="data-cell text-center">
                         <v-chip
                             :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']"
-                            variant="flat" 
-                            size="small">
+                            variant="flat" size="small">
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
@@ -223,7 +233,8 @@ onMounted(() => loadCampaigns());
     z-index: 6;
 }
 
-:deep(.data-cell), :deep(.data-cell *) {
+:deep(.data-cell),
+:deep(.data-cell *) {
     font-size: 13px !important;
 }
 
@@ -237,3 +248,4 @@ onMounted(() => loadCampaigns());
     color: #991b1b !important;
 }
 </style>
+

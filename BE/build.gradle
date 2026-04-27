@@ -54,7 +54,9 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.testcontainers:mysql:1.19.0'
     testImplementation 'org.testcontainers:junit-jupiter:1.19.0'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.junit.platform:junit-platform-suite'
+    testRuntimeOnly 'org.junit.platform:junit-platform-suite-engine'
+    testImplementation 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {

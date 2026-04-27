@@ -83,6 +83,7 @@ public class AdminSanPhamMapper {
         return ProductVariantResponse.builder()
                 .id(variant.getId())
                 .idSanPham(variant.getSanPham() != null ? variant.getSanPham().getId() : null)
+                .maSanPham(variant.getSanPham() != null ? variant.getSanPham().getMa() : null)
                 .tenSanPham(variant.getSanPham() != null ? variant.getSanPham().getTen() : null)
                 .tenSanPhamDayDu(variant.getSanPham() != null 
                     ? String.format("%s [%s - %s]", 
@@ -90,6 +91,8 @@ public class AdminSanPhamMapper {
                         variant.getMauSac() != null ? variant.getMauSac().getTen() : "?",
                         variant.getKichThuoc() != null ? variant.getKichThuoc().getTen() : "?") 
                     : null)
+                .tenThuongHieu(variant.getSanPham() != null && variant.getSanPham().getThuongHieu() != null ? variant.getSanPham().getThuongHieu().getTen() : null)
+                .tenChatLieu(variant.getSanPham() != null && variant.getSanPham().getChatLieu() != null ? variant.getSanPham().getChatLieu().getTen() : null)
                 .maChiTietSanPham(variant.getMaChiTietSanPham())
                 .idMauSac(variant.getMauSac() != null ? variant.getMauSac().getId() : null)
                 .tenMauSac(variant.getMauSac() != null ? variant.getMauSac().getTen() : null)

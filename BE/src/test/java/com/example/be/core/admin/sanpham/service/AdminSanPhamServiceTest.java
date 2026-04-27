@@ -53,7 +53,7 @@ class AdminSanPhamServiceTest extends BaseServiceTest {
         var result = adminSanPhamService.getProducts(request);
 
         // Assert
-        assertThat(result.getData()).isEmpty();
+        assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isZero();
     }
 }

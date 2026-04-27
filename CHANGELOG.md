@@ -1,3 +1,17 @@
+## [1.6.1](https://github.com/pnam-it309/AeroStride/compare/v1.6.0...v1.6.1) (2026-04-26)
+
+
+### Performance Improvements
+
+* **docker:** Tối ưu hóa hiệu năng Docker và đồng nhất UI khách hàng ([cd99508](https://github.com/pnam-it309/AeroStride/commit/cd9950833c496e7acc82d167f488945ea5796886))
+
+# [1.6.0](https://github.com/pnam-it309/AeroStride/compare/v1.5.0...v1.6.0) (2026-04-25)
+
+
+### Features
+
+* **fe:** Tối ưu hiển thị Timeline và thêm hiệu ứng chuyển cảnh trong Chi tiết hóa đơn ([eb0cfb7](https://github.com/pnam-it309/AeroStride/commit/eb0cfb795cb72e293ce798ae9f4cdf01f7111174))
+
 # [1.5.0](https://github.com/pnam-it309/AeroStride/compare/v1.4.0...v1.5.0) (2026-04-22)
 
 

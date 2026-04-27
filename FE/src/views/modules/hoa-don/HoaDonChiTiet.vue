@@ -368,11 +368,7 @@ onMounted(() => {
                             <ChevronLeftIcon size="28" />
                         </v-btn>
                         <v-chip v-if="loaded && getOrderStatusMeta(order.trangThai)"
-                            :class="['status-chip', getOrderStatusMeta(order.trangThai).chipClass]"
-                            variant="flat"
-                            size="small"
-                        >
-                            <v-icon start size="16">{{ getOrderStatusMeta(order.trangThai).icon }}</v-icon>
+                            :color="getStatusTone(order.trangThai)" variant="flat" class="font-bold px-4 status-chip">
                             {{ getStatusLabel(order.trangThai) }}
                         </v-chip>
                     </div>
@@ -509,7 +505,7 @@ onMounted(() => {
                                         <span class="info-label">Hạng khách hàng:</span>
                                         <div class="info-value">
                                             <v-chip size="x-small" color="primary" variant="flat"
-                                                class="font-weight-bold text-white">Thành viên</v-chip>
+                                                class="font-weight-medium text-white">Thành viên</v-chip>
                                         </div>
                                     </div>
                                 </div>
@@ -535,10 +531,10 @@ onMounted(() => {
                         <v-table class="premium-table" density="compact">
                             <thead>
                                 <tr>
-                                    <th class="text-left py-4 font-weight-bold text-slate-700" style="font-size: 14px">Sản phẩm</th>
-                                    <th class="text-center py-4 font-weight-bold text-slate-700" style="font-size: 14px">Số lượng</th>
-                                    <th class="text-right py-4 font-weight-bold text-slate-700" style="font-size: 14px">Đơn giá</th>
-                                    <th class="text-right py-4 font-weight-bold text-slate-700" style="font-size: 14px">Thành tiền</th>
+                                    <th class="text-left py-4">Sản phẩm</th>
+                                    <th class="text-center py-4">Số lượng</th>
+                                    <th class="text-right py-4">Đơn giá</th>
+                                    <th class="text-right py-4">Thành tiền</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -549,11 +545,18 @@ onMounted(() => {
                                                 <v-icon size="24" color="primary">mdi-shoe-sneaker</v-icon>
                                             </div>
                                             <div>
-                                                <div class="font-weight-bold text-slate-800">{{ item.tenSanPham }}</div>
-                                                <div class="text-caption text-slate-500">Màu: {{ item.tenMauSac }} |
-                                                    Size:
-                                                    {{
-                                                        item.tenKichThuoc }}</div>
+                                                <div class="font-weight-bold text-slate-800">
+                                                    {{ item.tenSanPham || item.chiTietSanPham?.sanPham?.ten || 'Sản phẩm' }}
+                                                    <span class="text-primary ml-1" style="font-size: 0.85em">[{{ item.maChiTietSanPham || item.chiTietSanPham?.maChiTietSanPham || 'N/A' }}]</span>
+                                                </div>
+                                                <div class="text-caption text-slate-500 d-flex align-center mt-1">
+                                                    <v-chip size="x-small" variant="tonal" class="mr-2 px-2" color="slate-600">
+                                                        Màu: {{ item.tenMauSac || item.chiTietSanPham?.mauSac?.ten || '—' }}
+                                                    </v-chip>
+                                                    <v-chip size="x-small" variant="tonal" class="px-2" color="slate-600">
+                                                        Size: {{ item.tenKichThuoc || item.chiTietSanPham?.kichThuoc?.ten || '—' }}
+                                                    </v-chip>
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -594,36 +597,41 @@ onMounted(() => {
                             <v-timeline side="end" align="start" density="compact">
                                 <v-timeline-item v-for="(log, idx) in order.listsLichSuHoaDon" :key="idx"
                                     :dot-color="getStatusInfo(log.trangThaiMoi).color" size="small">
-                                    <div class="d-flex justify-space-between w-100">
-                                        <div class="pr-10">
-                                            <div class="font-weight-bold text-slate-800">{{
-                                                getStatusInfo(log.trangThaiMoi).text
-                                                }}</div>
-                                            <div class="text-body-2 text-slate-600 mt-1">
+                                    <div class="d-flex align-center w-100 justify-space-between">
+                                        <div style="flex: 1; min-width: 0;" class="pr-4">
+                                            <div class="font-weight-bold text-slate-800">{{ getStatusInfo(log.trangThaiMoi).text }}</div>
+                                            <div class="text-body-2 text-slate-500 mt-1">
                                                 {{ log.ghiChu || 'Cập nhật trạng thái từ hệ thống quản trị' }}
                                             </div>
-                                            <div class="text-caption text-primary mt-2 font-weight-bold">
-                                                Người thực hiện: {{ log.nguoiThucHien || 'ADMIN' }}
+                                        </div>
+                                        
+                                        <div style="width: 280px; white-space: nowrap;" class="text-center px-4">
+                                            <div class="text-caption text-slate-500">
+                                                Người thực hiện: <span class="text-primary font-weight-bold">{{ log.nguoiThucHien || 'ADMIN' }}</span>
                                             </div>
                                         </div>
-                                        <div class="text-caption text-slate-400 font-weight-bold text-right"
-                                            style="min-width: 140px;">
-                                            {{ formatDate(log.ngayTao) }}
+
+                                        <div style="width: 260px; white-space: nowrap;" class="text-caption text-slate-500 font-weight-medium text-right">
+                                            Thời gian: <span class="font-weight-bold">{{ formatDate(log.ngayTao) }}</span>
                                         </div>
                                     </div>
                                 </v-timeline-item>
                                 <v-timeline-item v-if="!order.listsLichSuHoaDon || order.listsLichSuHoaDon.length === 0"
                                     dot-color="success" size="small">
-                                    <div class="d-flex justify-space-between w-100">
-                                        <div>
+                                    <div class="d-flex align-center w-100 justify-space-between">
+                                        <div style="flex: 1;">
                                             <div class="font-weight-bold text-slate-800">Khởi tạo đơn hàng</div>
-                                            <div class="text-caption text-slate-500 mt-1">Đơn hàng được ghi nhận vào hệ
-                                                thống
+                                            <div class="text-caption text-slate-500 mt-1">Đơn hàng được ghi nhận vào hệ thống</div>
+                                        </div>
+
+                                        <div style="width: 280px; white-space: nowrap;" class="text-center px-4">
+                                            <div class="text-caption text-slate-500">
+                                                Người thực hiện: <span class="text-primary font-weight-bold">Hệ thống</span>
                                             </div>
                                         </div>
-                                        <div class="text-caption text-slate-400 font-weight-bold text-right"
-                                            style="min-width: 140px;">
-                                            {{ formatDate(order.ngayTao) }}
+
+                                        <div style="width: 260px; white-space: nowrap;" class="text-caption text-slate-500 font-weight-medium text-right">
+                                            Thời gian: <span class="font-weight-bold">{{ formatDate(order.ngayTao) }}</span>
                                         </div>
                                     </div>
                                 </v-timeline-item>
@@ -644,26 +652,26 @@ onMounted(() => {
                     <div class="summary-section pa-6">
                         <div class="summary-grid">
                             <div class="summary-row mb-2">
-                                <span class="text-slate-500 font-weight-bold" style="font-size: 14px">Tạm tính:</span>
-                                <span class="font-weight-bold text-slate-800" style="font-size: 13px">{{
+                                <span class="text-slate-500 font-weight-medium">Tạm tính:</span>
+                                <span class="text-body-1 font-weight-bold text-slate-800">{{
                                     formatCurrency(order.tongTien)
                                     }}</span>
                             </div>
                             <div class="summary-row mb-2 text-error">
-                                <span class="font-weight-bold" style="font-size: 14px">Giảm giá:</span>
-                                <span class="font-weight-bold" style="font-size: 13px">- {{ formatCurrency(order.tongTien -
+                                <span class="font-weight-medium">Giảm giá:</span>
+                                <span class="text-body-1 font-weight-bold">- {{ formatCurrency(order.tongTien -
                                     (order.tongTienSauGiam || order.tongTien)) }}</span>
                             </div>
                             <div class="summary-row mb-2">
-                                <span class="text-slate-500 font-weight-bold" style="font-size: 14px">Phí vận chuyển:</span>
-                                <span class="font-weight-bold text-slate-800" style="font-size: 13px">{{
+                                <span class="text-slate-500 font-weight-medium">Phí vận chuyển:</span>
+                                <span class="text-body-1 font-weight-bold text-slate-800">{{
                                     formatCurrency(order.phiVanChuyen || 0)
                                 }}</span>
                             </div>
                             <v-divider class="my-3 border-opacity-25"></v-divider>
                             <div class="summary-row">
-                                <span class="font-weight-bold text-slate-800" style="font-size: 14px">Tổng cộng:</span>
-                                <span class="font-weight-bold text-primary" style="font-size: 18px">{{
+                                <span class="text-subtitle-1 font-weight-bold text-slate-800">Tổng cộng:</span>
+                                <span class="text-h5 font-weight-bold text-primary">{{
                                     formatCurrency(order.tongTienSauGiam ||
                                         order.tongTien) }}</span>
                             </div>
@@ -685,14 +693,16 @@ onMounted(() => {
                     </div>
                     <v-card-text class="pa-6">
                         <div class="info-group mb-6">
-                        <div class="text-slate-500 font-weight-bold mb-2" style="font-size: 14px">Loại đơn hàng</div>
-                            <v-chip variant="tonal" color="primary" class="font-weight-bold">
+                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Loại đơn hàng
+                            </div>
+                            <v-chip variant="tonal" color="primary" class="font-weight-medium">
                                 {{ order.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi' }}
                             </v-chip>
                         </div>
                         <v-divider class="mb-6 border-opacity-10"></v-divider>
                         <div class="info-group mb-6">
-                        <div class="text-slate-500 font-weight-bold mb-2" style="font-size: 14px">Địa chỉ nhận</div>
+                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Địa chỉ nhận
+                            </div>
                             <div class="text-body-1 text-slate-700 d-flex align-start">
                                 <MapPinIcon size="18" class="mr-2 text-error mt-1" />
                                 <span>{{ order.diaChi || 'Khách nhận tại quầy' }}</span>
@@ -700,7 +710,7 @@ onMounted(() => {
                         </div>
                         <v-divider class="mb-6 border-opacity-10"></v-divider>
                         <div class="info-group">
-                        <div class="text-slate-500 font-weight-bold mb-2" style="font-size: 14px">Ghi chú</div>
+                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Ghi chú</div>
                             <div class="text-body-2 text-slate-600 italic pa-3 bg-slate-50 rounded-lg">
                                 {{ order.ghiChu || 'Không có ghi chú' }}
                             </div>
@@ -831,17 +841,23 @@ onMounted(() => {
                                 <v-table class="items-table-compact">
                                     <thead>
                                         <tr>
-                                            <th class="py-3 font-weight-bold text-slate-700" style="font-size: 14px">Sản phẩm</th>
-                                            <th class="text-center py-3 font-weight-bold text-slate-700" style="font-size: 14px">SL</th>
-                                            <th class="text-right py-3 font-weight-bold text-slate-700" style="font-size: 14px">Xóa</th>
+                                            <th class="py-3 text-caption font-weight-medium">Sản phẩm</th>
+                                            <th class="text-center py-3 text-caption font-weight-medium">SL</th>
+                                            <th class="text-right py-3 text-caption font-weight-medium">Xóa</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr v-for="item in order.listsHoaDonChiTiet" :key="item.id" class="hover-row">
                                             <td class="py-3">
-                                                <div class="text-subtitle-2 font-weight-bold text-slate-800">{{ item.tenSanPham }}</div>
+                                                <div class="text-subtitle-2 font-weight-bold text-slate-800">
+                                                    {{ item.tenSanPham || item.chiTietSanPham?.sanPham?.ten || 'Sản phẩm' }}
+                                                </div>
+                                                <div class="text-caption text-slate-400 font-weight-bold">
+                                                    Mã: {{ item.maChiTietSanPham || item.chiTietSanPham?.maChiTietSanPham || 'N/A' }}
+                                                </div>
                                                 <div class="text-caption text-slate-500">
-                                                    {{ item.tenMauSac }} | {{ item.tenKichThuoc }}
+                                                    {{ item.tenMauSac || item.chiTietSanPham?.mauSac?.ten || '—' }} | 
+                                                    {{ item.tenKichThuoc || item.chiTietSanPham?.kichThuoc?.ten || '—' }}
                                                 </div>
                                                 <div class="text-caption font-weight-bold text-primary mt-1">
                                                     {{ formatCurrency(item.donGia) }}
@@ -938,8 +954,8 @@ onMounted(() => {
 }
 
 .btn-white-text :deep(svg) {
-    color: #fff !important;
-    stroke: #fff !important;
+    color: #000 !important;
+    stroke: #000 !important;
     fill: none !important;
 }
 
@@ -957,32 +973,21 @@ onMounted(() => {
 }
 
 .info-label {
-    font-size: 14px;
-    font-weight: 700;
-    text-transform: none;
-    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #94a3b8;
     white-space: nowrap;
 }
 
 .info-value {
     font-size: 13px;
-    font-weight: 700;
-    color: #1d2025;
+    font-weight: 600;
+    color: #334155;
     text-align: right;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.timeline-info .label {
-    font-size: 14px;
-    font-weight: 700;
-    color: #1d2025;
-}
-
-.timeline-info .note {
-    font-size: 13px;
-    color: #64748b;
 }
 
 .timeline-wrap {
@@ -1007,7 +1012,7 @@ onMounted(() => {
 .product-icon {
     width: 44px;
     height: 44px;
-    background: #f0f1ff;
+    background: #eff6ff;
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -1038,6 +1043,7 @@ onMounted(() => {
 }
 
 .bg-primary-light {
-    background: #f0f1ff;
+    background: #eff6ff;
 }
 </style>
+

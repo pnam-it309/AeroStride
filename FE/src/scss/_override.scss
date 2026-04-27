@@ -21,22 +21,22 @@ body,
 /* Global Font Size Rules (Standardized for professional dashboard) */
 .text-h1 {
     font-size: 1.8rem !important;
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1.2 !important;
 }
 .text-h2 {
     font-size: 1.6rem !important;
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1.2 !important;
 }
 .text-h3 {
     font-size: 1.4rem !important;
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1.2 !important;
 }
 .text-h4 {
     font-size: 1.25rem !important;
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1.2 !important;
 }
 .text-h5 {
@@ -93,7 +93,7 @@ body,
                         background-color: #f8fafc !important; // Match sidebar light feel
                         border-bottom: 1px solid #e2e8f0 !important;
                         color: #000 !important;
-                        font-weight: 600 !important;
+                        font-weight: 500 !important;
                         text-transform: none !important;
                         font-size: 1.05rem !important; // Increased from 0.875
                         height: 52px !important;
@@ -150,7 +150,7 @@ h3,
 h4,
 .text-h6 {
     text-transform: none !important;
-    font-weight: 700 !important;
+    font-weight: 600 !important;
     &::first-letter {
         text-transform: uppercase !important;
     }

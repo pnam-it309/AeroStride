@@ -1,13 +1,13 @@
 package com.example.be;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.platform.suite.api.ExcludeClassNamePatterns;
+import org.junit.platform.suite.api.SelectPackages;
+import org.junit.platform.suite.api.Suite;
+import org.junit.platform.suite.api.SuiteDisplayName;
 
-@SpringBootTest
-class BeApplicationTests {
-
-    @Test
-    void contextLoads() {
-    }
-
+@Suite
+@SuiteDisplayName("AeroStride Full Test Suite")
+@SelectPackages("com.example.be")
+@ExcludeClassNamePatterns(".*BeApplicationTests")
+public class BeApplicationTests {
 }

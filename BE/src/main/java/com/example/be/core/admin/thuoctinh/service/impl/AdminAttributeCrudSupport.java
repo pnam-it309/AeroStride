@@ -13,6 +13,7 @@ import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.utils.CodeUtils;
 import com.example.be.utils.SearchUtils;
 import jakarta.persistence.criteria.Predicate;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,6 +97,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
 
     @Override
     @Transactional
+    @CacheEvict(value = "productOptions", allEntries = true)
     public AdminAttributeResponse create(AdminAttributeRequest request) {
         validateDuplicate(request, null);
 
@@ -106,6 +108,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
 
     @Override
     @Transactional
+    @CacheEvict(value = "productOptions", allEntries = true)
     public AdminAttributeResponse update(String id, AdminAttributeRequest request) {
         E entity = findActiveEntity(id);
         validateDuplicate(request, id);
@@ -116,6 +119,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
 
     @Override
     @Transactional
+    @CacheEvict(value = "productOptions", allEntries = true)
     public void delete(String id) {
         E entity = findActiveEntity(id);
         entity.setTrangThai(TrangThai.DA_XOA);

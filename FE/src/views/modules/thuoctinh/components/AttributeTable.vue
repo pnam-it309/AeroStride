@@ -51,7 +51,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                     grow 
                     height="54"
                 >
-                    <v-tab v-for="tabItem in tabs" :key="tabItem.value" :value="tabItem.value" class="text-none font-weight-bold px-4 tab-item">
+                    <v-tab v-for="tabItem in tabs" :key="tabItem.value" :value="tabItem.value" class="text-none font-weight-medium px-4 tab-item">
                         <v-icon start size="16">{{ tabItem.icon }}</v-icon>
                         {{ tabItem.title }}
                     </v-tab>
@@ -65,7 +65,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                         <div class="font-weight-medium text-slate-900">{{ getItemCode(item) }}</div>
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-slate-800 font-weight-medium">{{ getItemName(item) }}</div>
+                        <div class="text-slate-800">{{ getItemName(item) }}</div>
                     </td>
                     <td class="data-cell text-center">
                         <v-chip
@@ -126,3 +126,4 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
 <style scoped>
 /* Scoped styles removed in favor of global _admin-common.scss */
 </style>
+

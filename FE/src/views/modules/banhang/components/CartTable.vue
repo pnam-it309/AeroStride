@@ -38,8 +38,10 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
                             <div>
                                 <div class="font-weight-bold text-subtitle-2">{{ item.tenSanPham }}</div>
                                 <div class="d-flex gap-2 mt-1">
-                                    <v-chip size="x-small" label variant="outlined" color="grey">Size {{ item.tenKichThuoc }}</v-chip>
-                                    <v-chip size="x-small" label variant="outlined" color="grey">{{ item.tenMauSac }}</v-chip>
+                                    <v-chip size="x-small" label variant="outlined" color="grey">Size {{
+                                        item.tenKichThuoc }}</v-chip>
+                                    <v-chip size="x-small" label variant="outlined" color="grey">{{ item.tenMauSac
+                                        }}</v-chip>
                                 </div>
                             </div>
                         </div>
@@ -74,19 +76,20 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
     background: #f1f5f9;
     border-radius: 8px;
     display: inline-flex;
-    align-center: center !important; /* Fixed typo from original logic */
+    align-center: center !important;
+    /* Fixed typo from original logic */
     align-items: center;
     padding: 2px;
 }
+
 .qty-value {
     min-width: 32px;
     font-weight: 700;
     text-align: center;
 }
+
 .item-row:hover {
     background-color: #f8fafc;
 }
 </style>
-
-
 

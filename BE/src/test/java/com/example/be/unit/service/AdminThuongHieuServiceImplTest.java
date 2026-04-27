@@ -1,5 +1,6 @@
-package com.example.be.core.admin.thuoctinh.thuonghieu.service.impl;
+package com.example.be.unit.service;
 import com.example.be.core.admin.thuoctinh.thuonghieu.repository.AdminThuongHieuRepository;
+import com.example.be.core.admin.thuoctinh.thuonghieu.service.impl.AdminThuongHieuServiceImpl;
 import com.example.be.entity.ThuongHieu;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -7,6 +8,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
+import org.springframework.data.jpa.domain.Specification;
+import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -14,9 +17,12 @@ import static org.mockito.Mockito.*;
 class AdminThuongHieuServiceImplTest {
     @Mock private AdminThuongHieuRepository repository;
     @InjectMocks private AdminThuongHieuServiceImpl service;
-    @Test void testFindById() {
+    @Test void testGetById() {
         ThuongHieu entity = new ThuongHieu();
-        when(repository.findById(1L)).thenReturn(Optional.of(entity));
-        assertTrue(service.findById(1L).isPresent());
+        entity.setId("1");
+        entity.setMa("TH1");
+        entity.setTen("Brand 1");
+        when(repository.findOne(any(Specification.class))).thenReturn(Optional.of(entity));
+        assertNotNull(service.getById("1"));
     }
 }

@@ -26,7 +26,7 @@ const updateFormField = (field, value) => {
             
             <v-card-title class="px-8 py-6 border-b bg-slate-50/50">
                 <div>
-                    <h3 class="text-h5 font-weight-black text-slate-900 tracking-tight">
+                    <h3 class="text-h5 font-weight-bold text-slate-900 tracking-tight">
                         {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }} {{ title.toLowerCase() }}
                     </h3>
                     <p class="text-subtitle-2 text-slate-500 font-weight-medium mt-1">Thiết lập các thông tin cơ bản cho thuộc tính.</p>
@@ -39,7 +39,7 @@ const updateFormField = (field, value) => {
                         <v-col cols="12">
                             <div class="form-group mb-5">
                                 <div class="mb-2 px-1">
-                                    <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">Mã {{ title }} <span class="text-lowercase font-weight-medium text-slate-400">(Tự động)</span></span>
+                                    <span class="text-caption font-weight-medium text-slate-700 text-uppercase tracking-wider">Mã {{ title }} <span class="text-lowercase font-weight-medium text-slate-400">(Tự động)</span></span>
                                 </div>
                                 <v-text-field
                                     :model-value="form.ma"
@@ -48,13 +48,13 @@ const updateFormField = (field, value) => {
                                     variant="outlined"
                                     density="comfortable"
                                     hide-details
-                                    class="modern-input font-weight-black bg-slate-50"
+                                    class="modern-input font-weight-medium bg-slate-50"
                                 ></v-text-field>
                             </div>
 
                             <div class="form-group mb-5">
                                 <div class="mb-2 px-1">
-                                    <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">Tên {{ title }} *</span>
+                                    <span class="text-caption font-weight-medium text-slate-700 text-uppercase tracking-wider">Tên {{ title }} *</span>
                                 </div>
                                 <v-text-field
                                     :model-value="form.ten"
@@ -63,14 +63,14 @@ const updateFormField = (field, value) => {
                                     variant="outlined"
                                     density="comfortable"
                                     hide-details
-                                    class="modern-input font-weight-bold"
+                                    class="modern-input"
                                 ></v-text-field>
                             </div>
 
                             <!-- Color Specific -->
                             <div v-if="selectedTab === 'colors'" class="form-group mb-5">
                                 <div class="mb-2 px-1">
-                                    <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">Mã màu (Hex)</span>
+                                    <span class="text-caption font-weight-medium text-slate-700 text-uppercase tracking-wider">Mã màu (Hex)</span>
                                 </div>
                                 <div class="d-flex align-center gap-3">
                                     <v-text-field
@@ -93,7 +93,7 @@ const updateFormField = (field, value) => {
                             <!-- Size Specific -->
                             <div v-if="selectedTab === 'sizes'" class="form-group mb-5">
                                 <div class="mb-2 px-1">
-                                    <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">Giá trị (Số)</span>
+                                    <span class="text-caption font-weight-medium text-slate-700 text-uppercase tracking-wider">Giá trị (Số)</span>
                                 </div>
                                 <v-text-field
                                     :model-value="form.giaTriKichThuoc"
@@ -103,13 +103,13 @@ const updateFormField = (field, value) => {
                                     variant="outlined"
                                     density="comfortable"
                                     hide-details
-                                    class="modern-input font-weight-bold"
+                                    class="modern-input"
                                 ></v-text-field>
                             </div>
 
                             <div class="form-group">
                                 <div class="mb-2 px-1">
-                                    <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">Mô tả</span>
+                                    <span class="text-caption font-weight-medium text-slate-700 text-uppercase tracking-wider">Mô tả</span>
                                 </div>
                                 <v-textarea
                                     :model-value="form.moTa"
@@ -129,13 +129,13 @@ const updateFormField = (field, value) => {
             <v-divider></v-divider>
 
             <v-card-actions class="px-8 py-6 bg-slate-50 d-flex justify-end gap-3">
-                <v-btn variant="tonal" color="slate-500" class="px-6 rounded-xl font-weight-bold h-11" @click="closeModal">
+                <v-btn variant="tonal" color="slate-500" class="px-6 rounded-xl font-weight-medium h-11" @click="closeModal">
                     Hủy bỏ
                 </v-btn>
                 <v-btn
                     color="primary"
                     variant="flat"
-                    class="px-8 rounded-xl font-weight-black h-11 text-white"
+                    class="px-8 rounded-xl font-weight-bold h-11 text-white"
                     @click="handleSave"
                     :disabled="!form?.ten"
                 >
@@ -178,3 +178,4 @@ const updateFormField = (field, value) => {
     text-transform: none;
 }
 </style>
+

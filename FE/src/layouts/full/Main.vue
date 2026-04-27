@@ -186,7 +186,7 @@ const sidebarMenu = shallowRef(sidebarItems);
 /* Breadcrumbs in Header */
 :deep(.breadcrumbs-header) {
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 :deep(.breadcrumbs-header .v-breadcrumbs-item) {
