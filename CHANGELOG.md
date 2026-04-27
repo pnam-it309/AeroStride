@@ -1,3 +1,15 @@
+## [1.7.1](https://github.com/pnam-it309/AeroStride/compare/v1.7.0...v1.7.1) (2026-04-27)
+
+
+### Bug Fixes
+
+* Khôi phục chính xác code giao diện từ Yen (feature/fix-khuyenmai) ([adb8d4d](https://github.com/pnam-it309/AeroStride/commit/adb8d4df11a21de816a7cc54816b09b29f437733))
+
+
+### Reverts
+
+* Trả lại cấu hình Dependabot như cũ ([e24412f](https://github.com/pnam-it309/AeroStride/commit/e24412f7a2c0880ed0a140d76fde2a07b905674d))
+
 ## [1.6.1](https://github.com/pnam-it309/AeroStride/compare/v1.6.0...v1.6.1) (2026-04-26)
 
 
