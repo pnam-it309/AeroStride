@@ -50,7 +50,7 @@
         "jsdom": "^22.1.0",
         "prettier": "^2.5.1",
         "sass": "1.49.9",
-        "sass-loader": "^10.0.0",
+        "sass-loader": "^16.0.7",
         "sockjs-client": "^1.6.1",
         "vite": "4.4.9",
         "vitest": "^0.34.0",
