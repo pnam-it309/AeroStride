@@ -80,9 +80,10 @@ const tableHeaders = [
     { text: 'Mã nhân viên', align: 'center', width: '120px' },
     { text: 'Tên nhân viên', align: 'left', width: '150px' },
     { text: 'Tên tài khoản', align: 'center', width: '120px' },
-    { text: 'Giới tính', align: 'center', width: '130px' },
-    { text: 'Thông tin liên hệ', align: 'left', width: '220px' },
-    { text: 'Chức vụ', align: 'center', width: '100px' },
+    { text: 'Giới tính', align: 'center', width: '100px' },
+    { text: 'Thông tin liên hệ', align: 'left', width: '230px' },
+    { text: 'Địa chỉ', align: 'left', width: '200px' },
+    { text: 'Chức vụ', align: 'left', width: '120px' },
     { text: 'Trạng thái', align: 'center', width: '130px' },
     { text: 'Hành động', align: 'center', width: '110px' }
 ];
@@ -250,7 +251,7 @@ onMounted(() => {
                     <td class="data-cell text-center">
                         <v-chip
                             size="small"
-                            variant="tonal"
+                            variant="flat"
                             :class="['gender-chip', item.gioiTinh ? 'gender-chip-male' : 'gender-chip-female']"
                         >
                             {{ item.gioiTinh === true ? 'Nam' : item.gioiTinh === false ? 'Nữ' : '-' }}

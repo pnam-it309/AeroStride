@@ -393,6 +393,16 @@ onMounted(async () => {
                                     </div>
                                 </div>
                             </v-col>
+                            <v-col cols="12">
+                                <div class="pa-4 bg-slate-50 rounded-lg border mb-2">
+                                    <div class="text-caption text-slate-400 font-weight-bold mb-1 uppercase tracking-wider">
+                                        ĐỊA CHỈ THƯỜNG TRÚ
+                                    </div>
+                                    <div class="text-subtitle-1 font-weight-black text-slate-800">
+                                        {{ employeeForm.diaChi || 'Chưa cập nhật' }}
+                                    </div>
+                                </div>
+                            </v-col>
                         </v-row>
                     </v-card-text>
                 </v-card>
@@ -454,6 +464,7 @@ onMounted(async () => {
                                     placeholder="name@company.com"
                                     variant="outlined"
                                     density="comfortable"
+                                    class="font-weight-bold"
                                     hide-details
                                 ></v-text-field>
                             </v-col>
@@ -506,6 +517,19 @@ onMounted(async () => {
                                     hide-details
                                 ></v-textarea>
                             </v-col>
+                            <v-col cols="12">
+                                <div class="field-label">Địa chỉ thường trú</div>
+                                <v-textarea
+                                    v-model="employeeForm.diaChi"
+                                    :readonly="isDetailView"
+                                    placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố..."
+                                    variant="outlined"
+                                    density="comfortable"
+                                    rows="2"
+                                    class="font-weight-bold"
+                                    hide-details
+                                ></v-textarea>
+                            </v-col>
                         </v-row>
                     </v-card-text>
                 </v-card>
@@ -543,14 +567,15 @@ onMounted(async () => {
                                     item-value="value"
                                     variant="outlined"
                                     density="comfortable"
+                                    class="font-weight-bold"
                                     hide-details
                                 >
                                     <template #selection="{ item }">
                                         <v-chip
                                             :color="item.raw.color"
                                             size="small"
-                                            variant="flat"
-                                            class="px-5 font-weight-medium rounded-lg h-7"
+                                            variant="tonal"
+                                            class="px-5 font-weight-black rounded-lg h-7"
                                             >{{ item.title }}</v-chip
                                         >
                                     </template>
