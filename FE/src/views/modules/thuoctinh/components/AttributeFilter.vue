@@ -20,9 +20,10 @@ const handleSearch = () => emit('search');
             title="Bộ lọc thuộc tính" 
             :loading="loading" 
             @refresh="handleRefresh" 
+            class="compact-filter-card"
         >
             <v-col cols="12" md="3" class="py-1">
-                <div class="filter-field-label">Tìm kiếm nhanh</div>
+                <div class="filter-label">Tìm kiếm nhanh</div>
                 <v-text-field 
                     :model-value="searchQuery"
                     @update:model-value="emit('update:searchQuery', $event)"
@@ -31,11 +32,12 @@ const handleSearch = () => emit('search');
                     density="compact"
                     hide-details 
                     prepend-inner-icon="mdi-magnify" 
+                    class="compact-input"
                     @keyup.enter="handleSearch"
                 ></v-text-field>
             </v-col>
             <v-col cols="12" md="2" class="py-1">
-                <div class="filter-field-label">Trạng thái</div>
+                <div class="filter-label">Trạng thái</div>
                 <v-select 
                     :model-value="statusFilter"
                     @update:model-value="emit('update:statusFilter', $event)"
@@ -47,6 +49,7 @@ const handleSearch = () => emit('search');
                     variant="outlined" 
                     density="compact" 
                     hide-details 
+                    class="compact-input"
                 ></v-select>
             </v-col>
         </AdminFilter>
@@ -54,6 +57,38 @@ const handleSearch = () => emit('search');
 </template>
 
 <style scoped>
-/* Scoped styles removed in favor of global _admin-common.scss */
-</style>
+.filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 2px;
+    margin-left: 2px;
+}
 
+:deep(.compact-input .v-field__input) {
+    min-height: 36px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    font-size: 13px;
+}
+
+:deep(.compact-input .v-field) {
+    border-radius: 8px !important;
+}
+
+:deep(.compact-filter-card) {
+    margin-bottom: 8px !important;
+}
+
+:deep(.compact-filter-card .v-card-text) {
+    padding: 8px 16px !important;
+}
+
+:deep(.compact-filter-card .filter-header) {
+    margin-bottom: 4px !important;
+}
+
+:deep(.compact-filter-card .filter-title) {
+    font-size: 14px !important;
+}
+</style>
