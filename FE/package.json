@@ -34,7 +34,7 @@
         "vue3-apexcharts": "1.4.1",
         "vue3-perfect-scrollbar": "^1.6.1",
         "vuetify": "3.3.19",
-        "yup": "^0.32.11"
+        "yup": "^1.7.1"
     },
     "devDependencies": {
         "@mdi/font": "^6.5.95",
