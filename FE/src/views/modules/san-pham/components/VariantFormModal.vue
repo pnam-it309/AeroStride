@@ -185,7 +185,7 @@ const refreshOptions = () => {
 </script>
 
 <template>
-    <v-dialog v-model="dialogVisible" max-width="700" persistent transition="dialog-bottom-transition" scrollable>
+    <v-dialog v-model="dialogVisible" max-width="860" persistent transition="dialog-bottom-transition" scrollable>
         <v-card class="rounded-xl border shadow-2xl p-0">
             <div class="h-1-5 w-full bg-primary"></div>
 
@@ -202,126 +202,139 @@ const refreshOptions = () => {
 
             <v-form ref="formRef">
                 <v-card-text class="pa-8">
-                    <v-row>
-                        <v-col cols="12" md="6">
-                            <div class="space-y-5">
-                                <div class="form-group">
-                                    <div class="d-flex align-center justify-space-between mb-2 px-1">
-                                        <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
-                                            Màu sắc
-                                        </span>
-                                        <v-btn variant="text" color="primary" density="compact"
-                                            class="text-none px-2 h-auto" @click="refreshOptions">
-                                            <RefreshIcon size="12" class="mr-1" /> Làm mới
-                                        </v-btn>
-                                    </div>
-                                    <v-combobox v-model="formData.idMauSac" :items="options.mauSacs" item-title="ten"
-                                        item-value="id" :disabled="shouldLockAttributes" placeholder="Chọn màu sắc"
-                                        variant="outlined" density="comfortable" hide-details="auto"
-                                        :return-object="false" class="modern-select" :rules="[rules.required]"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idMauSac', dichVuMauSac, 'MAU_SAC', 'màu sắc')"></v-combobox>
+                    <v-row class="variant-modal-layout">
+                        <v-col cols="12" md="4">
+                            <div class="form-group h-100">
+                                <div class="mb-2 px-1">
+                                    <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
+                                        Hình ảnh
+                                    </span>
                                 </div>
-
-                                <div class="form-group">
-                                    <div class="mb-2 px-1">
-                                        <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
-                                            Kích thước
-                                        </span>
-                                    </div>
-                                    <v-combobox v-model="formData.idKichThuoc" :items="options.kichThuocs" item-title="ten"
-                                        item-value="id" :disabled="shouldLockAttributes" placeholder="Chọn kích thước"
-                                        variant="outlined" density="comfortable" hide-details="auto"
-                                        :return-object="false" class="modern-select" :rules="[rules.required]"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idKichThuoc', dichVuKichThuoc, 'KICH_THUOC', 'kích thước')"></v-combobox>
-                                </div>
-
-                                <div class="form-group">
-                                    <div class="mb-2 px-1">
-                                        <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
-                                            Mã SKU
-                                        </span>
-                                    </div>
-                                    <v-text-field v-model="formData.maChiTietSanPham" :placeholder="skuPlaceholder"
-                                        variant="outlined" density="comfortable" readonly hide-details="auto"
-                                        class="modern-input bg-slate-50"></v-text-field>
-                                </div>
-
-                                <div class="form-group">
-                                    <div class="mb-2 px-1">
-                                        <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
-                                            Hình ảnh
-                                        </span>
-                                    </div>
-                                    <div class="variant-image-upload border-dashed rounded-xl pa-2 d-flex align-center gap-4 bg-slate-50/50">
-                                        <v-avatar rounded="lg" size="80" class="border bg-white shadow-sm">
+                                <div class="variant-image-panel border-dashed rounded-xl pa-4 bg-slate-50/50 h-100">
+                                    <div class="variant-image-panel__preview">
+                                        <v-avatar rounded="xl" size="168" class="border bg-white shadow-sm">
                                             <v-img v-if="formData.urlAnh" :src="formData.urlAnh" cover></v-img>
                                             <div v-else class="fill-height d-flex align-center justify-center text-slate-300">
-                                                <PhotoIcon size="32" />
+                                                <PhotoIcon size="48" />
                                             </div>
                                         </v-avatar>
-                                        <div class="flex-grow-1">
-                                            <input type="file" ref="fileInput" class="d-none" accept="image/*"
-                                                @change="handleImageUpload" />
+                                    </div>
 
-                                            <div v-if="allowImageUpload" class="d-flex gap-2">
-                                                <v-btn variant="flat" color="primary" size="small"
-                                                    class="rounded-lg text-none" :loading="uploadingImage"
-                                                    @click="triggerFileInput">
-                                                    <PlusIcon size="14" class="mr-1" /> Chọn ảnh
-                                                </v-btn>
-                                                <v-btn v-if="formData.urlAnh" variant="tonal" color="error" size="small"
-                                                    class="rounded-lg text-none px-2" @click="formData.urlAnh = ''">
-                                                    <TrashIcon size="14" />
-                                                </v-btn>
-                                            </div>
+                                    <div class="variant-image-panel__body">
+                                        <input type="file" ref="fileInput" class="d-none" accept="image/*"
+                                            @change="handleImageUpload" />
 
-                                            <p v-if="allowImageUpload" class="text-caption text-slate-400 mt-2 line-height-tight">
-                                                Dung lượng tối đa 2MB. Định dạng JPG, PNG.
-                                            </p>
-                                            <p v-else class="text-caption text-slate-500 mt-2 line-height-tight">
-                                                Ảnh của biến thể đang được quản lý ở màn chi tiết biến thể để tránh ghi đè dữ liệu ngoài ý muốn.
-                                            </p>
+                                        <div v-if="allowImageUpload" class="d-flex flex-wrap gap-2">
+                                            <v-btn variant="flat" color="primary" size="small"
+                                                class="rounded-lg text-none" :loading="uploadingImage"
+                                                @click="triggerFileInput">
+                                                <PlusIcon size="14" class="mr-1" /> Chọn ảnh
+                                            </v-btn>
+                                            <v-btn v-if="formData.urlAnh" variant="tonal" color="error" size="small"
+                                                class="rounded-lg text-none px-2" @click="formData.urlAnh = ''">
+                                                <TrashIcon size="14" />
+                                            </v-btn>
                                         </div>
+
+                                        <p v-if="allowImageUpload" class="text-caption text-slate-400 mt-3 line-height-tight">
+                                            Dung lượng tối đa 2MB. Định dạng JPG, PNG.
+                                        </p>
+                                        <p v-else class="text-caption text-slate-500 mt-3 line-height-tight">
+                                            Ảnh của biến thể đang được quản lý ở màn chi tiết biến thể để tránh ghi đè dữ liệu ngoài ý muốn.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
                         </v-col>
 
-                        <v-col cols="12" md="6">
-                            <div class="space-y-5">
-                                <div class="form-group">
-                                    <div class="mb-2 px-1">
-                                        <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
-                                            Số lượng tồn
-                                        </span>
+                        <v-col cols="12" md="8">
+                            <v-row class="variant-modal-fields">
+                                <v-col cols="12" md="6">
+                                    <div class="form-group">
+                                        <div class="d-flex align-center justify-space-between mb-2 px-1">
+                                            <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
+                                                Màu sắc
+                                            </span>
+                                            <v-btn variant="text" color="primary" density="compact"
+                                                class="text-none px-2 h-auto" @click="refreshOptions">
+                                                <RefreshIcon size="12" class="mr-1" /> Làm mới
+                                            </v-btn>
+                                        </div>
+                                        <v-combobox v-model="formData.idMauSac" :items="options.mauSacs" item-title="ten"
+                                            item-value="id" :disabled="shouldLockAttributes" placeholder="Chọn màu sắc"
+                                            variant="outlined" density="comfortable" hide-details="auto"
+                                            :return-object="false" class="modern-select" :rules="[rules.required]"
+                                            @keyup.enter="(e) => onKeyUpEnter(e, 'idMauSac', dichVuMauSac, 'MAU_SAC', 'màu sắc')"></v-combobox>
                                     </div>
-                                    <v-text-field v-model.number="formData.soLuong" type="number" min="0"
-                                        :rules="[rules.required, rules.min0]" variant="outlined" density="comfortable"
-                                        hide-details="auto" placeholder="0" class="modern-input"></v-text-field>
-                                </div>
+                                </v-col>
 
-                                <div class="form-group">
-                                    <div class="mb-2 px-1">
-                                        <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
-                                            Giá nhập (VNĐ)
-                                        </span>
+                                <v-col cols="12" md="6">
+                                    <div class="form-group">
+                                        <div class="mb-2 px-1">
+                                            <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
+                                                Số lượng tồn
+                                            </span>
+                                        </div>
+                                        <v-text-field v-model.number="formData.soLuong" type="number" min="0"
+                                            :rules="[rules.required, rules.min0]" variant="outlined" density="comfortable"
+                                            hide-details="auto" placeholder="0" class="modern-input"></v-text-field>
                                     </div>
-                                    <v-text-field v-model.number="formData.giaNhap" type="number" min="0"
-                                        :rules="[rules.min0]" variant="outlined" density="comfortable" hide-details="auto"
-                                        placeholder="0" suffix="₫" class="modern-input"></v-text-field>
-                                </div>
+                                </v-col>
 
-                                <div class="form-group">
-                                    <div class="mb-2 px-1">
-                                        <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
-                                            Giá bán (VNĐ)
-                                        </span>
+                                <v-col cols="12" md="6">
+                                    <div class="form-group">
+                                        <div class="mb-2 px-1">
+                                            <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
+                                                Kích thước
+                                            </span>
+                                        </div>
+                                        <v-combobox v-model="formData.idKichThuoc" :items="options.kichThuocs" item-title="ten"
+                                            item-value="id" :disabled="shouldLockAttributes" placeholder="Chọn kích thước"
+                                            variant="outlined" density="comfortable" hide-details="auto"
+                                            :return-object="false" class="modern-select" :rules="[rules.required]"
+                                            @keyup.enter="(e) => onKeyUpEnter(e, 'idKichThuoc', dichVuKichThuoc, 'KICH_THUOC', 'kích thước')"></v-combobox>
                                     </div>
-                                    <v-text-field v-model.number="formData.giaBan" type="number" min="0"
-                                        :rules="[rules.required, rules.min0]" variant="outlined" density="comfortable"
-                                        hide-details="auto" placeholder="0" suffix="₫" class="modern-input"></v-text-field>
-                                </div>
-                            </div>
+                                </v-col>
+
+                                <v-col cols="12" md="6">
+                                    <div class="form-group">
+                                        <div class="mb-2 px-1">
+                                            <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
+                                                Giá nhập (VNĐ)
+                                            </span>
+                                        </div>
+                                        <v-text-field v-model.number="formData.giaNhap" type="number" min="0"
+                                            :rules="[rules.min0]" variant="outlined" density="comfortable" hide-details="auto"
+                                            placeholder="0" suffix="₫" class="modern-input"></v-text-field>
+                                    </div>
+                                </v-col>
+
+                                <v-col cols="12">
+                                    <div class="form-group">
+                                        <div class="mb-2 px-1">
+                                            <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
+                                                Mã SKU
+                                            </span>
+                                        </div>
+                                        <v-text-field v-model="formData.maChiTietSanPham" :placeholder="skuPlaceholder"
+                                            variant="outlined" density="comfortable" readonly hide-details="auto"
+                                            class="modern-input bg-slate-50"></v-text-field>
+                                    </div>
+                                </v-col>
+
+                                <v-col cols="12">
+                                    <div class="form-group">
+                                        <div class="mb-2 px-1">
+                                            <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
+                                                Giá bán (VNĐ)
+                                            </span>
+                                        </div>
+                                        <v-text-field v-model.number="formData.giaBan" type="number" min="0"
+                                            :rules="[rules.required, rules.min0]" variant="outlined" density="comfortable"
+                                            hide-details="auto" placeholder="0" suffix="₫" class="modern-input"></v-text-field>
+                                    </div>
+                                </v-col>
+                            </v-row>
                         </v-col>
                     </v-row>
                 </v-card-text>
@@ -364,6 +377,31 @@ const refreshOptions = () => {
     margin-top: 1.25rem;
 }
 
+.variant-modal-layout {
+    align-items: stretch;
+}
+
+.variant-image-panel {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.variant-image-panel__preview {
+    display: flex;
+    justify-content: center;
+}
+
+.variant-image-panel__body {
+    width: 100%;
+}
+
+.variant-modal-fields {
+    row-gap: 4px;
+}
+
 :deep(.modern-select .v-field),
 :deep(.modern-input .v-field) {
     border-radius: 12px !important;
@@ -376,5 +414,11 @@ const refreshOptions = () => {
 
 :deep(.v-btn) {
     letter-spacing: 0.02em;
+}
+
+@media (max-width: 959px) {
+    .variant-image-panel {
+        min-height: auto;
+    }
 }
 </style>
