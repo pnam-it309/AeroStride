@@ -144,41 +144,37 @@ onMounted(() => loadCampaigns());
         <AdminTable title="Danh sách đợt giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
             { text: 'STT', align: 'center', width: '60px' },
             { text: 'Mã', align: 'center', width: '120px' },
-            { text: 'Tên đợt giảm giá', align: 'left', width: '180px' },
-            { text: 'Giá trị giảm', align: 'left', width: '150px' },
-            { text: 'Đơn tối thiểu', align: 'left', width: '150px' },
-            { text: 'Thời gian áp dụng', align: 'left', width: '180px' },
-            { text: 'Mức ưu tiên', align: 'center', width: '100px' },
+            { text: 'Tên đợt giảm giá', align: 'left', width: '160px' },
+            { text: 'Giá trị giảm', align: 'left', width: '140px' },
+            { text: 'Đơn tối thiểu', align: 'left', width: '140px' },
+            { text: 'Ngày bắt đầu', align: 'left', width: '160px' },
+            { text: 'Ngày kết thúc', align: 'left', width: '140px' },
             { text: 'Trạng thái', align: 'center', width: '130px' },
-            { text: 'Hành động', align: 'center', width: '130px' }
+            { text: 'Hành động', align: 'center', width: '120px' }
         ]" :items="campaigns" :total-count="pagination.totalElements" :loading="loading"
             @add="router.push(PATH.DOT_GIAM_GIA_FORM)" @export="handleExport">
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center text-slate-400 font-weight-medium">
+                    <td class="data-cell text-center text-slate-400">
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
-                    <td class="data-cell text-center font-weight-medium">
+                    <td class="data-cell text-center">
                         {{ item.ma }}
                     </td>
-                    <td class="data-cell text-left font-weight-medium">
+                    <td class="data-cell text-left">
                         {{ item.ten || '--' }}
                     </td>
                     <td class="data-cell text-left">
-                        <div class="font-weight-bold text-primary">Giảm {{ getDiscountValueDisplay(item) }}</div>
+                        <div class="text-primary">Giảm {{ getDiscountValueDisplay(item) }}</div>
                     </td>
                     <td class="data-cell text-left">
-                        <div class="font-weight-bold text-primary">{{ formatCurrency(item.dieuKienGiamGia) }}</div>
+                        <div class="text-primary">{{ formatCurrency(item.dieuKienGiamGia) }}</div>
                     </td>
                     <td class="data-cell text-left">
-                        <div class="d-flex flex-column align-start">
-                            <div class="font-weight-medium text-slate-700">{{ formatDateTime(item.ngayBatDau) }}</div>
-                            <div class="font-weight-medium text-slate-400">đến {{ formatDateTime(item.ngayKetThuc) }}
-                            </div>
-                        </div>
+                        <div class="text-slate-700">{{ formatDateTime(item.ngayBatDau) }}</div>
                     </td>
-                    <td class="data-cell text-center font-weight-medium">
-                        {{ item.mucUuTien ?? '--' }}
+                    <td class="data-cell text-left">
+                        <div class="text-slate-700">{{ formatDateTime(item.ngayKetThuc) }}</div>
                     </td>
                     <td class="data-cell text-center">
                         <v-chip

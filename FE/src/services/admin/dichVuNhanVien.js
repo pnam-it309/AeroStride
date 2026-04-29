@@ -73,7 +73,7 @@ export const dichVuNhanVien = {
     const response = await api.get(`${API_ADMIN.NHAN_VIEN}/export-excel`, { responseType: 'blob' });
     return response.data;
   },
- 
+
   // Lấy danh sách phân quyền
   async layDanhSachPhanQuyen() {
     const response = await api.get(`${API_ADMIN.NHAN_VIEN}/phan-quyen`);

@@ -12,7 +12,7 @@ defineProps({
     showImportButton: { type: Boolean, default: false },
     showTemplateButton: { type: Boolean, default: false },
     exportButtonText: { type: String, default: 'Tải Excel' },
-    emptyText: { type: String, default: 'Không có dữ liệu hiển thị' },
+    emptyText: { type: String, default: 'Không có dữ liệu phù hợp để hiển thị' },
     emptyIcon: { type: String, default: 'mdi-package-variant' }
 });
 
@@ -78,10 +78,9 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                                 <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">Đang tải dữ
                                     liệu...</span>
                             </div>
-                            <div v-else class="d-flex flex-column align-center">
-                                <v-icon :icon="emptyIcon" size="64" color="grey-lighten-2" class="mb-2" />
-                                <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">{{ emptyText
-                                    }}</span>
+                            <div v-else class="d-flex flex-column align-center py-12 bg-slate-50/30 rounded-lg mx-4 my-2">
+                                <v-icon :icon="emptyIcon" size="48" style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
+                                <span class="text-slate-500" style="font-size: 14px !important; font-weight: 400 !important;">{{ emptyText }}</span>
                             </div>
                         </td>
                     </tr>

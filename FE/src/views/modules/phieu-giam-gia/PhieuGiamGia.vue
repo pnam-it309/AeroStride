@@ -195,23 +195,23 @@ onMounted(() => loadVouchers());
         <AdminTable title="Danh sách phiếu giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
             { text: 'STT', align: 'center', width: '60px' },
             { text: 'Mã phiếu', align: 'center', width: '130px' },
-            { text: 'Tên phiếu', align: 'center' },
-            { text: 'Loại phiếu', align: 'center', width: '120px' },
+            { text: 'Tên phiếu', align: 'left', width: '170px' },
+            { text: 'Loại phiếu', align: 'center', width: '100px' },
             { text: 'Hình thức', align: 'center', width: '130px' },
-            { text: 'Giá trị giảm', align: 'center' },
-            { text: 'Đơn tối thiểu', align: 'center', width: '140px' },
-            { text: 'Số lượng', align: 'center', width: '90px' },
-            { text: 'Thời gian áp dụng', align: 'center', width: '180px' },
+            { text: 'Giá trị giảm', align: 'left', width: '150px' },
+            { text: 'Đơn tối thiểu', align: 'left', width: '140px' },
+            { text: 'Số lượng', align: 'left', width: '100px' },
+            { text: 'Thời gian áp dụng', align: 'left', width: '180px' },
             { text: 'Trạng thái', align: 'center', width: '140px' },
             { text: 'Hành động', align: 'center', width: '110px' }
         ]" :items="vouchers" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog"
             @export="handleExport">
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center text-slate-400 font-weight-medium">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
-                    <td class="data-cell text-center font-weight-medium text-primary">{{ item.ma || '--' }}</td>
-                    <td class="data-cell text-left font-weight-medium">{{ item.ten || '--' }}</td>
-                    <td class="data-cell text-center font-weight-medium">
+                    <td class="data-cell text-center text-slate-400">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
+                    <td class="data-cell text-center text-primary">{{ item.ma || '--' }}</td>
+                    <td class="data-cell text-left">{{ item.ten || '--' }}</td>
+                    <td class="data-cell text-center">
                         {{ getLoaiPhieuLabel(item.loaiPhieu) }}
                     </td>
                     <td class="data-cell text-center">
@@ -227,21 +227,21 @@ onMounted(() => loadVouchers());
                         </v-chip>
                     </td>
                     <td class="data-cell text-left">
-                        <div class="font-weight-bold text-primary">Giảm {{ getDiscountDisplay(item) }}</div>
-                        <div class="max-discount-value font-weight-medium text-slate-500"
+                        <div class="text-primary">Giảm {{ getDiscountDisplay(item) }}</div>
+                        <div class="max-discount-value text-slate-500"
                             v-if="item.loaiPhieu === 'PHAN_TRAM' || item.loaiPhieu === 'PERCENTAGE'">Tối đa: {{
                                 getMaxDiscountDisplay(item) }}</div>
                     </td>
                     <td class="data-cell text-left">
-                        <div class="price-value font-weight-bold text-slate-700">{{ formatCurrency(item.donHangToiThieu) }}</div>
+                        <div class="price-value text-slate-700">{{ formatCurrency(item.donHangToiThieu) }}</div>
                     </td>
-                    <td class="data-cell text-center font-weight-medium text-slate-700">
+                    <td class="data-cell text-center text-slate-700">
                         {{ item.soLuong === -1 ? '∞' : item.soLuong }}
                     </td>
                     <td class="data-cell text-left">
                         <div class="d-flex flex-column align-start">
-                            <div class="font-weight-medium text-slate-700" style="font-size: 12.5px">{{ formatDateTime(item.ngayBatDau) }}</div>
-                            <div class="font-weight-medium text-slate-400" style="font-size: 11px">đến {{ formatDateTime(item.ngayKetThuc) }}</div>
+                            <div class="text-slate-700" style="font-size: 12.5px">Từ: {{ formatDateTime(item.ngayBatDau) }}</div>
+                            <div class="text-slate-400" style="font-size: 11px">Đến: {{ formatDateTime(item.ngayKetThuc) }}</div>
                         </div>
                     </td>
                     <td class="data-cell text-center">
@@ -290,7 +290,7 @@ onMounted(() => loadVouchers());
 }
 
 .price-value {
-    font-weight: 700 !important;
+    font-weight: 400 !important;
 }
 
 :deep(.data-cell), :deep(.data-cell *) {

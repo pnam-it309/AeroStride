@@ -60,12 +60,14 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
                     <td class="data-cell text-center">
-                        <div class="font-weight-medium text-slate-900">{{ getItemCode(item) }}</div>
+                        <div class="text-slate-500">{{ (pagination.page - 1) * pagination.size + index + 1 }}</div>
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-slate-800">{{ getItemName(item) }}</div>
+                        <div class="text-slate-600">{{ getItemCode(item) }}</div>
+                    </td>
+                    <td class="data-cell text-center">
+                        <div class="text-slate-600">{{ getItemName(item) }}</div>
                     </td>
                     <td class="data-cell text-center">
                         <v-chip

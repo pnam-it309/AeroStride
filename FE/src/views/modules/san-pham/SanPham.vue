@@ -308,25 +308,25 @@ onMounted(() => {
             @import="$refs.fileInput.click()" @download-template="handleDownloadTemplate">
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center font-weight-medium">
+                    <td class="data-cell text-center">
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
 
-                    <td class="data-cell text-center font-weight-medium">
+                    <td class="data-cell text-center">
                         {{ getProductCode(item) }}
                     </td>
 
                     <td class="data-cell text-left">
-                        <div class="text-dark font-weight-medium">
+                        <div class="text-dark">
                             {{ getProductName(item) }}
                         </div>
                     </td>
 
-                    <td class="data-cell text-left font-weight-medium">
+                    <td class="data-cell text-left">
                         {{ getBrandName(item) }}
                     </td>
 
-                    <td class="data-cell text-left font-weight-medium">
+                    <td class="data-cell text-left">
                         {{ getCategoryName(item) }}
                     </td>
 
@@ -335,7 +335,7 @@ onMounted(() => {
                     </td>
 
                     <td class="data-cell text-left price-value px-2">
-                        <div class="font-weight-bold text-primary">
+                        <div class="text-primary">
                             {{ getPriceRange(item) }}
                         </div>
                     </td>
@@ -436,7 +436,8 @@ onMounted(() => {
 }
 
 :deep(.data-cell), :deep(.data-cell *) {
-    font-size: 13px !important;
+    font-size: 13.5px !important;
+    font-family: 'Inter', sans-serif !important;
 }
 </style>
 

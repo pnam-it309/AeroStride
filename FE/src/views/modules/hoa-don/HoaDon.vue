@@ -53,8 +53,13 @@ const {
         ...(nTrangThai !== null ? { trangThai: nTrangThai } : {})
     };
     const res = await dichVuHoaDon.layHoaDonPhanTrang(params);
-    loadCounts(); 
-    return res;
+    await loadCounts(); 
+    
+    // Trả về đúng cấu trúc kèm tổng số bản ghi để hiển thị các nút phân trang
+    return {
+        content: Array.isArray(res) ? res : (res?.data || res?.content || []),
+        totalElements: counts.value.all || 0
+    };
 }, {
     search: '',
     trangThai: TAB_ALL,
@@ -494,6 +499,7 @@ onMounted(() => loadOrders());
                     v-model="pagination.page"
                     :page-size="pagination.size"
                     @update:pageSize="pagination.size = $event"
+                    @update:page-size="pagination.size = $event"
                     :total-pages="pagination.totalPages"
                     :total-elements="pagination.totalElements"
                     :current-size="orders.length"

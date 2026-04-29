@@ -32,7 +32,7 @@ const statusFilter = ref(null);
 
 const pagination = ref({
     page: 1,
-    size: 10,
+    size: 5,
     totalElements: 0,
     totalPages: 1
 });
@@ -449,7 +449,7 @@ watch(selectedTab, (n) => {
 }
 
 :deep(.data-cell), :deep(.data-cell *) {
-    font-size: 13px !important;
+    font-size: 14px !important;
 }
 </style>
 

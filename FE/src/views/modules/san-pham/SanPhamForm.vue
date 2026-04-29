@@ -295,7 +295,7 @@ const formatCurrency = (value) => {
 
 const getStatusLabel = (status) => {
     if (status === defaultVariantStatus) return 'Đang hoạt động';
-    if (status === 'KHONG_HOAT_DONG') return 'Ngừng bán';
+    if (status === 'KHONG_HOAT_DONG') return 'Ngừng hoạt động';
     return status || 'Không xác định';
 };
 
@@ -1026,13 +1026,12 @@ const handleSave = async () => {
                                     <InfoCircleIcon size="18" class="text-primary" />
                                 </div>
                                 <div>
-                                    <div
-                                        class="text-h2 font-weight-black text-gradient-to-r from-blue-500 to-purple-600">
+                                    <div style="font-size: 16px; color: #1e293b; font-weight: 600; font-family: 'Inter', sans-serif;">
                                         Thêm thông tin sản phẩm
                                     </div>
                                 </div>
                             </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin cơ bản</span>
+
                 <v-row>
                     <v-col cols="12">
                         <div class="field-label">Mã</div>
@@ -1122,7 +1121,8 @@ const handleSave = async () => {
                                     <BoxIcon size="18" class="brand-logo-icon" />
                                 </div>
                                 <div>
-                                    <div class="text-subtitle-1 font-weight-black text-slate-800">Biến thể sản phẩm
+                                    <div style="font-size: 16px; color: #1e293b; font-weight: 600; font-family: 'Inter', sans-serif;">
+                                        Biến thể sản phẩm
                                     </div>
                                 </div>
                             </div>
@@ -1177,7 +1177,7 @@ const handleSave = async () => {
             </template>
 
             <template v-else>
-                <v-col cols="12" lg="8">
+                <v-col cols="12">
                     <v-card class="premium-card mb-6">
                         <v-card-text class="pa-8">
                             <div class="section-header d-flex align-center mb-6">
@@ -1211,82 +1211,85 @@ const handleSave = async () => {
                         </v-card-text>
                     </v-card>
 
-                    <v-card class="premium-card mb-6">
-                        <v-card-text class="pa-8">
-                            <div class="section-header d-flex align-center mb-6">
-                                <div class="icon-blob bg-amber-lighten-5 mr-3">
-                                    <SettingsIcon size="18" class="text-amber-darken-2" />
-                                </div>
-                                <span class="text-subtitle-1 font-weight-black text-slate-800">Thuộc tính & Phân loại</span>
-                            </div>
 
-                            <v-row>
-                                <!-- Technical Attributes -->
-                                <v-col cols="12" md="6" lg="4">
-                                    <div class="field-label">Xuất xứ <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idXuatXu" :items="origins" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Chọn xuất xứ..."
-                                        variant="outlined" density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6" lg="4">
-                                    <div class="field-label">Chất liệu <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idChatLieu" :items="materials" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Chọn chất liệu..."
-                                        variant="outlined" density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6" lg="4">
-                                    <div class="field-label">Thương hiệu <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idThuongHieu" :items="brands" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Tìm thương hiệu..."
-                                        variant="outlined" density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6" lg="4">
-                                    <div class="field-label">Danh mục <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idDanhMuc" :items="categories" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Chọn danh mục..."
-                                        variant="outlined" density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6" lg="4">
-                                    <div class="field-label">Loại đế <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idDeGiay" :items="soles" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" variant="outlined"
-                                        density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6" lg="4">
-                                    <div class="field-label">Loại cổ <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idCoGiay" :items="collars" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" variant="outlined"
-                                        density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6" lg="6">
-                                    <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idMucDichChay" :items="purposes" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" variant="outlined"
-                                        density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"></v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6" lg="6">
-                                    <div class="field-label">Đối tượng sử dụng <span class="text-red">*</span></div>
-                                    <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary"
-                                        variant="outlined" density="comfortable" class="w-100 rounded-lg custom-toggle">
-                                        <v-btn value="NAM" class="flex-grow-1 font-weight-bold">Nam</v-btn>
-                                        <v-btn value="NU" class="flex-grow-1 font-weight-bold">Nữ</v-btn>
-                                        <v-btn value="UNISEX" class="flex-grow-1 font-weight-bold">Unisex</v-btn>
-                                    </v-btn-toggle>
-                                </v-col>
-                            </v-row>
-                        </v-card-text>
-                    </v-card>
                 </v-col>
             </template>
 
             <v-col cols="12">
+                 <!-- 2. Detailed Attributes & Classification -->
+                <v-card class="premium-card mb-6">
+                    <v-card-text class="pa-8">
+                        <div class="section-header d-flex align-center mb-6">
+                            <div class="icon-blob bg-amber-lighten-5 mr-3">
+                                <SettingsIcon size="18" class="text-amber-darken-2" />
+                            </div>
+                            <div style="font-size: 16px; color: #1e293b; font-weight: 600; font-family: 'Inter', sans-serif;">
+                                Thuộc tính & Phân loại
+                            </div>
+                        </div>
+
+                        <v-row>
+                            <v-col cols="12" md="6" lg="4">
+                                <div class="field-label">Xuất xứ <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idXuatXu" :items="origins" item-title="ten" item-value="id"
+                                    :rules="[rules.required]" placeholder="Chọn xuất xứ..." variant="outlined"
+                                    density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu', dichVuXuatXu, 'XUAT_XU', 'xuất xứ')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                                <div class="field-label">Chất liệu <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idChatLieu" :items="materials" item-title="ten"
+                                    item-value="id" :rules="[rules.required]" placeholder="Chọn chất liệu..."
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu', dichVuChatLieu, 'CHAT_LIEU', 'chất liệu')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                                <div class="field-label">Thương hiệu <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idThuongHieu" :items="brands" item-title="ten"
+                                    item-value="id" :rules="[rules.required]" placeholder="Tìm thương hiệu..."
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu', dichVuThuongHieu, 'THUONG_HIEU', 'thương hiệu')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                                <div class="field-label">Danh mục <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idDanhMuc" :items="categories" item-title="ten"
+                                    item-value="id" :rules="[rules.required]" placeholder="Chọn danh mục..."
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc', dichVuDanhMuc, 'DANH_MUC', 'danh mục')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                                <div class="field-label">Loại đế <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idDeGiay" :items="soles" item-title="ten" item-value="id"
+                                    :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay', dichVuDeGiay, 'DE_GIAY', 'đế giày')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="6" lg="4">
+                                <div class="field-label">Loại cổ <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idCoGiay" :items="collars" item-title="ten" item-value="id"
+                                    :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay', dichVuCoGiay, 'CO_GIAY', 'cổ giày')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="6" lg="6">
+                                <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
+                                <v-combobox v-model="product.idMucDichChay" :items="purposes" item-title="ten"
+                                    item-value="id" :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay', dichVuMucDichChay, 'MUC_DICH_CHAY', 'mục đích sử dụng')"></v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="6" lg="6">
+                                <div class="field-label">Đối tượng sử dụng <span class="text-red">*</span></div>
+                                <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary"
+                                    variant="outlined" density="comfortable" class="w-100 rounded-lg custom-toggle">
+                                    <v-btn value="NAM" class="flex-grow-1">Nam</v-btn>
+                                    <v-btn value="NU" class="flex-grow-1">Nữ</v-btn>
+                                    <v-btn value="UNISEX" class="flex-grow-1">Unisex</v-btn>
+                                </v-btn-toggle>
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
                 <v-card class="premium-card">
                     <v-card-text class="pa-8">
                         <template v-if="!isEditMode">
@@ -1294,20 +1297,22 @@ const handleSave = async () => {
                                 <div class="d-flex align-center">
                                     <v-icon icon="mdi-view-grid-plus-outline" size="18" class="mr-3" />
                                     <div>
-                                        <div class="font-weight-bold">Danh sách biến thể</div>
+                                        <div class="font-weight-bold" style="font-family: 'Inter', 'Outfit', sans-serif; display: flex; align-items: center;">
+                                            Danh sách biến thể <span class="text-slate-400 ml-1" style="font-weight: inherit; font-family: inherit;">/ {{ variantItems.length }} biến thể</span>
+                                        </div>
                                         <div class="text-caption variant-gradient-header__meta">
-                                            {{ variantItems.length }} biến thể • Kho {{ totalVariantStock }}
+                                            Kho {{ totalVariantStock }}
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="d-flex align-center flex-wrap gradient-header-actions">
-                                    <v-btn variant="outlined" color="white"
+                                    <v-btn variant="outlined" 
                                         class="text-none rounded-pill action-btn-light" @click="applyBulkAllVariants">
                                         <v-icon icon="mdi-lightning-bolt-outline" size="16" class="mr-1" />
                                         Thêm nhanh tất cả
                                     </v-btn>
-                                    <v-btn variant="outlined" color="white"
+                                    <v-btn variant="outlined" 
                                         class="text-none rounded-pill action-btn-light" @click="clearAllDraftVariants">
                                         <v-icon icon="mdi-delete-outline" size="16" class="mr-1" />
                                         Xóa tất cả
@@ -1484,87 +1489,81 @@ const handleSave = async () => {
                                         <PhotoIcon size="18" class="text-cyan-darken-2" />
                                     </div>
                                     <div>
-                                        <div class="text-subtitle-1 font-weight-black text-slate-800">Biến thể sản phẩm
-                                        </div>
-                                        <div class="text-body-2 text-slate-500 section-description">
-                                            Dữ liệu biến thể hiện có được giữ nguyên. Bạn có thể thêm hoặc chỉnh sửa
-                                            nhanh tại đây, còn nghiệp vụ nâng cao vẫn ở màn quản lý biến thể riêng.
+                                        <div style="font-size: 16px; color: #1e293b; font-weight: 600; font-family: 'Inter', 'Outfit', sans-serif; display: flex; align-items: center;">
+                                            Biến thể sản phẩm <span class="text-slate-400 ml-1" style="font-weight: inherit; font-family: inherit;">/ {{ variantItems.length }} biến thể</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="d-flex align-center flex-wrap section-toolbar__actions">
-                                    <v-chip color="primary" variant="tonal" class="font-weight-medium">
-                                        {{ variantItems.length }} biến thể
-                                    </v-chip>
                                     <v-btn color="primary" variant="flat" class="text-none font-weight-bold rounded-lg"
+                                        style="color: white !important;"
                                         @click="openCreateVariantModal">
                                         <PlusIcon size="18" class="mr-2" /> Thêm biến thể
                                     </v-btn>
                                 </div>
                             </div>
 
-                            <v-alert class="mt-5" color="secondary" variant="tonal" density="comfortable" rounded="lg">
-                                Với sản phẩm đã tồn tại, phần tạo biến thể theo tổ hợp không dùng để tránh ghi đè dữ
-                                liệu cũ. Luồng thêm/sửa nhanh vẫn giữ ở đây.
-                            </v-alert>
-
-                            <div v-if="variantItems.length > 0" class="variant-table-wrap mt-6">
-                                <v-table class="variant-table">
+                            <div v-if="variantItems.length > 0" class="mt-6 border rounded-lg overflow-hidden shadow-sm">
+                                <table class="native-admin-table">
                                     <thead>
                                         <tr>
-                                            <th>Ảnh</th>
-                                            <th>Màu sắc</th>
-                                            <th>Kích thước</th>
-                                            <th>SKU</th>
-                                            <th class="text-right">Tồn kho</th>
-                                            <th class="text-right">Giá bán</th>
-                                            <th class="text-center">Trạng thái</th>
-                                            <th class="text-right">Thao tác</th>
+                                            <th class="header-cell text-center" style="width: 80px">Ảnh</th>
+                                            <th class="header-cell text-left" style="width: 160px">Màu sắc</th>
+                                            <th class="header-cell text-left" style="width: 130px">Kích thước</th>
+                                            <th class="header-cell text-left" style="width: 160px">Mã biến thể</th>
+                                            <th class="header-cell text-center" style="width: 160px">Tồn kho</th>
+                                            <th class="header-cell text-left" style="width: 160px">Giá bán</th>
+                                            <th class="header-cell text-center" style="width: 160px">Trạng thái</th>
+                                            <th class="header-cell text-center" style="width: 120px">Hành động</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="variant in variantItems" :key="getVariantKey(variant)">
-                                            <td>
-                                                <v-avatar rounded="lg" size="48" class="border bg-slate-50 shadow-sm">
+                                        <tr v-for="variant in variantItems" :key="getVariantKey(variant)" class="data-row">
+                                            <td class="data-cell text-center">
+                                                <v-avatar rounded="lg" size="42" class="border bg-slate-50">
                                                     <v-img :src="getVariantThumbnail(variant)" cover></v-img>
                                                 </v-avatar>
                                             </td>
-                                            <td class="font-weight-bold text-slate-700">
+                                            <td class="data-cell text-left text-slate-700">
                                                 {{ getOptionLabel(colors, variant.idMauSac) }}
                                             </td>
-                                            <td class="font-weight-bold text-slate-700">
+                                            <td class="data-cell text-left text-slate-700">
                                                 {{ getOptionLabel(sizes, variant.idKichThuoc) }}
                                             </td>
-                                            <td class="mono-font text-slate-600">
+                                            <td class="data-cell text-left text-slate-600" style="font-size: 13px;">
                                                 {{ getVariantSkuLabel(variant) }}
                                             </td>
-                                            <td class="text-right font-weight-bold">{{ variant.soLuong }}</td>
-                                            <td class="text-right font-weight-bold text-primary">
-                                                {{ formatCurrency(variant.giaBan) }}
+                                            <td class="data-cell text-center" >{{ variant.soLuong }}</td>
+                                            <td class="data-cell text-left">
+                                                <div style="color: #1e257c !important;">
+                                                    {{ formatCurrency(variant.giaBan) }}
+                                                </div>
                                             </td>
-                                            <td class="text-center">
-                                                <v-chip size="small"
-                                                    :color="variant.trangThai === defaultVariantStatus ? 'success' : 'warning'"
-                                                    variant="flat" class="font-weight-medium text-white">
+                                            <td class="data-cell text-center">
+                                                <v-chip
+                                                    :class="['status-chip', variant.trangThai === defaultVariantStatus ? 'status-chip-active' : 'status-chip-inactive']"
+                                                    variant="flat"
+                                                    size="small"
+                                                >
                                                     {{ getStatusLabel(variant.trangThai) }}
                                                 </v-chip>
                                             </td>
-                                            <td>
-                                                <div class="d-flex justify-end variant-actions">
-                                                    <v-btn icon size="small" variant="text" color="primary"
+                                            <td class="data-cell text-center">
+                                                <div class="d-flex justify-center gap-1">
+                                                    <v-btn icon size="x-small" variant="text" color="primary"
                                                         @click="openEditVariantModal(variant)">
-                                                        <PencilIcon size="18" />
+                                                        <PencilIcon size="16" />
                                                     </v-btn>
-                                                    <v-btn icon size="small" variant="text" color="error"
+                                                    <v-btn icon size="x-small" variant="text" color="error"
                                                         @click="handleRemoveVariant(variant)">
-                                                        <TrashIcon size="18" />
+                                                        <TrashIcon size="16" />
                                                     </v-btn>
                                                 </div>
                                             </td>
                                         </tr>
                                     </tbody>
-                                </v-table>
+                                </table>
                             </div>
 
                             <div v-else class="variant-empty-state mt-6">
@@ -1587,78 +1586,7 @@ const handleSave = async () => {
                     </v-card-text>
                 </v-card>
 
-                <!-- 2. Detailed Attributes & Classification -->
-                <v-card class="premium-card mb-6">
-                    <v-card-text class="pa-8">
-                        <div class="section-header d-flex align-center mb-6">
-                            <div class="icon-blob bg-amber-lighten-5 mr-3">
-                                <SettingsIcon size="18" class="text-amber-darken-2" />
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thuộc tính & Phân loại</span>
-                        </div>
-
-                        <v-row>
-                            <v-col cols="12" md="6" lg="4">
-                                <div class="field-label">Xuất xứ <span class="text-red">*</span></div>
-                                <v-combobox v-model="product.idXuatXu" :items="origins" item-title="ten" item-value="id"
-                                    :rules="[rules.required]" placeholder="Chọn xuất xứ..." variant="outlined"
-                                    density="comfortable" :return-object="false"
-                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu', dichVuXuatXu, 'XUAT_XU', 'xuất xứ')"></v-combobox>
-                            </v-col>
-                            <v-col cols="12" md="6" lg="4">
-                                <div class="field-label">Chất liệu <span class="text-red">*</span></div>
-                                <v-combobox v-model="product.idChatLieu" :items="materials" item-title="ten"
-                                    item-value="id" :rules="[rules.required]" placeholder="Chọn chất liệu..."
-                                    variant="outlined" density="comfortable" :return-object="false"
-                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu', dichVuChatLieu, 'CHAT_LIEU', 'chất liệu')"></v-combobox>
-                            </v-col>
-                            <v-col cols="12" md="6" lg="4">
-                                <div class="field-label">Thương hiệu <span class="text-red">*</span></div>
-                                <v-combobox v-model="product.idThuongHieu" :items="brands" item-title="ten"
-                                    item-value="id" :rules="[rules.required]" placeholder="Tìm thương hiệu..."
-                                    variant="outlined" density="comfortable" :return-object="false"
-                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu', dichVuThuongHieu, 'THUONG_HIEU', 'thương hiệu')"></v-combobox>
-                            </v-col>
-                            <v-col cols="12" md="6" lg="4">
-                                <div class="field-label">Danh mục <span class="text-red">*</span></div>
-                                <v-combobox v-model="product.idDanhMuc" :items="categories" item-title="ten"
-                                    item-value="id" :rules="[rules.required]" placeholder="Chọn danh mục..."
-                                    variant="outlined" density="comfortable" :return-object="false"
-                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc', dichVuDanhMuc, 'DANH_MUC', 'danh mục')"></v-combobox>
-                            </v-col>
-                            <v-col cols="12" md="6" lg="4">
-                                <div class="field-label">Loại đế <span class="text-red">*</span></div>
-                                <v-combobox v-model="product.idDeGiay" :items="soles" item-title="ten" item-value="id"
-                                    :rules="[rules.required]" variant="outlined" density="comfortable"
-                                    :return-object="false"
-                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay', dichVuDeGiay, 'DE_GIAY', 'đế giày')"></v-combobox>
-                            </v-col>
-                            <v-col cols="12" md="6" lg="4">
-                                <div class="field-label">Loại cổ <span class="text-red">*</span></div>
-                                <v-combobox v-model="product.idCoGiay" :items="collars" item-title="ten" item-value="id"
-                                    :rules="[rules.required]" variant="outlined" density="comfortable"
-                                    :return-object="false"
-                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay', dichVuCoGiay, 'CO_GIAY', 'cổ giày')"></v-combobox>
-                            </v-col>
-                            <v-col cols="12" md="6" lg="6">
-                                <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
-                                <v-combobox v-model="product.idMucDichChay" :items="purposes" item-title="ten"
-                                    item-value="id" :rules="[rules.required]" variant="outlined" density="comfortable"
-                                    :return-object="false"
-                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay', dichVuMucDichChay, 'MUC_DICH_CHAY', 'mục đích sử dụng')"></v-combobox>
-                            </v-col>
-                            <v-col cols="12" md="6" lg="6">
-                                <div class="field-label">Đối tượng sử dụng <span class="text-red">*</span></div>
-                                <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary"
-                                    variant="outlined" density="comfortable" class="w-100 rounded-lg custom-toggle">
-                                    <v-btn value="NAM" class="flex-grow-1 font-weight-bold">Nam</v-btn>
-                                    <v-btn value="NU" class="flex-grow-1 font-weight-bold">Nữ</v-btn>
-                                    <v-btn value="UNISEX" class="flex-grow-1 font-weight-bold">Unisex</v-btn>
-                                </v-btn-toggle>
-                            </v-col>
-                        </v-row>
-                    </v-card-text>
-                </v-card>
+               
             </v-col>
         </v-row>
 
@@ -1678,6 +1606,15 @@ const handleSave = async () => {
         position: sticky;
         top: 0;
     }
+}
+
+.header-actions__buttons :deep(.v-btn),
+.create-generate-btn,
+.action-btn-light,
+.variant-actions :deep(.v-btn),
+.variant-empty-state :deep(.v-btn) {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
 }
 
 .header-actions {
@@ -1731,9 +1668,25 @@ const handleSave = async () => {
 .create-generate-btn {
     min-height: 50px;
     border-radius: 16px;
-    background: linear-gradient(135deg, #5AC8FA 0%, #0085DB 58%, #111C2D 100%) !important;
+    background: #1e257c !important;
     color: #fff !important;
-    box-shadow: 0 14px 28px rgba(0, 133, 219, 0.24);
+    box-shadow: 0 10px 20px rgba(30, 37, 124, 0.2);
+}
+
+.field-label {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+    font-family: 'Inter', sans-serif;
+}
+
+.custom-toggle :deep(.v-btn) {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 13.5px !important;
+    letter-spacing: -0.01em !important;
+    text-transform: none !important;
 }
 
 .variant-gradient-header {
@@ -1742,14 +1695,16 @@ const handleSave = async () => {
     justify-content: space-between;
     gap: 16px;
     flex-wrap: wrap;
-    padding: 18px 24px;
+    padding: 20px 24px;
     border-radius: 22px 22px 0 0;
-    background: linear-gradient(90deg, #5AC8FA 0%, #0085DB 48%, #111C2D 100%);
-    color: #fff;
+    background: #f8fafc;
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-bottom: none;
+    color: #1e293b;
 }
 
 .variant-gradient-header__meta {
-    color: rgba(255, 255, 255, 0.78);
+    color: #64748b;
 }
 
 .gradient-header-actions {
@@ -1757,8 +1712,9 @@ const handleSave = async () => {
 }
 
 .action-btn-light {
-    border-color: rgba(255, 255, 255, 0.28) !important;
-    color: #fff !important;
+    border-color: rgba(148, 163, 184, 0.45) !important;
+    color: #1e293b !important;
+    font-weight: 600 !important;
 }
 
 .variant-gradient-body {
@@ -1946,9 +1902,10 @@ const handleSave = async () => {
 }
 
 .variant-table :deep(tbody td) {
-    padding-top: 16px;
-    padding-bottom: 16px;
+    padding: 16px 20px !important;
     border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+    font-size: 13.5px !important;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .variant-actions {

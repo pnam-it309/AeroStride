@@ -50,7 +50,7 @@ const filters = reactive({
 
 const pagination = reactive({
   page: 1,
-  size: 10,
+  size: 5,
 })
 
 const variantModal = reactive({ open: false, mode: 'create', submitting: false, variant: null })
@@ -306,8 +306,8 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
             <PackageIcon size="18" color="white" />
           </v-avatar>
           <div>
-            <p class="text-overline font-bold text-slate-400 mb-0" style="line-height: 1;">Mã Sản Phẩm</p>
-            <h2 class="text-body-2 font-bold text-dark mb-0">{{ selectedProductSummary.maSanPham }}</h2>
+     
+            <h2 class="text-body-2 text-dark mb-0">{{ selectedProductSummary.maSanPham }}</h2>
           </div>
         </div>
       </div>
@@ -324,13 +324,13 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
         </v-col>
         <v-col cols="12" md="2">
           <div class="filter-field-label">Tìm kiếm nhanh</div>
-          <v-text-field v-model="filters.keyword" placeholder="Mã SKU, màu, size..." prepend-inner-icon="mdi-magnify"
+          <v-text-field v-model="filters.keyword" placeholder="Mã biến thể, màu, size..." prepend-inner-icon="mdi-magnify"
             variant="outlined" density="compact" hide-details clearable></v-text-field>
         </v-col>
         <v-col cols="12" md="2">
           <div class="filter-field-label">Màu sắc</div>
           <v-select v-model="filters.mauSacId"
-            :items="[{ title: 'Tất cả mầu', value: '' }, ...formOptions.mauSacs.map(m => ({ title: m.ten, value: m.id }))]"
+            :items="[{ title: 'Tất cả màu', value: '' }, ...formOptions.mauSacs.map(m => ({ title: m.ten, value: m.id }))]"
             variant="outlined" density="compact" hide-details></v-select>
         </v-col>
         <v-col cols="12" md="2">
@@ -350,10 +350,10 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
 
     <!-- Table content -->
     <div class="flex-grow-1 min-h-0">
-      <AdminTable title="Danh mục biến thể" :headers="[
+      <AdminTable :title="`Danh mục biến thể / ${filteredVariants.length} biến thể`" :headers="[
         { text: 'STT', align: 'center', width: '60px' },
         { text: 'Hình ảnh', align: 'center', width: '80px' },
-        { text: 'Mã SKU', align: 'center', width: '150px' },
+        { text: 'Mã biến thể', align: 'center', width: '150px' },
         { text: 'Màu sắc', align: 'center', width: '120px' },
         { text: 'Kích thước', align: 'center', width: '100px' },
         { text: 'Số lượng', align: 'center', width: '100px' },
@@ -365,9 +365,7 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
         @add="openCreateVariantModal" class="h-100">
 
         <template #top>
-          <div class="px-6 py-2 bg-slate-50 border-b d-flex align-center justify-space-between">
-            <span class="text-caption font-bold text-slate-500">Tìm thấy {{ filteredVariants.length }} biến thể tương
-              ứng</span>
+          <div class="px-6 py-2 bg-slate-50 border-b d-flex align-center justify-end">
             <v-btn size="x-small" variant="text" color="primary" class="font-bold"
               @click="fetchSelectedProduct(selectedProductId)" :loading="loading">
               <RefreshIcon size="14" class="mr-1" /> Đồng bộ dữ liệu
@@ -384,20 +382,20 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
                 <v-img :src="getVariantThumbnail(item)" cover></v-img>
               </v-avatar>
             </td>
-            <td class="data-cell text-center font-weight-medium">
+            <td class="data-cell text-center">
               {{ item.maChiTietSanPham }}
             </td>
-            <td class="data-cell text-center font-weight-medium text-dark">
+            <td class="data-cell text-center">
               {{ item.tenMauSac }}
             </td>
-            <td class="data-cell text-center font-weight-medium text-dark">
+            <td class="data-cell text-center">
               {{ item.tenKichThuoc }}
             </td>
-            <td class="data-cell text-center font-weight-medium text-dark">
+            <td class="data-cell text-center">
               {{ formatNumber(item.soLuong) }}
             </td>
             <td class="data-cell text-center">
-              <span class="text-primary font-weight-bold">{{ formatCurrency(item.giaBan) }}</span>
+              <span class="text-primary">{{ formatCurrency(item.giaBan) }}</span>
             </td>
             <td class="data-cell text-center">
               <v-chip size="small" 
