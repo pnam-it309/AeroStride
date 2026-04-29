@@ -21,7 +21,7 @@ const handleSearch = () => emit('search');
             :loading="loading" 
             @refresh="handleRefresh" 
         >
-            <v-col cols="12" md="3" class="py-1">
+            <v-col cols="12" md="5" class="py-1">
                 <div class="filter-field-label">Tìm kiếm nhanh</div>
                 <v-text-field 
                     :model-value="searchQuery"
@@ -34,7 +34,7 @@ const handleSearch = () => emit('search');
                     @keyup.enter="handleSearch"
                 ></v-text-field>
             </v-col>
-            <v-col cols="12" md="2" class="py-1">
+            <v-col cols="12" md="5" class="py-1">
                 <div class="filter-field-label">Trạng thái</div>
                 <v-select 
                     :model-value="statusFilter"

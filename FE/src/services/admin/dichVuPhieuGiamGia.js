@@ -11,7 +11,7 @@ export const dichVuPhieuGiamGia = {
   // Lấy phiếu giảm giá có phân trang
   async layPhieuGiamGiaPhanTrang(params) {
     const response = await api.get(`${API_ADMIN.PHIEU_GIAM_GIA}/phan-trang`, { params });
-    return response.data.data;
+    return response.data;
   },
 
   // Lấy chi tiết phiếu giảm giá

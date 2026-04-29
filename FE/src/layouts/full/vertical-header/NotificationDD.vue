@@ -24,20 +24,20 @@ const iconMap = {
       </v-btn>
     </template>
 
-    <v-card width="360" class="rounded-0 border shadow-2xl elevation-0 overflow-hidden">
+    <v-card width="380" class="premium-notification-card">
       <!-- Header -->
-      <div class="pa-4 bg-primary-lighten-5 d-flex align-center justify-space-between border-b">
-        <h3 class="text-subtitle-1 font-weight-black text-primary text-uppercase tracking-wider">Hoạt động gần đây</h3>
-        <v-chip v-if="notifications.length > 0" size="x-small" color="primary" variant="flat" class="font-weight-black px-2">
+      <div class="pa-5 header-navy d-flex align-center justify-space-between">
+        <h3 class="text-subtitle-1 text-uppercase tracking-wider" style="color: #ffffff !important; font-size: 16px !important; font-weight: 600 !important;">Hoạt động gần đây</h3>
+        <v-chip v-if="notifications.length > 0" size="x-small" class="notification-count-chip">
           {{ notifications.length }} THÔNG BÁO
         </v-chip>
       </div>
 
       <!-- Empty State -->
       <div v-if="notifications.length === 0" class="pa-10 text-center">
-        <v-icon size="48" color="grey-lighten-2" class="mb-2">mdi-bell-outline</v-icon>
-        <div class="text-subtitle-2 font-weight-black text-grey">Chưa có thông báo nào</div>
-        <div class="text-caption text-grey">Các hoạt động của bạn sẽ xuất hiện tại đây</div>
+        <v-icon size="48" color="grey-lighten-2" class="mb-3">mdi-bell-outline</v-icon>
+        <div class="text-subtitle-2 font-weight-bold text-slate-700">Chưa có thông báo nào</div>
+        <div class="text-caption text-slate-400 mt-1">Các hoạt động của bạn sẽ xuất hiện tại đây</div>
       </div>
 
       <!-- List -->
@@ -45,58 +45,107 @@ const iconMap = {
         <v-list-item
           v-for="(item, i) in notifications"
           :key="item.id"
-          class="border-b notification-item pa-4"
+          class="notification-item pa-5"
           :active="item.isNew"
-          active-color="primary"
         >
           <template v-slot:prepend>
-            <div :class="`bg-${item.color}-lighten-4 pa-2 mr-4 rounded-0 d-flex align-center justify-center`" style="width: 40px; height: 40px;">
-              <component :is="iconMap[item.icon] || CircleCheckIcon" size="24" :class="`text-${item.color}`" />
+            <div class="icon-wrapper mr-4" :style="`background-color: var(--v-${item.color}-lighten-5)`">
+              <div class="icon-inner" :style="`background-color: var(--v-${item.color}-lighten-4)`">
+                <component :is="iconMap[item.icon] || CircleCheckIcon" size="20" :style="`color: var(--v-${item.color}-base)`" />
+              </div>
             </div>
           </template>
 
           <template v-slot:title>
-            <div class="text-subtitle-2 font-weight-black text-dark mb-1">{{ item.title }}</div>
+            <div class="text-subtitle-2 font-weight-bold text-slate-800 mb-1">{{ item.title }}</div>
           </template>
 
           <template v-slot:subtitle>
-            <div class="text-caption font-weight-bold text-medium-emphasis line-clamp-2 leading-tight">
+            <div class="text-caption text-slate-500 line-clamp-2 leading-relaxed">
               {{ item.subtitle }}
             </div>
-            <div class="text-overline font-weight-black text-grey mt-1 d-block">{{ item.time }}</div>
+            <div class="text-overline font-weight-bold text-slate-400 mt-1 d-block">{{ item.time }}</div>
           </template>
         </v-list-item>
       </v-list>
 
-      <v-divider></v-divider>
-      
       <!-- Footer -->
-      <v-btn block variant="flat" color="grey-lighten-4" class="text-none font-weight-black py-4 rounded-0" size="large">
-        Xem tất cả nhật ký
-      </v-btn>
+      <div class="pa-3 bg-slate-50">
+        <v-btn block variant="text" color="primary" class="text-none font-weight-bold py-2 footer-btn" size="large">
+          Xem tất cả nhật ký
+        </v-btn>
+      </div>
     </v-card>
   </v-menu>
 </template>
 
 <style scoped>
+.premium-notification-card {
+  border-radius: 20px !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
+  overflow: hidden;
+  background: white;
+  font-family: inherit;
+}
+
+.header-navy {
+  background-color: #1e257c !important;
+}
+
+.notification-count-chip {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  font-size: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
 .notification-list {
-  max-height: 450px;
+  max-height: 480px;
   overflow-y: auto;
 }
+
+.notification-item {
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
 .notification-item:hover {
   background-color: #f8fafc;
 }
+
+.icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-inner {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-btn {
+  color: #1e257c !important;
+  font-size: 14px;
+}
+
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-clamp: 2; /* Added for compatibility */
 }
-.leading-tight {
-  line-height: 1.25;
-}
-.shadow-2xl {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+.leading-relaxed {
+  line-height: 1.5;
 }
 </style>

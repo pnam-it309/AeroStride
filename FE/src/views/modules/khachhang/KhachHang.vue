@@ -341,9 +341,25 @@ const confirmChangeStatus = (item) => {
             try {
                 const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
                 await dichVuKhachHang.thayDoiTrangThaiKhachHang(item.id, newS);
+                
+                // Cập nhật local
                 item.trangThai = newS;
+                
+                addNotification({
+                    title: 'Thành công',
+                    subtitle: `Đã chuyển sang: ${getStatusLabel(newS)}`,
+                    color: 'success'
+                });
+                
+                // Load lại dữ liệu để đồng bộ
+                loadCustomers();
             } catch (e) {
-                console.error(e);
+                console.error('[Customer] Status change error:', e);
+                addNotification({
+                    title: 'Lỗi',
+                    subtitle: 'Không thể thay đổi trạng thái khách hàng',
+                    color: 'error'
+                });
             }
         }
     });
@@ -439,7 +455,7 @@ watch(
         <!-- Table — không có tab, chỉ có bảng -->
         <AdminTable
             title="Danh sách khách hàng"
-            addButtonText="Thêm khách hàng"
+            addButtonText="Tạo mới"
             show-export-button
             :headers="tableHeaders"
             :items="allCustomers"
@@ -466,7 +482,10 @@ watch(
                     </td>
                     <td class="data-cell contact-cell text-left px-4">
                         <div class="d-inline-flex flex-column align-start">
-                            <div class="info-line text-slate-700 mb-1">{{ item.sdt || '-' }}</div>
+                            <div class="info-line text-slate-700 mb-1">
+                                <v-icon size="14" class="mr-2 text-slate-400">mdi-phone</v-icon>
+                                <span>{{ item.sdt || '-' }}</span>
+                            </div>
                             <div v-if="hasValue(item.email)" class="info-line d-flex align-center text-slate-500">
                                 <v-icon size="14" class="mr-2">mdi-email-outline</v-icon>{{ item.email }}
                             </div>
@@ -571,8 +590,7 @@ watch(
                         <v-col
                             cols="12"
                             md="6"
-                            style="border-right: 1px solid rgba(0, 0, 0, 0.08); overflow-y: auto; max-height: 85vh"
-                            class="px-6 pt-2 pb-4"
+                            class="px-6 pt-2 pb-4 border-right-divider"
                         >
                             <div class="d-flex align-center justify-space-between px-5 pt-4 pb-2 sticky-sub-header bg-white">
                                 <span class="text-subtitle-2 font-weight-medium text-dark">Địa chỉ hiện tại</span>
@@ -661,14 +679,9 @@ watch(
                         <v-col
                             cols="12"
                             md="6"
-                            style="overflow-y: auto; max-height: 85vh"
-                            class="px-8 pt-2 pb-4"
-                            :style="{ background: showAddrForm ? 'white' : '#fafafa' }"
+                            class="px-8 pt-2 pb-4 bg-white addr-col-right"
                         >
-                            <div
-                                class="px-5 pt-4 pb-2 d-flex align-center justify-space-between sticky-sub-header"
-                                :style="{ background: showAddrForm ? 'white' : '#fafafa' }"
-                            >
+                            <div class="px-5 pt-4 pb-2 d-flex align-center justify-space-between sticky-sub-header bg-white">
                                 <span class="text-subtitle-2 font-weight-medium text-dark">
                                     {{ showAddrForm ? (isEditAddr ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới') : 'Thêm địa chỉ khác' }}
                                 </span>
@@ -689,7 +702,7 @@ watch(
                             </div>
 
                             <!-- Placeholder khi chưa mở form -->
-                            <div v-if="!showAddrForm" class="text-center py-16 px-4 bg-slate-50/30 rounded-lg mx-5 mt-4 border border-dashed border-slate-200">
+                            <div v-if="!showAddrForm" class="text-center py-16 px-4 bg-slate-50/30 rounded-lg mx-5 mt-4">
                                 <v-icon style="font-size: 36px !important; color: #1e293b !important;" class="mb-4">mdi-map-marker-plus</v-icon>
                                 <div class="text-slate-500" style="font-size: 14px !important; font-weight: 400 !important;">
                                     Nhấn "Thêm địa chỉ" để đăng ký địa chỉ nhận hàng mới
@@ -926,7 +939,23 @@ watch(
 }
 
 .addr-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border-color: #1e257c !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.border-right-divider {
+    border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+    overflow-y: auto;
+    height: 600px; /* Fixed height to match card */
+}
+
+.addr-col-right {
+    overflow-y: auto;
+    height: 600px;
+}
+
+.bg-white {
+    background-color: #ffffff !important;
 }
 </style>
 

@@ -15,8 +15,13 @@ import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { EditIcon } from 'vue-tabler-icons';
 
 import { useAdminTable } from '@/composables/useAdminTable';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import { useNotifications } from '@/services/notificationService';
 
 const router = useRouter();
+const { addNotification } = useNotifications();
+const fromDateRef = ref(null);
+const toDateRef = ref(null);
 
 const {
     items: vouchers,
@@ -37,23 +42,23 @@ const {
 
 const isRefreshing = ref(false);
 
-// Tính trạng thái theo thời gian thực (ngày bắt đầu / kết thúc)
-const getDiscountTimeStatus = (item) => {
-    const now = Date.now();
-    const start = item.ngayBatDau ? new Date(item.ngayBatDau).getTime() : null;
-    const end = item.ngayKetThuc ? new Date(item.ngayKetThuc).getTime() : null;
-    if (start && now < start) return { label: 'Sắp diễn ra', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' };
-    if (end && now > end)   return { label: 'Kết thúc',    color: '#ef4444', bg: 'rgba(239,68,68,0.1)' };
-    return { label: 'Hoạt động', color: '#10b981', bg: 'rgba(16,185,129,0.1)' };
-};
-
-// Confirmation Logic
-const confirmDialog = ref({ show: false, title: '', message: '', color: 'primary', action: null, loading: false });
+const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 
 const handleRefresh = async () => {
     isRefreshing.value = true;
     handleReset();
     setTimeout(() => (isRefreshing.value = false), 800);
+};
+
+const openDatePicker = (ref) => {
+    const input = ref?.$el?.querySelector('input[type="date"]');
+    if (input) {
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+        } else {
+            input.click();
+        }
+    }
 };
 
 const handleExport = async () => {
@@ -62,28 +67,39 @@ const handleExport = async () => {
         downloadFile(blob, 'danh_sach_phieu_giam_gia.xlsx');
     } catch (error) {
         console.error('Lỗi xuất Excel:', error);
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể xuất file Excel', color: 'error' });
     }
 };
 
 const confirmToggleStatus = (item) => {
-    confirmDialog.value = {
-        show: true,
+    setConfirm({
         title: 'Thay đổi trạng thái',
         message: `Bạn có muốn đổi trạng thái của phiếu [${item.ma}]?`,
         color: 'warning',
         action: async () => {
-            confirmDialog.value.loading = true;
             try {
                 const newS = isActiveStatus(item.trangThai) ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
+                
                 await dichVuPhieuGiamGia.thayDoiTrangThaiPhieuGiamGia(item.id, newS);
+                
+                // Cập nhật trạng thái local
                 item.trangThai = newS;
-                confirmDialog.value.show = false;
+                
+                addNotification({
+                    title: 'Thành công',
+                    subtitle: `Đã chuyển sang: ${getStatusLabel(newS)}`,
+                    color: 'success'
+                });
             } catch (e) {
-            } finally {
-                confirmDialog.value.loading = false;
+                console.error('[Voucher] Status change error:', e);
+                addNotification({
+                    title: 'Lỗi',
+                    subtitle: 'Không thể thay đổi trạng thái phiếu giảm giá',
+                    color: 'error'
+                });
             }
         }
-    };
+    });
 };
 
 const openCreateDialog = () => {
@@ -128,6 +144,34 @@ const getHinhThucLabel = (value) => {
     return value;
 };
 
+import { watch } from 'vue';
+
+// Tự động khôi phục dữ liệu nếu phát hiện dòng bị lỗi (mất mã/tên)
+watch(vouchers, (newItems) => {
+    if (newItems && newItems.length > 0) {
+        newItems.forEach(async (item) => {
+            if (!item.ma || !item.ten || item.ma === '--' || item.ten === '--') {
+                try {
+                    // Trích xuất số từ id (ví dụ pgg1 -> 1) và format thành PGG01
+                    const idNum = item.id.replace(/\D/g, '');
+                    const formattedMa = idNum ? `PGG${idNum.padStart(2, '0')}` : item.id.toUpperCase();
+                    
+                    const repairData = {
+                        ...item,
+                        ma: (item.ma && item.ma !== '--') ? item.ma : formattedMa,
+                        ten: (item.ten && item.ten !== '--') ? item.ten : ('Phiếu khôi phục ' + formattedMa)
+                    };
+                    // Gọi API cập nhật âm thầm để vá dữ liệu
+                    await dichVuPhieuGiamGia.capNhatPhieuGiamGia(item.id, repairData);
+                    console.log(`[Auto-Repair] Fixed voucher: ${item.id} -> ${formattedMa}`);
+                } catch (err) {
+                    console.error('[Auto-Repair] Failed for:', item.id, err);
+                }
+            }
+        });
+    }
+}, { deep: true });
+
 onMounted(() => loadVouchers());
 </script>
 
@@ -151,7 +195,7 @@ onMounted(() => loadVouchers());
                         density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input" clearable
                         @input="handleSearch"></v-text-field>
                 </v-col>
-                <v-col cols="12" md="3" class="filter-cell">
+                <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Loại phiếu</div>
                     <v-select v-model="filters.loaiPhieu" :items="[
                         { title: 'Tất cả', value: null },
@@ -160,7 +204,7 @@ onMounted(() => loadVouchers());
                     ]" variant="outlined" density="compact" hide-details class="compact-input"
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
-                <v-col cols="12" md="3" class="filter-cell">
+                <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Hình thức</div>
                     <v-select v-model="filters.hinhThuc" :items="[
                         { title: 'Tất cả', value: null },
@@ -178,15 +222,17 @@ onMounted(() => loadVouchers());
                     ]" variant="outlined" density="compact" hide-details class="compact-input"
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
-                <v-col cols="12" md="3" class="filter-cell">
+                <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Từ ngày</div>
-                    <v-text-field v-model="filters.tuNgay" type="date" variant="outlined" density="compact"
-                        hide-details class="compact-input" @change="handleSearch" @input="handleSearch"></v-text-field>
+                    <v-text-field ref="fromDateRef" v-model="filters.tuNgay" type="date" variant="outlined" density="compact"
+                        hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month" 
+                        @click:append-inner="openDatePicker(fromDateRef)" @change="handleSearch" @input="handleSearch"></v-text-field>
                 </v-col>
-                <v-col cols="12" md="3" class="filter-cell">
+                <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Đến ngày</div>
-                    <v-text-field v-model="filters.denNgay" type="date" variant="outlined" density="compact"
-                        hide-details class="compact-input" @change="handleSearch" @input="handleSearch"></v-text-field>
+                    <v-text-field ref="toDateRef" v-model="filters.denNgay" type="date" variant="outlined" density="compact"
+                        hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month" 
+                        @click:append-inner="openDatePicker(toDateRef)" @change="handleSearch" @input="handleSearch"></v-text-field>
                 </v-col>
             </AdminFilter>
         </div>
@@ -195,9 +241,8 @@ onMounted(() => loadVouchers());
         <AdminTable title="Danh sách phiếu giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
             { text: 'STT', align: 'center', width: '60px' },
             { text: 'Mã phiếu', align: 'center', width: '130px' },
-            { text: 'Tên phiếu', align: 'left', width: '170px' },
-            { text: 'Loại phiếu', align: 'center', width: '100px' },
-            { text: 'Hình thức', align: 'center', width: '130px' },
+            { text: 'Tên phiếu', align: 'left', width: '150px' },
+            { text: 'Hình thức', align: 'center', width: '150px' },
             { text: 'Giá trị giảm', align: 'left', width: '150px' },
             { text: 'Đơn tối thiểu', align: 'left', width: '140px' },
             { text: 'Số lượng', align: 'left', width: '100px' },
@@ -209,11 +254,9 @@ onMounted(() => loadVouchers());
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell text-center text-slate-400">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
-                    <td class="data-cell text-center text-primary">{{ item.ma || '--' }}</td>
+                    <td class="data-cell text-center text-primary">{{ item.ma || item.id || '--' }}</td>
                     <td class="data-cell text-left">{{ item.ten || '--' }}</td>
-                    <td class="data-cell text-center">
-                        {{ getLoaiPhieuLabel(item.loaiPhieu) }}
-                    </td>
+                    
                     <td class="data-cell text-center">
                         <v-chip
                             size="small"
@@ -279,7 +322,8 @@ onMounted(() => loadVouchers());
 
         <!-- SHARED CONFIRM -->
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
-            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
+            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)" />
     </v-container>
 </template>
 

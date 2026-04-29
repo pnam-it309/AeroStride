@@ -34,7 +34,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
     <div class="d-flex flex-column h-100 overflow-hidden">
         <AdminTable
             :title="title"
-            :addButtonText="`Thêm ${title.toLowerCase().replace('danh sách ', '')}`"
+            :addButtonText="`Tạo mới`"
             :headers="headers"
             :items="items"
             :total-count="pagination.totalElements"

@@ -316,24 +316,24 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
     <!-- Filter -->
     <div class="flex-none mb-4">
       <AdminFilter title="Bộ lọc nâng cao" @refresh="resetFilters" :loading="loading">
-        <v-col cols="12" md="2">
+        <v-col cols="12" md="6">
+          <div class="filter-field-label">Tìm kiếm nhanh</div>
+          <v-text-field v-model="filters.keyword" placeholder="Mã biến thể, màu, size..." prepend-inner-icon="mdi-magnify"
+            variant="outlined" density="compact" hide-details clearable></v-text-field>
+        </v-col>
+        <v-col cols="12" md="6">
           <div class="filter-field-label">Sản phẩm</div>
           <v-autocomplete v-model="selectedProductId"
             :items="[{ tenSanPham: 'Tất cả sản phẩm', id: 'ALL' }, ...productOptions]" item-title="tenSanPham"
             item-value="id" variant="outlined" density="compact" hide-details></v-autocomplete>
         </v-col>
-        <v-col cols="12" md="2">
-          <div class="filter-field-label">Tìm kiếm nhanh</div>
-          <v-text-field v-model="filters.keyword" placeholder="Mã biến thể, màu, size..." prepend-inner-icon="mdi-magnify"
-            variant="outlined" density="compact" hide-details clearable></v-text-field>
-        </v-col>
-        <v-col cols="12" md="2">
+        <v-col cols="12" md="3">
           <div class="filter-field-label">Màu sắc</div>
           <v-select v-model="filters.mauSacId"
             :items="[{ title: 'Tất cả màu', value: '' }, ...formOptions.mauSacs.map(m => ({ title: m.ten, value: m.id }))]"
             variant="outlined" density="compact" hide-details></v-select>
         </v-col>
-        <v-col cols="12" md="2">
+        <v-col cols="12" md="3">
           <div class="filter-field-label">Kích thước</div>
           <v-select v-model="filters.kichThuocId"
             :items="[{ title: 'Tất cả size', value: '' }, ...formOptions.kichThuocs.map(k => ({ title: k.ten, value: k.id }))]"
@@ -361,7 +361,7 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
         { text: 'Trạng thái', align: 'center', width: '140px' },
         { text: 'Thao tác', align: 'center', width: '140px' }
       ]" :items="paginatedVariants" :loading="loading"
-        :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'" addButtonText="Thêm biến thể"
+        :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'" addButtonText="Tạo mới"
         @add="openCreateVariantModal" class="h-100">
 
         <template #top>

@@ -11,7 +11,7 @@ export const dichVuDotGiamGia = {
   // Lấy đợt giảm giá có phân trang
   async layDotGiamGiaPhanTrang(params) {
     const response = await api.get(`${API_ADMIN.DOT_GIAM_GIA}/phan-trang`, { params });
-    return response.data.data;
+    return response.data;
   },
 
   // Lấy chi tiết đợt giảm giá

@@ -77,10 +77,10 @@ async function handleResetPassword(id) {
 
 const tableHeaders = [
     { text: 'STT', align: 'center', width: '60px' },
-    { text: 'Mã nhân viên', align: 'center', width: '120px' },
+    { text: 'Mã nhân viên', align: 'center', width: '100px' },
     { text: 'Tên nhân viên', align: 'left', width: '150px' },
     { text: 'Tên tài khoản', align: 'center', width: '120px' },
-    { text: 'Giới tính', align: 'center', width: '100px' },
+    { text: 'Giới tính', align: 'center', width: '120px' },
     { text: 'Thông tin liên hệ', align: 'left', width: '230px' },
     { text: 'Địa chỉ', align: 'left', width: '200px' },
     { text: 'Chức vụ', align: 'left', width: '120px' },
@@ -202,7 +202,7 @@ onMounted(() => {
 
         <AdminTable
             :title="tab === 0 ? 'Danh sách nhân viên' : 'Yêu cầu tạo mới mật khẩu'"
-            :addButtonText="tab === 0 ? 'Thêm nhân viên' : 'Thêm nhân viên'"
+            :addButtonText="tab === 0 ? 'Tạo mới' : 'Tạo mới'"
             :hide-add-button="tab === 1"
             show-export-button
             :headers="tableHeaders"
@@ -222,6 +222,7 @@ onMounted(() => {
                             size="x-small"
                             :class="['ml-2 font-weight-bold tab-count-chip', tab === 0 ? 'active-chip' : 'inactive-chip']"
                             variant="flat"
+                            style="width: 22px !important; height: 22px !important; min-width: 22px !important; border-radius: 50% !important; padding: 0 !important; border: 1.5px solid currentColor !important; background: transparent !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;"
                         >
                             {{ pagination.totalElements }}
                         </v-chip>
@@ -235,6 +236,7 @@ onMounted(() => {
                             size="x-small"
                             :class="['ml-2 font-weight-bold tab-count-chip', tab === 1 ? 'active-chip' : 'inactive-chip']"
                             variant="flat"
+                            style="width: 22px !important; height: 22px !important; min-width: 22px !important; border-radius: 50% !important; padding: 0 !important; border: 1.5px solid currentColor !important; background: transparent !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;"
                         >
                             {{ pendingRequests.length }}
                         </v-chip>
@@ -392,5 +394,32 @@ onMounted(() => {
 
 .data-cell.font-weight-bold {
     font-weight: 400 !important;
+}
+
+.center-cell {
+    text-align: center !important;
+}
+
+/* Force header centering for columns marked as align center */
+:deep(.v-table th.text-center) {
+    text-align: center !important;
+}
+
+/* Tab Count Badge colors */
+.active-chip {
+    color: rgb(var(--v-theme-primary)) !important;
+}
+
+.inactive-chip {
+    color: #64748b !important;
+}
+
+:deep(.tab-count-chip .v-chip__underlay) {
+    display: none !important;
+}
+
+:deep(.tab-count-chip .v-chip__content) {
+    justify-content: center !important;
+    width: 100% !important;
 }
 </style>

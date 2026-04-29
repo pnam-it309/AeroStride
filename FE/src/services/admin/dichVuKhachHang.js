@@ -11,19 +11,19 @@ export const dichVuKhachHang = {
     // Lấy khách hàng có phân trang
     async layKhachHangPhanTrang(params) {
         const response = await api.get(`${API_ADMIN.KHACH_HANG}/phan-trang`, { params });
-        return response.data.data;
+        return response.data;
     },
 
     // Tìm kiếm khách hàng
     async timKiemKhachHang(params) {
         const response = await api.get(`${API_ADMIN.KHACH_HANG}/tim-kiem`, { params });
-        return response.data.data;
+        return response.data;
     },
 
     // Lọc khách hàng
     async locKhachHang(params) {
         const response = await api.get(`${API_ADMIN.KHACH_HANG}/filter`, { params });
-        return response.data.data;
+        return response.data;
     },
 
     // Lấy chi tiết khách hàng
@@ -47,7 +47,15 @@ export const dichVuKhachHang = {
     // Đổi trạng thái khách hàng (hỗ trợ nhiều route backend)
     async thayDoiTrangThaiKhachHang(id, trangThai) {
         const payload = { trangThai };
+        const statusPayload = { status: trangThai };
+
         const attempts = [
+            // Thử kiểu /status/{id} (Giống module Phiếu giảm giá)
+            () => api.put(`${API_ADMIN.KHACH_HANG}/status/${id}`, statusPayload),
+            () => api.patch(`${API_ADMIN.KHACH_HANG}/status/${id}`, statusPayload),
+            () => api.put(`${API_ADMIN.KHACH_HANG}/status/${id}`, payload),
+
+            // Thử kiểu cũ
             () => api.patch(`${API_ADMIN.KHACH_HANG}/update-trang-thai/${id}`, payload),
             () => api.put(`${API_ADMIN.KHACH_HANG}/update-trang-thai/${id}`, payload),
             () => api.patch(`${API_ADMIN.KHACH_HANG}/trang-thai/${id}`, payload)

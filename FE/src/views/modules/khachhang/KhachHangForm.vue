@@ -190,28 +190,34 @@ const loadCustomer = async (id) => {
 const loadPurchaseHistory = async (id) => {
     invoiceLoading.value = true;
     try {
+        // Gọi API lấy hóa đơn phân trang, truyền idKhachHang để backend lọc nếu hỗ trợ
         const res = await dichVuHoaDon.layHoaDonPhanTrang({
-            // Ưu tiên lấy nhiều dữ liệu để lọc chính xác ở client
-            size: 200,
+            idKhachHang: id,
+            khachHangId: id,
+            size: 500, // Lấy nhiều hơn để đảm bảo không sót
             sortDirection: 'DESC'
         });
 
         const allData = res?.content || res?.data || res || [];
 
+        // Lọc lại ở client để chắc chắn (đề phòng backend chưa hỗ trợ param idKhachHang)
         const filtered = allData.filter((inv) => {
-            // Lọc theo nhiều tiêu chí để đảm bảo không sót đơn hàng
-            const invCustId = inv.idKhachHang || inv.khachHangId || inv.idKH;
-            const invCustMa = inv.maKhachHang || inv.customerCode;
+            const invCustId = inv.idKhachHang || inv.khachHangId || inv.idKH || (inv.khachHang && inv.khachHang.id);
+            const invCustMa = inv.maKhachHang || (inv.khachHang && inv.khachHang.ma);
             
+            // So khớp theo ID hoặc Mã khách hàng
             if (invCustId && String(invCustId) === String(id)) return true;
             if (invCustMa && customerForm.value.ma && String(invCustMa) === String(customerForm.value.ma)) return true;
+            
+            // So khớp theo tên (phương án cuối cùng)
             if (inv.tenKhachHang && customerForm.value.ten && inv.tenKhachHang === customerForm.value.ten) return true;
+            
             return false;
         });
 
         listHoaDon.value = filtered;
 
-        // Bổ sung: Lấy số lượng thực tế nếu bị thiếu (0) vì API summary không trả về
+        // Bổ sung: Lấy số lượng thực tế nếu bị thiếu (vì một số API summary trả về 0)
         listHoaDon.value.forEach(async (inv, idx) => {
             if (!inv.tongSanPham && !inv.soLuong && !inv.tongSoLuong) {
                 try {
@@ -708,55 +714,64 @@ onMounted(() => {
 
                         <v-divider class="mb-6 opacity-30"></v-divider>
 
-                        <v-table class="purchase-history-table">
-                            <thead>
-                                <tr>
-                                    <th class="text-center font-weight-bold" style="width: 150px">STT</th>
-                                    <th class="text-left font-weight-bold" style="width: 130px">Mã hóa đơn</th>
-                                    <th class="text-center font-weight-bold">Tổng sản phẩm</th>
-                                    <th class="text-left font-weight-bold" style="width: 150px">Tổng tiền</th>
-                                    <th class="text-center font-weight-bold">Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-if="invoiceLoading">
-                                    <td colspan="5" class="text-center py-10">
-                                        <v-progress-circular indeterminate color="primary" size="32" />
-                                    </td>
-                                </tr>
-                                <tr v-else-if="listHoaDon.length === 0">
-                                    <td colspan="5" class="text-center py-10 text-slate-400 font-weight-medium">
-                                        Chưa có lịch sử giao dịch nào.
-                                    </td>
-                                </tr>
-                                <tr v-for="(invoice, index) in listHoaDon" :key="invoice.id" class="history-row">
-                                    <td class="data-cell text-center text-slate-400">{{ index + 1 }}</td>
-                                    <td class="data-cell text-left">
-                                        <span class="text-slate-800">{{ invoice.maHoaDon || invoice.ma }}</span>
-                                    </td>
-                                    <td class="data-cell text-center text-slate-600">
-                                        {{ invoice.tongSanPham || invoice.soLuong || invoice.tongSoLuong || 0 }}
-                                    </td>
-                                    <td class="data-cell text-left">
-                                        <span class="text-primary" style="color: #1e257c !important"
-                                            >{{ (invoice.tongTienSauGiam || invoice.tongTien || 0).toLocaleString() }}đ</span
-                                        >
-                                    </td>
-                                    <td class="text-center">
-                                        <v-btn
-                                            icon
-                                            variant="text"
-                                            size="small"
-                                            color="primary"
-                                            class="action-btn"
-                                            @click="viewInvoiceDetail(invoice)"
-                                        >
-                                            <v-icon size="18">mdi-eye-outline</v-icon>
-                                        </v-btn>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </v-table>
+                        <div class="admin-table-container border rounded-xl overflow-hidden bg-white mt-2">
+                            <table class="native-admin-table w-100">
+                                <thead>
+                                    <tr>
+                                        <th class="header-cell text-center" style="width: 80px">STT</th>
+                                        <th class="header-cell text-left" style="width: 150px">Mã hóa đơn</th>
+                                        <th class="header-cell text-center">Tổng sản phẩm</th>
+                                        <th class="header-cell text-left" style="width: 180px">Tổng tiền</th>
+                                        <th class="header-cell text-center" style="width: 120px">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-if="invoiceLoading">
+                                        <td colspan="5" class="text-center py-12">
+                                            <v-progress-circular indeterminate color="primary" size="32" />
+                                            <div class="mt-2 text-caption text-slate-400">Đang tải lịch sử...</div>
+                                        </td>
+                                    </tr>
+                                    <tr v-else-if="listHoaDon.length === 0">
+                                        <td colspan="5" class="text-center py-16 text-slate-400 font-weight-medium">
+                                            <v-icon size="40" class="mb-2 opacity-20">mdi-receipt-text-off</v-icon>
+                                            <div>Khách hàng chưa có lịch sử mua hàng</div>
+                                        </td>
+                                    </tr>
+                                    <tr v-for="(invoice, index) in listHoaDon" :key="invoice.id" class="data-row">
+                                        <td class="data-cell text-center">
+                                            <span class="text-slate-400 font-weight-medium">{{ index + 1 }}</span>
+                                        </td>
+                                        <td class="data-cell text-left">
+                                            <span class="font-weight-bold text-slate-700 mono-font">{{ invoice.maHoaDon || invoice.ma }}</span>
+                                        </td>
+                                        <td class="data-cell text-center">
+                                            <v-chip size="x-small" color="slate-100" class="font-weight-bold px-3">
+                                                {{ invoice.tongSanPham || invoice.soLuong || invoice.tongSoLuong || 0 }} Sản phẩm
+                                            </v-chip>
+                                        </td>
+                                        <td class="data-cell text-left">
+                                            <span class="text-primary font-weight-black" style="color: #1e257c !important; font-size: 15px !important;">
+                                                {{ (invoice.tongTienSauGiam || invoice.tongTien || 0).toLocaleString() }}đ
+                                            </span>
+                                        </td>
+                                        <td class="data-cell text-center">
+                                            <v-btn
+                                                icon
+                                                variant="tonal"
+                                                size="small"
+                                                color="primary"
+                                                class="rounded-lg"
+                                                @click="viewInvoiceDetail(invoice)"
+                                                title="Xem chi tiết"
+                                            >
+                                                <v-icon size="18">mdi-eye-outline</v-icon>
+                                            </v-btn>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </v-card-text>
                 </v-card>
             </v-col>

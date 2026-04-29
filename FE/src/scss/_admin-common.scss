@@ -299,7 +299,7 @@
 }
 
 .gender-chip-male {
-    background: #3b82f6 !important;
+    background: #1e257c !important;
     color: #ffffff !important;
 }
 
@@ -320,36 +320,7 @@
     font-weight: 400 !important;
 }
 
-/* Ép màu xanh đậm thương hiệu cho Switch (Vuetify 3) */
-/* Khi trạng thái là ON (Bật) */
-.v-switch.v-selection-control--dirty .v-switch__track {
-    background-color: #1e257c !important;
-    opacity: 0.4 !important;
-}
 
-.v-switch.v-selection-control--dirty .v-switch__thumb {
-    background-color: #1e257c !important;
-    color: #1e257c !important;
-}
-
-.v-switch.v-selection-control--dirty .v-selection-control__wrapper {
-    color: #1e257c !important;
-}
-
-/* Khi trạng thái là OFF (Tắt) */
-.v-switch:not(.v-selection-control--dirty) .v-switch__track {
-    background-color: #94a3b8 !important; /* Màu xám slate */
-    opacity: 0.3 !important;
-}
-
-.v-switch:not(.v-selection-control--dirty) .v-switch__thumb {
-    background-color: #f1f5f9 !important; /* Màu xám trắng */
-    color: #f1f5f9 !important;
-}
-
-.v-switch:not(.v-selection-control--dirty) .v-selection-control__wrapper {
-    color: #94a3b8 !important;
-}
 
 
 .status-chip {
@@ -567,7 +538,7 @@
     z-index: 10;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     margin-top: auto;
     /* Push to bottom if parent stretches */
 }
@@ -608,26 +579,94 @@
     letter-spacing: 0.02em;
 }
 
-/* Tinh chỉnh ô nhập ngày tháng */
+/* Tinh chỉnh ô nhập ngày tháng cao cấp */
 .date-field {
-    input::-webkit-calendar-picker-indicator {
-        background: transparent;
-        bottom: 0;
-        color: transparent;
+    .v-field__input {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        min-height: 40px !important;
+        display: flex;
+        align-items: center;
         cursor: pointer;
-        height: auto;
-        left: 0;
+    }
+
+    input[type="date"] {
+        position: relative;
+        width: 100%;
+        color: #556071 !important;
+        font-weight: 400 !important;
+    }
+
+    /* Ẩn icon mặc định của trình duyệt */
+    input::-webkit-calendar-picker-indicator {
         position: absolute;
-        right: 0;
         top: 0;
-        width: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+        color: transparent;
+        background: transparent;
+        cursor: pointer;
         z-index: 1;
+    }
+
+    .v-field__outline {
+        --v-field-border-opacity: 0.2 !important;
+        border-radius: 12px !important;
+    }
+
+    &:hover .v-field__outline {
+        --v-field-border-opacity: 0.5 !important;
+        color: #1e257c !important;
     }
 
     .v-field__append-inner {
         padding-top: 0 !important;
         align-items: center !important;
-        opacity: 0.8;
+        opacity: 0.5;
+        z-index: 1;
+        cursor: pointer !important;
+        
+        .v-icon {
+            font-size: 20px !important;
+            color: #64748b !important;
+            cursor: pointer !important;
+        }
+    }
+
+    &:hover {
+        .v-field__outline {
+            --v-field-border-opacity: 0.5 !important;
+            color: #1e257c !important;
+        }
+        .v-field__append-inner {
+            opacity: 1;
+            .v-icon {
+                color: #1e257c !important;
+            }
+        }
+    }
+
+    &.v-field--focused {
+        .v-field__outline {
+            --v-field-border-opacity: 1 !important;
+        }
+        .v-field__append-inner {
+            opacity: 1;
+            .v-icon {
+                color: #1e257c !important;
+            }
+        }
+    }
+    
+    background-color: #ffffff !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+
+    * {
+        cursor: pointer !important;
     }
 }
 
@@ -667,8 +706,8 @@
     font-size: 14px !important;
     font-weight: 600 !important;
     letter-spacing: 0.01em !important;
-    background: #3b82f6 !important;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
+    background: #1e257c !important;
+    box-shadow: 0 4px 14px rgba(30, 37, 124, 0.3) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 
     .v-btn__content {
@@ -686,9 +725,9 @@
 
     &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45) !important;
-        background: #2563eb !important;
-        /* Blue-600 */
+        box-shadow: 0 6px 20px rgba(30, 37, 124, 0.45) !important;
+        background: #1e257c !important;
+        /* Brand Navy */
     }
 
     &:active {
@@ -1210,41 +1249,7 @@
     }
 }
 
-/* Global Switch Synchronizer - Enforce Monochrome Black */
-.action-switch,
-.v-switch.tight-switch {
-    .v-selection-control {
-        min-height: 24px !important;
-
-        .v-switch__track {
-            background: #e2e8f0 !important;
-            /* Light slate for Off state */
-            opacity: 1 !important;
-        }
-
-        &.v-selection-control--dirty {
-            .v-switch__track {
-                background: #3b82f6 !important;
-                /* Primary Blue for On state */
-                opacity: 1 !important;
-            }
-
-            .v-switch__thumb {
-                color: #ffffff !important;
-                background: #ffffff !important;
-            }
-        }
-
-        .v-switch__thumb {
-            width: 14px !important;
-            height: 14px !important;
-            color: #ffffff !important;
-            background: #ffffff !important;
-            opacity: 1 !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
-        }
-    }
-}
+/* Removed conflicting global switch synchronizer block to resolve color overrides */
 
 .switch-wrapper {
     display: inline-flex;

@@ -11,13 +11,13 @@ export const dichVuNhanVien = {
   // Lấy nhân viên có phân trang
   async layNhanVienPhanTrang(params) {
     const response = await api.get(`${API_ADMIN.NHAN_VIEN}/phan-trang`, { params });
-    return response.data.data;
+    return response.data;
   },
 
   // Tìm kiếm nhân viên
   async timKiemNhanVien(params) {
     const response = await api.get(`${API_ADMIN.NHAN_VIEN}/tim-kiem`, { params });
-    return response.data.data;
+    return response.data;
   },
 
   // Lấy chi tiết nhân viên

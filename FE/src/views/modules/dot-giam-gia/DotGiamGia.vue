@@ -16,8 +16,13 @@ import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { EditIcon } from 'vue-tabler-icons';
 
 import { useAdminTable } from '@/composables/useAdminTable';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import { useNotifications } from '@/services/notificationService';
 
 const router = useRouter();
+const { addNotification } = useNotifications();
+const startDateRef = ref(null);
+const endDateRef = ref(null);
 
 const {
     items: campaigns,
@@ -37,18 +42,7 @@ const {
 
 const isRefreshing = ref(false);
 
-// Tính trạng thái theo thời gian thực (ngày bắt đầu / kết thúc)
-const getDiscountTimeStatus = (item) => {
-    const now = Date.now();
-    const start = item.ngayBatDau ? new Date(item.ngayBatDau).getTime() : null;
-    const end = item.ngayKetThuc ? new Date(item.ngayKetThuc).getTime() : null;
-    if (start && now < start) return { label: 'Sắp diễn ra', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' };
-    if (end && now > end) return { label: 'Kết thúc', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' };
-    return { label: 'Hoạt động', color: '#10b981', bg: 'rgba(16,185,129,0.1)' };
-};
-
-// Confirmation Logic
-const confirmDialog = ref({ show: false, title: '', message: '', color: 'primary', action: null, loading: false });
+const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 
 const handleRefresh = async () => {
     isRefreshing.value = true;
@@ -62,33 +56,56 @@ const handleExport = async () => {
         downloadFile(blob, 'danh_sach_dot_giam_gia.xlsx');
     } catch (error) {
         console.error('Lỗi xuất Excel:', error);
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể xuất file Excel', color: 'error' });
     }
 };
 
 const confirmToggleStatus = (item) => {
-    confirmDialog.value = {
-        show: true,
+    setConfirm({
         title: 'Thay đổi trạng thái',
         message: `Bạn có muốn đổi trạng thái của chiến dịch [${item.ten}]?`,
         color: 'warning',
         action: async () => {
-            confirmDialog.value.loading = true;
             try {
                 const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
+                console.log(`[Discount] Changing status of ${item.id} to ${newS}`);
+                
                 await dichVuDotGiamGia.thayDoiTrangThaiDotGiamGia(item.id, newS);
+                
+                // Cập nhật trạng thái local
                 item.trangThai = newS;
-                confirmDialog.value.show = false;
+                
+                addNotification({
+                    title: 'Thành công',
+                    subtitle: `Đã chuyển sang: ${getStatusLabel(newS)}`,
+                    color: 'success'
+                });
             } catch (e) {
-            } finally {
-                confirmDialog.value.loading = false;
+                console.error('[Discount] Status change error:', e);
+                addNotification({
+                    title: 'Lỗi',
+                    subtitle: 'Không thể thay đổi trạng thái đợt giảm giá',
+                    color: 'error'
+                });
             }
         }
-    };
+    });
 };
 
 
 const getDiscountValueDisplay = (campaign) => {
     return `${campaign?.soTienGiam}%`;
+};
+
+const openDatePicker = (ref) => {
+    const input = ref?.$el?.querySelector('input[type="date"]');
+    if (input) {
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+        } else {
+            input.click();
+        }
+    }
 };
 
 onMounted(() => loadCampaigns());
@@ -128,14 +145,16 @@ onMounted(() => loadCampaigns());
 
                 <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Từ ngày</div>
-                    <v-text-field v-model="filters.startDate" type="date" variant="outlined" density="compact"
-                        hide-details class="compact-input" @change="handleSearch"></v-text-field>
+                    <v-text-field ref="startDateRef" v-model="filters.startDate" type="date" variant="outlined" density="compact"
+                        hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month" 
+                        @click:append-inner="openDatePicker(startDateRef)" @change="handleSearch"></v-text-field>
                 </v-col>
 
                 <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Đến ngày</div>
-                    <v-text-field v-model="filters.endDate" type="date" variant="outlined" density="compact"
-                        hide-details class="compact-input" @change="handleSearch"></v-text-field>
+                    <v-text-field ref="endDateRef" v-model="filters.endDate" type="date" variant="outlined" density="compact"
+                        hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month" 
+                        @click:append-inner="openDatePicker(endDateRef)" @change="handleSearch"></v-text-field>
                 </v-col>
             </AdminFilter>
         </div>
@@ -143,10 +162,9 @@ onMounted(() => loadCampaigns());
         <!-- 2. TABLE -->
         <AdminTable title="Danh sách đợt giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
             { text: 'STT', align: 'center', width: '60px' },
-            { text: 'Mã', align: 'center', width: '120px' },
-            { text: 'Tên đợt giảm giá', align: 'left', width: '160px' },
+            { text: 'Mã', align: 'center', width: '110px' },
+            { text: 'Tên đợt giảm giá', align: 'left', width: '150px' },
             { text: 'Giá trị giảm', align: 'left', width: '140px' },
-            { text: 'Đơn tối thiểu', align: 'left', width: '140px' },
             { text: 'Ngày bắt đầu', align: 'left', width: '160px' },
             { text: 'Ngày kết thúc', align: 'left', width: '140px' },
             { text: 'Trạng thái', align: 'center', width: '130px' },
@@ -166,9 +184,6 @@ onMounted(() => loadCampaigns());
                     </td>
                     <td class="data-cell text-left">
                         <div class="text-primary">Giảm {{ getDiscountValueDisplay(item) }}</div>
-                    </td>
-                    <td class="data-cell text-left">
-                        <div class="text-primary">{{ formatCurrency(item.dieuKienGiamGia) }}</div>
                     </td>
                     <td class="data-cell text-left">
                         <div class="text-slate-700">{{ formatDateTime(item.ngayBatDau) }}</div>
@@ -209,7 +224,8 @@ onMounted(() => loadCampaigns());
 
         <!-- SHARED CONFIRM -->
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
-            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
+            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)" />
     </v-container>
 </template>
 

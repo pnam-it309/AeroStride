@@ -291,6 +291,7 @@ onMounted(() => loadOrders());
                         append-inner-icon="mdi-calendar-month-outline"
                         persistent-placeholder
                         hide-details
+                        @click="openFromDatePicker"
                         @click:append-inner="openFromDatePicker"
                         @input="handleSearch"
                     ></v-text-field>
@@ -307,6 +308,7 @@ onMounted(() => loadOrders());
                         class="date-field"
                         append-inner-icon="mdi-calendar-month-outline"
                         hide-details
+                        @click="openToDatePicker"
                         @click:append-inner="openToDatePicker"
                         @input="handleSearch"
                     ></v-text-field>
