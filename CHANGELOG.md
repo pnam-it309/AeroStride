@@ -1,3 +1,10 @@
+# 1.0.0 (2026-05-01)
+
+
+### Features
+
+* Khởi tạo toàn bộ cấu trúc mã nguồn dự án AeroStride ([c80e9d3](https://github.com/pnam-it309/AeroStride/commit/c80e9d31c3cb8145d395b6295c9b46ea8235d228))
+
 # [1.8.0](https://github.com/pnam-it309/AeroStride/compare/v1.7.2...v1.8.0) (2026-04-29)
 
 
