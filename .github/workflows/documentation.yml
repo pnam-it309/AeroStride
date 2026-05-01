@@ -1,0 +1,37 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'BE/src/main/java/**'
+      - 'FE/src/**'
+      - '.github/workflows/documentation.yml'
+
+jobs:
+  generate-diagrams:
+    name: Generate Architecture Diagrams
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Mermaid CLI
+        run: npm install -g @mermaid-js/mermaid-cli
+
+      - name: Generate Diagrams
+        run: |
+          mkdir -p docs/gen
+          # Find all .mmd files in docs and render them
+          find docs -name "*.mmd" -exec mmdc -i {} -o {}.png \;
+          # Move rendered images to gen folder
+          find docs -name "*.mmd.png" -exec mv {} docs/gen/ \;
+
+      - name: Commit and Push Diagrams
+        if: github.event_name == 'push'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add docs/gen/*.png
+          git commit -m "docs: automated architecture diagram update [skip ci]" || echo "No changes to commit"
+          git push

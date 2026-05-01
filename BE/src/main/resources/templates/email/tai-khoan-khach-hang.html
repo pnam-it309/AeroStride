@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{email/base-template :: layout(~{::#main-content})}">
+<head>
+    <title>Welcome to AeroStride</title>
+</head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+
+<div id="main-content">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding: 10px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:white;border-radius:12px;overflow:hidden;
+                          border:1px solid #e2e8f0;">
+          <tr>
+            <td style="background:#2E4E8E;padding:28px;text-align:center;">
+              <h1 style="color:white;margin:0;font-size:24px;
+                                   letter-spacing:1px;">⚡ AeroStride</h1>
+              <p style="color:#93c5fd;margin:6px 0 0;font-size:13px;">
+                Đăng nhập hệ thống
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:36px 40px;">
+              <p style="font-size:16px;color:#1e293b;margin:0 0 12px;">
+                Xin chào <strong th:text="${tenKhachHang}">Khách hàng</strong>,
+              </p>
+              <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 24px;">
+                Tài khoản của bạn tại <strong>AeroStride</strong> đã được tạo thành công.
+                Dưới đây là thông tin đăng nhập của bạn:
+              </p>
+
+
+              <table width="100%" cellpadding="0" cellspacing="0"
+                     style="background:#f8fafc;border-radius:10px;
+                                      border-left:4px solid #2E4E8E;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 10px;font-size:14px;color:#475569;">
+                      👤 <strong style="color:#1e293b;">Tên đăng nhập:</strong>
+                      &nbsp;
+                      <span style="font-size:15px;font-weight:bold;
+                                                     color:#2E4E8E;letter-spacing:0.5px;"
+                            th:text="${tenTaiKhoan}">username</span>
+                    </p>
+                    <p style="margin:0;font-size:14px;color:#475569;">
+                      🔑 <strong style="color:#1e293b;">Mật khẩu tạm thời:</strong>
+                      &nbsp;
+                      <span style="font-size:15px;font-weight:bold;
+                                                     color:#2E4E8E;letter-spacing:1px;"
+                            th:text="${matKhau}">password</span>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <div style="text-align: center;">
+                <a href="https://aerostride.com/login" class="button">Đăng nhập ngay</a>
+              </div>
+
+              <table width="100%" cellpadding="0" cellspacing="0"
+                     style="background:#fff7ed;border-radius:8px;
+                                      border:1px solid #fed7aa;margin: 28px 0;">
+                <tr>
+                  <td style="padding:14px 18px;font-size:13px;color:#9a3412;">
+                    ⚠️ Vui lòng <strong>đổi mật khẩu ngay</strong>
+                    sau lần đăng nhập đầu tiên để bảo mật tài khoản.
+                  </td>
+                </tr>
+              </table>
+
+              <p style="color:#94a3b8;font-size:12px;margin:0;">
+                Nếu bạn không yêu cầu tạo tài khoản này, vui lòng liên hệ
+                với chúng tôi ngay lập tức.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#f8fafc;padding:20px;text-align:center;
+                               border-top:1px solid #e2e8f0;">
+              <p style="margin:0;font-size:12px;color:#94a3b8;">
+                © 2025 AeroStride · Thông tin bảo mật
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>
+
+</body>
+</html>

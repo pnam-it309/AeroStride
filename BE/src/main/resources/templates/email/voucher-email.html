@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chúc mừng bạn nhận được ưu đãi!</title>
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f1f5f9;">
+    <div style="background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #4f46e5; margin: 0; font-size: 24px;">🎁 Quà tặng từ AeroStride</h1>
+        </div>
+        
+        <p>Chào bạn <strong><span th:text="${name}">Khách hàng</span></strong>,</p>
+        <p>Chúng tôi xin gửi tặng bạn một phiếu giảm giá đặc biệt để tri ân sự ủng hộ của bạn dành cho AeroStride.</p>
+        
+        <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; padding: 25px; border-radius: 12px; text-align: center; margin: 30px 0; position: relative; overflow: hidden;">
+            <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; opacity: 0.9;">Mã ưu đãi của bạn</div>
+            <div style="font-size: 32px; font-weight: 800; margin-bottom: 15px; border: 2px dashed rgba(255,255,255,0.4); padding: 10px; display: inline-block;" th:text="${voucherCode}">VOUCHER-CODE</div>
+            <div style="font-size: 18px; font-weight: 600;" th:text="${voucherName}">Tên Voucher</div>
+            <div style="margin-top: 15px; font-size: 14px;">
+                Giảm ngay <span style="font-size: 20px; font-weight: bold;" th:text="${discountValue}">10%</span> 
+                cho đơn hàng từ <span th:text="${minOrder}">500.000đ</span>
+            </div>
+        </div>
+        
+        <div style="background-color: #fff7ed; border-left: 4px solid #f97316; padding: 15px; margin-bottom: 25px; border-radius: 4px;">
+            <p style="margin: 0; font-size: 14px; color: #9a3412;">
+                <strong>Hạn sử dụng:</strong> đến hết ngày <span th:text="${expiryDate}">31/12/2026</span>
+            </p>
+        </div>
+        
+        <div style="text-align: center;">
+            <a href="https://aerostride.com" style="display: inline-block; background-color: #4f46e5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Sử dụng ngay</a>
+        </div>
+        
+        <v-divider style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;"></v-divider>
+        
+        <p style="font-size: 12px; color: #6b7280; text-align: center;">
+            Email này được gửi tự động từ hệ thống AeroStride. Vui lòng không trả lời trực tiếp email này.
+        </p>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #94a3b8;">
+        &copy; 2026 AeroStride - Store Giày Thể Thao Cao Cấp<br>
+    </div>
+</body>
+</html>

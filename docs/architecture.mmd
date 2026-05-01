@@ -1,0 +1,8 @@
+graph TD
+    User((User)) --> FE[Vue.js Frontend]
+    FE --> LB[Load Balancer / Nginx]
+    LB --> BE[Spring Boot Backend]
+    BE --> DB[(MySQL Database)]
+    BE --> Redis[(Redis Cache)]
+    BE --> Cloudinary[Cloudinary Storage]
+    BE --> Mail[Mail Server]

@@ -1,0 +1,11 @@
+.gradle/
+.gradle-user-home/
+**/.gradle-user-home/
+build/
+node_modules/
+.tmp-mysqlsh/
+.local-db/
+.local-uploads/
+.codex-run/
+.env
+docker/.env

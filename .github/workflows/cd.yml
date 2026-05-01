@@ -1,0 +1,73 @@
+name: AeroStride CD (Deployment)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ${{ secrets.DOCKER_REGISTRY || 'ghcr.io' }}
+  IMAGE_NAME_BE: ${{ secrets.IMAGE_NAME_BE || 'pnam-it309/aerostride/backend' }}
+  IMAGE_NAME_FE: ${{ secrets.IMAGE_NAME_FE || 'pnam-it309/aerostride/frontend' }}
+
+jobs:
+  release-and-publish:
+    runs-on: ubuntu-latest
+    name: Semantic Release & Publish
+    permissions:
+      packages: write
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Semantic Release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Images
+        if: steps.semantic.outputs.new_release_published == 'true'
+        run: |
+          # Backend
+          docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:${{ steps.semantic.outputs.new_release_version }} -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:latest -f docker/BE.Dockerfile .
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }} --all-tags
+          
+          # Frontend
+          docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:${{ steps.semantic.outputs.new_release_version }} -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:latest -f docker/FE.Dockerfile .
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }} --all-tags
+
+  deploy:
+    needs: release-and-publish
+    runs-on: self-hosted
+    name: Deploy to On-Premise
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update Services
+        run: |
+          echo "${{ secrets.DOCKER_ENV }}" > docker/.env
+          docker compose -f docker/docker-compose.yml --env-file docker/.env pull
+          docker compose -f docker/docker-compose.yml --env-file docker/.env up -d --force-recreate
+          docker image prune -f

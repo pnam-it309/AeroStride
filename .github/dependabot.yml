@@ -1,0 +1,33 @@
+# .github/dependabot.yml
+version: 2
+updates:
+  # Maintain dependencies for the Java Backend (Gradle)
+  - package-ecosystem: "gradle"
+    directory: "/BE"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      spring-boot:
+        patterns:
+          - "org.springframework.boot*"
+          - "org.springframework.security*"
+
+  # Maintain dependencies for the Vue Frontend (npm)
+  - package-ecosystem: "npm"
+    directory: "/FE"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      vue-ecosystem:
+        patterns:
+          - "vue*"
+          - "@vue*"
+          - "vite*"
+
+  # Maintain GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"

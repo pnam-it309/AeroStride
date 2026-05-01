@@ -1,0 +1,272 @@
+html,
+body,
+.v-application {
+    font-family: 'Inter', sans-serif !important;
+    text-transform: none !important;
+}
+
+/* Force Vuetify components to respect lowercase rules */
+.v-btn,
+.v-tab,
+.v-chip,
+.v-list-item-title,
+.v-card-title {
+    font-family: inherit !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+}
+
+/* Global Button Hover Effects */
+.v-btn {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 4px !important; /* Standardized sharp rounding */
+    
+    &:hover {
+        transform: translateY(-2px);
+    }
+    
+    &.bg-primary:hover {
+        background-color: #2b38ff !important; /* Vibrant blue from user screenshot */
+        box-shadow: 0 6px 20px rgba(43, 56, 255, 0.35) !important;
+        color: white !important;
+    }
+    
+    &.bg-error:hover {
+        background-color: #ff5252 !important;
+        box-shadow: 0 6px 20px rgba(255, 82, 82, 0.3) !important;
+    }
+
+    &.bg-success:hover {
+        background-color: #38d39f !important;
+        box-shadow: 0 6px 20px rgba(56, 211, 159, 0.3) !important;
+    }
+}
+
+.v-tab {
+    font-size: 0.95rem !important; /* Refined for dashboard use */
+}
+
+/* Global Font Size Rules (Standardized for professional dashboard) */
+.text-h1 {
+    font-size: 1.8rem !important;
+    font-weight: 600;
+    line-height: 1.2 !important;
+}
+.text-h2 {
+    font-size: 1.6rem !important;
+    font-weight: 600;
+    line-height: 1.2 !important;
+}
+.text-h3 {
+    font-size: 1.4rem !important;
+    font-weight: 600;
+    line-height: 1.2 !important;
+}
+.text-h4 {
+    font-size: 1.25rem !important;
+    font-weight: 600;
+    line-height: 1.2 !important;
+}
+.text-h5 {
+    font-size: 1.15rem !important;
+    font-weight: 600;
+    line-height: 1.2 !important;
+}
+.text-h6 {
+    font-size: 1.05rem !important;
+    font-weight: 600;
+    line-height: 1.2 !important;
+}
+
+/* Global Chip Styling - Make them determined by font size */
+.v-chip {
+    font-family: inherit !important;
+    font-size: 0.95rem !important;
+    height: auto !important;
+    padding: 6px 16px !important;
+    border-radius: 4px !important; /* Standardized sharp rounding */
+    text-transform: none !important;
+}
+
+/* Content font (matching sidebar logic) */
+.text-body-1,
+.text-subtitle-1,
+.v-list-item-title {
+    font-size: 1.05rem !important;
+    font-weight: 500 !important;
+    line-height: 1.5 !important;
+}
+
+.text-body-2,
+.text-subtitle-2 {
+    font-size: 0.95rem !important;
+    font-weight: 400 !important;
+    line-height: 1.5 !important;
+}
+
+.text-caption {
+    font-size: 0.85rem !important;
+    font-weight: 400;
+}
+
+/* Table Styling */
+.v-table {
+    background: transparent !important;
+    .v-table__wrapper {
+        border-radius: 8px;
+        table {
+            border-spacing: 0;
+            thead {
+                tr {
+                    th {
+                        background-color: #f8fafc !important; // Match sidebar light feel
+                        border-bottom: 1px solid #e2e8f0 !important;
+                        color: #000 !important;
+                        font-weight: 500 !important;
+                        text-transform: none !important;
+                        font-size: 1.05rem !important; // Increased from 0.875
+                        height: 52px !important;
+
+                        /* Capitalize first letter logic */
+                        &::first-letter {
+                            text-transform: uppercase !important;
+                        }
+                    }
+                }
+            }
+            tbody {
+                tr {
+                    td {
+                        font-size: 1rem !important; // Increased from 0.875
+                        height: 60px !important; // More space for larger text
+                        color: #000 !important;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* Inputs & Form Fields */
+.v-field {
+    font-size: 1rem !important; // Increased from 0.875
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+}
+
+.v-field__input {
+    font-weight: 500 !important;
+}
+
+/* Placeholder styling */
+::placeholder {
+    font-weight: 500 !important;
+    opacity: 0.7 !important;
+}
+
+/* Expand content width */
+.maxWidth {
+    max-width: 1800px !important;
+    width: 98% !important;
+    margin: 0 auto;
+}
+
+/* Titles - Capitalize first letter */
+.v-card-title,
+h1,
+h2,
+h3,
+h4,
+.text-h6 {
+    text-transform: none !important;
+    font-weight: 600 !important;
+    &::first-letter {
+        text-transform: uppercase !important;
+    }
+}
+
+html {
+    .bg-success,
+    .bg-primary,
+    .bg-secondary,
+    .bg-warning,
+    .bg-error,
+    .bg-info,
+    .bg-indigo {
+        color: #000 !important;
+    }
+}
+
+.v-btn--elevated {
+    &.bg-primary {
+        box-shadow: 0 4px 6px -1px rgba(var(--v-theme-primary), 0.1), 0 2px 4px -2px rgba(var(--v-theme-primary), 0.1) !important;
+    }
+}
+
+.border,
+.v-divider {
+    border-color: #e2e8f0 !important;
+    opacity: 1 !important;
+}
+
+/* Global color sync for admin module pages */
+.page-title,
+h1.text-h5,
+h1.text-h4,
+h5.text-h5,
+h5.text-h4,
+.module-page-title {
+    color: #000 !important;
+}
+
+.native-admin-table .header-cell,
+.v-table thead tr th {
+    color: #000 !important;
+}
+
+/* Numeric Badges & Count Chips - Premium Red Circle style (Synchronized with Invoice) */
+.v-application .v-tabs .v-chip.tab-count-chip {
+    background: #ef4444 !important;
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+    border: none !important;
+    
+    /* Zero out all Vuetify color variables to brand red/white */
+    --v-chip-background: 239, 68, 68 !important;
+    --v-chip-color: 255, 255, 255 !important;
+    
+    min-width: 24px !important;
+    height: 24px !important;
+    padding: 0 4px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important; 
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    margin-left: 8px !important;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4) !important;
+    opacity: 1 !important;
+}
+
+/* Block selection inversion - Stay brand red even when active */
+.v-application .v-tabs .v-tab--selected .tab-count-chip,
+.v-application .v-tabs .v-tab--active .tab-count-chip,
+.v-application .v-tabs .v-chip.tab-count-chip.v-chip--selected {
+    background-color: #ef4444 !important;
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    border: none !important;
+}
+
+/* Catch any flat/tonal variants that might bypass background rules */
+.v-application .v-tabs .tab-count-chip.v-chip--variant-flat,
+.v-application .v-tabs .tab-count-chip.v-chip--variant-tonal {
+    --v-chip-background: 239, 68, 68 !important;
+    background-color: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+.text-error {
+    color: #fb977d !important;
+}

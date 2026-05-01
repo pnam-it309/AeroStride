@@ -1,0 +1,101 @@
+name: AeroStride CI (Integration)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'BE/**'
+      - 'FE/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [ main ]
+
+env:
+  MYSQL_DATABASE: aerostride_db_test
+  MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'root' }}
+  REDIS_PORT: 6379
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    name: Code Quality & Testing
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ env.MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE: ${{ env.MYSQL_DATABASE }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Backend Logic
+      - name: Setup Backend
+        uses: ./.github/actions/setup-backend
+        with:
+          java-version: '17'
+
+      - name: Run Backend Tests
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/${{ env.MYSQL_DATABASE }}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+          SPRING_DATASOURCE_USERNAME: root
+          SPRING_DATASOURCE_PASSWORD: ${{ env.MYSQL_ROOT_PASSWORD }}
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: ${{ env.REDIS_PORT }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'AeroStride_Super_Long_Secret_Key_For_HS512_Signing_Must_Be_At_Least_64_Bytes_Long_!!!' }}
+        run: |
+          sleep 5
+          cd BE
+          chmod +x gradlew
+          ./gradlew test --no-daemon
+
+      # Frontend Logic
+      - name: Setup Frontend
+        uses: ./.github/actions/setup-frontend
+        with:
+          node-version: '20'
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd FE
+          npm ci
+
+      - name: Run Frontend Lint & Format Check
+        run: |
+          cd FE
+          npm run format
+
+  build-and-scan:
+    needs: quality
+    runs-on: ubuntu-latest
+    name: Build & Security Scan
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build & Scan Backend
+        run: |
+          docker build -t aerostride-be:latest -f docker/BE.Dockerfile .
+          # Scan will run in separate CodeQL workflow or here if preferred
+
+      - name: Build & Scan Frontend
+        run: |
+          docker build -t aerostride-fe:latest -f docker/FE.Dockerfile .

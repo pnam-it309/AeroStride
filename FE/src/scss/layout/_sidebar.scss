@@ -1,0 +1,291 @@
+@use '../_variables' as *;
+
+/*This is for the logo*/
+.leftSidebar {
+    border-radius: 18px;
+    height: calc((100% - 40px)) !important;
+    overflow: hidden;
+
+    @media screen and (max-width:1279px) {
+        height: 100% !important;
+        border-radius: 0;
+    }
+
+
+    .mini-icon {
+        display: none;
+    }
+
+    .mini-text {
+        display: block;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .profile-name {
+        background: rgba(0, 0, 0, 0.5);
+
+        h5 {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+    }
+}
+
+.verticalLayout {
+    .logo {
+        @media screen and (max-width:1024px) {
+            width: auto;
+        }
+    }
+}
+
+.v-navigation-drawer__content {
+    overflow-y: hidden !important;
+}
+
+/*This is for the Vertical sidebar*/
+.scrollnavbar {
+    height: calc(100vh - 130px);
+
+    .userbottom {
+        bottom: 0px;
+        width: 100%;
+        position: fixed;
+        z-index: 2;
+    }
+
+    .smallCap {
+        padding: 3px 12px 12px 0px !important;
+        font-weight: 500;
+        margin-top: 24px;
+        color: rgb(var(--v-theme-grey200));
+
+        &:first-child {
+            margin-top: 0 !important;
+        }
+    }
+
+    /*General Menu css*/
+    .v-list-group__items .v-list-item,
+    .v-list-item {
+        border-radius: $border-radius-root + 3px;
+        padding-inline-start: calc(12px + var(--indent-padding) / 10) !important;
+        margin: 0 0 2px;
+
+        .v-list-item__prepend {
+            margin-inline-end: 13px;
+            // position: relative;
+            z-index: 2;
+        }
+
+        .v-list-item__append {
+            position: relative;
+            z-index: 2;
+
+            .v-icon {
+                margin-inline-start: 13px;
+            }
+        }
+    }
+
+    /*This is for the dropdown*/
+    .v-list {
+        color: rgb(var(--v-theme-textSecondary));
+
+
+        >.v-list-group {
+            position: relative;
+
+            >.v-list-item--active,
+            >.v-list-item--active:hover {
+                background: transparent;
+                color: white;
+            }
+
+            .v-list-group__items .v-list-item.v-list-item--active,
+            .v-list-group__items .v-list-item.v-list-item--active>.v-list-item__overlay {
+                background: transparent;
+                color: rgb(var(--v-theme-secondary));
+            }
+        }
+
+        .v-list-item__content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .icon-box {
+            height: 40px;
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: $border-radius-root + 3px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .v-list-item--density-default.v-list-item--one-line {
+            padding-top: 5px;
+            padding-bottom: 5px;
+            min-height: 40px !important;
+        }
+
+        .v-list-item--density-default:not(.v-list-item--nav).v-list-item--one-line {
+            padding-inline-start: 0 !important;
+            padding-inline-end: 12px;
+        }
+
+        .sublinks {
+            .v-list-item {
+                opacity: 0.7;
+
+                .sublink-dot {
+                    height: 6px;
+                    width: 6px;
+                    border-radius: 100%;
+                    background-color: rgb(var(--v-theme-textSecondary));
+                }
+
+                &:hover {
+                    opacity: 1;
+                }
+
+                &.v-list-item--active {
+                    opacity: 1;
+
+                    .v-list-item-title {
+                        font-weight: 600;
+                    }
+                }
+            }
+        }
+
+        .z-index-2 {
+            z-index: 2;
+        }
+
+
+        /* 1. ĐẠI PHẪU LIST ITEM - FIX LỖI CHỈ HIỆN 1 NỬA */
+        .v-list-item {
+            position: relative !important;
+            z-index: 1;
+            transition: color 0.3s ease;
+            overflow: hidden !important;
+            background: transparent !important;
+            margin: 4px 8px !important; /* Thêm chút margin ngang cho đẹp pill */
+            min-height: 44px !important;
+            display: grid !important; /* Vuetify 3 dùng grid */
+
+            /* Tắt hoàn toàn mọi lớp nền mặc định của Vuetify */
+            &::after,
+            .v-list-item__overlay,
+            .v-list-item__underlay,
+            .v-list-item__spacer {
+                display: none !important;
+                opacity: 0 !important;
+            }
+
+            /* 2. LỚP NỀN XANH - ÉP PHỦ 100% CHIỀU CAO */
+            &::before {
+                content: "" !important;
+                position: absolute !important;
+                inset: 0 !important;       /* Phủ kín 4 góc: top, right, bottom, left = 0 */
+                height: 100% !important;   /* Ép chiều cao */
+                width: 100% !important;    /* Ép chiều rộng */
+                grid-area: 1 / 1 / -1 / -1 !important; /* Chiếm toàn bộ các ô trong grid nếu có */
+                
+                background-color: #1e257c !important;
+                border-radius: 8px 24px 24px 8px !important;
+                z-index: 1 !important;
+                pointer-events: none;
+                
+                /* Hiệu ứng Slide */
+                transform: translateX(-105%); 
+                transition: transform 0.35s cubic-bezier(0.65, 0, 0.35, 1) !important;
+            }
+
+            /* 3. NỘI DUNG (ICON + TEXT) */
+            .v-list-item-title,
+            .v-list-item__content,
+            .v-list-item__prepend,
+            .v-list-item__append,
+            .v-icon,
+            .iconClass,
+            svg {
+                position: relative !important;
+                z-index: 10 !important; /* Luôn nổi lên trên ::before */
+                color: inherit !important;
+                stroke: currentColor !important;
+                transition: color 0.3s ease;
+                background: transparent !important;
+                display: flex;
+                align-items: center;
+                pointer-events: none; /* Tránh cản hover của parent */
+            }
+
+            /* TRẠNG THÁI HOVER */
+            &:hover {
+                color: #ffffff !important;
+                
+                &::before {
+                    transform: translateX(0);
+                }
+            }
+
+            /* TRẠNG THÁI ACTIVE */
+            &.v-list-item--active {
+                color: #ffffff !important;
+                
+                &::before {
+                    transform: translateX(0);
+                    transition: none !important;
+                }
+            }
+
+            /* Không bao giờ cho hiện background xám/đen của Vuetify */
+            &, &:hover, &.v-list-item--active {
+                background-color: transparent !important;
+            }
+        }
+
+
+    }
+}
+
+
+.v-navigation-drawer--rail {
+
+    .scrollnavbar .v-list .v-list-group__items,
+    .hide-menu {
+        opacity: 0.8;
+    }
+
+    .leftPadding {
+        margin-left: 0px;
+    }
+}
+
+// scrollbar 
+.ps__rail-y {
+    z-index: 9;
+}
+
+.v-menu {
+    &.mobile_popup {
+        .v-overlay__content {
+            width: 100%;
+
+            @media screen and (min-width:767px) {
+                max-width: 96% !important;
+            }
+
+            max-width: 92% !important;
+        }
+
+        .v-btn.search {
+            color: rgba(var(--v-theme-textSecondary), 0.8) !important;
+        }
+    }
+}

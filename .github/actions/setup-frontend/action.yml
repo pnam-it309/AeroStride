@@ -1,0 +1,25 @@
+name: 'Setup Frontend'
+description: 'Set up Node.js, NPM, and Caching for AeroStride FE'
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '20'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+        cache-dependency-path: FE/package-lock.json
+
+    - name: Cache Node Modules
+      uses: actions/cache@v4
+      with:
+        path: FE/node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('FE/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-

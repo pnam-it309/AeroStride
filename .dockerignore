@@ -1,0 +1,25 @@
+# Git
+.git
+.gitignore
+.github
+
+# Build artifacts
+**/build/
+**/.gradle/
+**/node_modules/
+**/dist/
+**/out/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker
+.dockerignore
+
+# Misc
+*.log
+tmp/
+.DS_Store

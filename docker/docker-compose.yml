@@ -1,0 +1,95 @@
+services:
+  redis:
+    image: redis:alpine
+    container_name: aerostride-redis
+    restart: always
+    networks:
+      - aerostride-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
+
+  backend:
+    image: ${BACKEND_IMAGE:-aerostride-be:dev}
+    build:
+      context: ..
+      dockerfile: docker/BE.Dockerfile
+      target: ${DOCKER_BE_TARGET:-production}
+    container_name: aerostride-be
+    restart: always
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      WATCHPACK_POLLING: "true"
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8080}:${BE_INTERNAL_PORT:-8080}"
+    volumes:
+      - ${DOCKER_BE_VOL_APP:-../BE:/app}
+      - be-build:/app/build
+      - be-gradle:/app/.gradle
+    networks:
+      - aerostride-net
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-aerostride-fe:dev}
+    build:
+      context: ..
+      dockerfile: docker/FE.Dockerfile
+      target: ${DOCKER_FE_TARGET:-production}
+      args:
+        - VITE_API_URL=${VITE_API_URL}
+    container_name: aerostride-fe
+    restart: always
+    environment:
+      - BACKEND_HOST=aerostride-be
+      - BACKEND_PORT=${BACKEND_PORT:-8080}
+      - NGINX_PORT=${NGINX_PORT:-8080}
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    ports:
+      - "${FE_PORTExternal:-80}:${FE_INTERNAL_PORT:-8080}"
+    volumes:
+      - ${DOCKER_FE_VOL_APP:-../FE:/app}
+      - fe-node-modules:/app/node_modules
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - aerostride-net
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
+networks:
+  aerostride-net:
+    driver: bridge
+
+volumes:
+  be-build:
+  be-gradle:
+  fe-node-modules:
