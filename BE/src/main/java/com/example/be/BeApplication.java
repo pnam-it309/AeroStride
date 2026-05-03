@@ -11,12 +11,21 @@ import org.springframework.scheduling.annotation.EnableAsync;
 public class BeApplication {
 
     public static void main(String[] args) {
-        // Load environment variables from BE/env/.env.dev
+        // Load environment variables from BE/env/.env.dev or env/.env.dev
         Dotenv dotenv = Dotenv.configure()
                 .directory("env")
                 .filename(".env.dev")
                 .ignoreIfMissing()
                 .load();
+
+        // If not found in ./env, try ./BE/env (when running from project root)
+        if (dotenv.entries().isEmpty()) {
+            dotenv = Dotenv.configure()
+                    .directory("BE/env")
+                    .filename(".env.dev")
+                    .ignoreIfMissing()
+                    .load();
+        }
 
         // Populate system properties only if not already set by environment variables
         for (DotenvEntry entry : dotenv.entries()) {
