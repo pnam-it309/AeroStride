@@ -1,13 +1,11 @@
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   ArrowLeftIcon,
   PhotoIcon,
   PencilIcon,
-  PlusIcon,
   RefreshIcon,
-  SearchIcon,
   PackageIcon,
   QrcodeIcon
 } from 'vue-tabler-icons'
@@ -22,10 +20,15 @@ import { dichVuBienThe } from '@/services/product/dichVuBienThe'
 import { dichVuMauSac, dichVuKichThuoc } from '@/services/product/dichVuThuocTinh'
 import logoPlaceholder from '@/assets/images/logos/logo-light.svg'
 import VariantFormModal from './components/VariantFormModal.vue'
-import VariantImageModal from './components/VariantImageModal.vue'
 import VariantManagementDrawer from './components/VariantManagementDrawer.vue'
 import QrScanner from './components/QrScanner.vue'
 import QrcodeVue from 'qrcode.vue'
+import { downloadFile } from '@/utils/fileUtils'
+import { exportQrRowsToWorkbook } from '@/views/modules/san-pham/utils/qrExcelWorkbook'
+
+const MIN_VARIANT_PRICE = 0
+const MAX_VARIANT_PRICE = 100000000
+const VARIANT_PRICE_STEP = 50000
 
 const router = useRouter()
 const route = useRoute()
@@ -40,26 +43,29 @@ const formOptions = ref({
 const selectedProductId = ref('')
 const selectedProduct = ref(null)
 const loading = ref(false)
+const selectedVariantIds = ref([])
+const qrExcelExportItems = ref([])
+const qrExcelExportContainer = ref(null)
 
 const filters = reactive({
   keyword: '',
   mauSacId: '',
   kichThuocId: '',
   trangThai: '',
+  khoangGia: [MIN_VARIANT_PRICE, MAX_VARIANT_PRICE],
 })
 
 const pagination = reactive({
   page: 1,
-  size: 5,
+  size: 10,
 })
 
 const variantModal = reactive({ open: false, mode: 'create', submitting: false, variant: null })
-const imageModal = reactive({ open: false, mode: 'create', submitting: false, image: null, variantId: '' })
 const variantDrawer = reactive({ open: false, variant: null, initialTab: 0 })
-const qrDialog = reactive({ open: false, value: '' })
+const qrDialog = reactive({ open: false, value: '', variant: null })
 const showQrScanner = ref(false)
+const qrCodeWrapper = ref(null)
 
-// State cho xác nhận
 const confirmDialog = ref({
   show: false,
   title: '',
@@ -71,19 +77,18 @@ const confirmDialog = ref({
 
 const numberFormatter = new Intl.NumberFormat('vi-VN')
 
-const resetFilters = () => {
-  Object.assign(filters, {
-    keyword: '',
-    mauSacId: '',
-    kichThuocId: '',
-    trangThai: '',
-  })
-  pagination.page = 1
+const toNumber = (value, fallback = 0) => {
+  const parsedValue = Number(value)
+  return Number.isFinite(parsedValue) ? parsedValue : fallback
 }
 
 const formatCurrency = (value) => {
   if (value === null || value === undefined) return '--'
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(Number(value))
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    maximumFractionDigits: 0
+  }).format(Number(value))
 }
 
 const formatNumber = (value) => {
@@ -97,15 +102,21 @@ const getStatusLabel = (status) => {
   return status || 'Không xác định'
 }
 
-const isActiveStatus = (status) => status === 'DANG_HOAT_DONG';
+const isActiveStatus = (status) => status === 'DANG_HOAT_DONG'
 
 const selectedProductSummary = computed(() => {
   if (!selectedProductId.value || selectedProductId.value === 'ALL') {
-    return { title: 'Tất cả sản phẩm', subtitle: `Tổng số ${formatNumber(selectedProduct.value?.variants?.length || 0)} biến thể`, maSanPham: '' }
+    return {
+      title: 'Tất cả sản phẩm',
+      subtitle: `Tổng số ${formatNumber(selectedProduct.value?.variants?.length || 0)} biến thể`,
+      maSanPham: ''
+    }
   }
+
   if (!selectedProduct.value) {
     return { title: 'Đang tải...', subtitle: 'Vui lòng đợi', maSanPham: '' }
   }
+
   return {
     title: selectedProduct.value.tenSanPham,
     subtitle: `${selectedProduct.value.maSanPham} • ${formatNumber(selectedProduct.value.variants?.length || 0)} biến thể`,
@@ -113,26 +124,95 @@ const selectedProductSummary = computed(() => {
   }
 })
 
-const filteredVariants = computed(() => {
-  const variants = selectedProduct.value?.variants || []
-  return variants.filter((variant) => {
-    const keyword = filters.keyword.trim().toLowerCase()
-    const matchesKeyword = !keyword || variant.maChiTietSanPham?.toLowerCase().includes(keyword)
-    return matchesKeyword && (!filters.mauSacId || variant.idMauSac === filters.mauSacId) &&
-      (!filters.kichThuocId || variant.idKichThuoc === filters.kichThuocId) &&
-      (!filters.trangThai || variant.trangThai === filters.trangThai)
-  })
-})
+const currentVariants = computed(() => selectedProduct.value?.variants || [])
+const filteredVariants = computed(() => currentVariants.value.filter((variant) => {
+  const keyword = filters.keyword.trim().toLowerCase()
+  const matchesKeyword = !keyword
+    || variant.maChiTietSanPham?.toLowerCase().includes(keyword)
+    || variant.tenSanPham?.toLowerCase().includes(keyword)
+  const variantPrice = toNumber(variant.giaBan, 0)
+  const matchesPrice = variantPrice >= filters.khoangGia[0] && variantPrice <= filters.khoangGia[1]
+  return matchesKeyword
+    && (!filters.mauSacId || variant.idMauSac === filters.mauSacId)
+    && (!filters.kichThuocId || variant.idKichThuoc === filters.kichThuocId)
+    && (!filters.trangThai || variant.trangThai === filters.trangThai)
+    && matchesPrice
+}))
 
-const totalPages = computed(() => Math.max(Math.ceil(filteredVariants.value.length / pagination.size), 1))
+const totalElements = computed(() => filteredVariants.value.length)
+const totalPages = computed(() => Math.max(Math.ceil(totalElements.value / pagination.size), 1))
 const paginatedVariants = computed(() => {
   const start = (pagination.page - 1) * pagination.size
   return filteredVariants.value.slice(start, start + pagination.size)
 })
 
+const visibleVariantIds = computed(() => paginatedVariants.value.map((item) => item.id))
+const selectedVariants = computed(() => filteredVariants.value.filter((item) => selectedVariantIds.value.includes(item.id)))
+const allVisibleVariantsSelected = computed(() => visibleVariantIds.value.length > 0
+  && visibleVariantIds.value.every((id) => selectedVariantIds.value.includes(id)))
+const someVisibleVariantsSelected = computed(() => visibleVariantIds.value.some((id) => selectedVariantIds.value.includes(id))
+  && !allVisibleVariantsSelected.value)
+const variantExportButtonText = computed(() => selectedVariantIds.value.length
+  ? `Xuất Excel (${selectedVariantIds.value.length})`
+  : 'Xuất Excel')
+const variantQrExportButtonText = computed(() => selectedVariantIds.value.length
+  ? `Xuất Excel QR (${selectedVariantIds.value.length})`
+  : 'Xuất Excel QR')
+const hasSelectedActiveVariants = computed(() => selectedVariants.value.some((item) => isActiveStatus(item.trangThai)))
+const hasSelectedInactiveVariants = computed(() => selectedVariants.value.some((item) => !isActiveStatus(item.trangThai)))
+const canBulkActivateVariants = computed(() => selectedVariants.value.length > 0 && hasSelectedInactiveVariants.value)
+const canBulkDeactivateVariants = computed(() => selectedVariants.value.length > 0 && hasSelectedActiveVariants.value)
+
+const clearVariantSelection = () => {
+  selectedVariantIds.value = []
+}
+
+const syncVariantSelection = () => {
+  const validIds = new Set(filteredVariants.value.map((item) => item.id))
+  selectedVariantIds.value = selectedVariantIds.value.filter((id) => validIds.has(id))
+}
+
+const resetFilters = () => {
+  filters.keyword = ''
+  filters.mauSacId = ''
+  filters.kichThuocId = ''
+  filters.trangThai = ''
+  filters.khoangGia = [MIN_VARIANT_PRICE, MAX_VARIANT_PRICE]
+  pagination.page = 1
+  clearVariantSelection()
+}
+
+const escapeCell = (value) => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+
+const exportHtmlTableToExcel = ({ headers, rows, fileName }) => {
+  const tableRows = [headers, ...rows]
+    .map((columns) => `<tr>${columns.map((column) => `<td>${escapeCell(column)}</td>`).join('')}</tr>`)
+    .join('')
+
+  const excelContent = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+      <head>
+        <meta charset="UTF-8" />
+      </head>
+      <body>
+        <table>${tableRows}</table>
+      </body>
+    </html>
+  `
+
+  const blob = new Blob(['\ufeff', excelContent], {
+    type: 'application/vnd.ms-excel;charset=utf-8;'
+  })
+
+  downloadFile(blob, fileName)
+}
+
 const fetchFormOptions = async () => {
   try {
-    // Try aggregate endpoint first
     const response = await dichVuSanPham.layOptionsForm().catch(() => null)
     if (response) {
       formOptions.value = {
@@ -140,17 +220,18 @@ const fetchFormOptions = async () => {
         kichThuocs: response.kichThuocs || [],
         trangThais: response.trangThais || [],
       }
-    } else {
-      // Fallback: fetch individually if aggregate fails
-      const [m, k] = await Promise.all([
-        dichVuMauSac.layMauSac({ size: 1000 }),
-        dichVuKichThuoc.layKichThuoc({ size: 1000 })
-      ])
-      formOptions.value = {
-        mauSacs: m.content || m || [],
-        kichThuocs: k.content || k || [],
-        trangThais: ['DANG_HOAT_DONG', 'KHONG_HOAT_DONG'] // Default statuses
-      }
+      return
+    }
+
+    const [mauSacResponse, kichThuocResponse] = await Promise.all([
+      dichVuMauSac.layMauSac({ size: 1000 }),
+      dichVuKichThuoc.layKichThuoc({ size: 1000 })
+    ])
+
+    formOptions.value = {
+      mauSacs: mauSacResponse.content || mauSacResponse || [],
+      kichThuocs: kichThuocResponse.content || kichThuocResponse || [],
+      trangThais: ['DANG_HOAT_DONG', 'KHONG_HOAT_DONG']
     }
   } catch (error) {
     console.error('Lỗi khi tải options:', error)
@@ -161,7 +242,9 @@ const fetchProductOptions = async () => {
   try {
     const response = await dichVuSanPham.layDanhSachSanPham({ page: 0, size: 100 })
     productOptions.value = response.content || []
-  } catch (error) { }
+  } catch (error) {
+    console.error('Lỗi khi tải danh sách sản phẩm:', error)
+  }
 }
 
 const fetchSelectedProduct = async (productId) => {
@@ -176,9 +259,16 @@ const fetchSelectedProduct = async (productId) => {
     } else {
       selectedProduct.value = await dichVuSanPham.layChiTietSanPham(productId)
     }
+
+    syncVariantSelection()
   } catch (error) {
     selectedProduct.value = null
-    addNotification({ title: 'Lỗi', subtitle: 'Không thể tải danh sách biến thể', color: 'error' })
+    clearVariantSelection()
+    addNotification({
+      title: 'Lỗi',
+      subtitle: 'Không thể tải danh sách biến thể',
+      color: 'error'
+    })
   } finally {
     loading.value = false
   }
@@ -191,56 +281,118 @@ const handleVariantSubmit = (payload) => {
     message: `Bạn có chắc chắn muốn ${variantModal.mode === 'create' ? 'thêm mới' : 'cập nhật'} biến thể này không?`,
     color: 'primary',
     action: async () => {
-      confirmDialog.value.loading = true;
+      confirmDialog.value.loading = true
       variantModal.submitting = true
       try {
         if (variantModal.mode === 'create') {
           await dichVuBienThe.taoBienThe(selectedProductId.value, payload)
-          addNotification({ title: 'Thành công', subtitle: 'Đã thêm biến thể mới', color: 'success' });
+          addNotification({ title: 'Thành công', subtitle: 'Đã thêm biến thể mới', color: 'success' })
         } else {
           await dichVuBienThe.capNhatBienThe(variantModal.variant.id, payload)
-          addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật biến thể', color: 'success' });
+          addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật biến thể', color: 'success' })
         }
+
         variantModal.open = false
-        confirmDialog.value.show = false;
+        confirmDialog.value.show = false
         await fetchSelectedProduct(selectedProductId.value)
       } catch (error) {
-        addNotification({ title: 'Lỗi', subtitle: 'Thao tác thất bại', color: 'error' });
+        addNotification({ title: 'Lỗi', subtitle: 'Thao tác thất bại', color: 'error' })
       } finally {
         variantModal.submitting = false
-        confirmDialog.value.loading = false;
+        confirmDialog.value.loading = false
       }
     }
-  };
+  }
 }
 
 const openImageModal = (item) => {
-  variantDrawer.variant = item;
-  variantDrawer.initialTab = 1; // Tab 1 is Images
-  variantDrawer.open = true;
+  variantDrawer.variant = item
+  variantDrawer.initialTab = 1
+  variantDrawer.open = true
+}
+
+const updateVariantStatus = async (variant, nextStatus) => {
+  await dichVuBienThe.capNhatBienThe(variant.id, { ...variant, trangThai: nextStatus })
 }
 
 const handleStatusChange = (item) => {
-  const newStatus = item.trangThai === 'DANG_HOAT_DONG' ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
+  const nextStatus = item.trangThai === 'DANG_HOAT_DONG' ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG'
   confirmDialog.value = {
     show: true,
     title: 'Xác nhận đổi trạng thái',
-    message: `Bạn có chắc chắn muốn ${newStatus === 'DANG_HOAT_DONG' ? 'kích hoạt' : 'ngừng kinh doanh'} biến thể này không?`,
+    message: `Bạn có chắc chắn muốn ${nextStatus === 'DANG_HOAT_DONG' ? 'kích hoạt' : 'ngừng kinh doanh'} biến thể này không?`,
     color: 'warning',
     action: async () => {
-      confirmDialog.value.loading = true;
+      confirmDialog.value.loading = true
       try {
-        await dichVuBienThe.capNhatBienThe(item.id, { ...item, trangThai: newStatus });
-        addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật trạng thái', color: 'success' });
-        await fetchSelectedProduct(selectedProductId.value);
-        confirmDialog.value.show = false;
+        await updateVariantStatus(item, nextStatus)
+        addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật trạng thái', color: 'success' })
+        await fetchSelectedProduct(selectedProductId.value)
+        confirmDialog.value.show = false
       } catch (error) {
-        addNotification({ title: 'Lỗi', subtitle: 'Không thể cập nhật trạng thái', color: 'error' });
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể cập nhật trạng thái', color: 'error' })
       } finally {
-        confirmDialog.value.loading = false;
+        confirmDialog.value.loading = false
       }
     }
-  };
+  }
+}
+
+const handleBulkVariantStatus = (nextStatus) => {
+  if (!selectedVariants.value.length) {
+    addNotification({
+      title: 'Thông báo',
+      subtitle: 'Bạn chưa chọn biến thể nào',
+      color: 'warning'
+    })
+    return
+  }
+
+  const canApplyStatus = nextStatus === 'DANG_HOAT_DONG'
+    ? canBulkActivateVariants.value
+    : canBulkDeactivateVariants.value
+  if (!canApplyStatus) {
+    addNotification({
+      title: 'Thông báo',
+      subtitle: nextStatus === 'DANG_HOAT_DONG'
+        ? 'Các biến thể đã ở trạng thái bật'
+        : 'Các biến thể đã ở trạng thái tắt',
+      color: 'warning'
+    })
+    return
+  }
+
+  const selectedCount = selectedVariants.value.length
+  const actionLabel = nextStatus === 'DANG_HOAT_DONG' ? 'bật hoạt động' : 'ngừng hoạt động'
+  confirmDialog.value = {
+    show: true,
+    title: 'Cập nhật trạng thái hàng loạt',
+    message: `Bạn có chắc chắn muốn ${actionLabel} ${selectedCount} biến thể đã chọn?`,
+    color: 'warning',
+    action: async () => {
+      confirmDialog.value.loading = true
+      try {
+        await Promise.all(selectedVariants.value.map((variant) => updateVariantStatus(variant, nextStatus)))
+        clearVariantSelection()
+        await fetchSelectedProduct(selectedProductId.value)
+        addNotification({
+          title: 'Thành công',
+          subtitle: `Đã cập nhật trạng thái ${selectedCount} biến thể`,
+          color: 'success'
+        })
+        confirmDialog.value.show = false
+      } catch (error) {
+        console.error('Bulk variant status update error:', error)
+        addNotification({
+          title: 'Lỗi',
+          subtitle: 'Không thể cập nhật trạng thái hàng loạt',
+          color: 'error'
+        })
+      } finally {
+        confirmDialog.value.loading = false
+      }
+    }
+  }
 }
 
 const openCreateVariantModal = () => {
@@ -252,6 +404,8 @@ const openCreateVariantModal = () => {
 const handleQrScan = (code) => {
   if (!code) return
   filters.keyword = code
+  pagination.page = 1
+  syncVariantSelection()
   addNotification({ title: 'Quét mã thành công', subtitle: `Mã: ${code}`, color: 'success' })
 }
 
@@ -270,20 +424,209 @@ const getVariantThumbnail = (item) => {
     || normalizeImageUrl(fallbackImage)
     || logoPlaceholder
 }
+const getVariantProductCode = (item) => {
+  if (item?.maSanPham) return item.maSanPham
+  if (selectedProductSummary.value.maSanPham) return selectedProductSummary.value.maSanPham
+
+  const sku = String(item?.maChiTietSanPham || '').trim()
+  if (sku.includes('-')) {
+    return sku.split('-')[0] || '--'
+  }
+
+  return sku || '--'
+}
+
+const getVariantQrValue = (item) => item?.maChiTietSanPham || item?.maSanPham || String(item?.id || '')
+
+const openQrDialog = (item) => {
+  qrDialog.variant = item
+  qrDialog.value = getVariantQrValue(item)
+  qrDialog.open = true
+}
+
+const toggleVariantSelection = (variantId, checked) => {
+  if (checked) {
+    if (!selectedVariantIds.value.includes(variantId)) {
+      selectedVariantIds.value = [...selectedVariantIds.value, variantId]
+    }
+    return
+  }
+
+  selectedVariantIds.value = selectedVariantIds.value.filter((id) => id !== variantId)
+}
+
+const toggleSelectVisibleVariants = (checked) => {
+  if (checked) {
+    const mergedIds = new Set([...selectedVariantIds.value, ...visibleVariantIds.value])
+    selectedVariantIds.value = Array.from(mergedIds)
+    return
+  }
+
+  const visibleIdSet = new Set(visibleVariantIds.value)
+  selectedVariantIds.value = selectedVariantIds.value.filter((id) => !visibleIdSet.has(id))
+}
+
+const handleExportVariants = () => {
+  const targetVariants = selectedVariants.value.length ? selectedVariants.value : filteredVariants.value
+  if (!targetVariants.length) {
+    addNotification({
+      title: 'Thông báo',
+      subtitle: 'Không có biến thể để xuất Excel',
+      color: 'warning'
+    })
+    return
+  }
+
+  const fileSuffix = selectedProductSummary.value.maSanPham || 'tat_ca'
+  exportHtmlTableToExcel({
+    headers: ['STT', 'Sản phẩm', 'Mã SKU', 'Màu sắc', 'Kích thước', 'Giá bán', 'Trạng thái'],
+    rows: targetVariants.map((item, index) => [
+      index + 1,
+      item.tenSanPham || selectedProduct.value?.tenSanPham || 'Tất cả sản phẩm',
+      item.maChiTietSanPham || '--',
+      item.tenMauSac || '--',
+      item.tenKichThuoc || '--',
+      toNumber(item.giaBan, 0),
+      getStatusLabel(item.trangThai)
+    ]),
+    fileName: selectedVariants.value.length
+      ? `bien_the_da_chon_${fileSuffix}.xls`
+      : `danh_sach_bien_the_${fileSuffix}.xls`
+  })
+
+  addNotification({
+    title: 'Thành công',
+    subtitle: `Đã xuất Excel ${targetVariants.length} biến thể`,
+    color: 'success'
+  })
+}
+
+const renderVariantQrCanvases = async (variants) => {
+  qrExcelExportItems.value = variants.map((variant) => ({
+    id: variant.id,
+    value: getVariantQrValue(variant)
+  }))
+
+  await nextTick()
+  await new Promise((resolve) => window.setTimeout(resolve, 80))
+
+  const canvases = Array.from(qrExcelExportContainer.value?.querySelectorAll('canvas') || [])
+  const qrDataUrls = canvases.map((canvas) => canvas.toDataURL('image/png'))
+  qrExcelExportItems.value = []
+  return qrDataUrls
+}
+
+const handleExportVariantQrExcel = async () => {
+  const targetVariants = selectedVariants.value.length ? selectedVariants.value : filteredVariants.value
+  if (!targetVariants.length) {
+    addNotification({
+      title: 'Thông báo',
+      subtitle: 'Không có biến thể để xuất Excel QR',
+      color: 'warning'
+    })
+    return
+  }
+
+  try {
+    const fileSuffix = selectedProductSummary.value.maSanPham || 'tat_ca'
+    const qrDataUrls = await renderVariantQrCanvases(targetVariants)
+    if (qrDataUrls.length !== targetVariants.length || qrDataUrls.some((item) => !item)) {
+      throw new Error('Không thể tạo đủ dữ liệu QR để xuất Excel')
+    }
+
+    exportQrRowsToWorkbook({
+      fileName: selectedVariants.value.length
+        ? `qrcode_bien_the_da_chon_${fileSuffix}.xlsx`
+        : `qrcode_bien_the_${fileSuffix}.xlsx`,
+      sheetName: selectedProductSummary.value.maSanPham
+        ? `QR ${selectedProductSummary.value.maSanPham}`
+        : 'QR Bien The',
+      rows: targetVariants.map((item) => ({
+        productName: item.tenSanPham || selectedProduct.value?.tenSanPham || 'Tất cả sản phẩm',
+        sku: item.maChiTietSanPham || '--',
+        color: item.tenMauSac || '--',
+        size: item.tenKichThuoc || '--'
+      })),
+      qrDataUrls
+    })
+
+    addNotification({
+      title: 'Thành công',
+      subtitle: `Đã xuất Excel QR của ${targetVariants.length} biến thể`,
+      color: 'success'
+    })
+  } catch (error) {
+    console.error('QR export error:', error)
+    qrExcelExportItems.value = []
+    addNotification({
+      title: 'Lỗi',
+      subtitle: 'Không thể xuất Excel QR của biến thể',
+      color: 'error'
+    })
+  }
+}
+
+const downloadCurrentQrCode = () => {
+  const canvas = qrCodeWrapper.value?.querySelector('canvas')
+  if (!canvas || !qrDialog.variant) {
+    addNotification({ title: 'Lỗi', subtitle: 'Không thể tạo mã QR để tải xuống', color: 'error' })
+    return
+  }
+
+  const link = document.createElement('a')
+  link.href = canvas.toDataURL('image/png')
+  link.download = `${getVariantQrValue(qrDialog.variant)}.png`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  addNotification({ title: 'Thành công', subtitle: 'Đã tải mã QR của biến thể', color: 'success' })
+}
+
+watch(filteredVariants, () => {
+  syncVariantSelection()
+  if (pagination.page > totalPages.value) {
+    pagination.page = totalPages.value
+  }
+})
+
+watch(() => pagination.size, () => {
+  pagination.page = 1
+})
+
+watch(
+  () => [
+    filters.keyword,
+    filters.mauSacId,
+    filters.kichThuocId,
+    filters.trangThai,
+    filters.khoangGia[0],
+    filters.khoangGia[1]
+  ],
+  () => {
+    pagination.page = 1
+    syncVariantSelection()
+  }
+)
+
+watch(
+  () => selectedProductId.value,
+  async (value) => {
+    clearVariantSelection()
+    pagination.page = 1
+    await fetchSelectedProduct(value)
+  }
+)
 
 onMounted(async () => {
   await Promise.all([fetchFormOptions(), fetchProductOptions()])
   const routeProductId = route.query.productId?.toString()
   selectedProductId.value = routeProductId || 'ALL'
 })
-
-watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
 </script>
 
 <template>
   <v-container fluid class="pa-4 animate-fade-in font-body"
     style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
-    <!-- Breadcrumbs -->
     <AdminBreadcrumbs :items="[
       { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
       { title: 'Biến thể', disabled: false, to: '/san-pham' },
@@ -292,7 +635,6 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
 
     <div class="mb-4"></div>
 
-    <!-- Header -->
     <div class="header-section mb-6">
       <div class="d-flex align-center gap-3">
         <v-btn v-if="selectedProductId && selectedProductId !== 'ALL'" icon variant="flat"
@@ -306,105 +648,151 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
             <PackageIcon size="18" color="white" />
           </v-avatar>
           <div>
-     
-            <h2 class="text-body-2 text-dark mb-0">{{ selectedProductSummary.maSanPham }}</h2>
+            <p class="text-overline font-black text-slate-400 mb-0" style="line-height: 1;">Mã Sản Phẩm</p>
+            <h2 class="text-body-2 font-black text-dark mb-0">{{ selectedProductSummary.maSanPham }}</h2>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Filter -->
     <div class="flex-none mb-4">
       <AdminFilter title="Bộ lọc nâng cao" @refresh="resetFilters" :loading="loading">
-        <v-col cols="12" md="6">
-          <div class="filter-field-label">Tìm kiếm nhanh</div>
-          <v-text-field v-model="filters.keyword" placeholder="Mã biến thể, màu, size..." prepend-inner-icon="mdi-magnify"
-            variant="outlined" density="compact" hide-details clearable></v-text-field>
-        </v-col>
-        <v-col cols="12" md="6">
+        <v-col cols="12" md="2">
           <div class="filter-field-label">Sản phẩm</div>
           <v-autocomplete v-model="selectedProductId"
             :items="[{ tenSanPham: 'Tất cả sản phẩm', id: 'ALL' }, ...productOptions]" item-title="tenSanPham"
-            item-value="id" variant="outlined" density="compact" hide-details></v-autocomplete>
+            item-value="id" variant="outlined" density="compact" hide-details />
         </v-col>
         <v-col cols="12" md="3">
+          <div class="filter-field-label">Tìm kiếm nhanh</div>
+          <v-text-field v-model="filters.keyword" placeholder="Mã SKU, màu, size..." prepend-inner-icon="mdi-magnify"
+            variant="outlined" density="compact" hide-details clearable />
+        </v-col>
+        <v-col cols="12" md="2">
           <div class="filter-field-label">Màu sắc</div>
           <v-select v-model="filters.mauSacId"
-            :items="[{ title: 'Tất cả màu', value: '' }, ...formOptions.mauSacs.map(m => ({ title: m.ten, value: m.id }))]"
-            variant="outlined" density="compact" hide-details></v-select>
+            :items="[{ title: 'Tất cả mầu', value: '' }, ...formOptions.mauSacs.map((mauSac) => ({ title: mauSac.ten, value: mauSac.id }))]"
+            variant="outlined" density="compact" hide-details />
         </v-col>
-        <v-col cols="12" md="3">
+        <v-col cols="12" md="2">
           <div class="filter-field-label">Kích thước</div>
           <v-select v-model="filters.kichThuocId"
-            :items="[{ title: 'Tất cả size', value: '' }, ...formOptions.kichThuocs.map(k => ({ title: k.ten, value: k.id }))]"
-            variant="outlined" density="compact" hide-details></v-select>
+            :items="[{ title: 'Tất cả size', value: '' }, ...formOptions.kichThuocs.map((kichThuoc) => ({ title: kichThuoc.ten, value: kichThuoc.id }))]"
+            variant="outlined" density="compact" hide-details />
         </v-col>
         <v-col cols="12" md="3">
-          <div class="filter-field-label">Trạng thái kinh doanh</div>
+          <div class="filter-field-label">Trạng thái</div>
           <v-select v-model="filters.trangThai"
-            :items="[{ title: 'Tất cả trạng thái', value: '' }, ...formOptions.trangThais.map(s => ({ title: getStatusLabel(s), value: s }))]"
-            variant="outlined" density="compact" hide-details></v-select>
+            :items="[{ title: 'Tất cả trạng thái', value: '' }, ...formOptions.trangThais.map((trangThai) => ({ title: getStatusLabel(trangThai), value: trangThai }))]"
+            variant="outlined" density="compact" hide-details />
+        </v-col>
+        <v-col cols="12" md="10" lg="11">
+          <div class="filter-field-label">Khoảng giá</div>
+          <div class="d-flex align-center bg-white pa-4 rounded-lg ">
+            <v-icon size="20" class="mr-4 text-primary">mdi-cash-multiple</v-icon>
+            <div class="flex-grow-1">
+              <div class="d-flex justify-space-between mb-2">
+                <span class="text-caption font-weight-black text-slate-600">Lọc theo giá bán biến thể</span>
+                <span class="text-caption font-weight-black text-primary">
+                  {{ formatCurrency(filters.khoangGia[0]) }} - {{ formatCurrency(filters.khoangGia[1]) }}
+                </span>
+              </div>
+              <v-range-slider v-model="filters.khoangGia" :max="MAX_VARIANT_PRICE" :min="MIN_VARIANT_PRICE"
+                :step="VARIANT_PRICE_STEP" hide-details color="primary" track-color="slate-200" />
+            </div>
+          </div>
         </v-col>
       </AdminFilter>
     </div>
 
-    <!-- Table content -->
     <div class="flex-grow-1 min-h-0">
-      <AdminTable :title="`Danh mục biến thể / ${filteredVariants.length} biến thể`" :headers="[
+      <AdminTable title="Danh mục biến thể" :headers="[
+        { text: 'Chọn', align: 'center', width: '70px' },
         { text: 'STT', align: 'center', width: '60px' },
+        { text: 'Mã SP', align: 'center', width: '120px' },
         { text: 'Hình ảnh', align: 'center', width: '80px' },
-        { text: 'Mã biến thể', align: 'center', width: '150px' },
+        { text: 'Mã SKU', align: 'left', width: '150px' },
         { text: 'Màu sắc', align: 'center', width: '120px' },
         { text: 'Kích thước', align: 'center', width: '100px' },
-        { text: 'Số lượng', align: 'center', width: '100px' },
         { text: 'Giá bán niêm yết', align: 'center', width: '150px' },
         { text: 'Trạng thái', align: 'center', width: '140px' },
-        { text: 'Thao tác', align: 'center', width: '140px' }
-      ]" :items="paginatedVariants" :loading="loading"
-        :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'" addButtonText="Tạo mới"
-        @add="openCreateVariantModal" class="h-100">
+        { text: 'Thao tác', align: 'center', width: '200px' }
+      ]" :items="paginatedVariants" :loading="loading" :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'"
+        addButtonText="Thêm biến thể" :showExportButton="true" :exportButtonText="variantExportButtonText"
+        @add="openCreateVariantModal" @export="handleExportVariants" class="h-100">
 
         <template #top>
-          <div class="px-6 py-2 bg-slate-50 border-b d-flex align-center justify-end">
-            <v-btn size="x-small" variant="text" color="primary" class="font-bold"
-              @click="fetchSelectedProduct(selectedProductId)" :loading="loading">
-              <RefreshIcon size="14" class="mr-1" /> Đồng bộ dữ liệu
-            </v-btn>
+          <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
+            <div class="d-flex align-center flex-wrap gap-2">
+              <v-checkbox-btn :model-value="allVisibleVariantsSelected"
+                :indeterminate="someVisibleVariantsSelected" color="primary" hide-details density="compact"
+                @update:model-value="toggleSelectVisibleVariants" />
+              <span class="text-caption font-weight-black text-slate-500">
+                Đã chọn {{ selectedVariantIds.length }} biến thể • Tìm thấy {{ filteredVariants.length }} biến thể
+              </span>
+            </div>
+
+            <div class="d-flex align-center flex-wrap gap-2">
+              <v-btn size="small" variant="tonal" color="primary" @click="handleExportVariantQrExcel">
+                {{ variantQrExportButtonText }}
+              </v-btn>
+              <v-btn size="small" variant="tonal" color="success" class="bulk-status-btn text-none"
+                :disabled="!canBulkActivateVariants"
+                @click="handleBulkVariantStatus('DANG_HOAT_DONG')">
+                Bật trạng thái
+              </v-btn>
+              <v-btn size="small" variant="tonal" color="warning" class="bulk-status-btn text-none"
+                :disabled="!canBulkDeactivateVariants"
+                @click="handleBulkVariantStatus('KHONG_HOAT_DONG')">
+                Tắt trạng thái
+              </v-btn>
+              <v-btn size="x-small" variant="text" color="primary" class="font-bold"
+                @click="fetchSelectedProduct(selectedProductId)" :loading="loading">
+                <RefreshIcon size="14" class="mr-1" /> Đồng bộ dữ liệu
+              </v-btn>
+            </div>
           </div>
         </template>
 
         <template #row="{ item, index }">
           <tr class="data-row">
-            <td class="data-cell text-center text-slate-400">{{ (pagination.page - 1) * pagination.size + index + 1 }}
+            <td class="data-cell text-center">
+              <v-checkbox-btn :model-value="selectedVariantIds.includes(item.id)" color="primary" hide-details
+                density="compact" @update:model-value="toggleVariantSelection(item.id, $event)" />
+            </td>
+            <td class="data-cell text-center text-slate-400">
+              {{ (pagination.page - 1) * pagination.size + index + 1 }}
+            </td>
+            <td class="data-cell text-center font-black text-slate-700">
+              {{ getVariantProductCode(item) }}
             </td>
             <td class="data-cell text-center">
               <v-avatar rounded="lg" size="44" class="border bg-slate-50 shadow-sm avatar-hover">
-                <v-img :src="getVariantThumbnail(item)" cover></v-img>
+                <v-img :src="getVariantThumbnail(item)" cover />
               </v-avatar>
             </td>
-            <td class="data-cell text-center">
-              {{ item.maChiTietSanPham }}
+            <td class="data-cell text-left font-black text-dark">
+              <span class="mono-font">{{ item.maChiTietSanPham }}</span>
             </td>
             <td class="data-cell text-center">
-              {{ item.tenMauSac }}
-            </td>
-            <td class="data-cell text-center">
-              {{ item.tenKichThuoc }}
-            </td>
-            <td class="data-cell text-center">
-              {{ formatNumber(item.soLuong) }}
-            </td>
-            <td class="data-cell text-center">
-              <span class="text-primary">{{ formatCurrency(item.giaBan) }}</span>
-            </td>
-            <td class="data-cell text-center">
-              <v-chip size="small" 
-                :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']" 
-                variant="flat">
-                {{ getStatusLabel(item.trangThai) }}
+              <v-chip size="small" variant="flat" color="slate-700" class="font-weight-black text-white status-chip">
+                {{ item.tenMauSac }}
               </v-chip>
             </td>
             <td class="data-cell text-center">
+              <v-chip size="small" variant="flat" color="blue-grey-darken-2"
+                class="font-weight-black text-white status-chip">
+                {{ item.tenKichThuoc }}
+              </v-chip>
+            </td>
+            <td class="data-cell font-black text-primary">{{ formatCurrency(item.giaBan) }}</td>
+            <td class="data-cell">
+              <v-chip size="small" :color="isActiveStatus(item.trangThai) ? 'success' : 'warning'" variant="flat"
+                class="status-chip font-weight-black text-white">
+                {{ getStatusLabel(item.trangThai) }}
+              </v-chip>
+            </td>
+            <td class="data-cell">
               <div class="d-flex align-center justify-center action-controls">
                 <v-btn variant="text" class="action-icon-btn"
                   @click="variantModal.variant = item; variantModal.mode = 'edit'; variantModal.open = true">
@@ -415,8 +803,12 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
                   <PhotoIcon />
                   <v-tooltip activator="parent" location="top">Thư viện ảnh</v-tooltip>
                 </v-btn>
+                <v-btn variant="text" class="action-icon-btn" @click="openQrDialog(item)">
+                  <QrcodeIcon />
+                  <v-tooltip activator="parent" location="top">Xuất QR</v-tooltip>
+                </v-btn>
                 <div class="switch-wrapper">
-                  <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details density="compact"
+                  <v-switch :model-value="isActiveStatus(item.trangThai)" color="#000" hide-details density="compact"
                     class="tight-switch action-switch" @click.prevent.stop="handleStatusChange(item)" />
                   <v-tooltip activator="parent" location="top">Bật/Tắt kinh doanh</v-tooltip>
                 </div>
@@ -427,13 +819,12 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
 
         <template #pagination>
           <AdminPagination v-model="pagination.page" :page-size="pagination.size"
-            @update:pageSize="pagination.size = $event" :total-pages="totalPages"
-            :total-elements="filteredVariants.length" :current-size="paginatedVariants.length" />
+            @update:pageSize="pagination.size = $event" :total-pages="totalPages" :total-elements="totalElements"
+            :current-size="paginatedVariants.length" />
         </template>
       </AdminTable>
     </div>
 
-    <!-- Confirmation Dialog -->
     <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
       :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
 
@@ -443,11 +834,47 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
     <VariantManagementDrawer v-model:show="variantDrawer.open" :variant="variantDrawer.variant"
       :initialTab="variantDrawer.initialTab" @saved="fetchSelectedProduct(selectedProductId)" />
     <QrScanner v-model:show="showQrScanner" @scan="handleQrScan" />
+
+    <v-dialog v-model="qrDialog.open" max-width="420">
+      <v-card class="pa-4">
+        <div class="d-flex justify-space-between align-start mb-4">
+          <div>
+            <p class="text-overline text-slate-400 mb-1">Mã QR biến thể</p>
+            <h3 class="text-h6 font-weight-black text-dark mb-1">{{ qrDialog.variant?.maChiTietSanPham || '--' }}</h3>
+            <p class="text-body-2 text-slate-500 mb-0">
+              {{ qrDialog.variant?.tenSanPham || selectedProduct.value?.tenSanPham || 'Sản phẩm' }}
+            </p>
+          </div>
+          <v-btn icon variant="text" size="small" @click="qrDialog.open = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </div>
+
+        <div ref="qrCodeWrapper" class="d-flex justify-center pa-4 rounded-lg border bg-white mb-4">
+          <QrcodeVue :value="qrDialog.value" :size="220" level="H" render-as="canvas" />
+        </div>
+
+        <div class="text-center mb-4">
+          <p class="text-body-2 font-weight-black mb-1">{{ qrDialog.value }}</p>
+          <p class="text-caption text-slate-500 mb-0">Quét mã để tìm nhanh biến thể theo SKU</p>
+        </div>
+
+        <div class="d-flex justify-end gap-2">
+          <v-btn variant="text" @click="qrDialog.open = false">Đóng</v-btn>
+          <v-btn color="primary" variant="flat" @click="downloadCurrentQrCode">Tải QR</v-btn>
+        </div>
+      </v-card>
+    </v-dialog>
+
+    <div ref="qrExcelExportContainer" class="qr-export-staging" aria-hidden="true">
+      <div v-for="item in qrExcelExportItems" :key="item.id" class="qr-export-item">
+        <QrcodeVue :value="item.value" :size="120" level="H" render-as="canvas" />
+      </div>
+    </div>
   </v-container>
 </template>
 
 <style scoped>
-/* Scoped styles removed in favor of global _admin-common.scss */
 .flex-none {
   flex: none;
 }
@@ -460,8 +887,24 @@ watch(() => selectedProductId.value, (val) => fetchSelectedProduct(val))
   min-height: 0;
 }
 
-:deep(.data-cell), :deep(.data-cell *) {
-  font-size: 13px !important;
+.bulk-status-btn {
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.bulk-status-btn:deep(.v-btn__content) {
+  font-weight: 800;
+}
+
+.bulk-status-btn.v-btn--disabled {
+  opacity: 0.62 !important;
+}
+
+.qr-export-staging {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 </style>
-
