@@ -1,6 +1,7 @@
 html,
 body,
 .v-application {
+    font-family: 'Inter', sans-serif !important;
     text-transform: none !important;
 }
 
@@ -10,8 +11,35 @@ body,
 .v-chip,
 .v-list-item-title,
 .v-card-title {
+    font-family: inherit !important;
     text-transform: none !important;
     letter-spacing: normal !important;
+}
+
+/* Global Button Hover Effects */
+.v-btn {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 4px !important; /* Standardized sharp rounding */
+    
+    &:hover {
+        transform: translateY(-2px);
+    }
+    
+    &.bg-primary:hover {
+        background-color: #2b38ff !important; /* Vibrant blue from user screenshot */
+        box-shadow: 0 6px 20px rgba(43, 56, 255, 0.35) !important;
+        color: white !important;
+    }
+    
+    &.bg-error:hover {
+        background-color: #ff5252 !important;
+        box-shadow: 0 6px 20px rgba(255, 82, 82, 0.3) !important;
+    }
+
+    &.bg-success:hover {
+        background-color: #38d39f !important;
+        box-shadow: 0 6px 20px rgba(56, 211, 159, 0.3) !important;
+    }
 }
 
 .v-tab {
@@ -52,10 +80,11 @@ body,
 
 /* Global Chip Styling - Make them determined by font size */
 .v-chip {
+    font-family: inherit !important;
     font-size: 0.95rem !important;
     height: auto !important;
     padding: 6px 16px !important;
-    font-weight: 600 !important;
+    border-radius: 4px !important; /* Standardized sharp rounding */
     text-transform: none !important;
 }
 

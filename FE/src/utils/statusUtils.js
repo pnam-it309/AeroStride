@@ -35,7 +35,7 @@ export const isActiveStatus = (status) => {
  * Trả về nhãn hiển thị trạng thái tiếng Việt
  */
 export const getStatusLabel = (status) => {
-    return isActiveStatus(status) ? 'Hoạt động' : 'Ngừng hoạt động';
+    return isActiveStatus(status) ? 'Đang hoạt động' : 'Ngừng hoạt động';
 };
 
 /**

@@ -5,7 +5,7 @@ export const dichVuHoaDon = {
   // Lấy hóa đơn có phân trang
   async layHoaDonPhanTrang(params) {
     const response = await api.get(`${API_ADMIN.HOA_DON}/phan-trang`, { params });
-    return response.data.data;
+    return response.data;
   },
 
   // Lấy chi tiết hóa đơn

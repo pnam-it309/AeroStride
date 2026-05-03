@@ -19,27 +19,23 @@ const updateFormField = (field, value) => {
 </script>
 
 <template>
-    <v-dialog :model-value="show" @update:model-value="emit('update:show', $event)" max-width="550" persistent transition="dialog-bottom-transition">
+    <v-dialog :model-value="show" @update:model-value="emit('update:show', $event)" max-width="750" persistent transition="dialog-bottom-transition">
         <v-card class="rounded-xl border shadow-2xl overflow-hidden p-0">
-            <!-- Header accent bar -->
-            <div class="h-1-5 w-full bg-primary accent-bar"></div>
-            
             <v-card-title class="px-8 py-6 border-b bg-slate-50/50">
                 <div>
-                    <h3 class="text-h5 font-weight-bold text-slate-900 tracking-tight">
+                    <h3 class="text-h6 text-slate-900 mb-0">
                         {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }} {{ title.toLowerCase() }}
                     </h3>
-                    <p class="text-subtitle-2 text-slate-500 font-weight-medium mt-1">Thiết lập các thông tin cơ bản cho thuộc tính.</p>
                 </div>
             </v-card-title>
 
-            <v-card-text class="pa-8">
+            <v-card-text class="pa-4">
                 <v-form v-if="form">
                     <v-row>
                         <v-col cols="12">
                             <div class="form-group mb-5">
                                 <div class="mb-2 px-1">
-                                    <span class="text-caption font-weight-medium text-slate-700 text-uppercase tracking-wider">Mã {{ title }} <span class="text-lowercase font-weight-medium text-slate-400">(Tự động)</span></span>
+                                    <span class="text-slate-700" style="font-size: 13px !important;">Mã {{ title }} <span class="text-lowercase text-slate-400">(Tự động)</span></span>
                                 </div>
                                 <v-text-field
                                     :model-value="form.ma"
@@ -48,13 +44,14 @@ const updateFormField = (field, value) => {
                                     variant="outlined"
                                     density="comfortable"
                                     hide-details
-                                    class="modern-input font-weight-medium bg-slate-50"
+                                    class="modern-input bg-slate-50"
+                                    style="font-size: 13px !important;"
                                 ></v-text-field>
                             </div>
 
                             <div class="form-group mb-5">
                                 <div class="mb-2 px-1">
-                                    <span class="text-caption font-weight-medium text-slate-700 text-uppercase tracking-wider">Tên {{ title }} *</span>
+                                    <span class="text-slate-700" style="font-size: 13px !important;">Tên {{ title }} *</span>
                                 </div>
                                 <v-text-field
                                     :model-value="form.ten"
@@ -64,13 +61,14 @@ const updateFormField = (field, value) => {
                                     density="comfortable"
                                     hide-details
                                     class="modern-input"
+                                    style="font-size: 13px !important;"
                                 ></v-text-field>
                             </div>
 
                             <!-- Color Specific -->
                             <div v-if="selectedTab === 'colors'" class="form-group mb-5">
                                 <div class="mb-2 px-1">
-                                    <span class="text-caption font-weight-medium text-slate-700 text-uppercase tracking-wider">Mã màu (Hex)</span>
+                                    <span class="text-slate-700" style="font-size: 13px !important;">Mã màu (Hex)</span>
                                 </div>
                                 <div class="d-flex align-center gap-3">
                                     <v-text-field
@@ -79,7 +77,8 @@ const updateFormField = (field, value) => {
                                         variant="outlined"
                                         density="comfortable"
                                         hide-details
-                                        class="modern-input flex-grow-1 font-weight-medium"
+                                        class="modern-input flex-grow-1"
+                                        style="font-size: 13px !important;"
                                     ></v-text-field>
                                     <input
                                         type="color"
@@ -93,7 +92,7 @@ const updateFormField = (field, value) => {
                             <!-- Size Specific -->
                             <div v-if="selectedTab === 'sizes'" class="form-group mb-5">
                                 <div class="mb-2 px-1">
-                                    <span class="text-caption font-weight-medium text-slate-700 text-uppercase tracking-wider">Giá trị (Số)</span>
+                                    <span class="text-slate-700" style="font-size: 13px !important;">Giá trị (Số)</span>
                                 </div>
                                 <v-text-field
                                     :model-value="form.giaTriKichThuoc"
@@ -104,12 +103,13 @@ const updateFormField = (field, value) => {
                                     density="comfortable"
                                     hide-details
                                     class="modern-input"
+                                    style="font-size: 13px !important;"
                                 ></v-text-field>
                             </div>
 
                             <div class="form-group">
                                 <div class="mb-2 px-1">
-                                    <span class="text-caption font-weight-medium text-slate-700 text-uppercase tracking-wider">Mô tả</span>
+                                    <span class="text-slate-700" style="font-size: 13px !important;">Mô tả</span>
                                 </div>
                                 <v-textarea
                                     :model-value="form.moTa"
@@ -118,6 +118,7 @@ const updateFormField = (field, value) => {
                                     variant="outlined"
                                     rows="3"
                                     class="modern-input"
+                                    style="font-size: 13px !important;"
                                     hide-details
                                 ></v-textarea>
                             </div>
@@ -129,18 +130,19 @@ const updateFormField = (field, value) => {
             <v-divider></v-divider>
 
             <v-card-actions class="px-8 py-6 bg-slate-50 d-flex justify-end gap-3">
-                <v-btn variant="tonal" color="slate-500" class="px-6 rounded-xl font-weight-medium h-11" @click="closeModal">
+                <v-btn variant="tonal" color="slate-500" class="px-6 h-11" style="font-size: 13px !important;" @click="closeModal">
                     Hủy bỏ
                 </v-btn>
                 <v-btn
                     color="primary"
                     variant="flat"
-                    class="px-8 rounded-xl font-weight-bold h-11 text-white"
+                    class="px-8 h-11 text-white-force"
+                    style="font-size: 13px !important;"
                     @click="handleSave"
                     :disabled="!form?.ten"
                 >
                     <template #prepend>
-                        <DeviceFloppyIcon size="18" class="text-white" />
+                        <DeviceFloppyIcon size="18" class="text-white-force" />
                     </template>
                     Lưu thông tin
                 </v-btn>
@@ -176,6 +178,14 @@ const updateFormField = (field, value) => {
 :deep(.v-btn) {
     letter-spacing: 0.02em;
     text-transform: none;
+}
+
+.text-white-force {
+    color: #ffffff !important;
+}
+
+.text-white-force :deep(.v-icon) {
+    color: #ffffff !important;
 }
 </style>
 

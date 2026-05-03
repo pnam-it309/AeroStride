@@ -393,16 +393,6 @@ onMounted(async () => {
                                     </div>
                                 </div>
                             </v-col>
-                            <v-col cols="12">
-                                <div class="pa-4 bg-slate-50 rounded-lg border mb-2">
-                                    <div class="text-caption text-slate-400 font-weight-bold mb-1 uppercase tracking-wider">
-                                        ĐỊA CHỈ THƯỜNG TRÚ
-                                    </div>
-                                    <div class="text-subtitle-1 font-weight-black text-slate-800">
-                                        {{ employeeForm.diaChi || 'Chưa cập nhật' }}
-                                    </div>
-                                </div>
-                            </v-col>
                         </v-row>
                     </v-card-text>
                 </v-card>
@@ -430,7 +420,7 @@ onMounted(async () => {
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
                                 <UserIcon class="text-primary" size="20" />
                             </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin định danh</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-700">Thông tin định danh</span>
                         </div>
                         <v-row>
                             <v-col cols="12" md="4">
@@ -441,7 +431,7 @@ onMounted(async () => {
                                     placeholder="Hệ thống tự tạo..."
                                     variant="outlined"
                                     density="comfortable"
-                                    class="font-weight-medium bg-slate-50 mono-font"
+                                    class="bg-slate-50"
                                     hide-details
                                 ></v-text-field>
                             </v-col>
@@ -464,7 +454,6 @@ onMounted(async () => {
                                     placeholder="name@company.com"
                                     variant="outlined"
                                     density="comfortable"
-                                    class="font-weight-bold"
                                     hide-details
                                 ></v-text-field>
                             </v-col>
@@ -513,20 +502,6 @@ onMounted(async () => {
                                     variant="outlined"
                                     density="comfortable"
                                     rows="2"
-                                    class="font-weight-bold"
-                                    hide-details
-                                ></v-textarea>
-                            </v-col>
-                            <v-col cols="12">
-                                <div class="field-label">Địa chỉ thường trú</div>
-                                <v-textarea
-                                    v-model="employeeForm.diaChi"
-                                    :readonly="isDetailView"
-                                    placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố..."
-                                    variant="outlined"
-                                    density="comfortable"
-                                    rows="2"
-                                    class="font-weight-bold"
                                     hide-details
                                 ></v-textarea>
                             </v-col>
@@ -540,7 +515,7 @@ onMounted(async () => {
                             <div class="icon-blob bg-slate-100 mr-3">
                                 <v-icon color="slate-600" size="18">mdi-account-shield-outline</v-icon>
                             </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Tài khoản & Phân quyền</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-700">Tài khoản & Phân quyền</span>
                         </div>
                         <v-row>
                             <v-col cols="12">
@@ -551,7 +526,7 @@ onMounted(async () => {
                                             >Thông báo tự động</span
                                         >
                                     </div>
-                                    <span class="text-body-1 font-weight-medium text-amber-darken-4 leading-relaxed block">
+                                    <span class="text-body-2 font-weight-medium text-amber-darken-4 leading-relaxed block">
                                         Hệ thống sẽ gửi email thiết lập mật khẩu đến địa chỉ email của nhân viên. Admin không thể can thiệp
                                         trực tiếp vào mật khẩu của nhân viên.
                                     </span>
@@ -567,7 +542,6 @@ onMounted(async () => {
                                     item-value="value"
                                     variant="outlined"
                                     density="comfortable"
-                                    class="font-weight-bold"
                                     hide-details
                                 >
                                     <template #selection="{ item }">
@@ -575,7 +549,7 @@ onMounted(async () => {
                                             :color="item.raw.color"
                                             size="small"
                                             variant="tonal"
-                                            class="px-5 font-weight-black rounded-lg h-7"
+                                            class="px-5 font-weight-bold rounded-lg h-7"
                                             >{{ item.title }}</v-chip
                                         >
                                     </template>
@@ -593,7 +567,7 @@ onMounted(async () => {
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
                                 <v-icon color="primary" size="18">mdi-camera</v-icon>
                             </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Ảnh chân dung</span>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-700">Ảnh chân dung</span>
                         </div>
 
                         <div class="position-relative d-inline-block mx-auto mb-6">
@@ -629,9 +603,9 @@ onMounted(async () => {
                                 variant="outlined"
                                 density="comfortable"
                                 hide-details
-                                class="font-weight-medium bg-slate-50"
+                                class="bg-slate-50"
                             ></v-text-field>
-                            <p class="text-caption font-weight-bold text-slate-400 mt-3 px-1">
+                            <p class="text-caption font-weight-medium text-slate-400 mt-3 px-1">
                                 Ảnh đại diện sẽ hiển thị trên hồ sơ và thanh thực đơn cá nhân.
                             </p>
                         </div>
@@ -662,7 +636,44 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-/* Redundant local styles removed - now using global _admin-common.scss */
+/* Đồng bộ font chữ và cỡ chữ toàn trang */
+:deep(.v-container),
+:deep(.v-card),
+:deep(.v-btn),
+:deep(.v-field),
+:deep(.v-list-item-title),
+:deep(span),
+:deep(div),
+:deep(p) {
+    font-family: 'Inter', 'Outfit', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 400; /* Reset default weight to normal */
+}
+
+:deep(.text-subtitle-1),
+:deep(.text-h5),
+:deep(.text-h6) {
+    font-family: 'Inter', 'Outfit', sans-serif !important;
+}
+
+:deep(.v-field__input) {
+    font-weight: 400 !important; /* Force normal weight for inputs */
+    color: #334155 !important;
+}
+
+.field-label {
+    font-size: 14px !important;
+    font-weight: 500 !important; /* Unified to Medium weight */
+    color: #475569;
+    margin-bottom: 6px;
+    margin-left: 2px;
+}
+
+.font-weight-bold,
+.text-subtitle-1 {
+    font-weight: 500 !important; /* Use Medium (500) for a softer, premium look */
+}
+
 .gap-2 {
     gap: 8px;
 }

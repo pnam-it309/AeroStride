@@ -41,7 +41,6 @@ const {
     trangThai: null,
     danhMuc: null,
     thuongHieu: null,
-    gioiTinh: null,
     chatLieu: null
 });
 
@@ -56,8 +55,7 @@ const filterOptions = ref({
     mucDichChays: [],
     chatLieus: [],
     coGiays: [],
-    deGiays: [],
-    gioiTinhKhachHangs: ['NAM', 'NU', 'TRE_EM', 'UNISEX']
+    deGiays: []
 });
 
 const handleRefresh = async () => {
@@ -186,11 +184,6 @@ const handleQrScan = (decodedText) => {
     handleSearch();
 };
 
-const setGenderFilter = (value) => {
-    filters.value.gioiTinh = value;
-    pagination.value.page = 1;
-    loadProducts();
-};
 
 const getCategoryColor = (name) => {
     if (!name) return 'grey';
@@ -248,7 +241,7 @@ onMounted(() => {
                 </v-col>
 
                 <!-- Danh mục -->
-                <v-col cols="12" md="2">
+                <v-col cols="12" md="3">
                     <div class="filter-field-label">Danh mục</div>
                     <v-select v-model="filters.danhMuc" :items="[
                         { title: 'Tất cả danh mục', value: null },
@@ -258,7 +251,7 @@ onMounted(() => {
                 </v-col>
 
                 <!-- Thương hiệu -->
-                <v-col cols="12" md="2">
+                <v-col cols="12" md="3">
                     <div class="filter-field-label">Thương hiệu</div>
                     <v-select v-model="filters.thuongHieu" :items="[
                         { title: 'Tất cả thương hiệu', value: null },
@@ -267,21 +260,9 @@ onMounted(() => {
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
 
-                <!-- Giới tính -->
-                <v-col cols="12" md="2">
-                    <div class="filter-field-label">Giới tính</div>
-                    <v-select v-model="filters.gioiTinh" :items="[
-                        { title: 'Tất cả', value: null },
-                        { title: 'Nam', value: 'NAM' },
-                        { title: 'Nữ', value: 'NU' },
-                        { title: 'Trẻ em', value: 'TRE_EM' },
-                        { title: 'Unisex', value: 'UNISEX' }
-                    ]" variant="outlined" density="compact" hide-details class="compact-input"
-                        @update:model-value="handleSearch"></v-select>
-                </v-col>
 
                 <!-- Trạng thái -->
-                <v-col cols="12" md="2">
+                <v-col cols="12" md="3">
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select v-model="filters.trangThai" :items="[
                         { title: 'Tất cả', value: null },
@@ -294,7 +275,7 @@ onMounted(() => {
         </div>
 
         <!-- 2. TABLE -->
-        <AdminTable title="Danh sách sản phẩm" addButtonText="Thêm sản phẩm" :headers="[
+        <AdminTable title="Danh sách sản phẩm" addButtonText="Tạo mới" :headers="[
             { text: 'STT', align: 'center', width: '50px' },
             { text: 'Mã sản phẩm', align: 'center', width: '120px' },
             { text: 'Tên sản phẩm', align: 'left', width: '180px' },
@@ -308,25 +289,25 @@ onMounted(() => {
             @import="$refs.fileInput.click()" @download-template="handleDownloadTemplate">
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center font-weight-medium">
+                    <td class="data-cell text-center">
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
 
-                    <td class="data-cell text-center font-weight-medium">
+                    <td class="data-cell text-center">
                         {{ getProductCode(item) }}
                     </td>
 
                     <td class="data-cell text-left">
-                        <div class="text-dark font-weight-medium">
+                        <div class="text-dark">
                             {{ getProductName(item) }}
                         </div>
                     </td>
 
-                    <td class="data-cell text-left font-weight-medium">
+                    <td class="data-cell text-left">
                         {{ getBrandName(item) }}
                     </td>
 
-                    <td class="data-cell text-left font-weight-medium">
+                    <td class="data-cell text-left">
                         {{ getCategoryName(item) }}
                     </td>
 
@@ -335,7 +316,7 @@ onMounted(() => {
                     </td>
 
                     <td class="data-cell text-left price-value px-2">
-                        <div class="font-weight-bold text-primary">
+                        <div class="text-primary">
                             {{ getPriceRange(item) }}
                         </div>
                     </td>
@@ -436,7 +417,8 @@ onMounted(() => {
 }
 
 :deep(.data-cell), :deep(.data-cell *) {
-    font-size: 13px !important;
+    font-size: 13.5px !important;
+    font-family: 'Inter', sans-serif !important;
 }
 </style>
 

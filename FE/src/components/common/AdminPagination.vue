@@ -59,7 +59,7 @@ const goToPage = async (p) => { if (p >= 1 && p <= props.totalPages) page.value 
 <template>
     <div class="pagination-shell d-flex align-center justify-space-between">
         <div class="pagination-summary text-medium-emphasis">
-            Đang hiển thị <strong>{{ startItem }}-{{ endItem }}</strong> trong tổng <strong>{{ totalElements }}</strong> kết quả
+            Đang hiển thị <strong>{{ startItem }}-{{ endItem }}</strong> trong tổng số <strong>{{ totalElements }}</strong> kết quả
         </div>
 
         <div v-if="shouldShowPagination" class="d-flex align-center flex-wrap justify-end gap-2">
@@ -89,6 +89,7 @@ const goToPage = async (p) => { if (p >= 1 && p <= props.totalPages) page.value 
 
 <style scoped>
 .pagination-shell {
+    width: 100%;
     gap: 12px;
 }
 

@@ -11,13 +11,13 @@ export const dichVuNhanVien = {
   // Lấy nhân viên có phân trang
   async layNhanVienPhanTrang(params) {
     const response = await api.get(`${API_ADMIN.NHAN_VIEN}/phan-trang`, { params });
-    return response.data.data;
+    return response.data;
   },
 
   // Tìm kiếm nhân viên
   async timKiemNhanVien(params) {
     const response = await api.get(`${API_ADMIN.NHAN_VIEN}/tim-kiem`, { params });
-    return response.data.data;
+    return response.data;
   },
 
   // Lấy chi tiết nhân viên
@@ -73,7 +73,7 @@ export const dichVuNhanVien = {
     const response = await api.get(`${API_ADMIN.NHAN_VIEN}/export-excel`, { responseType: 'blob' });
     return response.data;
   },
- 
+
   // Lấy danh sách phân quyền
   async layDanhSachPhanQuyen() {
     const response = await api.get(`${API_ADMIN.NHAN_VIEN}/phan-quyen`);

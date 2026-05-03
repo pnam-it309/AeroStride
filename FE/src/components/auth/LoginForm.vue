@@ -56,7 +56,7 @@ const handleLogin = async () => {
             <v-row class="mb-3">
                 <v-col cols="12">
                     <div class="input-group">
-                        <v-label class="font-weight-black mb-2 text-uppercase text-caption tracking-wider">Tên quản trị</v-label>
+                        <v-label class="font-weight-black mb-2 text-uppercase text-caption tracking-wider">Tên đăng nhập</v-label>
                         <v-text-field 
                             v-model="loginForm.username"
                             variant="outlined" 
@@ -117,7 +117,7 @@ const handleLogin = async () => {
                         :loading="loading"
                         :disabled="loading"
                     >
-                        BẮT ĐẦU QUẢN TRỊ
+                        Đăng nhập hệ thống
                         <v-icon end icon="mdi-arrow-right" class="ml-2"></v-icon>
                     </v-btn>
                 </v-col>
@@ -151,9 +151,8 @@ const handleLogin = async () => {
 .login-btn {
     height: 56px !important;
     font-weight: 900 !important;
+    color: white !important;
     letter-spacing: 1px !important;
-    box-shadow: 0 10px 20px rgba(var(--v-theme-primary), 0.3) !important;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .login-btn:hover {
@@ -162,7 +161,8 @@ const handleLogin = async () => {
 }
 
 .emerald-gradient-btn {
-    background: linear-gradient(135deg, rgba(var(--v-theme-primary), 1) 0%, #8ec5fc 100%) !important;
+    background: #1e3a8a !important;
+    color: white !important;
 }
 
 .hover-underline:hover {

@@ -33,6 +33,11 @@ const detailFilters = ref({
     khoangGia: [0, 5000000] // Giá từ 0đ đến 5tr
 });
 
+// Pagination for Bottom Table (Selected Details)
+const bottomPage = ref(1);
+const bottomPageSize = ref(5);
+
+
 const isEditMode = computed(() => !!route.params.id && !route.path.includes('/detail'));
 const isDetailView = computed(() => route.path.includes('/detail'));
 const primaryColor = '#2E4E8E';
@@ -168,6 +173,26 @@ const filteredSelectedDetails = computed(() => {
     
     return result;
 });
+
+const paginatedSelectedDetails = computed(() => {
+    const start = (bottomPage.value - 1) * bottomPageSize.value;
+    const end = start + bottomPageSize.value;
+    return filteredSelectedDetails.value.slice(start, end);
+});
+
+const totalBottomPages = computed(() => {
+    return Math.ceil(filteredSelectedDetails.value.length / bottomPageSize.value) || 1;
+});
+
+// Reset bottom page when filters change
+watch(detailFilters, () => { bottomPage.value = 1; }, { deep: true });
+watch(selectedVariantsIds, () => { 
+    // Nếu trang hiện tại không còn dữ liệu sau khi xóa, quay về trang trước
+    if (bottomPage.value > totalBottomPages.value) {
+        bottomPage.value = Math.max(1, totalBottomPages.value);
+    }
+}, { deep: true });
+
 
 const calculateDiscountedPrice = (originalPrice) => {
     return originalPrice * (1 - (form.value.soTienGiam || 0) / 100);
@@ -488,32 +513,32 @@ onMounted(init);
                                 <span class="filter-title-label">Bộ lọc</span>
                             </div>
                             <div class="detail-filter-body">
-                                <v-row no-gutters class="filter-row-inner">
-                                    <v-col cols="12" md="3" class="filter-cell">
+                                <div class="d-flex align-center" style="gap: 4px;">
+                                    <div class="flex-grow-1">
                                         <div class="filter-field-label">Thương hiệu</div>
                                         <v-select v-model="detailFilters.thuongHieu" :items="['Adidas', 'Nike']"
                                             density="compact" variant="outlined" hide-details clearable
                                             placeholder="Thương hiệu" class="compact-input"></v-select>
-                                    </v-col>
-                                    <v-col cols="12" md="3" class="filter-cell">
+                                    </div>
+                                    <div class="flex-grow-1">
                                         <div class="filter-field-label">Chất liệu</div>
                                         <v-select v-model="detailFilters.chatLieu" :items="['Da', 'Vải', 'Vải dệt']"
                                             density="compact" variant="outlined" hide-details clearable
                                             placeholder="Chất liệu" class="compact-input"></v-select>
-                                    </v-col>
-                                    <v-col cols="12" md="3" class="filter-cell">
+                                    </div>
+                                    <div class="flex-grow-1">
                                         <div class="filter-field-label">Kích cỡ</div>
                                         <v-select v-model="detailFilters.kichCo" :items="[39, 40, 41, 42, 43]"
                                             density="compact" variant="outlined" hide-details clearable
                                             placeholder="Kích cỡ" class="compact-input"></v-select>
-                                    </v-col>
-                                    <v-col cols="12" md="3" class="filter-cell">
+                                    </div>
+                                    <div class="flex-grow-1">
                                         <div class="filter-field-label">Màu sắc</div>
                                         <v-select v-model="detailFilters.mauSac" :items="['Đen', 'Trắng', 'Xám', 'Xanh dương', 'Xanh lá']"
                                             density="compact" variant="outlined" hide-details clearable
                                             placeholder="Màu sắc" class="compact-input"></v-select>
-                                    </v-col>
-                                </v-row>
+                                    </div>
+                                </div>
 
                                 <div class="price-range-row">
                                     <div class="d-flex align-center justify-space-between mb-2">
@@ -524,7 +549,7 @@ onMounted(init);
                                         <span class="price-range-value">{{ formatCurrency(detailFilters.khoangGia[0]) }} – {{ formatCurrency(detailFilters.khoangGia[1]) }}</span>
                                     </div>
                                     <v-range-slider v-model="detailFilters.khoangGia" :max="5000000" :min="0"
-                                        :step="100000" hide-details color="#3b82f6" track-color="#e2e8f0"
+                                        :step="100000" hide-details color="primary" track-color="#e2e8f0"
                                         thumb-size="18" class="blue-range-slider"></v-range-slider>
                                 </div>
                             </div>
@@ -551,12 +576,14 @@ onMounted(init);
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="(item, index) in filteredSelectedDetails" :key="item.id" class="data-row">
+                                    <tr v-for="(item, index) in paginatedSelectedDetails" :key="item.id" class="data-row">
                                         <td class="data-cell text-center">
                                             <v-checkbox-btn color="primary" hide-details density="compact" 
                                                 :model-value="isVariantSelected(item.id)" @update:model-value="toggleVariantSelection(item.id)"></v-checkbox-btn>
                                         </td>
-                                        <td class="data-cell text-center text-slate-500 font-weight-medium">{{ index + 1 }}</td>
+                                        <td class="data-cell text-center text-slate-500 font-weight-medium">
+                                            {{ (bottomPage - 1) * bottomPageSize + index + 1 }}
+                                        </td>
                                         <td class="data-cell text-center py-2">
                                             <div class="product-image-container d-inline-block position-relative">
                                                 <v-avatar rounded="lg" size="44" class="border">
@@ -604,6 +631,16 @@ onMounted(init);
                                 </tbody>
                             </table>
                         </div>
+
+                        <AdminPagination
+                            v-model="bottomPage"
+                            :page-size="bottomPageSize"
+                            @update:pageSize="bottomPageSize = $event"
+                            :total-pages="totalBottomPages"
+                            :total-elements="filteredSelectedDetails.length"
+                            :current-size="paginatedSelectedDetails.length"
+                            class="mt-4"
+                        />
                     </v-card-text>
                 </v-card>
             </v-col>

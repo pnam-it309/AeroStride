@@ -22,6 +22,8 @@ import AttributeFilter from './components/AttributeFilter.vue';
 import AttributeTable from './components/AttributeTable.vue';
 import AttributeFormModal from './components/AttributeFormModal.vue';
 
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
+
 const { addNotification } = useNotifications();
 
 const loading = ref(false);
@@ -32,7 +34,7 @@ const statusFilter = ref(null);
 
 const pagination = ref({
     page: 1,
-    size: 10,
+    size: 5,
     totalElements: 0,
     totalPages: 1
 });
@@ -44,15 +46,8 @@ const isEditMode = ref(false);
 const route = useRoute();
 const router = useRouter();
 
-// Confirmation Logic
-const confirmDialog = ref({
-    show: false,
-    title: '',
-    message: '',
-    color: 'primary',
-    action: null,
-    loading: false
-});
+// Use composables
+const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 
 const routeMap = {
     'thuong-hieu': 'brands',
@@ -232,24 +227,15 @@ const loadItems = async () => {
 
 const confirmSaveItem = () => {
     const modeText = isEditMode.value ? 'CẬP NHẬT' : 'THÊM MỚI';
-    confirmDialog.value = {
-        show: true,
+    setConfirm({
         title: `Xác nhận ${modeText.toLowerCase()}`,
         message: `Bạn có chắc muốn lưu [${itemForm.value.ten}] vào danh sách ${getCurrentTabTitle()}?`,
         color: 'success',
         action: async () => {
-            confirmDialog.value.loading = true;
-            try {
-                if (isEditMode.value) await updateItem();
-                else await createItem();
-                confirmDialog.value.show = false;
-            } catch (error) {
-                console.error(error);
-            } finally {
-                confirmDialog.value.loading = false;
-            }
+            if (isEditMode.value) await updateItem();
+            else await createItem();
         }
-    };
+    });
 };
 
 const createItem = async () => {
@@ -304,22 +290,14 @@ const updateItem = async () => {
 };
 
 const confirmChangeStatus = (item) => {
-    confirmDialog.value = {
-        show: true,
+    setConfirm({
         title: 'Xác nhận trạng thái',
         message: `Bạn có muốn đổi trạng thái của [${getItemName(item)}]?`,
         color: 'warning',
         action: async () => {
-            confirmDialog.value.loading = true;
-            try {
-                await changeItemStatus(item);
-                confirmDialog.value.show = false;
-            } catch (e) {
-            } finally {
-                confirmDialog.value.loading = false;
-            }
+            await changeItemStatus(item);
         }
-    };
+    });
 };
 
 const changeItemStatus = async (item) => {
@@ -439,7 +417,8 @@ watch(selectedTab, (n) => {
 
         <!-- SHARED CONFIRM -->
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
-            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
+            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)" />
     </v-container>
 </template>
 
@@ -449,7 +428,7 @@ watch(selectedTab, (n) => {
 }
 
 :deep(.data-cell), :deep(.data-cell *) {
-    font-size: 13px !important;
+    font-size: 14px !important;
 }
 </style>
 

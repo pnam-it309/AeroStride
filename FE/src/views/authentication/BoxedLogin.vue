@@ -23,14 +23,12 @@ import LoginForm from '@/components/auth/LoginForm.vue';
                                         <Logo class="mega-logo" />
                                     </div>
                                     <h1 class="text-h2 font-weight-black mb-4 text-white gradient-text">SẢI BƯỚC CÙNG AEROSTRIDE</h1>
-                                    <p class="text-h6 text-white opacity-80 mb-8 max-w-500 mx-auto">
-                                        Nền tảng quản lý chuyên nghiệp cho kỷ nguyên giày thể thao mới. 
-                                        Cùng chúng tôi kiến tạo tương lai.
-                                    </p>
+                                    <br>
+                                    <br>
                                     <div class="shoe-container">
                                         <v-img
                                             src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop"
-                                            width="550"
+                                            width="450"
                                             class="mx-auto floating-shoe-3d reflect-shoe"
                                         ></v-img>
                                     </div>
@@ -44,10 +42,10 @@ import LoginForm from '@/components/auth/LoginForm.vue';
                                         <Logo class="mega-logo" />
                                     </div>
                                     <div class="mb-8">
-                                        <h2 class="text-h3 font-weight-black mb-2 text-primary">CHÀO MỪNG</h2>
+                                        <h2 class="text-h3 font-weight-black mb-2 text-primary">Chào mừng đến với hệ thống</h2>
                                         <div class="d-flex align-center">
                                             <div class="h-line mr-2"></div>
-                                            <p class="text-subtitle-1 text-grey-darken-1 font-weight-medium">Đăng nhập tài quản trị</p>
+                                           
                                         </div>
                                     </div>
                                     
