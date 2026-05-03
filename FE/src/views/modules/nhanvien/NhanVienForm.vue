@@ -11,6 +11,7 @@ import { ArrowLeftIcon, DeviceFloppyIcon, UserIcon } from 'vue-tabler-icons';
 import QrcodeStream from '@/components/common/CCCDQRScanner';
 import { parseCCCDQR } from '@/utils/cccdQR';
 import { dichVuFile } from '@/services/core/dichVuFile';
+import axios from 'axios';
 
 const FB_DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
@@ -21,7 +22,7 @@ const { addNotification } = useNotifications();
 const loading = ref(false);
 const saving = ref(false);
 const isEditMode = ref(false);
-const isDetailView = computed(() => route.path.includes('/detail'));
+const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật nhân viên' : 'Thêm nhân viên');
 const showPassword = ref(false);
 
 const employeeForm = ref({
@@ -35,7 +36,70 @@ const employeeForm = ref({
     gioiTinh: true,
     trangThai: 'DANG_HOAT_DONG',
     hinhAnh: '',
-    diaChi: ''
+    diaChi: '',
+    tinh: null,
+    thanhPho: null,
+    phuongXa: null,
+    diaChiChiTiet: ''
+});
+
+// Address Selection Logic
+const provinces = ref([]);
+const districts = ref([]);
+const wards = ref([]);
+const loadingLocations = ref({ provinces: false, districts: false, wards: false });
+
+const fetchProvinces = async () => {
+    loadingLocations.value.provinces = true;
+    try {
+        const res = await axios.get('https://provinces.open-api.vn/api/p/');
+        provinces.value = res.data;
+    } catch (e) {
+        console.error('Error loading provinces:', e);
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể tải danh sách tỉnh/thành phố', color: 'error' });
+    } finally {
+        loadingLocations.value.provinces = false;
+    }
+};
+
+const fetchDistricts = async (provinceCode) => {
+    if (!provinceCode) return;
+    loadingLocations.value.districts = true;
+    try {
+        const res = await axios.get(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+        districts.value = res.data.districts;
+    } catch (e) {
+        console.error('Error loading districts:', e);
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể tải danh sách quận/huyện', color: 'error' });
+    } finally {
+        loadingLocations.value.districts = false;
+    }
+};
+
+const fetchWards = async (districtCode) => {
+    if (!districtCode) return;
+    loadingLocations.value.wards = true;
+    try {
+        const res = await axios.get(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
+        wards.value = res.data.wards;
+    } catch (e) {
+        console.error('Error loading wards:', e);
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể tải danh sách phường/xã', color: 'error' });
+    } finally {
+        loadingLocations.value.wards = false;
+    }
+};
+
+import { watch } from 'vue';
+watch(() => employeeForm.value.tinh, (newVal) => {
+    employeeForm.value.thanhPho = null;
+    employeeForm.value.phuongXa = null;
+    if (newVal) fetchDistricts(newVal);
+});
+
+watch(() => employeeForm.value.thanhPho, (newVal) => {
+    employeeForm.value.phuongXa = null;
+    if (newVal) fetchWards(newVal);
 });
 
 // Quét QR CCCD
@@ -50,7 +114,7 @@ function onDetectQR(detectedCodes) {
         employeeForm.value.ten = info.ten;
         employeeForm.value.ngaySinh = info.ngaySinh;
         if (info.sdt) employeeForm.value.sdt = info.sdt;
-        employeeForm.value.diaChi = info.diaChi;
+        employeeForm.value.diaChiChiTiet = info.diaChi;
         // Không gán info.ma vào employeeForm.value.ma theo yêu cầu
         // Nếu có giới tính
         if (typeof info.gioiTinh === 'boolean') employeeForm.value.gioiTinh = info.gioiTinh;
@@ -86,8 +150,57 @@ const loadEmployee = async (id) => {
     loading.value = true;
     try {
         const data = await dichVuNhanVien.layChiTietNhanVien(id);
-        employeeForm.value = { ...data };
+        employeeForm.value = { 
+            ...data,
+            tinh: null,
+            thanhPho: null,
+            phuongXa: null,
+            diaChiChiTiet: data.diaChiChiTiet || data.diaChi || ''
+        };
         isEditMode.value = true;
+        
+        // Load data for selects based on names from BE
+        if (data.tinh || data.thanhPho || data.phuongXa) {
+            await fetchProvinces();
+            const province = provinces.value.find(p => p.name === data.tinh);
+            if (province) {
+                employeeForm.value.tinh = province.code;
+                await fetchDistricts(province.code);
+                const district = districts.value.find(d => d.name === data.thanhPho);
+                if (district) {
+                    employeeForm.value.thanhPho = district.code;
+                    await fetchWards(district.code);
+                    const ward = wards.value.find(w => w.name === data.phuongXa);
+                    if (ward) {
+                        employeeForm.value.phuongXa = ward.code;
+                    }
+                }
+            }
+        } else if (data.diaChi && data.diaChi.includes(',')) {
+            // Fallback to parsing if separate fields are missing
+            const parts = data.diaChi.split(',').map(p => p.trim());
+            if (parts.length >= 4) {
+                employeeForm.value.diaChiChiTiet = parts.slice(0, parts.length - 3).join(', ');
+                await fetchProvinces();
+                const pName = parts[parts.length - 1];
+                const province = provinces.value.find(p => p.name.includes(pName) || pName.includes(p.name));
+                if (province) {
+                    employeeForm.value.tinh = province.code;
+                    await fetchDistricts(province.code);
+                    const dName = parts[parts.length - 2];
+                    const district = districts.value.find(d => d.name.includes(dName) || dName.includes(d.name));
+                    if (district) {
+                        employeeForm.value.thanhPho = district.code;
+                        await fetchWards(district.code);
+                        const wName = parts[parts.length - 3];
+                        const ward = wards.value.find(w => w.name.includes(wName) || wName.includes(w.name));
+                        if (ward) {
+                            employeeForm.value.phuongXa = ward.code;
+                        }
+                    }
+                }
+            }
+        }
     } catch (error) {
         console.error('Error loading employee:', error);
         addNotification({ title: 'Lỗi', subtitle: 'Không thể tải thông tin nhân viên', color: 'error' });
@@ -105,14 +218,31 @@ const handleSave = () => {
         action: async () => {
             saving.value = true;
             try {
+                // Combine address fields
+                const p = provinces.value.find(x => x.code === employeeForm.value.tinh);
+                const d = districts.value.find(x => x.code === employeeForm.value.thanhPho);
+                const w = wards.value.find(x => x.code === employeeForm.value.phuongXa);
+                
+                let combinedAddress = employeeForm.value.diaChiChiTiet;
+                if (w) combinedAddress += `, ${w.name}`;
+                if (d) combinedAddress += `, ${d.name}`;
+                if (p) combinedAddress += `, ${p.name}`;
+
                 const payload = {
+                    ma: employeeForm.value.ma,
                     ten: employeeForm.value.ten,
                     email: employeeForm.value.email,
                     sdt: employeeForm.value.sdt,
+                    tenTaiKhoan: employeeForm.value.tenTaiKhoan,
                     ngaySinh: employeeForm.value.ngaySinh,
                     gioiTinh: employeeForm.value.gioiTinh,
                     trangThai: employeeForm.value.trangThai,
-                    diaChi: employeeForm.value.diaChi,
+                    diaChi: combinedAddress,
+                    tinh: p ? p.name : null,
+                    thanhPho: d ? d.name : null,
+                    phuongXa: w ? w.name : null,
+                    diaChiChiTiet: employeeForm.value.diaChiChiTiet,
+                    hinhAnh: employeeForm.value.hinhAnh,
                     idPhanQuyen: String(employeeForm.value.idPhanQuyen)
                 };
                 if (isEditMode.value) {
@@ -161,6 +291,7 @@ const onFileChange = async (e) => {
 
 onMounted(async () => {
     loading.value = true;
+    fetchProvinces();
     try {
         const rolesData = await dichVuNhanVien.layDanhSachPhanQuyen();
         roles.value = rolesData.map((r) => ({
@@ -194,7 +325,7 @@ onMounted(async () => {
             :items="[
                 { title: 'Quản lý tài khoản', disabled: false, href: '#' },
                 { title: 'Nhân viên', disabled: false, to: PATH.NHAN_VIEN },
-                { title: isDetailView ? 'Chi tiết' : isEditMode ? 'Cập nhật' : 'Thêm mới', disabled: true }
+                { title: isEditMode ? 'Cập nhật' : 'Thêm mới', disabled: true }
             ]"
         />
 
@@ -207,7 +338,6 @@ onMounted(async () => {
             </div>
             <div class="d-flex gap-3">
                 <v-btn
-                    v-if="!isDetailView"
                     color="success"
                     variant="flat"
                     class="text-none font-weight-bold text-white px-8 rounded-lg h-11 elevation-4"
@@ -217,7 +347,6 @@ onMounted(async () => {
                     Quét QR CCCD
                 </v-btn>
                 <v-btn
-                    v-if="!isDetailView"
                     color="primary"
                     variant="flat"
                     class="text-none font-weight-bold text-white px-8 rounded-lg h-11 elevation-4"
@@ -225,17 +354,7 @@ onMounted(async () => {
                     @click="handleSave"
                 >
                     <v-icon size="18" class="mr-2 text-white">mdi-check-all</v-icon>
-                    Lưu thông tin nhân viên
-                </v-btn>
-                <v-btn
-                    v-if="isDetailView"
-                    color="primary"
-                    variant="flat"
-                    class="text-none font-weight-bold text-white px-8 rounded-lg h-11 elevation-4"
-                    @click="router.push(`${PATH.NHAN_VIEN_FORM}/${route.params.id}`)"
-                >
-                    <v-icon size="18" class="mr-2 text-white">mdi-pencil</v-icon>
-                    Chỉnh sửa hồ sơ
+                    {{ submitButtonText }}
                 </v-btn>
             </div>
         </div>
@@ -270,149 +389,7 @@ onMounted(async () => {
             </v-col>
         </v-row>
 
-        <!-- DASHBOARD VIEW (DETAIL) -->
-        <v-row v-else-if="isDetailView">
-            <v-col cols="12" lg="4">
-                <v-card class="premium-card mb-6 text-center pa-8">
-                    <v-avatar size="140" color="blue-lighten-5" class="mb-4 border-xl border-white elevation-4">
-                        <v-img :src="employeeForm.hinhAnh || FB_DEFAULT_AVATAR"></v-img>
-                    </v-avatar>
-                    <h2 class="text-h5 font-weight-bold mb-1 text-slate-800">{{ employeeForm.ten }}</h2>
-                    <div class="text-subtitle-2 font-weight-medium text-slate-400 mb-6">{{ employeeForm.email }}</div>
-
-                    <v-chip
-                        :color="roles.find((r) => r.value === employeeForm.idPhanQuyen)?.color || 'grey'"
-                        variant="flat"
-                        class="px-8 font-weight-medium rounded-lg mb-8"
-                    >
-                        {{ roles.find((r) => r.value === employeeForm.idPhanQuyen)?.title || 'Chưa phân quyền' }}
-                    </v-chip>
-
-                    <v-divider class="mb-6 opacity-50"></v-divider>
-
-                    <div class="text-left">
-                        <div class="d-flex align-center mb-4 bg-slate-50 pa-3 rounded-lg border">
-                            <div class="icon-blob bg-success-lighten-4 mr-3">
-                                <v-icon color="success" size="18">mdi-check-circle</v-icon>
-                            </div>
-                            <div>
-                                <div class="text-caption font-weight-medium text-slate-400 uppercase tracking-wider">TRẠNG THÁI</div>
-                                <div
-                                    class="text-subtitle-2 font-weight-bold"
-                                    :class="employeeForm.trangThai === 'DANG_HOAT_DONG' ? 'text-success' : 'text-error'"
-                                >
-                                    {{ employeeForm.trangThai === 'DANG_HOAT_DONG' ? 'Đang hoạt động' : 'Tạm khóa' }}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="d-flex align-center bg-slate-50 pa-3 rounded-lg border">
-                            <div class="icon-blob bg-info-lighten-4 mr-3">
-                                <v-icon color="info" size="18">mdi-account-key</v-icon>
-                            </div>
-                            <div>
-                                <div class="text-caption font-weight-medium text-slate-400 uppercase tracking-wider">TÊN TÀI KHOẢN</div>
-                                <div class="text-subtitle-2 font-weight-bold text-slate-700">{{ employeeForm.tenTaiKhoan }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </v-card>
-            </v-col>
-
-            <v-col cols="12" lg="8">
-                <v-card class="premium-card mb-6 pb-2">
-                    <v-card-text class="pa-8">
-                        <div class="section-header d-flex align-center mb-8">
-                            <div class="icon-blob bg-slate-100 mr-3">
-                                <v-icon color="slate-600" size="18">mdi-card-account-details-outline</v-icon>
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin chi tiết hồ sơ</span>
-                        </div>
-
-                        <v-row>
-                            <v-col cols="12" md="6">
-                                <div class="pa-4 bg-slate-50 rounded-lg border mb-2">
-                                    <div class="text-caption text-slate-400 font-weight-medium mb-1 uppercase tracking-wider">
-                                        HỌ VÀ TÊN
-                                    </div>
-                                    <div class="text-subtitle-1 font-weight-medium text-slate-800">{{ employeeForm.ten }}</div>
-                                </div>
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="pa-4 bg-slate-50 rounded-lg border mb-2">
-                                    <div class="text-caption text-slate-400 font-weight-medium mb-1 uppercase tracking-wider">
-                                        ĐỊA CHỈ EMAIL
-                                    </div>
-                                    <div class="text-subtitle-1 font-weight-medium text-slate-800">{{ employeeForm.email }}</div>
-                                </div>
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="pa-4 bg-slate-50 rounded-lg border mb-2">
-                                    <div class="text-caption text-slate-400 font-weight-medium mb-1 uppercase tracking-wider">
-                                        SỐ ĐIỆN THOẠI
-                                    </div>
-                                    <div class="text-subtitle-1 font-weight-medium text-slate-800">{{ employeeForm.sdt }}</div>
-                                </div>
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="pa-4 bg-slate-50 rounded-lg border mb-2">
-                                    <div class="text-caption text-slate-400 font-weight-medium mb-1 uppercase tracking-wider">
-                                        NGÀY SINH
-                                    </div>
-                                    <div class="text-subtitle-1 font-weight-medium text-slate-800">
-                                        {{ employeeForm.ngaySinh || 'Chưa cập nhật' }}
-                                    </div>
-                                </div>
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="pa-4 bg-slate-50 rounded-lg border mb-2">
-                                    <div class="text-caption text-slate-400 font-weight-medium mb-1 uppercase tracking-wider">
-                                        GIỚI TÍNH
-                                    </div>
-                                    <div class="text-subtitle-1 font-weight-medium text-slate-800">
-                                        {{ employeeForm.gioiTinh ? 'Nam' : 'Nữ' }}
-                                    </div>
-                                </div>
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="pa-4 bg-slate-50 rounded-lg border mb-2">
-                                    <div class="text-caption text-slate-400 font-weight-medium mb-1 uppercase tracking-wider">
-                                        NGÀY GIA NHẬP
-                                    </div>
-                                    <div class="text-subtitle-1 font-weight-medium text-slate-800">
-                                        {{ new Date().toLocaleDateString('vi-VN') }}
-                                    </div>
-                                </div>
-                            </v-col>
-                            <v-col cols="12">
-                                <div class="pa-4 bg-slate-50 rounded-lg border mb-2">
-                                    <div class="text-caption text-slate-400 font-weight-bold mb-1 uppercase tracking-wider">
-                                        ĐỊA CHỈ THƯỜNG TRÚ
-                                    </div>
-                                    <div class="text-subtitle-1 font-weight-black text-slate-800">
-                                        {{ employeeForm.diaChi || 'Chưa cập nhật' }}
-                                    </div>
-                                </div>
-                            </v-col>
-                        </v-row>
-                    </v-card-text>
-                </v-card>
-
-                <v-card class="premium-card bg-primary-lighten-5 border-primary-lighten-4">
-                    <v-card-text class="pa-8 d-flex align-center">
-                        <v-icon color="primary" size="32" class="mr-6">mdi-lock-reset</v-icon>
-                        <div>
-                            <div class="text-subtitle-1 font-weight-bold text-primary mb-1">Thiết lập tài khoản</div>
-                            <p class="text-body-2 font-weight-medium text-slate-600 mb-0">
-                                Liên kết thiết lập mật khẩu đã được gửi đến email nhân viên khi tạo mới.
-                            </p>
-                        </div>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-        </v-row>
-
-        <!-- FORM VIEW (CREATE/EDIT) -->
-        <v-row v-else class="pb-16">
+        <v-row class="pb-16">
             <v-col cols="12" lg="8">
                 <v-card class="premium-card mb-6">
                     <v-card-text class="pa-8">
@@ -439,7 +416,7 @@ onMounted(async () => {
                                 <div class="field-label">Họ và tên *</div>
                                 <v-text-field
                                     v-model="employeeForm.ten"
-                                    :readonly="isDetailView"
+                                    
                                     placeholder="Ví dụ: Nguyễn Văn A"
                                     variant="outlined"
                                     density="comfortable"
@@ -450,7 +427,7 @@ onMounted(async () => {
                                 <div class="field-label">Email / Tài khoản *</div>
                                 <v-text-field
                                     v-model="employeeForm.email"
-                                    :readonly="isDetailView"
+                                    
                                     placeholder="name@company.com"
                                     variant="outlined"
                                     density="comfortable"
@@ -461,29 +438,29 @@ onMounted(async () => {
                                 <div class="field-label">Số điện thoại *</div>
                                 <v-text-field
                                     v-model="employeeForm.sdt"
-                                    :readonly="isDetailView"
+                                    
                                     placeholder="09xx.xxx.xxx"
                                     variant="outlined"
                                     density="comfortable"
                                     hide-details
                                 ></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="6">
+                            <v-col cols="12" md="4">
                                 <div class="field-label">Ngày sinh</div>
                                 <v-text-field
                                     v-model="employeeForm.ngaySinh"
-                                    :readonly="isDetailView"
+                                    
                                     type="date"
                                     variant="outlined"
                                     density="comfortable"
                                     hide-details
                                 ></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="6">
+                            <v-col cols="12" md="4">
                                 <div class="field-label">Giới tính</div>
                                 <v-select
                                     v-model="employeeForm.gioiTinh"
-                                    :readonly="isDetailView"
+                                    
                                     :items="[
                                         { title: 'Nam', value: true },
                                         { title: 'Nữ', value: false }
@@ -493,12 +470,68 @@ onMounted(async () => {
                                     hide-details
                                 ></v-select>
                             </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="field-label">Vai trò</div>
+                                <v-select
+                                    v-model="employeeForm.idPhanQuyen"
+                                    
+                                    :items="roles"
+                                    item-title="title"
+                                    item-value="value"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    hide-details
+                                ></v-select>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="field-label">Tỉnh / Thành phố *</div>
+                                <v-select
+                                    v-model="employeeForm.tinh"
+                                    :items="provinces"
+                                    item-title="name"
+                                    item-value="code"
+                                    placeholder="Chọn tỉnh/thành phố"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    hide-details
+                                    :loading="loadingLocations.provinces"
+                                ></v-select>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="field-label">Quận / Huyện *</div>
+                                <v-select
+                                    v-model="employeeForm.thanhPho"
+                                    :items="districts"
+                                    item-title="name"
+                                    item-value="code"
+                                    placeholder="Chọn quận/huyện"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    hide-details
+                                    :loading="loadingLocations.districts"
+                                    :disabled="!employeeForm.tinh"
+                                ></v-select>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="field-label">Phường / Xã *</div>
+                                <v-select
+                                    v-model="employeeForm.phuongXa"
+                                    :items="wards"
+                                    item-title="name"
+                                    item-value="code"
+                                    placeholder="Chọn phường/xã"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    hide-details
+                                    :loading="loadingLocations.wards"
+                                    :disabled="!employeeForm.thanhPho"
+                                ></v-select>
+                            </v-col>
                             <v-col cols="12">
-                                <div class="field-label">Địa chỉ thường trú</div>
+                                <div class="field-label">Địa chỉ chi tiết *</div>
                                 <v-textarea
-                                    v-model="employeeForm.diaChi"
-                                    :readonly="isDetailView"
-                                    placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố..."
+                                    v-model="employeeForm.diaChiChiTiet"
+                                    placeholder="Số nhà, tên đường..."
                                     variant="outlined"
                                     density="comfortable"
                                     rows="2"
@@ -509,55 +542,6 @@ onMounted(async () => {
                     </v-card-text>
                 </v-card>
 
-                <v-card class="premium-card">
-                    <v-card-text class="pa-8">
-                        <div class="section-header d-flex align-center mb-6">
-                            <div class="icon-blob bg-slate-100 mr-3">
-                                <v-icon color="slate-600" size="18">mdi-account-shield-outline</v-icon>
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-700">Tài khoản & Phân quyền</span>
-                        </div>
-                        <v-row>
-                            <v-col cols="12">
-                                <div class="pa-5 bg-amber-lighten-5 rounded-lg border-amber-lighten-3 border mb-6">
-                                    <div class="d-flex align-center mb-1">
-                                        <v-icon start size="20" color="amber-darken-4" class="mr-2">mdi-email-send-outline</v-icon>
-                                        <span class="text-body-2 font-weight-bold text-amber-darken-4 uppercase tracking-wider"
-                                            >Thông báo tự động</span
-                                        >
-                                    </div>
-                                    <span class="text-body-2 font-weight-medium text-amber-darken-4 leading-relaxed block">
-                                        Hệ thống sẽ gửi email thiết lập mật khẩu đến địa chỉ email của nhân viên. Admin không thể can thiệp
-                                        trực tiếp vào mật khẩu của nhân viên.
-                                    </span>
-                                </div>
-                            </v-col>
-                            <v-col cols="12">
-                                <div class="field-label">Vai trò</div>
-                                <v-select
-                                    v-model="employeeForm.idPhanQuyen"
-                                    :readonly="isDetailView"
-                                    :items="roles"
-                                    item-title="title"
-                                    item-value="value"
-                                    variant="outlined"
-                                    density="comfortable"
-                                    hide-details
-                                >
-                                    <template #selection="{ item }">
-                                        <v-chip
-                                            :color="item.raw.color"
-                                            size="small"
-                                            variant="tonal"
-                                            class="px-5 font-weight-bold rounded-lg h-7"
-                                            >{{ item.title }}</v-chip
-                                        >
-                                    </template>
-                                </v-select>
-                            </v-col>
-                        </v-row>
-                    </v-card-text>
-                </v-card>
             </v-col>
 
             <v-col cols="12" lg="4">

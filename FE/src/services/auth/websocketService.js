@@ -6,7 +6,7 @@ class WebSocketService {
         this.stompClient = null;
         this.connected = false;
         this.subscriptions = new Map();
-        this.baseUrl = import.meta.env.VITE_WS_URL || 'http://localhost:8080/ws';
+        this.baseUrl = import.meta.env.VITE_WS_URL;
     }
 
     connect(onMessageCallback) {

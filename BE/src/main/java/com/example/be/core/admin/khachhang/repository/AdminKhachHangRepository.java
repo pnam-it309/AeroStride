@@ -36,10 +36,17 @@ public interface AdminKhachHangRepository extends JpaRepository<KhachHang, Strin
                 COALESCE(dc.phuongXa, ''), ', ',
                 COALESCE(dc.thanhPho, ''), ', ',
                 COALESCE(dc.tinh, '')
-            )
+            ),
+            SUM(CASE WHEN hd.trangThai = 6 THEN hd.tongTienSauGiam ELSE 0 END),
+            MAX(hd.ngayTao)
         )
         FROM KhachHang kh
         LEFT JOIN kh.diaChi dc
+        LEFT JOIN HoaDon hd ON hd.khachHang = kh
+        GROUP BY kh.id, kh.ma, kh.ten, kh.email, kh.tenTaiKhoan,
+                 kh.gioiTinh, kh.sdt, kh.ngaySinh, kh.hinhAnh, kh.ghiChu,
+                 kh.trangThai, kh.ngayTao, kh.ngayCapNhat,
+                 dc.diaChiChiTiet, dc.phuongXa, dc.thanhPho, dc.tinh
         ORDER BY kh.ngayTao DESC
     """)
     List<AdminKhachHangResponse> hienThi();
@@ -55,18 +62,23 @@ public interface AdminKhachHangRepository extends JpaRepository<KhachHang, Strin
                 COALESCE(dc.phuongXa, ''), ', ',
                 COALESCE(dc.thanhPho, ''), ', ',
                 COALESCE(dc.tinh, '')
-            )
+            ),
+            SUM(CASE WHEN hd.trangThai = 6 THEN hd.tongTienSauGiam ELSE 0 END),
+            MAX(hd.ngayTao)
         )
         FROM KhachHang kh
         LEFT JOIN kh.diaChi dc
+        LEFT JOIN HoaDon hd ON hd.khachHang = kh
         WHERE kh.id = :id
+        GROUP BY kh.id, kh.ma, kh.ten, kh.email, kh.tenTaiKhoan,
+                 kh.gioiTinh, kh.sdt, kh.ngaySinh, kh.hinhAnh, kh.ghiChu,
+                 kh.trangThai, kh.ngayTao, kh.ngayCapNhat,
+                 dc.diaChiChiTiet, dc.phuongXa, dc.thanhPho, dc.tinh
     """)
     AdminKhachHangResponse detail(@Param("id") String id);
 
     /**
      * Tìm kiếm + lọc + phân trang — 1 query duy nhất.
-     * Khi param là null → bỏ qua điều kiện lọc đó (trả về tất cả).
-     * Thay thế phanTrang + timKiem + filterAll cũ.
      */
     @Query(value = """
         SELECT new com.example.be.core.admin.khachhang.model.response.AdminKhachHangResponse(
@@ -78,10 +90,13 @@ public interface AdminKhachHangRepository extends JpaRepository<KhachHang, Strin
                 COALESCE(dc.phuongXa, ''), ', ',
                 COALESCE(dc.thanhPho, ''), ', ',
                 COALESCE(dc.tinh, '')
-            )
+            ),
+            SUM(CASE WHEN hd.trangThai = 6 THEN hd.tongTienSauGiam ELSE 0 END),
+            MAX(hd.ngayTao)
         )
         FROM KhachHang kh
         LEFT JOIN kh.diaChi dc
+        LEFT JOIN HoaDon hd ON hd.khachHang = kh
         WHERE (:keyword IS NULL OR
                LOWER(kh.ten) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
                LOWER(kh.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
@@ -89,6 +104,10 @@ public interface AdminKhachHangRepository extends JpaRepository<KhachHang, Strin
                LOWER(kh.ma) LIKE LOWER(CONCAT('%', :keyword, '%')))
           AND (:trangThai IS NULL OR kh.trangThai = :trangThai)
           AND (:gioiTinh IS NULL OR kh.gioiTinh = :gioiTinh)
+        GROUP BY kh.id, kh.ma, kh.ten, kh.email, kh.tenTaiKhoan,
+                 kh.gioiTinh, kh.sdt, kh.ngaySinh, kh.hinhAnh, kh.ghiChu,
+                 kh.trangThai, kh.ngayTao, kh.ngayCapNhat,
+                 dc.diaChiChiTiet, dc.phuongXa, dc.thanhPho, dc.tinh
         ORDER BY kh.ngayTao DESC
     """)
     Page<AdminKhachHangResponse> filterAll(

@@ -180,6 +180,21 @@ const loadProducts = async () => {
     }
 };
 
+const loadMaxPrice = async () => {
+    try {
+        const maxPrice = await dichVuSanPham.layGiaLonNhat();
+        if (maxPrice) {
+            const safeMaxPrice = Math.max(maxPrice, PRICE_STEP);
+            productPriceBounds.value.max = safeMaxPrice;
+            if (!priceFilterDirty.value) {
+                filters.khoangGia = [MIN_PRICE, safeMaxPrice];
+            }
+        }
+    } catch (error) {
+        console.error('Error loading max price:', error);
+    }
+};
+
 const loadFilterOptions = async () => {
     try {
         const options = await dichVuSanPham.layOptionsForm();
@@ -461,7 +476,7 @@ watch(() => pagination.size, () => {
 });
 
 onMounted(async () => {
-    await Promise.all([loadProducts(), loadFilterOptions()]);
+    await Promise.all([loadMaxPrice(), loadProducts(), loadFilterOptions()]);
 });
 
 onBeforeUnmount(() => {
@@ -552,17 +567,17 @@ onBeforeUnmount(() => {
             </AdminFilter>
         </div>
 
-        <AdminTable title="Danh sách sản phẩm" addButtonText="Thêm sản phẩm" :headers="[
-            { text: 'Chọn', align: 'center', width: '70px' },
-            { text: 'STT', align: 'center', width: '50px' },
-            { text: 'Mã sản phẩm', align: 'center', width: '120px' },
-            { text: 'Tên sản phẩm', align: 'center', width: '220px' },
-            { text: 'Thương hiệu', align: 'center', width: '140px' },
-            { text: 'Danh mục', align: 'center', width: '140px' },
-            { text: 'Tổng SL', align: 'center', width: '100px' },
-            { text: 'Khoảng giá', align: 'center', width: '200px' },
-            { text: 'Trạng thái', align: 'center', width: '130px' },
-            { text: 'Hành động', align: 'center', width: '130px' }
+        <AdminTable title="Danh sách sản phẩm" addButtonText="Tạo mới" :headers="[
+            { text: 'Chọn', width: '70px' },
+            { text: 'STT', width: '50px' },
+            { text: 'Mã sản phẩm', width: '120px' },
+            { text: 'Tên sản phẩm', width: '220px' },
+            { text: 'Thương hiệu', width: '140px' },
+            { text: 'Danh mục', width: '140px' },
+            { text: 'Tổng SL', width: '100px' },
+            { text: 'Khoảng giá', width: '200px' },
+            { text: 'Trạng thái', width: '130px' },
+            { text: 'Hành động', width: '130px' }
         ]" :items="paginatedProducts" :loading="loading" :showExportButton="true"
             :exportButtonText="productExportButtonText" @add="router.push({ name: 'SanPhamForm' })"
             @export="handleExportProducts">
@@ -592,42 +607,39 @@ onBeforeUnmount(() => {
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
                         <v-checkbox-btn :model-value="selectedProductIds.includes(item.id)" color="primary"
                             hide-details density="compact" @update:model-value="toggleProductSelection(item.id, $event)" />
                     </td>
 
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
 
-                    <td class="data-cell text-center">
-                        {{ item.maSanPham || '--' }}
+                    <td class="data-cell">
+                        <div class="text-truncate" :title="item.maSanPham || '--'">{{ item.maSanPham || '--' }}</div>
                     </td>
 
-                    <td class="data-cell text-center">
-                        <div class="d-inline-block text-left" style="min-width: 180px;">
+                    <td class="data-cell">
+                        <div class="text-truncate" :title="item.tenSanPham || 'Không có tên'">
                             {{ item.tenSanPham || 'Không có tên' }}
                         </div>
                     </td>
 
-                    <td class="data-cell text-center">
-                        {{ item.tenThuongHieu || '--' }}
+                    <td class="data-cell">
+                        <div class="text-truncate" :title="item.tenThuongHieu || '--'">{{ item.tenThuongHieu || '--' }}</div>
                     </td>
 
-                    <td class="data-cell text-center">
-                        {{ item.tenDanhMuc || '--' }}
+                    <td class="data-cell">
+                        <div class="text-truncate" :title="item.tenDanhMuc || '--'">{{ item.tenDanhMuc || '--' }}</div>
                     </td>
 
-                    <td class="data-cell text-center">
-                        <v-chip size="small" variant="flat" color="slate-600"
-                            class="font-weight-black text-white status-chip">
-                            {{ formatNumber(item.tongSoLuongTon || 0) }}
-                        </v-chip>
+                    <td class="data-cell">
+                        <span class="font-weight-black text-slate-700">{{ formatNumber(item.tongSoLuongTon || 0) }}</span>
                     </td>
 
                     <td class="data-cell text-center price-value px-2">
-                        <div class="font-weight-black text-primary">
+                        <div class="font-weight-black text-primary text-truncate" :title="getPriceRange(item)">
                             {{ getPriceRange(item) }}
                         </div>
                     </td>
@@ -639,7 +651,7 @@ onBeforeUnmount(() => {
                         </v-chip>
                     </td>
 
-                    <td class="data-cell action-cell text-center">
+                    <td class="data-cell action-cell">
                         <div class="d-flex align-center justify-center action-controls">
                             <v-btn variant="text" class="action-icon-btn"
                                 @click="router.push({ name: 'BienTheSanPham', query: { productId: item.id } })">
@@ -652,7 +664,7 @@ onBeforeUnmount(() => {
                                 <v-tooltip activator="parent" location="top" text="Chỉnh sửa" />
                             </v-btn>
                             <div class="switch-wrapper">
-                                <v-switch :model-value="isActiveStatus(item.trangThai)" color="#000" hide-details
+                                <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details
                                     density="compact" class="tight-switch action-switch"
                                     @click.prevent.stop="confirmToggleStatus(item)" />
                                 <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái" />

@@ -17,7 +17,6 @@ import java.util.Map;
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_PHIEU_GIAM_GIA)
 @RequiredArgsConstructor
-@CrossOrigin("*")
 public class AdminPhieuGiamGiaController {
 
     private final AdminPhieuGiamGiaService service;

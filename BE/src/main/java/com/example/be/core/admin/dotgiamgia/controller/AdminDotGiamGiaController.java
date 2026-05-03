@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_DOT_GIAM_GIA)
-@CrossOrigin("*")
 @RequiredArgsConstructor
 public class AdminDotGiamGiaController {
 

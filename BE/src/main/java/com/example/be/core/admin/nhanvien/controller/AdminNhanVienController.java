@@ -13,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_NHAN_VIEN)
 @RequiredArgsConstructor
-@CrossOrigin("*")
 public class AdminNhanVienController {
 
     private final AdminNhanVienService adminNhanVienService;

@@ -64,5 +64,11 @@ export const dichVuSanPham = {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
+  },
+  
+  // Lấy giá lớn nhất
+  async layGiaLonNhat() {
+    const response = await api.get(`${API_ADMIN.SAN_PHAM}/max-price`);
+    return response.data.data;
   }
 };

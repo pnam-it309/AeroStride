@@ -1,0 +1,10 @@
+// Centralized SCSS tokens for AeroStride
+// These are raw variables only, safe to @use anywhere.
+
+$white: #fff !default;
+$card-title-size: 18px !default;
+$body-font-family: 'Inter', sans-serif !default;
+$border-radius-root: 10px;
+$btn-font-weight: 700 !default;
+$btn-letter-spacing: 0.02em !default;
+$box-shadow: 0 2px 6px rgba(37, 83, 185, .1);

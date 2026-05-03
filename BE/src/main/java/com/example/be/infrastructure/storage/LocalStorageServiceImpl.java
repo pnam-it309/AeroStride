@@ -30,7 +30,7 @@ public class LocalStorageServiceImpl implements StorageService {
     @Value("${app.base_url}")
     private String appBaseUrl;
 
-    @Value("${app.local-upload-dir:.local-uploads}")
+    @Value("${app.local-upload-dir}")
     private String localUploadDir;
 
     @Override

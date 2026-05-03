@@ -46,6 +46,7 @@ const loading = ref(false)
 const selectedVariantIds = ref([])
 const qrExcelExportItems = ref([])
 const qrExcelExportContainer = ref(null)
+const dynamicMaxPrice = ref(MAX_VARIANT_PRICE)
 
 const filters = reactive({
   keyword: '',
@@ -177,7 +178,7 @@ const resetFilters = () => {
   filters.mauSacId = ''
   filters.kichThuocId = ''
   filters.trangThai = ''
-  filters.khoangGia = [MIN_VARIANT_PRICE, MAX_VARIANT_PRICE]
+  filters.khoangGia = [MIN_VARIANT_PRICE, dynamicMaxPrice.value]
   pagination.page = 1
   clearVariantSelection()
 }
@@ -244,6 +245,18 @@ const fetchProductOptions = async () => {
     productOptions.value = response.content || []
   } catch (error) {
     console.error('Lỗi khi tải danh sách sản phẩm:', error)
+  }
+}
+
+const loadMaxPrice = async () => {
+  try {
+    const maxPrice = await dichVuSanPham.layGiaLonNhat()
+    if (maxPrice) {
+      dynamicMaxPrice.value = Math.max(maxPrice, VARIANT_PRICE_STEP)
+      filters.khoangGia = [MIN_VARIANT_PRICE, dynamicMaxPrice.value]
+    }
+  } catch (error) {
+    console.error('Error loading max price:', error)
   }
 }
 
@@ -618,7 +631,7 @@ watch(
 )
 
 onMounted(async () => {
-  await Promise.all([fetchFormOptions(), fetchProductOptions()])
+  await Promise.all([loadMaxPrice(), fetchFormOptions(), fetchProductOptions()])
   const routeProductId = route.query.productId?.toString()
   selectedProductId.value = routeProductId || 'ALL'
 })
@@ -634,26 +647,6 @@ onMounted(async () => {
     ]" />
 
     <div class="mb-4"></div>
-
-    <div class="header-section mb-6">
-      <div class="d-flex align-center gap-3">
-        <v-btn v-if="selectedProductId && selectedProductId !== 'ALL'" icon variant="flat"
-          @click="router.push({ name: 'SanPham' })" class="btn-back-header">
-          <ArrowLeftIcon size="20" />
-        </v-btn>
-
-        <div v-if="selectedProductId && selectedProductId !== 'ALL'"
-          class="premium-card px-4 py-2 bg-slate-50 d-flex align-center shadow-none border">
-          <v-avatar color="primary" variant="flat" size="32" rounded="lg" class="mr-3">
-            <PackageIcon size="18" color="white" />
-          </v-avatar>
-          <div>
-            <p class="text-overline font-black text-slate-400 mb-0" style="line-height: 1;">Mã Sản Phẩm</p>
-            <h2 class="text-body-2 font-black text-dark mb-0">{{ selectedProductSummary.maSanPham }}</h2>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <div class="flex-none mb-4">
       <AdminFilter title="Bộ lọc nâng cao" @refresh="resetFilters" :loading="loading">
@@ -697,7 +690,7 @@ onMounted(async () => {
                   {{ formatCurrency(filters.khoangGia[0]) }} - {{ formatCurrency(filters.khoangGia[1]) }}
                 </span>
               </div>
-              <v-range-slider v-model="filters.khoangGia" :max="MAX_VARIANT_PRICE" :min="MIN_VARIANT_PRICE"
+              <v-range-slider v-model="filters.khoangGia" :max="dynamicMaxPrice" :min="MIN_VARIANT_PRICE"
                 :step="VARIANT_PRICE_STEP" hide-details color="primary" track-color="slate-200" />
             </div>
           </div>
@@ -707,18 +700,18 @@ onMounted(async () => {
 
     <div class="flex-grow-1 min-h-0">
       <AdminTable title="Danh mục biến thể" :headers="[
-        { text: 'Chọn', align: 'center', width: '70px' },
-        { text: 'STT', align: 'center', width: '60px' },
-        { text: 'Mã SP', align: 'center', width: '120px' },
-        { text: 'Hình ảnh', align: 'center', width: '80px' },
-        { text: 'Mã SKU', align: 'left', width: '150px' },
-        { text: 'Màu sắc', align: 'center', width: '120px' },
-        { text: 'Kích thước', align: 'center', width: '100px' },
-        { text: 'Giá bán niêm yết', align: 'center', width: '150px' },
-        { text: 'Trạng thái', align: 'center', width: '140px' },
-        { text: 'Thao tác', align: 'center', width: '200px' }
+        { text: 'Chọn', width: '70px' },
+        { text: 'STT', width: '60px' },
+        { text: 'Mã SP', width: '120px' },
+        { text: 'Hình ảnh', width: '80px' },
+        { text: 'Mã SKU', width: '150px' },
+        { text: 'Màu sắc', width: '120px' },
+        { text: 'Kích thước', width: '100px' },
+        { text: 'Giá bán niêm yết', width: '150px' },
+        { text: 'Trạng thái', width: '140px' },
+        { text: 'Thao tác', width: '200px' }
       ]" :items="paginatedVariants" :loading="loading" :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'"
-        addButtonText="Thêm biến thể" :showExportButton="true" :exportButtonText="variantExportButtonText"
+        addButtonText="Tạo mới" :showExportButton="true" :exportButtonText="variantExportButtonText"
         @add="openCreateVariantModal" @export="handleExportVariants" class="h-100">
 
         <template #top>
@@ -756,36 +749,39 @@ onMounted(async () => {
 
         <template #row="{ item, index }">
           <tr class="data-row">
-            <td class="data-cell text-center">
+            <td class="data-cell">
               <v-checkbox-btn :model-value="selectedVariantIds.includes(item.id)" color="primary" hide-details
                 density="compact" @update:model-value="toggleVariantSelection(item.id, $event)" />
             </td>
-            <td class="data-cell text-center text-slate-400">
+            <td class="data-cell text-slate-400">
               {{ (pagination.page - 1) * pagination.size + index + 1 }}
             </td>
-            <td class="data-cell text-center font-black text-slate-700">
-              {{ getVariantProductCode(item) }}
+            <td class="data-cell font-black text-slate-700">
+              <div class="text-truncate" :title="getVariantProductCode(item)">{{ getVariantProductCode(item) }}</div>
             </td>
-            <td class="data-cell text-center">
+            <td class="data-cell">
               <v-avatar rounded="lg" size="44" class="border bg-slate-50 shadow-sm avatar-hover">
                 <v-img :src="getVariantThumbnail(item)" cover />
               </v-avatar>
             </td>
-            <td class="data-cell text-left font-black text-dark">
-              <span class="mono-font">{{ item.maChiTietSanPham }}</span>
+            <td class="data-cell font-black text-dark">
+              <div class="text-truncate" :title="item.maChiTietSanPham">
+                <span class="mono-font">{{ item.maChiTietSanPham }}</span>
+              </div>
             </td>
-            <td class="data-cell text-center">
-              <v-chip size="small" variant="flat" color="slate-700" class="font-weight-black text-white status-chip">
-                {{ item.tenMauSac }}
-              </v-chip>
+            <td class="data-cell">
+              <div class="text-truncate" :title="item.tenMauSac">
+                <span class="font-weight-black text-slate-700">{{ item.tenMauSac }}</span>
+              </div>
             </td>
-            <td class="data-cell text-center">
-              <v-chip size="small" variant="flat" color="blue-grey-darken-2"
-                class="font-weight-black text-white status-chip">
-                {{ item.tenKichThuoc }}
-              </v-chip>
+            <td class="data-cell">
+              <div class="text-truncate" :title="item.tenKichThuoc">
+                <span class="font-weight-black text-slate-700">{{ item.tenKichThuoc }}</span>
+              </div>
             </td>
-            <td class="data-cell font-black text-primary">{{ formatCurrency(item.giaBan) }}</td>
+            <td class="data-cell font-black text-primary">
+              <div class="text-truncate" :title="formatCurrency(item.giaBan)">{{ formatCurrency(item.giaBan) }}</div>
+            </td>
             <td class="data-cell">
               <v-chip size="small" :color="isActiveStatus(item.trangThai) ? 'success' : 'warning'" variant="flat"
                 class="status-chip font-weight-black text-white">
@@ -808,9 +804,9 @@ onMounted(async () => {
                   <v-tooltip activator="parent" location="top">Xuất QR</v-tooltip>
                 </v-btn>
                 <div class="switch-wrapper">
-                  <v-switch :model-value="isActiveStatus(item.trangThai)" color="#000" hide-details density="compact"
+                  <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details density="compact"
                     class="tight-switch action-switch" @click.prevent.stop="handleStatusChange(item)" />
-                  <v-tooltip activator="parent" location="top">Bật/Tắt kinh doanh</v-tooltip>
+                  <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
                 </div>
               </div>
             </td>

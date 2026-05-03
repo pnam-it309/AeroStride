@@ -164,11 +164,11 @@ const attributeMeta = {
 const currentMeta = computed(() => attributeMeta[selectedTab.value] || attributeMeta.brands);
 
 const tableHeaders = computed(() => [
-    { text: 'STT', align: 'center', width: '50px' },
-    { text: currentMeta.value.codeLabel, align: 'center', width: '120px' },
-    { text: currentMeta.value.nameLabel, align: 'center', width: '220px' },
-    { text: 'Trạng thái', align: 'center', width: '130px' },
-    { text: 'Thao tác', align: 'center', width: '120px' }
+    { text: 'STT', width: '50px' },
+    { text: currentMeta.value.codeLabel, width: '120px' },
+    { text: currentMeta.value.nameLabel, width: '220px' },
+    { text: 'Trạng thái', width: '130px' },
+    { text: 'Thao tác', width: '120px' }
 ]);
 
 const pickFirst = (item, keys, fallback = '--') => {

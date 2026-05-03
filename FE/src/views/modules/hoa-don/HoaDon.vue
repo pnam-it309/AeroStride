@@ -85,16 +85,16 @@ const showOrderDetailDialog = ref(false);
 const selectedOrder = ref(null);
 
 const tableHeaders = [
-    { text: 'STT', align: 'center', width: '50px' },
-    { text: 'Mã hóa đơn', align: 'left', width: '120px' },
-    { text: 'Khách hàng', align: 'left', width: '150px' },
-    { text: 'Số điện thoại', align: 'left', width: '120px' },
-    { text: 'Loại hóa đơn', align: 'left', width: '120px' },
-    { text: 'Loại thanh toán', align: 'left', width: '140px' },
-    { text: 'Mã nhân viên', align: 'left', width: '140px' },
-    { text: 'Tổng tiền', align: 'left', width: '100px' },
-    { text: 'Trạng thái', align: 'left', width: '120px' },
-    { text: 'Hành động', align: 'center', width: '90px' }
+    { text: 'STT', width: '50px' },
+    { text: 'Mã hóa đơn', width: '120px' },
+    { text: 'Khách hàng', width: '150px' },
+    { text: 'Số điện thoại', width: '120px' },
+    { text: 'Loại hóa đơn', width: '120px' },
+    { text: 'Loại thanh toán', width: '140px' },
+    { text: 'Mã nhân viên', width: '140px' },
+    { text: 'Tổng tiền', width: '100px' },
+    { text: 'Trạng thái', width: '120px' },
+    { text: 'Hành động', width: '90px' }
 ];
 
 const loadCounts = async () => {
@@ -420,18 +420,18 @@ onMounted(() => loadOrders());
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell stt-cell text-slate-400 font-weight-medium">{{ getRowNumber(index) }}</td>
+                    <td class="data-cell text-slate-400 font-weight-medium">{{ getRowNumber(index) }}</td>
 
-                    <td class="data-cell col-left-tight">
-                        <div class="text-caption font-weight-medium text-dark">{{ item.maHoaDon }}</div>
+                    <td class="data-cell">
+                        <div class="text-caption font-weight-medium text-dark text-truncate" :title="item.maHoaDon">{{ item.maHoaDon }}</div>
                     </td>
 
-                    <td class="data-cell col-left-tight">
-                        <div class="text-caption font-weight-medium text-dark">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
+                    <td class="data-cell">
+                        <div class="text-caption font-weight-medium text-dark text-truncate" :title="item.tenKhachHang || 'Khách vãng lai'">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
                     </td>
 
-                    <td class="data-cell col-left-tight">
-                        <div class="text-caption font-weight-medium text-dark">{{ item.soDienThoai || 'N/A' }}</div>
+                    <td class="data-cell">
+                        <div class="text-caption font-weight-medium text-dark text-truncate" :title="item.soDienThoai || 'N/A'">{{ item.soDienThoai || 'N/A' }}</div>
                     </td>
 
                     <td class="data-cell">
@@ -445,11 +445,11 @@ onMounted(() => loadOrders());
                     </td>
 
                     <td class="data-cell">
-                        <div class="text-caption font-weight-medium text-dark">{{ getPaymentLabel(item) }}</div>
+                        <div class="text-caption font-weight-medium text-dark text-truncate" :title="getPaymentLabel(item)">{{ getPaymentLabel(item) }}</div>
                     </td>
 
                     <td class="data-cell">
-                        <div class="text-caption font-weight-medium text-dark">
+                        <div class="text-caption font-weight-medium text-dark text-truncate" :title="item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống'">
                             {{ item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống' }}
                         </div>
                     </td>
@@ -478,7 +478,7 @@ onMounted(() => loadOrders());
 
 
 
-                    <td class="data-cell action-cell" style="text-align: center">
+                    <td class="data-cell action-cell">
                         <div class="d-flex align-center justify-center action-group action-controls">
                             <v-btn
                                 icon

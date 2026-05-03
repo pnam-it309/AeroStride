@@ -19,7 +19,6 @@ import java.util.List;
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_BAN_HANG)
 @RequiredArgsConstructor
-@CrossOrigin("*") // Enable CORS for development
 public class AdminBanHangController {
 
     private final AdminBanHangService adminBanHangService;

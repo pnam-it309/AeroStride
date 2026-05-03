@@ -8,9 +8,11 @@ import { useNotifications } from '@/services/notificationService';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
+import AdminFilter from '@/components/common/AdminFilter.vue';
 import {
     ChevronLeftIcon, DeviceFloppyIcon, PrinterIcon, MailIcon,
-    AlertCircleIcon, InfoCircleIcon, SettingsIcon, CalendarIcon
+    AlertCircleIcon, InfoCircleIcon, SettingsIcon, CalendarIcon,
+    SearchIcon, FilterIcon, UsersIcon
 } from 'vue-tabler-icons';
 
 const route = useRoute();
@@ -21,6 +23,7 @@ const loading = ref(false);
 const saving = ref(false);
 const isDetailMode = computed(() => !!route.params.id && route.path.includes('/detail'));
 const isEditMode = computed(() => !!route.params.id && !route.path.includes('/detail'));
+const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật phiếu giảm giá' : 'Thêm phiếu giảm giá');
 const isViewOnly = computed(() => isDetailMode.value);
 
 const customers = ref([]);
@@ -85,6 +88,17 @@ const filteredCustomers = computed(() => {
     });
 });
 
+const formatCurrency = (value) => {
+    if (!value) return '0 VNĐ';
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+};
+
+const formatDate = (value) => {
+    if (!value) return '---';
+    const date = typeof value === 'number' ? new Date(value) : new Date(value);
+    return date.toLocaleDateString('vi-VN');
+};
+
 const init = async () => {
     try {
         const data = await dichVuKhachHang.layTatCaKhachHang();
@@ -97,8 +111,8 @@ const init = async () => {
         loading.value = true;
         try {
             const data = await dichVuPhieuGiamGia.layChiTietPhieuGiamGia(route.params.id);
-            form.value = { 
-                ...data, 
+            form.value = {
+                ...data,
                 loaiHienThi: data.hinhThuc || 'CONG_KHAI',
                 giatriToiThieu: data.donHangToiThieu || 0,
                 ngayBatDau: data.ngayBatDau ? new Date(data.ngayBatDau).toISOString().slice(0, 16) : '',
@@ -183,7 +197,7 @@ onMounted(init);
                     class="text-none font-weight-bold text-white px-8 rounded-lg h-11 elevation-4" @click="handleSave"
                     :loading="saving">
                     <v-icon size="18" class="mr-2 text-white">mdi-check-all</v-icon>
-                    {{ isEditMode ? 'Cập nhật thay đổi' : 'Thêm mới phiếu giảm giá' }}
+                    {{ submitButtonText }}
                 </v-btn>
             </div>
         </div>
@@ -195,201 +209,349 @@ onMounted(init);
             </v-col>
         </v-row>
 
-        <v-row v-else class="form-grid pb-16">
-            <!-- Left Column -->
-            <v-col cols="12" lg="8">
-                <!-- 1. General Identification -->
-                <v-card class="filter-card elevation-0 mb-6">
-                    <v-card-text class="pa-8">
-                        <div class="section-header d-flex align-center mb-6">
-                            <div class="icon-blob bg-blue-lighten-5 mr-3">
-                                <v-icon color="primary" size="18">mdi-ticket-percent</v-icon>
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin chương trình</span>
-                        </div>
-
-                        <v-row>
-                            <v-col cols="12" md="4">
-                                <div class="field-label">Mã phiếu giảm giá</div>
-                                <v-text-field v-model="form.ma" readonly placeholder="Hệ thống tự tạo..." variant="outlined"
-                                    density="compact" class="custom-input mono-font bg-slate-50"
-                                    hide-details></v-text-field>
-                            </v-col>
-                            <v-col cols="12" md="8">
-                                <div class="field-label">Tên chương trình <span class="text-red">*</span></div>
-                                <v-text-field v-model="form.ten" :readonly="isViewOnly" placeholder="Ví dụ: Voucher Mừng Sinh Nhật..."
-                                    variant="outlined" density="compact" hide-details></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <div class="field-label">Mô tả chi tiết</div>
-                                <v-textarea v-model="form.moTa" :readonly="isViewOnly" variant="outlined" rows="3"
-                                    placeholder="Điều kiện chương trình..." hide-details class="custom-textarea"></v-textarea>
-                            </v-col>
-                        </v-row>
-                    </v-card-text>
-                </v-card>
-
-                <!-- 2. Value Config -->
-                <v-card class="filter-card elevation-0 mb-6">
-                    <v-card-text class="pa-8">
-                        <div class="section-header d-flex align-center mb-6">
-                            <div class="icon-blob bg-amber-lighten-5 mr-3">
-                                <v-icon color="amber-darken-3" size="18">mdi-cash-register</v-icon>
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Giá trị & Giới hạn</span>
-                        </div>
-
-                        <v-row>
-                            <v-col cols="12" md="4">
-                                <div class="field-label">Hình thức giảm</div>
-                                <v-btn-toggle v-model="form.loaiPhieu" :disabled="isViewOnly" mandatory color="primary" variant="outlined"
-                                    density="compact" class="w-100 rounded-lg custom-toggle">
-                                    <v-btn value="TIEN_MAT" class="flex-grow-1">VNĐ</v-btn>
-                                    <v-btn value="PHAN_TRAM" class="flex-grow-1">%</v-btn>
-                                </v-btn-toggle>
-                            </v-col>
-                            <v-col cols="12" md="4">
-                                <div class="field-label">Giá trị giảm</div>
-                                <v-text-field v-if="form.loaiPhieu === 'TIEN_MAT'" v-model.number="form.soTienGiam"
-                                    :readonly="isViewOnly" type="number" suffix="VNĐ" variant="outlined" density="compact"
-                                    hide-details></v-text-field>
-                                <v-text-field v-else v-model.number="form.phanTramGiamGia" :readonly="isViewOnly" type="number" suffix="%"
-                                    variant="outlined" density="compact" hide-details></v-text-field>
-                            </v-col>
-                            <v-col cols="12" md="4">
-                                <div class="field-label">Giảm tối đa</div>
-                                <v-text-field v-model.number="form.giamToiDa" :readonly="isViewOnly" :disabled="form.loaiPhieu === 'TIEN_MAT'"
-                                    suffix="VNĐ" variant="outlined" density="compact" hide-details
-                                    :class="form.loaiPhieu === 'TIEN_MAT' ? 'bg-slate-50' : ''"></v-text-field>
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="d-flex align-center gap-4 mb-2" style="height: 24px;">
-                                    <div class="field-label mb-0">Số lượng</div>
-                                    <v-switch v-model="isInfinite" :disabled="isViewOnly" label="Vô hạn" color="primary" density="compact"
-                                        hide-details class="custom-mini-switch ml-2"></v-switch>
-                                </div>
-                                <v-text-field :model-value="isInfinite ? 'Vô hạn' : form.soLuong"
-                                    @update:model-value="val => !isInfinite && (form.soLuong = Number(val))"
-                                    :type="isInfinite ? 'text' : 'number'"
-                                    :disabled="isInfinite || form.loaiHienThi === 'CA_NHAN' || isViewOnly" variant="outlined"
-                                    density="compact" hide-details></v-text-field>
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="d-flex align-center mb-2" style="height: 24px;">
-                                    <div class="field-label mb-0">Đơn tối thiểu (VNĐ)</div>
-                                </div>
-                                <v-text-field v-model.number="form.giatriToiThieu" :readonly="isViewOnly" type="number" placeholder="0" variant="outlined"
-                                    density="compact" hide-details></v-text-field>
-                            </v-col>
-                        </v-row>
-                    </v-card-text>
-                </v-card>
-
-                <v-expand-transition>
-                    <div v-if="form.loaiHienThi === 'CA_NHAN'">
+        <v-fade-transition mode="out-in">
+            <div v-if="!loading" :key="form.loaiHienThi">
+                <!-- LAYOUT 1: CONG KHAI (Original 8/4 Stacking) -->
+                <v-row v-if="form.loaiHienThi === 'CONG_KHAI'" class="pb-16 animate-fade-in">
+                    <v-col cols="12" lg="8">
+                        <!-- 1. General Identification -->
                         <v-card class="filter-card elevation-0 mb-6">
                             <v-card-text class="pa-8">
                                 <div class="section-header d-flex align-center mb-6">
-                                    <div class="icon-blob bg-emerald-lighten-5 mr-3">
-                                        <v-icon color="emerald-darken-2" size="18">mdi-account-multiple-check</v-icon>
+                                    <div class="icon-blob bg-blue-lighten-5 mr-3">
+                                        <v-icon color="primary" size="18">mdi-ticket-percent</v-icon>
                                     </div>
-                                    <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách khách hàng chọn lọc</span>
+                                    <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin chương
+                                        trình</span>
+                                </div>
+                                <v-row>
+                                    <v-col cols="12" md="4">
+                                        <div class="field-label">Mã phiếu giảm giá</div>
+                                        <v-text-field v-model="form.ma" readonly placeholder="Hệ thống tự tạo..."
+                                            variant="outlined" density="compact"
+                                            class="custom-input mono-font bg-slate-50" hide-details></v-text-field>
+                                    </v-col>
+                                    <v-col cols="12" md="8">
+                                        <div class="field-label">Tên chương trình <span class="text-red">*</span></div>
+                                        <v-text-field v-model="form.ten" :readonly="isViewOnly"
+                                            placeholder="Ví dụ: Voucher Mừng Sinh Nhật..." variant="outlined"
+                                            density="compact" hide-details></v-text-field>
+                                    </v-col>
+                                    <v-col cols="12">
+                                        <div class="field-label">Mô tả chi tiết</div>
+                                        <v-textarea v-model="form.moTa" :readonly="isViewOnly" variant="outlined"
+                                            rows="3" placeholder="Điều kiện chương trình..." hide-details
+                                            class="custom-textarea"></v-textarea>
+                                    </v-col>
+                                </v-row>
+                            </v-card-text>
+                        </v-card>
+
+                        <!-- 2. Value Config -->
+                        <v-card class="filter-card elevation-0 mb-6">
+                            <v-card-text class="pa-8">
+                                <div class="section-header d-flex align-center mb-6">
+                                    <div class="icon-blob bg-amber-lighten-5 mr-3">
+                                        <v-icon color="amber-darken-3" size="18">mdi-cash-register</v-icon>
+                                    </div>
+                                    <span class="text-subtitle-1 font-weight-bold text-slate-800">Giá trị & Giới
+                                        hạn</span>
+                                </div>
+                                <v-row>
+                                    <v-col cols="12" md="4">
+                                        <div class="field-label">Hình thức giảm</div>
+                                        <v-btn-toggle v-model="form.loaiPhieu" :disabled="isViewOnly" mandatory
+                                            color="primary" variant="outlined" density="compact"
+                                            class="w-100 rounded-lg custom-toggle">
+                                            <v-btn value="TIEN_MAT" class="flex-grow-1">VNĐ</v-btn>
+                                            <v-btn value="PHAN_TRAM" class="flex-grow-1">%</v-btn>
+                                        </v-btn-toggle>
+                                    </v-col>
+                                    <v-col cols="12" md="4">
+                                        <div class="field-label">Giá trị giảm</div>
+                                        <v-text-field v-if="form.loaiPhieu === 'TIEN_MAT'"
+                                            v-model.number="form.soTienGiam" :readonly="isViewOnly" type="number"
+                                            suffix="VNĐ" variant="outlined" density="compact"
+                                            hide-details></v-text-field>
+                                        <v-text-field v-else v-model.number="form.phanTramGiamGia"
+                                            :readonly="isViewOnly" type="number" suffix="%" variant="outlined"
+                                            density="compact" hide-details></v-text-field>
+                                    </v-col>
+                                    <v-col cols="12" md="4">
+                                        <div class="field-label">Giảm tối đa</div>
+                                        <v-text-field v-model.number="form.giamToiDa" :readonly="isViewOnly"
+                                            :disabled="form.loaiPhieu === 'TIEN_MAT'" suffix="VNĐ" variant="outlined"
+                                            density="compact" hide-details
+                                            :class="form.loaiPhieu === 'TIEN_MAT' ? 'bg-slate-50' : ''"></v-text-field>
+                                    </v-col>
+                                    <v-col cols="12" md="6">
+                                        <div class="d-flex align-center gap-4 mb-2" style="height: 24px;">
+                                            <div class="field-label mb-0">Số lượng</div>
+                                            <v-switch v-model="isInfinite" :disabled="isViewOnly" label="Vô hạn"
+                                                color="primary" density="compact" hide-details
+                                                class="custom-mini-switch ml-2"></v-switch>
+                                        </div>
+                                        <v-text-field :model-value="isInfinite ? 'Vô hạn' : form.soLuong"
+                                            @update:model-value="val => !isInfinite && (form.soLuong = Number(val))"
+                                            :type="isInfinite ? 'text' : 'number'" :disabled="isInfinite || isViewOnly"
+                                            variant="outlined" density="compact" hide-details></v-text-field>
+                                    </v-col>
+                                    <v-col cols="12" md="6">
+                                        <div class="d-flex align-center mb-2" style="height: 24px;">
+                                            <div class="field-label mb-0">Đơn tối thiểu (VNĐ)</div>
+                                        </div>
+                                        <v-text-field v-model.number="form.giatriToiThieu" :readonly="isViewOnly"
+                                            type="number" placeholder="0" variant="outlined" density="compact"
+                                            hide-details></v-text-field>
+                                    </v-col>
+                                </v-row>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+
+                    <v-col cols="12" lg="4">
+                        <v-card class="filter-card elevation-0 sticky-sidebar">
+                            <v-card-text class="pa-8">
+                                <div class="section-header d-flex align-center mb-6">
+                                    <div class="icon-blob bg-emerald-lighten-5 mr-3">
+                                        <v-icon color="emerald-darken-2" size="18">mdi-clock-check</v-icon>
+                                    </div>
+                                    <span class="text-subtitle-1 font-weight-bold text-slate-800">Cài đặt phát
+                                        hành</span>
+                                </div>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <div class="field-label">Phạm vi áp dụng</div>
+                                        <v-btn-toggle v-model="form.loaiHienThi" :disabled="isViewOnly" mandatory
+                                            color="primary" variant="outlined" density="compact"
+                                            class="w-100 rounded-lg custom-toggle">
+                                            <v-btn value="CONG_KHAI" class="flex-grow-1">Công khai</v-btn>
+                                            <v-btn value="CA_NHAN" class="flex-grow-1">Cá nhân</v-btn>
+                                        </v-btn-toggle>
+                                    </v-col>
+                                    <v-col cols="12">
+                                        <div class="field-label">Bắt đầu từ ngày</div>
+                                        <v-text-field v-model="form.ngayBatDau" :readonly="isViewOnly"
+                                            type="datetime-local" variant="outlined" density="compact"
+                                            hide-details></v-text-field>
+                                    </v-col>
+                                    <v-col cols="12">
+                                        <div class="field-label">Kết thúc vào ngày</div>
+                                        <v-text-field v-model="form.ngayKetThuc" :readonly="isViewOnly"
+                                            type="datetime-local" variant="outlined" density="compact"
+                                            hide-details></v-text-field>
+                                    </v-col>
+                                </v-row>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+                </v-row>
+
+                <!-- LAYOUT 2: CA NHAN (3-Column Row + Full Width List) -->
+                <v-row v-else class="pb-16 animate-fade-in">
+                    <v-col cols="12">
+                        <v-row class="personal-mode-row">
+                            <!-- 1. Program Info -->
+                            <v-col cols="12" lg="4">
+                                <v-card class="filter-card elevation-0 h-100">
+                                    <v-card-text class="pa-8">
+                                        <div class="section-header d-flex align-center mb-6">
+                                            <div class="icon-blob bg-blue-lighten-5 mr-3">
+                                                <v-icon color="primary" size="18">mdi-ticket-percent</v-icon>
+                                            </div>
+                                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin
+                                                chương trình</span>
+                                        </div>
+                                        <v-row>
+                                            <v-col cols="12">
+                                                <div class="field-label">Mã phiếu giảm giá</div>
+                                                <v-text-field v-model="form.ma" readonly variant="outlined"
+                                                    density="compact" class="bg-slate-50 mono-font"
+                                                    hide-details></v-text-field>
+                                            </v-col>
+                                            <v-col cols="12">
+                                                <div class="field-label">Tên chương trình <span
+                                                        class="text-red">*</span></div>
+                                                <v-text-field v-model="form.ten" :readonly="isViewOnly"
+                                                    variant="outlined" density="compact" hide-details></v-text-field>
+                                            </v-col>
+                                            <v-col cols="12">
+                                                <div class="field-label">Mô tả</div>
+                                                <v-textarea v-model="form.moTa" :readonly="isViewOnly"
+                                                    variant="outlined" rows="4" hide-details></v-textarea>
+                                            </v-col>
+                                        </v-row>
+                                    </v-card-text>
+                                </v-card>
+                            </v-col>
+
+                            <!-- 2. Release Settings -->
+                            <v-col cols="12" lg="4">
+                                <v-card class="filter-card elevation-0 h-100">
+                                    <v-card-text class="pa-8">
+                                        <div class="section-header d-flex align-center mb-6">
+                                            <div class="icon-blob bg-emerald-lighten-5 mr-3">
+                                                <v-icon color="emerald-darken-2" size="18">mdi-clock-check</v-icon>
+                                            </div>
+                                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Cài đặt phát
+                                                hành</span>
+                                        </div>
+                                        <v-row>
+                                            <v-col cols="12">
+                                                <div class="field-label">Phạm vi áp dụng</div>
+                                                <v-btn-toggle v-model="form.loaiHienThi" mandatory color="primary"
+                                                    variant="outlined" density="compact" class="w-100 rounded-lg">
+                                                    <v-btn value="CONG_KHAI" class="flex-grow-1">Công khai</v-btn>
+                                                    <v-btn value="CA_NHAN" class="flex-grow-1">Cá nhân</v-btn>
+                                                </v-btn-toggle>
+                                            </v-col>
+                                            <v-col cols="12">
+                                                <div class="field-label">Ngày bắt đầu</div>
+                                                <v-text-field v-model="form.ngayBatDau" type="datetime-local"
+                                                    variant="outlined" density="compact" hide-details></v-text-field>
+                                            </v-col>
+                                            <v-col cols="12">
+                                                <div class="field-label">Ngày kết thúc</div>
+                                                <v-text-field v-model="form.ngayKetThuc" type="datetime-local"
+                                                    variant="outlined" density="compact" hide-details></v-text-field>
+                                            </v-col>
+                                        </v-row>
+                                    </v-card-text>
+                                </v-card>
+                            </v-col>
+
+                            <!-- 3. Value & Limits -->
+                            <v-col cols="12" lg="4">
+                                <v-card class="filter-card elevation-0 h-100">
+                                    <v-card-text class="pa-8">
+                                        <div class="section-header d-flex align-center mb-6">
+                                            <div class="icon-blob bg-amber-lighten-5 mr-3">
+                                                <v-icon color="amber-darken-3" size="18">mdi-cash-register</v-icon>
+                                            </div>
+                                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Giá trị & Giới
+                                                hạn</span>
+                                        </div>
+                                        <v-row>
+                                            <v-col cols="12">
+                                                <div class="field-label">Hình thức</div>
+                                                <v-btn-toggle v-model="form.loaiPhieu" mandatory color="primary"
+                                                    variant="outlined" density="compact" class="w-100 rounded-lg">
+                                                    <v-btn value="TIEN_MAT" class="flex-grow-1">VNĐ</v-btn>
+                                                    <v-btn value="PHAN_TRAM" class="flex-grow-1">%</v-btn>
+                                                </v-btn-toggle>
+                                            </v-col>
+                                            <v-col cols="12">
+                                                <div class="field-label">Giá trị giảm</div>
+                                                <v-text-field v-if="form.loaiPhieu === 'TIEN_MAT'"
+                                                    v-model.number="form.soTienGiam" suffix="VNĐ"
+                                                    variant="outlined" density="compact" hide-details></v-text-field>
+                                                <v-text-field v-else
+                                                    v-model.number="form.phanTramGiamGia" suffix="%"
+                                                    variant="outlined" density="compact" hide-details></v-text-field>
+                                            </v-col>
+                                            <v-col cols="12">
+                                                <div class="field-label">Đơn tối thiểu</div>
+                                                <v-text-field v-model.number="form.giatriToiThieu" suffix="VNĐ"
+                                                    variant="outlined" density="compact" hide-details></v-text-field>
+                                            </v-col>
+                                        </v-row>
+                                    </v-card-text>
+                                </v-card>
+                            </v-col>
+                        </v-row>
+                    </v-col>
+
+                    <!-- Row 2: Full Width Customer List -->
+                    <v-col cols="12">
+                        <v-card class="filter-card elevation-0 border-2 border-primary-lighten-4">
+                            <v-card-text class="pa-8">
+                                <div class="section-header d-flex align-center mb-6">
+                                    <div class="icon-blob bg-primary-lighten-5 mr-3">
+                                        <UsersIcon class="text-primary" size="20" />
+                                    </div>
+                                    <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách khách hàng
+                                        chọn lọc</span>
                                     <v-spacer></v-spacer>
-                                    <v-text-field v-model="searchGlobal" prepend-inner-icon="mdi-magnify" placeholder="Tìm tên, SĐT..." variant="outlined" density="compact" hide-details style="max-width: 250px"></v-text-field>
+                                    <v-chip color="primary" size="small" variant="flat" class="font-weight-bold px-4">
+                                        Đã chọn {{ selectedCustomerIds.length }} khách hàng
+                                    </v-chip>
                                 </div>
 
-                                <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="max-height: 300px;">
+                                <AdminFilter title="Tìm kiếm khách hàng" @refresh="searchGlobal = ''">
+                                    <v-col cols="12" md="4">
+                                        <v-text-field v-model="searchGlobal" prepend-inner-icon="mdi-magnify"
+                                            placeholder="Nhập tên, mã hoặc số điện thoại..." variant="outlined"
+                                            density="compact" hide-details></v-text-field>
+                                    </v-col>
+                                </AdminFilter>
+
+                                <div class="table-wrapper border rounded-xl overflow-hidden mt-6">
                                     <table class="native-admin-table">
                                         <thead>
                                             <tr>
                                                 <th class="header-cell text-center" style="width: 60px">
-                                                    <v-checkbox-btn v-model="isSelectAll" :disabled="isViewOnly" color="primary" density="compact" hide-details class="d-inline-flex"></v-checkbox-btn>
+                                                    <v-checkbox-btn v-model="isSelectAll" :disabled="isViewOnly"
+                                                        color="primary" density="compact" hide-details
+                                                        class="d-inline-flex"></v-checkbox-btn>
                                                 </th>
                                                 <th class="header-cell text-center" style="width: 60px">STT</th>
                                                 <th class="header-cell text-center">Mã KH</th>
                                                 <th class="header-cell text-center">Tên khách hàng</th>
+                                                <th class="header-cell text-center">Ngày sinh</th>
                                                 <th class="header-cell text-center">Số điện thoại</th>
                                                 <th class="header-cell text-center">Email</th>
+                                                <th class="header-cell text-center">Tổng chi tiêu</th>
+                                                <th class="header-cell text-center">Đơn hàng gần nhất</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr v-for="(item, index) in paginatedCustomers" :key="item.id" class="data-row">
+                                            <tr v-for="(item, index) in paginatedCustomers" :key="item.id"
+                                                class="data-row">
                                                 <td class="data-cell text-center">
-                                                    <v-checkbox-btn v-model="selectedCustomerIds" :value="item.id" :disabled="isViewOnly" color="primary" density="compact" hide-details class="d-inline-flex"></v-checkbox-btn>
+                                                    <v-checkbox-btn v-model="selectedCustomerIds" :value="item.id"
+                                                        :disabled="isViewOnly" color="primary" density="compact"
+                                                        hide-details class="d-inline-flex"></v-checkbox-btn>
                                                 </td>
-                                                <td class="data-cell text-center text-slate-500 font-weight-medium">
+                                                <td class="data-cell text-center text-slate-400 font-weight-medium">
                                                     {{ (pagination.page - 1) * pagination.size + index + 1 }}
                                                 </td>
-                                                <td class="data-cell text-center font-weight-bold text-slate-600">
-                                                    {{ item.maKh || item.ma }}
+                                                <td class="data-cell text-center">
+                                                    <span class="mono-font text-slate-500">{{ item.maKh || item.ma
+                                                        }}</span>
                                                 </td>
-                                                <td class="data-cell text-center font-weight-medium">
-                                                    {{ item.ten }}
+                                                <td class="data-cell text-center">
+                                                    <span class="font-weight-bold text-slate-700">{{ item.ten }}</span>
                                                 </td>
-                                                <td class="data-cell text-center text-body-2">
-                                                    {{ item.sdt }}
+                                                <td class="data-cell text-center text-slate-600">
+                                                    {{ formatDate(item.ngaySinh) }}
                                                 </td>
-                                                <td class="data-cell text-center text-body-2 text-slate-500">
+                                                <td class="data-cell text-center">
+                                                    <span class="text-slate-600">{{ item.sdt }}</span>
+                                                </td>
+                                                <td class="data-cell text-center text-slate-500">
                                                     {{ item.email }}
+                                                </td>
+                                                <td class="data-cell text-center font-weight-bold text-emerald-600">
+                                                    {{ formatCurrency(item.tongChiTieu) }}
+                                                </td>
+                                                <td class="data-cell text-center text-slate-500">
+                                                    {{ formatDate(item.ngayDonHangGanNhat) }}
                                                 </td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
-                                <AdminPagination
-                                    v-model="pagination.page"
-                                    :page-size="pagination.size"
-                                    @update:pageSize="pagination.size = $event"
-                                    :total-pages="totalPages"
-                                    :total-elements="filteredCustomers.length"
-                                    :current-size="paginatedCustomers.length"
-                                    class="mt-4"
-                                />
-                                <div class="mt-2 px-2">
-                                    <span class="text-caption font-weight-normal text-slate-500">Đã chọn {{ selectedCustomerIds.length }} khách hàng</span>
-                                </div>
+
+                                <AdminPagination v-model="pagination.page" :page-size="pagination.size"
+                                    @update:pageSize="pagination.size = $event" :total-pages="totalPages"
+                                    :total-elements="filteredCustomers.length" :current-size="paginatedCustomers.length"
+                                    class="mt-6" />
                             </v-card-text>
                         </v-card>
-                    </div>
-                </v-expand-transition>
-            </v-col>
-
-            <!-- Right Column -->
-            <v-col cols="12" lg="4">
-                <v-card class="filter-card elevation-0 mb-6 sticky-sidebar">
-                    <v-card-text class="pa-8">
-                        <div class="section-header d-flex align-center mb-6">
-                            <div class="icon-blob bg-emerald-lighten-5 mr-3">
-                                <v-icon color="emerald-darken-2" size="18">mdi-clock-check</v-icon>
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Cài đặt phát hành</span>
-                        </div>
-
-                        <v-row>
-                            <v-col cols="12">
-                                <div class="field-label">Phạm vi áp dụng</div>
-                                <v-btn-toggle v-model="form.loaiHienThi" :disabled="isViewOnly" mandatory color="primary" variant="outlined"
-                                    density="compact" class="w-100 rounded-lg custom-toggle">
-                                    <v-btn value="CONG_KHAI" class="flex-grow-1">Công khai</v-btn>
-                                    <v-btn value="CA_NHAN" class="flex-grow-1">Cá nhân</v-btn>
-                                </v-btn-toggle>
-                            </v-col>
-                            <v-col cols="12">
-                                <div class="field-label">Bắt đầu từ ngày</div>
-                                <v-text-field v-model="form.ngayBatDau" :readonly="isViewOnly" type="datetime-local" variant="outlined"
-                                    density="compact" hide-details></v-text-field>
-                            </v-col>
-                            <v-col cols="12">
-                                <div class="field-label">Kết thúc vào ngày</div>
-                                <v-text-field v-model="form.ngayKetThuc" :readonly="isViewOnly" type="datetime-local" variant="outlined"
-                                    density="compact" hide-details></v-text-field>
-                            </v-col>
-
-                        </v-row>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-        </v-row>
+                    </v-col>
+                </v-row>
+            </div>
+        </v-fade-transition>
 
         <!-- CONFIRM DIALOG -->
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
@@ -407,15 +569,46 @@ onMounted(init);
 
 
 
+
 :deep(.custom-mini-switch) {
     .v-selection-control {
         min-height: unset !important;
     }
+
     .v-label {
         font-size: 12px !important;
         font-weight: 700 !important;
         padding-inline-start: 8px !important;
     }
 }
-</style>
 
+.personal-mode-row {
+    &>.v-col {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.border-2 {
+    border-width: 2px !important;
+}
+
+.table-wrapper {
+    background: #fff;
+}
+</style>

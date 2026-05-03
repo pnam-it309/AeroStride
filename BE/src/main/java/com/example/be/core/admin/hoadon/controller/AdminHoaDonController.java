@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_HOA_DON)
 @RequiredArgsConstructor
-@CrossOrigin("*")
 public class AdminHoaDonController {
 
     private final AdminHoaDonService adminHoaDonService;

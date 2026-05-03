@@ -21,7 +21,7 @@ public class ExcelItemReader<T> implements ItemReader<T> {
     @Setter
     private ExcelRowMapper<T> rowMapper;
 
-    public ExcelItemReader(@Value("${batch.excel.file-path:}") String filePath) {
+    public ExcelItemReader(@Value("${batch.excel.file-path}") String filePath) {
         this.filePath = filePath;
     }
 

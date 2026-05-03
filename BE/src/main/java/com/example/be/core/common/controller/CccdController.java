@@ -2,6 +2,7 @@ package com.example.be.core.common.controller;
 
 import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.core.common.dto.CccdDto;
+import com.example.be.infrastructure.constants.RoutesConstant;
 import com.example.be.utils.CccdParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/common/cccd")
+@RequestMapping(RoutesConstant.API_PREFIX + "/common/cccd")
 @RequiredArgsConstructor
 public class CccdController {
 

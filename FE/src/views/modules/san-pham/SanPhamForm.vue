@@ -43,6 +43,7 @@ const confirmDialog = ref({
 });
 
 const isEditMode = computed(() => !!route.params.id);
+const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm');
 const defaultVariantStatus = 'DANG_HOAT_DONG';
 
 // DATA OPTIONS
@@ -1250,7 +1251,8 @@ const handleSave = async () => {
                 <v-btn color="primary" variant="flat"
                     class="text-none font-weight-black text-white px-8 rounded-lg h-11 elevation-4"
                     :loading="saving" @click="handleSave">
-                    <DeviceFloppyIcon size="18" class="mr-2 text-white" /> Lưu thông tin
+                    <DeviceFloppyIcon size="18" class="mr-2 text-white" />
+                    {{ submitButtonText }}
                 </v-btn>
             </div>
         </div>
@@ -1412,8 +1414,9 @@ const handleSave = async () => {
                                 </div>
                             </div>
 
-                            <v-btn block class="mt-8 create-generate-btn text-none font-weight-bold"
+                            <v-btn block class="mt-8 create-generate-btn text-none font-weight-black text-white elevation-4"
                                 color="primary" size="large" @click="generateVariants">
+                                <v-icon icon="mdi-auto-fix" size="20" class="mr-2" />
                                 Tạo biến thể tự động
                             </v-btn>
                         </v-card-text>
@@ -1886,7 +1889,7 @@ const handleSave = async () => {
                                                     </v-btn>
                                                     <div class="switch-wrapper">
                                                         <v-switch :model-value="isVariantActiveStatus(variant.trangThai)"
-                                                            color="#000" hide-details density="compact"
+                                                            color="primary" hide-details density="compact"
                                                             class="tight-switch action-switch"
                                                             @click.prevent.stop="handleToggleVariantStatus(variant)" />
                                                     </div>
@@ -1992,11 +1995,12 @@ const handleSave = async () => {
 }
 
 .create-generate-btn {
-    min-height: 50px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #5AC8FA 0%, #0085DB 58%, #111C2D 100%) !important;
-    color: #fff !important;
-    box-shadow: 0 14px 28px rgba(0, 133, 219, 0.24);
+    min-height: 48px;
+    border-radius: 12px !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.2) !important;
+    text-transform: none !important;
 }
 
 .variant-gradient-header {

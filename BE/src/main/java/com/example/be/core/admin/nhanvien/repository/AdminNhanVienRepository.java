@@ -29,6 +29,7 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
         SELECT new com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse(
                 nv.id, nv.ma, nv.ten, nv.email, nv.tenTaiKhoan,
                 nv.gioiTinh, nv.sdt, nv.ngaySinh, nv.hinhAnh, nv.diaChi,
+                nv.tinh, nv.thanhPho, nv.phuongXa, nv.diaChiChiTiet,
                 nv.trangThai, nv.ngayTao, nv.ngayCapNhat,
                 pq.ma, pq.ten, pq.quyenHan)
             FROM NhanVien nv
@@ -42,6 +43,7 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
         SELECT new com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse(
             nv.id, nv.ma, nv.ten, nv.email, nv.tenTaiKhoan,
             nv.gioiTinh, nv.sdt, nv.ngaySinh, nv.hinhAnh, nv.diaChi,
+            nv.tinh, nv.thanhPho, nv.phuongXa, nv.diaChiChiTiet,
             nv.trangThai, nv.ngayTao, nv.ngayCapNhat,
             pq.ma, pq.ten, pq.quyenHan)
         FROM NhanVien nv
@@ -58,6 +60,7 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
         SELECT new com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse(
             nv.id, nv.ma, nv.ten, nv.email, nv.tenTaiKhoan,
             nv.gioiTinh, nv.sdt, nv.ngaySinh, nv.hinhAnh, nv.diaChi,
+            nv.tinh, nv.thanhPho, nv.phuongXa, nv.diaChiChiTiet,
             nv.trangThai, nv.ngayTao, nv.ngayCapNhat,
             pq.ma, pq.ten, pq.quyenHan)
         FROM NhanVien nv
@@ -71,6 +74,7 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
     SELECT new com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse(
         nv.id, nv.ma, nv.ten, nv.email, nv.tenTaiKhoan,
         nv.gioiTinh, nv.sdt, nv.ngaySinh, nv.hinhAnh, nv.diaChi,
+        nv.tinh, nv.thanhPho, nv.phuongXa, nv.diaChiChiTiet,
         nv.trangThai, nv.ngayTao, nv.ngayCapNhat,
         pq.ma, pq.ten, pq.quyenHan)
     FROM NhanVien nv
@@ -98,6 +102,7 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
     SELECT new com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse(
         nv.id, nv.ma, nv.ten, nv.email, nv.tenTaiKhoan,
         nv.gioiTinh, nv.sdt, nv.ngaySinh, nv.hinhAnh, nv.diaChi,
+        nv.tinh, nv.thanhPho, nv.phuongXa, nv.diaChiChiTiet,
         nv.trangThai, nv.ngayTao, nv.ngayCapNhat,
         pq.ma, pq.ten, pq.quyenHan)
     FROM NhanVien nv

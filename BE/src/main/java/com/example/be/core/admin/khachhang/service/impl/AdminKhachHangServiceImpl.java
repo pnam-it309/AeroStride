@@ -144,6 +144,10 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
             dc.setKhachHang(kh);
             dc.setLaMacDinh(true);
             diaChiRepository.save(dc);
+            
+            // Sync default address field
+            kh.setDiaChi(dc);
+            adminKhachHangRepository.save(kh);
         }
 
         return adminKhachHangRepository.detail(kh.getId());
@@ -202,10 +206,14 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
 
     /** Applies mutable fields from request onto an existing entity (create + update). */
     private void applyEntityFields(KhachHang kh, AdminKhachHangRequest req) {
-        kh.setMa(req.getMa());
+        if (req.getMa() != null && !req.getMa().isBlank()) {
+            kh.setMa(req.getMa());
+        }
         kh.setTen(req.getTen());
         kh.setEmail(req.getEmail());
-        kh.setTenTaiKhoan(req.getTenTaiKhoan());
+        if (req.getTenTaiKhoan() != null && !req.getTenTaiKhoan().isBlank()) {
+            kh.setTenTaiKhoan(req.getTenTaiKhoan());
+        }
         kh.setGioiTinh(req.getGioiTinh());
         kh.setSdt(req.getSdt());
         kh.setNgaySinh(req.getNgaySinh());

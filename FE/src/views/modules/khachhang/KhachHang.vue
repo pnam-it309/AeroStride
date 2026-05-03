@@ -8,7 +8,7 @@ import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumb
 import { downloadFile } from '@/utils/fileUtils';
 import { formatDateTime } from '@/utils/formatters';
 import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
-import { EditIcon, EyeIcon, MapPinIcon } from 'vue-tabler-icons';
+import { EditIcon, MapPinIcon } from 'vue-tabler-icons';
 import axios from 'axios';
 
 import { useAdminTable } from '@/composables/useAdminTable';
@@ -138,6 +138,27 @@ const openAddrDialog = async (item) => {
     selectedKH.value = item;
     showAddrForm.value = false;
     isEditAddr.value = false;
+    
+    // 1. Khởi tạo từ danh sách địa chỉ lồng nhau (nếu có)
+    const existing = item.diaChis || item.listDiaChi || [];
+    let initialList = Array.isArray(existing) ? [...existing] : [];
+
+    // 2. Fallback: Nếu không có danh sách, nhưng có thông tin địa chỉ phẳng ở Root
+    if (initialList.length === 0 && (item.tinh || item.thanhPho || item.diaChiChiTiet)) {
+        initialList.push({
+            id: 'root-' + item.id,
+            tinh: item.tinh,
+            thanhPho: item.thanhPho,
+            phuongXa: item.phuongXa,
+            diaChiChiTiet: item.diaChiChiTiet,
+            tenNguoiNhan: item.ten,
+            sdtNguoiNhan: item.sdt,
+            laMacDinh: true
+        });
+    }
+    
+    listDiaChi.value = initialList;
+
     addrForm.value = {
         id: null,
         tinh: null,
@@ -154,18 +175,34 @@ const openAddrDialog = async (item) => {
 };
 
 const loadAddresses = async (khId) => {
+    if (!khId) return;
     addrLoading.value = true;
     try {
         const res = await dichVuKhachHang.layDanhSachDiaChi(khId);
-        listDiaChi.value = res?.content || res?.data || res || [];
+        
+        // Cấu trúc phân tích dữ liệu đa lớp cực kỳ linh hoạt
+        let data = [];
+        if (Array.isArray(res)) {
+            data = res;
+        } else if (res?.data) {
+            if (Array.isArray(res.data)) data = res.data;
+            else if (Array.isArray(res.data.content)) data = res.data.content;
+            else if (Array.isArray(res.data.items)) data = res.data.items;
+        } else if (Array.isArray(res?.content)) {
+            data = res.content;
+        }
+
+        // Chỉ cập nhật nếu tìm thấy mảng dữ liệu thực tế từ API
+        if (Array.isArray(data) && data.length > 0) {
+            listDiaChi.value = [...data];
+        }
     } catch (e) {
         console.error('Error loading addresses:', e);
         addNotification({
             title: 'Lỗi',
-            subtitle: 'Không thể tải danh sách địa chỉ',
+            subtitle: 'Không thể kết nối máy chủ để lấy địa chỉ',
             color: 'error'
         });
-        listDiaChi.value = [];
     } finally {
         addrLoading.value = false;
     }
@@ -192,27 +229,54 @@ const openEditAddrForm = async (addr) => {
     isEditAddr.value = true;
     addrForm.value = { ...addr };
     showAddrForm.value = true;
-    const p = provinces.value.find((x) => x.name === addr.tinh);
+    
+    // Tìm và set Code cho các ô Select để hiển thị đúng nội dung
+    const p = provinces.value.find((x) => x.name === addr.tinh || x.code === addr.tinh);
     if (p) {
+        addrForm.value.tinh = p.code;
         await fetchDistricts(p.code);
-        const d = districts.value.find((x) => x.name === addr.thanhPho);
-        if (d) await fetchWards(d.code);
+        const d = districts.value.find((x) => x.name === addr.thanhPho || x.code === addr.thanhPho);
+        if (d) {
+            addrForm.value.thanhPho = d.code;
+            await fetchWards(d.code);
+            const w = wards.value.find((x) => x.name === addr.phuongXa || x.code === addr.phuongXa);
+            if (w) {
+                addrForm.value.phuongXa = w.code;
+            }
+        }
     }
 };
 
 const saveAddress = async () => {
     addrSaving.value = true;
     try {
-        const payload = { ...addrForm.value, idKhachHang: selectedKH.value.id };
+        // Chuẩn bị payload
+        const payload = { 
+            ...addrForm.value, 
+            idKhachHang: selectedKH.value.id 
+        };
+
+        // Chuyển đổi Code -> Name trước khi gửi lên Server
         const p = provinces.value.find((x) => x.code === addrForm.value.tinh);
         const d = districts.value.find((x) => x.code === addrForm.value.thanhPho);
         const w = wards.value.find((x) => x.code === addrForm.value.phuongXa);
+        
         if (p) payload.tinh = p.name;
         if (d) payload.thanhPho = d.name;
         if (w) payload.phuongXa = w.name;
 
-        if (isEditAddr.value) await dichVuKhachHang.capNhatDiaChi(addrForm.value.id, payload);
-        else await dichVuKhachHang.taoDiaChi(payload);
+        // Xử lý trường hợp ID giả (synthesized address)
+        const isRealId = payload.id && !String(payload.id).startsWith('root-');
+
+        if (isEditAddr.value && isRealId) {
+            await dichVuKhachHang.capNhatDiaChi(addrForm.value.id, payload);
+            addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật địa chỉ', color: 'success' });
+        } else {
+            // Nếu là thêm mới hoặc là địa chỉ giả lập -> gọi API Add
+            delete payload.id; // Xóa ID giả trước khi Add
+            await dichVuKhachHang.taoDiaChi(payload);
+            addNotification({ title: 'Thành công', subtitle: 'Đã thêm địa chỉ mới', color: 'success' });
+        }
 
         showAddrForm.value = false;
         await loadAddresses(selectedKH.value.id);
@@ -264,14 +328,14 @@ const handleDeleteAddr = (addrId) => {
 };
 
 const tableHeaders = [
-    { text: 'STT', align: 'center', width: '60px' },
-    { text: 'Mã khách hàng', align: 'center', width: '100px' },
-    { text: 'Tên khách hàng', align: 'left', width: '80px' },
-    { text: 'Giới tính', align: 'center', width: '150px' },
-    { text: 'Thông tin liên hệ', align: 'left', width: '150px' },
-    { text: 'Địa chỉ', align: 'left', width: '220px' },
-    { text: 'Trạng thái', align: 'center', width: '90px' },
-    { text: 'Hành động', align: 'center', width: '120px' }
+    { text: 'STT', width: '60px' },
+    { text: 'Mã khách hàng', width: '100px' },
+    { text: 'Tên khách hàng', width: '80px' },
+    { text: 'Giới tính', width: '150px' },
+    { text: 'Thông tin liên hệ', width: '150px' },
+    { text: 'Địa chỉ', width: '220px' },
+    { text: 'Trạng thái', width: '90px' },
+    { text: 'Hành động', width: '120px' }
 ];
 
 onMounted(() => {
@@ -466,12 +530,16 @@ watch(
         >
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center text-slate-400">
+                    <td class="data-cell text-slate-400">
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
-                    <td class="data-cell text-center">{{ item.ma || '-' }}</td>
-                    <td class="data-cell text-left">{{ item.ten || '-' }}</td>
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
+                        <div class="text-truncate" :title="item.ma">{{ item.ma || '-' }}</div>
+                    </td>
+                    <td class="data-cell">
+                        <div class="text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
+                    </td>
+                    <td class="data-cell">
                         <v-chip
                             size="small"
                             variant="flat"
@@ -480,13 +548,13 @@ watch(
                             {{ item.gioiTinh === true ? 'Nam' : item.gioiTinh === false ? 'Nữ' : '-' }}
                         </v-chip>
                     </td>
-                    <td class="data-cell contact-cell text-left px-4">
-                        <div class="d-inline-flex flex-column align-start">
-                            <div class="info-line text-slate-700 mb-1">
+                    <td class="data-cell contact-cell px-4">
+                        <div class="d-inline-flex flex-column align-start" style="width: 100%; overflow: hidden;">
+                            <div class="info-line text-slate-700 mb-1 text-truncate" style="width: 100%;" :title="item.sdt">
                                 <v-icon size="14" class="mr-2 text-slate-400">mdi-phone</v-icon>
                                 <span>{{ item.sdt || '-' }}</span>
                             </div>
-                            <div v-if="hasValue(item.email)" class="info-line d-flex align-center text-slate-500">
+                            <div v-if="hasValue(item.email)" class="info-line d-flex align-center text-slate-500 text-truncate" style="width: 100%;" :title="item.email">
                                 <v-icon size="14" class="mr-2">mdi-email-outline</v-icon>{{ item.email }}
                             </div>
                         </div>
@@ -494,7 +562,7 @@ watch(
                     <td class="data-cell">
                         <div class="line-clamp-2" :title="getAddressSummary(item)">{{ getAddressSummary(item) }}</div>
                     </td>
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
                         <v-chip
                             size="small"
                             variant="flat"
@@ -503,21 +571,12 @@ watch(
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
-                    <td class="data-cell text-center action-cell">
+                    <td class="data-cell action-cell">
                         <div class="d-flex align-center justify-center action-controls">
                             <!-- Địa chỉ -->
                             <v-btn variant="text" class="action-icon-btn" @click.stop="openAddrDialog(item)">
                                 <MapPinIcon />
                                 <v-tooltip activator="parent" location="top">Quản lý địa chỉ</v-tooltip>
-                            </v-btn>
-                            <!-- Xem chi tiết -->
-                            <v-btn
-                                variant="text"
-                                class="action-icon-btn"
-                                @click.stop="router.push({ name: 'KhachHangDetail', params: { id: item.id } })"
-                            >
-                                <EyeIcon />
-                                <v-tooltip activator="parent" location="top">Xem chi tiết</v-tooltip>
                             </v-btn>
                             <!-- Chỉnh sửa -->
                             <v-btn

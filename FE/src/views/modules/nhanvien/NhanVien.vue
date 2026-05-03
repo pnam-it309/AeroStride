@@ -76,16 +76,16 @@ async function handleResetPassword(id) {
 }
 
 const tableHeaders = [
-    { text: 'STT', align: 'center', width: '60px' },
-    { text: 'Mã nhân viên', align: 'center', width: '100px' },
-    { text: 'Tên nhân viên', align: 'left', width: '150px' },
-    { text: 'Tên tài khoản', align: 'center', width: '120px' },
-    { text: 'Giới tính', align: 'center', width: '120px' },
-    { text: 'Thông tin liên hệ', align: 'left', width: '230px' },
-    { text: 'Địa chỉ', align: 'left', width: '200px' },
-    { text: 'Chức vụ', align: 'left', width: '120px' },
-    { text: 'Trạng thái', align: 'center', width: '130px' },
-    { text: 'Hành động', align: 'center', width: '110px' }
+    { text: 'STT', width: '60px' },
+    { text: 'Mã nhân viên', width: '100px' },
+    { text: 'Tên nhân viên', width: '150px' },
+    { text: 'Tên tài khoản', width: '120px' },
+    { text: 'Giới tính', width: '120px' },
+    { text: 'Thông tin liên hệ', width: '230px' },
+    { text: 'Địa chỉ', width: '200px' },
+    { text: 'Chức vụ', width: '120px' },
+    { text: 'Trạng thái', width: '130px' },
+    { text: 'Hành động', width: '110px' }
 ];
 
 const handleRefresh = async () => {
@@ -217,40 +217,28 @@ onMounted(() => {
                     <v-tab :value="0" class="text-none font-weight-bold px-4 tab-item">
                         <v-icon start size="16">mdi-view-grid-outline</v-icon>
                         Danh sách nhân viên
-                        <v-chip
-                            v-if="pagination.totalElements > 0"
-                            size="x-small"
-                            :class="['ml-2 font-weight-bold tab-count-chip', tab === 0 ? 'active-chip' : 'inactive-chip']"
-                            variant="flat"
-                            style="width: 22px !important; height: 22px !important; min-width: 22px !important; border-radius: 50% !important; padding: 0 !important; border: 1.5px solid currentColor !important; background: transparent !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;"
-                        >
-                            {{ pagination.totalElements }}
-                        </v-chip>
                     </v-tab>
 
                     <v-tab :value="1" class="text-none font-weight-bold px-4 tab-item">
                         <v-icon start size="16">mdi-clock-outline</v-icon>
                         Yêu cầu tạo mới mật khẩu
-                        <v-chip
-                            v-if="pendingRequests.length > 0"
-                            size="x-small"
-                            :class="['ml-2 font-weight-bold tab-count-chip', tab === 1 ? 'active-chip' : 'inactive-chip']"
-                            variant="flat"
-                            style="width: 22px !important; height: 22px !important; min-width: 22px !important; border-radius: 50% !important; padding: 0 !important; border: 1.5px solid currentColor !important; background: transparent !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;"
-                        >
-                            {{ pendingRequests.length }}
-                        </v-chip>
                     </v-tab>
                 </v-tabs>
             </template>
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell center-cell">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
-                    <td class="data-cell">{{ item.ma || '-' }}</td>
-                    <td class="data-cell">{{ item.ten || '-' }}</td>
-                    <td class="data-cell">{{ item.tenTaiKhoan || '-' }}</td>
-                    <td class="data-cell text-center">
+                    <td class="data-cell">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
+                    <td class="data-cell">
+                        <div class="text-truncate" :title="item.ma">{{ item.ma || '-' }}</div>
+                    </td>
+                    <td class="data-cell">
+                        <div class="text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
+                    </td>
+                    <td class="data-cell">
+                        <div class="text-truncate" :title="item.tenTaiKhoan">{{ item.tenTaiKhoan || '-' }}</div>
+                    </td>
+                    <td class="data-cell">
                         <v-chip
                             size="small"
                             variant="flat"
@@ -260,23 +248,29 @@ onMounted(() => {
                         </v-chip>
                     </td>
 
-                    <td class="data-cell contact-cell text-left px-4">
-                        <div class="d-inline-flex flex-column align-start">
-                            <div class="contact-info-item d-flex align-center mb-1">
+                    <td class="data-cell contact-cell px-4">
+                        <div class="d-inline-flex flex-column align-start" style="width: 100%; overflow: hidden;">
+                            <div class="contact-info-item d-flex align-center mb-1 text-truncate" :title="item.sdt" style="width: 100%;">
                                 <v-icon size="14" class="mr-2 text-slate-400">mdi-phone</v-icon>
                                 <span>{{ item.sdt }}</span>
                             </div>
-                            <div class="contact-info-item d-flex align-center text-slate-500">
+                            <div class="contact-info-item d-flex align-center text-slate-500 text-truncate" :title="item.email" style="width: 100%;">
                                 <v-icon size="14" class="mr-2">mdi-email-outline</v-icon>
                                 <span>{{ item.email || '-' }}</span>
                             </div>
                         </div>
                     </td>
-                    <td class="data-cell text-left">
-                        {{ item.diaChi || item.diaChiChiTiet || item.dia_chi || '-' }}
+                    <td class="data-cell">
+                        <div class="text-truncate" :title="item.diaChi || item.diaChiChiTiet || item.dia_chi">
+                            {{ item.diaChi || item.diaChiChiTiet || item.dia_chi || '-' }}
+                        </div>
                     </td>
 
-                    <td class="data-cell">{{ item.tenPhanQuyen || 'Nhân viên' }}</td>
+                    <td class="data-cell">
+                        <div class="text-truncate" :title="item.tenPhanQuyen || 'Nhân viên'">
+                            {{ item.tenPhanQuyen || 'Nhân viên' }}
+                        </div>
+                    </td>
                     <td class="data-cell">
                         <template v-if="tab === 0">
                             <v-chip

@@ -154,4 +154,9 @@ public class AdminSanPhamController {
         adminSanPhamService.importExcel(file);
         return ResponseEntity.ok("Import thành công");
     }
+
+    @GetMapping("/max-price")
+    public ResponseEntity<ApiResponse<java.math.BigDecimal>> getMaxPrice() {
+        return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getMaxPrice(), "Lay gia cao nhat thanh cong"));
+    }
 }

@@ -50,4 +50,5 @@ public interface AdminSanPhamService {
     byte[] downloadTemplate();
 
     void importExcel(org.springframework.web.multipart.MultipartFile file);
+    java.math.BigDecimal getMaxPrice();
 }

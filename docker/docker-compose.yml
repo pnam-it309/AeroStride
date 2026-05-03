@@ -18,25 +18,27 @@ services:
           memory: 64M
 
   backend:
-    image: ${BACKEND_IMAGE:-aerostride-be:dev}
+    image: ${BACKEND_IMAGE}
     build:
       context: ..
       dockerfile: docker/BE.Dockerfile
-      target: ${DOCKER_BE_TARGET:-production}
+      target: ${DOCKER_BE_TARGET}
+      args:
+        - BE_PORT=${BE_INTERNAL_PORT}
     container_name: aerostride-be
     restart: always
     env_file:
       - .env
     environment:
-      SERVER_PORT: ${SERVER_PORT:-8080}
+      SERVER_PORT: ${SERVER_PORT}
       WATCHPACK_POLLING: "true"
     depends_on:
       redis:
         condition: service_healthy
     ports:
-      - "${BACKEND_PORT:-8080}:${BE_INTERNAL_PORT:-8080}"
+      - "${BACKEND_PORT}:${BE_INTERNAL_PORT}"
     volumes:
-      - ${DOCKER_BE_VOL_APP:-../BE:/app}
+      - ${DOCKER_BE_VOL_APP}
       - be-build:/app/build
       - be-gradle:/app/.gradle
     networks:
@@ -51,25 +53,29 @@ services:
           memory: 1G
 
   frontend:
-    image: ${FRONTEND_IMAGE:-aerostride-fe:dev}
+    image: ${FRONTEND_IMAGE}
     build:
       context: ..
       dockerfile: docker/FE.Dockerfile
-      target: ${DOCKER_FE_TARGET:-production}
+      target: ${DOCKER_FE_TARGET}
       args:
         - VITE_API_URL=${VITE_API_URL}
+        - FE_DEV_PORT=${FE_DEV_PORT}
+        - NGINX_PORT=${NGINX_PORT}
     container_name: aerostride-fe
     restart: always
     environment:
       - BACKEND_HOST=aerostride-be
-      - BACKEND_PORT=${BACKEND_PORT:-8080}
-      - NGINX_PORT=${NGINX_PORT:-8080}
+      - BACKEND_PORT=${BACKEND_PORT}
+      - NGINX_PORT=${NGINX_PORT}
+      - SERVER_NAME=${SERVER_NAME}
+      - FE_DEV_PORT=${FE_DEV_PORT}
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
     ports:
-      - "${FE_PORTExternal:-80}:${FE_INTERNAL_PORT:-8080}"
+      - "${FE_PORTExternal}:${FE_INTERNAL_PORT}"
     volumes:
-      - ${DOCKER_FE_VOL_APP:-../FE:/app}
+      - ${DOCKER_FE_VOL_APP}
       - fe-node-modules:/app/node_modules
     depends_on:
       backend:

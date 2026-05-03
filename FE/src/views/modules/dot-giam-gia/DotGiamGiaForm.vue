@@ -39,6 +39,7 @@ const bottomPageSize = ref(5);
 
 
 const isEditMode = computed(() => !!route.params.id && !route.path.includes('/detail'));
+const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật đợt giảm giá' : 'Thêm đợt giảm giá');
 const isDetailView = computed(() => route.path.includes('/detail'));
 const primaryColor = '#2E4E8E';
 
@@ -348,7 +349,7 @@ onMounted(init);
                     prepend-icon="mdi-check-all"
                     @click="handleSave"
                     :loading="saving">
-                    {{ isEditMode ? 'Cập nhật đợt giảm giá' : 'Thêm mới đợt giảm giá' }}
+                    {{ submitButtonText }}
                 </v-btn>
             </div>
         </div>

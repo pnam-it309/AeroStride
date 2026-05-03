@@ -22,10 +22,12 @@ COPY BE/src/ src/
 
 # Development stage (for hot-reloading)
 FROM build AS development
-EXPOSE 8080
 
-# Performance tweaks for Gradle in Docker
-ENV GRADLE_OPTS="-Xmx2g -XX:MaxMetaspaceSize=512m -XX:TieredStopAtLevel=1 -Dfile.encoding=UTF-8"
+ARG BE_PORT
+EXPOSE ${BE_PORT}
+
+# Performance tweaks for Gradle in Docker (injected from env, not hardcoded)
+ENV GRADLE_OPTS=${GRADLE_OPTS}
 
 # Development Entrypoint:
 # Runs compilation in background and starts the app with DevTools support
@@ -48,15 +50,16 @@ USER spring:spring
 # Copy the fixed app.jar from the builder stage
 COPY --from=builder --chown=spring:spring /app/app.jar app.jar
 
-# Expose the application port
-EXPOSE 8080
+# Expose the application port (from env)
+ARG BE_PORT
+EXPOSE ${BE_PORT}
 
-# Configure environment variables
-ENV SPRING_PROFILES_ACTIVE=prod
-ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC"
+# Configure environment variables (from .env, not hardcoded)
+ENV SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+ENV JAVA_OPTS=${JAVA_OPTS}
 
-# Healthcheck to ensure the container is healthy
+# Healthcheck uses SERVER_PORT and APP_API_PREFIX from runtime env
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8080/api/v1/actuator/health || exit 1
+  CMD curl -f http://localhost:${SERVER_PORT}${APP_API_PREFIX}/actuator/health || exit 1
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

@@ -27,28 +27,28 @@ public class DefaultAdminBootstrap {
     private final PhanQuyenRepository phanQuyenRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${app.bootstrap.admin.enabled:true}")
+    @Value("${app.bootstrap.admin.enabled}")
     private boolean bootstrapEnabled;
 
-    @Value("${app.bootstrap.admin.email:}")
+    @Value("${app.bootstrap.admin.email}")
     private String adminEmail;
 
-    @Value("${app.bootstrap.admin.password:}")
+    @Value("${app.bootstrap.admin.password}")
     private String adminPassword;
 
-    @Value("${app.bootstrap.admin.username:}")
+    @Value("${app.bootstrap.admin.username}")
     private String adminUsername;
 
-    @Value("${app.bootstrap.admin.name:Admin He Thong}")
+    @Value("${app.bootstrap.admin.name}")
     private String adminName;
 
-    @Value("${app.bootstrap.admin.phone:0123456789}")
+    @Value("${app.bootstrap.admin.phone}")
     private String adminPhone;
 
-    @Value("${app.bootstrap.admin.birth-date:2002-06-19}")
+    @Value("${app.bootstrap.admin.birth-date}")
     private String adminBirthDate;
 
-    @Value("${app.bootstrap.admin.gender:true}")
+    @Value("${app.bootstrap.admin.gender}")
     private boolean adminGender;
 
     @Bean

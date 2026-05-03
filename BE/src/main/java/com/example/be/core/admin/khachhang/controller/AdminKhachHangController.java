@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_KHACH_HANG)
 @RequiredArgsConstructor
-@CrossOrigin("*")
 public class AdminKhachHangController {
 
     private final AdminKhachHangService adminKhachHangService;

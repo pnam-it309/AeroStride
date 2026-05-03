@@ -210,15 +210,23 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
 
     /** Applies mutable fields from request onto an existing entity (create + update). */
     private void applyEntityFields(NhanVien nv, AdminNhanVienRequest req) {
-        nv.setMa(req.getMa());
+        if (req.getMa() != null && !req.getMa().isBlank()) {
+            nv.setMa(req.getMa());
+        }
         nv.setTen(req.getTen());
         nv.setEmail(req.getEmail());
-        nv.setTenTaiKhoan(req.getTenTaiKhoan());
+        if (req.getTenTaiKhoan() != null && !req.getTenTaiKhoan().isBlank()) {
+            nv.setTenTaiKhoan(req.getTenTaiKhoan());
+        }
         nv.setGioiTinh(req.getGioiTinh());
         nv.setSdt(req.getSdt());
         nv.setNgaySinh(req.getNgaySinh());
         nv.setHinhAnh(req.getHinhAnh());
         nv.setDiaChi(req.getDiaChi());
+        nv.setTinh(req.getTinh());
+        nv.setThanhPho(req.getThanhPho());
+        nv.setPhuongXa(req.getPhuongXa());
+        nv.setDiaChiChiTiet(req.getDiaChiChiTiet());
     }
 
     /** Small random numeric suffix to avoid username collisions. */

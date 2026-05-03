@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue';
 import { XIcon, DeviceFloppyIcon } from 'vue-tabler-icons';
 
 const props = defineProps({
@@ -16,6 +17,9 @@ const handleSave = () => emit('save');
 const updateFormField = (field, value) => {
     emit('update:form', { ...props.form, [field]: value });
 };
+
+const submitButtonText = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm') + ' ' + props.title.toLowerCase());
+const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm mới') + ' ' + props.title.toLowerCase());
 </script>
 
 <template>
@@ -24,7 +28,7 @@ const updateFormField = (field, value) => {
             <v-card-title class="px-8 py-6 border-b bg-slate-50/50">
                 <div>
                     <h3 class="text-h6 text-slate-900 mb-0">
-                        {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }} {{ title.toLowerCase() }}
+                        {{ headerTitle }}
                     </h3>
                 </div>
             </v-card-title>
@@ -144,7 +148,7 @@ const updateFormField = (field, value) => {
                     <template #prepend>
                         <DeviceFloppyIcon size="18" class="text-white-force" />
                     </template>
-                    Lưu thông tin
+                    {{ submitButtonText }}
                 </v-btn>
             </v-card-actions>
         </v-card>

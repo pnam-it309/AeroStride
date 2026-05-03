@@ -372,15 +372,27 @@ const tableHeaders = [
                             </v-avatar>
                         </td>
                         <td>
-                            <div class="font-weight-bold">{{ p.tenSanPham }}</div>
+                            <div class="font-weight-bold text-truncate" :title="p.tenSanPham">{{ p.tenSanPham }}</div>
                             <div class="text-caption text-slate-500">Tồn: <b>{{ p.soLuongTon }}</b></div>
                         </td>
-                        <td class="text-caption font-weight-bold">{{ p.maChiTietSanPham }}</td>
-                        <td class="text-caption">{{ p.tenDanhMuc || '—' }}</td>
-                        <td class="text-caption">{{ p.tenThuongHieu || '—' }}</td>
-                        <td class="text-caption">{{ p.tenMauSac || '—' }}</td>
-                        <td class="text-caption">{{ p.tenChatLieu || '—' }}</td>
-                        <td class="text-caption">{{ p.tenKichThuoc || '—' }}</td>
+                        <td class="text-caption font-weight-bold">
+                            <div class="text-truncate" :title="p.maChiTietSanPham">{{ p.maChiTietSanPham }}</div>
+                        </td>
+                        <td class="text-caption">
+                            <div class="text-truncate" :title="p.tenDanhMuc">{{ p.tenDanhMuc || '—' }}</div>
+                        </td>
+                        <td class="text-caption">
+                            <div class="text-truncate" :title="p.tenThuongHieu">{{ p.tenThuongHieu || '—' }}</div>
+                        </td>
+                        <td class="text-caption">
+                            <div class="text-truncate" :title="p.tenMauSac">{{ p.tenMauSac || '—' }}</div>
+                        </td>
+                        <td class="text-caption">
+                            <div class="text-truncate" :title="p.tenChatLieu">{{ p.tenChatLieu || '—' }}</div>
+                        </td>
+                        <td class="text-caption">
+                            <div class="text-truncate" :title="p.tenKichThuoc">{{ p.tenKichThuoc || '—' }}</div>
+                        </td>
                         <td class="text-right font-weight-bold text-error">{{ formatCurrency(p.giaBan) }}</td>
                         <td class="text-center">
                             <v-btn

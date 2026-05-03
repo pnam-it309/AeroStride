@@ -182,6 +182,9 @@ const handleSubmit = async () => {
 const refreshOptions = () => {
     emit('options-refreshed');
 };
+
+const submitButtonText = computed(() => props.mode === 'create' ? 'Thêm biến thể' : 'Cập nhật biến thể');
+const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể mới' : 'Chỉnh sửa biến thể');
 </script>
 
 <template>
@@ -192,7 +195,7 @@ const refreshOptions = () => {
             <v-card-title class="px-8 py-6 border-b d-flex align-center justify-space-between bg-slate-50/50">
                 <div>
                     <h3 class="text-h5 font-weight-black text-slate-900 tracking-tight">
-                        {{ mode === 'create' ? 'Thêm biến thể mới' : 'Chỉnh sửa biến thể' }}
+                        {{ headerTitle }}
                     </h3>
                     <p class="text-subtitle-2 text-slate-500 font-weight-medium mt-1">
                         Thiết lập SKU, tồn kho và giá cho sản phẩm.
@@ -353,7 +356,7 @@ const refreshOptions = () => {
                         <DeviceFloppyIcon v-if="!submitting" size="18" class="text-white" />
                         <v-progress-circular v-else indeterminate size="18" width="2" color="white" />
                     </template>
-                    {{ mode === 'create' ? 'Tạo biến thể' : 'Lưu cập nhật' }}
+                    {{ submitButtonText }}
                 </v-btn>
             </v-card-actions>
         </v-card>

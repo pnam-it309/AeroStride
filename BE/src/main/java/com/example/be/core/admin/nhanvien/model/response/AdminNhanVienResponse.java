@@ -21,6 +21,10 @@ public class AdminNhanVienResponse {
     private LocalDate ngaySinh;
     private String hinhAnh;
     private String diaChi;
+    private String tinh;
+    private String thanhPho;
+    private String phuongXa;
+    private String diaChiChiTiet;
     private TrangThai trangThai;
     private Long ngayTao;
     private Long ngayCapNhat;

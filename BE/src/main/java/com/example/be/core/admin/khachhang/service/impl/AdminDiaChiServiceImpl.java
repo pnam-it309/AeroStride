@@ -39,11 +39,16 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
         BeanUtils.copyProperties(request, dc);
         dc.setKhachHang(kh);
         
+        // Save DiaChi first to ensure it has an ID before assigning to KhachHang
+        dc = repository.save(dc);
+        
         if (Boolean.TRUE.equals(request.getLaMacDinh())) {
             unsetOldDefault(kh.getId());
+            kh.setDiaChi(dc);
+            khachHangRepository.save(kh);
         }
         
-        return toResponse(repository.save(dc));
+        return toResponse(dc);
     }
 
     @Override
@@ -53,18 +58,32 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
                 .orElseThrow(() -> new RuntimeException("Dia chi khong ton tai"));
         
         BeanUtils.copyProperties(request, dc, "id", "khachHang");
+        dc = repository.save(dc);
         
         if (Boolean.TRUE.equals(request.getLaMacDinh())) {
             unsetOldDefault(dc.getKhachHang().getId());
+            KhachHang kh = dc.getKhachHang();
+            kh.setDiaChi(dc);
+            khachHangRepository.save(kh);
         }
         
-        return toResponse(repository.save(dc));
+        return toResponse(dc);
     }
 
     @Override
     @Transactional
     public void delete(String id) {
-        repository.deleteById(id);
+        DiaChi dc = repository.findById(id).orElse(null);
+        if (dc != null) {
+            List<KhachHang> khs = khachHangRepository.findByDiaChiId(id);
+            if (khs != null && !khs.isEmpty()) {
+                for (KhachHang kh : khs) {
+                    kh.setDiaChi(null);
+                    khachHangRepository.save(kh);
+                }
+            }
+            repository.delete(dc);
+        }
     }
 
     @Override
@@ -75,6 +94,13 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
         unsetOldDefault(dc.getKhachHang().getId());
         dc.setLaMacDinh(true);
         repository.save(dc);
+
+        // Update default address in KhachHang entity for quick reference
+        KhachHang kh = dc.getKhachHang();
+        if (kh != null) {
+            kh.setDiaChi(dc);
+            khachHangRepository.save(kh);
+        }
     }
 
     private void unsetOldDefault(String khId) {

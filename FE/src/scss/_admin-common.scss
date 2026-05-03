@@ -156,6 +156,15 @@
     font-weight: 500 !important;
 }
 
+/* Ellipsis utility for fixed-layout tables */
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+    width: 100%;
+}
+
 /* 2. ACTIONS & BUTTONS */
 .action-controls {
     display: flex;
@@ -495,6 +504,7 @@
 
 .native-admin-table {
     width: 100%;
+    table-layout: fixed; /* Force respect column widths */
     border-collapse: separate;
     border-spacing: 0;
 
@@ -522,7 +532,7 @@
         vertical-align: middle;
         border-bottom: 1px solid #f1f5f9;
         background: white;
-        text-align: left;
+        text-align: center;
     }
 
     .data-row:hover .data-cell {

@@ -60,16 +60,16 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
                         <div class="text-slate-500">{{ (pagination.page - 1) * pagination.size + index + 1 }}</div>
                     </td>
-                    <td class="data-cell text-center">
-                        <div class="text-slate-600">{{ getItemCode(item) }}</div>
+                    <td class="data-cell">
+                        <div class="text-slate-600 text-truncate" :title="getItemCode(item)">{{ getItemCode(item) }}</div>
                     </td>
-                    <td class="data-cell text-center">
-                        <div class="text-slate-600">{{ getItemName(item) }}</div>
+                    <td class="data-cell">
+                        <div class="text-slate-600 text-truncate" :title="getItemName(item)">{{ getItemName(item) }}</div>
                     </td>
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
                         <v-chip
                             variant="flat"
                             size="x-small"
@@ -78,7 +78,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
                         <div class="d-flex align-center justify-center action-controls">
                             <!-- Edit Button -->
                             <v-btn
@@ -90,7 +90,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                                 @click.stop="emit('edit', item)"
                             >
                                 <EditIcon size="15" />
-                                <v-tooltip activator="parent" location="top">Sửa</v-tooltip>
+                                <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
 
                             <!-- Switch -->
@@ -103,7 +103,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                                     class="tight-switch action-switch"
                                     @click.prevent.stop="emit('change-status', item)"
                                 />
-                                <v-tooltip activator="parent" location="top">Trạng thái</v-tooltip>
+                                <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
                             </div>
                         </div>
                     </td>

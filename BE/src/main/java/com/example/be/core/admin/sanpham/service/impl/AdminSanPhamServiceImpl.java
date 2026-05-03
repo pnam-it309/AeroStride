@@ -293,4 +293,10 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     @Override public ProductVariantImageResponse addVariantImage(String vId, ProductVariantImageRequest r) { return null; }
     @Override public ProductVariantImageResponse updateVariantImage(String iId, UpdateProductVariantImageRequest r) { return null; }
     @Override public void deleteVariantImage(String iId) {}
+
+    @Override
+    public java.math.BigDecimal getMaxPrice() {
+        java.math.BigDecimal maxPrice = adminChiTietSanPhamRepository.findMaxGiaBan();
+        return maxPrice != null ? maxPrice : new java.math.BigDecimal("100000000");
+    }
 }

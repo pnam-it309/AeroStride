@@ -58,8 +58,8 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                     <slot name="headers">
                         <tr>
                             <th v-for="(header, idx) in headers" :key="idx"
-                                :style="{ textAlign: header.align || 'center', width: header.width || 'auto' }"
-                                :class="['header-cell', header.align ? `text-${header.align}` : 'text-center']">
+                                :style="{ width: header.width || 'auto' }"
+                                class="header-cell text-center">
                                 {{ header.text || header }}
                             </th>
                         </tr>

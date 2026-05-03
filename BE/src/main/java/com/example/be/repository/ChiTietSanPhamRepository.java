@@ -44,4 +44,7 @@ public interface ChiTietSanPhamRepository extends JpaRepository<ChiTietSanPham, 
           AND (sp.xoaMem IS NULL OR sp.xoaMem = false)
         """)
     List<ChiTietSanPham> searchByKeyword(@Param("keyword") String keyword);
+
+    @Query("SELECT MAX(ct.giaBan) FROM ChiTietSanPham ct WHERE (ct.xoaMem IS NULL OR ct.xoaMem = false)")
+    java.math.BigDecimal findMaxGiaBan();
 }

@@ -19,6 +19,10 @@ public class AdminNhanVienRequest extends PageRequest {
     private LocalDate ngaySinh;
     private String hinhAnh;
     private String diaChi;
+    private String tinh;
+    private String thanhPho;
+    private String phuongXa;
+    private String diaChiChiTiet;
     private String idPhanQuyen;
 
     // ── FILTER / TÌM KIẾM / LỌC / PHÂN TRANG ───────

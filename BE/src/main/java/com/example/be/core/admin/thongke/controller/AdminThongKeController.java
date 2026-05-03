@@ -3,6 +3,7 @@ package com.example.be.core.admin.thongke.controller;
 import com.example.be.core.admin.thongke.model.response.AdminThongKeResponse;
 import com.example.be.core.admin.thongke.service.AdminThongKeService;
 import com.example.be.core.common.dto.ApiResponse;
+import com.example.be.infrastructure.constants.RoutesConstant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -11,9 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/v1/admin/thong-ke")
+@RequestMapping(RoutesConstant.ADMIN + "/thong-ke")
 @RequiredArgsConstructor
-@CrossOrigin("*")
 public class AdminThongKeController {
 
     private final AdminThongKeService adminThongKeService;

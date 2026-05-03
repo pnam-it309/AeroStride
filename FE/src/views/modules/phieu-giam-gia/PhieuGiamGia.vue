@@ -254,8 +254,12 @@ onMounted(() => loadVouchers());
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell text-center text-slate-400">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
-                    <td class="data-cell text-center text-primary">{{ item.ma || item.id || '--' }}</td>
-                    <td class="data-cell text-left">{{ item.ten || '--' }}</td>
+                    <td class="data-cell text-center text-primary">
+                        <div class="text-truncate" :title="item.ma || item.id">{{ item.ma || item.id || '--' }}</div>
+                    </td>
+                    <td class="data-cell text-left">
+                        <div class="text-truncate" :title="item.ten">{{ item.ten || '--' }}</div>
+                    </td>
                     
                     <td class="data-cell text-center">
                         <v-chip
@@ -270,10 +274,12 @@ onMounted(() => loadVouchers());
                         </v-chip>
                     </td>
                     <td class="data-cell text-left">
-                        <div class="text-primary">Giảm {{ getDiscountDisplay(item) }}</div>
-                        <div class="max-discount-value text-slate-500"
-                            v-if="item.loaiPhieu === 'PHAN_TRAM' || item.loaiPhieu === 'PERCENTAGE'">Tối đa: {{
-                                getMaxDiscountDisplay(item) }}</div>
+                        <div class="text-primary text-truncate" :title="'Giảm ' + getDiscountDisplay(item)">Giảm {{ getDiscountDisplay(item) }}</div>
+                        <div class="max-discount-value text-slate-500 text-truncate"
+                            v-if="item.loaiPhieu === 'PHAN_TRAM' || item.loaiPhieu === 'PERCENTAGE'"
+                            :title="'Tối đa: ' + getMaxDiscountDisplay(item)">
+                            Tối đa: {{ getMaxDiscountDisplay(item) }}
+                        </div>
                     </td>
                     <td class="data-cell text-left">
                         <div class="price-value text-slate-700">{{ formatCurrency(item.donHangToiThieu) }}</div>
@@ -282,9 +288,13 @@ onMounted(() => loadVouchers());
                         {{ item.soLuong === -1 ? '∞' : item.soLuong }}
                     </td>
                     <td class="data-cell text-left">
-                        <div class="d-flex flex-column align-start">
-                            <div class="text-slate-700" style="font-size: 12.5px">Từ: {{ formatDateTime(item.ngayBatDau) }}</div>
-                            <div class="text-slate-400" style="font-size: 11px">Đến: {{ formatDateTime(item.ngayKetThuc) }}</div>
+                        <div class="d-flex flex-column align-start" style="width: 100%; overflow: hidden;">
+                            <div class="text-slate-700 text-truncate" style="font-size: 12.5px; width: 100%;" :title="'Từ: ' + formatDateTime(item.ngayBatDau)">
+                                Từ: {{ formatDateTime(item.ngayBatDau) }}
+                            </div>
+                            <div class="text-slate-400 text-truncate" style="font-size: 11px; width: 100%;" :title="'Đến: ' + formatDateTime(item.ngayKetThuc)">
+                                Đến: {{ formatDateTime(item.ngayKetThuc) }}
+                            </div>
                         </div>
                     </td>
                     <td class="data-cell text-center">

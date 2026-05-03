@@ -29,7 +29,7 @@ const sidebarMenu = shallowRef(sidebarItems);
         app
         class="leftSidebar bg-containerBg"
         elevation="0"
-        :width="300"
+        :width="320"
         rail-width="68"
         style="
             overflow: hidden !important;

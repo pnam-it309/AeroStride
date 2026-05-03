@@ -177,19 +177,19 @@ onMounted(() => loadCampaigns());
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
                     <td class="data-cell text-center">
-                        {{ item.ma }}
+                        <div class="text-truncate" :title="item.ma">{{ item.ma }}</div>
                     </td>
                     <td class="data-cell text-left">
-                        {{ item.ten || '--' }}
+                        <div class="text-truncate" :title="item.ten">{{ item.ten || '--' }}</div>
                     </td>
                     <td class="data-cell text-left">
                         <div class="text-primary">Giảm {{ getDiscountValueDisplay(item) }}</div>
                     </td>
                     <td class="data-cell text-left">
-                        <div class="text-slate-700">{{ formatDateTime(item.ngayBatDau) }}</div>
+                        <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayBatDau)">{{ formatDateTime(item.ngayBatDau) }}</div>
                     </td>
                     <td class="data-cell text-left">
-                        <div class="text-slate-700">{{ formatDateTime(item.ngayKetThuc) }}</div>
+                        <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayKetThuc)">{{ formatDateTime(item.ngayKetThuc) }}</div>
                     </td>
                     <td class="data-cell text-center">
                         <v-chip

@@ -15,11 +15,14 @@ COPY FE/ .
 
 # Development stage (for hot-reloading)
 FROM build AS development
-EXPOSE 5173
+
+ARG FE_DEV_PORT
+EXPOSE ${FE_DEV_PORT}
+
 # Use polling for hot-reload on Windows hosts
 ENV CHOKIDAR_USEPOLLING=true
 ENV WATCHPACK_POLLING=true
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+CMD ["sh", "-c", "npm run dev -- --host 0.0.0.0 --port ${FE_DEV_PORT}"]
 
 # Stage 2: Builder stage (Production)
 FROM build AS builder
@@ -38,11 +41,12 @@ COPY --from=builder /app/dist .
 # Copy custom nginx configuration for SPA routing
 COPY docker/nginx.conf /etc/nginx/templates/default.conf.template
 
-# Default port (can be overridden by environment variable NGINX_PORT)
-EXPOSE 8080
+# Port from env (no default)
+ARG NGINX_PORT
+EXPOSE ${NGINX_PORT}
 
-# Healthcheck for Nginx
+# Healthcheck for Nginx (uses NGINX_PORT env var)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/ || exit 1
+  CMD curl -f http://localhost:${NGINX_PORT}/ || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

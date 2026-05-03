@@ -61,7 +61,7 @@ const props = defineProps({ item: Object, level: { type: Number, default: 1 }, h
 
 .nested-items-container {
     border-left: 2px solid rgba(var(--v-theme-primary), 0.1);
-    margin-left: 24px;
+    margin-left: 20px;
     margin-top: 2px;
     margin-bottom: 8px;
     border-radius: 0 0 12px 12px;
