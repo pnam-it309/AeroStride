@@ -18,7 +18,6 @@ public class AdminNhanVienRequest extends PageRequest {
     private String sdt;
     private LocalDate ngaySinh;
     private String hinhAnh;
-    private String diaChi;
     private String tinh;
     private String thanhPho;
     private String phuongXa;

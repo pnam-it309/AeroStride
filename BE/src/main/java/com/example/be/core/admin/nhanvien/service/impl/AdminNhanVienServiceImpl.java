@@ -45,7 +45,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     // ── TÌM KIẾM / LỌC / PHÂN TRANG — gộp 1 method ──────────────────────
     @Override
     public Page<AdminNhanVienResponse> search(AdminNhanVienRequest request) {
-        return SearchUtils.execute(request, pageable -> 
+        return SearchUtils.execute(request, pageable ->
             adminNhanVienRepository.filterAll(
                 request.getKeyword(),
                 request.getTrangThai(),
@@ -178,7 +178,6 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
                     item.getSdt(),
                     item.getNgaySinh(),
                     item.getGioiTinh(),
-                    item.getDiaChi(),
                     item.getTenPhanQuyen(),
                     item.getTrangThai() == TrangThai.DANG_HOAT_DONG ? "Đang làm việc" : "Đã nghỉ việc"
             });
@@ -222,7 +221,6 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         nv.setSdt(req.getSdt());
         nv.setNgaySinh(req.getNgaySinh());
         nv.setHinhAnh(req.getHinhAnh());
-        nv.setDiaChi(req.getDiaChi());
         nv.setTinh(req.getTinh());
         nv.setThanhPho(req.getThanhPho());
         nv.setPhuongXa(req.getPhuongXa());
