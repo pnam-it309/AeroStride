@@ -19,9 +19,19 @@ const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
 
+// Helper to clean location names for better matching
+const cleanName = (s) => {
+    if (!s) return '';
+    return String(s).toLowerCase()
+        .replace(/^(thành phố|tỉnh|quận|huyện|phường|xã|thị xã|thị trấn|tp\.?|t\.?|q\.?|h\.?|x\.?)\s+/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+};
+
 const loading = ref(false);
 const saving = ref(false);
 const isEditMode = ref(false);
+const isDetailView = computed(() => route.path.includes('/detail') || route.query.view === 'true');
 const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật nhân viên' : 'Thêm nhân viên');
 const showPassword = ref(false);
 
@@ -162,15 +172,15 @@ const loadEmployee = async (id) => {
         // Load data for selects based on names from BE
         if (data.tinh || data.thanhPho || data.phuongXa) {
             await fetchProvinces();
-            const province = provinces.value.find(p => p.name === data.tinh);
+            const province = provinces.value.find(p => cleanName(p.name) === cleanName(data.tinh) || p.code === data.tinh);
             if (province) {
                 employeeForm.value.tinh = province.code;
                 await fetchDistricts(province.code);
-                const district = districts.value.find(d => d.name === data.thanhPho);
+                const district = districts.value.find(d => cleanName(d.name) === cleanName(data.thanhPho) || d.code === data.thanhPho);
                 if (district) {
                     employeeForm.value.thanhPho = district.code;
                     await fetchWards(district.code);
-                    const ward = wards.value.find(w => w.name === data.phuongXa);
+                    const ward = wards.value.find(w => cleanName(w.name) === cleanName(data.phuongXa) || w.code === data.phuongXa);
                     if (ward) {
                         employeeForm.value.phuongXa = ward.code;
                     }
@@ -201,6 +211,7 @@ const loadEmployee = async (id) => {
                 }
             }
         }
+
     } catch (error) {
         console.error('Error loading employee:', error);
         addNotification({ title: 'Lỗi', subtitle: 'Không thể tải thông tin nhân viên', color: 'error' });
@@ -218,15 +229,23 @@ const handleSave = () => {
         action: async () => {
             saving.value = true;
             try {
-                // Combine address fields
+                // Combine address fields robustly
                 const p = provinces.value.find(x => x.code === employeeForm.value.tinh);
                 const d = districts.value.find(x => x.code === employeeForm.value.thanhPho);
                 const w = wards.value.find(x => x.code === employeeForm.value.phuongXa);
                 
-                let combinedAddress = employeeForm.value.diaChiChiTiet;
-                if (w) combinedAddress += `, ${w.name}`;
-                if (d) combinedAddress += `, ${d.name}`;
-                if (p) combinedAddress += `, ${p.name}`;
+                const provinceName = p ? p.name : employeeForm.value.tinhName;
+                const districtName = d ? d.name : employeeForm.value.thanhPhoName;
+                const wardName = w ? w.name : employeeForm.value.phuongXaName;
+
+                const addrParts = [
+                    employeeForm.value.diaChiChiTiet,
+                    wardName,
+                    districtName,
+                    provinceName
+                ].filter(part => part && String(part).trim() !== '');
+                
+                const combinedAddress = addrParts.length > 0 ? addrParts.join(', ') : '';
 
                 const payload = {
                     ma: employeeForm.value.ma,
@@ -237,13 +256,12 @@ const handleSave = () => {
                     ngaySinh: employeeForm.value.ngaySinh,
                     gioiTinh: employeeForm.value.gioiTinh,
                     trangThai: employeeForm.value.trangThai,
-                    diaChi: combinedAddress,
-                    tinh: p ? p.name : null,
-                    thanhPho: d ? d.name : null,
-                    phuongXa: w ? w.name : null,
-                    diaChiChiTiet: employeeForm.value.diaChiChiTiet,
+                    tinh: provinceName || null,
+                    thanhPho: districtName || null,
+                    phuongXa: wardName || null,
+                    diaChiChiTiet: employeeForm.value.diaChiChiTiet || null,
                     hinhAnh: employeeForm.value.hinhAnh,
-                    idPhanQuyen: String(employeeForm.value.idPhanQuyen)
+                    idPhanQuyen: employeeForm.value.idPhanQuyen
                 };
                 if (isEditMode.value) {
                     await dichVuNhanVien.capNhatNhanVien(route.params.id, payload);
@@ -286,6 +304,21 @@ const onFileChange = async (e) => {
         addNotification({ title: 'Lỗi', subtitle: 'Không thể tải lên ảnh', color: 'error' });
     } finally {
         uploading.value = false;
+    }
+};
+
+// Hàm mở trình chọn ngày khi bấm vào icon
+const openDatePicker = (event) => {
+    // Tìm input type="date" gần nhất trong cùng một v-input container
+    const container = event.target.closest('.v-input');
+    const input = container ? container.querySelector('input[type="date"]') : null;
+    
+    if (input) {
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+        } else {
+            input.click();
+        }
     }
 };
 
@@ -416,10 +449,10 @@ onMounted(async () => {
                                 <div class="field-label">Họ và tên *</div>
                                 <v-text-field
                                     v-model="employeeForm.ten"
-                                    
+                                    :readonly="isDetailView"
                                     placeholder="Ví dụ: Nguyễn Văn A"
                                     variant="outlined"
-                                    density="comfortable"
+                                    density="compact"
                                     hide-details
                                 ></v-text-field>
                             </v-col>
@@ -427,10 +460,10 @@ onMounted(async () => {
                                 <div class="field-label">Email / Tài khoản *</div>
                                 <v-text-field
                                     v-model="employeeForm.email"
-                                    
+                                    :readonly="isDetailView"
                                     placeholder="name@company.com"
                                     variant="outlined"
-                                    density="comfortable"
+                                    density="compact"
                                     hide-details
                                 ></v-text-field>
                             </v-col>
@@ -438,10 +471,10 @@ onMounted(async () => {
                                 <div class="field-label">Số điện thoại *</div>
                                 <v-text-field
                                     v-model="employeeForm.sdt"
-                                    
+                                    :readonly="isDetailView"
                                     placeholder="09xx.xxx.xxx"
                                     variant="outlined"
-                                    density="comfortable"
+                                    density="compact"
                                     hide-details
                                 ></v-text-field>
                             </v-col>
@@ -449,24 +482,27 @@ onMounted(async () => {
                                 <div class="field-label">Ngày sinh</div>
                                 <v-text-field
                                     v-model="employeeForm.ngaySinh"
-                                    
+                                    :readonly="isDetailView"
                                     type="date"
+                                    append-inner-icon="mdi-calendar"
+                                    @click:append-inner="openDatePicker"
                                     variant="outlined"
-                                    density="comfortable"
+                                    density="compact"
                                     hide-details
+                                    clearable
                                 ></v-text-field>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Giới tính</div>
                                 <v-select
                                     v-model="employeeForm.gioiTinh"
-                                    
+                                    :readonly="isDetailView"
                                     :items="[
                                         { title: 'Nam', value: true },
                                         { title: 'Nữ', value: false }
                                     ]"
                                     variant="outlined"
-                                    density="comfortable"
+                                    density="compact"
                                     hide-details
                                 ></v-select>
                             </v-col>
@@ -474,12 +510,12 @@ onMounted(async () => {
                                 <div class="field-label">Vai trò</div>
                                 <v-select
                                     v-model="employeeForm.idPhanQuyen"
-                                    
+                                    :readonly="isDetailView"
                                     :items="roles"
                                     item-title="title"
                                     item-value="value"
                                     variant="outlined"
-                                    density="comfortable"
+                                    density="compact"
                                     hide-details
                                 ></v-select>
                             </v-col>
@@ -487,12 +523,13 @@ onMounted(async () => {
                                 <div class="field-label">Tỉnh / Thành phố *</div>
                                 <v-select
                                     v-model="employeeForm.tinh"
+                                    :readonly="isDetailView"
                                     :items="provinces"
                                     item-title="name"
                                     item-value="code"
                                     placeholder="Chọn tỉnh/thành phố"
                                     variant="outlined"
-                                    density="comfortable"
+                                    density="compact"
                                     hide-details
                                     :loading="loadingLocations.provinces"
                                 ></v-select>
@@ -501,39 +538,42 @@ onMounted(async () => {
                                 <div class="field-label">Quận / Huyện *</div>
                                 <v-select
                                     v-model="employeeForm.thanhPho"
+                                    :readonly="isDetailView"
                                     :items="districts"
                                     item-title="name"
                                     item-value="code"
                                     placeholder="Chọn quận/huyện"
                                     variant="outlined"
-                                    density="comfortable"
+                                    density="compact"
                                     hide-details
                                     :loading="loadingLocations.districts"
-                                    :disabled="!employeeForm.tinh"
+                                    :disabled="isDetailView || !employeeForm.tinh"
                                 ></v-select>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Phường / Xã *</div>
                                 <v-select
                                     v-model="employeeForm.phuongXa"
+                                    :readonly="isDetailView"
                                     :items="wards"
                                     item-title="name"
                                     item-value="code"
                                     placeholder="Chọn phường/xã"
                                     variant="outlined"
-                                    density="comfortable"
+                                    density="compact"
                                     hide-details
                                     :loading="loadingLocations.wards"
-                                    :disabled="!employeeForm.thanhPho"
+                                    :disabled="isDetailView || !employeeForm.thanhPho"
                                 ></v-select>
                             </v-col>
                             <v-col cols="12">
                                 <div class="field-label">Địa chỉ chi tiết *</div>
                                 <v-textarea
                                     v-model="employeeForm.diaChiChiTiet"
+                                    :readonly="isDetailView"
                                     placeholder="Số nhà, tên đường..."
                                     variant="outlined"
-                                    density="comfortable"
+                                    density="compact"
                                     rows="2"
                                     hide-details
                                 ></v-textarea>
@@ -702,5 +742,9 @@ onMounted(async () => {
     height: 100%;
     background: rgba(0, 0, 0, 0.4);
     z-index: 5;
+}
+:deep(input[type="date"]::-webkit-calendar-picker-indicator) {
+    display: none;
+    -webkit-appearance: none;
 }
 </style>

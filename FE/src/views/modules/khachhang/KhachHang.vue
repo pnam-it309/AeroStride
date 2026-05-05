@@ -227,23 +227,77 @@ const openNewAddrForm = () => {
 
 const openEditAddrForm = async (addr) => {
     isEditAddr.value = true;
-    addrForm.value = { ...addr };
     showAddrForm.value = true;
     
-    // Tìm và set Code cho các ô Select để hiển thị đúng nội dung
-    const p = provinces.value.find((x) => x.name === addr.tinh || x.code === addr.tinh);
-    if (p) {
-        addrForm.value.tinh = p.code;
-        await fetchDistricts(p.code);
-        const d = districts.value.find((x) => x.name === addr.thanhPho || x.code === addr.thanhPho);
-        if (d) {
-            addrForm.value.thanhPho = d.code;
-            await fetchWards(d.code);
-            const w = wards.value.find((x) => x.name === addr.phuongXa || x.code === addr.phuongXa);
-            if (w) {
-                addrForm.value.phuongXa = w.code;
+    // Nạp thông tin cơ bản
+    addrForm.value = {
+        id: addr.id,
+        tenNguoiNhan: addr.tenNguoiNhan,
+        sdtNguoiNhan: addr.sdtNguoiNhan,
+        diaChiChiTiet: addr.diaChiChiTiet,
+        laMacDinh: addr.laMacDinh,
+        tinh: null,
+        thanhPho: null,
+        phuongXa: null
+    };
+
+    // Hàm chuẩn hóa địa danh cực mạnh để khớp lệnh
+    const clean = (s) => {
+        if (!s) return '';
+        let str = String(s).toLowerCase()
+            .replace(/\s+/g, ' ')
+            .trim();
+        
+        // Đặc trị các thành phố lớn thường bị viết tắt
+        if (str.includes('hồ chí minh') || str.includes('hcm')) return 'hcm';
+        if (str.includes('hà nội') || str === 'hn') return 'hanoi';
+        if (str.includes('đà nẵng') || str === 'dn') return 'danang';
+
+        // Loại bỏ tiền tố viết tắt và tiền tố đầy đủ
+        return str
+            .replace(/^(thành phố|tỉnh|quận|huyện|phường|xã|thị xã|thị trấn|tp\.?|t\.?|q\.?|h\.?|x\.?)\s+/gi, '')
+            .replace(/\s+/g, '') // Xóa trắng để so sánh chuỗi dính liền (ví dụ: "tháibình")
+            .trim();
+    };
+
+    try {
+        // Xử lý trường hợp dữ liệu bị dồn hết vào diaChiChiTiet (Flat address)
+        let tinhName = addr.tinh;
+        let huyenName = addr.thanhPho;
+        let xaName = addr.phuongXa;
+
+        if (!tinhName && addr.diaChiChiTiet?.includes(',')) {
+            const parts = addr.diaChiChiTiet.split(',').map(p => p.trim());
+            if (parts.length >= 4) {
+                // Định dạng: [Số nhà], [Phường], [Quận], [Tỉnh]
+                tinhName = parts[parts.length - 1];
+                huyenName = parts[parts.length - 2];
+                xaName = parts[parts.length - 3];
+                addrForm.value.diaChiChiTiet = parts.slice(0, parts.length - 3).join(', ');
             }
         }
+
+        // 1. Khớp Tỉnh
+        const p = provinces.value.find(x => clean(x.name) === clean(tinhName) || x.code === tinhName);
+        if (p) {
+            addrForm.value.tinh = p.code;
+            await fetchDistricts(p.code);
+            
+            // 2. Khớp Huyện
+            const d = districts.value.find(x => clean(x.name) === clean(huyenName) || x.code === huyenName);
+            if (d) {
+                addrForm.value.thanhPho = d.code;
+                await fetchWards(d.code);
+                
+                // 3. Khớp Xã
+                const w = wards.value.find(x => clean(x.name) === clean(xaName) || x.code === xaName);
+                if (w) {
+                    addrForm.value.phuongXa = w.code;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Lỗi nạp địa chỉ:', error);
     }
 };
 
@@ -328,14 +382,14 @@ const handleDeleteAddr = (addrId) => {
 };
 
 const tableHeaders = [
-    { text: 'STT', width: '60px' },
-    { text: 'Mã khách hàng', width: '100px' },
-    { text: 'Tên khách hàng', width: '80px' },
-    { text: 'Giới tính', width: '150px' },
-    { text: 'Thông tin liên hệ', width: '150px' },
-    { text: 'Địa chỉ', width: '220px' },
-    { text: 'Trạng thái', width: '90px' },
-    { text: 'Hành động', width: '120px' }
+    { text: 'STT', width: '50px', align: 'center' },
+    { text: 'Mã khách hàng', width: '100px', align: 'center' },
+    { text: 'Tên khách hàng', width: '80px', align: 'start' },
+    { text: 'Giới tính', width: '90px', align: 'center' },
+    { text: 'Thông tin liên hệ', width: '120px', align: 'start' },
+    { text: 'Địa chỉ', width: '180px', align: 'start' },
+    { text: 'Trạng thái', width: '90px', align: 'center' },
+    { text: 'Hành động', width: '100px', align: 'center' }
 ];
 
 onMounted(() => {
@@ -536,8 +590,8 @@ watch(
                     <td class="data-cell">
                         <div class="text-truncate" :title="item.ma">{{ item.ma || '-' }}</div>
                     </td>
-                    <td class="data-cell">
-                        <div class="text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
+                    <td class="data-cell text-left px-4">
+                        <div class="text-truncate font-weight-medium text-slate-700" :title="item.ten">{{ item.ten || '-' }}</div>
                     </td>
                     <td class="data-cell">
                         <v-chip
@@ -559,8 +613,8 @@ watch(
                             </div>
                         </div>
                     </td>
-                    <td class="data-cell">
-                        <div class="line-clamp-2" :title="getAddressSummary(item)">{{ getAddressSummary(item) }}</div>
+                    <td class="data-cell text-left px-4">
+                        <div class="line-clamp-2 text-slate-500" :title="getAddressSummary(item)">{{ getAddressSummary(item) }}</div>
                     </td>
                     <td class="data-cell">
                         <v-chip
@@ -631,103 +685,76 @@ watch(
         <!-- ═══════════════════════════════════════════════════
          Dialog Quản lý địa chỉ (2 cột: danh sách | form)
          ═══════════════════════════════════════════════════ -->
-        <v-dialog v-model="addrDialog" max-width="1000" width="80vw" scrollable transition="dialog-bottom-transition">
-            <v-card class="rounded-xl font-body addr-dialog-card" min-height="600">
+        <v-dialog v-model="addrDialog" max-width="1100" width="90vw" scrollable transition="scale-transition">
+            <v-card class="rounded-xl font-body addr-dialog-card overflow-hidden" min-height="650">
                 <!-- Tiêu đề dialog -->
-                <v-card-title class="d-flex align-center pa-5 border-b">
-                    <MapPinIcon size="20" class="mr-2 text-primary" />
-                    <span class="font-weight-bold text-subtitle-1"> Quản lý địa chỉ — {{ selectedKH?.ten }} </span>
+                <v-card-title class="d-flex align-center pa-6 border-b bg-slate-50">
+                    <div class="icon-blob bg-blue-lighten-5 mr-4" style="width: 50px; height: 50px">
+                        <MapPinIcon :size="30" class="text-primary" />
+                    </div>
+                    <div>
+                        <div class="text-h6 font-weight-black text-slate-800 line-height-1">Quản lý địa chỉ — {{ selectedKH?.ten }}</div>
+                    </div>
                     <v-spacer />
-                    <v-btn icon variant="text" size="small" @click="addrDialog = false">
+                    <v-btn icon variant="text" size="small" color="slate-400" @click="addrDialog = false">
                         <v-icon>mdi-close</v-icon>
                     </v-btn>
                 </v-card-title>
 
-                <v-card-text class="pa-4" style="max-height: 85vh; overflow: hidden">
+                <v-card-text class="pa-0" style="max-height: 85vh; overflow: hidden">
                     <v-row no-gutters style="height: 100%">
                         <!-- ── Cột trái: Danh sách địa chỉ ── -->
-                        <v-col
-                            cols="12"
-                            md="6"
-                            class="px-6 pt-2 pb-4 border-right-divider"
-                        >
-                            <div class="d-flex align-center justify-space-between px-5 pt-4 pb-2 sticky-sub-header bg-white">
-                                <span class="text-subtitle-2 font-weight-medium text-dark">Địa chỉ hiện tại</span>
-                                <v-chip size="small" variant="flat" class="gender-chip gender-chip-male">
-                                    {{ listDiaChi.length }} địa chỉ
-                                </v-chip>
+                        <v-col cols="12" md="6" class="pb-6 border-e overflow-y-auto" style="max-height: calc(85vh - 80px)">
+                            <div class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-10">
+                                <span class="text-subtitle-2 font-weight-bold text-slate-800">Địa chỉ hiện tại</span>
+
                             </div>
 
-                            <div v-if="addrLoading" class="text-center py-10">
-                                <v-progress-circular indeterminate color="primary" size="32" />
+                            <div v-if="addrLoading" class="text-center py-16">
+                                <v-progress-circular indeterminate color="primary" size="40" />
                             </div>
 
-                            <div v-else-if="listDiaChi.length === 0" class="text-center py-16 px-4 bg-slate-50/30 rounded-lg mx-5 mt-4">
-                                <v-icon style="font-size: 36px !important; color: #1e293b !important;" class="mb-4">mdi-map-marker-off</v-icon>
-                                <div class="text-slate-500" style="font-size: 14px !important; font-weight: 400 !important;">Chưa có địa chỉ nào</div>
+                            <div v-else-if="listDiaChi.length === 0" class="text-center py-16 px-8 mx-8 bg-slate-50/50 rounded-xl border-dashed border mt-4">
+                                <v-icon size="48" color="slate-200" class="mb-4">mdi-map-marker-off</v-icon>
+                                <div class="text-slate-400 font-weight-medium">Chưa có địa chỉ nào được đăng ký</div>
                             </div>
 
-                            <div v-else>
-                                <div v-for="addr in listDiaChi" :key="addr.id" class="addr-card mx-5 mb-4 pa-5 border rounded-xl">
+                            <div v-else class="px-8">
+                                <div v-for="addr in listDiaChi" :key="addr.id" 
+                                    class="pa-6 rounded-xl bg-blue-lighten-5 border border-blue-lighten-4 mb-6 hover-shadow-sm transition-all position-relative"
+                                    style="margin-top: 15px">
                                     <!-- Dòng tên + badge mặc định -->
-                                    <div class="d-flex align-center gap-2 mb-1">
-                                        <span class="font-weight-medium text-dark" style="font-size: 13px">
+                                    <div class="d-flex align-center gap-3 mb-3">
+                                        <span class="text-subtitle-1 font-weight-medium text-slate-700">
                                             {{ addr.tenNguoiNhan }}
                                         </span>
-                                        <v-chip
-                                            v-if="addr.laMacDinh"
-                                            color="success"
-                                            size="small"
-                                            variant="flat"
-                                            class="px-3"
-                                            style="font-size: 11.5px; height: 24px; font-weight: 400"
-                                            >mặc định</v-chip
-                                        >
+                                        <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="tonal" class="font-weight-medium px-2">Mặc định</v-chip>
                                     </div>
+                                    
                                     <!-- SĐT -->
-                                    <div class="text-dark mb-1" style="font-size: 13.5px; opacity: 0.8">
-                                        <v-icon size="14" class="mr-1">mdi-phone-outline</v-icon>{{ addr.sdtNguoiNhan }}
+                                    <div class="d-flex align-center gap-2 mb-2 text-slate-600">
+                                        <v-icon size="20" color="slate-400" style="font-size: 20px !important">mdi-phone-outline</v-icon>
+                                        <span class="text-body-2 font-weight-medium">{{ addr.sdtNguoiNhan }}</span>
                                     </div>
+                                    
                                     <!-- Địa chỉ đầy đủ -->
-                                    <div class="text-dark" style="line-height: 1.6; color: #334155; font-size: 13.5px">
+                                    <div class="text-body-2 text-slate-500 mb-4 font-weight-medium line-height-1-6">
                                         {{ [addr.diaChiChiTiet, addr.phuongXa, addr.thanhPho, addr.tinh].filter(Boolean).join(', ') }}
                                     </div>
+                                    
                                     <!-- Actions -->
-                                    <div class="d-flex align-center gap-2 mt-5">
-                                        <v-btn
-                                            v-if="!addr.laMacDinh"
-                                            variant="tonal"
-                                            size="small"
-                                            color="success"
-                                            class="text-none rounded-lg px-4"
-                                            height="32"
-                                            style="font-weight: 400"
-                                            @click="handleSetDefault(addr.id)"
-                                        >
-                                            <v-icon size="16" class="mr-1">mdi-star-outline</v-icon>Đặt mặc định
+                                    <div class="d-flex align-center gap-1 mt-2">
+                                        <v-btn variant="text" size="small" color="primary" class="text-none px-0 font-weight-medium h-auto min-width-0 mr-4" @click="openEditAddrForm(addr)">
+                                            <v-icon start size="20" style="font-size: 20px !important" class="mr-1">mdi-pencil</v-icon>
+                                            Sửa
                                         </v-btn>
-                                        <v-btn
-                                            variant="tonal"
-                                            size="small"
-                                            color="primary"
-                                            class="text-none rounded-lg px-4"
-                                            height="32"
-                                            style="font-weight: 400"
-                                            @click="openEditAddrForm(addr)"
-                                        >
-                                            <v-icon size="16" class="mr-1">mdi-pencil</v-icon>Sửa
+                                        <v-btn v-if="!addr.laMacDinh" variant="text" size="small" color="success" class="text-none px-0 font-weight-medium h-auto min-width-0 mr-4" @click="handleSetDefault(addr.id)">
+                                            <v-icon start size="20" style="font-size: 20px !important" class="mr-1">mdi-star-outline</v-icon>
+                                            Mặc định
                                         </v-btn>
-                                        <v-btn
-                                            v-if="!addr.laMacDinh"
-                                            variant="tonal"
-                                            size="small"
-                                            color="error"
-                                            class="text-none rounded-lg px-4"
-                                            height="32"
-                                            style="font-weight: 400"
-                                            @click="handleDeleteAddr(addr.id)"
-                                        >
-                                            <v-icon size="16" class="mr-1">mdi-delete-outline</v-icon>Xóa
+                                        <v-btn v-if="!addr.laMacDinh" variant="text" size="small" color="error" class="text-none px-0 font-weight-medium h-auto min-width-0" @click="handleDeleteAddr(addr.id)">
+                                            <v-icon start size="20" style="font-size: 20px !important" class="mr-1">mdi-delete-outline</v-icon>
+                                            Xóa
                                         </v-btn>
                                     </div>
                                 </div>
@@ -735,139 +762,70 @@ watch(
                         </v-col>
 
                         <!-- ── Cột phải: Form thêm / sửa địa chỉ ── -->
-                        <v-col
-                            cols="12"
-                            md="6"
-                            class="px-8 pt-2 pb-4 bg-white addr-col-right"
-                        >
-                            <div class="px-5 pt-4 pb-2 d-flex align-center justify-space-between sticky-sub-header bg-white">
-                                <span class="text-subtitle-2 font-weight-medium text-dark">
+                        <v-col cols="12" md="6" class="pb-6 bg-white overflow-y-auto" style="max-height: calc(85vh - 80px)">
+                            <div class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-10">
+                                <span class="text-subtitle-2 font-weight-bold text-slate-800">
                                     {{ showAddrForm ? (isEditAddr ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới') : 'Thêm địa chỉ khác' }}
                                 </span>
-                                <v-btn
-                                    v-if="!showAddrForm"
-                                    color="primary"
-                                    variant="tonal"
-                                    size="small"
-                                    class="text-none font-weight-bold"
-                                    prepend-icon="mdi-plus"
-                                    @click="openNewAddrForm"
-                                >
+                                <v-btn v-if="!showAddrForm" color="primary" variant="text" size="small" class="text-none font-weight-medium" @click="openNewAddrForm">
+                                    <v-icon start size="18">mdi-plus</v-icon>
                                     Thêm địa chỉ
                                 </v-btn>
-                                <v-btn v-else variant="text" size="small" class="text-none" @click="showAddrForm = false">
-                                    <v-icon size="14" class="mr-1">mdi-arrow-left</v-icon>Hủy
+                                <v-btn v-else variant="text" size="small" color="slate-400" class="text-none font-weight-medium" @click="showAddrForm = false">
+                                    <v-icon start size="16">mdi-arrow-left</v-icon>Hủy bỏ
                                 </v-btn>
                             </div>
 
                             <!-- Placeholder khi chưa mở form -->
-                            <div v-if="!showAddrForm" class="text-center py-16 px-4 bg-slate-50/30 rounded-lg mx-5 mt-4">
-                                <v-icon style="font-size: 36px !important; color: #1e293b !important;" class="mb-4">mdi-map-marker-plus</v-icon>
-                                <div class="text-slate-500" style="font-size: 14px !important; font-weight: 400 !important;">
-                                    Nhấn "Thêm địa chỉ" để đăng ký địa chỉ nhận hàng mới
+                            <div v-if="!showAddrForm" class="d-flex flex-column align-center justify-center py-16 text-center" style="opacity: 0.8; height: 100%">
+                                <div class="icon-blob bg-slate-50 mb-4" style="width: 100px; height: 100px">
+                                    <v-icon size="64" color="slate-300" style="font-size: 64px !important">mdi-map-marker-plus-outline</v-icon>
+                                </div>
+                                <div class="text-body-2 text-slate-400 font-weight-medium max-w-200 mx-auto px-8">
+                                    Nhấn "Thêm địa chỉ" để đăng ký địa chỉ nhận hàng mới.
                                 </div>
                             </div>
 
                             <!-- Form -->
-                            <v-form v-else class="px-5 pt-2 pb-6">
+                            <v-form v-else class="px-8 pt-2 pb-6">
                                 <v-row dense>
                                     <v-col cols="12" md="6">
                                         <div class="field-label">Tên người nhận *</div>
-                                        <v-text-field
-                                            v-model="addrForm.tenNguoiNhan"
-                                            placeholder="Nhập tên"
-                                            variant="outlined"
-                                            hide-details
-                                        />
+                                        <v-text-field v-model="addrForm.tenNguoiNhan" placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" density="compact" hide-details />
                                     </v-col>
                                     <v-col cols="12" md="6">
                                         <div class="field-label">Số điện thoại *</div>
-                                        <v-text-field
-                                            v-model="addrForm.sdtNguoiNhan"
-                                            placeholder="09xx..."
-                                            variant="outlined"
-                                            hide-details
-                                        />
+                                        <v-text-field v-model="addrForm.sdtNguoiNhan" placeholder="09xx.xxx.xxx" variant="outlined" density="compact" hide-details />
                                     </v-col>
                                     <v-col cols="12">
                                         <div class="field-label">Tỉnh / Thành phố *</div>
-                                        <v-autocomplete
-                                            v-model="addrForm.tinh"
-                                            :items="provinces"
-                                            item-title="name"
-                                            item-value="code"
-                                            placeholder="Chọn tỉnh"
-                                            variant="outlined"
-                                            hide-details
-                                            :loading="loadingLoc.provinces"
-                                        />
+                                        <v-autocomplete v-model="addrForm.tinh" :items="provinces" item-title="name" item-value="code" placeholder="Chọn tỉnh thành" variant="outlined" density="compact" hide-details :loading="loadingLoc.provinces" />
                                     </v-col>
                                     <v-col cols="12" md="6">
                                         <div class="field-label">Quận / Huyện *</div>
-                                        <v-autocomplete
-                                            v-model="addrForm.thanhPho"
-                                            :items="districts"
-                                            item-title="name"
-                                            item-value="code"
-                                            placeholder="Chọn quận/huyện"
-                                            variant="outlined"
-                                            hide-details
-                                            :disabled="!addrForm.tinh"
-                                            :loading="loadingLoc.districts"
-                                        />
+                                        <v-autocomplete v-model="addrForm.thanhPho" :items="districts" item-title="name" item-value="code" placeholder="Chọn quận huyện" variant="outlined" density="compact" hide-details :disabled="!addrForm.tinh" :loading="loadingLoc.districts" />
                                     </v-col>
                                     <v-col cols="12" md="6">
                                         <div class="field-label">Phường / Xã *</div>
-                                        <v-autocomplete
-                                            v-model="addrForm.phuongXa"
-                                            :items="wards"
-                                            item-title="name"
-                                            item-value="code"
-                                            placeholder="Chọn phường/xã"
-                                            variant="outlined"
-                                            hide-details
-                                            :disabled="!addrForm.thanhPho"
-                                            :loading="loadingLoc.wards"
-                                        />
+                                        <v-autocomplete v-model="addrForm.phuongXa" :items="wards" item-title="name" item-value="code" placeholder="Chọn phường xã" variant="outlined" density="compact" hide-details :disabled="!addrForm.thanhPho" :loading="loadingLoc.wards" />
                                     </v-col>
                                     <v-col cols="12">
                                         <div class="field-label">Địa chỉ cụ thể *</div>
-                                        <v-textarea
-                                            v-model="addrForm.diaChiChiTiet"
-                                            placeholder="Số nhà, tên đường..."
-                                            variant="outlined"
-                                            rows="2"
-                                            hide-details
-                                        />
+                                        <v-textarea v-model="addrForm.diaChiChiTiet" placeholder="Số nhà, tên đường, tòa nhà..." variant="outlined" rows="2" hide-details />
                                     </v-col>
                                     <v-col cols="12" v-if="listDiaChi.length > 0">
-                                        <v-checkbox
-                                            v-model="addrForm.laMacDinh"
-                                            label="Đặt làm địa chỉ mặc định"
-                                            color="primary"
-                                            hide-details
-                                            density="compact"
-                                        />
+                                        <div class="pa-4 rounded-lg bg-slate-50 border border-dashed border-slate-200">
+                                            <v-checkbox v-model="addrForm.laMacDinh" color="primary" hide-details density="compact">
+                                                <template v-slot:label>
+                                                    <span class="text-body-2 font-weight-bold text-slate-600">Đặt làm địa chỉ mặc định</span>
+                                                </template>
+                                            </v-checkbox>
+                                        </div>
                                     </v-col>
-                                    <v-col cols="12" class="mt-2">
-                                        <v-btn
-                                            color="primary"
-                                            variant="flat"
-                                            block
-                                            class="text-none font-weight-bold rounded-lg"
-                                            height="48"
-                                            :loading="addrSaving"
-                                            :disabled="
-                                                !addrForm.tenNguoiNhan ||
-                                                !addrForm.sdtNguoiNhan ||
-                                                !addrForm.tinh ||
-                                                !addrForm.thanhPho ||
-                                                !addrForm.phuongXa ||
-                                                !addrForm.diaChiChiTiet
-                                            "
-                                            @click="saveAddress"
-                                        >
-                                            <span class="force-white-text">{{ isEditAddr ? 'Cập nhật địa chỉ' : 'Lưu địa chỉ' }}</span>
+                                    <v-col cols="12" class="mt-6">
+                                        <v-btn color="primary" variant="flat" block class="text-none font-weight-bold rounded-xl shadow-sm hover-primary-btn" height="48" :loading="addrSaving" :disabled="!addrForm.tenNguoiNhan || !addrForm.sdtNguoiNhan || !addrForm.tinh || !addrForm.thanhPho || !addrForm.phuongXa || !addrForm.diaChiChiTiet" @click="saveAddress">
+                                            <v-icon start size="20" style="color: white !important">mdi-check</v-icon>
+                                            <span style="color: white !important">{{ isEditAddr ? 'Cập nhật địa chỉ' : 'Lưu địa chỉ mới' }}</span>
                                         </v-btn>
                                     </v-col>
                                 </v-row>

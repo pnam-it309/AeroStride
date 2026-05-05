@@ -9,7 +9,7 @@ import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUt
 // REUSABLE COMPONENTS
 import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import { downloadFile } from '@/utils/fileUtils';
-import { EditIcon } from 'vue-tabler-icons';
+import { EditIcon, RefreshIcon } from 'vue-tabler-icons';
 
 import { dichVuResetPassword } from '@/services/admin/dichVuResetPassword';
 import { useNotifications } from '@/services/notificationService';
@@ -41,8 +41,6 @@ watch(
 );
 
 const router = useRouter();
-
-// Use composables
 const { confirmDialog, setConfirm, clearConfirm, handleConfirm } = useConfirmDialog();
 const { isRefreshing, handleRefresh: refreshData } = useRefreshHandler();
 
@@ -76,16 +74,16 @@ async function handleResetPassword(id) {
 }
 
 const tableHeaders = [
-    { text: 'STT', width: '60px' },
-    { text: 'Mã nhân viên', width: '100px' },
-    { text: 'Tên nhân viên', width: '150px' },
-    { text: 'Tên tài khoản', width: '120px' },
-    { text: 'Giới tính', width: '120px' },
-    { text: 'Thông tin liên hệ', width: '230px' },
-    { text: 'Địa chỉ', width: '200px' },
-    { text: 'Chức vụ', width: '120px' },
-    { text: 'Trạng thái', width: '130px' },
-    { text: 'Hành động', width: '110px' }
+    { text: 'STT', width: '60px', align: 'center' },
+    { text: 'Mã nhân viên', width: '100px', align: 'center' },
+    { text: 'Tên nhân viên', width: '130px', align: 'center' },
+    { text: 'Tên tài khoản', width: '100px', align: 'center' },
+    { text: 'Giới tính', width: '120px', align: 'center' },
+    { text: 'Thông tin liên hệ', width: '230px', align: 'start' },
+    { text: 'Địa chỉ', width: '200px', align: 'start' },
+    { text: 'Chức vụ', width: '120px', align: 'center' },
+    { text: 'Trạng thái', width: '130px', align: 'center' },
+    { text: 'Hành động', width: '130px', align: 'center' }
 ];
 
 const handleRefresh = async () => {
@@ -126,6 +124,28 @@ const confirmChangeStatus = (item) => {
             }
         }
     });
+};
+
+const confirmResetPassword = (item) => {
+    setConfirm({
+        title: 'Reset mật khẩu',
+        message: `Bạn có chắc muốn reset mật khẩu cho nhân viên [${item.ten}]? Một mật khẩu mới sẽ được tạo và gửi qua email của họ.`,
+        color: 'warning',
+        action: () => handleResetPassword(item.id)
+    });
+};
+
+const getAddressSummary = (item) => {
+    if (!item) return '-';
+    
+    const ct = item.diaChiChiTiet || item.dia_chi_chi_tiet || '';
+    const xa = item.phuongXa || item.phuong_xa || '';
+    const huyen = item.thanhPho || item.thanh_pho || '';
+    const tinh = item.tinh || '';
+    
+    const parts = [ct, xa, huyen, tinh].map(p => String(p).trim()).filter(p => p !== '' && p !== 'null');
+    
+    return parts.length > 0 ? parts.join(', ') : 'Chưa cập nhật';
 };
 
 onMounted(() => {
@@ -260,9 +280,23 @@ onMounted(() => {
                             </div>
                         </div>
                     </td>
-                    <td class="data-cell">
-                        <div class="text-truncate" :title="item.diaChi || item.diaChiChiTiet || item.dia_chi">
-                            {{ item.diaChi || item.diaChiChiTiet || item.dia_chi || '-' }}
+                    <td class="data-cell text-left px-4" style="min-width: 200px;">
+                        <div class="text-slate-700" style="font-size: 13px; line-height: 1.4;">
+                            <!-- Thử cả 2 bộ tên trường do xung đột DB -->
+                            <span v-if="item.diaChiChiTiet || item.dia_chi_chi_tiet">
+                                {{ item.diaChiChiTiet || item.dia_chi_chi_tiet }}, 
+                            </span>
+                            <span v-if="item.phuongXa || item.phuong_xa">
+                                {{ item.phuongXa || item.phuong_xa }}, 
+                            </span>
+                            <span v-if="item.thanhPho || item.thanh_pho">
+                                {{ item.thanhPho || item.thanh_pho }}, 
+                            </span>
+                            <span v-if="item.tinh">{{ item.tinh }}</span>
+                            
+                            <span v-if="!(item.diaChiChiTiet || item.dia_chi_chi_tiet) && !(item.phuongXa || item.phuong_xa) && !(item.thanhPho || item.thanh_pho) && !item.tinh" class="text-slate-400">
+                                Chưa cập nhật
+                            </span>
                         </div>
                     </td>
 
@@ -291,6 +325,10 @@ onMounted(() => {
 
                     <td class="data-cell action-cell">
                         <div v-if="tab === 0" class="d-flex align-center justify-center action-controls">
+                            <v-btn variant="text" class="action-icon-btn" @click.stop="confirmResetPassword(item)">
+                                <RefreshIcon size="15" />
+                                <v-tooltip activator="parent" location="top">Reset mật khẩu</v-tooltip>
+                            </v-btn>
                             <v-btn variant="text" class="action-icon-btn" @click.stop="router.push(`${PATH.NHAN_VIEN_FORM}/${item.id}`)">
                                 <EditIcon size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
