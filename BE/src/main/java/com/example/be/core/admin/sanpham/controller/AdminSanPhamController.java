@@ -125,6 +125,11 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.updateVariantImage(imageId, request), "Cap nhat anh bien the thanh cong"));
     }
 
+    @PutMapping(RoutesConstant.VARIANT_IMAGE_MAIN)
+    public ResponseEntity<ApiResponse<ProductVariantImageResponse>> setMainVariantImage(@PathVariable String imageId) {
+        return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.setMainVariantImage(imageId), "Dat anh chinh thanh cong"));
+    }
+
     @DeleteMapping(RoutesConstant.VARIANT_IMAGE_ID)
     public ResponseEntity<ApiResponse<Void>> deleteVariantImage(@PathVariable String imageId) {
         adminSanPhamService.deleteVariantImage(imageId);

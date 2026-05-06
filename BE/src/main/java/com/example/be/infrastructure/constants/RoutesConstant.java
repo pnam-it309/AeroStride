@@ -88,4 +88,5 @@ public final class RoutesConstant {
     public static final String VARIANT_ID = "/variants/{variantId}";
     public static final String VARIANT_IMAGES = "/variants/{variantId}/images";
     public static final String VARIANT_IMAGE_ID = "/variant-images/{imageId}";
+    public static final String VARIANT_IMAGE_MAIN = "/variant-images/{imageId}/main";
 }

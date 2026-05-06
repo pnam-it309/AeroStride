@@ -7,6 +7,7 @@ import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
 import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import QrScanner from '@/views/modules/san-pham/components/QrScanner.vue';
+import FormattedNumberField from '@/views/modules/san-pham/components/FormattedNumberField.vue';
 import { downloadFile } from '@/utils/fileUtils';
 import { EditIcon, EyeIcon } from 'vue-tabler-icons';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
@@ -65,10 +66,36 @@ const toNumber = (value, fallback = 0) => {
     return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const getProductLowestPrice = (item) => toNumber(item?.giaBanThapNhat, 0);
+const getProductPriceCandidates = (item) => {
+    const nestedVariantCollections = [
+        item?.variants,
+        item?.chiTietSanPhams,
+        item?.bienThes,
+        item?.danhSachBienThe
+    ].filter(Array.isArray);
+
+    const nestedPrices = nestedVariantCollections.flatMap((variants) => variants
+        .map((variant) => Number(variant?.giaBan))
+        .filter((price) => Number.isFinite(price)));
+
+    return [
+        item?.giaBanThapNhat,
+        item?.giaBanCaoNhat,
+        item?.giaBan,
+        ...nestedPrices
+    ]
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value));
+};
+
+const getProductLowestPrice = (item) => {
+    const priceCandidates = getProductPriceCandidates(item);
+    return priceCandidates.length ? Math.min(...priceCandidates) : 0;
+};
+
 const getProductHighestPrice = (item) => {
-    const lowestPrice = getProductLowestPrice(item);
-    return toNumber(item?.giaBanCaoNhat, lowestPrice);
+    const priceCandidates = getProductPriceCandidates(item);
+    return priceCandidates.length ? Math.max(...priceCandidates) : getProductLowestPrice(item);
 };
 
 const productPriceMatches = (item) => {
@@ -150,9 +177,7 @@ const updateProductPriceBounds = (items) => {
         return;
     }
 
-    const currentMin = Math.min(filters.khoangGia[0], safeMaxPrice);
-    const currentMax = Math.min(filters.khoangGia[1], safeMaxPrice);
-    filters.khoangGia = [Math.max(MIN_PRICE, currentMin), Math.max(currentMin, currentMax)];
+    filters.khoangGia = sanitizePriceRange(filters.khoangGia, safeMaxPrice);
 };
 
 const loadProducts = async () => {
@@ -198,21 +223,19 @@ const loadMaxPrice = async () => {
 const loadFilterOptions = async () => {
     try {
         const options = await dichVuSanPham.layOptionsForm();
-        if (options) {
-            filterOptions.value.danhMucs = options.danhMucs || [];
-            filterOptions.value.thuongHieus = options.thuongHieus || [];
-            filterOptions.value.xuatXus = options.xuatXus || [];
-            filterOptions.value.mucDichChays = options.mucDichChays || [];
-            filterOptions.value.chatLieus = options.chatLieus || [];
-            filterOptions.value.coGiays = options.coGiays || [];
-            filterOptions.value.deGiays = options.deGiays || [];
-        }
+        filterOptions.value.danhMucs = options?.danhMucs || [];
+        filterOptions.value.thuongHieus = options?.thuongHieus || [];
+        filterOptions.value.xuatXus = options?.xuatXus || [];
+        filterOptions.value.mucDichChays = options?.mucDichChays || [];
+        filterOptions.value.chatLieus = options?.chatLieus || [];
+        filterOptions.value.coGiays = options?.coGiays || [];
+        filterOptions.value.deGiays = options?.deGiays || [];
     } catch (error) {
         console.error('Error loading filter options:', error);
         addNotification({
-            title: 'Lỗi',
-            subtitle: 'Không thể tải các tùy chọn lọc',
-            color: 'error'
+            title: 'Cảnh báo',
+            subtitle: 'Không thể tải đầy đủ bộ lọc, hệ thống sẽ hiển thị dữ liệu khả dụng',
+            color: 'warning'
         });
     }
 };
@@ -240,6 +263,32 @@ const schedulePriceSearch = () => {
         pagination.page = 1;
         syncProductSelection();
     }, 120);
+};
+
+const sanitizePriceRange = (range, maxPrice = productPriceBounds.value.max) => {
+    const safeMaxPrice = Math.max(MIN_PRICE, toNumber(maxPrice, DEFAULT_MAX_PRICE));
+    const rawMin = Math.max(MIN_PRICE, toNumber(range?.[0], MIN_PRICE));
+    const rawMax = Math.max(MIN_PRICE, toNumber(range?.[1], safeMaxPrice));
+    const nextMin = Math.min(rawMin, safeMaxPrice);
+    const nextMax = Math.min(Math.max(rawMax, nextMin), safeMaxPrice);
+    return [nextMin, nextMax];
+};
+
+const updatePriceFilterBoundary = (boundary, value) => {
+    const nextRange = [...filters.khoangGia];
+    if (boundary === 'min') {
+        nextRange[0] = value === '' ? MIN_PRICE : value;
+    } else {
+        nextRange[1] = value === '' ? productPriceBounds.value.max : value;
+    }
+
+    filters.khoangGia = sanitizePriceRange(nextRange);
+    schedulePriceSearch();
+};
+
+const handleSliderPriceChange = (value) => {
+    filters.khoangGia = sanitizePriceRange(value);
+    schedulePriceSearch();
 };
 
 const escapeCell = (value) => String(value ?? '')
@@ -559,7 +608,21 @@ onBeforeUnmount(() => {
                                 </div>
                                 <v-range-slider v-model="filters.khoangGia" :min="productPriceBounds.min"
                                     :max="productPriceBounds.max" :step="PRICE_STEP" hide-details color="primary"
-                                    track-color="slate-200" @update:model-value="schedulePriceSearch" />
+                                    track-color="slate-200" @update:model-value="handleSliderPriceChange" />
+                                <v-row class="mt-1" dense>
+                                    <v-col cols="12" sm="6">
+                                        <div class="text-caption font-weight-bold text-slate-500 mb-1">Từ giá</div>
+                                        <FormattedNumberField :model-value="filters.khoangGia[0]" placeholder="0"
+                                            variant="outlined" density="compact" hide-details class="bg-white"
+                                            @update:model-value="updatePriceFilterBoundary('min', $event)" />
+                                    </v-col>
+                                    <v-col cols="12" sm="6">
+                                        <div class="text-caption font-weight-bold text-slate-500 mb-1">Đến giá</div>
+                                        <FormattedNumberField :model-value="filters.khoangGia[1]" placeholder="0"
+                                            variant="outlined" density="compact" hide-details class="bg-white"
+                                            @update:model-value="updatePriceFilterBoundary('max', $event)" />
+                                    </v-col>
+                                </v-row>
                             </div>
                         </div>
                     </div>
@@ -574,7 +637,7 @@ onBeforeUnmount(() => {
             { text: 'Tên sản phẩm', width: '220px' },
             { text: 'Thương hiệu', width: '140px' },
             { text: 'Danh mục', width: '140px' },
-            { text: 'Tổng SL', width: '100px' },
+            { text: 'Tổng số lượng', width: '120px' },
             { text: 'Khoảng giá', width: '200px' },
             { text: 'Trạng thái', width: '130px' },
             { text: 'Hành động', width: '130px' }
@@ -588,19 +651,8 @@ onBeforeUnmount(() => {
                             :indeterminate="someVisibleProductsSelected" color="primary" hide-details density="compact"
                             @update:model-value="toggleSelectVisibleProducts" />
                         <span class="text-caption font-weight-black text-slate-500">
-                            Đã chọn {{ selectedProductIds.length }} sản phẩm
+                            đã chọn {{ selectedProductIds.length }} sản phẩm
                         </span>
-                    </div>
-
-                    <div class="d-flex align-center flex-wrap gap-2">
-                        <v-btn size="small" variant="tonal" color="success" :disabled="!canBulkActivateProducts"
-                            @click="handleBulkProductStatus('DANG_HOAT_DONG')">
-                            Bật trạng thái
-                        </v-btn>
-                        <v-btn size="small" variant="tonal" color="warning" :disabled="!canBulkDeactivateProducts"
-                            @click="handleBulkProductStatus('KHONG_HOAT_DONG')">
-                            Tắt trạng thái
-                        </v-btn>
                     </div>
                 </div>
             </template>
@@ -635,7 +687,7 @@ onBeforeUnmount(() => {
                     </td>
 
                     <td class="data-cell">
-                        <span class="font-weight-black text-slate-700">{{ formatNumber(item.tongSoLuongTon || 0) }}</span>
+                        <span class="font-weight-black text-primary">{{ formatNumber(item.tongSoLuongTon || 0) }}</span>
                     </td>
 
                     <td class="data-cell text-center price-value px-2">

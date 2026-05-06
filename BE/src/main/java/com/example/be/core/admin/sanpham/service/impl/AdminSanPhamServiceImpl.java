@@ -215,20 +215,41 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         
         // Handle images if provided
         if (req.getImages() != null && !req.getImages().isEmpty()) {
-            saveVariantImages(v, req.getImages());
+            syncVariantImages(v, req.getImages());
         }
         return v;
     }
 
-    private void saveVariantImages(ChiTietSanPham v, List<ProductVariantImageRequest> images) {
-        images.forEach(imgReq -> {
-            AnhChiTietSanPham img = new AnhChiTietSanPham();
-            img.setChiTietSanPham(v);
-            img.setDuongDanAnh(imgReq.getDuongDanAnh());
-            img.setHinhAnhDaiDien(imgReq.getHinhAnhDaiDien());
-            img.setTrangThai(TrangThai.DANG_HOAT_DONG);
-            img.setXoaMem(false);
-            adminAnhChiTietSanPhamRepository.save(img);
+    private void syncVariantImages(ChiTietSanPham variant, List<ProductVariantImageRequest> imageRequests) {
+        List<AnhChiTietSanPham> existingImages = adminAnhChiTietSanPhamRepository
+                .findByChiTietSanPhamIdAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(variant.getId());
+
+        Map<String, AnhChiTietSanPham> existingImagesByUrl = existingImages.stream()
+                .filter(image -> StringUtils.hasText(image.getDuongDanAnh()))
+                .collect(Collectors.toMap(
+                        AnhChiTietSanPham::getDuongDanAnh,
+                        image -> image,
+                        (current, ignored) -> current,
+                        LinkedHashMap::new
+                ));
+
+        boolean hasIncomingMainImage = imageRequests.stream()
+                .anyMatch(imageRequest -> Boolean.TRUE.equals(imageRequest.getHinhAnhDaiDien()));
+
+        if (hasIncomingMainImage) {
+            existingImages.forEach(image -> image.setHinhAnhDaiDien(false));
+            adminAnhChiTietSanPhamRepository.saveAll(existingImages);
+        }
+
+        imageRequests.forEach(imageRequest -> {
+            AnhChiTietSanPham image = existingImagesByUrl.getOrDefault(imageRequest.getDuongDanAnh(), new AnhChiTietSanPham());
+            image.setChiTietSanPham(variant);
+            image.setDuongDanAnh(imageRequest.getDuongDanAnh());
+            image.setMoTa(imageRequest.getMoTa());
+            image.setHinhAnhDaiDien(Boolean.TRUE.equals(imageRequest.getHinhAnhDaiDien()));
+            image.setTrangThai(imageRequest.getTrangThai() != null ? imageRequest.getTrangThai() : TrangThai.DANG_HOAT_DONG);
+            image.setXoaMem(false);
+            adminAnhChiTietSanPhamRepository.save(image);
         });
     }
 
@@ -253,8 +274,19 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         return adminChiTietSanPhamRepository.findByIdAndXoaMemFalse(id).orElseThrow(() -> new ResourceNotFoundException("Biến thể không tồn tại"));
     }
 
+    private AnhChiTietSanPham getVariantImageOrThrow(String imageId) {
+        return adminAnhChiTietSanPhamRepository.findByIdAndXoaMemFalse(imageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Ảnh biến thể không tồn tại"));
+    }
+
     private SanPham getProductOrThrow(String id) {
         return adminSanPhamRepository.findByIdAndXoaMemFalse(id).orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
+    }
+
+    private void unsetMainImageFlags(String variantId) {
+        List<AnhChiTietSanPham> existingImages = adminAnhChiTietSanPhamRepository.findByChiTietSanPhamIdAndXoaMemFalse(variantId);
+        existingImages.forEach(image -> image.setHinhAnhDaiDien(false));
+        adminAnhChiTietSanPhamRepository.saveAll(existingImages);
     }
 
     private ProductVariantResponse mapVariant(ChiTietSanPham v) {
@@ -290,9 +322,83 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         // Implementation for product import
     }
 
-    @Override public ProductVariantImageResponse addVariantImage(String vId, ProductVariantImageRequest r) { return null; }
-    @Override public ProductVariantImageResponse updateVariantImage(String iId, UpdateProductVariantImageRequest r) { return null; }
-    @Override public void deleteVariantImage(String iId) {}
+    @Override
+    @Transactional
+    public ProductVariantImageResponse addVariantImage(String variantId, ProductVariantImageRequest request) {
+        ChiTietSanPham variant = getVariantOrThrow(variantId);
+
+        if (Boolean.TRUE.equals(request.getHinhAnhDaiDien())) {
+            unsetMainImageFlags(variantId);
+        }
+
+        AnhChiTietSanPham image = new AnhChiTietSanPham();
+        image.setChiTietSanPham(variant);
+        image.setDuongDanAnh(request.getDuongDanAnh());
+        image.setMoTa(request.getMoTa());
+        image.setHinhAnhDaiDien(Boolean.TRUE.equals(request.getHinhAnhDaiDien()));
+        image.setTrangThai(request.getTrangThai() != null ? request.getTrangThai() : TrangThai.DANG_HOAT_DONG);
+        image.setXoaMem(false);
+
+        return adminSanPhamMapper.toVariantImageResponse(adminAnhChiTietSanPhamRepository.save(image));
+    }
+
+    @Override
+    @Transactional
+    public ProductVariantImageResponse updateVariantImage(String imageId, UpdateProductVariantImageRequest request) {
+        AnhChiTietSanPham image = getVariantImageOrThrow(imageId);
+
+        if (StringUtils.hasText(request.getDuongDanAnh())) {
+            image.setDuongDanAnh(request.getDuongDanAnh().trim());
+        }
+        if (request.getMoTa() != null) {
+            image.setMoTa(request.getMoTa());
+        }
+        if (request.getTrangThai() != null) {
+            image.setTrangThai(request.getTrangThai());
+        }
+        if (request.getHinhAnhDaiDien() != null) {
+            if (Boolean.TRUE.equals(request.getHinhAnhDaiDien())) {
+                unsetMainImageFlags(image.getChiTietSanPham().getId());
+            }
+            image.setHinhAnhDaiDien(request.getHinhAnhDaiDien());
+        }
+
+        image.setXoaMem(false);
+        return adminSanPhamMapper.toVariantImageResponse(adminAnhChiTietSanPhamRepository.save(image));
+    }
+
+    @Override
+    @Transactional
+    public ProductVariantImageResponse setMainVariantImage(String imageId) {
+        AnhChiTietSanPham image = getVariantImageOrThrow(imageId);
+        unsetMainImageFlags(image.getChiTietSanPham().getId());
+        image.setHinhAnhDaiDien(true);
+        image.setTrangThai(TrangThai.DANG_HOAT_DONG);
+        image.setXoaMem(false);
+        return adminSanPhamMapper.toVariantImageResponse(adminAnhChiTietSanPhamRepository.save(image));
+    }
+
+    @Override
+    @Transactional
+    public void deleteVariantImage(String imageId) {
+        AnhChiTietSanPham image = getVariantImageOrThrow(imageId);
+        String variantId = image.getChiTietSanPham().getId();
+        boolean wasMainImage = Boolean.TRUE.equals(image.getHinhAnhDaiDien());
+
+        image.setXoaMem(true);
+        image.setTrangThai(TrangThai.DA_XOA);
+        image.setHinhAnhDaiDien(false);
+        adminAnhChiTietSanPhamRepository.save(image);
+
+        if (wasMainImage) {
+            adminAnhChiTietSanPhamRepository.findFirstByChiTietSanPhamIdAndXoaMemFalseOrderByNgayTaoAsc(variantId)
+                    .ifPresent(nextImage -> {
+                        nextImage.setHinhAnhDaiDien(true);
+                        nextImage.setTrangThai(TrangThai.DANG_HOAT_DONG);
+                        adminAnhChiTietSanPhamRepository.save(nextImage);
+                    });
+        }
+    }
 
     @Override
     public java.math.BigDecimal getMaxPrice() {
