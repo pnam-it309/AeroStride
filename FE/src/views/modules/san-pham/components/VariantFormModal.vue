@@ -4,6 +4,9 @@ import { DeviceFloppyIcon, PhotoIcon, PlusIcon, RefreshIcon, TrashIcon } from 'v
 import { dichVuFile } from '@/services/core/dichVuFile';
 import { useNotifications } from '@/services/notificationService';
 import { dichVuMauSac, dichVuKichThuoc } from '@/services/product/dichVuThuocTinh';
+import FormattedNumberField from './FormattedNumberField.vue';
+import SafeProductImage from './SafeProductImage.vue';
+import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
 
 const props = defineProps({
     open: Boolean,
@@ -59,7 +62,169 @@ const formData = ref(createDefaultFormData());
 const normalizeUploadedFileUrl = (value) => {
     if (!value) return '';
     if (typeof value === 'string') return value;
-    return value.fileUrl || value.url || value.secure_url || value.duongDanAnh || value.data || '';
+    return value.fileUrl
+        || value.url
+        || value.secure_url
+        || value.duongDanAnh
+        || value.duongDan
+        || value.path
+        || value.data
+        || value.hinhAnh
+        || value.anh
+        || '';
+};
+
+const getImageUrlFromCollection = (collection) => {
+    if (!Array.isArray(collection)) {
+        return normalizeUploadedFileUrl(collection);
+    }
+
+    const mainImage = collection.find(image => image?.hinhAnhDaiDien || image?.anhDaiDien || image?.laAnhChinh);
+    return normalizeUploadedFileUrl(mainImage) || normalizeUploadedFileUrl(collection[0]);
+};
+
+const getVariantImageUrl = (variant) => {
+    if (!variant) return '';
+
+    return normalizeUploadedFileUrl(variant.urlAnh)
+        || getImageUrlFromCollection(variant.images)
+        || getImageUrlFromCollection(variant.hinhAnhs)
+        || getImageUrlFromCollection(variant.anhChiTietSanPhams)
+        || getImageUrlFromCollection(variant.hinhAnh)
+        || normalizeUploadedFileUrl(variant.anh)
+        || normalizeUploadedFileUrl(variant.duongDanAnh)
+        || normalizeUploadedFileUrl(variant.imageUrl)
+        || '';
+};
+
+const getNestedValue = (source, keys) => {
+    for (const key of keys) {
+        const value = source?.[key];
+        if (value !== null && value !== undefined && value !== '') {
+            return value;
+        }
+    }
+    return '';
+};
+
+const getVariantColorId = (variant) => (
+    getNestedValue(variant, ['idMauSac', 'mauSacId'])
+    || getNestedValue(variant?.mauSac, ['id', 'value', 'ma'])
+    || getNestedValue(variant?.color, ['id', 'value', 'ma'])
+    || ''
+);
+
+const getVariantColorLabel = (variant) => (
+    getNestedValue(variant, ['tenMauSac', 'mauSac', 'mau'])
+    || getNestedValue(variant?.mauSac, ['ten', 'name', 'label', 'title'])
+    || getNestedValue(variant?.color, ['ten', 'name', 'label', 'title'])
+    || ''
+);
+
+const getVariantSizeId = (variant) => (
+    getNestedValue(variant, ['idKichThuoc', 'kichThuocId', 'sizeId'])
+    || getNestedValue(variant?.kichThuoc, ['id', 'value', 'ma'])
+    || getNestedValue(variant?.size, ['id', 'value', 'ma'])
+    || ''
+);
+
+const getVariantSizeLabel = (variant) => (
+    getNestedValue(variant, ['tenKichThuoc', 'kichThuoc', 'size'])
+    || getNestedValue(variant?.kichThuoc, ['ten', 'name', 'label', 'title', 'giaTriKichThuoc'])
+    || getNestedValue(variant?.size, ['ten', 'name', 'label', 'title'])
+    || ''
+);
+
+const normalizeSearchText = (value) => String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+const comboboxFilter = (itemTitle, queryText, item) => {
+    const normalizedQuery = normalizeSearchText(queryText);
+    if (!normalizedQuery) {
+        return true;
+    }
+
+    const normalizedTitle = normalizeSearchText(item?.raw?.ten || itemTitle || item?.value);
+    return normalizedTitle.includes(normalizedQuery);
+};
+
+const comboboxProps = {
+    clearable: true,
+    autoSelectFirst: 'exact'
+};
+
+const resolveOptionId = (items, rawValue, fallbackLabel = '') => {
+    const optionItems = Array.isArray(items) ? items : [];
+
+    if (rawValue && typeof rawValue === 'object') {
+        if (rawValue.id) {
+            return rawValue.id;
+        }
+
+        const nestedValue = rawValue.value ?? rawValue.ten ?? rawValue.title ?? '';
+        return resolveOptionId(optionItems, nestedValue, fallbackLabel);
+    }
+
+    const normalizedValue = String(rawValue ?? '').trim();
+    if (normalizedValue) {
+        const matchedById = optionItems.find(item => item.id === normalizedValue);
+        if (matchedById) {
+            return matchedById.id;
+        }
+
+        const normalizedText = normalizeSearchText(normalizedValue);
+        const matchedByLabel = optionItems.find(item => normalizeSearchText(item.ten) === normalizedText);
+        if (matchedByLabel) {
+            return matchedByLabel.id;
+        }
+
+        return normalizedValue;
+    }
+
+    const normalizedFallback = normalizeSearchText(fallbackLabel);
+    if (!normalizedFallback) {
+        return '';
+    }
+
+    return optionItems.find(item => normalizeSearchText(item.ten) === normalizedFallback)?.id || fallbackLabel;
+};
+
+const getResolvedOptionLabel = (items, selectedId, fallbackLabel = '') => {
+    const optionItems = Array.isArray(items) ? items : [];
+    const resolvedId = resolveOptionId(optionItems, selectedId, fallbackLabel);
+    const matchedOption = optionItems.find(item => item.id === resolvedId || normalizeSearchText(item.ten) === normalizeSearchText(resolvedId));
+    return matchedOption?.ten || fallbackLabel || String(resolvedId || '');
+};
+
+const withCurrentOption = (items, currentValue, currentLabel) => {
+    const optionItems = Array.isArray(items) ? items : [];
+    const normalizedCurrentValue = String(currentValue ?? '').trim();
+    const normalizedCurrentLabel = String(currentLabel ?? '').trim();
+
+    if (!normalizedCurrentValue && !normalizedCurrentLabel) {
+        return optionItems;
+    }
+
+    const exists = optionItems.some(item => (
+        item.id === normalizedCurrentValue
+        || normalizeSearchText(item.ten) === normalizeSearchText(normalizedCurrentValue)
+        || normalizeSearchText(item.ten) === normalizeSearchText(normalizedCurrentLabel)
+    ));
+
+    if (exists) {
+        return optionItems;
+    }
+
+    return [
+        ...optionItems,
+        {
+            id: normalizedCurrentValue || normalizedCurrentLabel,
+            ten: normalizedCurrentLabel || normalizedCurrentValue
+        }
+    ];
 };
 
 const onKeyUpEnter = (event, field, service, type, label) => {
@@ -71,7 +236,8 @@ const onKeyUpEnter = (event, field, service, type, label) => {
         KICH_THUOC: props.options.kichThuocs || []
     };
     const list = lists[type] || [];
-    const exists = list.some(item => item.ten?.toLowerCase() === val.toLowerCase());
+    const normalizedValue = normalizeSearchText(val);
+    const exists = list.some(item => normalizeSearchText(item.ten) === normalizedValue);
 
     if (!exists) {
         autoCreateAttribute(val, field, service, type, label);
@@ -110,26 +276,97 @@ const skuPlaceholder = computed(() => (
 ));
 
 const shouldLockAttributes = computed(() => props.mode === 'edit' && props.lockAttributesOnEdit);
+const lockedColorLabel = computed(() => getResolvedOptionLabel(
+    props.options.mauSacs,
+    formData.value.idMauSac,
+    getVariantColorLabel(props.variant)
+));
+const lockedSizeLabel = computed(() => getResolvedOptionLabel(
+    props.options.kichThuocs,
+    formData.value.idKichThuoc,
+    getVariantSizeLabel(props.variant)
+));
+const currentVariantImageUrl = computed(() => getVariantImageUrl(props.variant));
+const colorComboboxItems = computed(() => withCurrentOption(
+    props.options.mauSacs,
+    formData.value.idMauSac || getVariantColorId(props.variant),
+    getVariantColorLabel(props.variant) || lockedColorLabel.value
+));
+const sizeComboboxItems = computed(() => withCurrentOption(
+    props.options.kichThuocs,
+    formData.value.idKichThuoc || getVariantSizeId(props.variant),
+    getVariantSizeLabel(props.variant) || lockedSizeLabel.value
+));
 
-watch(() => props.open, (isOpen) => {
-    if (!isOpen) return;
+const getVariantSku = (variant) => (
+    variant?.maChiTietSanPham
+    || variant?.sku
+    || variant?.maSku
+    || variant?.maBienThe
+    || variant?.ma
+    || ''
+);
 
-    if (props.mode === 'edit' && props.variant) {
-        formData.value = {
-            maChiTietSanPham: props.variant.maChiTietSanPham || '',
-            idMauSac: props.variant.idMauSac || '',
-            idKichThuoc: props.variant.idKichThuoc || '',
-            soLuong: Number(props.variant.soLuong ?? 0),
-            giaNhap: Number(props.variant.giaNhap ?? 0),
-            giaBan: Number(props.variant.giaBan ?? 0),
-            trangThai: props.variant.trangThai || 'DANG_HOAT_DONG',
-            urlAnh: normalizeUploadedFileUrl(props.variant.urlAnh)
-        };
+const populateEditFormData = () => {
+    if (!props.variant) {
+        formData.value = createDefaultFormData();
         return;
     }
 
-    formData.value = createDefaultFormData();
-});
+    formData.value = {
+        maChiTietSanPham: getVariantSku(props.variant),
+        idMauSac: resolveOptionId(props.options.mauSacs, getVariantColorId(props.variant), getVariantColorLabel(props.variant)),
+        idKichThuoc: resolveOptionId(props.options.kichThuocs, getVariantSizeId(props.variant), getVariantSizeLabel(props.variant)),
+        soLuong: Number(props.variant.soLuong ?? 0),
+        giaNhap: Number(props.variant.giaNhap ?? 0),
+        giaBan: Number(props.variant.giaBan ?? 0),
+        trangThai: props.variant.trangThai || 'DANG_HOAT_DONG',
+        urlAnh: getVariantImageUrl(props.variant)
+    };
+};
+
+watch(
+    () => [props.open, props.mode, props.variant],
+    ([isOpen, mode, variant]) => {
+        if (!isOpen) return;
+
+        if (mode === 'edit' && variant) {
+            populateEditFormData();
+            return;
+        }
+
+        formData.value = createDefaultFormData();
+    },
+    { immediate: true }
+);
+
+watch(
+    () => [props.open, props.mode, props.variant?.id, props.options.mauSacs?.length, props.options.kichThuocs?.length],
+    ([isOpen, mode]) => {
+        if (!isOpen || mode !== 'edit' || !props.variant) {
+            return;
+        }
+
+        const resolvedColorId = resolveOptionId(
+            props.options.mauSacs,
+            formData.value.idMauSac || getVariantColorId(props.variant),
+            getVariantColorLabel(props.variant)
+        );
+        const resolvedSizeId = resolveOptionId(
+            props.options.kichThuocs,
+            formData.value.idKichThuoc || getVariantSizeId(props.variant),
+            getVariantSizeLabel(props.variant)
+        );
+
+        formData.value = {
+            ...formData.value,
+            maChiTietSanPham: formData.value.maChiTietSanPham || getVariantSku(props.variant),
+            idMauSac: resolvedColorId || formData.value.idMauSac,
+            idKichThuoc: resolvedSizeId || formData.value.idKichThuoc,
+            urlAnh: formData.value.urlAnh || getVariantImageUrl(props.variant)
+        };
+    }
+);
 
 const generateSKU = () => {
     if (shouldLockAttributes.value) return;
@@ -148,6 +385,18 @@ const generateSKU = () => {
 watch(
     () => [formData.value.idMauSac, formData.value.idKichThuoc, props.productCode, props.mode],
     generateSKU
+);
+
+watch(
+    () => [props.open, props.mode, props.variant?.maChiTietSanPham],
+    ([isOpen, mode]) => {
+        if (!isOpen || mode !== 'edit') return;
+
+        const currentSku = getVariantSku(props.variant);
+        if (currentSku && !formData.value.maChiTietSanPham) {
+            formData.value.maChiTietSanPham = currentSku;
+        }
+    }
 );
 
 const triggerFileInput = () => {
@@ -173,6 +422,22 @@ const handleImageUpload = async (event) => {
 };
 
 const handleSubmit = async () => {
+    formData.value = {
+        ...formData.value,
+        maChiTietSanPham: formData.value.maChiTietSanPham || getVariantSku(props.variant),
+        idMauSac: resolveOptionId(props.options.mauSacs, formData.value.idMauSac, getVariantColorLabel(props.variant)) || getVariantColorId(props.variant),
+        idKichThuoc: resolveOptionId(props.options.kichThuocs, formData.value.idKichThuoc, getVariantSizeLabel(props.variant)) || getVariantSizeId(props.variant)
+    };
+
+    if (!formData.value.idMauSac || !formData.value.idKichThuoc) {
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Không thể xác định màu sắc hoặc kích thước của biến thể. Hãy tải lại danh sách thuộc tính.',
+            color: 'error'
+        });
+        return;
+    }
+
     const result = await formRef.value?.validate();
     if (!result?.valid) return;
 
@@ -216,7 +481,8 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                 <div class="variant-image-panel border-dashed rounded-xl pa-4 bg-slate-50/50 h-100">
                                     <div class="variant-image-panel__preview">
                                         <v-avatar rounded="xl" size="168" class="border bg-white shadow-sm">
-                                            <v-img v-if="formData.urlAnh" :src="formData.urlAnh" cover></v-img>
+                                            <SafeProductImage v-if="formData.urlAnh" :src="formData.urlAnh"
+                                                :fallback-src="logoPlaceholder" alt="variant-preview" />
                                             <div v-else class="fill-height d-flex align-center justify-center text-slate-300">
                                                 <PhotoIcon size="48" />
                                             </div>
@@ -231,16 +497,19 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                             <v-btn variant="flat" color="primary" size="small"
                                                 class="rounded-lg text-none" :loading="uploadingImage"
                                                 @click="triggerFileInput">
-                                                <PlusIcon size="14" class="mr-1" /> Chọn ảnh
+                                                <PlusIcon size="14" class="mr-1" />
+                                                {{ formData.urlAnh ? 'Thay thế ảnh' : 'Chọn ảnh' }}
+                                                <v-tooltip activator="parent" location="top" text="Tải ảnh mới cho biến thể" />
                                             </v-btn>
                                             <v-btn v-if="formData.urlAnh" variant="tonal" color="error" size="small"
                                                 class="rounded-lg text-none px-2" @click="formData.urlAnh = ''">
                                                 <TrashIcon size="14" />
+                                                <v-tooltip activator="parent" location="top" text="Xóa ảnh hiện tại" />
                                             </v-btn>
                                         </div>
 
-                                        <p v-if="allowImageUpload" class="text-caption text-slate-400 mt-3 line-height-tight">
-                                            Dung lượng tối đa 2MB. Định dạng JPG, PNG.
+                                        <p v-if="allowImageUpload" class="text-caption text-slate-500 mt-3 line-height-tight">
+                                            Ảnh hiện tại sẽ được thay thế khi chọn ảnh mới và bấm cập nhật.
                                         </p>
                                         <p v-else class="text-caption text-slate-500 mt-3 line-height-tight">
                                             Ảnh của biến thể đang được quản lý ở màn chi tiết biến thể để tránh ghi đè dữ liệu ngoài ý muốn.
@@ -261,12 +530,16 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                             <v-btn variant="text" color="primary" density="compact"
                                                 class="text-none px-2 h-auto" @click="refreshOptions">
                                                 <RefreshIcon size="12" class="mr-1" /> Làm mới
+                                                <v-tooltip activator="parent" location="top" text="Tải lại danh sách thuộc tính" />
                                             </v-btn>
                                         </div>
-                                        <v-combobox v-model="formData.idMauSac" :items="options.mauSacs" item-title="ten"
-                                            item-value="id" :disabled="shouldLockAttributes" placeholder="Chọn màu sắc"
-                                            variant="outlined" density="comfortable" hide-details="auto"
-                                            :return-object="false" class="modern-select" :rules="[rules.required]"
+                                        <v-combobox v-model="formData.idMauSac" v-bind="comboboxProps"
+                                            :custom-filter="comboboxFilter" :items="colorComboboxItems" item-title="ten"
+                                            item-value="id" :placeholder="lockedColorLabel || 'Chọn màu sắc'"
+                                            variant="outlined"
+                                            density="comfortable" hide-details="auto" :return-object="false"
+                                            class="modern-select"
+                                            :rules="[rules.required]"
                                             @keyup.enter="(e) => onKeyUpEnter(e, 'idMauSac', dichVuMauSac, 'MAU_SAC', 'màu sắc')"></v-combobox>
                                     </div>
                                 </v-col>
@@ -278,9 +551,10 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                                 Số lượng tồn
                                             </span>
                                         </div>
-                                        <v-text-field v-model.number="formData.soLuong" type="number" min="0"
-                                            :rules="[rules.required, rules.min0]" variant="outlined" density="comfortable"
-                                            hide-details="auto" placeholder="0" class="modern-input"></v-text-field>
+                                        <FormattedNumberField v-model="formData.soLuong" min="0"
+                                            :rules="[rules.required, rules.min0]" variant="outlined"
+                                            density="comfortable" hide-details="auto" placeholder="0"
+                                            class="modern-input"></FormattedNumberField>
                                     </div>
                                 </v-col>
 
@@ -291,10 +565,13 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                                 Kích thước
                                             </span>
                                         </div>
-                                        <v-combobox v-model="formData.idKichThuoc" :items="options.kichThuocs" item-title="ten"
-                                            item-value="id" :disabled="shouldLockAttributes" placeholder="Chọn kích thước"
-                                            variant="outlined" density="comfortable" hide-details="auto"
-                                            :return-object="false" class="modern-select" :rules="[rules.required]"
+                                        <v-combobox v-model="formData.idKichThuoc" v-bind="comboboxProps"
+                                            :custom-filter="comboboxFilter" :items="sizeComboboxItems" item-title="ten"
+                                            item-value="id" :placeholder="lockedSizeLabel || 'Chọn kích thước'"
+                                            variant="outlined"
+                                            density="comfortable" hide-details="auto" :return-object="false"
+                                            class="modern-select"
+                                            :rules="[rules.required]"
                                             @keyup.enter="(e) => onKeyUpEnter(e, 'idKichThuoc', dichVuKichThuoc, 'KICH_THUOC', 'kích thước')"></v-combobox>
                                     </div>
                                 </v-col>
@@ -306,9 +583,9 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                                 Giá nhập (VNĐ)
                                             </span>
                                         </div>
-                                        <v-text-field v-model.number="formData.giaNhap" type="number" min="0"
-                                            :rules="[rules.min0]" variant="outlined" density="comfortable" hide-details="auto"
-                                            placeholder="0" suffix="₫" class="modern-input"></v-text-field>
+                                        <FormattedNumberField v-model="formData.giaNhap" min="0" :rules="[rules.min0]"
+                                            variant="outlined" density="comfortable" hide-details="auto" placeholder="0"
+                                            suffix="₫" class="modern-input"></FormattedNumberField>
                                     </div>
                                 </v-col>
 
@@ -332,9 +609,10 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                                 Giá bán (VNĐ)
                                             </span>
                                         </div>
-                                        <v-text-field v-model.number="formData.giaBan" type="number" min="0"
-                                            :rules="[rules.required, rules.min0]" variant="outlined" density="comfortable"
-                                            hide-details="auto" placeholder="0" suffix="₫" class="modern-input"></v-text-field>
+                                        <FormattedNumberField v-model="formData.giaBan" min="0"
+                                            :rules="[rules.required, rules.min0]" variant="outlined"
+                                            density="comfortable" hide-details="auto" placeholder="0" suffix="₫"
+                                            class="modern-input"></FormattedNumberField>
                                     </div>
                                 </v-col>
                             </v-row>

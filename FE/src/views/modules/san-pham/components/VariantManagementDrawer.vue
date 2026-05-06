@@ -8,6 +8,8 @@ import {
 import { useNotifications } from '@/services/notificationService';
 import { dichVuBienThe } from '@/services/product/dichVuBienThe';
 import { dichVuFile } from '@/services/core/dichVuFile';
+import SafeProductImage from './SafeProductImage.vue';
+import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
 
 const props = defineProps({
   show: Boolean,
@@ -74,6 +76,8 @@ const formatCurrency = (value) => {
     maximumFractionDigits: 0 
   }).format(Number(value));
 };
+
+const getVariantImageUrl = (imageUrl) => imageUrl || logoPlaceholder;
 
 const triggerFileInput = () => {
     fileInput.value?.click();
@@ -170,6 +174,7 @@ const setMainImage = async (imgId) => {
         </div>
         <v-btn icon variant="tonal" density="comfortable" color="slate-400" @click="emit('update:show', false)" class="rounded-lg">
           <XIcon size="20" />
+          <v-tooltip activator="parent" location="top" text="Đóng bảng quản lý biến thể" />
         </v-btn>
       </div>
 
@@ -297,19 +302,10 @@ const setMainImage = async (imgId) => {
                 <v-row v-if="images.length > 0" dense class="gallery-grid">
                     <v-col v-for="img in images" :key="img.id" cols="6" sm="4">
                         <div class="image-card rounded-xl overflow-hidden border position-relative" :class="{ 'is-main': img.hinhAnhDaiDien }">
-                            <v-img 
-                                :src="img.duongDanAnh" 
-                                cover 
-                                height="100" 
-                                class="cursor-pointer hover-zoom"
-                                @click="setMainImage(img.id)"
-                            >
-                                <template #placeholder>
-                                    <div class="d-flex align-center justify-center h-100 bg-slate-50">
-                                        <v-progress-circular indeterminate color="primary-lighten-4" size="20" />
-                                    </div>
-                                </template>
-                            </v-img>
+                            <div class="cursor-pointer hover-zoom" style="height: 100px;" @click="setMainImage(img.id)">
+                                <SafeProductImage :src="getVariantImageUrl(img.duongDanAnh)"
+                                    :fallback-src="logoPlaceholder" :alt="img.moTa || 'variant-gallery-image'" />
+                            </div>
 
                             <!-- Labels & Actions -->
                             <div v-if="img.hinhAnhDaiDien" class="main-badge">CHÍNH</div>
@@ -322,6 +318,7 @@ const setMainImage = async (imgId) => {
                                 @click.stop="deleteImage(img.id)"
                             >
                                 <XIcon size="14" class="text-white" />
+                                <v-tooltip activator="parent" location="top" text="Xóa ảnh" />
                             </v-btn>
                         </div>
                     </v-col>

@@ -3,6 +3,8 @@ import { ref, watch } from 'vue';
 import { XIcon, DeviceFloppyIcon, UploadIcon, PhotoIcon } from 'vue-tabler-icons';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import { useNotifications } from '@/services/notificationService';
+import SafeProductImage from './SafeProductImage.vue';
+import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
 
 const props = defineProps({
     open: Boolean,
@@ -83,6 +85,7 @@ const handleSubmit = () => {
                 </h3>
                 <v-btn icon variant="tonal" density="comfortable" color="slate-400" @click="emit('close')">
                     <XIcon size="20" />
+                    <v-tooltip activator="parent" location="top" text="Đóng cửa sổ ảnh" />
                 </v-btn>
             </div>
 
@@ -104,7 +107,8 @@ const handleSubmit = () => {
                         <v-progress-circular indeterminate color="primary" class="mb-2"></v-progress-circular>
                         <p class="text-caption font-weight-bold text-slate-500 uppercase tracking-widest">Đang xử lý...</p>
                     </div>
-                    <img v-else-if="formData.duongDanAnh" :src="formData.duongDanAnh" class="w-full h-full object-contain" />
+                    <SafeProductImage v-else-if="formData.duongDanAnh" :src="formData.duongDanAnh"
+                        :fallback-src="logoPlaceholder" fit="contain" class="w-full h-full" />
                     <div v-else class="text-center group-hover:scale-110 transition-transform duration-300">
                         <UploadIcon class="h-12 w-12 text-slate-300 mx-auto mb-3" />
                         <span class="text-sm text-slate-500 font-bold block mb-1">Nhấn để tải ảnh lên</span>
