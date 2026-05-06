@@ -49,7 +49,7 @@ const concatUint8Arrays = (chunks) => {
   return result
 }
 
-const buildZipBlob = (entries) => {
+export const buildZipBlob = (entries, type = 'application/zip') => {
   const localParts = []
   const centralParts = []
   let offset = 0
@@ -113,12 +113,10 @@ const buildZipBlob = (entries) => {
   eocdView.setUint32(16, centralDirectoryOffset, true)
   eocdView.setUint16(20, 0, true)
 
-  return new Blob([...localParts, centralDirectory, endOfCentralDirectory], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  })
+  return new Blob([...localParts, centralDirectory, endOfCentralDirectory], { type })
 }
 
-const dataUrlToBytes = (dataUrl) => {
+export const dataUrlToBytes = (dataUrl) => {
   const [, base64Content = ''] = String(dataUrl || '').split(',')
   const binaryString = window.atob(base64Content)
   const bytes = new Uint8Array(binaryString.length)
@@ -126,6 +124,42 @@ const dataUrlToBytes = (dataUrl) => {
     bytes[i] = binaryString.charCodeAt(i)
   }
   return bytes
+}
+
+export const sanitizeFileNamePart = (value, fallback = 'file') => {
+  const normalizedValue = String(value || fallback || '')
+    .trim()
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, '_')
+    .replace(/\s+/g, '_')
+    .slice(0, 80)
+
+  return normalizedValue || fallback
+}
+
+export const exportQrImageZip = ({ fileName, items }) => {
+  const usedFileNames = new Set()
+  const entries = (items || []).map((item, index) => {
+    const baseName = sanitizeFileNamePart(
+      item?.baseName || item?.name || `qr_${index + 1}`,
+      `qr_${index + 1}`
+    )
+
+    let nextFileName = `${baseName}.png`
+    let duplicateIndex = 1
+    while (usedFileNames.has(nextFileName)) {
+      duplicateIndex += 1
+      nextFileName = `${baseName}_${duplicateIndex}.png`
+    }
+    usedFileNames.add(nextFileName)
+
+    return {
+      name: nextFileName,
+      data: dataUrlToBytes(item?.dataUrl)
+    }
+  })
+
+  const zipBlob = buildZipBlob(entries, 'application/zip')
+  triggerBlobDownload(zipBlob, fileName)
 }
 
 const columnName = (index) => {
@@ -326,7 +360,7 @@ const buildContentTypesXml = () => `${XML_HEADER}
     <Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml" />
   </Types>`
 
-const triggerBlobDownload = (blob, fileName) => {
+export const triggerBlobDownload = (blob, fileName) => {
   const fileUrl = window.URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = fileUrl
@@ -358,6 +392,6 @@ export const exportQrRowsToWorkbook = ({ fileName, sheetName, rows, qrDataUrls }
     })
   })
 
-  const workbookBlob = buildZipBlob(entries)
+  const workbookBlob = buildZipBlob(entries, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
   triggerBlobDownload(workbookBlob, fileName)
 }

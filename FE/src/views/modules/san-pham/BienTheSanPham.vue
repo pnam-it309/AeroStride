@@ -5,8 +5,6 @@ import {
   ArrowLeftIcon,
   PhotoIcon,
   PencilIcon,
-  RefreshIcon,
-  PackageIcon,
   QrcodeIcon
 } from 'vue-tabler-icons'
 import AdminFilter from '@/components/common/AdminFilter.vue'
@@ -22,9 +20,9 @@ import logoPlaceholder from '@/assets/images/logos/logo-light.svg'
 import VariantFormModal from './components/VariantFormModal.vue'
 import VariantManagementDrawer from './components/VariantManagementDrawer.vue'
 import QrScanner from './components/QrScanner.vue'
+import SafeProductImage from './components/SafeProductImage.vue'
 import QrcodeVue from 'qrcode.vue'
-import { downloadFile } from '@/utils/fileUtils'
-import { exportQrRowsToWorkbook } from '@/views/modules/san-pham/utils/qrExcelWorkbook'
+import { exportQrImageZip } from './utils/qrExcelWorkbook'
 
 const MIN_VARIANT_PRICE = 0
 const MAX_VARIANT_PRICE = 100000000
@@ -44,8 +42,8 @@ const selectedProductId = ref('')
 const selectedProduct = ref(null)
 const loading = ref(false)
 const selectedVariantIds = ref([])
-const qrExcelExportItems = ref([])
-const qrExcelExportContainer = ref(null)
+const qrExportItems = ref([])
+const qrExportContainer = ref(null)
 const dynamicMaxPrice = ref(MAX_VARIANT_PRICE)
 
 const filters = reactive({
@@ -77,6 +75,13 @@ const confirmDialog = ref({
 })
 
 const numberFormatter = new Intl.NumberFormat('vi-VN')
+
+const getBackendErrorMessage = (error, fallbackMessage) => (
+  error?.response?.data?.message
+  || error?.response?.data?.errors?.[0]?.defaultMessage
+  || error?.message
+  || fallbackMessage
+)
 
 const toNumber = (value, fallback = 0) => {
   const parsedValue = Number(value)
@@ -153,16 +158,6 @@ const allVisibleVariantsSelected = computed(() => visibleVariantIds.value.length
   && visibleVariantIds.value.every((id) => selectedVariantIds.value.includes(id)))
 const someVisibleVariantsSelected = computed(() => visibleVariantIds.value.some((id) => selectedVariantIds.value.includes(id))
   && !allVisibleVariantsSelected.value)
-const variantExportButtonText = computed(() => selectedVariantIds.value.length
-  ? `Xuất Excel (${selectedVariantIds.value.length})`
-  : 'Xuất Excel')
-const variantQrExportButtonText = computed(() => selectedVariantIds.value.length
-  ? `Xuất Excel QR (${selectedVariantIds.value.length})`
-  : 'Xuất Excel QR')
-const hasSelectedActiveVariants = computed(() => selectedVariants.value.some((item) => isActiveStatus(item.trangThai)))
-const hasSelectedInactiveVariants = computed(() => selectedVariants.value.some((item) => !isActiveStatus(item.trangThai)))
-const canBulkActivateVariants = computed(() => selectedVariants.value.length > 0 && hasSelectedInactiveVariants.value)
-const canBulkDeactivateVariants = computed(() => selectedVariants.value.length > 0 && hasSelectedActiveVariants.value)
 
 const clearVariantSelection = () => {
   selectedVariantIds.value = []
@@ -181,35 +176,6 @@ const resetFilters = () => {
   filters.khoangGia = [MIN_VARIANT_PRICE, dynamicMaxPrice.value]
   pagination.page = 1
   clearVariantSelection()
-}
-
-const escapeCell = (value) => String(value ?? '')
-  .replace(/&/g, '&amp;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;')
-  .replace(/"/g, '&quot;')
-
-const exportHtmlTableToExcel = ({ headers, rows, fileName }) => {
-  const tableRows = [headers, ...rows]
-    .map((columns) => `<tr>${columns.map((column) => `<td>${escapeCell(column)}</td>`).join('')}</tr>`)
-    .join('')
-
-  const excelContent = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
-      <head>
-        <meta charset="UTF-8" />
-      </head>
-      <body>
-        <table>${tableRows}</table>
-      </body>
-    </html>
-  `
-
-  const blob = new Blob(['\ufeff', excelContent], {
-    type: 'application/vnd.ms-excel;charset=utf-8;'
-  })
-
-  downloadFile(blob, fileName)
 }
 
 const fetchFormOptions = async () => {
@@ -287,6 +253,76 @@ const fetchSelectedProduct = async (productId) => {
   }
 }
 
+const getOptionLabel = (items, id) => items.find((item) => item.id === id)?.ten || ''
+const getOptionIdByLabel = (items, label) => {
+  const normalizedLabel = String(label ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+  if (!normalizedLabel) return ''
+
+  return (items || []).find((item) => String(item.ten ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim() === normalizedLabel)?.id || ''
+}
+
+const getVariantPrimaryImageUrl = (variant) => {
+  const mainImage = variant?.images?.find((image) => image?.hinhAnhDaiDien)
+  const fallbackImage = variant?.images?.[0] || variant?.hinhAnh?.[0] || variant?.hinhAnh
+
+  return normalizeImageUrl(variant?.urlAnh)
+    || normalizeImageUrl(mainImage)
+    || normalizeImageUrl(fallbackImage)
+}
+
+const buildLocalVariantViewModel = (payload, existingVariant = {}) => ({
+  ...existingVariant,
+  ...payload,
+  tenSanPham: existingVariant.tenSanPham || selectedProduct.value?.tenSanPham || '',
+  maSanPham: existingVariant.maSanPham || selectedProduct.value?.maSanPham || '',
+  tenMauSac: getOptionLabel(formOptions.value.mauSacs || [], payload.idMauSac) || existingVariant.tenMauSac || '--',
+  tenKichThuoc: getOptionLabel(formOptions.value.kichThuocs || [], payload.idKichThuoc) || existingVariant.tenKichThuoc || '--',
+  images: (Array.isArray(payload.images) && payload.images.length)
+    ? payload.images
+    : getVariantPrimaryImageUrl(payload)
+      ? [{ duongDanAnh: getVariantPrimaryImageUrl(payload), hinhAnhDaiDien: true }]
+      : existingVariant.images || [],
+  urlAnh: getVariantPrimaryImageUrl(payload) || getVariantPrimaryImageUrl(existingVariant) || ''
+})
+
+const syncVariantToLocalState = (nextVariant) => {
+  if (!selectedProduct.value) return
+
+  const currentVariants = Array.isArray(selectedProduct.value.variants)
+    ? [...selectedProduct.value.variants]
+    : []
+  const variantIndex = currentVariants.findIndex((item) => item.id === nextVariant.id)
+
+  if (variantIndex >= 0) {
+    currentVariants.splice(variantIndex, 1, {
+      ...currentVariants[variantIndex],
+      ...nextVariant
+    })
+  } else {
+    currentVariants.unshift(nextVariant)
+  }
+
+  selectedProduct.value = {
+    ...selectedProduct.value,
+    variants: currentVariants
+  }
+}
+
+const closeVariantModal = () => {
+  variantModal.open = false
+  variantModal.mode = 'create'
+  variantModal.submitting = false
+  variantModal.variant = null
+}
+
 const handleVariantSubmit = (payload) => {
   confirmDialog.value = {
     show: true,
@@ -298,18 +334,37 @@ const handleVariantSubmit = (payload) => {
       variantModal.submitting = true
       try {
         if (variantModal.mode === 'create') {
-          await dichVuBienThe.taoBienThe(selectedProductId.value, payload)
+          const createdVariant = await dichVuBienThe.taoBienThe(
+            selectedProductId.value,
+            buildVariantRequestPayload(payload)
+          )
+          syncVariantToLocalState(buildLocalVariantViewModel(
+            { ...payload, ...(createdVariant || {}) },
+            createdVariant || {}
+          ))
           addNotification({ title: 'Thành công', subtitle: 'Đã thêm biến thể mới', color: 'success' })
         } else {
-          await dichVuBienThe.capNhatBienThe(variantModal.variant.id, payload)
+          const updatedVariant = await dichVuBienThe.capNhatBienThe(
+            variantModal.variant.id,
+            buildVariantRequestPayload(payload, variantModal.variant)
+          )
+          syncVariantToLocalState(buildLocalVariantViewModel(
+            { ...variantModal.variant, ...payload, ...(updatedVariant || {}), id: variantModal.variant.id },
+            updatedVariant || variantModal.variant
+          ))
           addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật biến thể', color: 'success' })
         }
 
-        variantModal.open = false
+        closeVariantModal()
         confirmDialog.value.show = false
         await fetchSelectedProduct(selectedProductId.value)
       } catch (error) {
-        addNotification({ title: 'Lỗi', subtitle: 'Thao tác thất bại', color: 'error' })
+        console.error(error)
+        addNotification({
+          title: 'Lỗi',
+          subtitle: getBackendErrorMessage(error, 'Thao tác thất bại'),
+          color: 'error'
+        })
       } finally {
         variantModal.submitting = false
         confirmDialog.value.loading = false
@@ -324,93 +379,23 @@ const openImageModal = (item) => {
   variantDrawer.open = true
 }
 
-const updateVariantStatus = async (variant, nextStatus) => {
-  await dichVuBienThe.capNhatBienThe(variant.id, { ...variant, trangThai: nextStatus })
-}
-
-const handleStatusChange = (item) => {
-  const nextStatus = item.trangThai === 'DANG_HOAT_DONG' ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG'
-  confirmDialog.value = {
-    show: true,
-    title: 'Xác nhận đổi trạng thái',
-    message: `Bạn có chắc chắn muốn ${nextStatus === 'DANG_HOAT_DONG' ? 'kích hoạt' : 'ngừng kinh doanh'} biến thể này không?`,
-    color: 'warning',
-    action: async () => {
-      confirmDialog.value.loading = true
-      try {
-        await updateVariantStatus(item, nextStatus)
-        addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật trạng thái', color: 'success' })
-        await fetchSelectedProduct(selectedProductId.value)
-        confirmDialog.value.show = false
-      } catch (error) {
-        addNotification({ title: 'Lỗi', subtitle: 'Không thể cập nhật trạng thái', color: 'error' })
-      } finally {
-        confirmDialog.value.loading = false
-      }
-    }
-  }
-}
-
-const handleBulkVariantStatus = (nextStatus) => {
-  if (!selectedVariants.value.length) {
-    addNotification({
-      title: 'Thông báo',
-      subtitle: 'Bạn chưa chọn biến thể nào',
-      color: 'warning'
-    })
-    return
-  }
-
-  const canApplyStatus = nextStatus === 'DANG_HOAT_DONG'
-    ? canBulkActivateVariants.value
-    : canBulkDeactivateVariants.value
-  if (!canApplyStatus) {
-    addNotification({
-      title: 'Thông báo',
-      subtitle: nextStatus === 'DANG_HOAT_DONG'
-        ? 'Các biến thể đã ở trạng thái bật'
-        : 'Các biến thể đã ở trạng thái tắt',
-      color: 'warning'
-    })
-    return
-  }
-
-  const selectedCount = selectedVariants.value.length
-  const actionLabel = nextStatus === 'DANG_HOAT_DONG' ? 'bật hoạt động' : 'ngừng hoạt động'
-  confirmDialog.value = {
-    show: true,
-    title: 'Cập nhật trạng thái hàng loạt',
-    message: `Bạn có chắc chắn muốn ${actionLabel} ${selectedCount} biến thể đã chọn?`,
-    color: 'warning',
-    action: async () => {
-      confirmDialog.value.loading = true
-      try {
-        await Promise.all(selectedVariants.value.map((variant) => updateVariantStatus(variant, nextStatus)))
-        clearVariantSelection()
-        await fetchSelectedProduct(selectedProductId.value)
-        addNotification({
-          title: 'Thành công',
-          subtitle: `Đã cập nhật trạng thái ${selectedCount} biến thể`,
-          color: 'success'
-        })
-        confirmDialog.value.show = false
-      } catch (error) {
-        console.error('Bulk variant status update error:', error)
-        addNotification({
-          title: 'Lỗi',
-          subtitle: 'Không thể cập nhật trạng thái hàng loạt',
-          color: 'error'
-        })
-      } finally {
-        confirmDialog.value.loading = false
-      }
-    }
-  }
-}
-
 const openCreateVariantModal = () => {
   variantModal.variant = null
   variantModal.mode = 'create'
+  variantModal.open = true
+}
+
+const openEditVariantModal = (item) => {
+  variantModal.variant = {
+    ...item,
+    maChiTietSanPham: item.maChiTietSanPham || item.sku || item.maSku || item.maBienThe || item.ma || '',
+    idMauSac: item.idMauSac || getOptionIdByLabel(formOptions.value.mauSacs, item.tenMauSac),
+    idKichThuoc: item.idKichThuoc || getOptionIdByLabel(formOptions.value.kichThuocs, item.tenKichThuoc),
+    tenMauSac: item.tenMauSac || getOptionLabel(formOptions.value.mauSacs, item.idMauSac),
+    tenKichThuoc: item.tenKichThuoc || getOptionLabel(formOptions.value.kichThuocs, item.idKichThuoc),
+    urlAnh: getVariantPrimaryImageUrl(item)
+  }
+  variantModal.mode = 'edit'
   variantModal.open = true
 }
 
@@ -429,13 +414,7 @@ const normalizeImageUrl = (value) => {
 }
 
 const getVariantThumbnail = (item) => {
-  const mainImage = item?.images?.find((image) => image?.hinhAnhDaiDien)
-  const fallbackImage = item?.images?.[0] || item?.hinhAnh?.[0] || item?.hinhAnh
-
-  return normalizeImageUrl(item?.urlAnh)
-    || normalizeImageUrl(mainImage)
-    || normalizeImageUrl(fallbackImage)
-    || logoPlaceholder
+  return getVariantPrimaryImageUrl(item) || logoPlaceholder
 }
 const getVariantProductCode = (item) => {
   if (item?.maSanPham) return item.maSanPham
@@ -455,6 +434,137 @@ const openQrDialog = (item) => {
   qrDialog.variant = item
   qrDialog.value = getVariantQrValue(item)
   qrDialog.open = true
+}
+
+const renderVariantQrCanvases = async (variants) => {
+  qrExportItems.value = variants.map((variant) => ({
+    id: variant.id,
+    value: getVariantQrValue(variant)
+  }))
+
+  await nextTick()
+  await new Promise((resolve) => window.setTimeout(resolve, 80))
+
+  const canvases = Array.from(qrExportContainer.value?.querySelectorAll('canvas') || [])
+  const qrDataUrls = canvases.map((canvas) => canvas.toDataURL('image/png'))
+  qrExportItems.value = []
+  return qrDataUrls
+}
+
+const handleExportVariantQrZip = async () => {
+  const targetVariants = selectedVariants.value
+  if (!targetVariants.length) {
+    addNotification({
+      title: 'Thông báo',
+      subtitle: 'Chọn ít nhất 1 biến thể để xuất ZIP QR',
+      color: 'warning'
+    })
+    return
+  }
+
+  try {
+    const fileSuffix = selectedProductSummary.value.maSanPham || 'tat_ca'
+    const qrDataUrls = await renderVariantQrCanvases(targetVariants)
+    if (qrDataUrls.length !== targetVariants.length || qrDataUrls.some((item) => !item)) {
+      throw new Error('Không thể tạo đủ dữ liệu QR để xuất ZIP')
+    }
+
+    exportQrImageZip({
+      fileName: `qrcode_bien_the_da_chon_${fileSuffix}.zip`,
+      items: targetVariants.map((variant, index) => ({
+        baseName: variant.maChiTietSanPham
+          || [variant.tenSanPham, variant.tenMauSac, variant.tenKichThuoc].filter(Boolean).join('_')
+          || `variant_${index + 1}`,
+        dataUrl: qrDataUrls[index]
+      }))
+    })
+
+    addNotification({
+      title: 'Thành công',
+      subtitle: `Đã xuất ZIP QR của ${targetVariants.length} biến thể`,
+      color: 'success'
+    })
+  } catch (error) {
+    console.error('QR ZIP export error:', error)
+    qrExportItems.value = []
+    addNotification({
+      title: 'Lỗi',
+      subtitle: 'Không thể xuất ZIP QR của biến thể',
+      color: 'error'
+    })
+  }
+}
+
+const buildVariantRequestPayload = (payload, existingVariant = null) => {
+  const currentImageUrl = getVariantPrimaryImageUrl(existingVariant)
+  const nextImageUrl = normalizeImageUrl(payload?.urlAnh)
+
+  const requestPayload = {
+    maChiTietSanPham: payload.maChiTietSanPham || null,
+    idMauSac: payload.idMauSac,
+    idKichThuoc: payload.idKichThuoc,
+    soLuong: Number(payload.soLuong ?? 0),
+    giaNhap: Number(payload.giaNhap ?? 0),
+    giaBan: Number(payload.giaBan ?? 0),
+    trangThai: payload.trangThai || 'DANG_HOAT_DONG'
+  }
+
+  if (nextImageUrl && (!existingVariant || nextImageUrl !== currentImageUrl)) {
+    requestPayload.images = [{
+      duongDanAnh: nextImageUrl,
+      moTa: `Ảnh của ${payload.maChiTietSanPham || existingVariant?.maChiTietSanPham || 'biến thể'}`,
+      hinhAnhDaiDien: true
+    }]
+  }
+
+  return requestPayload
+}
+
+const buildVariantStatusPayload = (variant, nextStatus) => ({
+  maChiTietSanPham: variant.maChiTietSanPham || null,
+  idMauSac: variant.idMauSac,
+  idKichThuoc: variant.idKichThuoc,
+  soLuong: Number(variant.soLuong ?? 0),
+  giaNhap: Number(variant.giaNhap ?? 0),
+  giaBan: Number(variant.giaBan ?? 0),
+  trangThai: nextStatus
+})
+
+const updateVariantStatusLocally = (variantId, nextStatus) => {
+  if (!selectedProduct.value?.variants?.length) return
+
+  selectedProduct.value = {
+    ...selectedProduct.value,
+    variants: selectedProduct.value.variants.map((item) => (
+      item.id === variantId
+        ? { ...item, trangThai: nextStatus }
+        : item
+    ))
+  }
+}
+
+const handleToggleVariantStatus = (variant) => {
+  const nextStatus = isActiveStatus(variant.trangThai) ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG'
+  confirmDialog.value = {
+    show: true,
+    title: 'Đổi trạng thái biến thể',
+    message: `Bạn có chắc chắn muốn ${nextStatus === 'DANG_HOAT_DONG' ? 'bật' : 'tắt'} trạng thái cho biến thể này không?`,
+    color: 'warning',
+    action: async () => {
+      confirmDialog.value.loading = true
+      try {
+        await dichVuBienThe.capNhatBienThe(variant.id, buildVariantStatusPayload(variant, nextStatus))
+        updateVariantStatusLocally(variant.id, nextStatus)
+        addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật trạng thái biến thể', color: 'success' })
+        confirmDialog.value.show = false
+      } catch (error) {
+        console.error(error)
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể cập nhật trạng thái biến thể', color: 'error' })
+      } finally {
+        confirmDialog.value.loading = false
+      }
+    }
+  }
 }
 
 const toggleVariantSelection = (variantId, checked) => {
@@ -477,106 +587,6 @@ const toggleSelectVisibleVariants = (checked) => {
 
   const visibleIdSet = new Set(visibleVariantIds.value)
   selectedVariantIds.value = selectedVariantIds.value.filter((id) => !visibleIdSet.has(id))
-}
-
-const handleExportVariants = () => {
-  const targetVariants = selectedVariants.value.length ? selectedVariants.value : filteredVariants.value
-  if (!targetVariants.length) {
-    addNotification({
-      title: 'Thông báo',
-      subtitle: 'Không có biến thể để xuất Excel',
-      color: 'warning'
-    })
-    return
-  }
-
-  const fileSuffix = selectedProductSummary.value.maSanPham || 'tat_ca'
-  exportHtmlTableToExcel({
-    headers: ['STT', 'Sản phẩm', 'Mã SKU', 'Màu sắc', 'Kích thước', 'Giá bán', 'Trạng thái'],
-    rows: targetVariants.map((item, index) => [
-      index + 1,
-      item.tenSanPham || selectedProduct.value?.tenSanPham || 'Tất cả sản phẩm',
-      item.maChiTietSanPham || '--',
-      item.tenMauSac || '--',
-      item.tenKichThuoc || '--',
-      toNumber(item.giaBan, 0),
-      getStatusLabel(item.trangThai)
-    ]),
-    fileName: selectedVariants.value.length
-      ? `bien_the_da_chon_${fileSuffix}.xls`
-      : `danh_sach_bien_the_${fileSuffix}.xls`
-  })
-
-  addNotification({
-    title: 'Thành công',
-    subtitle: `Đã xuất Excel ${targetVariants.length} biến thể`,
-    color: 'success'
-  })
-}
-
-const renderVariantQrCanvases = async (variants) => {
-  qrExcelExportItems.value = variants.map((variant) => ({
-    id: variant.id,
-    value: getVariantQrValue(variant)
-  }))
-
-  await nextTick()
-  await new Promise((resolve) => window.setTimeout(resolve, 80))
-
-  const canvases = Array.from(qrExcelExportContainer.value?.querySelectorAll('canvas') || [])
-  const qrDataUrls = canvases.map((canvas) => canvas.toDataURL('image/png'))
-  qrExcelExportItems.value = []
-  return qrDataUrls
-}
-
-const handleExportVariantQrExcel = async () => {
-  const targetVariants = selectedVariants.value.length ? selectedVariants.value : filteredVariants.value
-  if (!targetVariants.length) {
-    addNotification({
-      title: 'Thông báo',
-      subtitle: 'Không có biến thể để xuất Excel QR',
-      color: 'warning'
-    })
-    return
-  }
-
-  try {
-    const fileSuffix = selectedProductSummary.value.maSanPham || 'tat_ca'
-    const qrDataUrls = await renderVariantQrCanvases(targetVariants)
-    if (qrDataUrls.length !== targetVariants.length || qrDataUrls.some((item) => !item)) {
-      throw new Error('Không thể tạo đủ dữ liệu QR để xuất Excel')
-    }
-
-    exportQrRowsToWorkbook({
-      fileName: selectedVariants.value.length
-        ? `qrcode_bien_the_da_chon_${fileSuffix}.xlsx`
-        : `qrcode_bien_the_${fileSuffix}.xlsx`,
-      sheetName: selectedProductSummary.value.maSanPham
-        ? `QR ${selectedProductSummary.value.maSanPham}`
-        : 'QR Bien The',
-      rows: targetVariants.map((item) => ({
-        productName: item.tenSanPham || selectedProduct.value?.tenSanPham || 'Tất cả sản phẩm',
-        sku: item.maChiTietSanPham || '--',
-        color: item.tenMauSac || '--',
-        size: item.tenKichThuoc || '--'
-      })),
-      qrDataUrls
-    })
-
-    addNotification({
-      title: 'Thành công',
-      subtitle: `Đã xuất Excel QR của ${targetVariants.length} biến thể`,
-      color: 'success'
-    })
-  } catch (error) {
-    console.error('QR export error:', error)
-    qrExcelExportItems.value = []
-    addNotification({
-      title: 'Lỗi',
-      subtitle: 'Không thể xuất Excel QR của biến thể',
-      color: 'error'
-    })
-  }
 }
 
 const downloadCurrentQrCode = () => {
@@ -711,8 +721,7 @@ onMounted(async () => {
         { text: 'Trạng thái', width: '140px' },
         { text: 'Thao tác', width: '200px' }
       ]" :items="paginatedVariants" :loading="loading" :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'"
-        addButtonText="Tạo mới" :showExportButton="true" :exportButtonText="variantExportButtonText"
-        @add="openCreateVariantModal" @export="handleExportVariants" class="h-100">
+        addButtonText="Tạo mới" @add="openCreateVariantModal" class="h-100">
 
         <template #top>
           <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
@@ -721,27 +730,15 @@ onMounted(async () => {
                 :indeterminate="someVisibleVariantsSelected" color="primary" hide-details density="compact"
                 @update:model-value="toggleSelectVisibleVariants" />
               <span class="text-caption font-weight-black text-slate-500">
-                Đã chọn {{ selectedVariantIds.length }} biến thể • Tìm thấy {{ filteredVariants.length }} biến thể
+                đã chọn {{ selectedVariantIds.length }} biến thể
               </span>
             </div>
 
             <div class="d-flex align-center flex-wrap gap-2">
-              <v-btn size="small" variant="tonal" color="primary" @click="handleExportVariantQrExcel">
-                {{ variantQrExportButtonText }}
-              </v-btn>
-              <v-btn size="small" variant="tonal" color="success" class="bulk-status-btn text-none"
-                :disabled="!canBulkActivateVariants"
-                @click="handleBulkVariantStatus('DANG_HOAT_DONG')">
-                Bật trạng thái
-              </v-btn>
-              <v-btn size="small" variant="tonal" color="warning" class="bulk-status-btn text-none"
-                :disabled="!canBulkDeactivateVariants"
-                @click="handleBulkVariantStatus('KHONG_HOAT_DONG')">
-                Tắt trạng thái
-              </v-btn>
-              <v-btn size="x-small" variant="text" color="primary" class="font-bold"
-                @click="fetchSelectedProduct(selectedProductId)" :loading="loading">
-                <RefreshIcon size="14" class="mr-1" /> Đồng bộ dữ liệu
+              <v-btn v-if="selectedVariantIds.length > 0" size="small" variant="tonal" color="primary"
+                class="text-none font-weight-bold" @click="handleExportVariantQrZip">
+                Xuất ZIP QR
+                <v-tooltip activator="parent" location="top" text="Xuất ảnh QR của các biến thể đã chọn" />
               </v-btn>
             </div>
           </div>
@@ -761,26 +758,27 @@ onMounted(async () => {
             </td>
             <td class="data-cell">
               <v-avatar rounded="lg" size="44" class="border bg-slate-50 shadow-sm avatar-hover">
-                <v-img :src="getVariantThumbnail(item)" cover />
+                <SafeProductImage :src="getVariantThumbnail(item)" :fallback-src="logoPlaceholder"
+                  :alt="item.maChiTietSanPham || 'variant-image'" />
               </v-avatar>
             </td>
             <td class="data-cell font-black text-dark">
               <div class="text-truncate" :title="item.maChiTietSanPham">
-                <span class="mono-font">{{ item.maChiTietSanPham }}</span>
+                <span class="text-truncate">{{ item.maChiTietSanPham }}</span>
               </div>
             </td>
             <td class="data-cell">
               <div class="text-truncate" :title="item.tenMauSac">
-                <span class="font-weight-black text-slate-700">{{ item.tenMauSac }}</span>
+                <span class="text-truncate">{{ item.tenMauSac }}</span>
               </div>
             </td>
             <td class="data-cell">
               <div class="text-truncate" :title="item.tenKichThuoc">
-                <span class="font-weight-black text-slate-700">{{ item.tenKichThuoc }}</span>
+                <span class="text-truncate">{{ item.tenKichThuoc }}</span>
               </div>
             </td>
             <td class="data-cell font-black text-primary">
-              <div class="text-truncate" :title="formatCurrency(item.giaBan)">{{ formatCurrency(item.giaBan) }}</div>
+              <div class="font-weight-black text-primary text-truncate" :title="formatCurrency(item.giaBan)">{{ formatCurrency(item.giaBan) }}</div>
             </td>
             <td class="data-cell">
               <v-chip size="small" :color="isActiveStatus(item.trangThai) ? 'success' : 'warning'" variant="flat"
@@ -790,8 +788,7 @@ onMounted(async () => {
             </td>
             <td class="data-cell">
               <div class="d-flex align-center justify-center action-controls">
-                <v-btn variant="text" class="action-icon-btn"
-                  @click="variantModal.variant = item; variantModal.mode = 'edit'; variantModal.open = true">
+                <v-btn variant="text" class="action-icon-btn" @click="openEditVariantModal(item)">
                   <PencilIcon />
                   <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                 </v-btn>
@@ -799,14 +796,15 @@ onMounted(async () => {
                   <PhotoIcon />
                   <v-tooltip activator="parent" location="top">Thư viện ảnh</v-tooltip>
                 </v-btn>
-                <v-btn variant="text" class="action-icon-btn" @click="openQrDialog(item)">
+                <v-btn variant="text" color="primary" class="action-icon-btn qr-action-btn" @click="openQrDialog(item)">
                   <QrcodeIcon />
-                  <v-tooltip activator="parent" location="top">Xuất QR</v-tooltip>
+                  <v-tooltip activator="parent" location="top">QR code</v-tooltip>
                 </v-btn>
                 <div class="switch-wrapper">
-                  <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details density="compact"
-                    class="tight-switch action-switch" @click.prevent.stop="handleStatusChange(item)" />
-                  <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
+                  <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details
+                    density="compact" class="tight-switch action-switch"
+                    @click.prevent.stop="handleToggleVariantStatus(item)" />
+                  <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái" />
                 </div>
               </div>
             </td>
@@ -824,9 +822,10 @@ onMounted(async () => {
     <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
       :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
 
-    <VariantFormModal :open="variantModal.open" :mode="variantModal.mode" :variant="variantModal.variant"
+    <VariantFormModal :key="`${variantModal.mode}-${variantModal.variant?.id || 'new'}`"
+      :open="variantModal.open" :mode="variantModal.mode" :variant="variantModal.variant"
       :options="formOptions" :submitting="variantModal.submitting" :productCode="selectedProductSummary.maSanPham"
-      @close="variantModal.open = false" @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
+      @close="closeVariantModal" @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
     <VariantManagementDrawer v-model:show="variantDrawer.open" :variant="variantDrawer.variant"
       :initialTab="variantDrawer.initialTab" @saved="fetchSelectedProduct(selectedProductId)" />
     <QrScanner v-model:show="showQrScanner" @scan="handleQrScan" />
@@ -843,6 +842,7 @@ onMounted(async () => {
           </div>
           <v-btn icon variant="text" size="small" @click="qrDialog.open = false">
             <v-icon>mdi-close</v-icon>
+            <v-tooltip activator="parent" location="top" text="Đóng hộp thoại QR" />
           </v-btn>
         </div>
 
@@ -857,13 +857,13 @@ onMounted(async () => {
 
         <div class="d-flex justify-end gap-2">
           <v-btn variant="text" @click="qrDialog.open = false">Đóng</v-btn>
-          <v-btn color="primary" variant="flat" @click="downloadCurrentQrCode">Tải QR</v-btn>
+          <v-btn color="primary" variant="flat" @click="downloadCurrentQrCode">Tải mã QR</v-btn>
         </div>
       </v-card>
     </v-dialog>
 
-    <div ref="qrExcelExportContainer" class="qr-export-staging" aria-hidden="true">
-      <div v-for="item in qrExcelExportItems" :key="item.id" class="qr-export-item">
+    <div ref="qrExportContainer" class="qr-export-staging" aria-hidden="true">
+      <div v-for="item in qrExportItems" :key="item.id" class="qr-export-item">
         <QrcodeVue :value="item.value" :size="120" level="H" render-as="canvas" />
       </div>
     </div>
@@ -883,24 +883,25 @@ onMounted(async () => {
   min-height: 0;
 }
 
-.bulk-status-btn {
-  font-weight: 800;
-  letter-spacing: 0.01em;
+.qr-action-btn {
+  border-radius: 10px;
 }
 
-.bulk-status-btn:deep(.v-btn__content) {
-  font-weight: 800;
-}
-
-.bulk-status-btn.v-btn--disabled {
-  opacity: 0.62 !important;
+.qr-action-btn:hover {
+  background: rgba(var(--v-theme-primary), 0.08);
 }
 
 .qr-export-staging {
   position: fixed;
-  left: -10000px;
-  top: 0;
+  left: -9999px;
+  top: -9999px;
   opacity: 0;
   pointer-events: none;
+}
+
+.qr-export-item {
+  display: inline-block;
+  padding: 8px;
+  background: #ffffff;
 }
 </style>

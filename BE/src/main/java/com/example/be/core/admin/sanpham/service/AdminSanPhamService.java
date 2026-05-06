@@ -43,6 +43,8 @@ public interface AdminSanPhamService {
 
     ProductVariantImageResponse updateVariantImage(String imageId, UpdateProductVariantImageRequest request);
 
+    ProductVariantImageResponse setMainVariantImage(String imageId);
+
     void deleteVariantImage(String imageId);
 
     byte[] exportExcel();

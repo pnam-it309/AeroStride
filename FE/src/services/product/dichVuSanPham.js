@@ -1,11 +1,65 @@
 import api from '../apiService';
 import { API_ADMIN } from '@/constants/apiPaths';
+import {
+  dichVuThuongHieu,
+  dichVuDanhMuc,
+  dichVuXuatXu,
+  dichVuMucDichChay,
+  dichVuChatLieu,
+  dichVuDeGiay,
+  dichVuCoGiay,
+  dichVuMauSac,
+  dichVuKichThuoc
+} from './dichVuThuocTinh';
+
+const toOptionList = (response) => response?.content || response || [];
+
+const loadOptionSafely = async (request) => {
+  try {
+    return toOptionList(await request({ size: 1000 }));
+  } catch (error) {
+    return [];
+  }
+};
 
 export const dichVuSanPham = {
   // Lấy options cho form sản phẩm
   async layOptionsForm() {
-    const response = await api.get(`${API_ADMIN.SAN_PHAM}/form-options`);
-    return response.data.data;
+    const [
+      thuongHieus,
+      danhMucs,
+      xuatXus,
+      mucDichChays,
+      chatLieus,
+      deGiays,
+      coGiays,
+      mauSacs,
+      kichThuocs
+    ] = await Promise.all([
+      loadOptionSafely(dichVuThuongHieu.layThuongHieu),
+      loadOptionSafely(dichVuDanhMuc.layDanhMuc),
+      loadOptionSafely(dichVuXuatXu.layXuatXu),
+      loadOptionSafely(dichVuMucDichChay.layMucDichChay),
+      loadOptionSafely(dichVuChatLieu.layChatLieu),
+      loadOptionSafely(dichVuDeGiay.layDeGiay),
+      loadOptionSafely(dichVuCoGiay.layCoGiay),
+      loadOptionSafely(dichVuMauSac.layMauSac),
+      loadOptionSafely(dichVuKichThuoc.layKichThuoc)
+    ]);
+
+    return {
+      thuongHieus,
+      danhMucs,
+      xuatXus,
+      mucDichChays,
+      chatLieus,
+      deGiays,
+      coGiays,
+      mauSacs,
+      kichThuocs,
+      trangThais: ['DANG_HOAT_DONG', 'KHONG_HOAT_DONG'],
+      gioiTinhKhachHangs: ['NAM', 'NU', 'TRE_EM', 'UNISEX']
+    };
   },
 
   // Lấy danh sách sản phẩm
