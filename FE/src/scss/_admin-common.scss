@@ -525,14 +525,18 @@
     }
 
     .data-cell {
-        padding: 16px 16px !important; /* Tăng padding để dòng thoáng hơn */
-        font-size: 13px !important;
+        padding: 0 16px !important; /* Sử dụng padding 0 cho top/bottom để height kiểm soát hoàn toàn */
+        font-size: 13.5px !important;
         font-weight: 400 !important;
+        line-height: 1.5 !important;
         color: #1d2025 !important;
         vertical-align: middle;
         border-bottom: 1px solid #f1f5f9;
         background: white;
         text-align: center;
+        height: 64px !important; /* Độ cao cố định tuyệt đối cho mọi module */
+        min-height: 64px !important;
+        max-height: 64px !important;
     }
 
     .data-row:hover .data-cell {

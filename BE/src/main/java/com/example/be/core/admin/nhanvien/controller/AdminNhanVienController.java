@@ -45,8 +45,7 @@ public class AdminNhanVienController {
         return ResponseEntity.ok(ApiResponse.success(null, "Xóa nhân viên thành công!"));
     }
 
-    @PatchMapping(RoutesConstant.STATUS_ALT)
-    @PutMapping(RoutesConstant.STATUS) // Compatibility Alias (Old FE uses PUT for status)
+    @RequestMapping(value = {"/{id}/status", "/status/{id}"}, method = {RequestMethod.PUT, RequestMethod.PATCH})
     public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id, @RequestBody java.util.Map<String, String> body) {
         TrangThai status = TrangThai.valueOf(body.get("status"));
         adminNhanVienService.doiTrangThai(id, status);

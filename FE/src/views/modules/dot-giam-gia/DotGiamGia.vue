@@ -33,8 +33,7 @@ const {
     handleFilter: handleSearch,
     handleReset
 } = useAdminTable(dichVuDotGiamGia.layDotGiamGiaPhanTrang, {
-    search: '',
-    loaiGiamGia: null,
+    keyword: '',
     trangThai: null,
     startDate: null,
     endDate: null
@@ -93,6 +92,44 @@ const confirmToggleStatus = (item) => {
 };
 
 
+const getCampaignTimelineStatus = (item) => {
+    const now = Date.now();
+    const start = new Date(item.ngayBatDau).getTime();
+    const end = new Date(item.ngayKetThuc).getTime();
+    const manualActive = isActiveStatus(item.trangThai);
+
+    // 1. Sắp diễn ra
+    if (now < start) {
+        return {
+            label: 'Sắp diễn ra',
+            color: 'info',
+            switchOn: false,
+            switchDisabled: true,
+            chipClass: 'chip-upcoming'
+        };
+    }
+    
+    // 2. Đã kết thúc
+    if (end && now > end) {
+        return {
+            label: 'Đã kết thúc',
+            color: 'error',
+            switchOn: false,
+            switchDisabled: true,
+            chipClass: 'chip-expired'
+        };
+    }
+
+    // 3. Đang diễn ra
+    return {
+        label: manualActive ? 'Đang hoạt động' : 'Tạm ngừng',
+        color: manualActive ? 'success' : 'warning',
+        switchOn: manualActive,
+        switchDisabled: false,
+        chipClass: manualActive ? 'chip-active' : 'chip-expired'
+    };
+};
+
 const getDiscountValueDisplay = (campaign) => {
     return `${campaign?.soTienGiam}%`;
 };
@@ -125,36 +162,37 @@ onMounted(() => loadCampaigns());
         <!-- 1. FILTER -->
         <div class="filter-top invoice-filter-shell">
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-                <v-col cols="12" md="2" class="filter-cell">
+                <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm</div>
-                    <v-text-field v-model="filters.search" placeholder="Tên đợt giảm giá..." variant="outlined"
+                    <v-text-field v-model="filters.keyword" placeholder="Mã hoặc tên đợt..." variant="outlined"
                         density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
-                        @input="handleSearch"></v-text-field>
+                        clearable @input="handleSearch"></v-text-field>
                 </v-col>
 
 
-                <v-col cols="12" md="3" class="filter-cell">
+                <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select v-model="filters.trangThai" :items="[
                         { title: 'Tất cả trạng thái', value: null },
                         { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
-                        { title: 'Ngừng hoạt động', value: 'KHONG_HOAT_DONG' }
+                        { title: 'Sắp diễn ra', value: 'SAP_DIEN_RA' },
+                        { title: 'Đã kết thúc', value: 'DA_KET_THUC' }
                     ]" variant="outlined" density="compact" hide-details class="compact-input"
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
 
-                <v-col cols="12" md="3" class="filter-cell">
+                <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Từ ngày</div>
                     <v-text-field ref="startDateRef" v-model="filters.startDate" type="date" variant="outlined" density="compact"
-                        hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month" 
-                        @click:append-inner="openDatePicker(startDateRef)" @change="handleSearch"></v-text-field>
+                        hide-details class="compact-input date-field" 
+                        @change="handleSearch"></v-text-field>
                 </v-col>
 
-                <v-col cols="12" md="3" class="filter-cell">
+                <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Đến ngày</div>
                     <v-text-field ref="endDateRef" v-model="filters.endDate" type="date" variant="outlined" density="compact"
-                        hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month" 
-                        @click:append-inner="openDatePicker(endDateRef)" @change="handleSearch"></v-text-field>
+                        hide-details class="compact-input date-field" 
+                        @change="handleSearch"></v-text-field>
                 </v-col>
             </AdminFilter>
         </div>
@@ -163,10 +201,10 @@ onMounted(() => loadCampaigns());
         <AdminTable title="Danh sách đợt giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
             { text: 'STT', align: 'center', width: '60px' },
             { text: 'Mã', align: 'center', width: '110px' },
-            { text: 'Tên đợt giảm giá', align: 'left', width: '150px' },
-            { text: 'Giá trị giảm', align: 'left', width: '140px' },
-            { text: 'Ngày bắt đầu', align: 'left', width: '160px' },
-            { text: 'Ngày kết thúc', align: 'left', width: '140px' },
+            { text: 'Tên đợt giảm giá', align: 'center', width: '180px' },
+            { text: 'Giá trị giảm', align: 'center', width: '140px' },
+            { text: 'Ngày bắt đầu', align: 'center', width: '160px' },
+            { text: 'Ngày kết thúc', align: 'center', width: '160px' },
             { text: 'Trạng thái', align: 'center', width: '130px' },
             { text: 'Hành động', align: 'center', width: '120px' }
         ]" :items="campaigns" :total-count="pagination.totalElements" :loading="loading"
@@ -179,23 +217,23 @@ onMounted(() => loadCampaigns());
                     <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.ma">{{ item.ma }}</div>
                     </td>
-                    <td class="data-cell text-left">
+                    <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.ten">{{ item.ten || '--' }}</div>
                     </td>
-                    <td class="data-cell text-left">
+                    <td class="data-cell text-center">
                         <div class="text-primary">Giảm {{ getDiscountValueDisplay(item) }}</div>
                     </td>
-                    <td class="data-cell text-left">
+                    <td class="data-cell text-center">
                         <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayBatDau)">{{ formatDateTime(item.ngayBatDau) }}</div>
                     </td>
-                    <td class="data-cell text-left">
+                    <td class="data-cell text-center">
                         <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayKetThuc)">{{ formatDateTime(item.ngayKetThuc) }}</div>
                     </td>
                     <td class="data-cell text-center">
                         <v-chip
-                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']"
+                            :class="['status-chip', getCampaignTimelineStatus(item).chipClass]"
                             variant="flat" size="small">
-                            {{ getStatusLabel(item.trangThai) }}
+                            {{ getCampaignTimelineStatus(item).label }}
                         </v-chip>
                     </td>
                     <td class="data-cell action-cell" style="text-align: center">
@@ -206,17 +244,22 @@ onMounted(() => loadCampaigns());
                                 <v-tooltip activator="parent" location="top" text="Chỉnh sửa"></v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
-                                <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details
+                                <v-switch :model-value="getCampaignTimelineStatus(item).switchOn" 
+                                    :disabled="getCampaignTimelineStatus(item).switchDisabled"
+                                    color="primary" hide-details
                                     density="compact" class="tight-switch action-switch"
-                                    @click.prevent.stop="confirmToggleStatus(item)" />
-                                <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái"></v-tooltip>
+                                    :class="{ 'opacity-50': getCampaignTimelineStatus(item).switchDisabled }"
+                                    @click.prevent.stop="!getCampaignTimelineStatus(item).switchDisabled && confirmToggleStatus(item)" />
+                                <v-tooltip activator="parent" location="top">
+                                    {{ getCampaignTimelineStatus(item).switchDisabled ? 'Không thể đổi trạng thái lúc này' : 'Chuyển đổi trạng thái' }}
+                                </v-tooltip>
                             </div>
                         </div>
                     </td>
                 </tr>
             </template>
             <template #pagination>
-                <AdminPagination v-model:page="pagination.page" v-model:page-size="pagination.size"
+                <AdminPagination v-model="pagination.page" v-model:pageSize="pagination.size"
                     :total-pages="pagination.totalPages" :total-elements="pagination.totalElements"
                     :current-size="campaigns.length" @change="loadCampaigns" />
             </template>
@@ -245,19 +288,33 @@ onMounted(() => loadCampaigns());
     z-index: 6;
 }
 
+.native-admin-table th,
+.native-admin-table td {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
 :deep(.data-cell),
 :deep(.data-cell *) {
     font-size: 13px !important;
 }
 
-:deep(.status-chip-active) {
-    background-color: #10b9811a !important;
-    color: #10b981 !important;
+:deep(.chip-upcoming) {
+    background-color: #f0fdfa !important;
+    color: #0f766e !important;
 }
 
-:deep(.status-chip-inactive) {
-    background-color: #ef44441a !important;
-    color: #ef4444 !important;
+:deep(.chip-active) {
+    background-color: #f0f1ff !important;
+    color: #1e257c !important;
+}
+
+:deep(.chip-expired) {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
+}
+
+.opacity-50 {
+    opacity: 0.5 !important;
 }
 </style>
-

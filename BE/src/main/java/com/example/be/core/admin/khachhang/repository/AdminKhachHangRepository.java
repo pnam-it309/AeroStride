@@ -38,7 +38,8 @@ public interface AdminKhachHangRepository extends JpaRepository<KhachHang, Strin
                 COALESCE(dc.tinh, '')
             ),
             SUM(CASE WHEN hd.trangThai = 6 THEN hd.tongTienSauGiam ELSE 0 END),
-            MAX(hd.ngayTao)
+            MAX(hd.ngayTao),
+            COUNT(CASE WHEN hd.trangThai = 6 THEN hd.id ELSE NULL END)
         )
         FROM KhachHang kh
         LEFT JOIN kh.diaChi dc
@@ -64,7 +65,8 @@ public interface AdminKhachHangRepository extends JpaRepository<KhachHang, Strin
                 COALESCE(dc.tinh, '')
             ),
             SUM(CASE WHEN hd.trangThai = 6 THEN hd.tongTienSauGiam ELSE 0 END),
-            MAX(hd.ngayTao)
+            MAX(hd.ngayTao),
+            COUNT(CASE WHEN hd.trangThai = 6 THEN hd.id ELSE NULL END)
         )
         FROM KhachHang kh
         LEFT JOIN kh.diaChi dc
@@ -92,7 +94,8 @@ public interface AdminKhachHangRepository extends JpaRepository<KhachHang, Strin
                 COALESCE(dc.tinh, '')
             ),
             SUM(CASE WHEN hd.trangThai = 6 THEN hd.tongTienSauGiam ELSE 0 END),
-            MAX(hd.ngayTao)
+            MAX(hd.ngayTao),
+            COUNT(CASE WHEN hd.trangThai = 6 THEN hd.id ELSE NULL END)
         )
         FROM KhachHang kh
         LEFT JOIN kh.diaChi dc
@@ -109,6 +112,15 @@ public interface AdminKhachHangRepository extends JpaRepository<KhachHang, Strin
                  kh.trangThai, kh.ngayTao, kh.ngayCapNhat,
                  dc.diaChiChiTiet, dc.phuongXa, dc.thanhPho, dc.tinh
         ORDER BY kh.ngayTao DESC
+    """, countQuery = """
+        SELECT COUNT(kh) FROM KhachHang kh
+        WHERE (:keyword IS NULL OR
+               LOWER(kh.ten) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+               LOWER(kh.email) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+               kh.sdt LIKE CONCAT('%', :keyword, '%') OR
+               LOWER(kh.ma) LIKE LOWER(CONCAT('%', :keyword, '%')))
+          AND (:trangThai IS NULL OR kh.trangThai = :trangThai)
+          AND (:gioiTinh IS NULL OR kh.gioiTinh = :gioiTinh)
     """)
     Page<AdminKhachHangResponse> filterAll(
             @Param("keyword") String keyword,

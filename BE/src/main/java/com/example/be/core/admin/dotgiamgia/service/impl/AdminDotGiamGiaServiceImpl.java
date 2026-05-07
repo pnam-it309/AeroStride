@@ -44,7 +44,33 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     @Override
     @Transactional(readOnly = true)
     public Page<AdminDotGiamGiaResponse> search(AdminDotGiamGiaSearchRequest request) {
-        return SearchUtils.execute(request, pageable -> repo.phanTrang(request.getKeyword(), pageable));
+        Long startLong = null;
+        Long endLong = null;
+
+        try {
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            if (request.getStartDate() != null && !request.getStartDate().isEmpty()) {
+                startLong = sdf.parse(request.getStartDate()).getTime();
+            }
+            if (request.getEndDate() != null && !request.getEndDate().isEmpty()) {
+                // End of day
+                endLong = sdf.parse(request.getEndDate()).getTime() + 86399999L;
+            }
+        } catch (Exception e) {
+            // Ignore parse errors
+        }
+
+        final Long finalStart = startLong;
+        final Long finalEnd = endLong;
+
+        return SearchUtils.execute(request, pageable -> repo.phanTrang(
+                request.getKeyword(),
+                request.getTrangThai(),
+                System.currentTimeMillis(),
+                finalStart,
+                finalEnd,
+                pageable
+        ));
     }
 
     @Override
@@ -113,7 +139,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     @Transactional(readOnly = true)
     public byte[] exportExcel() {
         Pageable pageable = PaginationUtils.createPageable(0, Integer.MAX_VALUE, "id", "desc");
-        List<AdminDotGiamGiaResponse> data = repo.phanTrang(null, pageable).getContent();
+        List<AdminDotGiamGiaResponse> data = repo.phanTrang(null, null, System.currentTimeMillis(), null, null, pageable).getContent();
 
         String[] headers = {"STT", "Mã", "Tên", "Giá trị (%)", "Ngày bắt đầu", "Ngày kết thúc", "Trạng thái"};
 
