@@ -36,8 +36,7 @@ export default defineConfig(({ mode }) => {
                 'vue-tabler-icons',
                 '@vuelidate/core',
                 '@vuelidate/validators'
-            ],
-            entries: ['./index.html', './src/**/*.{js,vue}']
+            ]
         },
         build: {
             rollupOptions: {
@@ -49,11 +48,15 @@ export default defineConfig(({ mode }) => {
         server: {
             watch: {
                 usePolling: true,
-                interval: 1000, // Kiểm tra file mỗi 1s để tránh quá tải CPU Windows
+                interval: 1000,
+                ignored: ['**/node_modules/**', '**/dist/**'],
             },
             host: true,
             strictPort: true,
-            port: 5173,
+            port: Number(env.FE_DEV_PORT),
+            hmr: {
+                clientPort: Number(env.FE_DEV_PORT),
+            },
             proxy: {
                 '/api': {
                     target: `http://${env.BACKEND_HOST}:${env.BACKEND_PORT}`,

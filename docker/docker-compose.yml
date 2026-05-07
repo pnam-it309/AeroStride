@@ -17,6 +17,31 @@ services:
         reservations:
           memory: 64M
 
+  mysql:
+    image: mysql:8.0
+    container_name: aerostride-mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "${MYSQL_PORT_HOST}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - aerostride-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+
   backend:
     image: ${BACKEND_IMAGE}
     build:
@@ -35,6 +60,10 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+      mysql:
+        condition: service_healthy
+    links:
+      - mysql:mysql
     ports:
       - "${BACKEND_PORT}:${BE_INTERNAL_PORT}"
     volumes:
@@ -77,6 +106,8 @@ services:
     volumes:
       - ${DOCKER_FE_VOL_APP}
       - fe-node-modules:/app/node_modules
+    env_file:
+      - .env
     depends_on:
       backend:
         condition: service_started
@@ -85,11 +116,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: 1G
+          cpus: '2.0'
+          memory: 4G
         reservations:
-          cpus: '0.25'
-          memory: 512M
+          cpus: '0.5'
+          memory: 1G
 
 networks:
   aerostride-net:
@@ -99,3 +130,4 @@ volumes:
   be-build:
   be-gradle:
   fe-node-modules:
+  mysql-data:

@@ -1,12 +1,11 @@
 export const ORDER_STATUS = Object.freeze({
-    CHO_THANH_TOAN: 0,
+    CHUA_XAC_NHAN: 0,
     CHO_XAC_NHAN: 1,
-    CHO_GIAO_HANG: 2,
-    DANG_VAN_CHUYEN: 3,
-    DA_GIAO_HANG: 4,
-    DA_THANH_TOAN: 5,
-    HOAN_THANH: 6,
-    DA_HUY: 7
+    XAC_NHAN: 2,
+    DANG_GIAO: 3,
+    HOAN_THANH: 4,
+    DA_HUY: 5,
+    HOAN_DON: 6
 });
 
 const toEnumKey = (value) => {
@@ -14,14 +13,13 @@ const toEnumKey = (value) => {
 
     if (typeof value === 'number' && Number.isFinite(value)) {
         switch (value) {
-            case 0: return 'CHO_THANH_TOAN';
+            case 0: return 'CHUA_XAC_NHAN';
             case 1: return 'CHO_XAC_NHAN';
-            case 2: return 'CHO_GIAO_HANG';
-            case 3: return 'DANG_VAN_CHUYEN';
-            case 4: return 'DA_GIAO_HANG';
-            case 5: return 'DA_THANH_TOAN';
-            case 6: return 'HOAN_THANH';
-            case 7: return 'DA_HUY';
+            case 2: return 'XAC_NHAN';
+            case 3: return 'DANG_GIAO';
+            case 4: return 'HOAN_THANH';
+            case 5: return 'DA_HUY';
+            case 6: return 'HOAN_DON';
             default: return null;
         }
     }
@@ -40,65 +38,47 @@ export const getOrderStatusMeta = (value) => {
     if (!key) return null;
 
     switch (key) {
-        case 'CHO_THANH_TOAN':
+        case 'CHUA_XAC_NHAN':
             return {
                 key,
                 ordinal: 0,
-                text: 'Chờ thanh toán',
-                color: 'warning',
-                chipClass: 'status-chip-pending',
-                icon: 'mdi-cash-clock'
+                text: 'Chưa xác nhận',
+                color: 'blue-grey-darken-1',
+                chipClass: 'status-chip-unconfirmed',
+                icon: 'mdi-help-circle-outline'
             };
         case 'CHO_XAC_NHAN':
             return {
                 key,
                 ordinal: 1,
                 text: 'Chờ xác nhận',
-                color: 'info',
-                chipClass: 'status-chip-confirmed',
+                color: 'warning',
+                chipClass: 'status-chip-pending',
                 icon: 'mdi-progress-clock'
             };
-        case 'CHO_GIAO_HANG':
+        case 'XAC_NHAN':
             return {
                 key,
                 ordinal: 2,
-                text: 'Chờ giao hàng',
-                color: 'primary',
-                chipClass: 'status-chip-waiting-delivery',
-                icon: 'mdi-truck-delivery-outline'
+                text: 'Đã xác nhận',
+                color: 'info',
+                chipClass: 'status-chip-confirmed',
+                icon: 'mdi-check-circle-outline'
             };
-        case 'DANG_VAN_CHUYEN':
+        case 'DANG_GIAO':
             return {
                 key,
                 ordinal: 3,
-                text: 'Đang vận chuyển',
+                text: 'Đang giao',
                 color: 'cyan',
                 chipClass: 'status-chip-delivering',
                 icon: 'mdi-truck-fast-outline'
             };
-        case 'DA_GIAO_HANG':
-            return {
-                key,
-                ordinal: 4,
-                text: 'Đã giao hàng',
-                color: 'indigo',
-                chipClass: 'status-chip-delivered',
-                icon: 'mdi-package-variant-closed-check'
-            };
-        case 'DA_THANH_TOAN':
-            return {
-                key,
-                ordinal: 5,
-                text: 'Đã thanh toán',
-                color: 'teal',
-                chipClass: 'status-chip-paid',
-                icon: 'mdi-currency-usd'
-            };
         case 'HOAN_THANH':
             return {
                 key,
-                ordinal: 6,
-                text: 'Hoàn thành',
+                ordinal: 4,
+                text: 'Đã hoàn thành',
                 color: 'success',
                 chipClass: 'status-chip-completed',
                 icon: 'mdi-checkbox-marked-circle-outline'
@@ -106,11 +86,20 @@ export const getOrderStatusMeta = (value) => {
         case 'DA_HUY':
             return {
                 key,
-                ordinal: 7,
-                text: 'Đã hủy',
+                ordinal: 5,
+                text: 'Hủy',
                 color: 'error',
                 chipClass: 'status-chip-cancelled',
                 icon: 'mdi-close-circle-outline'
+            };
+        case 'HOAN_DON':
+            return {
+                key,
+                ordinal: 6,
+                text: 'Hoàn đơn',
+                color: 'deep-purple',
+                chipClass: 'status-chip-refunded',
+                icon: 'mdi-cash-refund'
             };
         default:
             return null;
@@ -118,4 +107,3 @@ export const getOrderStatusMeta = (value) => {
 };
 
 export const getOrderStatusOrdinal = (value) => getOrderStatusMeta(value)?.ordinal ?? null;
-

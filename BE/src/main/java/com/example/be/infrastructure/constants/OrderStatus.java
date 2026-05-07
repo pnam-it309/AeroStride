@@ -1,12 +1,11 @@
 package com.example.be.infrastructure.constants;
 
 public enum OrderStatus {
-    CHO_THANH_TOAN,      // 0
-    CHO_XAC_NHAN,        // 1
-    CHO_GIAO_HANG,       // 2
-    DANG_VAN_CHUYEN,     // 3
-    DA_GIAO_HANG,        // 4
-    DA_THANH_TOAN,       // 5
-    HOAN_THANH,          // 6
-    DA_HUY               // 7
+    CHUA_XAC_NHAN,  // 0: Chưa xác nhận
+    CHO_XAC_NHAN,   // 1: Chờ xác nhận
+    XAC_NHAN,       // 2: Đã xác nhận
+    DANG_GIAO,      // 3: Đang giao
+    HOAN_THANH,     // 4: Đã hoàn thành
+    DA_HUY,         // 5: Hủy
+    HOAN_DON        // 6: Hoàn đơn
 }

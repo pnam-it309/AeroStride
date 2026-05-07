@@ -8,7 +8,7 @@ COPY FE/package*.json ./
 # Use BuildKit cache mount for npm cache to speed up installations
 # This avoids re-downloading packages even when package.json changes slightly
 RUN --mount=type=cache,target=/root/.npm \
-    npm install
+    npm install --legacy-peer-deps
 
 # Copy source code
 COPY FE/ .

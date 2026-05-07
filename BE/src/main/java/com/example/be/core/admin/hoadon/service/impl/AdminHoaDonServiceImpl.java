@@ -176,7 +176,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         history.setNgayTao(System.currentTimeMillis());
         lichSuTrangThaiHoaDonRepository.save(history);
 
-        if (newStatus == OrderStatus.DA_HUY && oldStatus != OrderStatus.DA_HUY) {
+        if ((newStatus == OrderStatus.DA_HUY || newStatus == OrderStatus.HOAN_DON) && (oldStatus != OrderStatus.DA_HUY && oldStatus != OrderStatus.HOAN_DON)) {
             hoaDonChiTietRepository.findAllByHoaDon(hd).forEach(detail -> {
                 ChiTietSanPham ct = detail.getChiTietSanPham();
                 if (ct != null) {
@@ -184,8 +184,8 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                     chiTietSanPhamRepository.save(ct);
                 }
             });
-        } else if (oldStatus == OrderStatus.DA_HUY && newStatus != OrderStatus.DA_HUY) {
-            // Re-activating a cancelled order: deduct stock
+        } else if ((oldStatus == OrderStatus.DA_HUY || oldStatus == OrderStatus.HOAN_DON) && (newStatus != OrderStatus.DA_HUY && newStatus != OrderStatus.HOAN_DON)) {
+            // Re-activating a cancelled/returned order: deduct stock
             hoaDonChiTietRepository.findAllByHoaDon(hd).forEach(detail -> {
                 ChiTietSanPham ct = detail.getChiTietSanPham();
                 if (ct != null) {
@@ -341,9 +341,20 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public String generateInvoiceHtml(String id) {
         HoaDon hd = repository.findForPrint(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
         List<com.example.be.entity.HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
+        
+        // Ensure all lazy relationships are initialized for the template
+        details.forEach(item -> {
+            if (item.getChiTietSanPham() != null) {
+                ChiTietSanPham ct = item.getChiTietSanPham();
+                if (ct.getSanPham() != null) ct.getSanPham().getTen();
+                if (ct.getMauSac() != null) ct.getMauSac().getTen();
+                if (ct.getKichThuoc() != null) ct.getKichThuoc().getTen();
+            }
+        });
 
         Context context = new Context();
         context.setVariable("hd", hd);
