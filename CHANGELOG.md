@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/pnam-it309/AeroStride/compare/v1.7.2...v1.8.0) (2026-05-07)
+
+
+### Features
+
+* **hoadon:** Tối ưu hóa giao diện chi tiết hóa đơn và hoàn thiện logic in ấn ([74d24f3](https://github.com/pnam-it309/AeroStride/commit/74d24f30e20dc881ca1c9eeafc46f63c181c5fc5))
+
 ## [1.7.2](https://github.com/pnam-it309/AeroStride/compare/v1.7.1...v1.7.2) (2026-04-27)
 
 
