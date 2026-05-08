@@ -40,7 +40,7 @@ export const dichVuPhieuGiamGia = {
 
   // Thay đổi trạng thái phiếu giảm giá
   async thayDoiTrangThaiPhieuGiamGia(id, status) {
-    const response = await api.put(`${API_ADMIN.PHIEU_GIAM_GIA}/status/${id}`, { status });
+    const response = await api.put(`${API_ADMIN.PHIEU_GIAM_GIA}/${id}/status`, { status });
     return response.data.data;
   },
 

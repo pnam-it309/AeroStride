@@ -8,5 +8,7 @@ import lombok.Setter;
 @Setter
 public class AdminDotGiamGiaSearchRequest extends PageRequest {
     private String keyword;
-    private com.example.be.infrastructure.constants.TrangThai trangThai;
+    private String trangThai;
+    private String startDate;
+    private String endDate;
 }

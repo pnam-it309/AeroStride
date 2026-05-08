@@ -34,6 +34,7 @@ public class AdminPhieuGiamGiaRequest extends PageRequest {
     // Search fields
     private String keyword;
     private TrangThai trangThai;
+    private String timelineStatus;
     private String tuNgay;
     private String denNgay;
 }

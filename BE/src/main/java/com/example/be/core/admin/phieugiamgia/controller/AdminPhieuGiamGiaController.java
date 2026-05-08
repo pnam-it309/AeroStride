@@ -49,12 +49,22 @@ public class AdminPhieuGiamGiaController {
         return ResponseEntity.ok(ApiResponse.success(null, "Xóa thành công!"));
     }
 
-    @PatchMapping(RoutesConstant.STATUS_ALT)
-    @PutMapping(RoutesConstant.STATUS) // Compatibility Alias (Backward compatibility for PUT)
+    @RequestMapping(value = {"/{id}/status", "/status/{id}"}, method = {RequestMethod.PUT, RequestMethod.PATCH})
     public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id, @RequestBody Map<String, String> body) {
-        TrangThai status = TrangThai.valueOf(body.get("status"));
-        service.updateStatus(id, status);
-        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật trạng thái thành công!"));
+        String statusStr = body.get("status");
+        if (statusStr == null || statusStr.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, "ERR_INVALID_STATUS", "Trạng thái không được để trống!", null, null));
+        }
+        
+        try {
+            TrangThai status = TrangThai.valueOf(statusStr.trim().toUpperCase());
+            service.updateStatus(id, status);
+            return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật trạng thái thành công!"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(400, "ERR_INVALID_STATUS_VALUE", "Trạng thái không hợp lệ: " + statusStr, null, null));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error(500, "ERR_INTERNAL", "Lỗi xử lý cập nhật trạng thái: " + e.getMessage(), null, null));
+        }
     }
 
     @GetMapping(RoutesConstant.EXPORT_EXCEL)

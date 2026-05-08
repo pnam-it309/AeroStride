@@ -80,6 +80,8 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                 req.getLoaiPhieu(),
                 req.getHinhThuc(),
                 req.getTrangThai(),
+                req.getTimelineStatus(),
+                System.currentTimeMillis(),
                 finalTuNgay,
                 finalDenNgay,
                 pageable
@@ -175,7 +177,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     @Override
     public byte[] exportExcel() {
         Pageable pageable = PaginationUtils.createPageable(0, Integer.MAX_VALUE, "id", "desc");
-        List<AdminPhieuGiamGiaResponse> data = repo.phanTrang(null, null, null, null, null, null, pageable).getContent();
+        List<AdminPhieuGiamGiaResponse> data = repo.phanTrang(null, null, null, null, null, System.currentTimeMillis(), null, null, pageable).getContent();
 
         String[] headers = {"STT", "Mã", "Tên", "Giá trị giảm", "Giảm tối đa", "Điều kiện", "Số lượng", "Ngày bắt đầu", "Ngày kết thúc", "Trạng thái"};
 

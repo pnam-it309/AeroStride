@@ -32,6 +32,7 @@ public class AdminKhachHangResponse {
     // New fields for Voucher selection view
     private java.math.BigDecimal tongChiTieu;
     private Long ngayDonHangGanNhat;
+    private Long tongDonHang;
     
     // Full list for detail view
     private List<AdminDiaChiResponse> addresses;
@@ -64,13 +65,14 @@ public class AdminKhachHangResponse {
         this.diaChiChiTiet = diaChiChiTiet;
     }
 
-    // Constructor for JPQL with address and statistics (16 args)
+    // Constructor for JPQL with address and statistics (17 args)
     public AdminKhachHangResponse(String id, String ma, String ten, String email, String tenTaiKhoan, 
                                  Boolean gioiTinh, String sdt, LocalDate ngaySinh, String hinhAnh, 
                                  String ghiChu, TrangThai trangThai, Long ngayTao, Long ngayCapNhat,
-                                 String diaChiChiTiet, java.math.BigDecimal tongChiTieu, Long ngayDonHangGanNhat) {
+                                 String diaChiChiTiet, java.math.BigDecimal tongChiTieu, Long ngayDonHangGanNhat, Long tongDonHang) {
         this(id, ma, ten, email, tenTaiKhoan, gioiTinh, sdt, ngaySinh, hinhAnh, ghiChu, trangThai, ngayTao, ngayCapNhat, diaChiChiTiet);
         this.tongChiTieu = tongChiTieu;
         this.ngayDonHangGanNhat = ngayDonHangGanNhat;
+        this.tongDonHang = tongDonHang;
     }
 }
