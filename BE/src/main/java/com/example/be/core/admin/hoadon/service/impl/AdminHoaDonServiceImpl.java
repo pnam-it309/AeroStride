@@ -77,8 +77,16 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     @Transactional(readOnly = true)
     public HoaDon detail(String id) {
         HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn với id: " + id));
+        return initializeHoaDon(hd);
+    }
+
+    /**
+     * Force initialization of lazy collections and proxies to prevent LazyInitializationException during JSON serialization
+     */
+    private HoaDon initializeHoaDon(HoaDon hd) {
+        if (hd == null) return null;
         
-        // Force initialization of lazy collections to prevent LazyInitializationException during JSON serialization
+        // Initialize lazy collections
         if (hd.getListsHoaDonChiTiet() != null) {
             hd.getListsHoaDonChiTiet().size();
             // Initialize products and their related entities within details
@@ -149,7 +157,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     @Override
     @Transactional
     public HoaDon updateStatus(String id, Integer status, String note) {
-        HoaDon hd = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
+        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
 
         OrderStatus oldStatus = hd.getTrangThai();
         OrderStatus newStatus;
@@ -160,7 +168,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             throw new com.example.be.infrastructure.exceptions.BusinessException("Trạng thái không hợp lệ");
         }
 
-        if (oldStatus == newStatus) return hd;
+        if (oldStatus == newStatus) return initializeHoaDon(hd);
 
         hd.setTrangThai(newStatus);
         hd.setNgayCapNhat(System.currentTimeMillis());
@@ -198,13 +206,13 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             });
         }
 
-        return hd;
+        return initializeHoaDon(hd);
     }
 
     @Override
     @Transactional
     public HoaDon updateInfo(String id, AdminUpdateHoaDonRequest request) {
-        HoaDon hd = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
+        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
 
         hd.setSoDienThoaiNguoiNhan(request.getSoDienThoaiNguoiNhan());
         hd.setDiaChiNguoiNhan(request.getDiaChiNguoiNhan());
@@ -221,13 +229,13 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         hd.setNgayCapNhat(System.currentTimeMillis());
         logHistory(hd, "Cập nhật thông tin giao hàng/khách hàng");
 
-        return repository.save(hd);
+        return initializeHoaDon(repository.save(hd));
     }
 
     @Override
     @Transactional
     public HoaDon updateHdct(String id, AdminUpdateHdctRequest request) {
-        HoaDon hd = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
+        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
         ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(request.getIdChiTietSanPham())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm chi tiết"));
 
@@ -258,13 +266,13 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         hoaDonChiTietRepository.save(hdct);
         logHistory(hd, "Thay đổi sản phẩm: " + ctsp.getSanPham().getTen() + " (SL: " + request.getSoLuong() + ")");
 
-        return recalculateTotal(hd);
+        return initializeHoaDon(recalculateTotal(hd));
     }
 
     @Override
     @Transactional
     public HoaDon removeHdct(String id, String idHdct) {
-        HoaDon hd = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
+        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHdct)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm chi tiết"));
         
@@ -276,7 +284,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         
         hoaDonChiTietRepository.delete(hdct);
         logHistory(hd, "Xóa sản phẩm khỏi hóa đơn");
-        return recalculateTotal(hd);
+        return initializeHoaDon(recalculateTotal(hd));
     }
 
     private void logHistory(HoaDon hd, String note) {

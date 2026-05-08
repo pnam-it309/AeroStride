@@ -16,329 +16,262 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
             padding: 40px 20px; 
             color: #1e293b;
-            background-color: #f1f5f9;
-            line-height: 1.6;
+            background-color: #f8fafc;
+            line-height: 1.5;
             margin: 0;
         }
         
         .invoice-box { 
-            max-width: 850px; 
+            max-width: 900px; 
             margin: auto; 
             background: white;
-            border: 1px solid #e2e8f0; 
-            padding: 50px; 
-            border-radius: 16px; 
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); 
+            border: 1px solid #cbd5e1; 
+            padding: 40px; 
+            border-radius: 4px; 
         }
 
-        .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; 
-            margin-bottom: 40px; 
-            padding-bottom: 30px;
-            border-bottom: 3px solid #f1f5f9;
+        .header-grid {
+            display: grid;
+            grid-template-columns: 200px 1fr 200px;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #0d9488;
+            padding-bottom: 20px;
         }
 
-        .logo-area .logo { 
-            color: #4f46e5; 
-            font-size: 36px; 
+        .logo-side .logo { 
+            color: #0d9488; 
+            font-size: 32px; 
             font-weight: 800; 
-            letter-spacing: -1.5px;
-            line-height: 1;
-            margin-bottom: 6px;
+            letter-spacing: -1px;
         }
+        .logo-side .tagline { font-size: 11px; color: #64748b; font-weight: 600; }
 
-        .tagline {
-            font-size: 13px;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-weight: 600;
-        }
-
-        .invoice-title-area { text-align: right; }
+        .title-side { text-align: center; }
         .invoice-title { 
             margin: 0; 
-            font-size: 28px; 
+            font-size: 24px; 
             color: #0f172a; 
             font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-
-        .invoice-meta {
-            margin-top: 12px;
-            font-size: 14px;
-            color: #64748b;
-        }
-
-        .meta-badge {
-            display: inline-block;
-            background: #eef2ff;
-            color: #4338ca;
-            padding: 4px 12px;
-            border-radius: 9999px;
-            font-weight: 700;
-            margin-left: 8px;
-        }
-
-        .info-grid { 
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 40px; 
-        }
-
-        .info-card {
-            background: #f8fafc;
-            padding: 24px;
-            border-radius: 12px;
-            border: 1px solid #f1f5f9;
-        }
-
-        .section-title { 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            font-size: 12px; 
-            color: #94a3b8; 
-            margin-bottom: 16px; 
-            display: flex;
-            align-items: center;
-        }
-
-        .section-title::after {
-            content: "";
-            flex: 1;
-            height: 1px;
-            background: #e2e8f0;
-            margin-left: 12px;
-        }
-
-        .info-name { font-weight: 800; font-size: 18px; margin-bottom: 6px; color: #0f172a; }
-        .info-detail { color: #475569; margin-bottom: 4px; font-size: 14px; display: flex; align-items: center; }
-
-        table { width: 100%; border-collapse: collapse; margin: 30px 0; }
-        th { 
-            background-color: #f8fafc; 
-            text-align: left; 
-            padding: 16px; 
-            font-size: 12px; 
-            font-weight: 800;
-            color: #64748b; 
             text-transform: uppercase;
-            border-bottom: 2px solid #e2e8f0;
         }
-        td { padding: 18px 16px; border-bottom: 1px solid #f1f5f9; font-size: 15px; vertical-align: top; }
+        .invoice-date { font-size: 14px; color: #475569; margin-top: 5px; }
 
-        .product-name { font-weight: 700; color: #0f172a; margin-bottom: 6px; font-size: 16px; }
-        .product-variant { font-size: 13px; color: #64748b; font-weight: 500; }
+        .meta-side { text-align: right; font-size: 13px; color: #475569; }
+        .meta-side div { margin-bottom: 4px; }
 
-        .summary-container {
+        .info-section { margin-bottom: 30px; }
+        .seller-info { 
+            font-size: 13px; 
+            color: #475569; 
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f0fdfa;
+            border-left: 4px solid #0d9488;
+        }
+
+        .customer-info-grid { display: grid; gap: 8px; }
+        .info-row { display: flex; border-bottom: 1px dotted #cbd5e1; padding: 4px 0; font-size: 14px; }
+        .info-label { min-width: 150px; font-weight: 600; color: #64748b; }
+        .info-value { flex: 1; color: #0f172a; }
+
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { 
+            background-color: #f1f5f9; 
+            text-align: center; 
+            padding: 12px 8px; 
+            font-size: 12px; 
+            font-weight: 700;
+            color: #0f172a; 
+            border: 1px solid #cbd5e1;
+            text-transform: uppercase;
+        }
+        td { padding: 12px 8px; border: 1px solid #cbd5e1; font-size: 14px; vertical-align: middle; }
+
+        .summary-section {
             display: grid;
-            grid-template-columns: 1fr 340px;
-            gap: 50px;
-            margin-top: 30px;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 40px;
+            margin-top: 20px;
         }
 
-        .summary-card {
-            background: #0f172a;
-            color: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.2);
+        .amount-in-words {
+            font-style: italic;
+            font-size: 13px;
+            color: #475569;
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 4px;
         }
 
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; }
-        .summary-label { color: #94a3b8; }
-        .summary-value { font-weight: 600; }
-        
-        .grand-total-row { 
-            margin-top: 20px; 
-            padding-top: 20px; 
-            border-top: 1px solid #334155; 
-            font-size: 22px; 
-            color: white; 
-            font-weight: 800; 
-        }
+        .summary-table { width: 100%; margin: 0; }
+        .summary-table td { border: none; padding: 4px 0; font-size: 14px; }
+        .total-row { font-weight: 800; font-size: 18px; color: #0d9488; border-top: 2px solid #0d9488 !important; padding-top: 10px !important; }
 
-        .payment-methods {
-            margin-top: 24px;
-            padding: 20px;
-            background: #f0fdf4;
-            border-radius: 12px;
-            border: 1px solid #dcfce7;
-        }
-        .payment-title { font-weight: 800; color: #166534; font-size: 14px; margin-bottom: 8px; text-transform: uppercase; }
-        .payment-item { font-size: 14px; color: #166534; margin-bottom: 4px; }
-
-        .signature-section { 
-            margin-top: 80px; 
+        .signature-grid { 
+            margin-top: 50px; 
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             text-align: center;
         }
-        .signature-label { font-weight: 800; font-size: 16px; color: #0f172a; margin-bottom: 100px; }
+        .sig-box { display: flex; flex-direction: column; align-items: center; }
+        .sig-label { font-weight: 700; font-size: 14px; color: #0f172a; margin-bottom: 80px; }
+        .sig-sub { font-size: 11px; color: #94a3b8; font-style: italic; }
 
-        .footer-note { 
-            margin-top: 80px; 
+        .footer-text { 
+            margin-top: 60px; 
             text-align: center; 
-            font-size: 14px; 
+            font-size: 12px; 
             color: #94a3b8;
-            border-top: 2px dashed #f1f5f9;
-            padding-top: 30px;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 20px;
         }
 
         .btn-print { 
-            background: #4f46e5; 
+            background: #0d9488; 
             color: white !important; 
-            padding: 14px 32px; 
+            padding: 12px 24px; 
             border: none; 
-            border-radius: 12px; 
+            border-radius: 6px; 
             cursor: pointer; 
-            font-weight: 800; 
-            font-size: 16px;
-            margin-bottom: 40px;
-            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 700; 
+            margin-bottom: 30px;
         }
-        .btn-print:hover { background: #4338ca; transform: translateY(-2px); box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.4); }
     </style>
 </head>
 <body>
     <div class="no-print" style="text-align: center;">
-        <button class="btn-print" onclick="window.print()">
-            <span style="margin-right: 8px;">🖨️</span> XÁC NHẬN IN HÓA ĐƠN
-        </button>
+        <button class="btn-print" onclick="window.print()">🖨️ IN HÓA ĐƠN</button>
     </div>
 
     <div class="invoice-box">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo-area">
+        <!-- Header Section -->
+        <div class="header-grid">
+            <div class="logo-side">
                 <div class="logo">AeroStride</div>
                 <div class="tagline">Sống đam mê • Bước tự tin</div>
             </div>
-            <div class="invoice-title-area">
-                <h1 class="invoice-title">HÓA ĐƠN BÁN HÀNG</h1>
-                <div class="invoice-meta">
-                    <div>Số hóa đơn: <span class="meta-badge" th:text="${hd.maHoaDon}">HD001</span></div>
-                    <div style="margin-top: 8px;">Ngày lập: <strong th:text="${#dates.format(ngayIn, 'dd/MM/yyyy HH:mm')}">12/04/2026</strong></div>
-                </div>
+            <div class="title-side">
+                <h1 class="invoice-title">Hóa đơn bán hàng</h1>
+                <div class="invoice-date">Ngày <span th:text="${#dates.format(ngayIn, 'dd')}">01</span> tháng <span th:text="${#dates.format(ngayIn, 'MM')}">01</span> năm <span th:text="${#dates.format(ngayIn, 'yyyy')}">2026</span></div>
+            </div>
+            <div class="meta-side">
+                <div>Mẫu số: <strong>01GTKT3/001</strong></div>
+                <div>Ký hiệu: <strong>AS/24P</strong></div>
+                <div>Số: <strong style="color: #ef4444;" th:text="${hd.maHoaDon}">HD001</strong></div>
             </div>
         </div>
 
-        <!-- Info Grid -->
-        <div class="info-grid">
-            <div class="info-card">
-                <div class="section-title">Đơn vị bán hàng</div>
-                <div class="info-content">
-                    <div class="info-name">Showroom AeroStride Việt Nam</div>
-                    <div class="info-detail">📍 123 Trịnh Văn Bô, Nam Từ Liêm, Hà Nội</div>
-                    <div class="info-detail">📞 1900 6789</div>
-                    <div class="info-detail">🌐 www.aerostride.vn</div>
+        <!-- Seller Info -->
+        <div class="seller-info">
+            <strong>Đơn vị bán hàng:</strong> Showroom AeroStride Việt Nam<br/>
+            <strong>Địa chỉ:</strong> 123 Trịnh Văn Bô, Nam Từ Liêm, Hà Nội<br/>
+            <strong>Điện thoại:</strong> 1900 6789 - <strong>Website:</strong> www.aerostride.vn
+        </div>
+
+        <!-- Customer Info -->
+        <div class="info-section">
+            <div class="customer-info-grid">
+                <div class="info-row">
+                    <span class="info-label">Họ tên người mua hàng:</span>
+                    <span class="info-value" th:text="${hd.khachHang != null ? hd.khachHang.ten : (hd.tenKhachHang != null ? hd.tenKhachHang : 'Khách lẻ')}">Khách hàng</span>
                 </div>
-            </div>
-            <div class="info-card">
-                <div class="section-title">Thông tin khách hàng</div>
-                <div class="info-content">
-                    <div class="info-name" th:text="${hd.khachHang != null ? hd.khachHang.ten : (hd.tenKhachHang != null ? hd.tenKhachHang : 'Khách lẻ')}">Khách hàng</div>
-                    <div class="info-detail">📞 <span th:text="${hd.soDienThoaiNguoiNhan != null ? hd.soDienThoaiNguoiNhan : (hd.soDienThoai != null ? hd.soDienThoai : 'N/A')}">0987xxx</span></div>
-                    <div class="info-detail">🏠 <span th:text="${hd.diaChiNguoiNhan != null ? hd.diaChiNguoiNhan : (hd.diaChi != null ? hd.diaChi : 'Nhận tại quầy')}">Địa chỉ</span></div>
-                    <div class="info-detail" th:if="${hd.nhanVien != null}" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
-                        👤 Nhân viên: <strong style="margin-left: 4px;" th:text="${hd.nhanVien.ten}">Nguyễn Văn A</strong>
-                    </div>
+                <div class="info-row">
+                    <span class="info-label">Số điện thoại:</span>
+                    <span class="info-value" th:text="${hd.soDienThoaiNguoiNhan != null ? hd.soDienThoaiNguoiNhan : (hd.soDienThoai != null ? hd.soDienThoai : 'N/A')}">0987xxx</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Địa chỉ:</span>
+                    <span class="info-value" th:text="${hd.diaChiNguoiNhan != null ? hd.diaChiNguoiNhan : (hd.diaChi != null ? hd.diaChi : 'Nhận tại quầy')}">Địa chỉ</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Hình thức thanh toán:</span>
+                    <span class="info-value">Tiền mặt / Chuyển khoản</span>
                 </div>
             </div>
         </div>
 
         <!-- Items Table -->
-        <div class="items-section">
-            <div class="section-title">Chi tiết sản phẩm</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 40px; text-align: center;">STT</th>
-                        <th>Sản phẩm & Mô tả</th>
-                        <th style="width: 60px; text-align: center;">SL</th>
-                        <th style="width: 130px; text-align: right;">Đơn giá</th>
-                        <th style="width: 140px; text-align: right;">Thành tiền</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="item, stat : ${details}">
-                        <td style="text-align: center; color: #94a3b8; font-weight: 600;" th:text="${stat.count}">1</td>
-                        <td>
-                            <div class="product-name" th:text="${item.chiTietSanPham.sanPham.ten}">Tên sản phẩm</div>
-                            <div class="product-variant" th:text="${'SKU: ' + item.chiTietSanPham.maChiTietSanPham + ' • Màu: ' + item.chiTietSanPham.mauSac.ten + ' • Size: ' + item.chiTietSanPham.kichThuoc.ten}">Variant</div>
-                        </td>
-                        <td style="text-align: center; font-weight: 700; color: #0f172a;" th:text="${item.soLuong}">1</td>
-                        <td style="text-align: right; font-weight: 500;" th:text="${#numbers.formatDecimal(item.donGia, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500,000</td>
-                        <td style="text-align: right; font-weight: 800; color: #4f46e5;" th:text="${#numbers.formatDecimal(item.donGia * item.soLuong, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500,000</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40px;">STT</th>
+                    <th>Tên hàng hóa, dịch vụ</th>
+                    <th style="width: 80px;">ĐVT</th>
+                    <th style="width: 70px;">SL</th>
+                    <th style="width: 120px;">Đơn giá</th>
+                    <th style="width: 130px;">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="item, stat : ${details}">
+                    <td style="text-align: center;" th:text="${stat.count}">1</td>
+                    <td>
+                        <div style="font-weight: 600;" th:text="${item.chiTietSanPham.sanPham.ten}">Tên sản phẩm</div>
+                        <div style="font-size: 12px; color: #64748b;" th:text="${'Màu: ' + item.chiTietSanPham.mauSac.ten + ' • Size: ' + item.chiTietSanPham.kichThuoc.ten}">Variant</div>
+                    </td>
+                    <td style="text-align: center;">Đôi</td>
+                    <td style="text-align: center;" th:text="${item.soLuong}">1</td>
+                    <td style="text-align: right;" th:text="${#numbers.formatDecimal(item.donGia, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500,000</td>
+                    <td style="text-align: right; font-weight: 600;" th:text="${#numbers.formatDecimal(item.donGia * item.soLuong, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500,000</td>
+                </tr>
+            </tbody>
+        </table>
 
-        <!-- Summary -->
-        <div class="summary-container">
+        <!-- Summary Section -->
+        <div class="summary-section">
             <div class="summary-left">
-                <div th:if="${hd.ghiChu != null and hd.ghiChu != ''}" style="margin-bottom: 24px;">
-                    <div class="section-title" style="margin-bottom: 8px;">Ghi chú đơn hàng</div>
-                    <div style="font-size: 14px; color: #475569; font-style: italic;" th:text="${hd.ghiChu}">Ghi chú...</div>
+                <div th:if="${hd.ghiChu != null and hd.ghiChu != ''}">
+                    <strong style="font-size: 13px; color: #64748b;">Ghi chú:</strong>
+                    <p style="font-size: 13px; margin-top: 5px;" th:text="${hd.ghiChu}">Ghi chú đơn hàng...</p>
                 </div>
-                
-                <div class="payment-methods" th:if="${hd.listsGiaoDichThanhToan != null and !hd.listsGiaoDichThanhToan.isEmpty()}">
-                    <div class="payment-title">💳 Lịch sử thanh toán</div>
-                    <div class="payment-item" th:each="pay : ${hd.listsGiaoDichThanhToan}">
-                        • <span th:text="${pay.phuongThucThanhToan != null ? pay.phuongThucThanhToan.ten : 'Thanh toán'}">Tiền mặt</span>: 
-                        <strong th:text="${#numbers.formatDecimal(pay.soTien, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500,000</strong>
-                        <span th:if="${pay.maGiaoDichNgoai != null}" style="color: #64748b; font-size: 12px;" th:text="${' (Mã: ' + pay.maGiaoDichNgoai + ')'}"></span>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 30px; font-style: italic; font-size: 12px; color: #94a3b8; line-height: 1.8;">
-                    * Quý khách vui lòng kiểm tra kỹ sản phẩm trước khi rời quầy.<br/>
-                    * AeroStride hỗ trợ đổi size trong vòng 07 ngày kể từ ngày mua hàng.<br/>
-                    * Sản phẩm đổi trả phải còn nguyên tem, mác và chưa qua sử dụng.
+                <div class="amount-in-words">
+                    <strong>Số tiền viết bằng chữ:</strong> ................................................................................................
                 </div>
             </div>
-            
-            <div class="summary-card">
-                <div class="summary-row">
-                    <div class="summary-label">Tạm tính</div>
-                    <div class="summary-value" th:text="${#numbers.formatDecimal(hd.tongTien, 0, 'COMMA', 0, 'POINT') + ' ₫'}">1,000,000</div>
-                </div>
-                <div class="summary-row" th:if="${hd.phiVanChuyen != null and hd.phiVanChuyen.doubleValue() > 0}">
-                    <div class="summary-label">Phí vận chuyển</div>
-                    <div class="summary-value" th:text="${'+ ' + #numbers.formatDecimal(hd.phiVanChuyen, 0, 'COMMA', 0, 'POINT') + ' ₫'}">30,000</div>
-                </div>
-                <div class="summary-row" style="color: #fca5a5;" th:if="${hd.tongTienSauGiam != null and hd.tongTien.compareTo(hd.tongTienSauGiam) > 0}">
-                    <div class="summary-label" style="color: #fca5a5;">Giảm giá</div>
-                    <div class="summary-value" th:text="${'- ' + #numbers.formatDecimal(hd.tongTien.subtract(hd.tongTienSauGiam), 0, 'COMMA', 0, 'POINT') + ' ₫'}">-100,000</div>
-                </div>
-                <div class="summary-row grand-total-row">
-                    <div class="summary-label" style="color: white;">TỔNG CỘNG</div>
-                    <div class="summary-value" th:text="${#numbers.formatDecimal(hd.tongTienSauGiam != null ? hd.tongTienSauGiam : hd.tongTien.add(hd.phiVanChuyen != null ? hd.phiVanChuyen : 0), 0, 'COMMA', 0, 'POINT') + ' ₫'}">930,000</div>
-                </div>
+            <div class="summary-right">
+                <table class="summary-table">
+                    <tr>
+                        <td>Cộng tiền hàng:</td>
+                        <td style="text-align: right;" th:text="${#numbers.formatDecimal(hd.tongTien, 0, 'COMMA', 0, 'POINT') + ' ₫'}">1,000,000</td>
+                    </tr>
+                    <tr th:if="${hd.phiVanChuyen != null and hd.phiVanChuyen.doubleValue() > 0}">
+                        <td>Phí vận chuyển:</td>
+                        <td style="text-align: right;" th:text="${'+ ' + #numbers.formatDecimal(hd.phiVanChuyen, 0, 'COMMA', 0, 'POINT') + ' ₫'}">30,000</td>
+                    </tr>
+                    <tr th:if="${hd.tongTienSauGiam != null and hd.tongTien.compareTo(hd.tongTienSauGiam) > 0}">
+                        <td>Giảm giá:</td>
+                        <td style="text-align: right; color: #ef4444;" th:text="${'- ' + #numbers.formatDecimal(hd.tongTien.subtract(hd.tongTienSauGiam), 0, 'COMMA', 0, 'POINT') + ' ₫'}">-100,000</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>TỔNG CỘNG:</td>
+                        <td style="text-align: right;" th:text="${#numbers.formatDecimal(hd.tongTienSauGiam != null ? hd.tongTienSauGiam : hd.tongTien.add(hd.phiVanChuyen != null ? hd.phiVanChuyen : 0), 0, 'COMMA', 0, 'POINT') + ' ₫'}">930,000</td>
+                    </tr>
+                </table>
             </div>
         </div>
 
-        <!-- Signatures -->
-        <div class="signature-section">
-            <div class="signature-box">
-                <div class="signature-label">Người mua hàng</div>
-                <div style="font-size: 12px; color: #94a3b8;">(Ký và ghi rõ họ tên)</div>
+        <!-- Signatures Section -->
+        <div class="signature-grid">
+            <div class="sig-box">
+                <div class="sig-label">Người mua hàng</div>
+                <div class="sig-sub">(Ký, ghi rõ họ tên)</div>
             </div>
-            <div class="signature-box">
-                <div class="signature-label">Người lập hóa đơn</div>
-                <div style="font-size: 12px; color: #94a3b8;">(Ký và ghi rõ họ tên)</div>
+            <div class="sig-box">
+                <div class="sig-label">Người bán hàng</div>
+                <div class="sig-sub">(Ký, ghi rõ họ tên)</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-label">Thủ trưởng đơn vị</div>
+                <div class="sig-sub">(Ký, đóng dấu, ghi rõ họ tên)</div>
             </div>
         </div>
 
         <!-- Footer -->
-        <div class="footer-note">
-            <p>Cảm ơn quý khách đã tin tưởng lựa chọn <strong>AeroStride</strong>!</p>
-            <p style="margin-top: 8px; font-weight: 500; color: #64748b;">Hệ thống bán lẻ Sneaker chính hãng hàng đầu Việt Nam</p>
+        <div class="footer-text">
+            (Cần kiểm tra, đối chiếu khi lập, giao, nhận hóa đơn)<br/>
+            Cảm ơn quý khách đã tin dùng sản phẩm của <strong>AeroStride</strong>!
         </div>
     </div>
 </body>

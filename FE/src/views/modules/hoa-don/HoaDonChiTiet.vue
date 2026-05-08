@@ -243,7 +243,7 @@ const timelineSteps = computed(() => {
 
     let steps = [...coreSteps];
 
-    // If the current status is an exception, add it at the end if it's the current state
+    // If the current status is an exception, replace or append it
     if (status === 5 || status === 6) {
         const exc = exceptionSteps.find(s => s.key === status);
         if (exc) steps.push(exc);
@@ -253,10 +253,9 @@ const timelineSteps = computed(() => {
     const currentIndex = status === null ? -1 : steps.findIndex(s => s.key === status);
 
     return steps.slice(0, currentIndex + 1).map((step, index) => {
-        let state = "pending"; // Default state
+        let state = "pending";
 
         if (status === 5 || status === 6) {
-            // If cancelled or returned, everything before the exception is considered "past"
             if (index < currentIndex) state = "done";
             else if (index === currentIndex) state = "active";
             else state = "disabled";
@@ -465,6 +464,7 @@ const updateItemQuantity = async (item, newQty) => {
             idChiTietSanPham: item.idChiTietSanPham,
             soLuong: newQty
         });
+        addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật số lượng sản phẩm', color: 'success' });
         await loadOrderDetail();
     } catch (error) {
         addNotification({ title: 'Lỗi', subtitle: 'Không thể cập nhật số lượng', color: 'error' });
@@ -612,11 +612,8 @@ onMounted(() => {
                     <div v-for="(step, index) in timelineSteps" :key="step.key" class="timeline-step"
                         :class="[step.state, step.state === 'active' ? 'text-' + step.tone : 'text-slate-400']">
                         <div class="node-section">
-                            <div class="line left" v-if="index > 0" :class="{ active: true }"></div>
-                            <div class="node" :class="[step.state, step.state === 'active' ? 'bg-' + step.tone + ' border-' + step.tone : '']">
-                                <component :is="getStepIcon(step)" size="22" :class="step.state === 'active' ? 'text-white' : ''" />
-                            </div>
-                            <div class="line right" v-if="index < timelineSteps.length - 1" :class="{ active: true }">
+                            <div class="node" :class="step.state">
+                                <component :is="getStepIcon(step)" size="22" />
                             </div>
                         </div>
                         <div class="timeline-info">
@@ -664,14 +661,14 @@ onMounted(() => {
                                 <div class="d-flex flex-column h-100 justify-center">
                                     <div class="text-h4 font-weight-bold text-slate-900 mb-2">{{ customerName }}</div>
                                     <div class="d-flex align-center mb-4">
-                                        <span class="text-primary font-weight-bold mr-4 border-e pe-4">
+                                        <span class="text-primary font-weight-bold mr-4 pe-4">
                                             ID: {{ order.khachHang?.maKhachHang || 'GUEST' }}
                                         </span>
                                         <span class="text-deep-purple-accent-4 font-weight-bold">
                                             Hạng: Thành viên
                                         </span>
                                     </div>
-                                    <div class="text-caption text-slate-400 font-weight-bold text-uppercase">Ghi chú khách hàng</div>
+                                    <div class="text-caption text-slate-400 font-weight-bold ">Ghi chú khách hàng</div>
                                     <div class="text-body-2 text-slate-600 mt-1 italic">
                                         {{ order.khachHang?.ghiChu || 'Không có ghi chú đặc biệt' }}
                                     </div>
@@ -679,24 +676,24 @@ onMounted(() => {
                             </v-col>
 
                             <!-- Contact & Metadata Column -->
-                            <v-col cols="12" md="4" class="ml-auto border-s ps-8">
+                            <v-col cols="12" md="4" class="ml-auto ps-8">
                                 <div class="d-flex flex-column h-100 justify-center gap-4">
                                     <div class="contact-item">
-                                        <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-1">Số điện thoại</div>
+                                        <div class="text-caption text-slate-400 font-weight-bold mb-1">Số điện thoại</div>
                                         <div class="text-h6 text-slate-800 d-flex align-center">
                                             <v-icon color="primary" class="mr-2" size="20">mdi-phone-check</v-icon>
                                             {{ order.soDienThoai || 'Chưa có' }}
                                         </div>
                                     </div>
                                     <div class="contact-item">
-                                        <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-1">Email</div>
+                                        <div class="text-caption text-slate-400 font-weight-bold mb-1">Email</div>
                                         <div class="text-h6 text-slate-800 d-flex align-center">
                                             <v-icon color="primary" class="mr-2" size="20">mdi-email-check</v-icon>
                                             {{ order.email || 'N/A' }}
                                         </div>
                                     </div>
                                     <div class="contact-item">
-                                        <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-1">Ngày đăng ký</div>
+                                        <div class="text-caption text-slate-400 font-weight-bold mb-1">Ngày đăng ký</div>
                                         <div class="text-body-1 text-slate-600 d-flex align-center">
                                             <v-icon color="slate-400" class="mr-2" size="20">mdi-calendar-range</v-icon>
                                             {{ formatDate(order.khachHang?.ngayTao) }}
@@ -724,15 +721,15 @@ onMounted(() => {
                             </template>
                         </v-tooltip>
                     </div>
-                    <div class="table-scroll-container" style="max-height: 480px; overflow-y: auto;">
+                    <div class="table-scroll-container" style="max-height: 480px; overflow-y: auto; overflow-x: hidden;">
                         <v-table class="premium-table" density="compact">
                             <thead>
                                 <tr>
-                                    <th class="text-center py-4" style="width: 240px;">Hình ảnh</th>
-                                    <th class="text-left py-4">Thông tin sản phẩm</th>
-                                    <th class="text-center py-4" style="width: 130px; white-space: nowrap;">Số lượng</th>
-                                    <th class="text-center py-4" style="width: 150px;">Đơn giá</th>
-                                    <th class="text-center py-4" style="width: 150px;">Thành tiền</th>
+                                    <th class="text-center py-4" style="width: 220px;">Hình ảnh</th>
+                                    <th class="text-center py-4">Thông tin sản phẩm</th>
+                                    <th class="text-center py-4" style="width: 170px;">Số lượng</th>
+                                    <th class="text-center py-4" style="width: 130px;">Đơn giá</th>
+                                    <th class="text-center py-4" style="width: 130px;">Thành tiền</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -751,11 +748,11 @@ onMounted(() => {
                                             
                                             <div class="d-flex align-center gap-6 mt-2 text-slate-600">
                                                 <div class="d-flex align-center">
-                                                    <span class="text-caption font-weight-bold text-uppercase mr-2" style="white-space: nowrap;">Màu sắc:</span>
+                                                    <span class="text-caption font-weight-bold mr-2" style="white-space: nowrap;">Màu sắc:</span>
                                                     <span class="font-weight-bold text-slate-900" style="white-space: nowrap;">{{ item.chiTietSanPham?.mauSac?.ten || '—' }}</span>
                                                 </div>
                                                 <div class="d-flex align-center border-s ps-6">
-                                                    <span class="text-caption font-weight-bold text-uppercase mr-2" style="white-space: nowrap;">Kích thước:</span>
+                                                    <span class="text-caption font-weight-bold mr-2" style="white-space: nowrap;">Kích thước:</span>
                                                     <span class="font-weight-bold text-slate-900" style="white-space: nowrap;">{{ item.chiTietSanPham?.kichThuoc?.ten || '—' }}</span>
                                                 </div>
                                             </div>
@@ -922,7 +919,7 @@ onMounted(() => {
                     </div>
                     <v-card-text class="pa-6">
                         <div class="info-group mb-6">
-                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Loại đơn hàng
+                            <div class="text-caption text-slate-400 font-weight-bold mb-2">Loại đơn hàng
                             </div>
                             <v-chip variant="tonal" color="primary" class="font-weight-bold">
                                 {{ orderTypeLabel }}
@@ -930,7 +927,7 @@ onMounted(() => {
                         </div>
                         <v-divider class="mb-6 border-opacity-10"></v-divider>
                         <div class="info-group mb-6">
-                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Địa chỉ nhận
+                            <div class="text-caption text-slate-400 font-weight-bold mb-2">Địa chỉ nhận
                             </div>
                             <div class="text-body-1 text-slate-700 d-flex align-start">
                                 <MapPinIcon size="18" class="mr-2 text-error mt-1" />
@@ -939,7 +936,7 @@ onMounted(() => {
                         </div>
                         <v-divider class="mb-6 border-opacity-10"></v-divider>
                         <div class="info-group">
-                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Ghi chú</div>
+                            <div class="text-caption text-slate-400 font-weight-bold mb-2">Ghi chú</div>
                             <div class="text-body-2 text-slate-600 italic pa-3 bg-slate-50 rounded-lg">
                                 {{ order.ghiChu || 'Không có ghi chú' }}
                             </div>
@@ -1032,15 +1029,15 @@ onMounted(() => {
                 <v-card-text class="pa-8">
                     <v-row>
                         <v-col cols="12">
-                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Tên khách hàng</div>
+                            <div class="text-caption text-slate-400 font-weight-bold mb-2">Tên khách hàng</div>
                             <v-text-field v-model="editInfoForm.tenKhachHang" placeholder="Nhập tên khách hàng" variant="outlined" density="comfortable" hide-details class="mb-4"></v-text-field>
                         </v-col>
                         <v-col cols="12">
-                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Số điện thoại</div>
+                            <div class="text-caption text-slate-400 font-weight-bold mb-2">Số điện thoại</div>
                             <v-text-field v-model="editInfoForm.soDienThoai" placeholder="Nhập số điện thoại" variant="outlined" density="comfortable" hide-details class="mb-4"></v-text-field>
                         </v-col>
                         <v-col cols="12">
-                            <div class="text-caption text-slate-400 font-weight-bold text-uppercase mb-2">Email</div>
+                            <div class="text-caption text-slate-400 font-weight-bold mb-2">Email</div>
                             <v-text-field v-model="editInfoForm.email" placeholder="Nhập email" variant="outlined" density="comfortable" hide-details></v-text-field>
                         </v-col>
                     </v-row>
@@ -1086,7 +1083,7 @@ onMounted(() => {
                     <!-- Address Section -->
                     <div class="pa-0 mt-6 mb-4 d-flex align-center">
                         <v-icon size="20" class="mr-2 text-slate-900">mdi-map-marker-outline</v-icon>
-                        <span class="text-subtitle-2 font-weight-bold text-uppercase text-slate-900">Địa chỉ giao
+                        <span class="text-subtitle-2 font-weight-bold text-slate-900">Địa chỉ giao
                             hàng</span>
                     </div>
 
@@ -1119,7 +1116,7 @@ onMounted(() => {
                     <!-- Notes Section -->
                     <div class="pa-0 mt-6 mb-4 d-flex align-center">
                         <v-icon size="20" class="mr-2 text-slate-900">mdi-note-text-outline</v-icon>
-                        <span class="text-subtitle-2 font-weight-bold text-uppercase text-slate-900">Ghi chú vận
+                        <span class="text-subtitle-2 font-weight-bold text-slate-900">Ghi chú vận
                             chuyển</span>
                     </div>
 
@@ -1316,9 +1313,15 @@ onMounted(() => {
 }
 
 .timeline-wrap {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    padding: 10px 0;
+}
+
+.timeline-wrap::before {
+    display: none !important;
 }
 
 @media (max-width: 960px) {
@@ -1332,6 +1335,11 @@ onMounted(() => {
 .hover-row:hover {
     background-color: #f8fafc;
     cursor: pointer;
+}
+
+.premium-table :deep(table) {
+    table-layout: fixed !important;
+    width: 100% !important;
 }
 
 .product-icon {
@@ -1372,11 +1380,46 @@ onMounted(() => {
 }
 
 .timeline-step {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     position: relative;
     transition: all 0.3s ease;
+    z-index: 1;
+}
+
+.node-section::before,
+.node-section::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    height: 6px;
+    background: #10b981;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.node-section::before {
+    left: 0;
+    right: calc(50% + 32px); /* 50% + half of 44px + 10px gap */
+}
+
+.node-section::after {
+    left: calc(50% + 32px);
+    right: 0;
+}
+
+.timeline-step:first-child .node-section::before {
+    display: none;
+}
+
+.timeline-step:last-child .node-section::after {
+    display: none;
+}
+
+.timeline-step:only-child::before {
+    display: none;
 }
 
 .timeline-step.pending,
@@ -1385,13 +1428,17 @@ onMounted(() => {
     filter: none;
 }
 
-.timeline-step.done {
+.timeline-step.done .node,
+.timeline-step.done .timeline-info {
     opacity: 0.8;
 }
 
 .timeline-step.active {
     opacity: 1;
-    transform: scale(1.05);
+}
+
+.timeline-step.active .node {
+    transform: scale(1.1);
 }
 
 .node-section {
@@ -1399,8 +1446,10 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     width: 100%;
+    height: 44px;
     margin-bottom: 12px;
     position: relative;
+    z-index: 2;
 }
 
 .node {
@@ -1410,11 +1459,30 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #f1f5f9;
-    color: #64748b;
-    z-index: 2;
-    border: 2px solid #e2e8f0;
-    transition: all 0.3s ease;
+    background: #ffffff !important;
+    color: #94a3b8 !important;
+    z-index: 5;
+    border: 2px solid #e2e8f0 !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.timeline-step.active .node {
+    border-color: #3b82f6 !important; /* Blue for active */
+    color: #3b82f6 !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    animation: timeline-pulse 2s infinite;
+}
+
+@keyframes timeline-pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+.timeline-step.done .node {
+    background: #ffffff !important;
+    color: #94a3b8 !important;
+    border-color: #e2e8f0 !important;
 }
 
 .timeline-step.active .node {
@@ -1427,15 +1495,7 @@ onMounted(() => {
     border-color: #e2e8f0;
 }
 
-.line {
-    position: absolute;
-    height: 2px;
-    background: #e2e8f0;
-    width: calc(50% - 22px);
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 1;
-}
+/* Removed old .line and .line.active-line classes as we use ::before now */
 
 .line.left {
     left: 0;

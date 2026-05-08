@@ -199,16 +199,16 @@ const imageSrc = (p) => {
 };
 
 const tableHeaders = [
-    { text: 'Ảnh', align: 'left', width: '80px' },
-    { text: 'Tên', align: 'left' },
-    { text: 'Mã', align: 'left', width: '110px' },
-    { text: 'Danh mục', align: 'left', width: '140px' },
-    { text: 'Thương hiệu', align: 'left', width: '140px' },
-    { text: 'Màu sắc', align: 'left', width: '120px' },
-    { text: 'Chất liệu', align: 'left', width: '120px' },
-    { text: 'Size', align: 'left', width: '80px' },
-    { text: 'Giá', align: 'right', width: '120px' },
-    { text: 'Thao tác', align: 'center', width: '110px' }
+    { text: 'Ảnh', width: '70px' },
+    { text: 'Tên' },
+    { text: 'Mã', width: '100px' },
+    { text: 'Danh mục', width: '100px' },
+    { text: 'Thương hiệu', width: '120px' },
+    { text: 'Màu sắc', width: '90px' },
+    { text: 'Chất liệu', width: '90px' },
+    { text: 'Size', width: '70px' },
+    { text: 'Giá', width: '100px' },
+    { text: 'Thao tác', width: '100px' }
 ];
 </script>
 
@@ -429,6 +429,7 @@ const tableHeaders = [
 .table-wrapper-picker {
     max-height: 470px;
     overflow-y: auto;
+    overflow-x: hidden;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
 }
