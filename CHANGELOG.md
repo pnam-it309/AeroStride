@@ -6,6 +6,14 @@
 * **discount:** Hợp nhất tính năng sửa lỗi Phiếu Giảm Giá và Đợt Giảm Giá ([a66a9fb](https://github.com/pnam-it309/AeroStride/commit/a66a9fb288f05d5f62d5ca58a293c3d5106e7bdf))
 * **hoadon:** Tối ưu hóa giao diện chi tiết hóa đơn và hoàn thiện logic in ấn ([74d24f3](https://github.com/pnam-it309/AeroStride/commit/74d24f30e20dc881ca1c9eeafc46f63c181c5fc5))
 
+# [1.8.0](https://github.com/pnam-it309/AeroStride/compare/v1.7.2...v1.8.0) (2026-05-08)
+
+
+### Features
+
+* **discount:** Hợp nhất tính năng sửa lỗi Phiếu Giảm Giá và Đợt Giảm Giá ([a66a9fb](https://github.com/pnam-it309/AeroStride/commit/a66a9fb288f05d5f62d5ca58a293c3d5106e7bdf))
+* **hoadon:** Tối ưu hóa giao diện chi tiết hóa đơn và hoàn thiện logic in ấn ([74d24f3](https://github.com/pnam-it309/AeroStride/commit/74d24f30e20dc881ca1c9eeafc46f63c181c5fc5))
+
 # [1.8.0](https://github.com/pnam-it309/AeroStride/compare/v1.7.2...v1.8.0) (2026-05-07)
 
 
