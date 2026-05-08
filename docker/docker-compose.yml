@@ -89,6 +89,10 @@ services:
       target: ${DOCKER_FE_TARGET}
       args:
         - VITE_API_URL=${VITE_API_URL}
+        - VITE_WS_URL=${VITE_WS_URL}
+        - VITE_APP_NAME=${VITE_APP_NAME}
+        - VITE_APP_VERSION=${VITE_APP_VERSION}
+        - VITE_APP_ENV=${VITE_APP_ENV}
         - FE_DEV_PORT=${FE_DEV_PORT}
         - NGINX_PORT=${NGINX_PORT}
     container_name: aerostride-fe
