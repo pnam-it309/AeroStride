@@ -160,8 +160,9 @@ const getVoucherTimelineStatus = (item) => {
             color: 'info',
             switchOn: false,
             switchDisabled: true,
-            chipClass: 'chip-upcoming',
-            isEnded: false
+            chipClass: 'status-chip-upcoming',
+            isEnded: false,
+            switchTooltip: 'Không thể đổi trạng thái lúc này (Chưa bắt đầu)'
         };
     }
     
@@ -172,8 +173,9 @@ const getVoucherTimelineStatus = (item) => {
             color: 'error',
             switchOn: false,
             switchDisabled: true,
-            chipClass: 'chip-expired',
-            isEnded: true
+            chipClass: 'status-chip-expired',
+            isEnded: true,
+            switchTooltip: 'Không thể đổi trạng thái lúc này (Đã kết thúc)'
         };
     }
 
@@ -184,8 +186,9 @@ const getVoucherTimelineStatus = (item) => {
             color: 'error',
             switchOn: false,
             switchDisabled: true,
-            chipClass: 'chip-expired',
-            isEnded: true
+            chipClass: 'status-chip-expired',
+            isEnded: true,
+            switchTooltip: 'Không thể đổi trạng thái lúc này (Đã kết thúc)'
         };
     }
 
@@ -194,8 +197,9 @@ const getVoucherTimelineStatus = (item) => {
         color: 'success',
         switchOn: true,
         switchDisabled: false,
-        chipClass: 'chip-active',
-        isEnded: false
+        chipClass: 'status-chip-active',
+        isEnded: false,
+        switchTooltip: 'Chuyển đổi trạng thái'
     };
 };
 
@@ -332,7 +336,7 @@ onMounted(() => loadVouchers());
                             variant="flat"
                             :class="[
                                 'status-chip',
-                                getHinhThucLabel(getHinhThucValue(item)) === 'Cá nhân' ? 'chip-private' : 'chip-public'
+                                getHinhThucLabel(getHinhThucValue(item)) === 'Cá nhân' ? 'status-chip-private' : 'status-chip-public'
                             ]"
                         >
                             {{ getHinhThucLabel(getHinhThucValue(item)) }}
@@ -377,7 +381,6 @@ onMounted(() => loadVouchers());
                     <td class="data-cell text-center">
                         <v-chip
                             :class="['status-chip', getVoucherTimelineStatus(item).chipClass]"
-                            :color="getVoucherTimelineStatus(item).color"
                             variant="flat"
                             size="small"
                         >
@@ -425,7 +428,7 @@ onMounted(() => loadVouchers());
                                     @click.prevent.stop="!getVoucherTimelineStatus(item).switchDisabled && confirmToggleStatus(item)"
                                 />
                                 <v-tooltip activator="parent" location="top">
-                                    {{ getVoucherTimelineStatus(item).switchDisabled ? 'Không thể đổi trạng thái lúc này' : 'Chuyển đổi trạng thái' }}
+                                    {{ getVoucherTimelineStatus(item).switchTooltip }}
                                 </v-tooltip>
                             </div>
                         </div>
@@ -473,30 +476,8 @@ onMounted(() => loadVouchers());
     font-size: 13px !important;
 }
 
-:deep(.chip-private) {
-    background-color: #fffbeb !important;
-    color: #92400e !important;
-}
 
-:deep(.chip-public) {
-    background-color: #dbeafe !important;
-    color: #1e40af !important;
-}
 
-:deep(.chip-upcoming) {
-    background-color: #f0fdfa !important;
-    color: #0f766e !important;
-}
-
-:deep(.chip-active) {
-    background-color: #f0f1ff !important;
-    color: #1e257c !important;
-}
-
-:deep(.chip-expired) {
-    background-color: #fef2f2 !important;
-    color: #991b1b !important;
-}
 
 .opacity-50 {
     opacity: 0.5 !important;

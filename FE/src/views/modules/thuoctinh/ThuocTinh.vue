@@ -14,6 +14,7 @@ import {
     dichVuMucDichChay
 } from '@/services/product/dichVuThuocTinh';
 import { useNotifications } from '@/services/notificationService';
+import { isActiveStatus } from '@/utils/statusUtils';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 
 // REUSABLE COMPONENTS
@@ -182,12 +183,7 @@ const pickFirst = (item, keys, fallback = '--') => {
 const getItemCode = (item) => String(pickFirst(item, currentMeta.value.codeKeys));
 const getItemName = (item) => String(pickFirst(item, currentMeta.value.nameKeys));
 
-const isActiveStatus = (status) => {
-    if (status === null || status === undefined) return false;
-    if (typeof status === 'number') return status === 0;
-    const normalized = String(status).toUpperCase();
-    return normalized === 'DANG_HOAT_DONG' || normalized === 'ACTIVE' || normalized === 'HOAT_DONG' || normalized === '0';
-};
+
 
 const loadItems = async () => {
     loading.value = true;
@@ -423,12 +419,6 @@ watch(selectedTab, (n) => {
 </template>
 
 <style scoped>
-.font-body {
-    font-family: 'Inter', sans-serif;
-}
-
-:deep(.data-cell), :deep(.data-cell *) {
-    font-size: 14px !important;
-}
+/* .font-body is now defined globally in _admin-common.scss */
 </style>
 

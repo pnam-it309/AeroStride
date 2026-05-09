@@ -72,7 +72,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                     <td class="data-cell">
                         <v-chip
                             variant="flat"
-                            size="x-small"
+                            size="small"
                             :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']"
                         >
                             {{ getStatusLabel(item.trangThai) }}

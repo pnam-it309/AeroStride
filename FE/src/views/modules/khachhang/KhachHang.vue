@@ -866,41 +866,7 @@ watch(
     z-index: 6;
 }
 
-:deep(.status-chip-active) {
-    background-color: #e8f5e9 !important;
-    color: #70c274 !important;
-    font-weight: 500 !important;
-}
-:deep(.status-chip-active .v-chip__content) {
-    color: #206924 !important;
-}
-
-:deep(.gender-chip-male) {
-    background-color: #f0f1ff !important;
-    color: #1e257c !important;
-    font-weight: 400 !important;
-}
-:deep(.gender-chip-male .v-chip__content) {
-    color: #1e257c !important;
-}
-
-:deep(.status-chip-inactive) {
-    background-color: #efebe9 !important;
-    color: #5d4037 !important;
-    font-weight: 400 !important;
-}
-:deep(.status-chip-inactive .v-chip__content) {
-    color: #5d4037 !important;
-}
-
-:deep(.gender-chip-female) {
-    background-color: #fef2f2 !important;
-    color: #991b1b !important;
-    font-weight: 400 !important;
-}
-:deep(.gender-chip-female .v-chip__content) {
-    color: #991b1b !important;
-}
+/* Status chips are now managed globally in _admin-common.scss — NO local overrides */
 
 :deep(.status-chip),
 :deep(.gender-chip) {
@@ -911,20 +877,13 @@ watch(
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-weight: 400 !important;
 }
 
 :deep(.gender-chip) {
     min-width: 80px !important;
 }
 
-.addr-dialog-card :deep(.v-card-title),
-.addr-dialog-card :deep(.v-card-text),
-.addr-dialog-card :deep(.field-label),
-.addr-dialog-card :deep(.text-caption),
-.addr-dialog-card {
-    font-family: 'Inter', sans-serif !important;
-}
+
 
 .addr-dialog-card :deep(.v-card-title),
 .addr-dialog-card :deep(.v-card-text),
@@ -935,7 +894,6 @@ watch(
 .addr-dialog-card :deep(.v-list-item-title),
 .addr-dialog-card :deep(span),
 .addr-dialog-card :deep(div) {
-    font-family: 'Inter', sans-serif !important;
     font-size: 14px !important;
 }
 
@@ -994,7 +952,6 @@ watch(
 .addr-dialog-card .v-btn__content,
 .addr-dialog-card .v-field__input {
     font-size: 13px !important;
-    font-family: 'Inter', sans-serif !important;
     text-transform: none !important;
     font-weight: 500 !important;
     vertical-align: middle !important;

@@ -192,11 +192,24 @@ const orderDiscountAmount = computed(() => {
 const orderTotalAmount = computed(() => order.value.tongTienSauGiam || order.value.tongTien || 0);
 
 const initialHistoryLog = computed(() => ({
-    trangThaiMoi: order.value.trangThai,
-    ghiChu: order.value.ghiChu || 'Đơn hàng được ghi nhận vào hệ thống',
+    trangThaiMoi: 'CHUA_XAC_NHAN', // Trạng thái mặc định khi tạo đơn
+    ghiChu: order.value.ghiChu || 'Khởi tạo đơn hàng',
     nguoiThucHien: order.value.nguoiTao || 'SYSTEM',
     ngayTao: order.value.ngayTao
 }));
+
+const sortedHistoryLogs = computed(() => {
+    const logs = Array.isArray(order.value?.listsLichSuHoaDon) ? [...order.value.listsLichSuHoaDon] : [];
+    
+    // Sort by date descending (Newest first)
+    logs.sort((a, b) => new Date(b.ngayTao || 0) - new Date(a.ngayTao || 0));
+    
+    // If no logs yet, or if the first log (oldest) isn't the creation, 
+    // we don't strictly need to prepend here because we have the fallback in template.
+    // However, it's better to always have the creation log at the end of the list.
+    
+    return logs;
+});
 
 // --- Navigation ---
 const openEditCustomer = () => {
@@ -794,7 +807,8 @@ onMounted(() => {
 
                         <div class="history-scroll-container pa-6">
                             <v-timeline side="end" density="compact" line-color="slate-200" class="custom-history-timeline">
-                                <v-timeline-item v-for="(log, idx) in order.listsLichSuHoaDon" :key="idx"
+                                <!-- Actual logs from DB -->
+                                <v-timeline-item v-for="(log, idx) in sortedHistoryLogs" :key="log.id || idx"
                                     :dot-color="getStatusInfo(log.trangThaiMoi).color" size="small">
                                     <div class="d-flex align-center w-100 py-1">
                                         <!-- Column 1: Status -->
@@ -804,7 +818,7 @@ onMounted(() => {
                                                 {{ getStatusInfo(log.trangThaiMoi).text }}
                                             </v-chip>
                                         </div>
-
+                                        
                                         <!-- Column 2: Description -->
                                         <div class="flex-grow-1 text-center">
                                             <div class="text-body-2 text-slate-700">
@@ -827,8 +841,9 @@ onMounted(() => {
                                     </div>
                                 </v-timeline-item>
 
-                                <!-- Fallback for initialization -->
-                                <v-timeline-item v-if="!order.listsLichSuHoaDon || order.listsLichSuHoaDon.length === 0"
+                                <!-- Always show creation as the final step (at bottom) -->
+                                <!-- Always show creation as the final step (at bottom) if not already in logs -->
+                                <v-timeline-item v-if="!sortedHistoryLogs.some(l => l.trangThaiMoi === 'CHUA_XAC_NHAN' || l.trangThaiMoi === 0)"
                                     :dot-color="getStatusInfo(initialHistoryLog.trangThaiMoi).color" size="small">
                                     <div class="d-flex align-center w-100 py-1">
                                         <!-- Column 1: Status -->

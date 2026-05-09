@@ -43,7 +43,7 @@ export const getOrderStatusMeta = (value) => {
                 key,
                 ordinal: 0,
                 text: 'Chưa xác nhận',
-                color: '#A52A2A',
+                color: '#9c2a1a',
                 chipClass: 'status-chip-unconfirmed',
                 icon: 'mdi-help-circle-outline'
             };
@@ -52,7 +52,7 @@ export const getOrderStatusMeta = (value) => {
                 key,
                 ordinal: 1,
                 text: 'Chờ xác nhận',
-                color: 'orange-darken-3',
+                color: '#c2410c',
                 chipClass: 'status-chip-pending',
                 icon: 'mdi-progress-clock'
             };
@@ -61,7 +61,7 @@ export const getOrderStatusMeta = (value) => {
                 key,
                 ordinal: 2,
                 text: 'Đã xác nhận',
-                color: 'light-blue-darken-3',
+                color: '#1e257c',
                 chipClass: 'status-chip-confirmed',
                 icon: 'mdi-check-circle-outline'
             };
@@ -70,7 +70,7 @@ export const getOrderStatusMeta = (value) => {
                 key,
                 ordinal: 3,
                 text: 'Đang giao',
-                color: 'cyan-darken-3',
+                color: '#1e40af',
                 chipClass: 'status-chip-delivering',
                 icon: 'mdi-truck-fast-outline'
             };
@@ -79,7 +79,7 @@ export const getOrderStatusMeta = (value) => {
                 key,
                 ordinal: 4,
                 text: 'Đã hoàn thành',
-                color: 'green-darken-3',
+                color: '#166534',
                 chipClass: 'status-chip-completed',
                 icon: 'mdi-checkbox-marked-circle-outline'
             };
@@ -88,7 +88,7 @@ export const getOrderStatusMeta = (value) => {
                 key,
                 ordinal: 5,
                 text: 'Hủy',
-                color: 'error',
+                color: '#991b1b',
                 chipClass: 'status-chip-cancelled',
                 icon: 'mdi-close-circle-outline'
             };
@@ -97,7 +97,7 @@ export const getOrderStatusMeta = (value) => {
                 key,
                 ordinal: 6,
                 text: 'Hoàn đơn',
-                color: 'deep-purple',
+                color: '#5b21b6',
                 chipClass: 'status-chip-refunded',
                 icon: 'mdi-cash-refund'
             };

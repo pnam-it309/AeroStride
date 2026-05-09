@@ -55,7 +55,7 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
 
                             <div class="form-group mb-5">
                                 <div class="mb-2 px-1">
-                                    <span class="text-slate-700" style="font-size: 13px !important;">Tên {{ title }} *</span>
+                                    <span class="text-slate-700" style="font-size: 13px !important;">Tên {{ title }}</span>
                                 </div>
                                 <v-text-field
                                     :model-value="form.ten"

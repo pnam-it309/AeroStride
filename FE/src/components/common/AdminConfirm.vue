@@ -38,12 +38,12 @@ const handleCancel = () => {
     <v-card class="premium-confirm-card">
       <v-card-text class="pa-8 pb-4">
         <div class="d-flex align-start">
-          <div class="icon-box-wrapper mr-5" style="background-color: #f8f9ff">
-            <div class="icon-inner" style="background-color: #f0f1ff">
-              <AlertTriangleIcon v-if="color === 'warning'" size="28" style="color: #1e257c" />
-              <AlertTriangleIcon v-else-if="color === 'error'" size="28" class="text-error" />
-              <CheckIcon v-else-if="color === 'success'" size="28" class="text-success" />
-              <InfoCircleIcon v-else size="28" style="color: #1e257c" />
+          <div class="icon-box-wrapper mr-5" :class="`confirm-bg-outer-${color || 'primary'}`">
+            <div class="icon-inner" :class="`confirm-bg-inner-${color || 'primary'}`">
+              <AlertTriangleIcon v-if="color === 'warning'" size="28" class="confirm-icon-warning" />
+              <AlertTriangleIcon v-else-if="color === 'error'" size="28" class="confirm-icon-error" />
+              <CheckIcon v-else-if="color === 'success'" size="28" class="confirm-icon-success" />
+              <InfoCircleIcon v-else size="28" class="confirm-icon-primary" />
             </div>
           </div>
           <div class="flex-grow-1 pt-1">
@@ -107,17 +107,37 @@ const handleCancel = () => {
   height: 64px;
   border-radius: 16px;
   display: flex;
-  align-center: center;
+  align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
+
+/* Colors for Warning */
+.confirm-bg-outer-warning { background-color: #fffaf5; }
+.confirm-bg-inner-warning { background-color: #fff7ed; }
+.confirm-icon-warning { color: #c2410c; }
+
+/* Colors for Error */
+.confirm-bg-outer-error { background-color: #fff5f5; }
+.confirm-bg-inner-error { background-color: #fef2f2; }
+.confirm-icon-error { color: #991b1b; }
+
+/* Colors for Success */
+.confirm-bg-outer-success { background-color: #f5fcf7; }
+.confirm-bg-inner-success { background-color: #f0fdf4; }
+.confirm-icon-success { color: #166534; }
+
+/* Colors for Primary/Info */
+.confirm-bg-outer-primary, .confirm-bg-outer-info { background-color: #f8f9ff; }
+.confirm-bg-inner-primary, .confirm-bg-inner-info { background-color: #f0f1ff; }
+.confirm-icon-primary, .confirm-icon-info { color: #1e257c; }
 
 .icon-inner {
   width: 46px;
   height: 46px;
   border-radius: 12px;
   display: flex;
-  align-center: center;
+  align-items: center;
   justify-content: center;
 }
 

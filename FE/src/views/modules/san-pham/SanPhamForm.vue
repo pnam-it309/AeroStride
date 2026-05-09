@@ -95,9 +95,9 @@ const getDisplayItems = (originalItems, query) => {
 
     if (existsExact) return filtered;
 
-    // Chèn mục mới vào đầu danh sách đã lọc
+    // Chèn mục mới vào đầu danh sách đã lọc với ID đặc biệt để nhận biết click trực tiếp
     return [
-        { id: trimmedQuery, ten: trimmedQuery, isNew: true },
+        { id: `__new__${trimmedQuery}`, ten: trimmedQuery, isNew: true },
         ...filtered
     ];
 };
@@ -295,7 +295,7 @@ const findAttributeOption = (config, value) => {
 
     const normalizedLower = normalizeSearchText(normalizedValue);
     return options.find(item => (
-        item.id === normalizedValue
+        (item.id === normalizedValue && !String(item.id).startsWith('__new__'))
         || normalizeSearchText(item.ten) === normalizedLower
     )) || null;
 };
@@ -310,7 +310,7 @@ const upsertAttributeOption = (config, option) => {
         return;
     }
 
-    config.options.value = [...options, option];
+    config.options.value = [option, ...options];
 };
 
 const refreshAttributeOptions = async (config) => {
@@ -328,11 +328,20 @@ const refreshAttributeOptions = async (config) => {
 };
 
 const resolveAttributeField = async (config, { notifyOnCreate = false } = {}) => {
-    const currentValue = product.value[config.field];
+    let currentValue = product.value[config.field];
+    
+    // Nếu là ID tạm thời từ việc click "Thêm nhanh", bóc tách lấy text thực tế
+    let isExplicitQuickAdd = false;
+    if (typeof currentValue === 'string' && currentValue.startsWith('__new__')) {
+        currentValue = currentValue.replace('__new__', '');
+        isExplicitQuickAdd = true;
+    }
+
     const existingOption = findAttributeOption(config, currentValue);
 
     if (existingOption) {
         product.value[config.field] = existingOption.id;
+        searchQueries[config.field] = existingOption.ten;
         return existingOption.id;
     }
 
@@ -390,6 +399,10 @@ const resolveAttributeField = async (config, { notifyOnCreate = false } = {}) =>
 
     const resolvedId = await requestPromise;
     product.value[config.field] = resolvedId;
+    if (createdOption) {
+        await nextTick();
+        searchQueries[config.field] = createdOption.ten;
+    }
 
     if (createdOption && notifyOnCreate) {
         addNotification({
@@ -612,21 +625,23 @@ const updateVariantPriceBounds = () => {
     }
 };
 
-const handleAttributeFieldBlur = async (field) => {
-    const config = attributeConfig.find(item => item.field === field);
-    if (!config) {
-        return;
-    }
+const handleAttributeChange = async (field, value) => {
+    // Chỉ tự động tạo nếu người dùng chọn mục "Thêm nhanh" (có prefix __new__)
+    // Hoặc nếu họ nhấn Enter (được xử lý ở onKeyUpEnter)
+    if (typeof value === 'string' && value.startsWith('__new__')) {
+        const config = attributeConfig.find(item => item.field === field);
+        if (!config) return;
 
-    try {
-        await resolveAttributeField(config, { notifyOnCreate: true });
-    } catch (error) {
-        console.error(error);
-        addNotification({
-            title: 'Lỗi',
-            subtitle: getBackendErrorMessage(error, `Không thể tự động thêm ${config.label}`),
-            color: 'error'
-        });
+        try {
+            await resolveAttributeField(config, { notifyOnCreate: true });
+        } catch (error) {
+            console.error(error);
+            addNotification({
+                title: 'Lỗi',
+                subtitle: getBackendErrorMessage(error, `Không thể thêm nhanh ${config.label}`),
+                color: 'error'
+            });
+        }
     }
 };
 
@@ -1498,20 +1513,19 @@ const handleSave = async () => {
                                         class="custom-input mono-font bg-slate-50" hide-details></v-text-field>
                                 </v-col>
                                 <v-col cols="12">
-                                    <div class="field-label">Sản phẩm <span class="text-red">*</span></div>
+                                    <div class="field-label">Sản phẩm</div>
                                     <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Nike Mercurial Vapor 15"
                                         :rules="[rules.required]" variant="outlined" density="comfortable"
                                         hide-details="auto"></v-text-field>
                                 </v-col>
                                 <v-col cols="12" md="6">
-                                    <div class="field-label">Thương hiệu <span class="text-red">*</span></div>
+                                    <div class="field-label">Thương hiệu</div>
                                     <v-combobox v-model="product.idThuongHieu" v-model:search="searchQueries.idThuongHieu" v-bind="comboboxProps"
                                         :custom-filter="() => true" :items="displayBrands" item-title="ten"
                                         item-value="id" :rules="[rules.required]" placeholder="Chọn thương hiệu..."
                                         variant="outlined" density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"
-                                        @update:model-value="() => handleAttributeFieldBlur('idThuongHieu')"
-                                        @blur="() => handleAttributeFieldBlur('idThuongHieu')">
+                                        @update:model-value="(val) => handleAttributeChange('idThuongHieu', val)">
                                         <template #item="{ props, item }">
                                             <v-list-item v-bind="props">
                                                 <template #append v-if="item.raw.isNew">
@@ -1522,13 +1536,13 @@ const handleSave = async () => {
                                     </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="6">
-                                    <div class="field-label">Xuất xứ <span class="text-red">*</span></div>
+                                    <div class="field-label">Xuất xứ</div>
                                     <v-combobox v-model="product.idXuatXu" v-model:search="searchQueries.idXuatXu" v-bind="comboboxProps"
                                         :custom-filter="() => true" :items="displayOrigins" item-title="ten" item-value="id"
                                         :rules="[rules.required]" placeholder="Chọn xuất xứ..." variant="outlined"
                                         density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"
-                                        @blur="() => handleAttributeFieldBlur('idXuatXu')">
+                                        @update:model-value="(val) => handleAttributeChange('idXuatXu', val)">
                                         <template #item="{ props, item }">
                                             <v-list-item v-bind="props">
                                                 <template #append v-if="item.raw.isNew">
@@ -1539,13 +1553,13 @@ const handleSave = async () => {
                                     </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="6">
-                                    <div class="field-label">Danh mục <span class="text-red">*</span></div>
+                                    <div class="field-label">Danh mục</div>
                                     <v-combobox v-model="product.idDanhMuc" v-model:search="searchQueries.idDanhMuc" v-bind="comboboxProps"
                                         :custom-filter="() => true" :items="displayCategories" item-title="ten"
                                         item-value="id" :rules="[rules.required]" placeholder="Chọn danh mục..."
                                         variant="outlined" density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc')"
-                                        @blur="() => handleAttributeFieldBlur('idDanhMuc')">
+                                        @update:model-value="(val) => handleAttributeChange('idDanhMuc', val)">
                                         <template #item="{ props, item }">
                                             <v-list-item v-bind="props">
                                                 <template #append v-if="item.raw.isNew">
@@ -1556,13 +1570,13 @@ const handleSave = async () => {
                                     </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="6">
-                                    <div class="field-label">Chất liệu <span class="text-red">*</span></div>
+                                    <div class="field-label">Chất liệu</div>
                                     <v-combobox v-model="product.idChatLieu" v-model:search="searchQueries.idChatLieu" v-bind="comboboxProps"
                                         :custom-filter="() => true" :items="displayMaterials" item-title="ten"
                                         item-value="id" :rules="[rules.required]" placeholder="Chọn chất liệu..."
                                         variant="outlined" density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"
-                                        @blur="() => handleAttributeFieldBlur('idChatLieu')">
+                                        @update:model-value="(val) => handleAttributeChange('idChatLieu', val)">
                                         <template #item="{ props, item }">
                                             <v-list-item v-bind="props">
                                                 <template #append v-if="item.raw.isNew">
@@ -1573,13 +1587,13 @@ const handleSave = async () => {
                                     </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="6">
-                                    <div class="field-label">Loại đế <span class="text-red">*</span></div>
+                                    <div class="field-label">Loại đế</div>
                                     <v-combobox v-model="product.idDeGiay" v-model:search="searchQueries.idDeGiay" v-bind="comboboxProps"
                                         :custom-filter="() => true" :items="displaySoles" item-title="ten" item-value="id"
                                         :rules="[rules.required]" placeholder="Chọn loại đế..." variant="outlined"
                                         density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"
-                                        @blur="() => handleAttributeFieldBlur('idDeGiay')">
+                                        @update:model-value="(val) => handleAttributeChange('idDeGiay', val)">
                                         <template #item="{ props, item }">
                                             <v-list-item v-bind="props">
                                                 <template #append v-if="item.raw.isNew">
@@ -1590,13 +1604,13 @@ const handleSave = async () => {
                                     </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="6">
-                                    <div class="field-label">Loại cổ <span class="text-red">*</span></div>
+                                    <div class="field-label">Loại cổ</div>
                                     <v-combobox v-model="product.idCoGiay" v-model:search="searchQueries.idCoGiay" v-bind="comboboxProps"
                                         :custom-filter="() => true" :items="displayCollars" item-title="ten" item-value="id"
                                         :rules="[rules.required]" placeholder="Chọn loại cổ..." variant="outlined"
                                         density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"
-                                        @blur="() => handleAttributeFieldBlur('idCoGiay')">
+                                        @update:model-value="(val) => handleAttributeChange('idCoGiay', val)">
                                         <template #item="{ props, item }">
                                             <v-list-item v-bind="props">
                                                 <template #append v-if="item.raw.isNew">
@@ -1607,13 +1621,13 @@ const handleSave = async () => {
                                     </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="6">
-                                    <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
+                                    <div class="field-label">Mục đích sử dụng</div>
                                     <v-combobox v-model="product.idMucDichChay" v-model:search="searchQueries.idMucDichChay" v-bind="comboboxProps"
                                         :custom-filter="() => true" :items="displayPurposes" item-title="ten"
                                         item-value="id" :rules="[rules.required]" placeholder="Chọn mục đích..."
                                         variant="outlined" density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"
-                                        @blur="() => handleAttributeFieldBlur('idMucDichChay')">
+                                        @update:model-value="(val) => handleAttributeChange('idMucDichChay', val)">
                                         <template #item="{ props, item }">
                                             <v-list-item v-bind="props">
                                                 <template #append v-if="item.raw.isNew">
@@ -1624,7 +1638,7 @@ const handleSave = async () => {
                                     </v-combobox>
                                 </v-col>
                                 <v-col cols="12">
-                                    <div class="field-label">Đối tượng sử dụng <span class="text-red">*</span></div>
+                                    <div class="field-label">Đối tượng sử dụng</div>
                                     <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary"
                                         variant="outlined" density="comfortable" class="w-100 rounded-lg custom-toggle">
                                         <v-btn value="NAM" class="flex-grow-1 font-weight-bold">Nam</v-btn>
@@ -1658,7 +1672,7 @@ const handleSave = async () => {
                             <v-row>
                                 <v-col cols="12">
                                     <div class="d-flex align-center justify-space-between mb-2">
-                                        <div class="field-label mb-0">Màu sắc <span class="text-red">*</span></div>
+                                        <div class="field-label mb-0">Màu sắc</div>
                                         <v-chip size="small" variant="tonal" color="primary" class="font-weight-bold">
                                             {{ selectedColors.length }} màu
                                         </v-chip>
@@ -1670,7 +1684,7 @@ const handleSave = async () => {
                                 </v-col>
                                 <v-col cols="12">
                                     <div class="d-flex align-center justify-space-between mb-2">
-                                        <div class="field-label mb-0">Kích thước <span class="text-red">*</span></div>
+                                        <div class="field-label mb-0">Kích thước</div>
                                         <v-chip size="small" variant="tonal" color="info" class="font-weight-bold">
                                             {{ selectedSizes.length }} size
                                         </v-chip>
@@ -1733,7 +1747,7 @@ const handleSave = async () => {
                                         hide-details></v-text-field>
                                 </v-col>
                                 <v-col cols="12" md="8">
-                                    <div class="field-label">Tên sản phẩm <span class="text-red">*</span></div>
+                                    <div class="field-label">Tên sản phẩm</div>
                                     <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Giày Nike Air..."
                                         :rules="[rules.required]" variant="outlined" density="comfortable"
                                         hide-details="auto"></v-text-field>
@@ -1759,49 +1773,99 @@ const handleSave = async () => {
 
                             <v-row>
                                 <v-col cols="12" md="6">
-                                    <div class="field-label">Xuất xứ <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idXuatXu" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="origins" item-title="ten" item-value="id"
-                                        :rules="[rules.required]" placeholder="Chọn xuất xứ..." variant="outlined"
-                                        density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"
-                                        @blur="() => handleAttributeFieldBlur('idXuatXu')"></v-combobox>
+                                    <div class="field-label">Xuất xứ</div>
+                                    <v-combobox v-model="product.idXuatXu" v-model:search="searchQueries.idXuatXu"
+                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displayOrigins"
+                                        item-title="ten" item-value="id" :rules="[rules.required]"
+                                        placeholder="Chọn xuất xứ..." variant="outlined" density="comfortable"
+                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"
+                                        @update:model-value="(val) => handleAttributeChange('idXuatXu', val)">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat"
+                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
+                                                        nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="6">
-                                    <div class="field-label">Chất liệu <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idChatLieu" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="materials" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Chọn chất liệu..."
-                                        variant="outlined" density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"
-                                        @blur="() => handleAttributeFieldBlur('idChatLieu')"></v-combobox>
+                                    <div class="field-label">Chất liệu</div>
+                                    <v-combobox v-model="product.idChatLieu" v-model:search="searchQueries.idChatLieu"
+                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displayMaterials"
+                                        item-title="ten" item-value="id" :rules="[rules.required]"
+                                        placeholder="Chọn chất liệu..." variant="outlined" density="comfortable"
+                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"
+                                        @update:model-value="(val) => handleAttributeChange('idChatLieu', val)">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat"
+                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
+                                                        nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="4">
-                                    <div class="field-label">Loại đế <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idDeGiay" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="soles" item-title="ten" item-value="id"
-                                        :rules="[rules.required]" variant="outlined" density="comfortable"
-                                        :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"
-                                        @blur="() => handleAttributeFieldBlur('idDeGiay')"></v-combobox>
+                                    <div class="field-label">Loại đế</div>
+                                    <v-combobox v-model="product.idDeGiay" v-model:search="searchQueries.idDeGiay"
+                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displaySoles"
+                                        item-title="ten" item-value="id" :rules="[rules.required]"
+                                        placeholder="Chọn loại đế..." variant="outlined" density="comfortable"
+                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"
+                                        @update:model-value="(val) => handleAttributeChange('idDeGiay', val)">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat"
+                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
+                                                        nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="4">
-                                    <div class="field-label">Loại cổ <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idCoGiay" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="collars" item-title="ten" item-value="id"
-                                        :rules="[rules.required]" variant="outlined" density="comfortable"
-                                        :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"
-                                        @blur="() => handleAttributeFieldBlur('idCoGiay')"></v-combobox>
+                                    <div class="field-label">Loại cổ</div>
+                                    <v-combobox v-model="product.idCoGiay" v-model:search="searchQueries.idCoGiay"
+                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displayCollars"
+                                        item-title="ten" item-value="id" :rules="[rules.required]"
+                                        placeholder="Chọn loại cổ..." variant="outlined" density="comfortable"
+                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"
+                                        @update:model-value="(val) => handleAttributeChange('idCoGiay', val)">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat"
+                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
+                                                        nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="4">
-                                    <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idMucDichChay" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="purposes" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" variant="outlined" density="comfortable"
-                                        :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"
-                                        @blur="() => handleAttributeFieldBlur('idMucDichChay')"></v-combobox>
+                                    <div class="field-label">Mục đích sử dụng</div>
+                                    <v-combobox v-model="product.idMucDichChay" v-model:search="searchQueries.idMucDichChay"
+                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displayPurposes"
+                                        item-title="ten" item-value="id" :rules="[rules.required]"
+                                        placeholder="Chọn mục đích..." variant="outlined" density="comfortable"
+                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"
+                                        @update:model-value="(val) => handleAttributeChange('idMucDichChay', val)">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat"
+                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
+                                                        nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                             </v-row>
                         </v-card-text>
@@ -1820,25 +1884,45 @@ const handleSave = async () => {
 
                             <v-row>
                                 <v-col cols="12">
-                                    <div class="field-label">Thương hiệu <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idThuongHieu" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="brands" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Tìm thương hiệu..."
-                                        variant="outlined" density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"
-                                        @blur="() => handleAttributeFieldBlur('idThuongHieu')"></v-combobox>
+                                    <div class="field-label">Thương hiệu</div>
+                                    <v-combobox v-model="product.idThuongHieu" v-model:search="searchQueries.idThuongHieu"
+                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displayBrands"
+                                        item-title="ten" item-value="id" :rules="[rules.required]"
+                                        placeholder="Tìm thương hiệu..." variant="outlined" density="comfortable"
+                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"
+                                        @update:model-value="(val) => handleAttributeChange('idThuongHieu', val)">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat"
+                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
+                                                        nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                                 <v-col cols="12">
-                                    <div class="field-label">Danh mục <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idDanhMuc" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="categories" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Chọn danh mục..."
-                                        variant="outlined" density="comfortable" :return-object="false"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc')"
-                                        @blur="() => handleAttributeFieldBlur('idDanhMuc')"></v-combobox>
+                                    <div class="field-label">Danh mục</div>
+                                    <v-combobox v-model="product.idDanhMuc" v-model:search="searchQueries.idDanhMuc"
+                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displayCategories"
+                                        item-title="ten" item-value="id" :rules="[rules.required]"
+                                        placeholder="Chọn danh mục..." variant="outlined" density="comfortable"
+                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc')"
+                                        @update:model-value="(val) => handleAttributeChange('idDanhMuc', val)">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat"
+                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
+                                                        nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                                 <v-col cols="12">
-                                    <div class="field-label">Đối tượng sử dụng <span class="text-red">*</span></div>
+                                    <div class="field-label">Đối tượng sử dụng</div>
                                     <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary"
                                         variant="outlined" density="comfortable" class="w-100 rounded-lg custom-toggle">
                                         <v-btn value="NAM" class="flex-grow-1 font-weight-bold">Nam</v-btn>
@@ -2208,9 +2292,8 @@ const handleSave = async () => {
                                             <span class="text-primary">{{ formatCurrency(variant.giaBan) }}</span>
                                         </td>
                                         <td class="data-cell text-center">
-                                            <v-chip size="small"
-                                                :color="isVariantActiveStatus(variant.trangThai) ? 'success' : 'warning'"
-                                                variant="flat" class="status-chip font-weight-black text-white">
+                                            <v-chip size="small" variant="flat"
+                                                :class="['status-chip', isVariantActiveStatus(variant.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
                                                 {{ getStatusLabel(variant.trangThai) }}
                                             </v-chip>
                                         </td>

@@ -1044,13 +1044,11 @@ onMounted(() => {
 :deep(table),
 :deep(th),
 :deep(td) {
-    font-family: 'Inter', 'Outfit', sans-serif !important;
     font-size: 14px !important;
 }
 
 :deep(.text-subtitle-1),
 :deep(.text-h5) {
-    font-family: 'Inter', 'Outfit', sans-serif !important;
 }
 
 :deep(.text-body-2),
@@ -1065,25 +1063,7 @@ onMounted(() => {
     text-transform: none !important;
 }
 
-:deep(.status-chip-active) {
-    background-color: #e8f5e9 !important;
-    color: #70c274 !important;
-    font-weight: 500 !important;
-}
-
-:deep(.status-chip-active .v-chip__content) {
-    color: #206924 !important;
-}
-
-:deep(.status-chip-inactive) {
-    background-color: #efebe9 !important;
-    color: #c26d6d !important;
-    font-weight: 400 !important;
-}
-
-:deep(.status-chip-inactive .v-chip__content) {
-    color: #cf1616 !important;
-}
+/* Status chips are now managed globally in _admin-common.scss — NO local overrides */
 
 :deep(.v-btn) {
     opacity: 1 !important;
@@ -1140,32 +1120,11 @@ onMounted(() => {
 }
 
 .mono-font {
-    font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
 }
 
-:deep(.status-chip-inactive) {
-    background-color: #f8fafc !important;
-    color: #64748b !important;
-    font-weight: 700 !important;
-}
 
-:deep(.status-chip-inactive .v-chip__content) {
-    color: #64748b !important;
-}
 
-:deep(.status-chip) {
-    border-radius: 12px !important;
-    font-size: 13px !important;
-    padding: 0 16px !important;
-    min-height: 28px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-/* 
-   FORCE GLOBAL OVERRIDES FOR THIS PAGE 
-   Sử dụng ID cụ thể để đảm bảo độ ưu tiên cao nhất, vượt qua mọi file CSS khác
-*/
 #khach-hang-form-container,
 #khach-hang-form-container *,
 .khach-hang-dialog-card,
@@ -1180,7 +1139,6 @@ onMounted(() => {
 #khach-hang-form-container .v-btn__content,
 #khach-hang-form-container .v-field__input {
     font-size: 13px !important;
-    font-family: 'Inter', 'Outfit', sans-serif !important;
     text-transform: none !important;
     font-weight: 500 !important;
 }
@@ -1201,181 +1159,12 @@ onMounted(() => {
 
 /* Đảm bảo các mã code monospaced không bị mất font */
 #khach-hang-form-container .mono-font {
-    font-family: 'JetBrains Mono', monospace !important;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
     font-size: 13px !important;
 }
 
-/* Đồng bộ font chữ và cỡ chữ */
-:deep(.v-container),
-:deep(.v-card),
-:deep(.v-btn),
-:deep(.v-field),
-:deep(.v-list-item-title),
-:deep(span),
-:deep(div),
-:deep(table),
-:deep(th),
-:deep(td) {
-    font-family: 'Inter', 'Outfit', sans-serif !important;
-    font-size: 14px !important;
-}
 
-:deep(.text-subtitle-1),
-:deep(.text-h5) {
-    font-family: 'Inter', 'Outfit', sans-serif !important;
-}
 
-:deep(.text-body-2),
-:deep(.text-subtitle-2),
-:deep(.text-subtitle-1),
-:deep(.text-h6),
-:deep(.text-caption),
-:deep(.v-field__input),
-:deep(.v-btn__content),
-:deep(.v-list-item-title) {
-    font-size: 14px !important;
-    text-transform: none !important;
-}
-
-:deep(.status-chip-active) {
-    background-color: #e8f5e9 !important;
-    color: #70c274 !important;
-    font-weight: 500 !important;
-}
-
-:deep(.status-chip-active .v-chip__content) {
-    color: #206924 !important;
-}
-
-:deep(.status-chip-inactive) {
-    background-color: #efebe9 !important;
-    color: #5d4037 !important;
-    font-weight: 400 !important;
-}
-
-:deep(.status-chip-inactive .v-chip__content) {
-    color: #5d4037 !important;
-}
-
-:deep(.v-btn) {
-    opacity: 1 !important;
-}
-
-/* Custom Table Styles to match main data table */
-.purchase-history-table,
-.invoice-items-table {
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 8px !important;
-    overflow: hidden !important;
-}
-
-.purchase-history-table :deep(th),
-.invoice-items-table :deep(th) {
-    background-color: #f8fafc !important;
-    color: #475569 !important;
-    font-weight: 600 !important;
-    height: 44px !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    text-transform: none !important;
-    letter-spacing: normal !important;
-}
-
-.purchase-history-table :deep(td),
-.invoice-items-table :deep(td) {
-    color: #1e293b !important;
-    height: 48px !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    padding: 8px 16px !important;
-}
-
-.history-row:hover,
-.detail-row:hover {
-    background-color: #f8fafc !important;
-}
-
-.total-row {
-    background-color: #f1f5f9 !important;
-}
-
-.total-row td {
-    font-size: 14px !important;
-    color: #1e293b !important;
-}
-
-.action-btn {
-    opacity: 0.7 !important;
-    transition: opacity 0.2s !important;
-}
-
-.action-btn:hover {
-    opacity: 1 !important;
-}
-
-.mono-font {
-    font-family: 'JetBrains Mono', 'Courier New', monospace !important;
-}
-
-:deep(.status-chip-inactive) {
-    background-color: #f8fafc !important;
-    color: #64748b !important;
-    font-weight: 700 !important;
-}
-
-:deep(.status-chip-inactive .v-chip__content) {
-    color: #64748b !important;
-}
-
-:deep(.status-chip) {
-    border-radius: 12px !important;
-    font-size: 13px !important;
-    padding: 0 16px !important;
-    min-height: 28px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-/* 
-   FORCE GLOBAL OVERRIDES FOR THIS PAGE 
-   Sử dụng ID cụ thể để đảm bảo độ ưu tiên cao nhất, vượt qua mọi file CSS khác
-*/
-#khach-hang-form-container,
-#khach-hang-form-container *,
-.khach-hang-dialog-card,
-.khach-hang-dialog-card *,
-#khach-hang-form-container .text-subtitle-1,
-#khach-hang-form-container .text-subtitle-2,
-#khach-hang-form-container .text-h6,
-#khach-hang-form-container .text-h5,
-#khach-hang-form-container .v-card-title,
-#khach-hang-form-container .v-table th,
-#khach-hang-form-container .v-table td,
-#khach-hang-form-container .v-btn__content,
-#khach-hang-form-container .v-field__input {
-    font-size: 13px !important;
-    font-family: 'Inter', 'Outfit', sans-serif !important;
-    text-transform: none !important;
-    font-weight: 500 !important;
-}
-
-/* Các tiêu đề (header) */
-#khach-hang-form-container th,
-#khach-hang-form-container .header-cell,
-#khach-hang-form-container .v-card-title,
-#khach-hang-form-container .font-weight-black,
-#khach-hang-form-container .font-weight-bold,
-.khach-hang-dialog-card th,
-.khach-hang-dialog-card .header-cell,
-.khach-hang-dialog-card .v-card-title,
-.khach-hang-dialog-card .font-weight-black,
-.khach-hang-dialog-card .font-weight-bold {
-    font-weight: 700 !important;
-}
-
-/* Đảm bảo các mã code monospaced không bị mất font */
-#khach-hang-form-container .mono-font {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 13px !important;
-}
 /* CSS Global để ẩn icon mặc định của trình duyệt */
 :deep(input[type="date"]::-webkit-calendar-picker-indicator),
 :deep(input[type="date"]::-webkit-inner-spin-button) {

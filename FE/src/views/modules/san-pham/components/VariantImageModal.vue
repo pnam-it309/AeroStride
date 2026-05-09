@@ -198,7 +198,7 @@ const handleSubmit = () => {
 </template>
 
 <style scoped>
-.font-display { font-family: 'Outfit', sans-serif; }
+/* .font-display is now defined globally in _admin-common.scss */
 .filter-label {
     font-size: 13px;
     font-weight: 700;

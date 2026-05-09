@@ -68,12 +68,12 @@ const confirmToggleStatus = (item) => {
             try {
                 const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
                 console.log(`[Discount] Changing status of ${item.id} to ${newS}`);
-                
+
                 await dichVuDotGiamGia.thayDoiTrangThaiDotGiamGia(item.id, newS);
-                
+
                 // Cập nhật trạng thái local
                 item.trangThai = newS;
-                
+
                 addNotification({
                     title: 'Thành công',
                     subtitle: `Đã chuyển sang: ${getStatusLabel(newS)}`,
@@ -105,11 +105,12 @@ const getCampaignTimelineStatus = (item) => {
             color: 'info',
             switchOn: false,
             switchDisabled: true,
-            chipClass: 'chip-upcoming',
-            isEnded: false
+            chipClass: 'status-chip-upcoming',
+            isEnded: false,
+            switchTooltip: 'Không thể đổi trạng thái lúc này (Chưa bắt đầu)'
         };
     }
-    
+
     // 2. Đã kết thúc
     if (end && now > end) {
         return {
@@ -117,8 +118,9 @@ const getCampaignTimelineStatus = (item) => {
             color: 'error',
             switchOn: false,
             switchDisabled: true,
-            chipClass: 'chip-expired',
-            isEnded: true
+            chipClass: 'status-chip-expired',
+            isEnded: true,
+            switchTooltip: 'Không thể đổi trạng thái lúc này (Đã kết thúc)'
         };
     }
 
@@ -129,8 +131,9 @@ const getCampaignTimelineStatus = (item) => {
             color: 'error',
             switchOn: false,
             switchDisabled: true,
-            chipClass: 'chip-expired',
-            isEnded: true
+            chipClass: 'status-chip-expired',
+            isEnded: true,
+            switchTooltip: 'Không thể đổi trạng thái lúc này (Đã kết thúc)'
         };
     }
 
@@ -139,8 +142,9 @@ const getCampaignTimelineStatus = (item) => {
         color: 'success',
         switchOn: true,
         switchDisabled: false,
-        chipClass: 'chip-active',
-        isEnded: false
+        chipClass: 'status-chip-active',
+        isEnded: false,
+        switchTooltip: 'Chuyển đổi trạng thái'
     };
 };
 
@@ -179,8 +183,8 @@ onMounted(() => loadCampaigns());
                 <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm</div>
                     <v-text-field v-model="filters.keyword" placeholder="Mã hoặc tên đợt..." variant="outlined"
-                        density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
-                        clearable @input="handleSearch"></v-text-field>
+                        density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input" clearable
+                        @input="handleSearch"></v-text-field>
                 </v-col>
 
 
@@ -197,15 +201,15 @@ onMounted(() => loadCampaigns());
 
                 <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Từ ngày</div>
-                    <v-text-field ref="startDateRef" v-model="filters.startDate" type="date" variant="outlined" density="compact"
-                        hide-details class="compact-input date-field" 
+                    <v-text-field ref="startDateRef" v-model="filters.startDate" type="date" variant="outlined"
+                        density="compact" hide-details class="compact-input date-field"
                         @change="handleSearch"></v-text-field>
                 </v-col>
 
                 <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Đến ngày</div>
-                    <v-text-field ref="endDateRef" v-model="filters.endDate" type="date" variant="outlined" density="compact"
-                        hide-details class="compact-input date-field" 
+                    <v-text-field ref="endDateRef" v-model="filters.endDate" type="date" variant="outlined"
+                        density="compact" hide-details class="compact-input date-field"
                         @change="handleSearch"></v-text-field>
                 </v-col>
             </AdminFilter>
@@ -238,25 +242,28 @@ onMounted(() => loadCampaigns());
                         <div class="text-primary">Giảm {{ getDiscountValueDisplay(item) }}</div>
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayBatDau)">{{ formatDateTime(item.ngayBatDau) }}</div>
+                        <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayBatDau)">{{
+                            formatDateTime(item.ngayBatDau) }}</div>
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayKetThuc)">{{ formatDateTime(item.ngayKetThuc) }}</div>
+                        <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayKetThuc)">{{
+                            formatDateTime(item.ngayKetThuc) }}</div>
                     </td>
                     <td class="data-cell text-center">
-                        <v-chip
-                            :class="['status-chip', getCampaignTimelineStatus(item).chipClass]"
-                            variant="flat" size="small">
+                        <v-chip :class="['status-chip', getCampaignTimelineStatus(item).chipClass]" variant="flat"
+                            size="small">
                             {{ getCampaignTimelineStatus(item).label }}
                         </v-chip>
                     </td>
                     <td class="data-cell action-cell" style="text-align: center">
                         <div class="d-flex align-center justify-center action-controls">
                             <span class="d-inline-block" v-if="getCampaignTimelineStatus(item).isEnded">
-                                <v-btn variant="text" class="action-icon-btn opacity-50" style="pointer-events: none" :ripple="false">
+                                <v-btn variant="text" class="action-icon-btn opacity-50" style="pointer-events: none"
+                                    :ripple="false">
                                     <EditIcon size="15" />
                                 </v-btn>
-                                <v-tooltip activator="parent" location="top">Không thể cập nhật đợt giảm giá đã kết thúc</v-tooltip>
+                                <v-tooltip activator="parent" location="top">Không thể cập nhật đợt giảm giá đã kết
+                                    thúc</v-tooltip>
                             </span>
                             <v-btn v-else variant="text" class="action-icon-btn"
                                 @click.stop="router.push({ name: 'DotGiamGiaForm', params: { id: item.id } })">
@@ -264,14 +271,13 @@ onMounted(() => loadCampaigns());
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
-                                <v-switch :model-value="getCampaignTimelineStatus(item).switchOn" 
-                                    :disabled="getCampaignTimelineStatus(item).switchDisabled"
-                                    color="primary" hide-details
-                                    density="compact" class="tight-switch action-switch"
+                                <v-switch :model-value="getCampaignTimelineStatus(item).switchOn"
+                                    :disabled="getCampaignTimelineStatus(item).switchDisabled" color="primary"
+                                    hide-details density="compact" class="tight-switch action-switch"
                                     :class="{ 'opacity-50': getCampaignTimelineStatus(item).switchDisabled }"
                                     @click.prevent.stop="!getCampaignTimelineStatus(item).switchDisabled && confirmToggleStatus(item)" />
                                 <v-tooltip activator="parent" location="top">
-                                    {{ getCampaignTimelineStatus(item).switchDisabled ? 'Không thể đổi trạng thái lúc này' : 'Chuyển đổi trạng thái' }}
+                                    {{ getCampaignTimelineStatus(item).switchTooltip }}
                                 </v-tooltip>
                             </div>
                         </div>
@@ -319,20 +325,8 @@ onMounted(() => loadCampaigns());
     font-size: 13px !important;
 }
 
-:deep(.chip-upcoming) {
-    background-color: #f0fdfa !important;
-    color: #0f766e !important;
-}
 
-:deep(.chip-active) {
-    background-color: #f0f1ff !important;
-    color: #1e257c !important;
-}
 
-:deep(.chip-expired) {
-    background-color: #fef2f2 !important;
-    color: #991b1b !important;
-}
 
 .opacity-50 {
     opacity: 0.5 !important;

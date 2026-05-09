@@ -739,7 +739,6 @@ onBeforeUnmount(() => {
 :deep(.data-cell),
 :deep(.data-cell *) {
     font-size: 13px !important;
-    font-family: 'Inter', 'Outfit', sans-serif !important;
 }
 
 :deep(.v-slider-track__background) {

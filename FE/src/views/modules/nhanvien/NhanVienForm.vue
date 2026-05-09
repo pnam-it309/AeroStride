@@ -670,7 +670,6 @@ onMounted(async () => {
 :deep(span),
 :deep(div),
 :deep(p) {
-    font-family: 'Inter', 'Outfit', sans-serif !important;
     font-size: 14px !important;
     font-weight: 400; /* Reset default weight to normal */
 }
@@ -678,7 +677,6 @@ onMounted(async () => {
 :deep(.text-subtitle-1),
 :deep(.text-h5),
 :deep(.text-h6) {
-    font-family: 'Inter', 'Outfit', sans-serif !important;
 }
 
 :deep(.v-field__input) {

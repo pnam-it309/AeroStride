@@ -312,7 +312,7 @@ onMounted(() => {
                                 variant="flat"
                                 :class="[
                                     'status-chip',
-                                    item.trangThai === 'DANG_HOAT_DONG' ? 'status-chip-active' : 'status-chip-inactive'
+                                    isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive'
                                 ]"
                             >
                                 {{ getStatusLabel(item.trangThai) }}
@@ -393,29 +393,10 @@ onMounted(() => {
     justify-content: center !important;
     font-weight: 400 !important;
 }
-:deep(.gender-chip-male) {
-    background-color: #f0f1ff !important;
-    color: #1e257c !important;
-    font-weight: 400 !important;
-}
-:deep(.gender-chip-female) {
-    background-color: #fef2f2 !important;
-    color: #991b1b !important;
-    font-weight: 400 !important;
-}
-:deep(.gender-chip-male .v-chip__content) {
-    color: #1e257c !important;
-    font-weight: 400 !important;
-}
-:deep(.gender-chip-female .v-chip__content) {
-    color: #991b1b !important;
-    font-weight: 400 !important;
-}
 
 /* Typography & Cell Alignment */
 .data-cell {
     font-size: 13px !important;
-    font-family: 'Inter', 'Outfit', sans-serif !important;
     font-weight: 400 !important;
     vertical-align: middle !important;
 }

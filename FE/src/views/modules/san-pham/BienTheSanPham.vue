@@ -815,8 +815,8 @@ onMounted(async () => {
               <div class="text-primary text-truncate font-weight-medium" :title="formatCurrency(item.giaBan)">{{ formatCurrency(item.giaBan) }}</div>
             </td>
             <td class="data-cell">
-              <v-chip size="small" :color="isActiveStatus(item.trangThai) ? 'success' : 'warning'" variant="flat"
-                class="status-chip font-weight-medium text-white">
+              <v-chip size="small" variant="flat"
+                :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
                 {{ getStatusLabel(item.trangThai) }}
               </v-chip>
             </td>
