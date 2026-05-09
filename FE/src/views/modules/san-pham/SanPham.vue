@@ -554,7 +554,7 @@ onBeforeUnmount(() => {
                         class="compact-input" @update:model-value="handleSearch" />
                 </v-col>
 
-                <v-col cols="12" md="2">
+                <v-col cols="12" md="3">
                     <div class="filter-field-label">Danh mục</div>
                     <v-select v-model="filters.danhMuc" :items="[
                         { title: 'Tất cả danh mục', value: null },
@@ -563,7 +563,7 @@ onBeforeUnmount(() => {
                         @update:model-value="handleSearch" />
                 </v-col>
 
-                <v-col cols="12" md="2">
+                <v-col cols="12" md="3">
                     <div class="filter-field-label">Thương hiệu</div>
                     <v-select v-model="filters.thuongHieu" :items="[
                         { title: 'Tất cả thương hiệu', value: null },
@@ -572,19 +572,7 @@ onBeforeUnmount(() => {
                         @update:model-value="handleSearch" />
                 </v-col>
 
-                <v-col cols="12" md="2">
-                    <div class="filter-field-label">Giới tính</div>
-                    <v-select v-model="filters.gioiTinh" :items="[
-                        { title: 'Tất cả', value: null },
-                        { title: 'Nam', value: 'NAM' },
-                        { title: 'Nữ', value: 'NU' },
-                        { title: 'Trẻ em', value: 'TRE_EM' },
-                        { title: 'Unisex', value: 'UNISEX' }
-                    ]" variant="outlined" density="compact" hide-details class="compact-input"
-                        @update:model-value="handleSearch" />
-                </v-col>
-
-                <v-col cols="12" md="2">
+                <v-col cols="12" md="3">
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select v-model="filters.trangThai" :items="[
                         { title: 'Tất cả', value: null },
@@ -594,35 +582,21 @@ onBeforeUnmount(() => {
                         @update:model-value="handleSearch" />
                 </v-col>
 
-                <v-col cols="12" md="10" lg="11">
+                <v-col cols="12" md="11">
                     <div class="filter-field-label">Khoảng giá</div>
                     <div class="price-slider-wrap">
-                        <div class="d-flex align-center bg-white pa-4 rounded-lg ">
+                        <div class="d-flex align-center bg-white pa-3 rounded-lg">
                             <v-icon size="20" class="mr-4 text-primary">mdi-cash-multiple</v-icon>
                             <div class="flex-grow-1">
                                 <div class="d-flex justify-space-between mb-2">
-                                    <span class="text-caption font-weight-black text-slate-600">Lọc theo giá bán sản phẩm</span>
-                                    <span class="text-caption font-weight-black text-primary">
+                                    <span class="text-caption font-weight-medium text-slate-600">Lọc theo giá bán sản phẩm</span>
+                                    <span class="text-caption font-weight-medium text-primary">
                                         {{ formatCurrency(filters.khoangGia[0]) }} - {{ formatCurrency(filters.khoangGia[1]) }}
                                     </span>
                                 </div>
                                 <v-range-slider v-model="filters.khoangGia" :min="productPriceBounds.min"
                                     :max="productPriceBounds.max" :step="PRICE_STEP" hide-details color="primary"
                                     track-color="slate-200" @update:model-value="handleSliderPriceChange" />
-                                <v-row class="mt-1" dense>
-                                    <v-col cols="12" sm="6">
-                                        <div class="text-caption font-weight-bold text-slate-500 mb-1">Từ giá</div>
-                                        <FormattedNumberField :model-value="filters.khoangGia[0]" placeholder="0"
-                                            variant="outlined" density="compact" hide-details class="bg-white"
-                                            @update:model-value="updatePriceFilterBoundary('min', $event)" />
-                                    </v-col>
-                                    <v-col cols="12" sm="6">
-                                        <div class="text-caption font-weight-bold text-slate-500 mb-1">Đến giá</div>
-                                        <FormattedNumberField :model-value="filters.khoangGia[1]" placeholder="0"
-                                            variant="outlined" density="compact" hide-details class="bg-white"
-                                            @update:model-value="updatePriceFilterBoundary('max', $event)" />
-                                    </v-col>
-                                </v-row>
                             </div>
                         </div>
                     </div>
@@ -644,14 +618,30 @@ onBeforeUnmount(() => {
         ]" :items="paginatedProducts" :loading="loading" :showExportButton="true"
             :exportButtonText="productExportButtonText" @add="router.push({ name: 'SanPhamForm' })"
             @export="handleExportProducts">
-            <template #top>
-                <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
-                    <div class="d-flex align-center flex-wrap gap-2">
+            <template #headers>
+                <tr>
+                    <th class="header-cell text-center" style="width: 50px;">
                         <v-checkbox-btn :model-value="allVisibleProductsSelected"
                             :indeterminate="someVisibleProductsSelected" color="primary" hide-details density="compact"
                             @update:model-value="toggleSelectVisibleProducts" />
-                        <span class="text-caption font-weight-black text-slate-500">
-                            đã chọn {{ selectedProductIds.length }} sản phẩm
+                    </th>
+                    <th class="header-cell text-center" style="width: 50px;">STT</th>
+                    <th class="header-cell text-center" style="width: 150px;">Mã sản phẩm</th>
+                    <th class="header-cell text-left" style="width: 180px;">Tên sản phẩm</th>
+                    <th class="header-cell text-left" style="width: 130px;">Thương hiệu</th>
+                    <th class="header-cell text-left" style="width: 100px;">Danh mục</th>
+                    <th class="header-cell text-center" style="width: 160px;">Tổng số lượng</th>
+                    <th class="header-cell text-left" style="width: 120px;">Khoảng giá</th>
+                    <th class="header-cell text-center" style="width: 130px;">Trạng thái</th>
+                    <th class="header-cell text-center" style="width: 130px;">Hành động</th>
+                </tr>
+            </template>
+
+            <template #top>
+                <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
+                    <div class="d-flex align-center flex-wrap gap-2">
+                        <span class="text-caption font-weight-medium text-slate-500">
+                            Đã chọn {{ selectedProductIds.length }} sản phẩm
                         </span>
                     </div>
                 </div>
@@ -668,37 +658,37 @@ onBeforeUnmount(() => {
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
 
-                    <td class="data-cell">
+                    <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.maSanPham || '--'">{{ item.maSanPham || '--' }}</div>
                     </td>
 
-                    <td class="data-cell">
+                    <td class="data-cell text-left px-4">
                         <div class="text-truncate" :title="item.tenSanPham || 'Không có tên'">
                             {{ item.tenSanPham || 'Không có tên' }}
                         </div>
                     </td>
 
-                    <td class="data-cell">
+                    <td class="data-cell text-left px-4">
                         <div class="text-truncate" :title="item.tenThuongHieu || '--'">{{ item.tenThuongHieu || '--' }}</div>
                     </td>
 
-                    <td class="data-cell">
+                    <td class="data-cell text-left px-4">
                         <div class="text-truncate" :title="item.tenDanhMuc || '--'">{{ item.tenDanhMuc || '--' }}</div>
                     </td>
 
                     <td class="data-cell">
-                        <span class="font-weight-black text-primary">{{ formatNumber(item.tongSoLuongTon || 0) }}</span>
+                        <span class="text-primary font-weight-medium">{{ formatNumber(item.tongSoLuongTon || 0) }}</span>
                     </td>
 
-                    <td class="data-cell text-center price-value px-2">
-                        <div class="font-weight-black text-primary text-truncate" :title="getPriceRange(item)">
+                    <td class="data-cell text-left price-value px-4">
+                        <div class="text-primary text-truncate font-weight-medium" :title="getPriceRange(item)">
                             {{ getPriceRange(item) }}
                         </div>
                     </td>
 
                     <td class="data-cell">
-                        <v-chip :color="getStatusColor(item.trangThai)" variant="flat" size="small"
-                            class="font-weight-black text-white status-chip">
+                        <v-chip size="small" variant="flat"
+                            :class="['status-chip', item.trangThai === 'DANG_HOAT_DONG' ? 'status-chip-active' : 'status-chip-inactive']">
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
@@ -744,5 +734,26 @@ onBeforeUnmount(() => {
 <style scoped>
 .price-slider-wrap {
     padding-right: 10px;
+}
+
+:deep(.data-cell),
+:deep(.data-cell *) {
+    font-size: 13px !important;
+    font-family: 'Inter', 'Outfit', sans-serif !important;
+}
+
+:deep(.v-slider-track__background) {
+    height: 3px !important;
+}
+:deep(.v-slider-track__fill) {
+    height: 3px !important;
+}
+:deep(.v-slider-thumb__surface) {
+    width: 12px !important;
+    height: 12px !important;
+}
+:deep(.v-slider-thumb__ripple) {
+    width: 24px !important;
+    height: 24px !important;
 }
 </style>

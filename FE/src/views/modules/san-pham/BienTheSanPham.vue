@@ -56,7 +56,7 @@ const filters = reactive({
 
 const pagination = reactive({
   page: 1,
-  size: 10,
+  size: 5,
 })
 
 const variantModal = reactive({ open: false, mode: 'create', submitting: false, variant: null })
@@ -674,7 +674,7 @@ onMounted(async () => {
         <v-col cols="12" md="2">
           <div class="filter-field-label">Màu sắc</div>
           <v-select v-model="filters.mauSacId"
-            :items="[{ title: 'Tất cả mầu', value: '' }, ...formOptions.mauSacs.map((mauSac) => ({ title: mauSac.ten, value: mauSac.id }))]"
+            :items="[{ title: 'Tất cả màu', value: '' }, ...formOptions.mauSacs.map((mauSac) => ({ title: mauSac.ten, value: mauSac.id }))]"
             variant="outlined" density="compact" hide-details />
         </v-col>
         <v-col cols="12" md="2">
@@ -695,8 +695,8 @@ onMounted(async () => {
             <v-icon size="20" class="mr-4 text-primary">mdi-cash-multiple</v-icon>
             <div class="flex-grow-1">
               <div class="d-flex justify-space-between mb-2">
-                <span class="text-caption font-weight-black text-slate-600">Lọc theo giá bán biến thể</span>
-                <span class="text-caption font-weight-black text-primary">
+                <span class="text-caption font-weight-medium text-slate-600">Lọc theo giá bán biến thể</span>
+                <span class="text-caption font-weight-medium text-primary">
                   {{ formatCurrency(filters.khoangGia[0]) }} - {{ formatCurrency(filters.khoangGia[1]) }}
                 </span>
               </div>
@@ -723,14 +723,30 @@ onMounted(async () => {
       ]" :items="paginatedVariants" :loading="loading" :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'"
         addButtonText="Tạo mới" @add="openCreateVariantModal" class="h-100">
 
-        <template #top>
-          <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
-            <div class="d-flex align-center flex-wrap gap-2">
+        <template #headers>
+          <tr>
+            <th class="header-cell text-center" style="width: 40px;">
               <v-checkbox-btn :model-value="allVisibleVariantsSelected"
                 :indeterminate="someVisibleVariantsSelected" color="primary" hide-details density="compact"
                 @update:model-value="toggleSelectVisibleVariants" />
-              <span class="text-caption font-weight-black text-slate-500">
-                đã chọn {{ selectedVariantIds.length }} biến thể
+            </th>
+            <th class="header-cell text-center" style="width: 40px;">STT</th>
+            <th class="header-cell text-center" style="width: 80px;">Mã SP</th>
+            <th class="header-cell text-center" style="width: 100px;">Hình ảnh</th>
+            <th class="header-cell text-center" style="width: 100px;">Mã SKU</th>
+            <th class="header-cell text-center" style="width: 120px;">Màu sắc</th>
+            <th class="header-cell text-center" style="width: 80px;">Kích thước</th>
+            <th class="header-cell text-center" style="width: 120px;">Giá bán niêm yết</th>
+            <th class="header-cell text-center" style="width: 140px;">Trạng thái</th>
+            <th class="header-cell text-center" style="width: 120px;">Thao tác</th>
+          </tr>
+        </template>
+
+        <template #top>
+          <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
+            <div class="d-flex align-center flex-wrap gap-2">
+              <span class="text-caption font-weight-medium text-slate-500">
+                Đã chọn {{ selectedVariantIds.length }} biến thể
               </span>
             </div>
 
@@ -753,7 +769,7 @@ onMounted(async () => {
             <td class="data-cell text-slate-400">
               {{ (pagination.page - 1) * pagination.size + index + 1 }}
             </td>
-            <td class="data-cell font-black text-slate-700">
+            <td class="data-cell text-slate-700 font-weight-medium">
               <div class="text-truncate" :title="getVariantProductCode(item)">{{ getVariantProductCode(item) }}</div>
             </td>
             <td class="data-cell">
@@ -762,7 +778,7 @@ onMounted(async () => {
                   :alt="item.maChiTietSanPham || 'variant-image'" />
               </v-avatar>
             </td>
-            <td class="data-cell font-black text-dark">
+            <td class="data-cell text-dark font-weight-medium">
               <div class="text-truncate" :title="item.maChiTietSanPham">
                 <span class="text-truncate">{{ item.maChiTietSanPham }}</span>
               </div>
@@ -777,12 +793,12 @@ onMounted(async () => {
                 <span class="text-truncate">{{ item.tenKichThuoc }}</span>
               </div>
             </td>
-            <td class="data-cell font-black text-primary">
-              <div class="font-weight-black text-primary text-truncate" :title="formatCurrency(item.giaBan)">{{ formatCurrency(item.giaBan) }}</div>
+            <td class="data-cell text-center text-primary px-4">
+              <div class="text-primary text-truncate font-weight-medium" :title="formatCurrency(item.giaBan)">{{ formatCurrency(item.giaBan) }}</div>
             </td>
             <td class="data-cell">
               <v-chip size="small" :color="isActiveStatus(item.trangThai) ? 'success' : 'warning'" variant="flat"
-                class="status-chip font-weight-black text-white">
+                class="status-chip font-weight-medium text-white">
                 {{ getStatusLabel(item.trangThai) }}
               </v-chip>
             </td>
@@ -835,7 +851,7 @@ onMounted(async () => {
         <div class="d-flex justify-space-between align-start mb-4">
           <div>
             <p class="text-overline text-slate-400 mb-1">Mã QR biến thể</p>
-            <h3 class="text-h6 font-weight-black text-dark mb-1">{{ qrDialog.variant?.maChiTietSanPham || '--' }}</h3>
+            <h3 class="text-h6 font-weight-bold text-dark mb-1">{{ qrDialog.variant?.maChiTietSanPham || '--' }}</h3>
             <p class="text-body-2 text-slate-500 mb-0">
               {{ qrDialog.variant?.tenSanPham || selectedProduct.value?.tenSanPham || 'Sản phẩm' }}
             </p>
@@ -851,7 +867,7 @@ onMounted(async () => {
         </div>
 
         <div class="text-center mb-4">
-          <p class="text-body-2 font-weight-black mb-1">{{ qrDialog.value }}</p>
+          <p class="text-body-2 font-weight-bold mb-1">{{ qrDialog.value }}</p>
           <p class="text-caption text-slate-500 mb-0">Quét mã để tìm nhanh biến thể theo SKU</p>
         </div>
 
@@ -903,5 +919,20 @@ onMounted(async () => {
   display: inline-block;
   padding: 8px;
   background: #ffffff;
+}
+
+:deep(.v-slider-track__background) {
+  height: 3px !important;
+}
+:deep(.v-slider-track__fill) {
+  height: 3px !important;
+}
+:deep(.v-slider-thumb__surface) {
+  width: 12px !important;
+  height: 12px !important;
+}
+:deep(.v-slider-thumb__ripple) {
+  width: 24px !important;
+  height: 24px !important;
 }
 </style>

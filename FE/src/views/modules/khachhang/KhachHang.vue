@@ -382,12 +382,12 @@ const handleDeleteAddr = (addrId) => {
 };
 
 const tableHeaders = [
-    { text: 'STT', width: '50px', align: 'center' },
-    { text: 'Mã khách hàng', width: '100px', align: 'center' },
-    { text: 'Tên khách hàng', width: '80px', align: 'start' },
+    { text: 'STT', width: '30px', align: 'center' },
+    { text: 'Mã khách hàng', width: '90px', align: 'center' },
+    { text: 'Tên khách hàng', width: '70px', align: 'center' },
     { text: 'Giới tính', width: '90px', align: 'center' },
-    { text: 'Thông tin liên hệ', width: '120px', align: 'start' },
-    { text: 'Địa chỉ', width: '180px', align: 'start' },
+    { text: 'Thông tin liên hệ', width: '120px', align: 'center' },
+    { text: 'Địa chỉ', width: '170px', align: 'center' },
     { text: 'Trạng thái', width: '90px', align: 'center' },
     { text: 'Hành động', width: '100px', align: 'center' }
 ];
@@ -591,7 +591,7 @@ watch(
                         <div class="text-truncate" :title="item.ma">{{ item.ma || '-' }}</div>
                     </td>
                     <td class="data-cell text-left px-4">
-                        <div class="text-truncate font-weight-medium text-slate-700" :title="item.ten">{{ item.ten || '-' }}</div>
+                        <div class="text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
                     </td>
                     <td class="data-cell">
                         <v-chip
@@ -705,12 +705,12 @@ watch(
                     <v-row no-gutters style="height: 100%">
                         <!-- ── Cột trái: Danh sách địa chỉ ── -->
                         <v-col cols="12" md="6" class="pb-6 border-e overflow-y-auto" style="max-height: calc(85vh - 80px)">
-                            <div class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-10">
+                            <div class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-10 position-relative">
                                 <span class="text-subtitle-2 font-weight-bold text-slate-800">Địa chỉ hiện tại</span>
-
+                                <v-progress-linear v-if="addrLoading && listDiaChi.length > 0" indeterminate color="primary" height="2" class="position-absolute" style="bottom: 0; left: 0; right: 0; z-index: 20;"></v-progress-linear>
                             </div>
 
-                            <div v-if="addrLoading" class="text-center py-16">
+                            <div v-if="addrLoading && listDiaChi.length === 0" class="text-center py-16">
                                 <v-progress-circular indeterminate color="primary" size="40" />
                             </div>
 
@@ -767,9 +767,8 @@ watch(
                                 <span class="text-subtitle-2 font-weight-bold text-slate-800">
                                     {{ showAddrForm ? (isEditAddr ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới') : 'Thêm địa chỉ khác' }}
                                 </span>
-                                <v-btn v-if="!showAddrForm" color="primary" variant="text" size="small" class="text-none font-weight-medium" @click="openNewAddrForm">
-                                    <v-icon start size="18">mdi-plus</v-icon>
-                                    Thêm địa chỉ
+                                <v-btn v-if="!showAddrForm" color="primary" variant="tonal" size="small" class="text-none font-weight-bold rounded-lg" prepend-icon="mdi-plus" @click="openNewAddrForm">
+                                    Thêm địa chỉ mới
                                 </v-btn>
                                 <v-btn v-else variant="text" size="small" color="slate-400" class="text-none font-weight-medium" @click="showAddrForm = false">
                                     <v-icon start size="16">mdi-arrow-left</v-icon>Hủy bỏ
@@ -782,7 +781,7 @@ watch(
                                     <v-icon size="64" color="slate-300" style="font-size: 64px !important">mdi-map-marker-plus-outline</v-icon>
                                 </div>
                                 <div class="text-body-2 text-slate-400 font-weight-medium max-w-200 mx-auto px-8">
-                                    Nhấn "Thêm địa chỉ" để đăng ký địa chỉ nhận hàng mới.
+                                    Nhấn "Thêm địa chỉ mới" để đăng ký địa chỉ nhận hàng mới.
                                 </div>
                             </div>
 
@@ -845,6 +844,7 @@ watch(
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    justify-content: center;
 }
 
 .line-clamp-2 {
@@ -866,24 +866,31 @@ watch(
     z-index: 6;
 }
 
-:deep(.status-chip-active),
+:deep(.status-chip-active) {
+    background-color: #e8f5e9 !important;
+    color: #70c274 !important;
+    font-weight: 500 !important;
+}
+:deep(.status-chip-active .v-chip__content) {
+    color: #206924 !important;
+}
+
 :deep(.gender-chip-male) {
     background-color: #f0f1ff !important;
     color: #1e257c !important;
     font-weight: 400 !important;
 }
-:deep(.status-chip-active .v-chip__content),
 :deep(.gender-chip-male .v-chip__content) {
     color: #1e257c !important;
 }
 
 :deep(.status-chip-inactive) {
-    background-color: #f8fafc !important;
-    color: #64748b !important;
+    background-color: #efebe9 !important;
+    color: #5d4037 !important;
     font-weight: 400 !important;
 }
 :deep(.status-chip-inactive .v-chip__content) {
-    color: #64748b !important;
+    color: #5d4037 !important;
 }
 
 :deep(.gender-chip-female) {
