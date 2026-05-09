@@ -1,9 +1,8 @@
 package com.example.be.entity;
 
 import com.example.be.core.common.base.PrimaryEntity;
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -64,12 +63,12 @@ public class ChiTietSanPham extends PrimaryEntity {
 
     @OneToMany(mappedBy = "chiTietSanPham", fetch = FetchType.LAZY)
     @Builder.Default
-    @JsonIgnoreProperties("chiTietSanPham")
+    @JsonIgnore
     private List<ChiTietDotGiamGia> chiTietDotGiamGias = new ArrayList<>();
 
     @OneToMany(mappedBy = "chiTietSanPham", fetch = FetchType.LAZY)
     @Builder.Default
-    @JsonIgnoreProperties("chiTietSanPham")
+    @JsonIgnore
     private List<HoaDonChiTiet> hoaDonChiTiets = new ArrayList<>();
 
 }

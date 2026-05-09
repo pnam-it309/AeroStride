@@ -355,7 +355,7 @@
 .status-chip {
     border-radius: 12px !important; /* Tăng lên 8px để mềm mại hơn theo yêu cầu */
     font-size: 13px !important;
-    font-weight: 400 !important;
+    font-weight: 700 !important;
     padding: 0 16px !important;
     min-height: 28px !important;
     width: 130px !important;
@@ -368,6 +368,13 @@
 }
 
 /* Specialized Invoice Statuses (Pastel style) */
+.status-chip-unconfirmed {
+    background: #fdf5f3 !important;
+    color: #9c2a1a !important;
+    border: 1px solid #f9deda !important;
+    .v-chip__content { color: #9c2a1a !important; }
+}
+
 .status-chip-pending {
     background: #fff7ed !important;
     color: #c2410c !important;
@@ -412,7 +419,7 @@
     border-radius: 4px !important;
     width: 85px !important; /* Ngắn lại cho gọn */
     font-size: 13px !important;
-    font-weight: 400 !important;
+    font-weight: 700 !important;
     border: 1px solid transparent !important;
     display: inline-flex !important;
     align-items: center;

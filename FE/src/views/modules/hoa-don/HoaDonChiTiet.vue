@@ -1,21 +1,21 @@
 <script setup>
 import { PATH } from '@/router/routePaths';
-import { ref, computed, onMounted, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { dichVuHoaDon } from "@/services/admin/dichVuHoaDon";
-import { dichVuNhanVien } from "@/services/admin/dichVuNhanVien";
-import { useNotifications } from "@/services/notificationService";
+import { ref, computed, onMounted, watch } from"vue";
+import { useRoute, useRouter } from"vue-router";
+import { dichVuHoaDon } from"@/services/admin/dichVuHoaDon";
+import { dichVuNhanVien } from"@/services/admin/dichVuNhanVien";
+import { useNotifications } from"@/services/notificationService";
 import axios from 'axios';
 import {
     ChevronLeftIcon, PrinterIcon, EditIcon, CalendarIcon,
     PackageIcon, UserIcon, MapPinIcon, CreditCardIcon, TruckIcon,
     CircleCheckIcon, CircleXIcon, CheckIcon, TrashIcon,
     PlusIcon, LayoutListIcon
-} from "vue-tabler-icons";
-import ProductPicker from "../banhang/components/ProductPicker.vue";
-import AdminConfirm from "@/components/common/AdminConfirm.vue";
+} from"vue-tabler-icons";
+import ProductPicker from"../banhang/components/ProductPicker.vue";
+import AdminConfirm from"@/components/common/AdminConfirm.vue";
 import AdminBreadcrumbs from "@/components/common/AdminBreadcrumbs.vue";
-import { getOrderStatusMeta, getOrderStatusOrdinal } from "@/utils/orderStatus";
+import { getOrderStatusMeta, getOrderStatusOrdinal } from"@/utils/orderStatus";
 
 const route = useRoute();
 const router = useRouter();
@@ -59,43 +59,43 @@ const addressDetail = ref({
 const productsDialogOpen = ref(false);
 const employees = ref([]);
 const editInfoForm = ref({
-    soDienThoaiNguoiNhan: "",
-    diaChiNguoiNhan: "",
-    ghiChu: "",
+    soDienThoaiNguoiNhan:"",
+    diaChiNguoiNhan:"",
+    ghiChu:"",
     idKhachHang: null,
     idNhanVien: null,
     // Add guest customer info fields
-    tenKhachHang: "",
-    email: "",
-    soDienThoai: ""
+    tenKhachHang:"",
+    email:"",
+    soDienThoai:""
 });
 const updatingInfo = ref(false);
 const updatingItems = ref(false);
 
 const order = ref({
-    id: "",
-    maHoaDon: "",
-    tenKhachHang: "",
-    email: "",
-    soDienThoai: "",
+    id:"",
+    maHoaDon:"",
+    tenKhachHang:"",
+    email:"",
+    soDienThoai:"",
     trangThai: 'CHO_XAC_NHAN',
-    ngayTao: "",
+    ngayTao:"",
     tongTien: 0,
     tongTienSauGiam: 0,
     phiVanChuyen: 0,
-    loaiDon: "OFFLINE",
-    diaChi: "",
-    ghiChu: "",
+    loaiDon:"OFFLINE",
+    diaChi:"",
+    ghiChu:"",
     listsHoaDonChiTiet: [],
     listsLichSuHoaDon: [],
     listsGiaoDichThanhToan: []
 });
 
 const productColumns = [
-    { key: "tenSanPham", label: "Sản phẩm", width: "300px" },
-    { key: "soLuong", label: "SL", width: "80px" },
-    { key: "donGia", label: "Đơn giá", width: "130px" },
-    { key: "thanhTien", label: "Tổng cộng", width: "130px" },
+    { key:"tenSanPham", label:"Sản phẩm", width:"300px" },
+    { key:"soLuong", label:"SL", width:"80px" },
+    { key:"donGia", label:"Đơn giá", width:"130px" },
+    { key:"thanhTien", label:"Tổng cộng", width:"130px" },
 ];
 
 const getStatusInfo = (s) => {
@@ -136,7 +136,7 @@ const receptionistLabel = computed(() => {
         order.value?.maNhanVien ||
         order.value?.maNV ||
         order.value?.tenNhanVien ||
-        "Hệ thống"
+"Hệ thống"
     );
 });
 
@@ -228,17 +228,17 @@ const timelineSteps = computed(() => {
 
     // Core flow steps
     const coreSteps = [
-        { key: 0, label: "Chưa xác nhận", icon: PackageIcon, note: "Đơn hàng mới tạo" },
-        { key: 1, label: "Chờ xác nhận", icon: CalendarIcon, note: "Đơn hàng chờ xác nhận" },
-        { key: 2, label: "Đã xác nhận", icon: CircleCheckIcon, note: "Đơn hàng đã được xác nhận" },
-        { key: 3, label: "Đang giao", icon: TruckIcon, note: "Đơn hàng đang được giao" },
-        { key: 4, label: "Hoàn thành", icon: CheckIcon, note: "Đơn hàng đã hoàn thành" }
+        { key: 0, label:"Chưa xác nhận", icon: PackageIcon, note:"Đơn hàng mới tạo" },
+        { key: 1, label:"Chờ xác nhận", icon: CalendarIcon, note:"Đơn hàng chờ xác nhận" },
+        { key: 2, label:"Đã xác nhận", icon: CircleCheckIcon, note:"Đơn hàng đã được xác nhận" },
+        { key: 3, label:"Đang giao", icon: TruckIcon, note:"Đơn hàng đang được giao" },
+        { key: 4, label:"Hoàn thành", icon: CheckIcon, note:"Đơn hàng đã hoàn thành" }
     ];
 
     // Exception steps
     const exceptionSteps = [
-        { key: 5, label: "Đã hủy", icon: CircleXIcon, note: "Đơn hàng bị hủy" },
-        { key: 6, label: "Hoàn đơn", icon: CircleXIcon, note: "Đơn hàng đã hoàn trả" }
+        { key: 5, label:"Đã hủy", icon: CircleXIcon, note:"Đơn hàng bị hủy" },
+        { key: 6, label:"Hoàn đơn", icon: CircleXIcon, note:"Đơn hàng đã hoàn trả" }
     ];
 
     let steps = [...coreSteps];
@@ -253,16 +253,16 @@ const timelineSteps = computed(() => {
     const currentIndex = status === null ? -1 : steps.findIndex(s => s.key === status);
 
     return steps.slice(0, currentIndex + 1).map((step, index) => {
-        let state = "pending";
+        let state ="pending";
 
         if (status === 5 || status === 6) {
-            if (index < currentIndex) state = "done";
-            else if (index === currentIndex) state = "active";
-            else state = "disabled";
+            if (index < currentIndex) state ="done";
+            else if (index === currentIndex) state ="active";
+            else state ="disabled";
         } else {
-            if (index < currentIndex) state = "done";
-            else if (index === currentIndex) state = "active";
-            else state = "pending";
+            if (index < currentIndex) state ="done";
+            else if (index === currentIndex) state ="active";
+            else state ="pending";
         }
 
         return {
@@ -532,13 +532,13 @@ onMounted(() => {
                         <v-btn icon variant="text" color="slate-600" class="mr-2 btn-back-header" @click="goBack">
                             <ChevronLeftIcon size="28" />
                         </v-btn>
-                        <v-chip v-if="showStatusChip" :color="orderStatusTone" variant="flat"
-                            class="font-bold px-4 status-chip text-white">
+                        <v-chip v-if="showStatusChip" variant="flat"
+                            :class="['font-weight-bold px-4 status-chip', getOrderStatusMeta(order.trangThai)?.chipClass]">
                             {{ orderStatusLabel }}
                         </v-chip>
                     </div>
                     <div v-if="loaded" class="text-caption text-slate-500 mt-1 d-flex align-center">
-                        Nhân viên tiếp nhận: <span class="font-weight-bold text-slate-700 ml-1">{{ receptionistLabel }}</span>
+                        Nhân viên tiếp nhận: <span class="text-slate-700 ml-1">{{ receptionistLabel }}</span>
                     </div>
                 </div>
                 <div class="header-right d-flex gap-3">
@@ -563,7 +563,7 @@ onMounted(() => {
 
                     <v-menu v-if="canUpdateStatus">
                         <template v-slot:activator="{ props }">
-                            <v-btn color="primary" variant="flat" class="rounded-lg px-6 font-bold btn-white-text"
+                            <v-btn color="primary" variant="flat" class="rounded-lg px-6  btn-white-text"
                                 height="44" v-bind="props" :loading="updatingStatus">
                                 <EditIcon size="18" class="mr-2" />
                                 Cập nhật trạng thái
@@ -594,11 +594,11 @@ onMounted(() => {
                             <v-divider></v-divider>
                             <v-list-item v-if="getOrderStatus() < 4" @click="requestStatusUpdate(5)" color="error"
                                 prepend-icon="mdi-close">
-                                <v-list-item-title class="text-error font-bold">Hủy đơn hàng</v-list-item-title>
+                                <v-list-item-title class="text-error">Hủy đơn hàng</v-list-item-title>
                             </v-list-item>
                             <v-list-item v-if="getOrderStatus() === 4" @click="requestStatusUpdate(6)"
                                 color="deep-purple" prepend-icon="mdi-cash-refund">
-                                <v-list-item-title class="text-deep-purple font-bold">Hoàn đơn</v-list-item-title>
+                                <v-list-item-title class="text-deep-purple">Hoàn đơn</v-list-item-title>
                             </v-list-item>
                         </v-list>
                     </v-menu>
@@ -630,13 +630,13 @@ onMounted(() => {
 
         <v-row v-if="loaded">
             <!-- Left Column: Items & History -->
-            <v-col cols="12" lg="8">
+            <v-col cols="12" lg="7">
                 <!-- Customer Info -->
                 <v-card class="premium-card mb-6">
                     <div class="card-title pa-5 border-b d-flex align-center justify-space-between bg-slate-50">
                         <div class="d-flex align-center">
                             <UserIcon size="20" class="mr-3 text-primary" />
-                            <span class="font-weight-bold text-slate-800">Thông tin khách hàng</span>
+                            <span class="text-slate-800 font-weight" style="font-size:16px;">Thông tin khách hàng</span>
                         </div>
                         <v-tooltip text="Cập nhật thông tin khách hàng" location="top">
                             <template v-slot:activator="{ props }">
@@ -659,16 +659,19 @@ onMounted(() => {
                             <!-- Primary Info Column -->
                             <v-col cols="12" md="4" class="px-6">
                                 <div class="d-flex flex-column h-100 justify-center">
-                                    <div class="text-h4 font-weight-bold text-slate-900 mb-2">{{ customerName }}</div>
+                                    <div class="text-h4  text-slate-900 mb-2">{{ customerName }}</div>
                                     <div class="d-flex align-center mb-4">
-                                        <span class="text-primary font-weight-bold mr-4 pe-4">
+                                        <span class="text-primary  mr-4 pe-4">
                                             ID: {{ order.khachHang?.maKhachHang || 'GUEST' }}
                                         </span>
-                                        <span class="text-deep-purple-accent-4 font-weight-bold">
+                                        
+                                    </div>
+                                    <div>
+                                        <span class="text-deep-purple-accent-4">
                                             Hạng: Thành viên
                                         </span>
                                     </div>
-                                    <div class="text-caption text-slate-400 font-weight-bold ">Ghi chú khách hàng</div>
+                                    <div class="text-caption text-slate-400">Ghi chú khách hàng</div>
                                     <div class="text-body-2 text-slate-600 mt-1 italic">
                                         {{ order.khachHang?.ghiChu || 'Không có ghi chú đặc biệt' }}
                                     </div>
@@ -679,21 +682,21 @@ onMounted(() => {
                             <v-col cols="12" md="4" class="ml-auto ps-8">
                                 <div class="d-flex flex-column h-100 justify-center gap-4">
                                     <div class="contact-item">
-                                        <div class="text-caption text-slate-400 font-weight-bold mb-1">Số điện thoại</div>
+                                        <div class="text-caption text-slate-400  mb-1">Số điện thoại</div>
                                         <div class="text-h6 text-slate-800 d-flex align-center">
                                             <v-icon color="primary" class="mr-2" size="20">mdi-phone-check</v-icon>
                                             {{ order.soDienThoai || 'Chưa có' }}
                                         </div>
                                     </div>
                                     <div class="contact-item">
-                                        <div class="text-caption text-slate-400 font-weight-bold mb-1">Email</div>
+                                        <div class="text-caption text-slate-400  mb-1">Email</div>
                                         <div class="text-h6 text-slate-800 d-flex align-center">
                                             <v-icon color="primary" class="mr-2" size="20">mdi-email-check</v-icon>
                                             {{ order.email || 'N/A' }}
                                         </div>
                                     </div>
                                     <div class="contact-item">
-                                        <div class="text-caption text-slate-400 font-weight-bold mb-1">Ngày đăng ký</div>
+                                        <div class="text-caption text-slate-400  mb-1">Ngày đăng ký</div>
                                         <div class="text-body-1 text-slate-600 d-flex align-center">
                                             <v-icon color="slate-400" class="mr-2" size="20">mdi-calendar-range</v-icon>
                                             {{ formatDate(order.khachHang?.ngayTao) }}
@@ -710,7 +713,7 @@ onMounted(() => {
                     <div class="card-title pa-5 border-b d-flex align-center justify-space-between bg-slate-50">
                         <div class="d-flex align-center">
                             <PackageIcon size="20" class="mr-3 text-primary" />
-                            <span class="font-weight-bold text-slate-800">Sản phẩm đã đặt</span>
+                            <span class="text-slate-800">Sản phẩm đã đặt</span>
                         </div>
                         <v-tooltip text="Thêm / sửa sản phẩm" location="top">
                             <template v-slot:activator="{ props }">
@@ -741,19 +744,19 @@ onMounted(() => {
                                     </td>
                                     <td class="py-6">
                                         <div class="text-left d-flex flex-column justify-center h-100 px-4">
-                                            <div class="text-h5 font-weight-bold text-slate-900 mb-2">{{
+                                            <div class="text-h5  text-slate-900 mb-2">{{
                                                 item.chiTietSanPham?.sanPham?.ten || 'N/A' }}</div>
-                                            <div class="text-h6 text-primary font-weight-bold mb-4">Mã SKU: {{
+                                            <div class="text-h6 text-primary  mb-4">Mã SKU: {{
                                                 item.chiTietSanPham?.maChiTietSanPham || 'N/A' }}</div>
                                             
                                             <div class="d-flex align-center gap-6 mt-2 text-slate-600">
                                                 <div class="d-flex align-center">
-                                                    <span class="text-caption font-weight-bold mr-2" style="white-space: nowrap;">Màu sắc:</span>
-                                                    <span class="font-weight-bold text-slate-900" style="white-space: nowrap;">{{ item.chiTietSanPham?.mauSac?.ten || '—' }}</span>
+                                                    <span class="text-caption  mr-2" style="white-space: nowrap;">Màu sắc:</span>
+                                                    <span class="text-slate-900" style="white-space: nowrap;">{{ item.chiTietSanPham?.mauSac?.ten || '—' }}</span>
                                                 </div>
                                                 <div class="d-flex align-center border-s ps-6">
-                                                    <span class="text-caption font-weight-bold mr-2" style="white-space: nowrap;">Kích thước:</span>
-                                                    <span class="font-weight-bold text-slate-900" style="white-space: nowrap;">{{ item.chiTietSanPham?.kichThuoc?.ten || '—' }}</span>
+                                                    <span class="text-caption  mr-2" style="white-space: nowrap;">Kích thước:</span>
+                                                    <span class="text-slate-900" style="white-space: nowrap;">{{ item.chiTietSanPham?.kichThuoc?.ten || '—' }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -762,7 +765,7 @@ onMounted(() => {
                                         {{ item.soLuong }}
                                     </td>
                                     <td class="text-center text-slate-700">{{ formatCurrency(item.donGia) }}</td>
-                                    <td class="text-center font-weight-bold text-primary">{{
+                                    <td class="text-center  text-primary">{{
                                         formatCurrency(Number(item.soLuong) * Number(item.donGia))
                                         }}</td>
                                 </tr>
@@ -776,12 +779,12 @@ onMounted(() => {
                 <v-card class="premium-card mb-6">
                     <div class="card-title pa-5 border-b d-flex align-center bg-slate-50">
                         <CalendarIcon size="20" class="mr-3 text-primary" />
-                        <span class="font-weight-bold text-slate-800">Lịch sử đơn hàng</span>
+                        <span class="text-slate-800">Lịch sử đơn hàng</span>
                     </div>
                     <v-card-text class="pa-0">
                         <!-- Table-style Headers for Timeline -->
                         <div
-                            class="d-flex align-center w-100 px-6 py-3 bg-slate-800 border-b text-caption font-weight-bold text-white uppercase">
+                            class="d-flex align-center w-100 px-6 py-3 bg-slate-800 border-b text-caption  text-white uppercase">
                             <div class="text-center" style="width: 48px;"></div> <!-- Space for timeline dots -->
                             <div class="text-center" style="width: 130px;">Trạng thái</div>
                             <div class="text-center flex-grow-1">Mô tả</div>
@@ -796,8 +799,8 @@ onMounted(() => {
                                     <div class="d-flex align-center w-100 py-1">
                                         <!-- Column 1: Status -->
                                         <div style="width: 130px;" class="text-center">
-                                            <v-chip :color="getStatusInfo(log.trangThaiMoi).color" size="small"
-                                                variant="flat" class="font-weight-bold text-white">
+                                            <v-chip size="small"
+                                                variant="flat" :class="['font-weight-bold status-chip', getStatusInfo(log.trangThaiMoi).chipClass]">
                                                 {{ getStatusInfo(log.trangThaiMoi).text }}
                                             </v-chip>
                                         </div>
@@ -811,13 +814,13 @@ onMounted(() => {
 
                                         <!-- Column 3: Performer -->
                                         <div style="width: 160px;" class="text-center">
-                                            <span class="text-caption font-weight-bold text-slate-600 uppercase">{{
+                                            <span class="text-caption  text-slate-600 uppercase">{{
                                                 log.nguoiThucHien || 'SYSTEM' }}</span>
                                         </div>
 
                                         <!-- Column 4: Time -->
                                         <div style="width: 160px;" class="text-center">
-                                            <span class="text-caption text-slate-400 font-weight-bold">
+                                            <span class="text-caption text-slate-400">
                                                 {{ formatDate(log.ngayTao) }}
                                             </span>
                                         </div>
@@ -830,8 +833,8 @@ onMounted(() => {
                                     <div class="d-flex align-center w-100 py-1">
                                         <!-- Column 1: Status -->
                                         <div style="width: 130px;" class="text-center">
-                                            <v-chip :color="getStatusInfo(initialHistoryLog.trangThaiMoi).color" size="small"
-                                                variant="flat" class="font-weight-bold text-white">
+                                            <v-chip size="small"
+                                                variant="flat" :class="['font-weight-bold status-chip', getStatusInfo(initialHistoryLog.trangThaiMoi).chipClass]">
                                                 {{ getStatusInfo(initialHistoryLog.trangThaiMoi).text }}
                                             </v-chip>
                                         </div>
@@ -845,13 +848,13 @@ onMounted(() => {
 
                                         <!-- Column 3: Performer -->
                                         <div style="width: 160px;" class="text-center">
-                                            <span class="text-caption font-weight-bold text-slate-600 uppercase">{{
+                                            <span class="text-caption  text-slate-600 uppercase">{{
                                                 initialHistoryLog.nguoiThucHien }}</span>
                                         </div>
 
                                         <!-- Column 4: Time -->
                                         <div style="width: 160px;" class="text-center">
-                                            <span class="text-caption text-slate-400 font-weight-bold">
+                                            <span class="text-caption text-slate-400">
                                                 {{ formatDate(initialHistoryLog.ngayTao) }}
                                             </span>
                                         </div>
@@ -864,36 +867,36 @@ onMounted(() => {
             </v-col>
 
             <!-- Right Column: Customer & Shipping -->
-            <v-col cols="12" lg="4">
+            <v-col cols="12" lg="5">
                 <!-- Order Summary -->
                 <v-card class="premium-card mb-6">
                     <div class="card-title pa-5 border-b d-flex align-center bg-slate-50">
                         <CreditCardIcon size="20" class="mr-3 text-primary" />
-                        <span class="font-weight-bold text-slate-800">Tổng thanh toán</span>
+                        <span class="text-slate-800">Tổng thanh toán</span>
                     </div>
                     <div class="summary-section pa-6">
                         <div class="summary-grid">
                             <div class="summary-row mb-2">
                                 <span class="text-slate-500 font-weight-medium">Tạm tính:</span>
-                                <span class="text-body-1 font-weight-bold text-slate-800">{{
+                                <span class="text-body-1  text-slate-800">{{
                                     formatCurrency(order.tongTien)
                                     }}</span>
                             </div>
                             <div class="summary-row mb-2 text-error">
                                 <span class="font-weight-medium">Giảm giá:</span>
-                                <span class="text-body-1 font-weight-bold">- {{ formatCurrency(Math.abs(orderDiscountAmount))
+                                <span class="text-body-1">- {{ formatCurrency(Math.abs(orderDiscountAmount))
                                     }}</span>
                             </div>
                             <div class="summary-row mb-2">
                                 <span class="text-slate-500 font-weight-medium">Phí vận chuyển:</span>
-                                <span class="text-body-1 font-weight-bold text-slate-800">{{
+                                <span class="text-body-1  text-slate-800">{{
                                     formatCurrency(order.phiVanChuyen || 0)
                                 }}</span>
                             </div>
                             <v-divider class="my-3 border-opacity-25"></v-divider>
                             <div class="summary-row">
-                                <span class="text-subtitle-1 font-weight-bold text-slate-800">Tổng cộng:</span>
-                                <span class="text-h5 font-weight-bold text-primary">{{
+                                <span class="text-subtitle-1  text-slate-800">Tổng cộng:</span>
+                                <span class="text-h5  text-primary">{{
                                     formatCurrency(orderTotalAmount) }}</span>
                             </div>
                         </div>
@@ -906,7 +909,7 @@ onMounted(() => {
                     <div class="card-title pa-5 border-b d-flex align-center justify-space-between bg-slate-50">
                         <div class="d-flex align-center">
                             <TruckIcon size="20" class="mr-3 text-primary" />
-                            <span class="font-weight-bold text-slate-800">Thông tin vận chuyển</span>
+                            <span class="text-slate-800">Thông tin vận chuyển</span>
                         </div>
                         <v-tooltip text="Cập nhật thông tin vận chuyển" location="top">
                             <template v-slot:activator="{ props }">
@@ -919,7 +922,7 @@ onMounted(() => {
                     </div>
                     <v-card-text class="pa-6">
                         <div class="info-group mb-6">
-                            <div class="text-caption text-slate-400 font-weight-bold mb-2">Loại đơn hàng
+                            <div class="text-caption text-slate-400  mb-2">Loại đơn hàng
                             </div>
                             <v-chip variant="tonal" color="primary" class="font-weight-bold">
                                 {{ orderTypeLabel }}
@@ -927,7 +930,7 @@ onMounted(() => {
                         </div>
                         <v-divider class="mb-6 border-opacity-10"></v-divider>
                         <div class="info-group mb-6">
-                            <div class="text-caption text-slate-400 font-weight-bold mb-2">Địa chỉ nhận
+                            <div class="text-caption text-slate-400  mb-2">Địa chỉ nhận
                             </div>
                             <div class="text-body-1 text-slate-700 d-flex align-start">
                                 <MapPinIcon size="18" class="mr-2 text-error mt-1" />
@@ -936,7 +939,7 @@ onMounted(() => {
                         </div>
                         <v-divider class="mb-6 border-opacity-10"></v-divider>
                         <div class="info-group">
-                            <div class="text-caption text-slate-400 font-weight-bold mb-2">Ghi chú</div>
+                            <div class="text-caption text-slate-400  mb-2">Ghi chú</div>
                             <div class="text-body-2 text-slate-600 italic pa-3 bg-slate-50 rounded-lg">
                                 {{ order.ghiChu || 'Không có ghi chú' }}
                             </div>
@@ -948,7 +951,7 @@ onMounted(() => {
                 <v-card class="premium-card">
                     <div class="card-title pa-5 border-b d-flex align-center bg-slate-50">
                         <CreditCardIcon size="20" class="mr-3 text-primary" />
-                        <span class="font-weight-bold text-slate-800">Lịch sử thanh toán</span>
+                        <span class="text-slate-800">Lịch sử thanh toán</span>
                     </div>
                     <v-card-text class="pa-6">
                         <div v-if="order.listsGiaoDichThanhToan?.length" class="payment-list">
@@ -962,14 +965,14 @@ onMounted(() => {
                                             </v-icon>
                                         </div>
                                         <div>
-                                            <div class="font-weight-bold text-slate-800">{{ pay.tenPhuongThuc }}</div>
+                                            <div class="text-slate-800">{{ pay.tenPhuongThuc }}</div>
                                             <div class="text-caption text-slate-500">Mã GD: {{ pay.maGiaoDichNgoai ||
                                                 'Nội bộ'
                                             }}</div>
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="text-h6 font-weight-bold text-primary">{{ formatCurrency(pay.soTien)
+                                        <div class="text-h6  text-primary">{{ formatCurrency(pay.soTien)
                                         }}
                                         </div>
                                         <div class="text-caption text-slate-400">{{ formatDate(pay.ngayTao) }}</div>
@@ -1029,24 +1032,24 @@ onMounted(() => {
                 <v-card-text class="pa-8">
                     <v-row>
                         <v-col cols="12">
-                            <div class="text-caption text-slate-400 font-weight-bold mb-2">Tên khách hàng</div>
+                            <div class="text-caption text-slate-400  mb-2">Tên khách hàng</div>
                             <v-text-field v-model="editInfoForm.tenKhachHang" placeholder="Nhập tên khách hàng" variant="outlined" density="comfortable" hide-details class="mb-4"></v-text-field>
                         </v-col>
                         <v-col cols="12">
-                            <div class="text-caption text-slate-400 font-weight-bold mb-2">Số điện thoại</div>
+                            <div class="text-caption text-slate-400  mb-2">Số điện thoại</div>
                             <v-text-field v-model="editInfoForm.soDienThoai" placeholder="Nhập số điện thoại" variant="outlined" density="comfortable" hide-details class="mb-4"></v-text-field>
                         </v-col>
                         <v-col cols="12">
-                            <div class="text-caption text-slate-400 font-weight-bold mb-2">Email</div>
+                            <div class="text-caption text-slate-400  mb-2">Email</div>
                             <v-text-field v-model="editInfoForm.email" placeholder="Nhập email" variant="outlined" density="comfortable" hide-details></v-text-field>
                         </v-col>
                     </v-row>
                 </v-card-text>
                 <v-divider></v-divider>
                 <v-card-actions class="pa-6 bg-slate-50">
-                    <v-btn variant="text" color="slate-500" class="rounded-lg px-6 font-weight-bold" @click="customerDialogOpen = false">Hủy</v-btn>
+                    <v-btn variant="text" color="slate-500" class="rounded-lg px-6" @click="customerDialogOpen = false">Hủy</v-btn>
                     <v-spacer></v-spacer>
-                    <v-btn color="primary" variant="flat" class="rounded-lg px-8 font-weight-bold text-white" :loading="updatingInfo" @click="saveInfoUpdate('customer')">Lưu thay đổi</v-btn>
+                    <v-btn color="primary" variant="flat" class="rounded-lg px-8  text-white" :loading="updatingInfo" @click="saveInfoUpdate('customer')">Lưu thay đổi</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -1068,7 +1071,7 @@ onMounted(() => {
                     <!-- Recipient Section -->
                     <div class="pa-0 mb-4 d-flex align-center">
                         <v-icon size="20" class="mr-2 text-slate-900">mdi-account-outline</v-icon>
-                        <span class="text-subtitle-2 font-weight-bold text-slate-900">Thông tin người nhận</span>
+                        <span class="text-subtitle-2  text-slate-900">Thông tin người nhận</span>
                     </div>
 
                     <v-row>
@@ -1083,7 +1086,7 @@ onMounted(() => {
                     <!-- Address Section -->
                     <div class="pa-0 mt-6 mb-4 d-flex align-center">
                         <v-icon size="20" class="mr-2 text-slate-900">mdi-map-marker-outline</v-icon>
-                        <span class="text-subtitle-2 font-weight-bold text-slate-900">Địa chỉ giao
+                        <span class="text-subtitle-2  text-slate-900">Địa chỉ giao
                             hàng</span>
                     </div>
 
@@ -1116,7 +1119,7 @@ onMounted(() => {
                     <!-- Notes Section -->
                     <div class="pa-0 mt-6 mb-4 d-flex align-center">
                         <v-icon size="20" class="mr-2 text-slate-900">mdi-note-text-outline</v-icon>
-                        <span class="text-subtitle-2 font-weight-bold text-slate-900">Ghi chú vận
+                        <span class="text-subtitle-2  text-slate-900">Ghi chú vận
                             chuyển</span>
                     </div>
 
@@ -1128,12 +1131,12 @@ onMounted(() => {
                 <v-divider></v-divider>
 
                 <v-card-actions class="pa-6 bg-slate-50">
-                    <v-btn variant="text" color="slate-500" class="rounded-lg px-6 font-weight-bold"
+                    <v-btn variant="text" color="slate-500" class="rounded-lg px-6"
                         @click="shippingDialogOpen = false">
                         Đóng
                     </v-btn>
                     <v-spacer></v-spacer>
-                    <v-btn color="primary" variant="flat" class="rounded-lg px-8 font-weight-bold shadow-sm text-white"
+                    <v-btn color="primary" variant="flat" class="rounded-lg px-8  shadow-sm text-white"
                         :loading="updatingInfo" @click="saveInfoUpdate('shipping')">
                         <v-icon left class="mr-2 text-white">mdi-check</v-icon>
                         <span class="text-white">Lưu thay đổi</span>
@@ -1160,7 +1163,7 @@ onMounted(() => {
                         <!-- Right Side: Added Items -->
                         <v-col cols="12" lg="4" class="d-flex flex-column">
                             <div class="pa-5 border-b bg-white">
-                                <div class="font-weight-bold text-slate-700 d-flex align-center">
+                                <div class="text-slate-700 d-flex align-center">
                                     <LayoutListIcon size="18" class="mr-2 text-primary" />
                                     Sản phẩm đã chọn ({{ order.listsHoaDonChiTiet?.length || 0 }})
                                 </div>
@@ -1177,14 +1180,14 @@ onMounted(() => {
                                     <tbody>
                                         <tr v-for="item in order.listsHoaDonChiTiet" :key="item.id" class="hover-row">
                                             <td class="py-3">
-                                                <div class="text-subtitle-2 font-weight-bold text-slate-800">{{
+                                                <div class="text-subtitle-2  text-slate-800">{{
                                                     item.chiTietSanPham?.sanPham?.ten || 'N/A'
                                                 }}</div>
                                                 <div class="text-caption text-slate-500">
                                                     {{ item.chiTietSanPham?.mauSac?.ten || '—' }} | {{
                                                         item.chiTietSanPham?.kichThuoc?.ten || '—' }}
                                                 </div>
-                                                <div class="text-caption font-weight-bold text-primary mt-1">
+                                                <div class="text-caption  text-primary mt-1">
                                                     {{ formatCurrency(item.donGia) }}
                                                 </div>
                                             </td>
@@ -1196,7 +1199,7 @@ onMounted(() => {
                                                         @click="decrementQuantity(item)">
                                                         <v-icon size="14">mdi-minus</v-icon>
                                                     </v-btn>
-                                                    <span class="mx-2 font-weight-bold text-caption">{{ item.soLuong
+                                                    <span class="mx-2  text-caption">{{ item.soLuong
                                                     }}</span>
                                                     <v-btn icon size="x-small" variant="text" density="comfortable"
                                                         :disabled="updatingItems" @click="incrementQuantity(item)">
@@ -1222,12 +1225,12 @@ onMounted(() => {
                             <div class="pa-5 border-t bg-slate-50">
                                 <div class="d-flex justify-space-between align-center mb-1">
                                     <span class="text-caption text-slate-500">Tạm tính:</span>
-                                    <span class="text-subtitle-2 font-weight-bold">{{ formatCurrency(order.tongTien)
+                                    <span class="text-subtitle-2">{{ formatCurrency(order.tongTien)
                                     }}</span>
                                 </div>
                                 <div class="d-flex justify-space-between align-center">
                                     <span class="text-caption text-slate-500">Tổng cộng:</span>
-                                    <span class="text-h6 font-weight-bold text-primary">{{
+                                    <span class="text-h6  text-primary">{{
                                         formatCurrency(orderTotalAmount) }}</span>
                                 </div>
                             </div>
@@ -1236,9 +1239,9 @@ onMounted(() => {
                 </v-card-text>
                 <v-card-actions class="pa-6 border-t bg-slate-50">
                     <v-spacer></v-spacer>
-                    <v-btn variant="outlined" color="error" class="px-8 rounded-md font-weight-bold mr-2"
+                    <v-btn variant="outlined" color="error" class="px-8 rounded-md  mr-2"
                         @click="productsDialogOpen = false">Hủy</v-btn>
-                    <v-btn color="primary" variant="flat" class="px-8 rounded-md font-weight-bold text-white"
+                    <v-btn color="primary" variant="flat" class="px-8 rounded-md  text-white"
                         @click="productsDialogOpen = false">Hoàn tất</v-btn>
                 </v-card-actions>
             </v-card>
@@ -1394,19 +1397,26 @@ onMounted(() => {
     content: '';
     position: absolute;
     top: 50%;
-    height: 6px;
-    background: #10b981;
+    height: 3px;
+    background: #e2e8f0;
     transform: translateY(-50%);
     z-index: 1;
+    transition: background 0.4s ease;
+}
+
+.timeline-step.done .node-section::before,
+.timeline-step.done .node-section::after,
+.timeline-step.active .node-section::before {
+    background: #1e257c;
 }
 
 .node-section::before {
     left: 0;
-    right: calc(50% + 32px); /* 50% + half of 44px + 10px gap */
+    right: 50%;
 }
 
 .node-section::after {
-    left: calc(50% + 32px);
+    left: 50%;
     right: 0;
 }
 
@@ -1428,7 +1438,10 @@ onMounted(() => {
     filter: none;
 }
 
-.timeline-step.done .node,
+.timeline-step.done .node {
+    opacity: 1;
+}
+
 .timeline-step.done .timeline-info {
     opacity: 0.8;
 }
@@ -1467,32 +1480,26 @@ onMounted(() => {
 }
 
 .timeline-step.active .node {
-    border-color: #3b82f6 !important; /* Blue for active */
-    color: #3b82f6 !important;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    border-color: #1e257c !important;
+    color: #1e257c !important;
+    box-shadow: 0 0 0 4px rgba(30, 37, 124, 0.15);
     animation: timeline-pulse 2s infinite;
 }
 
 @keyframes timeline-pulse {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-    70% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(30, 37, 124, 0.4); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(30, 37, 124, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(30, 37, 124, 0); }
 }
 
 .timeline-step.done .node {
-    background: #ffffff !important;
-    color: #94a3b8 !important;
-    border-color: #e2e8f0 !important;
+    background: #1e257c !important;
+    color: #ffffff !important;
+    border-color: #1e257c !important;
 }
 
-.timeline-step.active .node {
-    /* Relying on global styles and bg- classes for colors */
-}
-
-.timeline-step.done .node {
-    background: #f8fafc;
-    color: #94a3b8;
-    border-color: #e2e8f0;
+.timeline-step.done .timeline-info .label {
+    color: #1e257c;
 }
 
 /* Removed old .line and .line.active-line classes as we use ::before now */
@@ -1511,14 +1518,21 @@ onMounted(() => {
 
 .timeline-info .label {
     font-weight: 700;
-    font-size: 13px;
+    font-size: 14.5px;
     color: #1e293b;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .timeline-info .note {
     font-size: 11px;
-    color: #64748b;
+    font-weight: 400;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+
+.timeline-info .text-caption {
+    font-size: 11px !important;
+    color: #94a3b8 !important;
 }
 
 /* Timeline Animation */

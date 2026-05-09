@@ -111,13 +111,11 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                     if (ctsp.getMauSac() != null) ctsp.getMauSac().getTen();
                     if (ctsp.getKichThuoc() != null) ctsp.getKichThuoc().getTen();
                     
-                    // Initialize collections
+                    // Initialize image collection (needed for product thumbnail)
                     if (ctsp.getAnhChiTietSanPhams() != null) {
                         ctsp.getAnhChiTietSanPhams().size();
                     }
-                    if (ctsp.getChiTietDotGiamGias() != null) {
-                        ctsp.getChiTietDotGiamGias().size();
-                    }
+                    // Note: chiTietDotGiamGias is @JsonIgnore — no need to initialize
                 }
             });
         }

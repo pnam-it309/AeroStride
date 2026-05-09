@@ -1,6 +1,7 @@
 package com.example.be.entity;
 
 import com.example.be.core.common.base.BaseCodeNameEntity;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
@@ -21,6 +22,7 @@ import java.math.BigDecimal;
     @AttributeOverride(name = "ma", column = @Column(name = "ma_dot_giam_gia")),
     @AttributeOverride(name = "ten", column = @Column(name = "ten_dot_giam_gia"))
 })
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class DotGiamGia extends BaseCodeNameEntity {
 
     @Column(name = "loai_giam_gia")

@@ -43,7 +43,7 @@ export const getOrderStatusMeta = (value) => {
                 key,
                 ordinal: 0,
                 text: 'Chưa xác nhận',
-                color: 'blue-grey-darken-1',
+                color: '#A52A2A',
                 chipClass: 'status-chip-unconfirmed',
                 icon: 'mdi-help-circle-outline'
             };
@@ -52,7 +52,7 @@ export const getOrderStatusMeta = (value) => {
                 key,
                 ordinal: 1,
                 text: 'Chờ xác nhận',
-                color: 'warning',
+                color: 'orange-darken-3',
                 chipClass: 'status-chip-pending',
                 icon: 'mdi-progress-clock'
             };
@@ -61,7 +61,7 @@ export const getOrderStatusMeta = (value) => {
                 key,
                 ordinal: 2,
                 text: 'Đã xác nhận',
-                color: 'info',
+                color: 'light-blue-darken-3',
                 chipClass: 'status-chip-confirmed',
                 icon: 'mdi-check-circle-outline'
             };
@@ -70,7 +70,7 @@ export const getOrderStatusMeta = (value) => {
                 key,
                 ordinal: 3,
                 text: 'Đang giao',
-                color: 'cyan',
+                color: 'cyan-darken-3',
                 chipClass: 'status-chip-delivering',
                 icon: 'mdi-truck-fast-outline'
             };
@@ -79,7 +79,7 @@ export const getOrderStatusMeta = (value) => {
                 key,
                 ordinal: 4,
                 text: 'Đã hoàn thành',
-                color: 'success',
+                color: 'green-darken-3',
                 chipClass: 'status-chip-completed',
                 icon: 'mdi-checkbox-marked-circle-outline'
             };
