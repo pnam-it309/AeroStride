@@ -18,6 +18,24 @@ const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
 
+// Helper to clean location names for better matching
+const cleanName = (s) => {
+    if (!s) return '';
+    return String(s).toLowerCase()
+        .replace(/^(thành phố|tỉnh|quận|huyện|phường|xã|thị xã|thị trấn|tp\.?|t\.?|q\.?|h\.?|x\.?)\s+/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+};
+
+const matchLocation = (list, name) => {
+    if (!name) return null;
+    const cleanN = cleanName(name);
+    if (cleanN.includes('hcm') || cleanN.includes('hồ chí minh')) {
+        return list.find(x => cleanName(x.name).includes('hồ chí minh') || cleanName(x.name).includes('hcm'));
+    }
+    return list.find(x => cleanName(x.name).includes(cleanN) || cleanN.includes(cleanName(x.name)));
+};
+
 const loading = ref(false);
 const saving = ref(false);
 const isEditMode = ref(false);
@@ -131,9 +149,63 @@ const loadCustomer = async (id) => {
         const data = await dichVuKhachHang.layChiTietKhachHang(id);
         customerForm.value = {
             ...data,
+            tinh: null,
+            thanhPho: null,
+            phuongXa: null,
             ma: data.ma || data.maKhachHang || '', // Đảm bảo luôn có trường 'ma' để dùng làm khóa tìm kiếm
         };
         isEditMode.value = true;
+
+        // Map string names to codes for v-autocomplete, or parse from full address string
+        if (data.tinh || data.thanhPho || data.phuongXa) {
+            if (provinces.value.length === 0) {
+                await fetchProvinces();
+            }
+            const province = provinces.value.find(p => cleanName(p.name) === cleanName(data.tinh) || p.code === data.tinh);
+            if (province) {
+                customerForm.value.tinh = province.code;
+                await fetchDistricts(province.code);
+                const district = districts.value.find(d => cleanName(d.name) === cleanName(data.thanhPho) || d.code === data.thanhPho);
+                if (district) {
+                    customerForm.value.thanhPho = district.code;
+                    await fetchWards(district.code);
+                    const ward = wards.value.find(w => cleanName(w.name) === cleanName(data.phuongXa) || w.code === data.phuongXa);
+                    if (ward) {
+                        customerForm.value.phuongXa = ward.code;
+                    }
+                }
+            }
+        } else {
+            let addressStr = data.diaChiChiTiet || data.diaChi || '';
+            if (addressStr && addressStr.includes(',')) {
+                const parts = addressStr.split(',').map(p => p.trim());
+                if (parts.length >= 4) {
+                    if (provinces.value.length === 0) {
+                        await fetchProvinces();
+                    }
+                    const pName = parts[parts.length - 1];
+                    const province = matchLocation(provinces.value, pName);
+                    if (province) {
+                        customerForm.value.tinh = province.code;
+                        await fetchDistricts(province.code);
+                        
+                        const dName = parts[parts.length - 2];
+                        const district = matchLocation(districts.value, dName);
+                        if (district) {
+                            customerForm.value.thanhPho = district.code;
+                            await fetchWards(district.code);
+                            
+                            const wName = parts[parts.length - 3];
+                            const ward = matchLocation(wards.value, wName);
+                            if (ward) {
+                                customerForm.value.phuongXa = ward.code;
+                                customerForm.value.diaChiChiTiet = parts.slice(0, parts.length - 3).join(', ');
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         // Đồng bộ danh sách địa chỉ (thử mọi trường có thể)
         const rawAddresses = data.listDiaChi || data.diaChis || data.diaChiList || [];
@@ -173,18 +245,39 @@ const handleSave = () => {
                 if (d) payload.thanhPho = d.name;
                 if (w) payload.phuongXa = w.name;
                 // validate address fields
-                if (!payload.tinh || !payload.thanhPho || !payload.phuongXa || !payload.diaChiChiTiet) {
-                    addNotification({
-                        title: 'Thiếu thông tin',
-                        subtitle: 'Vui lòng nhập đầy đủ địa chỉ',
-                        color: 'warning'
-                    });
-                    saving.value = false;
-                    return;
+                if (!isEditMode.value || listDiaChi.value.length === 0) {
+                    if (!payload.tinh || !payload.thanhPho || !payload.phuongXa || !payload.diaChiChiTiet) {
+                        addNotification({
+                            title: 'Thiếu thông tin',
+                            subtitle: 'Vui lòng nhập đầy đủ địa chỉ',
+                            color: 'warning'
+                        });
+                        saving.value = false;
+                        return;
+                    }
                 }
 
                 if (isEditMode.value) {
                     await dichVuKhachHang.capNhatKhachHang(route.params.id, payload);
+                    
+                    // Nếu là edit mode mà chưa có địa chỉ, tự động tạo địa chỉ từ form
+                    if (listDiaChi.value.length === 0 && payload.tinh && payload.thanhPho && payload.phuongXa && payload.diaChiChiTiet) {
+                        try {
+                            await dichVuKhachHang.taoDiaChi({
+                                idKhachHang: route.params.id,
+                                tinh: payload.tinh,
+                                thanhPho: payload.thanhPho,
+                                phuongXa: payload.phuongXa,
+                                diaChiChiTiet: payload.diaChiChiTiet,
+                                tenNguoiNhan: payload.ten || customerForm.value.ten,
+                                sdtNguoiNhan: payload.sdt || customerForm.value.sdt,
+                                laMacDinh: true
+                            });
+                        } catch (e) {
+                            console.error('Lỗi tự động tạo địa chỉ:', e);
+                        }
+                    }
+
                     addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật thông tin khách hàng', color: 'success' });
                 } else {
                     await dichVuKhachHang.taoKhachHang(payload);
@@ -312,6 +405,14 @@ const openAddrDialog = (item = null) => {
 };
 
 const saveAddress = async () => {
+    if (!addrForm.value.tenNguoiNhan || !addrForm.value.sdtNguoiNhan || !addrForm.value.tinh || !addrForm.value.thanhPho || !addrForm.value.phuongXa || !addrForm.value.diaChiChiTiet) {
+        addNotification({
+            title: 'Thiếu thông tin',
+            subtitle: 'Vui lòng nhập đầy đủ tất cả các trường bắt buộc',
+            color: 'warning'
+        });
+        return;
+    }
     try {
         const payload = { ...addrForm.value, idKhachHang: route.params.id };
         const p = provinces.value.find((x) => x.code === addrForm.value.tinh);
@@ -410,19 +511,12 @@ onMounted(() => {
 
         </div>
 
-
-        <v-row v-if="loading">
-            <v-col cols="12" class="text-center py-16">
-                <v-progress-circular indeterminate color="primary" size="64" width="6"></v-progress-circular>
-                <div class="mt-4 text-subtitle-1 font-weight-medium text-slate-500">Đang tải hồ sơ khách hàng...</div>
-            </v-col>
-        </v-row>
-
-        <v-row class="pb-16">
-            <v-col cols="12" lg="6">
+        <!-- Row 1: Personal Info & Portrait -->
+        <v-row class="mb-6 d-flex align-stretch">
+            <v-col cols="12" lg="8" class="d-flex">
                 <!-- Basic Info -->
-                <v-card class="filter-card elevation-0 mb-6">
-                    <v-card-text class="pa-8">
+                <v-card class="filter-card elevation-0 w-100 d-flex flex-column mb-0">
+                    <v-card-text class="pa-8 flex-grow-1">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
                                 <UserIcon class="text-primary" size="20" />
@@ -454,9 +548,17 @@ onMounted(() => {
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
-                                <v-text-field v-model="customerForm.ngaySinh" :readonly="isDetailView" type="date"
-                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
-                                    variant="outlined" density="compact" hide-details clearable></v-text-field>
+                                <v-text-field 
+                                v-model="customerForm.ngaySinh" 
+                                :readonly="isDetailView" 
+                                type="date"
+                                append-inner-icon="mdi-calendar" 
+                                @click:append-inner="openDatePicker"
+                                variant="outlined" 
+                                density="compact" 
+                                hide-details
+                                clearable
+                                ></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Giới tính</div>
@@ -468,10 +570,60 @@ onMounted(() => {
                         </v-row>
                     </v-card-text>
                 </v-card>
+            </v-col>
 
+            <v-col cols="12" lg="4" class="d-flex">
+                <v-card class="filter-card elevation-0 w-100 d-flex flex-column mb-0">
+                    <v-card-text class="pa-8 text-center flex-grow-1">
+                        <div class="section-header d-flex align-center mb-6 text-left">
+                            <div class="icon-blob bg-blue-lighten-5 mr-3">
+                                <v-icon color="primary" size="18">mdi-camera</v-icon>
+                            </div>
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Ảnh chân dung</span>
+                        </div>
+
+                        <div class="position-relative d-inline-block mx-auto mb-6">
+                            <v-avatar size="160" color="blue-lighten-5"
+                                class="border-xl border-white elevation-6 cursor-pointer avatar-hover transition-all overflow-hidden"
+                                @click="handleFileClick">
+                                <v-img :src="customerForm.hinhAnh || FB_DEFAULT_AVATAR" cover>
+                                    <template v-slot:placeholder>
+                                        <v-row class="fill-height ma-0" align="center" justify="center">
+                                            <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                                        </v-row>
+                                    </template>
+                                </v-img>
+                                <div v-if="uploading" class="upload-overlay d-flex align-center justify-center">
+                                    <v-progress-circular indeterminate size="40" color="white"
+                                        width="5"></v-progress-circular>
+                                </div>
+                            </v-avatar>
+                            <div v-if="!isDetailView" class="camera-icon-bubble" @click="handleFileClick">
+                                <v-icon color="white" size="20">mdi-camera-plus</v-icon>
+                            </div>
+                        </div>
+                        <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="onFileChange" />
+
+                        <div v-if="!isDetailView" class="text-left">
+                            <div class="field-label">Liên kết ảnh (URL)</div>
+                            <v-text-field v-if="!isDetailView" v-model="customerForm.hinhAnh"
+                                placeholder="Dán URL ảnh hoặc nhấn vào vòng tròn phía trên" variant="outlined"
+                                density="compact" hide-details class="font-weight-medium bg-slate-50"></v-text-field>
+                            <p class="text-caption font-weight-medium text-slate-400 mt-2 px-1">
+                                Gợi ý: Sử dụng ảnh .jpg hoặc .png chất lượng cao.
+                            </p>
+                        </div>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </v-row>
+
+        <!-- Row 2: Address Book & (Notes + Security) -->
+        <v-row class="pb-16 d-flex align-stretch">
+            <v-col cols="12" lg="8" class="d-flex">
                 <!-- Address Info Card -->
-                <v-card class="filter-card elevation-0 mb-6">
-                    <v-card-text class="pa-8">
+                <v-card class="filter-card elevation-0 w-100 d-flex flex-column mb-0">
+                    <v-card-text class="pa-8 flex-grow-1">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-amber-lighten-5 mr-3">
                                 <MapPinIcon class="text-amber-darken-3" size="20" />
@@ -485,7 +637,7 @@ onMounted(() => {
                             </v-btn>
                         </div>
 
-                        <div v-if="!isEditMode && !isDetailView" class="mb-4">
+                        <div v-if="(!isEditMode || listDiaChi.length === 0) && !isDetailView" class="mb-4">
                             <v-row>
                                 <v-col cols="12" md="4">
                                     <div class="field-label">Tỉnh / Thành phố *</div>
@@ -529,13 +681,7 @@ onMounted(() => {
                             </v-row>
                         </div>
 
-                        <div v-else-if="listDiaChi.length === 0"
-                            class="text-center py-12 bg-slate-50 rounded-xl border-dashed border">
-                            <v-icon size="48" color="slate-200">mdi-map-marker-off</v-icon>
-                            <div class="mt-2 text-slate-400 font-weight-medium">Chưa có địa chỉ nào được đăng ký</div>
-                        </div>
-
-                        <div v-else v-for="addr in listDiaChi" :key="addr.id"
+                        <div v-else-if="listDiaChi.length > 0" v-for="addr in listDiaChi" :key="addr.id"
                             class="mb-4 pa-5 border rounded-xl d-flex align-center gap-4 bg-white shadow-sm hover-addr-card transition-all">
                             <v-avatar color="primary" class="mr-2 elevation-2" size="36">
                                 <v-icon color="white" size="18">mdi-map-marker</v-icon>
@@ -570,9 +716,11 @@ onMounted(() => {
                         </div>
                     </v-card-text>
                 </v-card>
+            </v-col>
 
+            <v-col cols="12" lg="4" class="d-flex flex-column" style="gap: 24px">
                 <!-- Notes -->
-                <v-card class="filter-card elevation-0">
+                <v-card class="filter-card elevation-0 mb-0">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-slate-100 mr-3">
@@ -586,53 +734,9 @@ onMounted(() => {
                             rows="3" hide-details></v-textarea>
                     </v-card-text>
                 </v-card>
-            </v-col>
 
-            <v-col cols="12" lg="6">
-                <v-card class="filter-card elevation-0 mb-6">
-                    <v-card-text class="pa-8 text-center">
-                        <div class="section-header d-flex align-center mb-6 text-left">
-                            <div class="icon-blob bg-blue-lighten-5 mr-3">
-                                <v-icon color="primary" size="18">mdi-camera</v-icon>
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Ảnh chân dung</span>
-                        </div>
-
-                        <div class="position-relative d-inline-block mx-auto mb-6">
-                            <v-avatar size="160" color="blue-lighten-5"
-                                class="border-xl border-white elevation-6 cursor-pointer avatar-hover transition-all overflow-hidden"
-                                @click="handleFileClick">
-                                <v-img :src="customerForm.hinhAnh || FB_DEFAULT_AVATAR" cover>
-                                    <template v-slot:placeholder>
-                                        <v-row class="fill-height ma-0" align="center" justify="center">
-                                            <v-progress-circular indeterminate color="primary"></v-progress-circular>
-                                        </v-row>
-                                    </template>
-                                </v-img>
-                                <div v-if="uploading" class="upload-overlay d-flex align-center justify-center">
-                                    <v-progress-circular indeterminate size="40" color="white"
-                                        width="5"></v-progress-circular>
-                                </div>
-                            </v-avatar>
-                            <div v-if="!isDetailView" class="camera-icon-bubble" @click="handleFileClick">
-                                <v-icon color="white" size="20">mdi-camera-plus</v-icon>
-                            </div>
-                        </div>
-                        <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="onFileChange" />
-
-                        <div v-if="!isDetailView" class="text-left">
-                            <div class="field-label">Liên kết ảnh (URL)</div>
-                            <v-text-field v-if="!isDetailView" v-model="customerForm.hinhAnh"
-                                placeholder="Dán URL ảnh hoặc nhấn vào vòng tròn phía trên" variant="outlined"
-                                density="compact" hide-details class="font-weight-medium bg-slate-50"></v-text-field>
-                            <p class="text-caption font-weight-medium text-slate-400 mt-2 px-1">
-                                Gợi ý: Sử dụng ảnh .jpg hoặc .png chất lượng cao.
-                            </p>
-                        </div>
-                    </v-card-text>
-                </v-card>
-
-                <v-card class="filter-card elevation-0 bg-primary-lighten-5 border-primary-lighten-4">
+                <!-- Security -->
+                <v-card class="filter-card elevation-0 bg-primary-lighten-5 border-primary-lighten-4 flex-grow-1 d-flex flex-column justify-center mb-0">
                     <v-card-text class="pa-8">
                         <div class="d-flex align-center mb-4">
                             <v-icon color="primary" size="24" class="mr-3">mdi-shield-check</v-icon>
@@ -906,14 +1010,8 @@ onMounted(() => {
                 <v-card-actions class="pa-4 bg-grey-lighten-4">
                     <v-spacer></v-spacer>
                     <v-btn variant="text" class="text-none font-weight-medium" @click="addrDialog = false">Hủy</v-btn>
-                    <v-btn color="primary" variant="flat" class="px-6 text-none font-weight-medium rounded-lg"
-                        @click="saveAddress" :disabled="!addrForm.tenNguoiNhan ||
-                            !addrForm.sdtNguoiNhan ||
-                            !addrForm.tinh ||
-                            !addrForm.thanhPho ||
-                            !addrForm.phuongXa ||
-                            !addrForm.diaChiChiTiet
-                            ">Lưu địa chỉ</v-btn>
+                    <v-btn color="primary" variant="flat" class="px-6 text-none font-weight-medium rounded-lg text-white"
+                        @click="saveAddress">Lưu địa chỉ</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -965,13 +1063,23 @@ onMounted(() => {
 }
 
 :deep(.status-chip-active) {
-    background-color: #f0f1ff !important;
-    color: #1e257c !important;
-    font-weight: 700 !important;
+    background-color: #e8f5e9 !important;
+    color: #70c274 !important;
+    font-weight: 500 !important;
 }
 
 :deep(.status-chip-active .v-chip__content) {
-    color: #1e257c !important;
+    color: #206924 !important;
+}
+
+:deep(.status-chip-inactive) {
+    background-color: #efebe9 !important;
+    color: #c26d6d !important;
+    font-weight: 400 !important;
+}
+
+:deep(.status-chip-inactive .v-chip__content) {
+    color: #cf1616 !important;
 }
 
 :deep(.v-btn) {
@@ -1051,9 +1159,6 @@ onMounted(() => {
     align-items: center !important;
     justify-content: center !important;
 }
-</style>
-
-<style>
 /* 
    FORCE GLOBAL OVERRIDES FOR THIS PAGE 
    Sử dụng ID cụ thể để đảm bảo độ ưu tiên cao nhất, vượt qua mọi file CSS khác
@@ -1130,13 +1235,23 @@ onMounted(() => {
 }
 
 :deep(.status-chip-active) {
-    background-color: #f0f1ff !important;
-    color: #1e257c !important;
-    font-weight: 700 !important;
+    background-color: #e8f5e9 !important;
+    color: #70c274 !important;
+    font-weight: 500 !important;
 }
 
 :deep(.status-chip-active .v-chip__content) {
-    color: #1e257c !important;
+    color: #206924 !important;
+}
+
+:deep(.status-chip-inactive) {
+    background-color: #efebe9 !important;
+    color: #5d4037 !important;
+    font-weight: 400 !important;
+}
+
+:deep(.status-chip-inactive .v-chip__content) {
+    color: #5d4037 !important;
 }
 
 :deep(.v-btn) {
@@ -1216,9 +1331,6 @@ onMounted(() => {
     align-items: center !important;
     justify-content: center !important;
 }
-</style>
-
-<style>
 /* 
    FORCE GLOBAL OVERRIDES FOR THIS PAGE 
    Sử dụng ID cụ thể để đảm bảo độ ưu tiên cao nhất, vượt qua mọi file CSS khác
@@ -1261,13 +1373,9 @@ onMounted(() => {
     font-family: 'JetBrains Mono', monospace !important;
     font-size: 13px !important;
 }
-
-</style>
-
-<style>
 /* CSS Global để ẩn icon mặc định của trình duyệt */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="date"]::-webkit-inner-spin-button {
+:deep(input[type="date"]::-webkit-calendar-picker-indicator),
+:deep(input[type="date"]::-webkit-inner-spin-button) {
     display: none !important;
     -webkit-appearance: none !important;
 }
@@ -1278,4 +1386,7 @@ input[type="date"]::-webkit-inner-spin-button {
     opacity: 0.8 !important;
     color: #475569 !important;
 }
+
 </style>
+
+

@@ -317,16 +317,36 @@
     color: #ffffff !important;
 }
 
-.status-chip-confirmed, .status-chip-active {
-    background-color: #f0f1ff !important; /* Xanh cực nhạt */
-    color: #1e257c !important; /* Chữ xanh đậm chủ đạo */
+.status-chip-confirmed {
+    background-color: #f0f1ff !important;
+    color: #1e257c !important;
     font-weight: 400 !important;
 }
 
-.status-chip-cancelled, .status-chip-inactive {
-    background-color: #f8fafc !important; /* Xám cực nhạt */
+.status-chip-active {
+    background-color: #e8f5e9 !important;
+    color: #70c274 !important;
+    font-weight: 500 !important;
+    
+    .v-chip__content {
+        color: #206924 !important;
+    }
+}
+
+.status-chip-cancelled {
+    background-color: #f8fafc !important;
     color: #64748b !important;
     font-weight: 400 !important;
+}
+
+.status-chip-inactive {
+    background-color: #efebe9 !important;
+    color: #5d4037 !important;
+    font-weight: 400 !important;
+    
+    .v-chip__content {
+        color: #5d4037 !important;
+    }
 }
 
 
@@ -522,21 +542,30 @@
         white-space: nowrap;
         text-align: center;
         text-transform: none !important;
+
+        &.text-center {
+            text-align: center !important;
+        }
+        &.text-left {
+            text-align: left !important;
+        }
+        &.text-right {
+            text-align: right !important;
+        }
     }
 
     .data-cell {
-        padding: 0 16px !important; /* Sử dụng padding 0 cho top/bottom để height kiểm soát hoàn toàn */
+        padding: 10px 16px !important; /* Sử dụng padding thoáng cho top/bottom để tăng độ dễ nhìn khi nhiều dữ liệu */
         font-size: 13.5px !important;
         font-weight: 400 !important;
-        line-height: 1.5 !important;
+        line-height: 1.6 !important; /* Tăng độ giãn dòng nhẹ cho dữ liệu nhiều */
         color: #1d2025 !important;
         vertical-align: middle;
         border-bottom: 1px solid #f1f5f9;
         background: white;
         text-align: center;
-        height: 64px !important; /* Độ cao cố định tuyệt đối cho mọi module */
-        min-height: 64px !important;
-        max-height: 64px !important;
+        height: 76px !important; /* Tăng độ cao dòng lên 76px để thoáng hàng hơn */
+        min-height: 76px !important;
     }
 
     .data-row:hover .data-cell {

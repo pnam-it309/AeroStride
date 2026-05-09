@@ -1129,8 +1129,8 @@ const validateProduct = () => {
         ['idDanhMuc', 'Danh mục'],
         ['idXuatXu', 'Xuất xứ'],
         ['idChatLieu', 'Chất liệu'],
-        ['idDeGiay', 'Loại đế'],
-        ['idCoGiay', 'Loại cổ'],
+        ['idDeGiay', 'Loại đế giày'],
+        ['idCoGiay', 'Loại cổ giày'],
         ['idMucDichChay', 'Mục đích sử dụng']
     ];
 
@@ -1413,7 +1413,7 @@ const handleSave = async () => {
                     <BoxIcon size="18" class="mr-2" /> Quản lý biến thể
                 </v-btn>
                 <v-btn color="primary" variant="flat"
-                    class="text-none font-weight-black text-white px-8 rounded-lg h-11 elevation-4"
+                    class="text-none font-weight-medium text-white px-8 rounded-lg h-11 elevation-4"
                     :loading="saving" @click="handleSave">
                     <DeviceFloppyIcon size="18" class="mr-2 text-white" />
                     {{ submitButtonText }}
@@ -1438,9 +1438,7 @@ const handleSave = async () => {
                                     <InfoCircleIcon size="18" class="text-primary" />
                                 </div>
                                 <div>
-                                    <div class="text-h2 font-weight-black text-gradient-to-r from-blue-500 to-purple-600">
-                                         Thêm thông tin sản phẩm
-                                    </div>
+                                    <div class="text-subtitle-1 font-weight-bold text-slate-800">Thêm thông tin sản phẩm</div>
                                 </div>
                             </div>
 
@@ -1548,7 +1546,7 @@ const handleSave = async () => {
                                     <BoxIcon size="18" class="brand-logo-icon" />
                                 </div>
                                 <div>
-                                    <div class="text-subtitle-1 font-weight-black text-slate-800">Biến thể sản phẩm</div>
+                                    <div class="text-subtitle-1 font-weight-bold text-slate-800">Biến thể sản phẩm</div>
                                 </div>
                             </div>
 
@@ -1598,7 +1596,7 @@ const handleSave = async () => {
                                 </div>
                             </div>
 
-                            <v-btn block class="mt-8 create-generate-btn text-none font-weight-black text-white elevation-4"
+                            <v-btn block class="mt-6 create-generate-btn text-none text-white"
                                 color="primary" size="large" @click="generateVariants">
                                 <v-icon icon="mdi-auto-fix" size="20" class="mr-2" />
                                 Tạo biến thể tự động
@@ -1753,9 +1751,11 @@ const handleSave = async () => {
                         <template v-if="!isEditMode">
                             <div class="variant-gradient-header">
                                 <div class="d-flex align-center">
-                                    <v-icon icon="mdi-view-grid-plus-outline" size="18" class="mr-3" />
+                                    <div class="icon-blob bg-blue-lighten-5 mr-3">
+                                        <v-icon icon="mdi-view-grid-plus-outline" size="18" class="text-primary" />
+                                    </div>
                                     <div>
-                                        <div class="font-weight-bold">Danh sách biến thể</div>
+                                        <div class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách biến thể</div>
                                         <div class="text-caption variant-gradient-header__meta">
                                             {{ variantItems.length }} biến thể • Kho {{ totalVariantStock }}
                                         </div>
@@ -1763,12 +1763,12 @@ const handleSave = async () => {
                                 </div>
 
                                 <div class="d-flex align-center flex-wrap gradient-header-actions">
-                                    <v-btn variant="outlined" color="white" class="text-none rounded-pill action-btn-light"
+                                    <v-btn variant="outlined" color="primary" class="text-none rounded-pill"
                                         @click="applyBulkAllVariants">
                                         <v-icon icon="mdi-lightning-bolt-outline" size="16" class="mr-1" />
                                         Thêm nhanh tất cả
                                     </v-btn>
-                                    <v-btn variant="outlined" color="white" class="text-none rounded-pill action-btn-light"
+                                    <v-btn variant="outlined" color="error" class="text-none rounded-pill"
                                         @click="clearAllDraftVariants">
                                         <v-icon icon="mdi-delete-outline" size="16" class="mr-1" />
                                         Xóa tất cả
@@ -1932,10 +1932,10 @@ const handleSave = async () => {
                                     <div class="variant-empty-state__icon">
                                         <BoxIcon size="28" />
                                     </div>
-                                    <div class="text-subtitle-1 font-weight-bold text-slate-700 mt-4">
+                                    <div class="text-subtitle-2 font-weight-bold text-slate-700 mt-3">
                                         Chưa có biến thể nào được tạo
                                     </div>
-                                    <div class="text-body-2 text-slate-500 mt-2">
+                                    <div class="text-caption text-slate-500 mt-1">
                                         Chọn màu sắc và kích thước ở card bên phải, sau đó bấm <span class="font-weight-bold">Tạo biến thể tự động</span>.
                                     </div>
                                 </div>
@@ -1949,17 +1949,15 @@ const handleSave = async () => {
                                         <PhotoIcon size="18" class="text-cyan-darken-2" />
                                     </div>
                                     <div>
-                                        <div class="text-subtitle-1 font-weight-black text-slate-800">Biến thể sản phẩm</div>
-                                        
+                                        <div class="text-subtitle-1 font-weight-bold text-slate-800">
+                                            Biến thể sản phẩm / {{ variantItems.length }} biến thể
+                                        </div>
                                     </div>
                                 </div>
 
                             <div class="d-flex align-center flex-wrap section-toolbar__actions">
-                                <v-chip color="primary" variant="tonal" class="font-weight-bold">
-                                    {{ variantItems.length }} biến thể
-                                </v-chip>
                                 <v-btn color="primary" variant="flat"
-                                    class="text-none font-weight-black rounded-lg text-white px-6 h-11"
+                                    class="text-none font-weight-medium rounded-lg text-white px-6 h-11"
                                     @click="openCreateVariantModal">
                                     <PlusIcon size="18" class="mr-2 text-white" /> <span class="text-white">Thêm biến thể</span>
                                 </v-btn>
@@ -2007,8 +2005,8 @@ const handleSave = async () => {
                                             <v-icon size="20" class="mr-4 text-primary">mdi-cash-multiple</v-icon>
                                             <div class="flex-grow-1">
                                                 <div class="d-flex justify-space-between mb-2">
-                                                    <span class="text-caption font-weight-black text-slate-600">Lọc theo giá bán biến thể</span>
-                                                    <span class="text-caption font-weight-black text-primary">
+                                                    <span class="text-caption font-weight-medium text-slate-600">Lọc theo giá bán biến thể</span>
+                                                    <span class="text-caption font-weight-bold text-primary">
                                                         {{ formatCurrency(variantTableFilters.khoangGia[0]) }} - {{ formatCurrency(variantTableFilters.khoangGia[1]) }}
                                                     </span>
                                                 </div>
@@ -2016,23 +2014,9 @@ const handleSave = async () => {
                                                     :min="variantPriceBounds.min" :max="variantPriceBounds.max"
                                                     :step="variantPriceStep" hide-details color="primary"
                                                     track-color="slate-200"
+                                                    track-size="2"
+                                                    thumb-size="14"
                                                     @update:model-value="handleVariantSliderPriceChange" />
-                                                <v-row class="mt-1" dense>
-                                                    <v-col cols="12" sm="6">
-                                                        <div class="text-caption font-weight-bold text-slate-500 mb-1">Từ giá</div>
-                                                        <FormattedNumberField :model-value="variantTableFilters.khoangGia[0]"
-                                                            placeholder="0" variant="outlined" density="compact"
-                                                            hide-details class="bg-white"
-                                                            @update:model-value="updateVariantPriceBoundary('min', $event)" />
-                                                    </v-col>
-                                                    <v-col cols="12" sm="6">
-                                                        <div class="text-caption font-weight-bold text-slate-500 mb-1">Đến giá</div>
-                                                        <FormattedNumberField :model-value="variantTableFilters.khoangGia[1]"
-                                                            placeholder="0" variant="outlined" density="compact"
-                                                            hide-details class="bg-white"
-                                                            @update:model-value="updateVariantPriceBoundary('max', $event)" />
-                                                    </v-col>
-                                                </v-row>
                                             </div>
                                         </div>
                                     </v-col>
@@ -2041,15 +2025,30 @@ const handleSave = async () => {
                             <AdminTable v-if="variantItems.length > 0" title="Danh mục biến thể"
                                 :headers="variantTableHeaders" :items="paginatedVariantItems" :loading="loading"
                                 :show-add-button="false" class="mt-6 variant-admin-table">
+                                <template #headers>
+                                    <tr>
+                                        <th class="header-cell text-center" style="width: 70px;">
+                                            <v-checkbox-btn :model-value="allVisibleVariantsSelected"
+                                                :indeterminate="someVisibleVariantsSelected" color="primary" hide-details density="compact"
+                                                @update:model-value="toggleSelectVisibleVariants" />
+                                        </th>
+                                        <th class="header-cell text-center" style="width: 60px;">STT</th>
+                                        <th class="header-cell text-center" style="width: 80px;">Ảnh</th>
+                                        <th class="header-cell text-left" style="width: 140px;">Màu sắc</th>
+                                        <th class="header-cell text-left" style="width: 140px;">Kích thước</th>
+                                        <th class="header-cell text-left" style="width: 240px;">Mã SKU</th>
+                                        <th class="header-cell text-right" style="width: 110px;">Tồn kho</th>
+                                        <th class="header-cell text-right" style="width: 130px;">Giá bán</th>
+                                        <th class="header-cell text-center" style="width: 160px;">Trạng thái</th>
+                                        <th class="header-cell text-center" style="width: 120px;">Thao tác</th>
+                                    </tr>
+                                </template>
+
                                 <template #top>
                                     <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
                                         <div class="d-flex align-center flex-wrap gap-2">
-                                            <v-checkbox-btn :model-value="allVisibleVariantsSelected"
-                                                :indeterminate="someVisibleVariantsSelected" color="primary"
-                                                hide-details density="compact"
-                                                @update:model-value="toggleSelectVisibleVariants" />
-                                            <span class="text-caption font-weight-black text-slate-500">
-                                                đã chọn {{ selectedVariantKeys.length }} biến thể • tìm thấy {{ filteredVariantItems.length }} biến thể
+                                            <span class="text-caption font-weight-medium text-slate-500">
+                                                Đã chọn {{ selectedVariantKeys.length }} biến thể
                                             </span>
                                         </div>
 
@@ -2064,12 +2063,15 @@ const handleSave = async () => {
                                     </div>
                                 </template>
 
-                                <template #row="{ item: variant }">
+                                <template #row="{ item: variant, index }">
                                     <tr class="data-row">
                                         <td class="data-cell">
                                             <v-checkbox-btn :model-value="selectedVariantKeys.includes(getVariantKey(variant))"
                                                 color="primary" hide-details density="compact"
                                                 @update:model-value="toggleVariantSelection(getVariantKey(variant), $event)" />
+                                        </td>
+                                        <td class="data-cell text-center text-slate-500 font-weight-medium">
+                                            {{ (variantPage - 1) * variantPageSize + index + 1 }}
                                         </td>
                                         <td class="data-cell">
                                             <v-avatar rounded="lg" size="44" class="border bg-slate-50 shadow-sm avatar-hover">
@@ -2087,16 +2089,16 @@ const handleSave = async () => {
                                                 {{ getOptionLabel(sizes, variant.idKichThuoc) }}
                                             </div>
                                         </td>
-                                        <td class="data-cell mono-font text-slate-600">
+                                        <td class="data-cell text-slate-600">
                                             <div class="text-truncate" :title="getVariantSkuLabel(variant)">
                                                 {{ getVariantSkuLabel(variant) }}
                                             </div>
                                         </td>
                                         <td class="data-cell text-right font-weight-bold">
-                                            {{ formatNumber(variant.soLuong) }}
+                                            <span class="text-primary">{{ formatNumber(variant.soLuong) }}</span>
                                         </td>
-                                        <td class="data-cell text-right font-weight-bold text-primary">
-                                            {{ formatCurrency(variant.giaBan) }}
+                                        <td class="data-cell text-right font-weight-bold">
+                                            <span class="text-primary">{{ formatCurrency(variant.giaBan) }}</span>
                                         </td>
                                         <td class="data-cell text-center">
                                             <v-chip size="small"
@@ -2212,11 +2214,9 @@ const handleSave = async () => {
 }
 
 .create-config-preview__title {
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
     margin-bottom: 12px;
 }
 
@@ -2227,11 +2227,11 @@ const handleSave = async () => {
 }
 
 .create-generate-btn {
-    min-height: 48px;
-    border-radius: 12px !important;
-    font-weight: 900 !important;
+    min-height: 50px;
+    border-radius: 3px !important;
+    font-weight: 500 !important;
     letter-spacing: 0.5px;
-    box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.2) !important;
+    box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15) !important;
     text-transform: none !important;
 }
 
@@ -2241,14 +2241,14 @@ const handleSave = async () => {
     justify-content: space-between;
     gap: 16px;
     flex-wrap: wrap;
-    padding: 18px 24px;
-    border-radius: 22px 22px 0 0;
-    background: linear-gradient(90deg, #5AC8FA 0%, #0085DB 48%, #111C2D 100%);
-    color: #fff;
+    padding: 0 0 24px 0;
+    border: none;
+    background: transparent;
+    color: #1e293b;
 }
 
 .variant-gradient-header__meta {
-    color: rgba(255, 255, 255, 0.78);
+    color: #64748b;
 }
 
 .gradient-header-actions {
@@ -2256,14 +2256,13 @@ const handleSave = async () => {
 }
 
 .action-btn-light {
-    border-color: rgba(255, 255, 255, 0.28) !important;
-    color: #fff !important;
+    border-color: rgba(148, 163, 184, 0.16) !important;
+    color: #1e293b !important;
 }
 
 .variant-gradient-body {
-    border: 1px solid rgba(148, 163, 184, 0.16);
-    border-top: none;
-    border-radius: 0 0 22px 22px;
+    border: none;
+    border-radius: 0 0 12px 12px;
     padding: 24px;
     background: #fff;
 }
@@ -2430,7 +2429,7 @@ const handleSave = async () => {
 
 .variant-filter-label {
     font-size: 13px;
-    font-weight: 800;
+    font-weight: 600;
     color: #0f172a;
     margin-bottom: 8px;
 }

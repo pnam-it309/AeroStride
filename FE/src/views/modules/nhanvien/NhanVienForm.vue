@@ -490,6 +490,7 @@ onMounted(async () => {
                                     density="compact"
                                     hide-details
                                     clearable
+                                    class="date-input-small"
                                 ></v-text-field>
                             </v-col>
                             <v-col cols="12" md="4">
@@ -746,5 +747,11 @@ onMounted(async () => {
 :deep(input[type="date"]::-webkit-calendar-picker-indicator) {
     display: none;
     -webkit-appearance: none;
+}
+
+/* Chỉnh nhỏ lại icon lịch giống với form Khách hàng */
+:deep(.date-input-small .v-field__append-inner .v-icon) {
+    font-size: 16px !important;
+    opacity: 0.7 !important;
 }
 </style>

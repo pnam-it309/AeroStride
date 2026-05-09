@@ -79,8 +79,8 @@ const tableHeaders = [
     { text: 'Tên nhân viên', width: '130px', align: 'center' },
     { text: 'Tên tài khoản', width: '100px', align: 'center' },
     { text: 'Giới tính', width: '120px', align: 'center' },
-    { text: 'Thông tin liên hệ', width: '230px', align: 'start' },
-    { text: 'Địa chỉ', width: '200px', align: 'start' },
+    { text: 'Thông tin liên hệ', width: '230px', align: 'center' },
+    { text: 'Địa chỉ', width: '200px', align: 'center' },
     { text: 'Chức vụ', width: '120px', align: 'center' },
     { text: 'Trạng thái', width: '130px', align: 'center' },
     { text: 'Hành động', width: '130px', align: 'center' }
@@ -420,9 +420,15 @@ onMounted(() => {
     vertical-align: middle !important;
 }
 
-.data-row {
-    height: 56px !important;
+.contact-cell {
+    text-align: left !important;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
 }
+
+
 
 .data-cell.font-weight-bold {
     font-weight: 400 !important;
