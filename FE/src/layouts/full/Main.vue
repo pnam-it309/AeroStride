@@ -42,8 +42,8 @@ const sidebarMenu = shallowRef(sidebarItems);
         <div class="sidebar-logo-wrap d-flex justify-center border-b" v-if="!sidebarCollapsed">
             <Logo />
         </div>
-        <div class="sidebar-logo-wrap d-flex justify-center border-b" v-else>
-            <v-avatar size="32" color="primary" class="rounded-0 text-white font-weight-black">A</v-avatar>
+        <div class="sidebar-logo-wrap d-flex justify-center border-b" v-else style="min-height: 64px; padding: 16px 0;">
+            <img src="@/assets/images/logos/logo.jpg" alt="logo" style="width: 32px; height: 32px; object-fit: contain;" />
         </div>
 
         <perfect-scrollbar class="scrollnavbar bg-containerBg" :style="{ height: 'calc(100vh - 136px)' }">

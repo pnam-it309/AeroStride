@@ -40,6 +40,7 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                     class="admin-btn-secondary" @click="$emit('export')">
                     {{ exportButtonText }}
                 </v-btn>
+                <slot name="extra-actions"></slot>
                 <v-btn v-if="showAddButton" prepend-icon="mdi-plus" variant="flat" color="primary"
                     class="add-btn-primary" @click="$emit('add')">
                     {{ addButtonText }}

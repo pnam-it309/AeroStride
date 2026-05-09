@@ -56,6 +56,9 @@ const addrForm = ref({
     laMacDinh: false
 });
 const isEditAddr = ref(false);
+const invoiceDetailDialog = ref(false);
+const selectedInvoice = ref(null);
+const detailLoading = ref(false);
 
 
 const customerForm = ref({

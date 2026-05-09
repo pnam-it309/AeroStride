@@ -148,4 +148,9 @@ const iconMap = {
 .leading-relaxed {
   line-height: 1.5;
 }
+
+:deep(.v-badge__wrapper .v-badge__badge) {
+  color: white !important;
+  font-weight: 700 !important;
+}
 </style>

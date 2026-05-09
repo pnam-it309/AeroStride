@@ -62,6 +62,54 @@ const purposes = ref([]);
 const colors = ref([]);
 const sizes = ref([]);
 
+// Theo dõi nội dung đang gõ trong các combobox
+const searchQueries = reactive({
+    idThuongHieu: '',
+    idXuatXu: '',
+    idDanhMuc: '',
+    idChatLieu: '',
+    idDeGiay: '',
+    idCoGiay: '',
+    idMucDichChay: ''
+});
+
+// Hàm tạo danh sách hiển thị với mục thêm nhanh ở đầu
+const getDisplayItems = (originalItems, query) => {
+    const trimmedQuery = query?.trim();
+    const normalizedQuery = normalizeSearchText(trimmedQuery);
+
+    // Lọc danh sách gốc trước
+    let filtered = originalItems;
+    if (normalizedQuery) {
+        filtered = originalItems.filter(item =>
+            normalizeSearchText(item.ten).includes(normalizedQuery)
+        );
+    }
+
+    if (!trimmedQuery) return filtered;
+
+    // Kiểm tra xem đã có item nào trùng hoàn toàn chưa
+    const existsExact = originalItems.some(item =>
+        normalizeSearchText(item.ten) === normalizedQuery
+    );
+
+    if (existsExact) return filtered;
+
+    // Chèn mục mới vào đầu danh sách đã lọc
+    return [
+        { id: trimmedQuery, ten: trimmedQuery, isNew: true },
+        ...filtered
+    ];
+};
+
+const displayBrands = computed(() => getDisplayItems(brands.value, searchQueries.idThuongHieu, 'idThuongHieu'));
+const displayOrigins = computed(() => getDisplayItems(origins.value, searchQueries.idXuatXu, 'idXuatXu'));
+const displayCategories = computed(() => getDisplayItems(categories.value, searchQueries.idDanhMuc, 'idDanhMuc'));
+const displayMaterials = computed(() => getDisplayItems(materials.value, searchQueries.idChatLieu, 'idChatLieu'));
+const displaySoles = computed(() => getDisplayItems(soles.value, searchQueries.idDeGiay, 'idDeGiay'));
+const displayCollars = computed(() => getDisplayItems(collars.value, searchQueries.idCoGiay, 'idCoGiay'));
+const displayPurposes = computed(() => getDisplayItems(purposes.value, searchQueries.idMucDichChay, 'idMucDichChay'));
+
 const selectedColors = ref([]);
 const selectedSizes = ref([]);
 const variantItems = ref([]);
@@ -194,7 +242,7 @@ const comboboxFilter = (itemTitle, queryText, item) => {
 
 const comboboxProps = {
     clearable: true,
-    autoSelectFirst: 'exact'
+    autoSelectFirst: false
 };
 
 const normalizeAttributeText = (value) => {
@@ -1457,66 +1505,123 @@ const handleSave = async () => {
                                 </v-col>
                                 <v-col cols="12" md="6">
                                     <div class="field-label">Thương hiệu <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idThuongHieu" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="brands" item-title="ten"
+                                    <v-combobox v-model="product.idThuongHieu" v-model:search="searchQueries.idThuongHieu" v-bind="comboboxProps"
+                                        :custom-filter="() => true" :items="displayBrands" item-title="ten"
                                         item-value="id" :rules="[rules.required]" placeholder="Chọn thương hiệu..."
                                         variant="outlined" density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"
-                                        @blur="() => handleAttributeFieldBlur('idThuongHieu')"></v-combobox>
+                                        @update:model-value="() => handleAttributeFieldBlur('idThuongHieu')"
+                                        @blur="() => handleAttributeFieldBlur('idThuongHieu')">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2 font-weight-bold text-white">Thuộc tính thêm nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="6">
                                     <div class="field-label">Xuất xứ <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idXuatXu" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="origins" item-title="ten" item-value="id"
+                                    <v-combobox v-model="product.idXuatXu" v-model:search="searchQueries.idXuatXu" v-bind="comboboxProps"
+                                        :custom-filter="() => true" :items="displayOrigins" item-title="ten" item-value="id"
                                         :rules="[rules.required]" placeholder="Chọn xuất xứ..." variant="outlined"
                                         density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"
-                                        @blur="() => handleAttributeFieldBlur('idXuatXu')"></v-combobox>
+                                        @blur="() => handleAttributeFieldBlur('idXuatXu')">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2 font-weight-bold text-white">Thuộc tính thêm nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="6">
                                     <div class="field-label">Danh mục <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idDanhMuc" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="categories" item-title="ten"
+                                    <v-combobox v-model="product.idDanhMuc" v-model:search="searchQueries.idDanhMuc" v-bind="comboboxProps"
+                                        :custom-filter="() => true" :items="displayCategories" item-title="ten"
                                         item-value="id" :rules="[rules.required]" placeholder="Chọn danh mục..."
                                         variant="outlined" density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc')"
-                                        @blur="() => handleAttributeFieldBlur('idDanhMuc')"></v-combobox>
+                                        @blur="() => handleAttributeFieldBlur('idDanhMuc')">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2 font-weight-bold text-white">Thuộc tính thêm nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="6">
                                     <div class="field-label">Chất liệu <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idChatLieu" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="materials" item-title="ten"
+                                    <v-combobox v-model="product.idChatLieu" v-model:search="searchQueries.idChatLieu" v-bind="comboboxProps"
+                                        :custom-filter="() => true" :items="displayMaterials" item-title="ten"
                                         item-value="id" :rules="[rules.required]" placeholder="Chọn chất liệu..."
                                         variant="outlined" density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"
-                                        @blur="() => handleAttributeFieldBlur('idChatLieu')"></v-combobox>
+                                        @blur="() => handleAttributeFieldBlur('idChatLieu')">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2 font-weight-bold text-white">Thuộc tính thêm nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="6">
                                     <div class="field-label">Loại đế <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idDeGiay" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="soles" item-title="ten" item-value="id"
+                                    <v-combobox v-model="product.idDeGiay" v-model:search="searchQueries.idDeGiay" v-bind="comboboxProps"
+                                        :custom-filter="() => true" :items="displaySoles" item-title="ten" item-value="id"
                                         :rules="[rules.required]" placeholder="Chọn loại đế..." variant="outlined"
                                         density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"
-                                        @blur="() => handleAttributeFieldBlur('idDeGiay')"></v-combobox>
+                                        @blur="() => handleAttributeFieldBlur('idDeGiay')">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2 font-weight-bold text-white">Thuộc tính thêm nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="6">
                                     <div class="field-label">Loại cổ <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idCoGiay" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="collars" item-title="ten" item-value="id"
+                                    <v-combobox v-model="product.idCoGiay" v-model:search="searchQueries.idCoGiay" v-bind="comboboxProps"
+                                        :custom-filter="() => true" :items="displayCollars" item-title="ten" item-value="id"
                                         :rules="[rules.required]" placeholder="Chọn loại cổ..." variant="outlined"
                                         density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"
-                                        @blur="() => handleAttributeFieldBlur('idCoGiay')"></v-combobox>
+                                        @blur="() => handleAttributeFieldBlur('idCoGiay')">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2 font-weight-bold text-white">Thuộc tính thêm nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                                 <v-col cols="12" md="6">
                                     <div class="field-label">Mục đích sử dụng <span class="text-red">*</span></div>
-                                    <v-combobox v-model="product.idMucDichChay" v-bind="comboboxProps"
-                                        :custom-filter="comboboxFilter" :items="purposes" item-title="ten"
+                                    <v-combobox v-model="product.idMucDichChay" v-model:search="searchQueries.idMucDichChay" v-bind="comboboxProps"
+                                        :custom-filter="() => true" :items="displayPurposes" item-title="ten"
                                         item-value="id" :rules="[rules.required]" placeholder="Chọn mục đích..."
                                         variant="outlined" density="comfortable" :return-object="false"
                                         @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"
-                                        @blur="() => handleAttributeFieldBlur('idMucDichChay')"></v-combobox>
+                                        @blur="() => handleAttributeFieldBlur('idMucDichChay')">
+                                        <template #item="{ props, item }">
+                                            <v-list-item v-bind="props">
+                                                <template #append v-if="item.raw.isNew">
+                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2 font-weight-bold text-white">Thuộc tính thêm nhanh</v-chip>
+                                                </template>
+                                            </v-list-item>
+                                        </template>
+                                    </v-combobox>
                                 </v-col>
                                 <v-col cols="12">
                                     <div class="field-label">Đối tượng sử dụng <span class="text-red">*</span></div>
@@ -1560,6 +1665,7 @@ const handleSave = async () => {
                                     </div>
                                     <v-select v-model="selectedColors" :items="colors" item-title="ten" item-value="id"
                                         multiple chips closable-chips variant="outlined" density="comfortable"
+                                        :chip-props="{ variant: 'outlined', color: 'primary', class: 'font-weight-bold' }"
                                         hide-details placeholder="Chọn màu sắc"></v-select>
                                 </v-col>
                                 <v-col cols="12">
@@ -1571,6 +1677,7 @@ const handleSave = async () => {
                                     </div>
                                     <v-select v-model="selectedSizes" :items="sizes" item-title="ten" item-value="id"
                                         multiple chips closable-chips variant="outlined" density="comfortable"
+                                        :chip-props="{ variant: 'outlined', color: 'primary', class: 'font-weight-bold' }"
                                         hide-details placeholder="Chọn kích thước"></v-select>
                                 </v-col>
                                 <v-col cols="12">

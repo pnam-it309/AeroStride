@@ -168,7 +168,7 @@ const setMainImage = async (imgId) => {
         <div>
             <div class="d-flex align-center gap-2 mb-1">
                 <v-icon icon="mdi-package-variant" size="18" color="primary" />
-                <h2 class="text-h6 text-slate-900 mb-0" style="font-size: 1.15rem !important;">Quản lý nâng cao</h2>
+                <h2 class="text-h6 text-slate-900 mb-0" style="font-size: 1.15rem !important;">Quản lý hình ảnh</h2>
             </div>
             <p class="text-primary" style="font-size: 13px !important;">{{ variant.maChiTietSanPham }}</p>
         </div>
@@ -212,10 +212,6 @@ const setMainImage = async (imgId) => {
 
         <!-- Custom Styled Tabs -->
         <v-tabs v-model="activeTab" color="primary" align-tabs="start" class="mb-6 mb-tabs-border" grow hide-slider>
-            <v-tab :value="0" class="custom-tab px-6" rounded="lg" style="font-size: 13px !important;">
-                <SettingsIcon size="18" class="mr-2" /> 
-                <span>Trạng thái</span>
-            </v-tab>
             <v-tab :value="1" class="custom-tab px-6" rounded="lg" style="font-size: 13px !important;">
                 <PhotoIcon size="18" class="mr-2" /> 
                 <span>Hình ảnh</span>
@@ -223,51 +219,6 @@ const setMainImage = async (imgId) => {
         </v-tabs>
 
         <v-window v-model="activeTab">
-            <!-- TAB 0: STATUS & OPS -->
-            <v-window-item :value="0">
-                <div class="space-y-6">
-                    <div class="form-group">
-                        <label class="drawer-label d-block mb-3" style="font-size: 13px !important;">Hiển thị trên gian hàng</label>
-                        <v-select
-                            v-model="formData.trangThai"
-                            :items="[
-                                { title: 'Đang hoạt động (Hiển thị)', value: 'DANG_HOAT_DONG' },
-                                { title: 'Ngừng hoạt động (Ẩn)', value: 'KHONG_HOAT_DONG' }
-                            ]"
-                            variant="outlined"
-                            density="comfortable"
-                            hide-details
-                            class="rounded-xl custom-select"
-                        >
-                            <template #prepend-inner>
-                                <v-icon icon="mdi-eye-outline" size="20" class="text-slate-400 mr-2" />
-                            </template>
-                        </v-select>
-                    </div>
-
-                    <div class="info-banner rounded-xl bg-primary-lighten-5 border border-primary-lighten-4 pa-4">
-                        <div class="d-flex gap-3 text-primary-darken-1">
-                            <v-icon icon="mdi-information-variant" size="20" class="mt-0-5" />
-                            <div style="font-size: 13px !important;">
-                                Việc thay đổi trạng thái sẽ cập nhật ngay lập tức khả năng hiển thị của SKU này với khách hàng. Hãy chắc chắn số lượng tồn kho là chính xác.
-                            </div>
-                        </div>
-                    </div>
-
-                    <v-btn 
-                        block 
-                        color="primary" 
-                        height="52" 
-                        class="rounded-xl shadow-lg hover-lift mt-4 text-white-force" 
-                        style="font-size: 13px !important;"
-                        :loading="submitting" 
-                        @click="handleUpdateStatus"
-                    >
-                        Lưu thay đổi trạng thái
-                    </v-btn>
-                </div>
-            </v-window-item>
-
             <!-- TAB 1: IMAGE GALLERY -->
             <v-window-item :value="1">
                 <!-- Advanced Upload Zone -->

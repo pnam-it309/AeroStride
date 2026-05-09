@@ -217,9 +217,17 @@ const fetchProductOptions = async () => {
 const loadMaxPrice = async () => {
   try {
     const maxPrice = await dichVuSanPham.layGiaLonNhat()
-    if (maxPrice) {
-      dynamicMaxPrice.value = Math.max(maxPrice, VARIANT_PRICE_STEP)
-      filters.khoangGia = [MIN_VARIANT_PRICE, dynamicMaxPrice.value]
+    if (maxPrice !== undefined && maxPrice !== null) {
+      const nextMax = Math.max(maxPrice, VARIANT_PRICE_STEP)
+      const oldMax = dynamicMaxPrice.value
+      
+      // Cập nhật giá trị Max mới
+      dynamicMaxPrice.value = nextMax
+      
+      // Nếu người dùng đang để thanh trượt ở mức Max cũ, tự động đẩy lên Max mới
+      if (filters.khoangGia[1] === oldMax || filters.khoangGia[1] > nextMax) {
+        filters.khoangGia = [filters.khoangGia[0], nextMax]
+      }
     }
   } catch (error) {
     console.error('Error loading max price:', error)
@@ -357,7 +365,10 @@ const handleVariantSubmit = (payload) => {
 
         closeVariantModal()
         confirmDialog.value.show = false
-        await fetchSelectedProduct(selectedProductId.value)
+        await Promise.all([
+          fetchSelectedProduct(selectedProductId.value),
+          loadMaxPrice()
+        ])
       } catch (error) {
         console.error(error)
         addNotification({
@@ -722,6 +733,13 @@ onMounted(async () => {
         { text: 'Thao tác', width: '200px' }
       ]" :items="paginatedVariants" :loading="loading" :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'"
         addButtonText="Tạo mới" @add="openCreateVariantModal" class="h-100">
+        
+        <template #extra-actions>
+          <v-btn prepend-icon="mdi-qrcode-scan" variant="flat" color="primary"
+            class="add-btn-primary text-none font-weight-bold" @click="showQrScanner = true">
+            Quét mã QR
+          </v-btn>
+        </template>
 
         <template #headers>
           <tr>
@@ -873,7 +891,7 @@ onMounted(async () => {
 
         <div class="d-flex justify-end gap-2">
           <v-btn variant="text" @click="qrDialog.open = false">Đóng</v-btn>
-          <v-btn color="primary" variant="flat" @click="downloadCurrentQrCode">Tải mã QR</v-btn>
+          <v-btn color="primary" variant="flat" class="text-white" @click="downloadCurrentQrCode">Tải mã QR</v-btn>
         </div>
       </v-card>
     </v-dialog>

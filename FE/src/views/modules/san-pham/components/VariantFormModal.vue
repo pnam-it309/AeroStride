@@ -474,46 +474,52 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                         <v-col cols="12" md="4">
                             <div class="form-group h-100">
                                 <div class="mb-2 px-1">
-                                    <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
+                                    <span class="text-caption font-weight-bold text-slate-700 tracking-wider">
                                         Hình ảnh
                                     </span>
                                 </div>
-                                <div class="variant-image-panel border-dashed rounded-xl pa-4 bg-slate-50/50 h-100">
+                                <div class="variant-image-panel pa-0 position-relative overflow-hidden">
                                     <div class="variant-image-panel__preview">
-                                        <v-avatar rounded="xl" size="168" class="border bg-white shadow-sm">
-                                            <SafeProductImage v-if="formData.urlAnh" :src="formData.urlAnh"
-                                                :fallback-src="logoPlaceholder" alt="variant-preview" />
-                                            <div v-else class="fill-height d-flex align-center justify-center text-slate-300">
-                                                <PhotoIcon size="48" />
+                                        <div 
+                                            class="image-wrapper rounded-2xl cursor-pointer hover-lift transition-all w-100"
+                                            style="aspect-ratio: 1/1; position: relative; overflow: hidden; background-color: #f8fafc;"
+                                            @click="triggerFileInput"
+                                        >
+                                            <v-img v-if="formData.urlAnh" :src="formData.urlAnh"
+                                                cover class="fill-height w-100">
+                                                <template #placeholder>
+                                                    <div class="d-flex align-center justify-center fill-height">
+                                                        <v-progress-circular indeterminate color="primary" />
+                                                    </div>
+                                                </template>
+                                            </v-img>
+                                            <div v-else class="d-flex flex-column align-center justify-center fill-height text-slate-300">
+                                                <PhotoIcon size="84" stroke-width="1" class="mb-4 opacity-40" />
+                                                <span class="text-subtitle-1 font-weight-medium text-slate-400">Chưa có ảnh</span>
+                                                <span class="text-caption text-slate-400 mt-1 opacity-60">Nhấp vào đây để tải ảnh</span>
                                             </div>
-                                        </v-avatar>
+
+                                            <!-- Overlay when hovering -->
+                                            <div class="image-overlay d-flex align-center justify-center">
+                                                <v-icon color="white" size="32">mdi-camera-plus-outline</v-icon>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div class="variant-image-panel__body">
+                                    <div class="variant-image-panel__body mt-4">
                                         <input type="file" ref="fileInput" class="d-none" accept="image/*"
                                             @change="handleImageUpload" />
-
-                                        <div v-if="allowImageUpload" class="d-flex flex-wrap gap-2">
-                                            <v-btn variant="flat" color="primary" size="small"
-                                                class="rounded-lg text-none" :loading="uploadingImage"
-                                                @click="triggerFileInput">
-                                                <PlusIcon size="14" class="mr-1" />
-                                                {{ formData.urlAnh ? 'Thay thế ảnh' : 'Chọn ảnh' }}
-                                                <v-tooltip activator="parent" location="top" text="Tải ảnh mới cho biến thể" />
-                                            </v-btn>
-                                            <v-btn v-if="formData.urlAnh" variant="tonal" color="error" size="small"
-                                                class="rounded-lg text-none px-2" @click="formData.urlAnh = ''">
-                                                <TrashIcon size="14" />
-                                                <v-tooltip activator="parent" location="top" text="Xóa ảnh hiện tại" />
+                                        
+                                        <p class="text-center text-xs text-slate-400 leading-relaxed italic">
+                                            Sử dụng ảnh vuông (1:1) để có hiển thị tốt nhất trên website.
+                                        </p>
+                                        
+                                        <div v-if="formData.urlAnh" class="d-flex justify-center mt-2">
+                                            <v-btn variant="text" color="error" density="compact" class="text-none" @click.stop="formData.urlAnh = ''">
+                                                <v-icon start size="14">mdi-trash-can-outline</v-icon>
+                                                Xóa ảnh
                                             </v-btn>
                                         </div>
-
-                                        <p v-if="allowImageUpload" class="text-caption text-slate-500 mt-3 line-height-tight">
-                                            Ảnh hiện tại sẽ được thay thế khi chọn ảnh mới và bấm cập nhật.
-                                        </p>
-                                        <p v-else class="text-caption text-slate-500 mt-3 line-height-tight">
-                                            Ảnh của biến thể đang được quản lý ở màn chi tiết biến thể để tránh ghi đè dữ liệu ngoài ý muốn.
-                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -524,7 +530,7 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
                                         <div class="d-flex align-center justify-space-between mb-2 px-1">
-                                            <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
+                                            <span class="text-caption font-weight-bold text-slate-700 tracking-wider">
                                                 Màu sắc
                                             </span>
                                             <v-btn variant="text" color="primary" density="compact"
@@ -547,7 +553,7 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
                                         <div class="mb-2 px-1">
-                                            <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
+                                            <span class="text-caption font-weight-bold text-slate-700 tracking-wider">
                                                 Số lượng tồn
                                             </span>
                                         </div>
@@ -561,7 +567,7 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
                                         <div class="mb-2 px-1">
-                                            <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
+                                            <span class="text-caption font-weight-bold text-slate-700 tracking-wider">
                                                 Kích thước
                                             </span>
                                         </div>
@@ -579,7 +585,7 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
                                         <div class="mb-2 px-1">
-                                            <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
+                                            <span class="text-caption font-weight-bold text-slate-700 tracking-wider">
                                                 Giá nhập (VNĐ)
                                             </span>
                                         </div>
@@ -592,7 +598,7 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                 <v-col cols="12">
                                     <div class="form-group">
                                         <div class="mb-2 px-1">
-                                            <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
+                                            <span class="text-caption font-weight-bold text-slate-700 tracking-wider">
                                                 Mã SKU
                                             </span>
                                         </div>

@@ -333,97 +333,34 @@ onMounted(() => loadOrders());
                     <v-tab :value="TAB_ALL" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-view-grid-outline</v-icon>
                         Tất cả
-                        <v-avatar
-                            v-if="hasCount(counts.all)"
-                            size="24"
-                            class="ml-2 tab-count-avatar tab-count-all font-weight-black"
-                        >
-                            {{ counts.all }}
-                        </v-avatar>
                     </v-tab>
                     <v-tab :value="0" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-help-circle-outline</v-icon>
                         Chưa xác nhận
-                        <v-avatar
-                            v-if="hasCount(counts.unconfirmed)"
-                            size="24"
-                            color="error"
-                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
-                        >
-                            {{ counts.unconfirmed }}
-                        </v-avatar>
                     </v-tab>
                     <v-tab :value="1" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-progress-clock</v-icon>
                         Chờ xác nhận
-                        <v-avatar
-                            v-if="hasCount(counts.pendingConfirmation)"
-                            size="24"
-                            color="error"
-                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
-                        >
-                            {{ counts.pendingConfirmation }}
-                        </v-avatar>
                     </v-tab>
                     <v-tab :value="2" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-check-circle-outline</v-icon>
                         Đã xác nhận
-                        <v-avatar
-                            v-if="hasCount(counts.confirmed)"
-                            size="24"
-                            color="error"
-                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
-                        >
-                            {{ counts.confirmed }}
-                        </v-avatar>
                     </v-tab>
                     <v-tab :value="3" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-truck-fast-outline</v-icon>
                         Đang giao
-                        <v-avatar
-                            v-if="hasCount(counts.delivering)"
-                            size="24"
-                            color="error"
-                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
-                        >
-                            {{ counts.delivering }}
-                        </v-avatar>
                     </v-tab>
                     <v-tab :value="4" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-checkbox-marked-circle-outline</v-icon>
                         Hoàn thành
-                        <v-avatar
-                            v-if="hasCount(counts.completed)"
-                            size="24"
-                            color="error"
-                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
-                        >
-                            {{ counts.completed }}
-                        </v-avatar>
                     </v-tab>
                     <v-tab :value="5" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-close-circle-outline</v-icon>
                         Hủy
-                        <v-avatar
-                            v-if="hasCount(counts.cancelled)"
-                            size="24"
-                            color="error"
-                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
-                        >
-                            {{ counts.cancelled }}
-                        </v-avatar>
                     </v-tab>
                     <v-tab :value="6" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-cash-refund</v-icon>
                         Hoàn đơn
-                        <v-avatar
-                            v-if="hasCount(counts.returned)"
-                            size="24"
-                            color="error"
-                            class="ml-2 tab-count-avatar tab-count-status font-weight-black"
-                        >
-                            {{ counts.returned }}
-                        </v-avatar>
                     </v-tab>
                 </v-tabs>
             </template>
@@ -610,6 +547,10 @@ onMounted(() => loadOrders());
 .action-group {
     min-width: 64px;
 }
+.stt-cell {
+    text-align: center !important;
+}
+
 .stt-cell {
     text-align: center !important;
 }

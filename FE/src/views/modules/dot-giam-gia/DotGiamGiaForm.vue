@@ -5,6 +5,7 @@ import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { useNotifications } from '@/services/notificationService';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
+import AdminFilter from '@/components/common/AdminFilter.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import { CalendarIcon, GiftIcon, InfoCircleIcon, TagIcon, BoxIcon, SearchIcon, TrashIcon } from 'vue-tabler-icons';
 import { PATH } from '@/router/routePaths';
@@ -24,13 +25,26 @@ const selectionPage = ref(1);
 const selectionPageSize = ref(5);
 
 // --- PHẦN THÊM MỚI: Khởi tạo các biến lọc cho bảng dưới ---
+const dynamicMaxPrice = ref(100000000);
+const loadMaxPrice = async () => {
+    try {
+        const maxPrice = await dichVuDotGiamGia.layGiaLonNhat(); // Giả định service này có hoặc dùng dichVuSanPham
+        if (maxPrice !== undefined && maxPrice !== null) {
+            dynamicMaxPrice.value = Math.max(maxPrice, 50000);
+            detailFilters.value.khoangGia = [0, dynamicMaxPrice.value];
+        }
+    } catch (error) {
+        console.error('Error loading max price:', error);
+    }
+};
+
 const detailFilters = ref({
     thuongHieu: null,
     chatLieu: null,
     kichCo: null,
     mauSac: null,
     loaiSan: null,
-    khoangGia: [0, 100000000] 
+    khoangGia: [0, dynamicMaxPrice.value] 
 });
 
 // Pagination for Bottom Table (Selected Details)
@@ -44,7 +58,7 @@ const resetDetailFilters = () => {
         kichCo: null,
         mauSac: null,
         loaiSan: null,
-        khoangGia: [0, 100000000] 
+        khoangGia: [0, dynamicMaxPrice.value] 
     };
 };
 
@@ -197,7 +211,7 @@ const filteredSelectedDetails = computed(() => {
     
     // Lọc theo giá sau giảm (Chỉ lọc nếu dải giá bị thay đổi đáng kể)
     const minPrice = filters.khoangGia[0] || 0;
-    const maxPrice = filters.khoangGia[1] || 100000000;
+    const maxPrice = filters.khoangGia[1] || dynamicMaxPrice.value;
     
     result = result.filter(p => {
         const giaSauGiam = calculateDiscountedPrice(p.giaGoc || 0);
@@ -277,6 +291,7 @@ const removeAllSelected = () => {
 
 const init = async () => {
     try {
+        await loadMaxPrice();
         const data = await dichVuDotGiamGia.layDanhSachSanPhamApDung();
         products.value = (data || []).map((p, i) => ({
             ...p,
@@ -449,26 +464,20 @@ onMounted(init);
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách sản phẩm</span>
                         </div>
 
-                        <v-row class="mb-4 d-flex align-end" no-gutters>
-                            <v-col cols="12" sm="6" class="pr-sm-2">
+                        <AdminFilter title="Tìm kiếm sản phẩm" @refresh="searchQuery = ''; searchCode = ''; selectionPage = 1">
+                            <v-col cols="12" sm="5">
                                 <div class="field-label-small mb-1">Tên sản phẩm</div>
                                 <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
-                                    placeholder="Tìm tên..." variant="outlined" density="compact" hide-details
+                                    placeholder="Tìm theo tên sản phẩm..." variant="outlined" density="compact" hide-details
                                     class="compact-input"></v-text-field>
                             </v-col>
-                            <v-col cols="12" sm="5" class="px-sm-2">
+                            <v-col cols="12" sm="5">
                                 <div class="field-label-small mb-1">Mã sản phẩm</div>
                                 <v-text-field v-model="searchCode" prepend-inner-icon="mdi-barcode-scan"
-                                    placeholder="Tìm mã..." variant="outlined" density="compact" hide-details
+                                    placeholder="Tìm theo mã SKU..." variant="outlined" density="compact" hide-details
                                     class="compact-input"></v-text-field>
                             </v-col>
-                            <v-col cols="12" sm="1" class="pl-sm-1 d-flex align-center justify-end">
-                                <v-btn icon variant="tonal" color="primary" class="rounded-lg h-10 w-10 reset-btn" @click="searchQuery = ''; searchCode = ''; selectionPage = 1">
-                                    <v-icon size="20">mdi-refresh</v-icon>
-                                    <v-tooltip activator="parent" location="top">Làm mới bộ lọc</v-tooltip>
-                                </v-btn>
-                            </v-col>
-                        </v-row>
+                        </AdminFilter>
 
                         <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="height: 380px;">
                             <table class="native-admin-table">
@@ -559,59 +568,46 @@ onMounted(init);
                             </v-btn>
                         </div>
 
-                        <!-- Bộ lọc sản phẩm chi tiết -->
-                        <div class="detail-filter-shell mb-6">
-                            <div class="detail-filter-header">
-                                <v-icon size="16" class="mr-2" color="#64748b">mdi-filter-outline</v-icon>
-                                <span class="filter-title-label">Bộ lọc</span>
-                                <v-spacer></v-spacer>
-                                <v-btn variant="text" color="primary" density="compact" class="text-none px-2" @click="resetDetailFilters">
-                                    <v-icon size="16" class="mr-1">mdi-refresh</v-icon>
-                                    Làm mới
-                                </v-btn>
-                            </div>
-                            <div class="detail-filter-body">
-                                <div class="d-flex align-center" style="gap: 4px;">
-                                    <div class="flex-grow-1">
-                                        <div class="filter-field-label">Thương hiệu</div>
-                                        <v-select v-model="detailFilters.thuongHieu" :items="['Adidas', 'Nike']"
-                                            density="compact" variant="outlined" hide-details clearable
-                                            placeholder="Thương hiệu" class="compact-input"></v-select>
+                        <!-- Bộ lọc sản phẩm chi tiết sử dụng AdminFilter chuẩn -->
+                        <AdminFilter title="Bộ lọc sản phẩm" @refresh="resetDetailFilters">
+                            <v-col cols="12" sm="3">
+                                <div class="field-label-small mb-1">Thương hiệu</div>
+                                <v-select v-model="detailFilters.thuongHieu" :items="['Adidas', 'Nike']"
+                                    density="compact" variant="outlined" hide-details clearable
+                                    placeholder="Thương hiệu" class="compact-input"></v-select>
+                            </v-col>
+                            <v-col cols="12" sm="3">
+                                <div class="field-label-small mb-1">Chất liệu</div>
+                                <v-select v-model="detailFilters.chatLieu" :items="['Da', 'Vải', 'Vải dệt']"
+                                    density="compact" variant="outlined" hide-details clearable
+                                    placeholder="Chất liệu" class="compact-input"></v-select>
+                            </v-col>
+                            <v-col cols="12" sm="3">
+                                <div class="field-label-small mb-1">Kích cỡ</div>
+                                <v-select v-model="detailFilters.kichCo" :items="[39, 40, 41, 42, 43]"
+                                    density="compact" variant="outlined" hide-details clearable
+                                    placeholder="Kích cỡ" class="compact-input"></v-select>
+                            </v-col>
+                            <v-col cols="12" sm="3">
+                                <div class="field-label-small mb-1">Màu sắc</div>
+                                <v-select v-model="detailFilters.mauSac" :items="['Đen', 'Trắng', 'Xám', 'Xanh dương', 'Xanh lá']"
+                                    density="compact" variant="outlined" hide-details clearable
+                                    placeholder="Màu sắc" class="compact-input"></v-select>
+                            </v-col>
+                            
+                            <v-col cols="12" class="mt-4">
+                                <div class="d-flex align-center justify-space-between mb-2">
+                                    <div class="d-flex align-center gap-2">
+                                        <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
+                                        <span class="text-caption font-weight-bold text-slate-600">Lọc theo giá sau giảm</span>
                                     </div>
-                                    <div class="flex-grow-1">
-                                        <div class="filter-field-label">Chất liệu</div>
-                                        <v-select v-model="detailFilters.chatLieu" :items="['Da', 'Vải', 'Vải dệt']"
-                                            density="compact" variant="outlined" hide-details clearable
-                                            placeholder="Chất liệu" class="compact-input"></v-select>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="filter-field-label">Kích cỡ</div>
-                                        <v-select v-model="detailFilters.kichCo" :items="[39, 40, 41, 42, 43]"
-                                            density="compact" variant="outlined" hide-details clearable
-                                            placeholder="Kích cỡ" class="compact-input"></v-select>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="filter-field-label">Màu sắc</div>
-                                        <v-select v-model="detailFilters.mauSac" :items="['Đen', 'Trắng', 'Xám', 'Xanh dương', 'Xanh lá']"
-                                            density="compact" variant="outlined" hide-details clearable
-                                            placeholder="Màu sắc" class="compact-input"></v-select>
-                                    </div>
+                                    <span class="price-range-value text-primary font-weight-bold">{{ formatCurrency(detailFilters.khoangGia[0]) }} – {{ formatCurrency(detailFilters.khoangGia[1]) }}</span>
                                 </div>
-
-                                <div class="price-range-row">
-                                    <div class="d-flex align-center justify-space-between mb-2">
-                                        <div class="d-flex align-center gap-2">
-                                            <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
-                                            <span class="filter-field-label mb-0" style="margin-bottom: 0 !important;">Lọc theo giá sau giảm</span>
-                                        </div>
-                                        <span class="price-range-value">{{ formatCurrency(detailFilters.khoangGia[0]) }} – {{ formatCurrency(detailFilters.khoangGia[1]) }}</span>
-                                    </div>
-                                    <v-range-slider v-model="detailFilters.khoangGia" :max="5000000" :min="0"
-                                        :step="100000" hide-details color="primary" track-color="#e2e8f0"
-                                        thumb-size="18" class="blue-range-slider"></v-range-slider>
-                                </div>
-                            </div>
-                        </div>
+                                <v-range-slider v-model="detailFilters.khoangGia" :max="dynamicMaxPrice" :min="0"
+                                    :step="10000" hide-details color="primary" track-color="#e2e8f0"
+                                    thumb-size="18" class="blue-range-slider"></v-range-slider>
+                            </v-col>
+                        </AdminFilter>
 
                         <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="max-height: 400px;">
                             <table class="native-admin-table">
