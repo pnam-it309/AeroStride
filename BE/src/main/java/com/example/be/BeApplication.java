@@ -11,30 +11,36 @@ import org.springframework.scheduling.annotation.EnableAsync;
 public class BeApplication {
 
     public static void main(String[] args) {
+        System.err.println("[AeroStride] Initializing environment...");
+        System.out.println("ENVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
         // Load environment variables from BE/env/.env.dev or env/.env.dev
-        Dotenv dotenv = Dotenv.configure()
-                .directory("env")
-                .filename(".env.dev")
-                .ignoreIfMissing()
-                .load();
+        Dotenv dotenv = null;
+        String[] paths = {"env", "BE/env", "."};
 
-        // If not found in ./env, try ./BE/env (when running from project root)
-        if (dotenv.entries().isEmpty()) {
-            dotenv = Dotenv.configure()
-                    .directory("BE/env")
-                    .filename(".env.dev")
-                    .ignoreIfMissing()
-                    .load();
+        for (String path : paths) {
+            try {
+                dotenv = Dotenv.configure()
+                        .directory(path)
+                        .filename(".env.dev")
+                        .load();
+                System.err.println("[AeroStride] SUCCESS: Loaded .env.dev from " + path + " (" + dotenv.entries().size() + " entries)");
+                break;
+            } catch (Exception e) {
+                System.err.println("[AeroStride] INFO: Could not load from " + path + "/.env.dev");
+            }
         }
 
-        // Populate system properties only if not already set by environment variables
-        for (DotenvEntry entry : dotenv.entries()) {
-            if (System.getProperty(entry.getKey()) == null && System.getenv(entry.getKey()) == null) {
-                System.setProperty(entry.getKey(), entry.getValue());
+        if (dotenv == null) {
+            System.err.println("[AeroStride] ERROR: Could not find .env.dev in any standard location!");
+        } else {
+            for (DotenvEntry entry : dotenv.entries()) {
+                // Set system property if not exists or if it's a critical app property
+                if (System.getProperty(entry.getKey()) == null || entry.getKey().startsWith("SPRING_") || entry.getKey().startsWith("JWT_")) {
+                    System.setProperty(entry.getKey(), entry.getValue());
+                }
             }
         }
 
         SpringApplication.run(BeApplication.class, args);
     }
-
 }
