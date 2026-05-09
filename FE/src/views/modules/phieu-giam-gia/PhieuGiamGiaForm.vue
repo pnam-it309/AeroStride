@@ -128,6 +128,17 @@ const formatDate = (value) => {
     return date.toLocaleDateString('vi-VN');
 };
 
+// Hàm đồng bộ mở trình chọn ngày khi bấm vào icon
+const openDatePicker = (event) => {
+    const container = event.target.closest('.v-input');
+    // Tìm cả input date và datetime-local
+    const input = container ? container.querySelector('input[type="date"], input[type="datetime-local"]') : null;
+    if (input) {
+        if (typeof input.showPicker === 'function') input.showPicker();
+        else input.click();
+    }
+};
+
 const init = async () => {
     try {
         const data = await dichVuKhachHang.layTatCaKhachHang();
@@ -358,13 +369,15 @@ onMounted(init);
                                 <div class="field-label">Ngày bắt đầu</div>
                                 <v-text-field v-model="form.ngayBatDau" :readonly="isViewOnly"
                                     type="datetime-local" variant="outlined" density="compact"
-                                    hide-details></v-text-field>
+                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
+                                    class="date-field" hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12">
                                 <div class="field-label">Ngày kết thúc</div>
                                 <v-text-field v-model="form.ngayKetThuc" :readonly="isViewOnly"
                                     type="datetime-local" variant="outlined" density="compact"
-                                    hide-details></v-text-field>
+                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
+                                    class="date-field" hide-details></v-text-field>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -398,14 +411,14 @@ onMounted(init);
                                 <v-text-field v-model="filterStartDate" type="date" variant="outlined"
                                     density="compact" hide-details rounded="xl"
                                     class="compact-input date-field"
-                                    append-inner-icon="mdi-calendar"></v-text-field>
+                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="filter-field-label" style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Đến ngày</div>
                                 <v-text-field v-model="filterEndDate" type="date" variant="outlined"
                                     density="compact" hide-details rounded="xl"
                                     class="compact-input date-field"
-                                    append-inner-icon="mdi-calendar"></v-text-field>
+                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"></v-text-field>
                             </v-col>
                         </AdminFilter>
 
@@ -544,5 +557,21 @@ onMounted(init);
         margin-top: 24px !important;
         padding-inline-start: 12px !important;
     }
+}
+
+/* CSS Đồng bộ ẩn icon mặc định trình duyệt cho cả date và datetime-local */
+:deep(input[type="date"]::-webkit-calendar-picker-indicator),
+:deep(input[type="date"]::-webkit-inner-spin-button),
+:deep(input[type="datetime-local"]::-webkit-calendar-picker-indicator),
+:deep(input[type="datetime-local"]::-webkit-inner-spin-button) {
+    display: none !important;
+    -webkit-appearance: none !important;
+}
+
+/* Giảm kích thước icon lịch chuẩn theo màn hình KH */
+:deep(.date-field .v-field__append-inner .v-icon) {
+    font-size: 18px !important;
+    opacity: 0.7;
+    color: #475569 !important;
 }
 </style>

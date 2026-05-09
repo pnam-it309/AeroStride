@@ -546,7 +546,7 @@ onMounted(() => {
                             <ChevronLeftIcon size="28" />
                         </v-btn>
                         <v-chip v-if="showStatusChip" variant="flat"
-                            :class="['font-weight-bold px-4 status-chip', getOrderStatusMeta(order.trangThai)?.chipClass]">
+                            :class="['px-4 status-chip', getOrderStatusMeta(order.trangThai)?.chipClass]">
                             {{ orderStatusLabel }}
                         </v-chip>
                     </div>
@@ -814,7 +814,7 @@ onMounted(() => {
                                         <!-- Column 1: Status -->
                                         <div style="width: 130px;" class="text-center">
                                             <v-chip size="small"
-                                                variant="flat" :class="['font-weight-bold status-chip', getStatusInfo(log.trangThaiMoi).chipClass]">
+                                                variant="flat" :class="['status-chip', getStatusInfo(log.trangThaiMoi).chipClass]">
                                                 {{ getStatusInfo(log.trangThaiMoi).text }}
                                             </v-chip>
                                         </div>
@@ -849,7 +849,7 @@ onMounted(() => {
                                         <!-- Column 1: Status -->
                                         <div style="width: 130px;" class="text-center">
                                             <v-chip size="small"
-                                                variant="flat" :class="['font-weight-bold status-chip', getStatusInfo(initialHistoryLog.trangThaiMoi).chipClass]">
+                                                variant="flat" :class="['status-chip', getStatusInfo(initialHistoryLog.trangThaiMoi).chipClass]">
                                                 {{ getStatusInfo(initialHistoryLog.trangThaiMoi).text }}
                                             </v-chip>
                                         </div>

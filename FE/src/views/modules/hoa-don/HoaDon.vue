@@ -389,7 +389,7 @@ onMounted(() => loadOrders());
 
                     <td class="data-cell">
                         <v-chip
-                            :class="['font-weight-bold status-chip', getOrderTypeClass(item.loaiDon)]"
+                            :class="['status-chip', getOrderTypeClass(item.loaiDon)]"
                             variant="flat"
                             size="small"
                         >
@@ -410,7 +410,7 @@ onMounted(() => loadOrders());
                     <td class="data-cell status-cell">
                         <template v-if="getStatusMeta(item.trangThai)">
                             <v-chip
-                                :class="['font-weight-bold status-chip', getStatusMeta(item.trangThai).chipClass]"
+                                :class="['status-chip', getStatusMeta(item.trangThai).chipClass]"
                                 variant="flat"
                                 size="small"
                             >
@@ -467,7 +467,7 @@ onMounted(() => loadOrders());
                     </div>
                     <v-chip
                         v-if="getStatusMeta(selectedOrder.trangThai)"
-                        :class="['font-weight-bold px-6 status-chip', getStatusMeta(selectedOrder.trangThai).chipClass]"
+                        :class="['px-6 status-chip', getStatusMeta(selectedOrder.trangThai).chipClass]"
                         variant="flat"
                     >
                         <v-icon start size="18">{{ getStatusMeta(selectedOrder.trangThai).icon }}</v-icon>

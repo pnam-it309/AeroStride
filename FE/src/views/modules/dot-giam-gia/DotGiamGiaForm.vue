@@ -289,6 +289,16 @@ const removeAllSelected = () => {
     bottomTableSelection.value = [];
 };
 
+// Hàm đồng bộ mở trình chọn ngày giờ khi bấm vào icon (giống màn NV/KH)
+const openDatePicker = (event) => {
+    const container = event.target.closest('.v-input');
+    const input = container ? container.querySelector('input[type="datetime-local"]') : null;
+    if (input) {
+        if (typeof input.showPicker === 'function') input.showPicker();
+        else input.click();
+    }
+};
+
 const init = async () => {
     try {
         await loadMaxPrice();
@@ -442,13 +452,17 @@ onMounted(init);
                         <div class="mb-5">
                             <div class="field-label">Ngày bắt đầu <span class="text-red">*</span></div>
                             <v-text-field v-model="form.ngayBatDau" :readonly="isDetailView" type="datetime-local"
-                                variant="outlined" density="comfortable" hide-details></v-text-field>
+                                append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
+                                variant="outlined" density="comfortable" hide-details
+                                class="date-field"></v-text-field>
                         </div>
 
                         <div class="mb-6">
                             <div class="field-label">Ngày kết thúc <span class="text-red">*</span></div>
                             <v-text-field v-model="form.ngayKetThuc" :readonly="isDetailView" type="datetime-local"
-                                variant="outlined" density="comfortable" hide-details></v-text-field>
+                                append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
+                                variant="outlined" density="comfortable" hide-details
+                                class="date-field"></v-text-field>
                         </div>
                     </v-card-text>
                 </v-card>
@@ -514,21 +528,23 @@ onMounted(init);
                                                 {{ item.ten }}
                                             </td>
                                         </tr>
-                                        <!-- Variant rows -->
-                                        <tr v-if="expandedProductIds.includes(item.id)" v-for="variant in item.variants" :key="variant.id" class="variant-row bg-slate-50">
-                                            <td class="data-cell text-center"></td>
-                                            <td class="data-cell text-center">
-                                                <v-checkbox-btn :model-value="selectedVariantsIds.includes(variant.id)"
-                                                    @update:model-value="toggleVariantSelection(variant.id)" :readonly="isDetailView"
-                                                    color="primary" hide-details density="compact" class="d-inline-flex"></v-checkbox-btn>
-                                            </td>
-                                            <td class="data-cell text-center text-slate-500 font-weight-medium">
-                                                {{ variant.ma }}
-                                            </td>
-                                            <td class="data-cell text-center text-slate-500">
-                                                {{ variant.color }} - {{ variant.kichCo }} - {{ variant.chatLieu }}
-                                            </td>
-                                        </tr>
+                                         <!-- Variant rows -->
+                                         <tr v-if="expandedProductIds.includes(item.id)" v-for="variant in item.variants" :key="variant.id" class="variant-row bg-slate-50/50">
+                                             <td class="data-cell text-right pr-3">
+                                                 
+                                             </td>
+                                             <td class="data-cell text-center">
+                                                 <v-checkbox-btn :model-value="selectedVariantsIds.includes(variant.id)"
+                                                     @update:model-value="toggleVariantSelection(variant.id)" :readonly="isDetailView"
+                                                     color="primary" hide-details density="compact" class="d-inline-flex" style="margin-left: 80px !important;"></v-checkbox-btn>
+                                             </td>
+                                             <td class="data-cell text-center text-slate-500 font-weight-medium">
+                                                 {{ variant.ma }}
+                                             </td>
+                                             <td class="data-cell text-center text-slate-500">
+                                                 {{ variant.color }} - {{ variant.kichCo }} - {{ variant.chatLieu }}
+                                             </td>
+                                         </tr>
                                     </template>
                                 </tbody>
                             </table>
@@ -605,7 +621,7 @@ onMounted(init);
                                 </div>
                                 <v-range-slider v-model="detailFilters.khoangGia" :max="dynamicMaxPrice" :min="0"
                                     :step="10000" hide-details color="primary" track-color="#e2e8f0"
-                                    thumb-size="18" class="blue-range-slider"></v-range-slider>
+                                    track-size="3" thumb-size="14" class="blue-range-slider"></v-range-slider>
                             </v-col>
                         </AdminFilter>
 
@@ -657,7 +673,7 @@ onMounted(init);
                                         <td class="data-cell text-center">
                                             <div class="text-caption text-slate-400 text-decoration-line-through">{{
                                                 formatCurrency(item.giaGoc) }}</div>
-                                            <div class="text-error font-weight-bold">{{
+                                            <div class="discounted-price font-weight-bold">{{
                                                 formatCurrency(calculateDiscountedPrice(item.giaGoc)) }}</div>
                                         </td>
                                         <td class="data-cell text-center">
@@ -797,9 +813,19 @@ onMounted(init);
 }
 
 /* Blue range slider */
+:deep(.blue-range-slider .v-slider-track) {
+    height: 4px !important;
+}
+
+:deep(.blue-range-slider .v-slider-track__background),
+:deep(.blue-range-slider .v-slider-track__fill) {
+    height: 4px !important;
+    border-radius: 2px !important;
+}
+
 :deep(.blue-range-slider .v-slider-thumb .v-slider-thumb__surface) {
     background: #ffffff !important;
-    border: 2.5px solid #3b82f6 !important;
+    border: 2px solid #3b82f6 !important;
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
     transition: transform 0.15s ease, box-shadow 0.15s ease !important;
 }
@@ -905,5 +931,22 @@ onMounted(init);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     z-index: 2;
     white-space: nowrap;
+}
+.discounted-price {
+    color: #d42d2d !important; /* Deep bronze dark brown for premium price text */
+}
+
+/* CSS Đồng bộ ẩn icon mặc định trình duyệt */
+:deep(input[type="datetime-local"]::-webkit-calendar-picker-indicator),
+:deep(input[type="datetime-local"]::-webkit-inner-spin-button) {
+    display: none !important;
+    -webkit-appearance: none !important;
+}
+
+/* Giảm kích thước icon lịch chuẩn theo màn hình KH */
+:deep(.date-field .v-field__append-inner .v-icon) {
+    font-size: 18px !important;
+    opacity: 0.7;
+    color: #475569 !important;
 }
 </style>
