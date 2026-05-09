@@ -37,6 +37,17 @@ const detailFilters = ref({
 const bottomPage = ref(1);
 const bottomPageSize = ref(5);
 
+const resetDetailFilters = () => {
+    detailFilters.value = {
+        thuongHieu: null,
+        chatLieu: null,
+        kichCo: null,
+        mauSac: null,
+        loaiSan: null,
+        khoangGia: [0, 100000000] 
+    };
+};
+
 
 const isEditMode = computed(() => !!route.params.id && !route.path.includes('/detail'));
 const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật đợt giảm giá' : 'Thêm đợt giảm giá');
@@ -452,7 +463,7 @@ onMounted(init);
                                     class="compact-input"></v-text-field>
                             </v-col>
                             <v-col cols="12" sm="1" class="pl-sm-1 d-flex align-center justify-end">
-                                <v-btn icon variant="tonal" color="error" class="rounded-lg h-10 w-10 reset-btn" @click="searchQuery = ''; searchCode = ''; selectionPage = 1">
+                                <v-btn icon variant="tonal" color="primary" class="rounded-lg h-10 w-10 reset-btn" @click="searchQuery = ''; searchCode = ''; selectionPage = 1">
                                     <v-icon size="20">mdi-refresh</v-icon>
                                     <v-tooltip activator="parent" location="top">Làm mới bộ lọc</v-tooltip>
                                 </v-btn>
@@ -538,12 +549,12 @@ onMounted(init);
                                 <span class="text-primary ml-1">({{ selectedVariantsIds.length }})</span>
                             </span>
                             <v-spacer></v-spacer>
-                            <v-btn v-if="bottomTableSelection.length > 0" variant="flat" color="error" class="mr-2"
+                            <v-btn v-if="bottomTableSelection.length > 0" variant="flat" color="primary" class="mr-2"
                                 prepend-icon="mdi-trash-can-outline" size="small" @click="removeBulkSelected" style="height: 36px; text-transform: none;">
                                 Xóa đã chọn ({{ bottomTableSelection.length }})
                             </v-btn>
-                            <v-btn variant="flat" class="btn-danger-outline"
-                                prepend-icon="mdi-trash-can-outline" @click="removeAllSelected">
+                            <v-btn variant="outlined" color="primary"
+                                prepend-icon="mdi-trash-can-outline" @click="removeAllSelected" style="height: 36px; text-transform: none; border-width: 1px;">
                                 Xóa tất cả
                             </v-btn>
                         </div>
@@ -553,6 +564,11 @@ onMounted(init);
                             <div class="detail-filter-header">
                                 <v-icon size="16" class="mr-2" color="#64748b">mdi-filter-outline</v-icon>
                                 <span class="filter-title-label">Bộ lọc</span>
+                                <v-spacer></v-spacer>
+                                <v-btn variant="text" color="primary" density="compact" class="text-none px-2" @click="resetDetailFilters">
+                                    <v-icon size="16" class="mr-1">mdi-refresh</v-icon>
+                                    Làm mới
+                                </v-btn>
                             </div>
                             <div class="detail-filter-body">
                                 <div class="d-flex align-center" style="gap: 4px;">

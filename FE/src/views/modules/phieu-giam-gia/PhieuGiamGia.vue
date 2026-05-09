@@ -160,7 +160,8 @@ const getVoucherTimelineStatus = (item) => {
             color: 'info',
             switchOn: false,
             switchDisabled: true,
-            chipClass: 'chip-upcoming'
+            chipClass: 'chip-upcoming',
+            isEnded: false
         };
     }
     
@@ -171,17 +172,30 @@ const getVoucherTimelineStatus = (item) => {
             color: 'error',
             switchOn: false,
             switchDisabled: true,
-            chipClass: 'chip-expired'
+            chipClass: 'chip-expired',
+            isEnded: true
         };
     }
 
     // 3. Đang diễn ra
+    if (!manualActive) {
+        return {
+            label: 'Đã kết thúc',
+            color: 'error',
+            switchOn: false,
+            switchDisabled: true,
+            chipClass: 'chip-expired',
+            isEnded: true
+        };
+    }
+
     return {
-        label: manualActive ? 'Đang hoạt động' : 'Đã kết thúc',
-        color: manualActive ? 'success' : 'error',
-        switchOn: manualActive,
+        label: 'Đang hoạt động',
+        color: 'success',
+        switchOn: true,
         switchDisabled: false,
-        chipClass: manualActive ? 'chip-active' : 'chip-expired'
+        chipClass: 'chip-active',
+        isEnded: false
     };
 };
 
@@ -372,7 +386,22 @@ onMounted(() => loadVouchers());
                     </td>
                     <td class="data-cell action-cell text-center">
                         <div class="d-flex align-center justify-center action-controls">
+                            <span class="d-inline-block" v-if="getVoucherTimelineStatus(item).isEnded">
+                                <v-btn
+                                    icon
+                                    variant="text"
+                                    :ripple="false"
+                                    size="28"
+                                    color="slate-700"
+                                    class="action-icon-btn opacity-50"
+                                    style="pointer-events: none"
+                                >
+                                    <EditIcon size="15" />
+                                </v-btn>
+                                <v-tooltip activator="parent" location="top">Không thể cập nhật phiếu giảm giá đã kết thúc</v-tooltip>
+                            </span>
                             <v-btn
+                                v-else
                                 icon
                                 variant="text"
                                 :ripple="false"

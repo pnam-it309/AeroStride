@@ -105,7 +105,8 @@ const getCampaignTimelineStatus = (item) => {
             color: 'info',
             switchOn: false,
             switchDisabled: true,
-            chipClass: 'chip-upcoming'
+            chipClass: 'chip-upcoming',
+            isEnded: false
         };
     }
     
@@ -116,17 +117,30 @@ const getCampaignTimelineStatus = (item) => {
             color: 'error',
             switchOn: false,
             switchDisabled: true,
-            chipClass: 'chip-expired'
+            chipClass: 'chip-expired',
+            isEnded: true
         };
     }
 
     // 3. Đang diễn ra
+    if (!manualActive) {
+        return {
+            label: 'Đã kết thúc',
+            color: 'error',
+            switchOn: false,
+            switchDisabled: true,
+            chipClass: 'chip-expired',
+            isEnded: true
+        };
+    }
+
     return {
-        label: manualActive ? 'Đang hoạt động' : 'Tạm ngừng',
-        color: manualActive ? 'success' : 'warning',
-        switchOn: manualActive,
+        label: 'Đang hoạt động',
+        color: 'success',
+        switchOn: true,
         switchDisabled: false,
-        chipClass: manualActive ? 'chip-active' : 'chip-expired'
+        chipClass: 'chip-active',
+        isEnded: false
     };
 };
 
@@ -238,10 +252,16 @@ onMounted(() => loadCampaigns());
                     </td>
                     <td class="data-cell action-cell" style="text-align: center">
                         <div class="d-flex align-center justify-center action-controls">
-                            <v-btn variant="text" class="action-icon-btn"
+                            <span class="d-inline-block" v-if="getCampaignTimelineStatus(item).isEnded">
+                                <v-btn variant="text" class="action-icon-btn opacity-50" style="pointer-events: none" :ripple="false">
+                                    <EditIcon size="15" />
+                                </v-btn>
+                                <v-tooltip activator="parent" location="top">Không thể cập nhật đợt giảm giá đã kết thúc</v-tooltip>
+                            </span>
+                            <v-btn v-else variant="text" class="action-icon-btn"
                                 @click.stop="router.push({ name: 'DotGiamGiaForm', params: { id: item.id } })">
                                 <EditIcon size="15" />
-                                <v-tooltip activator="parent" location="top" text="Chỉnh sửa"></v-tooltip>
+                                <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
                                 <v-switch :model-value="getCampaignTimelineStatus(item).switchOn" 
