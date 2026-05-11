@@ -11,9 +11,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 public class BeApplication {
 
     public static void main(String[] args) {
-        System.err.println("[AeroStride] Initializing environment...");
-        System.out.println("ENVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
-        // Load environment variables from BE/env/.env.dev or env/.env.dev
+
         Dotenv dotenv = null;
         String[] paths = {"env", "BE/env", "."};
 

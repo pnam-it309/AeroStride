@@ -93,8 +93,8 @@ const tableHeaders = [
     { text: 'Loại hóa đơn', width: '120px' },
     { text: 'Loại thanh toán', width: '140px' },
     { text: 'Tổng tiền', width: '100px' },
-    { text: 'Trạng thái', width: '120px' },
-    { text: 'Hành động', width: '90px' }
+    { text: 'Trạng thái', width: '140px' },
+    { text: 'Hành động', width: '110px' }
 ];
 
 const loadCounts = async () => {
@@ -107,9 +107,9 @@ const loadCounts = async () => {
         const data = await dichVuHoaDon.laySoLuongHoaDon(params);
         counts.value = {
             all: data.all || 0,
-            unconfirmed: data['0'] || 0,
-            pendingConfirmation: data['1'] || 0,
-            confirmed: data['2'] || 0,
+            pendingConfirmation: data['0'] || 0,
+            confirmed: data['1'] || 0,
+            waitingDelivery: data['2'] || 0,
             delivering: data['3'] || 0,
             completed: data['4'] || 0,
             cancelled: data['5'] || 0,
@@ -335,16 +335,16 @@ onMounted(() => loadOrders());
                         Tất cả
                     </v-tab>
                     <v-tab :value="0" class="text-none font-weight-bold px-2 tab-item">
-                        <v-icon start size="16">mdi-help-circle-outline</v-icon>
-                        Chưa xác nhận
-                    </v-tab>
-                    <v-tab :value="1" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-progress-clock</v-icon>
                         Chờ xác nhận
                     </v-tab>
-                    <v-tab :value="2" class="text-none font-weight-bold px-2 tab-item">
+                    <v-tab :value="1" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-check-circle-outline</v-icon>
                         Đã xác nhận
+                    </v-tab>
+                    <v-tab :value="2" class="text-none font-weight-bold px-2 tab-item">
+                        <v-icon start size="16">mdi-package-variant-closed</v-icon>
+                        Chờ giao
                     </v-tab>
                     <v-tab :value="3" class="text-none font-weight-bold px-2 tab-item">
                         <v-icon start size="16">mdi-truck-fast-outline</v-icon>
@@ -370,39 +370,38 @@ onMounted(() => loadOrders());
                     <td class="data-cell text-slate-400 font-weight-medium">{{ getRowNumber(index) }}</td>
 
                     <td class="data-cell">
-                        <div class="text-caption font-weight-medium text-dark text-truncate" :title="item.maHoaDon">{{ item.maHoaDon }}</div>
+                        <div class="font-weight-medium text-dark text-truncate" :title="item.maHoaDon">{{ item.maHoaDon }}</div>
                     </td>
 
                     <td class="data-cell">
-                        <div class="text-caption font-weight-medium text-dark text-truncate" :title="item.tenKhachHang || 'Khách vãng lai'">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
+                        <div class="font-weight-medium text-dark text-truncate" :title="item.tenKhachHang || 'Khách vãng lai'">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
                     </td>
 
                     <td class="data-cell">
-                        <div class="text-caption font-weight-medium text-dark text-truncate" :title="item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống'">
+                        <div class="font-weight-medium text-dark text-truncate" :title="item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống'">
                             {{ item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống' }}
                         </div>
                     </td>
 
                     <td class="data-cell">
-                        <div class="text-caption font-weight-medium text-dark text-truncate" :title="item.soDienThoai || 'N/A'">{{ item.soDienThoai || 'N/A' }}</div>
+                        <div class="font-weight-medium text-dark text-truncate" :title="item.soDienThoai || 'N/A'">{{ item.soDienThoai || 'N/A' }}</div>
                     </td>
 
                     <td class="data-cell">
                         <v-chip
                             :class="['status-chip', getOrderTypeClass(item.loaiDon)]"
                             variant="flat"
-                            size="small"
                         >
                             {{ getOrderTypeLabel(item.loaiDon) }}
                         </v-chip>
                     </td>
 
                     <td class="data-cell">
-                        <div class="text-caption font-weight-medium text-dark text-truncate" :title="getPaymentLabel(item)">{{ getPaymentLabel(item) }}</div>
+                        <div class="font-weight-medium text-dark text-truncate" :title="getPaymentLabel(item)">{{ getPaymentLabel(item) }}</div>
                     </td>
 
                     <td class="data-cell price-value">
-                        <div class="text-subtitle-2 font-weight-black total-price-text">
+                        <div class="font-weight-medium text-dark total-price-text">
                             {{ formatCurrency(item.tongTienSauGiam || item.tongTien) }}
                         </div>
                     </td>
@@ -412,14 +411,13 @@ onMounted(() => loadOrders());
                             <v-chip
                                 :class="['status-chip', getStatusMeta(item.trangThai).chipClass]"
                                 variant="flat"
-                                size="small"
                             >
                                 <v-icon start size="16">{{ getStatusMeta(item.trangThai).icon }}</v-icon>
                                 {{ getStatusMeta(item.trangThai).text }}
                             </v-chip>
                         </template>
                         <template v-else>
-                            <span class="text-caption text-medium-emphasis">—</span>
+                            <span class="text-medium-emphasis">—</span>
                         </template>
                     </td>
 

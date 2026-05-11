@@ -462,9 +462,6 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                     <h3 class="text-h5 font-weight-black text-slate-900 tracking-tight">
                         {{ headerTitle }}
                     </h3>
-                    <p class="text-subtitle-2 text-slate-500 font-weight-medium mt-1">
-                        Thiết lập SKU, tồn kho và giá cho sản phẩm.
-                    </p>
                 </div>
             </v-card-title>
 
@@ -508,12 +505,7 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
 
                                     <div class="variant-image-panel__body mt-4">
                                         <input type="file" ref="fileInput" class="d-none" accept="image/*"
-                                            @change="handleImageUpload" />
-                                        
-                                        <p class="text-center text-xs text-slate-400 leading-relaxed italic">
-                                            Sử dụng ảnh vuông (1:1) để có hiển thị tốt nhất trên website.
-                                        </p>
-                                        
+                                            @change="handleImageUpload" />            
                                         <div v-if="formData.urlAnh" class="d-flex justify-center mt-2">
                                             <v-btn variant="text" color="error" density="compact" class="text-none" @click.stop="formData.urlAnh = ''">
                                                 <v-icon start size="14">mdi-trash-can-outline</v-icon>
@@ -634,11 +626,11 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                     @click="emit('close')">
                     Hủy bỏ
                 </v-btn>
-                <v-btn color="primary" variant="flat" class="px-8 rounded-xl font-weight-black h-11 text-white"
+                <v-btn color="primary" variant="flat" class="px-8 rounded-xl font-weight-black h-11"
                     :loading="submitting" @click="handleSubmit">
                     <template #prepend>
-                        <DeviceFloppyIcon v-if="!submitting" size="18" class="text-white" />
-                        <v-progress-circular v-else indeterminate size="18" width="2" color="white" />
+                        <DeviceFloppyIcon v-if="!submitting" size="18" />
+                        <v-progress-circular v-else indeterminate size="18" width="2" />
                     </template>
                     {{ submitButtonText }}
                 </v-btn>

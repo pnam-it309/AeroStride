@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
+import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
@@ -18,17 +19,16 @@ const loading = ref(false);
 const saving = ref(false);
 const products = ref([]); 
 const searchQuery = ref('');
-const searchCode = ref('');
 
 // Pagination for Selection Table
 const selectionPage = ref(1);
 const selectionPageSize = ref(5);
 
 // --- PHẦN THÊM MỚI: Khởi tạo các biến lọc cho bảng dưới ---
-const dynamicMaxPrice = ref(100000000);
+const dynamicMaxPrice = ref(5000000); // Mặc định 5 triệu, sẽ cập nhật sau khi load data
 const loadMaxPrice = async () => {
     try {
-        const maxPrice = await dichVuDotGiamGia.layGiaLonNhat(); // Giả định service này có hoặc dùng dichVuSanPham
+        const maxPrice = await dichVuSanPham.layGiaLonNhat(); 
         if (maxPrice !== undefined && maxPrice !== null) {
             dynamicMaxPrice.value = Math.max(maxPrice, 50000);
             detailFilters.value.khoangGia = [0, dynamicMaxPrice.value];
@@ -39,6 +39,7 @@ const loadMaxPrice = async () => {
 };
 
 const detailFilters = ref({
+    timKiem: '',
     thuongHieu: null,
     chatLieu: null,
     kichCo: null,
@@ -53,6 +54,7 @@ const bottomPageSize = ref(5);
 
 const resetDetailFilters = () => {
     detailFilters.value = {
+        timKiem: '',
         thuongHieu: null,
         chatLieu: null,
         kichCo: null,
@@ -106,11 +108,10 @@ const filteredProductsToSelect = computed(() => {
     let result = baseProducts.value;
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
-        result = result.filter(p => p.ten?.toLowerCase().includes(query));
-    }
-    if (searchCode.value) {
-        const code = searchCode.value.toLowerCase();
-        result = result.filter(p => p.ma?.toLowerCase().includes(code));
+        result = result.filter(p => 
+            (p.ten && p.ten.toLowerCase().includes(query)) || 
+            (p.ma && p.ma.toLowerCase().includes(query))
+        );
     }
     return result;
 });
@@ -203,6 +204,13 @@ const filteredSelectedDetails = computed(() => {
     const filters = detailFilters.value;
     
     // Áp dụng bộ lọc an toàn và linh hoạt
+    if (filters.timKiem) {
+        const query = filters.timKiem.toLowerCase();
+        result = result.filter(p => 
+            (p.tenSanPham && p.tenSanPham.toLowerCase().includes(query)) || 
+            (p.ma && p.ma.toLowerCase().includes(query))
+        );
+    }
     if (filters.thuongHieu) result = result.filter(p => p.thuongHieu === filters.thuongHieu);
     if (filters.chatLieu) result = result.filter(p => p.chatLieu === filters.chatLieu);
     if (filters.kichCo) result = result.filter(p => String(p.kichCo || '').toLowerCase().includes(String(filters.kichCo).toLowerCase()));
@@ -316,6 +324,18 @@ const init = async () => {
             chatLieu: p.sanPham?.chatLieu?.ten || p.tenChatLieu || p.chatLieu || '--',
             giaGoc: p.giaBan || 0
         }));
+
+        // Cập nhật giá lớn nhất thực tế từ danh sách sản phẩm đã load
+        if (products.value.length > 0) {
+            const actualMax = products.value.reduce((max, p) => Math.max(max, p.giaGoc || 0), 0);
+            if (actualMax > 0) {
+                dynamicMaxPrice.value = actualMax;
+                // Nếu giá trị lọc hiện tại đang là mặc định hoặc lớn hơn thực tế quá nhiều, cập nhật lại
+                if (detailFilters.value.khoangGia[1] >= 5000000 || detailFilters.value.khoangGia[1] === 0) {
+                    detailFilters.value.khoangGia = [0, actualMax];
+                }
+            }
+        }
     } catch (e) { console.error('Error loading products:', e); }
 
     if (isEditMode.value || isDetailView.value) {
@@ -478,17 +498,11 @@ onMounted(init);
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách sản phẩm</span>
                         </div>
 
-                        <AdminFilter title="Tìm kiếm sản phẩm" @refresh="searchQuery = ''; searchCode = ''; selectionPage = 1">
-                            <v-col cols="12" sm="5">
-                                <div class="field-label-small mb-1">Tên sản phẩm</div>
+                        <AdminFilter title="Tìm kiếm sản phẩm" @refresh="searchQuery = ''; selectionPage = 1">
+                            <v-col cols="12" sm="4">
+                                <div class="field-label-small mb-1">Tìm kiếm sản phẩm</div>
                                 <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
-                                    placeholder="Tìm theo tên sản phẩm..." variant="outlined" density="compact" hide-details
-                                    class="compact-input"></v-text-field>
-                            </v-col>
-                            <v-col cols="12" sm="5">
-                                <div class="field-label-small mb-1">Mã sản phẩm</div>
-                                <v-text-field v-model="searchCode" prepend-inner-icon="mdi-barcode-scan"
-                                    placeholder="Tìm theo mã SKU..." variant="outlined" density="compact" hide-details
+                                    placeholder="Tìm theo tên hoặc mã SKU..." variant="outlined" density="compact" hide-details
                                     class="compact-input"></v-text-field>
                             </v-col>
                         </AdminFilter>
@@ -586,43 +600,51 @@ onMounted(init);
 
                         <!-- Bộ lọc sản phẩm chi tiết sử dụng AdminFilter chuẩn -->
                         <AdminFilter title="Bộ lọc sản phẩm" @refresh="resetDetailFilters">
-                            <v-col cols="12" sm="3">
+                            <v-col cols="12" sm="2">
+                                <div class="field-label-small mb-1">Tìm kiếm sản phẩm</div>
+                                <v-text-field v-model="detailFilters.timKiem" prepend-inner-icon="mdi-magnify"
+                                    placeholder="Tên hoặc mã..." variant="outlined" density="compact" hide-details
+                                    class="compact-input"></v-text-field>
+                            </v-col>
+                            <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Thương hiệu</div>
                                 <v-select v-model="detailFilters.thuongHieu" :items="['Adidas', 'Nike']"
                                     density="compact" variant="outlined" hide-details clearable
                                     placeholder="Thương hiệu" class="compact-input"></v-select>
                             </v-col>
-                            <v-col cols="12" sm="3">
+                            <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Chất liệu</div>
                                 <v-select v-model="detailFilters.chatLieu" :items="['Da', 'Vải', 'Vải dệt']"
                                     density="compact" variant="outlined" hide-details clearable
                                     placeholder="Chất liệu" class="compact-input"></v-select>
                             </v-col>
-                            <v-col cols="12" sm="3">
+                            <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Kích cỡ</div>
                                 <v-select v-model="detailFilters.kichCo" :items="[39, 40, 41, 42, 43]"
                                     density="compact" variant="outlined" hide-details clearable
                                     placeholder="Kích cỡ" class="compact-input"></v-select>
                             </v-col>
-                            <v-col cols="12" sm="3">
+                            <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Màu sắc</div>
                                 <v-select v-model="detailFilters.mauSac" :items="['Đen', 'Trắng', 'Xám', 'Xanh dương', 'Xanh lá']"
                                     density="compact" variant="outlined" hide-details clearable
                                     placeholder="Màu sắc" class="compact-input"></v-select>
                             </v-col>
-                            
-                            <v-col cols="12" class="mt-4">
-                                <div class="d-flex align-center justify-space-between mb-2">
-                                    <div class="d-flex align-center gap-2">
-                                        <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
-                                        <span class="text-caption font-weight-bold text-slate-600">Lọc theo giá sau giảm</span>
+
+                            <template #after>
+                                <v-col cols="12" class="mt-4 pa-0">
+                                    <div class="d-flex align-center justify-space-between mb-2">
+                                        <div class="d-flex align-center gap-2">
+                                            <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
+                                            <span class="text-caption font-weight-bold text-slate-600">Lọc theo giá sau giảm</span>
+                                        </div>
+                                        <span class="price-range-value text-primary font-weight-bold">{{ formatCurrency(detailFilters.khoangGia[0]) }} – {{ formatCurrency(detailFilters.khoangGia[1]) }}</span>
                                     </div>
-                                    <span class="price-range-value text-primary font-weight-bold">{{ formatCurrency(detailFilters.khoangGia[0]) }} – {{ formatCurrency(detailFilters.khoangGia[1]) }}</span>
-                                </div>
-                                <v-range-slider v-model="detailFilters.khoangGia" :max="dynamicMaxPrice" :min="0"
-                                    :step="10000" hide-details color="primary" track-color="#e2e8f0"
-                                    track-size="3" thumb-size="14" class="blue-range-slider"></v-range-slider>
-                            </v-col>
+                                    <v-range-slider v-model="detailFilters.khoangGia" :max="dynamicMaxPrice" :min="0"
+                                        :step="10000" hide-details color="primary" track-color="#e2e8f0"
+                                        track-size="3" thumb-size="14" class="blue-range-slider"></v-range-slider>
+                                </v-col>
+                            </template>
                         </AdminFilter>
 
                         <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="max-height: 400px;">

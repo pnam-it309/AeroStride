@@ -373,20 +373,20 @@ onMounted(async () => {
                 <v-btn
                     color="success"
                     variant="flat"
-                    class="text-none font-weight-bold text-white px-8 rounded-lg h-11 elevation-4"
+                    class="text-none px-8 rounded-lg h-11 elevation-4"
                     @click="showQR = true"
                 >
-                    <v-icon size="20" class="mr-2 text-white">mdi-qrcode-scan</v-icon>
+                    <v-icon size="20" class="mr-2">mdi-qrcode-scan</v-icon>
                     Quét QR CCCD
                 </v-btn>
                 <v-btn
                     color="primary"
                     variant="flat"
-                    class="text-none font-weight-bold text-white px-8 rounded-lg h-11 elevation-4"
+                    class="text-none px-8 rounded-lg h-11 elevation-4"
                     :loading="saving"
                     @click="handleSave"
                 >
-                    <v-icon size="18" class="mr-2 text-white">mdi-check-all</v-icon>
+                    <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
                     {{ submitButtonText }}
                 </v-btn>
             </div>

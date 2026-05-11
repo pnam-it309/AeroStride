@@ -21,7 +21,7 @@ const emit = defineEmits(['refresh', 'search']);
                 <!-- Các ô filter -->
                 <slot></slot>
                 
-                <!-- Nút làm mới - luôn hiển thị bên ngoài slot -->
+                <!-- Nút làm mới - quay lại row -->
                 <v-col cols="auto" class="filter-reset-col ml-auto align-self-end pb-1">
                     <v-btn variant="outlined" color="primary" class="reset-btn" :disabled="loading || isRefreshing"
                         @click="emit('refresh')">
@@ -32,6 +32,9 @@ const emit = defineEmits(['refresh', 'search']);
                     </v-btn>
                 </v-col>
             </v-row>
+
+            <!-- Vùng chứa nội dung phụ bên dưới (như slider) -->
+            <slot name="after"></slot>
         </v-card-text>
     </v-card>
 </template>

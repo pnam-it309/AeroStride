@@ -104,7 +104,7 @@ const formatNumber = (value) => {
 
 const getStatusLabel = (status) => {
   if (status === 'DANG_HOAT_DONG') return 'Đang hoạt động'
-  if (status === 'KHONG_HOAT_DONG') return 'Ngừng bán'
+  if (status === 'KHONG_HOAT_DONG') return 'Ngừng hoạt động'
   return status || 'Không xác định'
 }
 
@@ -123,10 +123,12 @@ const selectedProductSummary = computed(() => {
     return { title: 'Đang tải...', subtitle: 'Vui lòng đợi', maSanPham: '' }
   }
 
+  const maSP = selectedProduct.value.maSanPham || selectedProduct.value.ma || ''
+
   return {
     title: selectedProduct.value.tenSanPham,
-    subtitle: `${selectedProduct.value.maSanPham} • ${formatNumber(selectedProduct.value.variants?.length || 0)} biến thể`,
-    maSanPham: selectedProduct.value.maSanPham || '',
+    subtitle: `${maSP} • ${formatNumber(selectedProduct.value.variants?.length || 0)} biến thể`,
+    maSanPham: maSP,
   }
 })
 
@@ -220,10 +222,10 @@ const loadMaxPrice = async () => {
     if (maxPrice !== undefined && maxPrice !== null) {
       const nextMax = Math.max(maxPrice, VARIANT_PRICE_STEP)
       const oldMax = dynamicMaxPrice.value
-      
+
       // Cập nhật giá trị Max mới
       dynamicMaxPrice.value = nextMax
-      
+
       // Nếu người dùng đang để thanh trượt ở mức Max cũ, tự động đẩy lên Max mới
       if (filters.khoangGia[1] === oldMax || filters.khoangGia[1] > nextMax) {
         filters.khoangGia = [filters.khoangGia[0], nextMax]
@@ -244,7 +246,11 @@ const fetchSelectedProduct = async (productId) => {
         variants: allVariants || []
       }
     } else {
-      selectedProduct.value = await dichVuSanPham.layChiTietSanPham(productId)
+      const data = await dichVuSanPham.layChiTietSanPham(productId)
+      selectedProduct.value = {
+        ...data,
+        maSanPham: data.maSanPham || data.ma || '',
+      }
     }
 
     syncVariantSelection()
@@ -511,6 +517,7 @@ const buildVariantRequestPayload = (payload, existingVariant = null) => {
   const nextImageUrl = normalizeImageUrl(payload?.urlAnh)
 
   const requestPayload = {
+    idSanPham: selectedProductId.value !== 'ALL' ? selectedProductId.value : (payload.idSanPham || null),
     maChiTietSanPham: payload.maChiTietSanPham || null,
     idMauSac: payload.idMauSac,
     idKichThuoc: payload.idKichThuoc,
@@ -526,6 +533,9 @@ const buildVariantRequestPayload = (payload, existingVariant = null) => {
       moTa: `Ảnh của ${payload.maChiTietSanPham || existingVariant?.maChiTietSanPham || 'biến thể'}`,
       hinhAnhDaiDien: true
     }]
+  } else if (!existingVariant) {
+    // Luôn gửi mảng images nếu là tạo mới để tránh lỗi backend
+    requestPayload.images = []
   }
 
   return requestPayload
@@ -694,28 +704,29 @@ onMounted(async () => {
             :items="[{ title: 'Tất cả size', value: '' }, ...formOptions.kichThuocs.map((kichThuoc) => ({ title: kichThuoc.ten, value: kichThuoc.id }))]"
             variant="outlined" density="compact" hide-details />
         </v-col>
-        <v-col cols="12" md="3">
+        <v-col cols="12" md="2">
           <div class="filter-field-label">Trạng thái</div>
           <v-select v-model="filters.trangThai"
             :items="[{ title: 'Tất cả trạng thái', value: '' }, ...formOptions.trangThais.map((trangThai) => ({ title: getStatusLabel(trangThai), value: trangThai }))]"
             variant="outlined" density="compact" hide-details />
         </v-col>
-        <v-col cols="12" md="10" lg="11">
-          <div class="filter-field-label">Khoảng giá</div>
-          <div class="d-flex align-center bg-white pa-4 rounded-lg ">
-            <v-icon size="20" class="mr-4 text-primary">mdi-cash-multiple</v-icon>
-            <div class="flex-grow-1">
-              <div class="d-flex justify-space-between mb-2">
-                <span class="text-caption font-weight-medium text-slate-600">Lọc theo giá bán biến thể</span>
-                <span class="text-caption font-weight-medium text-primary">
-                  {{ formatCurrency(filters.khoangGia[0]) }} - {{ formatCurrency(filters.khoangGia[1]) }}
-                </span>
+
+        <template #after>
+          <v-col cols="12" class="mt-4 pa-0">
+            <div class="d-flex align-center justify-space-between mb-2">
+              <div class="d-flex align-center gap-2">
+                <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
+                <span class="text-caption font-weight-bold text-slate-600">Khoảng giá</span>
               </div>
-              <v-range-slider v-model="filters.khoangGia" :max="dynamicMaxPrice" :min="MIN_VARIANT_PRICE"
-                :step="VARIANT_PRICE_STEP" hide-details color="primary" track-color="slate-200" />
+              <span class="text-primary font-weight-bold">
+                {{ formatCurrency(filters.khoangGia[0]) }} – {{ formatCurrency(filters.khoangGia[1]) }}
+              </span>
             </div>
-          </div>
-        </v-col>
+            <v-range-slider v-model="filters.khoangGia" :max="dynamicMaxPrice" :min="MIN_VARIANT_PRICE"
+              :step="VARIANT_PRICE_STEP" hide-details color="primary" track-color="#e2e8f0" track-size="3"
+              thumb-size="14" class="blue-range-slider" />
+          </v-col>
+        </template>
       </AdminFilter>
     </div>
 
@@ -723,20 +734,21 @@ onMounted(async () => {
       <AdminTable title="Danh mục biến thể" :headers="[
         { text: 'Chọn', width: '70px' },
         { text: 'STT', width: '60px' },
-        { text: 'Mã SP', width: '120px' },
+        { text: 'Mã sản phẩm', width: '120px' },
         { text: 'Hình ảnh', width: '80px' },
         { text: 'Mã SKU', width: '150px' },
         { text: 'Màu sắc', width: '120px' },
         { text: 'Kích thước', width: '100px' },
         { text: 'Giá bán niêm yết', width: '150px' },
         { text: 'Trạng thái', width: '140px' },
-        { text: 'Thao tác', width: '200px' }
-      ]" :items="paginatedVariants" :loading="loading" :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'"
-        addButtonText="Tạo mới" @add="openCreateVariantModal" class="h-100">
-        
+        { text: 'Hành động', width: '200px' }
+      ]" :items="paginatedVariants" :loading="loading"
+        :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'" addButtonText="Tạo mới"
+        @add="openCreateVariantModal" class="h-100">
+
         <template #extra-actions>
-          <v-btn prepend-icon="mdi-qrcode-scan" variant="flat" color="primary"
-            class="add-btn-primary text-none font-weight-bold" @click="showQrScanner = true">
+          <v-btn prepend-icon="mdi-qrcode-scan" variant="flat" color="primary" class="add-btn-primary text-none"
+            @click="showQrScanner = true">
             Quét mã QR
           </v-btn>
         </template>
@@ -744,19 +756,18 @@ onMounted(async () => {
         <template #headers>
           <tr>
             <th class="header-cell text-center" style="width: 40px;">
-              <v-checkbox-btn :model-value="allVisibleVariantsSelected"
-                :indeterminate="someVisibleVariantsSelected" color="primary" hide-details density="compact"
-                @update:model-value="toggleSelectVisibleVariants" />
+              <v-checkbox-btn :model-value="allVisibleVariantsSelected" :indeterminate="someVisibleVariantsSelected"
+                color="primary" hide-details density="compact" @update:model-value="toggleSelectVisibleVariants" />
             </th>
             <th class="header-cell text-center" style="width: 40px;">STT</th>
-            <th class="header-cell text-center" style="width: 80px;">Mã SP</th>
+            <th class="header-cell text-center" style="width: 120px;">Mã sản phẩm</th>
             <th class="header-cell text-center" style="width: 100px;">Hình ảnh</th>
             <th class="header-cell text-center" style="width: 100px;">Mã SKU</th>
             <th class="header-cell text-center" style="width: 120px;">Màu sắc</th>
             <th class="header-cell text-center" style="width: 80px;">Kích thước</th>
             <th class="header-cell text-center" style="width: 120px;">Giá bán niêm yết</th>
             <th class="header-cell text-center" style="width: 140px;">Trạng thái</th>
-            <th class="header-cell text-center" style="width: 120px;">Thao tác</th>
+            <th class="header-cell text-center" style="width: 120px;">Hành động</th>
           </tr>
         </template>
 
@@ -812,10 +823,11 @@ onMounted(async () => {
               </div>
             </td>
             <td class="data-cell text-center text-primary px-4">
-              <div class="text-primary text-truncate font-weight-medium" :title="formatCurrency(item.giaBan)">{{ formatCurrency(item.giaBan) }}</div>
+              <div class="text-primary text-truncate font-weight-medium" :title="formatCurrency(item.giaBan)">{{
+                formatCurrency(item.giaBan) }}</div>
             </td>
             <td class="data-cell">
-              <v-chip size="small" variant="flat"
+              <v-chip variant="flat"
                 :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
                 {{ getStatusLabel(item.trangThai) }}
               </v-chip>
@@ -835,9 +847,8 @@ onMounted(async () => {
                   <v-tooltip activator="parent" location="top">QR code</v-tooltip>
                 </v-btn>
                 <div class="switch-wrapper">
-                  <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details
-                    density="compact" class="tight-switch action-switch"
-                    @click.prevent.stop="handleToggleVariantStatus(item)" />
+                  <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details density="compact"
+                    class="tight-switch action-switch" @click.prevent.stop="handleToggleVariantStatus(item)" />
                   <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái" />
                 </div>
               </div>
@@ -856,10 +867,10 @@ onMounted(async () => {
     <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
       :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
 
-    <VariantFormModal :key="`${variantModal.mode}-${variantModal.variant?.id || 'new'}`"
-      :open="variantModal.open" :mode="variantModal.mode" :variant="variantModal.variant"
-      :options="formOptions" :submitting="variantModal.submitting" :productCode="selectedProductSummary.maSanPham"
-      @close="closeVariantModal" @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
+    <VariantFormModal :key="`${variantModal.mode}-${variantModal.variant?.id || 'new'}`" :open="variantModal.open"
+      :mode="variantModal.mode" :variant="variantModal.variant" :options="formOptions"
+      :submitting="variantModal.submitting" :productCode="selectedProductSummary.maSanPham" @close="closeVariantModal"
+      @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
     <VariantManagementDrawer v-model:show="variantDrawer.open" :variant="variantDrawer.variant"
       :initialTab="variantDrawer.initialTab" @saved="fetchSelectedProduct(selectedProductId)" />
     <QrScanner v-model:show="showQrScanner" @scan="handleQrScan" />
@@ -886,12 +897,11 @@ onMounted(async () => {
 
         <div class="text-center mb-4">
           <p class="text-body-2 font-weight-bold mb-1">{{ qrDialog.value }}</p>
-          <p class="text-caption text-slate-500 mb-0">Quét mã để tìm nhanh biến thể theo SKU</p>
         </div>
 
         <div class="d-flex justify-end gap-2">
           <v-btn variant="text" @click="qrDialog.open = false">Đóng</v-btn>
-          <v-btn color="primary" variant="flat" class="text-white" @click="downloadCurrentQrCode">Tải mã QR</v-btn>
+          <v-btn color="primary" variant="flat" @click="downloadCurrentQrCode">Tải mã QR</v-btn>
         </div>
       </v-card>
     </v-dialog>
@@ -942,13 +952,16 @@ onMounted(async () => {
 :deep(.v-slider-track__background) {
   height: 3px !important;
 }
+
 :deep(.v-slider-track__fill) {
   height: 3px !important;
 }
+
 :deep(.v-slider-thumb__surface) {
   width: 12px !important;
   height: 12px !important;
 }
+
 :deep(.v-slider-thumb__ripple) {
   width: 24px !important;
   height: 24px !important;

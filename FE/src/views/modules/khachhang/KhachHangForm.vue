@@ -6,7 +6,7 @@ import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { useNotifications } from '@/services/notificationService';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
-import { ArrowLeftIcon, UserIcon, MapPinIcon, NoteIcon } from 'vue-tabler-icons';
+import { ArrowLeftIcon, UserIcon, MapPinIcon, NoteIcon, PlusIcon, EditIcon, TrashIcon, StarIcon } from 'vue-tabler-icons';
 import axios from 'axios';
 
 import { dichVuFile } from '@/services/core/dichVuFile';
@@ -505,9 +505,9 @@ onMounted(() => {
             </div>
             <div class="d-flex gap-3">
                 <v-btn color="primary" variant="flat"
-                    class="text-none font-weight-bold text-white px-8 rounded-xl h-11 elevation-4" :loading="saving"
+                    class="text-none px-8 rounded-xl h-11 elevation-4" :loading="saving"
                     @click="handleSave">
-                    <v-icon size="18" class="mr-2 text-white">mdi-check-all</v-icon>
+                    <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
                     {{ submitButtonText }}
                 </v-btn>
             </div>
@@ -633,9 +633,10 @@ onMounted(() => {
                             </div>
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Số địa chỉ</span>
                             <v-spacer></v-spacer>
-                            <v-btn v-if="isEditMode" color="primary" variant="tonal" size="small"
-                                class="text-none font-weight-bold rounded-lg" prepend-icon="mdi-plus"
+                            <v-btn v-if="isEditMode" variant="flat" color="primary" size="small"
+                                class="add-btn-primary text-none"
                                 @click="openAddrDialog()">
+                                <PlusIcon size="18" class="mr-2" />
                                 Thêm địa chỉ mới
                             </v-btn>
                         </div>
@@ -704,16 +705,18 @@ onMounted(() => {
                             <div class="d-flex align-center gap-1" v-if="!isDetailView">
                                 <v-btn icon variant="text" size="small" color="primary" @click="openAddrDialog(addr)"
                                     class="action-icon-btn">
-                                    <v-icon size="18">mdi-pencil</v-icon>
+                                    <EditIcon size="18" />
+                                    <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
+                                </v-btn>
+                                <v-btn v-if="!addr.laMacDinh" icon variant="text" size="small" color="success"
+                                    @click="handleSetDefault(addr.id)" class="action-icon-btn">
+                                    <StarIcon size="18" />
+                                    <v-tooltip activator="parent" location="top">Đặt mặc định</v-tooltip>
                                 </v-btn>
                                 <v-btn v-if="!addr.laMacDinh" icon variant="text" size="small" color="error"
                                     @click="handleDeleteAddr(addr.id)" class="action-icon-btn">
-                                    <v-icon size="18">mdi-delete</v-icon>
-                                </v-btn>
-                                <v-btn v-if="!addr.laMacDinh" variant="tonal" size="x-small" color="info"
-                                    class="text-none ml-2 font-weight-bold h-8 px-3 rounded-lg"
-                                    @click="handleSetDefault(addr.id)">
-                                    Mặc định
+                                    <TrashIcon size="18" />
+                                    <v-tooltip activator="parent" location="top">Xóa địa chỉ</v-tooltip>
                                 </v-btn>
                             </div>
                         </div>
@@ -1013,7 +1016,7 @@ onMounted(() => {
                 <v-card-actions class="pa-4 bg-grey-lighten-4">
                     <v-spacer></v-spacer>
                     <v-btn variant="text" class="text-none font-weight-medium" @click="addrDialog = false">Hủy</v-btn>
-                    <v-btn color="primary" variant="flat" class="px-6 text-none font-weight-medium rounded-lg text-white"
+                    <v-btn color="primary" variant="flat" class="px-6 text-none rounded-lg"
                         @click="saveAddress">Lưu địa chỉ</v-btn>
                 </v-card-actions>
             </v-card>

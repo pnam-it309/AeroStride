@@ -23,6 +23,7 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
     private final KhachHangRepository khachHangRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public List<AdminDiaChiResponse> getByKhachHangId(String khId) {
         return repository.findByKhachHangId(khId).stream()
                 .map(this::toResponse)

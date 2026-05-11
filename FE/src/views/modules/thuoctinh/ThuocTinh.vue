@@ -169,7 +169,7 @@ const tableHeaders = computed(() => [
     { text: currentMeta.value.codeLabel, width: '120px' },
     { text: currentMeta.value.nameLabel, width: '220px' },
     { text: 'Trạng thái', width: '130px' },
-    { text: 'Thao tác', width: '120px' }
+    { text: 'Hành động', width: '120px' }
 ]);
 
 const pickFirst = (item, keys, fallback = '--') => {

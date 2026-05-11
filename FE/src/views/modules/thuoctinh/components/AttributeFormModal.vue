@@ -140,13 +140,13 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                 <v-btn
                     color="primary"
                     variant="flat"
-                    class="px-8 h-11 text-white-force"
+                    class="px-8 h-11"
                     style="font-size: 13px !important;"
                     @click="handleSave"
                     :disabled="!form?.ten"
                 >
                     <template #prepend>
-                        <DeviceFloppyIcon size="18" class="text-white-force" />
+                        <DeviceFloppyIcon size="18" />
                     </template>
                     {{ submitButtonText }}
                 </v-btn>
@@ -182,14 +182,6 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
 :deep(.v-btn) {
     letter-spacing: 0.02em;
     text-transform: none;
-}
-
-.text-white-force {
-    color: #ffffff !important;
-}
-
-.text-white-force :deep(.v-icon) {
-    color: #ffffff !important;
 }
 </style>
 

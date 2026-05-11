@@ -98,12 +98,12 @@ const sidebarItem = [
   //   BgColor: 'indigo',
   //   to: '/quan-ly-file'
   // },
-  {
-    title: 'Đăng xuất',
-    icon: LogoutIcon,
-    BgColor: 'grey',
-    to: PATH.LOGOUT
-  }
+  // {
+  //   title: 'Đăng xuất',
+  //   icon: LogoutIcon,
+  //   BgColor: 'grey',
+  //   to: PATH.LOGOUT
+  // }
 ];
 
 export default sidebarItem;

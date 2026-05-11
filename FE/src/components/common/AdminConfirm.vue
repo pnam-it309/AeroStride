@@ -53,9 +53,9 @@ const handleCancel = () => {
         </div>
 
         <div v-if="showInput" class="mt-6">
+          <label class="text-body-2 text-slate-700 font-weight-medium mb-2 d-block">{{ inputLabel }}</label>
           <v-textarea
             v-model="inputValue"
-            :label="inputLabel"
             variant="outlined"
             density="comfortable"
             hide-details
@@ -81,6 +81,7 @@ const handleCancel = () => {
         </v-btn>
         <v-btn 
           variant="flat" 
+          :color="color || 'primary'"
           class="confirm-btn-submit px-8" 
           :loading="loading"
           :disabled="inputRequired && !inputValue"
@@ -158,20 +159,15 @@ const handleCancel = () => {
 }
 
 .confirm-btn-submit {
-  background-color: #1e257c !important;
-  color: white !important;
   text-transform: none !important;
   font-weight: 700 !important;
   letter-spacing: 0.5px;
   border-radius: 10px !important;
   height: 42px !important;
-  box-shadow: 0 4px 12px rgba(30, 37, 124, 0.2) !important;
 }
 
 .confirm-btn-submit:hover {
-  background-color: #151a5c !important;
   transform: translateY(-1px);
-  box-shadow: 0 6px 15px rgba(30, 37, 124, 0.3) !important;
 }
 
 .gap-3 {

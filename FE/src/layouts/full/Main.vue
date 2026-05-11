@@ -202,7 +202,7 @@ const sidebarMenu = shallowRef(sidebarItems);
 }
 /* Breadcrumbs in Header */
 :deep(.breadcrumbs-header) {
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 700;
 }
 

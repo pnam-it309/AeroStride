@@ -147,7 +147,7 @@ onMounted(() => {
             ></v-select>
           </v-col>
           <v-col cols="12" md="auto" class="ml-auto align-self-end">
-            <v-btn color="primary" variant="flat" @click="loadStatistics" class="px-6 font-weight-bold" height="40">
+            <v-btn color="primary" variant="flat" @click="loadStatistics" class="px-6" height="40">
               <v-icon start size="18">mdi-refresh</v-icon>
               Cập nhật dữ liệu
             </v-btn>

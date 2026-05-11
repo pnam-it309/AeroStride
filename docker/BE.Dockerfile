@@ -30,8 +30,8 @@ EXPOSE ${BE_PORT}
 ENV GRADLE_OPTS=${GRADLE_OPTS}
 
 # Development Entrypoint:
-# Runs compilation in background and starts the app with DevTools support
-ENTRYPOINT ["sh", "-c", "./gradlew classes --continuous & ./gradlew bootRun"]
+# Runs compilation quietly in background (for DevTools hot-reload) and starts the app
+ENTRYPOINT ["sh", "-c", "(while true; do ./gradlew classes -q --no-daemon; sleep 5; done) & ./gradlew bootRun"]
 
 # Stage 2: Builder stage (Production)
 FROM build AS builder

@@ -41,8 +41,8 @@ const handleSearch = () => emit('search');
                     @update:model-value="emit('update:statusFilter', $event)"
                     :items="[
                         { title: 'Tất cả', value: null },
-                        { title: 'Hoạt động', value: 'DANG_HOAT_DONG' },
-                        { title: 'Ngừng bán', value: 'KHONG_HOAT_DONG' }
+                        { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
+                        { title: 'Ngừng hoạt động', value: 'KHONG_HOAT_DONG' }
                     ]" 
                     variant="outlined" 
                     density="compact" 

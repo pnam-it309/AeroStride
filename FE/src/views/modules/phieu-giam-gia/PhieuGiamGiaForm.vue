@@ -234,9 +234,9 @@ onMounted(init);
             </div>
             <div class="d-flex gap-3">
                 <v-btn v-if="!isViewOnly" color="primary" variant="flat"
-                    class="text-none font-weight-bold text-white px-8 rounded-lg h-11 elevation-4" @click="handleSave"
+                    class="text-none px-8 rounded-lg h-11 elevation-4" @click="handleSave"
                     :loading="saving">
-                    <v-icon size="18" class="mr-2 text-white">mdi-check-all</v-icon>
+                    <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
                     {{ submitButtonText }}
                 </v-btn>
             </div>

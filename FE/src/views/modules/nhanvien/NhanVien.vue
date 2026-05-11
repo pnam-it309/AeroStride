@@ -74,16 +74,16 @@ async function handleResetPassword(id) {
 }
 
 const tableHeaders = [
-    { text: 'STT', width: '60px', align: 'center' },
-    { text: 'Mã nhân viên', width: '100px', align: 'center' },
-    { text: 'Tên nhân viên', width: '130px', align: 'center' },
-    { text: 'Tên tài khoản', width: '100px', align: 'center' },
-    { text: 'Giới tính', width: '120px', align: 'center' },
-    { text: 'Thông tin liên hệ', width: '230px', align: 'center' },
-    { text: 'Địa chỉ', width: '200px', align: 'center' },
-    { text: 'Chức vụ', width: '120px', align: 'center' },
-    { text: 'Trạng thái', width: '130px', align: 'center' },
-    { text: 'Hành động', width: '130px', align: 'center' }
+    { text: 'STT', width: '50px', align: 'center' },
+    { text: 'Mã nhân viên', width: '115px', align: 'center' },
+    { text: 'Tên nhân viên', width: '190px', align: 'left' },
+    { text: 'Tài khoản', width: '240px', align: 'left' },
+    { text: 'Giới tính', width: '130px', align: 'center' },
+    { text: 'Số điện thoại', width: '150px', align: 'center' },
+    { text: 'Địa chỉ', width: '230px', align: 'left' },
+    { text: 'Chức vụ', width: '140px', align: 'center' },
+    { text: 'Trạng thái', width: '180px', align: 'center' },
+    { text: 'Hành động', width: '140px', align: 'center' }
 ];
 
 const handleRefresh = async () => {
@@ -207,8 +207,8 @@ onMounted(() => {
                         v-model="filters.trangThai"
                         :items="[
                             { title: 'Tất cả trạng thái', value: null },
-                            { title: 'Đang làm việc', value: 'DANG_HOAT_DONG' },
-                            { title: 'Đã nghỉ việc', value: 'KHONG_HOAT_DONG' }
+                            { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
+                            { title: 'Ngừng hoạt động', value: 'KHONG_HOAT_DONG' }
                         ]"
                         variant="outlined"
                         density="compact"
@@ -248,40 +248,34 @@ onMounted(() => {
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
-                    <td class="data-cell">
+                    <td class="data-cell text-center">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
+                    <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.ma">{{ item.ma || '-' }}</div>
                     </td>
-                    <td class="data-cell">
-                        <div class="text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
+                    <td class="data-cell px-4">
+                        <div class="font-weight-medium text-slate-800 text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
                     </td>
-                    <td class="data-cell">
-                        <div class="text-truncate" :title="item.tenTaiKhoan">{{ item.tenTaiKhoan || '-' }}</div>
+                    <td class="data-cell text-left px-4">
+                        <div class="font-weight-medium text-slate-800 text-truncate" :title="item.tenTaiKhoan">{{ item.tenTaiKhoan || '-' }}</div>
+                        <div class="text-caption text-slate-500 text-truncate" :title="item.email">{{ item.email || '-' }}</div>
                     </td>
-                    <td class="data-cell">
+                    <td class="data-cell text-center">
                         <v-chip
-                            size="small"
                             variant="flat"
+                            class="justify-center"
                             :class="['gender-chip', item.gioiTinh ? 'gender-chip-male' : 'gender-chip-female']"
                         >
                             {{ item.gioiTinh === true ? 'Nam' : item.gioiTinh === false ? 'Nữ' : '-' }}
                         </v-chip>
                     </td>
-
-                    <td class="data-cell contact-cell px-4">
-                        <div class="d-inline-flex flex-column align-start" style="width: 100%; overflow: hidden;">
-                            <div class="contact-info-item d-flex align-center mb-1 text-truncate" :title="item.sdt" style="width: 100%;">
-                                <v-icon size="14" class="mr-2 text-slate-400">mdi-phone</v-icon>
-                                <span>{{ item.sdt }}</span>
-                            </div>
-                            <div class="contact-info-item d-flex align-center text-slate-500 text-truncate" :title="item.email" style="width: 100%;">
-                                <v-icon size="14" class="mr-2">mdi-email-outline</v-icon>
-                                <span>{{ item.email || '-' }}</span>
-                            </div>
+                    <td class="data-cell text-center px-4">
+                        <div class="d-flex align-center justify-center text-truncate text-slate-700" :title="item.sdt">
+                            <v-icon size="14" class="mr-2 text-slate-400">mdi-phone</v-icon>
+                            <span>{{ item.sdt || '-' }}</span>
                         </div>
                     </td>
                     <td class="data-cell text-left px-4" style="min-width: 200px;">
-                        <div class="text-slate-700" style="font-size: 13px; line-height: 1.4;">
+                        <div class="text-slate-700" style="line-height: 1.4;">
                             <!-- Thử cả 2 bộ tên trường do xung đột DB -->
                             <span v-if="item.diaChiChiTiet || item.dia_chi_chi_tiet">
                                 {{ item.diaChiChiTiet || item.dia_chi_chi_tiet }}, 
@@ -300,16 +294,16 @@ onMounted(() => {
                         </div>
                     </td>
 
-                    <td class="data-cell">
+                    <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.tenPhanQuyen || 'Nhân viên'">
                             {{ item.tenPhanQuyen || 'Nhân viên' }}
                         </div>
                     </td>
-                    <td class="data-cell">
+                    <td class="data-cell text-center">
                         <template v-if="tab === 0">
                             <v-chip
-                                size="small"
                                 variant="flat"
+                                class="justify-center"
                                 :class="[
                                     'status-chip',
                                     isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive'
@@ -383,20 +377,11 @@ onMounted(() => {
    Matching KhachHang aesthetics
 */
 :deep(.gender-chip) {
-    border-radius: 12px !important;
-    font-size: 13px !important;
-    padding: 0 16px !important;
-    min-height: 28px !important;
-    min-width: 80px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-weight: 400 !important;
+    min-width: 100px !important;
 }
 
 /* Typography & Cell Alignment */
 .data-cell {
-    font-size: 13px !important;
     font-weight: 400 !important;
     vertical-align: middle !important;
 }

@@ -38,10 +38,8 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
                             <div>
                                 <div class="font-weight-bold text-subtitle-2">{{ item.tenSanPham }}</div>
                                 <div class="d-flex gap-2 mt-1">
-                                    <v-chip size="x-small" label variant="outlined" color="grey">Size {{
-                                        item.tenKichThuoc }}</v-chip>
-                                    <v-chip size="x-small" label variant="outlined" color="grey">{{ item.tenMauSac
-                                        }}</v-chip>
+                                    <span class="text-caption text-slate-500 font-weight-medium">Size: {{ item.tenKichThuoc }}</span>
+                                    <span class="text-caption text-slate-500 font-weight-medium">Màu: {{ item.tenMauSac }}</span>
                                 </div>
                             </div>
                         </div>

@@ -8,7 +8,7 @@ import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumb
 import { downloadFile } from '@/utils/fileUtils';
 import { formatDateTime } from '@/utils/formatters';
 import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
-import { EditIcon, MapPinIcon } from 'vue-tabler-icons';
+import { EditIcon, MapPinIcon, PlusIcon, PencilIcon, StarIcon, TrashIcon } from 'vue-tabler-icons';
 import axios from 'axios';
 
 import { useAdminTable } from '@/composables/useAdminTable';
@@ -301,7 +301,7 @@ const openEditAddrForm = async (addr) => {
     }
 };
 
-const saveAddress = async () => {
+const doSaveAddress = async () => {
     addrSaving.value = true;
     try {
         // Chuẩn bị payload
@@ -346,6 +346,22 @@ const saveAddress = async () => {
     }
 };
 
+const saveAddress = () => {
+    if (!selectedKH.value) return;
+
+    const isEditing = isEditAddr.value && addrForm.value.id && !String(addrForm.value.id).startsWith('root-');
+    setConfirm({
+        title: isEditing ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ',
+        message: isEditing
+            ? 'Bạn có chắc muốn cập nhật địa chỉ này không?'
+            : 'Bạn có chắc muốn thêm địa chỉ mới cho khách hàng này không?',
+        color: 'primary',
+        action: async () => {
+            await doSaveAddress();
+        }
+    });
+};
+
 const handleSetDefault = async (addrId) => {
     try {
         await dichVuKhachHang.datDiaChiMacDinh(addrId);
@@ -358,6 +374,17 @@ const handleSetDefault = async (addrId) => {
             color: 'error'
         });
     }
+};
+
+const confirmSetDefaultAddr = (addr) => {
+    setConfirm({
+        title: 'Đặt địa chỉ mặc định',
+        message: `Bạn có chắc muốn đặt địa chỉ của [${addr.tenNguoiNhan}] làm mặc định không?`,
+        color: 'warning',
+        action: async () => {
+            await handleSetDefault(addr.id);
+        }
+    });
 };
 
 const handleDeleteAddr = (addrId) => {
@@ -384,9 +411,9 @@ const handleDeleteAddr = (addrId) => {
 const tableHeaders = [
     { text: 'STT', width: '30px', align: 'center' },
     { text: 'Mã khách hàng', width: '90px', align: 'center' },
-    { text: 'Tên khách hàng', width: '70px', align: 'center' },
+    { text: 'Tên khách hàng', width: '100px', align: 'center' },
     { text: 'Giới tính', width: '90px', align: 'center' },
-    { text: 'Thông tin liên hệ', width: '120px', align: 'center' },
+    { text: 'Thông tin liên hệ', width: '170px', align: 'center' },
     { text: 'Địa chỉ', width: '170px', align: 'center' },
     { text: 'Trạng thái', width: '90px', align: 'center' },
     { text: 'Hành động', width: '100px', align: 'center' }
@@ -557,7 +584,7 @@ watch(
                         v-model="filters.trangThai"
                         :items="[
                             { title: 'Tất cả', value: null },
-                            { title: 'Hoạt động', value: 'DANG_HOAT_DONG' },
+                            { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
                             { title: 'Ngừng hoạt động', value: 'KHONG_HOAT_DONG' }
                         ]"
                         variant="outlined"
@@ -595,7 +622,6 @@ watch(
                     </td>
                     <td class="data-cell">
                         <v-chip
-                            size="small"
                             variant="flat"
                             :class="['gender-chip', item.gioiTinh ? 'gender-chip-male' : 'gender-chip-female']"
                         >
@@ -618,9 +644,8 @@ watch(
                     </td>
                     <td class="data-cell">
                         <v-chip
-                            size="small"
                             variant="flat"
-                            :class="['status-chip', item.trangThai === 'DANG_HOAT_DONG' ? 'status-chip-active' : 'status-chip-inactive']"
+                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']"
                         >
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
@@ -744,17 +769,17 @@ watch(
                                     
                                     <!-- Actions -->
                                     <div class="d-flex align-center gap-1 mt-2">
-                                        <v-btn variant="text" size="small" color="primary" class="text-none px-0 font-weight-medium h-auto min-width-0 mr-4" @click="openEditAddrForm(addr)">
-                                            <v-icon start size="20" style="font-size: 20px !important" class="mr-1">mdi-pencil</v-icon>
-                                            Sửa
+                                        <v-btn variant="text" icon size="small" color="primary" class="action-icon-btn" @click="openEditAddrForm(addr)">
+                                            <PencilIcon size="18" />
+                                            <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                                         </v-btn>
-                                        <v-btn v-if="!addr.laMacDinh" variant="text" size="small" color="success" class="text-none px-0 font-weight-medium h-auto min-width-0 mr-4" @click="handleSetDefault(addr.id)">
-                                            <v-icon start size="20" style="font-size: 20px !important" class="mr-1">mdi-star-outline</v-icon>
-                                            Mặc định
+                                        <v-btn v-if="!addr.laMacDinh" variant="text" icon size="small" color="success" class="action-icon-btn" @click="confirmSetDefaultAddr(addr)">
+                                            <StarIcon size="18" />
+                                            <v-tooltip activator="parent" location="top">Đặt mặc định</v-tooltip>
                                         </v-btn>
-                                        <v-btn v-if="!addr.laMacDinh" variant="text" size="small" color="error" class="text-none px-0 font-weight-medium h-auto min-width-0" @click="handleDeleteAddr(addr.id)">
-                                            <v-icon start size="20" style="font-size: 20px !important" class="mr-1">mdi-delete-outline</v-icon>
-                                            Xóa
+                                        <v-btn v-if="!addr.laMacDinh" variant="text" icon size="small" color="error" class="action-icon-btn" @click="handleDeleteAddr(addr.id)">
+                                            <TrashIcon size="18" />
+                                            <v-tooltip activator="parent" location="top">Xóa địa chỉ</v-tooltip>
                                         </v-btn>
                                     </div>
                                 </div>
@@ -767,7 +792,8 @@ watch(
                                 <span class="text-subtitle-2 font-weight-bold text-slate-800">
                                     {{ showAddrForm ? (isEditAddr ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới') : 'Thêm địa chỉ khác' }}
                                 </span>
-                                <v-btn v-if="!showAddrForm" color="primary" variant="tonal" size="small" class="text-none font-weight-bold rounded-lg" prepend-icon="mdi-plus" @click="openNewAddrForm">
+                                <v-btn v-if="!showAddrForm" variant="flat" color="primary" size="small" class="add-btn-primary text-none" @click="openNewAddrForm">
+                                    <PlusIcon size="18" class="mr-2" />
                                     Thêm địa chỉ mới
                                 </v-btn>
                                 <v-btn v-else variant="text" size="small" color="slate-400" class="text-none font-weight-medium" @click="showAddrForm = false">
@@ -855,10 +881,7 @@ watch(
     overflow: hidden;
 }
 
-:deep(.data-cell),
-:deep(.data-cell *) {
-    font-size: 13px !important;
-}
+
 
 .filter-top {
     position: sticky;
@@ -868,19 +891,8 @@ watch(
 
 /* Status chips are now managed globally in _admin-common.scss — NO local overrides */
 
-:deep(.status-chip),
 :deep(.gender-chip) {
-    border-radius: 12px !important;
-    font-size: 13px !important;
-    padding: 0 16px !important;
-    min-height: 28px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-:deep(.gender-chip) {
-    min-width: 80px !important;
+    min-width: 100px !important;
 }
 
 
@@ -894,11 +906,9 @@ watch(
 .addr-dialog-card :deep(.v-list-item-title),
 .addr-dialog-card :deep(span),
 .addr-dialog-card :deep(div) {
-    font-size: 14px !important;
 }
 
 .addr-dialog-card :deep(.v-card-title span) {
-    font-size: 17px !important;
     font-weight: 700 !important;
 }
 
@@ -951,7 +961,6 @@ watch(
 .addr-dialog-card .v-table td,
 .addr-dialog-card .v-btn__content,
 .addr-dialog-card .v-field__input {
-    font-size: 13px !important;
     text-transform: none !important;
     font-weight: 500 !important;
     vertical-align: middle !important;

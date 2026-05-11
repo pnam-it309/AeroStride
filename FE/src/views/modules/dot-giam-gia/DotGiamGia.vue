@@ -218,7 +218,7 @@ onMounted(() => loadCampaigns());
         <!-- 2. TABLE -->
         <AdminTable title="Danh sách đợt giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
             { text: 'STT', align: 'center', width: '60px' },
-            { text: 'Mã', align: 'center', width: '110px' },
+            { text: 'Mã đợt giảm giá', align: 'center', width: '110px' },
             { text: 'Tên đợt giảm giá', align: 'center', width: '180px' },
             { text: 'Giá trị giảm', align: 'center', width: '140px' },
             { text: 'Ngày bắt đầu', align: 'center', width: '160px' },
@@ -250,8 +250,7 @@ onMounted(() => loadCampaigns());
                             formatDateTime(item.ngayKetThuc) }}</div>
                     </td>
                     <td class="data-cell text-center">
-                        <v-chip :class="['status-chip', getCampaignTimelineStatus(item).chipClass]" variant="flat"
-                            size="small">
+                        <v-chip :class="['status-chip', getCampaignTimelineStatus(item).chipClass]" variant="flat">
                             {{ getCampaignTimelineStatus(item).label }}
                         </v-chip>
                     </td>
@@ -319,13 +318,6 @@ onMounted(() => loadCampaigns());
     text-align: center !important;
     vertical-align: middle !important;
 }
-
-:deep(.data-cell),
-:deep(.data-cell *) {
-    font-size: 13px !important;
-}
-
-
 
 
 .opacity-50 {

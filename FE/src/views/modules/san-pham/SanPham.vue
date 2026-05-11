@@ -554,7 +554,7 @@ onBeforeUnmount(() => {
                         class="compact-input" @update:model-value="handleSearch" />
                 </v-col>
 
-                <v-col cols="12" md="3">
+                <v-col cols="12" md="2">
                     <div class="filter-field-label">Danh mục</div>
                     <v-select v-model="filters.danhMuc" :items="[
                         { title: 'Tất cả danh mục', value: null },
@@ -563,7 +563,7 @@ onBeforeUnmount(() => {
                         @update:model-value="handleSearch" />
                 </v-col>
 
-                <v-col cols="12" md="3">
+                <v-col cols="12" md="2">
                     <div class="filter-field-label">Thương hiệu</div>
                     <v-select v-model="filters.thuongHieu" :items="[
                         { title: 'Tất cả thương hiệu', value: null },
@@ -572,35 +572,32 @@ onBeforeUnmount(() => {
                         @update:model-value="handleSearch" />
                 </v-col>
 
-                <v-col cols="12" md="3">
+                <v-col cols="12" md="2">
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select v-model="filters.trangThai" :items="[
                         { title: 'Tất cả', value: null },
-                        { title: 'Hoạt động', value: 'DANG_HOAT_DONG' },
+                        { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
                         { title: 'Ngừng hoạt động', value: 'KHONG_HOAT_DONG' }
                     ]" variant="outlined" density="compact" hide-details class="compact-input"
                         @update:model-value="handleSearch" />
                 </v-col>
-
-                <v-col cols="12" md="11">
-                    <div class="filter-field-label">Khoảng giá</div>
-                    <div class="price-slider-wrap">
-                        <div class="d-flex align-center bg-white pa-3 rounded-lg">
-                            <v-icon size="20" class="mr-4 text-primary">mdi-cash-multiple</v-icon>
-                            <div class="flex-grow-1">
-                                <div class="d-flex justify-space-between mb-2">
-                                    <span class="text-caption font-weight-medium text-slate-600">Lọc theo giá bán sản phẩm</span>
-                                    <span class="text-caption font-weight-medium text-primary">
-                                        {{ formatCurrency(filters.khoangGia[0]) }} - {{ formatCurrency(filters.khoangGia[1]) }}
-                                    </span>
-                                </div>
-                                <v-range-slider v-model="filters.khoangGia" :min="productPriceBounds.min"
-                                    :max="productPriceBounds.max" :step="PRICE_STEP" hide-details color="primary"
-                                    track-color="slate-200" @update:model-value="handleSliderPriceChange" />
+                <template #after>
+                    <v-col cols="12" class="mt-4 pa-0">
+                        <div class="d-flex align-center justify-space-between mb-2">
+                            <div class="d-flex align-center gap-2">
+                                <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
+                                <span class="text-caption font-weight-bold text-slate-600">Khoảng giá</span>
                             </div>
+                            <span class="text-primary font-weight-bold">
+                                {{ formatCurrency(filters.khoangGia[0]) }} – {{ formatCurrency(filters.khoangGia[1]) }}
+                            </span>
                         </div>
-                    </div>
-                </v-col>
+                        <v-range-slider v-model="filters.khoangGia" :min="productPriceBounds.min"
+                            :max="productPriceBounds.max" :step="PRICE_STEP" hide-details color="primary"
+                            track-color="#e2e8f0" track-size="3" thumb-size="14" class="blue-range-slider"
+                            @update:model-value="handleSliderPriceChange" />
+                    </v-col>
+                </template>
             </AdminFilter>
         </div>
 
@@ -612,7 +609,7 @@ onBeforeUnmount(() => {
             { text: 'Thương hiệu', width: '140px' },
             { text: 'Danh mục', width: '140px' },
             { text: 'Tổng số lượng', width: '120px' },
-            { text: 'Khoảng giá', width: '200px' },
+            { text: 'Khoảng giá', width: '270px' },
             { text: 'Trạng thái', width: '130px' },
             { text: 'Hành động', width: '130px' }
         ]" :items="paginatedProducts" :loading="loading" :showExportButton="true"
@@ -620,20 +617,20 @@ onBeforeUnmount(() => {
             @export="handleExportProducts">
             <template #headers>
                 <tr>
-                    <th class="header-cell text-center" style="width: 50px;">
+                    <th class="header-cell " style="width: 50px;">
                         <v-checkbox-btn :model-value="allVisibleProductsSelected"
                             :indeterminate="someVisibleProductsSelected" color="primary" hide-details density="compact"
                             @update:model-value="toggleSelectVisibleProducts" />
                     </th>
-                    <th class="header-cell text-center" style="width: 50px;">STT</th>
-                    <th class="header-cell text-center" style="width: 150px;">Mã sản phẩm</th>
-                    <th class="header-cell text-left" style="width: 180px;">Tên sản phẩm</th>
-                    <th class="header-cell text-left" style="width: 130px;">Thương hiệu</th>
-                    <th class="header-cell text-left" style="width: 100px;">Danh mục</th>
-                    <th class="header-cell text-center" style="width: 160px;">Tổng số lượng</th>
-                    <th class="header-cell text-left" style="width: 120px;">Khoảng giá</th>
-                    <th class="header-cell text-center" style="width: 130px;">Trạng thái</th>
-                    <th class="header-cell text-center" style="width: 130px;">Hành động</th>
+                    <th class="header-cell " style="width: 50px;">STT</th>
+                    <th class="header-cell " style="width: 150px;">Mã sản phẩm</th>
+                    <th class="header-cell " style="width: 180px;">Tên sản phẩm</th>
+                    <th class="header-cell " style="width: 130px;">Thương hiệu</th>
+                    <th class="header-cell " style="width: 140px;">Danh mục</th>
+                    <th class="header-cell " style="width: 160px;">Tổng số lượng</th>
+                    <th class="header-cell " style="width: 150px;">Khoảng giá</th>
+                    <th class="header-cell " style="width: 140px;">Trạng thái</th>
+                    <th class="header-cell " style="width: 140px;">Hành động</th>
                 </tr>
             </template>
 
@@ -668,11 +665,11 @@ onBeforeUnmount(() => {
                         </div>
                     </td>
 
-                    <td class="data-cell text-left px-4">
+                    <td class="data-cell px-4">
                         <div class="text-truncate" :title="item.tenThuongHieu || '--'">{{ item.tenThuongHieu || '--' }}</div>
                     </td>
 
-                    <td class="data-cell text-left px-4">
+                    <td class="data-cell px-4">
                         <div class="text-truncate" :title="item.tenDanhMuc || '--'">{{ item.tenDanhMuc || '--' }}</div>
                     </td>
 
@@ -680,15 +677,15 @@ onBeforeUnmount(() => {
                         <span class="text-primary font-weight-medium">{{ formatNumber(item.tongSoLuongTon || 0) }}</span>
                     </td>
 
-                    <td class="data-cell text-left price-value px-4">
+                    <td class="data-cell price-value px-4">
                         <div class="text-primary text-truncate font-weight-medium" :title="getPriceRange(item)">
                             {{ getPriceRange(item) }}
                         </div>
                     </td>
 
                     <td class="data-cell">
-                        <v-chip size="small" variant="flat"
-                            :class="['status-chip', item.trangThai === 'DANG_HOAT_DONG' ? 'status-chip-active' : 'status-chip-inactive']">
+                        <v-chip variant="flat"
+                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
@@ -736,10 +733,7 @@ onBeforeUnmount(() => {
     padding-right: 10px;
 }
 
-:deep(.data-cell),
-:deep(.data-cell *) {
-    font-size: 13px !important;
-}
+
 
 :deep(.v-slider-track__background) {
     height: 3px !important;
