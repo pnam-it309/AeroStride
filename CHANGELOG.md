@@ -1,3 +1,10 @@
+## [1.8.3](https://github.com/pnam-it309/AeroStride/compare/v1.8.2...v1.8.3) (2026-05-12)
+
+
+### Bug Fixes
+
+* sử dụng lenient() cho Mockito và đồng bộ cấu hình H2 ([173db31](https://github.com/pnam-it309/AeroStride/commit/173db31f5e212b3064ef3c7a13f6ba04a12e5895))
+
 ## [1.8.2](https://github.com/pnam-it309/AeroStride/compare/v1.8.1...v1.8.2) (2026-05-12)
 
 
