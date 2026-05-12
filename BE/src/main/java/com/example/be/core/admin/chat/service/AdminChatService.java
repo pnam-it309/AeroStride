@@ -135,14 +135,14 @@ public class AdminChatService {
                 .content(text)
                 .build();
 
-        messageRepository.save(message);
+        ChatMessage savedMessage = messageRepository.save(message);
 
         ChatMessageResponse response = ChatMessageResponse.builder()
-                .id(message.getId())
+                .id(savedMessage.getId())
                 .conversationId(conversation.getId())
                 .sender(senderType)
                 .text(text)
-                .time(formatTime(message.getNgayTao()))
+                .time(formatTime(savedMessage.getNgayTao()))
                 .build();
 
         messagingTemplate.convertAndSend("/topic/messages", response);
