@@ -29,12 +29,14 @@ public final class RoutesConstant {
     public static final String ADMIN_THUOC_TINH_CO_GIAY = ADMIN_THUOC_TINH + "/co-giay";
     public static final String ADMIN_THUOC_TINH_XUAT_XU = ADMIN_THUOC_TINH + "/xuat-xu";
     public static final String ADMIN_THUOC_TINH_MUC_DICH_CHAY = ADMIN_THUOC_TINH + "/muc-dich-chay";
+    public static final String ADMIN_CHAT = ADMIN + "/chat";
     
     // Staff routes
     public static final String STAFF = API_PREFIX + "/staff";
     
     // Customer routes (Mobile/Web)
     public static final String CUSTOMER = API_PREFIX + "/customer";
+    public static final String CUSTOMER_CHAT = CUSTOMER + "/chat";
 
     // Common Sub-paths (Compatibility)
     public static final String HIEN_THI = "/hien-thi";

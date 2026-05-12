@@ -38,26 +38,25 @@ public class RefreshTokenService {
     }
 
     /**
-     * Creates a refresh token for the given username.
-     * Looks up NhanVien first, then KhachHang.
+     * Creates a refresh token for the given username and role.
      */
     @Transactional
-    public RefreshToken createRefreshToken(String username) {
+    public RefreshToken createRefreshToken(String username, String role) {
         RefreshToken.RefreshTokenBuilder builder = RefreshToken.builder()
                 .token(UUID.randomUUID().toString())
                 .expiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
 
-        // Check staff/admin table first
-        NhanVien nhanVien = nhanVienRepository.findByTenTaiKhoan(username).orElse(null);
-        if (nhanVien != null) {
-            // Delete old tokens for this user first
+        // Nếu là ADMIN, QUAN_TRI_VIEN hoặc NHAN_VIEN, chỉ tìm trong bảng NhanVien
+        if (role != null && (role.contains("ADMIN") || role.contains("QUAN_TRI_VIEN") || role.contains("NHAN_VIEN"))) {
+            NhanVien nhanVien = nhanVienRepository.findByTenTaiKhoan(username)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản nhân viên: " + username));
             refreshTokenRepository.deleteByNhanVienId(nhanVien.getId());
             return refreshTokenRepository.save(builder.nhanVien(nhanVien).build());
         }
 
-        // Fall back to customer
+        // Mặc định hoặc nếu là KHACH_HANG, chỉ tìm trong bảng KhachHang
         KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản: " + username));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản khách hàng: " + username));
 
         refreshTokenRepository.deleteByKhachHangId(khachHang.getId());
         return refreshTokenRepository.save(builder.khachHang(khachHang).build());

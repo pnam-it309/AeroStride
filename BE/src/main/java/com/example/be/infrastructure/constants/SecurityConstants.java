@@ -9,11 +9,15 @@ public final class SecurityConstants {
     public static final String[] PUBLIC_URLS = {
         RoutesConstant.AUTH + "/**",
         RoutesConstant.RESET_PASSWORD + "/request",
+        RoutesConstant.CUSTOMER + "/landing/**",
+        RoutesConstant.CUSTOMER + "/san-pham/**",
         RoutesConstant.API_PREFIX + "/storage/proxy",
         "/uploads/**",
         "/swagger-ui/**",
         "/v3/api-docs/**",
         "/ws/**",
+        "/ws-chat/**",
+        RoutesConstant.CUSTOMER_CHAT + "/**",
         "/actuator/**"
     };
 }

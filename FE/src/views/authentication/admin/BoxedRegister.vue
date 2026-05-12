@@ -2,6 +2,7 @@
 import Logo from '@/layouts/full/logo/Logo.vue';
 /* Register form */
 import RegisterForm from '@/components/auth/RegisterForm.vue';
+import { PATH } from '@/router/routePaths';
 </script>
 <template>
     <div class="authentication">
@@ -24,7 +25,7 @@ import RegisterForm from '@/components/auth/RegisterForm.vue';
                                 <RegisterForm />
                                 <h6 class="text-subtitle-1  text-grey100 d-flex justify-center align-center mt-3">
                                     Already have an Account?
-                                    <v-btn variant="plain" to="/auth/login"
+                                    <v-btn variant="plain" :to="PATH.ADMIN_LOGIN"
                                         class="text-primary text-body-1 opacity-1 font-weight-medium pl-2">Sign In</v-btn>
                                 </h6>
                             </v-card-item>

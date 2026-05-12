@@ -154,6 +154,26 @@ const MainRoutes = {
             path: '/sample-page',
             component: () => import('@/views/pages/SamplePage.vue')
         },
+        {
+            name: 'QuanLyChat',
+            path: PATH.QUAN_LY_CHAT,
+            component: () => import('@/views/chat/ChatManagement.vue')
+        },
+        {
+            name: 'LichLamViec',
+            path: PATH.LICH_LAM_VIEC,
+            component: () => import('@/views/modules/lich-lam-viec/LichLamViec.vue')
+        },
+        {
+            name: 'LichCaLam',
+            path: PATH.LICH_CA_LAM,
+            component: () => import('@/views/modules/lich-lam-viec/LichCaLam.vue')
+        },
+        {
+            name: 'LichSuHoatDong',
+            path: PATH.LICH_SU_HOAT_DONG,
+            component: () => import('@/views/modules/lich-lam-viec/LichSuHoatDong.vue')
+        },
     ]
 };
 

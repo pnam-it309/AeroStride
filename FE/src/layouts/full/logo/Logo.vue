@@ -2,7 +2,5 @@
 import LogoDark from "./LogoDark.vue";
 </script>
 <template>
-  <div>
-    <LogoDark />
-  </div>
+  <LogoDark v-bind="$attrs" />
 </template>

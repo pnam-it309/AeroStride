@@ -2,30 +2,47 @@ import { requireGuest } from './guards';
 import { PATH } from './routePaths';
 
 const AuthRoutes = {
-    path: '/auth',
+    path: '/admin',
     component: () => import('@/layouts/blank/BlankLayout.vue'),
     meta: {
         requiresAuth: false
     },
     children: [
-
+        // Mặc định khi vào /admin thì chuyển về trang login admin
+        {
+            path: '',
+            redirect: PATH.ADMIN_LOGIN
+        },
+        // Nếu gõ /admin/user thì chuyển về login client (tùy chọn, để tránh 404)
+        {
+            path: 'user',
+            redirect: PATH.LOGIN
+        },
+        // Admin Auth
         {
             name: 'Login',
+            path: PATH.ADMIN_LOGIN,
+            beforeEnter: requireGuest,
+            component: () => import('@/views/authentication/admin/BoxedLogin.vue')
+        },
+        {
+            name: 'AdminRegister',
+            path: PATH.ADMIN_REGISTER,
+            beforeEnter: requireGuest,
+            component: () => import('@/views/authentication/admin/BoxedRegister.vue')
+        },
+        {
+            name: 'AdminForgotPassword',
+            path: PATH.ADMIN_FORGOT_PASSWORD,
+            beforeEnter: requireGuest,
+            component: () => import('@/views/authentication/admin/ForgotPassword.vue')
+        },
+        // Client Auth (Vẫn giữ absolute path để có thể truy cập từ /user/login)
+        {
+            name: 'ClientLogin',
             path: PATH.LOGIN,
             beforeEnter: requireGuest,
-            component: () => import('@/views/authentication/BoxedLogin.vue')
-        },
-        {
-            name: 'ForgotPassword',
-            path: PATH.FORGOT_PASSWORD,
-            beforeEnter: requireGuest,
-            component: () => import('@/views/authentication/ForgotPassword.vue')
-        },
-        {
-            name: 'Register',
-            path: PATH.REGISTER,
-            beforeEnter: requireGuest,
-            component: () => import('@/views/authentication/BoxedRegister.vue')
+            component: () => import('@/views/authentication/client/ClientLogin.vue')
         },
         {
             name: 'Logout',
@@ -37,11 +54,11 @@ const AuthRoutes = {
                 
                 const { dichVuXacThuc } = await import('@/services/auth/dichVuXacThuc');
                 
-                // Add a small delay for the 'Restart' feel
                 setTimeout(async () => {
                     await dichVuXacThuc.dangXuat();
                     uiStore.hideLoading();
-                    next(PATH.LOGIN);
+                    // Quay về trang Landing (/) sau khi logout
+                    next('/');
                 }, 1500);
             }
         }

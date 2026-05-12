@@ -24,8 +24,12 @@ INSERT INTO khach_hang (id, id_dia_chi, ma_nguoi_dung, ten_nguoi_dung, email, te
 ('kh2', NULL, 'KH002', 'Trần Anh Khách', 'khach2@gmail.com', 'khach2', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0902223333', '1991-03-15', 'kh2.jpg', NULL, 0, 1711814400000),
 ('kh3', NULL, 'KH003', 'Lê Khách 3', 'khach3@gmail.com', 'khach3', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0903334444', '1995-07-20', 'kh3.jpg', NULL, 0, 1711814400000),
 ('kh4', NULL, 'KH004', 'Phạm Khách 4', 'khach4@gmail.com', 'khach4', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0904445555', '1998-05-10', 'kh4.jpg', NULL, 0, 1711814400000),
-('kh5', NULL, 'KH005', 'Hoàng Khách 5', 'khach5@gmail.com', 'khach5', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0905556666', '1990-11-25', 'kh5.jpg', NULL, 0, 1711814400000);
-
+('kh5', NULL, 'KH005', 'Hoàng Khách 5', 'khach5@gmail.com', 'khach5', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0905556666', '1990-11-25', 'kh5.jpg', NULL, 0, 1711814400000),
+('kh6', NULL, 'KH006', 'Hoàng Phương Nam', 'nickhunter3009@gmail.com', 'NamHP', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0901112222', '1993-12-01', 'kh1.jpg', 'Khách hay mua hàng', 0, 1711814400000),
+('kh7', NULL, 'KH007', 'Phí Thu Trang', 'phitrang082006@gmail.com', 'TrangPT', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0902223333', '1991-03-15', 'kh2.jpg', NULL, 0, 1711814400000),
+('kh8', NULL, 'KH008', 'Lê Thị Thu Huyền', 't818721@gmail.com', 'HuyenLTT', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0903334444', '1995-07-20', 'kh3.jpg', NULL, 0, 1711814400000),
+('kh9', NULL, 'KH009', 'Nguyễn Huy Đức', 'nguyenhuyducbg19062002@gmail.com', 'DucNHD', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0904445555', '1998-05-10', 'kh4.jpg', NULL, 0, 1711814400000),
+('kh10', NULL, 'KH010', 'Bùi Thị Yến', 'yent6969@gmail.com', 'YenBT', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0905556666', '1990-11-25', 'kh5.jpg', NULL, 0, 1711814400000);
 -- 3. Bảng Địa Chỉ (dia_chi)
 INSERT INTO dia_chi (id,id_khach_hang, ma_dia_chi, tinh, thanh_pho, phuong_xa, dia_chi_chi_tiet, ten_nguoi_nhan, sdt_nguoi_nhan, trang_thai,la_mac_dinh, ngay_tao) VALUES
 ('dc1','kh1', 'DC001', 'Hà Nội', 'Quận Cầu Giấy', 'Phường Dịch Vọng', 'Số 123 Cầu Giấy', 'Nguyễn Khách 1', '0901112222', 0,1, 1711814400000),
@@ -126,11 +130,11 @@ INSERT INTO chi_tiet_san_pham (id, id_san_pham, id_kich_thuoc, id_mau_sac, ma_ch
 
 -- 14. Bảng Ảnh Chi Tiết Sản Phẩm (anh_chi_tiet_san_pham)
 INSERT INTO anh_chi_tiet_san_pham (id, id_chi_tiet_san_pham, duong_dan_anh, hinh_anh_dai_dien, mo_ta, xoa_mem, trang_thai, ngay_tao) VALUES
-('a1', 'ct1', 'anh1_1.jpg', 1, 'Ảnh mặt trước', 0, 0, 1711814400000),
-('a2', 'ct1', 'anh1_2.jpg', 0, 'Ảnh mặt bên', 0, 0, 1711814400000),
-('a3', 'ct2', 'anh2_1.jpg', 1, 'Ảnh đại diện ct2', 0, 0, 1711814400000),
-('a4', 'ct3', 'anh3_1.jpg', 1, 'Ảnh đại diện ct3', 0, 0, 1711814400000),
-('a5', 'ct4', 'anh4_1.jpg', 1, 'Ảnh đại diện ct4', 0, 0, 1711814400000);
+('a1', 'ct1', 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=1974&auto=format&fit=crop', 1, 'Ảnh mặt trước', 0, 0, 1711814400000),
+('a2', 'ct1', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop', 0, 'Ảnh mặt bên', 0, 0, 1711814400000),
+('a3', 'ct2', 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=1974&auto=format&fit=crop', 1, 'Ảnh đại diện ct2', 0, 0, 1711814400000),
+('a4', 'ct3', 'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=2012&auto=format&fit=crop', 1, 'Ảnh đại diện ct3', 0, 0, 1711814400000),
+('a5', 'ct4', 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?q=80&w=1964&auto=format&fit=crop', 1, 'Ảnh đại diện ct4', 0, 0, 1711814400000);
 
 -- 15. Bảng Đợt Giảm Giá (dot_giam_gia)
 INSERT INTO dot_giam_gia (id, ma_dot_giam_gia, ten_dot_giam_gia, loai_giam_gia, so_tien_giam, dieu_kien_giam_gia, ngay_bat_dau, ngay_ket_thuc, muc_uu_tien, trang_thai, ngay_tao) VALUES
@@ -203,6 +207,13 @@ INSERT INTO giao_dich_thanh_toan (id, id_hoa_don, id_phuong_thuc_thanh_toan, ma_
 ('gd3', 'hd3', 'pt1', 'GD003', 1200000.00, 'PAYMENT', NULL, 'REF003', NULL, NULL, NULL, NULL, 1711860000000, 1, 'Tiền mặt'),
 ('gd4', 'hd4', 'pt3', 'GD004', 2150000.00, 'PAYMENT', 'MOMO999', 'REF004', NULL, NULL, 1711873600000, NULL, 1711870000000, 0, 'Đang chờ MoMo'),
 ('gd5', 'hd5', 'pt1', 'GD005', 1500000.00, 'PAYMENT', NULL, 'REF005', NULL, NULL, NULL, NULL, 1711880000000, 1, 'Khách lẻ trả tiền mặt');
+
+
+INSERT INTO ca_lam (id, ten_ca, gio_bat_dau, gio_ket_thuc, mo_ta, ngay_tao) VALUES 
+(UUID(), 'Ca Sáng', '08:00:00', '12:00:00', 'Ca làm việc buổi sáng', NOW()),
+(UUID(), 'Ca Chiều', '13:00:00', '17:00:00', 'Ca làm việc buổi chiều', NOW()),
+(UUID(), 'Ca Tối', '18:00:00', '22:00:00', 'Ca làm việc buổi tối', NOW());
+
 
 -- update id_dia_chi
 -- UPDATE dia_chi SET id_khach_hang = 'kh1' WHERE id = 'dc1';

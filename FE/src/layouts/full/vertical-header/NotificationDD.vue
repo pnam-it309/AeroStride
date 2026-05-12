@@ -1,8 +1,10 @@
 <script setup>
 import { BellRingingIcon, CircleCheckIcon, InfoCircleIcon, AlertTriangleIcon, TrashIcon, EditIcon } from 'vue-tabler-icons';
 import { useNotifications } from '@/services/notificationService';
+import { useNotificationStore } from '@/stores/notificationStore';
 
 const { notifications, markAllAsRead } = useNotifications();
+const notificationStore = useNotificationStore();
 
 // Map string icons to actual components
 const iconMap = {
@@ -18,7 +20,7 @@ const iconMap = {
   <v-menu :close-on-content-click="false" location="bottom end" transition="slide-y-transition">
     <template v-slot:activator="{ props }">
       <v-btn icon variant="text" class="custom-hover-primary text-muted ml-2" v-bind="props" @click="markAllAsRead">
-        <v-badge :content="notifications.filter(n => n.isNew).length" :model-value="notifications.filter(n => n.isNew).length > 0" color="primary" offset-x="-5" offset-y="-3">
+        <v-badge :content="notificationStore.totalUnread" :model-value="notificationStore.totalUnread > 0" color="primary" offset-x="-5" offset-y="-3">
           <BellRingingIcon stroke-width="1.8" size="22" />
         </v-badge>
       </v-btn>

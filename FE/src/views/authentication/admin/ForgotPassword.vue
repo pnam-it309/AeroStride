@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/services/apiService';
 import { useNotifications } from '@/services/notificationService';
+import { PATH } from '@/router/routePaths';
 
 const email = ref('');
 const loading = ref(false);
@@ -18,7 +19,7 @@ const handleSubmit = async () => {
   try {
     await api.post(`/reset-password-requests/request`, null, { params: { email: email.value } });
     addNotification({ title: 'Thành công', subtitle: 'Yêu cầu đã được gửi tới admin. Vui lòng chờ xác nhận!', color: 'success' });
-    router.push('/auth/login');
+    router.push(PATH.ADMIN_LOGIN);
   } catch (e) {
     addNotification({ title: 'Lỗi', subtitle: e.response?.data?.message || 'Không gửi được yêu cầu', color: 'error' });
   } finally {
@@ -49,7 +50,7 @@ const handleSubmit = async () => {
         >
           Gửi yêu cầu
         </v-btn>
-        <v-btn variant="text" class="mt-2" block @click="router.push('/auth/login')">Quay lại đăng nhập</v-btn>
+        <v-btn variant="text" class="mt-2" block @click="router.push(PATH.ADMIN_LOGIN)">Quay lại đăng nhập</v-btn>
       </v-form>
     </v-card>
   </v-container>

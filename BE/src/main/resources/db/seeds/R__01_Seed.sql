@@ -8,26 +8,26 @@ INSERT IGNORE INTO thuong_hieu (id, ma_thuong_hieu, ten_thuong_hieu, trang_thai,
 
 -- Thêm Sản Phẩm Mới (Bắt đầu từ sp6)
 INSERT IGNORE INTO san_pham (id, id_thuong_hieu, id_danh_muc, id_xuat_xu, id_muc_dich_chay, id_chat_lieu, id_de_giay, id_co_giay, ma_san_pham, ten_san_pham, gioi_tinh_khach_hang, hinh_anh, mo_ta_ngan, mo_ta_chi_tiet, trang_thai, xoa_mem, ngay_tao) VALUES
-('sp6', 'th6', 'dm4', 'xx1', 'md3', 'cl3', 'dg1', 'cg1', 'SP006', 'Bitis Hunter Street', 'UNISEX', 'sp6.jpg', 'Dòng giày thể thao đường phố của Bitis.', 'Mô tả chi tiết giày Bitis Hunter', 0, 0, 1711814600000),
-('sp7', 'th7', 'dm4', 'xx2', 'md3', 'cl3', 'dg1', 'cg1', 'SP007', 'Vans Old Skool', 'UNISEX', 'sp7.jpg', 'Huyền thoại Vans trượt ván.', 'Mô tả chi tiết giày Vans Old Skool', 0, 0, 1711814600000),
-('sp8', 'th8', 'dm1', 'xx3', 'md1', 'cl2', 'dg5', 'cg1', 'SP008', 'Asics Gel-Kayano 30', 'NAM', 'sp8.jpg', 'Giày chạy bộ đường dài chuyên nghiệp.', 'Mô tả chi tiết giày Asics Gel', 0, 0, 1711814600000),
-('sp9', 'th1', 'dm1', 'xx1', 'md1', 'cl2', 'dg1', 'cg1', 'SP009', 'Nike Zoom Fly 5', 'NAM', 'sp9.jpg', 'Giày chạy bộ tốc độ.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp10', 'th2', 'dm2', 'xx2', 'md3', 'cl1', 'dg3', 'cg2', 'SP010', 'Adidas NMD R1', 'UNISEX', 'sp10.jpg', 'Phong cách thời trang đường phố.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp11', 'th9', 'dm1', 'xx1', 'md2', 'cl2', 'dg5', 'cg1', 'SP011', 'Puma Deviate Nitro', 'NAM', 'sp11.jpg', 'Đệm Nitro cực êm.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp12', 'th10', 'dm2', 'xx3', 'md3', 'cl5', 'dg1', 'cg1', 'SP012', 'Reebok Classic Leather', 'UNISEX', 'sp12.jpg', 'Cổ điển và bền bỉ.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp13', 'th3', 'dm1', 'xx2', 'md1', 'cl2', 'dg3', 'cg1', 'SP013', 'Puma Velocity Nitro 2', 'NU', 'sp13.jpg', 'Giày chạy đa năng cho nữ.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp14', 'th4', 'dm4', 'xx1', 'md3', 'cl1', 'dg4', 'cg2', 'SP014', 'NB 550 White Blue', 'UNISEX', 'sp14.jpg', 'Mẫu sneaker hot nhất hiện nay.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp15', 'th5', 'dm4', 'xx2', 'md3', 'cl3', 'dg1', 'cg3', 'SP015', 'Converse Chuck 70 High', 'UNISEX', 'sp15.jpg', 'Chuck 70 cao cổ thời thượng.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp16', 'th1', 'dm1', 'xx3', 'md1', 'cl2', 'dg5', 'cg1', 'SP016', 'Nike Vaporfly Next% 3', 'NAM', 'sp16.jpg', 'Siêu giày đua marathon.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp17', 'th2', 'dm2', 'xx1', 'md3', 'cl5', 'dg1', 'cg1', 'SP017', 'Adidas Forum Low', 'UNISEX', 'sp17.jpg', 'Phong cách bóng rổ retro.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp18', 'th3', 'dm1', 'xx2', 'md1', 'cl2', 'dg2', 'cg1', 'SP018', 'Puma Liberate Nitro', 'NAM', 'sp18.jpg', 'Siêu nhẹ cho các buổi tập nhanh.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp19', 'th4', 'dm4', 'xx3', 'md3', 'cl1', 'dg1', 'cg2', 'SP019', 'NB 2002R Protection Pack', 'UNISEX', 'sp19.jpg', 'Thiết kế phá cách độc đáo.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp20', 'th6', 'dm4', 'xx1', 'md1', 'cl2', 'dg3', 'cg1', 'SP020', 'Bitis Hunter X Dune', 'NAM', 'sp20.jpg', 'Dòng X mạnh mẽ bền bỉ.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp21', 'th7', 'dm4', 'xx2', 'md3', 'cl3', 'dg1', 'cg1', 'SP021', 'Vans Slip-On Checkerboard', 'UNISEX', 'sp21.jpg', 'Họa tiết caro kinh điển.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp22', 'th8', 'dm1', 'xx1', 'md1', 'cl2', 'dg1', 'cg1', 'SP022', 'Asics Novablast 4', 'NAM', 'sp22.jpg', 'Độ nảy cực tốt.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp23', 'th1', 'dm3', 'xx2', 'md2', 'cl5', 'dg2', 'cg2', 'SP023', 'Nike Mercurial Vapor 15', 'NAM', 'sp23.jpg', 'Giày bóng đá tốc độ.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp24', 'th2', 'dm3', 'xx1', 'md2', 'cl1', 'dg4', 'cg2', 'SP024', 'Adidas Predator Accuracy', 'NAM', 'sp24.jpg', 'Kiểm soát bóng tối ưu.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp25', 'th9', 'dm4', 'xx3', 'md3', 'cl3', 'dg1', 'cg1', 'SP025', 'Puma Suede Classic', 'UNISEX', 'sp25.jpg', 'Vải da lộn sang trọng.', 'Mô tả chi tiết', 0, 0, 1711814600000);
+('sp6', 'th6', 'dm4', 'xx1', 'md3', 'cl3', 'dg1', 'cg1', 'SP006', 'Bitis Hunter Street', 'UNISEX', 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?q=80&w=1996&auto=format&fit=crop', 'Dòng giày thể thao đường phố của Bitis.', 'Mô tả chi tiết giày Bitis Hunter', 0, 0, 1711814600000),
+('sp7', 'th7', 'dm4', 'xx2', 'md3', 'cl3', 'dg1', 'cg1', 'SP007', 'Vans Old Skool', 'UNISEX', 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=1974&auto=format&fit=crop', 'Huyền thoại Vans trượt ván.', 'Mô tả chi tiết giày Vans Old Skool', 0, 0, 1711814600000),
+('sp8', 'th8', 'dm1', 'xx3', 'md1', 'cl2', 'dg5', 'cg1', 'SP008', 'Asics Gel-Kayano 30', 'NAM', 'https://images.unsplash.com/photo-1560769629-975ec94e6a86?q=80&w=1964&auto=format&fit=crop', 'Giày chạy bộ đường dài chuyên nghiệp.', 'Mô tả chi tiết giày Asics Gel', 0, 0, 1711814600000),
+('sp9', 'th1', 'dm1', 'xx1', 'md1', 'cl2', 'dg1', 'cg1', 'SP009', 'Nike Zoom Fly 5', 'NAM', 'https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=2080&auto=format&fit=crop', 'Giày chạy bộ tốc độ.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp10', 'th2', 'dm2', 'xx2', 'md3', 'cl1', 'dg3', 'cg2', 'SP010', 'Adidas NMD R1', 'UNISEX', 'https://images.unsplash.com/photo-1543508282-6319a3e4621a?q=80&w=2030&auto=format&fit=crop', 'Phong cách thời trang đường phố.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp11', 'th9', 'dm1', 'xx1', 'md2', 'cl2', 'dg5', 'cg1', 'SP011', 'Puma Deviate Nitro', 'NAM', 'https://images.unsplash.com/photo-1605348532760-6753d2c43329?q=80&w=1974&auto=format&fit=crop', 'Đệm Nitro cực êm.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp12', 'th10', 'dm2', 'xx3', 'md3', 'cl5', 'dg1', 'cg1', 'SP012', 'Reebok Classic Leather', 'UNISEX', 'https://images.unsplash.com/photo-1512374382149-433a72b75d9b?q=80&w=1970&auto=format&fit=crop', 'Cổ điển và bền bỉ.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp13', 'th3', 'dm1', 'xx2', 'md1', 'cl2', 'dg3', 'cg1', 'SP013', 'Puma Velocity Nitro 2', 'NU', 'https://images.unsplash.com/photo-1584735175315-9d5df23860e6?q=80&w=1974&auto=format&fit=crop', 'Giày chạy đa năng cho nữ.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp14', 'th4', 'dm4', 'xx1', 'md3', 'cl1', 'dg4', 'cg2', 'SP014', 'NB 550 White Blue', 'UNISEX', 'https://images.unsplash.com/photo-1603808033192-082d6919d3e1?q=80&w=2030&auto=format&fit=crop', 'Mẫu sneaker hot nhất hiện nay.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp15', 'th5', 'dm4', 'xx2', 'md3', 'cl3', 'dg1', 'cg3', 'SP015', 'Converse Chuck 70 High', 'UNISEX', 'https://images.unsplash.com/photo-1562183241-b937e95585b6?q=80&w=1965&auto=format&fit=crop', 'Chuck 70 cao cổ thời thượng.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp16', 'th1', 'dm1', 'xx3', 'md1', 'cl2', 'dg5', 'cg1', 'SP016', 'Nike Vaporfly Next% 3', 'NAM', 'https://images.unsplash.com/photo-1539185441755-769473a23570?q=80&w=2071&auto=format&fit=crop', 'Siêu giày đua marathon.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp17', 'th2', 'dm2', 'xx1', 'md3', 'cl5', 'dg1', 'cg1', 'SP017', 'Adidas Forum Low', 'UNISEX', 'https://images.unsplash.com/photo-1600185365483-26d7a4cc7519?q=80&w=1925&auto=format&fit=crop', 'Phong cách bóng rổ retro.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp18', 'th3', 'dm1', 'xx2', 'md1', 'cl2', 'dg2', 'cg1', 'SP018', 'Puma Liberate Nitro', 'NAM', 'https://images.unsplash.com/photo-1514989940723-e8e51635b782?q=80&w=2070&auto=format&fit=crop', 'Siêu nhẹ cho các buổi tập nhanh.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp19', 'th4', 'dm4', 'xx3', 'md3', 'cl1', 'dg1', 'cg2', 'SP019', 'NB 2002R Protection Pack', 'UNISEX', 'https://images.unsplash.com/photo-1515347619252-60a4bdad8896?q=80&w=1996&auto=format&fit=crop', 'Thiết kế phá cách độc đáo.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp20', 'th6', 'dm4', 'xx1', 'md1', 'cl2', 'dg3', 'cg1', 'SP020', 'Bitis Hunter X Dune', 'NAM', 'https://images.unsplash.com/photo-1551107644-79bb0c590d30?q=80&w=2070&auto=format&fit=crop', 'Dòng X mạnh mẽ bền bỉ.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp21', 'th7', 'dm4', 'xx2', 'md3', 'cl3', 'dg1', 'cg1', 'SP021', 'Vans Slip-On Checkerboard', 'UNISEX', 'https://images.unsplash.com/photo-1575537302964-96cd47c06b1b?q=80&w=2070&auto=format&fit=crop', 'Họa tiết caro kinh điển.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp22', 'th8', 'dm1', 'xx1', 'md1', 'cl2', 'dg1', 'cg1', 'SP022', 'Asics Novablast 4', 'NAM', 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?q=80&w=1964&auto=format&fit=crop', 'Độ nảy cực tốt.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp23', 'th1', 'dm3', 'xx2', 'md2', 'cl5', 'dg2', 'cg2', 'SP023', 'Nike Mercurial Vapor 15', 'NAM', 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?q=80&w=2071&auto=format&fit=crop', 'Giày bóng đá tốc độ.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp24', 'th2', 'dm3', 'xx1', 'md2', 'cl1', 'dg4', 'cg2', 'SP024', 'Adidas Predator Accuracy', 'NAM', 'https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?q=80&w=2031&auto=format&fit=crop', 'Kiểm soát bóng tối ưu.', 'Mô tả chi tiết', 0, 0, 1711814600000),
+('sp25', 'th9', 'dm4', 'xx3', 'md3', 'cl3', 'dg1', 'cg1', 'SP025', 'Puma Suede Classic', 'UNISEX', 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?q=80&w=2070&auto=format&fit=crop', 'Vải da lộn sang trọng.', 'Mô tả chi tiết', 0, 0, 1711814600000);
 
 -- Thêm Chi Tiết Sản Phẩm (250 biến thể - 10 bản ghi cho mỗi sản phẩm từ sp1 đến sp25)
 INSERT IGNORE INTO chi_tiet_san_pham (id, id_san_pham, id_kich_thuoc, id_mau_sac, ma_chi_tiet_san_pham, so_luong, gia_nhap, gia_ban, trang_thai, xoa_mem, ngay_tao) VALUES
@@ -332,11 +332,6 @@ INSERT IGNORE INTO dia_chi (id, ma_dia_chi, tinh, thanh_pho, phuong_xa, dia_chi_
 
 -- Thêm Khách Hàng Mới
 INSERT IGNORE INTO khach_hang (id, id_dia_chi, ma_nguoi_dung, ten_nguoi_dung, email, ten_tai_khoan, mat_khau, gioi_tinh, sdt, ngay_sinh, hinh_anh, ghi_chu, trang_thai, ngay_tao) VALUES
-('kh6', 'dc6', 'KH006', 'Trần Khách Test 6', 'khach6@gmail.com', 'khach6', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0906667777', '2000-01-01', 'kh6.jpg', 'Data test sinh tự động', 0, 1711814900000),
-('kh7', 'dc7', 'KH007', 'Lê Khách Test 7', 'khach7@gmail.com', 'khach7', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0907778888', '2001-02-02', 'kh7.jpg', 'Data test sinh tự động', 0, 1711814900000),
-('kh8', 'dc8', 'KH008', 'Nguyễn Văn A', 'khach8@gmail.com', 'khach8', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0912111222', '1990-05-15', 'kh8.jpg', NULL, 0, 1711814900000),
-('kh9', 'dc9', 'KH009', 'Trần Thị B', 'khach9@gmail.com', 'khach9', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0912333444', '1992-08-20', 'kh9.jpg', NULL, 0, 1711814900000),
-('kh10', 'dc10', 'KH010', 'Lê Văn C', 'khach10@gmail.com', 'khach10', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0912555666', '1988-12-10', 'kh10.jpg', NULL, 0, 1711814900000),
 ('kh11', 'dc11', 'KH011', 'Phạm Thị D', 'khach11@gmail.com', 'khach11', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0912777888', '1995-03-25', 'kh11.jpg', NULL, 0, 1711814900000),
 ('kh12', 'dc12', 'KH012', 'Hoàng Văn E', 'khach12@gmail.com', 'khach12', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0912999000', '1993-07-30', 'kh12.jpg', NULL, 0, 1711814900000),
 ('kh13', 'dc13', 'KH013', 'Ngô Thị F', 'khach13@gmail.com', 'khach13', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0913123456', '1991-11-05', 'kh13.jpg', NULL, 0, 1711814900000),

@@ -1,6 +1,7 @@
 <script setup>
 import Logo from '@/layouts/full/logo/Logo.vue';
-import LoginForm from '@/components/auth/LoginForm.vue';
+import LoginForm from '@/components/auth/admin/LoginForm.vue';
+import { PATH } from '@/router/routePaths';
 </script>
 
 <template>
@@ -55,7 +56,7 @@ import LoginForm from '@/components/auth/LoginForm.vue';
                                         <v-divider class="mb-6"></v-divider>
                                         <p class="text-body-1 text-grey-darken-1">
                                             Đối tác mới của chúng tôi?
-                                            <RouterLink to="/auth/register" class="text-primary text-decoration-none font-weight-black ml-1 premium-link">
+                                            <RouterLink :to="PATH.ADMIN_REGISTER" class="text-primary text-decoration-none font-weight-black ml-1 premium-link">
                                                 Gia nhập ngay
                                             </RouterLink>
                                         </p>

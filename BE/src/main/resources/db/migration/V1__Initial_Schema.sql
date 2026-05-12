@@ -31,10 +31,10 @@ CREATE TABLE nhan_vien (
     ten_tai_khoan VARCHAR(100) UNIQUE,
     mat_khau VARCHAR(255),
     hinh_anh VARCHAR(500),
-    tinh NVARCHAR(300),
-    thanh_pho NVARCHAR(300),
-    phuong_xa NVARCHAR(300),
-    dia_chi_chi_tiet NVARCHAR(300),
+    tinh VARCHAR(300),
+    thanh_pho VARCHAR(300),
+    phuong_xa VARCHAR(300),
+    dia_chi_chi_tiet VARCHAR(300),
     xoa_mem BIT DEFAULT 0,
     trang_thai INT,
     ngay_tao BIGINT,
@@ -442,6 +442,47 @@ CREATE TABLE giao_dich_thanh_toan (
     ghi_chu TEXT,
     FOREIGN KEY (id_hoa_don) REFERENCES hoa_don(id),
     FOREIGN KEY (id_phuong_thuc_thanh_toan) REFERENCES phuong_thuc_thanh_toan(id)
+);
+
+-- Create table for work shifts
+CREATE TABLE ca_lam (
+    id VARCHAR(36) PRIMARY KEY,
+    ten_ca VARCHAR(255),
+    gio_bat_dau TIME,
+    gio_ket_thuc TIME,
+    mo_ta TEXT,
+    xoa_mem BOOLEAN DEFAULT FALSE,
+    ngay_tao DATETIME,
+    ngay_sua DATETIME,
+    nguoi_tao VARCHAR(255),
+    nguoi_sua VARCHAR(255)
+);
+
+-- Create table for work schedules
+CREATE TABLE lich_lam_viec (
+    id VARCHAR(36) PRIMARY KEY,
+    id_nhan_vien VARCHAR(36),
+    id_ca_lam VARCHAR(36),
+    ngay_lam DATE,
+    trang_thai_lich VARCHAR(50),
+    ngay_tao DATETIME,
+    ngay_sua DATETIME,
+    nguoi_tao VARCHAR(255),
+    nguoi_sua VARCHAR(255),
+    CONSTRAINT fk_lich_lam_viec_nhan_vien FOREIGN KEY (id_nhan_vien) REFERENCES nhan_vien(id),
+    CONSTRAINT fk_lich_lam_viec_ca_lam FOREIGN KEY (id_ca_lam) REFERENCES ca_lam(id)
+);
+
+-- Create table for activity history
+CREATE TABLE lich_su_hoat_dong (
+    id VARCHAR(36) PRIMARY KEY,
+    nguoi_thuc_hien VARCHAR(255),
+    hanh_dong VARCHAR(255),
+    doi_tuong VARCHAR(255),
+    ngay_tao DATETIME,
+    ngay_sua DATETIME,
+    nguoi_tao VARCHAR(255),
+    nguoi_sua VARCHAR(255)
 );
 
 SET FOREIGN_KEY_CHECKS = 1;

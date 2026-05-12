@@ -14,7 +14,11 @@ import {
   LoginIcon, 
   UserPlusIcon,
   LogoutIcon,
-  BoxIcon
+  BoxIcon,
+  MessagesIcon,
+  CalendarIcon,
+  ClockIcon,
+  HistoryIcon
 } from 'vue-tabler-icons';
 import { PATH } from '@/router/routePaths';
 
@@ -86,6 +90,22 @@ const sidebarItem = [
     BgColor: 'secondary',
     to: PATH.NHAN_VIEN
   },
+  {
+    title: 'Quản lý tin nhắn',
+    icon: MessagesIcon,
+    BgColor: 'indigo',
+    to: PATH.QUAN_LY_CHAT
+  },
+    {
+    title: 'Quản lý lịch',
+    icon: CalendarIcon,
+    BgColor: 'teal',
+    children: [
+      { title: 'Lịch làm việc', icon: CalendarIcon, to: PATH.LICH_LAM_VIEC, BgColor: 'teal' },
+      { title: 'Lịch ca làm', icon: ClockIcon, to: PATH.LICH_CA_LAM, BgColor: 'teal' },
+      { title: 'Lịch sử hoạt động', icon: HistoryIcon, to: PATH.LICH_SU_HOAT_DONG, BgColor: 'teal' }
+    ]
+  }
   // {
   //   title: 'Thanh toán',
   //   icon: CreditCardIcon,

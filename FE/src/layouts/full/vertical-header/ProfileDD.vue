@@ -1,5 +1,6 @@
 <script setup>
 import { PATH } from '@/router/routePaths';
+import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 const profileDD = [
   {
     avatar: 'mdi-account-outline',
@@ -18,10 +19,9 @@ const profileDD = [
   },
 ];
 
-const handleLogout = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  window.location.href = PATH.LOGIN;
+const handleLogout = async () => {
+  await dichVuXacThuc.dangXuat();
+  window.location.href = PATH.ADMIN_LOGIN;
 };
 </script>
 

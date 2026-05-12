@@ -71,7 +71,19 @@ api.interceptors.response.use(
 
       if (status === 401 && !isLoginRequest) {
         sessionStorage.clear(); // Xóa sạch để đảm bảo an toàn
-        window.location.href = '/auth/login';
+        
+        const currentPath = window.location.pathname;
+        const isAdminPath = currentPath.startsWith('/admin') || currentPath.startsWith('/main');
+        
+        // Chỉ tự động nhảy về Login nếu đang ở trong vùng quản trị
+        // Nếu ở Landing Page hoặc các trang public, ta cứ ở lại đó
+        if (isAdminPath) {
+          window.location.href = '/admin/login';
+        } else if (currentPath === '/user/login') {
+          // Đã ở trang login rồi thì thôi
+        } else if (currentPath.startsWith('/auth')) {
+          // Các trang auth khác
+        }
       } else if (status === 403) {
         if (import.meta.env.DEV) {
           console.error('Bạn không có quyền thực hiện hành động này');

@@ -1,0 +1,40 @@
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="shoeDetailMask">
+      <rect width="240" height="240" fill="white"/>
+      <!-- Detailed cutouts for laces and structure -->
+      <path d="M70 70C90 65 110 75 125 95" stroke="black" stroke-width="4" stroke-linecap="round" fill="none"/>
+      
+      <!-- Side dynamic lines (Sporty look) -->
+      <path d="M80 115C100 105 140 100 170 125" stroke="black" stroke-width="8" stroke-linecap="round" fill="none"/>
+      <path d="M90 130C110 120 145 120 165 145" stroke="black" stroke-width="5" stroke-linecap="round" fill="none"/>
+
+      <!-- Eyelets -->
+      <circle cx="115" cy="100" r="3" fill="black"/>
+      <circle cx="125" cy="115" r="3" fill="black"/>
+      <circle cx="135" cy="130" r="3" fill="black"/>
+      <circle cx="145" cy="145" r="3" fill="black"/>
+
+      <!-- Loose lace -->
+      <path d="M115 100C130 90 160 100 180 120C190 130 185 145 170 140" stroke="black" stroke-width="4" stroke-linecap="round" fill="none"/>
+      
+      <!-- Separation between upper and midsole -->
+      <path d="M35 155C100 170 180 165 210 150" stroke="black" stroke-width="3" fill="none"/>
+    </mask>
+  </defs>
+
+  <!-- Anatomically Correct Sneaker Silhouette -->
+  <g mask="url(#shoeDetailMask)">
+    <!-- Midsole (Bottom part) -->
+    <path d="M30 160C30 155 60 180 120 185C180 190 215 175 220 160C225 145 220 180 200 195C170 210 100 215 60 205C30 195 30 175 30 160Z" fill="#1A4799"/>
+    
+    <!-- Main Upper (Body of the shoe) -->
+    <path d="M35 155C25 130 30 70 55 60C70 50 90 55 110 80L135 110C155 130 200 140 215 150C220 155 215 165 210 165C180 175 100 180 35 155Z" fill="#1A4799"/>
+  </g>
+
+  <!-- Heel Tab -->
+  <path d="M52 65C48 55 55 50 62 55" stroke="#1A4799" stroke-width="5" stroke-linecap="round" fill="none"/>
+
+  <!-- Speed/Motion Lines at bottom -->
+  <path d="M80 215L170 210L120 222H80V215Z" fill="#1A4799"/>
+</svg>
