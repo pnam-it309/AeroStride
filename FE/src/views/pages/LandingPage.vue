@@ -1,6 +1,6 @@
 <script setup>
 import { PATH } from '@/router/routePaths';
-import Logo from '@/layouts/full/logo/Logo.vue';
+import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import Preloader from '@/components/common/Preloader.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 import { useLandingPage } from '@/composables/useLandingPage';
@@ -65,7 +65,7 @@ const {
             <CtaSection :active="activeSection === 6" />
 
             <footer class="footer-landing py-10 text-center text-grey-darken-1 bg-white border-t">
-                <Logo class="mb-4 d-inline-block" style="max-width: 150px" />
+                <LogoClient class="mb-4 d-inline-block" style="max-width: 150px" />
                 <p>&copy; 2026 AeroStride All rights reserved.</p>
             </footer>
         </div>

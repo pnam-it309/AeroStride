@@ -1,16 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import ClientLoginForm from '@/components/auth/client/ClientLoginForm.vue';
-import Logo from '@/layouts/full/logo/Logo.vue';
+import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import { PATH } from '@/router/routePaths';
-
-const shoes = [
-    'https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=1974&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=1974&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=2012&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?q=80&w=1964&auto=format&fit=crop'
-];
 
 const currentShoeIndex = ref(0);
 
@@ -39,7 +31,7 @@ onMounted(() => {
 
                     <div class="content-wrapper text-center z-index-2 w-100 px-10">
                         <div class="mb-12 logo-container">
-                            <Logo class="mega-logo subtle-logo" dark />
+                            <LogoClient class="mega-logo subtle-logo" dark />
                         </div>
 
                         <h1 class="text-h2 font-weight-black text-black mb-6 tracking-tight hero-text text-uppercase"
@@ -59,9 +51,7 @@ onMounted(() => {
                                     <v-img v-for="(shoe, index) in shoes" v-show="currentShoeIndex === index"
                                         :key="shoe" :src="shoe"
                                         class="mx-auto floating-shoe-premium drop-shadow-2xl rounded-xl absolute-shoe"
-                                        width="100%"
-                                        max-width="500"
-                                        cover></v-img>
+                                        width="100%" max-width="500" cover></v-img>
                                 </transition-group>
                             </div>
                         </div>
@@ -73,7 +63,7 @@ onMounted(() => {
                     <div class="auth-form-container w-100 px-sm-12 px-6 py-10" style="max-width: 500px;">
                         <!-- Mobile Logo -->
                         <div class="text-center mb-10 d-md-none transform-zoom">
-                            <Logo class="mega-logo" />
+                            <LogoClient class="mega-logo" />
                         </div>
 
                         <!-- Header -->
@@ -126,7 +116,8 @@ onMounted(() => {
 }
 
 .text-primary-accent {
-    color: #2962FF; /* Blue Accent 4 */
+    color: #2962FF;
+    /* Blue Accent 4 */
     background: linear-gradient(135deg, #0091EA 0%, #2962FF 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -228,7 +219,8 @@ onMounted(() => {
 .subtle-logo {
     opacity: 1;
     transition: all 0.5s ease;
-    mix-blend-mode: darken; /* Darken hoạt động tốt hơn để triệt tiêu nền trắng trên nền sáng */
+    mix-blend-mode: darken;
+    /* Darken hoạt động tốt hơn để triệt tiêu nền trắng trên nền sáng */
 }
 
 .logo-container:hover .subtle-logo {
@@ -239,13 +231,16 @@ onMounted(() => {
 
 .slider-wrapper {
     position: relative;
-    height: 420px; /* Điều chỉnh chiều cao hợp lý */
+    height: 420px;
+    /* Điều chỉnh chiều cao hợp lý */
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: -10px; /* Kéo lên trên một chút so với văn bản */
-    margin-bottom: 50px; /* Thêm khoảng trống ở dưới để không dính đáy */
+    margin-top: -10px;
+    /* Kéo lên trên một chút so với văn bản */
+    margin-bottom: 50px;
+    /* Thêm khoảng trống ở dưới để không dính đáy */
 }
 
 .absolute-shoe {

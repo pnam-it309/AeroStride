@@ -96,8 +96,8 @@ onMounted(() => {
             v-if="!isOpen"
             icon="mdi-message-text"
             color="black"
-            size="large"
-            elevation="8"
+            size="default"
+            elevation="4"
             class="chat-fab"
             @click="isOpen = true"
         ></v-btn>

@@ -130,11 +130,11 @@ INSERT INTO chi_tiet_san_pham (id, id_san_pham, id_kich_thuoc, id_mau_sac, ma_ch
 
 -- 14. Bảng Ảnh Chi Tiết Sản Phẩm (anh_chi_tiet_san_pham)
 INSERT INTO anh_chi_tiet_san_pham (id, id_chi_tiet_san_pham, duong_dan_anh, hinh_anh_dai_dien, mo_ta, xoa_mem, trang_thai, ngay_tao) VALUES
-('a1', 'ct1', 'anh1_1.jpg', 1, 'Ảnh mặt trước', 0, 0, 1711814400000),
-('a2', 'ct1', 'anh1_2.jpg', 0, 'Ảnh mặt bên', 0, 0, 1711814400000),
-('a3', 'ct2', 'anh2_1.jpg', 1, 'Ảnh đại diện ct2', 0, 0, 1711814400000),
-('a4', 'ct3', 'anh3_1.jpg', 1, 'Ảnh đại diện ct3', 0, 0, 1711814400000),
-('a5', 'ct4', 'anh4_1.jpg', 1, 'Ảnh đại diện ct4', 0, 0, 1711814400000);
+('a1', 'ct1', 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=1974&auto=format&fit=crop', 1, 'Ảnh mặt trước', 0, 0, 1711814400000),
+('a2', 'ct1', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop', 0, 'Ảnh mặt bên', 0, 0, 1711814400000),
+('a3', 'ct2', 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=1974&auto=format&fit=crop', 1, 'Ảnh đại diện ct2', 0, 0, 1711814400000),
+('a4', 'ct3', 'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=2012&auto=format&fit=crop', 1, 'Ảnh đại diện ct3', 0, 0, 1711814400000),
+('a5', 'ct4', 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?q=80&w=1964&auto=format&fit=crop', 1, 'Ảnh đại diện ct4', 0, 0, 1711814400000);
 
 -- 15. Bảng Đợt Giảm Giá (dot_giam_gia)
 INSERT INTO dot_giam_gia (id, ma_dot_giam_gia, ten_dot_giam_gia, loai_giam_gia, so_tien_giam, dieu_kien_giam_gia, ngay_bat_dau, ngay_ket_thuc, muc_uu_tien, trang_thai, ngay_tao) VALUES

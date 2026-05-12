@@ -119,37 +119,38 @@ const currentPromo = computed(() => promotions[activeIndex.value]);
                 </div>
             </div>
 
-            <!-- Horizontal Carousel (Xem được) -->
-            <div ref="containerRef" class="horizontal-scroll-container flex-grow-1">
-                <div class="timeline-row">
-                    <div v-for="(promo, i) in promotions" :key="i" 
-                         class="timeline-card-item" 
-                         :class="{ 'focused': activeIndex === i, 'faded': activeIndex !== i }"
-                         @click="selectPhase(i)">
-                        
-                        <div class="glass-promo-card">
-                            <div class="card-top">
-                                <div class="icon-circle" :style="{ background: promo.color + '15' }">
-                                    <v-icon :color="promo.color" size="40">{{ promo.icon }}</v-icon>
+            <!-- Horizontal Carousel (Chạy liên tục như slider) -->
+            <div class="horizontal-slider-wrapper flex-grow-1">
+                <div class="marquee-track">
+                    <!-- Triple items for seamless loop -->
+                    <div v-for="n in 3" :key="'group-'+n" class="marquee-group">
+                        <div v-for="(promo, i) in promotions" :key="n+'-'+i" 
+                             class="timeline-card-item" 
+                             @click="showDetail = true; activeIndex = i">
+                            
+                            <div class="glass-promo-card">
+                                <div class="card-top">
+                                    <div class="icon-circle" :style="{ background: promo.color + '15' }">
+                                        <v-icon :color="promo.color" size="40">{{ promo.icon }}</v-icon>
+                                    </div>
+                                    <div class="status-badge" :style="{ border: `1px solid ${promo.color}`, color: promo.color }">
+                                        {{ promo.status }}
+                                    </div>
                                 </div>
-                                <div class="status-badge" :style="{ border: `1px solid ${promo.color}`, color: promo.color }">
-                                    {{ promo.status }}
+
+                                <div class="card-mid">
+                                    <h3 class="card-title">{{ promo.title }}</h3>
+                                    <div class="card-date">{{ promo.date }}</div>
+                                    <p class="card-desc">{{ promo.desc }}</p>
                                 </div>
-                            </div>
 
-                            <div class="card-mid">
-                                <h3 class="card-title">{{ promo.title }}</h3>
-                                <div class="card-date">{{ promo.date }}</div>
-                                <p class="card-desc">{{ promo.desc }}</p>
-                            </div>
-
-                            <!-- Clickable Detail Trigger (Cảm nhận được) -->
-                            <div class="card-bot">
-                                <v-btn block rounded="pill" size="large" 
-                                       :color="promo.color" variant="tonal" 
-                                       class="font-weight-black" @click.stop="toggleDetail">
-                                    DATA ANALYSIS <v-icon class="ml-2">mdi-chart-timeline-variant</v-icon>
-                                </v-btn>
+                                <div class="card-bot">
+                                    <v-btn block rounded="pill" size="large" 
+                                           :color="promo.color" variant="tonal" 
+                                           class="font-weight-black">
+                                        DATA ANALYSIS <v-icon class="ml-2">mdi-chart-timeline-variant</v-icon>
+                                    </v-btn>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -267,19 +268,28 @@ const currentPromo = computed(() => promotions[activeIndex.value]);
     }
 }
 
-/* Horizontal Scroll Container */
-.horizontal-scroll-container {
-    width: 100%; overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
-    &::-webkit-scrollbar { display: none; }
+/* Continuous Slider (Marquee) */
+.horizontal-slider-wrapper {
+    width: 100%; overflow: hidden; position: relative;
     display: flex; align-items: center;
 }
 
-.timeline-row { display: flex; padding: 0 15vw; align-items: center; gap: 40px; }
+.marquee-track {
+    display: flex; width: max-content;
+    animation: scroll-roadmap 60s linear infinite;
+    &:hover { animation-play-state: paused; }
+}
+
+.marquee-group { display: flex; gap: 40px; padding-right: 40px; }
 
 .timeline-card-item {
-    width: 420px; flex-shrink: 0; cursor: pointer; transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-    &.focused { transform: scale(1.05); z-index: 10; opacity: 1; }
-    &.faded { opacity: 0.4; filter: blur(2px); transform: scale(0.9); }
+    width: 420px; flex-shrink: 0; cursor: pointer; transition: all 0.4s ease;
+    &:hover { transform: translateY(-10px) scale(1.02); z-index: 10; }
+}
+
+@keyframes scroll-roadmap {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-33.333%); }
 }
 
 .glass-promo-card {

@@ -7,34 +7,32 @@ const props = defineProps({ active: Boolean, warm: Boolean });
 
 <template>
     <section class="snap-section features-section overflow-hidden" :class="{ 'is-active': props.active }">
-        <template v-if="props.active || props.warm">
-            <div class="light-decor">
-                <div class="soft-glow glow-1"></div>
-                <div class="soft-glow glow-2"></div>
-                <div class="soft-glow glow-3"></div>
-            </div>
+        <div class="light-decor">
+            <div class="soft-glow glow-1"></div>
+            <div class="soft-glow glow-2"></div>
+            <div class="soft-glow glow-3"></div>
+        </div>
 
-            <div class="diagonal-bento-wall">
-                <div
-                    v-for="(column, columnIndex) in LANDING_FEATURE_COLUMNS"
-                    :key="`col-${columnIndex}`"
-                    class="bento-col"
-                    :class="`col-${columnIndex + 1}`"
-                >
-                    <div v-for="(item, itemIndex) in column" :key="`c${columnIndex}-${itemIndex}`" class="bento-card glass-card" :class="item.size">
-                        <div class="card-inner">
-                            <div class="icon-wrap" :style="{ background: `${item.color}15` }">
-                                <v-icon :color="item.color" size="24">{{ item.icon }}</v-icon>
-                            </div>
-                            <div class="text-wrap">
-                                <h4>{{ item.title }}</h4>
-                                <p>{{ item.desc }}</p>
-                            </div>
+        <div class="diagonal-bento-wall">
+            <div
+                v-for="(column, columnIndex) in LANDING_FEATURE_COLUMNS"
+                :key="`col-${columnIndex}`"
+                class="bento-col"
+                :class="`col-${columnIndex + 1}`"
+            >
+                <div v-for="(item, itemIndex) in column" :key="`c${columnIndex}-${itemIndex}`" class="bento-card glass-card" :class="item.size">
+                    <div class="card-inner">
+                        <div class="icon-wrap" :style="{ background: `${item.color}15` }">
+                            <v-icon :color="item.color" size="24">{{ item.icon }}</v-icon>
+                        </div>
+                        <div class="text-wrap">
+                            <h4>{{ item.title }}</h4>
+                            <p>{{ item.desc }}</p>
                         </div>
                     </div>
                 </div>
             </div>
-        </template>
+        </div>
     </section>
 </template>
 
@@ -48,9 +46,6 @@ const props = defineProps({ active: Boolean, warm: Boolean });
     background: #ffffff;
     display: flex;
     overflow: hidden;
-    contain: layout paint style;
-    content-visibility: auto;
-    contain-intrinsic-size: 100vh 100vw;
 }
 
 .light-decor {
@@ -79,6 +74,7 @@ const props = defineProps({ active: Boolean, warm: Boolean });
     top: -110vh;
     left: -110vw;
     transform: rotate(-12deg) skewX(-2deg);
+    transform-style: preserve-3d;
     z-index: 5;
     will-change: transform;
     justify-content: center;
@@ -90,23 +86,26 @@ const props = defineProps({ active: Boolean, warm: Boolean });
     gap: 40px;
     width: 340px;
     flex-shrink: 0;
+    will-change: transform;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
 }
 
-.col-1 { animation: scroll-up-loop 48s linear infinite; }
-.col-2 { animation: scroll-down-loop 54s linear infinite; }
-.col-3 { animation: scroll-up-loop 62s linear infinite; }
-.col-4 { animation: scroll-down-loop 58s linear infinite; }
-.col-5 { animation: scroll-up-loop 66s linear infinite; }
-.col-6 { animation: scroll-down-loop 50s linear infinite; }
+.col-1 { animation: scroll-up-loop 35s linear infinite running; }
+.col-2 { animation: scroll-down-loop 40s linear infinite running; }
+.col-3 { animation: scroll-up-loop 45s linear infinite running; }
+.col-4 { animation: scroll-down-loop 38s linear infinite running; }
+.col-5 { animation: scroll-up-loop 42s linear infinite running; }
+.col-6 { animation: scroll-down-loop 32s linear infinite running; }
 
 @keyframes scroll-up-loop {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-33.33%); }
+    0% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(0, -33.33%, 0); }
 }
 
 @keyframes scroll-down-loop {
-    0% { transform: translateY(-33.33%); }
-    100% { transform: translateY(0); }
+    0% { transform: translate3d(0, -33.33%, 0); }
+    100% { transform: translate3d(0, 0, 0); }
 }
 
 .bento-card {
@@ -176,12 +175,4 @@ const props = defineProps({ active: Boolean, warm: Boolean });
     }
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .bento-col,
-    .soft-glow,
-    .bento-card {
-        animation: none !important;
-        transition: none !important;
-    }
-}
 </style>

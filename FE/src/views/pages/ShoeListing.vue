@@ -1,11 +1,14 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import PromotionBar from '@/components/shared/PromotionBar.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
+import apiService from '@/services/apiService';
 
 const router = useRouter();
+const loading = ref(false);
+const isFilterVisible = ref(true);
 
 const filters = [
     { title: 'Gender', items: ['Men', 'Women', 'Unisex'] },
@@ -15,16 +18,32 @@ const filters = [
     { title: 'Technology', items: ['X1-Sensor', 'Air-Nano', 'Carbon-Strike'] }
 ];
 
-// Placeholder data for 8 products
-const products = ref(Array(8).fill(null).map((_, i) => ({
-    id: i + 1,
-    promo: 'Promo Exclusion',
-    name: '[PRODUCT NAME]',
-    category: '[CATEGORY NAME]',
-    price: '[PRICE] ₫'
-})));
+const products = ref([]);
 
-const isFilterVisible = ref(true);
+const fetchProducts = async () => {
+    loading.value = true;
+    try {
+        const response = await apiService.get('/customer/san-pham/hien-thi', {
+            params: { size: 12 }
+        });
+        if (response.data.success) {
+            products.value = response.data.data.content;
+        }
+    } catch (error) {
+        console.error('Error fetching products:', error);
+    } finally {
+        loading.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchProducts();
+});
+
+const formatPrice = (price) => {
+    if (!price) return '0 ₫';
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+};
 
 const goToDetail = (id) => {
     router.push(`/product/${id}`);
@@ -42,7 +61,7 @@ const goToDetail = (id) => {
         <!-- Sub-header (Title & Global Filters) -->
         <div class="listing-subheader px-12 py-8 mt-0">
             <div class="d-flex align-center justify-space-between">
-                <h1 class="text-h4 font-weight-black">Men's AeroStride X1 ({{ products.length }})</h1>
+                <h1 class="text-h4 font-weight-black">Tất cả sản phẩm ({{ products.length }})</h1>
                 <div class="d-flex align-center gap-6">
                     <v-btn variant="text" @click="isFilterVisible = !isFilterVisible" class="font-weight-bold">
                         {{ isFilterVisible ? 'Hide Filters' : 'Show Filters' }} <v-icon class="ml-2">mdi-filter-variant</v-icon>
@@ -87,22 +106,23 @@ const goToDetail = (id) => {
                 <!-- Product Grid -->
                 <v-col cols="12" :md="isFilterVisible ? 10 : 12" class="product-grid-col">
                     <v-row>
-                        <v-col v-for="(p, i) in products" :key="i" cols="12" sm="6" md="4" lg="4">
+                        <v-col v-for="p in products" :key="p.id" cols="12" sm="6" md="4" lg="4">
                             <!-- Click to Navigate -->
                             <div class="product-card-placeholder" @click="goToDetail(p.id)">
                                 <!-- Image Placeholder -->
                                 <div class="image-box-placeholder mb-4">
-                                    <v-icon size="64" color="grey-lighten-2">mdi-image-outline</v-icon>
+                                    <v-img v-if="p.hinhAnh" :src="p.hinhAnh" cover class="fill-height"></v-img>
+                                    <v-icon v-else size="64" color="grey-lighten-2">mdi-image-outline</v-icon>
                                     <div class="corner-border tl"></div>
                                     <div class="corner-border br"></div>
                                 </div>
                                 
                                 <!-- Content -->
                                 <div class="product-info">
-                                    <span class="promo-label">{{ p.promo }}</span>
-                                    <h4 class="product-name">{{ p.name }}</h4>
-                                    <p class="product-category">{{ p.category }}</p>
-                                    <p class="product-price">{{ p.price }}</p>
+                                    <span class="promo-label">{{ p.tenThuongHieu }}</span>
+                                    <h4 class="product-name">{{ p.tenSanPham }}</h4>
+                                    <p class="product-category">{{ p.tenDanhMuc }}</p>
+                                    <p class="product-price">{{ formatPrice(p.giaBanThapNhat) }}</p>
                                 </div>
                             </div>
                         </v-col>

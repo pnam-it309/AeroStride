@@ -12,12 +12,32 @@ import Logo from './logo/Logo.vue';
 import NotificationDD from './vertical-header/NotificationDD.vue';
 import ProfileDD from './vertical-header/ProfileDD.vue';
 import { Menu2Icon } from 'vue-tabler-icons';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { computed, onMounted } from 'vue';
 
 const uiStore = useUIStore();
+const notificationStore = useNotificationStore();
 const { sidebarCollapsed, breadcrumbs } = storeToRefs(uiStore);
+const { unreadChatCount } = storeToRefs(notificationStore);
 const { toggleSidebar } = uiStore;
 
-const sidebarMenu = shallowRef(sidebarItems);
+const sidebarMenu = computed(() => {
+    return sidebarItems.map(item => {
+        if (item.title === 'Quản lý tin nhắn' && unreadChatCount.value > 0) {
+            return {
+                ...item,
+                chip: unreadChatCount.value.toString(),
+                chipColor: 'error',
+                chipVariant: 'flat'
+            };
+        }
+        return item;
+    });
+});
+
+onMounted(() => {
+    notificationStore.init();
+});
 </script>
 
 <template>

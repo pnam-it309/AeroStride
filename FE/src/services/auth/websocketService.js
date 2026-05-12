@@ -26,6 +26,7 @@ class WebSocketService {
             
             // Default global notifications
             this.subscribe('/topic/notifications', onMessageCallback);
+            this.subscribe('/topic/messages', onMessageCallback);
             
             // Subscribe to private notifications if user is logged in
             const user = JSON.parse(localStorage.getItem('user'));

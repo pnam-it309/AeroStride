@@ -25,10 +25,10 @@ const buildLoop = (items, repeatCount, offset = 0) => {
 };
 
 export const LANDING_FEATURE_COLUMNS = [
-    buildLoop(LANDING_FEATURES, 2),
-    buildLoop(LANDING_FEATURES.slice().reverse(), 2),
-    buildLoop([...LANDING_FEATURES.slice(4), ...LANDING_FEATURES.slice(0, 4)], 2),
-    buildLoop([...LANDING_FEATURES.slice(8), ...LANDING_FEATURES.slice(0, 8)], 2),
-    buildLoop([...LANDING_FEATURES.slice(2), ...LANDING_FEATURES.slice(0, 2)], 2),
-    buildLoop([...LANDING_FEATURES.slice(6), ...LANDING_FEATURES.slice(0, 6)], 2)
+    buildLoop(LANDING_FEATURES, 3),
+    buildLoop(LANDING_FEATURES.slice().reverse(), 3),
+    buildLoop([...LANDING_FEATURES.slice(4), ...LANDING_FEATURES.slice(0, 4)], 3),
+    buildLoop([...LANDING_FEATURES.slice(8), ...LANDING_FEATURES.slice(0, 8)], 3),
+    buildLoop([...LANDING_FEATURES.slice(2), ...LANDING_FEATURES.slice(0, 2)], 3),
+    buildLoop([...LANDING_FEATURES.slice(6), ...LANDING_FEATURES.slice(0, 6)], 3)
 ];

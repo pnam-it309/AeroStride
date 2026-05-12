@@ -1,7 +1,17 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
-import Logo from '@/layouts/full/logo/Logo.vue';
+import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import { PATH } from '@/router/routePaths';
+import { useAuthStore } from '@/stores/authStore';
+import { useRouter } from 'vue-router';
+
+const authStore = useAuthStore();
+const router = useRouter();
+
+const handleLogout = async () => {
+    await authStore.logout();
+    router.push('/');
+};
 
 const isMenuOpen = ref(false);
 const activeMenu = ref(null);
@@ -61,7 +71,25 @@ const closeMegaMenu = () => {
                 <span class="divider">|</span>
                 <a href="#" class="u-link">Join Us</a>
                 <span class="divider">|</span>
-                <router-link :to="PATH.LOGIN" class="u-link font-weight-black">Sign In</router-link>
+                <router-link v-if="!authStore.isLoggedIn" :to="PATH.LOGIN" class="u-link d-flex align-center" title="Sign In">
+                    <v-icon size="20" color="black" class="mr-1">mdi-account-circle-outline</v-icon>
+                </router-link>
+                <div v-else class="d-flex align-center cursor-pointer" style="height: 100%">
+                    <v-menu location="bottom end" transition="slide-y-transition">
+                        <template v-slot:activator="{ props }">
+                            <div v-bind="props" class="d-flex align-center gap-1">
+                                <v-icon size="18" color="black">mdi-account-circle-outline</v-icon>
+                                <span class="u-link font-weight-black">{{ authStore.user?.username || 'Member' }}</span>
+                            </div>
+                        </template>
+                        <v-list density="compact" width="180" class="rounded-lg mt-2 border shadow-sm">
+                            <v-list-item prepend-icon="mdi-account-outline" title="My Profile" :to="PATH.PROFILE"></v-list-item>
+                            <v-list-item prepend-icon="mdi-package-variant-closed" title="Orders" :to="PATH.ORDERS"></v-list-item>
+                            <v-divider class="my-1"></v-divider>
+                            <v-list-item prepend-icon="mdi-logout" title="Sign Out" @click="handleLogout" color="error"></v-list-item>
+                        </v-list>
+                    </v-menu>
+                </div>
             </div>
         </div>
 
@@ -70,7 +98,7 @@ const closeMegaMenu = () => {
             <div class="container-custom d-flex align-center justify-space-between w-100">
                 <!-- Logo -->
                 <router-link to="/" class="logo-wrap">
-                    <Logo />
+                    <LogoClient />
                 </router-link>
 
                 <!-- Nav Links -->
@@ -128,9 +156,17 @@ const closeMegaMenu = () => {
 <style scoped lang="scss">
 .main-header-system {
     position: fixed; top: 0; left: 0; width: 100%; z-index: 9999;
-    background: #ffffff;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     
+    &:hover {
+        background: #ffffff;
+        backdrop-filter: none;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
     &.mega-active { background: #ffffff !important; box-shadow: 0 4px 30px rgba(0,0,0,0.05); }
 }
 

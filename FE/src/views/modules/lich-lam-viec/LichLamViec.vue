@@ -66,7 +66,17 @@ const loadData = async () => {
 
         if (empRes.data.success) {
             const rawContent = empRes.data.data.content || empRes.data.data;
-            employeeOptions.value = Array.isArray(rawContent) ? rawContent : [];
+            const content = Array.isArray(rawContent) ? rawContent : [];
+            // Loại bỏ trùng lặp theo ID
+            const uniqueEmp = [];
+            const seenIds = new Set();
+            content.forEach(emp => {
+                if (emp.id && !seenIds.has(emp.id)) {
+                    uniqueEmp.push(emp);
+                    seenIds.add(emp.id);
+                }
+            });
+            employeeOptions.value = uniqueEmp;
         }
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -391,11 +401,11 @@ onMounted(() => {
                     <v-row>
                         <v-col cols="12">
                             <div class="filter-field-label">Nhân viên (Chọn nhiều)</div>
-                            <v-select
+                            <v-autocomplete
                                 v-model="addForm.nhanVien"
                                 :items="employeeOptions"
-                                item-title="ten"
-                                item-value="ten"
+                                item-title="tenNhanVien"
+                                item-value="id"
                                 placeholder="Chọn nhân viên"
                                 variant="outlined"
                                 density="compact"
@@ -403,7 +413,15 @@ onMounted(() => {
                                 chips
                                 closable-chips
                                 hide-details
-                            />
+                            >
+                                <template v-slot:item="{ props, item }">
+                                    <v-list-item 
+                                        v-bind="props" 
+                                        :title="item.raw.tenNhanVien"
+                                        :subtitle="item.raw.maNhanVien"
+                                    ></v-list-item>
+                                </template>
+                            </v-autocomplete>
                         </v-col>
                         <v-col cols="12" md="6">
                             <div class="filter-field-label">Ngày làm</div>

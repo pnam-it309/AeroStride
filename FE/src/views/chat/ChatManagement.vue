@@ -3,10 +3,20 @@ import { ref, onMounted, watch, computed } from 'vue';
 import api from '@/services/apiService';
 import { API_CHAT } from '@/constants/apiPaths';
 import { chatSocket } from '@/services/chatSocket';
+import { useNotificationStore } from '@/stores/notificationStore';
+import { useAuthStore } from '@/stores/authStore';
 
+const notificationStore = useNotificationStore();
+const authStore = useAuthStore();
 const customers = ref([]);
 const activeChat = ref(null);
 const chatMessages = ref([]);
+
+// Filter out system messages for admin view
+const displayMessages = computed(() => {
+    return chatMessages.value.filter(m => m.sender !== 'system');
+});
+
 const newMessage = ref('');
 const isAccepted = ref(false);
 const isLoading = ref(false);
@@ -69,7 +79,7 @@ const sendMessage = async () => {
     const messageData = {
         conversationId: activeChat.value.id,
         text: newMessage.value,
-        sender: 'staff'
+        sender: authStore.user?.username || 'STAFF'
     };
 
     try {
@@ -98,14 +108,6 @@ const acceptChat = async () => {
             activeChat.value.status = 'ACTIVE';
             activeChat.value.isAccepted = true;
             
-            // Send notification to customer via socket
-            chatSocket.send('/topic/messages', {
-                conversationId: activeChat.value.id,
-                sender: 'system',
-                text: `Nhân viên đã tiếp nhận cuộc trò chuyện`,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            });
-            
             fetchConversations();
         }
     } catch (error) {
@@ -115,6 +117,7 @@ const acceptChat = async () => {
 
 onMounted(() => {
     fetchConversations();
+    notificationStore.resetUnreadChat();
 
     chatSocket.connect(() => {
         chatSocket.subscribe('/topic/notifications', (msg) => {
@@ -126,6 +129,8 @@ onMounted(() => {
             if (activeChat.value && data.conversationId === activeChat.value.id) {
                 chatMessages.value.push(data);
                 scrollToBottom();
+            } else {
+                notificationStore.incrementUnreadChat();
             }
             fetchConversations();
         });
@@ -231,14 +236,14 @@ onMounted(() => {
                             <v-progress-circular indeterminate color="primary" size="32"></v-progress-circular>
                         </div>
                         <template v-else>
-                            <div v-for="(m, idx) in chatMessages" :key="m.id || idx" 
+                            <div v-for="(m, idx) in displayMessages" :key="m.id || idx" 
                                  class="msg-wrapper mb-4 d-flex"
-                                 :class="m.sender === 'staff' ? 'justify-end' : 'justify-start'">
-                                <div class="msg-box" :class="m.sender === 'staff' ? 'msg-staff' : 'msg-other'">
+                                 :class="m.sender === authStore.user?.username ? 'justify-end' : 'justify-start'">
+                                <div class="msg-box" :class="m.sender === authStore.user?.username ? 'msg-staff' : 'msg-other'">
                                     <div class="msg-content">{{ m.text }}</div>
                                     <div class="msg-footer d-flex align-center justify-end mt-1">
                                         <span class="msg-time">{{ m.time }}</span>
-                                        <v-icon v-if="m.sender === 'staff'" size="14" color="blue" class="ml-1">mdi-check-all</v-icon>
+                                        <v-icon v-if="m.sender === authStore.user?.username" size="14" color="blue" class="ml-1">mdi-check-all</v-icon>
                                     </div>
                                 </div>
                             </div>
