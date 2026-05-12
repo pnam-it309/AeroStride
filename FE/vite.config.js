@@ -62,7 +62,19 @@ export default defineConfig(({ mode }) => {
                     target: `http://${env.BACKEND_HOST}:${env.BACKEND_PORT}`,
                     changeOrigin: true,
                     secure: false,
-                }
+                },
+                '/ws': {
+                    target: `http://${env.BACKEND_HOST}:${env.BACKEND_PORT}`,
+                    changeOrigin: true,
+                    secure: false,
+                    ws: true,
+                },
+                '/ws-chat': {
+                    target: `http://${env.BACKEND_HOST}:${env.BACKEND_PORT}`,
+                    changeOrigin: true,
+                    secure: false,
+                    ws: true,
+                },
             }
         }
     };

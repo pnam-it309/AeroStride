@@ -31,19 +31,22 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
-        log.info("LOGIN ATTEMPT: User [{}] with password length [{}]", loginRequest.getUsername(), 
-                loginRequest.getPassword() != null ? loginRequest.getPassword().length() : 0);
+        log.info("LOGIN ATTEMPT: User [{}] Type [{}]", loginRequest.getUsername(), loginRequest.getLoginType());
+
+        String identifier = loginRequest.getUsername();
+        if (loginRequest.getLoginType() != null && !loginRequest.getLoginType().isBlank()) {
+            identifier = loginRequest.getLoginType().toUpperCase() + "|" + identifier;
+        }
 
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+                new UsernamePasswordAuthenticationToken(identifier, loginRequest.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtTokenProvider.generateToken(authentication);
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getUsername());
-
         String role = userDetails.getAuthorities().iterator().next().getAuthority();
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getUsername(), role);
 
         AuthResponse authResponse = AuthResponse.builder()
                 .accessToken(jwt)

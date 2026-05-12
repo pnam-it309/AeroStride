@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUIStore } from '@/stores/ui';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
+import { PATH } from '@/router/routePaths';
 
 const router = useRouter();
 const uiStore = useUIStore();
@@ -26,7 +27,10 @@ const handleLogin = async () => {
 
   try {
     uiStore.showLoading('Đang xác thực thông tin quản trị...');
-    const response = await dichVuXacThuc.dangNhap(loginForm.value);
+    const response = await dichVuXacThuc.dangNhap({
+      ...loginForm.value,
+      loginType: 'ADMIN'
+    });
     
     // Explicitly hide after successful auth to trigger transition
     uiStore.hideLoading();
@@ -99,7 +103,7 @@ const handleLogin = async () => {
                             </template>
                         </v-checkbox>
                         <div class="ml-auto">
-                            <RouterLink to="/auth/forgot-password"
+                            <RouterLink :to="PATH.ADMIN_FORGOT_PASSWORD"
                                 class="text-primary text-decoration-none text-caption font-weight-black hover-underline">
                                 Quên mật khẩu?
                             </RouterLink>

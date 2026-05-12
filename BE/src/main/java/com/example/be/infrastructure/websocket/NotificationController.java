@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -13,6 +15,7 @@ import java.time.LocalDateTime;
 
 @Controller
 @AllArgsConstructor
+@Slf4j
 public class NotificationController {
 
     private final RedisTemplate<String, Object> redisTemplate;
@@ -23,9 +26,12 @@ public class NotificationController {
                 .content(message)
                 .timestamp(LocalDateTime.now().toString())
                 .build();
-        
-        // Thay vì gửi trực tiếp, ta publish lên Redis để tất cả các instance đều nhận được
-        redisTemplate.convertAndSend("notifications", response);
+
+        try {
+            redisTemplate.convertAndSend("notifications", response);
+        } catch (DataAccessException ex) {
+            log.warn("Redis notification publish failed; dropping STOMP fanout. Error: {}", ex.getMessage());
+        }
     }
 
     @Data

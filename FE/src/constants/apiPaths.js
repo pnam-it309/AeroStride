@@ -46,3 +46,18 @@ export const API_THUOC_TINH = {
     XUAT_XU: `${API_ADMIN.THUOC_TINH}/xuat-xu`,
     MUC_DICH_CHAY: `${API_ADMIN.THUOC_TINH}/muc-dich-chay`,
 };
+
+export const API_CHAT = {
+    CONVERSATIONS: `${API_BASE.ADMIN}/chat/conversations`,
+    MESSAGES: (id) => `${API_BASE.ADMIN}/chat/conversations/${id}/messages`,
+    ACCEPT: (id) => `${API_BASE.ADMIN}/chat/conversations/${id}/accept`,
+    SEND: `${API_BASE.ADMIN}/chat/send`,
+    CUSTOMER_BASE: '/customer/chat',
+    CUSTOMER_SEND: '/customer/chat/send',
+};
+
+export const API_LICH_LAM_VIEC = {
+    SCHEDULES: `${API_BASE.ADMIN}/lich-lam-viec/schedules`,
+    SHIFTS: `${API_BASE.ADMIN}/lich-lam-viec/shifts`,
+    ACTIVITIES: `${API_BASE.ADMIN}/lich-lam-viec/activities`,
+};

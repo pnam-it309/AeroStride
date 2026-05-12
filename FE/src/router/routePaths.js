@@ -1,5 +1,5 @@
 export const PATH = {
-    DASHBOARD: '/',
+    DASHBOARD: '/main',
     BAN_HANG: '/ban-hang',
     SAN_PHAM: '/san-pham',
     BIEN_THE_SAN_PHAM: '/san-pham/bien-the',
@@ -20,9 +20,21 @@ export const PATH = {
     THUOC_TINH: '/thuoc-tinh',
     THANH_TOAN: '/thanh-toan',
     THONG_KE: '/thong-ke',
+    LANDING: '/',
     // Auth
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-    FORGOT_PASSWORD: '/auth/forgot-password',
+    LOGIN: '/user/login',
+    REGISTER: '/user/register',
+    FORGOT_PASSWORD: '/user/forgot-password',
+    
+    // Admin Auth
+    ADMIN_LOGIN: '/admin/login',
+    ADMIN_REGISTER: '/admin/register',
+    ADMIN_FORGOT_PASSWORD: '/admin/forgot-password',
+    
     LOGOUT: '/auth/logout',
+    SHOES: '/shoes',
+    QUAN_LY_CHAT: '/quan-ly-chat',
+    LICH_LAM_VIEC: '/lich-lam-viec',
+    LICH_CA_LAM: '/lich-ca-lam',
+    LICH_SU_HOAT_DONG: '/lich-su-hoat-dong',
 };

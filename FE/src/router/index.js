@@ -1,14 +1,25 @@
-import { createRouter, createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import MainRoutes from './MainRoutes';
 import AuthRoutes from './AuthRoutes';
 import { requireAuth, requireGuest } from './guards';
 
 export const router = createRouter({
-    history: createWebHashHistory(),
+    history: createWebHistory(),
     routes: [
         {
             path: '/',
-            redirect: '/main'
+            name: 'Landing',
+            component: () => import('@/views/pages/LandingPage.vue')
+        },
+        {
+            path: '/shoes',
+            name: 'ShoeListing',
+            component: () => import('@/views/pages/ShoeListing.vue')
+        },
+        {
+            path: '/product/:id',
+            name: 'ProductDetail',
+            component: () => import('@/views/pages/ProductDetail.vue')
         },
         {
             path: '/:pathMatch(.*)*',

@@ -34,31 +34,49 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
-        // 1. Check staff/admin table first (CMS users)
-        NhanVien nhanVien = nhanVienRepository.findByTenTaiKhoanOrEmail(identifier, identifier).orElse(null);
-        if (nhanVien != null) {
-            VaiTro role = VaiTro.NHAN_VIEN;
-            // ma_phan_quyen = 'ADMIN' in SQL mapping to getMa() in Java
-            if (nhanVien.getPhanQuyen() != null && "ADMIN".equals(nhanVien.getPhanQuyen().getMa())) {
-                role = VaiTro.QUAN_TRI_VIEN;
+        String tempLoginType = null;
+        String tempRealIdentifier = identifier;
+
+        // Phân tách prefix nếu có (định dạng: TYPE|IDENTIFIER)
+        if (identifier != null && identifier.contains("|")) {
+            String[] parts = identifier.split("\\|", 2);
+            if (parts.length == 2) {
+                tempLoginType = parts[0];
+                tempRealIdentifier = parts[1];
             }
-            return buildUserDetails(
-                    nhanVien.getTenTaiKhoan(),
-                    nhanVien.getMatKhau(),
-                    role
-            );
         }
 
-        // 2. Fall back to customer table (web users)
-        KhachHang khachHang = khachHangRepository.findByTenTaiKhoanOrEmail(identifier, identifier)
-                .orElseThrow(() -> new UsernameNotFoundException(
-                        "Không tìm thấy tài khoản: " + identifier));
+        final String loginType = tempLoginType;
+        final String realIdentifier = tempRealIdentifier;
 
-        return buildUserDetails(
-                khachHang.getTenTaiKhoan(),
-                khachHang.getMatKhau(),
-                VaiTro.KHACH_HANG
-        );
+        // Luồng đăng nhập cho ADMIN/STAFF
+        if (loginType == null || "ADMIN".equals(loginType)) {
+            NhanVien nhanVien = nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(realIdentifier, realIdentifier, realIdentifier, realIdentifier)
+                    .orElse(null);
+
+            if (nhanVien != null) {
+                VaiTro role = VaiTro.NHAN_VIEN;
+                if (nhanVien.getPhanQuyen() != null && "ADMIN".equals(nhanVien.getPhanQuyen().getMa())) {
+                    role = VaiTro.QUAN_TRI_VIEN;
+                }
+                return buildUserDetails(nhanVien.getTenTaiKhoan(), nhanVien.getMatKhau(), role);
+            }
+            
+            // Nếu yêu cầu đích danh ADMIN mà không thấy thì throw luôn
+            if ("ADMIN".equals(loginType)) {
+                throw new UsernameNotFoundException("Không tìm thấy tài khoản quản trị: " + realIdentifier);
+            }
+        }
+
+        // Luồng đăng nhập cho CLIENT (Khách hàng)
+        if (loginType == null || "CLIENT".equals(loginType)) {
+            KhachHang khachHang = khachHangRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(realIdentifier, realIdentifier, realIdentifier, realIdentifier)
+                    .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản khách hàng: " + realIdentifier));
+
+            return buildUserDetails(khachHang.getTenTaiKhoan(), khachHang.getMatKhau(), VaiTro.KHACH_HANG);
+        }
+
+        throw new UsernameNotFoundException("Không tìm thấy tài khoản: " + realIdentifier);
     }
 
     private UserDetails buildUserDetails(String username, String password, VaiTro vaiTro) {
