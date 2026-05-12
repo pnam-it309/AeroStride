@@ -16,6 +16,26 @@
 * **customer:** Kết nối dữ liệu thật cho danh sách sản phẩm và cải thiện thông báo chat ([1504964](https://github.com/pnam-it309/AeroStride/commit/150496457bd778fba99c30be222842d0dbbb181f))
 * **discount:** Hợp nhất tính năng sửa lỗi Phiếu Giảm Giá và Đợt Giảm Giá ([a66a9fb](https://github.com/pnam-it309/AeroStride/commit/a66a9fb288f05d5f62d5ca58a293c3d5106e7bdf))
 * **hoadon:** Tối ưu hóa giao diện chi tiết hóa đơn và hoàn thiện logic in ấn ([74d24f3](https://github.com/pnam-it309/AeroStride/commit/74d24f30e20dc881ca1c9eeafc46f63c181c5fc5))
+* nâng cấp cơ chế nạp biến môi trường và log debug cho BeApplication ([ea03765](https://github.com/pnam-it309/AeroStride/commit/ea03765accf58d550273bceb898cffea5ab7e1e7))
+
+# [1.8.0](https://github.com/pnam-it309/AeroStride/compare/v1.7.2...v1.8.0) (2026-05-12)
+
+
+### Bug Fixes
+
+* **be:** Cải thiện logic nạp biến môi trường và sửa lỗi parse .env.dev ([8d00992](https://github.com/pnam-it309/AeroStride/commit/8d0099272292c9562c52acc13fe5632f5cf69f93))
+* **be:** Sửa lỗi biên dịch và cảnh báo Builder ([a615492](https://github.com/pnam-it309/AeroStride/commit/a61549273247fd519dd6f63c1319a65e9af5ba94))
+* **product:** Tinh chỉnh UI thuộc tính và sửa lỗi hiển thị ID trong Thêm nhanh ([672e503](https://github.com/pnam-it309/AeroStride/commit/672e5032437f434b51a5e3b8718c79b42373a6a2))
+* **security:** Khac phuc lo hong SSRF va cai thien cau hinh bao mat ([7b9068b](https://github.com/pnam-it309/AeroStride/commit/7b9068bc78ad491d6d4d0412dafb9b6a415342bb)), closes [#3](https://github.com/pnam-it309/AeroStride/issues/3) [#4](https://github.com/pnam-it309/AeroStride/issues/4) [#2](https://github.com/pnam-it309/AeroStride/issues/2)
+
+
+### Features
+
+* **admin:** Dong bo bo loc khoan gia va toi ưu tinh nang them nhanh thuoc tinh ([7be8a0c](https://github.com/pnam-it309/AeroStride/commit/7be8a0cc9cf355d654973858460c46fd31365550))
+* Cập nhật giao diện in hóa đơn và hệ thống thông báo toàn cục ([780ec4f](https://github.com/pnam-it309/AeroStride/commit/780ec4f8d71938263317c3324e6591f824e7bf81))
+* **customer:** Kết nối dữ liệu thật cho danh sách sản phẩm và cải thiện thông báo chat ([1504964](https://github.com/pnam-it309/AeroStride/commit/150496457bd778fba99c30be222842d0dbbb181f))
+* **discount:** Hợp nhất tính năng sửa lỗi Phiếu Giảm Giá và Đợt Giảm Giá ([a66a9fb](https://github.com/pnam-it309/AeroStride/commit/a66a9fb288f05d5f62d5ca58a293c3d5106e7bdf))
+* **hoadon:** Tối ưu hóa giao diện chi tiết hóa đơn và hoàn thiện logic in ấn ([74d24f3](https://github.com/pnam-it309/AeroStride/commit/74d24f30e20dc881ca1c9eeafc46f63c181c5fc5))
 
 # [1.8.0](https://github.com/pnam-it309/AeroStride/compare/v1.7.2...v1.8.0) (2026-05-12)
 
