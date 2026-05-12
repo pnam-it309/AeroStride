@@ -94,8 +94,8 @@ class AdminKhachHangServiceImplTest {
         when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
         
         AdminKhachHangResponse mockResponse = new AdminKhachHangResponse();
-        when(adminKhachHangRepository.detail(any())).thenReturn(mockResponse);
-        when(adminDiaChiService.getByKhachHangId(any())).thenReturn(java.util.Collections.emptyList());
+        lenient().when(adminKhachHangRepository.detail(any())).thenReturn(mockResponse);
+        lenient().when(adminDiaChiService.getByKhachHangId(any())).thenReturn(java.util.Collections.emptyList());
 
         var result = service.add(testRequest);
 
