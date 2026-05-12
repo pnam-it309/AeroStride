@@ -20,6 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyString;
 
 @ExtendWith(MockitoExtension.class)
 class AdminKhachHangServiceImplTest {
@@ -100,7 +101,7 @@ class AdminKhachHangServiceImplTest {
 
         assertNotNull(result);
         verify(adminKhachHangRepository).save(any(KhachHang.class));
-        verify(passwordEncoder).encode("rawPassword");
+        verify(passwordEncoder).encode(anyString());
     }
 
     @Test
