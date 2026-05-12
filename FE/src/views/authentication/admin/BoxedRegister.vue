@@ -1,7 +1,7 @@
 <script setup>
 import Logo from '@/layouts/full/logo/Logo.vue';
 /* Register form */
-import RegisterForm from '@/components/auth/RegisterForm.vue';
+import RegisterForm from '@/components/auth/admin/RegisterForm.vue';
 import { PATH } from '@/router/routePaths';
 </script>
 <template>
