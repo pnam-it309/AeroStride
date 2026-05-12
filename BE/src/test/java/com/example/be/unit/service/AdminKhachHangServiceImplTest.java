@@ -3,6 +3,8 @@ package com.example.be.core.admin.khachhang.service.impl;
 import com.example.be.core.admin.khachhang.model.request.AdminKhachHangRequest;
 import com.example.be.core.admin.khachhang.model.response.AdminKhachHangResponse;
 import com.example.be.core.admin.khachhang.repository.AdminKhachHangRepository;
+import com.example.be.core.admin.khachhang.service.AdminDiaChiService;
+import com.example.be.repository.DiaChiRepository;
 import com.example.be.entity.KhachHang;
 import com.example.be.infrastructure.constants.TrangThai;
 import org.junit.jupiter.api.BeforeEach;
@@ -97,7 +99,7 @@ class AdminKhachHangServiceImplTest {
         var result = service.add(testRequest);
 
         assertNotNull(result);
-        verify(repository).save(any(KhachHang.class));
+        verify(adminKhachHangRepository).save(any(KhachHang.class));
         verify(passwordEncoder).encode("rawPassword");
     }
 
