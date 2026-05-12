@@ -1,3 +1,10 @@
+## [1.8.2](https://github.com/pnam-it309/AeroStride/compare/v1.8.1...v1.8.2) (2026-05-12)
+
+
+### Bug Fixes
+
+* tối ưu cấu hình H2 cho test và sửa logic verify password ([ad4f4d9](https://github.com/pnam-it309/AeroStride/commit/ad4f4d9c715bdcec8a6f3f229b76633bbc2d892d))
+
 ## [1.8.1](https://github.com/pnam-it309/AeroStride/compare/v1.8.0...v1.8.1) (2026-05-12)
 
 
