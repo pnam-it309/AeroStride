@@ -27,7 +27,7 @@ public class FileController {
 
     private final StorageService storageService;
     private final HttpClient httpClient = HttpClient.newBuilder()
-            .followRedirects(HttpClient.Redirect.NORMAL)
+            .followRedirects(HttpClient.Redirect.NEVER)
             .connectTimeout(Duration.ofSeconds(10))
             .build();
 
@@ -90,19 +90,30 @@ public class FileController {
             throw new IllegalArgumentException("Missing image url");
         }
 
-        URI remoteUri = URI.create(rawUrl.trim());
-        String scheme = remoteUri.getScheme();
-        String host = remoteUri.getHost();
-
-        if (!("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))) {
-            throw new IllegalArgumentException("Unsupported image url scheme");
+        URI uri;
+        try {
+            uri = new URI(rawUrl.trim());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid URL format");
         }
 
-        if (!StringUtils.hasText(host) || ALLOWED_PROXY_HOSTS.stream().noneMatch(allowedHost -> allowedHost.equalsIgnoreCase(host))) {
-            throw new IllegalArgumentException("Image host is not allowed");
+        String scheme = uri.getScheme();
+        String host = uri.getHost();
+
+        if (!"https".equalsIgnoreCase(scheme)) {
+            throw new IllegalArgumentException("Only HTTPS is allowed for security");
         }
 
-        return remoteUri;
+        if (host == null || !ALLOWED_PROXY_HOSTS.contains(host.toLowerCase())) {
+            throw new IllegalArgumentException("Unauthorized host");
+        }
+
+        // Reconstruct URI from validated components to prevent potential SSRF smuggling
+        try {
+            return new URI(scheme, host, uri.getPath(), uri.getQuery(), null);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Failed to sanitize URI");
+        }
     }
 
     private MediaType resolveContentType(String rawContentType) {
