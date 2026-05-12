@@ -25,7 +25,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
     ports:
-      - "${MYSQL_PORT_HOST}:3306"
+      - "${MYSQL_PORT_HOST}"
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
@@ -44,6 +44,7 @@ services:
 
   backend:
     image: ${BACKEND_IMAGE}
+    pull_policy: build
     build:
       context: ..
       dockerfile: docker/BE.Dockerfile
@@ -83,6 +84,7 @@ services:
 
   frontend:
     image: ${FRONTEND_IMAGE}
+    pull_policy: build
     build:
       context: ..
       dockerfile: docker/FE.Dockerfile

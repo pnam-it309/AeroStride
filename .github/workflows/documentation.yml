@@ -32,6 +32,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add docs/gen/*.png
+          # Add gen folder if it contains files, ignore if empty
+          git add docs/gen/*.png || echo "No new diagrams to add"
           git commit -m "docs: automated architecture diagram update [skip ci]" || echo "No changes to commit"
-          git push
+          git push || echo "Nothing to push"

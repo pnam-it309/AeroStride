@@ -23,7 +23,13 @@ import static org.mockito.Mockito.*;
 class AdminKhachHangServiceImplTest {
 
     @Mock
-    private AdminKhachHangRepository repository;
+    private AdminKhachHangRepository adminKhachHangRepository;
+
+    @Mock
+    private DiaChiRepository diaChiRepository;
+
+    @Mock
+    private AdminDiaChiService adminDiaChiService;
 
     @Mock
     private com.example.be.core.notification.EmailService emailService;
@@ -53,7 +59,7 @@ class AdminKhachHangServiceImplTest {
 
     @Test
     void add_ShouldThrowException_WhenMaExists() {
-        when(repository.existsByMa("KH001")).thenReturn(true);
+        when(adminKhachHangRepository.existsByMa("KH001")).thenReturn(true);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> service.add(testRequest));
         assertEquals("Mã khách hàng này đã tồn tại trong hệ thống.", exception.getMessage());
@@ -61,8 +67,8 @@ class AdminKhachHangServiceImplTest {
 
     @Test
     void add_ShouldThrowException_WhenEmailExists() {
-        when(repository.existsByMa(any())).thenReturn(false);
-        when(repository.existsByEmail("test@gmail.com")).thenReturn(true);
+        when(adminKhachHangRepository.existsByMa(any())).thenReturn(false);
+        when(adminKhachHangRepository.existsByEmail("test@gmail.com")).thenReturn(true);
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> service.add(testRequest));
         assertEquals("Email này đã được sử dụng bởi một khách hàng khác.", exception.getMessage());
@@ -71,21 +77,22 @@ class AdminKhachHangServiceImplTest {
 
     @Test
     void update_ShouldThrowException_WhenUserNotFound() {
-        when(repository.findById("999")).thenReturn(Optional.empty());
+        when(adminKhachHangRepository.findById("999")).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> service.update("999", testRequest));
     }
 
     @Test
     void add_ShouldSaveSuccess() {
-        when(repository.existsByMa(any())).thenReturn(false);
-        when(repository.findAllMa()).thenReturn(java.util.Collections.emptyList());
-        when(repository.existsByEmail(any())).thenReturn(false);
-        when(repository.existsByTenTaiKhoan(any())).thenReturn(false);
+        when(adminKhachHangRepository.existsByMa(any())).thenReturn(false);
+        when(adminKhachHangRepository.findAllMa()).thenReturn(java.util.Collections.emptyList());
+        when(adminKhachHangRepository.existsByEmail(any())).thenReturn(false);
+        when(adminKhachHangRepository.existsByTenTaiKhoan(any())).thenReturn(false);
         when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
         
-        AdminKhachHangResponse mockResponse = mock(AdminKhachHangResponse.class);
-        when(repository.detail(any())).thenReturn(mockResponse);
+        AdminKhachHangResponse mockResponse = new AdminKhachHangResponse();
+        when(adminKhachHangRepository.detail(any())).thenReturn(mockResponse);
+        when(adminDiaChiService.getByKhachHangId(any())).thenReturn(java.util.Collections.emptyList());
 
         var result = service.add(testRequest);
 
@@ -96,11 +103,11 @@ class AdminKhachHangServiceImplTest {
 
     @Test
     void delete_ShouldUpdateStatus() {
-        when(repository.findById("1")).thenReturn(Optional.of(testEntity));
+        when(adminKhachHangRepository.findById("1")).thenReturn(Optional.of(testEntity));
 
         service.delete("1");
 
         assertEquals(TrangThai.KHONG_HOAT_DONG, testEntity.getTrangThai());
-        verify(repository).save(testEntity);
+        verify(adminKhachHangRepository).save(testEntity);
     }
 }
