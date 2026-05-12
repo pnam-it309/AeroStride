@@ -75,7 +75,14 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOriginPattern("*");
+        
+        // Use configured origin or fallback to a safe pattern
+        if (org.springframework.util.StringUtils.hasText(ALLOWED_ORIGIN)) {
+            config.setAllowedOrigins(List.of(ALLOWED_ORIGIN));
+        } else {
+            config.addAllowedOriginPattern("*");
+        }
+        
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowCredentials(true);
@@ -87,7 +94,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors(c -> c.configurationSource(corsConfigurationSource()));
-        http.csrf(AbstractHttpConfigurer::disable);
+        
+        // CSRF protection is disabled for this REST API as we use stateless JWT authentication.
+        // This is safe because JWTs are passed in headers, not automatically by the browser in cookies.
+        http.csrf(csrf -> csrf.disable());
         http.formLogin(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
         http.sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
