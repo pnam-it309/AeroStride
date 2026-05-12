@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/pnam-it309/AeroStride/compare/v1.8.0...v1.8.1) (2026-05-12)
+
+
+### Bug Fixes
+
+* bổ sung import thiếu và sửa tên biến trong AdminKhachHangServiceImplTest ([cec5ac8](https://github.com/pnam-it309/AeroStride/commit/cec5ac8eed39c408f73781fc6bc5cd89e8fcac61))
+
 # [1.8.0](https://github.com/pnam-it309/AeroStride/compare/v1.7.2...v1.8.0) (2026-05-12)
 
 
