@@ -87,11 +87,11 @@ class AdminKhachHangServiceImplTest {
 
     @Test
     void add_ShouldSaveSuccess() {
-        when(adminKhachHangRepository.existsByMa(any())).thenReturn(false);
-        when(adminKhachHangRepository.findAllMa()).thenReturn(java.util.Collections.emptyList());
-        when(adminKhachHangRepository.existsByEmail(any())).thenReturn(false);
-        when(adminKhachHangRepository.existsByTenTaiKhoan(any())).thenReturn(false);
-        when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
+        lenient().when(adminKhachHangRepository.existsByMa(any())).thenReturn(false);
+        lenient().when(adminKhachHangRepository.findAllMa()).thenReturn(java.util.Collections.emptyList());
+        lenient().when(adminKhachHangRepository.existsByEmail(any())).thenReturn(false);
+        lenient().when(adminKhachHangRepository.existsByTenTaiKhoan(any())).thenReturn(false);
+        lenient().when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
         
         AdminKhachHangResponse mockResponse = new AdminKhachHangResponse();
         lenient().when(adminKhachHangRepository.detail(any())).thenReturn(mockResponse);
