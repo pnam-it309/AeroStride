@@ -5,6 +5,7 @@ import { API_CHAT } from '@/constants/apiPaths';
 import { chatSocket } from '@/services/chatSocket';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useAuthStore } from '@/stores/authStore';
+import { CHAT_TYPES, CHAT_SENDER_TYPE } from '@/constants/appConstants';
 
 const notificationStore = useNotificationStore();
 const authStore = useAuthStore();
@@ -14,7 +15,7 @@ const chatMessages = ref([]);
 
 // Filter out system messages for admin view
 const displayMessages = computed(() => {
-    return chatMessages.value.filter(m => m.sender !== 'system');
+    return chatMessages.value.filter(m => m.sender !== CHAT_SENDER_TYPE.SYSTEM);
 });
 
 const newMessage = ref('');
@@ -24,7 +25,7 @@ const isMessagesLoading = ref(false);
 const messagesContainer = ref(null);
 
 // Filters
-const chatType = ref('CUSTOMER'); // 'CUSTOMER', 'INTERNAL'
+const chatType = ref(CHAT_TYPES.CUSTOMER); // 'CUSTOMER', 'INTERNAL'
 const chatStatus = ref('ACTIVE'); // 'PENDING', 'ACTIVE', 'CLOSED'
 const searchQuery = ref('');
 
@@ -86,6 +87,8 @@ const sendMessage = async () => {
         await api.post(API_CHAT.SEND, messageData);
         newMessage.value = '';
         scrollToBottom();
+        // Refresh list to update last message and replace NEW_INTERNAL if necessary
+        fetchConversations();
     } catch (error) {
         console.error('Lỗi khi gửi tin nhắn:', error);
     }
@@ -126,6 +129,15 @@ onMounted(() => {
 
         chatSocket.subscribe('/topic/messages', (msg) => {
             const data = typeof msg === 'string' ? JSON.parse(msg) : msg;
+            
+            // Lọc tin nhắn: Chỉ xử lý nếu tin nhắn thuộc về mình hoặc là tin nhắn chờ (PENDING)
+            // data.staffId là username của nhân viên đã tiếp nhận (đối với khách hàng)
+            // hoặc là username của người gửi (đối với chat nội bộ)
+            const currentUsername = authStore.user?.username;
+            const isMyChat = !data.staffId || data.staffId === currentUsername || data.secondStaffId === currentUsername;
+            
+            if (!isMyChat) return;
+
             if (activeChat.value && data.conversationId === activeChat.value.id) {
                 chatMessages.value.push(data);
                 scrollToBottom();
@@ -145,8 +157,8 @@ onMounted(() => {
             <v-col cols="12" md="3" class="border-r d-flex flex-column fill-height shadow-sm">
                 <!-- Type Tabs -->
                 <v-tabs v-model="chatType" color="primary" grow density="compact" class="border-b">
-                    <v-tab value="CUSTOMER">KHÁCH HÀNG</v-tab>
-                    <v-tab value="INTERNAL">NỘI BỘ</v-tab>
+                    <v-tab :value="CHAT_TYPES.CUSTOMER">KHÁCH HÀNG</v-tab>
+                    <v-tab :value="CHAT_TYPES.INTERNAL">NỘI BỘ</v-tab>
                 </v-tabs>
 
                 <!-- Status Filters -->

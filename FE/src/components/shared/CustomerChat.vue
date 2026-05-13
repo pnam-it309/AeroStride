@@ -1,21 +1,72 @@
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, nextTick, watch } from 'vue';
 import { chatSocket } from '@/services/chatSocket';
 import apiService from '@/services/apiService';
 import { API_CHAT } from '@/constants/apiPaths';
+import { CHAT_SENDER_TYPE } from '@/constants/appConstants';
+import { useAuthStore } from '@/stores/authStore';
 
+const authStore = useAuthStore();
 const isOpen = ref(false);
 const message = ref('');
 const chatHistory = ref([
     { id: 1, sender: 'bot', text: 'Xin chào! AeroStride có thể giúp gì cho bạn?', time: '10:00' },
 ]);
 const chatBody = ref(null);
-const sessionId = ref(localStorage.getItem('chat_session_id') || `guest_${Math.random().toString(36).substr(2, 9)}`);
 
-// Lưu sessionId để duy trì phiên chat khi reload trang
-if (!localStorage.getItem('chat_session_id')) {
-    localStorage.setItem('chat_session_id', sessionId.value);
-}
+// Logic xác định sessionId
+const getSessionId = () => {
+    // 1. Nếu đã đăng nhập, dùng username làm sessionId để luôn giữ lịch sử
+    if (authStore.isLoggedIn && authStore.user?.username) {
+        return `user_${authStore.user.username}`;
+    }
+
+    // 2. Nếu là khách vãng lai
+    const now = Date.now();
+    const lastActivity = localStorage.getItem('chat_last_activity');
+    const savedSessionId = localStorage.getItem('chat_session_id');
+
+    // Kiểm tra timeout 30 phút (30 * 60 * 1000 ms)
+    if (lastActivity && (now - parseInt(lastActivity)) > 30 * 60 * 1000) {
+        localStorage.removeItem('chat_session_id');
+        const newId = `guest_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('chat_session_id', newId);
+        localStorage.setItem('chat_last_activity', now.toString());
+        return newId;
+    }
+
+    if (savedSessionId) {
+        localStorage.setItem('chat_last_activity', now.toString());
+        return savedSessionId;
+    }
+
+    const newId = `guest_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('chat_session_id', newId);
+    localStorage.setItem('chat_last_activity', now.toString());
+    return newId;
+};
+
+const sessionId = ref(getSessionId());
+
+// Cập nhật hoạt động cuối cùng khi có tương tác
+const updateActivity = () => {
+    if (!authStore.isLoggedIn) {
+        localStorage.setItem('chat_last_activity', Date.now().toString());
+    }
+};
+
+// Theo dõi trạng thái đăng nhập để cập nhật sessionId
+watch(() => authStore.isLoggedIn, () => {
+    sessionId.value = getSessionId();
+    fetchHistory();
+});
+
+// Cập nhật hoạt động khi mở cửa sổ chat
+watch(isOpen, (newVal) => {
+    if (newVal) {
+        updateActivity();
+    }
+});
 
 const scrollToBottom = async () => {
     await nextTick();
@@ -30,11 +81,12 @@ const sendMessage = () => {
     const userMsg = message.value;
     message.value = '';
     scrollToBottom();
+    updateActivity();
 
     // Send via API to ensure persistence
     apiService.post(API_CHAT.CUSTOMER_SEND, {
         sessionId: sessionId.value,
-        sender: 'customer',
+        sender: CHAT_SENDER_TYPE.CUSTOMER,
         text: userMsg
     }).catch(err => {
         console.error('Lỗi gửi tin nhắn:', err);
@@ -73,17 +125,20 @@ onMounted(() => {
         chatSocket.subscribe('/topic/messages', (msg) => {
             const data = typeof msg === 'string' ? JSON.parse(msg) : msg;
             
+            // Critical fix: Only process messages for THIS session
+            // If it's a guest session, sessionId must match. 
+            // If it's a registered customer, conversationId should ideally match (handled similarly)
+            if (data.sessionId && data.sessionId !== sessionId.value) return;
+
             // Avoid duplicates
             if (chatHistory.value.find(existing => existing.id === data.id)) return;
 
-            // Only add if it's from staff or system, or if it's our own message from another tab
-            if (data.sender === 'staff' || data.sender === 'system' || (data.sender === 'customer' && !chatHistory.value.find(m => m.text === data.text))) {
-                chatHistory.value.push({
-                    ...data,
-                    sender: data.sender === 'customer' ? 'user' : data.sender
-                });
-                scrollToBottom();
-            }
+            // Add message if it belongs to this session
+            chatHistory.value.push({
+                ...data,
+                sender: data.sender === CHAT_SENDER_TYPE.CUSTOMER ? 'user' : data.sender
+            });
+            scrollToBottom();
         });
     });
 });

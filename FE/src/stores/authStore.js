@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { useRouter } from 'vue-router';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
+import { APP_ROLES } from '@/constants/appConstants';
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
@@ -12,8 +13,8 @@ export const useAuthStore = defineStore('auth', {
     
     getters: {
         isLoggedIn: (state) => !!state.accessToken,
-        isAdmin: (state) => state.user?.role === 'ADMIN',
-        isStaff: (state) => state.user?.role === 'STAFF',
+        isAdmin: (state) => state.user?.role === APP_ROLES.ADMIN,
+        isStaff: (state) => state.user?.role === APP_ROLES.STAFF,
     },
     
     actions: {

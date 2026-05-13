@@ -1,5 +1,6 @@
 import api from '../apiService';
 import { API_AUTH } from '@/constants/apiPaths';
+import { APP_ROLES } from '@/constants/appConstants';
 
 export const dichVuXacThuc = {
   // Đăng nhập
@@ -71,11 +72,11 @@ export const dichVuXacThuc = {
 
   // Kiểm tra có phải admin không
   laAdmin() {
-    return this.coVaiTro('ADMIN');
+    return this.coVaiTro(APP_ROLES.ADMIN);
   },
 
   // Kiểm tra có phải staff không
   laStaff() {
-    return this.coVaiTro('STAFF');
+    return this.coVaiTro(APP_ROLES.STAFF);
   }
 };

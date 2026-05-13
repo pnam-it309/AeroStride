@@ -18,6 +18,7 @@ public final class SecurityConstants {
         "/ws/**",
         "/ws-chat/**",
         RoutesConstant.CUSTOMER_CHAT + "/**",
-        "/actuator/**"
+        "/actuator/**",
+        "/error"
     };
 }
