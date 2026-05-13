@@ -20,7 +20,9 @@ class ChatSocketService {
             return;
         }
 
-        const socket = new SockJS('/ws-chat');
+        const wsUrl = import.meta.env.VITE_WS_URL || '/ws-chat';
+        // Note: chatSocket uses /ws-chat by default in backend
+        const socket = new SockJS(wsUrl.includes('ws-chat') ? wsUrl : '/ws-chat');
         this.client = new Client({
             webSocketFactory: () => socket,
             onConnect: () => {

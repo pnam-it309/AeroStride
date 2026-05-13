@@ -6,7 +6,6 @@ import vuetify from 'vite-plugin-vuetify';
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
-    
     return {
         plugins: [
             vue(),
@@ -46,6 +45,7 @@ export default defineConfig(({ mode }) => {
             chunkSizeWarningLimit: 1000
         },
         server: {
+            allowedHosts: true,
             watch: {
                 usePolling: true,
                 interval: 1000,
