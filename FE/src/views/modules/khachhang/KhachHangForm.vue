@@ -505,10 +505,12 @@ onMounted(() => {
             </div>
             <div class="d-flex gap-3">
                 <v-btn color="primary" variant="flat"
-                    class="text-none px-8 rounded-xl h-11 elevation-4" :loading="saving"
+                    class="add-btn-primary text-none px-8 rounded-xl h-11 elevation-4" 
+                    style="font-size: 16px !important; font-weight: 600 !important;"
+                    :loading="saving"
                     @click="handleSave">
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
-                    {{ submitButtonText }}
+                    <span style="font-size: 16px !important; font-weight: 600 !important;">{{ submitButtonText }}</span>
                 </v-btn>
             </div>
 

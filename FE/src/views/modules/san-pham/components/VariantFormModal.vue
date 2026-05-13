@@ -455,11 +455,11 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
 <template>
     <v-dialog v-model="dialogVisible" max-width="860" persistent transition="dialog-bottom-transition" scrollable>
         <v-card class="rounded-xl border shadow-2xl p-0">
-            <div class="h-1-5 w-full bg-primary"></div>
+
 
             <v-card-title class="px-8 py-6 border-b d-flex align-center justify-space-between bg-slate-50/50">
                 <div>
-                    <h3 class="text-h5 font-weight-black text-slate-900 tracking-tight">
+                    <h3 class="text-h5 font-weight-bold text-slate-900 tracking-tight">
                         {{ headerTitle }}
                     </h3>
                 </div>
@@ -521,16 +521,7 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                             <v-row class="variant-modal-fields">
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
-                                        <div class="d-flex align-center justify-space-between mb-2 px-1">
-                                            <span class="text-caption font-weight-bold text-slate-700 tracking-wider">
-                                                Màu sắc
-                                            </span>
-                                            <v-btn variant="text" color="primary" density="compact"
-                                                class="text-none px-2 h-auto" @click="refreshOptions">
-                                                <RefreshIcon size="12" class="mr-1" /> Làm mới
-                                                <v-tooltip activator="parent" location="top" text="Tải lại danh sách thuộc tính" />
-                                            </v-btn>
-                                        </div>
+                                        <div class="field-label">Màu sắc</div>
                                         <v-combobox v-model="formData.idMauSac" v-bind="comboboxProps"
                                             :custom-filter="comboboxFilter" :items="colorComboboxItems" item-title="ten"
                                             item-value="id" :placeholder="lockedColorLabel || 'Chọn màu sắc'"
@@ -544,11 +535,7 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
 
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
-                                        <div class="mb-2 px-1">
-                                            <span class="text-caption font-weight-bold text-slate-700 tracking-wider">
-                                                Số lượng tồn
-                                            </span>
-                                        </div>
+                                        <div class="field-label">Số lượng tồn</div>
                                         <FormattedNumberField v-model="formData.soLuong" min="0"
                                             :rules="[rules.required, rules.min0]" variant="outlined"
                                             density="comfortable" hide-details="auto" placeholder="0"
@@ -558,11 +545,7 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
 
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
-                                        <div class="mb-2 px-1">
-                                            <span class="text-caption font-weight-bold text-slate-700 tracking-wider">
-                                                Kích thước
-                                            </span>
-                                        </div>
+                                        <div class="field-label">Kích thước</div>
                                         <v-combobox v-model="formData.idKichThuoc" v-bind="comboboxProps"
                                             :custom-filter="comboboxFilter" :items="sizeComboboxItems" item-title="ten"
                                             item-value="id" :placeholder="lockedSizeLabel || 'Chọn kích thước'"
@@ -576,11 +559,7 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
 
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
-                                        <div class="mb-2 px-1">
-                                            <span class="text-caption font-weight-bold text-slate-700 tracking-wider">
-                                                Giá nhập (VNĐ)
-                                            </span>
-                                        </div>
+                                        <div class="field-label">Giá nhập (VNĐ)</div>
                                         <FormattedNumberField v-model="formData.giaNhap" min="0" :rules="[rules.min0]"
                                             variant="outlined" density="comfortable" hide-details="auto" placeholder="0"
                                             suffix="₫" class="modern-input"></FormattedNumberField>
@@ -589,11 +568,7 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
 
                                 <v-col cols="12">
                                     <div class="form-group">
-                                        <div class="mb-2 px-1">
-                                            <span class="text-caption font-weight-bold text-slate-700 tracking-wider">
-                                                Mã SKU
-                                            </span>
-                                        </div>
+                                        <div class="field-label">Mã SKU</div>
                                         <v-text-field v-model="formData.maChiTietSanPham" :placeholder="skuPlaceholder"
                                             variant="outlined" density="comfortable" readonly hide-details="auto"
                                             class="modern-input bg-slate-50"></v-text-field>
@@ -602,11 +577,7 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
 
                                 <v-col cols="12">
                                     <div class="form-group">
-                                        <div class="mb-2 px-1">
-                                            <span class="text-caption font-weight-bold text-slate-700 text-uppercase tracking-wider">
-                                                Giá bán (VNĐ)
-                                            </span>
-                                        </div>
+                                        <div class="field-label">Giá bán (VNĐ)</div>
                                         <FormattedNumberField v-model="formData.giaBan" min="0"
                                             :rules="[rules.required, rules.min0]" variant="outlined"
                                             density="comfortable" hide-details="auto" placeholder="0" suffix="₫"
@@ -622,11 +593,11 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
             <v-divider></v-divider>
 
             <v-card-actions class="px-8 py-6 bg-slate-50 d-flex justify-end gap-3">
-                <v-btn variant="tonal" color="slate-500" class="px-6 rounded-xl font-weight-bold h-11"
+                <v-btn variant="tonal" color="slate-500" class="px-6 rounded-xl font-weight-medium h-11"
                     @click="emit('close')">
                     Hủy bỏ
                 </v-btn>
-                <v-btn color="primary" variant="flat" class="px-8 rounded-xl font-weight-black h-11"
+                <v-btn color="primary" variant="flat" class="px-8 rounded-xl font-weight-medium h-11"
                     :loading="submitting" @click="handleSubmit">
                     <template #prepend>
                         <DeviceFloppyIcon v-if="!submitting" size="18" />
@@ -640,6 +611,25 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
 </template>
 
 <style scoped>
+/* Đồng bộ cỡ chữ với màn hình cha (13px) */
+.field-label,
+:deep(.v-field__input),
+:deep(.v-field__input input),
+:deep(.v-select__selection-text),
+:deep(.v-list-item-title) {
+    font-size: 13px !important;
+}
+
+.field-label {
+    font-weight: 600 !important;
+    margin-bottom: 6px !important;
+    color: #334155 !important;
+}
+
+:deep(.v-field__input::placeholder) {
+    font-size: 13px !important;
+}
+
 .h-1-5 {
     height: 6px;
 }

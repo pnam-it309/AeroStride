@@ -226,9 +226,9 @@
 }
 
 .btn-back-header {
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 6px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
     width: 40px !important;
     height: 40px !important;
     display: flex !important;
@@ -237,10 +237,8 @@
     transition: all 0.3s ease !important;
 
     &:hover {
-        background: #fff !important;
-        border-color: #000 !important;
+        background: rgba(0, 0, 0, 0.04) !important;
         transform: translateX(-4px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
     }
 }
 
@@ -547,7 +545,7 @@
         flex: 1 1 0;
         max-width: none;
         height: 52px !important;
-        font-size: 16px !important;
+        font-size: 13px !important;
         font-weight: 700 !important;
         color: #64748b !important;
 
@@ -748,10 +746,7 @@
         pointer-events: none;
     }
 
-    .v-field__outline {
-        --v-field-border-opacity: 0.2 !important;
-        border-radius: 12px !important;
-    }
+
 
     &:hover .v-field__outline {
         --v-field-border-opacity: 0.5 !important;
@@ -785,20 +780,24 @@
         }
     }
 
-    &.v-field--focused {
-        .v-field__outline {
-            --v-field-border-opacity: 1 !important;
+    .v-field--focused .v-field__outline {
+        --v-field-border-opacity: 1 !important;
+        color: #1e257c !important;
+    }
+
+    .v-field--focused .v-field__append-inner {
+        opacity: 1;
+        .v-icon {
+            color: #1e257c !important;
         }
-        .v-field__append-inner {
-            opacity: 1;
-            .v-icon {
-                color: #1e257c !important;
-            }
-        }
+    }
+
+    .v-field:focus-within .v-field__outline {
+        --v-field-border-opacity: 1 !important;
+        color: #1e257c !important;
     }
     
     background-color: #ffffff !important;
-    border-radius: 12px !important;
     cursor: default !important;
 
     * {
@@ -972,7 +971,7 @@
 
     .v-tab {
         height: 48px !important;
-        font-size: 16px !important;
+        font-size: 13px !important;
         font-weight: 600 !important;
         color: #1d2025 !important;
         padding: 0 20px !important;
@@ -995,6 +994,7 @@
             height: 100% !important;
             line-height: 1 !important;
             width: 100%;
+            font-size: 14px !important;
         }
 
         .v-icon {

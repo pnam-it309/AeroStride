@@ -423,10 +423,11 @@ onMounted(init);
             <div class="d-flex gap-3">
                 <v-btn v-if="!isDetailView" color="primary" variant="flat"
                     class="add-btn-primary text-white" 
+                    style="font-size: 16px !important; font-weight: 600 !important;"
                     prepend-icon="mdi-check-all"
                     @click="handleSave"
                     :loading="saving">
-                    {{ submitButtonText }}
+                    <span style="font-size: 16px !important; font-weight: 600 !important;">{{ submitButtonText }}</span>
                 </v-btn>
             </div>
         </div>
@@ -970,5 +971,78 @@ onMounted(init);
     font-size: 18px !important;
     opacity: 0.7;
     color: #475569 !important;
+}
+
+/* ==========================================================================
+   ĐỒNG BỘ HỆ THỐNG TYPOGRAPHY CHUẨN 13PX CHO MÀN HÌNH FORM
+   ========================================================================== */
+
+/* Ép mọi thẻ nội dung thông thường về 13px và khử in đậm */
+:deep(div:not(.v-icon):not(.discount-badge):not(.section-header):not(.text-subtitle-1)),
+:deep(span:not(.v-icon):not(.discount-badge):not(.section-header):not(.text-subtitle-1)),
+:deep(td),
+:deep(th),
+:deep(p),
+:deep(input),
+:deep(textarea),
+:deep(.v-field__input),
+:deep(.v-field__input input),
+:deep(.v-label),
+:deep(.v-field-label),
+:deep(input::placeholder),
+:deep(textarea::placeholder),
+:deep(.v-field__input::placeholder),
+:deep(.v-field__input input::placeholder) {
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    text-transform: none !important; /* Bỏ in hoa */
+}
+
+/* Khử viết hoa toàn bộ cho các phần tử con */
+:deep(*) {
+    text-transform: none !important;
+}
+
+/* THAY ĐỔI: Đồng bộ tất cả các nút bấm (Buttons) về cỡ 13px và độ đậm 600 rõ ràng */
+:deep(.v-btn),
+:deep(.v-btn span),
+:deep(.v-btn *),
+:deep(.v-btn__content) {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+/* Ngoại lệ: Giữ cỡ chữ 16px CHO TIÊU ĐỀ PHẦN và NÚT THÊM ĐỢT GIẢM GIÁ CHÍNH */
+:deep(.section-header),
+:deep(.section-header *),
+:deep(h3),
+:deep(.v-card-title),
+:deep(.text-subtitle-1),
+:deep(.add-btn-primary),
+:deep(.add-btn-primary span),
+:deep(.add-btn-primary *),
+:deep(.add-btn-primary__content) {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+}
+
+/* Ngoại lệ: Giữ font weight 600 cho nhãn trường (field label) nhưng kích thước vẫn là 13px */
+:deep(.field-label),
+:deep(.field-label *) {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+/* Ngoại lệ: Giữ kích cỡ đặc biệt cho nhãn phụ và dải giá */
+:deep(.field-label-small),
+:deep(.price-range-value) {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+}
+
+/* Ngoại lệ: Giữ badge giảm giá nhỏ gọn */
+:deep(.discount-badge) {
+    font-size: 10px !important;
+    font-weight: 700 !important;
 }
 </style>

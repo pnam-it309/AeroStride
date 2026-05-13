@@ -373,21 +373,23 @@ onMounted(async () => {
                 <v-btn
                     color="success"
                     variant="flat"
-                    class="text-none px-8 rounded-lg h-11 elevation-4"
+                    class="text-none px-8 rounded-lg elevation-4"
+                    style="font-size: 16px !important; font-weight: 600 !important; height: 44px !important; min-height: 44px !important;"
                     @click="showQR = true"
                 >
                     <v-icon size="20" class="mr-2">mdi-qrcode-scan</v-icon>
-                    Quét QR CCCD
+                    <span style="font-size: 16px !important; font-weight: 600 !important;">Quét QR CCCD</span>
                 </v-btn>
                 <v-btn
                     color="primary"
                     variant="flat"
-                    class="text-none px-8 rounded-lg h-11 elevation-4"
+                    class="add-btn-primary text-none px-8 rounded-lg elevation-4"
+                    style="font-size: 16px !important; font-weight: 600 !important; height: 44px !important; min-height: 44px !important;"
                     :loading="saving"
                     @click="handleSave"
                 >
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
-                    {{ submitButtonText }}
+                    <span style="font-size: 16px !important; font-weight: 600 !important;">{{ submitButtonText }}</span>
                 </v-btn>
             </div>
         </div>
@@ -433,19 +435,19 @@ onMounted(async () => {
                             <span class="text-subtitle-1 font-weight-bold text-slate-700">Thông tin định danh</span>
                         </div>
                         <v-row>
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="6">
                                 <div class="field-label">Mã nhân viên</div>
                                 <v-text-field
                                     v-model="employeeForm.ma"
                                     readonly
                                     placeholder="Hệ thống tự tạo..."
                                     variant="outlined"
-                                    density="comfortable"
+                                    density="compact"
                                     class="bg-slate-50"
                                     hide-details
                                 ></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="8">
+                            <v-col cols="12" md="6">
                                 <div class="field-label">Họ và tên *</div>
                                 <v-text-field
                                     v-model="employeeForm.ten"
@@ -478,7 +480,7 @@ onMounted(async () => {
                                     hide-details
                                 ></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
                                 <v-text-field
                                     v-model="employeeForm.ngaySinh"
@@ -493,7 +495,7 @@ onMounted(async () => {
                                     class="date-input-small"
                                 ></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="6">
                                 <div class="field-label">Giới tính</div>
                                 <v-select
                                     v-model="employeeForm.gioiTinh"
@@ -507,7 +509,7 @@ onMounted(async () => {
                                     hide-details
                                 ></v-select>
                             </v-col>
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="6">
                                 <div class="field-label">Vai trò</div>
                                 <v-select
                                     v-model="employeeForm.idPhanQuyen"
@@ -515,6 +517,20 @@ onMounted(async () => {
                                     :items="roles"
                                     item-title="title"
                                     item-value="value"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                ></v-select>
+                            </v-col>
+                            <v-col cols="12" md="6">
+                                <div class="field-label">Trạng thái</div>
+                                <v-select
+                                    v-model="employeeForm.trangThai"
+                                    :readonly="isDetailView || !isEditMode"
+                                    :items="[
+                                        { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
+                                        { title: 'Ngừng hoạt động', value: 'NGUNG_HOAT_DONG' }
+                                    ]"
                                     variant="outlined"
                                     density="compact"
                                     hide-details
@@ -661,40 +677,64 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-/* Đồng bộ font chữ và cỡ chữ toàn trang */
-:deep(.v-container),
-:deep(.v-card),
-:deep(.v-btn),
-:deep(.v-field),
-:deep(.v-list-item-title),
-:deep(span),
-:deep(div),
-:deep(p) {
-    font-size: 14px !important;
-    font-weight: 400; /* Reset default weight to normal */
+/* ==========================================================================
+   ĐỒNG BỘ HỆ THỐNG TYPOGRAPHY CHUẨN 13PX CHO MÀN HÌNH FORM NHÂN VIÊN
+   ========================================================================== */
+
+/* Ép mọi thẻ nội dung thông thường về 13px và khử in đậm */
+:deep(div:not(.v-icon):not(.section-header):not(.text-subtitle-1)),
+:deep(span:not(.v-icon):not(.section-header):not(.text-subtitle-1)),
+:deep(td),
+:deep(th),
+:deep(p),
+:deep(input),
+:deep(textarea),
+:deep(.v-field__input),
+:deep(.v-field__input input),
+:deep(.v-label),
+:deep(.v-field-label),
+:deep(input::placeholder),
+:deep(textarea::placeholder),
+:deep(.v-field__input::placeholder),
+:deep(.v-field__input input::placeholder) {
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    text-transform: none !important; /* Bỏ in hoa */
 }
 
-:deep(.text-subtitle-1),
-:deep(.text-h5),
-:deep(.text-h6) {
+/* Khử viết hoa toàn bộ cho các phần tử con */
+:deep(*) {
+    text-transform: none !important;
 }
 
-:deep(.v-field__input) {
-    font-weight: 400 !important; /* Force normal weight for inputs */
-    color: #334155 !important;
-}
-
-.field-label {
-    font-size: 14px !important;
-    font-weight: 500 !important; /* Unified to Medium weight */
+/* Đồng bộ nhãn trường dữ liệu: 13px + Chữ đậm 600 */
+.field-label,
+:deep(.field-label),
+:deep(.field-label *) {
+    font-size: 13px !important;
+    font-weight: 600 !important;
     color: #475569;
     margin-bottom: 6px;
     margin-left: 2px;
 }
 
-.font-weight-bold,
-.text-subtitle-1 {
-    font-weight: 500 !important; /* Use Medium (500) for a softer, premium look */
+/* THAY ĐỔI: Giữ các nút bấm phụ (bên trong trang) ở cỡ 13px, chữ đậm 600 */
+:deep(.v-btn:not(.add-btn-primary)),
+:deep(.v-btn:not(.add-btn-primary) span),
+:deep(.v-btn:not(.add-btn-primary) *),
+:deep(.v-btn:not(.add-btn-primary)__content) {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+/* Ngoại lệ: Giữ cỡ chữ 16px CHO CÁC TIÊU ĐỀ PHẦN */
+:deep(.section-header),
+:deep(.section-header *),
+:deep(h3),
+:deep(.v-card-title),
+:deep(.text-subtitle-1) {
+    font-size: 16px !important;
+    font-weight: 600 !important;
 }
 
 .gap-2 {
