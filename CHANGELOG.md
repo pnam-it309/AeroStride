@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/pnam-it309/AeroStride/compare/v1.8.4...v1.9.0) (2026-05-13)
+
+
+### Features
+
+* **docker,proxy,websocket:** Thêm cấu hình Proxy Gateway và hỗ trợ WebSocket ([e35cadb](https://github.com/pnam-it309/AeroStride/commit/e35cadb7daf7f96415453c1b3aff937bd3d63ec0))
+
 ## [1.8.4](https://github.com/pnam-it309/AeroStride/compare/v1.8.3...v1.8.4) (2026-05-13)
 
 
