@@ -40,7 +40,7 @@ ENV NODE_OPTIONS=--max-old-space-size=4096
 RUN npm run build
 
 # Stage 3: Runtime stage (Production)
-FROM nginxinc/nginx-unprivileged:alpine AS production
+FROM nginx:alpine AS production
 WORKDIR /usr/share/nginx/html
 
 # Copy the built assets from the builder stage
@@ -48,6 +48,7 @@ COPY --from=builder /app/dist .
 
 # Copy custom nginx configuration for SPA routing
 COPY docker/nginx.conf /etc/nginx/templates/default.conf.template
+ENV NGINX_ROOT=/usr/share/nginx/html
 
 # Port from env (no default)
 ARG NGINX_PORT
