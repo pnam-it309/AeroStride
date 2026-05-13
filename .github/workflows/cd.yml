@@ -68,6 +68,12 @@ jobs:
       - name: Update Services
         run: |
           echo "${{ secrets.DOCKER_ENV }}" > docker/.env
+          BACKEND_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:latest \
+          FRONTEND_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:latest \
           docker compose -f docker/docker-compose.yml --env-file docker/.env pull
+          
+          BACKEND_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BE }}:latest \
+          FRONTEND_IMAGE=${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FE }}:latest \
           docker compose -f docker/docker-compose.yml --env-file docker/.env up -d --force-recreate
+          
           docker image prune -f

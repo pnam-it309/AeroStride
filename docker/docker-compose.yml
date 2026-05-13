@@ -126,25 +126,25 @@ services:
           cpus: '0.5'
           memory: 1G
 
-  nginx-proxy:
-    image: nginx:alpine
-    container_name: aerostride-nginx
-    restart: always
-    ports:
-      - "${HTTP_PORT_HOST:-80}:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/templates/default.conf.template
-    environment:
-      - NGINX_PORT=80
-      - SERVER_NAME=${SERVER_NAME}
-      - BACKEND_PORT=${BACKEND_PORT}
-      - FE_INTERNAL_PORT=${FE_INTERNAL_PORT}
-      - BACKEND_HOST=${BACKEND_HOST}
-    networks:
-      - aerostride-net
-    depends_on:
-      - frontend
-      - backend
+  # nginx-proxy:
+  #   image: nginx:alpine
+  #   container_name: aerostride-nginx
+  #   restart: always
+  #   ports:
+  #     - "${HTTP_PORT_HOST:-80}:80"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/templates/default.conf.template
+  #   environment:
+  #     - NGINX_PORT=80
+  #     - SERVER_NAME=${SERVER_NAME}
+  #     - BACKEND_PORT=${BACKEND_PORT}
+  #     - FE_INTERNAL_PORT=${FE_INTERNAL_PORT}
+  #     - BACKEND_HOST=${BACKEND_HOST}
+  #   networks:
+  #     - aerostride-net
+  #   depends_on:
+  #     - frontend
+  #     - backend
 networks:
   aerostride-net:
     driver: bridge
