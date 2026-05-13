@@ -165,6 +165,13 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
     background-color: #fcfdfe !important;
 }
 
+:deep(.v-field__input::placeholder),
+:deep(.v-field__input),
+:deep(.v-field__input input),
+:deep(.v-textarea textarea) {
+    font-size: 13px !important;
+}
+
 :deep(.v-field--focused .v-field__outline) {
     --v-field-border-width: 2px;
 }

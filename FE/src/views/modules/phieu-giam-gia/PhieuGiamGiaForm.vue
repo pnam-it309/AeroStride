@@ -400,7 +400,7 @@ onMounted(init);
                         </div>
 
                         <AdminFilter title="Tìm kiếm khách hàng" @refresh="() => { searchGlobal = ''; filterStartDate = null; filterEndDate = null; }">
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="3">
                                 <div class="filter-field-label" style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Tìm kiếm</div>
                                 <v-text-field v-model="searchGlobal" prepend-inner-icon="mdi-magnify"
                                     placeholder="Nhập tên, mã hoặc số điện thoại..." variant="outlined"
@@ -502,6 +502,30 @@ onMounted(init);
     .form-grid {
         position: relative;
     }
+}
+
+/* Đồng bộ hóa nhãn (Labels) và Ô nhập liệu */
+.field-label {
+    font-weight: 600 !important;
+    margin-bottom: 6px !important;
+    color: #334155 !important;
+    font-size: 13px !important;
+}
+
+:deep(.v-field__input::placeholder),
+:deep(.v-field__input),
+:deep(.v-field__input input),
+:deep(.v-textarea textarea),
+:deep(.v-btn-toggle .v-btn) {
+    font-size: 13px !important;
+}
+
+/* Chuẩn hóa hiệu ứng focus cho ô Tìm kiếm và Ô ngày tháng */
+:deep(.compact-input .v-field--focused .v-field__outline),
+:deep(.compact-input .v-field:focus-within .v-field__outline) {
+    --v-field-border-width: 1px !important;
+    --v-field-border-opacity: 1 !important;
+    color: #8489cf !important;
 }
 
 :deep(.custom-mini-switch) {

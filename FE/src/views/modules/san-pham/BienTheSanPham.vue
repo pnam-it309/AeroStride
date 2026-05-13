@@ -875,33 +875,43 @@ onMounted(async () => {
       :initialTab="variantDrawer.initialTab" @saved="fetchSelectedProduct(selectedProductId)" />
     <QrScanner v-model:show="showQrScanner" @scan="handleQrScan" />
 
-    <v-dialog v-model="qrDialog.open" max-width="420">
-      <v-card class="pa-4">
-        <div class="d-flex justify-space-between align-start mb-4">
+    <v-dialog v-model="qrDialog.open" max-width="420" transition="dialog-bottom-transition">
+      <v-card class="rounded-xl shadow-lg border-0 overflow-hidden">
+        <div class="px-6 pt-6 pb-4 d-flex justify-space-between align-start">
           <div>
-            <p class="text-overline text-slate-400 mb-1">Mã QR biến thể</p>
-            <h3 class="text-h6 font-weight-bold text-dark mb-1">{{ qrDialog.variant?.maChiTietSanPham || '--' }}</h3>
-            <p class="text-body-2 text-slate-500 mb-0">
+            <div class="text-caption font-weight-bold text-slate-500 mb-1" style="text-transform: none; letter-spacing: 0.5px;">
+              Mã QR biến thể
+            </div>
+            <h3 class="text-h6 font-weight-bold text-slate-900 mb-1">{{ qrDialog.variant?.maChiTietSanPham || '--' }}</h3>
+            <p class="text-body-2 text-slate-600 mb-0 text-truncate" style="max-width: 280px;">
               {{ qrDialog.variant?.tenSanPham || selectedProduct.value?.tenSanPham || 'Sản phẩm' }}
             </p>
           </div>
-          <v-btn icon variant="text" size="small" @click="qrDialog.open = false">
-            <v-icon>mdi-close</v-icon>
-            <v-tooltip activator="parent" location="top" text="Đóng hộp thoại QR" />
+          <v-btn icon variant="tonal" size="small" color="slate-400" class="rounded-lg" @click="qrDialog.open = false">
+            <v-icon size="18">mdi-close</v-icon>
           </v-btn>
         </div>
 
-        <div ref="qrCodeWrapper" class="d-flex justify-center pa-4 rounded-lg border bg-white mb-4">
-          <QrcodeVue :value="qrDialog.value" :size="220" level="H" render-as="canvas" />
-        </div>
+        <div class="px-6 pb-6 bg-slate-50">
+          <div class="pt-6">
+            <div ref="qrCodeWrapper" class="d-flex flex-column align-center pa-6 rounded-xl bg-white border shadow-sm">
+              <QrcodeVue :value="qrDialog.value" :size="240" level="H" render-as="canvas" class="qr-canvas-display" />
+              
+              <div class="mt-5 px-4 py-2 rounded-lg bg-slate-100 border text-slate-800 font-weight-bold text-body-2 tracking-wide monospace">
+                {{ qrDialog.value }}
+              </div>
+            </div>
+          </div>
 
-        <div class="text-center mb-4">
-          <p class="text-body-2 font-weight-bold mb-1">{{ qrDialog.value }}</p>
-        </div>
-
-        <div class="d-flex justify-end gap-2">
-          <v-btn variant="text" @click="qrDialog.open = false">Đóng</v-btn>
-          <v-btn color="primary" variant="flat" @click="downloadCurrentQrCode">Tải mã QR</v-btn>
+          <div class="d-flex gap-3 mt-6">
+            <v-btn variant="flat" color="white" class="text-none rounded-lg px-4 font-weight-bold border flex-grow-1" @click="qrDialog.open = false">
+              Đóng
+            </v-btn>
+            <v-btn color="primary" variant="flat" class="text-none rounded-lg px-4 font-weight-bold shadow flex-grow-1" @click="downloadCurrentQrCode">
+              <v-icon size="18" class="mr-2">mdi-download</v-icon>
+              Tải mã QR
+            </v-btn>
+          </div>
         </div>
       </v-card>
     </v-dialog>

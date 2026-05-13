@@ -94,14 +94,14 @@ const goToPage = async (p) => { if (p >= 1 && p <= props.totalPages) page.value 
 }
 
 .pagination-summary {
-    font-size: 16px !important;
+    font-size: 13px !important;
 }
 .pagination-summary strong {
     color: #000;
     font-weight: 700;
 }
 .pagination-label {
-    font-size: 16px !important;
+    font-size: 13px !important;
     color: #000;
     font-weight: 500;
 }
@@ -109,7 +109,7 @@ const goToPage = async (p) => { if (p >= 1 && p <= props.totalPages) page.value 
     border: 1px solid #cbd5e1;
     padding: 2px 8px;
     border-radius: 8px;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
     line-height: 1.2;
     outline: none;
@@ -128,7 +128,7 @@ const goToPage = async (p) => { if (p >= 1 && p <= props.totalPages) page.value 
     height: 32px;
     border-radius: 8px;
     border: 1px solid #dbe4ef;
-    font-size: 16px !important;
+    font-size: 13px !important;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
@@ -149,7 +149,7 @@ const goToPage = async (p) => { if (p >= 1 && p <= props.totalPages) page.value 
 }
 .pager-ellipsis {
     color: #94a3b8;
-    font-size: 16px;
+    font-size: 13px;
     padding: 0 2px;
 }
 </style>

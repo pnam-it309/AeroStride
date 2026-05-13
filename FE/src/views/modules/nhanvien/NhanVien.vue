@@ -253,10 +253,10 @@ onMounted(() => {
                         <div class="text-truncate" :title="item.ma">{{ item.ma || '-' }}</div>
                     </td>
                     <td class="data-cell px-4">
-                        <div class="font-weight-medium text-slate-800 text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
+                        <div class="text-slate-800 text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
                     </td>
                     <td class="data-cell text-left px-4">
-                        <div class="font-weight-medium text-slate-800 text-truncate" :title="item.tenTaiKhoan">{{ item.tenTaiKhoan || '-' }}</div>
+                        <div class="text-slate-800 text-truncate" :title="item.tenTaiKhoan">{{ item.tenTaiKhoan || '-' }}</div>
                         <div class="text-caption text-slate-500 text-truncate" :title="item.email">{{ item.email || '-' }}</div>
                     </td>
                     <td class="data-cell text-center">
@@ -380,6 +380,66 @@ onMounted(() => {
     min-width: 100px !important;
 }
 
+/* ==========================================================================
+   ĐỒNG BỘ HỆ THỐNG TYPOGRAPHY CHUẨN 13PX CHO MÀN HÌNH DANH SÁCH NHÂN VIÊN
+   ========================================================================== */
+
+/* Ép mọi thẻ nội dung thông thường về 13px và khử in đậm */
+:deep(div:not(.v-icon):not(.tab-item):not(.v-btn__content):not(.text-h6)),
+:deep(span:not(.v-icon):not(.tab-item):not(.v-btn__content)),
+:deep(td),
+:deep(th),
+:deep(p),
+:deep(input),
+:deep(.v-field__input),
+:deep(.v-field__input input),
+:deep(.v-label),
+:deep(.v-field-label),
+:deep(input::placeholder),
+:deep(.v-field__input::placeholder) {
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    text-transform: none !important; /* Bỏ in hoa */
+}
+
+/* Khử viết hoa toàn bộ cho các phần tử con */
+:deep(*) {
+    text-transform: none !important;
+}
+
+/* Đảm bảo Header bảng hiển thị 13px và Chữ đậm 600 */
+:deep(th),
+:deep(.v-table th),
+:deep(.header-cell) {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+/* Cân đối nhãn bộ lọc: 13px + Chữ đậm 600 */
+.filter-field-label,
+:deep(.filter-field-label) {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+/* Giữ nút bấm "Tạo mới" chính ở top level ở 16px, chữ đậm 600 */
+:deep(.add-btn-primary),
+:deep(.add-btn-primary span),
+:deep(.add-btn-primary *),
+:deep(.add-btn-primary__content) {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+}
+
+/* THAY ĐỔI: Các nút bấm hành động phụ (trong bảng, reset pass) ở 13px, chữ đậm 600 */
+:deep(.v-btn:not(.add-btn-primary)),
+:deep(.v-btn:not(.add-btn-primary) span),
+:deep(.v-btn:not(.add-btn-primary) *),
+:deep(.v-btn:not(.add-btn-primary)__content) {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
 /* Typography & Cell Alignment */
 .data-cell {
     font-weight: 400 !important;
@@ -394,18 +454,13 @@ onMounted(() => {
     justify-content: center;
 }
 
-
-
-.data-cell.font-weight-bold {
-    font-weight: 400 !important;
-}
-
 .center-cell {
     text-align: center !important;
 }
 
 /* Force header centering for columns marked as align center */
-:deep(.v-table th.text-center) {
+:deep(.v-table th.text-center),
+:deep(.header-cell.text-center) {
     text-align: center !important;
 }
 

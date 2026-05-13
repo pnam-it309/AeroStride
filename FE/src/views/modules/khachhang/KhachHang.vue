@@ -731,7 +731,7 @@ watch(
                         <!-- ── Cột trái: Danh sách địa chỉ ── -->
                         <v-col cols="12" md="6" class="pb-6 border-e overflow-y-auto" style="max-height: calc(85vh - 80px)">
                             <div class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-10 position-relative">
-                                <span class="text-subtitle-2 font-weight-bold text-slate-800">Địa chỉ hiện tại</span>
+                                <span class="text-subtitle-2 font-weight-bold text-slate-800" style="font-size: 15px !important;">Địa chỉ hiện tại</span>
                                 <v-progress-linear v-if="addrLoading && listDiaChi.length > 0" indeterminate color="primary" height="2" class="position-absolute" style="bottom: 0; left: 0; right: 0; z-index: 20;"></v-progress-linear>
                             </div>
 
@@ -750,20 +750,20 @@ watch(
                                     style="margin-top: 15px">
                                     <!-- Dòng tên + badge mặc định -->
                                     <div class="d-flex align-center gap-3 mb-3">
-                                        <span class="text-subtitle-1 font-weight-medium text-slate-700">
+                                        <span class="text-subtitle-1 font-weight-medium text-slate-700" style="font-size: 15px !important;">
                                             {{ addr.tenNguoiNhan }}
                                         </span>
-                                        <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="tonal" class="font-weight-medium px-2">Mặc định</v-chip>
+                                        <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="tonal" class="font-weight-medium px-2" style="font-size: 15px !important;">Mặc định</v-chip>
                                     </div>
                                     
                                     <!-- SĐT -->
                                     <div class="d-flex align-center gap-2 mb-2 text-slate-600">
                                         <v-icon size="20" color="slate-400" style="font-size: 20px !important">mdi-phone-outline</v-icon>
-                                        <span class="text-body-2 font-weight-medium">{{ addr.sdtNguoiNhan }}</span>
+                                        <span class="text-body-2 font-weight-medium" style="font-size: 14px !important;">{{ addr.sdtNguoiNhan }}</span>
                                     </div>
                                     
                                     <!-- Địa chỉ đầy đủ -->
-                                    <div class="text-body-2 text-slate-500 mb-4 font-weight-medium line-height-1-6">
+                                    <div class="text-body-2 text-slate-500 mb-4 font-weight-medium line-height-1-6" style="font-size: 14px !important;">
                                         {{ [addr.diaChiChiTiet, addr.phuongXa, addr.thanhPho, addr.tinh].filter(Boolean).join(', ') }}
                                     </div>
                                     
@@ -789,12 +789,19 @@ watch(
                         <!-- ── Cột phải: Form thêm / sửa địa chỉ ── -->
                         <v-col cols="12" md="6" class="pb-6 bg-white overflow-y-auto" style="max-height: calc(85vh - 80px)">
                             <div class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-10">
-                                <span class="text-subtitle-2 font-weight-bold text-slate-800">
+                                <span class="text-subtitle-2 font-weight-bold text-slate-800" style="font-size: 15px !important;">
                                     {{ showAddrForm ? (isEditAddr ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới') : 'Thêm địa chỉ khác' }}
                                 </span>
-                                <v-btn v-if="!showAddrForm" variant="flat" color="primary" size="small" class="add-btn-primary text-none" @click="openNewAddrForm">
-                                    <PlusIcon size="18" class="mr-2" />
-                                    Thêm địa chỉ mới
+                                <v-btn
+                                    v-if="!showAddrForm"
+                                    variant="text"
+                                    color="primary"
+                                    class="text-none font-weight-bold px-4 rounded-lg text-primary bg-blue-lighten-5"
+                                    style="font-size: 15px !important; height: 36px !important; min-height: 36px !important; box-shadow: none !important;"
+                                    @click="openNewAddrForm"
+                                >
+                                    <PlusIcon size="14" class="mr-1" />
+                                    <span style="font-size: 15px !important; font-weight: 600 !important; color: rgb(var(--v-theme-primary)) !important;">Thêm địa chỉ mới</span>
                                 </v-btn>
                                 <v-btn v-else variant="text" size="small" color="slate-400" class="text-none font-weight-medium" @click="showAddrForm = false">
                                     <v-icon start size="16">mdi-arrow-left</v-icon>Hủy bỏ

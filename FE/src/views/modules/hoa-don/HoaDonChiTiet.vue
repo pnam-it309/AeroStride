@@ -332,18 +332,19 @@ onMounted(() => {
         <!-- Header -->
         <v-card class="premium-card-detail mb-6 pa-6">
             <div class="header-section">
-                <div class="header-left">
-                    <div class="d-flex align-center header-left-row">
-                        <v-btn icon variant="text" color="slate-600" class="mr-2 btn-back-header" @click="goBack">
-                            <ChevronLeftIcon size="28" />
-                        </v-btn>
+                <div class="header-left d-flex align-center">
+                    <v-btn icon variant="text" color="slate-600" class="mr-3 btn-back-header" @click="goBack">
+                        <ChevronLeftIcon size="28" />
+                    </v-btn>
+                    <div class="d-flex align-center flex-wrap ga-3">
+                        <div v-if="loaded" class="text-body-2 text-slate-800 d-flex align-center">
+                            Mã hóa đơn: <span class="ml-1">#{{ order.maHoaDon }}</span>
+                        </div>
+                        |
                         <v-chip v-if="showStatusChip" variant="flat"
                             :class="['px-4 status-chip', getOrderStatusMeta(order.trangThai)?.chipClass]">
                             {{ orderStatusLabel }}
                         </v-chip>
-                    </div>
-                    <div v-if="loaded" class="text-body-2 text-slate-500 mt-1 d-flex align-center">
-                        Mã hóa đơn: <span class="text-slate-700 ml-1">#{{ order.maHoaDon }}</span>
                     </div>
                 </div>
                 <div class="header-right d-flex gap-3">
@@ -386,7 +387,7 @@ onMounted(() => {
                             <v-divider v-if="getOrderStatus() < 4"></v-divider>
                             <v-list-item v-if="getOrderStatus() < 4" @click="requestStatusUpdate(4)" color="success"
                                 prepend-icon="mdi-checkbox-marked-circle-outline">
-                                <v-list-item-title class="font-weight-bold text-success">
+                                <v-list-item-title class="text-success">
                                     {{ getOrderStatus() === 3 ? 'Giao hàng thành công' : 'Hoàn thành nhanh đơn hàng' }}
                                 </v-list-item-title>
                             </v-list-item>
@@ -421,7 +422,7 @@ onMounted(() => {
                             </div>
                         </div>
                         <div class="timeline-info">
-                            <div class="text-subtitle-2 mb-1">{{ step.label }}</div>
+                            <div class="text-body-2 mb-1">{{ step.label }}</div>
                             <div class="text-body-2 text-slate-500">{{ step.note }}</div>
                             <div v-if="step.timestamp" class="text-body-2 text-slate-400 mt-1">
                                 {{ formatDate(step.timestamp) }}
@@ -454,52 +455,63 @@ onMounted(() => {
                                 </v-avatar>
                             </v-col>
 
-                            <!-- Primary Info Column -->
-                            <v-col cols="12" md="5" class="px-2 py-0">
-                                <div class="d-flex flex-column h-100 justify-start customer-main-col">
-                                    <div class="text-h6 text-slate-900 mb-1">{{ customerName }}</div>
-                                    <div class="d-flex align-center mb-1">
-                                        <span class="text-primary text-body-2 mr-3 pe-3">
-                                            ID: {{ order.khachHang?.maKhachHang || 'GUEST' }}
-                                        </span>
-                                    </div>
-                                    <!-- <div>
-                                        <span class="text-deep-purple-accent-4">
-                                            Hạng: Thành viên
-                                        </span>
-                                    </div> -->
-                                    <div class="text-body-2 text-slate-500">Ghi chú khách hàng</div>
-                                    <div class="text-body-2 text-slate-600 mt-1">
-                                        {{ order.khachHang?.ghiChu || 'Không có ghi chú đặc biệt' }}
-                                    </div>
-                                </div>
-                            </v-col>
+                            <!-- Unified Grid Info Column -->
+                            <v-col cols="12" sm="" class="flex-grow-1 ps-sm-6 py-0 d-flex align-center">
+                                <v-row class="w-100 h-100 py-1" dense>
+                                    <!-- Left Info: Profile & Notes -->
+                                    <v-col cols="12" md="6" class="py-0">
+                                        <div class="d-flex flex-column h-100 justify-center gap-3">
+                                            <div class="info-item mb-3">
+                                                <div class="text-body-2 text-slate-500 mb-1">Họ và tên</div>
+                                                <div class="text-body-2 text-slate-900 d-flex align-center">
+                                                    <v-icon color="primary" class="mr-2" size="18">mdi-account-outline</v-icon>
+                                                    <span>{{ customerName }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="info-item mb-3">
+                                                <div class="text-body-2 text-slate-500 mb-1">Mã khách hàng</div>
+                                                <div class="text-body-2 text-slate-800 d-flex align-center">
+                                                    <v-icon color="primary" class="mr-2" size="18">mdi-card-account-details-outline</v-icon>
+                                                    <span>{{ order.khachHang?.maKhachHang || 'GUEST' }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="info-item">
+                                                <div class="text-body-2 text-slate-500 mb-1">Ghi chú khách hàng</div>
+                                                <div class="text-body-2 text-slate-600 d-flex align-center">
+                                                    <v-icon color="primary" class="mr-2" size="18">mdi-note-text-outline</v-icon>
+                                                    <span>{{ order.khachHang?.ghiChu || 'Không có ghi chú đặc biệt' }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </v-col>
 
-                            <!-- Contact & Metadata Column -->
-                            <v-col cols="12" md="4" class="ml-auto ps-2 py-0">
-                                <div class="d-flex flex-column h-100 justify-start gap-2 customer-contact-col">
-                                    <div class="contact-item">
-                                        <div class="text-body-2 text-slate-500 mb-0">Số điện thoại</div>
-                                        <div class="text-subtitle-1 text-slate-800 d-flex align-center">
-                                            <v-icon color="primary" class="mr-2" size="20">mdi-phone-check</v-icon>
-                                            {{ order.soDienThoai || 'Chưa có' }}
+                                    <!-- Right Info: Contact & Metadata -->
+                                    <v-col cols="12" md="6" class="py-0 ps-md-4">
+                                        <div class="d-flex flex-column h-100 justify-center gap-3">
+                                            <div class="info-item mb-3">
+                                                <div class="text-body-2 text-slate-500 mb-1">Số điện thoại</div>
+                                                <div class="text-body-2 text-slate-800 d-flex align-center">
+                                                    <v-icon color="primary" class="mr-2" size="18">mdi-phone-check</v-icon>
+                                                    <span>{{ order.soDienThoai || 'Chưa có' }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="info-item mb-3">
+                                                <div class="text-body-2 text-slate-500 mb-1">Email</div>
+                                                <div class="text-body-2 text-slate-800 d-flex align-center">
+                                                    <v-icon color="primary" class="mr-2" size="18">mdi-email-check</v-icon>
+                                                    <span>{{ order.email || 'N/A' }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="info-item">
+                                                <div class="text-body-2 text-slate-500 mb-1">Ngày đăng ký</div>
+                                                <div class="text-body-2 text-slate-600 d-flex align-center">
+                                                    <v-icon color="primary" class="mr-2" size="18">mdi-calendar-range</v-icon>
+                                                    <span>{{ formatDate(order.khachHang?.ngayTao) }}</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="contact-item">
-                                        <div class="text-body-2 text-slate-500 mb-0">Email</div>
-                                        <div class="text-subtitle-1 text-slate-800 d-flex align-center">
-                                            <v-icon color="primary" class="mr-2" size="20">mdi-email-check</v-icon>
-                                            {{ order.email || 'N/A' }}
-                                        </div>
-                                    </div>
-                                    <div class="contact-item">
-                                        <div class="text-body-2 text-slate-500 mb-0">Ngày đăng ký</div>
-                                        <div class="text-body-1 text-slate-600 d-flex align-center">
-                                            <v-icon color="slate-400" class="mr-2" size="20">mdi-calendar-range</v-icon>
-                                            {{ formatDate(order.khachHang?.ngayTao) }}
-                                        </div>
-                                    </div>
-                                </div>
+                                    </v-col>
+                                </v-row>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -514,7 +526,7 @@ onMounted(() => {
                     <v-card-text class="pa-0 d-flex flex-column flex-grow-1 overflow-hidden">
                         <!-- Table-style Headers for Timeline -->
                         <div
-                            class="d-flex align-center w-100 px-4 py-2 bg-slate-800 border-b text-subtitle-2 text-white uppercase">
+                            class="d-flex align-center w-100 px-4 py-2 bg-slate-800 border-b text-body-2 text-white">
                             <div class="text-center" style="width: 42px;"></div> <!-- Space for timeline dots -->
                             <div class="text-center" style="width: 110px;">Trạng thái</div>
                             <div class="text-center flex-grow-1">Mô tả</div>
@@ -546,7 +558,7 @@ onMounted(() => {
 
                                         <!-- Column 3: Performer -->
                                         <div style="width: 150px;" class="text-center">
-                                            <span class="text-body-2 text-slate-600 uppercase">{{
+                                            <span class="text-body-2 text-slate-600">{{
                                                 log.nguoiThucHien || 'SYSTEM' }}</span>
                                         </div>
 
@@ -581,7 +593,7 @@ onMounted(() => {
 
                                         <!-- Column 3: Performer -->
                                         <div style="width: 150px;" class="text-center">
-                                            <span class="text-body-2 text-slate-600 uppercase">{{
+                                            <span class="text-body-2 text-slate-600">{{
                                                 initialHistoryLog.nguoiThucHien }}</span>
                                         </div>
 
@@ -611,26 +623,26 @@ onMounted(() => {
                     <div class="summary-section pa-3">
                         <div class="summary-grid">
                             <div class="summary-row mb-2">
-                                <span class="text-slate-500 font-weight-medium">Tạm tính:</span>
+                                <span class="text-slate-500">Tạm tính:</span>
                                 <span class="text-body-2 text-slate-800">{{
                                     formatCurrency(order.tongTien)
                                 }}</span>
                             </div>
                             <div class="summary-row mb-2 text-error">
-                                <span class="font-weight-medium">Giảm giá:</span>
+                                <span>Giảm giá:</span>
                                 <span class="text-body-2">- {{ formatCurrency(Math.abs(orderDiscountAmount))
                                 }}</span>
                             </div>
                             <div class="summary-row mb-2">
-                                <span class="text-slate-500 font-weight-medium">Phí vận chuyển:</span>
+                                <span class="text-slate-500">Phí vận chuyển:</span>
                                 <span class="text-body-2 text-slate-800">{{
                                     formatCurrency(order.phiVanChuyen || 0)
                                     }}</span>
                             </div>
                             <v-divider class="my-2 border-opacity-25"></v-divider>
                             <div class="summary-row">
-                                <span class="text-subtitle-2 text-slate-800">Tổng cộng:</span>
-                                <span class="text-h6 text-primary">{{
+                                <span class="text-body-2 text-slate-800">Tổng cộng:</span>
+                                <span class="text-body-2 text-primary">{{
                                     formatCurrency(orderTotalAmount) }}</span>
                             </div>
                         </div>
@@ -655,7 +667,7 @@ onMounted(() => {
                                             </v-icon>
                                         </div>
                                         <div>
-                                            <div class="text-slate-800 text-body-2 font-weight-medium">{{
+                                            <div class="text-slate-800 text-body-2">{{
                                                 pay.tenPhuongThuc }}
                                             </div>
                                             <div class="text-body-2 text-slate-500">Mã GD: {{ pay.maGiaoDichNgoai ||
@@ -664,7 +676,7 @@ onMounted(() => {
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="text-h6  text-primary">{{ formatCurrency(pay.soTien)
+                                        <div class="text-body-2 text-primary">{{ formatCurrency(pay.soTien)
                                             }}</div>
                                         <div class="text-body-2 text-slate-400">{{ formatDate(pay.ngayTao) }}</div>
                                     </div>
@@ -729,7 +741,7 @@ onMounted(() => {
                                 </v-avatar>
                             </td>
                             <td class="py-4 text-center">
-                                <div class="text-slate-900 text-subtitle-1">{{
+                                <div class="text-slate-900 text-body-2">{{
                                     item.chiTietSanPham?.sanPham?.ten || 'N/A' }}</div>
                             </td>
                             <td class="py-4 text-center">
@@ -747,12 +759,12 @@ onMounted(() => {
                                 </span>
                             </td>
                             <td class="text-center py-4">
-                                <span class="text-h6 text-slate-800">{{ item.soLuong }}</span>
+                                <span class="text-body-2 text-slate-800">{{ item.soLuong }}</span>
                             </td>
                             <td class="text-center py-4 text-slate-700">
                                 {{ formatCurrency(item.donGia) }}
                             </td>
-                            <td class="text-center py-4 text-primary text-subtitle-1">
+                            <td class="text-center py-4 text-primary text-body-2">
                                 {{ formatCurrency(Number(item.soLuong) * Number(item.donGia)) }}
                             </td>
                         </tr>
@@ -970,8 +982,39 @@ onMounted(() => {
     border: 1.5px dashed #e2e8f0;
 }
 
-.status-chip {
-    font-size: 14px !important;
+/* Đồng bộ kích thước chữ 13px và loại bỏ in đậm cho toàn màn hình chi tiết hóa đơn */
+.screen-scroll,
+.screen-scroll :deep(div:not(.v-icon)),
+.screen-scroll :deep(span:not(.v-icon)),
+.screen-scroll :deep(td),
+.screen-scroll :deep(th),
+.screen-scroll :deep(p) {
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    text-transform: none !important; /* Bỏ in hoa */
+}
+
+/* Khử viết hoa toàn bộ cho các phần tử con */
+.screen-scroll :deep(*) {
+    text-transform: none !important;
+}
+
+/* THAY ĐỔI: Đồng bộ tất cả các nút bấm (Buttons) về cỡ 13px và độ đậm 600 để rõ hành động */
+.screen-scroll :deep(.v-btn),
+.screen-scroll :deep(.v-btn span),
+.screen-scroll :deep(.v-btn *),
+.screen-scroll :deep(.v-btn__content) {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+}
+
+/* Ngoại lệ: Giữ cỡ chữ 16px CHO DUY NHẤT CÁC TIÊU ĐỀ PHẦN */
+.screen-scroll :deep(.card-title),
+.screen-scroll :deep(.card-title span),
+.screen-scroll :deep(h3),
+.screen-scroll :deep(.v-card-title) {
+    font-size: 16px !important;
+    font-weight: 600 !important;
 }
 
 .summary-row {
