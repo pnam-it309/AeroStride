@@ -1,3 +1,10 @@
+## [1.8.4](https://github.com/pnam-it309/AeroStride/compare/v1.8.3...v1.8.4) (2026-05-13)
+
+
+### Bug Fixes
+
+* **ci,test,docker:** Sửa lỗi build CI và deployment database ([224a042](https://github.com/pnam-it309/AeroStride/commit/224a042fbebecaada69fa4be8a00937557d04a6b))
+
 ## [1.8.3](https://github.com/pnam-it309/AeroStride/compare/v1.8.2...v1.8.3) (2026-05-12)
 
 
