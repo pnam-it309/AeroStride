@@ -8,12 +8,17 @@ import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumb
 import { downloadFile } from '@/utils/fileUtils';
 import { formatDateTime } from '@/utils/formatters';
 import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
-import { EditIcon, MapPinIcon, PlusIcon, PencilIcon, StarIcon, TrashIcon } from 'vue-tabler-icons';
+import { PlusIcon, PencilIcon, StarIcon, TrashIcon, MapPinIcon } from 'vue-tabler-icons';
 import axios from 'axios';
 
 import { useAdminTable } from '@/composables/useAdminTable';
+import { useLocation } from '@/composables/useLocation';
+import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useNotifications } from '@/services/notificationService';
+import { TRANG_THAI_KHACH_HANG, TRANG_THAI_FILTER_OPTIONS, KHACH_HANG_TABLE_HEADERS, KHACH_HANG_BREADCRUMBS, ADDRESS_CONSTANTS } from '@/constants/khachHangConstants';
+import { GIOI_TINH_FILTER_OPTIONS } from '@/constants/appConstants';
+import { useAddressMapping } from '@/composables/useAddressMapping';
 
 const isRefreshing = ref(false);
 
@@ -30,7 +35,7 @@ const {
 const handleRefresh = async () => {
     isRefreshing.value = true;
     handleReset();
-    setTimeout(() => (isRefreshing.value = false), 800);
+    setTimeout(() => (isRefreshing.value = false), ADDRESS_CONSTANTS.REFRESH_DELAY);
 };
 
 const handleExport = async () => {
@@ -58,10 +63,7 @@ const { confirmDialog, setConfirm, clearConfirm, handleConfirm } = useConfirmDia
 const addrDialog = ref(false);
 const selectedKH = ref(null);
 
-const customerBreadcrumbs = [
-    { title: 'Quản lý tài khoản', disabled: false, href: '#' },
-    { title: 'Khách hàng', disabled: true }
-];
+const customerBreadcrumbs = KHACH_HANG_BREADCRUMBS;
 
 watch(addrDialog, (isOpen) => {
     if (isOpen) {
@@ -80,11 +82,6 @@ const addrLoading = ref(false);
 const addrSaving = ref(false);
 const listDiaChi = ref([]);
 
-const provinces = ref([]);
-const districts = ref([]);
-const wards = ref([]);
-const loadingLoc = ref({ provinces: false, districts: false, wards: false });
-
 const addrForm = ref({
     id: null,
     tinh: null,
@@ -98,41 +95,8 @@ const addrForm = ref({
 const isEditAddr = ref(false);
 const showAddrForm = ref(false);
 
-const fetchProvinces = async () => {
-    if (provinces.value.length) return;
-    loadingLoc.value.provinces = true;
-    try {
-        const res = await axios.get('https://provinces.open-api.vn/api/p/');
-        provinces.value = res.data;
-    } finally {
-        loadingLoc.value.provinces = false;
-    }
-};
-
-const fetchDistricts = async (code) => {
-    if (!code) return;
-    loadingLoc.value.districts = true;
-    districts.value = [];
-    wards.value = [];
-    try {
-        const res = await axios.get(`https://provinces.open-api.vn/api/p/${code}?depth=2`);
-        districts.value = res.data.districts;
-    } finally {
-        loadingLoc.value.districts = false;
-    }
-};
-
-const fetchWards = async (code) => {
-    if (!code) return;
-    loadingLoc.value.wards = true;
-    wards.value = [];
-    try {
-        const res = await axios.get(`https://provinces.open-api.vn/api/d/${code}?depth=2`);
-        wards.value = res.data.wards;
-    } finally {
-        loadingLoc.value.wards = false;
-    }
-};
+const { provinces, districts, wards, loadingLocations: loadingLoc, fetchProvinces, fetchDistricts, fetchWards, cleanName } = useLocation();
+const { mapCodesToNames, isLegacyAddressId, createLegacyAddressId, parseAddressString } = useAddressMapping();
 
 const openAddrDialog = async (item) => {
     selectedKH.value = item;
@@ -146,7 +110,7 @@ const openAddrDialog = async (item) => {
     // 2. Fallback: Nếu không có danh sách, nhưng có thông tin địa chỉ phẳng ở Root
     if (initialList.length === 0 && (item.tinh || item.thanhPho || item.diaChiChiTiet)) {
         initialList.push({
-            id: 'root-' + item.id,
+            id: createLegacyAddressId(item.id),
             tinh: item.tinh,
             thanhPho: item.thanhPho,
             phuongXa: item.phuongXa,
@@ -180,7 +144,6 @@ const loadAddresses = async (khId) => {
     try {
         const res = await dichVuKhachHang.layDanhSachDiaChi(khId);
         
-        // Cấu trúc phân tích dữ liệu đa lớp cực kỳ linh hoạt
         let data = [];
         if (Array.isArray(res)) {
             data = res;
@@ -192,9 +155,32 @@ const loadAddresses = async (khId) => {
             data = res.content;
         }
 
-        // Chỉ cập nhật nếu tìm thấy mảng dữ liệu thực tế từ API
-        if (Array.isArray(data) && data.length > 0) {
-            listDiaChi.value = [...data];
+        // Luôn cập nhật nếu data là mảng (kể cả mảng rỗng)
+        if (Array.isArray(data)) {
+            const newList = [...data];
+            
+            // Bảo toàn địa chỉ "gốc" (legacy) từ bảng KhachHang nếu có
+            const item = selectedKH.value;
+            const hasLegacyInfo = item && (item.tinh || item.thanhPho || item.diaChiChiTiet);
+            
+            if (hasLegacyInfo) {
+                const legacyId = createLegacyAddressId(item.id);
+                // Chỉ thêm nếu trong data chưa có ID này (tránh bị loadAddress ghi đè mất)
+                if (!newList.some(addr => addr.id === legacyId)) {
+                    newList.push({
+                        id: legacyId,
+                        tinh: item.tinh,
+                        thanhPho: item.thanhPho,
+                        phuongXa: item.phuongXa,
+                        diaChiChiTiet: item.diaChiChiTiet,
+                        tenNguoiNhan: item.ten,
+                        sdtNguoiNhan: item.sdt,
+                        laMacDinh: data.length === 0 // Chỉ mặc định nếu không có địa chỉ thực nào khác
+                    });
+                }
+            }
+            
+            listDiaChi.value = newList;
         }
     } catch (e) {
         console.error('Error loading addresses:', e);
@@ -241,25 +227,6 @@ const openEditAddrForm = async (addr) => {
         phuongXa: null
     };
 
-    // Hàm chuẩn hóa địa danh cực mạnh để khớp lệnh
-    const clean = (s) => {
-        if (!s) return '';
-        let str = String(s).toLowerCase()
-            .replace(/\s+/g, ' ')
-            .trim();
-        
-        // Đặc trị các thành phố lớn thường bị viết tắt
-        if (str.includes('hồ chí minh') || str.includes('hcm')) return 'hcm';
-        if (str.includes('hà nội') || str === 'hn') return 'hanoi';
-        if (str.includes('đà nẵng') || str === 'dn') return 'danang';
-
-        // Loại bỏ tiền tố viết tắt và tiền tố đầy đủ
-        return str
-            .replace(/^(thành phố|tỉnh|quận|huyện|phường|xã|thị xã|thị trấn|tp\.?|t\.?|q\.?|h\.?|x\.?)\s+/gi, '')
-            .replace(/\s+/g, '') // Xóa trắng để so sánh chuỗi dính liền (ví dụ: "tháibình")
-            .trim();
-    };
-
     try {
         // Xử lý trường hợp dữ liệu bị dồn hết vào diaChiChiTiet (Flat address)
         let tinhName = addr.tinh;
@@ -267,30 +234,29 @@ const openEditAddrForm = async (addr) => {
         let xaName = addr.phuongXa;
 
         if (!tinhName && addr.diaChiChiTiet?.includes(',')) {
-            const parts = addr.diaChiChiTiet.split(',').map(p => p.trim());
-            if (parts.length >= 4) {
-                // Định dạng: [Số nhà], [Phường], [Quận], [Tỉnh]
-                tinhName = parts[parts.length - 1];
-                huyenName = parts[parts.length - 2];
-                xaName = parts[parts.length - 3];
-                addrForm.value.diaChiChiTiet = parts.slice(0, parts.length - 3).join(', ');
+            const parsed = parseAddressString(addr.diaChiChiTiet);
+            if (parsed.tinh) {
+                tinhName = parsed.tinh;
+                huyenName = parsed.thanhPho;
+                xaName = parsed.phuongXa;
+                addrForm.value.diaChiChiTiet = parsed.diaChiChiTiet;
             }
         }
 
         // 1. Khớp Tỉnh
-        const p = provinces.value.find(x => clean(x.name) === clean(tinhName) || x.code === tinhName);
+        const p = provinces.value.find(x => cleanName(x.name) === cleanName(tinhName) || x.code === tinhName);
         if (p) {
             addrForm.value.tinh = p.code;
             await fetchDistricts(p.code);
             
             // 2. Khớp Huyện
-            const d = districts.value.find(x => clean(x.name) === clean(huyenName) || x.code === huyenName);
+            const d = districts.value.find(x => cleanName(x.name) === cleanName(huyenName) || x.code === huyenName);
             if (d) {
                 addrForm.value.thanhPho = d.code;
                 await fetchWards(d.code);
                 
                 // 3. Khớp Xã
-                const w = wards.value.find(x => clean(x.name) === clean(xaName) || x.code === xaName);
+                const w = wards.value.find(x => cleanName(x.name) === cleanName(xaName) || x.code === xaName);
                 if (w) {
                     addrForm.value.phuongXa = w.code;
                 }
@@ -311,16 +277,11 @@ const doSaveAddress = async () => {
         };
 
         // Chuyển đổi Code -> Name trước khi gửi lên Server
-        const p = provinces.value.find((x) => x.code === addrForm.value.tinh);
-        const d = districts.value.find((x) => x.code === addrForm.value.thanhPho);
-        const w = wards.value.find((x) => x.code === addrForm.value.phuongXa);
-        
-        if (p) payload.tinh = p.name;
-        if (d) payload.thanhPho = d.name;
-        if (w) payload.phuongXa = w.name;
+        const mappedPayload = mapCodesToNames(addrForm.value, provinces.value, districts.value, wards.value);
+        Object.assign(payload, mappedPayload);
 
         // Xử lý trường hợp ID giả (synthesized address)
-        const isRealId = payload.id && !String(payload.id).startsWith('root-');
+        const isRealId = payload.id && !isLegacyAddressId(payload.id);
 
         if (isEditAddr.value && isRealId) {
             await dichVuKhachHang.capNhatDiaChi(addrForm.value.id, payload);
@@ -408,16 +369,7 @@ const handleDeleteAddr = (addrId) => {
     });
 };
 
-const tableHeaders = [
-    { text: 'STT', width: '30px', align: 'center' },
-    { text: 'Mã khách hàng', width: '90px', align: 'center' },
-    { text: 'Tên khách hàng', width: '100px', align: 'center' },
-    { text: 'Giới tính', width: '90px', align: 'center' },
-    { text: 'Thông tin liên hệ', width: '170px', align: 'center' },
-    { text: 'Địa chỉ', width: '170px', align: 'center' },
-    { text: 'Trạng thái', width: '90px', align: 'center' },
-    { text: 'Hành động', width: '100px', align: 'center' }
-];
+const tableHeaders = KHACH_HANG_TABLE_HEADERS;
 
 onMounted(() => {
     loadCustomers();
@@ -484,7 +436,7 @@ const confirmChangeStatus = (item) => {
         color: 'warning',
         action: async () => {
             try {
-                const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
+                const newS = item.trangThai === TRANG_THAI_KHACH_HANG.DANG_HOAT_DONG ? TRANG_THAI_KHACH_HANG.NGUNG_HOAT_DONG : TRANG_THAI_KHACH_HANG.DANG_HOAT_DONG;
                 await dichVuKhachHang.thayDoiTrangThaiKhachHang(item.id, newS);
                 
                 // Cập nhật local
@@ -533,8 +485,7 @@ watch(
 <template>
     <v-container
         fluid
-        class="pa-4 animate-fade-in font-body"
-        style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important"
+        class="pa-4 animate-fade-in font-body admin-module-page"
     >
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs :items="customerBreadcrumbs" />
@@ -542,7 +493,7 @@ watch(
         <div class="mb-2"></div>
 
         <!-- Filter -->
-        <div class="filter-top invoice-filter-shell">
+        <div class="filter-shell">
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <!-- Tìm kiếm -->
                 <v-col cols="12" md="4" class="filter-cell">
@@ -564,11 +515,7 @@ watch(
                     <div class="filter-field-label">Giới tính</div>
                     <v-select
                         v-model="filters.gioiTinh"
-                        :items="[
-                            { title: 'Tất cả', value: null },
-                            { title: 'Nam', value: true },
-                            { title: 'Nữ', value: false }
-                        ]"
+                        :items="GIOI_TINH_FILTER_OPTIONS"
                         variant="outlined"
                         density="compact"
                         hide-details
@@ -582,11 +529,7 @@ watch(
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select
                         v-model="filters.trangThai"
-                        :items="[
-                            { title: 'Tất cả', value: null },
-                            { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
-                            { title: 'Ngừng hoạt động', value: 'KHONG_HOAT_DONG' }
-                        ]"
+                        :items="TRANG_THAI_FILTER_OPTIONS"
                         variant="outlined"
                         density="compact"
                         hide-details
@@ -611,10 +554,10 @@ watch(
         >
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-slate-400">
+                    <td class="data-cell text-center text-black font-weight-medium">
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
-                    <td class="data-cell">
+                    <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.ma">{{ item.ma || '-' }}</div>
                     </td>
                     <td class="data-cell text-left px-4">
@@ -628,19 +571,19 @@ watch(
                             {{ item.gioiTinh === true ? 'Nam' : item.gioiTinh === false ? 'Nữ' : '-' }}
                         </v-chip>
                     </td>
-                    <td class="data-cell contact-cell px-4">
+                    <td class="data-cell text-left px-4">
                         <div class="d-inline-flex flex-column align-start" style="width: 100%; overflow: hidden;">
-                            <div class="info-line text-slate-700 mb-1 text-truncate" style="width: 100%;" :title="item.sdt">
+                            <div class="info-line text-black mb-1 text-truncate" style="width: 100%;" :title="item.sdt">
                                 <v-icon size="14" class="mr-2 text-slate-400">mdi-phone</v-icon>
                                 <span>{{ item.sdt || '-' }}</span>
                             </div>
-                            <div v-if="hasValue(item.email)" class="info-line d-flex align-center text-slate-500 text-truncate" style="width: 100%;" :title="item.email">
+                            <div v-if="hasValue(item.email)" class="info-line d-flex align-center justify-start text-slate-800 text-truncate" style="width: 100%;" :title="item.email">
                                 <v-icon size="14" class="mr-2">mdi-email-outline</v-icon>{{ item.email }}
                             </div>
                         </div>
                     </td>
-                    <td class="data-cell text-left px-4">
-                        <div class="line-clamp-2 text-slate-500" :title="getAddressSummary(item)">{{ getAddressSummary(item) }}</div>
+                    <td class="data-cell text-left px-4 allow-wrap">
+                        <div class="text-slate-800" :title="getAddressSummary(item)">{{ getAddressSummary(item) }}</div>
                     </td>
                     <td class="data-cell">
                         <v-chip
@@ -654,7 +597,7 @@ watch(
                         <div class="d-flex align-center justify-center action-controls">
                             <!-- Địa chỉ -->
                             <v-btn variant="text" class="action-icon-btn" @click.stop="openAddrDialog(item)">
-                                <MapPinIcon />
+                                <component :is="ADMIN_ICONS.ACTION.MAP" size="15" />
                                 <v-tooltip activator="parent" location="top">Quản lý địa chỉ</v-tooltip>
                             </v-btn>
                             <!-- Chỉnh sửa -->
@@ -663,7 +606,7 @@ watch(
                                 class="action-icon-btn"
                                 @click.stop="router.push({ name: 'KhachHangForm', params: { id: item.id } })"
                             >
-                                <EditIcon />
+                                <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <!-- Switch trạng thái -->
@@ -713,7 +656,7 @@ watch(
         <v-dialog v-model="addrDialog" max-width="1100" width="90vw" scrollable transition="scale-transition">
             <v-card class="rounded-xl font-body addr-dialog-card overflow-hidden" min-height="650">
                 <!-- Tiêu đề dialog -->
-                <v-card-title class="d-flex align-center pa-6 border-b bg-slate-50">
+                <v-card-title class="d-flex align-center pa-6 bg-slate-50">
                     <div class="icon-blob bg-blue-lighten-5 mr-4" style="width: 50px; height: 50px">
                         <MapPinIcon :size="30" class="text-primary" />
                     </div>
@@ -729,7 +672,7 @@ watch(
                 <v-card-text class="pa-0" style="max-height: 85vh; overflow: hidden">
                     <v-row no-gutters style="height: 100%">
                         <!-- ── Cột trái: Danh sách địa chỉ ── -->
-                        <v-col cols="12" md="6" class="pb-6 border-e overflow-y-auto" style="max-height: calc(85vh - 80px)">
+                        <v-col cols="12" md="6" class="pb-6 overflow-y-auto" style="max-height: calc(85vh - 80px)">
                             <div class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-10 position-relative">
                                 <span class="text-subtitle-2 font-weight-bold text-slate-800" style="font-size: 15px !important;">Địa chỉ hiện tại</span>
                                 <v-progress-linear v-if="addrLoading && listDiaChi.length > 0" indeterminate color="primary" height="2" class="position-absolute" style="bottom: 0; left: 0; right: 0; z-index: 20;"></v-progress-linear>
@@ -739,15 +682,16 @@ watch(
                                 <v-progress-circular indeterminate color="primary" size="40" />
                             </div>
 
-                            <div v-else-if="listDiaChi.length === 0" class="text-center py-16 px-8 mx-8 bg-slate-50/50 rounded-xl border-dashed border mt-4">
+                            <div v-else-if="listDiaChi.length === 0" class="text-center py-16 px-8 mx-8 bg-slate-50/50 rounded-xl mt-4">
                                 <v-icon size="48" color="slate-200" class="mb-4">mdi-map-marker-off</v-icon>
                                 <div class="text-slate-400 font-weight-medium">Chưa có địa chỉ nào được đăng ký</div>
                             </div>
 
                             <div v-else class="px-8">
                                 <div v-for="addr in listDiaChi" :key="addr.id" 
-                                    class="pa-6 rounded-xl bg-blue-lighten-5 border border-blue-lighten-4 mb-6 hover-shadow-sm transition-all position-relative"
-                                    style="margin-top: 15px">
+                                    class="pa-6 rounded-xl bg-white border border-slate-200 mb-6 hover-shadow-sm transition-all position-relative"
+                                    :class="{'border-s-4 border-s-success border-success-light': addr.laMacDinh}"
+                                    style="margin-top: 15px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;">
                                     <!-- Dòng tên + badge mặc định -->
                                     <div class="d-flex align-center gap-3 mb-3">
                                         <span class="text-subtitle-1 font-weight-medium text-slate-700" style="font-size: 15px !important;">
@@ -846,7 +790,7 @@ watch(
                                         <v-textarea v-model="addrForm.diaChiChiTiet" placeholder="Số nhà, tên đường, tòa nhà..." variant="outlined" rows="2" hide-details />
                                     </v-col>
                                     <v-col cols="12" v-if="listDiaChi.length > 0">
-                                        <div class="pa-4 rounded-lg bg-slate-50 border border-dashed border-slate-200">
+                                        <div class="pa-4 rounded-lg bg-slate-50">
                                             <v-checkbox v-model="addrForm.laMacDinh" color="primary" hide-details density="compact">
                                                 <template v-slot:label>
                                                     <span class="text-body-2 font-weight-bold text-slate-600">Đặt làm địa chỉ mặc định</span>
@@ -869,127 +813,6 @@ watch(
         </v-dialog>
     </v-container>
 </template>
-
 <style scoped>
-/* Scoped styles removed in favor of global _admin-common.scss */
-.contact-cell {
-    text-align: left !important;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-}
 
-.line-clamp-2 {
-    display: -webkit-box;
-    line-clamp: 2;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-
-
-.filter-top {
-    position: sticky;
-    top: 8px;
-    z-index: 6;
-}
-
-/* Status chips are now managed globally in _admin-common.scss — NO local overrides */
-
-:deep(.gender-chip) {
-    min-width: 100px !important;
-}
-
-
-
-.addr-dialog-card :deep(.v-card-title),
-.addr-dialog-card :deep(.v-card-text),
-.addr-dialog-card :deep(.field-label),
-.addr-dialog-card :deep(.text-caption),
-.addr-dialog-card :deep(.v-btn__content),
-.addr-dialog-card :deep(.v-field__input),
-.addr-dialog-card :deep(.v-list-item-title),
-.addr-dialog-card :deep(span),
-.addr-dialog-card :deep(div) {
-}
-
-.addr-dialog-card :deep(.v-card-title span) {
-    font-weight: 700 !important;
-}
-
-:deep(.force-white-text) {
-    color: #ffffff !important;
-}
-
-/* Loại bỏ lớp phủ mờ của Vuetify trên nút bấm */
-.addr-dialog-card :deep(.v-btn__overlay),
-.addr-dialog-card :deep(.v-btn__underlay) {
-    display: none !important;
-}
-
-.addr-dialog-card :deep(.v-btn) {
-    opacity: 1 !important;
-}
-
-.addr-card {
-    transition: box-shadow 0.15s;
-}
-
-.addr-card:hover {
-    border-color: #1e257c !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.border-right-divider {
-    border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
-    overflow-y: auto;
-    height: 600px; /* Fixed height to match card */
-}
-
-.addr-col-right {
-    overflow-y: auto;
-    height: 600px;
-}
-
-.bg-white {
-    background-color: #ffffff !important;
-}
-</style>
-
-<style>
-/* 
-   Đồng bộ giao diện Dialog Địa chỉ 
-*/
-.addr-dialog-card,
-.addr-dialog-card *,
-.addr-dialog-card .v-table th,
-.addr-dialog-card .v-table td,
-.addr-dialog-card .v-btn__content,
-.addr-dialog-card .v-field__input {
-    text-transform: none !important;
-    font-weight: 500 !important;
-    vertical-align: middle !important;
-}
-
-.addr-dialog-card .v-card-title,
-.addr-dialog-card .v-card-title *,
-.addr-dialog-card .font-weight-bold,
-.addr-dialog-card .font-weight-black {
-    font-weight: 700 !important;
-}
-
-/* Khoảng cách cho nội dung dialog */
-.addr-dialog-card .v-card-text {
-    padding-top: 0px !important;
-}
-
-.sticky-sub-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    margin-top: -8px; /* Offset for better alignment */
-    padding-bottom: 12px !important;
-}
 </style>
