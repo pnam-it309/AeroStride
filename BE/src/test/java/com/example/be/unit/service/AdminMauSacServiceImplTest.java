@@ -44,7 +44,7 @@ class AdminMauSacServiceImplTest {
         var result = service.getById("1");
 
         assertNotNull(result);
-        assertEquals("#FFFFFF", result.getMoTa());
+        assertEquals("#FFFFFF", result.getMaMauHex());
     }
 
     @Test
