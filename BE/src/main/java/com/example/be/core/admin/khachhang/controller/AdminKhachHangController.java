@@ -3,20 +3,28 @@ package com.example.be.core.admin.khachhang.controller;
 import com.example.be.core.admin.khachhang.model.request.AdminKhachHangRequest;
 import com.example.be.core.admin.khachhang.service.AdminKhachHangService;
 import com.example.be.core.common.dto.ApiResponse;
+import com.example.be.core.common.dto.UpdateStatusRequest;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.RoutesConstant;
-import com.example.be.infrastructure.constants.TrangThai;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_KHACH_HANG)
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
 public class AdminKhachHangController {
 
     private final AdminKhachHangService adminKhachHangService;
 
-    @GetMapping({"/hien-thi", "/phan-trang", "/tim-kiem"}) // Aliases for FE compatibility
+    @GetMapping({RoutesConstant.HIEN_THI, RoutesConstant.PHAN_TRANG, RoutesConstant.TIM_KIEM}) // Aliases for FE compatibility
     public ResponseEntity<ApiResponse<?>> search(AdminKhachHangRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminKhachHangService.search(request)));
     }
@@ -27,35 +35,36 @@ public class AdminKhachHangController {
     }
 
     @PostMapping(RoutesConstant.ADD) // Compatibility Alias
-    public ResponseEntity<ApiResponse<Void>> add(@RequestBody AdminKhachHangRequest request) {
+    public ResponseEntity<ApiResponse<Void>> add(@Valid @RequestBody AdminKhachHangRequest request) {
         adminKhachHangService.add(request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Thêm khách hàng thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.KHACH_HANG_ADD_SUCCESS));
     }
 
     @PutMapping(RoutesConstant.UPDATE) // Compatibility Alias
-    public ResponseEntity<ApiResponse<Void>> update(@PathVariable String id, @RequestBody AdminKhachHangRequest request) {
+    public ResponseEntity<ApiResponse<Void>> update(@PathVariable String id,
+                                                     @Valid @RequestBody AdminKhachHangRequest request) {
         adminKhachHangService.update(id, request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật khách hàng thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.KHACH_HANG_UPDATE_SUCCESS));
     }
 
     @DeleteMapping(RoutesConstant.DELETE) // Compatibility Alias
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         adminKhachHangService.delete(id);
-        return ResponseEntity.ok(ApiResponse.success(null, "Xóa khách hàng thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.KHACH_HANG_DELETE_SUCCESS));
     }
 
     @PutMapping(RoutesConstant.STATUS) // Compatibility Alias
-    public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id, @RequestBody java.util.Map<String, String> body) {
-        TrangThai status = TrangThai.valueOf(body.get("status"));
-        adminKhachHangService.doiTrangThai(id, status);
-        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật trạng thái thành công!"));
+    public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id,
+                                                           @Valid @RequestBody UpdateStatusRequest body) {
+        adminKhachHangService.doiTrangThai(id, body.getStatus());
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.UPDATE_STATUS_SUCCESS));
     }
 
     @GetMapping(RoutesConstant.EXPORT_EXCEL)
     public ResponseEntity<byte[]> exportExcel() {
         return ResponseEntity.ok()
-                .header("Content-Disposition", "attachment; filename=khach_hang.xlsx")
-                .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=khach_hang.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(adminKhachHangService.exportExcel());
     }
 }

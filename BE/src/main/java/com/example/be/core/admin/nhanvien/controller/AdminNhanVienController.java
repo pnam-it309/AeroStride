@@ -3,16 +3,24 @@ package com.example.be.core.admin.nhanvien.controller;
 import com.example.be.core.admin.nhanvien.model.request.AdminNhanVienRequest;
 import com.example.be.core.admin.nhanvien.service.AdminNhanVienService;
 import com.example.be.core.common.dto.ApiResponse;
+import com.example.be.core.common.dto.UpdateStatusRequest;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.RoutesConstant;
-import com.example.be.infrastructure.constants.TrangThai;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_NHAN_VIEN)
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
 public class AdminNhanVienController {
 
     private final AdminNhanVienService adminNhanVienService;
@@ -28,28 +36,29 @@ public class AdminNhanVienController {
     }
 
     @PostMapping(RoutesConstant.ADD) // Compatibility Alias
-    public ResponseEntity<ApiResponse<Void>> add(@RequestBody AdminNhanVienRequest request) {
+    public ResponseEntity<ApiResponse<Void>> add(@Valid @RequestBody AdminNhanVienRequest request) {
         adminNhanVienService.add(request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Thêm nhân viên thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.NHAN_VIEN_ADD_SUCCESS));
     }
 
     @PutMapping(RoutesConstant.UPDATE) // Compatibility Alias
-    public ResponseEntity<ApiResponse<Void>> update(@PathVariable String id, @RequestBody AdminNhanVienRequest request) {
+    public ResponseEntity<ApiResponse<Void>> update(@PathVariable String id,
+                                                     @Valid @RequestBody AdminNhanVienRequest request) {
         adminNhanVienService.update(id, request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật nhân viên thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.NHAN_VIEN_UPDATE_SUCCESS));
     }
 
     @DeleteMapping(RoutesConstant.DELETE) // Compatibility Alias
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         adminNhanVienService.delete(id);
-        return ResponseEntity.ok(ApiResponse.success(null, "Xóa nhân viên thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.NHAN_VIEN_DELETE_SUCCESS));
     }
 
-    @RequestMapping(value = {"/{id}/status", "/status/{id}"}, method = {RequestMethod.PUT, RequestMethod.PATCH})
-    public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id, @RequestBody java.util.Map<String, String> body) {
-        TrangThai status = TrangThai.valueOf(body.get("status"));
-        adminNhanVienService.doiTrangThai(id, status);
-        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật trạng thái thành công!"));
+    @PatchMapping(RoutesConstant.STATUS_ALT)
+    public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id,
+                                                           @Valid @RequestBody UpdateStatusRequest body) {
+        adminNhanVienService.doiTrangThai(id, body.getStatus());
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.UPDATE_STATUS_SUCCESS));
     }
 
     @PostMapping(RoutesConstant.AVATAR)
@@ -60,8 +69,8 @@ public class AdminNhanVienController {
     @GetMapping(RoutesConstant.EXPORT_EXCEL)
     public ResponseEntity<byte[]> exportExcel() {
         return ResponseEntity.ok()
-                .header("Content-Disposition", "attachment; filename=nhan_vien.xlsx")
-                .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=nhan_vien.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(adminNhanVienService.exportExcel());
     }
 

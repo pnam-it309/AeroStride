@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { AlertTriangleIcon, InfoCircleIcon, CheckIcon } from 'vue-tabler-icons';
 
 const props = defineProps({
@@ -16,11 +16,22 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:show', 'confirm', 'cancel']);
-
 const inputValue = ref('');
 
 watch(() => props.show, (val) => {
   if (val) inputValue.value = '';
+});
+
+// Dynamic color mapping using Tailwind-compatible colors
+const colorClasses = computed(() => {
+  const maps = {
+    warning: { outer: 'bg-orange-50', inner: 'bg-orange-100', icon: 'text-orange-700' },
+    error: { outer: 'bg-red-50', inner: 'bg-red-100', icon: 'text-red-700' },
+    success: { outer: 'bg-green-50', inner: 'bg-green-100', icon: 'text-green-700' },
+    primary: { outer: 'bg-blue-50', inner: 'bg-blue-100', icon: 'text-blue-900' },
+    info: { outer: 'bg-blue-50', inner: 'bg-blue-100', icon: 'text-blue-900' }
+  };
+  return maps[props.color] || maps.primary;
 });
 
 const handleConfirm = () => {
@@ -34,16 +45,17 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <v-dialog v-model="props.show" max-width="450" persistent transition="dialog-bottom-transition">
+  <v-dialog v-model="props.show" max-width="450" persistent transition="confirm-dialog-transition">
     <v-card class="premium-confirm-card">
       <v-card-text class="pa-8 pb-4">
         <div class="d-flex align-start">
-          <div class="icon-box-wrapper mr-5" :class="`confirm-bg-outer-${color || 'primary'}`">
-            <div class="icon-inner" :class="`confirm-bg-inner-${color || 'primary'}`">
-              <AlertTriangleIcon v-if="color === 'warning'" size="28" class="confirm-icon-warning" />
-              <AlertTriangleIcon v-else-if="color === 'error'" size="28" class="confirm-icon-error" />
-              <CheckIcon v-else-if="color === 'success'" size="28" class="confirm-icon-success" />
-              <InfoCircleIcon v-else size="28" class="confirm-icon-primary" />
+          <!-- Icon Section with Dynamic Tailwind Classes -->
+          <div class="icon-box-wrapper mr-5" :class="colorClasses.outer">
+            <div class="icon-inner" :class="colorClasses.inner">
+              <AlertTriangleIcon v-if="color === 'warning'" size="28" :class="colorClasses.icon" />
+              <AlertTriangleIcon v-else-if="color === 'error'" size="28" :class="colorClasses.icon" />
+              <CheckIcon v-else-if="color === 'success'" size="28" :class="colorClasses.icon" />
+              <InfoCircleIcon v-else size="28" :class="colorClasses.icon" />
             </div>
           </div>
           <div class="flex-grow-1 pt-1">
@@ -63,7 +75,7 @@ const handleCancel = () => {
             class="custom-textarea"
             :placeholder="`Nhập ${inputLabel.toLowerCase()}...`"
           ></v-textarea>
-          <div v-if="inputRequired && !inputValue" class="text-caption text-error mt-2 ml-1 d-flex align-center">
+          <div v-if="inputRequired && !inputValue" class="text-caption text-red-500 mt-2 ml-1 d-flex align-center">
             <v-icon size="14" class="mr-1">mdi-alert-circle</v-icon>
             Vui lòng nhập {{ inputLabel.toLowerCase() }}
           </div>
@@ -113,26 +125,6 @@ const handleCancel = () => {
   flex-shrink: 0;
 }
 
-/* Colors for Warning */
-.confirm-bg-outer-warning { background-color: #fffaf5; }
-.confirm-bg-inner-warning { background-color: #fff7ed; }
-.confirm-icon-warning { color: #c2410c; }
-
-/* Colors for Error */
-.confirm-bg-outer-error { background-color: #fff5f5; }
-.confirm-bg-inner-error { background-color: #fef2f2; }
-.confirm-icon-error { color: #991b1b; }
-
-/* Colors for Success */
-.confirm-bg-outer-success { background-color: #f5fcf7; }
-.confirm-bg-inner-success { background-color: #f0fdf4; }
-.confirm-icon-success { color: #166534; }
-
-/* Colors for Primary/Info */
-.confirm-bg-outer-primary, .confirm-bg-outer-info { background-color: #f8f9ff; }
-.confirm-bg-inner-primary, .confirm-bg-inner-info { background-color: #f0f1ff; }
-.confirm-icon-primary, .confirm-icon-info { color: #1e257c; }
-
 .icon-inner {
   width: 46px;
   height: 46px;
@@ -152,25 +144,13 @@ const handleCancel = () => {
 }
 
 .confirm-btn-cancel {
-  text-transform: none !important;
   font-weight: 600 !important;
-  letter-spacing: 0.3px;
   color: #64748b !important;
 }
 
 .confirm-btn-submit {
-  text-transform: none !important;
   font-weight: 700 !important;
-  letter-spacing: 0.5px;
   border-radius: 10px !important;
   height: 42px !important;
-}
-
-.confirm-btn-submit:hover {
-  transform: translateY(-1px);
-}
-
-.gap-3 {
-  gap: 12px;
 }
 </style>

@@ -1,6 +1,7 @@
 package com.example.be.entity;
 
 import com.example.be.core.common.base.BaseCodeNameEntity;
+import com.example.be.infrastructure.annotations.CodePrefix;
 import com.example.be.infrastructure.constants.VaiTro;
 import jakarta.persistence.*;
 import lombok.*;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@CodePrefix("NV")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @AttributeOverrides({
     @AttributeOverride(name = "ma", column = @Column(name = "ma_nhan_vien")),

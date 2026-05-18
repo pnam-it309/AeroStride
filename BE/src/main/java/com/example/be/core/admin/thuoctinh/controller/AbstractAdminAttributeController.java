@@ -8,8 +8,10 @@ import com.example.be.core.common.dto.PageRequest;
 import com.example.be.core.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
 public abstract class AbstractAdminAttributeController {
 
     private final AdminAttributeManagementService service;

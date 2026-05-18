@@ -20,9 +20,19 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 public abstract class BaseIntegrationTest {
 
+    protected static MySQLContainer<?> mysql;
+
     static {
         // Configure Testcontainers for Docker Desktop on Windows
         System.setProperty("docker.host", "npipe:////./pipe/docker_cli");
+        try {
+            mysql = new MySQLContainer<>("mysql:8.0")
+                    .withDatabaseName("aerostride_test")
+                    .withUsername("test")
+                    .withPassword("test");
+        } catch (Throwable t) {
+            System.err.println("WARN: Failed to initialize MySQL testcontainer (Docker might be offline): " + t.getMessage());
+        }
     }
 
     @Autowired
@@ -31,17 +41,13 @@ public abstract class BaseIntegrationTest {
     @Autowired
     protected ObjectMapper objectMapper;
 
-    @Container
-    protected static final MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
-            .withDatabaseName("aerostride_test")
-            .withUsername("test")
-            .withPassword("test");
-
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", mysql::getJdbcUrl);
-        registry.add("spring.datasource.username", mysql::getUsername);
-        registry.add("spring.datasource.password", mysql::getPassword);
+        if (mysql != null) {
+            registry.add("spring.datasource.url", mysql::getJdbcUrl);
+            registry.add("spring.datasource.username", mysql::getUsername);
+            registry.add("spring.datasource.password", mysql::getPassword);
+        }
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
     }
 

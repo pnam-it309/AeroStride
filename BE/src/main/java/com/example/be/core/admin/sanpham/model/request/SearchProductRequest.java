@@ -4,9 +4,11 @@ import com.example.be.core.common.dto.PageRequest;
 import com.example.be.infrastructure.constants.TrangThai;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString(callSuper = true)
 public class SearchProductRequest extends PageRequest {
 
     private String keyword;

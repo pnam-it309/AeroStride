@@ -10,11 +10,11 @@ const emit = defineEmits(['refresh', 'search']);
 </script>
 
 <template>
-    <v-card class="filter-card mb-2 border shadow-none" elevation="0">
+    <v-card class="filter-card mb-2 shadow-none" elevation="0">
         <v-card-text class="pa-4">
             <div class="filter-header d-flex align-center mb-3">
                 <v-icon color="#000000" class="mr-2 filter-main-icon">mdi-filter-variant</v-icon>
-                <div class="filter-title text-slate-900">{{ title }}</div>
+                <div class="filter-title text-black font-weight-bold">{{ title }}</div>
             </div>
 
             <v-row dense align="end" class="filter-grid">

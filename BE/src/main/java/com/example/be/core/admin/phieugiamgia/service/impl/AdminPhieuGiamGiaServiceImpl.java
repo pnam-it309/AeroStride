@@ -10,6 +10,7 @@ import com.example.be.core.notification.dto.EmailRequest;
 import com.example.be.entity.KhachHang;
 import com.example.be.entity.PhieuGiamGia;
 import com.example.be.entity.PhieuGiamGiaCaNhan;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.infrastructure.exceptions.SystemException;
@@ -50,7 +51,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     @Override
     public AdminPhieuGiamGiaResponse detail(String id) {
         PhieuGiamGia p = repo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu giảm giá với id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PHIEU_GIAM_GIA_NOT_FOUND_ID + id));
         List<String> listIdKhachHang = null;
         if ("CA_NHAN".equals(p.getHinhThuc())) {
             listIdKhachHang = phieuGiamGiaCaNhanRepository.findByPhieuGiamGiaId(p.getId()).stream()
@@ -110,7 +111,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     @Transactional
     public void delete(String id) {
         if (!repo.existsById(id)) {
-            throw new ResourceNotFoundException("Không tìm thấy phiếu giảm giá để xóa");
+            throw new ResourceNotFoundException(MessageConstants.PHIEU_GIAM_GIA_DELETE_ERROR);
         }
         repo.deleteById(id);
     }
@@ -123,8 +124,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
 
         // Tự động sinh mã nếu trống
         if (p.getMa() == null || p.getMa().trim().isEmpty()) {
-            // Using placeholder logic or common generator
-            p.setMa("PGG" + System.currentTimeMillis() % 100000);
+            p.setMa(com.example.be.utils.CodeUtils.generateRandom(PhieuGiamGia.class, repo::existsByMa));
         }
 
         if ("CA_NHAN".equals(req.getHinhThuc()) && req.getListIdKhachHang() != null) {
@@ -177,7 +177,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     @Transactional
     public void update(AdminPhieuGiamGiaRequest req, String id) {
         PhieuGiamGia p = repo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu giảm giá để cập nhật"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PHIEU_GIAM_GIA_UPDATE_ERROR));
         TrangThai oldStatus = p.getTrangThai();
         BeanUtils.copyProperties(req, p);
         p.setId(id); // Ensure ID is preserved
@@ -193,7 +193,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
     @Transactional
     public void updateStatus(String id, TrangThai status) {
         PhieuGiamGia p = repo.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu giảm giá!"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PHIEU_GIAM_GIA_NOT_FOUND));
         TrangThai oldStatus = p.getTrangThai();
         p.setTrangThai(status);
         repo.saveAndFlush(p);
@@ -225,7 +225,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                 "DANG_HOAT_DONG".equalsIgnoreCase(item.getTrangThai()) ? "Đang hoạt động" : "Ngừng hoạt động"
             });
         } catch (IOException e) {
-            throw new SystemException("Lỗi xuất file Excel: " + e.getMessage());
+            throw new SystemException(MessageConstants.EXCEL_EXPORT_ERROR + e.getMessage());
         }
     }
 
@@ -237,7 +237,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                 "VOUCHER_NEW", "Giảm giá khai trương", "PHAN_TRAM", 10, 200000, 100, "CONG_KHAI", "12/04/2026", "20/04/2026"
             });
         } catch (IOException e) {
-            throw new SystemException("Lỗi tải template: " + e.getMessage());
+            throw new SystemException(MessageConstants.TEMPLATE_LOAD_ERROR + e.getMessage());
         }
     }
 
@@ -282,7 +282,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                 repo.save(p);
             }
         } catch (Exception e) {
-            throw new SystemException("Lỗi nhập Excel Voucher: " + e.getMessage());
+            throw new SystemException(MessageConstants.EXCEL_IMPORT_ERROR + e.getMessage());
         }
     }
 
@@ -363,7 +363,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         }
 
         for (PhieuGiamGia p : expiredVouchers) {
-            p.setTrangThai(TrangThai.KHONG_HOAT_DONG);
+            p.setTrangThai(TrangThai.NGUNG_HOAT_DONG);
             repo.save(p);
             
             if ("CA_NHAN".equals(p.getHinhThuc())) {
@@ -402,7 +402,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
 
             EmailRequest emailRequest = EmailRequest.builder()
                     .to(kh.getEmail())
-                    .subject("📢 AeroStride - Cập nhật trạng thái phiếu giảm giá của bạn")
+                    .subject("AeroStride - Cập nhật trạng thái phiếu giảm giá của bạn")
                     .templateName("voucher-status-email")
                     .variables(variables)
                     .build();

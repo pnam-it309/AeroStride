@@ -12,6 +12,7 @@ import com.example.be.entity.ChiTietDotGiamGia;
 import com.example.be.entity.ChiTietSanPham;
 import com.example.be.entity.DotGiamGia;
 import com.example.be.infrastructure.constants.TrangThai;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.infrastructure.exceptions.SystemException;
 import com.example.be.core.admin.dotgiamgia.repository.AdminChiTietDotGiamGiaRepository;
@@ -92,7 +93,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     @Transactional
     public void update(AdminDotGiamGiaRequest req, String id) {
         DotGiamGia d = repo.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đợt giảm giá với id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DOT_GIAM_GIA_NOT_FOUND_ID + id));
         BeanUtils.copyProperties(req, d);
         d.setId(id); // Keep the ID
         repo.save(d);
@@ -122,7 +123,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     @Transactional
     public void delete(String id) {
         if (!repo.existsById(id)) {
-            throw new ResourceNotFoundException("Không tìm thấy đợt giảm giá");
+            throw new ResourceNotFoundException(MessageConstants.DOT_GIAM_GIA_NOT_FOUND);
         }
         repo.deleteById(id);
     }
@@ -131,7 +132,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     @Transactional
     public void updateStatus(String id, TrangThai status) {
         DotGiamGia d = repo.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đợt giảm giá"));
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DOT_GIAM_GIA_NOT_FOUND));
         d.setTrangThai(status);
         repo.saveAndFlush(d);
     }
@@ -156,7 +157,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
                 item.getNgayKetThuc()
             });
         } catch (IOException e) {
-            throw new SystemException("Lỗi xuất file Excel: " + e.getMessage());
+            throw new SystemException(MessageConstants.EXCEL_EXPORT_ERROR + e.getMessage());
         }
     }
 
@@ -164,7 +165,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     @Transactional(readOnly = true)
     public AdminDotGiamGiaResponse findById(String id) {
         DotGiamGia d = repo.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chi tiết đợt giảm giá"));
+            .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DOT_GIAM_GIA_DETAIL_NOT_FOUND));
         return toResponse(d);
     }
 

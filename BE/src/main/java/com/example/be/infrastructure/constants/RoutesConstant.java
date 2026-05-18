@@ -30,6 +30,8 @@ public final class RoutesConstant {
     public static final String ADMIN_THUOC_TINH_XUAT_XU = ADMIN_THUOC_TINH + "/xuat-xu";
     public static final String ADMIN_THUOC_TINH_MUC_DICH_CHAY = ADMIN_THUOC_TINH + "/muc-dich-chay";
     public static final String ADMIN_CHAT = ADMIN + "/chat";
+    public static final String ADMIN_LICH_LAM_VIEC = ADMIN + "/lich-lam-viec";
+    public static final String ADMIN_THONG_KE = ADMIN + "/thong-ke";
     
     // Staff routes
     public static final String STAFF = API_PREFIX + "/staff";
@@ -91,4 +93,19 @@ public final class RoutesConstant {
     public static final String VARIANT_IMAGES = "/variants/{variantId}/images";
     public static final String VARIANT_IMAGE_ID = "/variant-images/{imageId}";
     public static final String VARIANT_IMAGE_MAIN = "/variant-images/{imageId}/main";
+    public static final String MAX_PRICE = "/max-price";
+
+    // Chat specific
+    public static final String CONVERSATIONS = "/conversations";
+    public static final String CONVERSATION_MESSAGES = "/conversations/{id}/messages";
+    public static final String CONVERSATION_ACCEPT = "/conversations/{id}/accept";
+    public static final String SEND = "/send";
+
+    // Lich Lam Viec specific
+    public static final String SCHEDULES = "/schedules";
+    public static final String SHIFTS = "/shifts";
+    public static final String ACTIVITIES = "/activities";
+    public static final String EXPORT_TEMPLATE = "/export-template";
+    public static final String PREVIEW_IMPORT = "/preview-import";
+    public static final String CONFIRM_IMPORT = "/confirm-import";
 }

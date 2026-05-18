@@ -8,7 +8,7 @@ import {
     ChevronLeftIcon, PrinterIcon, EditIcon, CalendarIcon,
     PackageIcon, UserIcon, MapPinIcon, CreditCardIcon, TruckIcon,
     CircleCheckIcon, CircleXIcon, CheckIcon, TrashIcon,
-    PlusIcon, LayoutListIcon
+    PlusIcon, LayoutListIcon, LayoutGridIcon
 } from "vue-tabler-icons";
 import AdminConfirm from "@/components/common/AdminConfirm.vue";
 import AdminBreadcrumbs from "@/components/common/AdminBreadcrumbs.vue";
@@ -321,7 +321,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <v-container fluid class="pa-6 animate-fade-in screen-scroll">
+    <v-container fluid class="pa-6 animate-fade-in screen-scroll bg-slate-50">
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs :items="[
             { title: 'Quản lý bán hàng', disabled: false, href: '#' },
@@ -330,7 +330,7 @@ onMounted(() => {
         ]" />
 
         <!-- Header -->
-        <v-card class="premium-card-detail mb-6 pa-6">
+        <v-card elevation="0" class="premium-card-detail mb-6 pa-6 bg-white">
             <div class="header-section">
                 <div class="header-left d-flex align-center">
                     <v-btn icon variant="text" color="slate-600" class="mr-3 btn-back-header" @click="goBack">
@@ -347,14 +347,14 @@ onMounted(() => {
                         </v-chip>
                     </div>
                 </div>
-                <div class="header-right d-flex gap-3">
-                    <v-btn variant="flat" color="white" class="btn-outline-primary" @click="printInvoice">
+                <div class="header-right d-flex ga-6">
+                    <v-btn variant="flat" color="primary" class="rounded-lg px-6" height="44" @click="printInvoice">
                         <template v-slot:prepend>
                             <PrinterIcon size="18" class="mr-1" />
                         </template>
                         In hóa đơn
                     </v-btn>
-                    <v-btn variant="flat" color="white" class="btn-outline-primary" @click="goToList">
+                    <v-btn variant="flat" color="primary" class="rounded-lg px-6" height="44" @click="goToList">
                         <template v-slot:prepend>
                             <LayoutListIcon size="18" class="mr-1" />
                         </template>
@@ -411,7 +411,7 @@ onMounted(() => {
             </div>
         </v-card>
 
-        <v-card class="premium-card-detail mb-6 pa-6 overflow-hidden premium-timeline">
+        <v-card elevation="0" class="premium-card-detail mb-6 pa-6 overflow-hidden premium-timeline bg-white">
             <div class="timeline-wrap">
                 <transition-group name="timeline-anim">
                     <div v-for="(step, index) in timelineSteps" :key="step.key" class="timeline-step"
@@ -437,7 +437,7 @@ onMounted(() => {
             <!-- Left Column: Primary Content (8/12) -->
             <v-col cols="12" lg="8" class="d-flex flex-column">
                 <!-- Customer Info -->
-                <v-card class="premium-card mb-4">
+                <v-card elevation="0" class="premium-card mb-4 bg-white">
                     <div class="card-title pa-4 border-b d-flex align-center justify-space-between bg-slate-50">
                         <div class="d-flex align-center">
                             <UserIcon size="20" class="mr-3 text-primary" />
@@ -518,7 +518,7 @@ onMounted(() => {
                 </v-card>
 
                 <!-- Status History Logs (Expands to fill height) -->
-                <v-card class="premium-card mb-0 d-flex flex-column flex-grow-1">
+                <v-card elevation="0" class="premium-card mb-0 d-flex flex-column flex-grow-1 bg-white">
                     <div class="card-title pa-4 border-b d-flex align-center bg-slate-50">
                         <CalendarIcon size="20" class="mr-3 text-primary" />
                         <span class="text-slate-800">Lịch sử đơn hàng</span>
@@ -615,7 +615,7 @@ onMounted(() => {
             <!-- Right Column: Summary, Payments & Shipping (4/12) -->
             <v-col cols="12" lg="4" class="d-flex flex-column">
                 <!-- Order Summary -->
-                <v-card class="premium-card mb-4">
+                <v-card elevation="0" class="premium-card mb-4 bg-white">
                     <div class="card-title pa-3 border-b d-flex align-center bg-slate-50">
                         <CreditCardIcon size="20" class="mr-3 text-primary" />
                         <span class="text-slate-800">Tổng thanh toán</span>
@@ -650,7 +650,7 @@ onMounted(() => {
                 </v-card>
 
                 <!-- Payment History (Moved here to balance height) -->
-                <v-card class="premium-card mb-4">
+                <v-card elevation="0" class="premium-card mb-4 bg-white">
                     <div class="card-title pa-4 border-b d-flex align-center bg-slate-50">
                         <CreditCardIcon size="20" class="mr-3 text-primary" />
                         <span class="text-slate-800">Lịch sử thanh toán</span>
@@ -690,7 +690,7 @@ onMounted(() => {
                 </v-card>
 
                 <!-- Shipping Info (Expands to fill height) -->
-                <v-card class="premium-card mb-0 d-flex flex-column flex-grow-1">
+                <v-card elevation="0" class="premium-card mb-0 d-flex flex-column flex-grow-1 bg-white">
                     <div class="card-title pa-3 border-b d-flex align-center justify-space-between bg-slate-50">
                         <div class="d-flex align-center">
                             <TruckIcon size="20" class="mr-3 text-primary" />
@@ -726,52 +726,53 @@ onMounted(() => {
             </v-col>
         </v-row>
 
-        <!-- Products Section (Full Width Bottom) -->
-        <v-row v-if="loaded">
-            <v-col cols="12">
-                <AdminTable title="Sản phẩm đã đặt" :headers="productColumns" :items="order.listsHoaDonChiTiet"
-                    :showAddButton="false">
-                    <template #row="{ item }">
-                        <tr class="hover-row">
-                            <td class="text-center py-4">
-                                <v-avatar size="150" class="rounded-lg border bg-slate-50 shadow-sm">
-                                    <v-img
-                                        :src="item.chiTietSanPham?.hinhAnh || 'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg'"
-                                        cover></v-img>
-                                </v-avatar>
-                            </td>
-                            <td class="py-4 text-center">
-                                <div class="text-slate-900 text-body-2">{{
-                                    item.chiTietSanPham?.sanPham?.ten || 'N/A' }}</div>
-                            </td>
-                            <td class="py-4 text-center">
-                                <div class="text-primary">#{{ item.chiTietSanPham?.maChiTietSanPham
-                                    || 'N/A' }}</div>
-                            </td>
-                            <td class="text-center py-4">
-                                <span class="text-slate-600">
-                                    {{ item.chiTietSanPham?.mauSac?.ten || '—' }}
-                                </span>
-                            </td>
-                            <td class="text-center py-4">
-                                <span class="text-slate-600">
-                                    {{ item.chiTietSanPham?.kichThuoc?.ten || '—' }}
-                                </span>
-                            </td>
-                            <td class="text-center py-4">
-                                <span class="text-body-2 text-slate-800">{{ item.soLuong }}</span>
-                            </td>
-                            <td class="text-center py-4 text-slate-700">
-                                {{ formatCurrency(item.donGia) }}
-                            </td>
-                            <td class="text-center py-4 text-primary text-body-2">
-                                {{ formatCurrency(Number(item.soLuong) * Number(item.donGia)) }}
-                            </td>
-                        </tr>
-                    </template>
-                </AdminTable>
-            </v-col>
-        </v-row>
+        <v-card v-if="loaded" elevation="0" class="premium-card-detail mt-8 bg-white overflow-hidden">
+            <div class="card-title pa-4 border-b d-flex align-center bg-slate-50">
+                <LayoutGridIcon size="20" class="mr-3 text-primary" />
+                <span class="text-slate-800">Sản phẩm đã đặt</span>
+            </div>
+            <AdminTable :headers="productColumns" :items="order.listsHoaDonChiTiet"
+                :showAddButton="false" hideToolbar class="all-center-table full-width-admin-table">
+                <template #row="{ item }">
+                    <tr class="hover-row">
+                        <td class="py-4">
+                            <v-avatar size="80" class="rounded-lg border bg-slate-50 shadow-sm">
+                                <v-img
+                                    :src="item.chiTietSanPham?.hinhAnh || 'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg'"
+                                    cover></v-img>
+                            </v-avatar>
+                        </td>
+                        <td class="py-4">
+                            <div class="text-slate-900 text-body-2">{{
+                                item.chiTietSanPham?.sanPham?.ten || 'N/A' }}</div>
+                        </td>
+                        <td class="py-4">
+                            <div class="text-primary">#{{ item.chiTietSanPham?.maChiTietSanPham
+                                || 'N/A' }}</div>
+                        </td>
+                        <td class="py-4">
+                            <span class="text-slate-600">
+                                {{ item.chiTietSanPham?.mauSac?.ten || '—' }}
+                            </span>
+                        </td>
+                        <td class="py-4">
+                            <span class="text-slate-600">
+                                {{ item.chiTietSanPham?.kichThuoc?.ten || '—' }}
+                            </span>
+                        </td>
+                        <td class="py-4">
+                            <span class="text-body-2 text-slate-800">{{ item.soLuong }}</span>
+                        </td>
+                        <td class="py-4 text-slate-700">
+                            {{ formatCurrency(item.donGia) }}
+                        </td>
+                        <td class="py-4 text-primary text-body-2">
+                            {{ formatCurrency(Number(item.soLuong) * Number(item.donGia)) }}
+                        </td>
+                    </tr>
+                </template>
+            </AdminTable>
+        </v-card>
 
         <div v-else-if="loading" class="d-flex flex-column align-center justify-center py-16">
             <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
@@ -1041,5 +1042,35 @@ onMounted(() => {
     .customer-contact-col {
         min-height: unset;
     }
+}
+
+.premium-card, .premium-card-detail {
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+}
+
+.border-x-0 {
+    border-left: none !important;
+    border-right: none !important;
+}
+
+/* Full-width AdminTable override */
+.full-width-admin-table :deep(.admin-table-container) {
+    border: none !important;
+    margin-bottom: 0 !important;
+}
+
+.full-width-admin-table :deep(.native-admin-table) {
+    width: 100% !important;
+    table-layout: auto !important; /* Cho phép bảng giãn hết cỡ */
+}
+
+.all-center-table :deep(.data-cell),
+.all-center-table :deep(.header-cell),
+.all-center-table :deep(th),
+.all-center-table :deep(td) {
+    text-align: center !important;
+    height: auto !important;
+    padding: 16px !important;
 }
 </style>

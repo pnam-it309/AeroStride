@@ -2,10 +2,14 @@ package com.example.be.core.admin.thongke.service.impl;
 
 import com.example.be.core.admin.thongke.model.response.AdminThongKeResponse;
 import com.example.be.core.admin.thongke.repository.AdminThongKeRepository;
+import com.example.be.core.admin.thongke.repository.AdminThongKeSpecification;
 import com.example.be.core.admin.thongke.service.AdminThongKeService;
+import com.example.be.entity.HoaDon;
+import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.utils.AccountUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -54,17 +58,12 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         Long tuNgayMs = AccountUtils.parseDateToLong(tuNgay.toString(), false);
         Long denNgayMs = AccountUtils.parseDateToLong(denNgay.toString(), true);
 
-        List<Object[]> rows = thongKeRepository.getDoanhThuTheoNgay(tuNgayMs, denNgayMs);
-        List<AdminThongKeResponse.DoanhThuNgay> result = new ArrayList<>();
+        // Build Specification dynamically using clean criteria
+        Specification<HoaDon> spec = Specification.where(AdminThongKeSpecification.hasTrangThai(OrderStatus.DANG_GIAO))
+                .and(AdminThongKeSpecification.ngayTaoGreaterOrEqual(tuNgayMs))
+                .and(AdminThongKeSpecification.ngayTaoLessOrEqual(denNgayMs));
 
-        for (Object[] row : rows) {
-            result.add(AdminThongKeResponse.DoanhThuNgay.builder()
-                    .ngay(row[0] != null ? row[0].toString() : "")
-                    .doanhThu(row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO)
-                    .soDon(row[2] != null ? Long.parseLong(row[2].toString()) : 0L)
-                    .build());
-        }
-        return result;
+        return thongKeRepository.getDoanhThuTheoNgay(spec);
     }
 
     @Override

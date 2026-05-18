@@ -181,17 +181,17 @@ watch(
                     <v-col cols="12" class="position-relative">
                         <div class="shoe-focus-container">
                             <div class="shoe-item">
-                                <div class="shoe-meta-fixed">
-                                    <span class="shoe-tag" :style="{ color: currentShoe.color }">{{ currentShoe.tag }}</span>
-                                    <h2 class="shoe-name">{{ currentShoe.title }}</h2>
-                                    <v-btn variant="outlined" :color="currentShoe.color" class="mt-4 px-8 py-4 font-weight-black explore-btn" rounded="lg">
+                                <div class="shoe-meta-fixed reveal-container" :class="{ 'active': props.active }">
+                                    <span class="shoe-tag reveal-item delay-1" :style="{ color: currentShoe.color }">{{ currentShoe.tag }}</span>
+                                    <h2 class="shoe-name reveal-item delay-2">{{ currentShoe.title }}</h2>
+                                    <v-btn variant="outlined" :color="currentShoe.color" class="mt-4 px-8 py-4 font-weight-black explore-btn reveal-item delay-3" rounded="lg">
                                         KHAM PHA CHI TIET
                                         <v-icon end>mdi-arrow-right</v-icon>
                                     </v-btn>
                                 </div>
 
-                                <div class="tech-specs-fixed">
-                                    <div class="spec-group" :style="{ borderColor: `${currentShoe.color}4d` }">
+                                <div class="tech-specs-fixed reveal-container" :class="{ 'active': props.active }">
+                                    <div class="spec-group reveal-item delay-4" :style="{ borderColor: `${currentShoe.color}4d` }">
                                         <div class="spec-item">
                                             <span class="label">ENGINE</span>
                                             <span class="val">{{ activeCard === 1 ? 'HYPER' : 'AIR' }} V{{ activeCard + 1 }}</span>
@@ -291,6 +291,24 @@ watch(
 .controls-overlay { position: absolute; bottom: 50px; left: 0; width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0 100px; z-index: 30; }
 .nav-btn { transition: transform 0.2s ease, opacity 0.2s ease; opacity: 0.6; &:hover { opacity: 1; transform: scale(1.08); } }
 .step-line { display: inline-block; width: 40px; height: 5px; background: rgba(0,0,0,0.05); margin: 0 6px; cursor: pointer; transition: all 0.3s ease; &.active { background: #2962FF; width: 65px; } }
+
+/* Reveal Animation System */
+.reveal-item {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+    will-change: transform, opacity;
+}
+
+.active .reveal-item {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.delay-1 { transition-delay: 0.1s; }
+.delay-2 { transition-delay: 0.2s; }
+.delay-3 { transition-delay: 0.3s; }
+.delay-4 { transition-delay: 0.4s; }
 
 @media (max-width: 960px) {
     .shoe-meta-fixed,

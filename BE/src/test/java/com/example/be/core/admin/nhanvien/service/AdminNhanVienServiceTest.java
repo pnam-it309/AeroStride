@@ -43,13 +43,13 @@ class AdminNhanVienServiceTest extends BaseServiceTest {
         request.setSize(10);
         request.setKeyword("Employee");
 
-        AdminNhanVienResponse mockResponse = new AdminNhanVienResponse();
-        mockResponse.setMa("NV-01");
-        mockResponse.setTen("Employee 01");
+        NhanVien employee = new NhanVien();
+        employee.setMa("NV-01");
+        employee.setTen("Employee 01");
 
-        Page<AdminNhanVienResponse> mockPage = new PageImpl<>(List.of(mockResponse));
+        Page<NhanVien> mockPage = new PageImpl<>(List.of(employee));
 
-        when(adminNhanVienRepository.filterAll(any(), any(), any(), any())).thenReturn(mockPage);
+        when(adminNhanVienRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), any(Pageable.class))).thenReturn(mockPage);
 
         // When (Act)
         Page<AdminNhanVienResponse> result = adminNhanVienService.search(request);

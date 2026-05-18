@@ -6,6 +6,7 @@ import com.example.be.core.admin.nhanvien.repository.AdminNhanVienRepository;
 import com.example.be.core.admin.nhanvien.service.AdminNhanVienService;
 import com.example.be.core.notification.EmailService;
 import com.example.be.entity.NhanVien;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.exceptions.DuplicateResourceException;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
@@ -15,7 +16,7 @@ import com.example.be.utils.AccountUtils;
 import com.example.be.utils.CodeUtils;
 import com.example.be.utils.ExcelUtils;
 import com.example.be.utils.SearchUtils;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,11 +24,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.be.core.admin.nhanvien.repository.AdminNhanVienSpecification;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Sort;
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class AdminNhanVienServiceImpl implements AdminNhanVienService {
 
     private final AdminNhanVienRepository adminNhanVienRepository;
@@ -39,30 +45,30 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     // ── HIỂN THỊ (không phân trang) ───────────────────────────────────────
     @Override
     public List<AdminNhanVienResponse> hienThi() {
-        return adminNhanVienRepository.hienThi();
+        return adminNhanVienRepository.findAll(Sort.by(Sort.Direction.DESC, "ngayTao"))
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     // ── TÌM KIẾM / LỌC / PHÂN TRANG — gộp 1 method ──────────────────────
     @Override
     public Page<AdminNhanVienResponse> search(AdminNhanVienRequest request) {
+        Specification<NhanVien> spec = Specification.where(AdminNhanVienSpecification.keywordLike(request.getKeyword()))
+                .and(AdminNhanVienSpecification.hasTrangThai(request.getTrangThai()))
+                .and(AdminNhanVienSpecification.hasGioiTinh(request.getGioiTinh()));
+
         return SearchUtils.execute(request, pageable ->
-            adminNhanVienRepository.filterAll(
-                request.getKeyword(),
-                request.getTrangThai(),
-                request.getGioiTinh(),
-                pageable
-            )
+            adminNhanVienRepository.findAll(spec, pageable).map(this::toResponse)
         );
     }
 
     // ── DETAIL ────────────────────────────────────────────────────────────
     @Override
     public AdminNhanVienResponse detail(String id) {
-        AdminNhanVienResponse res = adminNhanVienRepository.detail(id);
-        if (res == null) {
-            throw new ResourceNotFoundException("Không tìm thấy nhân viên với id: " + id);
-        }
-        return res;
+        NhanVien nv = adminNhanVienRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.NHAN_VIEN_NOT_FOUND + id));
+        return toResponse(nv);
     }
 
     // ── CREATE ────────────────────────────────────────────────────────────
@@ -72,18 +78,20 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         // Kiểm tra mã nếu được cung cấp
         if (request.getMa() != null && !request.getMa().trim().isEmpty()) {
             if (adminNhanVienRepository.existsByMa(request.getMa())) {
-                throw new DuplicateResourceException("Mã nhân viên này đã tồn tại.");
+                throw new DuplicateResourceException(MessageConstants.NHAN_VIEN_MA_EXISTS);
             }
         }
         if (adminNhanVienRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException("Email này đã được sử dụng bởi một nhân viên khác.");
+            throw new DuplicateResourceException(MessageConstants.NHAN_VIEN_EMAIL_EXISTS);
         }
 
         NhanVien nv = toEntity(request);
 
-        // Tự sinh mã nếu trống
         if (nv.getMa() == null || nv.getMa().trim().isEmpty()) {
-            nv.setMa(CodeUtils.generateSequential("NV", adminNhanVienRepository.findAllMa()));
+            List<String> existingMas = adminNhanVienRepository.findAllProjectedBy().stream()
+                    .map(AdminNhanVienRepository.MaOnly::getMa)
+                    .toList();
+            nv.setMa(CodeUtils.generateSequential("NV", existingMas));
         }
 
         // Tự sinh tenTaiKhoan unique
@@ -100,7 +108,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
 
         if (request.getIdPhanQuyen() != null) {
             nv.setPhanQuyen(phanQuyenRepository.findById(request.getIdPhanQuyen())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phân quyền")));
+                    .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PHAN_QUYEN_NOT_FOUND)));
         }
 
         nv.setTrangThai(TrangThai.DANG_HOAT_DONG);
@@ -111,7 +119,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
                 request.getEmail(), request.getTen(), tenTaiKhoan, matKhauTam, tenVaiTro
         );
 
-        return adminNhanVienRepository.detail(nv.getId());
+        return toResponse(nv);
     }
 
     // ── UPDATE ────────────────────────────────────────────────────────────
@@ -119,29 +127,29 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     @Transactional
     public AdminNhanVienResponse update(String id, AdminNhanVienRequest request) {
         NhanVien nv = adminNhanVienRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.NHAN_VIEN_NOT_FOUND + id));
 
         if (adminNhanVienRepository.existsByMaAndIdNot(request.getMa(), id)) {
-            throw new DuplicateResourceException("Mã nhân viên đã tồn tại");
+            throw new DuplicateResourceException(MessageConstants.DUPLICATE_MA);
         }
         if (adminNhanVienRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
-            throw new DuplicateResourceException("Email đã được sử dụng");
+            throw new DuplicateResourceException(MessageConstants.DUPLICATE_EMAIL);
         }
         if (adminNhanVienRepository.existsByTenTaiKhoanAndIdNot(request.getTenTaiKhoan(), id)) {
-            throw new DuplicateResourceException("Tên tài khoản đã được sử dụng");
+            throw new DuplicateResourceException(MessageConstants.DUPLICATE_USERNAME);
         }
 
         applyEntityFields(nv, request);
 
         if (request.getIdPhanQuyen() != null) {
             nv.setPhanQuyen(phanQuyenRepository.findById(request.getIdPhanQuyen())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phân quyền")));
+                    .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PHAN_QUYEN_NOT_FOUND)));
         } else {
             nv.setPhanQuyen(null);
         }
 
         adminNhanVienRepository.save(nv);
-        return adminNhanVienRepository.detail(id);
+        return toResponse(nv);
     }
 
     // ── ĐỔI TRẠNG THÁI ───────────────────────────────────────────────────
@@ -149,7 +157,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     @Transactional
     public void doiTrangThai(String id, TrangThai trangThai) {
         NhanVien nv = adminNhanVienRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.NHAN_VIEN_NOT_FOUND + id));
         nv.setTrangThai(trangThai);
         adminNhanVienRepository.saveAndFlush(nv);
     }
@@ -159,15 +167,15 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     @Transactional
     public void delete(String id) {
         NhanVien nv = adminNhanVienRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với id: " + id));
-        nv.setTrangThai(TrangThai.KHONG_HOAT_DONG);
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.NHAN_VIEN_NOT_FOUND + id));
+        nv.setTrangThai(TrangThai.NGUNG_HOAT_DONG);
         adminNhanVienRepository.save(nv);
     }
 
     // ── EXPORT EXCEL ──────────────────────────────────────────────────────
     @Override
     public byte[] exportExcel() {
-        List<AdminNhanVienResponse> data = adminNhanVienRepository.hienThi();
+        List<AdminNhanVienResponse> data = hienThi();
         String[] headers = {"STT", "Mã", "Tên", "Email", "SĐT", "Ngày sinh", "Giới tính", "Địa chỉ", "Chức vụ", "Trạng thái"};
         try {
             return ExcelUtils.exportToExcel("Danh sách nhân viên", headers, data, item -> new Object[]{
@@ -179,11 +187,11 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
                     item.getNgaySinh(),
                     item.getGioiTinh(),
                     item.getTenPhanQuyen(),
-                    item.getTrangThai() == TrangThai.DANG_HOAT_DONG ? "Đang làm việc" : "Đã nghỉ việc"
+                    item.getTrangThai() == TrangThai.DANG_HOAT_DONG ? "Đang làm việc" : "Ngừng hoạt động"
             });
         } catch (IOException e) {
             throw new com.example.be.infrastructure.exceptions.SystemException(
-                    "Lỗi xuất file Excel: " + e.getMessage());
+                    MessageConstants.EXCEL_EXPORT_ERROR + e.getMessage());
         }
     }
 
@@ -230,5 +238,30 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     /** Small random numeric suffix to avoid username collisions. */
     private static String SECURE_RANDOM_SUFFIX() {
         return String.valueOf((int) (Math.random() * 1000));
+    }
+
+    private AdminNhanVienResponse toResponse(NhanVien nv) {
+        if (nv == null) return null;
+        return AdminNhanVienResponse.builder()
+                .id(nv.getId())
+                .ma(nv.getMa())
+                .ten(nv.getTen())
+                .email(nv.getEmail())
+                .tenTaiKhoan(nv.getTenTaiKhoan())
+                .gioiTinh(nv.getGioiTinh())
+                .sdt(nv.getSdt())
+                .ngaySinh(nv.getNgaySinh())
+                .hinhAnh(nv.getHinhAnh())
+                .tinh(nv.getTinh())
+                .thanhPho(nv.getThanhPho())
+                .phuongXa(nv.getPhuongXa())
+                .diaChiChiTiet(nv.getDiaChiChiTiet())
+                .trangThai(nv.getTrangThai())
+                .ngayTao(nv.getNgayTao())
+                .ngayCapNhat(nv.getNgayCapNhat())
+                .maPhanQuyen(nv.getPhanQuyen() != null ? nv.getPhanQuyen().getMa() : null)
+                .tenPhanQuyen(nv.getPhanQuyen() != null ? nv.getPhanQuyen().getTen() : null)
+                .quyenHan(nv.getPhanQuyen() != null ? nv.getPhanQuyen().getQuyenHan() : null)
+                .build();
     }
 }

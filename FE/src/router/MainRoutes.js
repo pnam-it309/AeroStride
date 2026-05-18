@@ -1,18 +1,17 @@
 import { PATH } from './routePaths';
 
 const MainRoutes = {
-    path: '/main',
+    path: '/',
     meta: {
         requiresAuth: true
     },
     component: () => import('@/layouts/full/FullLayout.vue'),
     children: [
         {
-            name: 'Dashboard',
-            path: '',
-            component: () => import('@/views/dashboard/index.vue')
+            name: 'Thống kê',
+            path: PATH.THONG_KE,
+            component: () => import('@/views/modules/ThongKe.vue')
         },
-        // AeroStride Module Routes
         {
             name: 'BanHang',
             path: PATH.BAN_HANG,
@@ -26,7 +25,7 @@ const MainRoutes = {
         {
             name: 'BienTheSanPham',
             path: PATH.BIEN_THE_SAN_PHAM,
-            component: () => import('@/views/modules/san-pham/BienTheSanPham.vue')
+            component: () => import('@/views/modules/bien-the-san-pham/BienTheSanPham.vue')
         },
         {
             name: 'SanPhamForm',
@@ -118,42 +117,7 @@ const MainRoutes = {
             path: '/quan-ly-file',
             component: () => import('@/views/modules/QuanLyFile.vue')
         },
-        {
-            name: 'ThongKe',
-            path: PATH.THONG_KE,
-            component: () => import('@/views/modules/ThongKe.vue')
-        },
-        // Original UI Components (can be removed later if not needed)
-        {
-            name: 'Alert',
-            path: '/ui/alerts',
-            component: () => import('@/views/ui-components/Alerts.vue')
-        },
-        {
-            name: 'Buttons',
-            path: '/ui/buttons',
-            component: () => import('@/views/ui-components/Buttons.vue')
-        },
-        {
-            name: 'Cards',
-            path: '/ui/cards',
-            component: () => import('@/views/ui-components/Cards.vue')
-        },
-        {
-            name: 'Tables',
-            path: '/ui/tables',
-            component: () => import('@/views/ui-components/Tables.vue')
-        },
-        {
-            name: 'Icons',
-            path: '/icons',
-            component: () => import('@/views/pages/Icons.vue')
-        },
-        {
-            name: 'Starter',
-            path: '/sample-page',
-            component: () => import('@/views/pages/SamplePage.vue')
-        },
+
         {
             name: 'QuanLyChat',
             path: PATH.QUAN_LY_CHAT,

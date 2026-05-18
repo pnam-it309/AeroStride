@@ -29,8 +29,11 @@ class AdminPhieuGiamGiaServiceImplTest {
     @InjectMocks private AdminPhieuGiamGiaServiceImpl service;
 
     @Test void testDetail() {
-        AdminPhieuGiamGiaResponse mockResponse = mock(AdminPhieuGiamGiaResponse.class);
-        when(repository.detail("1")).thenReturn(mockResponse);
+        PhieuGiamGia mockP = new PhieuGiamGia();
+        mockP.setId("1");
+        mockP.setMa("PGG-01");
+        mockP.setTen("Discount Voucher 01");
+        when(repository.findById("1")).thenReturn(Optional.of(mockP));
         assertNotNull(service.detail("1"));
     }
 

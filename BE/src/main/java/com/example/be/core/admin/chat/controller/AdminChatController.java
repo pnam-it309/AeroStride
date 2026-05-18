@@ -2,64 +2,54 @@ package com.example.be.core.admin.chat.controller;
 
 import com.example.be.core.admin.chat.model.AdminChatResponse;
 import com.example.be.core.admin.chat.model.ChatMessageResponse;
+import com.example.be.core.admin.chat.model.SendMessageRequest;
 import com.example.be.core.admin.chat.service.AdminChatService;
+import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.infrastructure.constants.RoutesConstant;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_CHAT)
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
 public class AdminChatController {
 
     private final AdminChatService chatService;
 
-    @GetMapping("/conversations")
-    public ResponseEntity<?> getConversations() {
-        List<AdminChatResponse> data = chatService.getAllConversations();
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", data);
-        return ResponseEntity.ok(response);
+    @GetMapping(RoutesConstant.CONVERSATIONS)
+    public ResponseEntity<ApiResponse<List<AdminChatResponse>>> getConversations() {
+        return ResponseEntity.ok(ApiResponse.success(chatService.getAllConversations()));
     }
 
-    @GetMapping("/conversations/{id}/messages")
-    public ResponseEntity<?> getMessages(@PathVariable String id) {
-        List<ChatMessageResponse> data = chatService.getMessagesByConversation(id);
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", data);
-        return ResponseEntity.ok(response);
+    @GetMapping(RoutesConstant.CONVERSATION_MESSAGES)
+    public ResponseEntity<ApiResponse<List<ChatMessageResponse>>> getMessages(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(chatService.getMessagesByConversation(id)));
     }
 
-    @PostMapping("/conversations/{id}/accept")
-    public ResponseEntity<?> acceptConversation(@PathVariable String id) {
-        boolean success = chatService.acceptConversation(id, "ADMIN");
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", success);
+    @PostMapping(RoutesConstant.CONVERSATION_ACCEPT)
+    public ResponseEntity<ApiResponse<Map<String, String>>> acceptConversation(@PathVariable String id) {
+        boolean success = chatService.acceptConversation(id);
         if (success) {
-            Map<String, String> data = new HashMap<>();
-            data.put("staffCode", "ADMIN");
-            response.put("data", data);
+            String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+            Map<String, String> data = Map.of("staffCode", currentUsername);
+            return ResponseEntity.ok(ApiResponse.success(data));
         }
-        return ResponseEntity.ok(response);
+        return ResponseEntity.badRequest().body(ApiResponse.error(400, "Không thể chấp nhận cuộc hội thoại"));
     }
 
-    @PostMapping("/send")
-    public ResponseEntity<?> sendMessage(@RequestBody Map<String, String> payload) {
-        String conversationId = payload.get("conversationId");
-        String text = payload.get("text");
-        String sender = payload.get("sender");
-        
-        chatService.sendMessage(conversationId, text, sender, null);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        return ResponseEntity.ok(response);
+    @PostMapping(RoutesConstant.SEND)
+    public ResponseEntity<ApiResponse<Void>> sendMessage(@Valid @RequestBody SendMessageRequest request) {
+        chatService.sendMessage(request.getConversationId(), request.getText(), request.getSender(), null);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

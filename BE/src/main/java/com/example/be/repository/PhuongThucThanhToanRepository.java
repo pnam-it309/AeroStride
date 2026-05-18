@@ -6,5 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PhuongThucThanhToanRepository extends JpaRepository<PhuongThucThanhToan, String> {
-    PhuongThucThanhToan findByMa(String ma);
 }

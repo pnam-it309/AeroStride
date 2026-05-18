@@ -15,7 +15,7 @@ import java.util.Optional;
 
 import com.example.be.core.admin.sanpham.mapper.AdminSanPhamMapper;
 import com.example.be.core.admin.sanpham.repository.AdminChiTietSanPhamRepository;
-import com.example.be.repository.ChiTietDotGiamGiaRepository;
+import com.example.be.core.admin.dotgiamgia.repository.AdminChiTietDotGiamGiaRepository;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,7 +34,7 @@ class AdminDotGiamGiaServiceImplTest {
     private AdminSanPhamMapper mapper;
 
     @Mock
-    private ChiTietDotGiamGiaRepository chiTietDotGiamGiaRepo;
+    private AdminChiTietDotGiamGiaRepository chiTietDotGiamGiaRepo;
 
     @InjectMocks
     private AdminDotGiamGiaServiceImpl service;

@@ -10,6 +10,6 @@ import org.springframework.stereotype.Service;
 public class AdminMucDichChayServiceImpl extends AdminAttributeCrudSupport<MucDichChay> implements AdminMucDichChayService {
 
     public AdminMucDichChayServiceImpl(AdminMucDichChayRepository repository) {
-        super(repository, MucDichChay::new, entity -> null, (entity, value) -> {}, MucDichChay::setXoaMem, "muc dich chay");
+        super(repository, MucDichChay::new, entity -> null, (entity, value) -> {}, request -> null, MucDichChay::setXoaMem, "muc dich chay");
     }
 }

@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'url';
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import vuetify from 'vite-plugin-vuetify';
+import viteCompression from 'vite-plugin-compression';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -12,6 +13,20 @@ export default defineConfig(({ mode }) => {
             vuetify({
                 autoImport: true,
                 styles: { configFile: 'src/scss/_variables.scss' }
+            }),
+            viteCompression({
+                verbose: true,
+                disable: false,
+                threshold: 10240, // Compress files larger than 10KB
+                algorithm: 'gzip',
+                ext: '.gz',
+            }),
+            viteCompression({
+                verbose: true,
+                disable: false,
+                threshold: 10240,
+                algorithm: 'brotliCompress',
+                ext: '.br',
             })
         ],
         base: './',
@@ -39,7 +54,23 @@ export default defineConfig(({ mode }) => {
         },
         build: {
             rollupOptions: {
-                treeshake: true
+                treeshake: true,
+                output: {
+                    manualChunks(id) {
+                        if (id.includes('node_modules')) {
+                            if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
+                                return 'vendor-core';
+                            }
+                            if (id.includes('vuetify')) {
+                                return 'vendor-vuetify';
+                            }
+                            if (id.includes('apexcharts') || id.includes('vue-tabler-icons')) {
+                                return 'vendor-charts-icons';
+                            }
+                            return 'vendor-utils';
+                        }
+                    }
+                }
             },
             sourcemap: false,
             chunkSizeWarningLimit: 1000

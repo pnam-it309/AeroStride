@@ -64,7 +64,7 @@ export const dichVuNhanVien = {
 
   // Thay đổi trạng thái nhân viên
   async thayDoiTrangThaiNhanVien(id, status) {
-    const response = await api.put(`${API_ADMIN.NHAN_VIEN}/status/${id}`, { status });
+    const response = await api.patch(`${API_ADMIN.NHAN_VIEN}/${id}/status`, { status });
     return response.data.data;
   },
 

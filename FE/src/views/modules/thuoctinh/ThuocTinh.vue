@@ -43,6 +43,7 @@ const pagination = ref({
 const showDialog = ref(false);
 const selectedItem = ref(null);
 const isEditMode = ref(false);
+const activatorElement = ref(null);
 
 const route = useRoute();
 const router = useRouter();
@@ -167,7 +168,8 @@ const currentMeta = computed(() => attributeMeta[selectedTab.value] || attribute
 const tableHeaders = computed(() => [
     { text: 'STT', width: '50px' },
     { text: currentMeta.value.codeLabel, width: '120px' },
-    { text: currentMeta.value.nameLabel, width: '220px' },
+    { text: currentMeta.value.nameLabel, width: '200px' },
+    { text: 'Mô tả', width: '200px' },
     { text: 'Trạng thái', width: '130px' },
     { text: 'Hành động', width: '120px' }
 ]);
@@ -298,7 +300,7 @@ const confirmChangeStatus = (item) => {
 
 const changeItemStatus = async (item) => {
     const service = services[selectedTab.value];
-    const newS = isActiveStatus(item.trangThai) ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
+    const newS = isActiveStatus(item.trangThai) ? 'NGUNG_HOAT_DONG' : 'DANG_HOAT_DONG';
     const pld = { ...item, trangThai: newS };
     switch (selectedTab.value) {
         case 'brands': await service.capNhatThuongHieu(item.id, pld); break;
@@ -325,7 +327,13 @@ const resetForm = () => {
     selectedItem.value = null;
 };
 
-const openCreateDialog = () => {
+const openCreateDialog = (event) => {
+    const target = event?.currentTarget;
+    if (showDialog.value && activatorElement.value === target && !isEditMode.value) {
+        showDialog.value = false;
+        return;
+    }
+    activatorElement.value = target;
     resetForm();
     isEditMode.value = false;
     showDialog.value = true;
@@ -342,7 +350,13 @@ const handleRefresh = async () => {
     }, 800);
 };
 
-const editItem = (item) => {
+const editItem = (item, event) => {
+    const target = event?.currentTarget;
+    if (showDialog.value && activatorElement.value === target && selectedItem.value?.id === item.id) {
+        showDialog.value = false;
+        return;
+    }
+    activatorElement.value = target;
     selectedItem.value = item;
     itemForm.value = { ...item };
     isEditMode.value = true;
@@ -372,8 +386,7 @@ watch(selectedTab, (n) => {
 </script>
 
 <template>
-    <v-container fluid class="pa-4 animate-fade-in d-flex flex-column overflow-hidden font-body"
-        style="height: calc(100vh - 20px);">
+    <v-container fluid class="pa-4 animate-fade-in d-flex flex-column overflow-hidden font-body admin-module-page">
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs
             :items="[
@@ -409,7 +422,7 @@ watch(selectedTab, (n) => {
 
         <!-- FORM MODAL -->
         <AttributeFormModal v-model:show="showDialog" v-model:form="itemForm" :isEditMode="isEditMode"
-            :title="getCurrentTabTitle()" :selectedTab="selectedTab" @save="confirmSaveItem" />
+            :title="getCurrentTabTitle()" :selectedTab="selectedTab" :activator="activatorElement" @save="confirmSaveItem" />
 
         <!-- SHARED CONFIRM -->
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"

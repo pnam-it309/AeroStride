@@ -1,10 +1,11 @@
 package com.example.be.core.admin.chat.service;
 
 import com.example.be.core.admin.chat.model.ChatMessageResponse;
+import com.example.be.core.admin.chat.repository.AdminChatConversationRepository;
+import com.example.be.core.admin.chat.repository.AdminChatMessageRepository;
+import com.example.be.core.admin.chat.service.impl.AdminChatServiceImpl;
 import com.example.be.entity.ChatConversation;
 import com.example.be.entity.ChatMessage;
-import com.example.be.repository.ChatConversationRepository;
-import com.example.be.repository.ChatMessageRepository;
 import com.example.be.repository.NhanVienRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,10 +31,10 @@ import static org.mockito.Mockito.when;
 class AdminChatServiceTest {
 
     @Mock
-    private ChatConversationRepository conversationRepository;
+    private AdminChatConversationRepository conversationRepository;
 
     @Mock
-    private ChatMessageRepository messageRepository;
+    private AdminChatMessageRepository messageRepository;
 
     @Mock
     private NhanVienRepository nhanVienRepository;
@@ -45,7 +46,7 @@ class AdminChatServiceTest {
     private RedisTemplate<String, Object> redisTemplate;
 
     @InjectMocks
-    private AdminChatService adminChatService;
+    private AdminChatServiceImpl adminChatService;
 
     @Test
     void sendMessage_whenRedisPublishFails_shouldStillSaveAndBroadcast() {

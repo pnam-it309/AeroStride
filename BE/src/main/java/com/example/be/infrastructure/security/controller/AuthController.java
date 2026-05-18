@@ -7,6 +7,7 @@ import com.example.be.infrastructure.security.dto.AuthResponse;
 import com.example.be.infrastructure.security.dto.LoginRequest;
 import com.example.be.infrastructure.security.dto.TokenRefreshRequest;
 import com.example.be.infrastructure.security.service.RefreshTokenService;
+import com.example.be.infrastructure.config.ratelimit.RateLimit;
 import com.example.be.core.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
 
     @PostMapping("/login")
+    @RateLimit(limit = 5, windowSeconds = 60)
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
         log.info("LOGIN ATTEMPT: User [{}] Type [{}]", loginRequest.getUsername(), loginRequest.getLoginType());
 

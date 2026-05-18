@@ -1,5 +1,5 @@
 export const PATH = {
-    DASHBOARD: '/main',
+    DASHBOARD: '/thong-ke',
     BAN_HANG: '/ban-hang',
     SAN_PHAM: '/san-pham',
     BIEN_THE_SAN_PHAM: '/san-pham/bien-the',

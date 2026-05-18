@@ -13,21 +13,21 @@ const props = defineProps({
         <div class="hero-bg-animated" :style="{ transform: `translate(${props.mouseX * 0.5}px, ${props.mouseY * 0.5}px)` }"></div>
         <v-container>
             <v-row align="center">
-                <v-col cols="12" lg="6" :class="{ 'animate-in-left': props.active }">
-                    <h1 class="hero-title text-uppercase font-weight-black text-blue-darken-4">
+                <v-col cols="12" lg="6" :class="{ 'reveal-container': true, 'active': props.active }">
+                    <h1 class="hero-title text-uppercase font-weight-black text-blue-darken-4 reveal-item delay-1">
                         NEXT-GEN <br />
                         <span class="text-blue-accent-4">AEROSTRIDE</span>
                     </h1>
-                    <p class="text-h5 text-blue-grey-darken-1 mt-6 mb-10 leading-relaxed">
+                    <p class="text-h5 text-blue-grey-darken-1 mt-6 mb-10 leading-relaxed reveal-item delay-2">
                         Công nghệ giày tương lai dành cho những người dẫn đầu. 
                         Trải nghiệm sự êm ái vượt giới hạn.
                     </p>
-                    <v-btn size="x-large" color="blue-darken-4" rounded="xl" class="px-12 elevation-10">
+                    <v-btn size="x-large" color="blue-darken-4" rounded="xl" class="px-12 elevation-10 reveal-item delay-3">
                         KHÁM PHÁ NGAY
                     </v-btn>
                 </v-col>
-                <v-col cols="12" lg="6" class="text-center" :class="{ 'animate-in-right': props.active }">
-                    <div class="hero-shoe-wrapper">
+                <v-col cols="12" lg="6" class="text-center reveal-container" :class="{ 'active': props.active }">
+                    <div class="hero-shoe-wrapper reveal-item delay-4">
                         <v-img
                             v-if="props.product?.imageUrl"
                             :src="props.product.imageUrl"
@@ -89,11 +89,29 @@ const props = defineProps({
     z-index: -1;
 }
 
-.animate-in-left { animation: slideInLeft 1s cubic-bezier(0.2, 1, 0.3, 1) both; }
-.animate-in-right { animation: slideInRight 1s cubic-bezier(0.2, 1, 0.3, 1) both; }
+.reveal-item {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+    will-change: transform, opacity;
+}
 
-@keyframes slideInLeft { from { opacity: 0; transform: translateX(-100px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes slideInRight { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+.active .reveal-item {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.delay-1 { transition-delay: 0.1s; }
+.delay-2 { transition-delay: 0.2s; }
+.delay-3 { transition-delay: 0.3s; }
+.delay-4 { transition-delay: 0.5s; }
+
+.hero-shoe-main {
+    width: 600px;
+    filter: drop-shadow(0 30px 60px rgba(0,0,0,0.2));
+    animation: floating 6s ease-in-out infinite;
+    transition: transform 1s cubic-bezier(0.2, 1, 0.3, 1);
+}
 
 @media (max-width: 960px) {
     .hero-title { font-size: 3rem; }

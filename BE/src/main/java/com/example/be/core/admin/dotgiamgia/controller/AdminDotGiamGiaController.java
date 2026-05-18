@@ -4,17 +4,23 @@ import com.example.be.core.admin.dotgiamgia.model.request.AdminDotGiamGiaRequest
 import com.example.be.core.admin.dotgiamgia.model.request.AdminDotGiamGiaSearchRequest;
 import com.example.be.core.admin.dotgiamgia.service.AdminDotGiamGiaService;
 import com.example.be.core.common.dto.ApiResponse;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.RoutesConstant;
 import com.example.be.infrastructure.constants.TrangThai;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_DOT_GIAM_GIA)
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
 public class AdminDotGiamGiaController {
 
     private final AdminDotGiamGiaService service;
@@ -29,28 +35,28 @@ public class AdminDotGiamGiaController {
         return ResponseEntity.ok(ApiResponse.success(service.findById(id)));
     }
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> add(@RequestBody AdminDotGiamGiaRequest req) {
+    public ResponseEntity<ApiResponse<Void>> add(@Valid @RequestBody AdminDotGiamGiaRequest req) {
         service.add(req);
-        return ResponseEntity.ok(ApiResponse.success(null, "Thêm đợt giảm giá thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.DOT_GIAM_GIA_ADD_SUCCESS));
     }
 
     @PutMapping(RoutesConstant.ID)
-    public ResponseEntity<ApiResponse<Void>> update(@RequestBody AdminDotGiamGiaRequest req,
+    public ResponseEntity<ApiResponse<Void>> update(@Valid @RequestBody AdminDotGiamGiaRequest req,
                                                      @PathVariable String id) {
         service.update(req, id);
-        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật đợt giảm giá thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.DOT_GIAM_GIA_UPDATE_SUCCESS));
     }
 
     @PatchMapping(RoutesConstant.STATUS_SUB)
     public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id, @RequestParam TrangThai status) {
         service.updateStatus(id, status);
-        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật trạng thái thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.UPDATE_STATUS_SUCCESS));
     }
 
     @DeleteMapping(RoutesConstant.ID)
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         service.delete(id);
-        return ResponseEntity.ok(ApiResponse.success(null, "Xóa đợt giảm giá thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.DOT_GIAM_GIA_DELETE_SUCCESS));
     }
 
     @GetMapping(RoutesConstant.EXPORT_EXCEL)

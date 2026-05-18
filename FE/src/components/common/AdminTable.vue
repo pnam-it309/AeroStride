@@ -66,8 +66,7 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                                 </th>
                                 <th v-for="(header, idx) in headers" :key="idx"
                                     :style="{ minWidth: header.width || 'auto', width: header.width || 'auto' }"
-                                    :class="['header-cell', header.align ? `text-${header.align}` : '']"
-                                    style="white-space: nowrap;">
+                                    class="header-cell" style="white-space: nowrap;">
                                     {{ header.text || header }}
                                 </th>
                             </tr>

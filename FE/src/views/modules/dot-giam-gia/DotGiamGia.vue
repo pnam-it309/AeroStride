@@ -13,9 +13,9 @@ import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import { downloadFile } from '@/utils/fileUtils';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
-import { EditIcon } from 'vue-tabler-icons';
 
 import { useAdminTable } from '@/composables/useAdminTable';
+import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useNotifications } from '@/services/notificationService';
 
@@ -66,7 +66,7 @@ const confirmToggleStatus = (item) => {
         color: 'warning',
         action: async () => {
             try {
-                const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
+                const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'NGUNG_HOAT_DONG' : 'DANG_HOAT_DONG';
                 console.log(`[Discount] Changing status of ${item.id} to ${newS}`);
 
                 await dichVuDotGiamGia.thayDoiTrangThaiDotGiamGia(item.id, newS);
@@ -167,8 +167,7 @@ onMounted(() => loadCampaigns());
 </script>
 
 <template>
-    <v-container fluid class="pa-4 animate-fade-in font-body"
-        style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
+    <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs :items="[
             { title: 'Quản lý đợt giảm giá', disabled: false, href: '#' },
@@ -178,7 +177,7 @@ onMounted(() => loadCampaigns());
         <div class="mb-2"></div>
 
         <!-- 1. FILTER -->
-        <div class="filter-top invoice-filter-shell">
+        <div class="filter-shell invoice-filter-shell">
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm</div>
@@ -218,24 +217,24 @@ onMounted(() => loadCampaigns());
         <!-- 2. TABLE -->
         <AdminTable title="Danh sách đợt giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
             { text: 'STT', align: 'center', width: '60px' },
-            { text: 'Mã đợt giảm giá', align: 'center', width: '110px' },
-            { text: 'Tên đợt giảm giá', align: 'center', width: '180px' },
-            { text: 'Giá trị giảm', align: 'center', width: '140px' },
-            { text: 'Ngày bắt đầu', align: 'center', width: '160px' },
-            { text: 'Ngày kết thúc', align: 'center', width: '160px' },
-            { text: 'Trạng thái', align: 'center', width: '130px' },
-            { text: 'Hành động', align: 'center', width: '120px' }
+            { text: 'Mã đợt giảm giá', width: '110px' },
+            { text: 'Tên đợt giảm giá', width: '180px' },
+            { text: 'Giá trị giảm', width: '140px' },
+            { text: 'Ngày bắt đầu', width: '160px' },
+            { text: 'Ngày kết thúc', width: '160px' },
+            { text: 'Trạng thái', width: '130px' },
+            { text: 'Hành động', width: '120px' }
         ]" :items="campaigns" :total-count="pagination.totalElements" :loading="loading"
             @add="router.push(PATH.DOT_GIAM_GIA_FORM)" @export="handleExport">
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center text-slate-400">
+                    <td class="data-cell text-slate-400">
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
                     <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.ma">{{ item.ma }}</div>
                     </td>
-                    <td class="data-cell text-center">
+                    <td class="data-cell text-balanced">
                         <div class="text-truncate" :title="item.ten">{{ item.ten || '--' }}</div>
                     </td>
                     <td class="data-cell text-center">
@@ -249,7 +248,7 @@ onMounted(() => loadCampaigns());
                         <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayKetThuc)">{{
                             formatDateTime(item.ngayKetThuc) }}</div>
                     </td>
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
                         <v-chip :class="['status-chip', getCampaignTimelineStatus(item).chipClass]" variant="flat">
                             {{ getCampaignTimelineStatus(item).label }}
                         </v-chip>
@@ -259,14 +258,14 @@ onMounted(() => loadCampaigns());
                             <span class="d-inline-block" v-if="getCampaignTimelineStatus(item).isEnded">
                                 <v-btn variant="text" class="action-icon-btn opacity-50" style="pointer-events: none"
                                     :ripple="false">
-                                    <EditIcon size="15" />
+                                    <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 </v-btn>
                                 <v-tooltip activator="parent" location="top">Không thể cập nhật đợt giảm giá đã kết
                                     thúc</v-tooltip>
                             </span>
                             <v-btn v-else variant="text" class="action-icon-btn"
-                                @click.stop="router.push({ name: 'DotGiamGiaForm', params: { id: item.id } })">
-                                <EditIcon size="15" />
+                                @click.stop="router.push(`${PATH.DOT_GIAM_GIA_FORM}/${item.id}`)">
+                                <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
@@ -298,29 +297,5 @@ onMounted(() => loadCampaigns());
 </template>
 
 <style scoped>
-/* Scoped styles removed in favor of global _admin-common.scss */
-.line-clamp-1 {
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.filter-top {
-    position: sticky;
-    top: 8px;
-    z-index: 6;
-}
-
-.native-admin-table th,
-.native-admin-table td {
-    text-align: center !important;
-    vertical-align: middle !important;
-}
-
-
-.opacity-50 {
-    opacity: 0.5 !important;
-}
+/* All styles migrated to _admin-common.scss under .admin-module-page */
 </style>

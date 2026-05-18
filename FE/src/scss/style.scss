@@ -5,13 +5,4 @@
 @use './layout/container';
 @use './layout/sidebar';
 @use './layout/topbar';
-@use './components/VButtons';
-@use './components/VCard';
-@use './components/VInput';
-@use './components/VNavigationDrawer';
-@use './components/VShadow';
-@use './components/VTextField';
-@use './pages/dashboards';
-@use './pages/authentication';
-// vue3-perfect-scrollbar CSS is imported in main.js
 @use './admin-common';

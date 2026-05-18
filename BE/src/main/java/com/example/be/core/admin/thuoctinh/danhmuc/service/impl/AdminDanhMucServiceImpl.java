@@ -10,6 +10,6 @@ import org.springframework.stereotype.Service;
 public class AdminDanhMucServiceImpl extends AdminAttributeCrudSupport<DanhMuc> implements AdminDanhMucService {
 
     public AdminDanhMucServiceImpl(AdminDanhMucRepository repository) {
-        super(repository, DanhMuc::new, entity -> null, (entity, value) -> {}, DanhMuc::setXoaMem, "danh muc");
+        super(repository, DanhMuc::new, entity -> null, (entity, value) -> {}, request -> null, DanhMuc::setXoaMem, "danh muc");
     }
 }

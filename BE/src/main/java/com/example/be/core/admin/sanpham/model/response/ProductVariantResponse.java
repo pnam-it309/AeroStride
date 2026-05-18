@@ -34,6 +34,7 @@ public class ProductVariantResponse {
     private Integer soLuong;
     private BigDecimal giaNhap;
     private BigDecimal giaBan;
+    private BigDecimal phanTramGiam;
     private TrangThai trangThai;
     private Long ngayTao;
     private Long ngayCapNhat;

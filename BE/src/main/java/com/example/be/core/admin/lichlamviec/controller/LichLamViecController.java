@@ -1,92 +1,76 @@
 package com.example.be.core.admin.lichlamviec.controller;
 
 import com.example.be.core.admin.lichlamviec.service.LichLamViecService;
+import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.infrastructure.constants.RoutesConstant;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+@Slf4j
 @RestController
-@RequestMapping(RoutesConstant.ADMIN + "/lich-lam-viec")
+@RequestMapping(RoutesConstant.ADMIN_LICH_LAM_VIEC)
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
 public class LichLamViecController {
 
     private final LichLamViecService lichLamViecService;
 
-    @GetMapping("/schedules")
-    public ResponseEntity<?> getSchedules() {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", lichLamViecService.getAllSchedules());
-        return ResponseEntity.ok(response);
+    @GetMapping(RoutesConstant.SCHEDULES)
+    public ResponseEntity<ApiResponse<?>> getSchedules() {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.getAllSchedules()));
     }
 
-    @GetMapping("/shifts")
-    public ResponseEntity<?> getShifts() {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", lichLamViecService.getAllShifts());
-        return ResponseEntity.ok(response);
+    @GetMapping(RoutesConstant.SHIFTS)
+    public ResponseEntity<ApiResponse<?>> getShifts() {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.getAllShifts()));
     }
 
-    @GetMapping("/activities")
-    public ResponseEntity<?> getActivities(
+    @GetMapping(RoutesConstant.ACTIVITIES)
+    public ResponseEntity<ApiResponse<?>> getActivities(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", lichLamViecService.getActivityHistory(pageable));
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.getActivityHistory(pageable)));
     }
 
-    @GetMapping("/export-template")
+    @GetMapping(RoutesConstant.EXPORT_TEMPLATE)
     public ResponseEntity<byte[]> exportTemplate() throws IOException {
         byte[] excelContent = lichLamViecService.exportTemplate();
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=lich_lam_viec_template.xlsx")
-                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(excelContent);
     }
 
-    @PostMapping("/import")
-    public ResponseEntity<?> importExcel(@RequestParam("file") MultipartFile file) throws IOException {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", lichLamViecService.importExcel(file));
-        return ResponseEntity.ok(response);
+    @PostMapping(RoutesConstant.IMPORT_EXCEL)
+    public ResponseEntity<ApiResponse<?>> importExcel(@RequestParam("file") MultipartFile file) throws IOException {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.importExcel(file)));
     }
 
-    @PostMapping("/preview-import")
-    public ResponseEntity<?> previewImport(@RequestParam("file") MultipartFile file) throws IOException {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", lichLamViecService.previewImport(file));
-        return ResponseEntity.ok(response);
+    @PostMapping(RoutesConstant.PREVIEW_IMPORT)
+    public ResponseEntity<ApiResponse<?>> previewImport(@RequestParam("file") MultipartFile file) throws IOException {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.previewImport(file)));
     }
 
-    @PostMapping("/confirm-import")
-    public ResponseEntity<?> confirmImport(@RequestBody java.util.List<Map<String, Object>> data) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", lichLamViecService.confirmImport(data));
-        return ResponseEntity.ok(response);
+    @PostMapping(RoutesConstant.CONFIRM_IMPORT)
+    public ResponseEntity<ApiResponse<?>> confirmImport(@RequestBody List<Map<String, Object>> data) {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.confirmImport(data)));
     }
 
-    @PostMapping("/schedules")
-    public ResponseEntity<?> addSchedule(@RequestBody Map<String, Object> request) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", lichLamViecService.addSchedule(request));
-        return ResponseEntity.ok(response);
+    @PostMapping(RoutesConstant.SCHEDULES)
+    public ResponseEntity<ApiResponse<?>> addSchedule(@RequestBody Map<String, Object> request) {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.addSchedule(request)));
     }
 }

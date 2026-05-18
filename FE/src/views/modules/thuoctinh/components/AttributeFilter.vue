@@ -15,7 +15,7 @@ const handleSearch = () => emit('search');
 </script>
 
 <template>
-    <div class="flex-none mb-4">
+    <div class="filter-shell">
         <AdminFilter 
             title="Bộ lọc thuộc tính" 
             :loading="loading" 
@@ -31,6 +31,7 @@ const handleSearch = () => emit('search');
                     density="compact"
                     hide-details 
                     prepend-inner-icon="mdi-magnify" 
+                    class="compact-input"
                     @keyup.enter="handleSearch"
                 ></v-text-field>
             </v-col>
@@ -42,11 +43,12 @@ const handleSearch = () => emit('search');
                     :items="[
                         { title: 'Tất cả', value: null },
                         { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
-                        { title: 'Ngừng hoạt động', value: 'KHONG_HOAT_DONG' }
+                        { title: 'Ngừng hoạt động', value: 'NGUNG_HOAT_DONG' }
                     ]" 
                     variant="outlined" 
                     density="compact" 
                     hide-details 
+                    class="compact-input"
                 ></v-select>
             </v-col>
         </AdminFilter>

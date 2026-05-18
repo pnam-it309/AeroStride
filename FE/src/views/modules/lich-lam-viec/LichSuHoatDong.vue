@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { AdminFilter, AdminTable, AdminPagination, AdminBreadcrumbs } from '@/components/common';
 import apiService from '@/services/apiService';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
+import { ADMIN_ICONS } from '@/constants/adminIcons';
 
 const loading = ref(false);
 const isRefreshing = ref(false);
@@ -26,11 +27,11 @@ const breadcrumbs = [
 ];
 
 const tableHeaders = [
-    { text: 'STT', width: '50px', align: 'center' },
-    { text: 'Người thực hiện', width: '150px', align: 'left' },
-    { text: 'Hành động', width: '250px', align: 'left' },
-    { text: 'Đối tượng', width: '150px', align: 'left' },
-    { text: 'Thời gian', width: '180px', align: 'center' }
+    { text: 'STT', width: '50px' },
+    { text: 'Người thực hiện', width: '150px' },
+    { text: 'Hành động', width: '250px' },
+    { text: 'Đối tượng', width: '150px' },
+    { text: 'Thời gian', width: '180px' }
 ];
 
 const loadData = async () => {
@@ -71,7 +72,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <v-container fluid class="pa-4 animate-fade-in font-body" style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important">
+    <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <AdminBreadcrumbs :items="breadcrumbs" />
         
         <div class="mb-2"></div>
@@ -102,20 +103,20 @@ onMounted(() => {
         >
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
-                    <td class="data-cell text-left">
+                    <td class="data-cell">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
+                    <td class="data-cell">
                         <div class="d-flex align-center">
                             <v-avatar size="24" color="primary" class="mr-2 text-white text-caption">
                                 {{ item.nguoiThucHien ? item.nguoiThucHien.charAt(0) : '?' }}
                             </v-avatar>
-                            <span class="font-weight-bold">{{ item.nguoiThucHien }}</span>
+                            <span>{{ item.nguoiThucHien }}</span>
                         </div>
                     </td>
-                    <td class="data-cell text-left">{{ item.hanhDong }}</td>
-                    <td class="data-cell text-left">
+                    <td class="data-cell">{{ item.hanhDong }}</td>
+                    <td class="data-cell">
                         <v-chip size="x-small" variant="outlined">{{ item.doiTuong }}</v-chip>
                     </td>
-                    <td class="data-cell text-center text-slate-500 text-caption">{{ item.ngay }}</td>
+                    <td class="data-cell text-slate-500 text-caption">{{ item.ngay }}</td>
                 </tr>
             </template>
 

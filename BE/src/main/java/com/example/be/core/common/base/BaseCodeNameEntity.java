@@ -23,4 +23,7 @@ public abstract class BaseCodeNameEntity extends PrimaryEntity {
     @Column(name = "ten")
     private String ten;
 
+    @Column(name = "mo_ta")
+    private String moTa;
+
 }

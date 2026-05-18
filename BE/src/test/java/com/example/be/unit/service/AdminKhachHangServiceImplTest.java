@@ -88,7 +88,7 @@ class AdminKhachHangServiceImplTest {
     @Test
     void add_ShouldSaveSuccess() {
         lenient().when(adminKhachHangRepository.existsByMa(any())).thenReturn(false);
-        lenient().when(adminKhachHangRepository.findAllMa()).thenReturn(java.util.Collections.emptyList());
+        lenient().when(adminKhachHangRepository.findAllProjectedBy()).thenReturn(java.util.Collections.emptyList());
         lenient().when(adminKhachHangRepository.existsByEmail(any())).thenReturn(false);
         lenient().when(adminKhachHangRepository.existsByTenTaiKhoan(any())).thenReturn(false);
         lenient().when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
@@ -110,7 +110,7 @@ class AdminKhachHangServiceImplTest {
 
         service.delete("1");
 
-        assertEquals(TrangThai.KHONG_HOAT_DONG, testEntity.getTrangThai());
+        assertEquals(TrangThai.NGUNG_HOAT_DONG, testEntity.getTrangThai());
         verify(adminKhachHangRepository).save(testEntity);
     }
 }

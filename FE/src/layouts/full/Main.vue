@@ -222,7 +222,7 @@ onMounted(() => {
 }
 /* Breadcrumbs in Header */
 :deep(.breadcrumbs-header) {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 700;
 }
 

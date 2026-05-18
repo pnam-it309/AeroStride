@@ -57,7 +57,7 @@ export const dichVuSanPham = {
       coGiays,
       mauSacs,
       kichThuocs,
-      trangThais: ['DANG_HOAT_DONG', 'KHONG_HOAT_DONG'],
+      trangThais: ['DANG_HOAT_DONG', 'NGUNG_HOAT_DONG'],
       gioiTinhKhachHangs: ['NAM', 'NU', 'TRE_EM', 'UNISEX']
     };
   },
@@ -94,7 +94,7 @@ export const dichVuSanPham = {
 
   // Thay đổi trạng thái sản phẩm
   async thayDoiTrangThai(id, status) {
-    const response = await api.put(`${API_ADMIN.SAN_PHAM}/${id}/status`, { status });
+    const response = await api.patch(`${API_ADMIN.SAN_PHAM}/${id}/status`, { status });
     return response.data.data;
   },
 

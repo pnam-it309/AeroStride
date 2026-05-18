@@ -1,13 +1,17 @@
 package com.example.be.core.admin.hoadon.service.impl;
 
+import com.example.be.core.admin.hoadon.mapper.AdminHoaDonMapper;
 import com.example.be.core.admin.hoadon.model.request.AdminHoaDonRequest;
 import com.example.be.core.admin.hoadon.model.request.AdminUpdateHdctRequest;
 import com.example.be.core.admin.hoadon.model.request.AdminUpdateHoaDonRequest;
+import com.example.be.core.admin.hoadon.model.response.AdminHoaDonDetailResponse;
 import com.example.be.core.admin.hoadon.model.response.AdminHoaDonResponse;
 import com.example.be.core.admin.hoadon.repository.AdminHoaDonRepository;
 import com.example.be.core.admin.hoadon.service.AdminHoaDonService;
 import com.example.be.entity.*;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.infrastructure.exceptions.BusinessException;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.infrastructure.exceptions.SystemException;
 import com.example.be.repository.*;
@@ -42,6 +46,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     private final ChiTietSanPhamRepository chiTietSanPhamRepository;
     private final KhachHangRepository khachHangRepository;
     private final TemplateEngine templateEngine;
+    private final AdminHoaDonMapper hoaDonMapper;
 
 
     @Override
@@ -75,87 +80,23 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
 
     @Override
     @Transactional(readOnly = true)
-    public HoaDon detail(String id) {
-        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn với id: " + id));
-        return initializeHoaDon(hd);
-    }
-
-    /**
-     * Force initialization of lazy collections and proxies to prevent LazyInitializationException during JSON serialization
-     */
-    private HoaDon initializeHoaDon(HoaDon hd) {
-        if (hd == null) return null;
-        
-        // Initialize lazy collections
-        if (hd.getListsHoaDonChiTiet() != null) {
-            hd.getListsHoaDonChiTiet().size();
-            // Initialize products and their related entities within details
-            hd.getListsHoaDonChiTiet().forEach(item -> {
-                if (item.getChiTietSanPham() != null) {
-                    ChiTietSanPham ctsp = item.getChiTietSanPham();
-                    ctsp.getMaChiTietSanPham(); // Init CTSP
-                    
-                    if (ctsp.getSanPham() != null) {
-                        SanPham sp = ctsp.getSanPham();
-                        sp.getTen(); // Init SanPham
-                        // Initialize all lazy attributes of SanPham that Jackson might touch
-                        if (sp.getThuongHieu() != null) sp.getThuongHieu().getTen();
-                        if (sp.getDanhMuc() != null) sp.getDanhMuc().getTen();
-                        if (sp.getXuatXu() != null) sp.getXuatXu().getTen();
-                        if (sp.getChatLieu() != null) sp.getChatLieu().getTen();
-                        if (sp.getDeGiay() != null) sp.getDeGiay().getTen();
-                        if (sp.getCoGiay() != null) sp.getCoGiay().getTen();
-                        if (sp.getMucDichChay() != null) sp.getMucDichChay().getTen();
-                    }
-                    
-                    if (ctsp.getMauSac() != null) ctsp.getMauSac().getTen();
-                    if (ctsp.getKichThuoc() != null) ctsp.getKichThuoc().getTen();
-                    
-                    // Initialize image collection (needed for product thumbnail)
-                    if (ctsp.getAnhChiTietSanPhams() != null) {
-                        ctsp.getAnhChiTietSanPhams().size();
-                    }
-                    // Note: chiTietDotGiamGias is @JsonIgnore — no need to initialize
-                }
-            });
-        }
-        
-        if (hd.getListsLichSuHoaDon() != null) {
-            hd.getListsLichSuHoaDon().size();
-        }
-        
+    public AdminHoaDonDetailResponse detail(String id) {
+        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
+        // Explicitly initialize collections that were removed from EntityGraph to avoid MultipleBagFetchException
+        // Hibernate will load each in a single efficient query (1 query per collection)
+        if (hd.getListsLichSuHoaDon() != null) hd.getListsLichSuHoaDon().size();
         if (hd.getListsGiaoDichThanhToan() != null) {
-            hd.getListsGiaoDichThanhToan().size();
             hd.getListsGiaoDichThanhToan().forEach(gd -> {
-                if (gd.getPhuongThucThanhToan() != null) {
-                    gd.getPhuongThucThanhToan().getTen();
-                }
+                if (gd.getPhuongThucThanhToan() != null) gd.getPhuongThucThanhToan().getTen();
             });
         }
-        
-        // Initialize other lazy relationships of HoaDon
-        if (hd.getPhieuGiamGia() != null) hd.getPhieuGiamGia().getTen();
-        
-        // Initialize staff role and related entities
-        if (hd.getNhanVien() != null) {
-            hd.getNhanVien().getTen();
-            if (hd.getNhanVien().getPhanQuyen() != null) {
-                hd.getNhanVien().getPhanQuyen().getTen();
-            }
-        }
-
-        // Initialize customer
-        if (hd.getKhachHang() != null) {
-            hd.getKhachHang().getTen();
-        }
-        
-        return hd;
+        return hoaDonMapper.toDetailResponse(hd);
     }
 
     @Override
     @Transactional
-    public HoaDon updateStatus(String id, Integer status, String note) {
-        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
+    public AdminHoaDonDetailResponse updateStatus(String id, Integer status, String note) {
+        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
 
         OrderStatus oldStatus = hd.getTrangThai();
         OrderStatus newStatus;
@@ -163,10 +104,17 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         if (status != null && status >= 0 && status < OrderStatus.values().length) {
             newStatus = OrderStatus.values()[status];
         } else {
-            throw new com.example.be.infrastructure.exceptions.BusinessException("Trạng thái không hợp lệ");
+            throw new BusinessException(MessageConstants.INVALID_STATUS);
         }
 
-        if (oldStatus == newStatus) return initializeHoaDon(hd);
+        if (oldStatus == newStatus) return detail(id);
+
+        // BẮT BUỘC: Kiểm tra luồng trạng thái hợp lệ
+        if (oldStatus != null && !oldStatus.canTransitionTo(newStatus)) {
+            throw new BusinessException(
+                String.format(MessageConstants.INVALID_STATUS_TRANSITION, oldStatus.name(), newStatus.name())
+            );
+        }
 
         hd.setTrangThai(newStatus);
         hd.setNgayCapNhat(System.currentTimeMillis());
@@ -176,41 +124,29 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 .hoaDon(hd)
                 .trangThaiCu(oldStatus != null ? oldStatus.ordinal() : null)
                 .trangThaiMoi(newStatus.ordinal())
-                .ghiChu(note != null && !note.trim().isEmpty() ? note : "Cập nhật trạng thái từ hệ thống quản trị")
+                .ghiChu(note != null && !note.trim().isEmpty() ? note : "Cập nhật trạng thái")
                 .nguoiThucHien("ADMIN")
                 .build();
         history.setNgayTao(System.currentTimeMillis());
         lichSuTrangThaiHoaDonRepository.save(history);
 
-        if ((newStatus == OrderStatus.DA_HUY || newStatus == OrderStatus.HOAN_DON) && (oldStatus != OrderStatus.DA_HUY && oldStatus != OrderStatus.HOAN_DON)) {
-            hoaDonChiTietRepository.findAllByHoaDon(hd).forEach(detail -> {
+        if (newStatus == OrderStatus.DA_HUY || newStatus == OrderStatus.HOAN_DON) {
+            hd.getListsHoaDonChiTiet().forEach(detail -> {
                 ChiTietSanPham ct = detail.getChiTietSanPham();
                 if (ct != null) {
                     ct.setSoLuong(ct.getSoLuong() + detail.getSoLuong());
                     chiTietSanPhamRepository.save(ct);
                 }
             });
-        } else if ((oldStatus == OrderStatus.DA_HUY || oldStatus == OrderStatus.HOAN_DON) && (newStatus != OrderStatus.DA_HUY && newStatus != OrderStatus.HOAN_DON)) {
-            // Re-activating a cancelled/returned order: deduct stock
-            hoaDonChiTietRepository.findAllByHoaDon(hd).forEach(detail -> {
-                ChiTietSanPham ct = detail.getChiTietSanPham();
-                if (ct != null) {
-                    if (ct.getSoLuong() < detail.getSoLuong()) {
-                        throw new com.example.be.infrastructure.exceptions.BusinessException("Sản phẩm " + ct.getSanPham().getTen() + " không đủ tồn kho để khôi phục đơn hàng.");
-                    }
-                    ct.setSoLuong(ct.getSoLuong() - detail.getSoLuong());
-                    chiTietSanPhamRepository.save(ct);
-                }
-            });
         }
 
-        return initializeHoaDon(hd);
+        return detail(id);
     }
 
     @Override
     @Transactional
-    public HoaDon updateInfo(String id, AdminUpdateHoaDonRequest request) {
-        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
+    public AdminHoaDonDetailResponse updateInfo(String id, AdminUpdateHoaDonRequest request) {
+        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
 
         hd.setSoDienThoaiNguoiNhan(request.getSoDienThoaiNguoiNhan());
         hd.setDiaChiNguoiNhan(request.getDiaChiNguoiNhan());
@@ -227,15 +163,16 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         hd.setNgayCapNhat(System.currentTimeMillis());
         logHistory(hd, "Cập nhật thông tin giao hàng/khách hàng");
 
-        return initializeHoaDon(repository.save(hd));
+        repository.save(hd);
+        return detail(id);
     }
 
     @Override
     @Transactional
-    public HoaDon updateHdct(String id, AdminUpdateHdctRequest request) {
-        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
+    public AdminHoaDonDetailResponse updateHdct(String id, AdminUpdateHdctRequest request) {
+        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
         ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(request.getIdChiTietSanPham())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm chi tiết"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PRODUCT_DETAIL_NOT_FOUND));
 
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findByHoaDonAndChiTietSanPham(hd, ctsp);
 
@@ -243,7 +180,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         int delta = request.getSoLuong() - currentQty;
 
         if (ctsp.getSoLuong() < delta) {
-            throw new com.example.be.infrastructure.exceptions.BusinessException("Sản phẩm không đủ số lượng tồn kho (Còn lại: " + ctsp.getSoLuong() + ")");
+            throw new BusinessException(MessageConstants.PRODUCT_OUT_OF_STOCK + " (Còn lại: " + ctsp.getSoLuong() + ")");
         }
 
         if (hdct != null) {
@@ -264,15 +201,16 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         hoaDonChiTietRepository.save(hdct);
         logHistory(hd, "Thay đổi sản phẩm: " + ctsp.getSanPham().getTen() + " (SL: " + request.getSoLuong() + ")");
 
-        return initializeHoaDon(recalculateTotal(hd));
+        recalculateTotal(hd);
+        return detail(id);
     }
 
     @Override
     @Transactional
-    public HoaDon removeHdct(String id, String idHdct) {
-        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
+    public AdminHoaDonDetailResponse removeHdct(String id, String idHdct) {
+        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHdct)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm chi tiết"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PRODUCT_DETAIL_NOT_FOUND));
         
         ChiTietSanPham ct = hdct.getChiTietSanPham();
         if (ct != null) {
@@ -282,7 +220,8 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         
         hoaDonChiTietRepository.delete(hdct);
         logHistory(hd, "Xóa sản phẩm khỏi hóa đơn");
-        return initializeHoaDon(recalculateTotal(hd));
+        recalculateTotal(hd);
+        return detail(id);
     }
 
     private void logHistory(HoaDon hd, String note) {
@@ -342,29 +281,18 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 item.getTrangThai()
             });
         } catch (IOException e) {
-            throw new SystemException("Lỗi xuất file Excel: " + e.getMessage());
+            throw new SystemException(MessageConstants.EXCEL_EXPORT_ERROR + e.getMessage());
         }
     }
 
     @Override
     @Transactional(readOnly = true)
     public String generateInvoiceHtml(String id) {
-        HoaDon hd = repository.findForPrint(id).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
-        List<com.example.be.entity.HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
+        HoaDon hd = repository.findForPrintById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
         
-        // Ensure all lazy relationships are initialized for the template
-        details.forEach(item -> {
-            if (item.getChiTietSanPham() != null) {
-                ChiTietSanPham ct = item.getChiTietSanPham();
-                if (ct.getSanPham() != null) ct.getSanPham().getTen();
-                if (ct.getMauSac() != null) ct.getMauSac().getTen();
-                if (ct.getKichThuoc() != null) ct.getKichThuoc().getTen();
-            }
-        });
-
         Context context = new Context();
         context.setVariable("hd", hd);
-        context.setVariable("details", details);
+        context.setVariable("details", hd.getListsHoaDonChiTiet());
         context.setVariable("ngayIn", new Date());
 
         return templateEngine.process("email/invoice-print", context);

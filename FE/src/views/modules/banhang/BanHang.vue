@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { useNotifications } from '@/services/notificationService';
+import { MESSAGES } from '@/constants/messages';
 
 // Import Components
 import OrderTabs from './components/OrderTabs.vue';
@@ -46,7 +47,7 @@ onMounted(async () => {
         orders.value = data || [];
         if (orders.value.length === 0) await createNewOrder();
     } catch (error) {
-        addNotification({ title: 'Lỗi', subtitle: 'Không thể kết nối máy chủ', color: 'error' });
+        addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.CONNECT_SERVER, color: 'error' });
     } finally {
         loading.value = false;
     }
@@ -61,7 +62,7 @@ watch(() => selectedOrder.value?.id, (id) => {
 const createNewOrder = async () => {
     if (isProcessing.value) return; // Prevent double clicks
     if (orders.value.length >= 5) {
-        addNotification({ title: 'Giới hạn', subtitle: 'Tối đa 5 hóa đơn chờ', color: 'warning' });
+        addNotification({ title: 'Giới hạn', subtitle: MESSAGES.WARNING.WAITING_LIMIT, color: 'warning' });
         return;
     }
     isProcessing.value = true;
@@ -70,7 +71,7 @@ const createNewOrder = async () => {
         orders.value.push(newOrder);
         activeOrderIndex.value = orders.value.length - 1;
     } catch (e) {
-        addNotification({ title: 'Lỗi', subtitle: 'Không thể tạo đơn mới', color: 'error' });
+        addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.SAVE_DATA, color: 'error' });
     } finally {
         isProcessing.value = false;
     }
@@ -91,7 +92,7 @@ const closeOrder = (orderId, index) => {
                 if (orders.value.length === 0) await createNewOrder();
                 confirmDialog.value.show = false;
             } catch (e) {
-                addNotification({ title: 'Lỗi', subtitle: 'Không thể xóa hóa đơn', color: 'error' });
+                addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.DELETE_DATA, color: 'error' });
             } finally {
                 confirmDialog.value.loading = false;
             }
@@ -117,7 +118,7 @@ const onAddProduct = (product) => {
                 addNotification({ title: 'Thêm thành công', subtitle: product.tenSanPham, color: 'success' });
                 confirmDialog.value.show = false;
             } catch (e) {
-                addNotification({ title: 'Lỗi', subtitle: 'Sản phẩm không đủ số lượng hoặc lỗi hệ thống', color: 'error' });
+                addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK, color: 'error' });
             } finally {
                 confirmDialog.value.loading = false;
             }
@@ -132,7 +133,7 @@ const onUpdateQty = async (item, delta) => {
         const updated = await dichVuDonHang.updateSoLuong(selectedOrder.value.id, item.id, newQty);
         updateOrderInList(updated);
     } catch (e) {
-        addNotification({ title: 'Lỗi', subtitle: 'Số lượng vượt quá tồn kho', color: 'error' });
+        addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK, color: 'error' });
     }
 };
 
@@ -150,7 +151,7 @@ const onRemoveItem = (item) => {
                 orders.value = data || [];
                 confirmDialog.value.show = false;
             } catch (e) {
-                addNotification({ title: 'Lỗi', subtitle: 'Không thể xóa sản phẩm', color: 'error' });
+                addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.DELETE_DATA, color: 'error' });
             } finally {
                 confirmDialog.value.loading = false;
             }
@@ -189,7 +190,7 @@ const onApplyVoucher = async (voucherId) => {
 // Logic: Thanh toán
 const onCheckout = () => {
     if (checkoutData.value.paymentMethod === 'CASH' && checkoutData.value.receivedAmount < selectedOrder.value.tongTienSauGiam) {
-        addNotification({ title: 'Cảnh báo', subtitle: 'Khách chưa đưa đủ tiền', color: 'warning' });
+        addNotification({ title: 'Cảnh báo', subtitle: MESSAGES.ERROR.INSUFFICIENT_FUNDS, color: 'warning' });
         return;
     }
 
@@ -214,7 +215,7 @@ const onCheckout = () => {
                     tienChuyenKhoan: isCash ? 0 : selectedOrder.value.tongTienSauGiam
                 };
                 await dichVuDonHang.checkout(selectedOrder.value.id, payload);
-                addNotification({ title: 'Thành công', subtitle: 'Hóa đơn đã được thanh toán', color: 'success' });
+                addNotification({ title: 'Thành công', subtitle: MESSAGES.SUCCESS.PAYMENT, color: 'success' });
                 
                 orders.value.splice(activeOrderIndex.value, 1);
                 if (orders.value.length === 0) await createNewOrder();
@@ -225,7 +226,7 @@ const onCheckout = () => {
                 checkoutData.value.note = '';
                 confirmDialog.value.show = false;
             } catch (e) {
-                addNotification({ title: 'Lỗi', subtitle: 'Thanh toán thất bại', color: 'error' });
+                addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.PAYMENT_FAILED, color: 'error' });
             } finally {
                 isProcessing.value = false;
                 confirmDialog.value.loading = false;
@@ -360,7 +361,3 @@ const updateOrderInList = (updated) => {
     }
 }
 </style>
-
-
-
-
