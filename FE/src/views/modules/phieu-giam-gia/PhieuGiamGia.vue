@@ -282,7 +282,7 @@ onMounted(() => loadVouchers());
                     <td class="data-cell text-center text-primary">
                         <div class="text-truncate" :title="item.ma || item.id">{{ item.ma || item.id || '--' }}</div>
                     </td>
-                    <td class="data-cell text-balanced">
+                    <td class="data-cell text-left px-4">
                         <div class="text-truncate" :title="item.ten">{{ item.ten || '--' }}</div>
                     </td>
 
@@ -294,7 +294,7 @@ onMounted(() => loadVouchers());
                             {{ getHinhThucLabel(getHinhThucValue(item)) }}
                         </v-chip>
                     </td>
-                    <td class="data-cell">
+                    <td class="data-cell text-left px-4">
                         <div class="text-primary text-truncate" :title="'Giảm ' + getDiscountDisplay(item)">
                             Giảm {{ getDiscountDisplay(item) }}
                         </div>
