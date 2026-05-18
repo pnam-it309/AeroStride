@@ -27,4 +27,6 @@ public interface AdminPhieuGiamGiaService {
     byte[] downloadTemplate();
 
     void importExcel(org.springframework.web.multipart.MultipartFile file);
+
+    void checkAndExpireVouchers();
 }

@@ -44,34 +44,10 @@ export const dichVuKhachHang = {
         return response.data.data;
     },
 
-    // Đổi trạng thái khách hàng (hỗ trợ nhiều route backend)
+    // Đổi trạng thái khách hàng
     async thayDoiTrangThaiKhachHang(id, trangThai) {
-        const payload = { trangThai };
-        const statusPayload = { status: trangThai };
-
-        const attempts = [
-            // Thử kiểu /status/{id} (Giống module Phiếu giảm giá)
-            () => api.put(`${API_ADMIN.KHACH_HANG}/status/${id}`, statusPayload),
-            () => api.patch(`${API_ADMIN.KHACH_HANG}/status/${id}`, statusPayload),
-            () => api.put(`${API_ADMIN.KHACH_HANG}/status/${id}`, payload),
-
-            // Thử kiểu cũ
-            () => api.patch(`${API_ADMIN.KHACH_HANG}/update-trang-thai/${id}`, payload),
-            () => api.put(`${API_ADMIN.KHACH_HANG}/update-trang-thai/${id}`, payload),
-            () => api.patch(`${API_ADMIN.KHACH_HANG}/trang-thai/${id}`, payload)
-        ];
-
-        let lastError;
-        for (const request of attempts) {
-            try {
-                const response = await request();
-                return response.data?.data || response.data;
-            } catch (error) {
-                lastError = error;
-            }
-        }
-
-        throw lastError;
+        const response = await api.put(`${API_ADMIN.KHACH_HANG}/status/${id}`, { status: trangThai });
+        return response.data?.data || response.data;
     },
 
     // Xóa khách hàng

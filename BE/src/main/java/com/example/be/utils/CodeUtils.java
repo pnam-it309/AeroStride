@@ -1,8 +1,10 @@
 package com.example.be.utils;
 
+import com.example.be.infrastructure.annotations.CodePrefix;
 import java.security.SecureRandom;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
  * Centralized utility for generating codes (Sequential or Random).
@@ -15,8 +17,8 @@ public final class CodeUtils {
     private CodeUtils() {}
 
     /**
-     * Generates a RANDOM code with prefix based on Class.
-     * Example: SanPham.class -> SPX7Y2Z
+     * Generates a RANDOM code with prefix based on Class @CodePrefix annotation.
+     * Example: SanPham.class (@CodePrefix("SP")) -> SPX7Y2Z
      */
     public static String generateRandom(Class<?> clazz) {
         String prefix = getPrefix(clazz);
@@ -25,6 +27,22 @@ public final class CodeUtils {
             sb.append(CHARS.charAt(RANDOM.nextInt(CHARS.length())));
         }
         return sb.toString();
+    }
+
+    /**
+     * Generates a RANDOM code and ensures it is unique using the provided validator.
+     */
+    public static String generateRandom(Class<?> clazz, Predicate<String> isDuplicate) {
+        String code;
+        int attempts = 0;
+        do {
+            code = generateRandom(clazz);
+            attempts++;
+            if (attempts > 10) { // Safety break
+                code += System.currentTimeMillis() % 1000;
+            }
+        } while (isDuplicate.test(code) && attempts < 20);
+        return code;
     }
 
     /**
@@ -40,12 +58,23 @@ public final class CodeUtils {
         for (String ma : existingCodes) {
             if (ma != null && ma.startsWith(prefix)) {
                 try {
-                    int so = Integer.parseInt(ma.substring(prefixLen).trim());
-                    if (so > max) max = so;
+                    String suffix = ma.substring(prefixLen).trim();
+                    if (!suffix.isEmpty()) {
+                        int so = Integer.parseInt(suffix);
+                        if (so > max) max = so;
+                    }
                 } catch (NumberFormatException ignored) {}
             }
         }
         return String.format("%s%02d", prefix, max + 1);
+    }
+
+    /**
+     * Generates a SEQUENTIAL code based on the current max value.
+     */
+    public static String generateNext(String prefix, Integer currentMax) {
+        int next = (currentMax == null) ? 1 : currentMax + 1;
+        return String.format("%s%05d", prefix, next);
     }
 
     public static String generateUuidShort() {
@@ -53,6 +82,11 @@ public final class CodeUtils {
     }
 
     private static String getPrefix(Class<?> clazz) {
+        if (clazz.isAnnotationPresent(CodePrefix.class)) {
+            return clazz.getAnnotation(CodePrefix.class).value();
+        }
+        
+        // Fallback to legacy switch for classes not yet annotated
         String className = clazz.getSimpleName();
         return switch (className) {
             case "SanPham" -> "SP";
@@ -60,7 +94,7 @@ public final class CodeUtils {
             case "HoaDon" -> "HD";
             case "NhanVien" -> "NV";
             case "KhachHang" -> "KH";
-            case "PhieuGiamGia" -> "PG";
+            case "PhieuGiamGia" -> "PGG";
             case "DotGiamGia" -> "DG";
             default -> "MA";
         };

@@ -10,6 +10,6 @@ import org.springframework.stereotype.Service;
 public class AdminXuatXuServiceImpl extends AdminAttributeCrudSupport<XuatXu> implements AdminXuatXuService {
 
     public AdminXuatXuServiceImpl(AdminXuatXuRepository repository) {
-        super(repository, XuatXu::new, entity -> null, (entity, value) -> {}, XuatXu::setXoaMem, "xuat xu");
+        super(repository, XuatXu::new, entity -> null, (entity, value) -> {}, request -> null, XuatXu::setXoaMem, "xuat xu");
     }
 }

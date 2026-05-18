@@ -6,10 +6,10 @@ import { formatCurrency } from '@/utils/formatters';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
 import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
-import QrScanner from '@/views/modules/san-pham/components/QrScanner.vue';
+import QrScanner from '@/views/modules/bien-the-san-pham/components/QrScanner.vue';
 import FormattedNumberField from '@/views/modules/san-pham/components/FormattedNumberField.vue';
 import { downloadFile } from '@/utils/fileUtils';
-import { EditIcon, EyeIcon } from 'vue-tabler-icons';
+import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useRefreshHandler } from '@/composables/useRefreshHandler';
 
@@ -409,7 +409,7 @@ const confirmToggleStatus = (product) => {
         color: 'warning',
         action: async () => {
             try {
-                const nextStatus = isActiveStatus(product.trangThai) ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
+                const nextStatus = isActiveStatus(product.trangThai) ? 'NGUNG_HOAT_DONG' : 'DANG_HOAT_DONG';
                 await updateSingleProductStatus(product, nextStatus);
                 await loadProducts();
                 addNotification({
@@ -536,7 +536,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <v-container fluid class="pa-4 animate-fade-in font-body"
+    <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page"
         style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
         <AdminBreadcrumbs :items="[
             { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
@@ -545,7 +545,7 @@ onBeforeUnmount(() => {
 
         <div class="mb-2"></div>
 
-        <div class="filter-top">
+        <div class="filter-shell">
             <AdminFilter @refresh="handleRefresh" :loading="isRefreshing">
                 <v-col cols="12" md="3">
                     <div class="filter-field-label">Tìm kiếm</div>
@@ -577,7 +577,7 @@ onBeforeUnmount(() => {
                     <v-select v-model="filters.trangThai" :items="[
                         { title: 'Tất cả', value: null },
                         { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
-                        { title: 'Ngừng hoạt động', value: 'KHONG_HOAT_DONG' }
+                        { title: 'Ngừng hoạt động', value: 'NGUNG_HOAT_DONG' }
                     ]" variant="outlined" density="compact" hide-details class="compact-input"
                         @update:model-value="handleSearch" />
                 </v-col>
@@ -586,13 +586,13 @@ onBeforeUnmount(() => {
                         <div class="d-flex align-center justify-space-between mb-2">
                             <div class="d-flex align-center gap-2">
                                 <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
-                                <span class="text-caption font-weight-bold text-slate-600">Khoảng giá</span>
+                                <span class="filter-range-label">Khoảng giá</span>
                             </div>
-                            <span class="text-primary font-weight-bold">
+                            <span class="filter-range-value">
                                 {{ formatCurrency(filters.khoangGia[0]) }} – {{ formatCurrency(filters.khoangGia[1]) }}
                             </span>
                         </div>
-                        <v-range-slider v-model="filters.khoangGia" :min="productPriceBounds.min"
+                        <v-range-slider :key="`${productPriceBounds.min}-${productPriceBounds.max}`" v-model="filters.khoangGia" :min="productPriceBounds.min"
                             :max="productPriceBounds.max" :step="PRICE_STEP" hide-details color="primary"
                             track-color="#e2e8f0" track-size="3" thumb-size="14" class="blue-range-slider"
                             @update:model-value="handleSliderPriceChange" />
@@ -601,37 +601,30 @@ onBeforeUnmount(() => {
             </AdminFilter>
         </div>
 
-        <AdminTable title="Danh sách sản phẩm" addButtonText="Tạo mới" :headers="[
-            { text: 'Chọn', width: '70px' },
-            { text: 'STT', width: '50px' },
-            { text: 'Mã sản phẩm', width: '120px' },
-            { text: 'Tên sản phẩm', width: '220px' },
-            { text: 'Thương hiệu', width: '140px' },
-            { text: 'Danh mục', width: '140px' },
+        <AdminTable title="Danh sách sản phẩm" addButtonText="Tạo mới" class="balanced-table" :headers="[
+            { text: 'STT', width: '60px' },
+            { text: 'Mã sản phẩm', width: '110px' },
+            { text: 'Tên sản phẩm', width: '180px' },
+            { text: 'Thương hiệu', width: '110px' },
+            { text: 'Danh mục', width: '110px' },
             { text: 'Tổng số lượng', width: '120px' },
-            { text: 'Khoảng giá', width: '270px' },
-            { text: 'Trạng thái', width: '130px' },
-            { text: 'Hành động', width: '130px' }
+            { text: 'Khoảng giá', width: '150px' },
+            { text: 'Trạng thái', width: '110px' },
+            { text: 'Hành động', width: '140px' }
         ]" :items="paginatedProducts" :loading="loading" :showExportButton="true"
-            :exportButtonText="productExportButtonText" @add="router.push({ name: 'SanPhamForm' })"
+            :exportButtonText="productExportButtonText" selectable @add="router.push({ name: 'SanPhamForm' })"
             @export="handleExportProducts">
-            <template #headers>
-                <tr>
-                    <th class="header-cell " style="width: 50px;">
-                        <v-checkbox-btn :model-value="allVisibleProductsSelected"
-                            :indeterminate="someVisibleProductsSelected" color="primary" hide-details density="compact"
-                            @update:model-value="toggleSelectVisibleProducts" />
-                    </th>
-                    <th class="header-cell " style="width: 50px;">STT</th>
-                    <th class="header-cell " style="width: 150px;">Mã sản phẩm</th>
-                    <th class="header-cell " style="width: 180px;">Tên sản phẩm</th>
-                    <th class="header-cell " style="width: 130px;">Thương hiệu</th>
-                    <th class="header-cell " style="width: 140px;">Danh mục</th>
-                    <th class="header-cell " style="width: 160px;">Tổng số lượng</th>
-                    <th class="header-cell " style="width: 150px;">Khoảng giá</th>
-                    <th class="header-cell " style="width: 140px;">Trạng thái</th>
-                    <th class="header-cell " style="width: 140px;">Hành động</th>
-                </tr>
+            <template #extra-actions>
+                <v-btn variant="flat" class="admin-btn-qr text-none" @click="showQrScanner = true">
+                    <v-icon size="20" class="mr-2">mdi-qrcode-scan</v-icon>
+                    <span>Quét QR</span>
+                </v-btn>
+            </template>
+            
+            <template #header-select>
+                <v-checkbox-btn :model-value="allVisibleProductsSelected"
+                    :indeterminate="someVisibleProductsSelected" color="primary" hide-details density="compact"
+                    @update:model-value="toggleSelectVisibleProducts" />
             </template>
 
             <template #top>
@@ -655,7 +648,7 @@ onBeforeUnmount(() => {
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
 
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
                         <div class="text-truncate" :title="item.maSanPham || '--'">{{ item.maSanPham || '--' }}</div>
                     </td>
 
@@ -665,20 +658,20 @@ onBeforeUnmount(() => {
                         </div>
                     </td>
 
-                    <td class="data-cell px-4">
+                    <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.tenThuongHieu || '--'">{{ item.tenThuongHieu || '--' }}</div>
                     </td>
 
-                    <td class="data-cell px-4">
+                    <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.tenDanhMuc || '--'">{{ item.tenDanhMuc || '--' }}</div>
                     </td>
 
-                    <td class="data-cell">
-                        <span class="text-primary font-weight-medium">{{ formatNumber(item.tongSoLuongTon || 0) }}</span>
+                    <td class="data-cell text-center">
+                        <span class="text-primary">{{ formatNumber(item.tongSoLuongTon || 0) }}</span>
                     </td>
 
-                    <td class="data-cell price-value px-4">
-                        <div class="text-primary text-truncate font-weight-medium" :title="getPriceRange(item)">
+                    <td class="data-cell text-center">
+                        <div class="text-primary text-truncate" :title="getPriceRange(item)">
                             {{ getPriceRange(item) }}
                         </div>
                     </td>
@@ -694,12 +687,12 @@ onBeforeUnmount(() => {
                         <div class="d-flex align-center justify-center action-controls">
                             <v-btn variant="text" class="action-icon-btn"
                                 @click="router.push({ name: 'BienTheSanPham', query: { productId: item.id } })">
-                                <EyeIcon size="15" />
+                                <component :is="ADMIN_ICONS.ACTION.VIEW" size="15" />
                                 <v-tooltip activator="parent" location="top" text="Xem biến thể" />
                             </v-btn>
                             <v-btn variant="text" class="action-icon-btn"
                                 @click="router.push({ name: 'SanPhamForm', params: { id: item.id } })">
-                                <EditIcon size="15" />
+                                <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top" text="Chỉnh sửa" />
                             </v-btn>
                             <div class="switch-wrapper">
@@ -729,24 +722,5 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.price-slider-wrap {
-    padding-right: 10px;
-}
 
-
-
-:deep(.v-slider-track__background) {
-    height: 3px !important;
-}
-:deep(.v-slider-track__fill) {
-    height: 3px !important;
-}
-:deep(.v-slider-thumb__surface) {
-    width: 12px !important;
-    height: 12px !important;
-}
-:deep(.v-slider-thumb__ripple) {
-    width: 24px !important;
-    height: 24px !important;
-}
 </style>

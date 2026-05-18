@@ -26,15 +26,12 @@ const handleLogin = async () => {
   errorMessage.value = '';
 
   try {
-    uiStore.showLoading('Đang xác thực thông tin quản trị...');
     const response = await dichVuXacThuc.dangNhap({
       ...loginForm.value,
       loginType: 'ADMIN'
     });
     
-    // Explicitly hide after successful auth to trigger transition
-    uiStore.hideLoading();
-    router.push('/main');
+    router.push(PATH.DASHBOARD);
   } catch (error) {
     errorMessage.value = error.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
   } finally {

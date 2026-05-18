@@ -3,6 +3,7 @@ package com.example.be.core.admin.thuoctinh.kichthuoc.service.impl;
 import com.example.be.core.admin.thuoctinh.kichthuoc.repository.AdminKichThuocRepository;
 import com.example.be.core.admin.thuoctinh.kichthuoc.service.AdminKichThuocService;
 import com.example.be.core.admin.thuoctinh.service.impl.AdminAttributeCrudSupport;
+import com.example.be.core.admin.thuoctinh.model.request.AdminAttributeRequest;
 import com.example.be.entity.KichThuoc;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +11,6 @@ import org.springframework.stereotype.Service;
 public class AdminKichThuocServiceImpl extends AdminAttributeCrudSupport<KichThuoc> implements AdminKichThuocService {
 
     public AdminKichThuocServiceImpl(AdminKichThuocRepository repository) {
-        super(repository, KichThuoc::new, KichThuoc::getGiaTriKichThuoc, KichThuoc::setGiaTriKichThuoc, KichThuoc::setXoaMem, "kich thuoc");
+        super(repository, KichThuoc::new, KichThuoc::getGiaTriKichThuoc, KichThuoc::setGiaTriKichThuoc, AdminAttributeRequest::getGiaTriKichThuoc, KichThuoc::setXoaMem, "kich thuoc");
     }
 }

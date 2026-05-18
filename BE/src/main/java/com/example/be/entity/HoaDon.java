@@ -2,6 +2,7 @@ package com.example.be.entity;
 
 import com.example.be.core.common.base.AuditEntity;
 import com.example.be.core.common.base.IsIdentified;
+import com.example.be.infrastructure.annotations.CodePrefix;
 import com.example.be.infrastructure.constants.EntityProperties;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.listener.PrimaryEntityListener;
@@ -19,6 +20,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@CodePrefix("HD")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @EntityListeners(PrimaryEntityListener.class)
 public class HoaDon extends AuditEntity implements IsIdentified {
@@ -80,13 +82,16 @@ public class HoaDon extends AuditEntity implements IsIdentified {
 
     @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("hoaDon")
-    private java.util.List<HoaDonChiTiet> listsHoaDonChiTiet;
+    @OrderBy("ngayTao DESC")
+    private java.util.Set<HoaDonChiTiet> listsHoaDonChiTiet;
 
     @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("hoaDon")
-    private java.util.List<LichSuTrangThaiHoaDon> listsLichSuHoaDon;
+    @OrderBy("ngayTao DESC")
+    private java.util.Set<LichSuTrangThaiHoaDon> listsLichSuHoaDon;
 
     @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("hoaDon")
-    private java.util.List<GiaoDichThanhToan> listsGiaoDichThanhToan;
+    @OrderBy("ngayTao DESC")
+    private java.util.Set<GiaoDichThanhToan> listsGiaoDichThanhToan;
 }

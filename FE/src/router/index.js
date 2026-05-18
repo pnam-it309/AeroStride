@@ -22,8 +22,19 @@ export const router = createRouter({
             component: () => import('@/views/pages/ProductDetail.vue')
         },
         {
+            path: '/error/403',
+            name: 'Error403',
+            component: () => import('@/views/error/Error403.vue')
+        },
+        {
+            path: '/error/500',
+            name: 'Error500',
+            component: () => import('@/views/error/Error500.vue')
+        },
+        {
             path: '/:pathMatch(.*)*',
-            component: () => import('@/views/authentication/Error.vue')
+            name: 'Error404',
+            component: () => import('@/views/error/Error404.vue')
         },
         {
             ...MainRoutes,

@@ -13,6 +13,9 @@ import { parseCCCDQR } from '@/utils/cccdQR';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import axios from 'axios';
 
+import { GIOI_TINH_OPTIONS } from '@/constants/appConstants';
+import { TRANG_THAI_NHAN_VIEN } from '@/constants/nhanVienConstants';
+
 const FB_DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
 const route = useRoute();
@@ -44,7 +47,7 @@ const employeeForm = ref({
     ngaySinh: '',
     idPhanQuyen: null,
     gioiTinh: true,
-    trangThai: 'DANG_HOAT_DONG',
+    trangThai: TRANG_THAI_NHAN_VIEN.DANG_HOAT_DONG,
     hinhAnh: '',
     diaChi: '',
     tinh: null,
@@ -52,6 +55,11 @@ const employeeForm = ref({
     phuongXa: null,
     diaChiChiTiet: ''
 });
+
+const TRANG_THAI_OPTIONS = [
+    { title: 'Đang hoạt động', value: TRANG_THAI_NHAN_VIEN.DANG_HOAT_DONG },
+    { title: 'Ngừng hoạt động', value: TRANG_THAI_NHAN_VIEN.NGUNG_HOAT_DONG }
+];
 
 // Address Selection Logic
 const provinces = ref([]);
@@ -160,9 +168,14 @@ const loadEmployee = async (id) => {
     loading.value = true;
     try {
         const data = await dichVuNhanVien.layChiTietNhanVien(id);
+        
+        // Map nested phanQuyen.id to idPhanQuyen for the select component
+        const idPhanQuyen = data.idPhanQuyen || (data.phanQuyen ? data.phanQuyen.id : null);
+        
         employeeForm.value = { 
             ...data,
-            tinh: null,
+            idPhanQuyen,
+            tinh: null, // Reset to null first to trigger watchers correctly later
             thanhPho: null,
             phuongXa: null,
             diaChiChiTiet: data.diaChiChiTiet || data.diaChi || ''
@@ -369,34 +382,31 @@ onMounted(async () => {
                     <ArrowLeftIcon size="20" />
                 </v-btn>
             </div>
-            <div class="d-flex gap-3">
+            <div class="d-flex gap-3 header-actions__buttons">
                 <v-btn
-                    color="success"
                     variant="flat"
-                    class="text-none px-8 rounded-lg elevation-4"
-                    style="font-size: 16px !important; font-weight: 600 !important; height: 44px !important; min-height: 44px !important;"
+                    class="admin-btn-qr text-none"
                     @click="showQR = true"
                 >
                     <v-icon size="20" class="mr-2">mdi-qrcode-scan</v-icon>
-                    <span style="font-size: 16px !important; font-weight: 600 !important;">Quét QR CCCD</span>
+                    <span>Quét QR CCCD</span>
                 </v-btn>
                 <v-btn
                     color="primary"
                     variant="flat"
-                    class="add-btn-primary text-none px-8 rounded-lg elevation-4"
-                    style="font-size: 16px !important; font-weight: 600 !important; height: 44px !important; min-height: 44px !important;"
+                    class="add-btn-primary text-none"
                     :loading="saving"
                     @click="handleSave"
                 >
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
-                    <span style="font-size: 16px !important; font-weight: 600 !important;">{{ submitButtonText }}</span>
+                    <span>{{ submitButtonText }}</span>
                 </v-btn>
             </div>
         </div>
 
         <!-- Dialog quét QR CCCD -->
         <v-dialog v-model="showQR" max-width="500" transition="dialog-bottom-transition">
-            <v-card class="premium-card">
+            <v-card class="premium-card elevation-0 border border-slate-200">
                 <v-card-title class="pa-6 font-weight-bold border-b">
                     <v-icon start color="success" class="mr-2">mdi-qrcode-scan</v-icon>
                     Quét mã QR CCCD
@@ -426,7 +436,7 @@ onMounted(async () => {
 
         <v-row class="pb-16">
             <v-col cols="12" lg="8">
-                <v-card class="premium-card mb-6">
+                <v-card class="premium-card elevation-0 border border-slate-200 mb-6">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
@@ -459,11 +469,22 @@ onMounted(async () => {
                                 ></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Email / Tài khoản *</div>
+                                <div class="field-label">Email *</div>
                                 <v-text-field
                                     v-model="employeeForm.email"
                                     :readonly="isDetailView"
                                     placeholder="name@company.com"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                ></v-text-field>
+                            </v-col>
+                            <v-col cols="12" md="6">
+                                <div class="field-label">Tên tài khoản *</div>
+                                <v-text-field
+                                    v-model="employeeForm.tenTaiKhoan"
+                                    :readonly="isDetailView"
+                                    placeholder="Nhập tên tài khoản..."
                                     variant="outlined"
                                     density="compact"
                                     hide-details
@@ -602,7 +623,7 @@ onMounted(async () => {
             </v-col>
 
             <v-col cols="12" lg="4">
-                <v-card class="premium-card mb-6 text-center">
+                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 text-center">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6 text-left">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
@@ -653,7 +674,7 @@ onMounted(async () => {
                     </v-card-text>
                 </v-card>
 
-                <v-card class="premium-card bg-slate-50 border-dashed">
+                <v-card class="premium-card elevation-0 border border-slate-200 bg-slate-50 border-dashed">
                     <v-card-text class="pa-8 opacity-60">
                         <div class="d-flex align-center mb-2">
                             <v-icon color="slate-400" size="20" class="mr-2">mdi-history</v-icon>

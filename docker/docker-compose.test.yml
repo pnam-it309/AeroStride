@@ -1,0 +1,59 @@
+services:
+  # Database ảo dành riêng cho Integration Test (Cô lập hoàn toàn với database chính)
+  mysql-test:
+    image: mysql:8.0
+    container_name: aerostride-mysql-test
+    environment:
+      MYSQL_DATABASE: aerostride_test
+      MYSQL_ROOT_PASSWORD: test
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+    ports:
+      - "3307:3306"
+    networks:
+      - aerostride-test-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ptest"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Container chạy Backend Tests
+  backend-test:
+    image: gradle:8.5-jdk17
+    container_name: aerostride-be-test
+    working_dir: /app
+    volumes:
+      - ../BE:/app
+      # Mount cache của Gradle để tăng tốc độ chạy test ở những lần sau
+      - be-test-cache:/home/gradle/.gradle
+    environment:
+      # Truyền cấu hình đè lên properties mặc định
+      - SPRING_PROFILES_ACTIVE=test
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-test:3306/aerostride_test?useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=test
+      - SPRING_DATASOURCE_PASSWORD=test
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+    command: ["./gradlew", "test", "--no-daemon", "--info"]
+    networks:
+      - aerostride-test-net
+
+  # Container chạy Frontend Tests
+  frontend-test:
+    image: node:20-alpine
+    container_name: aerostride-fe-test
+    working_dir: /app
+    volumes:
+      - ../FE:/app
+    command: ["npm", "run", "test"]
+    networks:
+      - aerostride-test-net
+
+networks:
+  aerostride-test-net:
+    driver: bridge
+
+volumes:
+  be-test-cache:

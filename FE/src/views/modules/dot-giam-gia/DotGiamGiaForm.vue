@@ -3,7 +3,15 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
+import {
+    dichVuThuongHieu,
+    dichVuMauSac,
+    dichVuKichThuoc,
+    dichVuChatLieu
+} from '@/services/product/dichVuThuocTinh';
 import { useNotifications } from '@/services/notificationService';
+import { MESSAGES } from '@/constants/messages';
+import { STATUS } from '@/utils/statusUtils';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import AdminFilter from '@/components/common/AdminFilter.vue';
@@ -15,10 +23,28 @@ const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
 
+const toLocalDatetimeString = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const pad = (num) => String(num).padStart(2, '0');
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 const loading = ref(false);
 const saving = ref(false);
 const products = ref([]); 
 const searchQuery = ref('');
+
+// Attribute Options
+const brands = ref([]);
+const colors = ref([]);
+const sizes = ref([]);
+const materials = ref([]);
 
 // Pagination for Selection Table
 const selectionPage = ref(1);
@@ -80,7 +106,7 @@ const form = ref({
     mucUuTien: 0,
     ngayBatDau: '',
     ngayKetThuc: '',
-    trangThai: 'DANG_HOAT_DONG'
+    trangThai: STATUS.ACTIVE
 });
 
 const expandedProductIds = ref([]);
@@ -310,6 +336,19 @@ const openDatePicker = (event) => {
 const init = async () => {
     try {
         await loadMaxPrice();
+        // Load attributes for filters
+        const [brandData, colorData, sizeData, materialData] = await Promise.all([
+            dichVuThuongHieu.layThuongHieu({ trangThai: STATUS.ACTIVE }),
+            dichVuMauSac.layMauSac({ trangThai: STATUS.ACTIVE }),
+            dichVuKichThuoc.layKichThuoc({ trangThai: STATUS.ACTIVE }),
+            dichVuChatLieu.layChatLieu({ trangThai: STATUS.ACTIVE })
+        ]);
+
+        brands.value = (brandData?.content || brandData || []).map(b => b.ten);
+        colors.value = (colorData?.content || colorData || []).map(c => c.ten);
+        sizes.value = (sizeData?.content || sizeData || []).map(s => s.ten);
+        materials.value = (materialData?.content || materialData || []).map(m => m.ten);
+
         const data = await dichVuDotGiamGia.layDanhSachSanPhamApDung();
         products.value = (data || []).map((p, i) => ({
             ...p,
@@ -344,8 +383,8 @@ const init = async () => {
             const data = await dichVuDotGiamGia.layChiTietDotGiamGia(route.params.id);
             form.value = {
                 ...data,
-                ngayBatDau: data.ngayBatDau ? new Date(data.ngayBatDau).toISOString().slice(0, 16) : '',
-                ngayKetThuc: data.ngayKetThuc ? new Date(data.ngayKetThuc).toISOString().slice(0, 16) : ''
+                ngayBatDau: data.ngayBatDau ? toLocalDatetimeString(data.ngayBatDau) : '',
+                ngayKetThuc: data.ngayKetThuc ? toLocalDatetimeString(data.ngayKetThuc) : ''
             };
             const applied = await dichVuDotGiamGia.layDanhSachBienTheApDung(route.params.id);
             selectedVariantsIds.value = applied.map((v) => v.id);
@@ -353,7 +392,7 @@ const init = async () => {
             // KHÔNG tự động 'active' ở trên để bảng dưới chỉ hiện những cái đã chọn ban đầu
             expandedProductIds.value = [];
         } catch (e) {
-            addNotification({ title: 'Lỗi', subtitle: 'Không thể tải thông tin', color: 'error' });
+            addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.LOAD_DATA, color: 'error' });
         } finally { loading.value = false; }
     }
 };
@@ -384,15 +423,15 @@ const handleSave = () => {
                 };
                 if (isEditMode.value) {
                     await dichVuDotGiamGia.capNhatDotGiamGia(route.params.id, payload);
-                    addNotification({ title: 'Thành công', subtitle: 'Cập nhật hoàn tất', color: 'success' });
+                    addNotification({ title: 'Thành công', subtitle: MESSAGES.SUCCESS.UPDATE, color: 'success' });
                 } else {
                     await dichVuDotGiamGia.taoDotGiamGia(payload);
-                    addNotification({ title: 'Thành công', subtitle: 'Đã tạo chiến dịch mới', color: 'success' });
+                    addNotification({ title: 'Thành công', subtitle: MESSAGES.SUCCESS.ADD, color: 'success' });
                 }
                 confirmDialog.value.show = false;
                 router.push(PATH.DOT_GIAM_GIA);
             } catch (e) {
-                addNotification({ title: 'Lỗi', subtitle: 'Lỗi khi lưu dữ liệu', color: 'error' });
+                addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.SAVE_DATA, color: 'error' });
             } finally {
                 confirmDialog.value.loading = false;
                 saving.value = false;
@@ -409,25 +448,23 @@ onMounted(init);
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs :items="[
             { title: 'Quản lý đợt giảm giá', disabled: false, href: '#' },
-            { title: 'Đợt giảm giá', disabled: false, to: '/dot-giam-gia' },
-            { title: isDetailView ? 'Chi tiết' : isEditMode ? 'Cập nhật' : 'Thêm mới', disabled: true }
+            { title: 'Đợt giảm giá', disabled: false, to: PATH.DOT_GIAM_GIA },
+            { title: isEditMode ? 'Cập nhật' : (isDetailView ? 'Chi tiết' : 'Thêm mới'), disabled: true }
         ]" />
 
         <!-- Action Header -->
         <div class="d-flex align-center justify-space-between mb-8 mt-4">
             <div class="d-flex align-center gap-4">
-                <v-btn icon variant="flat" @click="router.push(PATH.DOT_GIAM_GIA)" class="btn-back-header">
-                    <ArrowLeftIcon size="20" />
+                <v-btn icon variant="flat" @click="router.back()" class="btn-back-header">
+                    <v-icon>mdi-arrow-left</v-icon>
                 </v-btn>
             </div>
             <div class="d-flex gap-3">
                 <v-btn v-if="!isDetailView" color="primary" variant="flat"
-                    class="add-btn-primary text-white" 
-                    style="font-size: 16px !important; font-weight: 600 !important;"
-                    prepend-icon="mdi-check-all"
-                    @click="handleSave"
+                    class="text-none px-8 rounded-lg h-11 elevation-4" @click="handleSave"
                     :loading="saving">
-                    <span style="font-size: 16px !important; font-weight: 600 !important;">{{ submitButtonText }}</span>
+                    <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
+                    {{ submitButtonText }}
                 </v-btn>
             </div>
         </div>
@@ -441,7 +478,7 @@ onMounted(init);
 
         <v-row v-else class="match-height-row pb-16">
             <v-col cols="12" md="5" class="d-flex flex-column">
-                <v-card class="premium-card mb-6 flex-grow-1" style="min-height: 580px;">
+                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1" style="min-height: 580px;">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
@@ -490,7 +527,7 @@ onMounted(init);
             </v-col>
 
             <v-col cols="12" md="7" class="d-flex flex-column">
-                <v-card class="premium-card mb-6 flex-grow-1" style="min-height: 580px;">
+                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1" style="min-height: 580px;">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-amber-lighten-5 mr-3">
@@ -551,10 +588,10 @@ onMounted(init);
                                              <td class="data-cell text-center">
                                                  <v-checkbox-btn :model-value="selectedVariantsIds.includes(variant.id)"
                                                      @update:model-value="toggleVariantSelection(variant.id)" :readonly="isDetailView"
-                                                     color="primary" hide-details density="compact" class="d-inline-flex" style="margin-left: 80px !important;"></v-checkbox-btn>
+                                                     color="primary" hide-details density="compact" class="d-inline-flex"></v-checkbox-btn>
                                              </td>
                                              <td class="data-cell text-center text-slate-500 font-weight-medium">
-                                                 {{ variant.ma }}
+                                                 <span class="text-slate-300 font-weight-bold mr-1">↳</span> {{ variant.ma }}
                                              </td>
                                              <td class="data-cell text-center text-slate-500">
                                                  {{ variant.color }} - {{ variant.kichCo }} - {{ variant.chatLieu }}
@@ -579,7 +616,7 @@ onMounted(init);
             </v-col>
 
             <v-col cols="12">
-                <v-card class="premium-card">
+                <v-card class="premium-card elevation-0 border border-slate-200">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-8">
                             <div class="icon-blob bg-emerald-lighten-5 mr-3">
@@ -609,25 +646,25 @@ onMounted(init);
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Thương hiệu</div>
-                                <v-select v-model="detailFilters.thuongHieu" :items="['Adidas', 'Nike']"
+                                <v-select v-model="detailFilters.thuongHieu" :items="brands"
                                     density="compact" variant="outlined" hide-details clearable
                                     placeholder="Thương hiệu" class="compact-input"></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Chất liệu</div>
-                                <v-select v-model="detailFilters.chatLieu" :items="['Da', 'Vải', 'Vải dệt']"
+                                <v-select v-model="detailFilters.chatLieu" :items="materials"
                                     density="compact" variant="outlined" hide-details clearable
                                     placeholder="Chất liệu" class="compact-input"></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Kích cỡ</div>
-                                <v-select v-model="detailFilters.kichCo" :items="[39, 40, 41, 42, 43]"
+                                <v-select v-model="detailFilters.kichCo" :items="sizes"
                                     density="compact" variant="outlined" hide-details clearable
                                     placeholder="Kích cỡ" class="compact-input"></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Màu sắc</div>
-                                <v-select v-model="detailFilters.mauSac" :items="['Đen', 'Trắng', 'Xám', 'Xanh dương', 'Xanh lá']"
+                                <v-select v-model="detailFilters.mauSac" :items="colors"
                                     density="compact" variant="outlined" hide-details clearable
                                     placeholder="Màu sắc" class="compact-input"></v-select>
                             </v-col>
@@ -641,7 +678,7 @@ onMounted(init);
                                         </div>
                                         <span class="price-range-value text-primary font-weight-bold">{{ formatCurrency(detailFilters.khoangGia[0]) }} – {{ formatCurrency(detailFilters.khoangGia[1]) }}</span>
                                     </div>
-                                    <v-range-slider v-model="detailFilters.khoangGia" :max="dynamicMaxPrice" :min="0"
+                                    <v-range-slider :key="`0-${dynamicMaxPrice}`" v-model="detailFilters.khoangGia" :max="dynamicMaxPrice" :min="0"
                                         :step="10000" hide-details color="primary" track-color="#e2e8f0"
                                         track-size="3" thumb-size="14" class="blue-range-slider"></v-range-slider>
                                 </v-col>
@@ -1004,12 +1041,16 @@ onMounted(init);
 }
 
 /* THAY ĐỔI: Đồng bộ tất cả các nút bấm (Buttons) về cỡ 13px và độ đậm 600 rõ ràng */
-:deep(.v-btn),
-:deep(.v-btn span),
-:deep(.v-btn *),
-:deep(.v-btn__content) {
+:deep(.v-btn:not(.btn-back-header)),
+:deep(.v-btn:not(.btn-back-header) span),
+:deep(.v-btn:not(.btn-back-header) *),
+:deep(.v-btn:not(.btn-back-header)__content) {
     font-size: 13px !important;
     font-weight: 600 !important;
+}
+
+:deep(.btn-back-header .v-icon) {
+    font-size: 20px !important;
 }
 
 /* Ngoại lệ: Giữ cỡ chữ 16px CHO TIÊU ĐỀ PHẦN và NÚT THÊM ĐỢT GIẢM GIÁ CHÍNH */

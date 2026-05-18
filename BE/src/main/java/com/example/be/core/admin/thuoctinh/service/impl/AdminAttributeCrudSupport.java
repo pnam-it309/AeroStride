@@ -32,6 +32,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
     private final Supplier<E> entitySupplier;
     private final Function<E, String> extraValueGetter;
     private final BiConsumer<E, String> extraValueSetter;
+    private final Function<AdminAttributeRequest, String> extraValueExtractor;
     private final BiConsumer<E, Boolean> deletedSetter;
     private final String entityDisplayName;
 
@@ -40,6 +41,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
             Supplier<E> entitySupplier,
             Function<E, String> extraValueGetter,
             BiConsumer<E, String> extraValueSetter,
+            Function<AdminAttributeRequest, String> extraValueExtractor,
             BiConsumer<E, Boolean> deletedSetter,
             String entityDisplayName
     ) {
@@ -47,6 +49,7 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
         this.entitySupplier = entitySupplier;
         this.extraValueGetter = extraValueGetter;
         this.extraValueSetter = extraValueSetter;
+        this.extraValueExtractor = extraValueExtractor;
         this.deletedSetter = deletedSetter;
         this.entityDisplayName = entityDisplayName;
     }
@@ -135,7 +138,8 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
         entity.setMa(ma);
         entity.setTen(requireText(request.getTen(), "Ten " + entityDisplayName + " khong duoc de trong"));
         entity.setTrangThai(Optional.ofNullable(parseTrangThai(request.getTrangThai())).orElse(TrangThai.DANG_HOAT_DONG));
-        extraValueSetter.accept(entity, normalize(request.getMoTa()));
+        entity.setMoTa(normalize(request.getMoTa()));
+        extraValueSetter.accept(entity, normalize(extraValueExtractor.apply(request)));
         deletedSetter.accept(entity, false);
     }
 
@@ -211,14 +215,21 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
     }
 
     private AdminAttributeResponse toResponse(E entity) {
-        return AdminAttributeResponse.builder()
+        String extraValue = extraValueGetter.apply(entity);
+        AdminAttributeResponse.AdminAttributeResponseBuilder builder = AdminAttributeResponse.builder()
                 .id(entity.getId())
                 .ma(entity.getMa())
                 .ten(entity.getTen())
-                .moTa(extraValueGetter.apply(entity))
+                .moTa(entity.getMoTa())
                 .trangThai(entity.getTrangThai() != null ? entity.getTrangThai().name() : null)
                 .ngayTao(entity.getNgayTao())
-                .ngayCapNhat(entity.getNgayCapNhat())
-                .build();
+                .ngayCapNhat(entity.getNgayCapNhat());
+
+        if (entity instanceof com.example.be.entity.MauSac) {
+            builder.maMauHex(extraValue);
+        } else if (entity instanceof com.example.be.entity.KichThuoc) {
+            builder.giaTriKichThuoc(extraValue);
+        }
+        return builder.build();
     }
 }

@@ -5,16 +5,22 @@ import com.example.be.core.admin.hoadon.model.request.AdminUpdateHdctRequest;
 import com.example.be.core.admin.hoadon.model.request.AdminUpdateHoaDonRequest;
 import com.example.be.core.admin.hoadon.service.AdminHoaDonService;
 import com.example.be.core.common.dto.ApiResponse;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.RoutesConstant;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_HOA_DON)
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
 public class AdminHoaDonController {
 
     private final AdminHoaDonService adminHoaDonService;
@@ -29,18 +35,22 @@ public class AdminHoaDonController {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.detail(id)));
     }
 
-    @RequestMapping(value = {"/{id}/status", "/status/{id}"}, method = {RequestMethod.PUT, RequestMethod.PATCH})
-    public ResponseEntity<ApiResponse<?>> updateStatus(@PathVariable String id, @RequestParam Integer status, @RequestParam(required = false) String note) {
+    @PatchMapping(RoutesConstant.STATUS_ALT)
+    public ResponseEntity<ApiResponse<?>> updateStatus(@PathVariable String id,
+                                                        @RequestParam Integer status,
+                                                        @RequestParam(required = false) String note) {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.updateStatus(id, status, note)));
     }
 
     @PutMapping(RoutesConstant.INFO)
-    public ResponseEntity<ApiResponse<?>> updateInfo(@PathVariable String id, @RequestBody AdminUpdateHoaDonRequest request) {
+    public ResponseEntity<ApiResponse<?>> updateInfo(@PathVariable String id,
+                                                      @Valid @RequestBody AdminUpdateHoaDonRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.updateInfo(id, request)));
     }
 
     @PutMapping(RoutesConstant.PRODUCTS)
-    public ResponseEntity<ApiResponse<?>> updateHdct(@PathVariable String id, @RequestBody AdminUpdateHdctRequest request) {
+    public ResponseEntity<ApiResponse<?>> updateHdct(@PathVariable String id,
+                                                      @Valid @RequestBody AdminUpdateHdctRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.updateHdct(id, request)));
     }
 

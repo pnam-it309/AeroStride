@@ -31,4 +31,5 @@ public class AdminPhieuGiamGiaResponse {
 
     private String ghiChu;
     private String trangThai;
+    private java.util.List<String> listIdKhachHang;
 }

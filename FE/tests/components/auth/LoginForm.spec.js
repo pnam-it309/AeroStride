@@ -1,8 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import LoginForm from '@/components/auth/LoginForm.vue';
+import LoginForm from '@/components/auth/admin/LoginForm.vue';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
+
+// Mock global localStorage to avoid jsdom issues
+global.localStorage = {
+  getItem: vi.fn(() => 'false'),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+};
 
 // Mock dependencies
 vi.mock('@/services/auth/dichVuXacThuc', () => ({
@@ -39,12 +47,10 @@ describe('LoginForm.vue', () => {
       },
     });
 
-    // Directly call handleLogin or trigger submit
-    await wrapper.find('v-form').trigger('submit.prevent');
+    // Directly call handleLogin on the component vm
+    await wrapper.vm.handleLogin();
     
-    // In Vue Test Utils, accessing refs is tricky, but we check the data
-    // Or we check if v-alert is visible
-    expect(wrapper.html()).contains('Vui lòng nhập tên đăng nhập và mật khẩu');
+    expect(wrapper.vm.errorMessage).toBe('Vui lòng nhập tên đăng nhập và mật khẩu');
   });
 
   it('calls login service when form is valid', async () => {
@@ -54,8 +60,6 @@ describe('LoginForm.vue', () => {
       },
     });
 
-    // Set form values manually (since we stubbed text-fields)
-    // In a real test, you'd mount Vuetify correctly
     const vm = wrapper.vm;
     vm.loginForm.username = 'admin';
     vm.loginForm.password = 'password123';
@@ -65,6 +69,7 @@ describe('LoginForm.vue', () => {
     expect(dichVuXacThuc.dangNhap).toHaveBeenCalledWith({
       username: 'admin',
       password: 'password123',
+      loginType: 'ADMIN',
     });
   });
 });

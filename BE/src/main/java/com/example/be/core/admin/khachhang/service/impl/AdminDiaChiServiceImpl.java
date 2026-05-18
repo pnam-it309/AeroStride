@@ -6,7 +6,9 @@ import com.example.be.core.admin.khachhang.repository.AdminDiaChiRepository;
 import com.example.be.core.admin.khachhang.service.AdminDiaChiService;
 import com.example.be.entity.DiaChi;
 import com.example.be.entity.KhachHang;
-import com.example.be.repository.KhachHangRepository;
+import com.example.be.core.admin.khachhang.repository.AdminKhachHangRepository;
+import com.example.be.infrastructure.constants.MessageConstants;
+import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,7 @@ import java.util.stream.Collectors;
 public class AdminDiaChiServiceImpl implements AdminDiaChiService {
 
     private final AdminDiaChiRepository repository;
-    private final KhachHangRepository khachHangRepository;
+    private final AdminKhachHangRepository khachHangRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -34,7 +36,7 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
     @Transactional
     public AdminDiaChiResponse add(AdminDiaChiRequest request) {
         KhachHang kh = khachHangRepository.findById(request.getIdKhachHang())
-                .orElseThrow(() -> new RuntimeException("Khach hang khong ton tai"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KHACH_HANG_NOT_FOUND + request.getIdKhachHang()));
         
         DiaChi dc = new DiaChi();
         BeanUtils.copyProperties(request, dc);
@@ -56,7 +58,7 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
     @Transactional
     public AdminDiaChiResponse update(String id, AdminDiaChiRequest request) {
         DiaChi dc = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Dia chi khong ton tai"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DIA_CHI_NOT_FOUND));
         
         BeanUtils.copyProperties(request, dc, "id", "khachHang");
         dc = repository.save(dc);
@@ -91,7 +93,7 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
     @Transactional
     public void setDefault(String id) {
         DiaChi dc = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Dia chi khong ton tai"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DIA_CHI_NOT_FOUND));
         unsetOldDefault(dc.getKhachHang().getId());
         dc.setLaMacDinh(true);
         repository.save(dc);
@@ -105,7 +107,7 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
     }
 
     private void unsetOldDefault(String khId) {
-        DiaChi oldDefault = repository.findDefaultByKhachHangId(khId);
+        DiaChi oldDefault = repository.findByKhachHangIdAndLaMacDinhTrue(khId);
         if (oldDefault != null) {
             oldDefault.setLaMacDinh(false);
             repository.save(oldDefault);
@@ -123,7 +125,7 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
                 .sdtNguoiNhan(dc.getSdtNguoiNhan())
                 .laMacDinh(dc.getLaMacDinh())
                 .idKhachHang(dc.getKhachHang() != null ? dc.getKhachHang().getId() : null)
-                .tenKhachHang(dc.getKhachHang() != null ? dc.getKhachHang().getTen() : "Khách lẻ")
+                .tenKhachHang(dc.getKhachHang() != null ? dc.getKhachHang().getTen() : MessageConstants.KHACH_LE)
                 .build();
     }
 }

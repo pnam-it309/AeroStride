@@ -4,6 +4,8 @@ import { AdminFilter, AdminTable, AdminBreadcrumbs, AdminPagination } from '@/co
 import { CalendarIcon } from 'vue-tabler-icons';
 import apiService from '@/services/apiService';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
+import { ADMIN_ICONS } from '@/constants/adminIcons';
+import { useNotifications } from '@/services/notificationService';
 
 const loading = ref(false);
 const isRefreshing = ref(false);
@@ -38,12 +40,12 @@ const breadcrumbs = [
 ];
 
 const tableHeaders = [
-    { text: 'STT', width: '50px', align: 'center' },
-    { text: 'Nhân viên', width: '200px', align: 'left' },
-    { text: 'Ca làm việc', width: '150px', align: 'center' },
-    { text: 'Ngày làm', width: '150px', align: 'center' },
-    { text: 'Trạng thái', width: '150px', align: 'center' },
-    { text: 'Hành động', width: '100px', align: 'center' }
+    { text: 'STT', width: '50px' },
+    { text: 'Nhân viên', width: '200px' },
+    { text: 'Ca làm việc', width: '150px' },
+    { text: 'Ngày làm', width: '150px' },
+    { text: 'Trạng thái', width: '150px' },
+    { text: 'Hành động', width: '100px' }
 ];
 
 const loadData = async () => {
@@ -252,12 +254,12 @@ onMounted(() => {
 </script>
 
 <template>
-    <v-container fluid class="pa-4 animate-fade-in font-body" style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important">
+    <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <AdminBreadcrumbs :items="breadcrumbs" />
         
         <div class="mb-2"></div>
 
-        <div class="filter-top invoice-filter-shell">
+        <div class="filter-shell">
             <AdminFilter title="Bộ lọc lịch làm việc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm nhân viên</div>
@@ -268,6 +270,7 @@ onMounted(() => {
                         density="compact"
                         hide-details
                         prepend-inner-icon="mdi-magnify"
+                        class="compact-input"
                         @input="handleFilter"
                     />
                 </v-col>
@@ -279,6 +282,7 @@ onMounted(() => {
                         variant="outlined"
                         density="compact"
                         hide-details
+                        class="compact-input"
                         @update:model-value="handleFilter"
                     />
                 </v-col>
@@ -308,13 +312,13 @@ onMounted(() => {
                 </template>
                 <template #row="{ item, index }">
                     <tr class="data-row">
-                        <td class="data-cell text-center">{{ index + 1 }}</td>
-                        <td class="data-cell text-left font-weight-bold">{{ item.nhanVien }}</td>
-                        <td class="data-cell text-center">
+                        <td class="data-cell">{{ index + 1 }}</td>
+                        <td class="data-cell font-weight-bold">{{ item.nhanVien }}</td>
+                        <td class="data-cell">
                             <v-chip size="small" color="info" variant="tonal">{{ item.ca }}</v-chip>
                         </td>
-                        <td class="data-cell text-center">{{ item.ngay }}</td>
-                        <td class="data-cell text-center">
+                        <td class="data-cell">{{ item.ngay }}</td>
+                        <td class="data-cell">
                             <v-chip
                                 size="small"
                                 :color="item.trangThai === 'DA_XAC_NHAN' ? 'success' : 'warning'"
@@ -323,10 +327,16 @@ onMounted(() => {
                                 {{ item.trangThai === 'DA_XAC_NHAN' ? 'Đã xác nhận' : 'Chờ xác nhận' }}
                             </v-chip>
                         </td>
-                        <td class="data-cell text-center action-cell">
+                        <td class="data-cell action-cell">
                             <div class="action-controls">
-                                <v-btn icon="mdi-pencil-outline" variant="text" color="primary" class="action-icon-btn" size="small"></v-btn>
-                                <v-btn icon="mdi-delete-outline" variant="text" color="error" class="action-icon-btn" size="small"></v-btn>
+                                <v-btn variant="text" color="primary" class="action-icon-btn" size="small">
+                                    <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
+                                    <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
+                                </v-btn>
+                                <v-btn variant="text" color="error" class="action-icon-btn" size="small">
+                                    <component :is="ADMIN_ICONS.ACTION.DELETE" size="15" />
+                                    <v-tooltip activator="parent" location="top">Xóa</v-tooltip>
+                                </v-btn>
                             </div>
                         </td>
                     </tr>
@@ -475,22 +485,22 @@ onMounted(() => {
                         <table class="native-admin-table w-100">
                             <thead>
                                 <tr>
-                                    <th class="header-cell text-center" style="width: 50px">STT</th>
-                                    <th class="header-cell text-left">Nhân viên</th>
-                                    <th class="header-cell text-center">Ca làm</th>
-                                    <th class="header-cell text-center">Ngày làm</th>
-                                    <th class="header-cell text-center">Trạng thái</th>
+                                    <th class="header-cell" style="width: 50px">STT</th>
+                                    <th class="header-cell">Nhân viên</th>
+                                    <th class="header-cell">Ca làm</th>
+                                    <th class="header-cell">Ngày làm</th>
+                                    <th class="header-cell">Trạng thái</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="(row, idx) in importPreviewData" :key="idx" class="data-row">
-                                    <td class="data-cell text-center">{{ idx + 1 }}</td>
-                                    <td class="data-cell text-left font-weight-bold">{{ row.nhanVien }}</td>
-                                    <td class="data-cell text-center">
+                                    <td class="data-cell">{{ idx + 1 }}</td>
+                                    <td class="data-cell font-weight-bold">{{ row.nhanVien }}</td>
+                                    <td class="data-cell">
                                         <v-chip size="x-small" color="info" variant="tonal">{{ row.ca }}</v-chip>
                                     </td>
-                                    <td class="data-cell text-center">{{ row.ngay }}</td>
-                                    <td class="data-cell text-center">
+                                    <td class="data-cell">{{ row.ngay }}</td>
+                                    <td class="data-cell">
                                         <v-chip size="x-small" :color="row.status === 'VALID' ? 'success' : 'error'" variant="flat">
                                             {{ row.status === 'VALID' ? 'Hợp lệ' : 'Lỗi' }}
                                         </v-chip>

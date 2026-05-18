@@ -84,6 +84,8 @@ const {
     overscroll-behavior-y: contain;
     -ms-overflow-style: none;
     scrollbar-width: none;
+    /* Optimize for smooth momentum scrolling */
+    -webkit-overflow-scrolling: touch;
     &::-webkit-scrollbar { display: none; }
 }
 
@@ -91,6 +93,9 @@ const {
     contain: layout paint style;
     content-visibility: auto;
     contain-intrinsic-size: 100vh;
+    /* GPU Acceleration */
+    backface-visibility: hidden;
+    transform: translateZ(0);
 }
 
 .navbar {

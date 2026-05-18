@@ -3,20 +3,24 @@ package com.example.be.core.admin.phieugiamgia.controller;
 import com.example.be.core.admin.phieugiamgia.model.request.AdminPhieuGiamGiaRequest;
 import com.example.be.core.admin.phieugiamgia.service.AdminPhieuGiamGiaService;
 import com.example.be.core.common.dto.ApiResponse;
+import com.example.be.core.common.dto.UpdateStatusRequest;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.RoutesConstant;
-import com.example.be.infrastructure.constants.TrangThai;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Map;
-
+@Slf4j
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_PHIEU_GIAM_GIA)
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
 public class AdminPhieuGiamGiaController {
 
     private final AdminPhieuGiamGiaService service;
@@ -32,39 +36,29 @@ public class AdminPhieuGiamGiaController {
     }
 
     @PostMapping(RoutesConstant.ADD) // Compatibility Alias
-    public ResponseEntity<ApiResponse<Void>> add(@RequestBody AdminPhieuGiamGiaRequest req) {
+    public ResponseEntity<ApiResponse<Void>> add(@Valid @RequestBody AdminPhieuGiamGiaRequest req) {
         service.add(req);
-        return ResponseEntity.ok(ApiResponse.success(null, "Thêm thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.PHIEU_GIAM_GIA_ADD_SUCCESS));
     }
 
     @PutMapping(RoutesConstant.UPDATE) // Compatibility Alias
-    public ResponseEntity<ApiResponse<Void>> update(@RequestBody AdminPhieuGiamGiaRequest req, @PathVariable String id) {
+    public ResponseEntity<ApiResponse<Void>> update(@Valid @RequestBody AdminPhieuGiamGiaRequest req,
+                                                     @PathVariable String id) {
         service.update(req, id);
-        return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.PHIEU_GIAM_GIA_UPDATE_SUCCESS));
     }
 
     @DeleteMapping(RoutesConstant.DELETE) // Compatibility Alias
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String id) {
         service.delete(id);
-        return ResponseEntity.ok(ApiResponse.success(null, "Xóa thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.PHIEU_GIAM_GIA_DELETE_SUCCESS));
     }
 
-    @RequestMapping(value = {"/{id}/status", "/status/{id}"}, method = {RequestMethod.PUT, RequestMethod.PATCH})
-    public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id, @RequestBody Map<String, String> body) {
-        String statusStr = body.get("status");
-        if (statusStr == null || statusStr.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(400, "ERR_INVALID_STATUS", "Trạng thái không được để trống!", null, null));
-        }
-        
-        try {
-            TrangThai status = TrangThai.valueOf(statusStr.trim().toUpperCase());
-            service.updateStatus(id, status);
-            return ResponseEntity.ok(ApiResponse.success(null, "Cập nhật trạng thái thành công!"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(400, "ERR_INVALID_STATUS_VALUE", "Trạng thái không hợp lệ: " + statusStr, null, null));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(ApiResponse.error(500, "ERR_INTERNAL", "Lỗi xử lý cập nhật trạng thái: " + e.getMessage(), null, null));
-        }
+    @PatchMapping(RoutesConstant.STATUS_ALT)
+    public ResponseEntity<ApiResponse<Void>> updateStatus(@PathVariable String id,
+                                                           @Valid @RequestBody UpdateStatusRequest body) {
+        service.updateStatus(id, body.getStatus());
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.UPDATE_STATUS_SUCCESS));
     }
 
     @GetMapping(RoutesConstant.EXPORT_EXCEL)
@@ -88,6 +82,6 @@ public class AdminPhieuGiamGiaController {
     @PostMapping(RoutesConstant.IMPORT_EXCEL)
     public ResponseEntity<ApiResponse<Void>> importExcel(@RequestParam("file") MultipartFile file) {
         service.importExcel(file);
-        return ResponseEntity.ok(ApiResponse.success(null, "Import thành công!"));
+        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.IMPORT_SUCCESS));
     }
 }

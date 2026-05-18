@@ -3,13 +3,14 @@ import { ref, onMounted, watch } from 'vue';
 import { PATH } from '@/router/routePaths';
 import { useRouter } from 'vue-router';
 import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
+import { ReceiptIcon } from 'vue-tabler-icons';
 
 // Reusable Components
 import AdminFilter from '@/components/common/AdminFilter.vue';
 import AdminTable from '@/components/common/AdminTable.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import { downloadFile } from '@/utils/fileUtils';
-import { EyeIcon, ReceiptIcon, PrinterIcon } from 'vue-tabler-icons';
+import { ADMIN_ICONS } from '@/constants/adminIcons';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { useAdminTable } from '@/composables/useAdminTable';
 import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
@@ -85,16 +86,16 @@ const showOrderDetailDialog = ref(false);
 const selectedOrder = ref(null);
 
 const tableHeaders = [
-    { text: 'STT', width: '50px' },
-    { text: 'Mã hóa đơn', width: '120px' },
-    { text: 'Khách hàng', width: '150px' },
-    { text: 'Mã nhân viên', width: '140px' },
-    { text: 'Số điện thoại', width: '120px' },
-    { text: 'Loại hóa đơn', width: '120px' },
-    { text: 'Loại thanh toán', width: '140px' },
-    { text: 'Tổng tiền', width: '100px' },
-    { text: 'Trạng thái', width: '140px' },
-    { text: 'Hành động', width: '110px' }
+    { text: 'STT',align: 'center', width: '50px' },
+    { text: 'Mã hóa đơn', width: '100px' },
+    { text: 'Khách hàng', width: '130px' },
+    { text: 'Mã nhân viên', width: '110px' },
+    { text: 'Số điện thoại', width: '110px' },
+    { text: 'Loại hóa đơn', width: '100px' },
+    { text: 'Loại thanh toán', width: '120px' },
+    { text: 'Tổng tiền', width: '90px' },
+    { text: 'Trạng thái', width: '120px' },
+    { text: 'Hành động', width: '100px' }
 ];
 
 const loadCounts = async () => {
@@ -229,7 +230,7 @@ onMounted(() => loadOrders());
 </script>
 
 <template>
-    <v-container fluid class="pa-4 animate-fade-in font-body" style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important;">
+    <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs
             :items="[
@@ -240,7 +241,7 @@ onMounted(() => loadOrders());
 
         <div class="mb-2"></div>
 
-        <div class="filter-top invoice-filter-shell">
+        <div class="filter-shell invoice-filter-shell">
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" md="4">
                     <div class="filter-field-label">Tìm kiếm</div>
@@ -252,7 +253,7 @@ onMounted(() => loadOrders());
                         density="compact"
                         hide-details
                         prepend-inner-icon="mdi-magnify"
-                        class="font-weight-bold search-field"
+                        class="compact-input search-field"
                         @input="handleSearch"
                     ></v-text-field>
                 </v-col>
@@ -267,7 +268,7 @@ onMounted(() => loadOrders());
                         variant="outlined"
                         density="compact"
                         hide-details
-                        class="font-weight-bold sort-field"
+                        class="compact-input sort-field"
                         @update:model-value="handleSearch"
                     >
                         <template v-slot:prepend-inner>
@@ -284,7 +285,7 @@ onMounted(() => loadOrders());
                         type="date"
                         variant="outlined"
                         density="compact"
-                        class="date-field"
+                        class="compact-input date-field"
                         append-inner-icon="mdi-calendar-month-outline"
                         hide-details
                         @click:append-inner="openFromDatePicker"
@@ -300,7 +301,7 @@ onMounted(() => loadOrders());
                         type="date"
                         variant="outlined"
                         density="compact"
-                        class="date-field"
+                        class="compact-input date-field"
                         append-inner-icon="mdi-calendar-month-outline"
                         hide-details
                         @click:append-inner="openToDatePicker"
@@ -311,6 +312,7 @@ onMounted(() => loadOrders());
         </div>
 
         <AdminTable
+            class="balanced-table"
             title="Danh sách hóa đơn"
             :showAddButton="false"
             show-export-button
@@ -330,35 +332,35 @@ onMounted(() => loadOrders());
                     @update:model-value="handleTabChange"
                     height="54"
                 >
-                    <v-tab :value="TAB_ALL" class="text-none font-weight-bold px-2 tab-item">
+                    <v-tab :value="TAB_ALL" class="text-none px-2 tab-item">
                         <v-icon start size="16">mdi-view-grid-outline</v-icon>
                         Tất cả
                     </v-tab>
-                    <v-tab :value="0" class="text-none font-weight-bold px-2 tab-item">
+                    <v-tab :value="0" class="text-none px-2 tab-item">
                         <v-icon start size="16">mdi-progress-clock</v-icon>
                         Chờ xác nhận
                     </v-tab>
-                    <v-tab :value="1" class="text-none font-weight-bold px-2 tab-item">
+                    <v-tab :value="1" class="text-none px-2 tab-item">
                         <v-icon start size="16">mdi-check-circle-outline</v-icon>
                         Đã xác nhận
                     </v-tab>
-                    <v-tab :value="2" class="text-none font-weight-bold px-2 tab-item">
+                    <v-tab :value="2" class="text-none px-2 tab-item">
                         <v-icon start size="16">mdi-package-variant-closed</v-icon>
                         Chờ giao
                     </v-tab>
-                    <v-tab :value="3" class="text-none font-weight-bold px-2 tab-item">
+                    <v-tab :value="3" class="text-none px-2 tab-item">
                         <v-icon start size="16">mdi-truck-fast-outline</v-icon>
                         Đang giao
                     </v-tab>
-                    <v-tab :value="4" class="text-none font-weight-bold px-2 tab-item">
+                    <v-tab :value="4" class="text-none px-2 tab-item">
                         <v-icon start size="16">mdi-checkbox-marked-circle-outline</v-icon>
                         Hoàn thành
                     </v-tab>
-                    <v-tab :value="5" class="text-none font-weight-bold px-2 tab-item">
+                    <v-tab :value="5" class="text-none px-2 tab-item">
                         <v-icon start size="16">mdi-close-circle-outline</v-icon>
                         Hủy
                     </v-tab>
-                    <v-tab :value="6" class="text-none font-weight-bold px-2 tab-item">
+                    <v-tab :value="6" class="text-none px-2 tab-item">
                         <v-icon start size="16">mdi-cash-refund</v-icon>
                         Hoàn đơn
                     </v-tab>
@@ -367,24 +369,24 @@ onMounted(() => loadOrders());
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-slate-400 font-weight-medium">{{ getRowNumber(index) }}</td>
+                    <td class="data-cell text-center text-slate-500">{{ getRowNumber(index) }}</td>
 
-                    <td class="data-cell">
-                        <div class="font-weight-medium text-dark text-truncate" :title="item.maHoaDon">{{ item.maHoaDon }}</div>
+                    <td class="data-cell text-center">
+                        <div class="text-truncate" :title="item.maHoaDon">{{ item.maHoaDon }}</div>
                     </td>
 
                     <td class="data-cell">
-                        <div class="font-weight-medium text-dark text-truncate" :title="item.tenKhachHang || 'Khách vãng lai'">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
+                        <div class="text-truncate" :title="item.tenKhachHang || 'Khách vãng lai'">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
                     </td>
 
-                    <td class="data-cell">
-                        <div class="font-weight-medium text-dark text-truncate" :title="item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống'">
+                    <td class="data-cell text-center">
+                        <div class="text-truncate" :title="item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống'">
                             {{ item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống' }}
                         </div>
                     </td>
 
-                    <td class="data-cell">
-                        <div class="font-weight-medium text-dark text-truncate" :title="item.soDienThoai || 'N/A'">{{ item.soDienThoai || 'N/A' }}</div>
+                    <td class="data-cell text-center">
+                        <div class="text-truncate" :title="item.soDienThoai || 'N/A'">{{ item.soDienThoai || 'N/A' }}</div>
                     </td>
 
                     <td class="data-cell">
@@ -396,12 +398,12 @@ onMounted(() => loadOrders());
                         </v-chip>
                     </td>
 
-                    <td class="data-cell">
-                        <div class="font-weight-medium text-dark text-truncate" :title="getPaymentLabel(item)">{{ getPaymentLabel(item) }}</div>
+                    <td class="data-cell text-center">
+                        <div class="text-truncate" :title="getPaymentLabel(item)">{{ getPaymentLabel(item) }}</div>
                     </td>
 
                     <td class="data-cell price-value">
-                        <div class="font-weight-medium text-dark total-price-text">
+                        <div class="text-primary">
                             {{ formatCurrency(item.tongTienSauGiam || item.tongTien) }}
                         </div>
                     </td>
@@ -429,11 +431,11 @@ onMounted(() => loadOrders());
                                 icon
                                 variant="text"
                                 size="28"
-                                color="slate-700"
-                                class="rounded-md action-icon-btn"
+                                color="slate-600"
+                                class="rounded-lg action-icon-btn"
                                 @click.stop="viewOrderDetail(item)"
                             >
-                                <EyeIcon size="15" />
+                                <component :is="ADMIN_ICONS.ACTION.VIEW" size="15" />
                                 <v-tooltip activator="parent" location="top">Xem chi tiết</v-tooltip>
                             </v-btn>
                         </div>
@@ -528,28 +530,15 @@ onMounted(() => loadOrders());
 </template>
 
 <style scoped>
-.back-btn {
-    border-radius: 12px !important;
-    width: 42px;
-    height: 42px;
+:deep(.order-type-online) {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #dbeafe !important;
 }
-.filter-top {
-    position: sticky;
-    top: 8px;
-    z-index: 6;
-}
-.page-title {
-    line-height: 1.1;
-}
-.action-group {
-    min-width: 64px;
-}
-.stt-cell {
-    text-align: center !important;
-}
-
-.stt-cell {
-    text-align: center !important;
+:deep(.order-type-offline) {
+    background: #fdf2f8 !important;
+    color: #be185d !important;
+    border: 1px solid #fce7f3 !important;
 }
 </style>
 

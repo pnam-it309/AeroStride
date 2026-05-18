@@ -1,15 +1,19 @@
 package com.example.be.core.admin.khachhang.repository;
 
 import com.example.be.entity.DiaChi;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.example.be.repository.DiaChiRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
 import java.util.List;
 
-public interface AdminDiaChiRepository extends JpaRepository<DiaChi, String> {
-    @Query("SELECT d FROM DiaChi d LEFT JOIN FETCH d.khachHang WHERE d.khachHang.id = :khachHangId")
-    List<DiaChi> findByKhachHangId(@Param("khachHangId") String khachHangId);
+import org.springframework.data.jpa.repository.EntityGraph;
 
-    @Query("SELECT d FROM DiaChi d WHERE d.khachHang.id = :khId AND d.laMacDinh = true")
-    DiaChi findDefaultByKhachHangId(@Param("khId") String khId);
+public interface AdminDiaChiRepository extends DiaChiRepository, JpaSpecificationExecutor<DiaChi> {
+
+    @EntityGraph(attributePaths = {"khachHang"})
+    List<DiaChi> findByKhachHangId(String khachHangId);
+
+    DiaChi findByKhachHangIdAndLaMacDinhTrue(String khId);
 }

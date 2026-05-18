@@ -11,8 +11,17 @@ import MainView from './Main.vue';
                 style="height: 100%; overflow: hidden !important; display: flex; flex-direction: column;">
                 <div class="content-shell">
                     <RouterView v-slot="{ Component, route }">
-                        <transition name="page-fade" mode="out-in">
-                            <component :is="Component" :key="route.path" />
+                        <transition name="route-shell" mode="out-in">
+                            <Suspense :timeout="0">
+                                <template #default>
+                                    <component :is="Component" :key="route.path" />
+                                </template>
+                                <template #fallback>
+                                    <div class="d-flex align-center justify-center w-100 h-100" style="min-height: 400px; background-color: #ffffff;">
+                                        <v-progress-circular indeterminate color="primary" size="48" />
+                                    </div>
+                                </template>
+                            </Suspense>
                         </transition>
                     </RouterView>
                 </div>
@@ -73,21 +82,5 @@ body {
     margin: 0;
 }
 
-/* Optimized Smooth Page Transition */
-.page-fade-enter-active,
-.page-fade-leave-active {
-    transition:
-        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.page-fade-enter-from {
-    opacity: 0;
-    transform: translateY(8px);
-}
-
-.page-fade-leave-to {
-    opacity: 0;
-    transform: translateY(-8px);
-}
+/* Transition rules are defined centrally in src/scss/_animations.scss */
 </style>

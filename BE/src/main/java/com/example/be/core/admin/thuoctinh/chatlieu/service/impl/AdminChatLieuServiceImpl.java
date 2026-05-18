@@ -10,6 +10,6 @@ import org.springframework.stereotype.Service;
 public class AdminChatLieuServiceImpl extends AdminAttributeCrudSupport<ChatLieu> implements AdminChatLieuService {
 
     public AdminChatLieuServiceImpl(AdminChatLieuRepository repository) {
-        super(repository, ChatLieu::new, entity -> null, (entity, value) -> {}, ChatLieu::setXoaMem, "chat lieu");
+        super(repository, ChatLieu::new, entity -> null, (entity, value) -> {}, request -> null, ChatLieu::setXoaMem, "chat lieu");
     }
 }

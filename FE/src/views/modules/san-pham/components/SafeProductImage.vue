@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { getDisplayImageUrl } from '../utils/imageDisplay';
+import { getDisplayImageUrl } from '@/utils/imageDisplay';
 
 const props = defineProps({
     src: {

@@ -9,7 +9,8 @@ import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUt
 // REUSABLE COMPONENTS
 import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import { downloadFile } from '@/utils/fileUtils';
-import { EditIcon, RefreshIcon } from 'vue-tabler-icons';
+import { ADMIN_ICONS } from '@/constants/adminIcons';
+import { RefreshIcon } from 'vue-tabler-icons';
 
 import { dichVuResetPassword } from '@/services/admin/dichVuResetPassword';
 import { useNotifications } from '@/services/notificationService';
@@ -17,6 +18,10 @@ import { useNotifications } from '@/services/notificationService';
 import { useAdminTable } from '@/composables/useAdminTable';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useRefreshHandler } from '@/composables/useRefreshHandler';
+
+import { MESSAGES } from '@/constants/messages';
+import { GIOI_TINH_FILTER_OPTIONS } from '@/constants/appConstants';
+import { TRANG_THAI_FILTER_OPTIONS } from '@/constants/nhanVienConstants';
 
 const {
     items: employees,
@@ -54,7 +59,7 @@ async function loadPendingRequests() {
     try {
         pendingRequests.value = await dichVuResetPassword.getPendingRequests();
     } catch (e) {
-        addNotification({ title: 'Lỗi', subtitle: 'Không tải được danh sách yêu cầu reset', color: 'error' });
+        addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.LOAD_DATA, color: 'error' });
     } finally {
         resetLoading.value = false;
     }
@@ -64,26 +69,26 @@ async function handleResetPassword(id) {
     resetLoading.value = true;
     try {
         await dichVuResetPassword.approveReset(id);
-        addNotification({ title: 'Thành công', subtitle: 'Đã reset và gửi email cho nhân viên', color: 'success' });
+        addNotification({ title: 'Thành công', subtitle: MESSAGES.SUCCESS.RESET_PASSWORD, color: 'success' });
         await loadPendingRequests();
     } catch (e) {
-        addNotification({ title: 'Lỗi', subtitle: 'Reset mật khẩu thất bại', color: 'error' });
+        addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.SYSTEM, color: 'error' });
     } finally {
         resetLoading.value = false;
     }
 }
 
 const tableHeaders = [
-    { text: 'STT', width: '50px', align: 'center' },
-    { text: 'Mã nhân viên', width: '115px', align: 'center' },
-    { text: 'Tên nhân viên', width: '190px', align: 'left' },
-    { text: 'Tài khoản', width: '240px', align: 'left' },
-    { text: 'Giới tính', width: '130px', align: 'center' },
-    { text: 'Số điện thoại', width: '150px', align: 'center' },
-    { text: 'Địa chỉ', width: '230px', align: 'left' },
-    { text: 'Chức vụ', width: '140px', align: 'center' },
-    { text: 'Trạng thái', width: '180px', align: 'center' },
-    { text: 'Hành động', width: '140px', align: 'center' }
+    { text: 'STT', width: '60px' },
+    { text: 'Mã nhân viên', width: '110px' },
+    { text: 'Tên nhân viên', width: '140px' },
+    { text: 'Tài khoản', width: '160px' },
+    { text: 'Giới tính', width: '100px' },
+    { text: 'Số điện thoại', width: '120px' },
+    { text: 'Địa chỉ', width: '220px' },
+    { text: 'Chức vụ', width: '110px' },
+    { text: 'Trạng thái', width: '140px' },
+    { text: 'Hành động', width: '120px' }
 ];
 
 const handleRefresh = async () => {
@@ -111,7 +116,7 @@ const confirmChangeStatus = (item) => {
         color: 'warning',
         action: async () => {
             try {
-                const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
+                const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'NGUNG_HOAT_DONG' : 'DANG_HOAT_DONG';
                 await dichVuNhanVien.thayDoiTrangThaiNhanVien(item.id, newS);
                 item.trangThai = newS;
             } catch (e) {
@@ -157,8 +162,7 @@ onMounted(() => {
 <template>
     <v-container
         fluid
-        class="pa-4 animate-fade-in font-body"
-        style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important"
+        class="pa-4 animate-fade-in font-body admin-module-page"
     >
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs
@@ -170,7 +174,7 @@ onMounted(() => {
 
         <div class="mb-2"></div>
         <!-- 1. FILTER -->
-        <div class="invoice-filter-shell">
+        <div class="filter-shell">
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm nhân viên</div>
@@ -189,11 +193,7 @@ onMounted(() => {
                     <div class="filter-field-label">Giới tính</div>
                     <v-select
                         v-model="filters.gioiTinh"
-                        :items="[
-                            { title: 'Tất cả', value: null },
-                            { title: 'Nam', value: true },
-                            { title: 'Nữ', value: false }
-                        ]"
+                        :items="GIOI_TINH_FILTER_OPTIONS"
                         variant="outlined"
                         density="compact"
                         hide-details
@@ -205,11 +205,7 @@ onMounted(() => {
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select
                         v-model="filters.trangThai"
-                        :items="[
-                            { title: 'Tất cả trạng thái', value: null },
-                            { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
-                            { title: 'Ngừng hoạt động', value: 'KHONG_HOAT_DONG' }
-                        ]"
+                        :items="TRANG_THAI_FILTER_OPTIONS"
                         variant="outlined"
                         density="compact"
                         hide-details
@@ -234,12 +230,12 @@ onMounted(() => {
         >
             <template #top>
                 <v-tabs v-model="tab" bg-color="transparent" color="primary" height="54" align-tabs="start" class="admin-tabs">
-                    <v-tab :value="0" class="text-none font-weight-bold px-4 tab-item">
+                    <v-tab :value="0" class="text-none px-4 tab-item">
                         <v-icon start size="16">mdi-view-grid-outline</v-icon>
                         Danh sách nhân viên
                     </v-tab>
 
-                    <v-tab :value="1" class="text-none font-weight-bold px-4 tab-item">
+                    <v-tab :value="1" class="text-none px-4 tab-item">
                         <v-icon start size="16">mdi-clock-outline</v-icon>
                         Yêu cầu tạo mới mật khẩu
                     </v-tab>
@@ -252,14 +248,14 @@ onMounted(() => {
                     <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.ma">{{ item.ma || '-' }}</div>
                     </td>
-                    <td class="data-cell px-4">
+                    <td class="data-cell text-left px-4">
                         <div class="text-slate-800 text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
                     </td>
                     <td class="data-cell text-left px-4">
                         <div class="text-slate-800 text-truncate" :title="item.tenTaiKhoan">{{ item.tenTaiKhoan || '-' }}</div>
                         <div class="text-caption text-slate-500 text-truncate" :title="item.email">{{ item.email || '-' }}</div>
                     </td>
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
                         <v-chip
                             variant="flat"
                             class="justify-center"
@@ -268,14 +264,14 @@ onMounted(() => {
                             {{ item.gioiTinh === true ? 'Nam' : item.gioiTinh === false ? 'Nữ' : '-' }}
                         </v-chip>
                     </td>
-                    <td class="data-cell text-center px-4">
+                    <td class="data-cell px-4">
                         <div class="d-flex align-center justify-center text-truncate text-slate-700" :title="item.sdt">
                             <v-icon size="14" class="mr-2 text-slate-400">mdi-phone</v-icon>
                             <span>{{ item.sdt || '-' }}</span>
                         </div>
                     </td>
-                    <td class="data-cell text-left px-4" style="min-width: 200px;">
-                        <div class="text-slate-700" style="line-height: 1.4;">
+                    <td class="data-cell text-left px-4 allow-wrap" style="min-width: 200px;">
+                        <div class="text-slate-700">
                             <!-- Thử cả 2 bộ tên trường do xung đột DB -->
                             <span v-if="item.diaChiChiTiet || item.dia_chi_chi_tiet">
                                 {{ item.diaChiChiTiet || item.dia_chi_chi_tiet }}, 
@@ -299,7 +295,7 @@ onMounted(() => {
                             {{ item.tenPhanQuyen || 'Nhân viên' }}
                         </div>
                     </td>
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
                         <template v-if="tab === 0">
                             <v-chip
                                 variant="flat"
@@ -323,8 +319,8 @@ onMounted(() => {
                                 <RefreshIcon size="15" />
                                 <v-tooltip activator="parent" location="top">Reset mật khẩu</v-tooltip>
                             </v-btn>
-                            <v-btn variant="text" class="action-icon-btn" @click.stop="router.push(`${PATH.NHAN_VIEN_FORM}/${item.id}`)">
-                                <EditIcon size="15" />
+                            <v-btn variant="text" class="action-icon-btn" @click="router.push(`${PATH.NHAN_VIEN_FORM}/${item.id}`)">
+                                <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
@@ -372,113 +368,4 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* 
-   FORCE GLOBAL OVERRIDES FOR STAFF MODULE 
-   Matching KhachHang aesthetics
-*/
-:deep(.gender-chip) {
-    min-width: 100px !important;
-}
-
-/* ==========================================================================
-   ĐỒNG BỘ HỆ THỐNG TYPOGRAPHY CHUẨN 13PX CHO MÀN HÌNH DANH SÁCH NHÂN VIÊN
-   ========================================================================== */
-
-/* Ép mọi thẻ nội dung thông thường về 13px và khử in đậm */
-:deep(div:not(.v-icon):not(.tab-item):not(.v-btn__content):not(.text-h6)),
-:deep(span:not(.v-icon):not(.tab-item):not(.v-btn__content)),
-:deep(td),
-:deep(th),
-:deep(p),
-:deep(input),
-:deep(.v-field__input),
-:deep(.v-field__input input),
-:deep(.v-label),
-:deep(.v-field-label),
-:deep(input::placeholder),
-:deep(.v-field__input::placeholder) {
-    font-size: 13px !important;
-    font-weight: 400 !important;
-    text-transform: none !important; /* Bỏ in hoa */
-}
-
-/* Khử viết hoa toàn bộ cho các phần tử con */
-:deep(*) {
-    text-transform: none !important;
-}
-
-/* Đảm bảo Header bảng hiển thị 13px và Chữ đậm 600 */
-:deep(th),
-:deep(.v-table th),
-:deep(.header-cell) {
-    font-size: 13px !important;
-    font-weight: 600 !important;
-}
-
-/* Cân đối nhãn bộ lọc: 13px + Chữ đậm 600 */
-.filter-field-label,
-:deep(.filter-field-label) {
-    font-size: 13px !important;
-    font-weight: 600 !important;
-}
-
-/* Giữ nút bấm "Tạo mới" chính ở top level ở 16px, chữ đậm 600 */
-:deep(.add-btn-primary),
-:deep(.add-btn-primary span),
-:deep(.add-btn-primary *),
-:deep(.add-btn-primary__content) {
-    font-size: 16px !important;
-    font-weight: 600 !important;
-}
-
-/* THAY ĐỔI: Các nút bấm hành động phụ (trong bảng, reset pass) ở 13px, chữ đậm 600 */
-:deep(.v-btn:not(.add-btn-primary)),
-:deep(.v-btn:not(.add-btn-primary) span),
-:deep(.v-btn:not(.add-btn-primary) *),
-:deep(.v-btn:not(.add-btn-primary)__content) {
-    font-size: 13px !important;
-    font-weight: 600 !important;
-}
-
-/* Typography & Cell Alignment */
-.data-cell {
-    font-weight: 400 !important;
-    vertical-align: middle !important;
-}
-
-.contact-cell {
-    text-align: left !important;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-}
-
-.center-cell {
-    text-align: center !important;
-}
-
-/* Force header centering for columns marked as align center */
-:deep(.v-table th.text-center),
-:deep(.header-cell.text-center) {
-    text-align: center !important;
-}
-
-/* Tab Count Badge colors */
-.active-chip {
-    color: rgb(var(--v-theme-primary)) !important;
-}
-
-.inactive-chip {
-    color: #64748b !important;
-}
-
-:deep(.tab-count-chip .v-chip__underlay) {
-    display: none !important;
-}
-
-:deep(.tab-count-chip .v-chip__content) {
-    justify-content: center !important;
-    width: 100% !important;
-}
 </style>

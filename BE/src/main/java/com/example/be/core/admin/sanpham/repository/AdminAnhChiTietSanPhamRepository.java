@@ -16,5 +16,7 @@ public interface AdminAnhChiTietSanPhamRepository extends AnhChiTietSanPhamRepos
 
     List<AnhChiTietSanPham> findByChiTietSanPhamIdAndXoaMemFalse(String variantId);
 
+    List<AnhChiTietSanPham> findAllByChiTietSanPhamIdInAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(List<String> variantIds);
+
     Optional<AnhChiTietSanPham> findFirstByChiTietSanPhamIdAndXoaMemFalseOrderByNgayTaoAsc(String variantId);
 }

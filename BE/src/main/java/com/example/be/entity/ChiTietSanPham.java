@@ -59,16 +59,16 @@ public class ChiTietSanPham extends PrimaryEntity {
     @OneToMany(mappedBy = "chiTietSanPham", fetch = FetchType.LAZY)
     @Builder.Default
     @JsonIgnoreProperties("chiTietSanPham")
-    private List<AnhChiTietSanPham> anhChiTietSanPhams = new ArrayList<>();
+    private java.util.Set<AnhChiTietSanPham> anhChiTietSanPhams = new java.util.LinkedHashSet<>();
 
     @OneToMany(mappedBy = "chiTietSanPham", fetch = FetchType.LAZY)
     @Builder.Default
     @JsonIgnore
-    private List<ChiTietDotGiamGia> chiTietDotGiamGias = new ArrayList<>();
+    private java.util.Set<ChiTietDotGiamGia> chiTietDotGiamGias = new java.util.LinkedHashSet<>();
 
     @OneToMany(mappedBy = "chiTietSanPham", fetch = FetchType.LAZY)
     @Builder.Default
     @JsonIgnore
-    private List<HoaDonChiTiet> hoaDonChiTiets = new ArrayList<>();
+    private java.util.Set<HoaDonChiTiet> hoaDonChiTiets = new java.util.LinkedHashSet<>();
 
 }

@@ -80,6 +80,22 @@ public class AdminSanPhamMapper {
     }
 
     public ProductVariantResponse toVariantResponse(ChiTietSanPham variant, List<ProductVariantImageResponse> images) {
+        java.math.BigDecimal activeDiscount = java.math.BigDecimal.ZERO;
+        long now = System.currentTimeMillis();
+        if (variant.getChiTietDotGiamGias() != null) {
+            for (com.example.be.entity.ChiTietDotGiamGia ct : variant.getChiTietDotGiamGias()) {
+                com.example.be.entity.DotGiamGia d = ct.getDotGiamGia();
+                if (d != null && d.getTrangThai() == com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG) {
+                    if (d.getNgayBatDau() != null && d.getNgayKetThuc() != null
+                            && d.getNgayBatDau() <= now && now <= d.getNgayKetThuc()) {
+                        if (d.getSoTienGiam() != null && d.getSoTienGiam().compareTo(activeDiscount) > 0) {
+                            activeDiscount = d.getSoTienGiam();
+                        }
+                    }
+                }
+            }
+        }
+
         return ProductVariantResponse.builder()
                 .id(variant.getId())
                 .idSanPham(variant.getSanPham() != null ? variant.getSanPham().getId() : null)
@@ -103,6 +119,7 @@ public class AdminSanPhamMapper {
                 .soLuong(variant.getSoLuong())
                 .giaNhap(variant.getGiaNhap())
                 .giaBan(variant.getGiaBan())
+                .phanTramGiam(activeDiscount)
                 .trangThai(variant.getTrangThai())
                 .ngayTao(variant.getNgayTao())
                 .ngayCapNhat(variant.getNgayCapNhat())

@@ -10,6 +10,6 @@ import org.springframework.stereotype.Service;
 public class AdminDeGiayServiceImpl extends AdminAttributeCrudSupport<DeGiay> implements AdminDeGiayService {
 
     public AdminDeGiayServiceImpl(AdminDeGiayRepository repository) {
-        super(repository, DeGiay::new, entity -> null, (entity, value) -> {}, DeGiay::setXoaMem, "de giay");
+        super(repository, DeGiay::new, entity -> null, (entity, value) -> {}, request -> null, DeGiay::setXoaMem, "de giay");
     }
 }

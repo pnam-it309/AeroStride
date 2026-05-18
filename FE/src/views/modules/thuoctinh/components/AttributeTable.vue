@@ -1,5 +1,5 @@
 <script setup>
-import { EditIcon } from 'vue-tabler-icons';
+import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { AdminTable, AdminPagination } from '@/components/common';
 import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
 import { formatDateTime } from '@/utils/formatters';
@@ -39,8 +39,8 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
             :items="items"
             :total-count="pagination.totalElements"
             :loading="loading"
-            @add="emit('add')"
-            class="h-100"
+            @add="emit('add', $event)"
+            class="h-100 all-center-table"
         >
             <template #top>
                 <v-tabs 
@@ -51,7 +51,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                     grow 
                     height="54"
                 >
-                    <v-tab v-for="tabItem in tabs" :key="tabItem.value" :value="tabItem.value" class="text-none font-weight-medium px-4 tab-item">
+                    <v-tab v-for="tabItem in tabs" :key="tabItem.value" :value="tabItem.value" class="text-none px-4 tab-item">
                         <v-icon start size="16">{{ tabItem.icon }}</v-icon>
                         {{ tabItem.title }}
                     </v-tab>
@@ -70,6 +70,9 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                         <div class="text-slate-600 text-truncate" :title="getItemName(item)">{{ getItemName(item) }}</div>
                     </td>
                     <td class="data-cell">
+                        <div class="text-slate-400 text-truncate" :title="item.moTa || '---'">{{ item.moTa || '---' }}</div>
+                    </td>
+                    <td class="data-cell">
                         <v-chip
                             variant="flat"
                             :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']"
@@ -86,12 +89,12 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                                 size="28"
                                 color="slate-700"
                                 class="rounded-lg action-icon-btn"
-                                @click.stop="emit('edit', item)"
+                                @click.stop="emit('edit', item, $event)"
                             >
-                                <EditIcon size="15" />
+                                <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
-
+                            
                             <!-- Switch -->
                             <div class="switch-wrapper d-flex align-center">
                                 <v-switch

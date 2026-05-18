@@ -20,4 +20,8 @@ public class AdminAttributeRequest {
     private String moTa;
 
     private String trangThai;
+
+    private String maMauHex;
+
+    private String giaTriKichThuoc;
 }

@@ -11,6 +11,7 @@ import com.example.be.core.admin.banhang.service.AdminBanHangService;
 import com.example.be.entity.*;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.constants.TrangThai;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.exceptions.BusinessException;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.utils.HelperUtils;
@@ -46,7 +47,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Transactional
     public AdminBanHangHoaDonResponse createHoaDon() {
         if (hoaDonRepository.countByTrangThaiAndLoaiDon(OrderStatus.CHO_XAC_NHAN, "TAI_QUAY") >= 5) {
-            throw new BusinessException("Tối đa 5 hóa đơn chờ.");
+            throw new BusinessException(MessageConstants.HOA_DON_WAITING_LIMIT);
         }
         HoaDon hoaDon = new HoaDon();
         hoaDon.setMaHoaDon(CodeUtils.generateRandom(HoaDon.class));
@@ -62,7 +63,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Override
     @Transactional
     public void deleteHoaDon(String id) {
-        HoaDon hd = hoaDonRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại"));
+        HoaDon hd = hoaDonRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_EXIST));
         hoaDonChiTietRepository.deleteAll(hoaDonChiTietRepository.findAllByHoaDon(hd));
         hoaDonRepository.delete(hd);
     }
@@ -72,10 +73,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     public AdminBanHangHoaDonResponse addSanPham(String idHoaDon, AdminBanHangHoaDonChiTietRequest request) {
         HoaDon hoaDon = getHoaDonOrThrow(idHoaDon);
         ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(request.getIdChiTietSanPham())
-                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
 
         if (ctsp.getSoLuong() < request.getSoLuong()) {
-            throw new BusinessException("Sản phẩm không đủ số lượng tồn kho.");
+            throw new BusinessException(MessageConstants.PRODUCT_OUT_OF_STOCK);
         }
 
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findByHoaDonAndChiTietSanPham(hoaDon, ctsp);
@@ -101,13 +102,13 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Transactional
     public AdminBanHangHoaDonResponse updateSoLuong(String idHoaDon, String idHoaDonChiTiet, Integer soLuong) {
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHoaDonChiTiet)
-                .orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tìm thấy trong hóa đơn"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_IN_HOA_DON));
         
         if (soLuong <= 0) {
             hoaDonChiTietRepository.delete(hdct);
         } else {
             if (hdct.getChiTietSanPham().getSoLuong() < soLuong) {
-                throw new BusinessException("Sản phẩm không đủ số lượng.");
+                throw new BusinessException(MessageConstants.PRODUCT_INSUFFICIENT_QTY);
             }
             hdct.setSoLuong(soLuong);
             hoaDonChiTietRepository.save(hdct);
@@ -119,7 +120,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Override
     public void removeHoaDonChiTiet(String idHoaDon, String idHoaDonChiTiet) {
         if (!hoaDonChiTietRepository.existsById(idHoaDonChiTiet)) {
-            throw new ResourceNotFoundException("Không tìm thấy sản phẩm chi tiết");
+            throw new ResourceNotFoundException(MessageConstants.PRODUCT_DETAIL_NOT_FOUND);
         }
         hoaDonChiTietRepository.deleteById(idHoaDonChiTiet);
         updateHoaDonTotals(getHoaDonOrThrow(idHoaDon));
@@ -131,7 +132,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         HoaDon hd = getHoaDonOrThrow(idHoaDon);
         KhachHang kh = null;
         if (idKhachHang != null && !idKhachHang.isEmpty()) {
-            kh = khachHangRepository.findById(idKhachHang).orElseThrow(() -> new ResourceNotFoundException("Khách hàng không tồn tại"));
+            kh = khachHangRepository.findById(idKhachHang).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KHACH_HANG_NOT_EXIST));
         }
         hd.setKhachHang(kh);
         hoaDonRepository.save(hd);
@@ -144,7 +145,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         HoaDon hd = getHoaDonOrThrow(idHoaDon);
         PhieuGiamGia voucher = null;
         if (idPhieuGiamGia != null && !idPhieuGiamGia.isEmpty()) {
-            voucher = phieuGiamGiaRepository.findById(idPhieuGiamGia).orElseThrow(() -> new ResourceNotFoundException("Voucher không tồn tại"));
+            voucher = phieuGiamGiaRepository.findById(idPhieuGiamGia).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.VOUCHER_NOT_EXIST));
         }
         hd.setPhieuGiamGia(voucher);
         updateHoaDonTotals(hd);
@@ -157,13 +158,13 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         HoaDon hd = getHoaDonOrThrow(idHoaDon);
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
         if (details.isEmpty()) {
-            throw new BusinessException("Hóa đơn trống.");
+            throw new BusinessException(MessageConstants.HOA_DON_EMPTY);
         }
 
         for (HoaDonChiTiet d : details) {
             ChiTietSanPham ct = d.getChiTietSanPham();
             if (ct.getSoLuong() < d.getSoLuong()) {
-                throw new BusinessException("Sản phẩm " + ct.getSanPham().getTen() + " không đủ tồn kho.");
+                throw new BusinessException(String.format(MessageConstants.PRODUCT_OUT_OF_STOCK_FORMAT, ct.getSanPham().getTen()));
             }
             ct.setSoLuong(ct.getSoLuong() - d.getSoLuong());
             chiTietSanPhamRepository.save(ct);
@@ -228,7 +229,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     }
 
     private HoaDon getHoaDonOrThrow(String id) {
-        return hoaDonRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Hóa đơn không tồn tại"));
+        return hoaDonRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_EXIST));
     }
 
     private void updateHoaDonTotals(HoaDon hd) {

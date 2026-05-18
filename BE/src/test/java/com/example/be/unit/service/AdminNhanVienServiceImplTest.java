@@ -20,8 +20,11 @@ class AdminNhanVienServiceImplTest {
     @Mock private PasswordEncoder passwordEncoder;
     @InjectMocks private AdminNhanVienServiceImpl service;
     @Test void testDetail() {
-        AdminNhanVienResponse mockResponse = mock(AdminNhanVienResponse.class);
-        when(repository.detail("1")).thenReturn(mockResponse);
+        NhanVien mockNv = new NhanVien();
+        mockNv.setId("1");
+        mockNv.setMa("NV-01");
+        mockNv.setTen("Employee 01");
+        when(repository.findById("1")).thenReturn(Optional.of(mockNv));
         assertNotNull(service.detail("1"));
     }
 }

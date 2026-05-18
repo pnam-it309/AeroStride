@@ -10,7 +10,7 @@ import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import AdminFilter from '@/components/common/AdminFilter.vue';
 import AdminTable from '@/components/common/AdminTable.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
-import VariantFormModal from './components/VariantFormModal.vue';
+import VariantFormModal from '../bien-the-san-pham/components/VariantFormModal.vue';
 import FormattedNumberField from './components/FormattedNumberField.vue';
 import SafeProductImage from './components/SafeProductImage.vue';
 import {
@@ -25,8 +25,9 @@ import {
     dichVuMucDichChay, dichVuMauSac, dichVuKichThuoc
 } from '@/services/product/dichVuThuocTinh';
 import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
-import { exportQrImageZip } from './utils/qrExcelWorkbook';
+import { exportQrImageZip } from '@/utils/qrExcelWorkbook';
 import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
+import { generateRandomCode } from '@/utils/codeGenerator';
 
 const route = useRoute();
 const router = useRouter();
@@ -62,6 +63,20 @@ const origins = ref([]);
 const purposes = ref([]);
 const colors = ref([]);
 const sizes = ref([]);
+
+// Tìm kiếm nhanh cho Chip Group
+const colorSearch = ref('');
+const sizeSearch = ref('');
+const filteredColors = computed(() => {
+    const query = normalizeSearchText(colorSearch.value);
+    if (!query) return colors.value;
+    return colors.value.filter(c => normalizeSearchText(c.ten).includes(query));
+});
+const filteredSizes = computed(() => {
+    const query = normalizeSearchText(sizeSearch.value);
+    if (!query) return sizes.value;
+    return sizes.value.filter(s => normalizeSearchText(s.ten).includes(query));
+});
 
 // Theo dõi nội dung đang gõ trong các combobox
 const searchQueries = reactive({
@@ -146,7 +161,7 @@ const variantPriceBounds = ref({
 const variantOptions = computed(() => ({
     mauSacs: colors.value,
     kichThuocs: sizes.value,
-    trangThais: [defaultVariantStatus, 'KHONG_HOAT_DONG']
+    trangThais: [defaultVariantStatus, 'NGUNG_HOAT_DONG']
 }));
 const variantTableHeaders = [
     { text: 'Chọn', width: '70px' },
@@ -203,6 +218,55 @@ const totalVariantStock = computed(() => variantItems.value.reduce(
     0
 ));
 
+// Grouping variants by color for better UI organization
+const variantsByColor = computed(() => {
+    const groups = {};
+    variantItems.value.forEach(item => {
+        if (!groups[item.idMauSac]) {
+            groups[item.idMauSac] = [];
+        }
+        groups[item.idMauSac].push(item);
+    });
+    return groups;
+});
+
+const bulkEditModal = reactive({
+    show: false,
+    targetColorId: null,
+    form: {
+        soLuong: '',
+        giaNhap: '',
+        giaBan: ''
+    }
+});
+
+const openBulkEdit = (colorId = null) => {
+    bulkEditModal.targetColorId = colorId;
+    bulkEditModal.form = { soLuong: '', giaNhap: '', giaBan: '' };
+    bulkEditModal.show = true;
+};
+
+const applyBulkEdit = () => {
+    const { soLuong, giaNhap, giaBan } = bulkEditModal.form;
+    variantItems.value = variantItems.value.map(item => {
+        if (bulkEditModal.targetColorId === null || String(item.idMauSac) === String(bulkEditModal.targetColorId)) {
+            return {
+                ...item,
+                soLuong: soLuong !== '' ? Number(soLuong) : item.soLuong,
+                giaNhap: giaNhap !== '' ? Number(giaNhap) : item.giaNhap,
+                giaBan: giaBan !== '' ? Number(giaBan) : item.giaBan
+            };
+        }
+        return item;
+    });
+    bulkEditModal.show = false;
+    addNotification({
+        title: 'Thành công',
+        subtitle: `Đã cập nhật hàng loạt cho ${bulkEditModal.targetColorId ? 'màu sắc này' : 'tất cả biến thể'}`,
+        color: 'success'
+    });
+};
+
 const variantContextSummary = computed(() => (
     [
         getOptionLabel(soles, product.value.idDeGiay),
@@ -244,6 +308,15 @@ const comboboxFilter = (itemTitle, queryText, item) => {
 const comboboxProps = {
     clearable: true,
     autoSelectFirst: false
+};
+
+const getVariantColorHex = (colorId) => {
+    const color = colors.value.find(c => c.id === colorId);
+    return color?.maMau || '#ffffff';
+};
+
+const removeDraftVariantByObject = (variant) => {
+    variantItems.value = variantItems.value.filter(item => item !== variant);
 };
 
 const normalizeAttributeText = (value) => {
@@ -330,7 +403,7 @@ const refreshAttributeOptions = async (config) => {
 
 const resolveAttributeField = async (config, { notifyOnCreate = false } = {}) => {
     let currentValue = product.value[config.field];
-    
+
     // Nếu là ID tạm thời từ việc click "Thêm nhanh", bóc tách lấy text thực tế
     let isExplicitQuickAdd = false;
     if (typeof currentValue === 'string' && currentValue.startsWith('__new__')) {
@@ -480,7 +553,11 @@ const normalizeOptionList = (listLike) => {
 
 const getOptionLabel = (listLike, id) => normalizeOptionList(listLike).find(item => item.id === id)?.ten || '--';
 const getVariantKey = (variant) => variant.id || variant.clientKey;
-const getVariantSkuLabel = (variant) => variant.maChiTietSanPham || 'Tự sinh sau khi lưu sản phẩm';
+const getVariantSkuLabel = (variant) => {
+    const sku = variant.maChiTietSanPham;
+    if (!sku) return 'Tự sinh sau khi lưu sản phẩm';
+    return sku.split('-')[0] || sku;
+};
 const getNestedValue = (source, keys) => {
     for (const key of keys) {
         const value = source?.[key];
@@ -1024,7 +1101,7 @@ const executeGenerateVariants = () => {
     colorImageState.value = Object.fromEntries(
         Object.entries(colorImageState.value).filter(([colorId]) => validColorIds.has(colorId))
     );
-    
+
     addNotification({
         title: 'Thành công',
         subtitle: `Đã tạo tự động ${nextVariants.length} biến thể`,
@@ -1043,7 +1120,7 @@ const generateVariants = () => {
     }
 
     const totalToGenerate = selectedColors.value.length * selectedSizes.value.length;
-    
+
     confirmDialog.value = {
         show: true,
         title: 'Xác nhận tạo biến thể',
@@ -1285,7 +1362,7 @@ const closeVariantModal = () => {
 };
 
 const handleToggleVariantStatus = (variant) => {
-    const nextStatus = isVariantActiveStatus(variant.trangThai) ? 'KHONG_HOAT_DONG' : defaultVariantStatus;
+    const nextStatus = isVariantActiveStatus(variant.trangThai) ? 'NGUNG_HOAT_DONG' : defaultVariantStatus;
     confirmDialog.value = {
         show: true,
         title: 'Đổi trạng thái biến thể',
@@ -1494,8 +1571,8 @@ const handleSave = async () => {
                     <BoxIcon size="18" class="mr-2" /> Quản lý biến thể
                 </v-btn>
                 <v-btn color="primary" variant="flat"
-                    class="text-none font-weight-medium px-8 rounded-lg h-11 elevation-4"
-                    :loading="saving" @click="handleSave">
+                    class="text-none font-weight-medium px-8 rounded-lg h-11 elevation-4" :loading="saving"
+                    @click="handleSave">
                     <DeviceFloppyIcon size="18" class="mr-2" />
                     {{ submitButtonText }}
                 </v-btn>
@@ -1509,789 +1586,541 @@ const handleSave = async () => {
             </v-col>
         </v-row>
 
-        <v-row v-else class="form-grid pb-16">
-            <template v-if="!isEditMode">
-                <v-col cols="12" lg="6">
-                    <v-card class="premium-card create-shell-card mb-6">
-                        <v-card-text class="pa-8">
-                            <div class="section-header d-flex align-center mb-6">
-                                <div class="icon-blob bg-blue-lighten-5 mr-3">
-                                    <InfoCircleIcon size="18" class="text-primary" />
-                                </div>
-                                <div>
-                                    <div class="text-subtitle-1 font-weight-bold text-slate-800">Thêm thông tin sản phẩm</div>
-                                </div>
+        <v-row v-else class="form-grid">
+            <v-col cols="12" :lg="isEditMode ? 12 : 8" class="d-flex flex-column">
+                <v-card class="premium-card h-100 d-flex flex-column">
+                    <v-card-text class="pa-8 flex-grow-1">
+                        <div class="section-header d-flex align-center mb-6">
+                            <div class="icon-blob bg-blue-lighten-5 mr-3">
+                                <InfoCircleIcon size="18" class="text-primary" />
                             </div>
+                            <span class="text-subtitle-1 text-slate-800">Sản phẩm</span>
+                        </div>
+                        <v-row>
+                            <!-- HÀNG 1: THÔNG TIN CHÍNH -->
+                            <v-col cols="12" md="2">
+                                <div class="field-label">Mã sản phẩm</div>
+                                <v-text-field v-model="product.maSanPham"
+                                    :placeholder="isEditMode ? 'SP-XXXX' : 'Hệ thống tự sinh khi lưu'"
+                                    variant="outlined" density="comfortable" class="custom-input mono-font"
+                                    hide-details
+                                    readonly>
+                                </v-text-field>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="field-label">Tên sản phẩm</div>
+                                <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Giày Nike Air..."
+                                    :rules="[rules.required]" variant="outlined" density="comfortable"
+                                    hide-details="auto"></v-text-field>
+                            </v-col>
+                            <v-col cols="12" md="3">
+                                <div class="field-label">Thương hiệu</div>
+                                <v-combobox v-model="product.idThuongHieu" v-model:search="searchQueries.idThuongHieu"
+                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displayBrands"
+                                    item-title="ten" item-value="id" :rules="[rules.required]"
+                                    placeholder="Thương hiệu..." variant="outlined" density="comfortable"
+                                    :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"
+                                    @update:model-value="(val) => handleAttributeChange('idThuongHieu', val)">
+                                    <template #item="{ props, item }">
+                                        <v-list-item v-bind="props">
+                                            <template #append v-if="item.raw.isNew">
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                    nhanh</span>
+                                            </template>
+                                        </v-list-item>
+                                    </template>
+                                </v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="3">
+                                <div class="field-label">Danh mục</div>
+                                <v-combobox v-model="product.idDanhMuc" v-model:search="searchQueries.idDanhMuc"
+                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displayCategories"
+                                    item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Danh mục..."
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc')"
+                                    @update:model-value="(val) => handleAttributeChange('idDanhMuc', val)">
+                                    <template #item="{ props, item }">
+                                        <v-list-item v-bind="props">
+                                            <template #append v-if="item.raw.isNew">
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                    nhanh</span>
+                                            </template>
+                                        </v-list-item>
+                                    </template>
+                                </v-combobox>
+                            </v-col>
 
-                            <v-row>
-                                <v-col cols="12">
-                                    <div class="field-label">Mã</div>
-                                    <v-text-field v-model="product.maSanPham" readonly placeholder="(Tự sinh)"
-                                        variant="outlined" density="comfortable"
-                                        class="custom-input mono-font" hide-details="auto"></v-text-field>
-                                </v-col>
-                                <v-col cols="12">
-                                    <div class="field-label">Sản phẩm</div>
-                                    <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Nike Mercurial Vapor 15"
-                                        :rules="[rules.required]" variant="outlined" density="comfortable"
-                                        hide-details="auto"></v-text-field>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Thương hiệu</div>
-                                    <v-combobox v-model="product.idThuongHieu" v-model:search="searchQueries.idThuongHieu" v-bind="comboboxProps"
-                                        :custom-filter="() => true" :items="displayBrands" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Chọn thương hiệu..."
-                                        variant="outlined" density="comfortable" :return-object="false" hide-details="auto"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"
-                                        @update:model-value="(val) => handleAttributeChange('idThuongHieu', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2 font-weight-bold text-white">Thuộc tính thêm nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Xuất xứ</div>
-                                    <v-combobox v-model="product.idXuatXu" v-model:search="searchQueries.idXuatXu" v-bind="comboboxProps"
-                                        :custom-filter="() => true" :items="displayOrigins" item-title="ten" item-value="id"
-                                        :rules="[rules.required]" placeholder="Chọn xuất xứ..." variant="outlined"
-                                        density="comfortable" :return-object="false" hide-details="auto"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"
-                                        @update:model-value="(val) => handleAttributeChange('idXuatXu', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2 font-weight-bold text-white">Thuộc tính thêm nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Danh mục</div>
-                                    <v-combobox v-model="product.idDanhMuc" v-model:search="searchQueries.idDanhMuc" v-bind="comboboxProps"
-                                        :custom-filter="() => true" :items="displayCategories" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Chọn danh mục..."
-                                        variant="outlined" density="comfortable" :return-object="false" hide-details="auto"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc')"
-                                        @update:model-value="(val) => handleAttributeChange('idDanhMuc', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2">Thuộc tính thêm nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Chất liệu</div>
-                                    <v-combobox v-model="product.idChatLieu" v-model:search="searchQueries.idChatLieu" v-bind="comboboxProps"
-                                        :custom-filter="() => true" :items="displayMaterials" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Chọn chất liệu..."
-                                        variant="outlined" density="comfortable" :return-object="false" hide-details="auto"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"
-                                        @update:model-value="(val) => handleAttributeChange('idChatLieu', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2">Thuộc tính thêm nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                                <v-col cols="12">
-                                    <div class="field-label">Đối tượng sử dụng</div>
-                                    <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary"
-                                        variant="outlined" density="comfortable" class="w-100 rounded-lg custom-toggle">
-                                        <v-btn value="NAM" class="flex-grow-1">Nam</v-btn>
-                                        <v-btn value="NU" class="flex-grow-1">Nữ</v-btn>
-                                        <v-btn value="UNISEX" class="flex-grow-1">Unisex</v-btn>
-                                    </v-btn-toggle>
-                                </v-col>
-                                <v-col cols="12">
-                                    <div class="field-label">Mô tả ngắn</div>
-                                    <v-textarea v-model="product.moTaNgan" variant="outlined" rows="4"
-                                        placeholder="Mô tả ngắn cho sản phẩm..." hide-details="auto"
-                                        class="custom-textarea"></v-textarea>
-                                </v-col>
-                            </v-row>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
+                            <!-- HÀNG 2: THUỘC TÍNH PHÂN LOẠI -->
+                            <v-col cols="12" md="3">
+                                <div class="field-label">Xuất xứ</div>
+                                <v-combobox v-model="product.idXuatXu" v-model:search="searchQueries.idXuatXu"
+                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displayOrigins"
+                                    item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Xuất xứ"
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"
+                                    @update:model-value="(val) => handleAttributeChange('idXuatXu', val)">
+                                    <template #item="{ props, item }">
+                                        <v-list-item v-bind="props">
+                                            <template #append v-if="item.raw.isNew">
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                    nhanh</span>
+                                            </template>
+                                        </v-list-item>
+                                    </template>
+                                </v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="3">
+                                <div class="field-label">Chất liệu</div>
+                                <v-combobox v-model="product.idChatLieu" v-model:search="searchQueries.idChatLieu"
+                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displayMaterials"
+                                    item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Chất liệu"
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"
+                                    @update:model-value="(val) => handleAttributeChange('idChatLieu', val)">
+                                    <template #item="{ props, item }">
+                                        <v-list-item v-bind="props">
+                                            <template #append v-if="item.raw.isNew">
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                    nhanh</span>
+                                            </template>
+                                        </v-list-item>
+                                    </template>
+                                </v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="3">
+                                <div class="field-label">Đối tượng</div>
+                                <v-select v-model="product.gioiTinhKhachHang"
+                                    :items="[{ title: 'Nam', value: 'NAM' }, { title: 'Nữ', value: 'NU' }, { title: 'Unisex', value: 'UNISEX' }]"
+                                    variant="outlined" density="comfortable" hide-details
+                                    placeholder="Đối tượng"></v-select>
+                            </v-col>
+                            <v-col cols="12" md="3">
+                                <div class="field-label">Mục đích</div>
+                                <v-combobox v-model="product.idMucDichChay" v-model:search="searchQueries.idMucDichChay"
+                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displayPurposes"
+                                    item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Mục đích"
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"
+                                    @update:model-value="(val) => handleAttributeChange('idMucDichChay', val)">
+                                    <template #item="{ props, item }">
+                                        <v-list-item v-bind="props">
+                                            <template #append v-if="item.raw.isNew">
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                    nhanh</span>
+                                            </template>
+                                        </v-list-item>
+                                    </template>
+                                </v-combobox>
+                            </v-col>
 
-                <v-col cols="12" lg="6">
-                    <v-card class="premium-card create-shell-card mb-6">
-                        <v-card-text class="pa-8">
-                            <div class="section-header d-flex align-center mb-6">
-                                <div class="icon-blob brand-logo-icon-blob mr-3">
-                                    <BoxIcon size="18" class="brand-logo-icon" />
-                                </div>
-                                <div>
-                                    <div class="text-subtitle-1 font-weight-bold text-slate-800">Biến thể sản phẩm</div>
-                                </div>
+                            <!-- HÀNG 3: THÔNG SỐ VÀ MÔ TẢ -->
+                            <v-col cols="12" md="3">
+                                <div class="field-label">Loại đế</div>
+                                <v-combobox v-model="product.idDeGiay" v-model:search="searchQueries.idDeGiay"
+                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displaySoles"
+                                    item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Loại đế"
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"
+                                    @update:model-value="(val) => handleAttributeChange('idDeGiay', val)">
+                                    <template #item="{ props, item }">
+                                        <v-list-item v-bind="props">
+                                            <template #append v-if="item.raw.isNew">
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                    nhanh</span>
+                                            </template>
+                                        </v-list-item>
+                                    </template>
+                                </v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="3">
+                                <div class="field-label">Loại cổ</div>
+                                <v-combobox v-model="product.idCoGiay" v-model:search="searchQueries.idCoGiay"
+                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displayCollars"
+                                    item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Loại cổ"
+                                    variant="outlined" density="comfortable" :return-object="false"
+                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"
+                                    @update:model-value="(val) => handleAttributeChange('idCoGiay', val)">
+                                    <template #item="{ props, item }">
+                                        <v-list-item v-bind="props">
+                                            <template #append v-if="item.raw.isNew">
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                    nhanh</span>
+                                            </template>
+                                        </v-list-item>
+                                    </template>
+                                </v-combobox>
+                            </v-col>
+                            <v-col cols="12" md="6">
+                                <div class="field-label">Mô tả ngắn</div>
+                                <v-textarea v-model="product.moTaNgan" variant="outlined" rows="1" auto-grow
+                                    placeholder="Tóm tắt đặc điểm..." hide-details class="custom-textarea"></v-textarea>
+                            </v-col>
+                            <v-col cols="12">
+                                <div class="field-label">Mô tả chi tiết</div>
+                                <v-textarea v-model="product.moTaChiTiet" variant="outlined" rows="3" auto-grow
+                                    placeholder="Mô tả chi tiết sản phẩm..." hide-details class="custom-textarea"></v-textarea>
+                            </v-col>
+                        </v-row>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+
+            <!-- Cấu hình biến thể (Chỉ Thêm Mới) -->
+            <v-col cols="12" lg="4" v-if="!isEditMode" class="d-flex flex-column">
+                <v-card class="premium-card h-100 d-flex flex-column">
+                    <v-card-text class="pa-8 flex-grow-1 d-flex flex-column">
+                        <div class="section-header d-flex align-center mb-6">
+                            <div class="icon-blob brand-logo-icon-blob mr-3">
+                                <BoxIcon size="18" class="brand-logo-icon" />
                             </div>
+                            <span class="text-subtitle-1 text-slate-800">Biến thể sản phẩm</span>
+                        </div>
 
-                            <v-row>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Loại đế</div>
-                                    <v-combobox v-model="product.idDeGiay" v-model:search="searchQueries.idDeGiay" v-bind="comboboxProps"
-                                        :custom-filter="() => true" :items="displaySoles" item-title="ten" item-value="id"
-                                        :rules="[rules.required]" placeholder="Chọn loại đế..." variant="outlined"
-                                        density="comfortable" :return-object="false" hide-details="auto"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"
-                                        @update:model-value="(val) => handleAttributeChange('idDeGiay', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2">Thuộc tính thêm nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Loại cổ</div>
-                                    <v-combobox v-model="product.idCoGiay" v-model:search="searchQueries.idCoGiay" v-bind="comboboxProps"
-                                        :custom-filter="() => true" :items="displayCollars" item-title="ten" item-value="id"
-                                        :rules="[rules.required]" placeholder="Chọn loại cổ..." variant="outlined"
-                                        density="comfortable" :return-object="false" hide-details="auto"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"
-                                        @update:model-value="(val) => handleAttributeChange('idCoGiay', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2">Thuộc tính thêm nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Màu sắc</div>
-                                    <v-select v-model="selectedColors" :items="colors" item-title="ten" item-value="id"
-                                        multiple variant="outlined" density="comfortable"
-                                        hide-details="auto" placeholder="Chọn màu sắc"></v-select>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Kích thước</div>
-                                    <v-select v-model="selectedSizes" :items="sizes" item-title="ten" item-value="id"
-                                        multiple variant="outlined" density="comfortable"
-                                        hide-details="auto" placeholder="Chọn kích thước"></v-select>
-                                </v-col>
-                                <v-col cols="12">
-                                    <div class="field-label">Mục đích sử dụng</div>
-                                    <v-combobox v-model="product.idMucDichChay" v-model:search="searchQueries.idMucDichChay" v-bind="comboboxProps"
-                                        :custom-filter="() => true" :items="displayPurposes" item-title="ten"
-                                        item-value="id" :rules="[rules.required]" placeholder="Chọn mục đích..."
-                                        variant="outlined" density="comfortable" :return-object="false" hide-details="auto"
-                                        @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"
-                                        @update:model-value="(val) => handleAttributeChange('idMucDichChay', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat" class="ml-2">Thuộc tính thêm nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                            </v-row>
-
-                            <div class="create-config-preview mt-5">
-                                <div class="create-config-preview__title">Thông số sẽ áp cho biến thể</div>
-                                <div class="create-config-preview__chips d-flex flex-wrap gap-2">
-                                    <span class="text-caption font-weight-bold text-slate-600 border rounded-lg px-3 py-1 bg-white">
-                                        {{ getOptionLabel(soles, product.idDeGiay) }}
-                                    </span>
-                                    <span class="text-caption font-weight-bold text-slate-600 border rounded-lg px-3 py-1 bg-white">
-                                        {{ getOptionLabel(collars, product.idCoGiay) }}
-                                    </span>
-                                    <span class="text-caption font-weight-bold text-slate-600 border rounded-lg px-3 py-1 bg-white">
-                                        {{ getOptionLabel(purposes, product.idMucDichChay) }}
-                                    </span>
+                        <v-row class="mt-2 flex-grow-1">
+                            <v-col cols="6" class="py-0 d-flex flex-column">
+                                <div class="field-label mb-2">Màu sắc</div>
+                                <div class="attribute-list-wrapper flex-grow-1">
+                                    <v-list density="compact" class="pa-0 bg-transparent">
+                                        <v-list-item v-for="c in colors" :key="c.id" class="pa-0 min-h-0">
+                                            <v-checkbox v-model="selectedColors" :label="c.ten" :value="c.id"
+                                                color="primary" hide-details density="compact"
+                                                class="attribute-checkbox"></v-checkbox>
+                                        </v-list-item>
+                                    </v-list>
                                 </div>
-                            </div>
-
-                            <v-btn block class="mt-6 create-generate-btn text-none"
-                                color="primary" size="large" @click="generateVariants">
-                                <v-icon icon="mdi-auto-fix" size="20" class="mr-2" />
-                                Tạo biến thể tự động
-                            </v-btn>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-            </template>
-
-            <template v-else>
-                <v-col cols="12" lg="8">
-                    <v-card class="premium-card mb-6">
-                        <v-card-text class="pa-8">
-                            <div class="section-header d-flex align-center mb-6">
-                                <div class="icon-blob bg-blue-lighten-5 mr-3">
-                                    <InfoCircleIcon size="18" class="text-primary" />
+                            </v-col>
+                            <v-col cols="6" class="py-0 d-flex flex-column">
+                                <div class="field-label mb-2">Kích thước</div>
+                                <div class="attribute-list-wrapper flex-grow-1">
+                                    <v-list density="compact" class="pa-0 bg-transparent">
+                                        <v-list-item v-for="s in sizes" :key="s.id" class="pa-0 min-h-0">
+                                            <v-checkbox v-model="selectedSizes" :label="s.ten" :value="s.id"
+                                                color="primary" hide-details density="compact"
+                                                class="attribute-checkbox"></v-checkbox>
+                                        </v-list-item>
+                                    </v-list>
                                 </div>
-                                <span class="text-subtitle-1 font-weight-black text-slate-800">Thông tin cơ bản</span>
-                            </div>
+                            </v-col>
+                        </v-row>
 
-                            <v-row>
-                                <v-col cols="12" md="4">
-                                    <div class="field-label">Mã sản phẩm</div>
-                                    <v-text-field v-model="product.maSanPham" readonly
-                                        :placeholder="isEditMode ? 'SP-XXXX' : 'Hệ thống tự sinh khi lưu'"
-                                        variant="outlined" density="comfortable" class="custom-input mono-font"
-                                        hide-details></v-text-field>
-                                </v-col>
-                                <v-col cols="12" md="8">
-                                    <div class="field-label">Tên sản phẩm</div>
-                                    <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Giày Nike Air..."
-                                        :rules="[rules.required]" variant="outlined" density="comfortable"
-                                        hide-details="auto"></v-text-field>
-                                </v-col>
-                                <v-col cols="12">
-                                    <div class="field-label">Mô tả ngắn</div>
-                                    <v-textarea v-model="product.moTaNgan" variant="outlined" rows="3"
-                                        placeholder="Tóm tắt đặc điểm nổi bật..." hide-details
-                                        class="custom-textarea"></v-textarea>
-                                </v-col>
-                            </v-row>
-                        </v-card-text>
-                    </v-card>
+                        <v-spacer></v-spacer>
 
-                    <v-card class="premium-card mb-6">
-                        <v-card-text class="pa-8">
-                            <div class="section-header d-flex align-center mb-6">
-                                <div class="icon-blob bg-amber-lighten-5 mr-3">
-                                    <SettingsIcon size="18" class="text-amber-darken-2" />
-                                </div>
-                                <span class="text-subtitle-1 font-weight-black text-slate-800">Thuộc tính kỹ thuật</span>
-                            </div>
+                        <v-btn height="44" class="mt-6 text-none font-weight-medium rounded-lg mx-auto d-flex"
+                            style="width: fit-content;"
+                            color="primary" @click="generateVariants"
+                            :disabled="selectedColors.length === 0 || selectedSizes.length === 0">
+                            <v-icon icon="mdi-auto-fix" size="18" class="mr-2" />
+                            Tạo danh sách biến thể
+                        </v-btn>
+                    </v-card-text>
+                </v-card>
+            </v-col>
+        </v-row>
 
-                            <v-row>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Xuất xứ</div>
-                                    <v-combobox v-model="product.idXuatXu" v-model:search="searchQueries.idXuatXu"
-                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displayOrigins"
-                                        item-title="ten" item-value="id" :rules="[rules.required]"
-                                        placeholder="Chọn xuất xứ..." variant="outlined" density="comfortable"
-                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"
-                                        @update:model-value="(val) => handleAttributeChange('idXuatXu', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat"
-                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
-                                                        nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="6">
-                                    <div class="field-label">Chất liệu</div>
-                                    <v-combobox v-model="product.idChatLieu" v-model:search="searchQueries.idChatLieu"
-                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displayMaterials"
-                                        item-title="ten" item-value="id" :rules="[rules.required]"
-                                        placeholder="Chọn chất liệu..." variant="outlined" density="comfortable"
-                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"
-                                        @update:model-value="(val) => handleAttributeChange('idChatLieu', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat"
-                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
-                                                        nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="4">
-                                    <div class="field-label">Loại đế</div>
-                                    <v-combobox v-model="product.idDeGiay" v-model:search="searchQueries.idDeGiay"
-                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displaySoles"
-                                        item-title="ten" item-value="id" :rules="[rules.required]"
-                                        placeholder="Chọn loại đế..." variant="outlined" density="comfortable"
-                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"
-                                        @update:model-value="(val) => handleAttributeChange('idDeGiay', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat"
-                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
-                                                        nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="4">
-                                    <div class="field-label">Loại cổ</div>
-                                    <v-combobox v-model="product.idCoGiay" v-model:search="searchQueries.idCoGiay"
-                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displayCollars"
-                                        item-title="ten" item-value="id" :rules="[rules.required]"
-                                        placeholder="Chọn loại cổ..." variant="outlined" density="comfortable"
-                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"
-                                        @update:model-value="(val) => handleAttributeChange('idCoGiay', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat"
-                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
-                                                        nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                                <v-col cols="12" md="4">
-                                    <div class="field-label">Mục đích sử dụng</div>
-                                    <v-combobox v-model="product.idMucDichChay" v-model:search="searchQueries.idMucDichChay"
-                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displayPurposes"
-                                        item-title="ten" item-value="id" :rules="[rules.required]"
-                                        placeholder="Chọn mục đích..." variant="outlined" density="comfortable"
-                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"
-                                        @update:model-value="(val) => handleAttributeChange('idMucDichChay', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat"
-                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
-                                                        nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                            </v-row>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-
-                <v-col cols="12" lg="4">
-                    <v-card class="premium-card mb-6">
-                        <v-card-text class="pa-8">
-                            <div class="section-header d-flex align-center mb-6">
-                                <div class="icon-blob bg-emerald-lighten-5 mr-3">
-                                    <BoxIcon size="18" class="text-emerald-darken-2" />
-                                </div>
-                                <span class="text-subtitle-1 font-weight-black text-slate-800">Phân loại</span>
-                            </div>
-
-                            <v-row>
-                                <v-col cols="12">
-                                    <div class="field-label">Thương hiệu</div>
-                                    <v-combobox v-model="product.idThuongHieu" v-model:search="searchQueries.idThuongHieu"
-                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displayBrands"
-                                        item-title="ten" item-value="id" :rules="[rules.required]"
-                                        placeholder="Tìm thương hiệu..." variant="outlined" density="comfortable"
-                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"
-                                        @update:model-value="(val) => handleAttributeChange('idThuongHieu', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat"
-                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
-                                                        nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                                <v-col cols="12">
-                                    <div class="field-label">Danh mục</div>
-                                    <v-combobox v-model="product.idDanhMuc" v-model:search="searchQueries.idDanhMuc"
-                                        v-bind="comboboxProps" :custom-filter="() => true" :items="displayCategories"
-                                        item-title="ten" item-value="id" :rules="[rules.required]"
-                                        placeholder="Chọn danh mục..." variant="outlined" density="comfortable"
-                                        :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc')"
-                                        @update:model-value="(val) => handleAttributeChange('idDanhMuc', val)">
-                                        <template #item="{ props, item }">
-                                            <v-list-item v-bind="props">
-                                                <template #append v-if="item.raw.isNew">
-                                                    <v-chip size="x-small" color="primary" variant="flat"
-                                                        class="ml-2 font-weight-bold text-white">Thuộc tính thêm
-                                                        nhanh</v-chip>
-                                                </template>
-                                            </v-list-item>
-                                        </template>
-                                    </v-combobox>
-                                </v-col>
-                                <v-col cols="12">
-                                    <div class="field-label">Đối tượng sử dụng</div>
-                                    <v-btn-toggle v-model="product.gioiTinhKhachHang" mandatory color="primary"
-                                        variant="outlined" density="comfortable" class="w-100 rounded-lg custom-toggle">
-                                        <v-btn value="NAM" class="flex-grow-1">Nam</v-btn>
-                                        <v-btn value="NU" class="flex-grow-1">Nữ</v-btn>
-                                        <v-btn value="UNISEX" class="flex-grow-1">Unisex</v-btn>
-                                    </v-btn-toggle>
-                                </v-col>
-                            </v-row>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-            </template>
-
+        <v-row v-if="!loading" class="mt-n2">
             <v-col cols="12">
                 <v-card class="premium-card">
                     <v-card-text class="pa-8">
                         <template v-if="!isEditMode">
-                            <div class="variant-gradient-header">
-                                <div class="d-flex align-center">
-                                    <div class="icon-blob bg-blue-lighten-5 mr-3">
-                                        <v-icon icon="mdi-view-grid-plus-outline" size="18" class="text-primary" />
-                                    </div>
-                                    <div>
-                                        <div class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách biến thể</div>
-                                        <div class="text-caption variant-gradient-header__meta">
-                                            Chỉ nhập trường cần áp dụng nhanh cho toàn bộ danh sách.
+                            <div class="variant-gradient-header pb-4 mb-6" style="border-bottom: 1px solid #e2e8f0;">
+                                <div class="d-flex align-center justify-space-between w-100">
+                                    <div class="d-flex align-center">
+                                        <div class="icon-blob bg-blue-lighten-5 mr-3">
+                                            <v-icon icon="mdi-view-grid-plus-outline" size="18" class="text-primary" />
+                                        </div>
+                                        <div>
+                                            <div class="text-subtitle-1 text-slate-800">Danh sách biến thể</div>
                                         </div>
                                     </div>
-                                </div>
-
-                                <div class="d-flex align-center flex-wrap gradient-header-actions">
-                                    <v-btn variant="outlined" color="primary" class="text-none rounded-pill"
-                                        @click="applyBulkAllVariants">
-                                        <v-icon icon="mdi-lightning-bolt-outline" size="16" class="mr-1" />
-                                        Thêm nhanh tất cả
-                                    </v-btn>
-                                    <v-btn variant="outlined" color="primary" class="text-none rounded-pill"
-                                        @click="clearAllDraftVariants">
-                                        <v-icon icon="mdi-delete-outline" size="16" class="mr-1" />
-                                        Xóa tất cả
-                                    </v-btn>
+                                    <div class="d-flex align-center gap-3">
+                                        <v-btn v-if="variantItems.length > 0" color="primary" variant="flat" 
+                                            class="text-none font-weight-bold rounded-lg px-4"
+                                            style="color: white !important;" @click="openBulkEdit(null)">
+                                            <v-icon icon="mdi-flash-outline" size="18" class="mr-2" />
+                                            Thêm nhanh toàn bộ
+                                        </v-btn>
+                                        <v-btn v-if="variantItems.length > 0" variant="flat" color="error" 
+                                            class="text-none font-weight-bold rounded-lg px-4"
+                                            style="color: white !important;" @click="clearAllDraftVariants">
+                                            <TrashIcon size="18" class="mr-2" />
+                                            Xóa tất cả
+                                        </v-btn>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="variant-gradient-body">
-                                <v-row class="bulk-toolbar" dense>
-                                    <v-col cols="12" md="4">
-                                        <div class="text-caption font-weight-bold text-slate-500 mb-1 ml-1">Số lượng</div>
-                                        <FormattedNumberField v-model="bulkAllForm.soLuong" min="0"
-                                            variant="outlined" density="compact" hide-details placeholder="Số lượng tất cả"
-                                            class="bg-white" />
-                                    </v-col>
-                                    <v-col cols="12" md="4">
-                                        <div class="text-caption font-weight-bold text-slate-500 mb-1 ml-1">Giá nhập</div>
-                                        <FormattedNumberField v-model="bulkAllForm.giaNhap" min="0"
-                                            variant="outlined" density="compact" hide-details placeholder="Giá nhập tất cả"
-                                            class="bg-white" />
-                                    </v-col>
-                                    <v-col cols="12" md="4">
-                                        <div class="text-caption font-weight-bold text-slate-500 mb-1 ml-1">Giá bán</div>
-                                        <FormattedNumberField v-model="bulkAllForm.giaBan" min="0"
-                                            variant="outlined" density="compact" hide-details placeholder="Giá bán tất cả"
-                                            class="bg-white" />
-                                    </v-col>
-                                </v-row>
+                            <div v-if="variantItems.length > 0" class="variants-grouped-container">
+                                <v-card v-for="(items, colorId) in variantsByColor" :key="colorId" 
+                                    class="color-group-card mb-6">
+                                    <div class="color-group-header px-6 py-4 bg-slate-50 d-flex align-center justify-space-between border-b">
+                                        <div class="d-flex align-center">
+                                            <v-avatar size="24" :color="getVariantColorHex(colorId)" class="mr-3 border" />
+                                            <span class="text-subtitle-2 font-weight-bold text-slate-800">
+                                                Màu sắc: {{ getVariantColorLabel(colorId) }}
+                                            </span>
+                                            <span class="text-caption text-slate-500 ml-3">
+                                                ({{ items.length }} kích thước)
+                                            </span>
+                                        </div>
+                                        <div class="d-flex align-center gap-2">
+                                            <v-btn color="primary" variant="flat" size="small"
+                                                class="text-none font-weight-bold rounded-lg px-3"
+                                                style="color: white !important;" @click="openBulkEdit(colorId)">
+                                                <v-icon icon="mdi-flash-outline" size="16" class="mr-1" />
+                                                Thêm nhanh cho màu này
+                                            </v-btn>
+                                        </div>
+                                    </div>
 
-                                <div v-if="variantGroups.length > 0" class="variant-group-stack">
-                                    <div v-for="group in variantGroups" :key="group.colorId"
-                                        class="variant-color-group border rounded-xl mb-10 overflow-hidden bg-white">
-                                        <v-row no-gutters class="fill-height align-stretch">
-                                            <v-col cols="12" md="3" class="border-r bg-slate-50/50 d-flex flex-column">
-                                                <div class="pa-4 border-b bg-white">
-                                                    <div class="d-flex align-center justify-space-between">
-                                                        <div class="d-flex align-center">
-                                                            <span class="color-dot mr-2"></span>
-                                                            <span class="font-weight-black text-slate-800">{{ group.colorLabel }}</span>
-                                                        </div>
-                                                        <v-btn v-if="getColorUploadEntry(group.colorId).url" icon size="x-small"
-                                                            variant="text" color="slate-400" @click="clearColorImage(group.colorId)">
-                                                            <v-icon icon="mdi-close" size="14" />
-                                                        </v-btn>
-                                                    </div>
+                                    <v-row no-gutters>
+                                        <v-col cols="12" md="3" class="border-r pa-6 d-flex flex-column align-center justify-center bg-slate-50/50">
+                                            <div class="field-label mb-3 w-100 text-center">Hình ảnh theo màu</div>
+                                            <div class="color-image-uploader" @click="openColorImagePicker(colorId)">
+                                                <v-img v-if="getColorUploadEntry(colorId).url" :src="getColorUploadEntry(colorId).url" 
+                                                    cover class="rounded-lg h-100" />
+                                                <div v-else class="uploader-placeholder">
+                                                    <v-icon icon="mdi-camera-plus-outline" size="32" color="slate-300" />
+                                                    <span class="text-caption text-slate-400 mt-2">Tải ảnh lên</span>
                                                 </div>
-
-                                                <div class="flex-grow-1 pa-4 d-flex flex-column">
-                                                    <input :ref="(el) => setColorFileInputRef(group.colorId, el)" type="file"
-                                                        accept="image/*" class="d-none"
-                                                        @change="handleColorImageUpload(group.colorId, $event)" />
-
-                                                    <div class="color-dropzone-premium flex-grow-1 rounded-xl border-dashed d-flex flex-column align-center justify-center cursor-pointer transition-all"
-                                                        style="min-height: 240px; position: relative; overflow: hidden;"
-                                                        @click="openColorImagePicker(group.colorId)">
-                                                        <SafeProductImage v-if="getColorUploadEntry(group.colorId).url"
-                                                            :src="getColorUploadPreviewUrl(group.colorId)"
-                                                            :fallback-src="logoPlaceholder"
-                                                            class="fill-height w-100" />
-
-                                                        <template v-else>
-                                                            <div class="text-center pa-6"
-                                                                v-if="!getColorUploadEntry(group.colorId).uploading">
-                                                                <div class="icon-blob bg-blue-lighten-5 mb-4 mx-auto"
-                                                                    style="width: 52px; height: 52px;">
-                                                                    <v-icon icon="mdi-image-plus" color="primary" size="24" />
-                                                                </div>
-                                                                <div class="text-subtitle-2 font-weight-black text-slate-700">Tải ảnh màu</div>
-                                                                <div class="text-caption text-slate-400 mt-2 px-2">Đại diện cho nhóm màu {{ group.colorLabel }}</div>
-                                                            </div>
-                                                            <div v-else class="text-center">
-                                                                <v-progress-circular indeterminate color="primary" size="32"
-                                                                    width="3" />
-                                                                <div class="text-caption text-primary mt-3 font-weight-bold">Đang tải...</div>
-                                                            </div>
-                                                        </template>
-                                                    </div>
-                                                </div>
-                                            </v-col>
-
-                                            <v-col cols="12" md="9" class="d-flex flex-column">
-                                                <div class="variant-color-group__header pa-4 bg-white border-b">
-                                                    <div class="d-flex align-center">
-                                                        <v-icon icon="mdi-layers-triple-outline" size="18"
-                                                            class="mr-2 text-slate-300" />
-                                                        <span class="font-weight-bold text-slate-500"
-                                                            style="font-size: 13px;">Chi tiết biến thể</span>
-                                                    </div>
-
-                                                    <div class="d-flex align-center flex-wrap group-actions">
-                                                        <FormattedNumberField v-model="bulkByColorForms[group.colorId].soLuong"
-                                                            min="0" variant="outlined" density="compact" hide-details
-                                                            placeholder="SL" class="group-quick-field mr-2 bg-white"
-                                                            style="width: 92px;" />
-                                                        <FormattedNumberField v-model="bulkByColorForms[group.colorId].giaBan"
-                                                            min="0" variant="outlined" density="compact" hide-details
-                                                            placeholder="Giá bán" class="group-quick-field mr-2 bg-white"
-                                                            style="width: 132px;" />
-                                                        <v-btn color="primary" variant="flat"
-                                                            class="text-none font-weight-medium px-6 rounded-lg h-10 elevation-2 text-white"
-                                                            @click="applyBulkColorVariants(group.colorId)">
-                                                            Áp dụng
-                                                        </v-btn>
-                                                        <v-btn icon size="small" variant="text" color="error" class="ml-2"
-                                                            @click="removeColorGroup(group.colorId)">
-                                                            <TrashIcon size="18" />
-                                                            <v-tooltip activator="parent" location="top" text="Xóa nhóm màu" />
-                                                        </v-btn>
-                                                    </div>
-                                                </div>
-
-                                                <div class="variant-group-table__head px-4 py-2 bg-slate-100">
-                                                    <div>Kích cỡ</div>
-                                                    <div>Số lượng</div>
-                                                    <div>Giá nhập</div>
-                                                    <div>Giá bán (VNĐ)</div>
-                                                    <div class="text-center">Xóa</div>
-                                                </div>
-
-                                                <div v-for="variant in group.variants" :key="getVariantKey(variant)"
-                                                    class="variant-group-row px-4 py-3 border-b">
-                                                    <div class="variant-group-row__size">
-                                                        <div class="font-weight-bold text-slate-800">
+                                                <input :ref="(el) => setColorFileInputRef(colorId, el)"
+                                                    type="file" accept="image/*" class="d-none"
+                                                    @change="handleColorImageUpload(colorId, $event)" />
+                                            </div>
+                                      
+                                        </v-col>
+                                        <v-col cols="12" md="9">
+                                            <v-table density="comfortable" class="variant-inner-table">
+                                                <thead class="bg-slate-50">
+                                                    <tr>
+                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 150px">Kích thước</th>
+                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 120px">Số lượng</th>
+                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 180px">Giá nhập</th>
+                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 180px">Giá bán (VNĐ)</th>
+                                                        <th class="text-center font-weight-bold text-slate-600" style="width: 80px">Xóa</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr v-for="variant in items" :key="variant.idKichThuoc">
+                                                        <td class="font-weight-medium text-slate-700">
                                                             Size {{ getVariantSizeLabel(variant.idKichThuoc) }}
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <FormattedNumberField v-model="variantItems[variant.index].soLuong"
-                                                            min="0" variant="outlined" density="compact" hide-details
-                                                            class="bg-white" />
-                                                    </div>
-                                                    <div>
-                                                        <FormattedNumberField v-model="variantItems[variant.index].giaNhap"
-                                                            min="0" variant="outlined" density="compact" hide-details
-                                                            class="bg-white" />
-                                                    </div>
-                                                    <div>
-                                                        <FormattedNumberField v-model="variantItems[variant.index].giaBan"
-                                                            min="0" variant="outlined" density="compact" hide-details
-                                                            class="bg-white" />
-                                                    </div>
-                                                    <div class="d-flex justify-center">
-                                                        <v-btn icon variant="text" color="error" size="small"
-                                                            @click="removeDraftVariantByIndex(variant.index)">
-                                                            <TrashIcon size="18" />
-                                                            <v-tooltip activator="parent" location="top" text="Xóa biến thể nháp" />
-                                                        </v-btn>
-                                                    </div>
-                                                </div>
-                                            </v-col>
-                                        </v-row>
-                                    </div>
-                                </div>
+                                                        </td>
+                                                        <td>
+                                                            <v-text-field v-model="variant.soLuong" type="number" hide-details 
+                                                                variant="outlined" density="compact" class="custom-input-dense" />
+                                                        </td>
+                                                        <td>
+                                                            <FormattedNumberField v-model="variant.giaNhap" hide-details 
+                                                                variant="outlined" density="compact" class="custom-input-dense" />
+                                                        </td>
+                                                        <td>
+                                                            <FormattedNumberField v-model="variant.giaBan" hide-details 
+                                                                variant="outlined" density="compact" class="custom-input-dense" />
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <v-btn variant="text" color="error" size="small"
+                                                                class="action-icon-btn"
+                                                                @click="removeDraftVariantByObject(variant)">
+                                                                <TrashIcon size="18" />
+                                                                <v-tooltip activator="parent" location="top" text="Xóa biến thể này" />
+                                                            </v-btn>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </v-table>
+                                        </v-col>
+                                    </v-row>
+                                </v-card>
+                            </div>
 
-                                <div v-else class="variant-empty-state">
-                                    <div class="variant-empty-state__icon">
-                                        <BoxIcon size="28" />
-                                    </div>
-                                    <div class="text-subtitle-2 font-weight-bold text-slate-700 mt-3">
-                                        Chưa có biến thể nào được tạo
-                                    </div>
-                                    <div class="text-caption text-slate-500 mt-1">
-                                        Chọn màu sắc và kích thước ở card bên phải, sau đó bấm <span class="font-weight-bold">Tạo biến thể tự động</span>.
-                                    </div>
+                            <div v-else class="variant-empty-state">
+                                <div class="variant-empty-state__icon">
+                                    <v-icon icon="mdi-layers-outline" size="32" />
+                                </div>
+                                <div class="text-subtitle-2 font-weight-bold text-slate-700 mt-3">
+                                    Chưa có biến thể nào được tạo
+                                </div>
+                                <div class="text-caption text-slate-500 mt-1">
+                                    Chọn màu sắc và kích thước ở card bên phải, sau đó bấm <span class="font-weight-bold">Tạo danh sách biến thể</span>.
                                 </div>
                             </div>
                         </template>
 
-                            <div v-if="variantItems.length > 0 && isEditMode" class="variant-filter-container mt-6">
-                                <AdminFilter title="Bộ lọc nâng cao" @refresh="resetVariantTableFilters" :loading="loading">
-                                    <v-col cols="12" sm="2">
-                                        <div class="variant-filter-label">Sản phẩm</div>
-                                        <v-text-field :model-value="variantFilterProductLabel" variant="outlined"
-                                            density="compact" hide-details readonly class="variant-filter-input bg-slate-50" />
-                                    </v-col>
-                                    <v-col cols="12" sm="2">
-                                        <div class="variant-filter-label">Tìm kiếm nhanh</div>
-                                        <v-text-field v-model="variantTableFilters.keyword" placeholder="Mã SKU, màu, size..."
-                                            prepend-inner-icon="mdi-magnify" variant="outlined" density="compact"
-                                            hide-details clearable class="variant-filter-input" />
-                                    </v-col>
-                                    <v-col cols="12" sm="2">
-                                        <div class="variant-filter-label">Màu sắc</div>
-                                        <v-select v-model="variantTableFilters.mauSacId"
-                                            :items="[{ title: 'Tất cả màu', value: '' }, ...colors.map((item) => ({ title: item.ten, value: item.id }))]"
-                                            variant="outlined" density="compact" hide-details class="variant-filter-input" />
-                                    </v-col>
-                                    <v-col cols="12" sm="2">
-                                        <div class="variant-filter-label">Kích thước</div>
-                                        <v-select v-model="variantTableFilters.kichThuocId"
-                                            :items="[{ title: 'Tất cả size', value: '' }, ...sizes.map((item) => ({ title: item.ten, value: item.id }))]"
-                                            variant="outlined" density="compact" hide-details class="variant-filter-input" />
-                                    </v-col>
-                                    <v-col cols="12" sm="2">
-                                        <div class="variant-filter-label">Trạng thái</div>
-                                        <v-select v-model="variantTableFilters.trangThai"
-                                            :items="[
-                                                { title: 'Tất cả trạng thái', value: '' },
-                                                { title: 'Đang hoạt động', value: defaultVariantStatus },
-                                                { title: 'Ngừng hoạt động', value: 'KHONG_HOAT_DONG' }
-                                            ]"
-                                            variant="outlined" density="compact" hide-details class="variant-filter-input" />
-                                    </v-col>
+                        <div v-if="variantItems.length > 0 && isEditMode" class="variant-filter-container mt-6">
+                            <AdminFilter title="Bộ lọc nâng cao" @refresh="resetVariantTableFilters" :loading="loading">
+                                <v-col cols="12" sm="2">
+                                    <div class="variant-filter-label">Sản phẩm</div>
+                                    <v-text-field :model-value="variantFilterProductLabel" variant="outlined"
+                                        density="compact" hide-details readonly
+                                        class="variant-filter-input bg-slate-50" />
+                                </v-col>
+                                <v-col cols="12" sm="2">
+                                    <div class="variant-filter-label">Tìm kiếm nhanh</div>
+                                    <v-text-field v-model="variantTableFilters.keyword"
+                                        placeholder="Mã SKU, màu, size..." prepend-inner-icon="mdi-magnify"
+                                        variant="outlined" density="compact" hide-details clearable
+                                        class="variant-filter-input" />
+                                </v-col>
+                                <v-col cols="12" sm="2">
+                                    <div class="variant-filter-label">Màu sắc</div>
+                                    <v-select v-model="variantTableFilters.mauSacId"
+                                        :items="[{ title: 'Tất cả màu', value: '' }, ...colors.map((item) => ({ title: item.ten, value: item.id }))]"
+                                        variant="outlined" density="compact" hide-details
+                                        class="variant-filter-input" />
+                                </v-col>
+                                <v-col cols="12" sm="2">
+                                    <div class="variant-filter-label">Kích thước</div>
+                                    <v-select v-model="variantTableFilters.kichThuocId"
+                                        :items="[{ title: 'Tất cả size', value: '' }, ...sizes.map((item) => ({ title: item.ten, value: item.id }))]"
+                                        variant="outlined" density="compact" hide-details
+                                        class="variant-filter-input" />
+                                </v-col>
+                                <v-col cols="12" sm="2">
+                                    <div class="variant-filter-label">Trạng thái</div>
+                                    <v-select v-model="variantTableFilters.trangThai" :items="[
+                                        { title: 'Tất cả trạng thái', value: '' },
+                                        { title: 'Đang hoạt động', value: defaultVariantStatus },
+                                        { title: 'Ngừng hoạt động', value: 'NGUNG_HOAT_DONG' }
+                                    ]" variant="outlined" density="compact" hide-details
+                                        class="variant-filter-input" />
+                                </v-col>
 
-                                    <template #after>
-                                        <v-col cols="12" class="mt-4 pa-0">
-                                            <div class="d-flex align-center justify-space-between mb-2">
-                                                <div class="d-flex align-center gap-2">
-                                                    <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
-                                                    <span class="text-caption font-weight-bold text-slate-600">Khoảng giá</span>
-                                                </div>
-                                                <span class="text-primary font-weight-bold">{{ formatCurrency(variantTableFilters.khoangGia[0]) }} – {{ formatCurrency(variantTableFilters.khoangGia[1]) }}</span>
+                                <template #after>
+                                    <v-col cols="12" class="mt-4 pa-0">
+                                        <div class="d-flex align-center justify-space-between mb-2">
+                                            <div class="d-flex align-center gap-2">
+                                                <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
+                                                <span class="text-caption font-weight-bold text-slate-600">Khoảng
+                                                    giá</span>
                                             </div>
-                                            <v-range-slider v-model="variantTableFilters.khoangGia"
-                                                :min="variantPriceBounds.min" :max="variantPriceBounds.max"
-                                                :step="variantPriceStep" hide-details color="primary"
-                                                track-color="#e2e8f0" track-size="3" thumb-size="14"
-                                                class="blue-range-slider"
-                                                @update:model-value="handleVariantSliderPriceChange" />
-                                        </v-col>
-                                    </template>
-                                </AdminFilter>
-                            </div>
-                            <AdminTable v-if="variantItems.length > 0 && isEditMode" title="Danh mục biến thể"
-                                :headers="variantTableHeaders" :items="paginatedVariantItems" :loading="loading"
-                                :show-add-button="false" class="mt-6 variant-admin-table">
-                                <template #headers>
-                                    <tr>
-                                        <th class="header-cell" style="width: 70px;">
-                                            <v-checkbox-btn :model-value="allVisibleVariantsSelected"
-                                                :indeterminate="someVisibleVariantsSelected" color="primary" hide-details density="compact"
-                                                @update:model-value="toggleSelectVisibleVariants" />
-                                        </th>
-                                        <th class="header-cell" style="width: 60px;">STT</th>
-                                        <th class="header-cell" style="width: 80px;">Ảnh</th>
-                                        <th class="header-cell" style="width: 140px;">Màu sắc</th>
-                                        <th class="header-cell" style="width: 140px;">Kích thước</th>
-                                        <th class="header-cell" style="width: 240px;">Mã SKU</th>
-                                        <th class="header-cell" style="width: 110px;">Tồn kho</th>
-                                        <th class="header-cell" style="width: 130px;">Giá bán</th>
-                                        <th class="header-cell" style="width: 160px;">Trạng thái</th>
-                                        <th class="header-cell" style="width: 120px;">Thao tác</th>
-                                    </tr>
+                                            <span class="text-primary font-weight-bold">{{
+                                                formatCurrency(variantTableFilters.khoangGia[0]) }} – {{
+                                                    formatCurrency(variantTableFilters.khoangGia[1]) }}</span>
+                                        </div>
+                                        <v-range-slider :key="`${variantPriceBounds.min}-${variantPriceBounds.max}`" v-model="variantTableFilters.khoangGia"
+                                            :min="variantPriceBounds.min" :max="variantPriceBounds.max"
+                                            :step="variantPriceStep" hide-details color="primary" track-color="#e2e8f0"
+                                            track-size="3" thumb-size="14" class="blue-range-slider"
+                                            @update:model-value="handleVariantSliderPriceChange" />
+                                    </v-col>
                                 </template>
+                            </AdminFilter>
+                        </div>
+                        <AdminTable v-if="variantItems.length > 0 && isEditMode" title="Danh mục biến thể"
+                            :headers="variantTableHeaders" :items="paginatedVariantItems" :loading="loading"
+                            :show-add-button="false" class="mt-6 variant-admin-table">
+                            <template #headers>
+                                <tr>
+                                    <th class="header-cell" style="width: 70px;">
+                                        <v-checkbox-btn :model-value="allVisibleVariantsSelected"
+                                            :indeterminate="someVisibleVariantsSelected" color="primary" hide-details
+                                            density="compact" @update:model-value="toggleSelectVisibleVariants" />
+                                    </th>
+                                    <th class="header-cell" style="width: 60px;">STT</th>
+                                    <th class="header-cell" style="width: 80px;">Ảnh</th>
+                                    <th class="header-cell" style="width: 140px;">Màu sắc</th>
+                                    <th class="header-cell" style="width: 140px;">Kích thước</th>
+                                    <th class="header-cell" style="width: 240px;">Mã SKU</th>
+                                    <th class="header-cell" style="width: 110px;">Tồn kho</th>
+                                    <th class="header-cell" style="width: 130px;">Giá bán</th>
+                                    <th class="header-cell" style="width: 160px;">Trạng thái</th>
+                                    <th class="header-cell" style="width: 120px;">Thao tác</th>
+                                </tr>
+                            </template>
 
-                                <template #top>
-                                    <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
-                                        <div class="d-flex align-center flex-wrap gap-2">
-                                            <span class="text-caption font-weight-medium text-slate-500">
-                                                Đã chọn {{ selectedVariantKeys.length }} biến thể
-                                            </span>
-                                        </div>
-
-                                        <div class="d-flex align-center flex-wrap gap-2">
-                                            <v-btn v-if="selectedVariants.length > 0" size="small" variant="tonal"
-                                                color="primary" class="text-none font-weight-bold"
-                                                @click="handleExportVariantQrZip">
-                                                Xuất ZIP QR
-                                                <v-tooltip activator="parent" location="top" text="Xuất ảnh QR của các biến thể đã chọn" />
-                                            </v-btn>
-                                        </div>
+                            <template #top>
+                                <div
+                                    class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
+                                    <div class="d-flex align-center flex-wrap gap-2">
+                                        <span class="text-caption font-weight-medium text-slate-500">
+                                            Đã chọn {{ selectedVariantKeys.length }} biến thể
+                                        </span>
                                     </div>
-                                </template>
 
-                                <template #row="{ item: variant, index }">
-                                    <tr class="data-row">
-                                        <td class="data-cell">
-                                            <v-checkbox-btn :model-value="selectedVariantKeys.includes(getVariantKey(variant))"
-                                                color="primary" hide-details density="compact"
-                                                @update:model-value="toggleVariantSelection(getVariantKey(variant), $event)" />
-                                        </td>
-                                        <td class="data-cell text-center text-slate-500 font-weight-medium">
-                                            {{ (variantPage - 1) * variantPageSize + index + 1 }}
-                                        </td>
-                                        <td class="data-cell">
-                                            <v-avatar rounded="lg" size="44" class="border bg-slate-50 shadow-sm avatar-hover">
-                                                <SafeProductImage :src="getVariantThumbnail(variant)"
-                                                    :fallback-src="logoPlaceholder" :alt="getVariantSkuLabel(variant)" />
-                                            </v-avatar>
-                                        </td>
-                                        <td class="data-cell font-weight-bold text-slate-700">
-                                            <div class="text-truncate" :title="getOptionLabel(colors, variant.idMauSac)">
-                                                {{ getOptionLabel(colors, variant.idMauSac) }}
-                                            </div>
-                                        </td>
-                                        <td class="data-cell font-weight-bold text-slate-700">
-                                            <div class="text-truncate" :title="getOptionLabel(sizes, variant.idKichThuoc)">
-                                                {{ getOptionLabel(sizes, variant.idKichThuoc) }}
-                                            </div>
-                                        </td>
-                                        <td class="data-cell text-slate-600">
-                                            <div class="text-truncate" :title="getVariantSkuLabel(variant)">
-                                                {{ getVariantSkuLabel(variant) }}
-                                            </div>
-                                        </td>
-                                        <td class="data-cell">
-                                            <span class="text-primary">{{ formatNumber(variant.soLuong) }}</span>
-                                        </td>
-                                        <td class="data-cell">
-                                            <span class="text-primary">{{ formatCurrency(variant.giaBan) }}</span>
-                                        </td>
-                                        <td class="data-cell text-center">
-                                            <v-chip variant="flat"
-                                                :class="['status-chip', isActiveStatus(variant.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
-                                                {{ getStatusLabel(variant.trangThai) }}
-                                            </v-chip>
-                                        </td>
-                                        <td class="data-cell text-center">
-                                            <div class="d-flex justify-center align-center variant-actions">
-                                                <v-btn variant="text" class="action-icon-btn" color="primary"
-                                                    @click="openEditVariantModal(variant)">
-                                                    <PencilIcon size="18" />
-                                                    <v-tooltip activator="parent" location="top" text="Chỉnh sửa biến thể" />
-                                                </v-btn>
-                                                <div class="switch-wrapper">
-                                                    <v-switch :model-value="isActiveStatus(variant.trangThai)"
-                                                        color="primary" hide-details density="compact"
-                                                        class="tight-switch action-switch"
-                                                        @click.prevent.stop="handleToggleVariantStatus(variant)" />
-                                                    <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái" />
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </template>
+                                    <div class="d-flex align-center flex-wrap gap-2">
+                                        <v-btn v-if="selectedVariants.length > 0" size="small" variant="tonal"
+                                            color="primary" class="text-none font-weight-bold"
+                                            @click="handleExportVariantQrZip">
+                                            Xuất ZIP QR
+                                            <v-tooltip activator="parent" location="top"
+                                                text="Xuất ảnh QR của các biến thể đã chọn" />
+                                        </v-btn>
+                                    </div>
+                                </div>
+                            </template>
 
-                                <template #pagination>
-                                    <AdminPagination v-model="variantPage" :page-size="variantPageSize"
-                                        @update:pageSize="variantPageSize = $event" :total-pages="totalVariantPages"
-                                        :total-elements="totalVariantElements" :current-size="paginatedVariantItems.length" />
-                                </template>
-                            </AdminTable>
+                            <template #row="{ item: variant, index }">
+                                <tr class="data-row">
+                                    <td class="data-cell">
+                                        <v-checkbox-btn
+                                            :model-value="selectedVariantKeys.includes(getVariantKey(variant))"
+                                            color="primary" hide-details density="compact"
+                                            @update:model-value="toggleVariantSelection(getVariantKey(variant), $event)" />
+                                    </td>
+                                    <td class="data-cell text-center text-slate-500 font-weight-medium">
+                                        {{ (variantPage - 1) * variantPageSize + index + 1 }}
+                                    </td>
+                                    <td class="data-cell">
+                                        <v-avatar rounded="lg" size="44"
+                                            class="border bg-slate-50 shadow-sm avatar-hover">
+                                            <SafeProductImage :src="getVariantThumbnail(variant)"
+                                                :fallback-src="logoPlaceholder" :alt="getVariantSkuLabel(variant)" />
+                                        </v-avatar>
+                                    </td>
+                                    <td class="data-cell font-weight-bold text-slate-700">
+                                        <div class="text-truncate" :title="getOptionLabel(colors, variant.idMauSac)">
+                                            {{ getOptionLabel(colors, variant.idMauSac) }}
+                                        </div>
+                                    </td>
+                                    <td class="data-cell font-weight-bold text-slate-700">
+                                        <div class="text-truncate" :title="getOptionLabel(sizes, variant.idKichThuoc)">
+                                            {{ getOptionLabel(sizes, variant.idKichThuoc) }}
+                                        </div>
+                                    </td>
+                                    <td class="data-cell text-slate-600">
+                                        <div class="text-truncate" :title="getVariantSkuLabel(variant)">
+                                            {{ getVariantSkuLabel(variant) }}
+                                        </div>
+                                    </td>
+                                    <td class="data-cell">
+                                        <span class="text-primary">{{ formatNumber(variant.soLuong) }}</span>
+                                    </td>
+                                    <td class="data-cell">
+                                        <span class="text-primary">{{ formatCurrency(variant.giaBan) }}</span>
+                                    </td>
+                                    <td class="data-cell text-center">
+                                        <v-chip variant="flat"
+                                            :class="['status-chip', isActiveStatus(variant.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
+                                            {{ getStatusLabel(variant.trangThai) }}
+                                        </v-chip>
+                                    </td>
+                                    <td class="data-cell text-center">
+                                        <div class="d-flex justify-center align-center variant-actions">
+                                            <v-btn variant="text" class="action-icon-btn" color="primary"
+                                                @click="openEditVariantModal(variant)">
+                                                <PencilIcon size="18" />
+                                                <v-tooltip activator="parent" location="top"
+                                                    text="Chỉnh sửa biến thể" />
+                                            </v-btn>
+                                            <div class="switch-wrapper">
+                                                <v-switch :model-value="isActiveStatus(variant.trangThai)"
+                                                    color="primary" hide-details density="compact"
+                                                    class="tight-switch action-switch"
+                                                    @click.prevent.stop="handleToggleVariantStatus(variant)" />
+                                                <v-tooltip activator="parent" location="top"
+                                                    text="Chuyển đổi trạng thái" />
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+
+                            <template #pagination>
+                                <AdminPagination v-model="variantPage" :page-size="variantPageSize"
+                                    @update:pageSize="variantPageSize = $event" :total-pages="totalVariantPages"
+                                    :total-elements="totalVariantElements"
+                                    :current-size="paginatedVariantItems.length" />
+                            </template>
+                        </AdminTable>
 
                     </v-card-text>
                 </v-card>
@@ -2301,12 +2130,50 @@ const handleSave = async () => {
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
             :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
 
-        <VariantFormModal :key="`${variantModal.mode}-${variantModal.variant?.id || variantModal.variant?.clientKey || 'new'}`"
+        <VariantFormModal
+            :key="`${variantModal.mode}-${variantModal.variant?.id || variantModal.variant?.clientKey || 'new'}`"
             :open="variantModal.open" :mode="variantModal.mode" :variant="variantModal.variant"
             :options="variantOptions" :submitting="variantModal.submitting" :productCode="product.maSanPham"
-            :lock-attributes-on-edit="isEditMode"
-            :allow-image-upload="true"
-            @close="closeVariantModal" @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
+            :lock-attributes-on-edit="isEditMode" :allow-image-upload="true" @close="closeVariantModal"
+            @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
+
+        <!-- Modal Thiết lập nhanh hàng loạt -->
+        <v-dialog v-model="bulkEditModal.show" max-width="500">
+            <v-card class="premium-card rounded-xl">
+                <v-card-title class="pa-6 border-b d-flex align-center">
+                    <v-icon icon="mdi-flash-circle" color="primary" class="mr-3" />
+                    <span class="font-weight-bold text-slate-800">
+                        {{ bulkEditModal.targetColorId ? `Thiết lập cho màu ${getVariantColorLabel(bulkEditModal.targetColorId)}` : 'Thiết lập cho tất cả biến thể' }}
+                    </span>
+                </v-card-title>
+                <v-card-text class="pa-8">
+                    
+                    <v-row>
+                        <v-col cols="12">
+                            <div class="field-label">Số lượng</div>
+                            <v-text-field v-model="bulkEditModal.form.soLuong" type="number" placeholder="Nhập số lượng..." 
+                                variant="outlined" density="comfortable" hide-details class="custom-input" />
+                        </v-col>
+                        <v-col cols="12">
+                            <div class="field-label">Giá nhập</div>
+                            <FormattedNumberField v-model="bulkEditModal.form.giaNhap" placeholder="Nhập giá nhập..." 
+                                variant="outlined" density="comfortable" hide-details class="custom-input" />
+                        </v-col>
+                        <v-col cols="12">
+                            <div class="field-label">Giá bán (VNĐ)</div>
+                            <FormattedNumberField v-model="bulkEditModal.form.giaBan" placeholder="Nhập giá bán..." 
+                                variant="outlined" density="comfortable" hide-details class="custom-input" />
+                        </v-col>
+                    </v-row>
+                </v-card-text>
+                <v-card-actions class="pa-6 border-t bg-slate-50">
+                    <v-spacer />
+                    <v-btn variant="text" color="slate-500" class="text-none font-weight-bold" @click="bulkEditModal.show = false">Hủy</v-btn>
+                    <v-btn color="primary" variant="flat" class="text-none font-weight-bold px-6 rounded-lg h-11" 
+                        @click="applyBulkEdit">Áp dụng</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
         <div ref="qrExportContainer" class="qr-export-staging" aria-hidden="true">
             <div v-for="item in qrExportItems" :key="item.id" class="qr-export-item">
@@ -2340,6 +2207,117 @@ const handleSave = async () => {
     font-weight: 600 !important;
     margin-bottom: 6px !important;
     color: #334155 !important;
+}
+
+.variant-chip-group :deep(.v-chip),
+.variant-chip-group :deep(.v-chip__content) {
+    font-size: 13px !important;
+}
+
+.color-group-card {
+    background: #ffffff;
+    border-radius: 12px !important;
+    overflow: hidden;
+    border: 1px solid #f1f5f9 !important;
+    box-shadow: none !important;
+}
+
+.premium-card {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+.color-group-header {
+    background: #f8fafc;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.action-icon-btn {
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+
+.action-icon-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    background-color: rgba(239, 68, 68, 0.08) !important;
+}
+
+.color-image-uploader {
+    width: 180px;
+    height: 180px;
+    border: 2px dashed #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.2s ease;
+    background: #ffffff;
+}
+
+.color-image-uploader:hover {
+    border-color: #3b82f6;
+    background: #f1f7ff;
+}
+
+.uploader-placeholder {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.variant-inner-table {
+    border-left: 1px solid #f1f5f9;
+}
+
+.variant-inner-table :deep(th) {
+    font-size: 13px !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+}
+
+.variant-inner-table :deep(td) {
+    font-size: 13px !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+}
+
+.custom-input-dense :deep(.v-field__input) {
+    font-size: 13px !important;
+    min-height: 36px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.attribute-list-wrapper {
+    min-height: 200px;
+    height: 0; /* Let flex-grow handle it */
+    overflow-y: auto;
+    border: 1px solid #f1f5f9;
+    border-radius: 8px;
+    background: #f8fafc;
+    padding: 8px;
+}
+
+.attribute-list-wrapper::-webkit-scrollbar {
+    width: 4px;
+}
+
+.attribute-list-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.attribute-checkbox :deep(.v-label) {
+    font-size: 13px !important;
+    color: #334155 !important;
+    opacity: 1 !important;
+}
+
+.attribute-checkbox :deep(.v-selection-control) {
+    min-height: 32px !important;
 }
 
 @media (min-width: 1280px) {
@@ -2511,7 +2489,7 @@ const handleSave = async () => {
     text-transform: none;
 }
 
-.variant-group-row + .variant-group-row {
+.variant-group-row+.variant-group-row {
     border-top: 1px solid rgba(148, 163, 184, 0.12);
 }
 

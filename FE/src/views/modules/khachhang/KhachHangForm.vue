@@ -6,35 +6,21 @@ import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { useNotifications } from '@/services/notificationService';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
-import { ArrowLeftIcon, UserIcon, MapPinIcon, NoteIcon, PlusIcon, EditIcon, TrashIcon, StarIcon } from 'vue-tabler-icons';
+import { ArrowLeftIcon, UserIcon, MapPinIcon, NoteIcon, PlusIcon, EditIcon, TrashIcon, StarIcon, ReceiptIcon } from 'vue-tabler-icons';
+import { useLocation } from '@/composables/useLocation';
 import axios from 'axios';
 
 import { dichVuFile } from '@/services/core/dichVuFile';
-
-
-const FB_DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+import { TRANG_THAI_KHACH_HANG, ADDRESS_CONSTANTS, DEFAULT_AVATAR_URL, INVOICE_TABLE_HEADERS } from '@/constants/khachHangConstants';
+import { GIOI_TINH_OPTIONS } from '@/constants/appConstants';
+import { useAddressMapping } from '@/composables/useAddressMapping';
 
 const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
 
-// Helper to clean location names for better matching
-const cleanName = (s) => {
-    if (!s) return '';
-    return String(s).toLowerCase()
-        .replace(/^(thành phố|tỉnh|quận|huyện|phường|xã|thị xã|thị trấn|tp\.?|t\.?|q\.?|h\.?|x\.?)\s+/gi, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-};
-
-const matchLocation = (list, name) => {
-    if (!name) return null;
-    const cleanN = cleanName(name);
-    if (cleanN.includes('hcm') || cleanN.includes('hồ chí minh')) {
-        return list.find(x => cleanName(x.name).includes('hồ chí minh') || cleanName(x.name).includes('hcm'));
-    }
-    return list.find(x => cleanName(x.name).includes(cleanN) || cleanN.includes(cleanName(x.name)));
-};
+const { provinces, districts, wards, loadingLocations, fetchProvinces, fetchDistricts, fetchWards, cleanName, matchLocation } = useLocation();
+const { mapCodesToNames, isLegacyAddressId, createLegacyAddressId, parseAddressString } = useAddressMapping();
 
 const loading = ref(false);
 const saving = ref(false);
@@ -70,7 +56,7 @@ const customerForm = ref({
     matKhau: '',
     ngaySinh: '',
     gioiTinh: true,
-    trangThai: 'DANG_HOAT_DONG',
+    trangThai: TRANG_THAI_KHACH_HANG.DANG_HOAT_DONG,
     tinh: null,
     thanhPho: null,
     phuongXa: null,
@@ -78,65 +64,6 @@ const customerForm = ref({
     ghiChu: '',
     hinhAnh: ''
 });
-
-// Location Data
-const provinces = ref([]);
-const districts = ref([]);
-const wards = ref([]);
-const loadingLocations = ref({ provinces: false, districts: false, wards: false });
-
-const fetchProvinces = async () => {
-    loadingLocations.value.provinces = true;
-    try {
-        const res = await axios.get('https://provinces.open-api.vn/api/p/');
-        provinces.value = res.data;
-    } catch (e) {
-        console.error('Error loading provinces:', e);
-        addNotification({
-            title: 'Lỗi',
-            subtitle: 'Không thể tải danh sách tỉnh/thành phố',
-            color: 'error'
-        });
-    } finally {
-        loadingLocations.value.provinces = false;
-    }
-};
-
-const fetchDistricts = async (provinceCode) => {
-    if (!provinceCode) return;
-    loadingLocations.value.districts = true;
-    try {
-        const res = await axios.get(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
-        districts.value = res.data.districts;
-    } catch (e) {
-        console.error('Error loading districts:', e);
-        addNotification({
-            title: 'Lỗi',
-            subtitle: 'Không thể tải danh sách quận/huyện',
-            color: 'error'
-        });
-    } finally {
-        loadingLocations.value.districts = false;
-    }
-};
-
-const fetchWards = async (districtCode) => {
-    if (!districtCode) return;
-    loadingLocations.value.wards = true;
-    try {
-        const res = await axios.get(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
-        wards.value = res.data.wards;
-    } catch (e) {
-        console.error('Error loading wards:', e);
-        addNotification({
-            title: 'Lỗi',
-            subtitle: 'Không thể tải danh sách phường/xã',
-            color: 'error'
-        });
-    } finally {
-        loadingLocations.value.wards = false;
-    }
-};
 
 const confirmDialog = ref({
     show: false,
@@ -150,70 +77,72 @@ const loadCustomer = async (id) => {
     loading.value = true;
     try {
         const data = await dichVuKhachHang.layChiTietKhachHang(id);
+
+        // Trích xuất danh sách địa chỉ từ API (bao gồm cả data.addresses từ Backend)
+        const rawAddresses = data.addresses || data.listDiaChi || data.diaChis || data.diaChiList || [];
+        listDiaChi.value = Array.isArray(rawAddresses) ? [...rawAddresses] : [];
+
+        // Xác định địa chỉ mặc định hoặc địa chỉ đầu tiên của khách hàng để làm địa chỉ hiện tại
+        const defaultAddr = listDiaChi.value.find(a => a.laMacDinh) || listDiaChi.value[0];
+
         customerForm.value = {
             ...data,
             tinh: null,
             thanhPho: null,
             phuongXa: null,
+            diaChiChiTiet: defaultAddr ? defaultAddr.diaChiChiTiet : (data.diaChiChiTiet || ''),
             ma: data.ma || data.maKhachHang || '', // Đảm bảo luôn có trường 'ma' để dùng làm khóa tìm kiếm
         };
         isEditMode.value = true;
 
+        const targetAddress = defaultAddr || data;
+
         // Map string names to codes for v-autocomplete, or parse from full address string
-        if (data.tinh || data.thanhPho || data.phuongXa) {
+        if (targetAddress.tinh || targetAddress.thanhPho || targetAddress.phuongXa) {
             if (provinces.value.length === 0) {
                 await fetchProvinces();
             }
-            const province = provinces.value.find(p => cleanName(p.name) === cleanName(data.tinh) || p.code === data.tinh);
+            const province = provinces.value.find(p => cleanName(p.name) === cleanName(targetAddress.tinh) || p.code === targetAddress.tinh);
             if (province) {
                 customerForm.value.tinh = province.code;
                 await fetchDistricts(province.code);
-                const district = districts.value.find(d => cleanName(d.name) === cleanName(data.thanhPho) || d.code === data.thanhPho);
+                const district = districts.value.find(d => cleanName(d.name) === cleanName(targetAddress.thanhPho) || d.code === targetAddress.thanhPho);
                 if (district) {
                     customerForm.value.thanhPho = district.code;
                     await fetchWards(district.code);
-                    const ward = wards.value.find(w => cleanName(w.name) === cleanName(data.phuongXa) || w.code === data.phuongXa);
+                    const ward = wards.value.find(w => cleanName(w.name) === cleanName(targetAddress.phuongXa) || w.code === targetAddress.phuongXa);
                     if (ward) {
                         customerForm.value.phuongXa = ward.code;
                     }
                 }
             }
         } else {
-            let addressStr = data.diaChiChiTiet || data.diaChi || '';
+            let addressStr = targetAddress.diaChiChiTiet || targetAddress.diaChi || '';
             if (addressStr && addressStr.includes(',')) {
-                const parts = addressStr.split(',').map(p => p.trim());
-                if (parts.length >= 4) {
+                const parsed = parseAddressString(addressStr);
+                if (parsed.tinh) {
                     if (provinces.value.length === 0) {
                         await fetchProvinces();
                     }
-                    const pName = parts[parts.length - 1];
-                    const province = matchLocation(provinces.value, pName);
+                    const province = matchLocation(provinces.value, parsed.tinh);
                     if (province) {
                         customerForm.value.tinh = province.code;
                         await fetchDistricts(province.code);
-                        
-                        const dName = parts[parts.length - 2];
-                        const district = matchLocation(districts.value, dName);
+
+                        const district = matchLocation(districts.value, parsed.thanhPho);
                         if (district) {
                             customerForm.value.thanhPho = district.code;
                             await fetchWards(district.code);
-                            
-                            const wName = parts[parts.length - 3];
-                            const ward = matchLocation(wards.value, wName);
+
+                            const ward = matchLocation(wards.value, parsed.phuongXa);
                             if (ward) {
                                 customerForm.value.phuongXa = ward.code;
-                                customerForm.value.diaChiChiTiet = parts.slice(0, parts.length - 3).join(', ');
+                                customerForm.value.diaChiChiTiet = parsed.diaChiChiTiet;
                             }
                         }
                     }
                 }
             }
-        }
-
-        // Đồng bộ danh sách địa chỉ (thử mọi trường có thể)
-        const rawAddresses = data.listDiaChi || data.diaChis || data.diaChiList || [];
-        if (Array.isArray(rawAddresses) && rawAddresses.length > 0) {
-            listDiaChi.value = [...rawAddresses];
         }
 
         // Tải thêm từ API riêng (nếu API này trả về thì sẽ cập nhật sau)
@@ -240,13 +169,8 @@ const handleSave = () => {
             try {
                 // Map names before sending
                 const payload = { ...customerForm.value };
-                const p = provinces.value.find((x) => x.code === customerForm.value.tinh);
-                const d = districts.value.find((x) => x.code === customerForm.value.thanhPho);
-                const w = wards.value.find((x) => x.code === customerForm.value.phuongXa);
-
-                if (p) payload.tinh = p.name;
-                if (d) payload.thanhPho = d.name;
-                if (w) payload.phuongXa = w.name;
+                const mappedPayload = mapCodesToNames(customerForm.value, provinces.value, districts.value, wards.value);
+                Object.assign(payload, mappedPayload);
                 // validate address fields
                 if (!isEditMode.value || listDiaChi.value.length === 0) {
                     if (!payload.tinh || !payload.thanhPho || !payload.phuongXa || !payload.diaChiChiTiet) {
@@ -262,7 +186,7 @@ const handleSave = () => {
 
                 if (isEditMode.value) {
                     await dichVuKhachHang.capNhatKhachHang(route.params.id, payload);
-                    
+
                     // Nếu là edit mode mà chưa có địa chỉ, tự động tạo địa chỉ từ form
                     if (listDiaChi.value.length === 0 && payload.tinh && payload.thanhPho && payload.phuongXa && payload.diaChiChiTiet) {
                         try {
@@ -356,7 +280,7 @@ watch(
 const loadAddresses = async (khId) => {
     try {
         const res = await dichVuKhachHang.layDanhSachDiaChi(khId);
-        
+
         let data = [];
         if (Array.isArray(res)) {
             data = res;
@@ -368,8 +292,34 @@ const loadAddresses = async (khId) => {
             data = res.content;
         }
 
-        if (Array.isArray(data) && data.length > 0) {
-            listDiaChi.value = [...data];
+        if (Array.isArray(data)) {
+            const newList = [...data];
+
+            // Bảo toàn địa chỉ "gốc" (legacy) từ customerForm nếu có
+            const hasLegacyInfo = customerForm.value && (customerForm.value.tinh || customerForm.value.thanhPho || customerForm.value.diaChiChiTiet);
+
+            if (hasLegacyInfo) {
+                const legacyId = createLegacyAddressId(customerForm.value.id || khId);
+
+                // Chỉ thêm nếu trong data chưa có ID này (tránh trùng lặp)
+                if (!newList.some(addr => addr.id === legacyId)) {
+                    const p = provinces.value.find(x => x.code === customerForm.value.tinh || x.name === customerForm.value.tinh);
+                    const d = districts.value.find(x => x.code === customerForm.value.thanhPho || x.name === customerForm.value.thanhPho);
+                    const w = wards.value.find(x => x.code === customerForm.value.phuongXa || x.name === customerForm.value.phuongXa);
+
+                    newList.push({
+                        id: legacyId,
+                        tinh: p ? p.name : customerForm.value.tinh,
+                        thanhPho: d ? d.name : customerForm.value.thanhPho,
+                        phuongXa: w ? w.name : customerForm.value.phuongXa,
+                        diaChiChiTiet: customerForm.value.diaChiChiTiet,
+                        tenNguoiNhan: customerForm.value.ten,
+                        sdtNguoiNhan: customerForm.value.sdt,
+                        laMacDinh: data.length === 0 // Chỉ mặc định nếu không có địa chỉ thực nào khác
+                    });
+                }
+            }
+            listDiaChi.value = newList;
         }
     } catch (e) {
         console.error('Error loading addresses:', e);
@@ -425,9 +375,14 @@ const saveAddress = async () => {
         if (d) payload.thanhPho = d.name;
         if (w) payload.phuongXa = w.name;
 
-        if (isEditAddr.value) {
+        // Xử lý trường hợp ID giả (legacy address)
+        const isRealId = payload.id && !isLegacyAddressId(payload.id);
+
+        if (isEditAddr.value && isRealId) {
             await dichVuKhachHang.capNhatDiaChi(addrForm.value.id, payload);
         } else {
+            // Nếu thêm mới hoặc là edit từ địa chỉ gốc giả lập -> gọi API Add (tạo địa chỉ thực mới)
+            delete payload.id;
             await dichVuKhachHang.taoDiaChi(payload);
         }
         addNotification({ title: 'Thành công', subtitle: 'Đã lưu địa chỉ', color: 'success' });
@@ -504,10 +459,8 @@ onMounted(() => {
                 </v-btn>
             </div>
             <div class="d-flex gap-3">
-                <v-btn color="primary" variant="flat"
-                    class="add-btn-primary text-none px-8 rounded-xl h-11 elevation-4" 
-                    style="font-size: 16px !important; font-weight: 600 !important;"
-                    :loading="saving"
+                <v-btn color="primary" variant="flat" class="add-btn-primary text-none px-8 rounded-xl h-11 elevation-4"
+                    style="font-size: 16px !important; font-weight: 600 !important;" :loading="saving"
                     @click="handleSave">
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
                     <span style="font-size: 16px !important; font-weight: 600 !important;">{{ submitButtonText }}</span>
@@ -520,7 +473,7 @@ onMounted(() => {
         <v-row class="mb-6 d-flex align-stretch">
             <v-col cols="12" lg="8" class="d-flex">
                 <!-- Basic Info -->
-                <v-card class="filter-card elevation-0 w-100 d-flex flex-column mb-0">
+                <v-card class="filter-card elevation-0 border border-slate-200 w-100 d-flex flex-column mb-0">
                     <v-card-text class="pa-8 flex-grow-1">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
@@ -532,45 +485,40 @@ onMounted(() => {
                         <v-row>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Mã khách hàng</div>
-                                <v-text-field v-model="customerForm.ma" :readonly="isDetailView" placeholder="KH-XXXX"
-                                    variant="outlined" density="compact"
-                                    class="font-weight-medium bg-slate-50 mono-font" hide-details></v-text-field>
+                                <v-text-field v-model="customerForm.ma" readonly
+                                    :placeholder="isEditMode ? 'KH-XXXX' : 'Hệ thống tự sinh khi lưu'"
+                                    variant="outlined" density="compact" class="font-weight-medium mono-font"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="8">
                                 <div class="field-label">Họ và tên *</div>
-                                <v-text-field v-model="customerForm.ten" :readonly="isDetailView" placeholder="Ví dụ: Nguyễn Văn A"
-                                    variant="outlined" density="compact" hide-details></v-text-field>
+                                <v-text-field v-model="customerForm.ten" :readonly="isDetailView"
+                                    placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" density="compact"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Email *</div>
-                                <v-text-field v-model="customerForm.email" :readonly="isDetailView" placeholder="khachhang@gmail.com"
-                                    variant="outlined" density="compact" hide-details></v-text-field>
+                                <v-text-field v-model="customerForm.email" :readonly="isDetailView"
+                                    placeholder="khachhang@gmail.com" variant="outlined" density="compact"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Số điện thoại *</div>
-                                <v-text-field v-model="customerForm.sdt" :readonly="isDetailView" placeholder="09xx.xxx.xxx" variant="outlined"
-                                    density="compact" hide-details></v-text-field>
+                                <v-text-field v-model="customerForm.sdt" :readonly="isDetailView"
+                                    placeholder="09xx.xxx.xxx" variant="outlined" density="compact"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
-                                <v-text-field 
-                                v-model="customerForm.ngaySinh" 
-                                :readonly="isDetailView" 
-                                type="date"
-                                append-inner-icon="mdi-calendar" 
-                                @click:append-inner="openDatePicker"
-                                variant="outlined" 
-                                density="compact" 
-                                hide-details
-                                clearable
-                                ></v-text-field>
+                                <v-text-field v-model="customerForm.ngaySinh" :readonly="isDetailView" type="date"
+                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
+                                    variant="outlined" density="compact" hide-details clearable></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Giới tính</div>
-                                <v-select v-model="customerForm.gioiTinh" :readonly="isDetailView" :items="[
-                                    { title: 'Nam', value: true },
-                                    { title: 'Nữ', value: false }
-                                ]" variant="outlined" density="compact" hide-details></v-select>
+                                <v-select v-model="customerForm.gioiTinh" :readonly="isDetailView"
+                                    :items="GIOI_TINH_OPTIONS" variant="outlined" density="compact"
+                                    hide-details></v-select>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -578,7 +526,7 @@ onMounted(() => {
             </v-col>
 
             <v-col cols="12" lg="4" class="d-flex">
-                <v-card class="filter-card elevation-0 w-100 d-flex flex-column mb-0">
+                <v-card class="filter-card elevation-0 border border-slate-200 w-100 d-flex flex-column mb-0">
                     <v-card-text class="pa-8 text-center flex-grow-1">
                         <div class="section-header d-flex align-center mb-6 text-left">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
@@ -591,7 +539,7 @@ onMounted(() => {
                             <v-avatar size="160" color="blue-lighten-5"
                                 class="border-xl border-white elevation-6 cursor-pointer avatar-hover transition-all overflow-hidden"
                                 @click="handleFileClick">
-                                <v-img :src="customerForm.hinhAnh || FB_DEFAULT_AVATAR" cover>
+                                <v-img :src="customerForm.hinhAnh || DEFAULT_AVATAR_URL" cover>
                                     <template v-slot:placeholder>
                                         <v-row class="fill-height ma-0" align="center" justify="center">
                                             <v-progress-circular indeterminate color="primary"></v-progress-circular>
@@ -627,7 +575,7 @@ onMounted(() => {
         <v-row class="pb-16 d-flex align-stretch">
             <v-col cols="12" lg="8" class="d-flex">
                 <!-- Address Info Card -->
-                <v-card class="filter-card elevation-0 w-100 d-flex flex-column mb-0">
+                <v-card class="filter-card elevation-0 border border-slate-200 w-100 d-flex flex-column mb-0">
                     <v-card-text class="pa-8 flex-grow-1">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-amber-lighten-5 mr-3">
@@ -636,8 +584,7 @@ onMounted(() => {
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Số địa chỉ</span>
                             <v-spacer></v-spacer>
                             <v-btn v-if="isEditMode" variant="flat" color="primary" size="small"
-                                class="add-btn-primary text-none"
-                                @click="openAddrDialog()">
+                                class="add-btn-primary text-none" @click="openAddrDialog()">
                                 <PlusIcon size="18" class="mr-2" />
                                 Thêm địa chỉ mới
                             </v-btn>
@@ -660,10 +607,9 @@ onMounted(() => {
 
                                 <v-col cols="12" md="4">
                                     <div class="field-label">Quận / Huyện *</div>
-                                    <v-autocomplete v-model="customerForm.thanhPho" :items="districts"
-                                        item-title="name" item-value="code" placeholder="Chọn Quận / Huyện"
-                                        variant="outlined" density="compact" :disabled="!customerForm.tinh"
-                                        @update:model-value="
+                                    <v-autocomplete v-model="customerForm.thanhPho" :items="districts" item-title="name"
+                                        item-value="code" placeholder="Chọn Quận / Huyện" variant="outlined"
+                                        density="compact" :disabled="!customerForm.tinh" @update:model-value="
                                             (val) => {
                                                 customerForm.phuongXa = null;
                                                 if (val) fetchWards(val);
@@ -680,9 +626,8 @@ onMounted(() => {
 
                                 <v-col cols="12">
                                     <div class="field-label">Địa chỉ cụ thể (Số nhà, đường...) *</div>
-                                    <v-textarea v-model="customerForm.diaChiChiTiet"
-                                        placeholder="Nhập địa chỉ cụ thể" variant="outlined" rows="2"
-                                        hide-details />
+                                    <v-textarea v-model="customerForm.diaChiChiTiet" placeholder="Nhập địa chỉ cụ thể"
+                                        variant="outlined" rows="2" hide-details />
                                 </v-col>
                             </v-row>
                         </div>
@@ -728,7 +673,7 @@ onMounted(() => {
 
             <v-col cols="12" lg="4" class="d-flex flex-column" style="gap: 24px">
                 <!-- Notes -->
-                <v-card class="filter-card elevation-0 mb-0">
+                <v-card class="filter-card elevation-0 border border-slate-200 mb-0">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-slate-100 mr-3">
@@ -744,7 +689,8 @@ onMounted(() => {
                 </v-card>
 
                 <!-- Security -->
-                <v-card class="filter-card elevation-0 bg-primary-lighten-5 border-primary-lighten-4 flex-grow-1 d-flex flex-column justify-center mb-0">
+                <v-card
+                    class="filter-card elevation-0 bg-primary-lighten-5 border-primary-lighten-4 flex-grow-1 d-flex flex-column justify-center mb-0">
                     <v-card-text class="pa-8">
                         <div class="d-flex align-center mb-4">
                             <v-icon color="primary" size="24" class="mr-3">mdi-shield-check</v-icon>
@@ -842,104 +788,7 @@ onMounted(() => {
                                         <td class="data-cell text-right font-weight-black text-primary py-4"
                                             style="font-size: 13px !important; color: #1e257c !important">
                                             {{ (selectedInvoice?.tongTienSauGiam || selectedInvoice?.tongTien ||
-                                            0).toLocaleString() }}đ
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </v-card-text>
-
-                <v-card-actions class="pa-4 bg-slate-50 border-t">
-                    <v-spacer />
-                    <v-btn color="slate-500" variant="text" class="text-none font-weight-bold"
-                        @click="invoiceDetailDialog = false">Đóng</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-
-        <!-- INVOICE DETAIL DIALOG -->
-        <v-dialog v-model="invoiceDetailDialog" max-width="1000" transition="dialog-bottom-transition" scrollable>
-            <v-card class="premium-card rounded-xl khach-hang-dialog-card">
-                <v-card-title class="pa-6 font-weight-black border-b text-primary d-flex align-center">
-                    <ReceiptIcon size="24" class="mr-3" />
-                    Chi tiết hóa đơn: {{ selectedInvoice?.maHoaDon || selectedInvoice?.ma }}
-                    <v-spacer />
-                    <v-btn icon variant="text" size="small" @click="invoiceDetailDialog = false">
-                        <v-icon>mdi-close</v-icon>
-                    </v-btn>
-                </v-card-title>
-
-                <v-card-text class="pa-6">
-                    <div v-if="detailLoading" class="text-center py-16">
-                        <v-progress-circular indeterminate color="primary" size="64" />
-                        <div class="mt-4 font-weight-bold text-slate-500">Đang tải chi tiết hóa đơn...</div>
-                    </div>
-
-                    <div v-else>
-                        <div class="admin-table-container border rounded-xl overflow-hidden bg-white">
-                            <table class="native-admin-table w-100">
-                                <thead>
-                                    <tr>
-                                        <th class="header-cell text-center" style="width: 60px">STT</th>
-                                        <th class="header-cell text-center">Mã sản phẩm</th>
-                                        <th class="header-cell text-center">Tên sản phẩm</th>
-                                        <th class="header-cell text-center">Mã biến thể</th>
-                                        <th class="header-cell text-center">Tên biến thể</th>
-                                        <th class="header-cell text-center" style="width: 100px">Số lượng</th>
-                                        <th class="header-cell text-center" style="width: 130px">Đơn giá</th>
-                                        <th class="header-cell text-center" style="width: 140px">Thành tiền</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="(item, index) in selectedInvoice?.items" :key="item.id" class="data-row">
-                                        <td class="data-cell text-center text-slate-400">{{ index + 1 }}</td>
-                                        <td class="data-cell text-center">
-                                            <span class="mono-font text-slate-500">{{ item.maSanPham || item.maSP ||
-                                                'N/A'
-                                                }}</span>
-                                        </td>
-                                        <td class="data-cell text-center">
-                                            <span class="text-slate-800">{{ item.tenSanPham }}</span>
-                                        </td>
-                                        <td class="data-cell text-center">
-                                            <span class="mono-font text-slate-500">{{ item.maBienThe || item.maCTSP ||
-                                                'N/A'
-                                                }}</span>
-                                        </td>
-                                        <td class="data-cell text-center">
-                                            <span class="text-slate-600">{{ item.tenMauSac }} / {{ item.tenKichThuoc
-                                                }}</span>
-                                        </td>
-                                        <td class="data-cell text-center">
-                                            <span class="text-slate-600">{{ item.soLuong }}</span>
-                                        </td>
-                                        <td class="data-cell text-center text-primary"
-                                            style="color: #1e257c !important">
-                                            {{ (item.donGia || item.giaTien || 0).toLocaleString() }}đ
-                                        </td>
-                                        <td class="data-cell text-center text-primary"
-                                            style="color: #1e257c !important">
-                                            {{
-                                                (
-                                                    item.thanhTien || (item.donGia || item.giaTien || 0) * (item.soLuong || 0)
-                                                ).toLocaleString()
-                                            }}đ
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <tfoot>
-                                    <tr class="bg-slate-50">
-                                        <td colspan="7"
-                                            class="data-cell text-right font-weight-black text-slate-800 py-4"
-                                            style="font-size: 13px !important">
-                                            Tổng tiền:
-                                        </td>
-                                        <td class="data-cell text-right font-weight-black text-primary py-4"
-                                            style="font-size: 13px !important; color: #1e257c !important">
-                                            {{ (selectedInvoice?.tongTienSauGiam || selectedInvoice?.tongTien ||
-                                            0).toLocaleString() }}đ
+                                                0).toLocaleString() }}đ
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -1018,8 +867,8 @@ onMounted(() => {
                 <v-card-actions class="pa-4 bg-grey-lighten-4">
                     <v-spacer></v-spacer>
                     <v-btn variant="text" class="text-none font-weight-medium" @click="addrDialog = false">Hủy</v-btn>
-                    <v-btn color="primary" variant="flat" class="px-6 text-none rounded-lg"
-                        @click="saveAddress">Lưu địa chỉ</v-btn>
+                    <v-btn color="primary" variant="flat" class="px-6 text-none rounded-lg" @click="saveAddress">Lưu địa
+                        chỉ</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -1050,10 +899,6 @@ onMounted(() => {
 :deep(th),
 :deep(td) {
     font-size: 14px !important;
-}
-
-:deep(.text-subtitle-1),
-:deep(.text-h5) {
 }
 
 :deep(.text-body-2),
@@ -1183,7 +1028,4 @@ onMounted(() => {
     opacity: 0.8 !important;
     color: #475569 !important;
 }
-
 </style>
-
-

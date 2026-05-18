@@ -1,0 +1,32 @@
+/**
+ * MESSAGES - Các thông báo hiển thị cho người dùng
+ */
+export const MESSAGES = {
+    SUCCESS: {
+        SAVE: 'Lưu thông tin thành công',
+        UPDATE: 'Cập nhật thành công',
+        DELETE: 'Xóa thành công',
+        ADD: 'Thêm mới thành công',
+        PAYMENT: 'Hóa đơn đã được thanh toán',
+        UPLOAD: 'Tải ảnh lên thành công',
+        RESET_PASSWORD: 'Yêu cầu reset mật khẩu đã được gửi'
+    },
+    ERROR: {
+        SYSTEM: 'Có lỗi hệ thống xảy ra. Vui lòng thử lại sau!',
+        LOAD_DATA: 'Không thể tải dữ liệu',
+        SAVE_DATA: 'Không thể lưu thông tin',
+        DELETE_DATA: 'Không thể xóa thông tin',
+        NOT_FOUND: 'Không tìm thấy thông tin yêu cầu',
+        UNAUTHORIZED: 'Bạn không có quyền thực hiện hành động này',
+        FILE_LARGE: 'Kích thước tệp quá lớn',
+        INVALID_FILE: 'Định dạng tệp không hợp lệ',
+        CONNECT_SERVER: 'Không thể kết nối máy chủ',
+        PRODUCT_OUT_OF_STOCK: 'Sản phẩm không đủ số lượng tồn kho',
+        PAYMENT_FAILED: 'Thanh toán thất bại',
+        INSUFFICIENT_FUNDS: 'Khách chưa đưa đủ tiền'
+    },
+    WARNING: {
+        WAITING_LIMIT: 'Tối đa 5 hóa đơn chờ',
+        UNSAVED_CHANGES: 'Bạn có thay đổi chưa được lưu'
+    }
+};

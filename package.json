@@ -2,7 +2,10 @@
   "name": "aerostride-root",
   "private": true,
   "scripts": {
-    "release": "semantic-release"
+    "release": "semantic-release",
+    "test:be": "cd BE && gradlew test",
+    "test:fe": "cd FE && npm run test",
+    "test": "npm run test:be && npm run test:fe"
   },
   "devDependencies": {
     "semantic-release": "^21.0.0",

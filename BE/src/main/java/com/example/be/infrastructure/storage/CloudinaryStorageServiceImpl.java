@@ -28,7 +28,7 @@ public class CloudinaryStorageServiceImpl implements StorageService {
             log.info("Starting file upload to Cloudinary in folder: {}", folderName);
 
             // Using Cloudinary SDK to upload the file
-            // asMap("folder", folderName) allows us to organize files into folders in the Cloudinary Media Library
+            // Using file.getBytes() is highly compatible and avoids NIO ChannelInputStream resolution errors in Tomcat
             Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
                     "folder", folderName,
                     "resource_type", "auto" // Automatically detected resource type (image, video, raw)

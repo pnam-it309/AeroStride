@@ -13,6 +13,8 @@ public class AdminAttributeResponse {
     private String ten;
     private String moTa;
     private String trangThai;
+    private String maMauHex;
+    private String giaTriKichThuoc;
     private Long ngayTao;
     private Long ngayCapNhat;
 }

@@ -26,6 +26,12 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "ERR_BUSINESS_LOGIC", e.getMessage(), request.getRequestURI(), ErrorSeverity.RECOVERABLE);
     }
 
+    @ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<ApiResponse<Object>> handleRateLimitException(RateLimitException e, HttpServletRequest request) {
+        log.warn("Rate limit triggered at {}: {}", request.getRequestURI(), e.getMessage());
+        return buildErrorResponse(HttpStatus.TOO_MANY_REQUESTS, "ERR_RATE_LIMIT", e.getMessage(), request.getRequestURI(), ErrorSeverity.RECOVERABLE);
+    }
+
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidationException(ValidationException e, HttpServletRequest request) {
         log.warn("Validation Warning at {}: {}", request.getRequestURI(), e.getMessage());

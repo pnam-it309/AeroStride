@@ -5,7 +5,7 @@ import { API_CHAT } from '@/constants/apiPaths';
 import { chatSocket } from '@/services/chatSocket';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useAuthStore } from '@/stores/authStore';
-import { CHAT_TYPES, CHAT_SENDER_TYPE } from '@/constants/appConstants';
+import { CHAT_TYPES, CHAT_SENDER_TYPE, CHAT_STATUS, CHAT_TOPICS } from '@/constants/appConstants';
 
 const notificationStore = useNotificationStore();
 const authStore = useAuthStore();
@@ -26,7 +26,7 @@ const messagesContainer = ref(null);
 
 // Filters
 const chatType = ref(CHAT_TYPES.CUSTOMER); // 'CUSTOMER', 'INTERNAL'
-const chatStatus = ref('ACTIVE'); // 'PENDING', 'ACTIVE', 'CLOSED'
+const chatStatus = ref(CHAT_STATUS.ACTIVE); // 'PENDING', 'ACTIVE', 'CLOSED'
 const searchQuery = ref('');
 
 const scrollToBottom = () => {
@@ -123,11 +123,11 @@ onMounted(() => {
     notificationStore.resetUnreadChat();
 
     chatSocket.connect(() => {
-        chatSocket.subscribe('/topic/notifications', (msg) => {
+        chatSocket.subscribe(CHAT_TOPICS.NOTIFICATIONS, (msg) => {
             fetchConversations();
         });
 
-        chatSocket.subscribe('/topic/messages', (msg) => {
+        chatSocket.subscribe(CHAT_TOPICS.MESSAGES, (msg) => {
             const data = typeof msg === 'string' ? JSON.parse(msg) : msg;
             
             // Lọc tin nhắn: Chỉ xử lý nếu tin nhắn thuộc về mình hoặc là tin nhắn chờ (PENDING)
@@ -157,8 +157,8 @@ onMounted(() => {
             <v-col cols="12" md="3" class="border-r d-flex flex-column fill-height shadow-sm">
                 <!-- Type Tabs -->
                 <v-tabs v-model="chatType" color="primary" grow density="compact" class="border-b">
-                    <v-tab :value="CHAT_TYPES.CUSTOMER">KHÁCH HÀNG</v-tab>
-                    <v-tab :value="CHAT_TYPES.INTERNAL">NỘI BỘ</v-tab>
+                    <v-tab :value="CHAT_TYPES.CUSTOMER">Khách hàng</v-tab>
+                    <v-tab :value="CHAT_TYPES.INTERNAL">Nội bộ</v-tab>
                 </v-tabs>
 
                 <!-- Status Filters -->

@@ -1,6 +1,7 @@
 package com.example.be.entity;
 
 import com.example.be.core.common.base.BaseCodeNameEntity;
+import com.example.be.infrastructure.annotations.CodePrefix;
 import com.example.be.infrastructure.constants.GioiTinhKhachHang;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -18,6 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@CodePrefix("SP")
 @AttributeOverrides({
     @AttributeOverride(name = "ma", column = @Column(name = "ma_san_pham")),
     @AttributeOverride(name = "ten", column = @Column(name = "ten_san_pham"))

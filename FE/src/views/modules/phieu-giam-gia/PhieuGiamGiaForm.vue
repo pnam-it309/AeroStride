@@ -5,6 +5,7 @@ import { dichVuPhieuGiamGia } from '@/services/admin/dichVuPhieuGiamGia';
 import { PATH } from '@/router/routePaths';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { useNotifications } from '@/services/notificationService';
+import { generateRandomCode } from '@/utils/codeGenerator';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
@@ -18,6 +19,18 @@ import {
 const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
+
+const toLocalDatetimeString = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const pad = (num) => String(num).padStart(2, '0');
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
 
 const loading = ref(false);
 const saving = ref(false);
@@ -63,7 +76,7 @@ const form = ref({
     soLuong: 0,
     giatriToiThieu: 0,
     giamToiDa: 0,
-    ngayBatDau: new Date().toISOString().slice(0, 16),
+    ngayBatDau: toLocalDatetimeString(new Date()),
     ngayKetThuc: '',
     trangThai: 'DANG_HOAT_DONG',
     listIdKhachHang: []
@@ -128,6 +141,40 @@ const formatDate = (value) => {
     return date.toLocaleDateString('vi-VN');
 };
 
+const formatNumberWithDots = (value) => {
+    if (value === undefined || value === null || value === '') return '';
+    const num = String(value).replace(/\D/g, '');
+    if (!num) return '';
+    return new Intl.NumberFormat('vi-VN').format(Number(num));
+};
+
+const parseNumberFromDots = (value) => {
+    if (value === undefined || value === null || value === '') return 0;
+    const cleanValue = String(value).replace(/\./g, '').replace(/\D/g, '');
+    return cleanValue ? Number(cleanValue) : 0;
+};
+
+const formattedSoTienGiam = computed({
+    get: () => formatNumberWithDots(form.value.soTienGiam),
+    set: (value) => {
+        form.value.soTienGiam = parseNumberFromDots(value);
+    }
+});
+
+const formattedGiamToiDa = computed({
+    get: () => formatNumberWithDots(form.value.giamToiDa),
+    set: (value) => {
+        form.value.giamToiDa = parseNumberFromDots(value);
+    }
+});
+
+const formattedGiatriToiThieu = computed({
+    get: () => formatNumberWithDots(form.value.giatriToiThieu),
+    set: (value) => {
+        form.value.giatriToiThieu = parseNumberFromDots(value);
+    }
+});
+
 // Hàm đồng bộ mở trình chọn ngày khi bấm vào icon
 const openDatePicker = (event) => {
     const container = event.target.closest('.v-input');
@@ -153,10 +200,11 @@ const init = async () => {
             const data = await dichVuPhieuGiamGia.layChiTietPhieuGiamGia(route.params.id);
             form.value = {
                 ...data,
+                moTa: data.ghiChu || '',
                 loaiHienThi: data.hinhThuc || 'CONG_KHAI',
                 giatriToiThieu: data.donHangToiThieu || 0,
-                ngayBatDau: data.ngayBatDau ? new Date(data.ngayBatDau).toISOString().slice(0, 16) : '',
-                ngayKetThuc: data.ngayKetThuc ? new Date(data.ngayKetThuc).toISOString().slice(0, 16) : ''
+                ngayBatDau: data.ngayBatDau ? toLocalDatetimeString(data.ngayBatDau) : '',
+                ngayKetThuc: data.ngayKetThuc ? toLocalDatetimeString(data.ngayKetThuc) : ''
             };
             selectedCustomerIds.value = data.listIdKhachHang || [];
             if (data.soLuong === -1) isInfinite.value = true;
@@ -187,6 +235,7 @@ const handleSave = () => {
             try {
                 const payload = {
                     ...form.value,
+                    ghiChu: form.value.moTa,
                     donHangToiThieu: form.value.giatriToiThieu,
                     hinhThuc: form.value.loaiHienThi,
                     ngayBatDau: new Date(form.value.ngayBatDau).getTime(),
@@ -218,11 +267,10 @@ onMounted(init);
 
 <template>
     <v-container fluid class="pa-6 animate-fade-in overflow-y-auto" style="height: 100vh;">
-        <!-- Breadcrumbs -->
         <AdminBreadcrumbs :items="[
             { title: 'Quản lý phiếu giảm giá', disabled: false, href: '#' },
             { title: 'Phiếu giảm giá', disabled: false, to: PATH.PHIEU_GIAM_GIA },
-            { title: isEditMode.value ? 'Cập nhật' : (isDetailMode.value ? 'Chi tiết' : 'Thêm mới'), disabled: true }
+            { title: isEditMode ? 'Cập nhật' : (isDetailMode ? 'Chi tiết' : 'Thêm mới'), disabled: true }
         ]" />
 
         <!-- Action Header -->
@@ -253,7 +301,7 @@ onMounted(init);
             <!-- LEFT COLUMN: Info & Values -->
             <v-col cols="12" lg="8">
                 <!-- 1. General Identification -->
-                <v-card class="filter-card elevation-0 mb-6">
+                <v-card class="filter-card elevation-0 border border-slate-200 mb-6">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
@@ -264,9 +312,12 @@ onMounted(init);
                         <v-row>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Mã phiếu giảm giá</div>
-                                <v-text-field v-model="form.ma" readonly placeholder="Hệ thống tự tạo..."
-                                    variant="outlined" density="compact"
-                                    class="custom-input mono-font bg-slate-50" hide-details></v-text-field>
+                                <v-text-field v-model="form.ma" readonly
+                                    :placeholder="isEditMode ? '' : 'Hệ thống tự sinh khi lưu'" variant="outlined"
+                                    density="compact"
+                                    class="custom-input mono-font"
+                                    hide-details>
+                                </v-text-field>
                             </v-col>
                             <v-col cols="12" md="8">
                                 <div class="field-label">Tên chương trình <span class="text-red">*</span></div>
@@ -285,7 +336,7 @@ onMounted(init);
                 </v-card>
 
                 <!-- 2. Value Config -->
-                <v-card class="filter-card elevation-0 mb-6">
+                <v-card class="filter-card elevation-0 border border-slate-200 mb-6">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-amber-lighten-5 mr-3">
@@ -306,7 +357,7 @@ onMounted(init);
                             <v-col cols="12" md="4">
                                 <div class="field-label">Giá trị giảm</div>
                                 <v-text-field v-if="form.loaiPhieu === 'TIEN_MAT'"
-                                    v-model.number="form.soTienGiam" :readonly="isViewOnly" type="number"
+                                    v-model="formattedSoTienGiam" :readonly="isViewOnly" type="text"
                                     suffix="VNĐ" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                                 <v-text-field v-else v-model.number="form.phanTramGiamGia"
@@ -315,7 +366,7 @@ onMounted(init);
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Giảm tối đa</div>
-                                <v-text-field v-model.number="form.giamToiDa" :readonly="isViewOnly"
+                                <v-text-field v-model="formattedGiamToiDa" :readonly="isViewOnly"
                                     :disabled="form.loaiPhieu === 'TIEN_MAT'" suffix="VNĐ" variant="outlined"
                                     density="compact" hide-details
                                     :class="form.loaiPhieu === 'TIEN_MAT' ? 'bg-slate-50' : ''"></v-text-field>
@@ -336,8 +387,8 @@ onMounted(init);
                                 <div class="d-flex align-center mb-2" style="height: 24px;">
                                     <div class="field-label mb-0">Đơn tối thiểu (VNĐ)</div>
                                 </div>
-                                <v-text-field v-model.number="form.giatriToiThieu" :readonly="isViewOnly"
-                                    type="number" placeholder="0" variant="outlined" density="compact"
+                                <v-text-field v-model="formattedGiatriToiThieu" :readonly="isViewOnly"
+                                    type="text" placeholder="0" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
                         </v-row>
@@ -347,7 +398,7 @@ onMounted(init);
 
             <!-- RIGHT COLUMN: Release Settings -->
             <v-col cols="12" lg="4">
-                <v-card class="filter-card elevation-0 sticky-sidebar">
+                <v-card class="filter-card elevation-0 border border-slate-200 sticky-sidebar">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-emerald-lighten-5 mr-3">
@@ -358,12 +409,16 @@ onMounted(init);
                         <v-row>
                             <v-col cols="12">
                                 <div class="field-label">Phạm vi áp dụng</div>
-                                <v-btn-toggle v-model="form.loaiHienThi" :disabled="isViewOnly" mandatory
+                                <v-btn-toggle v-model="form.loaiHienThi" :disabled="isViewOnly || isEditMode" mandatory
                                     color="primary" variant="outlined" density="compact"
                                     class="w-100 rounded-lg custom-toggle">
                                     <v-btn value="CONG_KHAI" class="flex-grow-1">Công khai</v-btn>
                                     <v-btn value="CA_NHAN" class="flex-grow-1">Cá nhân</v-btn>
                                 </v-btn-toggle>
+                                <div v-if="isEditMode" class="text-caption text-medium-emphasis mt-2 d-flex align-center gap-1" style="font-size: 11px !important;">
+                                    <v-icon size="14" color="info" class="mr-1">mdi-information</v-icon>
+                                    Không thể chuyển đổi phạm vi khi chỉnh sửa
+                                </div>
                             </v-col>
                             <v-col cols="12">
                                 <div class="field-label">Ngày bắt đầu</div>
@@ -431,15 +486,15 @@ onMounted(init);
                                                 color="primary" density="compact" hide-details
                                                 class="d-inline-flex"></v-checkbox-btn>
                                         </th>
-                                        <th class="header-cell text-center" style="width: 50px">STT</th>
-                                        <th class="header-cell text-center" style="width: 100px">Mã KH</th>
-                                        <th class="header-cell text-center" style="width: 180px">Tên khách hàng</th>
-                                        <th class="header-cell text-center" style="width: 120px">Số điện thoại</th>
-                                        <th class="header-cell text-center" style="width: 250px">Email</th>
-                                        <th class="header-cell text-center" style="width: 110px">Ngày sinh</th>
-                                        <th class="header-cell text-center" style="width: 140px">Tổng chi tiêu</th>
-                                        <th class="header-cell text-center" style="width: 120px">Tổng đơn hàng</th>
-                                        <th class="header-cell text-center" style="width: 140px">Đơn hàng gần nhất</th>
+                                        <th class="header-cell text-center" style="width: 60px">STT</th>
+                                        <th class="header-cell text-center" style="width: 120px">Mã KH</th>
+                                        <th class="header-cell text-center">Tên khách hàng</th>
+                                        <th class="header-cell text-center">Số điện thoại</th>
+                                        <th class="header-cell text-center">Email</th>
+                                        <th class="header-cell text-center" style="width: 120px">Ngày sinh</th>
+                                        <th class="header-cell text-center" style="width: 150px">Tổng chi tiêu</th>
+                                        <th class="header-cell text-center" style="width: 130px">Tổng đơn hàng</th>
+                                        <th class="header-cell text-center" style="width: 160px">Đơn hàng gần nhất</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -449,31 +504,31 @@ onMounted(init);
                                                 :disabled="isViewOnly" color="primary" density="compact"
                                                 hide-details class="d-inline-flex"></v-checkbox-btn>
                                         </td>
-                                        <td class="data-cell text-center text-slate-500">
+                                        <td class="data-cell text-center">
                                             {{ (pagination.page - 1) * pagination.size + index + 1 }}
                                         </td>
-                                        <td class="data-cell text-center text-slate-600">
+                                        <td class="data-cell text-center">
                                             {{ item.maKh || item.ma }}
                                         </td>
-                                        <td class="data-cell text-center text-slate-600">
+                                        <td class="data-cell text-center">
                                             {{ item.ten }}
                                         </td>
-                                        <td class="data-cell text-center text-slate-600">
+                                        <td class="data-cell text-center">
                                             {{ item.sdt }}
                                         </td>
-                                        <td class="data-cell text-center text-slate-600">
+                                        <td class="data-cell text-center">
                                             {{ item.email }}
                                         </td>
-                                        <td class="data-cell text-center text-slate-600">
+                                        <td class="data-cell text-center">
                                             {{ formatDate(item.ngaySinh) }}
                                         </td>
-                                        <td class="data-cell text-center text-slate-600">
+                                        <td class="data-cell text-center">
                                             {{ formatCurrency(item.tongChiTieu) }}
                                         </td>
-                                        <td class="data-cell text-center text-slate-600">
+                                        <td class="data-cell text-center">
                                             {{ item.tongDonHang || 0 }}
                                         </td>
-                                        <td class="data-cell text-center text-slate-600">
+                                        <td class="data-cell text-center">
                                             {{ formatDate(item.ngayDonHangGanNhat) }}
                                         </td>
                                     </tr>
@@ -481,10 +536,11 @@ onMounted(init);
                             </table>
                         </div>
 
-                        <AdminPagination v-model="pagination.page" :page-size="pagination.size"
-                            @update:pageSize="pagination.size = $event" :total-pages="totalPages"
-                            :total-elements="filteredCustomers.length" :current-size="paginatedCustomers.length"
-                            class="mt-6" />
+                        <div class="pagination-footer mt-6">
+                            <AdminPagination v-model="pagination.page" :page-size="pagination.size"
+                                @update:pageSize="pagination.size = $event" :total-pages="totalPages"
+                                :total-elements="filteredCustomers.length" :current-size="paginatedCustomers.length" />
+                        </div>
                     </v-card-text>
                 </v-card>
             </v-col>

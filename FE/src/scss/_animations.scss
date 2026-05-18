@@ -1,19 +1,197 @@
-@keyframes slideUpFade {
+/* ==========================================================================
+   AEROSTRIDE - CENTRALIZED ANIMATIONS
+   All transitions, keyframes, and motion logic go here.
+   ========================================================================== */
+
+@keyframes routeShellEnter {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(14px) scale(0.985);
+        filter: blur(8px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
+        filter: blur(0);
     }
 }
 
+@keyframes routeShellLeave {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.99);
+        filter: blur(6px);
+    }
+}
+
+@keyframes slideUpFade {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes premiumFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes addButtonPress {
+    0% { transform: translateY(0) scale(1); box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16); }
+    50% { transform: translateY(1px) scale(0.96); box-shadow: 0 4px 10px rgba(37, 99, 235, 0.12); }
+    100% { transform: translateY(0) scale(1); box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16); }
+}
+
+@keyframes editButtonPress {
+    0% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(0.94) rotate(-1.5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes modalPopIn {
+    from {
+        opacity: 0;
+        transform: translateY(26px) scale(0.94);
+        filter: blur(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+@keyframes confirmPopIn {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.88);
+    }
+    70% {
+        opacity: 1;
+        transform: translateY(-2px) scale(1.01);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.route-shell-enter-active,
+.route-shell-leave-active {
+    transition:
+        opacity 0.34s cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1),
+        filter 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.route-shell-enter-from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+    filter: blur(8px);
+}
+
+.route-shell-leave-to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.99);
+    filter: blur(6px);
+}
+
 .animate-fade-in {
+    animation: premiumFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-slide-up {
     animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-// Stagger delays for children if needed
+.add-btn-primary {
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        filter 0.18s ease !important;
+    will-change: transform, box-shadow;
+}
+
+.add-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.2);
+}
+
+.add-btn-primary:active {
+    animation: addButtonPress 220ms ease-out;
+}
+
+.action-icon-btn--edit {
+    transition:
+        transform 0.18s ease,
+        background-color 0.18s ease,
+        color 0.18s ease !important;
+    will-change: transform;
+}
+
+.action-icon-btn--edit:hover {
+    background-color: rgba(37, 99, 235, 0.08);
+}
+
+.action-icon-btn--edit:active {
+    animation: editButtonPress 220ms ease-out;
+}
+
+.variant-modal-transition-enter-active,
+.variant-modal-transition-leave-active {
+    transition:
+        opacity 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+        filter 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.variant-modal-transition-enter-from,
+.variant-modal-transition-leave-to {
+    opacity: 0;
+    transform: translateY(26px) scale(0.94);
+    filter: blur(8px);
+}
+
+.variant-modal-transition-enter-to,
+.variant-modal-transition-leave-from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+}
+
+.variant-modal-card {
+    transform-origin: center top;
+    animation: modalPopIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.confirm-dialog-transition-enter-active,
+.confirm-dialog-transition-leave-active {
+    transition:
+        opacity 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.confirm-dialog-transition-enter-from,
+.confirm-dialog-transition-leave-to {
+    opacity: 0;
+    transform: translateY(18px) scale(0.88);
+}
+
+.confirm-dialog-transition-enter-to,
+.confirm-dialog-transition-leave-from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.premium-confirm-card {
+    transform-origin: center;
+    animation: confirmPopIn 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Stagger delays for lists */
 .stagger-1 { animation-delay: 0.1s; }
 .stagger-2 { animation-delay: 0.2s; }
 .stagger-3 { animation-delay: 0.3s; }

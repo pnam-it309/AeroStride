@@ -1,0 +1,177 @@
+/**
+ * AEROSTRIDE - CENTRALIZED CHIPS & STATUS SYSTEM
+ * "Sửa 1 nơi, đẹp mọi nơi" - Quản lý toàn bộ các loại Chip trạng thái, giới tính, hình thức.
+ */
+
+/* 1. BASE CHIP MIXIN (Thay cho extend để an toàn hơn với @use) */
+@mixin admin-chip-base {
+    border-radius: 16px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    justify-content: center !important;
+    display: inline-flex !important;
+    height: 28px !important;
+}
+
+/* 2. GENERAL STATUS CHIPS (Common across modules) */
+.status-chip {
+    @include admin-chip-base;
+    min-width: 110px !important; /* Giảm từ 140px để tránh tràn bảng */
+
+    &.status-chip-active, 
+    &.status-chip-success,
+    &.status-chip-hoat-dong { 
+        background: #f0fdf4 !important; 
+        color: #166534 !important; 
+    }
+
+    &.status-chip-inactive, 
+    &.status-chip-error, 
+    &.status-chip-expired,
+    &.status-chip-ngung-hoat-dong { 
+        background: #fef2f2 !important; 
+        color: #991b1b !important; 
+    }
+
+    &.status-chip-pending, 
+    &.status-chip-warning { 
+        background: #fffbeb !important; 
+        color: #92400e !important; 
+    }
+
+    &.status-chip-confirmed, 
+    &.status-chip-info { 
+        background: #eff6ff !important; 
+        color: #1e40af !important; 
+    }
+
+    &.status-chip-upcoming {
+        background: #f0f9ff !important;
+        color: #0369a1 !important;
+    }
+
+    /* Voucher Specific status (Matching the voucher screen colors) */
+    &.status-chip-public { 
+        background: #f0fdf4 !important; 
+        color: #15803d !important; 
+        border: 1px solid #dcfce7 !important;
+    }
+    &.status-chip-private { 
+        background: #eff6ff !important; 
+        color: #1d4ed8 !important; 
+        border: 1px solid #dbeafe !important;
+    }
+    &.status-chip-waiting-delivery { 
+        background: #fefce8 !important; 
+        color: #a16207 !important; 
+    }
+
+    &.status-chip-delivering { 
+        background: #eff6ff !important; 
+        color: #1d4ed8 !important; 
+    }
+
+    &.status-chip-completed { 
+        background: #f0fdf4 !important; 
+        color: #166534 !important; 
+    }
+
+    &.status-chip-cancelled { 
+        background: #fef2f2 !important; 
+        color: #991b1b !important; 
+    }
+
+    &.status-chip-refunded { 
+        background: #faf5ff !important; 
+        color: #7e22ce !important; 
+    }
+}
+
+/* 3. GENDER CHIPS (Staff, Customer) */
+.gender-chip {
+    @include admin-chip-base;
+    min-width: 80px !important;
+
+    &-male { 
+        background: #e0f2fe !important; 
+        color: #0369a1 !important; 
+    }
+    &-female { 
+        background: #fce7f3 !important; 
+        color: #be185d !important; 
+    }
+}
+
+/* 4. INVOICE SPECIFIC STATUS CHIPS (HoaDon module) */
+.invoice-status-chip {
+    @include admin-chip-base;
+    min-width: 120px !important;
+    
+    &-cho-xac-nhan { background: #fff7ed !important; color: #c2410c !important; }
+    &-da-xac-nhan { background: #f0fdf4 !important; color: #15803d !important; }
+    &-cho-giao { background: #fefce8 !important; color: #a16207 !important; }
+    &-dang-giao { background: #eff6ff !important; color: #1d4ed8 !important; }
+    &-hoan-thanh { background: #f0fdf4 !important; color: #166534 !important; }
+    &-huy { background: #fef2f2 !important; color: #991b1b !important; }
+    &-hoan-don { background: #faf5ff !important; color: #7e22ce !important; }
+}
+
+/* 5. DISPLAY TYPE CHIPS (Public/Private) */
+.type-chip, .hinh-thuc-chip {
+    @include admin-chip-base;
+    min-width: 100px !important;
+
+    &-public, &-cong-khai { 
+        background: #f0fdf4 !important; 
+        color: #15803d !important; 
+        border: 1px solid #dcfce7 !important; 
+    }
+    &-private, &-ca-nhan { 
+        background: #eff6ff !important; 
+        color: #1d4ed8 !important; 
+        border: 1px solid #dbeafe !important; 
+    }
+    
+    /* Discount Method (Phần trăm / Tiền mặt) */
+    &-percentage { background: #fff7ed !important; color: #ea580c !important; border: 1px solid #ffedd5 !important; }
+    &-cash { background: #f0f9ff !important; color: #0369a1 !important; border: 1px solid #e0f2fe !important; }
+
+    &.order-type-online { 
+        background: #eff6ff !important; 
+        color: #1d4ed8 !important; 
+        border: 1px solid #dbeafe !important; 
+    }
+    &.order-type-offline { 
+        background: #fdf2f8 !important; 
+        color: #be185d !important; 
+        border: 1px solid #fce7f3 !important; 
+    }
+}
+
+/* Standalone Order Type Classes (Additional protection) */
+.order-type-online {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #dbeafe !important;
+}
+.order-type-offline {
+    background: #fdf2f8 !important;
+    color: #be185d !important;
+    border: 1px solid #fce7f3 !important;
+}
+
+/* 6. TAB COUNT CHIPS (Badges) */
+.tab-count-chip {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #e2e8f0 !important;
+    min-width: 24px !important;
+    height: 24px !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    margin-left: 8px !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+}

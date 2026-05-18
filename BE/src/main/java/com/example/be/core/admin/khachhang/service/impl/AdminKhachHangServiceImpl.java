@@ -8,6 +8,7 @@ import com.example.be.core.admin.khachhang.service.AdminKhachHangService;
 import com.example.be.core.notification.EmailService;
 import com.example.be.entity.DiaChi;
 import com.example.be.entity.KhachHang;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.exceptions.DuplicateResourceException;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
@@ -60,7 +61,7 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     public AdminKhachHangResponse detail(String id) {
         AdminKhachHangResponse response = adminKhachHangRepository.detail(id);
         if (response == null) {
-            throw new ResourceNotFoundException("Không tìm thấy khách hàng với id: " + id);
+            throw new ResourceNotFoundException(MessageConstants.KHACH_HANG_NOT_FOUND + id);
         }
         response.setAddresses(adminDiaChiService.getByKhachHangId(id));
         return response;
@@ -72,17 +73,20 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     public AdminKhachHangResponse add(AdminKhachHangRequest request) {
         if (request.getMa() != null && !request.getMa().trim().isEmpty()) {
             if (adminKhachHangRepository.existsByMa(request.getMa())) {
-                throw new DuplicateResourceException("Mã khách hàng này đã tồn tại trong hệ thống.");
+                throw new DuplicateResourceException(MessageConstants.KHACH_HANG_MA_EXISTS);
             }
         }
         if (adminKhachHangRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException("Email này đã được sử dụng bởi một khách hàng khác.");
+            throw new DuplicateResourceException(MessageConstants.KHACH_HANG_EMAIL_EXISTS);
         }
 
         KhachHang kh = toEntity(request);
 
         if (kh.getMa() == null || kh.getMa().trim().isEmpty()) {
-            kh.setMa(CodeUtils.generateSequential("KH", adminKhachHangRepository.findAllMa()));
+            List<String> existingMas = adminKhachHangRepository.findAllProjectedBy().stream()
+                    .map(AdminKhachHangRepository.MaOnly::getMa)
+                    .toList();
+            kh.setMa(CodeUtils.generateSequential("KH", existingMas));
         }
 
         // Luôn tự sinh tenTaiKhoan và matKhau tạm
@@ -118,16 +122,16 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     @Transactional
     public AdminKhachHangResponse update(String id, AdminKhachHangRequest req) {
         KhachHang kh = adminKhachHangRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng với id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KHACH_HANG_NOT_FOUND + id));
 
         if (adminKhachHangRepository.existsByMaAndIdNot(req.getMa(), id)) {
-            throw new DuplicateResourceException("Mã khách hàng đã tồn tại");
+            throw new DuplicateResourceException(MessageConstants.DUPLICATE_MA);
         }
         if (adminKhachHangRepository.existsByEmailAndIdNot(req.getEmail(), id)) {
-            throw new DuplicateResourceException("Email đã được sử dụng");
+            throw new DuplicateResourceException(MessageConstants.DUPLICATE_EMAIL);
         }
         if (adminKhachHangRepository.existsByTenTaiKhoanAndIdNot(req.getTenTaiKhoan(), id)) {
-            throw new DuplicateResourceException("Tên tài khoản đã được sử dụng");
+            throw new DuplicateResourceException(MessageConstants.DUPLICATE_USERNAME);
         }
 
         applyEntityFields(kh, req);
@@ -140,7 +144,7 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
 
         if (req.getIdDiaChi() != null) {
             DiaChi dc = diaChiRepository.findById(req.getIdDiaChi())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy địa chỉ"));
+                    .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DIA_CHI_NOT_FOUND));
             dc.setKhachHang(kh);
             dc.setLaMacDinh(true);
             diaChiRepository.save(dc);
@@ -158,7 +162,7 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     @Transactional
     public void doiTrangThai(String id, TrangThai trangThai) {
         KhachHang kh = adminKhachHangRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng với id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KHACH_HANG_NOT_FOUND + id));
         kh.setTrangThai(trangThai);
         adminKhachHangRepository.saveAndFlush(kh);
     }
@@ -168,8 +172,8 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     @Transactional
     public void delete(String id) {
         KhachHang kh = adminKhachHangRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng với id: " + id));
-        kh.setTrangThai(TrangThai.KHONG_HOAT_DONG);
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KHACH_HANG_NOT_FOUND + id));
+        kh.setTrangThai(TrangThai.NGUNG_HOAT_DONG);
         adminKhachHangRepository.save(kh);
     }
 
@@ -191,7 +195,7 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
             });
         } catch (IOException e) {
             throw new com.example.be.infrastructure.exceptions.SystemException(
-                    "Lỗi xuất file Excel: " + e.getMessage());
+                    MessageConstants.EXCEL_EXPORT_ERROR + e.getMessage());
         }
     }
 
@@ -240,7 +244,7 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
         }
         if (request.getIdDiaChi() != null) {
             DiaChi dc = diaChiRepository.findById(request.getIdDiaChi())
-                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy địa chỉ"));
+                    .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DIA_CHI_NOT_FOUND));
             dc.setKhachHang(kh);
             dc.setLaMacDinh(true);
             return diaChiRepository.save(dc);
