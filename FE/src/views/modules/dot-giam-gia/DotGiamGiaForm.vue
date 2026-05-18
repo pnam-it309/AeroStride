@@ -11,6 +11,7 @@ import {
 } from '@/services/product/dichVuThuocTinh';
 import { useNotifications } from '@/services/notificationService';
 import { MESSAGES } from '@/constants/messages';
+import { STATUS } from '@/utils/statusUtils';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import AdminFilter from '@/components/common/AdminFilter.vue';
@@ -105,7 +106,7 @@ const form = ref({
     mucUuTien: 0,
     ngayBatDau: '',
     ngayKetThuc: '',
-    trangThai: 'DANG_HOAT_DONG'
+    trangThai: STATUS.ACTIVE
 });
 
 const expandedProductIds = ref([]);
@@ -337,10 +338,10 @@ const init = async () => {
         await loadMaxPrice();
         // Load attributes for filters
         const [brandData, colorData, sizeData, materialData] = await Promise.all([
-            dichVuThuongHieu.layThuongHieu({ trangThai: 'DANG_HOAT_DONG' }),
-            dichVuMauSac.layMauSac({ trangThai: 'DANG_HOAT_DONG' }),
-            dichVuKichThuoc.layKichThuoc({ trangThai: 'DANG_HOAT_DONG' }),
-            dichVuChatLieu.layChatLieu({ trangThai: 'DANG_HOAT_DONG' })
+            dichVuThuongHieu.layThuongHieu({ trangThai: STATUS.ACTIVE }),
+            dichVuMauSac.layMauSac({ trangThai: STATUS.ACTIVE }),
+            dichVuKichThuoc.layKichThuoc({ trangThai: STATUS.ACTIVE }),
+            dichVuChatLieu.layChatLieu({ trangThai: STATUS.ACTIVE })
         ]);
 
         brands.value = (brandData?.content || brandData || []).map(b => b.ten);
