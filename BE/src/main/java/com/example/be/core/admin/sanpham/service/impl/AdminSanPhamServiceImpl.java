@@ -3,11 +3,13 @@ package com.example.be.core.admin.sanpham.service.impl;
 import com.example.be.core.admin.sanpham.mapper.AdminSanPhamMapper;
 import com.example.be.core.admin.sanpham.model.request.*;
 import com.example.be.core.admin.sanpham.model.response.*;
+import com.example.be.core.admin.dotgiamgia.repository.AdminChiTietDotGiamGiaRepository;
 import com.example.be.core.admin.sanpham.repository.*;
 import com.example.be.core.admin.sanpham.service.AdminSanPhamService;
 import com.example.be.core.admin.sanpham.service.ProductOptionService;
 import com.example.be.core.common.dto.PageResponse;
 import com.example.be.entity.*;
+import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.exceptions.DuplicateResourceException;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
@@ -16,6 +18,9 @@ import com.example.be.repository.*;
 import com.example.be.utils.CodeUtils;
 import com.example.be.utils.SearchUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -34,6 +39,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     private final AdminSanPhamRepository adminSanPhamRepository;
     private final AdminChiTietSanPhamRepository adminChiTietSanPhamRepository;
     private final AdminAnhChiTietSanPhamRepository adminAnhChiTietSanPhamRepository;
+    private final AdminChiTietDotGiamGiaRepository adminChiTietDotGiamGiaRepository;
     private final AdminSanPhamMapper adminSanPhamMapper;
     
     // Delegate lookup logic to ProductOptionService (SRP)
@@ -52,14 +58,12 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
     @Override
     public List<ProductVariantResponse> getVariantsByProductId(String productId) {
-        return adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(productId)
-                .stream().map(this::mapVariant).toList();
+        return mapVariants(adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(productId));
     }
 
     @Override
     public List<ProductVariantResponse> getAllVariants() {
-        return adminChiTietSanPhamRepository.findAllByXoaMemFalse()
-                .stream().map(this::mapVariant).toList();
+        return mapVariants(adminChiTietSanPhamRepository.findAllByXoaMemFalse());
     }
 
     @Override
@@ -69,12 +73,15 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public ProductDetailResponse createProduct(CreateProductRequest request) {
         validateVariantRequests(request.getVariants());
-        String code = StringUtils.hasText(request.getMaSanPham()) ? request.getMaSanPham().trim().toUpperCase() : CodeUtils.generateRandom(SanPham.class);
+        String code = StringUtils.hasText(request.getMaSanPham()) 
+                ? request.getMaSanPham().trim().toUpperCase() 
+                : CodeUtils.generateRandom(SanPham.class, adminSanPhamRepository::existsByMa);
         
         if (adminSanPhamRepository.existsByMaIgnoreCaseAndXoaMemFalse(code)) {
-            throw new DuplicateResourceException("Mã sản phẩm đã tồn tại: " + code);
+            throw new DuplicateResourceException(MessageConstants.SAN_PHAM_MA_EXISTS + code);
         }
 
         SanPham sanPham = new SanPham();
@@ -90,6 +97,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     }
 
     @Override
+    @Cacheable(value = "products", key = "#request.toString()", unless = "#result == null")
     public PageResponse<ProductResponse> getProducts(SearchProductRequest request) {
         Specification<SanPham> spec = Specification.where(AdminSanPhamSpecification.notDeleted())
                 .and(AdminSanPhamSpecification.hasKeyword(request.getKeyword()))
@@ -107,12 +115,17 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     }
 
     @Override
+    @Cacheable(value = "productDetail", key = "#id", unless = "#result == null")
     public ProductDetailResponse getProductDetail(String id) {
         return buildProductDetailResponse(id);
     }
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products", allEntries = true),
+        @CacheEvict(value = "productDetail", key = "#id")
+    })
     public ProductDetailResponse updateProduct(String id, UpdateProductRequest request) {
         SanPham sp = getProductOrThrow(id);
         applyProductData(sp, request, sp.getMa());
@@ -122,6 +135,10 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products", allEntries = true),
+        @CacheEvict(value = "productDetail", key = "#id")
+    })
     public void deleteProduct(String id) {
         SanPham sp = getProductOrThrow(id);
         sp.setXoaMem(true);
@@ -133,6 +150,10 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products", allEntries = true),
+        @CacheEvict(value = "productDetail", key = "#id")
+    })
     public void updateStatus(String id, TrangThai status) {
         SanPham sp = getProductOrThrow(id);
         sp.setTrangThai(status);
@@ -146,12 +167,20 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products", allEntries = true),
+        @CacheEvict(value = "productDetail", key = "#productId")
+    })
     public ProductVariantResponse addVariant(String productId, ProductVariantRequest request) {
         return mapVariant(createOrUpdateVariant(null, getProductOrThrow(productId), request));
     }
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products", allEntries = true),
+        @CacheEvict(value = "productDetail", key = "#result.idSanPham")
+    })
     public ProductVariantResponse updateVariant(String variantId, ProductVariantRequest request) {
         ChiTietSanPham v = getVariantOrThrow(variantId);
         return mapVariant(createOrUpdateVariant(v, v.getSanPham(), request));
@@ -159,8 +188,10 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public void deleteVariant(String variantId) {
-        softDeleteVariant(getVariantOrThrow(variantId));
+        ChiTietSanPham v = getVariantOrThrow(variantId);
+        softDeleteVariant(v);
     }
 
     // --- Helper Methods ---
@@ -197,18 +228,42 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     }
 
     private ChiTietSanPham createOrUpdateVariant(ChiTietSanPham existing, SanPham sp, ProductVariantRequest req) {
+        if (existing == null) {
+            if (adminChiTietSanPhamRepository.existsBySanPhamIdAndMauSacIdAndKichThuocIdAndXoaMemFalse(
+                    sp.getId(), req.getIdMauSac(), req.getIdKichThuoc())) {
+                throw new DuplicateResourceException(MessageConstants.SAN_PHAM_VARIANT_DUPLICATE);
+            }
+        } else {
+            if (adminChiTietSanPhamRepository.existsBySanPhamIdAndMauSacIdAndKichThuocIdAndXoaMemFalseAndIdNot(
+                    sp.getId(), req.getIdMauSac(), req.getIdKichThuoc(), existing.getId())) {
+                throw new DuplicateResourceException(MessageConstants.SAN_PHAM_VARIANT_DUPLICATE);
+            }
+        }
+
         ChiTietSanPham v = existing != null ? existing : new ChiTietSanPham();
         v.setSanPham(sp);
-        v.setMauSac(mauSacRepository.findById(req.getIdMauSac()).orElseThrow(() -> new ResourceNotFoundException("Màu sắc không tồn tại")));
-        v.setKichThuoc(kichThuocRepository.findById(req.getIdKichThuoc()).orElseThrow(() -> new ResourceNotFoundException("Kích thước không tồn tại")));
+        v.setMauSac(mauSacRepository.findById(req.getIdMauSac()).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.MAU_SAC_NOT_FOUND)));
+        v.setKichThuoc(kichThuocRepository.findById(req.getIdKichThuoc()).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KICH_THUOC_NOT_FOUND)));
         v.setSoLuong(req.getSoLuong());
         v.setGiaNhap(req.getGiaNhap());
         v.setGiaBan(req.getGiaBan());
         v.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : TrangThai.DANG_HOAT_DONG);
         v.setXoaMem(false);
         
-        if (v.getMaChiTietSanPham() == null) {
-            v.setMaChiTietSanPham(sp.getMa() + "-" + v.getMauSac().getMa() + "-" + v.getKichThuoc().getTen());
+        if (v.getMaChiTietSanPham() == null || v.getMaChiTietSanPham().trim().isEmpty()) {
+            List<String> existingMas = adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalse(sp.getId()).stream()
+                    .map(ChiTietSanPham::getMaChiTietSanPham)
+                    .filter(Objects::nonNull)
+                    .toList();
+
+            String baseMa = sp.getMa();
+            int suffix = 1;
+            String generatedMa;
+            do {
+                generatedMa = String.format("%s-%02d", baseMa, suffix++);
+            } while (existingMas.contains(generatedMa) || adminChiTietSanPhamRepository.existsByMaChiTietSanPhamIgnoreCaseAndXoaMemFalse(generatedMa));
+
+            v.setMaChiTietSanPham(generatedMa);
         }
         
         v = adminChiTietSanPhamRepository.save(v);
@@ -271,22 +326,57 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     }
 
     private ChiTietSanPham getVariantOrThrow(String id) {
-        return adminChiTietSanPhamRepository.findByIdAndXoaMemFalse(id).orElseThrow(() -> new ResourceNotFoundException("Biến thể không tồn tại"));
+        return adminChiTietSanPhamRepository.findByIdAndXoaMemFalse(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.BIEN_THE_NOT_FOUND));
     }
 
     private AnhChiTietSanPham getVariantImageOrThrow(String imageId) {
         return adminAnhChiTietSanPhamRepository.findByIdAndXoaMemFalse(imageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Ảnh biến thể không tồn tại"));
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.ANH_BIEN_THE_NOT_FOUND));
     }
 
     private SanPham getProductOrThrow(String id) {
-        return adminSanPhamRepository.findByIdAndXoaMemFalse(id).orElseThrow(() -> new ResourceNotFoundException("Sản phẩm không tồn tại"));
+        return adminSanPhamRepository.findByIdAndXoaMemFalse(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
     }
 
     private void unsetMainImageFlags(String variantId) {
         List<AnhChiTietSanPham> existingImages = adminAnhChiTietSanPhamRepository.findByChiTietSanPhamIdAndXoaMemFalse(variantId);
         existingImages.forEach(image -> image.setHinhAnhDaiDien(false));
         adminAnhChiTietSanPhamRepository.saveAll(existingImages);
+    }
+
+    private List<ProductVariantResponse> mapVariants(List<ChiTietSanPham> variants) {
+        if (variants == null || variants.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> ids = variants.stream().map(ChiTietSanPham::getId).toList();
+
+        // 1. Bulk-fetch images
+        List<AnhChiTietSanPham> images = adminAnhChiTietSanPhamRepository
+                .findAllByChiTietSanPhamIdInAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(ids);
+        
+        Map<String, List<ProductVariantImageResponse>> imageMap = images.stream()
+                .filter(img -> img.getChiTietSanPham() != null)
+                .collect(Collectors.groupingBy(
+                        img -> img.getChiTietSanPham().getId(),
+                        Collectors.mapping(adminSanPhamMapper::toVariantImageResponse, Collectors.toList())
+                ));
+
+        // 2. Bulk-fetch campaign details
+        List<ChiTietDotGiamGia> relations = adminChiTietDotGiamGiaRepository.findAllByChiTietSanPhamIdIn(ids);
+        
+        Map<String, List<ChiTietDotGiamGia>> relationMap = relations.stream()
+                .filter(rel -> rel.getChiTietSanPham() != null)
+                .collect(Collectors.groupingBy(
+                        rel -> rel.getChiTietSanPham().getId()
+                ));
+
+        // 3. Map to responses in memory
+        return variants.stream().map(v -> {
+            v.setChiTietDotGiamGias(new java.util.LinkedHashSet<>(relationMap.getOrDefault(v.getId(), new ArrayList<>())));
+            List<ProductVariantImageResponse> imgs = imageMap.getOrDefault(v.getId(), new ArrayList<>());
+            return adminSanPhamMapper.toVariantResponse(v, imgs);
+        }).toList();
     }
 
     private ProductVariantResponse mapVariant(ChiTietSanPham v) {
@@ -301,7 +391,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         Set<String> keys = new HashSet<>();
         for (ProductVariantRequest r : reqs) {
             String key = r.getIdMauSac() + "-" + r.getIdKichThuoc();
-            if (!keys.add(key)) throw new ValidationException("Dữ liệu biến thể bị trùng lặp tổ hợp màu sắc và kích thước");
+            if (!keys.add(key)) throw new ValidationException(MessageConstants.SAN_PHAM_VARIANT_DUPLICATE);
         }
     }
 
@@ -402,7 +492,8 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
     @Override
     public java.math.BigDecimal getMaxPrice() {
-        java.math.BigDecimal maxPrice = adminChiTietSanPhamRepository.findMaxGiaBan();
-        return maxPrice != null ? maxPrice : new java.math.BigDecimal("100000000");
+        return adminChiTietSanPhamRepository.findFirstByXoaMemFalseOrderByGiaBanDesc()
+                .map(ChiTietSanPham::getGiaBan)
+                .orElse(new java.math.BigDecimal("100000000"));
     }
 }
