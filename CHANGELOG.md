@@ -1,3 +1,10 @@
+## [1.10.2](https://github.com/pnam-it309/AeroStride/compare/v1.10.1...v1.10.2) (2026-05-18)
+
+
+### Bug Fixes
+
+* **docker:** Di chuyen app.jar ra ngoai thu muc app de tranh bi ghi de boi volume ([ff3845e](https://github.com/pnam-it309/AeroStride/commit/ff3845e61d23998004cddfd225eef484da5af680))
+
 ## [1.10.1](https://github.com/pnam-it309/AeroStride/compare/v1.10.0...v1.10.1) (2026-05-18)
 
 
