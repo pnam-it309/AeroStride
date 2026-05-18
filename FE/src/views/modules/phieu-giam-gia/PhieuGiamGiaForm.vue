@@ -5,6 +5,7 @@ import { dichVuPhieuGiamGia } from '@/services/admin/dichVuPhieuGiamGia';
 import { PATH } from '@/router/routePaths';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { useNotifications } from '@/services/notificationService';
+import { generateRandomCode } from '@/utils/codeGenerator';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
@@ -139,6 +140,40 @@ const formatDate = (value) => {
     const date = typeof value === 'number' ? new Date(value) : new Date(value);
     return date.toLocaleDateString('vi-VN');
 };
+
+const formatNumberWithDots = (value) => {
+    if (value === undefined || value === null || value === '') return '';
+    const num = String(value).replace(/\D/g, '');
+    if (!num) return '';
+    return new Intl.NumberFormat('vi-VN').format(Number(num));
+};
+
+const parseNumberFromDots = (value) => {
+    if (value === undefined || value === null || value === '') return 0;
+    const cleanValue = String(value).replace(/\./g, '').replace(/\D/g, '');
+    return cleanValue ? Number(cleanValue) : 0;
+};
+
+const formattedSoTienGiam = computed({
+    get: () => formatNumberWithDots(form.value.soTienGiam),
+    set: (value) => {
+        form.value.soTienGiam = parseNumberFromDots(value);
+    }
+});
+
+const formattedGiamToiDa = computed({
+    get: () => formatNumberWithDots(form.value.giamToiDa),
+    set: (value) => {
+        form.value.giamToiDa = parseNumberFromDots(value);
+    }
+});
+
+const formattedGiatriToiThieu = computed({
+    get: () => formatNumberWithDots(form.value.giatriToiThieu),
+    set: (value) => {
+        form.value.giatriToiThieu = parseNumberFromDots(value);
+    }
+});
 
 // Hàm đồng bộ mở trình chọn ngày khi bấm vào icon
 const openDatePicker = (event) => {
@@ -277,9 +312,12 @@ onMounted(init);
                         <v-row>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Mã phiếu giảm giá</div>
-                                <v-text-field v-model="form.ma" readonly placeholder="Hệ thống tự tạo..."
-                                    variant="outlined" density="compact"
-                                    class="custom-input mono-font bg-slate-50" hide-details></v-text-field>
+                                <v-text-field v-model="form.ma" readonly
+                                    :placeholder="isEditMode ? '' : 'Hệ thống tự sinh khi lưu'" variant="outlined"
+                                    density="compact"
+                                    class="custom-input mono-font"
+                                    hide-details>
+                                </v-text-field>
                             </v-col>
                             <v-col cols="12" md="8">
                                 <div class="field-label">Tên chương trình <span class="text-red">*</span></div>
@@ -319,7 +357,7 @@ onMounted(init);
                             <v-col cols="12" md="4">
                                 <div class="field-label">Giá trị giảm</div>
                                 <v-text-field v-if="form.loaiPhieu === 'TIEN_MAT'"
-                                    v-model.number="form.soTienGiam" :readonly="isViewOnly" type="number"
+                                    v-model="formattedSoTienGiam" :readonly="isViewOnly" type="text"
                                     suffix="VNĐ" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                                 <v-text-field v-else v-model.number="form.phanTramGiamGia"
@@ -328,7 +366,7 @@ onMounted(init);
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Giảm tối đa</div>
-                                <v-text-field v-model.number="form.giamToiDa" :readonly="isViewOnly"
+                                <v-text-field v-model="formattedGiamToiDa" :readonly="isViewOnly"
                                     :disabled="form.loaiPhieu === 'TIEN_MAT'" suffix="VNĐ" variant="outlined"
                                     density="compact" hide-details
                                     :class="form.loaiPhieu === 'TIEN_MAT' ? 'bg-slate-50' : ''"></v-text-field>
@@ -349,8 +387,8 @@ onMounted(init);
                                 <div class="d-flex align-center mb-2" style="height: 24px;">
                                     <div class="field-label mb-0">Đơn tối thiểu (VNĐ)</div>
                                 </div>
-                                <v-text-field v-model.number="form.giatriToiThieu" :readonly="isViewOnly"
-                                    type="number" placeholder="0" variant="outlined" density="compact"
+                                <v-text-field v-model="formattedGiatriToiThieu" :readonly="isViewOnly"
+                                    type="text" placeholder="0" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
                         </v-row>
