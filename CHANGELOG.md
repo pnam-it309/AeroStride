@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/pnam-it309/AeroStride/compare/v1.10.0...v1.10.1) (2026-05-18)
+
+
+### Bug Fixes
+
+* **fe/chat:** Ngan chan ro ri tin nhan noi bo cua nhan vien sang phia khach hang ([ba0edbf](https://github.com/pnam-it309/AeroStride/commit/ba0edbfe450e816074215d3285eb43c5c44e380c))
+
 # [1.10.0](https://github.com/pnam-it309/AeroStride/compare/v1.9.0...v1.10.0) (2026-05-18)
 
 
