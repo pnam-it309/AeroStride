@@ -3,7 +3,14 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
+import {
+    dichVuThuongHieu,
+    dichVuMauSac,
+    dichVuKichThuoc,
+    dichVuChatLieu
+} from '@/services/product/dichVuThuocTinh';
 import { useNotifications } from '@/services/notificationService';
+import { MESSAGES } from '@/constants/messages';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import AdminFilter from '@/components/common/AdminFilter.vue';
@@ -31,6 +38,12 @@ const loading = ref(false);
 const saving = ref(false);
 const products = ref([]); 
 const searchQuery = ref('');
+
+// Attribute Options
+const brands = ref([]);
+const colors = ref([]);
+const sizes = ref([]);
+const materials = ref([]);
 
 // Pagination for Selection Table
 const selectionPage = ref(1);
@@ -322,6 +335,19 @@ const openDatePicker = (event) => {
 const init = async () => {
     try {
         await loadMaxPrice();
+        // Load attributes for filters
+        const [brandData, colorData, sizeData, materialData] = await Promise.all([
+            dichVuThuongHieu.layThuongHieu({ trangThai: 'DANG_HOAT_DONG' }),
+            dichVuMauSac.layMauSac({ trangThai: 'DANG_HOAT_DONG' }),
+            dichVuKichThuoc.layKichThuoc({ trangThai: 'DANG_HOAT_DONG' }),
+            dichVuChatLieu.layChatLieu({ trangThai: 'DANG_HOAT_DONG' })
+        ]);
+
+        brands.value = (brandData?.content || brandData || []).map(b => b.ten);
+        colors.value = (colorData?.content || colorData || []).map(c => c.ten);
+        sizes.value = (sizeData?.content || sizeData || []).map(s => s.ten);
+        materials.value = (materialData?.content || materialData || []).map(m => m.ten);
+
         const data = await dichVuDotGiamGia.layDanhSachSanPhamApDung();
         products.value = (data || []).map((p, i) => ({
             ...p,
@@ -365,7 +391,7 @@ const init = async () => {
             // KHÔNG tự động 'active' ở trên để bảng dưới chỉ hiện những cái đã chọn ban đầu
             expandedProductIds.value = [];
         } catch (e) {
-            addNotification({ title: 'Lỗi', subtitle: 'Không thể tải thông tin', color: 'error' });
+            addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.LOAD_DATA, color: 'error' });
         } finally { loading.value = false; }
     }
 };
@@ -396,15 +422,15 @@ const handleSave = () => {
                 };
                 if (isEditMode.value) {
                     await dichVuDotGiamGia.capNhatDotGiamGia(route.params.id, payload);
-                    addNotification({ title: 'Thành công', subtitle: 'Cập nhật hoàn tất', color: 'success' });
+                    addNotification({ title: 'Thành công', subtitle: MESSAGES.SUCCESS.UPDATE, color: 'success' });
                 } else {
                     await dichVuDotGiamGia.taoDotGiamGia(payload);
-                    addNotification({ title: 'Thành công', subtitle: 'Đã tạo chiến dịch mới', color: 'success' });
+                    addNotification({ title: 'Thành công', subtitle: MESSAGES.SUCCESS.ADD, color: 'success' });
                 }
                 confirmDialog.value.show = false;
                 router.push(PATH.DOT_GIAM_GIA);
             } catch (e) {
-                addNotification({ title: 'Lỗi', subtitle: 'Lỗi khi lưu dữ liệu', color: 'error' });
+                addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.SAVE_DATA, color: 'error' });
             } finally {
                 confirmDialog.value.loading = false;
                 saving.value = false;
@@ -619,25 +645,25 @@ onMounted(init);
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Thương hiệu</div>
-                                <v-select v-model="detailFilters.thuongHieu" :items="['Adidas', 'Nike']"
+                                <v-select v-model="detailFilters.thuongHieu" :items="brands"
                                     density="compact" variant="outlined" hide-details clearable
                                     placeholder="Thương hiệu" class="compact-input"></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Chất liệu</div>
-                                <v-select v-model="detailFilters.chatLieu" :items="['Da', 'Vải', 'Vải dệt']"
+                                <v-select v-model="detailFilters.chatLieu" :items="materials"
                                     density="compact" variant="outlined" hide-details clearable
                                     placeholder="Chất liệu" class="compact-input"></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Kích cỡ</div>
-                                <v-select v-model="detailFilters.kichCo" :items="[39, 40, 41, 42, 43]"
+                                <v-select v-model="detailFilters.kichCo" :items="sizes"
                                     density="compact" variant="outlined" hide-details clearable
                                     placeholder="Kích cỡ" class="compact-input"></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Màu sắc</div>
-                                <v-select v-model="detailFilters.mauSac" :items="['Đen', 'Trắng', 'Xám', 'Xanh dương', 'Xanh lá']"
+                                <v-select v-model="detailFilters.mauSac" :items="colors"
                                     density="compact" variant="outlined" hide-details clearable
                                     placeholder="Màu sắc" class="compact-input"></v-select>
                             </v-col>
