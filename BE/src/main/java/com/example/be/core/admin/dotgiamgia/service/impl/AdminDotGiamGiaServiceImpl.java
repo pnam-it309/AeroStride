@@ -14,7 +14,7 @@ import com.example.be.entity.DotGiamGia;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.infrastructure.exceptions.SystemException;
-import com.example.be.repository.ChiTietDotGiamGiaRepository;
+import com.example.be.core.admin.dotgiamgia.repository.AdminChiTietDotGiamGiaRepository;
 import com.example.be.utils.AccountUtils;
 import com.example.be.utils.ExcelUtils;
 import com.example.be.utils.PaginationUtils;
@@ -26,6 +26,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.be.core.admin.dotgiamgia.repository.AdminDotGiamGiaSpecification;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Sort;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,7 +40,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     private final AdminDotGiamGiaRepository repo;
     private final AdminChiTietSanPhamRepository chiTietSanPhamRepo;
     private final AdminSanPhamMapper mapper;
-    private final ChiTietDotGiamGiaRepository chiTietDotGiamGiaRepo;
+    private final AdminChiTietDotGiamGiaRepository chiTietDotGiamGiaRepo;
 
 
 
@@ -48,13 +51,14 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
         Long endLong = null;
 
         try {
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
             if (request.getStartDate() != null && !request.getStartDate().isEmpty()) {
-                startLong = sdf.parse(request.getStartDate()).getTime();
+                java.time.LocalDate startDate = java.time.LocalDate.parse(request.getStartDate(), formatter);
+                startLong = startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
             }
             if (request.getEndDate() != null && !request.getEndDate().isEmpty()) {
-                // End of day
-                endLong = sdf.parse(request.getEndDate()).getTime() + 86399999L;
+                java.time.LocalDate endDate = java.time.LocalDate.parse(request.getEndDate(), formatter);
+                endLong = endDate.atTime(java.time.LocalTime.MAX).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
             }
         } catch (Exception e) {
             // Ignore parse errors
@@ -63,14 +67,12 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
         final Long finalStart = startLong;
         final Long finalEnd = endLong;
 
-        return SearchUtils.execute(request, pageable -> repo.phanTrang(
-                request.getKeyword(),
-                request.getTrangThai(),
-                System.currentTimeMillis(),
-                finalStart,
-                finalEnd,
-                pageable
-        ));
+        Specification<DotGiamGia> spec = Specification.where(AdminDotGiamGiaSpecification.keywordLike(request.getKeyword()))
+                .and(AdminDotGiamGiaSpecification.filterTrangThai(request.getTrangThai(), System.currentTimeMillis()))
+                .and(AdminDotGiamGiaSpecification.startDateAfter(finalStart))
+                .and(AdminDotGiamGiaSpecification.endDateBefore(finalEnd));
+
+        return SearchUtils.execute(request, pageable -> repo.findAll(spec, pageable).map(this::toResponse));
     }
 
     @Override
@@ -102,9 +104,8 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     private void saveProducts(DotGiamGia d, List<String> variantIds) {
         if (variantIds == null || variantIds.isEmpty()) return;
 
-        List<ChiTietDotGiamGia> detailEntities = variantIds.stream()
-                .map(vid -> chiTietSanPhamRepo.findById(vid).orElse(null))
-                .filter(v -> v != null)
+        List<ChiTietSanPham> variants = chiTietSanPhamRepo.findAllById(variantIds);
+        List<ChiTietDotGiamGia> detailEntities = variants.stream()
                 .map(v -> {
                     ChiTietDotGiamGia ct = new ChiTietDotGiamGia();
                     ct.setDotGiamGia(d);
@@ -138,8 +139,10 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     @Override
     @Transactional(readOnly = true)
     public byte[] exportExcel() {
-        Pageable pageable = PaginationUtils.createPageable(0, Integer.MAX_VALUE, "id", "desc");
-        List<AdminDotGiamGiaResponse> data = repo.phanTrang(null, null, System.currentTimeMillis(), null, null, pageable).getContent();
+        List<AdminDotGiamGiaResponse> data = repo.findAll(Sort.by(Sort.Direction.DESC, "id"))
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
 
         String[] headers = {"STT", "Mã", "Tên", "Giá trị (%)", "Ngày bắt đầu", "Ngày kết thúc", "Trạng thái"};
 
@@ -160,11 +163,9 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     @Override
     @Transactional(readOnly = true)
     public AdminDotGiamGiaResponse findById(String id) {
-        AdminDotGiamGiaResponse res = repo.getDetailById(id);
-        if (res == null) {
-            throw new ResourceNotFoundException("Không tìm thấy chi tiết đợt giảm giá");
-        }
-        return res;
+        DotGiamGia d = repo.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy chi tiết đợt giảm giá"));
+        return toResponse(d);
     }
 
     @Override
@@ -185,5 +186,22 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
                 .filter(v -> !Boolean.TRUE.equals(v.getXoaMem()))
                 .map(v -> mapper.toVariantResponse(v, List.of()))
                 .collect(Collectors.toList());
+    }
+
+    private AdminDotGiamGiaResponse toResponse(DotGiamGia d) {
+        if (d == null) return null;
+        return new AdminDotGiamGiaResponse(
+                d.getId(),
+                d.getMa(),
+                d.getTen(),
+                d.getLoaiGiamGia(),
+                d.getSoTienGiam(),
+                d.getDieuKienGiamGia(),
+                d.getNgayBatDau(),
+                d.getNgayKetThuc(),
+                d.getMucUuTien(),
+                d.getTrangThai() != null ? d.getTrangThai().name() : null,
+                d.getMoTa()
+        );
     }
 }
