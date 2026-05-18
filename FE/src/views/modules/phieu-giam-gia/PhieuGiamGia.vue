@@ -12,7 +12,7 @@ import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import { downloadFile } from '@/utils/fileUtils';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
-import { EditIcon } from 'vue-tabler-icons';
+import { ADMIN_ICONS } from '@/constants/adminIcons';
 
 import { useAdminTable } from '@/composables/useAdminTable';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
@@ -203,44 +203,13 @@ const getVoucherTimelineStatus = (item) => {
     };
 };
 
-import { watch } from 'vue';
 
-// Tự động khôi phục dữ liệu nếu phát hiện dòng bị lỗi (mất mã/tên)
-watch(
-    vouchers,
-    (newItems) => {
-        if (newItems && newItems.length > 0) {
-            newItems.forEach(async (item) => {
-                if (!item.ma || !item.ten || item.ma === '--' || item.ten === '--') {
-                    try {
-                        // Trích xuất số từ id (ví dụ pgg1 -> 1) và format thành PGG01
-                        const idNum = item.id.replace(/\D/g, '');
-                        const formattedMa = idNum ? `PGG${idNum.padStart(2, '0')}` : item.id.toUpperCase();
-
-                        const repairData = {
-                            ...item,
-                            ma: item.ma && item.ma !== '--' ? item.ma : formattedMa,
-                            ten: item.ten && item.ten !== '--' ? item.ten : 'Phiếu khôi phục ' + formattedMa
-                        };
-                        // Gọi API cập nhật âm thầm để vá dữ liệu
-                        await dichVuPhieuGiamGia.capNhatPhieuGiamGia(item.id, repairData);
-                        console.log(`[Auto-Repair] Fixed voucher: ${item.id} -> ${formattedMa}`);
-                    } catch (err) {
-                        console.error('[Auto-Repair] Failed for:', item.id, err);
-                    }
-                }
-            });
-        }
-    },
-    { deep: true }
-);
 
 onMounted(() => loadVouchers());
 </script>
 
 <template>
-    <v-container fluid class="pa-4 animate-fade-in font-body"
-        style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important">
+    <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs :items="[
             { title: 'Quản lý phiếu giảm giá', disabled: false, href: '#' },
@@ -250,7 +219,7 @@ onMounted(() => loadVouchers());
         <div class="mb-2"></div>
 
         <!-- 1. FILTER -->
-        <div class="filter-top invoice-filter-shell">
+        <div class="filter-shell invoice-filter-shell">
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" sm="6" md="3" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm</div>
@@ -294,30 +263,30 @@ onMounted(() => loadVouchers());
 
         <!-- 2. TABLE -->
         <AdminTable title="Danh sách phiếu giảm giá" addButtonText="Tạo mới" show-export-button :headers="[
-            { text: 'STT', align: 'center', width: '60px' },
-            { text: 'Mã phiếu', align: 'center', width: '130px' },
-            { text: 'Tên phiếu', align: 'left', width: '180px' },
-            { text: 'Hình thức', align: 'center', width: '150px' },
-            { text: 'Giá trị giảm', align: 'center', width: '150px' },
-            { text: 'Đơn tối thiểu', align: 'center', width: '140px' },
-            { text: 'Số lượng', align: 'center', width: '100px' },
-            { text: 'Thời gian áp dụng', align: 'left', width: '180px' },
-            { text: 'Trạng thái', align: 'center', width: '140px' },
-            { text: 'Hành động', align: 'center', width: '110px' }
+            { text: 'STT', width: '60px' },
+            { text: 'Mã phiếu', width: '130px' },
+            { text: 'Tên phiếu', width: '180px' },
+            { text: 'Hình thức', width: '150px' },
+            { text: 'Giá trị giảm', width: '150px' },
+            { text: 'Đơn tối thiểu', width: '140px' },
+            { text: 'Số lượng', width: '100px' },
+            { text: 'Thời gian áp dụng', width: '180px' },
+            { text: 'Trạng thái', width: '140px' },
+            { text: 'Hành động', width: '110px' }
         ]" :items="vouchers" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog"
             @export="handleExport">
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center text-slate-400">{{ (pagination.page - 1) * pagination.size + index
+                    <td class="data-cell text-slate-400">{{ (pagination.page - 1) * pagination.size + index
                         + 1 }}</td>
                     <td class="data-cell text-center text-primary">
                         <div class="text-truncate" :title="item.ma || item.id">{{ item.ma || item.id || '--' }}</div>
                     </td>
-                    <td class="data-cell text-left">
+                    <td class="data-cell text-balanced">
                         <div class="text-truncate" :title="item.ten">{{ item.ten || '--' }}</div>
                     </td>
 
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
                         <v-chip variant="flat" :class="[
                             'status-chip',
                             getHinhThucLabel(getHinhThucValue(item)) === 'Cá nhân' ? 'status-chip-private' : 'status-chip-public'
@@ -325,7 +294,7 @@ onMounted(() => loadVouchers());
                             {{ getHinhThucLabel(getHinhThucValue(item)) }}
                         </v-chip>
                     </td>
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
                         <div class="text-primary text-truncate" :title="'Giảm ' + getDiscountDisplay(item)">
                             Giảm {{ getDiscountDisplay(item) }}
                         </div>
@@ -338,11 +307,11 @@ onMounted(() => loadVouchers());
                     <td class="data-cell text-center">
                         <div class="price-value text-slate-700">{{ formatCurrency(item.donHangToiThieu) }}</div>
                     </td>
-                    <td class="data-cell text-center text-slate-700">
+                    <td class="data-cell text-balanced text-slate-700">
                         {{ item.soLuong === -1 ? 'Vô hạn' : item.soLuong }}
                     </td>
-                    <td class="data-cell text-left">
-                        <div class="d-flex flex-column align-start" style="width: 100%; overflow: hidden">
+                    <td class="data-cell text-center">
+                        <div class="d-inline-flex flex-column align-center" style="width: 100%; overflow: hidden">
                             <div class="text-slate-700 text-truncate" style="width: 100%"
                                 :title="'Từ: ' + formatDateTime(item.ngayBatDau)">
                                 Từ: {{ formatDateTime(item.ngayBatDau) }}
@@ -353,7 +322,7 @@ onMounted(() => loadVouchers());
                             </div>
                         </div>
                     </td>
-                    <td class="data-cell text-center">
+                    <td class="data-cell">
                         <v-chip :class="['status-chip', getVoucherTimelineStatus(item).chipClass]" variant="flat">
                             {{ getVoucherTimelineStatus(item).label }}
                         </v-chip>
@@ -363,7 +332,7 @@ onMounted(() => loadVouchers());
                             <span class="d-inline-block" v-if="getVoucherTimelineStatus(item).isEnded">
                                 <v-btn icon variant="text" :ripple="false" size="28" color="slate-700"
                                     class="action-icon-btn opacity-50" style="pointer-events: none">
-                                    <EditIcon size="15" />
+                                    <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 </v-btn>
                                 <v-tooltip activator="parent" location="top">Không thể cập nhật phiếu giảm giá đã kết
                                     thúc</v-tooltip>
@@ -371,7 +340,7 @@ onMounted(() => loadVouchers());
                             <v-btn v-else icon variant="text" :ripple="false" size="28" color="slate-700"
                                 class="action-icon-btn"
                                 @click.stop="router.push({ name: 'PhieuGiamGiaForm', params: { id: item.id } })">
-                                <EditIcon size="15" />
+                                <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
@@ -403,17 +372,5 @@ onMounted(() => loadVouchers());
 </template>
 
 <style scoped>
-/* Scoped styles removed in favor of global _admin-common.scss */
-.max-discount-value {
-    color: inherit !important;
-}
 
-.price-value {
-    font-weight: 400 !important;
-}
-
-
-.opacity-50 {
-    opacity: 0.5 !important;
-}
 </style>
