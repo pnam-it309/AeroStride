@@ -1,3 +1,24 @@
+# [1.10.0](https://github.com/pnam-it309/AeroStride/compare/v1.9.0...v1.10.0) (2026-05-18)
+
+
+### Bug Fixes
+
+* **fe/dot-giam-gia:** Sửa lỗi 400 Bad Request khi tải thuộc tính lọc sản phẩm ([d112c94](https://github.com/pnam-it309/AeroStride/commit/d112c942f9bc6439281b887387f9c70feb3bbe66))
+* **san-pham:** Xử lý trùng lặp biến thể sản phẩm hoạt động ([b0a9ac3](https://github.com/pnam-it309/AeroStride/commit/b0a9ac358b2e913c960632fcec3356ce2f49d102))
+
+
+### Features
+
+* **core:** Hoàn thiện các tính năng tối ưu hóa hiệu năng, bảo mật và trải nghiệm quản lý biến thể ([3e151ee](https://github.com/pnam-it309/AeroStride/commit/3e151ee722f42a56d0d919661b90ddc759933b41))
+* **fe/phieu-giam-gia:** Định dạng số tiền bằng dấu chấm phân tách phần nghìn ([dcf4884](https://github.com/pnam-it309/AeroStride/commit/dcf4884293674ab55a8ac56fd3f0ba7d01f137ce))
+
+
+### Performance Improvements
+
+* **discount:** Toi uu hoa Eager Fetch cho danh sach bien the dot giam gia ([ba9885a](https://github.com/pnam-it309/AeroStride/commit/ba9885a84c592dac2a7ee9870c9ff06c1a5d91f2))
+* **discount:** Toi uu hoa N+1 query va sua loi mui gio cua dot giam gia ([6fcaf1e](https://github.com/pnam-it309/AeroStride/commit/6fcaf1eb816a61f4074350af445185288350e74c))
+* **voucher:** Toi uu hoa Eager Fetch va hien dai hoa Date parsing cho Voucher ([be37f11](https://github.com/pnam-it309/AeroStride/commit/be37f11248af640312ee6f1d62b9cfed1eaaae17))
+
 # [1.9.0](https://github.com/pnam-it309/AeroStride/compare/v1.8.4...v1.9.0) (2026-05-13)
 
 
