@@ -81,11 +81,11 @@ async function handleResetPassword(id) {
 const tableHeaders = [
     { text: 'STT', width: '60px' },
     { text: 'Mã nhân viên', width: '110px' },
-    { text: 'Tên nhân viên', width: '140px', align: 'left' },
-    { text: 'Tài khoản', width: '160px', align: 'left' },
+    { text: 'Tên nhân viên', width: '140px' },
+    { text: 'Tài khoản', width: '160px' },
     { text: 'Giới tính', width: '100px' },
     { text: 'Số điện thoại', width: '120px' },
-    { text: 'Địa chỉ', width: '220px', align: 'left' },
+    { text: 'Địa chỉ', width: '220px' },
     { text: 'Chức vụ', width: '110px' },
     { text: 'Trạng thái', width: '140px' },
     { text: 'Hành động', width: '120px' }
