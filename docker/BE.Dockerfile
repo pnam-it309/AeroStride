@@ -45,10 +45,15 @@ WORKDIR /app
 
 # Create a non-root user for security
 RUN addgroup -S spring && adduser -S spring -G spring
+
+# Create app-bin directory and set ownership so spring user can access it
+RUN mkdir /app-bin && chown spring:spring /app-bin
+
 USER spring:spring
 
-# Copy the fixed app.jar from the builder stage
-COPY --from=builder --chown=spring:spring /app/app.jar app.jar
+# Copy the fixed app.jar from the builder stage to /app-bin/app.jar
+# This prevents it from being hidden if the ../BE:/app volume is mounted
+COPY --from=builder --chown=spring:spring /app/app.jar /app-bin/app.jar
 
 # Expose the application port (from env)
 ARG BE_PORT
@@ -62,4 +67,4 @@ ENV JAVA_OPTS=${JAVA_OPTS}
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD curl -f http://localhost:${SERVER_PORT}${APP_API_PREFIX}/actuator/health || exit 1
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app-bin/app.jar"]

@@ -1,0 +1,18 @@
+{
+  "name": "aerostride-automation-tests",
+  "version": "1.0.0",
+  "description": "Premium E2E and API Automation Testing Framework for AeroStride",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:ui": "npx playwright test --project=chromium",
+    "test:api": "npx playwright test tests/api/",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "report": "npx playwright show-report"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
