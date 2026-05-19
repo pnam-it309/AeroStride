@@ -21,6 +21,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.util.concurrent.atomic.AtomicInteger;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -48,6 +49,7 @@ public class AiChatServiceImpl implements AiChatService {
     private final AdminChatMessageRepository messageRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${google.gemini.api-key}")
     private String geminiApiKeyString;
@@ -348,10 +350,14 @@ public class AiChatServiceImpl implements AiChatService {
             Map<String, Object> firstCandidate = candidates.get(0);
             Map<String, Object> content = (Map<String, Object>) firstCandidate.get("content");
             List<Map<String, String>> parts = (List<Map<String, String>>) content.get("parts");
-            return parts.get(0).get("text");
+            String responseText = parts.get(0).get("text");
+            if (responseText == null || responseText.isBlank()) {
+                throw new RuntimeException("Phản hồi từ Gemini trống.");
+            }
+            return responseText;
         } catch (Exception e) {
             log.warn("Không thể parse Gemini response: {}", e.getMessage());
-            return FALLBACK_MESSAGE;
+            throw new RuntimeException("Lỗi phân tích cú pháp phản hồi từ Gemini", e);
         }
     }
 
@@ -365,7 +371,47 @@ public class AiChatServiceImpl implements AiChatService {
         StringBuilder sb = new StringBuilder();
         List<ProductVariantResponse> matchedVariants = new ArrayList<>();
 
-        if (lowerText.contains("giá") || lowerText.contains("nhiêu") || lowerText.contains("tiền")) {
+        // Kiểm tra dữ liệu sản phẩm trong cơ sở dữ liệu
+        if (variants == null || variants.isEmpty()) {
+            return "Dạ, hiện tại cửa hàng đang cập nhật danh mục sản phẩm mới nên chưa có sẵn các mẫu giày trong hệ thống. Bạn vui lòng quay lại sau ít phút hoặc nhắn tin để nhân viên tư vấn hỗ trợ trực tiếp cho bạn nhé!";
+        }
+
+        // Quy tắc chào hỏi và đáp lại
+        boolean isGreeting = lowerText.contains("chào") || lowerText.contains("hello") || lowerText.contains("hi ") || lowerText.equals("hi") || lowerText.contains("chúc buổi");
+        boolean isThankYou = lowerText.contains("cảm ơn") || lowerText.contains("cám ơn") || lowerText.contains("thank") || lowerText.contains("tks");
+        boolean isGoodbye = lowerText.contains("tạm biệt") || lowerText.contains("bye") || lowerText.contains("hẹn gặp lại");
+        boolean isAcknowledge = lowerText.equals("ok") || lowerText.equals("dạ") || lowerText.equals("vâng") || lowerText.contains("tốt quá") || lowerText.contains("được rồi");
+
+        if (isGreeting) {
+            sb.append("Dạ, AeroStride xin kính chào quý khách! Em là trợ lý ảo hỗ trợ khách hàng tự động.\n\n");
+            sb.append("Hiện tại AeroStride đang có sẵn các mẫu giày cực đẹp và thời trang của Nike, Adidas, Puma, Vans...\n");
+            sb.append("Bạn đang muốn tham khảo bảng giá, kiểm tra size, chọn màu sắc hay tìm hiểu về chương trình khuyến mãi nào ạ?");
+            
+            // Đính kèm các sản phẩm hot bán chạy để chào mừng khách hàng
+            Map<String, List<ProductVariantResponse>> grouped = variants.stream()
+                    .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
+            int count = 0;
+            for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
+                if (count >= 3) break;
+                if (!entry.getValue().isEmpty()) {
+                    matchedVariants.add(entry.getValue().get(0));
+                    count++;
+                }
+            }
+            sb.append("\n\nBạn cũng có thể xem nhanh các mẫu bán chạy ở bên dưới nha!");
+
+        } else if (isThankYou) {
+            sb.append("Dạ không có gì ạ! Được hỗ trợ quý khách chọn được đôi giày ưng ý là niềm hạnh phúc lớn nhất của AeroStride.\n\n");
+            sb.append("Nếu cần thêm bất kỳ sự giúp đỡ nào, bạn cứ nhắn tin ở đây nhé. Chúc bạn một ngày thật nhiều niềm vui và may mắn!");
+
+        } else if (isGoodbye) {
+            sb.append("Dạ, AeroStride xin chào tạm biệt quý khách ạ!\n\n");
+            sb.append("Chúc bạn luôn tràn đầy năng lượng và có những bước đi vững chắc cùng những đôi giày tuyệt đẹp. Hy vọng sớm được gặp lại bạn!");
+
+        } else if (isAcknowledge) {
+            sb.append("Dạ vâng ạ! Shop luôn ở đây sẵn sàng phục vụ. Bạn có muốn tham khảo thêm các mẫu giày hot nhất tuần này không ạ?");
+
+        } else if (lowerText.contains("giá") || lowerText.contains("nhiêu") || lowerText.contains("tiền")) {
             sb.append("Dạ, AeroStride xin gửi bạn bảng giá tham khảo của các mẫu giày nổi bật hiện có tại cửa hàng:\n\n");
             
             Map<String, List<ProductVariantResponse>> grouped = variants.stream()
@@ -557,21 +603,28 @@ public class AiChatServiceImpl implements AiChatService {
         }
 
         if (!matchedVariants.isEmpty()) {
-            sb.append("\n\n[[PRODUCT_JSON:[");
-            String jsonArray = matchedVariants.stream().map(v -> {
-                String imgUrl = (v.getImages() != null && !v.getImages().isEmpty()) ? v.getImages().get(0).getDuongDanAnh() : "";
-                return String.format(
-                        "{\"idSanPham\":\"%s\",\"tenSanPham\":\"%s\",\"giaBan\":%s,\"tenThuongHieu\":\"%s\",\"tenDanhMuc\":\"Giày\",\"hinhAnh\":\"%s\",\"phanTramGiam\":%s,\"soLuong\":%d}",
-                        v.getIdSanPham(),
-                        v.getTenSanPham().replace("\"", "\\\""),
-                        v.getGiaBan(),
-                        v.getTenThuongHieu().replace("\"", "\\\""),
-                        imgUrl,
-                        v.getPhanTramGiam() != null ? v.getPhanTramGiam() : "0",
-                        v.getSoLuong()
-                );
-            }).collect(Collectors.joining(","));
-            sb.append(jsonArray).append("]]]");
+            sb.append("\n\n[[PRODUCT_JSON:");
+            try {
+                List<Map<String, Object>> jsonList = new ArrayList<>();
+                for (ProductVariantResponse v : matchedVariants) {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("idSanPham", v.getIdSanPham());
+                    map.put("tenSanPham", v.getTenSanPham());
+                    map.put("giaBan", v.getGiaBan());
+                    map.put("tenThuongHieu", v.getTenThuongHieu() != null ? v.getTenThuongHieu() : "");
+                    map.put("tenDanhMuc", "Giày");
+                    String imgUrl = (v.getImages() != null && !v.getImages().isEmpty()) ? v.getImages().get(0).getDuongDanAnh() : "";
+                    map.put("hinhAnh", imgUrl);
+                    map.put("phanTramGiam", v.getPhanTramGiam() != null ? v.getPhanTramGiam() : 0);
+                    map.put("soLuong", v.getSoLuong() != null ? v.getSoLuong() : 0);
+                    jsonList.add(map);
+                }
+                sb.append(objectMapper.writeValueAsString(jsonList));
+            } catch (Exception e) {
+                log.error("Lỗi serialize JSON sản phẩm trong Bot quy tắc: {}", e.getMessage());
+                sb.append("[]");
+            }
+            sb.append("]]");
         }
 
         return sb.toString();

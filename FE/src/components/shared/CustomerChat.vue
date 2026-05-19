@@ -129,6 +129,34 @@ const sendMessage = () => {
         });
 };
 
+const parseProductJson = (text) => {
+    if (!text) return null;
+    const match = text.match(/\[\[PRODUCT_JSON:(.*?)\]\]/);
+    if (!match) return null;
+    let jsonStr = match[1].trim();
+    
+    // Tự động sửa lỗi (Self-healing): Nếu chuỗi bắt đầu bằng '[' nhưng kết thúc bằng '}' (thiếu ngoặc đóng mảng do lỗi Regex cũ)
+    if (jsonStr.startsWith('[') && !jsonStr.endsWith(']')) {
+        jsonStr += ']';
+    }
+    
+    // Xử lý loại bỏ ngoặc đóng thừa (nếu có 3 ngoặc ở cuối từ phiên bản cũ)
+    if (jsonStr.endsWith(']')) {
+        const openCount = (jsonStr.match(/\[/g) || []).length;
+        const closeCount = (jsonStr.match(/\]/g) || []).length;
+        if (closeCount > openCount) {
+            jsonStr = jsonStr.substring(0, jsonStr.length - (closeCount - openCount));
+        }
+    }
+    
+    try {
+        return JSON.parse(jsonStr);
+    } catch (e) {
+        console.warn('Không thể parse JSON sản phẩm (chuỗi gốc bị lỗi hoặc định dạng cũ):', jsonStr, e);
+        return []; // Trả về mảng rỗng để bảo vệ giao diện
+    }
+};
+
 const fetchHistory = async () => {
     try {
         const response = await apiService.get(`${API_CHAT.CUSTOMER_BASE}/history?sessionId=${sessionId.value}`);
@@ -141,12 +169,10 @@ const fetchHistory = async () => {
                 
                 // Thử parse data nếu có JSON sản phẩm
                 if (msg.text && msg.text.includes('[[PRODUCT_JSON:')) {
-                    try {
-                        const jsonStr = msg.text.match(/\[\[PRODUCT_JSON:(.*?)\]\]/)[1];
-                        parsed.products = JSON.parse(jsonStr);
+                    const products = parseProductJson(msg.text);
+                    if (products) {
+                        parsed.products = products;
                         parsed.text = msg.text.replace(/\[\[PRODUCT_JSON:.*?\]\]/, '');
-                    } catch (e) {
-                        console.error('Lỗi parse JSON sản phẩm:', e);
                     }
                 }
                 return parsed;
@@ -186,12 +212,10 @@ onMounted(() => {
 
             // Parse JSON sản phẩm cho tin nhắn mới
             if (data.text && data.text.includes('[[PRODUCT_JSON:')) {
-                try {
-                    const jsonStr = data.text.match(/\[\[PRODUCT_JSON:(.*?)\]\]/)[1];
-                    parsed.products = JSON.parse(jsonStr);
+                const products = parseProductJson(data.text);
+                if (products) {
+                    parsed.products = products;
                     parsed.text = data.text.replace(/\[\[PRODUCT_JSON:.*?\]\]/, '');
-                } catch (e) {
-                    console.error('Lỗi parse JSON sản phẩm:', e);
                 }
             }
 
