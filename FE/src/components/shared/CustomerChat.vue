@@ -57,6 +57,7 @@ const updateActivity = () => {
 watch(
     () => authStore.isLoggedIn,
     () => {
+        chatHistory.value = []; // Xóa sạch lịch sử tin nhắn cũ tránh lộ dữ liệu khi đổi tài khoản / đăng xuất
         sessionId.value = getSessionId();
         fetchHistory();
     }
