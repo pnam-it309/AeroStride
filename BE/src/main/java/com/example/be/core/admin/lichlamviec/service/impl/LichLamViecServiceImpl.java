@@ -274,4 +274,10 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         }
         return "Đã lưu thành công " + successCount + " lịch làm việc từ file Excel!";
     }
+
+    @Override
+    @Transactional
+    public void deleteSchedule(String id) {
+        lichLamViecRepository.deleteById(id);
+    }
 }

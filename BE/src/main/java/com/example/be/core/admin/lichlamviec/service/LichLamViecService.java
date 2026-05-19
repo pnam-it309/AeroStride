@@ -28,4 +28,6 @@ public interface LichLamViecService {
     List<Map<String, Object>> previewImport(MultipartFile file);
 
     String confirmImport(List<Map<String, Object>> data);
+
+    void deleteSchedule(String id);
 }

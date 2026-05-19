@@ -40,6 +40,7 @@ public class AdminChatServiceImpl implements AdminChatService {
     private final NhanVienRepository nhanVienRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final com.example.be.core.admin.chat.service.AiChatService aiChatService;
 
     private static final String DEFAULT_AVATAR = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
 
@@ -327,6 +328,17 @@ public class AdminChatServiceImpl implements AdminChatService {
                 .build();
 
         messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
+
+        log.info("Checking AI Trigger: senderType={}, isAccepted={}, convType={}", 
+                senderType, conversation.getIsAccepted(), conversation.getType());
+
+        // AI Chatbot logic: Nếu khách hàng gửi tin và chưa có nhân viên tiếp nhận
+        if (ChatConstants.SENDER_TYPE_CUSTOMER.equals(senderType) && 
+            Boolean.FALSE.equals(conversation.getIsAccepted()) && 
+            (conversation.getType() == null || conversation.getType() == ChatConversation.ChatType.CUSTOMER)) {
+            log.info("Triggering AI response for conversation: {}", conversation.getId());
+            aiChatService.generateAndSendResponse(conversation, text);
+        }
     }
 
     private void publishNotification(Map<String, String> notification) {

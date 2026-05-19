@@ -73,4 +73,10 @@ public class LichLamViecController {
     public ResponseEntity<ApiResponse<?>> addSchedule(@RequestBody Map<String, Object> request) {
         return ResponseEntity.ok(ApiResponse.success(lichLamViecService.addSchedule(request)));
     }
+
+    @DeleteMapping(RoutesConstant.SCHEDULES + "/{id}")
+    public ResponseEntity<ApiResponse<?>> deleteSchedule(@PathVariable String id) {
+        lichLamViecService.deleteSchedule(id);
+        return ResponseEntity.ok(ApiResponse.success("Đã xóa lịch làm việc thành công!"));
+    }
 }

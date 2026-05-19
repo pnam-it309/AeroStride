@@ -15,6 +15,7 @@ test.describe('AeroStride Flow-Based API Automation Tests', () => {
   let selectedEmployeeMa = 'NV001';
   let selectedEmployeeName = '';
   let activeShiftName = 'Ca Sáng';
+  const createdScheduleIds = [];
 
   // Đăng nhập một lần duy nhất trước khi chạy toàn bộ luồng kiểm thử
   test.beforeAll(async ({ request }) => {
@@ -183,6 +184,11 @@ test.describe('AeroStride Flow-Based API Automation Tests', () => {
       
       expect(foundSchedule).toBeDefined();
       expect(foundSchedule.trangThai).toBe('CHO_XAC_NHAN');
+
+      if (foundSchedule && foundSchedule.id) {
+        createdScheduleIds.push(foundSchedule.id);
+        console.log(`📌 Tagged schedule ${foundSchedule.id} for teardown cleanup.`);
+      }
       console.log('✅ Step 3 Checked: Created schedule verified in list.');
     });
   });
@@ -243,6 +249,11 @@ test.describe('AeroStride Flow-Based API Automation Tests', () => {
       
       expect(foundSchedule).toBeDefined();
       expect(foundSchedule.trangThai).toBe('DA_XAC_NHAN'); // Lịch import từ Excel mặc định là DA_XAC_NHAN
+
+      if (foundSchedule && foundSchedule.id) {
+        createdScheduleIds.push(foundSchedule.id);
+        console.log(`📌 Tagged imported schedule ${foundSchedule.id} for teardown cleanup.`);
+      }
       console.log('✅ Step 2 Checked: Excel-imported schedule successfully verified in CSDL.');
     });
   });
@@ -309,5 +320,27 @@ test.describe('AeroStride Flow-Based API Automation Tests', () => {
         console.log(`ℹ️ Dashboard stats returned status ${response.status()}. Path might differ in dev.`);
       }
     });
+  });
+
+  // ==============================================================================
+  // 🧹 TEARDOWN CLEANUP: Xóa sạch dữ liệu tạo ra trong quá trình test
+  // ==============================================================================
+  test.afterAll(async ({ request }) => {
+    if (createdScheduleIds.length > 0 && adminToken) {
+      console.log(`\n🧹 Starting Teardown Cleanup: deleting ${createdScheduleIds.length} test schedules...`);
+      for (const id of createdScheduleIds) {
+        const response = await request.delete(`/api/v1/admin/lich-lam-viec/schedules/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${adminToken}`
+          }
+        });
+        if (response.status() === 200) {
+          console.log(`  ➔ Deleted test schedule ID: ${id}`);
+        } else {
+          console.warn(`  ⚠️ Failed to delete test schedule ID: ${id} (Status: ${response.status()})`);
+        }
+      }
+      console.log('✨ Cleanup complete. Environment is clean.');
+    }
   });
 });
