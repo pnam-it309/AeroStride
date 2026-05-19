@@ -50,7 +50,7 @@ public class AiChatServiceImpl implements AiChatService {
     @Value("${google.gemini.api-key}")
     private String geminiApiKey;
 
-    @Value("${google.gemini.model:gemini-1.5-flash-latest}")
+    @Value("${google.gemini.model:gemini-2.0-flash}")
     private String geminiModel;
 
     @Value("${google.gemini.base-url:https://generativelanguage.googleapis.com/v1beta}")
@@ -103,35 +103,25 @@ public class AiChatServiceImpl implements AiChatService {
 
         try {
             // [Cải tiến 1] Lấy danh sách sản phẩm từ cache thay vì query DB mỗi lần
-            String productContext = buildProductContext();
+            List<ProductVariantResponse> activeVariants = getActiveVariantsCached();
 
-            // [Cải tiến 2] Lấy lịch sử hội thoại gần nhất để AI hiểu ngữ cảnh liên tục
+            String productContext = buildProductContextFromVariants(activeVariants);
             String chatHistory = buildChatHistory(conversation.getId());
 
-            // [Cải tiến 4] Tạo Gemini API URL từ cấu hình, không hardcode
             String apiUrl = String.format("%s/models/%s:generateContent?key=%s",
                     geminiBaseUrl, geminiModel, geminiApiKey);
 
-            // Tạo prompt hoàn chỉnh (sản phẩm + lịch sử + câu hỏi mới)
             String prompt = buildPrompt(productContext, chatHistory, customerText);
 
-            // Gọi Gemini API
             String botResponseText = callGeminiApi(apiUrl, prompt);
-
-            // Lưu và gửi tin nhắn qua WebSocket
             saveAndBroadcast(conversation, botResponseText);
 
         } catch (Exception e) {
-            log.error("Lỗi khi gọi Gemini API:", e);
-
-            // [Cải tiến 5] Gửi tin nhắn fallback thay vì im lặng
+            log.error("Lỗi khi gọi Gemini API (model={}, baseUrl={}): {}",
+                    geminiModel, geminiBaseUrl, e.getMessage(), e);
             saveAndBroadcast(conversation, FALLBACK_MESSAGE);
         }
     }
-
-    // =====================================================================
-    // PRIVATE METHODS - Tách nhỏ logic theo Single Responsibility Principle
-    // =====================================================================
 
     /**
      * [Cải tiến 1] Cache sản phẩm trong bộ nhớ với TTL 5 phút.
@@ -151,59 +141,27 @@ public class AiChatServiceImpl implements AiChatService {
         return cachedVariants;
     }
 
-    /**
-     * Xây dựng chuỗi context mô tả toàn bộ sản phẩm đang kinh doanh.
-     */
-    private String buildProductContext() {
-        List<ProductVariantResponse> activeVariants = getActiveVariantsCached();
+    private String buildProductContextFromVariants(List<ProductVariantResponse> variants) {
+        if (variants.isEmpty()) return "Hiện tại không có sản phẩm nào khả dụng.\n";
 
-        Map<String, List<ProductVariantResponse>> groupedProducts = activeVariants.stream()
+        Map<String, List<ProductVariantResponse>> groupedProducts = variants.stream()
                 .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
 
         StringBuilder sb = new StringBuilder();
-        sb.append("DANH SÁCH GIÀY ĐANG CÓ TẠI HỆ THỐNG (AeroStride):\n");
+        sb.append("DANH SÁCH GIÀY GỢI Ý (AeroStride):\n");
 
-        groupedProducts.forEach((tenSp, variants) -> {
-            sb.append(String.format("- Tên giày: %s\n", tenSp));
-            sb.append(String.format("  + Thương hiệu: %s, Chất liệu: %s\n",
-                    variants.get(0).getTenThuongHieu(), variants.get(0).getTenChatLieu()));
+        groupedProducts.forEach((tenSp, vars) -> {
+            sb.append(String.format("- %s (Thương hiệu: %s)\n", tenSp, vars.get(0).getTenThuongHieu()));
+            String sizes = vars.stream().map(ProductVariantResponse::getGiaTriKichThuoc).distinct().sorted().collect(Collectors.joining(", "));
+            String colors = vars.stream().map(ProductVariantResponse::getTenMauSac).distinct().collect(Collectors.joining(", "));
+            BigDecimal minPrice = vars.stream().map(ProductVariantResponse::getGiaBan).min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
 
-            String mauSac = variants.stream()
-                    .map(ProductVariantResponse::getTenMauSac)
-                    .distinct()
-                    .collect(Collectors.joining(", "));
-            String kichThuoc = variants.stream()
-                    .map(ProductVariantResponse::getGiaTriKichThuoc)
-                    .distinct()
-                    .sorted()
-                    .collect(Collectors.joining(", "));
+            sb.append(String.format("  + Size: %s | Màu: %s | Giá từ: %s VNĐ\n", sizes, colors, minPrice));
 
-            int tongTonKho = variants.stream()
-                    .mapToInt(v -> v.getSoLuong() != null ? v.getSoLuong() : 0).sum();
-            BigDecimal giaThapNhat = variants.stream()
-                    .map(ProductVariantResponse::getGiaBan)
-                    .min(BigDecimal::compareTo)
-                    .orElse(BigDecimal.ZERO);
-
-            List<BigDecimal> khuyenMais = variants.stream()
-                    .filter(v -> v.getPhanTramGiam() != null && v.getPhanTramGiam().compareTo(BigDecimal.ZERO) > 0)
-                    .map(ProductVariantResponse::getPhanTramGiam)
-                    .distinct()
-                    .collect(Collectors.toList());
-
-            sb.append(String.format("  + Màu sắc: %s\n", mauSac));
-            sb.append(String.format("  + Kích thước: %s\n", kichThuoc));
-            sb.append(String.format("  + Giá bán: từ %s VNĐ\n", giaThapNhat));
-            sb.append(String.format("  + Tình trạng: %s (Tổng tồn: %d)\n",
-                    tongTonKho > 0 ? "Còn hàng" : "Hết hàng", tongTonKho));
-
-            if (!khuyenMais.isEmpty()) {
-                String kmStr = khuyenMais.stream()
-                        .map(km -> km + "%")
-                        .collect(Collectors.joining(", "));
-                sb.append(String.format("  + KHUYẾN MÃI: Giảm %s\n", kmStr));
-            }
-            sb.append("\n");
+            // Khuyến mãi nếu có
+            vars.stream().filter(v -> v.getPhanTramGiam() != null && v.getPhanTramGiam().compareTo(BigDecimal.ZERO) > 0)
+                .map(ProductVariantResponse::getPhanTramGiam).findFirst()
+                .ifPresent(km -> sb.append(String.format("  + ĐANG GIẢM GIÁ: %s%%\n", km)));
         });
 
         return sb.toString();
@@ -244,13 +202,12 @@ public class AiChatServiceImpl implements AiChatService {
                 "%s\n" +
                 "%s" +
                 "YÊU CẦU QUAN TRỌNG:\n" +
-                "1. CHỈ được tư vấn các mẫu giày có trong danh sách trên. Tuyệt đối KHÔNG tự bịa ra sản phẩm hoặc tư vấn sản phẩm ngoài danh sách.\n" +
-                "2. Khi khách hàng hỏi, hãy phân tích và liệt kê các mẫu phù hợp nhất (dựa trên màu sắc, size, giá, hoặc mục đích).\n" +
-                "3. Phải nêu rõ các thuộc tính nổi bật của mẫu giày đó (màu sắc, chất liệu).\n" +
-                "4. Phải thông báo tình trạng còn hàng/hết hàng và các chương trình KHUYẾN MÃI (nếu có) của sản phẩm đó.\n" +
-                "5. Nếu không tìm thấy sản phẩm nào khớp hoàn toàn, hãy nói 'Hiện tại chúng tôi không có mẫu chính xác như bạn yêu cầu, nhưng bạn có thể tham khảo các mẫu tương tự sau:' và liệt kê mẫu gần nhất.\n" +
-                "6. Câu trả lời phải thân thiện, chuyên nghiệp, trình bày rõ ràng (dùng bullet point) và KHÔNG được quá dài.\n" +
-                "7. Nếu có LỊCH SỬ HỘI THOẠI, hãy tham khảo để hiểu ngữ cảnh (ví dụ: 'nó' = sản phẩm khách vừa hỏi trước đó).\n\n" +
+                "1. CHỈ được tư vấn các mẫu giày có trong danh sách trên. Tuyệt đối KHÔNG tự bịa ra sản phẩm.\n" +
+                "2. Nếu tìm thấy sản phẩm phù hợp, hãy đưa ra câu trả lời thân thiện VÀ ĐÍNH KÈM mã JSON của các sản phẩm đó vào cuối câu trả lời theo định dạng: [[PRODUCT_JSON:[{\"idSanPham\":\"...\", \"tenSanPham\":\"...\", \"giaBan\":..., \"tenThuongHieu\":\"...\", \"tenDanhMuc\":\"...\", \"hinhAnh\":\"...\", \"phanTramGiam\":..., \"soLuong\":...}]]] (liệt kê tối đa 3 sản phẩm phù hợp nhất).\n" +
+                "3. Phải nêu rõ các thuộc tính nổi bật (màu sắc, chất liệu) trong phần văn bản.\n" +
+                "4. Nếu không tìm thấy sản phẩm nào khớp hoàn toàn, hãy gợi ý mẫu gần nhất.\n" +
+                "5. Giữ câu trả lời chuyên nghiệp, trình bày rõ ràng (dùng bullet point) và KHÔNG được quá dài.\n" +
+                "6. Nếu có LỊCH SỬ HỘI THOẠI, hãy tham khảo để hiểu ngữ cảnh (ví dụ: 'nó' = sản phẩm khách vừa hỏi trước đó).\n\n" +
                 "Khách hàng hỏi: \"%s\"\n\n" +
                 "Câu trả lời của bạn:",
                 productContext, chatHistory, customerText
@@ -262,6 +219,15 @@ public class AiChatServiceImpl implements AiChatService {
      */
     @SuppressWarnings("unchecked")
     private String callGeminiApi(String apiUrl, String prompt) {
+        // [Tối ưu gói Free] Đợi 3 giây trước khi thực hiện request để không bị quét lỗi 429 Free Tier (15 RPM)
+        try {
+            log.info("Đang trì hoãn 3s trước khi gọi Gemini API để tránh lỗi Rate Limit (429)...");
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Tiến trình ngủ bị gián đoạn: {}", e.getMessage());
+        }
+
         Map<String, Object> requestBody = new HashMap<>();
         Map<String, Object> content = new HashMap<>();
         Map<String, String> part = new HashMap<>();
