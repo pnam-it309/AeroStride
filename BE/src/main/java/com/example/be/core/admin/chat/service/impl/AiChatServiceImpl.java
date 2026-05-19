@@ -123,7 +123,15 @@ public class AiChatServiceImpl implements AiChatService {
 
         String activeKey = getApiKey();
         if (activeKey == null || activeKey.isBlank() || "your_gemini_api_key_here".equals(activeKey)) {
-            log.warn("Gemini API Key chưa được cấu hình. Bỏ qua xử lý AI.");
+            log.warn("Gemini API Key chưa được cấu hình. Kích hoạt bot quy tắc làm mặc định.");
+            try {
+                List<ProductVariantResponse> activeVariants = getActiveVariantsCached(customerText);
+                String fallbackResponse = generateRuleBasedResponse(customerText, activeVariants);
+                saveAndBroadcast(conversation, fallbackResponse);
+            } catch (Exception ex) {
+                log.error("Lỗi nghiêm trọng khi chạy Bot quy tắc (không cấu hình key): {}", ex.getMessage(), ex);
+                saveAndBroadcast(conversation, FALLBACK_MESSAGE);
+            }
             return;
         }
 
@@ -143,9 +151,15 @@ public class AiChatServiceImpl implements AiChatService {
             saveAndBroadcast(conversation, botResponseText);
 
         } catch (Exception e) {
-            log.error("Lỗi khi gọi Gemini API (model={}, baseUrl={}): {}",
-                    geminiModel, geminiBaseUrl, e.getMessage(), e);
-            saveAndBroadcast(conversation, FALLBACK_MESSAGE);
+            log.warn("Gemini API gặp lỗi (429 hoặc quá tải). Tự động kích hoạt bot quy tắc (Rule-based Fallback)...");
+            try {
+                List<ProductVariantResponse> activeVariants = getActiveVariantsCached(customerText);
+                String fallbackResponse = generateRuleBasedResponse(customerText, activeVariants);
+                saveAndBroadcast(conversation, fallbackResponse);
+            } catch (Exception ex) {
+                log.error("Lỗi nghiêm trọng khi chạy Bot quy tắc dự phòng: {}", ex.getMessage(), ex);
+                saveAndBroadcast(conversation, FALLBACK_MESSAGE);
+            }
         }
     }
 
@@ -339,5 +353,155 @@ public class AiChatServiceImpl implements AiChatService {
             log.warn("Không thể parse Gemini response: {}", e.getMessage());
             return FALLBACK_MESSAGE;
         }
+    }
+
+    /**
+     * [Tính năng nâng cao] Chatbot quy tắc (Rule-based) dự phòng khi Gemini bị lỗi 429 hoặc quá tải.
+     * Tự động lọc từ khóa (giá, size, màu sắc, thương hiệu) và sinh câu trả lời đính kèm JSON sản phẩm thật
+     * để hiển thị giao diện thẻ sản phẩm mượt mà như AI thật.
+     */
+    private String generateRuleBasedResponse(String text, List<ProductVariantResponse> variants) {
+        String lowerText = text.toLowerCase();
+        StringBuilder sb = new StringBuilder();
+        List<ProductVariantResponse> matchedVariants = new ArrayList<>();
+
+        if (lowerText.contains("giá") || lowerText.contains("nhiêu") || lowerText.contains("tiền")) {
+            sb.append("Dạ, AeroStride xin gửi bạn bảng giá tham khảo của các mẫu giày nổi bật hiện có tại cửa hàng:\n\n");
+            
+            Map<String, List<ProductVariantResponse>> grouped = variants.stream()
+                    .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
+            
+            int count = 0;
+            for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
+                if (count >= 3) break;
+                String productName = entry.getKey();
+                List<ProductVariantResponse> vars = entry.getValue();
+                BigDecimal minPrice = vars.stream().map(ProductVariantResponse::getGiaBan).min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+                sb.append(String.format("• %s: giá từ %,.0f VNĐ\n", productName, minPrice));
+                
+                if (!vars.isEmpty()) {
+                    matchedVariants.add(vars.get(0));
+                }
+                count++;
+            }
+            sb.append("\nBạn có thể xem chi tiết các mẫu và đặt mua trực tiếp ở thẻ sản phẩm bên dưới nhé!");
+            
+        } else if (lowerText.contains("size") || lowerText.contains("kích") || lowerText.contains("cỡ")) {
+            sb.append("Dạ, các mẫu giày tại AeroStride hiện có sẵn các size phổ biến từ 38 đến 43.\n\n");
+            
+            Map<String, List<ProductVariantResponse>> grouped = variants.stream()
+                    .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
+            
+            int count = 0;
+            for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
+                if (count >= 3) break;
+                String productName = entry.getKey();
+                List<ProductVariantResponse> vars = entry.getValue();
+                String sizes = vars.stream().map(ProductVariantResponse::getGiaTriKichThuoc).distinct().sorted().collect(Collectors.joining(", "));
+                sb.append(String.format("• %s: hiện có size [%s]\n", productName, sizes));
+                
+                if (!vars.isEmpty()) {
+                    matchedVariants.add(vars.get(0));
+                }
+                count++;
+            }
+            sb.append("\nBạn chọn size phù hợp để shop lên đơn ngay cho bạn nha!");
+
+        } else if (lowerText.contains("màu") || lowerText.contains("đen") || lowerText.contains("trắng") || lowerText.contains("đỏ") || lowerText.contains("xanh")) {
+            sb.append("Chào bạn! AeroStride sở hữu bộ sưu tập giày với màu sắc cực kỳ đa dạng và thời thượng (Đen, Trắng, Đỏ, Xanh...).\n\n");
+            
+            Map<String, List<ProductVariantResponse>> grouped = variants.stream()
+                    .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
+            
+            int count = 0;
+            for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
+                if (count >= 3) break;
+                String productName = entry.getKey();
+                List<ProductVariantResponse> vars = entry.getValue();
+                String colors = vars.stream().map(ProductVariantResponse::getTenMauSac).distinct().collect(Collectors.joining(", "));
+                sb.append(String.format("• %s: có các màu [%s]\n", productName, colors));
+                
+                if (!vars.isEmpty()) {
+                    matchedVariants.add(vars.get(0));
+                }
+                count++;
+            }
+            sb.append("\nBạn có thể lướt xem và chọn màu yêu thích ở bên dưới nha!");
+
+        } else {
+            String matchedBrand = null;
+            if (lowerText.contains("nike")) matchedBrand = "nike";
+            else if (lowerText.contains("adidas")) matchedBrand = "adidas";
+            else if (lowerText.contains("puma")) matchedBrand = "puma";
+            else if (lowerText.contains("vans")) matchedBrand = "vans";
+            
+            if (matchedBrand != null) {
+                String finalBrand = matchedBrand;
+                List<ProductVariantResponse> brandVars = variants.stream()
+                        .filter(v -> v.getTenThuongHieu() != null && v.getTenThuongHieu().toLowerCase().contains(finalBrand))
+                        .collect(Collectors.toList());
+                
+                if (!brandVars.isEmpty()) {
+                    sb.append(String.format("Dạ, shop đang có sẵn các mẫu giày thuộc thương hiệu %s cực hot dưới đây:\n\n", matchedBrand.toUpperCase()));
+                    Map<String, List<ProductVariantResponse>> grouped = brandVars.stream()
+                            .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
+                    
+                    int count = 0;
+                    for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
+                        if (count >= 3) break;
+                        String productName = entry.getKey();
+                        List<ProductVariantResponse> vars = entry.getValue();
+                        BigDecimal minPrice = vars.stream().map(ProductVariantResponse::getGiaBan).min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+                        sb.append(String.format("• %s: chỉ từ %,.0f VNĐ\n", productName, minPrice));
+                        
+                        if (!vars.isEmpty()) {
+                            matchedVariants.add(vars.get(0));
+                        }
+                        count++;
+                    }
+                } else {
+                    sb.append(String.format("Dạ, hiện tại dòng sản phẩm thương hiệu %s đã tạm hết hàng mất rồi ạ. Bạn tham khảo các mẫu bán chạy khác của AeroStride dưới đây nhé!\n", matchedBrand.toUpperCase()));
+                }
+            } else {
+                sb.append("Xin chào! Trợ lý ảo AeroStride rất vui được hỗ trợ bạn. Dưới đây là một số mẫu giày bán chạy nhất tuần này tại cửa hàng:\n\n");
+                
+                Map<String, List<ProductVariantResponse>> grouped = variants.stream()
+                        .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
+                
+                int count = 0;
+                for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
+                    if (count >= 3) break;
+                    String productName = entry.getKey();
+                    List<ProductVariantResponse> vars = entry.getValue();
+                    BigDecimal minPrice = vars.stream().map(ProductVariantResponse::getGiaBan).min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+                    sb.append(String.format("• %s: giá từ %,.0f VNĐ (đang bán chạy)\n", productName, minPrice));
+                    
+                    if (!vars.isEmpty()) {
+                        matchedVariants.add(vars.get(0));
+                    }
+                    count++;
+                }
+            }
+        }
+
+        if (!matchedVariants.isEmpty()) {
+            sb.append("\n\n[[PRODUCT_JSON:[");
+            String jsonArray = matchedVariants.stream().map(v -> {
+                String imgUrl = (v.getImages() != null && !v.getImages().isEmpty()) ? v.getImages().get(0).getDuongDanAnh() : "";
+                return String.format(
+                        "{\"idSanPham\":\"%s\",\"tenSanPham\":\"%s\",\"giaBan\":%s,\"tenThuongHieu\":\"%s\",\"tenDanhMuc\":\"Giày\",\"hinhAnh\":\"%s\",\"phanTramGiam\":%s,\"soLuong\":%d}",
+                        v.getIdSanPham(),
+                        v.getTenSanPham().replace("\"", "\\\""),
+                        v.getGiaBan(),
+                        v.getTenThuongHieu().replace("\"", "\\\""),
+                        imgUrl,
+                        v.getPhanTramGiam() != null ? v.getPhanTramGiam() : "0",
+                        v.getSoLuong()
+                );
+            }).collect(Collectors.joining(","));
+            sb.append(jsonArray).append("]]]");
+        }
+
+        return sb.toString();
     }
 }
