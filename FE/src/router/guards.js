@@ -23,7 +23,12 @@ export function requireAuth(to, from, next) {
     } else {
         // Chỉ bắt đăng nhập nếu cố tình truy cập vào vùng quản trị (admin)
         if (to.path.startsWith('/admin')) {
-            next(PATH.ADMIN_LOGIN);
+            // Tránh vòng lặp vô hạn khi đang truy cập trang đăng nhập admin
+            if (to.path === PATH.ADMIN_LOGIN || to.path === PATH.ADMIN_REGISTER || to.path === PATH.ADMIN_FORGOT_PASSWORD) {
+                next();
+            } else {
+                next(PATH.ADMIN_LOGIN);
+            }
         } else {
             // Các trang công khai (Landing, Shoes, Detail...) luôn cho phép vào mà không cần login
             next();
