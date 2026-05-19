@@ -165,6 +165,19 @@ onMounted(() => {
             
             if (!isMyChat) return;
 
+            // Nếu tin nhắn do chính mình gửi đi: không bao giờ đếm vào số thông báo chưa đọc
+            if (data.sender === currentUsername) {
+                if (activeChat.value && data.conversationId === activeChat.value.id) {
+                    // Tránh trùng lặp tin nhắn đã render trước đó
+                    if (!chatMessages.value.find(m => m.id === data.id)) {
+                        chatMessages.value.push(data);
+                        scrollToBottom();
+                    }
+                }
+                fetchConversations(true);
+                return;
+            }
+
             if (activeChat.value && data.conversationId === activeChat.value.id) {
                 chatMessages.value.push(data);
                 scrollToBottom();
