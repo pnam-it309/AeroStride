@@ -32,16 +32,16 @@ export const router = createRouter({
             component: () => import('@/views/error/Error500.vue')
         },
         {
-            path: '/:pathMatch(.*)*',
-            name: 'Error404',
-            component: () => import('@/views/error/Error404.vue')
-        },
-        {
             ...MainRoutes,
             beforeEnter: requireAuth
         },
         {
             ...AuthRoutes
+        },
+        {
+            path: '/:pathMatch(.*)*',
+            name: 'Error404',
+            component: () => import('@/views/error/Error404.vue')
         }
     ]
 });

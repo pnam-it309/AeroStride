@@ -37,13 +37,13 @@ export function requireAuth(to, from, next) {
 }
 
 export function requireGuest(to, from, next) {
-  if (!dichVuXacThuc.daDangNhap()) {
+  const user = dichVuXacThuc.layUserHienTai();
+  if (!dichVuXacThuc.daDangNhap() || !user) {
     next();
   } else {
-    const user = dichVuXacThuc.layUserHienTai();
-    if (user && user.role === APP_ROLES.CUSTOMER) {
+    if (user.role === APP_ROLES.CUSTOMER) {
       next('/'); // Đã đăng nhập với tư cách khách hàng thì đưa về trang chủ
-    } else if (user && (user.role === APP_ROLES.ADMIN || user.role === APP_ROLES.STAFF)) {
+    } else if (user.role === APP_ROLES.ADMIN || user.role === APP_ROLES.STAFF) {
       next(PATH.DASHBOARD); // Đã đăng nhập với tư cách admin/staff thì đưa về trang dashboard quản trị
     } else {
       next('/');
