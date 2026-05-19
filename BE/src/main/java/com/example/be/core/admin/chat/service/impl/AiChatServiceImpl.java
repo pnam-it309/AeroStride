@@ -428,6 +428,78 @@ public class AiChatServiceImpl implements AiChatService {
             }
             sb.append("\nBạn có thể lướt xem và chọn màu yêu thích ở bên dưới nha!");
 
+        } else if (lowerText.contains("chất liệu") || lowerText.contains("làm bằng") || lowerText.contains("da") || lowerText.contains("vải") || lowerText.contains("cao su")) {
+            sb.append("Dạ, AeroStride sử dụng các chất liệu cao cấp tuyển chọn (Da bò bền bỉ, Vải Mesh thoáng khí, đế Cao su êm chân). Dưới đây là chất liệu của từng mẫu:\n\n");
+            
+            Map<String, List<ProductVariantResponse>> grouped = variants.stream()
+                    .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
+            
+            int count = 0;
+            for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
+                if (count >= 3) break;
+                String productName = entry.getKey();
+                List<ProductVariantResponse> vars = entry.getValue();
+                String material = vars.get(0).getTenChatLieu() != null ? vars.get(0).getTenChatLieu() : "Da cao cấp";
+                sb.append(String.format("• %s: chất liệu [%s]\n", productName, material));
+                
+                if (!vars.isEmpty()) {
+                    matchedVariants.add(vars.get(0));
+                }
+                count++;
+            }
+            sb.append("\nCác chất liệu này giúp nâng niu bàn chân và mang lại trải nghiệm đi giày thoải mái nhất!");
+
+        } else if (lowerText.contains("còn hàng") || lowerText.contains("còn không") || lowerText.contains("số lượng") || lowerText.contains("hết")) {
+            sb.append("Dạ, AeroStride xin cập nhật tình trạng tồn kho của các mẫu sản phẩm đang có sẵn tại shop:\n\n");
+            
+            Map<String, List<ProductVariantResponse>> grouped = variants.stream()
+                    .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
+            
+            int count = 0;
+            for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
+                if (count >= 3) break;
+                String productName = entry.getKey();
+                List<ProductVariantResponse> vars = entry.getValue();
+                int totalStock = vars.stream().mapToInt(v -> v.getSoLuong() != null ? v.getSoLuong() : 0).sum();
+                String stockStatus = totalStock > 20 ? "Còn nhiều hàng" : (totalStock > 0 ? "Còn ít hàng" : "Hết hàng");
+                sb.append(String.format("• %s: %s (tổng %d đôi)\n", productName, stockStatus, totalStock));
+                
+                if (!vars.isEmpty()) {
+                    matchedVariants.add(vars.get(0));
+                }
+                count++;
+            }
+            sb.append("\nBạn ưng ý mẫu nào hãy nhắn ngay để shop giữ hàng nhé!");
+
+        } else if (lowerText.contains("khuyến mãi") || lowerText.contains("giảm giá") || lowerText.contains("sale") || lowerText.contains("ưu đãi")) {
+            sb.append("Dạ, AeroStride xin gửi bạn các chương trình ưu đãi và giảm giá cực sốc tại shop:\n\n");
+            
+            Map<String, List<ProductVariantResponse>> grouped = variants.stream()
+                    .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
+            
+            int count = 0;
+            for (Map.Entry<String, List<ProductVariantResponse>> entry : grouped.entrySet()) {
+                if (count >= 3) break;
+                String productName = entry.getKey();
+                List<ProductVariantResponse> vars = entry.getValue();
+                BigDecimal maxDiscount = vars.stream()
+                        .map(v -> v.getPhanTramGiam() != null ? v.getPhanTramGiam() : BigDecimal.ZERO)
+                        .max(BigDecimal::compareTo)
+                        .orElse(BigDecimal.ZERO);
+                
+                if (maxDiscount.compareTo(BigDecimal.ZERO) > 0) {
+                    sb.append(String.format("• %s: Đang GIẢM GIÁ lên tới %s%%\n", productName, maxDiscount));
+                } else {
+                    sb.append(String.format("• %s: Giá cực tốt (Đồng giá)\n", productName));
+                }
+                
+                if (!vars.isEmpty()) {
+                    matchedVariants.add(vars.get(0));
+                }
+                count++;
+            }
+            sb.append("\nNhanh tay chốt đơn để không bỏ lỡ deal hời này nha bạn!");
+
         } else {
             String matchedBrand = null;
             if (lowerText.contains("nike")) matchedBrand = "nike";
