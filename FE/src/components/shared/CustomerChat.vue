@@ -127,8 +127,8 @@ onMounted(() => {
         chatSocket.subscribe('/topic/messages', (msg) => {
             const data = typeof msg === 'string' ? JSON.parse(msg) : msg;
 
-            // Critical fix: Only process messages for THIS session and filter out internal/staff chats
-            if (!data.sessionId || data.sessionId !== sessionId.value) return;
+            // Chỉ xử lý tin nhắn của phiên chat khách hàng này và lọc bỏ hoàn toàn các tin nhắn nội bộ giữa các nhân viên (secondStaffId luôn null đối với chat khách hàng)
+            if (data.secondStaffId || !data.sessionId || data.sessionId !== sessionId.value) return;
 
             // Avoid duplicates
             if (chatHistory.value.find((existing) => existing.id === data.id)) return;
