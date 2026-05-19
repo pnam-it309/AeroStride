@@ -52,10 +52,11 @@ const AuthRoutes = {
                 const uiStore = useUIStore();
                 uiStore.showLoading('Hệ thống đang đăng xuất...');
                 
-                const { dichVuXacThuc } = await import('@/services/auth/dichVuXacThuc');
+                const { useAuthStore } = await import('@/stores/authStore');
+                const authStore = useAuthStore();
                 
                 setTimeout(async () => {
-                    await dichVuXacThuc.dangXuat();
+                    await authStore.logout();
                     uiStore.hideLoading();
                     // Quay về trang Landing (/) sau khi logout
                     next('/');

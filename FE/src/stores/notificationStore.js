@@ -30,6 +30,22 @@ export const useNotificationStore = defineStore('notification', {
         addNotification(message) {
             // Check if it's a chat message
             if (message.conversationId) {
+                // Lọc tin nhắn để tránh đếm thông báo cho tin nhắn của chính mình hoặc tin nhắn không thuộc phạm vi xử lý
+                const userStr = sessionStorage.getItem('user');
+                const user = userStr ? JSON.parse(userStr) : null;
+                const currentUsername = user?.username;
+
+                // 1. Không bao giờ thông báo tin nhắn do chính mình gửi đi
+                if (message.sender === currentUsername) {
+                    return;
+                }
+
+                // 2. Chỉ xử lý các tin nhắn thuộc về mình (là người nhận/tiếp nhận) hoặc là tin nhắn chờ (PENDING - chưa có staffId)
+                const isMyChat = !message.staffId || message.staffId === currentUsername || message.secondStaffId === currentUsername;
+                if (!isMyChat) {
+                    return;
+                }
+
                 // If not on chat page, increment unread chat count
                 if (!window.location.pathname.includes('/quan-ly-chat')) {
                     this.unreadChatCount++;

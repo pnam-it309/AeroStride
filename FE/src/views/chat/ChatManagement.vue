@@ -25,8 +25,8 @@ const isMessagesLoading = ref(false);
 const messagesContainer = ref(null);
 
 // Filters
-const chatType = ref(CHAT_TYPES.CUSTOMER); // 'CUSTOMER', 'INTERNAL'
-const chatStatus = ref(CHAT_STATUS.ACTIVE); // 'PENDING', 'ACTIVE', 'CLOSED'
+const chatType = ref(CHAT_TYPES.CUSTOMER);
+const chatStatus = ref(CHAT_STATUS.ACTIVE);
 const searchQuery = ref('');
 
 const scrollToBottom = () => {
@@ -47,12 +47,36 @@ const filteredConversations = computed(() => {
     });
 });
 
+const activeCount = computed(() => {
+    return customers.value.filter(c => c.type === chatType.value && c.status === 'ACTIVE').length;
+});
+
+const pendingCount = computed(() => {
+    return customers.value.filter(c => c.type === chatType.value && c.status === 'PENDING').length;
+});
+
+const closedCount = computed(() => {
+    return customers.value.filter(c => c.type === chatType.value && c.status === 'CLOSED').length;
+});
+
 // Lấy danh sách hội thoại từ Backend
-const fetchConversations = async () => {
-    isLoading.value = true;
+const fetchConversations = async (quiet = false) => {
+    if (!quiet && customers.value.length === 0) {
+        isLoading.value = true;
+    }
     try {
         const response = await api.get(API_CHAT.CONVERSATIONS);
         customers.value = response.data?.data || [];
+        
+        if (activeChat.value && activeChat.value.id.startsWith('NEW_INTERNAL_')) {
+            const realConv = customers.value.find(
+                c => c.type === CHAT_TYPES.INTERNAL && c.name === activeChat.value.name && !c.id.startsWith('NEW_INTERNAL_')
+            );
+            if (realConv) {
+                activeChat.value = realConv;
+                fetchMessages(realConv.id);
+            }
+        }
     } catch (error) {
         console.error('Lỗi khi tải danh sách hội thoại:', error);
     } finally {
@@ -87,8 +111,7 @@ const sendMessage = async () => {
         await api.post(API_CHAT.SEND, messageData);
         newMessage.value = '';
         scrollToBottom();
-        // Refresh list to update last message and replace NEW_INTERNAL if necessary
-        fetchConversations();
+        fetchConversations(true);
     } catch (error) {
         console.error('Lỗi khi gửi tin nhắn:', error);
     }
@@ -107,11 +130,9 @@ const acceptChat = async () => {
         const response = await api.post(API_CHAT.ACCEPT(activeChat.value.id));
         if (response.data?.success) {
             isAccepted.value = true;
-            // Update local state
             activeChat.value.status = 'ACTIVE';
             activeChat.value.isAccepted = true;
-            
-            fetchConversations();
+            fetchConversations(true);
         }
     } catch (error) {
         console.error('Lỗi khi tiếp nhận cuộc trò chuyện:', error);
@@ -124,19 +145,27 @@ onMounted(() => {
 
     chatSocket.connect(() => {
         chatSocket.subscribe(CHAT_TOPICS.NOTIFICATIONS, (msg) => {
-            fetchConversations();
+            fetchConversations(true);
         });
 
         chatSocket.subscribe(CHAT_TOPICS.MESSAGES, (msg) => {
             const data = typeof msg === 'string' ? JSON.parse(msg) : msg;
             
-            // Lọc tin nhắn: Chỉ xử lý nếu tin nhắn thuộc về mình hoặc là tin nhắn chờ (PENDING)
-            // data.staffId là username của nhân viên đã tiếp nhận (đối với khách hàng)
-            // hoặc là username của người gửi (đối với chat nội bộ)
             const currentUsername = authStore.user?.username;
             const isMyChat = !data.staffId || data.staffId === currentUsername || data.secondStaffId === currentUsername;
             
             if (!isMyChat) return;
+
+            if (data.sender === currentUsername) {
+                if (activeChat.value && data.conversationId === activeChat.value.id) {
+                    if (!chatMessages.value.find(m => m.id === data.id)) {
+                        chatMessages.value.push(data);
+                        scrollToBottom();
+                    }
+                }
+                fetchConversations(true);
+                return;
+            }
 
             if (activeChat.value && data.conversationId === activeChat.value.id) {
                 chatMessages.value.push(data);
@@ -144,118 +173,139 @@ onMounted(() => {
             } else {
                 notificationStore.incrementUnreadChat();
             }
-            fetchConversations();
+            fetchConversations(true);
         });
     });
 });
 </script>
 
 <template>
-    <v-container fluid class="chat-management-page pa-0 fill-height bg-white">
+    <v-container fluid class="chat-page pa-0 fill-height">
         <v-row no-gutters class="fill-height">
-            <!-- Sidebar: Conversation List -->
-            <v-col cols="12" md="3" class="border-r d-flex flex-column fill-height shadow-sm">
+            <!-- Sidebar -->
+            <v-col cols="12" md="3" class="sidebar d-flex flex-column fill-height">
+                <!-- Logo Header -->
+                <div class="sidebar-header">
+                    <v-icon icon="mdi-message-text" class="mr-2" color="#1a56db" size="22"></v-icon>
+                    <span class="sidebar-title">Quản lý tin nhắn</span>
+                </div>
+
                 <!-- Type Tabs -->
-                <v-tabs v-model="chatType" color="primary" grow density="compact" class="border-b">
-                    <v-tab :value="CHAT_TYPES.CUSTOMER">Khách hàng</v-tab>
-                    <v-tab :value="CHAT_TYPES.INTERNAL">Nội bộ</v-tab>
+                <v-tabs v-model="chatType" color="#1a56db" bg-color="transparent" grow density="compact" class="type-tabs">
+                    <v-tab :value="CHAT_TYPES.CUSTOMER">
+                        <v-icon icon="mdi-account" size="18" class="mr-1"></v-icon>
+                        Khách hàng
+                    </v-tab>
+                    <v-tab :value="CHAT_TYPES.INTERNAL">
+                        <v-icon icon="mdi-account-group" size="18" class="mr-1"></v-icon>
+                        Nội bộ
+                    </v-tab>
                 </v-tabs>
 
                 <!-- Status Filters -->
-                <div class="pa-3 border-b bg-grey-lighten-4">
-                    <v-chip-group v-model="chatStatus" mandatory selected-class="bg-primary text-white" class="status-chips">
-                        <v-chip value="ACTIVE" size="small" variant="flat">Đang hoạt động</v-chip>
-                        <v-chip value="PENDING" size="small" variant="flat">Chờ nhận</v-chip>
-                        <v-chip value="CLOSED" size="small" variant="flat">Đóng</v-chip>
+                <div class="filter-section">
+                    <v-chip-group v-model="chatStatus" mandatory selected-class="chip-active" class="status-chips">
+                        <v-chip value="ACTIVE" size="small" variant="outlined" color="#1a56db">
+                            <v-icon icon="mdi-circle" size="8" class="mr-1" color="success"></v-icon>
+                            Hoạt động ({{ activeCount }})
+                        </v-chip>
+                        <v-chip value="PENDING" size="small" variant="outlined" color="#1a56db">
+                            <v-icon icon="mdi-circle" size="8" class="mr-1" color="amber-darken-2"></v-icon>
+                            Chờ ({{ pendingCount }})
+                        </v-chip>
+                        <v-chip value="CLOSED" size="small" variant="outlined" color="#1a56db">
+                            <v-icon icon="mdi-circle" size="8" class="mr-1" color="grey-darken-1"></v-icon>
+                            Đóng ({{ closedCount }})
+                        </v-chip>
                     </v-chip-group>
                     
                     <v-text-field
                         v-model="searchQuery"
                         prepend-inner-icon="mdi-magnify"
-                        placeholder="Tìm kiếm..."
+                        placeholder="Tìm cuộc trò chuyện..."
                         variant="solo"
                         flat
                         density="compact"
-                        bg-color="white"
+                        bg-color="#f0f4f8"
                         hide-details
-                        class="mt-2 rounded-lg border"
+                        class="mt-2 search-field"
                     ></v-text-field>
                 </div>
                 
                 <div v-if="isLoading" class="d-flex justify-center align-center py-10">
-                    <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                    <v-progress-circular indeterminate color="#1a56db"></v-progress-circular>
                 </div>
 
-                <v-list v-else class="flex-grow-1 overflow-y-auto pa-0 chat-list">
+                <v-list v-else class="flex-grow-1 overflow-y-auto pa-0 conv-list" bg-color="transparent">
                     <v-list-item
                         v-for="c in filteredConversations"
                         :key="c.id"
                         :active="activeChat?.id === c.id"
-                        class="px-4 py-4 border-b transition-all"
+                        class="conv-item"
                         @click="selectChat(c)"
                     >
                         <template v-slot:prepend>
-                            <v-avatar size="48" color="primary" class="elevation-2">
-                                <span class="text-white text-h6">{{ c.avatar || c.name.charAt(0) }}</span>
+                            <v-avatar size="44" class="conv-avatar">
+                                <v-img :src="(!c.avatar || c.avatar.length <= 2) ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : c.avatar" alt="avatar"></v-img>
                             </v-avatar>
                         </template>
-                        <v-list-item-title class="font-weight-black text-slate-800">{{ c.name }}</v-list-item-title>
-                        <v-list-item-subtitle class="text-truncate mt-1 text-slate-500">{{ c.lastMsg || 'Bắt đầu cuộc trò chuyện...' }}</v-list-item-subtitle>
+                        <v-list-item-title class="conv-name">{{ c.name }}</v-list-item-title>
+                        <v-list-item-subtitle class="conv-msg">{{ c.lastMsg || 'Bắt đầu trò chuyện...' }}</v-list-item-subtitle>
                         <template v-slot:append>
                             <div class="d-flex flex-column align-end">
-                                <span class="text-caption text-grey mb-1">{{ c.time }}</span>
-                                <v-badge v-if="c.unread" :content="c.unread" color="error" inline></v-badge>
+                                <span class="conv-time">{{ c.time }}</span>
+                                <v-badge v-if="c.unread" :content="c.unread" color="red" inline class="mt-1"></v-badge>
                             </div>
                         </template>
                     </v-list-item>
                     
                     <div v-if="filteredConversations.length === 0" class="text-center py-16 px-4">
                         <v-icon size="48" color="grey-lighten-1">mdi-message-off-outline</v-icon>
-                        <div class="mt-3 text-grey-darken-1 font-weight-medium">Không có cuộc trò chuyện nào</div>
-                        <div class="text-caption text-grey">Hãy thử thay đổi bộ lọc hoặc tìm kiếm</div>
+                        <div class="mt-3" style="color: #64748b">Không có cuộc trò chuyện nào</div>
+                        <div class="text-caption" style="color: #94a3b8">Hãy thử thay đổi bộ lọc</div>
                     </div>
                 </v-list>
             </v-col>
 
             <!-- Main Chat Area -->
-            <v-col cols="12" md="9" class="bg-slate-50 d-flex flex-column fill-height overflow-hidden">
+            <v-col cols="12" md="9" class="main-area d-flex flex-column fill-height overflow-hidden">
                 <template v-if="activeChat">
                     <!-- Chat Header -->
-                    <div class="chat-header pa-4 bg-white border-b d-flex align-center justify-space-between shadow-sm z-10">
+                    <div class="main-header">
                         <div class="d-flex align-center">
-                            <v-avatar color="primary" size="40" class="mr-3">
-                                <span class="text-white font-weight-bold">{{ activeChat.avatar || activeChat.name.charAt(0) }}</span>
+                            <v-avatar size="42" class="mr-3 main-avatar">
+                                <v-img :src="(!activeChat.avatar || activeChat.avatar.length <= 2) ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : activeChat.avatar" alt="avatar"></v-img>
                             </v-avatar>
                             <div>
-                                <div class="text-h6 font-weight-black text-slate-800 leading-tight">{{ activeChat.name }}</div>
+                                <div class="main-chat-name">{{ activeChat.name }}</div>
                                 <div class="d-flex align-center">
-                                    <span class="status-dot mr-2" :class="activeChat.status.toLowerCase()"></span>
-                                    <span class="text-caption font-weight-bold" :class="`text-${activeChat.status === 'ACTIVE' ? 'success' : activeChat.status === 'PENDING' ? 'warning' : 'grey'}`">
+                                    <span class="status-indicator" :class="activeChat.status.toLowerCase()"></span>
+                                    <span class="status-label" :class="activeChat.status.toLowerCase()">
                                         {{ activeChat.status === 'ACTIVE' ? 'Đang hoạt động' : activeChat.status === 'PENDING' ? 'Chờ tiếp nhận' : 'Đã đóng' }}
                                     </span>
                                 </div>
                             </div>
                         </div>
-                        <div class="d-flex align-center gap-2">
-                            <v-btn v-if="activeChat.status === 'PENDING'" color="primary" variant="flat" prepend-icon="mdi-check-circle" @click="acceptChat" class="rounded-lg px-6">Tiếp nhận</v-btn>
-                            <v-btn icon="mdi-dots-vertical" variant="text" color="slate-600"></v-btn>
+                        <div class="d-flex align-center ga-2">
+                            <v-btn v-if="activeChat.status === 'PENDING'" color="#1a56db" variant="flat" prepend-icon="mdi-check-circle" @click="acceptChat" class="rounded-lg px-6 text-none font-weight-bold" style="letter-spacing: 0">Tiếp nhận</v-btn>
+                            <v-btn icon="mdi-dots-vertical" variant="text" color="grey-darken-1"></v-btn>
                         </div>
                     </div>
 
                     <!-- Messages -->
-                    <div ref="messagesContainer" class="chat-messages-area pa-6 flex-grow-1 overflow-y-auto bg-transparent">
+                    <div ref="messagesContainer" class="messages-area flex-grow-1 overflow-y-auto">
                         <div v-if="isMessagesLoading" class="d-flex justify-center align-center fill-height">
-                            <v-progress-circular indeterminate color="primary" size="32"></v-progress-circular>
+                            <v-progress-circular indeterminate color="#1a56db" size="32"></v-progress-circular>
                         </div>
                         <template v-else>
                             <div v-for="(m, idx) in displayMessages" :key="m.id || idx" 
-                                 class="msg-wrapper mb-4 d-flex"
-                                 :class="m.sender === authStore.user?.username ? 'justify-end' : 'justify-start'">
-                                <div class="msg-box" :class="m.sender === authStore.user?.username ? 'msg-staff' : 'msg-other'">
-                                    <div class="msg-content">{{ m.text }}</div>
-                                    <div class="msg-footer d-flex align-center justify-end mt-1">
-                                        <span class="msg-time">{{ m.time }}</span>
-                                        <v-icon v-if="m.sender === authStore.user?.username" size="14" color="blue" class="ml-1">mdi-check-all</v-icon>
+                                 class="msg-row"
+                                 :class="m.sender === authStore.user?.username ? 'is-mine' : 'is-other'">
+                                <div class="msg-bubble" :class="m.sender === authStore.user?.username ? 'bubble-mine' : 'bubble-other'">
+                                    <div class="bubble-text">{{ m.text }}</div>
+                                    <div class="bubble-meta">
+                                        <span class="bubble-time">{{ m.time }}</span>
+                                        <v-icon v-if="m.sender === authStore.user?.username" size="14" color="rgba(255,255,255,0.7)" class="ml-1">mdi-check-all</v-icon>
                                     </div>
                                 </div>
                             </div>
@@ -263,16 +313,14 @@ onMounted(() => {
                     </div>
 
                     <!-- Input Area -->
-                    <div class="chat-input-container pa-4 bg-white border-t position-relative shadow-top">
-                        <div v-if="activeChat.status === 'PENDING'" class="overlay-lock d-flex align-center justify-center">
-                            <div class="text-center">
-                                <v-icon color="primary" size="32" class="mb-2">mdi-shield-lock-outline</v-icon>
-                                <div class="text-subtitle-1 font-weight-bold text-slate-700">Vui lòng tiếp nhận cuộc trò chuyện</div>
-                                <div class="text-caption text-slate-500">Bạn cần tiếp nhận để bắt đầu gửi tin nhắn</div>
-                            </div>
+                    <div class="input-area">
+                        <div v-if="activeChat.status === 'PENDING'" class="lock-overlay">
+                            <v-icon color="#1a56db" size="32" class="mb-2">mdi-shield-lock-outline</v-icon>
+                            <div class="lock-title">Vui lòng tiếp nhận cuộc trò chuyện</div>
+                            <div class="lock-sub">Bạn cần tiếp nhận để bắt đầu gửi tin nhắn</div>
                         </div>
 
-                        <v-row no-gutters align="center" :class="{ 'blur-sm': activeChat.status === 'PENDING' }">
+                        <v-row no-gutters align="center" :class="{ 'input-blur': activeChat.status === 'PENDING' }">
                             <v-col>
                                 <v-textarea
                                     v-model="newMessage"
@@ -281,27 +329,26 @@ onMounted(() => {
                                     auto-grow
                                     variant="solo"
                                     flat
-                                    bg-color="slate-50"
+                                    bg-color="#f0f4f8"
                                     hide-details
                                     density="comfortable"
-                                    class="rounded-xl chat-textarea"
+                                    class="rounded-xl input-textarea"
                                     @keyup.enter.exact.prevent="sendMessage"
                                     :disabled="activeChat.status === 'PENDING' || activeChat.status === 'CLOSED'"
                                 ></v-textarea>
                             </v-col>
-                            <v-btn icon="mdi-emoticon-happy-outline" variant="text" color="slate-500" class="mx-2"></v-btn>
-                            <v-btn color="primary" icon="mdi-send" elevation="2" @click="sendMessage" :disabled="!newMessage.trim() || activeChat.status === 'PENDING' || activeChat.status === 'CLOSED'"></v-btn>
+                            <v-btn icon="mdi-send" color="#1a56db" variant="flat" elevation="0" class="ml-3 rounded-xl" @click="sendMessage" :disabled="!newMessage.trim() || activeChat.status === 'PENDING' || activeChat.status === 'CLOSED'"></v-btn>
                         </v-row>
                     </div>
                 </template>
 
                 <!-- Empty State -->
-                <div v-else class="d-flex flex-column justify-center align-center fill-height text-slate-400">
-                    <div class="empty-chat-illustration mb-6">
-                        <v-icon size="120" color="primary-lighten-4">mdi-forum-outline</v-icon>
+                <div v-else class="d-flex flex-column justify-center align-center fill-height empty-state">
+                    <div class="empty-icon-wrap">
+                        <v-icon size="64" color="#1a56db">mdi-forum-outline</v-icon>
                     </div>
-                    <div class="text-h5 font-weight-black text-slate-800">Trung tâm tin nhắn</div>
-                    <div class="text-subtitle-1">Chọn một hội thoại bên trái để bắt đầu làm việc</div>
+                    <div class="empty-title">Trung tâm tin nhắn</div>
+                    <div class="empty-sub">Chọn một hội thoại bên trái để bắt đầu</div>
                 </div>
             </v-col>
         </v-row>
@@ -309,89 +356,293 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.chat-management-page {
+$blue-primary: #1a56db;
+$blue-dark: #143fa6;
+$blue-light: #e8eefb;
+$blue-bg: #f0f4f8;
+
+.chat-page {
     height: calc(100vh - 64px);
     overflow: hidden;
+    background: #fff;
+}
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+    background: #ffffff;
+    border-right: 1px solid #e5eaf0;
+}
+
+.sidebar-header {
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #e5eaf0;
+}
+
+.sidebar-title {
+    color: #1e293b;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: -0.01em;
+}
+
+.type-tabs {
+    border-bottom: 1px solid #e5eaf0;
+    :deep(.v-tab) {
+        color: #64748b !important;
+        font-weight: 700;
+        font-size: 0.8rem;
+        letter-spacing: 0.02em;
+        text-transform: none;
+        &.v-tab--selected {
+            color: #1a56db !important;
+        }
+    }
+    :deep(.v-tab-slider) {
+        color: #1a56db !important;
+    }
+}
+
+.filter-section {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5eaf0;
 }
 
 .status-chips {
     :deep(.v-chip) {
-        font-weight: 700 !important;
-        letter-spacing: 0.5px;
+        font-weight: 600 !important;
+        font-size: 0.7rem;
+        border-color: #cbd5e1 !important;
+        color: #64748b !important;
+    }
+    :deep(.chip-active) {
+        background: #e8eefb !important;
+        border-color: #1a56db !important;
+        color: #1a56db !important;
     }
 }
 
-.chat-list-item {
+.search-field {
+    :deep(.v-field) {
+        border-radius: 10px !important;
+        color: #1e293b;
+    }
+    :deep(.v-field__input) {
+        color: #1e293b !important;
+        font-size: 0.85rem;
+        &::placeholder { color: #94a3b8 !important; }
+    }
+    :deep(.v-icon) { color: #94a3b8 !important; }
+}
+
+.conv-list {
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+}
+
+.conv-item {
+    padding: 14px 16px !important;
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.2s ease;
+    &:hover { background: #f8fafc !important; }
     &.v-list-item--active {
-        background-color: #EEF2FF !important;
-        border-right: 4px solid #4F46E5;
+        background: #e8eefb !important;
+        border-left: 3px solid #1a56db;
     }
 }
 
-.status-dot {
+.conv-avatar {
+    border: 2px solid #e5eaf0;
+    background: #f8fafc;
+}
+
+.conv-name {
+    color: #1e293b !important;
+    font-weight: 700 !important;
+    font-size: 0.88rem !important;
+}
+
+.conv-msg {
+    color: #64748b !important;
+    font-size: 0.78rem !important;
+    margin-top: 2px !important;
+}
+
+.conv-time {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+/* ========== MAIN AREA ========== */
+.main-area {
+    background: $blue-bg;
+}
+
+.main-header {
+    padding: 16px 24px;
+    background: #fff;
+    border-bottom: 1px solid #e5eaf0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    z-index: 10;
+}
+
+.main-avatar {
+    border: 2px solid $blue-light;
+    background: $blue-light;
+}
+
+.main-chat-name {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #1e293b;
+    line-height: 1.25;
+}
+
+.status-indicator {
     width: 8px;
     height: 8px;
     border-radius: 50%;
     display: inline-block;
-    &.active { background-color: #10B981; box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2); }
-    &.pending { background-color: #F59E0B; }
-    &.closed { background-color: #94A3B8; }
+    margin-right: 6px;
+    &.active { background: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
+    &.pending { background: #f59e0b; }
+    &.closed { background: #94a3b8; }
 }
 
-.msg-wrapper {
+.status-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    &.active { color: #10b981; }
+    &.pending { color: #f59e0b; }
+    &.closed { color: #94a3b8; }
+}
+
+/* ========== MESSAGES ========== */
+.messages-area {
+    padding: 24px;
+    &::-webkit-scrollbar { width: 5px; }
+    &::-webkit-scrollbar-thumb { background: #d0d7e2; border-radius: 10px; }
+}
+
+.msg-row {
+    display: flex;
+    margin-bottom: 12px;
     width: 100%;
+    &.is-mine { justify-content: flex-end; }
+    &.is-other { justify-content: flex-start; }
 }
 
-.msg-box {
-    max-width: 65%;
-    padding: 10px 14px;
+.msg-bubble {
+    max-width: 60%;
+    padding: 12px 16px;
     position: relative;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
-.msg-staff {
-    background-color: #4F46E5;
-    color: white;
-    border-radius: 16px 16px 4px 16px;
-    .msg-time { color: rgba(255, 255, 255, 0.7); }
+.bubble-mine {
+    background: $blue-primary;
+    color: #fff;
+    border-radius: 18px 18px 4px 18px;
+    .bubble-time { color: rgba(255,255,255,0.65); }
 }
 
-.msg-other {
-    background-color: white;
-    color: #1E293B;
-    border-radius: 16px 16px 16px 4px;
-    border: 1px solid #E2E8F0;
-    .msg-time { color: #94A3B8; }
+.bubble-other {
+    background: #fff;
+    color: #1e293b;
+    border-radius: 18px 18px 18px 4px;
+    border: 1px solid #e5eaf0;
+    .bubble-time { color: #94a3b8; }
 }
 
-.msg-time {
-    font-size: 10px;
+.bubble-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.bubble-meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+.bubble-time {
+    font-size: 0.65rem;
     font-weight: 600;
 }
 
-.overlay-lock {
-    position: absolute;
-    inset: 0;
-    background: rgba(255, 255, 255, 0.9);
-    z-index: 10;
-    backdrop-filter: blur(2px);
+/* ========== INPUT ========== */
+.input-area {
+    padding: 16px 24px;
+    background: #fff;
+    border-top: 1px solid #e5eaf0;
+    position: relative;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.03);
 }
 
-.chat-textarea {
+.input-textarea {
     :deep(.v-field__input) {
         padding-top: 12px;
         padding-bottom: 12px;
     }
 }
 
-.shadow-top {
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+.input-blur { filter: blur(3px); pointer-events: none; }
+
+.lock-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.92);
+    z-index: 10;
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-.z-10 { z-index: 10; }
-.leading-tight { line-height: 1.25; }
-.text-slate-800 { color: #1E293B; }
-.text-slate-500 { color: #64748B; }
-.bg-slate-50 { background-color: #F8FAFC; }
-.transition-all { transition: all 0.2s ease; }
+.lock-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.lock-sub {
+    font-size: 0.78rem;
+    color: #94a3b8;
+}
+
+/* ========== EMPTY STATE ========== */
+.empty-state {
+    background: $blue-bg;
+}
+
+.empty-icon-wrap {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: $blue-light;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.empty-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.empty-sub {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-top: 4px;
+}
 </style>

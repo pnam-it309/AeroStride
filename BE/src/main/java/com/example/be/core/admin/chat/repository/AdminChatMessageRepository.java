@@ -11,4 +11,7 @@ import java.util.List;
 public interface AdminChatMessageRepository extends ChatMessageRepository, JpaSpecificationExecutor<ChatMessage> {
     List<ChatMessage> findByConversationIdOrderByNgayTaoAsc(String conversationId);
     List<ChatMessage> findByConversation_SessionIdOrderByNgayTaoAsc(String sessionId);
+
+    // Lấy N tin nhắn gần nhất của cuộc hội thoại (dùng cho AI context history)
+    List<ChatMessage> findTop10ByConversationIdOrderByNgayTaoDesc(String conversationId);
 }

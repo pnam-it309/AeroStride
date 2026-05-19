@@ -41,11 +41,66 @@ public class AdminChatServiceImpl implements AdminChatService {
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
 
+    private static final String DEFAULT_AVATAR = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+
     private String formatTime(Long timestamp) {
         if (timestamp == null) return "Vừa xong";
         return Instant.ofEpochMilli(timestamp)
-                .atZone(ZoneId.systemDefault())
+                .atZone(ZoneId.of("Asia/Ho_Chi_Minh"))
                 .format(DateTimeFormatter.ofPattern("HH:mm"));
+    }
+
+    private String getAvatarUrl(ChatConversation c, String currentUsername) {
+        if (c.getKhachHang() != null) {
+            String hinhAnh = c.getKhachHang().getHinhAnh();
+            return (hinhAnh != null && !hinhAnh.trim().isEmpty()) ? hinhAnh : DEFAULT_AVATAR;
+        }
+        
+        if (c.getType() == ChatConversation.ChatType.INTERNAL) {
+            NhanVien partner = null;
+            if (c.getSecondNhanVien() != null && !c.getSecondNhanVien().getTenTaiKhoan().equals(currentUsername)) {
+                partner = c.getSecondNhanVien();
+            } else if (c.getNhanVien() != null) {
+                partner = c.getNhanVien();
+            }
+            if (partner != null) {
+                String hinhAnh = partner.getHinhAnh();
+                return (hinhAnh != null && !hinhAnh.trim().isEmpty()) ? hinhAnh : DEFAULT_AVATAR;
+            }
+        }
+        
+        return DEFAULT_AVATAR;
+    }
+
+    private String getConversationName(ChatConversation c, String currentUsername) {
+        if (c.getKhachHang() != null) {
+            return c.getKhachHang().getTenTaiKhoan();
+        }
+        
+        if (c.getType() == ChatConversation.ChatType.INTERNAL) {
+            if (c.getSecondNhanVien() != null && !c.getSecondNhanVien().getTenTaiKhoan().equals(currentUsername)) {
+                return c.getSecondNhanVien().getTen();
+            }
+            if (c.getNhanVien() != null) {
+                return c.getNhanVien().getTen();
+            }
+            return ChatConstants.DEFAULT_STAFF_NAME;
+        }
+        
+        // Khách vãng lai: Ghép 4 ký tự cuối của sessionId
+        String sessionId = c.getSessionId();
+        if (sessionId != null && sessionId.length() > 4) {
+            String shortId = sessionId.substring(sessionId.length() - 4);
+            return ChatConstants.DEFAULT_CUSTOMER_NAME + " #" + shortId.toUpperCase();
+        }
+        
+        // Fallback dùng 4 ký tự cuối của Conversation ID
+        if (c.getId() != null && c.getId().length() > 4) {
+            String shortId = c.getId().substring(c.getId().length() - 4);
+            return ChatConstants.DEFAULT_CUSTOMER_NAME + " #" + shortId.toUpperCase();
+        }
+        
+        return ChatConstants.DEFAULT_CUSTOMER_NAME;
     }
 
     private String getCurrentUsername() {
@@ -85,13 +140,9 @@ public class AdminChatServiceImpl implements AdminChatService {
                 })
                 .map(c -> AdminChatResponse.builder()
                         .id(c.getId())
-                        .name(c.getKhachHang() != null ? c.getKhachHang().getTenTaiKhoan() : 
-                              (c.getType() == ChatConversation.ChatType.INTERNAL ? 
-                               (c.getSecondNhanVien() != null && !c.getSecondNhanVien().getTenTaiKhoan().equals(currentUsername) ? c.getSecondNhanVien().getTen() : 
-                                (c.getNhanVien() != null ? c.getNhanVien().getTen() : ChatConstants.DEFAULT_STAFF_NAME)) : ChatConstants.DEFAULT_CUSTOMER_NAME))
+                        .name(getConversationName(c, currentUsername))
                         .lastMsg(c.getMessages().isEmpty() ? "" : c.getMessages().get(c.getMessages().size() - 1).getContent())
-                        .avatar(c.getKhachHang() != null ? c.getKhachHang().getTenTaiKhoan().substring(0, 1) : 
-                               (c.getType() == ChatConversation.ChatType.INTERNAL ? "NV" : "K"))
+                        .avatar(getAvatarUrl(c, currentUsername))
                         .time(formatTime(c.getNgayCapNhat()))
                         .unread(0)
                         .isAccepted(c.getIsAccepted())
@@ -108,7 +159,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                         .id("NEW_INTERNAL_" + nv.getId())
                         .name(nv.getTen())
                         .lastMsg("")
-                        .avatar("NV")
+                        .avatar(nv.getHinhAnh() != null && !nv.getHinhAnh().trim().isEmpty() ? nv.getHinhAnh() : DEFAULT_AVATAR)
                         .time("")
                         .unread(0)
                         .isAccepted(true)
@@ -163,9 +214,38 @@ public class AdminChatServiceImpl implements AdminChatService {
             conversation.setStatus(ChatConversation.ChatStatus.ACTIVE);
             
             String currentUsername = getCurrentUsername();
-            nhanVienRepository.findByTenTaiKhoan(currentUsername).ifPresent(conversation::setNhanVien);
+            Optional<NhanVien> nhanVienOpt = nhanVienRepository.findByTenTaiKhoan(currentUsername);
             
-            conversationRepository.save(conversation);
+            if (nhanVienOpt.isPresent()) {
+                NhanVien nv = nhanVienOpt.get();
+                conversation.setNhanVien(nv);
+                
+                conversation = conversationRepository.save(conversation);
+                
+                String systemMessageText = "Nhân viên " + nv.getMa() + " đã tiếp nhận cuộc trò chuyện.";
+                
+                ChatMessage systemMessage = ChatMessage.builder()
+                        .conversation(conversation)
+                        .senderType(ChatConstants.SENDER_TYPE_SYSTEM)
+                        .content(systemMessageText)
+                        .build();
+                
+                ChatMessage savedMessage = messageRepository.save(systemMessage);
+                
+                ChatMessageResponse response = ChatMessageResponse.builder()
+                        .id(savedMessage.getId())
+                        .conversationId(conversation.getId())
+                        .sessionId(conversation.getSessionId())
+                        .staffId(nv.getTenTaiKhoan())
+                        .sender(ChatConstants.SENDER_TYPE_SYSTEM)
+                        .text(systemMessageText)
+                        .time(formatTime(savedMessage.getNgayTao()))
+                        .build();
+                
+                messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
+            } else {
+                conversationRepository.save(conversation);
+            }
             return true;
         }
         return false;
