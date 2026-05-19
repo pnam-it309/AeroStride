@@ -10,6 +10,7 @@ import com.example.be.entity.ChatMessage;
 import com.example.be.infrastructure.constants.ChatConstants;
 import com.example.be.infrastructure.constants.TrangThai;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
@@ -19,6 +20,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -48,7 +50,30 @@ public class AiChatServiceImpl implements AiChatService {
     private final RestTemplate restTemplate;
 
     @Value("${google.gemini.api-key}")
-    private String geminiApiKey;
+    private String geminiApiKeyString;
+
+    private List<String> apiKeysList = new ArrayList<>();
+    private final AtomicInteger keyIndex = new AtomicInteger(0);
+
+    @PostConstruct
+    public void initApiKeys() {
+        if (geminiApiKeyString != null && !geminiApiKeyString.isBlank()) {
+            apiKeysList = Arrays.stream(geminiApiKeyString.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+            log.info("Đã nạp thành công {} API Keys cho Gemini.", apiKeysList.size());
+        }
+    }
+
+    private String getApiKey() {
+        if (apiKeysList.isEmpty()) {
+            return geminiApiKeyString;
+        }
+        int idx = keyIndex.getAndIncrement() % apiKeysList.size();
+        if (idx < 0) idx = 0;
+        return apiKeysList.get(idx);
+    }
 
     @Value("${google.gemini.model:gemini-2.0-flash}")
     private String geminiModel;
@@ -96,20 +121,21 @@ public class AiChatServiceImpl implements AiChatService {
     public void generateAndSendResponse(ChatConversation conversation, String customerText) {
         log.info("AI đang xử lý tin nhắn: {}", customerText);
 
-        if (geminiApiKey == null || geminiApiKey.isBlank() || "your_gemini_api_key_here".equals(geminiApiKey)) {
+        String activeKey = getApiKey();
+        if (activeKey == null || activeKey.isBlank() || "your_gemini_api_key_here".equals(activeKey)) {
             log.warn("Gemini API Key chưa được cấu hình. Bỏ qua xử lý AI.");
             return;
         }
 
         try {
-            // [Cải tiến 1] Lấy danh sách sản phẩm từ cache thay vì query DB mỗi lần
-            List<ProductVariantResponse> activeVariants = getActiveVariantsCached();
+            // [Tối ưu gói Free] Lấy danh sách sản phẩm từ cache lọc theo từ khóa và giới hạn 25 phần tử
+            List<ProductVariantResponse> activeVariants = getActiveVariantsCached(customerText);
 
             String productContext = buildProductContextFromVariants(activeVariants);
             String chatHistory = buildChatHistory(conversation.getId());
 
             String apiUrl = String.format("%s/models/%s:generateContent?key=%s",
-                    geminiBaseUrl, geminiModel, geminiApiKey);
+                    geminiBaseUrl, geminiModel, activeKey);
 
             String prompt = buildPrompt(productContext, chatHistory, customerText);
 
@@ -123,11 +149,7 @@ public class AiChatServiceImpl implements AiChatService {
         }
     }
 
-    /**
-     * [Cải tiến 1] Cache sản phẩm trong bộ nhớ với TTL 5 phút.
-     * Giảm ~99% truy vấn DB khi nhiều khách hàng chat cùng lúc.
-     */
-    private List<ProductVariantResponse> getActiveVariantsCached() {
+    private List<ProductVariantResponse> getActiveVariantsCached(String text) {
         long now = System.currentTimeMillis();
         if (cachedVariants == null || (now - cacheTimestamp) > CACHE_TTL_MS) {
             log.info("Cache sản phẩm hết hạn hoặc chưa có → Truy vấn DB...");
@@ -138,7 +160,32 @@ public class AiChatServiceImpl implements AiChatService {
             cacheTimestamp = now;
             log.info("Đã cache {} biến thể đang hoạt động.", cachedVariants.size());
         }
-        return cachedVariants;
+
+        // [Tối ưu gói Free] Lọc thông minh theo từ khóa trong câu hỏi để gửi tối thiểu sản phẩm cần thiết, tránh quá tải token
+        if (text == null || text.isBlank()) {
+            return cachedVariants.stream().limit(15).collect(Collectors.toList());
+        }
+
+        String searchLower = text.toLowerCase();
+        List<ProductVariantResponse> filtered = cachedVariants.stream()
+                .filter(v -> {
+                    boolean match = false;
+                    if (v.getTenSanPham() != null && v.getTenSanPham().toLowerCase().contains(searchLower)) match = true;
+                    if (v.getTenSanPhamDayDu() != null && v.getTenSanPhamDayDu().toLowerCase().contains(searchLower)) match = true;
+                    if (v.getTenThuongHieu() != null && v.getTenThuongHieu().toLowerCase().contains(searchLower)) match = true;
+                    if (v.getTenChatLieu() != null && v.getTenChatLieu().toLowerCase().contains(searchLower)) match = true;
+                    if (v.getTenMauSac() != null && v.getTenMauSac().toLowerCase().contains(searchLower)) match = true;
+                    if (v.getGiaTriKichThuoc() != null && v.getGiaTriKichThuoc().toLowerCase().contains(searchLower)) match = true;
+                    return match;
+                })
+                .collect(Collectors.toList());
+
+        if (filtered.isEmpty()) {
+            // Fallback lấy 15 sản phẩm đầu tiên
+            return cachedVariants.stream().limit(15).collect(Collectors.toList());
+        }
+
+        return filtered.stream().limit(25).collect(Collectors.toList());
     }
 
     private String buildProductContextFromVariants(List<ProductVariantResponse> variants) {
