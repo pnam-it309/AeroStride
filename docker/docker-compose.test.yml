@@ -18,36 +18,42 @@ services:
       timeout: 3s
       retries: 10
 
-  # Container chạy Backend Tests
-  backend-test:
+  # Container chạy Backend Server dành riêng cho Black-box E2E/API testing
+  backend-server-test:
     image: gradle:8.5-jdk17
-    container_name: aerostride-be-test
+    container_name: aerostride-be-server-test
     working_dir: /app
     volumes:
       - ../BE:/app
-      # Mount cache của Gradle để tăng tốc độ chạy test ở những lần sau
+      # Mount cache của Gradle để tăng tốc độ khởi chạy
       - be-test-cache:/home/gradle/.gradle
     environment:
-      # Truyền cấu hình đè lên properties mặc định
       - SPRING_PROFILES_ACTIVE=test
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-test:3306/aerostride_test?useSSL=false&serverTimezone=UTC
       - SPRING_DATASOURCE_USERNAME=test
       - SPRING_DATASOURCE_PASSWORD=test
+    ports:
+      - "8081:8080"
     depends_on:
       mysql-test:
         condition: service_healthy
-    command: ["./gradlew", "test", "--no-daemon", "--info"]
+    command: ["./gradlew", "bootRun", "--no-daemon"]
     networks:
       - aerostride-test-net
 
-  # Container chạy Frontend Tests
-  frontend-test:
-    image: node:20-alpine
-    container_name: aerostride-fe-test
+  # Container chạy Playwright API Automation Tests (Black-box & Teardown Cleanup)
+  automation-test:
+    image: mcr.microsoft.com/playwright:v1.49.0-jammy
+    container_name: aerostride-automation-test
     working_dir: /app
     volumes:
-      - ../FE:/app
-    command: ["npm", "run", "test"]
+      - ../automation-tests:/app
+    environment:
+      - BASE_URL=http://backend-server-test:8080
+    depends_on:
+      backend-server-test:
+        condition: service_started
+    command: ["sh", "-c", "npm install && npx playwright test tests/api/aerostride-flows.spec.js"]
     networks:
       - aerostride-test-net
 
