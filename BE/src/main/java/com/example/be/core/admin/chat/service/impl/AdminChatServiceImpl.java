@@ -41,11 +41,35 @@ public class AdminChatServiceImpl implements AdminChatService {
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
 
+    private static final String DEFAULT_AVATAR = "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png";
+
     private String formatTime(Long timestamp) {
         if (timestamp == null) return "Vừa xong";
         return Instant.ofEpochMilli(timestamp)
                 .atZone(ZoneId.of("Asia/Ho_Chi_Minh"))
                 .format(DateTimeFormatter.ofPattern("HH:mm"));
+    }
+
+    private String getAvatarUrl(ChatConversation c, String currentUsername) {
+        if (c.getKhachHang() != null) {
+            String hinhAnh = c.getKhachHang().getHinhAnh();
+            return (hinhAnh != null && !hinhAnh.trim().isEmpty()) ? hinhAnh : DEFAULT_AVATAR;
+        }
+        
+        if (c.getType() == ChatConversation.ChatType.INTERNAL) {
+            NhanVien partner = null;
+            if (c.getSecondNhanVien() != null && !c.getSecondNhanVien().getTenTaiKhoan().equals(currentUsername)) {
+                partner = c.getSecondNhanVien();
+            } else if (c.getNhanVien() != null) {
+                partner = c.getNhanVien();
+            }
+            if (partner != null) {
+                String hinhAnh = partner.getHinhAnh();
+                return (hinhAnh != null && !hinhAnh.trim().isEmpty()) ? hinhAnh : DEFAULT_AVATAR;
+            }
+        }
+        
+        return DEFAULT_AVATAR;
     }
 
     private String getCurrentUsername() {
@@ -90,8 +114,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                                (c.getSecondNhanVien() != null && !c.getSecondNhanVien().getTenTaiKhoan().equals(currentUsername) ? c.getSecondNhanVien().getTen() : 
                                 (c.getNhanVien() != null ? c.getNhanVien().getTen() : ChatConstants.DEFAULT_STAFF_NAME)) : ChatConstants.DEFAULT_CUSTOMER_NAME))
                         .lastMsg(c.getMessages().isEmpty() ? "" : c.getMessages().get(c.getMessages().size() - 1).getContent())
-                        .avatar(c.getKhachHang() != null ? c.getKhachHang().getTenTaiKhoan().substring(0, 1) : 
-                               (c.getType() == ChatConversation.ChatType.INTERNAL ? "NV" : "K"))
+                        .avatar(getAvatarUrl(c, currentUsername))
                         .time(formatTime(c.getNgayCapNhat()))
                         .unread(0)
                         .isAccepted(c.getIsAccepted())
@@ -108,7 +131,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                         .id("NEW_INTERNAL_" + nv.getId())
                         .name(nv.getTen())
                         .lastMsg("")
-                        .avatar("NV")
+                        .avatar(nv.getHinhAnh() != null && !nv.getHinhAnh().trim().isEmpty() ? nv.getHinhAnh() : DEFAULT_AVATAR)
                         .time("")
                         .unread(0)
                         .isAccepted(true)

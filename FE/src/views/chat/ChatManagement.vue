@@ -195,8 +195,8 @@ onMounted(() => {
                         @click="selectChat(c)"
                     >
                         <template v-slot:prepend>
-                            <v-avatar size="48" color="primary" class="elevation-2">
-                                <span class="text-white text-h6">{{ c.avatar || c.name.charAt(0) }}</span>
+                            <v-avatar size="48" class="elevation-2 bg-grey-lighten-4">
+                                <v-img :src="(!c.avatar || c.avatar.length <= 2) ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : c.avatar" alt="avatar"></v-img>
                             </v-avatar>
                         </template>
                         <v-list-item-title class="font-weight-black text-slate-800">{{ c.name }}</v-list-item-title>
@@ -223,8 +223,8 @@ onMounted(() => {
                     <!-- Chat Header -->
                     <div class="chat-header pa-4 bg-white border-b d-flex align-center justify-space-between shadow-sm z-10">
                         <div class="d-flex align-center">
-                            <v-avatar color="primary" size="40" class="mr-3">
-                                <span class="text-white font-weight-bold">{{ activeChat.avatar || activeChat.name.charAt(0) }}</span>
+                            <v-avatar size="40" class="mr-3 bg-grey-lighten-4">
+                                <v-img :src="(!activeChat.avatar || activeChat.avatar.length <= 2) ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : activeChat.avatar" alt="avatar"></v-img>
                             </v-avatar>
                             <div>
                                 <div class="text-h6 font-weight-black text-slate-800 leading-tight">{{ activeChat.name }}</div>
