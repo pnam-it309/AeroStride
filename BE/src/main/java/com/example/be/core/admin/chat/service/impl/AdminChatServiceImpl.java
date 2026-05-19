@@ -44,7 +44,7 @@ public class AdminChatServiceImpl implements AdminChatService {
     private String formatTime(Long timestamp) {
         if (timestamp == null) return "Vừa xong";
         return Instant.ofEpochMilli(timestamp)
-                .atZone(ZoneId.systemDefault())
+                .atZone(ZoneId.of("Asia/Ho_Chi_Minh"))
                 .format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
@@ -163,9 +163,38 @@ public class AdminChatServiceImpl implements AdminChatService {
             conversation.setStatus(ChatConversation.ChatStatus.ACTIVE);
             
             String currentUsername = getCurrentUsername();
-            nhanVienRepository.findByTenTaiKhoan(currentUsername).ifPresent(conversation::setNhanVien);
+            Optional<NhanVien> nhanVienOpt = nhanVienRepository.findByTenTaiKhoan(currentUsername);
             
-            conversationRepository.save(conversation);
+            if (nhanVienOpt.isPresent()) {
+                NhanVien nv = nhanVienOpt.get();
+                conversation.setNhanVien(nv);
+                
+                conversation = conversationRepository.save(conversation);
+                
+                String systemMessageText = "Nhân viên " + nv.getMa() + " đã tiếp nhận cuộc trò chuyện.";
+                
+                ChatMessage systemMessage = ChatMessage.builder()
+                        .conversation(conversation)
+                        .senderType(ChatConstants.SENDER_TYPE_SYSTEM)
+                        .content(systemMessageText)
+                        .build();
+                
+                ChatMessage savedMessage = messageRepository.save(systemMessage);
+                
+                ChatMessageResponse response = ChatMessageResponse.builder()
+                        .id(savedMessage.getId())
+                        .conversationId(conversation.getId())
+                        .sessionId(conversation.getSessionId())
+                        .staffId(nv.getTenTaiKhoan())
+                        .sender(ChatConstants.SENDER_TYPE_SYSTEM)
+                        .text(systemMessageText)
+                        .time(formatTime(savedMessage.getNgayTao()))
+                        .build();
+                
+                messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
+            } else {
+                conversationRepository.save(conversation);
+            }
             return true;
         }
         return false;
