@@ -47,6 +47,18 @@ const filteredConversations = computed(() => {
     });
 });
 
+const activeCount = computed(() => {
+    return customers.value.filter(c => c.type === chatType.value && c.status === 'ACTIVE').length;
+});
+
+const pendingCount = computed(() => {
+    return customers.value.filter(c => c.type === chatType.value && c.status === 'PENDING').length;
+});
+
+const closedCount = computed(() => {
+    return customers.value.filter(c => c.type === chatType.value && c.status === 'CLOSED').length;
+});
+
 // Lấy danh sách hội thoại từ Backend
 const fetchConversations = async () => {
     isLoading.value = true;
@@ -164,9 +176,9 @@ onMounted(() => {
                 <!-- Status Filters -->
                 <div class="pa-3 border-b bg-grey-lighten-4">
                     <v-chip-group v-model="chatStatus" mandatory selected-class="bg-primary text-white" class="status-chips">
-                        <v-chip value="ACTIVE" size="small" variant="flat">Đang hoạt động</v-chip>
-                        <v-chip value="PENDING" size="small" variant="flat">Chờ nhận</v-chip>
-                        <v-chip value="CLOSED" size="small" variant="flat">Đóng</v-chip>
+                        <v-chip value="ACTIVE" size="small" variant="flat">Đang hoạt động ({{ activeCount }})</v-chip>
+                        <v-chip value="PENDING" size="small" variant="flat" :color="pendingCount > 0 ? 'warning' : ''">Chờ nhận ({{ pendingCount }})</v-chip>
+                        <v-chip value="CLOSED" size="small" variant="flat">Đóng ({{ closedCount }})</v-chip>
                     </v-chip-group>
                     
                     <v-text-field

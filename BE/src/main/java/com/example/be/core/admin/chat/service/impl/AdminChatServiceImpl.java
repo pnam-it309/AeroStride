@@ -72,6 +72,37 @@ public class AdminChatServiceImpl implements AdminChatService {
         return DEFAULT_AVATAR;
     }
 
+    private String getConversationName(ChatConversation c, String currentUsername) {
+        if (c.getKhachHang() != null) {
+            return c.getKhachHang().getTenTaiKhoan();
+        }
+        
+        if (c.getType() == ChatConversation.ChatType.INTERNAL) {
+            if (c.getSecondNhanVien() != null && !c.getSecondNhanVien().getTenTaiKhoan().equals(currentUsername)) {
+                return c.getSecondNhanVien().getTen();
+            }
+            if (c.getNhanVien() != null) {
+                return c.getNhanVien().getTen();
+            }
+            return ChatConstants.DEFAULT_STAFF_NAME;
+        }
+        
+        // Khách vãng lai: Ghép 4 ký tự cuối của sessionId
+        String sessionId = c.getSessionId();
+        if (sessionId != null && sessionId.length() > 4) {
+            String shortId = sessionId.substring(sessionId.length() - 4);
+            return ChatConstants.DEFAULT_CUSTOMER_NAME + " #" + shortId.toUpperCase();
+        }
+        
+        // Fallback dùng 4 ký tự cuối của Conversation ID
+        if (c.getId() != null && c.getId().length() > 4) {
+            String shortId = c.getId().substring(c.getId().length() - 4);
+            return ChatConstants.DEFAULT_CUSTOMER_NAME + " #" + shortId.toUpperCase();
+        }
+        
+        return ChatConstants.DEFAULT_CUSTOMER_NAME;
+    }
+
     private String getCurrentUsername() {
         try {
             return SecurityContextHolder.getContext().getAuthentication().getName();
@@ -109,10 +140,7 @@ public class AdminChatServiceImpl implements AdminChatService {
                 })
                 .map(c -> AdminChatResponse.builder()
                         .id(c.getId())
-                        .name(c.getKhachHang() != null ? c.getKhachHang().getTenTaiKhoan() : 
-                              (c.getType() == ChatConversation.ChatType.INTERNAL ? 
-                               (c.getSecondNhanVien() != null && !c.getSecondNhanVien().getTenTaiKhoan().equals(currentUsername) ? c.getSecondNhanVien().getTen() : 
-                                (c.getNhanVien() != null ? c.getNhanVien().getTen() : ChatConstants.DEFAULT_STAFF_NAME)) : ChatConstants.DEFAULT_CUSTOMER_NAME))
+                        .name(getConversationName(c, currentUsername))
                         .lastMsg(c.getMessages().isEmpty() ? "" : c.getMessages().get(c.getMessages().size() - 1).getContent())
                         .avatar(getAvatarUrl(c, currentUsername))
                         .time(formatTime(c.getNgayCapNhat()))
