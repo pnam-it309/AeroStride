@@ -60,11 +60,26 @@ const closedCount = computed(() => {
 });
 
 // Lấy danh sách hội thoại từ Backend
-const fetchConversations = async () => {
-    isLoading.value = true;
+const fetchConversations = async (quiet = false) => {
+    // Chỉ hiện loading ở lần tải đầu tiên để tránh giật lag UI khi nhắn tin
+    if (!quiet && customers.value.length === 0) {
+        isLoading.value = true;
+    }
     try {
         const response = await api.get(API_CHAT.CONVERSATIONS);
         customers.value = response.data?.data || [];
+        
+        // Tự động chuyển đổi từ chat ảo (NEW_INTERNAL_...) sang chat thật sau khi gửi tin nhắn đầu tiên
+        if (activeChat.value && activeChat.value.id.startsWith('NEW_INTERNAL_')) {
+            const realConv = customers.value.find(
+                c => c.type === CHAT_TYPES.INTERNAL && c.name === activeChat.value.name && !c.id.startsWith('NEW_INTERNAL_')
+            );
+            if (realConv) {
+                activeChat.value = realConv;
+                // Tải tin nhắn thật để hiển thị lập tức
+                fetchMessages(realConv.id);
+            }
+        }
     } catch (error) {
         console.error('Lỗi khi tải danh sách hội thoại:', error);
     } finally {
@@ -99,8 +114,8 @@ const sendMessage = async () => {
         await api.post(API_CHAT.SEND, messageData);
         newMessage.value = '';
         scrollToBottom();
-        // Refresh list to update last message and replace NEW_INTERNAL if necessary
-        fetchConversations();
+        // Refresh list to update last message and replace NEW_INTERNAL if necessary (chạy chế độ im lặng quiet=true)
+        fetchConversations(true);
     } catch (error) {
         console.error('Lỗi khi gửi tin nhắn:', error);
     }
@@ -123,7 +138,7 @@ const acceptChat = async () => {
             activeChat.value.status = 'ACTIVE';
             activeChat.value.isAccepted = true;
             
-            fetchConversations();
+            fetchConversations(true);
         }
     } catch (error) {
         console.error('Lỗi khi tiếp nhận cuộc trò chuyện:', error);
@@ -136,7 +151,7 @@ onMounted(() => {
 
     chatSocket.connect(() => {
         chatSocket.subscribe(CHAT_TOPICS.NOTIFICATIONS, (msg) => {
-            fetchConversations();
+            fetchConversations(true);
         });
 
         chatSocket.subscribe(CHAT_TOPICS.MESSAGES, (msg) => {
@@ -156,7 +171,7 @@ onMounted(() => {
             } else {
                 notificationStore.incrementUnreadChat();
             }
-            fetchConversations();
+            fetchConversations(true);
         });
     });
 });
