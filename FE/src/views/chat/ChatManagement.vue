@@ -186,12 +186,12 @@ onMounted(() => {
             <v-col cols="12" md="3" class="sidebar d-flex flex-column fill-height">
                 <!-- Logo Header -->
                 <div class="sidebar-header">
-                    <v-icon icon="mdi-message-text" class="mr-2" color="white" size="22"></v-icon>
+                    <v-icon icon="mdi-message-text" class="mr-2" color="#1a56db" size="22"></v-icon>
                     <span class="sidebar-title">Quản lý tin nhắn</span>
                 </div>
 
                 <!-- Type Tabs -->
-                <v-tabs v-model="chatType" color="white" bg-color="transparent" grow density="compact" class="type-tabs">
+                <v-tabs v-model="chatType" color="#1a56db" bg-color="transparent" grow density="compact" class="type-tabs">
                     <v-tab :value="CHAT_TYPES.CUSTOMER">
                         <v-icon icon="mdi-account" size="18" class="mr-1"></v-icon>
                         Khách hàng
@@ -205,16 +205,16 @@ onMounted(() => {
                 <!-- Status Filters -->
                 <div class="filter-section">
                     <v-chip-group v-model="chatStatus" mandatory selected-class="chip-active" class="status-chips">
-                        <v-chip value="ACTIVE" size="small" variant="outlined" color="white">
-                            <v-icon icon="mdi-circle" size="8" class="mr-1" color="light-green-accent-3"></v-icon>
+                        <v-chip value="ACTIVE" size="small" variant="outlined" color="#1a56db">
+                            <v-icon icon="mdi-circle" size="8" class="mr-1" color="success"></v-icon>
                             Hoạt động ({{ activeCount }})
                         </v-chip>
-                        <v-chip value="PENDING" size="small" variant="outlined" color="white">
-                            <v-icon icon="mdi-circle" size="8" class="mr-1" color="amber"></v-icon>
+                        <v-chip value="PENDING" size="small" variant="outlined" color="#1a56db">
+                            <v-icon icon="mdi-circle" size="8" class="mr-1" color="amber-darken-2"></v-icon>
                             Chờ ({{ pendingCount }})
                         </v-chip>
-                        <v-chip value="CLOSED" size="small" variant="outlined" color="white">
-                            <v-icon icon="mdi-circle" size="8" class="mr-1" color="grey"></v-icon>
+                        <v-chip value="CLOSED" size="small" variant="outlined" color="#1a56db">
+                            <v-icon icon="mdi-circle" size="8" class="mr-1" color="grey-darken-1"></v-icon>
                             Đóng ({{ closedCount }})
                         </v-chip>
                     </v-chip-group>
@@ -226,15 +226,14 @@ onMounted(() => {
                         variant="solo"
                         flat
                         density="compact"
-                        bg-color="rgba(255,255,255,0.15)"
+                        bg-color="#f0f4f8"
                         hide-details
                         class="mt-2 search-field"
-                        theme="dark"
                     ></v-text-field>
                 </div>
                 
                 <div v-if="isLoading" class="d-flex justify-center align-center py-10">
-                    <v-progress-circular indeterminate color="white"></v-progress-circular>
+                    <v-progress-circular indeterminate color="#1a56db"></v-progress-circular>
                 </div>
 
                 <v-list v-else class="flex-grow-1 overflow-y-auto pa-0 conv-list" bg-color="transparent">
@@ -261,9 +260,9 @@ onMounted(() => {
                     </v-list-item>
                     
                     <div v-if="filteredConversations.length === 0" class="text-center py-16 px-4">
-                        <v-icon size="48" color="rgba(255,255,255,0.3)">mdi-message-off-outline</v-icon>
-                        <div class="mt-3" style="color: rgba(255,255,255,0.6)">Không có cuộc trò chuyện nào</div>
-                        <div class="text-caption" style="color: rgba(255,255,255,0.4)">Hãy thử thay đổi bộ lọc</div>
+                        <v-icon size="48" color="grey-lighten-1">mdi-message-off-outline</v-icon>
+                        <div class="mt-3" style="color: #64748b">Không có cuộc trò chuyện nào</div>
+                        <div class="text-caption" style="color: #94a3b8">Hãy thử thay đổi bộ lọc</div>
                     </div>
                 </v-list>
             </v-col>
@@ -370,109 +369,109 @@ $blue-bg: #f0f4f8;
 
 /* ========== SIDEBAR ========== */
 .sidebar {
-    background: linear-gradient(180deg, $blue-primary 0%, $blue-dark 100%);
-    border-right: none;
+    background: #ffffff;
+    border-right: 1px solid #e5eaf0;
 }
 
 .sidebar-header {
     padding: 18px 20px;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.12);
+    border-bottom: 1px solid #e5eaf0;
 }
 
 .sidebar-title {
-    color: #fff;
+    color: #1e293b;
     font-weight: 800;
     font-size: 1rem;
     letter-spacing: -0.01em;
 }
 
 .type-tabs {
-    border-bottom: 1px solid rgba(255,255,255,0.12);
+    border-bottom: 1px solid #e5eaf0;
     :deep(.v-tab) {
-        color: rgba(255,255,255,0.65) !important;
+        color: #64748b !important;
         font-weight: 700;
         font-size: 0.8rem;
         letter-spacing: 0.02em;
         text-transform: none;
         &.v-tab--selected {
-            color: #fff !important;
+            color: #1a56db !important;
         }
     }
     :deep(.v-tab-slider) {
-        color: #fff !important;
+        color: #1a56db !important;
     }
 }
 
 .filter-section {
     padding: 12px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid #e5eaf0;
 }
 
 .status-chips {
     :deep(.v-chip) {
         font-weight: 600 !important;
         font-size: 0.7rem;
-        border-color: rgba(255,255,255,0.25) !important;
-        color: rgba(255,255,255,0.8) !important;
+        border-color: #cbd5e1 !important;
+        color: #64748b !important;
     }
     :deep(.chip-active) {
-        background: rgba(255,255,255,0.2) !important;
-        border-color: rgba(255,255,255,0.5) !important;
-        color: #fff !important;
+        background: #e8eefb !important;
+        border-color: #1a56db !important;
+        color: #1a56db !important;
     }
 }
 
 .search-field {
     :deep(.v-field) {
         border-radius: 10px !important;
-        color: #fff;
+        color: #1e293b;
     }
     :deep(.v-field__input) {
-        color: #fff !important;
+        color: #1e293b !important;
         font-size: 0.85rem;
-        &::placeholder { color: rgba(255,255,255,0.5) !important; }
+        &::placeholder { color: #94a3b8 !important; }
     }
-    :deep(.v-icon) { color: rgba(255,255,255,0.5) !important; }
+    :deep(.v-icon) { color: #94a3b8 !important; }
 }
 
 .conv-list {
     &::-webkit-scrollbar { width: 4px; }
-    &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+    &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 }
 
 .conv-item {
     padding: 14px 16px !important;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid #f1f5f9;
     transition: background 0.2s ease;
-    &:hover { background: rgba(255,255,255,0.08) !important; }
+    &:hover { background: #f8fafc !important; }
     &.v-list-item--active {
-        background: rgba(255,255,255,0.15) !important;
-        border-left: 3px solid #fff;
+        background: #e8eefb !important;
+        border-left: 3px solid #1a56db;
     }
 }
 
 .conv-avatar {
-    border: 2px solid rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.1);
+    border: 2px solid #e5eaf0;
+    background: #f8fafc;
 }
 
 .conv-name {
-    color: #fff !important;
+    color: #1e293b !important;
     font-weight: 700 !important;
     font-size: 0.88rem !important;
 }
 
 .conv-msg {
-    color: rgba(255,255,255,0.55) !important;
+    color: #64748b !important;
     font-size: 0.78rem !important;
     margin-top: 2px !important;
 }
 
 .conv-time {
     font-size: 0.65rem;
-    color: rgba(255,255,255,0.45);
+    color: #94a3b8;
     font-weight: 600;
 }
 
