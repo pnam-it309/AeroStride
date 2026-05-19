@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/pnam-it309/AeroStride/compare/v1.11.0...v1.12.0) (2026-05-19)
+
+
+### Features
+
+* **schedule-chat:** Trien khai lich lam viec va bo sung components hien thi card ([a2a31ac](https://github.com/pnam-it309/AeroStride/commit/a2a31ac10955a73e9325f31b331c87d3a7af7cd7))
+
 # [1.11.0](https://github.com/pnam-it309/AeroStride/compare/v1.10.2...v1.11.0) (2026-05-19)
 
 
