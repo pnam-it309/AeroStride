@@ -1,3 +1,10 @@
+## [1.12.2](https://github.com/pnam-it309/AeroStride/compare/v1.12.1...v1.12.2) (2026-05-19)
+
+
+### Bug Fixes
+
+* **fe:** Khắc phục lỗi định tuyến SPA và loại bỏ hardcode các tiền tố mặc định ([570db06](https://github.com/pnam-it309/AeroStride/commit/570db06c105e5dc8e601364f487bcd9e1dc2c6ba))
+
 ## [1.12.1](https://github.com/pnam-it309/AeroStride/compare/v1.12.0...v1.12.1) (2026-05-19)
 
 
