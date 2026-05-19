@@ -1,3 +1,10 @@
+## [1.12.1](https://github.com/pnam-it309/AeroStride/compare/v1.12.0...v1.12.1) (2026-05-19)
+
+
+### Bug Fixes
+
+* **core:** Sửa lỗi job chạy lặp lại liên tục và cải tiến giao diện hiển thị sản phẩm ([f268b71](https://github.com/pnam-it309/AeroStride/commit/f268b718e6354f470b1b53ac389c5ac971cc31c3))
+
 # [1.12.0](https://github.com/pnam-it309/AeroStride/compare/v1.11.0...v1.12.0) (2026-05-19)
 
 
