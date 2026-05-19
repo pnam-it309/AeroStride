@@ -21,9 +21,12 @@ api.interceptors.request.use(
     try {
         const uiStore = useUIStore();
         
-        // Mặc định mọi request đều dùng Progress Bar ở trên
-        // Chỉ dùng Overlay khi flag 'bigOp' được bật hoặc là tác vụ hệ thống (đã được gọi thủ công)
-        if (config.bigOp) {
+        // Bỏ qua thanh loading/progress bar cho các yêu cầu chat để đảm bảo trải nghiệm real-time mượt mà
+        const isChat = config.url && config.url.includes('/chat');
+        
+        if (config.silent || isChat) {
+            // Không hiển thị loading/progress bar
+        } else if (config.bigOp) {
             uiStore.showLoading(config.loadingMessage || 'Đang xử lý...');
         } else {
             uiStore.startProgress();
@@ -42,8 +45,11 @@ api.interceptors.request.use(
   },
   (error) => {
     const uiStore = useUIStore();
-    uiStore.stopProgress();
-    uiStore.hideLoading();
+    const isChat = error.config?.url && error.config.url.includes('/chat');
+    if (!error.config?.silent && !isChat) {
+        uiStore.stopProgress();
+        uiStore.hideLoading();
+    }
     return Promise.reject(error);
   }
 );
@@ -53,16 +59,22 @@ api.interceptors.response.use(
   (response) => {
     try {
         const uiStore = useUIStore();
-        uiStore.stopProgress();
-        uiStore.hideLoading();
+        const isChat = response.config?.url && response.config.url.includes('/chat');
+        if (!response.config?.silent && !isChat) {
+            uiStore.stopProgress();
+            uiStore.hideLoading();
+        }
     } catch (e) {}
     return response;
   },
   async (error) => {
     try {
         const uiStore = useUIStore();
-        uiStore.stopProgress();
-        uiStore.hideLoading();
+        const isChat = error.config?.url && error.config.url.includes('/chat');
+        if (!error.config?.silent && !isChat) {
+            uiStore.stopProgress();
+            uiStore.hideLoading();
+        }
     } catch (e) {}
 
     if (error.response) {
