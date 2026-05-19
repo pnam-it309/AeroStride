@@ -1,3 +1,34 @@
+# [1.11.0](https://github.com/pnam-it309/AeroStride/compare/v1.10.2...v1.11.0) (2026-05-19)
+
+
+### Bug Fixes
+
+* **auth:** Khac phuc loi vong lap redirect vo han tren trang dang nhap Admin ([2d3a0b8](https://github.com/pnam-it309/AeroStride/commit/2d3a0b8c91b99d393c7a9069e7073acf9d47b702))
+* **chat:** Cau hinh mui gio Viet Nam va hien thi thong bao tiep nhan cuoc tro chuyen ([a274c07](https://github.com/pnam-it309/AeroStride/commit/a274c07055e65e5c2c694abb98739ab57d6d2577))
+* **chat:** Chi tang so thong bao tin nhan khi nhan tin nhan moi tu nguoi khac ([face9fc](https://github.com/pnam-it309/AeroStride/commit/face9fc3942cdf8c4ff80add60a91eb4c68ab7d5))
+* **chat:** Khac phuc loi giat lag va vang khoi tin nhan noi bo khi chat ([a93095b](https://github.com/pnam-it309/AeroStride/commit/a93095b0bf52e1036843daa7faa4281e3096966d))
+* **chat:** Ngan chan ro ri tin nhan noi bo giua cac Nhan vien den giao dien Khach hang ([4719b9b](https://github.com/pnam-it309/AeroStride/commit/4719b9b53d20cb742436cf4dc7d7d450776cbdf4))
+* **chat:** Reset lich su chat va lam sach state xac thuc khi dang xuat ([262028f](https://github.com/pnam-it309/AeroStride/commit/262028f7c0c946f4e42f436f92fc9136c7fb913d))
+* **router:** Giai quyet triet de loi truy cap luc duoc luc khong cua /admin/login ([73a329e](https://github.com/pnam-it309/AeroStride/commit/73a329e3ff6a05381232fc83e8c6c1f8c2775e7f))
+
+
+### Features
+
+* **ai-chat:** Bo sung cac case chat bot cho chat lieu, ton kho va khuyen mai ([a6f6755](https://github.com/pnam-it309/AeroStride/commit/a6f675506459ef282a6766253a19426745a57284))
+* **ai-chat:** Them co che Bot quy tac (Rule-based) du phong thong minh khi Gemini gap loi 429 hoac khong cau hinh key ([6eb0b2f](https://github.com/pnam-it309/AeroStride/commit/6eb0b2f89bd04b102bf1e151f16330f009349cab))
+* **ai-chat:** Them quy tac tu dong sua loi JSON va bo sung case chao hoi ([3a34e83](https://github.com/pnam-it309/AeroStride/commit/3a34e83e06357c82cac3abf21dcd8330faa69338))
+* **auth:** Phan vung router he thong va thiet lap guard ngan Khach hang truy cap Admin ([c68ebc2](https://github.com/pnam-it309/AeroStride/commit/c68ebc24a96b35046c92ebd194fe0143b16e4ec1))
+* **auth:** Refactor router guards to utilize APP_ROLES constants ([7c762d2](https://github.com/pnam-it309/AeroStride/commit/7c762d203fe0474098428cb0a515f62240e56de1))
+* **chat:** Cap nhat lay anh dai dien nguoi dung hoac default Facebook avatar ([6331c58](https://github.com/pnam-it309/AeroStride/commit/6331c585b667c86ec801c71c500313c2bbef2a37))
+* **chat:** Cấu hình phân biệt nhiều Khách vãng lai và đếm số lượng tin nhắn chờ ([11ca8e5](https://github.com/pnam-it309/AeroStride/commit/11ca8e5130e1920ab5c45bd7fa17da90580bf08a)), closes [#A3D5](https://github.com/pnam-it309/AeroStride/issues/A3D5)
+* **chat:** Loai bo thanh progress bar tren top bar cho tat ca yeu cau lien quan den chat ([d97380a](https://github.com/pnam-it309/AeroStride/commit/d97380a0e8d22375b0df0f5176bb87455179f0a3))
+* **schedule:** Trien khai luong nghiep vu thuc te cho lich lam viec va import Excel ([689a05f](https://github.com/pnam-it309/AeroStride/commit/689a05f99bb3b2847357a1eb117c9b87bc4b0f40))
+
+
+### Performance Improvements
+
+* **ai-chat:** Them co che loc tu khoa san pham va Xoay tua API Keys de giai quyet triet de loi 429 ([5cfe089](https://github.com/pnam-it309/AeroStride/commit/5cfe089d4ef8cdd3b703181a5ea85cd991d3408f))
+
 ## [1.10.2](https://github.com/pnam-it309/AeroStride/compare/v1.10.1...v1.10.2) (2026-05-18)
 
 
