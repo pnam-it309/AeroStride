@@ -1,10 +1,10 @@
-import { API_COMMON } from '@/constants/apiPaths';
+import { API_COMMON, API_DEFAULTS } from '@/constants/apiPaths';
 
 const ABSOLUTE_HTTP_URL_PATTERN = /^https?:\/\//i;
 const CLOUDINARY_HOST_PATTERN = /^res\.cloudinary\.com$/i;
 
 const normalizeApiBaseUrl = () => {
-    const apiBaseUrl = String(import.meta.env.VITE_API_URL || '').trim();
+    const apiBaseUrl = String(import.meta.env.VITE_API_URL || API_DEFAULTS.PREFIX).trim();
     if (!apiBaseUrl) {
         return '';
     }

@@ -1,5 +1,5 @@
 import api from '../apiService';
-import { API_COMMON } from '@/constants/apiPaths';
+import { API_COMMON, API_DEFAULTS } from '@/constants/apiPaths';
 
 export const dichVuFile = {
   // Tải lên file
@@ -29,6 +29,7 @@ export const dichVuFile = {
 
   // Lấy URL file
   layUrlFile(filePath) {
-    return `${import.meta.env.VITE_API_URL}${API_COMMON.STORAGE}/files/${filePath}`;
+    const apiBase = import.meta.env.VITE_API_URL || API_DEFAULTS.PREFIX;
+    return `${apiBase}${API_COMMON.STORAGE}/files/${filePath}`;
   }
 };

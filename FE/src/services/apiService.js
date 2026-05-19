@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { useUIStore } from '@/stores/ui';
+import { API_DEFAULTS } from '@/constants/apiPaths';
 
-let API_BASE_URL = import.meta.env.VITE_API_URL;
+let API_BASE_URL = import.meta.env.VITE_API_URL || API_DEFAULTS.PREFIX;
 
 // Remove trailing slash if present
-if (API_BASE_URL.endsWith('/')) {
+if (API_BASE_URL && API_BASE_URL.endsWith('/')) {
   API_BASE_URL = API_BASE_URL.slice(0, -1);
 }
 

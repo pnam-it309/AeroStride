@@ -1,3 +1,8 @@
+export const API_DEFAULTS = {
+    PREFIX: '/api/v1',
+    WS_PREFIX: '/ws'
+};
+
 export const API_BASE = {
     ADMIN: '/admin',
     PUBLIC: '/public',
