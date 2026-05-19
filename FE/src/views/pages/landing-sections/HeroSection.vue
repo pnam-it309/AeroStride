@@ -15,14 +15,13 @@ const props = defineProps({
             <v-row align="center">
                 <v-col cols="12" lg="6" :class="{ 'reveal-container': true, 'active': props.active }">
                     <h1 class="hero-title text-uppercase font-weight-black text-blue-darken-4 reveal-item delay-1">
-                        NEXT-GEN <br />
+                        {{ props.product?.title || 'THẾ HỆ MỚI' }} <br />
                         <span class="text-blue-accent-4">AEROSTRIDE</span>
                     </h1>
                     <p class="text-h5 text-blue-grey-darken-1 mt-6 mb-10 leading-relaxed reveal-item delay-2">
-                        Công nghệ giày tương lai dành cho những người dẫn đầu. 
-                        Trải nghiệm sự êm ái vượt giới hạn.
+                        {{ props.product?.subtitle || 'Công nghệ giày tương lai dành cho những người dẫn đầu. Trải nghiệm sự êm ái vượt giới hạn.' }}
                     </p>
-                    <v-btn size="x-large" color="blue-darken-4" rounded="xl" class="px-12 elevation-10 reveal-item delay-3">
+                    <v-btn size="x-large" color="blue-darken-4" rounded="xl" class="px-12 elevation-10 reveal-item delay-3" to="/shoes">
                         KHÁM PHÁ NGAY
                     </v-btn>
                 </v-col>

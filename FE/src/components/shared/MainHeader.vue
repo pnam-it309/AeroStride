@@ -18,23 +18,31 @@ const activeMenu = ref(null);
 const isSearchOpen = ref(false);
 const isScrolled = ref(false);
 
+const searchQuery = ref('');
+
+const handleSearch = () => {
+    if (searchQuery.value.trim()) {
+        router.push({ path: PATH.SHOES, query: { keyword: searchQuery.value.trim() } });
+    }
+};
+
 const navLinks = [
-    { name: 'New & Featured', id: 'new', sub: [
-        { label: 'Featured', items: ['New Arrivals', 'Bestsellers', 'Member Exclusive', 'Custom Shoes'] },
-        { label: 'Shoes', items: ['All Shoes', 'Lifestyle', 'Running', 'Basketball', 'Training'] },
-        { label: 'Shop By Icon', items: ['AeroStride X1', 'Strike V3', 'Glide Pro', 'Air Max'] }
+    { name: 'Sản phẩm mới', id: 'new', sub: [
+        { label: 'Nổi bật', items: ['Sản phẩm mới nhất', 'Bán chạy nhất', 'Dành riêng cho thành viên', 'Giày thiết kế'] },
+        { label: 'Giày', items: ['Tất cả giày', 'Lifestyle', 'Chạy bộ', 'Bóng rổ', 'Tập luyện'] },
+        { label: 'Theo bộ sưu tập', items: ['AeroStride X1', 'Strike V3', 'Glide Pro', 'Air Max'] }
     ]},
-    { name: 'Men', id: 'men', sub: [
-        { label: 'Shoes', items: ['All Shoes', 'Lifestyle', 'Running', 'Basketball', 'Football'] },
-        { label: 'Clothing', items: ['All Clothing', 'Tops & T-Shirts', 'Hoodies', 'Jackets', 'Shorts'] },
-        { label: 'Accessories', items: ['Bags', 'Socks', 'Hats'] }
+    { name: 'Nam', id: 'men', sub: [
+        { label: 'Giày', items: ['Tất cả giày', 'Lifestyle', 'Chạy bộ', 'Bóng rổ', 'Bóng đá'] },
+        { label: 'Quần áo', items: ['Tất cả quần áo', 'Áo thun & Polo', 'Hoodies', 'Áo khoác', 'Quần short'] },
+        { label: 'Phụ kiện', items: ['Balo', 'Vớ', 'Nón'] }
     ]},
-    { name: 'Women', id: 'women', sub: [
-        { label: 'Shoes', items: ['All Shoes', 'Lifestyle', 'Running', 'Training', 'Yoga'] },
-        { label: 'Clothing', items: ['All Clothing', 'Sports Bras', 'Leggings', 'Hoodies', 'Jackets'] },
-        { label: 'Accessories', items: ['Bags', 'Socks', 'Hats'] }
+    { name: 'Nữ', id: 'women', sub: [
+        { label: 'Giày', items: ['Tất cả giày', 'Lifestyle', 'Chạy bộ', 'Tập luyện', 'Yoga'] },
+        { label: 'Quần áo', items: ['Tất cả quần áo', 'Áo bra thể thao', 'Leggings', 'Hoodies', 'Áo khoác'] },
+        { label: 'Phụ kiện', items: ['Balo', 'Vớ', 'Nón'] }
     ]},
-    { name: 'Sale', id: 'sale', color: '#FF1744' }
+    { name: 'Giảm giá', id: 'sale', color: '#FF1744' }
 ];
 
 const handleScroll = () => {
@@ -114,8 +122,8 @@ const closeMegaMenu = () => {
                 <!-- Actions -->
                 <div class="nav-actions d-flex align-center gap-6">
                     <div class="search-bar-wrap" :class="{ 'expanded': isSearchOpen }">
-                        <v-icon size="22" class="search-icon" @click="isSearchOpen = true">mdi-magnify</v-icon>
-                        <input type="text" placeholder="Search" class="search-input" />
+                        <v-icon size="22" class="search-icon" @click="handleSearch">mdi-magnify</v-icon>
+                        <input type="text" placeholder="Tìm kiếm" class="search-input" v-model="searchQuery" @keyup.enter="handleSearch" />
                     </div>
                     <v-icon size="24" class="action-icon">mdi-heart-outline</v-icon>
                     <v-icon size="24" class="action-icon">mdi-bag-outline</v-icon>

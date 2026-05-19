@@ -53,12 +53,37 @@ const rotationZ = ref(0);
 let animationFrame = 0;
 let lastTick = 0;
 
-const decoratedProducts = computed(() =>
-    products.map((product, index) => ({
-        ...product,
-        image: props.products?.[index]?.imageUrl || ''
-    }))
-);
+const decoratedProducts = computed(() => {
+    if (!props.products || props.products.length === 0) {
+        return [
+            {
+                code: 'AERO-X1-INFINITE',
+                category: 'HYPER-PERFORMANCE',
+                desc: 'Hệ thống giày thông minh AeroStride X1 tối ưu hóa hiệu suất chạy bộ trong thời gian thực.',
+                specs: [
+                    { label: 'KHỐI LƯỢNG', value: '220.45g' },
+                    { label: 'THÔNG KHÍ', value: '98.2%' },
+                    { label: 'HOÀN NĂNG', value: '84.5%' },
+                    { label: 'LỰC KÉO', value: 'MAX' }
+                ],
+                image: ''
+            }
+        ];
+    }
+    return props.products.map((p, index) => ({
+        code: p.title || 'AEROSTRIDE',
+        category: p.subtitle || 'PREMIUM',
+        desc: p.summary || 'Trải nghiệm đỉnh cao công nghệ giày thể thao.',
+        specs: [
+            { label: 'KHỐI LƯỢNG', value: '210g' },
+            { label: 'THÔNG KHÍ', value: '95%' },
+            { label: 'HOÀN NĂNG', value: '82%' },
+            { label: 'LỰC KÉO', value: 'PRO' }
+        ],
+        image: p.imageUrl,
+        id: p.id
+    }));
+});
 
 const activeProduct = computed(() => decoratedProducts.value[currentIndex.value] || decoratedProducts.value[0]);
 

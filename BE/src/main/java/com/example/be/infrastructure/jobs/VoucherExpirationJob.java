@@ -18,7 +18,7 @@ public class VoucherExpirationJob {
 
     private final AdminPhieuGiamGiaService adminPhieuGiamGiaService;
 
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(fixedDelay = 300000, initialDelay = 60000) // Chạy mỗi 5 phút, bắt đầu sau 1 phút khởi động để tránh quá tải
     public void execute() {
         log.info("Cron Job [VoucherExpirationJob] - Bắt đầu quét phiếu giảm giá hết hạn");
         try {

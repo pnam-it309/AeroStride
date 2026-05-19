@@ -1,34 +1,73 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import PromotionBar from '@/components/shared/PromotionBar.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
-import apiService from '@/services/apiService';
+import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 
 const router = useRouter();
+const route = useRoute();
 const loading = ref(false);
 const isFilterVisible = ref(true);
 
-const filters = [
-    { title: 'Gender', items: ['Men', 'Women', 'Unisex'] },
-    { title: 'Colour', items: ['Black', 'White', 'Blue', 'Red', 'Grey'] },
-    { title: 'Brand', items: ['AeroStride', 'Performance', 'Elite'] },
-    { title: 'Sports', items: ['Running', 'Basketball', 'Training', 'Lifestyle'] },
-    { title: 'Technology', items: ['X1-Sensor', 'Air-Nano', 'Carbon-Strike'] }
-];
-
+const filters = ref([]);
 const products = ref([]);
+const totalElements = ref(0);
+const currentPage = ref(1);
+const pageSize = ref(12);
+
+const searchParams = ref({
+    keyword: route.query.keyword || '',
+    idThuongHieu: route.query.idThuongHieu || null,
+    idDanhMuc: route.query.idDanhMuc || null,
+    idMauSac: route.query.idMauSac || null,
+    idKichThuoc: route.query.idKichThuoc || null,
+    idChatLieu: route.query.idChatLieu || null,
+    idDeGiay: route.query.idDeGiay || null,
+    idCoGiay: route.query.idCoGiay || null,
+    idXuatXu: route.query.idXuatXu || null,
+    idMucDichChay: route.query.idMucDichChay || null,
+    gioiTinhKhachHang: route.query.gioiTinhKhachHang || null,
+    minPrice: route.query.minPrice || null,
+    maxPrice: route.query.maxPrice || null,
+    sortBy: route.query.sortBy || 'newest'
+});
+
+const selectedFilters = ref({
+    thuongHieus: [],
+    danhMucs: [],
+    mauSacs: [],
+    kichThuocs: [],
+    gioiTinhKhachHangs: []
+});
+
+const fetchFilters = async () => {
+    try {
+        const data = await dichVuSanPhamPublic.layBoLoc();
+        filters.value = [
+            { title: 'Thương hiệu', key: 'idThuongHieu', items: data.thuongHieus },
+            { title: 'Danh mục', key: 'idDanhMuc', items: data.danhMucs },
+            { title: 'Màu sắc', key: 'idMauSac', items: data.mauSacs },
+            { title: 'Kích thước', key: 'idKichThuoc', items: data.kichThuocs },
+            { title: 'Giới tính', key: 'gioiTinhKhachHang', items: data.gioiTinhKhachHangs.map(g => ({ id: g, ten: g })) }
+        ];
+    } catch (error) {
+        console.error('Error fetching filters:', error);
+    }
+};
 
 const fetchProducts = async () => {
     loading.value = true;
     try {
-        const response = await apiService.get('/customer/san-pham/hien-thi', {
-            params: { size: 12 }
-        });
-        if (response.data.success) {
-            products.value = response.data.data.content;
-        }
+        const params = {
+            ...searchParams.value,
+            page: currentPage.value,
+            size: pageSize.value
+        };
+        const response = await dichVuSanPhamPublic.layDanhSachSanPham(params);
+        products.value = response.content;
+        totalElements.value = response.totalElements;
     } catch (error) {
         console.error('Error fetching products:', error);
     } finally {
@@ -36,7 +75,18 @@ const fetchProducts = async () => {
     }
 };
 
+const handleFilterChange = () => {
+    currentPage.value = 1;
+    fetchProducts();
+};
+
 onMounted(() => {
+    fetchFilters();
+    fetchProducts();
+});
+
+watch(() => route.query, (newQuery) => {
+    searchParams.value = { ...searchParams.value, ...newQuery };
     fetchProducts();
 });
 
@@ -47,6 +97,16 @@ const formatPrice = (price) => {
 
 const goToDetail = (id) => {
     router.push(`/product/${id}`);
+};
+
+const translateGender = (gender) => {
+    const map = {
+        'NAM': 'Nam',
+        'NU': 'Nữ',
+        'TRE_EM': 'Trẻ em',
+        'UNISEX': 'Unisex'
+    };
+    return map[gender] || gender;
 };
 </script>
 
@@ -61,21 +121,21 @@ const goToDetail = (id) => {
         <!-- Sub-header (Title & Global Filters) -->
         <div class="listing-subheader px-12 py-8 mt-0">
             <div class="d-flex align-center justify-space-between">
-                <h1 class="text-h4 font-weight-black">Tất cả sản phẩm ({{ products.length }})</h1>
+                <h1 class="text-h4 font-weight-black">Tất cả sản phẩm ({{ totalElements }})</h1>
                 <div class="d-flex align-center gap-6">
                     <v-btn variant="text" @click="isFilterVisible = !isFilterVisible" class="font-weight-bold">
-                        {{ isFilterVisible ? 'Hide Filters' : 'Show Filters' }} <v-icon class="ml-2">mdi-filter-variant</v-icon>
+                        {{ isFilterVisible ? 'Ẩn bộ lọc' : 'Hiện bộ lọc' }} <v-icon class="ml-2">mdi-filter-variant</v-icon>
                     </v-btn>
                     <v-menu>
                         <template v-slot:activator="{ props }">
                             <v-btn variant="text" v-bind="props" class="font-weight-bold">
-                                Sort By <v-icon class="ml-2">mdi-chevron-down</v-icon>
+                                Sắp xếp theo <v-icon class="ml-2">mdi-chevron-down</v-icon>
                             </v-btn>
                         </template>
                         <v-list>
-                            <v-list-item>Newest</v-list-item>
-                            <v-list-item>Price: High-Low</v-list-item>
-                            <v-list-item>Price: Low-High</v-list-item>
+                            <v-list-item @click="searchParams.sortBy = 'newest'; fetchProducts()">Mới nhất</v-list-item>
+                            <v-list-item @click="searchParams.sortBy = 'price_desc'; fetchProducts()">Giá: Cao - Thấp</v-list-item>
+                            <v-list-item @click="searchParams.sortBy = 'price_asc'; fetchProducts()">Giá: Thấp - Cao</v-list-item>
                         </v-list>
                     </v-menu>
                 </div>
@@ -88,24 +148,24 @@ const goToDetail = (id) => {
                 <transition name="sidebar-slide">
                     <v-col v-if="isFilterVisible" cols="12" md="2" class="filter-sidebar">
                         <div class="filter-group mb-8">
-                            <h3 class="filter-main-label mb-4">Shoes</h3>
+                            <h3 class="filter-main-label mb-4">Giày</h3>
                         </div>
                         <v-expansion-panels flat variant="accordion">
                             <v-expansion-panel v-for="filter in filters" :key="filter.title" :title="filter.title" class="filter-panel">
                                 <v-expansion-panel-text>
-                                    <div v-for="item in filter.items" :key="item" class="d-flex align-center mb-2">
-                                        <v-checkbox-btn :label="item" color="black" density="compact"></v-checkbox-btn>
-                                        <span class="filter-item-text ml-2">{{ item }}</span>
-                                    </div>
+                                    <v-radio-group v-model="searchParams[filter.key]" @change="handleFilterChange">
+                                        <v-radio v-for="item in filter.items" :key="item.id || item" :label="item.ten || translateGender(item)" :value="item.id || item" color="black" density="compact"></v-radio>
+                                    </v-radio-group>
                                 </v-expansion-panel-text>
                             </v-expansion-panel>
                         </v-expansion-panels>
+                        <v-btn variant="text" color="grey" @click="searchParams = { sortBy: 'newest' }; handleFilterChange()" class="mt-4 text-none">Xóa tất cả</v-btn>
                     </v-col>
                 </transition>
 
                 <!-- Product Grid -->
                 <v-col cols="12" :md="isFilterVisible ? 10 : 12" class="product-grid-col">
-                    <v-row>
+                    <v-row v-if="products.length > 0">
                         <v-col v-for="p in products" :key="p.id" cols="12" sm="6" md="4" lg="4">
                             <!-- Click to Navigate -->
                             <div class="product-card-placeholder" @click="goToDetail(p.id)">
@@ -127,6 +187,19 @@ const goToDetail = (id) => {
                             </div>
                         </v-col>
                     </v-row>
+                    <div v-else-if="!loading" class="text-center py-16">
+                        <v-icon size="64" color="grey-lighten-1">mdi-package-variant</v-icon>
+                        <p class="text-h6 text-grey-darken-1 mt-4">Không tìm thấy sản phẩm nào.</p>
+                    </div>
+
+                    <v-pagination
+                        v-if="totalElements > pageSize"
+                        v-model="currentPage"
+                        :length="Math.ceil(totalElements / pageSize)"
+                        @update:model-value="fetchProducts"
+                        class="mt-12"
+                        color="black"
+                    ></v-pagination>
                 </v-col>
             </v-row>
         </v-container>

@@ -23,7 +23,7 @@ public class CampaignStatusJob {
 
     private final DotGiamGiaRepository dotGiamGiaRepository;
 
-    @Scheduled(cron = "0 */5 * * * *") // Chạy mỗi 5 phút
+    @Scheduled(fixedDelay = 300000, initialDelay = 60000) // Chạy mỗi 5 phút, bắt đầu sau 1 phút khởi động để tránh quá tải
     @Transactional
     public void execute() {
         long now = System.currentTimeMillis();

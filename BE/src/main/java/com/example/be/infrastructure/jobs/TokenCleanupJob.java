@@ -20,7 +20,7 @@ public class TokenCleanupJob {
 
     private final RefreshTokenRepository refreshTokenRepository;
 
-    @Scheduled(cron = "0 0 2 * * *")
+    @Scheduled(cron = "0 0 2 * * ?")
     @Transactional
     public void execute() {
         log.info("Cron Job [TokenCleanupJob] - Started");

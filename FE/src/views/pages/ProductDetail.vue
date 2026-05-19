@@ -1,21 +1,57 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import PromotionBar from '@/components/shared/PromotionBar.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
+import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 
+const route = useRoute();
+const loading = ref(true);
+const product = ref(null);
 const selectedSize = ref(null);
-const sizes = ['EU 38.5', 'EU 39', 'EU 40', 'EU 40.5', 'EU 41', 'EU 42', 'EU 42.5', 'EU 43', 'EU 44', 'EU 44.5', 'EU 45', 'EU 46'];
 
-const product = {
-    name: 'AeroStride X1 "Infinite"',
-    category: 'Men\'s Road Running Shoes',
-    price: '4,250,000₫',
-    description: 'Trải nghiệm đỉnh cao công nghệ với AeroStride X1. Được thiết kế để tối ưu hóa từng bước chạy, X1 mang lại sự êm ái tuyệt đối và khả năng phản hồi lực vượt trội nhờ đế giữa Carbon-Nano thế hệ mới.'
+const fetchProduct = async () => {
+    loading.value = true;
+    try {
+        const data = await dichVuSanPhamPublic.layChiTietSanPham(route.params.id);
+        product.value = data;
+    } catch (error) {
+        console.error('Error fetching product:', error);
+    } finally {
+        loading.value = false;
+    }
 };
 
-const mainImageIndex = ref(0);
-const thumbnails = Array(6).fill(null);
+onMounted(() => {
+    fetchProduct();
+});
+
+const formatPrice = (price) => {
+    if (!price) return '0 ₫';
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+};
+
+const sizes = computed(() => {
+    if (!product.value?.variants) return [];
+    const uniqueSizes = [...new Set(product.value.variants.map(v => v.tenKichThuoc))];
+    return uniqueSizes.sort((a, b) => parseFloat(a) - parseFloat(b));
+});
+
+const allImages = computed(() => {
+    if (!product.value?.variants) return [];
+    const images = [];
+    product.value.variants.forEach(v => {
+        if (v.images) {
+            v.images.forEach(img => {
+                if (!images.find(i => i.duongDanAnh === img.duongDanAnh)) {
+                    images.push(img);
+                }
+            });
+        }
+    });
+    return images;
+});
 </script>
 
 <template>
@@ -25,36 +61,36 @@ const thumbnails = Array(6).fill(null);
         <div class="header-spacing" style="height: 104px;"></div>
         <PromotionBar />
 
-        <v-container class="mt-12">
+        <v-container class="mt-12" v-if="product">
             <v-row>
-                <!-- Left: Image Gallery (Placeholders) -->
+                <!-- Left: Image Gallery -->
                 <v-col cols="12" md="7" class="image-gallery">
-                    <v-row>
-                        <v-col v-for="(thumb, i) in thumbnails" :key="i" cols="6" class="mb-4">
-                            <div class="image-placeholder-large">
-                                <v-icon size="64" color="grey-lighten-2">mdi-image-outline</v-icon>
-                                <div class="index-label">VIEW {{ i + 1 }}</div>
-                            </div>
+                    <v-row v-if="allImages.length > 0">
+                        <v-col v-for="(img, i) in allImages" :key="i" cols="6" class="mb-4">
+                            <v-img :src="img.duongDanAnh" cover class="rounded-lg bg-grey-lighten-4 aspect-square"></v-img>
                         </v-col>
                     </v-row>
+                    <div v-else class="image-placeholder-large">
+                        <v-icon size="64" color="grey-lighten-2">mdi-image-outline</v-icon>
+                    </div>
                 </v-col>
 
-                <!-- Right: Product Info (Sticky) -->
+                <!-- Right: Product Info -->
                 <v-col cols="12" md="5">
                     <div class="sticky-info-panel px-md-8">
                         <div class="header-info mb-8">
-                            <h1 class="product-title text-h4 font-weight-black mb-1">{{ product.name }}</h1>
-                            <p class="product-cat text-subtitle-1 font-weight-bold grey--text">{{ product.category }}</p>
-                            <div class="product-price mt-4 text-h6 font-weight-black">{{ product.price }}</div>
+                            <h1 class="product-title text-h4 font-weight-black mb-1">{{ product.tenSanPham }}</h1>
+                            <p class="product-cat text-subtitle-1 font-weight-bold grey--text">{{ product.tenDanhMuc }} - {{ product.tenThuongHieu }}</p>
+                            <div class="product-price mt-4 text-h6 font-weight-black">{{ formatPrice(product.giaBanThapNhat) }}</div>
                         </div>
 
                         <!-- Size Selection -->
                         <div class="size-selection-section mb-10">
                             <div class="d-flex justify-space-between align-center mb-4">
-                                <span class="font-weight-black">Select Size</span>
-                                <a href="#" class="size-guide">Size Guide</a>
+                                <span class="font-weight-black">Chọn kích thước</span>
+                                <a href="#" class="size-guide">Bảng size</a>
                             </div>
-                            <v-row g-2>
+                            <v-row g-2 v-if="sizes.length > 0">
                                 <v-col v-for="size in sizes" :key="size" cols="4">
                                     <div class="size-box" 
                                          :class="{ 'active': selectedSize === size }"
@@ -63,44 +99,42 @@ const thumbnails = Array(6).fill(null);
                                     </div>
                                 </v-col>
                             </v-row>
+                            <p v-else class="text-grey">Không có sẵn kích thước nào.</p>
                         </div>
 
                         <!-- Action Buttons -->
                         <div class="action-buttons d-flex flex-column gap-4">
                             <v-btn block size="x-large" color="black" rounded="pill" class="font-weight-black py-6">
-                                Add to Bag
+                                Thêm vào giỏ hàng
                             </v-btn>
                             <v-btn block size="x-large" variant="outlined" rounded="pill" class="font-weight-black py-6">
-                                Favourite <v-icon class="ml-2">mdi-heart-outline</v-icon>
+                                Yêu thích <v-icon class="ml-2">mdi-heart-outline</v-icon>
                             </v-btn>
                         </div>
 
                         <!-- Description -->
                         <div class="product-description mt-12 pt-12 border-t">
-                            <p class="desc-text">{{ product.description }}</p>
+                            <p class="desc-text">{{ product.moTa }}</p>
                             <ul class="mt-6 pl-4 spec-list">
-                                <li>Colour Shown: White/Platinum/Black</li>
-                                <li>Style: AS-9920-101</li>
+                                <li>Thương hiệu: {{ product.tenThuongHieu }}</li>
+                                <li>Xuất xứ: {{ product.tenXuatXu }}</li>
+                                <li>Mã sản phẩm: {{ product.maSanPham }}</li>
                             </ul>
-                            
-                            <v-btn variant="text" class="px-0 mt-6 font-weight-black text-decoration-underline">
-                                View Product Details
-                            </v-btn>
                         </div>
 
-                        <!-- Expansion Panels for Shipping/Reviews -->
+                        <!-- Expansion Panels -->
                         <div class="mt-8">
                             <v-expansion-panels flat variant="accordion">
-                                <v-expansion-panel title="Delivery & Returns" class="border-t">
+                                <v-expansion-panel title="Giao hàng & Trả hàng" class="border-t">
                                     <v-expansion-panel-text class="text-caption">
-                                        Free standard delivery on orders over 5,000,000₫. Returns are free within 30 days.
+                                        Miễn phí giao hàng tiêu chuẩn cho đơn hàng trên 5.000.000₫. Miễn phí đổi trả trong vòng 30 ngày.
                                     </v-expansion-panel-text>
                                 </v-expansion-panel>
-                                <v-expansion-panel title="Reviews (128)" class="border-t">
+                                <v-expansion-panel title="Đánh giá (0)" class="border-t">
                                     <v-expansion-panel-text>
                                         <div class="d-flex align-center mb-2">
-                                            <v-rating model-value="4.8" density="compact" color="black" half-increments readonly></v-rating>
-                                            <span class="ml-2 font-weight-bold">4.8 Stars</span>
+                                            <v-rating model-value="0" density="compact" color="black" half-increments readonly></v-rating>
+                                            <span class="ml-2 font-weight-bold">Chưa có đánh giá</span>
                                         </div>
                                     </v-expansion-panel-text>
                                 </v-expansion-panel>
@@ -109,6 +143,9 @@ const thumbnails = Array(6).fill(null);
                     </div>
                 </v-col>
             </v-row>
+        </v-container>
+        <v-container v-else-if="loading" class="text-center py-16">
+            <v-progress-circular indeterminate color="black"></v-progress-circular>
         </v-container>
 
         <!-- Global Chat System -->
@@ -154,6 +191,8 @@ const thumbnails = Array(6).fill(null);
 :deep(.v-expansion-panel-text__wrapper) { padding: 0 0 24px 0; }
 
 .gap-4 { gap: 16px; }
+
+.aspect-square { aspect-ratio: 1; }
 
 @media (max-width: 960px) {
     .sticky-info-panel { position: relative; top: 0; padding: 0; margin-top: 40px; }

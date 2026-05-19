@@ -63,8 +63,8 @@ EXPOSE ${BE_PORT}
 ENV SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
 ENV JAVA_OPTS=${JAVA_OPTS}
 
-# Healthcheck uses SERVER_PORT and APP_API_PREFIX from runtime env
+# Healthcheck uses SERVER_PORT from runtime env
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:${SERVER_PORT}${APP_API_PREFIX}/actuator/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${SERVER_PORT}/actuator/health || exit 1
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app-bin/app.jar"]

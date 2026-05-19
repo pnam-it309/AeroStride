@@ -56,6 +56,6 @@ EXPOSE ${NGINX_PORT}
 
 # Healthcheck for Nginx (uses NGINX_PORT env var)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:${NGINX_PORT}/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${NGINX_PORT}/ || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

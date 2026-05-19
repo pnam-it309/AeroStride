@@ -43,12 +43,31 @@ const autoPlayProgress = ref(0);
 let hudInterval;
 let progressInterval;
 
-const decoratedShoes = computed(() =>
-    shoes.map((shoe, index) => ({
-        ...shoe,
-        image: props.products?.[index]?.imageUrl || ''
-    }))
-);
+const decoratedShoes = computed(() => {
+    if (!props.products || props.products.length === 0) {
+        return [
+            {
+                title: 'NEON VELOCITY',
+                tag: 'PERFORMANCE',
+                color: '#2962FF',
+                bgType: 'rain',
+                rotation: 'rotate(-22deg) translateY(-8px)',
+                features: ['AIR-UNIT', 'RESPONSIVE', 'LIGHTWEIGHT'],
+                image: ''
+            }
+        ];
+    }
+    return props.products.map((p, index) => ({
+        title: p.title || 'AEROSTRIDE',
+        tag: p.subtitle || 'PREMIUM',
+        color: index === 0 ? '#2962FF' : index === 1 ? '#D50000' : '#6200EA',
+        bgType: index === 0 ? 'rain' : index === 1 ? 'cubes' : 'orbits',
+        rotation: index === 0 ? 'rotate(-22deg) translateY(-8px)' : index === 1 ? 'rotate(12deg) translateX(10px)' : 'rotate(0deg) scale(1.05)',
+        features: ['BỀN BỈ', 'ÊM ÁI', 'TỐI ƯU'],
+        image: p.imageUrl,
+        id: p.id
+    }));
+});
 
 const currentShoe = computed(() => decoratedShoes.value[activeCard.value] || decoratedShoes.value[0]);
 
