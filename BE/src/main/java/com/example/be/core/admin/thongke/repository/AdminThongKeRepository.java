@@ -51,7 +51,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
            JOIN hdct.chiTietSanPham ctsp
            JOIN ctsp.sanPham sp
            JOIN hdct.hoaDon hd
-           WHERE CAST(hd.trangThai AS int) = 4 -- HOAN_THANH
+           WHERE CAST(hd.trangThai AS int) = 4
            AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
            AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
            GROUP BY sp.id, sp.ten
@@ -69,7 +69,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
            JOIN ctsp.sanPham sp
            JOIN sp.danhMuc dm
            JOIN hdct.hoaDon hd
-           WHERE CAST(hd.trangThai AS int) = 4 -- HOAN_THANH
+           WHERE CAST(hd.trangThai AS int) = 4
            AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
            AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
            GROUP BY dm.id, dm.ten
