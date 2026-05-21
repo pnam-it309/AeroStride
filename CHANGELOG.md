@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/pnam-it309/AeroStride/compare/v1.12.2...v1.13.0) (2026-05-21)
+
+
+### Features
+
+* integrate AI chat/search, add new frontend pages and update tests ([d37e6a0](https://github.com/pnam-it309/AeroStride/commit/d37e6a099c16a5ebd356df127435d74f4a31164c))
+
 ## [1.12.2](https://github.com/pnam-it309/AeroStride/compare/v1.12.1...v1.12.2) (2026-05-19)
 
 
