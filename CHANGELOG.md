@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/pnam-it309/AeroStride/compare/v1.13.0...v1.13.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* **repo:** remove invalid HQL inline comments in AdminThongKeRepository ([7642457](https://github.com/pnam-it309/AeroStride/commit/76424577b70b80c5310ecfb765b90042d90fa6a3))
+
 # [1.13.0](https://github.com/pnam-it309/AeroStride/compare/v1.12.2...v1.13.0) (2026-05-21)
 
 
