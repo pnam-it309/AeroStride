@@ -9,10 +9,14 @@
     "test:api": "npx playwright test tests/api/",
     "test:headed": "npx playwright test --headed",
     "test:debug": "npx playwright test --debug",
+    "test:selenium": "node tests/selenium/selenium-tests.js",
+    "test:chatbot": "node tests/selenium/chatbot-scenarios.js",
+    "test:admin": "node tests/selenium/admin-management.js",
     "report": "npx playwright show-report"
   },
   "dependencies": {},
   "devDependencies": {
-    "@playwright/test": "^1.49.0"
+    "@playwright/test": "^1.49.0",
+    "selenium-webdriver": "^4.27.0"
   }
 }

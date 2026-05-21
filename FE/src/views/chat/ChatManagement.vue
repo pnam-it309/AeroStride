@@ -68,6 +68,14 @@ const fetchConversations = async (quiet = false) => {
         const response = await api.get(API_CHAT.CONVERSATIONS);
         customers.value = response.data?.data || [];
         
+        if (activeChat.value) {
+            const updatedChat = customers.value.find(c => c.id === activeChat.value.id);
+            if (updatedChat) {
+                activeChat.value.status = updatedChat.status;
+                activeChat.value.isAccepted = updatedChat.isAccepted;
+            }
+        }
+
         if (activeChat.value && activeChat.value.id.startsWith('NEW_INTERNAL_')) {
             const realConv = customers.value.find(
                 c => c.type === CHAT_TYPES.INTERNAL && c.name === activeChat.value.name && !c.id.startsWith('NEW_INTERNAL_')
@@ -136,6 +144,20 @@ const acceptChat = async () => {
         }
     } catch (error) {
         console.error('Lỗi khi tiếp nhận cuộc trò chuyện:', error);
+    }
+};
+
+const closeChat = async () => {
+    if (!activeChat.value) return;
+    
+    try {
+        const response = await api.post(API_CHAT.CLOSE(activeChat.value.id));
+        if (response.data?.success) {
+            activeChat.value.status = 'CLOSED';
+            fetchConversations(true);
+        }
+    } catch (error) {
+        console.error('Lỗi khi đóng cuộc trò chuyện:', error);
     }
 };
 
@@ -288,6 +310,7 @@ onMounted(() => {
                         </div>
                         <div class="d-flex align-center ga-2">
                             <v-btn v-if="activeChat.status === 'PENDING'" color="#1a56db" variant="flat" prepend-icon="mdi-check-circle" @click="acceptChat" class="rounded-lg px-6 text-none font-weight-bold" style="letter-spacing: 0">Tiếp nhận</v-btn>
+                            <v-btn v-if="activeChat.status === 'PENDING' || activeChat.status === 'ACTIVE'" color="error" variant="flat" prepend-icon="mdi-close-circle" @click="closeChat" class="rounded-lg px-6 text-none font-weight-bold" style="letter-spacing: 0">Đóng phiên</v-btn>
                             <v-btn icon="mdi-dots-vertical" variant="text" color="grey-darken-1"></v-btn>
                         </div>
                     </div>

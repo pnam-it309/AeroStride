@@ -1,13 +1,10 @@
 package com.example.be.core.customer.landing.controller;
 
-import com.example.be.core.admin.sanpham.model.request.SearchProductRequest;
-import com.example.be.core.admin.sanpham.model.response.ProductResponse;
-import com.example.be.core.admin.sanpham.service.AdminSanPhamService;
-import com.example.be.infrastructure.config.ratelimit.RateLimit;
 import com.example.be.core.common.dto.ApiResponse;
-import com.example.be.core.common.dto.PageResponse;
+import com.example.be.core.customer.landing.model.response.CustomerLandingProductResponse;
+import com.example.be.core.customer.landing.service.CustomerLandingService;
+import com.example.be.infrastructure.config.ratelimit.RateLimit;
 import com.example.be.infrastructure.constants.RoutesConstant;
-import com.example.be.infrastructure.constants.TrangThai;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,19 +19,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CustomerLandingController {
 
-    private final AdminSanPhamService adminSanPhamService;
+    private final CustomerLandingService landingService;
 
     @GetMapping("/products")
     @RateLimit(limit = 60, windowSeconds = 60)
-    public ResponseEntity<ApiResponse<List<ProductResponse>>> getLandingProducts(
+    public ResponseEntity<ApiResponse<List<CustomerLandingProductResponse>>> getLandingProducts(
             @RequestParam(defaultValue = "6") Integer size
     ) {
-        SearchProductRequest request = new SearchProductRequest();
-        request.setPage(1);
-        request.setSize(size);
-        request.setTrangThai(TrangThai.DANG_HOAT_DONG);
-
-        PageResponse<ProductResponse> response = adminSanPhamService.getProducts(request);
-        return ResponseEntity.ok(ApiResponse.success(response.getContent(), "Lay san pham landing thanh cong"));
+        List<CustomerLandingProductResponse> response = landingService.getLandingProducts(size);
+        return ResponseEntity.ok(ApiResponse.success(response, "Lay san pham landing thanh cong"));
     }
 }

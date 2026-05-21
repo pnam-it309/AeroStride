@@ -19,6 +19,51 @@ const isTyping = ref(false);
 const isSending = ref(false);
 const lastSendTime = ref(0);
 const COOLDOWN_MS = 3000;
+const typingTimeout = ref(null);
+
+// Hỗ trợ câu hỏi gợi ý và gặp nhân viên
+const showSuggestions = ref(false);
+const DEFAULT_SUGGESTIONS = [
+    'Làm thế nào để đặt hàng?',
+    'Phí vận chuyển là bao nhiêu?',
+    'Kiểm tra trạng thái đơn hàng',
+    'Có voucher giảm giá không?',
+    'Sản phẩm có bảo hành không?',
+    'Hướng dẫn thanh toán online',
+    'Liên hệ nhân viên hỗ trợ'
+];
+const welcomeSuggestions = ref([...DEFAULT_SUGGESTIONS]);
+const suggestions = ref([...DEFAULT_SUGGESTIONS]);
+
+const fetchWelcomeSuggestions = async () => {
+    try {
+        const response = await apiService.get(`${API_CHAT.CUSTOMER_BASE}/welcome-suggestions?sessionId=${sessionId.value}`);
+        if (response.data?.success && response.data.data && response.data.data.length) {
+            welcomeSuggestions.value = response.data.data;
+            updateActiveSuggestions();
+        }
+    } catch (error) {
+        console.error('Lỗi khi tải gợi ý chào mừng từ AI:', error);
+    }
+};
+
+const sendSuggestion = (text) => {
+    message.value = text;
+    sendMessage();
+    showSuggestions.value = false;
+};
+
+// Cập nhật câu hỏi gợi ý dựa trên tin nhắn mới nhất
+const updateActiveSuggestions = () => {
+    for (let i = chatHistory.value.length - 1; i >= 0; i--) {
+        const msg = chatHistory.value[i];
+        if (msg.sender !== 'user' && msg.suggestions && msg.suggestions.length) {
+            suggestions.value = [...msg.suggestions];
+            return;
+        }
+    }
+    suggestions.value = [...welcomeSuggestions.value];
+};
 
 // Cấu hình marked để an toàn hơn
 marked.setOptions({
@@ -69,6 +114,7 @@ watch(
         chatHistory.value = [];
         sessionId.value = getSessionId();
         fetchHistory();
+        fetchWelcomeSuggestions();
     }
 );
 
@@ -95,7 +141,30 @@ const sendMessage = () => {
     const now = Date.now();
     if (now - lastSendTime.value < COOLDOWN_MS) return;
 
-    const userMsg = message.value;
+    let userMsg = message.value;
+    const lowerMsg = userMsg.toLowerCase().trim();
+    
+    // Kiểm tra nếu tin nhắn là yêu cầu kết nối nhân viên
+    const isHandoff = lowerMsg.includes('nhân viên') || 
+                      lowerMsg.includes('nhan vien') || 
+                      lowerMsg.includes('người thật') || 
+                      lowerMsg.includes('nguoi that') || 
+                      lowerMsg.includes('admin') || 
+                      lowerMsg.includes('gặp hỗ trợ') || 
+                      lowerMsg.includes('gap ho tro') || 
+                      lowerMsg.includes('gọi hỗ trợ') || 
+                      lowerMsg.includes('goi ho tro') || 
+                      lowerMsg.includes('liên hệ hỗ trợ') || 
+                      lowerMsg.includes('lien he ho tro') || 
+                      lowerMsg.includes('kết nối hỗ trợ') || 
+                      lowerMsg.includes('ket noi ho tro') || 
+                      lowerMsg.includes('nói chuyện với hỗ trợ') || 
+                      lowerMsg.includes('noi chuyen voi ho tro');
+
+    if (isHandoff) {
+        userMsg = 'Tôi muốn nói chuyện với nhân viên hỗ trợ.';
+    }
+
     message.value = '';
     isSending.value = true;
     lastSendTime.value = now;
@@ -110,6 +179,21 @@ const sendMessage = () => {
     });
 
     isTyping.value = true;
+    
+    // Tự động tắt typing indicator sau 45s nếu không có phản hồi từ WebSocket
+    if (typingTimeout.value) clearTimeout(typingTimeout.value);
+    typingTimeout.value = setTimeout(() => {
+        if (isTyping.value) {
+            isTyping.value = false;
+            chatHistory.value.push({
+                id: Date.now(),
+                sender: 'system',
+                text: 'Hệ thống đang bận. Bạn vui lòng chờ thêm giây lát hoặc nhắn "Gặp nhân viên" để được hỗ trợ trực tiếp nhé!'
+            });
+            scrollToBottom();
+        }
+    }, 45000);
+
     scrollToBottom();
     updateActivity();
 
@@ -126,12 +210,13 @@ const sendMessage = () => {
             console.error('Lỗi gửi tin nhắn:', err);
             isTyping.value = false;
             isSending.value = false;
+            if (typingTimeout.value) clearTimeout(typingTimeout.value);
         });
 };
 
 const parseProductJson = (text) => {
     if (!text) return null;
-    const match = text.match(/\[\[PRODUCT_JSON:(.*?)\]\]/);
+    const match = text.match(/\[\[PRODUCT_JSON:([\s\S]*?)\]\]/);
     if (!match) return null;
     let jsonStr = match[1].trim();
     
@@ -157,6 +242,19 @@ const parseProductJson = (text) => {
     }
 };
 
+const parseSuggestionsJson = (text) => {
+    if (!text) return null;
+    const match = text.match(/\[\[SUGGESTIONS:([\s\S]*?)\]\]/);
+    if (!match) return null;
+    let jsonStr = match[1].trim();
+    try {
+        return JSON.parse(jsonStr);
+    } catch (e) {
+        console.warn('Không thể parse gợi ý từ AI:', jsonStr, e);
+        return null;
+    }
+};
+
 const fetchHistory = async () => {
     try {
         const response = await apiService.get(`${API_CHAT.CUSTOMER_BASE}/history?sessionId=${sessionId.value}`);
@@ -172,7 +270,17 @@ const fetchHistory = async () => {
                     const products = parseProductJson(msg.text);
                     if (products) {
                         parsed.products = products;
-                        parsed.text = msg.text.replace(/\[\[PRODUCT_JSON:.*?\]\]/, '');
+                        parsed.text = msg.text.replace(/\[\[PRODUCT_JSON:[\s\S]*?\]\]/, '');
+                    }
+                }
+
+                // Thử parse gợi ý từ AI
+                if (msg.text && msg.text.includes('[[SUGGESTIONS:')) {
+                    const suggs = parseSuggestionsJson(msg.text);
+                    if (suggs) {
+                        parsed.suggestions = suggs;
+                        const currentText = parsed.text || msg.text;
+                        parsed.text = currentText.replace(/\[\[SUGGESTIONS:[\s\S]*?\]\]/, '');
                     }
                 }
                 return parsed;
@@ -183,6 +291,7 @@ const fetchHistory = async () => {
             } else {
                 chatHistory.value = history;
             }
+            updateActiveSuggestions();
             scrollToBottom();
         }
     } catch (error) {
@@ -192,6 +301,7 @@ const fetchHistory = async () => {
 
 onMounted(() => {
     fetchHistory();
+    fetchWelcomeSuggestions();
 
     chatSocket.connect(() => {
         chatSocket.subscribe('/topic/messages', (msg) => {
@@ -201,6 +311,10 @@ onMounted(() => {
             // Dừng indicator khi nhận được tin nhắn mới từ bot/staff
             if (data.sender !== CHAT_SENDER_TYPE.CUSTOMER) {
                 isTyping.value = false;
+                if (typingTimeout.value) {
+                    clearTimeout(typingTimeout.value);
+                    typingTimeout.value = null;
+                }
             }
 
             if (chatHistory.value.find((existing) => existing.id === data.id)) return;
@@ -215,7 +329,17 @@ onMounted(() => {
                 const products = parseProductJson(data.text);
                 if (products) {
                     parsed.products = products;
-                    parsed.text = data.text.replace(/\[\[PRODUCT_JSON:.*?\]\]/, '');
+                    parsed.text = data.text.replace(/\[\[PRODUCT_JSON:[\s\S]*?\]\]/, '');
+                }
+            }
+
+            // Parse gợi ý từ AI cho tin nhắn mới
+            if (data.text && data.text.includes('[[SUGGESTIONS:')) {
+                const suggs = parseSuggestionsJson(data.text);
+                if (suggs) {
+                    parsed.suggestions = suggs;
+                    const currentText = parsed.text || data.text;
+                    parsed.text = currentText.replace(/\[\[SUGGESTIONS:[\s\S]*?\]\]/, '');
                 }
             }
 
@@ -223,6 +347,7 @@ onMounted(() => {
             chatHistory.value = chatHistory.value.filter(m => m.id > 2000000000000 || m.text !== data.text || m.sender !== 'user');
 
             chatHistory.value.push(parsed);
+            updateActiveSuggestions();
             scrollToBottom();
         });
     });
@@ -328,8 +453,48 @@ const goToDetail = (id) => {
                 </div>
 
                 <!-- Footer -->
-                <div class="chat-footer">
+                <div class="chat-footer" style="position: relative;">
+                    <!-- Suggestions Panel -->
+                    <transition name="chat-slide">
+                        <div v-if="showSuggestions" class="suggestions-panel">
+                            <!-- Handoff Button -->
+                            <button class="handoff-btn" @click="sendSuggestion('Tôi muốn nói chuyện với nhân viên hỗ trợ.')">
+                                <v-icon icon="mdi-account-tie" size="small" class="mr-2"></v-icon>
+                                Gặp nhân viên hỗ trợ
+                            </button>
+                            
+                            <div class="suggestions-title">
+                                <v-icon icon="mdi-lightbulb-on" color="amber-darken-2" size="small" class="mr-1"></v-icon>
+                                Câu hỏi gợi ý:
+                            </div>
+                            
+                            <div class="suggestions-list">
+                                <button 
+                                    v-for="s in suggestions" 
+                                    :key="s" 
+                                    class="suggestion-pill"
+                                    @click="sendSuggestion(s)"
+                                >
+                                    {{ s }}
+                                </button>
+                                <button class="suggestion-pill collapse-pill" @click="showSuggestions = false">
+                                    Thu gọn ↑
+                                </button>
+                            </div>
+                        </div>
+                    </transition>
+
                     <div class="input-container">
+                        <!-- Yellow lightbulb icon toggle button -->
+                        <v-btn
+                            icon="mdi-lightbulb"
+                            variant="text"
+                            size="small"
+                            :color="showSuggestions ? 'amber-darken-2' : 'grey-darken-1'"
+                            class="mr-2"
+                            @click="showSuggestions = !showSuggestions"
+                        ></v-btn>
+                        
                         <textarea
                             v-model="message"
                             placeholder="Nhập câu hỏi của bạn..."
@@ -539,6 +704,8 @@ const goToDetail = (id) => {
     color: #2d3436;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     border: 1px solid #f1f1f1;
+    word-break: break-word;
+    overflow-wrap: break-word;
 
     :deep(p) {
         margin-bottom: 8px;
@@ -560,16 +727,13 @@ const goToDetail = (id) => {
 /* Product Showcase List */
 .product-showcase-list {
     display: flex;
-    gap: 12px;
-    overflow-x: auto;
+    flex-direction: column;
+    gap: 16px;
     padding-bottom: 10px;
-    margin: 0 -10px;
-    padding-left: 10px;
-    &::-webkit-scrollbar { height: 4px; }
-    &::-webkit-scrollbar-thumb { background: #eee; border-radius: 10px; }
     
     :deep(.product-showcase-card) {
-        width: 240px;
+        width: 100%;
+        max-width: 100%;
         flex-shrink: 0;
     }
 }
@@ -673,5 +837,105 @@ const goToDetail = (id) => {
     opacity: 0;
     transform: translateY(40px) scale(0.95);
     filter: blur(10px);
+}
+
+/* Suggestions Panel Styles */
+.suggestions-panel {
+    position: absolute;
+    bottom: 84px;
+    left: 20px;
+    right: 20px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 16px;
+    z-index: 10;
+}
+
+.handoff-btn {
+    width: 100%;
+    background: #f8f9fa;
+    color: #2d3436;
+    border: 1px solid #dfe6e9;
+    padding: 10px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: #000;
+        color: #fff;
+        border-color: #000;
+        transform: translateY(-1px);
+    }
+    
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+.suggestions-title {
+    font-size: 0.8rem;
+    color: #636e72;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.suggestions-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 4px;
+
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #e0e0e0;
+        border-radius: 4px;
+    }
+}
+
+.suggestion-pill {
+    background: #fff;
+    color: #e84393;
+    border: 1px solid #ff7875;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: #fff0f6;
+        color: #c41d7f;
+        border-color: #ff4d4f;
+        transform: scale(1.02);
+    }
+
+    &.collapse-pill {
+        border-style: dashed;
+        background: transparent;
+        color: #999;
+        border-color: #ccc;
+        
+        &:hover {
+            background: #fafafa;
+            color: #333;
+            border-color: #888;
+        }
+    }
 }
 </style>

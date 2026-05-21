@@ -31,12 +31,48 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
 
         BigDecimal tongDoanhThu = thongKeRepository.sumDoanhThu(tuNgayMs, denNgayMs);
         Long tongDonHang = thongKeRepository.countTongDon(tuNgayMs, denNgayMs);
-        Long donHoanThanh = thongKeRepository.countByTrangThai(6, tuNgayMs, denNgayMs); // OrderStatus.HOAN_THANH
-        Long donChoXacNhan = thongKeRepository.countByTrangThai(1, tuNgayMs, denNgayMs); // CHO_XAC_NHAN
-        Long donDangGiao = thongKeRepository.countByTrangThai(3, tuNgayMs, denNgayMs);  // DANG_VAN_CHUYEN
-        Long donDaHuy = thongKeRepository.countByTrangThai(7, tuNgayMs, denNgayMs);     // DA_HUY
+        Long donHoanThanh = thongKeRepository.countByTrangThai(4, tuNgayMs, denNgayMs); // OrderStatus.HOAN_THANH (ordinal: 4)
+        Long donChoXacNhan = thongKeRepository.countByTrangThai(0, tuNgayMs, denNgayMs); // CHO_XAC_NHAN (ordinal: 0)
+        Long donDangGiao = thongKeRepository.countByTrangThai(3, tuNgayMs, denNgayMs);  // DANG_GIAO (ordinal: 3)
+        Long donDaHuy = thongKeRepository.countByTrangThai(5, tuNgayMs, denNgayMs);     // DA_HUY (ordinal: 5)
 
         Long tongKhachHang = thongKeRepository.count();
+
+        // Top 5 sản phẩm bán chạy
+        List<Object[]> topProdRows = thongKeRepository.getTopProductsData(tuNgayMs, denNgayMs, PageRequest.of(0, 5));
+        List<AdminThongKeResponse.SanPhamBanChay> topProducts = new java.util.ArrayList<>();
+        for (Object[] row : topProdRows) {
+            topProducts.add(AdminThongKeResponse.SanPhamBanChay.builder()
+                    .name(row[0] != null ? row[0].toString() : "")
+                    .revenue(row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO)
+                    .quantity(row[2] != null ? Long.parseLong(row[2].toString()) : 0L)
+                    .growth(0.0) // default growth rate
+                    .build());
+        }
+
+        // Doanh thu theo danh mục
+        List<Object[]> catRows = thongKeRepository.getSalesByCategoryData(tuNgayMs, denNgayMs);
+        List<AdminThongKeResponse.DoanhThuDanhMuc> salesByCategory = new java.util.ArrayList<>();
+        BigDecimal totalCatRevenue = BigDecimal.ZERO;
+        for (Object[] row : catRows) {
+            if (row[1] != null) {
+                totalCatRevenue = totalCatRevenue.add(new BigDecimal(row[1].toString()));
+            }
+        }
+        for (Object[] row : catRows) {
+            BigDecimal value = row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO;
+            double percentage = 0.0;
+            if (totalCatRevenue.compareTo(BigDecimal.ZERO) > 0) {
+                percentage = value.multiply(new BigDecimal(100))
+                        .divide(totalCatRevenue, 2, java.math.RoundingMode.HALF_UP)
+                        .doubleValue();
+            }
+            salesByCategory.add(AdminThongKeResponse.DoanhThuDanhMuc.builder()
+                    .name(row[0] != null ? row[0].toString() : "Khác")
+                    .value(value)
+                    .percentage(percentage)
+                    .build());
+        }
 
         return AdminThongKeResponse.builder()
                 .tongDoanhThu(tongDoanhThu != null ? tongDoanhThu : BigDecimal.ZERO)
@@ -46,7 +82,9 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                 .donHangDangGiao(donDangGiao != null ? donDangGiao : 0L)
                 .donHangDaHuy(donDaHuy != null ? donDaHuy : 0L)
                 .tongKhachHang(tongKhachHang)
-                .sanPhamSapHet(0L) 
+                .sanPhamSapHet(0L)
+                .topSanPhamBanChay(topProducts)
+                .doanhThuTheoDanhMuc(salesByCategory)
                 .build();
     }
 

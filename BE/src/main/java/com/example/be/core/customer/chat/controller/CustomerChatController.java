@@ -1,6 +1,7 @@
 package com.example.be.core.customer.chat.controller;
 
-import com.example.be.core.admin.chat.service.AdminChatService;
+import com.example.be.core.customer.chat.model.request.CustomerChatRequest;
+import com.example.be.core.customer.chat.service.CustomerChatService;
 import com.example.be.infrastructure.constants.RoutesConstant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,16 +15,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CustomerChatController {
 
-    private final AdminChatService chatService; // Reusing service for simplicity
+    private final CustomerChatService chatService;
 
     @PostMapping("/send")
-    public ResponseEntity<?> sendMessage(@RequestBody Map<String, String> payload) {
-        String conversationId = payload.get("conversationId");
-        String sessionId = payload.get("sessionId");
-        String text = payload.get("text");
-        String sender = payload.get("sender");
-        
-        chatService.sendMessage(conversationId, text, sender, sessionId);
+    public ResponseEntity<?> sendMessage(@RequestBody CustomerChatRequest payload) {
+        chatService.sendMessage(payload.getConversationId(), payload.getText(), payload.getSender(), payload.getSessionId());
         
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -35,6 +31,14 @@ public class CustomerChatController {
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("data", chatService.getMessagesBySessionId(sessionId));
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/welcome-suggestions")
+    public ResponseEntity<?> getWelcomeSuggestions(@RequestParam String sessionId) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("data", chatService.getDynamicWelcomeSuggestions(sessionId));
         return ResponseEntity.ok(response);
     }
 }

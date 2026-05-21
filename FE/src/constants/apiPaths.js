@@ -19,6 +19,7 @@ export const API_ADMIN = {
     DIA_CHI: `${API_BASE.ADMIN}/dia-chi`,
     THUOC_TINH: `${API_BASE.ADMIN}/thuoc-tinh`,
     BAN_HANG: `${API_BASE.ADMIN}/ban-hang`,
+    THONG_KE: `${API_BASE.ADMIN}/thong-ke`,
 };
 
 export const API_AUTH = {
@@ -56,6 +57,7 @@ export const API_CHAT = {
     CONVERSATIONS: `${API_BASE.ADMIN}/chat/conversations`,
     MESSAGES: (id) => `${API_BASE.ADMIN}/chat/conversations/${id}/messages`,
     ACCEPT: (id) => `${API_BASE.ADMIN}/chat/conversations/${id}/accept`,
+    CLOSE: (id) => `${API_BASE.ADMIN}/chat/conversations/${id}/close`,
     SEND: `${API_BASE.ADMIN}/chat/send`,
     CUSTOMER_BASE: '/customer/chat',
     CUSTOMER_SEND: '/customer/chat/send',
@@ -65,4 +67,11 @@ export const API_LICH_LAM_VIEC = {
     SCHEDULES: `${API_BASE.ADMIN}/lich-lam-viec/schedules`,
     SHIFTS: `${API_BASE.ADMIN}/lich-lam-viec/shifts`,
     ACTIVITIES: `${API_BASE.ADMIN}/lich-lam-viec/activities`,
+};
+
+export const API_CUSTOMER = {
+    ORDER: '/customer/order',
+    CHECKOUT: '/customer/order/checkout',
+    MY_ORDERS: '/customer/order/my-orders',
+    VOUCHERS: '/customer/order/vouchers',
 };

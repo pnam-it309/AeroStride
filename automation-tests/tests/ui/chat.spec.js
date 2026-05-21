@@ -44,7 +44,7 @@ test.describe('AeroStride E2E: Customer Chat Widget Integration', () => {
     await sendBtn.click();
 
     // Verify sent message is displayed as user's bubble
-    const userMessages = page.locator('.message-wrap.user .message-bubble');
+    const userMessages = page.locator('.message-group.is-user .message-bubble');
     await expect(userMessages.last()).toBeVisible();
     await expect(userMessages.last()).toContainText('Hello AeroStride! This is an E2E automation test.');
   });

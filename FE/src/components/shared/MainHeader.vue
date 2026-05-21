@@ -28,21 +28,19 @@ const handleSearch = () => {
 
 const navLinks = [
     { name: 'Sản phẩm mới', id: 'new', sub: [
-        { label: 'Nổi bật', items: ['Sản phẩm mới nhất', 'Bán chạy nhất', 'Dành riêng cho thành viên', 'Giày thiết kế'] },
-        { label: 'Giày', items: ['Tất cả giày', 'Lifestyle', 'Chạy bộ', 'Bóng rổ', 'Tập luyện'] },
+        { label: 'Nổi bật', items: ['Sản phẩm mới nhất', 'Bán chạy nhất', 'Dành riêng cho thành viên', 'Bộ sưu tập giới hạn'] },
+        { label: 'Loại giày', items: ['Lifestyle', 'Chạy bộ', 'Bóng rổ', 'Tập luyện', 'Bóng đá'] },
         { label: 'Theo bộ sưu tập', items: ['AeroStride X1', 'Strike V3', 'Glide Pro', 'Air Max'] }
     ]},
     { name: 'Nam', id: 'men', sub: [
-        { label: 'Giày', items: ['Tất cả giày', 'Lifestyle', 'Chạy bộ', 'Bóng rổ', 'Bóng đá'] },
-        { label: 'Quần áo', items: ['Tất cả quần áo', 'Áo thun & Polo', 'Hoodies', 'Áo khoác', 'Quần short'] },
-        { label: 'Phụ kiện', items: ['Balo', 'Vớ', 'Nón'] }
+        { label: 'Loại giày', items: ['Tất cả giày nam', 'Lifestyle', 'Chạy bộ', 'Bóng rổ', 'Bóng đá', 'Tập luyện'] },
+        { label: 'Nổi bật', items: ['Hàng mới về', 'Sale 50%', 'Được yêu thích nhất'] }
     ]},
     { name: 'Nữ', id: 'women', sub: [
-        { label: 'Giày', items: ['Tất cả giày', 'Lifestyle', 'Chạy bộ', 'Tập luyện', 'Yoga'] },
-        { label: 'Quần áo', items: ['Tất cả quần áo', 'Áo bra thể thao', 'Leggings', 'Hoodies', 'Áo khoác'] },
-        { label: 'Phụ kiện', items: ['Balo', 'Vớ', 'Nón'] }
+        { label: 'Loại giày', items: ['Tất cả giày nữ', 'Lifestyle', 'Chạy bộ', 'Tập luyện', 'Yoga', 'Tennis'] },
+        { label: 'Nổi bật', items: ['Hàng mới về', 'Ưu đãi đặc biệt', 'Phối màu mới'] }
     ]},
-    { name: 'Giảm giá', id: 'sale', color: '#FF1744' }
+    { name: 'Mã giảm giá', id: 'vouchers', path: PATH.VOUCHERS, color: '#FF1744' }
 ];
 
 const handleScroll = () => {
@@ -114,7 +112,7 @@ const closeMegaMenu = () => {
                     <div v-for="link in navLinks" :key="link.id" 
                          class="nav-item-wrap"
                          @mouseenter="openMegaMenu(link.id)">
-                        <router-link :to="PATH.SHOES" class="nav-link" :style="{ color: link.color || 'inherit' }">{{ link.name }}</router-link>
+                        <router-link :to="link.path || PATH.SHOES" class="nav-link" :style="{ color: link.color || 'inherit' }">{{ link.name }}</router-link>
                         <div class="active-indicator"></div>
                     </div>
                 </div>

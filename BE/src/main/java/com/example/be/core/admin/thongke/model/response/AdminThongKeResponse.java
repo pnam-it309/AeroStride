@@ -27,6 +27,12 @@ public class AdminThongKeResponse {
     // Đơn hàng gần đây
     private List<DonHangGanDay> donHangGanDay;
 
+    // Top sản phẩm bán chạy
+    private List<SanPhamBanChay> topSanPhamBanChay;
+
+    // Doanh thu theo danh mục
+    private List<DoanhThuDanhMuc> doanhThuTheoDanhMuc;
+
     @Getter
     @Setter
     @NoArgsConstructor
@@ -51,5 +57,28 @@ public class AdminThongKeResponse {
         private BigDecimal tongTien;
         private Integer trangThai;
         private String loaiDon;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SanPhamBanChay {
+        private String name;
+        private BigDecimal revenue;
+        private Long quantity;
+        private Double growth;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class DoanhThuDanhMuc {
+        private String name;
+        private BigDecimal value;
+        private Double percentage;
     }
 }

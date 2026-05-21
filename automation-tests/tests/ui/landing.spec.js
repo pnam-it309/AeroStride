@@ -19,7 +19,7 @@ test.describe('AeroStride E2E: Landing Page & Shop Navigation', () => {
 
   test('should display Navigation Bar menu items', async ({ page }) => {
     // Verify navbar navigation links are present
-    const navLinks = ['New & Featured', 'Men', 'Women', 'Sale'];
+    const navLinks = ['Sản phẩm mới', 'Nam', 'Nữ', 'Giảm giá'];
     for (const linkText of navLinks) {
       const link = page.getByRole('link', { name: linkText }).or(page.locator(`text=${linkText}`));
       await expect(link.first()).toBeVisible();

@@ -491,6 +491,13 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     }
 
     @Override
+    public List<ProductVariantResponse> searchVariantsForAi(String keyword, java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice, Integer limit) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, limit != null ? limit : 20);
+        List<ChiTietSanPham> variants = adminChiTietSanPhamRepository.searchVariantsForAi(keyword, minPrice, maxPrice, pageable);
+        return mapVariants(variants);
+    }
+
+    @Override
     public java.math.BigDecimal getMaxPrice() {
         return adminChiTietSanPhamRepository.findFirstByXoaMemFalseOrderByGiaBanDesc()
                 .map(ChiTietSanPham::getGiaBan)

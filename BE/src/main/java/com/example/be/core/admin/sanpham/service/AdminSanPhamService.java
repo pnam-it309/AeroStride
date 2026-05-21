@@ -53,4 +53,5 @@ public interface AdminSanPhamService {
 
     void importExcel(org.springframework.web.multipart.MultipartFile file);
     java.math.BigDecimal getMaxPrice();
+    List<ProductVariantResponse> searchVariantsForAi(String keyword, java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice, Integer limit);
 }

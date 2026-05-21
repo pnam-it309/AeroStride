@@ -93,7 +93,8 @@ const highlights = computed(() => {
     background: #fff;
     border-radius: 20px;
     overflow: hidden;
-    width: 280px;
+    width: 100%;
+    max-width: 320px;
     flex-shrink: 0;
     border: 1px solid #f0f0f0;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

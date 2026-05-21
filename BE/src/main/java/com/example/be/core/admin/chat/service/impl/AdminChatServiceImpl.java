@@ -254,6 +254,51 @@ public class AdminChatServiceImpl implements AdminChatService {
 
     @Override
     @Transactional
+    public boolean closeConversation(String id) {
+        ChatConversation conversation = conversationRepository.findById(id).orElse(null);
+        if (conversation != null) {
+            conversation.setStatus(ChatConversation.ChatStatus.CLOSED);
+            
+            String currentUsername = getCurrentUsername();
+            Optional<NhanVien> nhanVienOpt = nhanVienRepository.findByTenTaiKhoan(currentUsername);
+            String operatorName = nhanVienOpt.isPresent() ? nhanVienOpt.get().getMa() : "Nhân viên";
+            
+            conversation = conversationRepository.save(conversation);
+            
+            String systemMessageText = "Cuộc trò chuyện đã được đóng bởi nhân viên " + operatorName + ".";
+            
+            ChatMessage systemMessage = ChatMessage.builder()
+                    .conversation(conversation)
+                    .senderType(ChatConstants.SENDER_TYPE_SYSTEM)
+                    .content(systemMessageText)
+                    .build();
+            
+            ChatMessage savedMessage = messageRepository.save(systemMessage);
+            
+            ChatMessageResponse response = ChatMessageResponse.builder()
+                    .id(savedMessage.getId())
+                    .conversationId(conversation.getId())
+                    .sessionId(conversation.getSessionId())
+                    .staffId(currentUsername)
+                    .sender(ChatConstants.SENDER_TYPE_SYSTEM)
+                    .text(systemMessageText)
+                    .time(formatTime(savedMessage.getNgayTao()))
+                    .build();
+            
+            messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, response);
+            
+            Map<String, String> notification = new HashMap<>();
+            notification.put("content", "CLOSED_CONVERSATION_" + id);
+            notification.put("timestamp", Instant.now().toString());
+            publishNotification(notification);
+            
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    @Transactional
     public void sendMessage(String conversationId, String text, String senderType, String sessionId) {
         ChatConversation conversation;
 
@@ -303,6 +348,15 @@ public class AdminChatServiceImpl implements AdminChatService {
             throw new RuntimeException("Phải có Conversation ID hoặc Session ID");
         }
 
+        // Nếu khách hàng gửi tin nhắn vào cuộc trò chuyện đã đóng, tự động mở lại
+        if (ChatConstants.SENDER_TYPE_CUSTOMER.equals(senderType) && conversation.getStatus() == ChatConversation.ChatStatus.CLOSED) {
+            log.info("Khách hàng gửi tin nhắn mới vào phiên đã đóng. Tự động mở lại cuộc trò chuyện.");
+            conversation.setStatus(ChatConversation.ChatStatus.PENDING);
+            conversation.setIsAccepted(false);
+            conversation.setNhanVien(null);
+            conversation = conversationRepository.save(conversation);
+        }
+
         // Kiểm tra nếu là nhân viên gửi thì cuộc trò chuyện phải được tiếp nhận
         if (ChatConstants.SENDER_TYPE_STAFF.equals(senderType) && Boolean.FALSE.equals(conversation.getIsAccepted()) && conversation.getType() == ChatConversation.ChatType.CUSTOMER) {
             throw new RuntimeException(ChatConstants.ERR_CONVERSATION_NOT_ACCEPTED);
@@ -348,4 +402,10 @@ public class AdminChatServiceImpl implements AdminChatService {
             log.warn("Redis notification publish failed; continuing without cross-instance fanout. Error: {}", ex.getMessage());
         }
     }
+
+    @Override
+    public List<String> getDynamicWelcomeSuggestions(String sessionId) {
+        return aiChatService.getDynamicWelcomeSuggestions(sessionId);
+    }
 }
+

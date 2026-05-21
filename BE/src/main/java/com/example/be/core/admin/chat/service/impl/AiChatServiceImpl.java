@@ -9,6 +9,8 @@ import com.example.be.entity.ChatConversation;
 import com.example.be.entity.ChatMessage;
 import com.example.be.infrastructure.constants.ChatConstants;
 import com.example.be.infrastructure.constants.TrangThai;
+import com.example.be.infrastructure.constants.AiChatPrompts;
+import com.example.be.core.common.chat.local.service.AiLocalService;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +42,7 @@ import java.util.stream.Collectors;
  * 3. RestTemplate có Timeout cấu hình → chống treo luồng khi API bên thứ ba chậm
  * 4. Model name & Base URL cấu hình từ .env → đổi model không cần compile lại
  * 5. Fallback message gửi qua WebSocket khi AI gặp sự cố → khách hàng không bị "treo"
+ * 6. Tích hợp AI nội bộ (Local AI) làm dự phòng khi hết request hoặc không có key.
  */
 @Slf4j
 @Service
@@ -50,12 +53,31 @@ public class AiChatServiceImpl implements AiChatService {
     private final SimpMessagingTemplate messagingTemplate;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final AiLocalService aiLocalService;
 
     @Value("${google.gemini.api-key}")
     private String geminiApiKeyString;
 
     private List<String> apiKeysList = new ArrayList<>();
     private final AtomicInteger keyIndex = new AtomicInteger(0);
+
+    @Value("${openai.api-key:}")
+    private String openAiApiKeyString;
+
+    private List<String> openAiApiKeysList = new ArrayList<>();
+    private final AtomicInteger openAiKeyIndex = new AtomicInteger(0);
+
+    @Value("${claude.api-key:}")
+    private String claudeApiKeyString;
+
+    private List<String> claudeApiKeysList = new ArrayList<>();
+    private final AtomicInteger claudeKeyIndex = new AtomicInteger(0);
+
+    @Value("${deepseek.api-key:}")
+    private String deepseekApiKeyString;
+
+    private List<String> deepseekApiKeysList = new ArrayList<>();
+    private final AtomicInteger deepseekKeyIndex = new AtomicInteger(0);
 
     @PostConstruct
     public void initApiKeys() {
@@ -66,6 +88,39 @@ public class AiChatServiceImpl implements AiChatService {
                     .collect(Collectors.toList());
             log.info("Đã nạp thành công {} API Keys cho Gemini.", apiKeysList.size());
         }
+        if (openAiApiKeyString != null && !openAiApiKeyString.isBlank()) {
+            openAiApiKeysList = Arrays.stream(openAiApiKeyString.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+            log.info("Đã nạp thành công {} API Keys cho OpenAI.", openAiApiKeysList.size());
+        }
+        if (claudeApiKeyString != null && !claudeApiKeyString.isBlank()) {
+            claudeApiKeysList = Arrays.stream(claudeApiKeyString.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+            log.info("Đã nạp thành công {} API Keys cho Claude.", claudeApiKeysList.size());
+        }
+        if (deepseekApiKeyString != null && !deepseekApiKeyString.isBlank()) {
+            deepseekApiKeysList = Arrays.stream(deepseekApiKeyString.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+            log.info("Đã nạp thành công {} API Keys cho DeepSeek.", deepseekApiKeysList.size());
+        }
+
+        // Khởi động luồng chạy ngầm tải trước (warm-up) cache danh sách sản phẩm để tránh trễ ở request đầu tiên
+        new Thread(() -> {
+            try {
+                Thread.sleep(1000); // Đợi Spring container và database connection pool ổn định
+                log.info("Bắt đầu tải trước (Warm-up) cache biến thể sản phẩm...");
+                getActiveVariantsIntelligent(null);
+                log.info("Tải trước cache sản phẩm hoàn tất! Chatbot sẵn sàng xử lý tức thì (0ms truy vấn).");
+            } catch (Exception e) {
+                log.warn("Không thể tải trước cache sản phẩm khi khởi động: {}", e.getMessage());
+            }
+        }).start();
     }
 
     private String getApiKey() {
@@ -77,14 +132,56 @@ public class AiChatServiceImpl implements AiChatService {
         return apiKeysList.get(idx);
     }
 
+    private String getOpenAiApiKey() {
+        if (openAiApiKeysList.isEmpty()) {
+            return openAiApiKeyString;
+        }
+        int idx = openAiKeyIndex.getAndIncrement() % openAiApiKeysList.size();
+        if (idx < 0) idx = 0;
+        return openAiApiKeysList.get(idx);
+    }
+
+    private String getClaudeApiKey() {
+        if (claudeApiKeysList.isEmpty()) {
+            return claudeApiKeyString;
+        }
+        int idx = claudeKeyIndex.getAndIncrement() % claudeApiKeysList.size();
+        if (idx < 0) idx = 0;
+        return claudeApiKeysList.get(idx);
+    }
+
+    private String getDeepSeekApiKey() {
+        if (deepseekApiKeysList.isEmpty()) {
+            return deepseekApiKeyString;
+        }
+        int idx = deepseekKeyIndex.getAndIncrement() % deepseekApiKeysList.size();
+        if (idx < 0) idx = 0;
+        return deepseekApiKeysList.get(idx);
+    }
+
     @Value("${google.gemini.model:gemini-2.0-flash}")
     private String geminiModel;
 
     @Value("${google.gemini.base-url:https://generativelanguage.googleapis.com/v1beta}")
     private String geminiBaseUrl;
 
-    private static final String FALLBACK_MESSAGE =
-            "Hiện tại trợ lý AI đang bận xử lý. Hệ thống đã chuyển tiếp cuộc trò chuyện tới nhân viên hỗ trợ trực tiếp. Xin vui lòng đợi trong giây lát!";
+    @Value("${openai.model:gpt-4o-mini}")
+    private String openAiModel;
+
+    @Value("${openai.base-url:https://api.openai.com/v1}")
+    private String openAiBaseUrl;
+
+    @Value("${claude.model:claude-3-5-sonnet-20241022}")
+    private String claudeModel;
+
+    @Value("${claude.base-url:https://api.anthropic.com/v1}")
+    private String claudeBaseUrl;
+
+    @Value("${deepseek.model:deepseek-chat}")
+    private String deepseekModel;
+
+    @Value("${deepseek.base-url:https://api.deepseek.com}")
+    private String deepseekBaseUrl;
 
     private static final DateTimeFormatter TIME_FORMATTER =
             DateTimeFormatter.ofPattern("HH:mm");
@@ -95,6 +192,28 @@ public class AiChatServiceImpl implements AiChatService {
     private volatile List<ProductVariantResponse> cachedVariants;
     private volatile long cacheTimestamp = 0;
     private static final long CACHE_TTL_MS = 5 * 60 * 1000; // 5 phút
+    private static final int MAX_CONTEXT_PRODUCTS = 20; // Giới hạn số lượng sản phẩm gửi lên AI để tránh quá tải
+
+    // Circuit Breaker tracker for unhealthy model APIs
+    private final Map<String, Long> unhealthyModels = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final long UNHEALTHY_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
+
+    private boolean isModelHealthy(String modelName) {
+        Long unhealthyUntil = unhealthyModels.get(modelName);
+        if (unhealthyUntil == null) {
+            return true;
+        }
+        if (System.currentTimeMillis() > unhealthyUntil) {
+            unhealthyModels.remove(modelName);
+            return true;
+        }
+        return false;
+    }
+
+    private void markModelUnhealthy(String modelName) {
+        log.warn("Mô hình AI {} gặp sự cố, đánh dấu không khỏe mạnh trong 2 phút để ngắt mạch (Circuit Breaker) chuyển đổi tức thì.", modelName);
+        unhealthyModels.put(modelName, System.currentTimeMillis() + UNHEALTHY_COOLDOWN_MS);
+    }
 
     /**
      * Constructor injection với RestTemplate được cấu hình Timeout.
@@ -105,13 +224,16 @@ public class AiChatServiceImpl implements AiChatService {
             AdminChatMessageRepository messageRepository,
             SimpMessagingTemplate messagingTemplate,
             RestTemplateBuilder restTemplateBuilder,
-            @Value("${google.gemini.timeout-ms:15000}") int timeoutMs
+            AiLocalService aiLocalService,
+            @Value("${google.gemini.timeout-ms:30000}") int timeoutMs
     ) {
         this.sanPhamService = sanPhamService;
         this.messageRepository = messageRepository;
         this.messagingTemplate = messagingTemplate;
+        this.aiLocalService = aiLocalService;
 
         // [Cải tiến 3] RestTemplate có Timeout → chống treo luồng @Async
+        // Tăng mặc định lên 30s để hỗ trợ prompt phức tạp
         this.restTemplate = restTemplateBuilder
                 .connectTimeout(Duration.ofMillis(timeoutMs))
                 .readTimeout(Duration.ofMillis(timeoutMs))
@@ -123,46 +245,246 @@ public class AiChatServiceImpl implements AiChatService {
     public void generateAndSendResponse(ChatConversation conversation, String customerText) {
         log.info("AI đang xử lý tin nhắn: {}", customerText);
 
-        String activeKey = getApiKey();
-        if (activeKey == null || activeKey.isBlank() || "your_gemini_api_key_here".equals(activeKey)) {
-            log.warn("Gemini API Key chưa được cấu hình. Kích hoạt bot quy tắc làm mặc định.");
+        // [Handoff Interceptor] Phát hiện từ khóa yêu cầu gặp nhân viên để phản hồi tức thì
+        String lowerInput = customerText.toLowerCase().trim();
+        if (lowerInput.contains("nhân viên") || lowerInput.contains("nhan vien") || 
+            lowerInput.contains("người thật") || lowerInput.contains("nguoi that") || 
+            lowerInput.contains("admin") || lowerInput.contains("gặp nhân viên") || 
+            lowerInput.contains("gặp hỗ trợ") || lowerInput.contains("gap ho tro") || 
+            lowerInput.contains("gọi hỗ trợ") || lowerInput.contains("goi ho tro") || 
+            lowerInput.contains("liên hệ hỗ trợ") || lowerInput.contains("lien he ho tro") || 
+            lowerInput.contains("kết nối hỗ trợ") || lowerInput.contains("ket noi ho tro") || 
+            lowerInput.contains("nói chuyện với hỗ trợ") || lowerInput.contains("noi chuyen voi ho tro") || 
+            lowerInput.contains("goi admin") || lowerInput.contains("gọi admin")) {
+            
+            log.info("Đã phát hiện từ khóa gặp nhân viên trong: '{}'. Thực hiện phản hồi handoff tức thì.", customerText);
+            String handoffResponse = AiChatPrompts.HANDOFF_RESPONSE;
+            
+            // Đính kèm các câu hỏi gợi ý phù hợp trong lúc chờ nhân viên hỗ trợ
+            List<String> waitingSuggs = List.of(
+                "Xem giờ mở cửa của showroom",
+                "Chính sách bảo hành và đổi trả",
+                "Xem địa chỉ showroom AeroStride"
+            );
             try {
-                List<ProductVariantResponse> activeVariants = getActiveVariantsCached(customerText);
-                String fallbackResponse = generateRuleBasedResponse(customerText, activeVariants);
-                saveAndBroadcast(conversation, fallbackResponse);
-            } catch (Exception ex) {
-                log.error("Lỗi nghiêm trọng khi chạy Bot quy tắc (không cấu hình key): {}", ex.getMessage(), ex);
-                saveAndBroadcast(conversation, FALLBACK_MESSAGE);
+                handoffResponse += "\n\n[[SUGGESTIONS:" + objectMapper.writeValueAsString(waitingSuggs) + "]]";
+            } catch (Exception e) {
+                log.error("Lỗi serialize suggestions cho handoff: {}", e.getMessage());
             }
+            
+            saveAndBroadcast(conversation, handoffResponse);
             return;
         }
 
-        try {
-            // [Tối ưu gói Free] Lấy danh sách sản phẩm từ cache lọc theo từ khóa và giới hạn 25 phần tử
-            List<ProductVariantResponse> activeVariants = getActiveVariantsCached(customerText);
+        // 1. Lấy danh sách sản phẩm thông minh dựa trên Index Database
+        List<ProductVariantResponse> activeVariants = getActiveVariantsIntelligent(customerText);
+        String productContext = buildProductContextFromVariants(activeVariants);
+        String chatHistory = buildChatHistory(conversation.getId());
+        String prompt = buildPrompt(productContext, chatHistory, customerText);
 
-            String productContext = buildProductContextFromVariants(activeVariants);
-            String chatHistory = buildChatHistory(conversation.getId());
-
-            String apiUrl = String.format("%s/models/%s:generateContent?key=%s",
-                    geminiBaseUrl, geminiModel, activeKey);
-
-            String prompt = buildPrompt(productContext, chatHistory, customerText);
-
-            String botResponseText = callGeminiApi(apiUrl, prompt);
-            saveAndBroadcast(conversation, botResponseText);
-
-        } catch (Exception e) {
-            log.warn("Gemini API gặp lỗi (429 hoặc quá tải). Tự động kích hoạt bot quy tắc (Rule-based Fallback)...");
+        // --- Cố gắng gọi GOOGLE GEMINI ---
+        String activeGeminiKey = getApiKey();
+        boolean hasGeminiKey = activeGeminiKey != null && !activeGeminiKey.isBlank() && !"your_gemini_api_key_here".equals(activeGeminiKey);
+        
+        if (hasGeminiKey && isModelHealthy("GEMINI")) {
             try {
-                List<ProductVariantResponse> activeVariants = getActiveVariantsCached(customerText);
-                String fallbackResponse = generateRuleBasedResponse(customerText, activeVariants);
-                saveAndBroadcast(conversation, fallbackResponse);
-            } catch (Exception ex) {
-                log.error("Lỗi nghiêm trọng khi chạy Bot quy tắc dự phòng: {}", ex.getMessage(), ex);
-                saveAndBroadcast(conversation, FALLBACK_MESSAGE);
+                log.info("Khởi động gọi Google Gemini API...");
+                String apiUrl = String.format("%s/models/%s:generateContent?key=%s",
+                        geminiBaseUrl, geminiModel, activeGeminiKey);
+                String botResponseText = callGeminiApi(apiUrl, prompt);
+                saveAndBroadcast(conversation, botResponseText);
+                log.info("Google Gemini phản hồi thành công.");
+                return; // Xử lý xong, kết thúc!
+            } catch (Exception e) {
+                log.warn("Google Gemini API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
+                markModelUnhealthy("GEMINI");
+            }
+        } else {
+            log.info("Google Gemini API Key chưa cấu hình hoặc không khỏe mạnh. Bỏ qua Gemini.");
+        }
+
+        // --- Cố gắng gọi OPENAI CHATGPT (Fallback thứ nhất) ---
+        String activeOpenAiKey = getOpenAiApiKey();
+        boolean hasOpenAiKey = activeOpenAiKey != null && !activeOpenAiKey.isBlank() && !"your_openai_api_key_here".equals(activeOpenAiKey);
+
+        if (hasOpenAiKey && isModelHealthy("OPENAI")) {
+            try {
+                log.info("Tự động chuyển đổi: Khởi động gọi OpenAI ChatGPT API...");
+                String apiUrl = String.format("%s/chat/completions", openAiBaseUrl);
+                String botResponseText = callOpenAiApi(apiUrl, prompt);
+                saveAndBroadcast(conversation, botResponseText);
+                log.info("OpenAI ChatGPT phản hồi thành công.");
+                return; // Xử lý xong, kết thúc!
+            } catch (Exception e) {
+                log.warn("OpenAI ChatGPT API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
+                markModelUnhealthy("OPENAI");
+            }
+        } else {
+            log.info("OpenAI ChatGPT API Key chưa cấu hình hoặc không khỏe mạnh. Bỏ qua OpenAI.");
+        }
+
+        // --- Cố gắng gọi ANTHROPIC CLAUDE (Fallback thứ hai) ---
+        String activeClaudeKey = getClaudeApiKey();
+        boolean hasClaudeKey = activeClaudeKey != null && !activeClaudeKey.isBlank() && !"your_claude_api_key_here".equals(activeClaudeKey);
+
+        if (hasClaudeKey && isModelHealthy("CLAUDE")) {
+            try {
+                log.info("Tự động chuyển đổi: Khởi động gọi Anthropic Claude API...");
+                String apiUrl = String.format("%s/messages", claudeBaseUrl);
+                String botResponseText = callClaudeApi(apiUrl, prompt);
+                saveAndBroadcast(conversation, botResponseText);
+                log.info("Anthropic Claude phản hồi thành công.");
+                return; // Xử lý xong, kết thúc!
+            } catch (Exception e) {
+                log.warn("Anthropic Claude API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
+                markModelUnhealthy("CLAUDE");
+            }
+        } else {
+            log.info("Anthropic Claude API Key chưa cấu hình hoặc không khỏe mạnh. Bỏ qua Claude.");
+        }
+
+        // --- Cố gắng gọi DEEPSEEK (Fallback thứ ba) ---
+        String activeDeepSeekKey = getDeepSeekApiKey();
+        boolean hasDeepSeekKey = activeDeepSeekKey != null && !activeDeepSeekKey.isBlank() && !"your_deepseek_api_key_here".equals(activeDeepSeekKey);
+
+        if (hasDeepSeekKey && isModelHealthy("DEEPSEEK")) {
+            try {
+                log.info("Tự động chuyển đổi: Khởi động gọi DeepSeek API...");
+                String apiUrl = String.format("%s/chat/completions", deepseekBaseUrl);
+                String botResponseText = callDeepSeekApi(apiUrl, prompt);
+                saveAndBroadcast(conversation, botResponseText);
+                log.info("DeepSeek phản hồi thành công.");
+                return; // Xử lý xong, kết thúc!
+            } catch (Exception e) {
+                log.warn("DeepSeek API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
+                markModelUnhealthy("DEEPSEEK");
+            }
+        } else {
+            log.info("DeepSeek API Key chưa cấu hình hoặc không khỏe mạnh. Bỏ qua DeepSeek.");
+        }
+
+        // --- Cố gắng gọi LOCAL AI (Fallback thứ tư - Tuyệt đối không treo luồng) ---
+        log.info("Tự động chuyển đổi: Kích hoạt AI nội bộ cục bộ làm dự phòng...");
+        try {
+            String localResponse = aiLocalService.generateResponse(customerText, conversation.getId());
+            saveAndBroadcast(conversation, localResponse);
+            log.info("AI nội bộ phản hồi thành công.");
+        } catch (Exception ex) {
+            log.error("Lỗi nghiêm trọng khi chạy AI nội bộ dự phòng: {}", ex.getMessage(), ex);
+            saveAndBroadcast(conversation, AiChatPrompts.FALLBACK_MESSAGE);
+        }
+    }
+
+    private int iterativeWordMatch(String[] queryWords, String attribute) {
+        if (queryWords == null || attribute == null) {
+            return 0;
+        }
+        String attrLower = attribute.toLowerCase();
+        int score = 0;
+        for (String word : queryWords) {
+            if (word.length() >= 2 && attrLower.contains(word)) {
+                score++;
             }
         }
+        return score;
+    }
+
+    private int calculateMatchScore(ProductVariantResponse v, String queryLower, String[] queryWords, BigDecimal targetPrice) {
+        int score = 0;
+
+        // 1. Khớp nguyên cụm từ (Exact phrase matching)
+        if (v.getTenSanPham() != null && queryLower.contains(v.getTenSanPham().toLowerCase())) score += 50;
+        if (v.getTenSanPhamDayDu() != null && queryLower.contains(v.getTenSanPhamDayDu().toLowerCase())) score += 60;
+        if (v.getTenThuongHieu() != null && queryLower.contains(v.getTenThuongHieu().toLowerCase())) score += 30;
+        if (v.getTenMauSac() != null && queryLower.contains(v.getTenMauSac().toLowerCase())) score += 30;
+        if (v.getGiaTriKichThuoc() != null && queryLower.contains(v.getGiaTriKichThuoc().toLowerCase())) score += 40;
+        if (v.getTenChatLieu() != null && queryLower.contains(v.getTenChatLieu().toLowerCase())) score += 15;
+
+        // 2. Khớp theo giá (Price matching)
+        if (targetPrice != null && v.getGiaBan() != null) {
+            BigDecimal diff = v.getGiaBan().subtract(targetPrice).abs();
+            // Nếu giá khớp chính xác hoặc lệch dưới 100k, cộng điểm cực cao
+            if (diff.compareTo(new BigDecimal("100000")) <= 0) {
+                score += 100;
+            } else if (diff.compareTo(new BigDecimal("500000")) <= 0) {
+                score += 30;
+            }
+        }
+
+        // 3. Khớp từng từ đơn lẻ (Iterative word-by-word token matching)
+        if (v.getTenSanPham() != null) {
+            score += iterativeWordMatch(queryWords, v.getTenSanPham()) * 10;
+        }
+        if (v.getTenThuongHieu() != null) {
+            score += iterativeWordMatch(queryWords, v.getTenThuongHieu()) * 8;
+        }
+        if (v.getTenMauSac() != null) {
+            score += iterativeWordMatch(queryWords, v.getTenMauSac()) * 8;
+        }
+        if (v.getGiaTriKichThuoc() != null) {
+            score += iterativeWordMatch(queryWords, v.getGiaTriKichThuoc()) * 10;
+        }
+        if (v.getTenChatLieu() != null) {
+            score += iterativeWordMatch(queryWords, v.getTenChatLieu()) * 5;
+        }
+
+        return score;
+    }
+
+    /**
+     * Lấy danh sách sản phẩm thông minh bằng cách kết hợp trích xuất thông tin từ tin nhắn
+     * và truy vấn trực tiếp vào Database thông qua Index.
+     */
+    private List<ProductVariantResponse> getActiveVariantsIntelligent(String text) {
+        if (text == null || text.isBlank()) {
+            return getActiveVariantsCached(null);
+        }
+
+        String queryLower = text.toLowerCase().trim();
+        
+        // 1. Trích xuất giá (ví dụ: 130k, 1.2tr, 500000)
+        BigDecimal minPrice = null;
+        BigDecimal maxPrice = null;
+        
+        try {
+            // Regex phát hiện giá (đơn giản hóa cho AI Context)
+            if (queryLower.matches(".*\\d+[kK].*")) {
+                String val = queryLower.replaceAll("[^0-9]", "");
+                maxPrice = new BigDecimal(val).multiply(new BigDecimal("1000"));
+                // Thêm biên độ cho linh hoạt
+                minPrice = maxPrice.subtract(new BigDecimal("200000")).max(BigDecimal.ZERO);
+                maxPrice = maxPrice.add(new BigDecimal("200000"));
+            } else if (queryLower.matches(".*\\d{5,}.*")) {
+                String val = queryLower.replaceAll("[^0-9]", "");
+                BigDecimal target = new BigDecimal(val);
+                minPrice = target.subtract(new BigDecimal("200000")).max(BigDecimal.ZERO);
+                maxPrice = target.add(new BigDecimal("200000"));
+            }
+        } catch (Exception e) {
+            log.warn("Lỗi trích xuất giá: {}", e.getMessage());
+        }
+
+        // 2. Trích xuất từ khóa thương hiệu hoặc tên
+        String keyword = null;
+        List<String> commonBrands = List.of("nike", "adidas", "puma", "vans", "converse", "jordan");
+        for (String brand : commonBrands) {
+            if (queryLower.contains(brand)) {
+                keyword = brand;
+                break;
+            }
+        }
+
+        // 3. Truy vấn Database thông qua Index (Surgical retrieval)
+        log.info("Đang truy vấn Database AI Search (Keyword: {}, Price: {} - {})", keyword, minPrice, maxPrice);
+        List<ProductVariantResponse> results = sanPhamService.searchVariantsForAi(keyword, minPrice, maxPrice, MAX_CONTEXT_PRODUCTS);
+
+        if (results.isEmpty()) {
+            // Nếu không tìm thấy bằng surgical search, quay lại dùng cache top sản phẩm hot
+            log.info("Surgical search không có kết quả, quay lại dùng cache top sản phẩm.");
+            return getActiveVariantsCached(text);
+        }
+
+        return results;
     }
 
     private List<ProductVariantResponse> getActiveVariantsCached(String text) {
@@ -177,31 +499,102 @@ public class AiChatServiceImpl implements AiChatService {
             log.info("Đã cache {} biến thể đang hoạt động.", cachedVariants.size());
         }
 
-        // [Tối ưu gói Free] Lọc thông minh theo từ khóa trong câu hỏi để gửi tối thiểu sản phẩm cần thiết, tránh quá tải token
+        // Lấy top 20 sản phẩm đang hoạt động khi không truyền từ khóa
         if (text == null || text.isBlank()) {
-            return cachedVariants.stream().limit(15).collect(Collectors.toList());
+            return cachedVariants.stream().limit(MAX_CONTEXT_PRODUCTS).collect(Collectors.toList());
         }
 
-        String searchLower = text.toLowerCase();
-        List<ProductVariantResponse> filtered = cachedVariants.stream()
-                .filter(v -> {
-                    boolean match = false;
-                    if (v.getTenSanPham() != null && v.getTenSanPham().toLowerCase().contains(searchLower)) match = true;
-                    if (v.getTenSanPhamDayDu() != null && v.getTenSanPhamDayDu().toLowerCase().contains(searchLower)) match = true;
-                    if (v.getTenThuongHieu() != null && v.getTenThuongHieu().toLowerCase().contains(searchLower)) match = true;
-                    if (v.getTenChatLieu() != null && v.getTenChatLieu().toLowerCase().contains(searchLower)) match = true;
-                    if (v.getTenMauSac() != null && v.getTenMauSac().toLowerCase().contains(searchLower)) match = true;
-                    if (v.getGiaTriKichThuoc() != null && v.getGiaTriKichThuoc().toLowerCase().contains(searchLower)) match = true;
-                    return match;
-                })
+        String queryLower = text.toLowerCase().trim();
+        String[] queryWords = queryLower.split("\\s+");
+
+        // Phát hiện giá mục tiêu (ví dụ: 130k, 130000, 1tr2)
+        BigDecimal targetPrice = null;
+        try {
+            if (queryLower.matches(".*\\d+[kK].*")) {
+                String val = queryLower.replaceAll("[^0-9]", "");
+                targetPrice = new BigDecimal(val).multiply(new BigDecimal("1000"));
+            } else if (queryLower.matches(".*\\d{5,}.*")) {
+                String val = queryLower.replaceAll("[^0-9]", "");
+                targetPrice = new BigDecimal(val);
+            }
+        } catch (Exception e) {
+            log.warn("Lỗi trích xuất giá từ query: {}", e.getMessage());
+        }
+
+        // Nhận diện từ khóa yêu cầu sắp xếp theo giá
+        boolean sortByPriceAsc = queryLower.contains("thấp đến cao") || queryLower.contains("rẻ nhất") || 
+                                 queryLower.contains("tăng dần") || queryLower.contains("giá rẻ") || 
+                                 queryLower.contains("thấp nhất") || queryLower.contains("giá tốt") ||
+                                 queryLower.contains("bình dân");
+
+        boolean sortByPriceDesc = queryLower.contains("cao đến thấp") || queryLower.contains("đắt nhất") || 
+                                  queryLower.contains("giảm dần") || queryLower.contains("cao nhất") || 
+                                  queryLower.contains("đắt tiền") || queryLower.contains("sang chảnh") ||
+                                  queryLower.contains("cao cấp");
+
+        // Sử dụng đệ quy và tính điểm trùng khớp để lấy chính xác sản phẩm mong muốn
+        class ScoredVariant {
+            final ProductVariantResponse variant;
+            int score;
+            ScoredVariant(ProductVariantResponse variant, int score) {
+                this.variant = variant;
+                this.score = score;
+            }
+        }
+
+        List<ScoredVariant> scoredList = new ArrayList<>();
+        BigDecimal finalTargetPrice = targetPrice;
+        for (ProductVariantResponse v : cachedVariants) {
+            int score = calculateMatchScore(v, queryLower, queryWords, finalTargetPrice);
+            // Nếu khách hỏi giá tăng/giảm dần chung chung, hoặc hỏi giá mà không khớp từ khóa đặc thù nào khác,
+            // ta vẫn cho điểm cơ bản = 1 để đưa vào danh sách sắp xếp giá
+            if (score == 0 && (sortByPriceAsc || sortByPriceDesc)) {
+                score = 1;
+            }
+            if (score > 0) {
+                scoredList.add(new ScoredVariant(v, score));
+            }
+        }
+
+        // Thực hiện sắp xếp theo yêu cầu của khách hàng
+        if (sortByPriceAsc) {
+            // Giá tăng dần (thấp đến cao). Nếu giá bằng nhau thì xếp theo điểm trùng khớp giảm dần
+            scoredList.sort((a, b) -> {
+                java.math.BigDecimal priceA = a.variant.getGiaBan() != null ? a.variant.getGiaBan() : java.math.BigDecimal.ZERO;
+                java.math.BigDecimal priceB = b.variant.getGiaBan() != null ? b.variant.getGiaBan() : java.math.BigDecimal.ZERO;
+                int priceCompare = priceA.compareTo(priceB);
+                if (priceCompare != 0) {
+                    return priceCompare;
+                }
+                return Integer.compare(b.score, a.score);
+            });
+        } else if (sortByPriceDesc) {
+            // Giá giảm dần (cao xuống thấp). Nếu giá bằng nhau thì xếp theo điểm trùng khớp giảm dần
+            scoredList.sort((a, b) -> {
+                java.math.BigDecimal priceA = a.variant.getGiaBan() != null ? a.variant.getGiaBan() : java.math.BigDecimal.ZERO;
+                java.math.BigDecimal priceB = b.variant.getGiaBan() != null ? b.variant.getGiaBan() : java.math.BigDecimal.ZERO;
+                int priceCompare = priceB.compareTo(priceA);
+                if (priceCompare != 0) {
+                    return priceCompare;
+                }
+                return Integer.compare(b.score, a.score);
+            });
+        } else {
+            // Sắp xếp mặc định theo điểm phù hợp giảm dần
+            scoredList.sort((a, b) -> Integer.compare(b.score, a.score));
+        }
+
+        List<ProductVariantResponse> filtered = scoredList.stream()
+                .map(sv -> sv.variant)
+                .limit(MAX_CONTEXT_PRODUCTS) // [GIỚI HẠN] Chỉ lấy tối đa 20 sản phẩm phù hợp nhất
                 .collect(Collectors.toList());
 
         if (filtered.isEmpty()) {
-            // Fallback lấy 15 sản phẩm đầu tiên
+            // Lấy top 15 sản phẩm mới nhất làm dữ liệu dự phòng thay vì trả về toàn bộ danh mục (gây treo AI)
             return cachedVariants.stream().limit(15).collect(Collectors.toList());
         }
 
-        return filtered.stream().limit(25).collect(Collectors.toList());
+        return filtered;
     }
 
     private String buildProductContextFromVariants(List<ProductVariantResponse> variants) {
@@ -214,6 +607,9 @@ public class AiChatServiceImpl implements AiChatService {
         sb.append("DANH SÁCH GIÀY GỢI Ý (AeroStride):\n");
 
         groupedProducts.forEach((tenSp, vars) -> {
+            // Nếu context quá dài (trên 15k ký tự), ngừng thêm để bảo vệ an toàn prompt
+            if (sb.length() > 15000) return;
+
             sb.append(String.format("- %s (Thương hiệu: %s)\n", tenSp, vars.get(0).getTenThuongHieu()));
             String sizes = vars.stream().map(ProductVariantResponse::getGiaTriKichThuoc).distinct().sorted().collect(Collectors.joining(", "));
             String colors = vars.stream().map(ProductVariantResponse::getTenMauSac).distinct().collect(Collectors.joining(", "));
@@ -260,20 +656,8 @@ public class AiChatServiceImpl implements AiChatService {
      */
     private String buildPrompt(String productContext, String chatHistory, String customerText) {
         return String.format(
-                "Bạn là trợ lý ảo AI chuyên nghiệp của cửa hàng giày AeroStride. " +
-                "Nhiệm vụ của bạn là tư vấn cho khách hàng dựa TRÊN DUY NHẤT dữ liệu sản phẩm được cung cấp dưới đây.\n\n" +
-                "%s\n" +
-                "%s" +
-                "YÊU CẦU QUAN TRỌNG:\n" +
-                "1. CHỈ được tư vấn các mẫu giày có trong danh sách trên. Tuyệt đối KHÔNG tự bịa ra sản phẩm.\n" +
-                "2. Nếu tìm thấy sản phẩm phù hợp, hãy đưa ra câu trả lời thân thiện VÀ ĐÍNH KÈM mã JSON của các sản phẩm đó vào cuối câu trả lời theo định dạng: [[PRODUCT_JSON:[{\"idSanPham\":\"...\", \"tenSanPham\":\"...\", \"giaBan\":..., \"tenThuongHieu\":\"...\", \"tenDanhMuc\":\"...\", \"hinhAnh\":\"...\", \"phanTramGiam\":..., \"soLuong\":...}]]] (liệt kê tối đa 3 sản phẩm phù hợp nhất).\n" +
-                "3. Phải nêu rõ các thuộc tính nổi bật (màu sắc, chất liệu) trong phần văn bản.\n" +
-                "4. Nếu không tìm thấy sản phẩm nào khớp hoàn toàn, hãy gợi ý mẫu gần nhất.\n" +
-                "5. Giữ câu trả lời chuyên nghiệp, trình bày rõ ràng (dùng bullet point) và KHÔNG được quá dài.\n" +
-                "6. Nếu có LỊCH SỬ HỘI THOẠI, hãy tham khảo để hiểu ngữ cảnh (ví dụ: 'nó' = sản phẩm khách vừa hỏi trước đó).\n\n" +
-                "Khách hàng hỏi: \"%s\"\n\n" +
-                "Câu trả lời của bạn:",
-                productContext, chatHistory, customerText
+                AiChatPrompts.MAIN_SYSTEM_PROMPT,
+                productContext, AiChatPrompts.STORE_POLICIES_CONTEXT, chatHistory, customerText
         );
     }
 
@@ -282,15 +666,6 @@ public class AiChatServiceImpl implements AiChatService {
      */
     @SuppressWarnings("unchecked")
     private String callGeminiApi(String apiUrl, String prompt) {
-        // [Tối ưu gói Free] Đợi 3 giây trước khi thực hiện request để không bị quét lỗi 429 Free Tier (15 RPM)
-        try {
-            log.info("Đang trì hoãn 3s trước khi gọi Gemini API để tránh lỗi Rate Limit (429)...");
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.warn("Tiến trình ngủ bị gián đoạn: {}", e.getMessage());
-        }
-
         Map<String, Object> requestBody = new HashMap<>();
         Map<String, Object> content = new HashMap<>();
         Map<String, String> part = new HashMap<>();
@@ -362,6 +737,134 @@ public class AiChatServiceImpl implements AiChatService {
     }
 
     /**
+     * Gọi OpenAI ChatGPT API và trích xuất kết quả.
+     */
+    @SuppressWarnings("unchecked")
+    private String callOpenAiApi(String apiUrl, String prompt) {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", openAiModel);
+
+        Map<String, String> message = new HashMap<>();
+        message.put("role", "user");
+        message.put("content", prompt);
+        requestBody.put("messages", List.of(message));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(getOpenAiApiKey());
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        Map<String, Object> response = restTemplate.postForObject(apiUrl, entity, Map.class);
+        return extractTextFromOpenAiResponse(response);
+    }
+
+    /**
+     * Trích xuất text phản hồi từ JSON response của OpenAI API.
+     */
+    @SuppressWarnings("unchecked")
+    private String extractTextFromOpenAiResponse(Map<String, Object> response) {
+        try {
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+            Map<String, Object> firstChoice = choices.get(0);
+            Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
+            String responseText = (String) message.get("content");
+            if (responseText == null || responseText.isBlank()) {
+                throw new RuntimeException("Phản hồi từ OpenAI trống.");
+            }
+            return responseText;
+        } catch (Exception e) {
+            log.warn("Không thể parse OpenAI response: {}", e.getMessage());
+            throw new RuntimeException("Lỗi phân tích cú pháp phản hồi từ OpenAI", e);
+        }
+    }
+
+    /**
+     * Gọi Anthropic Claude API và trích xuất kết quả.
+     */
+    @SuppressWarnings("unchecked")
+    private String callClaudeApi(String apiUrl, String prompt) {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", claudeModel);
+        requestBody.put("max_tokens", 1024);
+
+        Map<String, String> message = new HashMap<>();
+        message.put("role", "user");
+        message.put("content", prompt);
+        requestBody.put("messages", List.of(message));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("x-api-key", getClaudeApiKey());
+        headers.set("anthropic-version", "2023-06-01");
+        
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        Map<String, Object> response = restTemplate.postForObject(apiUrl, entity, Map.class);
+        return extractTextFromClaudeResponse(response);
+    }
+
+    /**
+     * Trích xuất text phản hồi từ JSON response của Claude API.
+     */
+    @SuppressWarnings("unchecked")
+    private String extractTextFromClaudeResponse(Map<String, Object> response) {
+        try {
+            List<Map<String, Object>> contentList = (List<Map<String, Object>>) response.get("content");
+            Map<String, Object> firstContent = contentList.get(0);
+            String responseText = (String) firstContent.get("text");
+            if (responseText == null || responseText.isBlank()) {
+                throw new RuntimeException("Phản hồi từ Claude trống.");
+            }
+            return responseText;
+        } catch (Exception e) {
+            log.warn("Không thể parse Claude response: {}", e.getMessage());
+            throw new RuntimeException("Lỗi phân tích cú pháp phản hồi từ Claude", e);
+        }
+    }
+
+    /**
+     * Gọi DeepSeek API và trích xuất kết quả.
+     */
+    @SuppressWarnings("unchecked")
+    private String callDeepSeekApi(String apiUrl, String prompt) {
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", deepseekModel);
+
+        Map<String, String> message = new HashMap<>();
+        message.put("role", "user");
+        message.put("content", prompt);
+        requestBody.put("messages", List.of(message));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(getDeepSeekApiKey());
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+        Map<String, Object> response = restTemplate.postForObject(apiUrl, entity, Map.class);
+        return extractTextFromDeepSeekResponse(response);
+    }
+
+    /**
+     * Trích xuất text phản hồi từ JSON response của DeepSeek API.
+     */
+    @SuppressWarnings("unchecked")
+    private String extractTextFromDeepSeekResponse(Map<String, Object> response) {
+        try {
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+            Map<String, Object> firstChoice = choices.get(0);
+            Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
+            String responseText = (String) message.get("content");
+            if (responseText == null || responseText.isBlank()) {
+                throw new RuntimeException("Phản hồi từ DeepSeek trống.");
+            }
+            return responseText;
+        } catch (Exception e) {
+            log.warn("Không thể parse DeepSeek response: {}", e.getMessage());
+            throw new RuntimeException("Lỗi phân tích cú pháp phản hồi từ DeepSeek", e);
+        }
+    }
+
+    /**
      * [Tính năng nâng cao] Chatbot quy tắc (Rule-based) dự phòng khi Gemini bị lỗi 429 hoặc quá tải.
      * Tự động lọc từ khóa (giá, size, màu sắc, thương hiệu) và sinh câu trả lời đính kèm JSON sản phẩm thật
      * để hiển thị giao diện thẻ sản phẩm mượt mà như AI thật.
@@ -373,7 +876,7 @@ public class AiChatServiceImpl implements AiChatService {
 
         // Kiểm tra dữ liệu sản phẩm trong cơ sở dữ liệu
         if (variants == null || variants.isEmpty()) {
-            return "Dạ, hiện tại cửa hàng đang cập nhật danh mục sản phẩm mới nên chưa có sẵn các mẫu giày trong hệ thống. Bạn vui lòng quay lại sau ít phút hoặc nhắn tin để nhân viên tư vấn hỗ trợ trực tiếp cho bạn nhé!";
+            return AiChatPrompts.RULE_NO_PRODUCTS;
         }
 
         // Quy tắc chào hỏi và đáp lại
@@ -383,9 +886,7 @@ public class AiChatServiceImpl implements AiChatService {
         boolean isAcknowledge = lowerText.equals("ok") || lowerText.equals("dạ") || lowerText.equals("vâng") || lowerText.contains("tốt quá") || lowerText.contains("được rồi");
 
         if (isGreeting) {
-            sb.append("Dạ, AeroStride xin kính chào quý khách! Em là trợ lý ảo hỗ trợ khách hàng tự động.\n\n");
-            sb.append("Hiện tại AeroStride đang có sẵn các mẫu giày cực đẹp và thời trang của Nike, Adidas, Puma, Vans...\n");
-            sb.append("Bạn đang muốn tham khảo bảng giá, kiểm tra size, chọn màu sắc hay tìm hiểu về chương trình khuyến mãi nào ạ?");
+            sb.append(AiChatPrompts.RULE_GREETING_START);
             
             // Đính kèm các sản phẩm hot bán chạy để chào mừng khách hàng
             Map<String, List<ProductVariantResponse>> grouped = variants.stream()
@@ -398,18 +899,16 @@ public class AiChatServiceImpl implements AiChatService {
                     count++;
                 }
             }
-            sb.append("\n\nBạn cũng có thể xem nhanh các mẫu bán chạy ở bên dưới nha!");
+            sb.append(AiChatPrompts.RULE_GREETING_END);
 
         } else if (isThankYou) {
-            sb.append("Dạ không có gì ạ! Được hỗ trợ quý khách chọn được đôi giày ưng ý là niềm hạnh phúc lớn nhất của AeroStride.\n\n");
-            sb.append("Nếu cần thêm bất kỳ sự giúp đỡ nào, bạn cứ nhắn tin ở đây nhé. Chúc bạn một ngày thật nhiều niềm vui và may mắn!");
+            sb.append(AiChatPrompts.RULE_THANK_YOU);
 
         } else if (isGoodbye) {
-            sb.append("Dạ, AeroStride xin chào tạm biệt quý khách ạ!\n\n");
-            sb.append("Chúc bạn luôn tràn đầy năng lượng và có những bước đi vững chắc cùng những đôi giày tuyệt đẹp. Hy vọng sớm được gặp lại bạn!");
+            sb.append(AiChatPrompts.RULE_GOODBYE);
 
         } else if (isAcknowledge) {
-            sb.append("Dạ vâng ạ! Shop luôn ở đây sẵn sàng phục vụ. Bạn có muốn tham khảo thêm các mẫu giày hot nhất tuần này không ạ?");
+            sb.append(AiChatPrompts.RULE_ACKNOWLEDGE);
 
         } else if (lowerText.contains("giá") || lowerText.contains("nhiêu") || lowerText.contains("tiền")) {
             sb.append("Dạ, AeroStride xin gửi bạn bảng giá tham khảo của các mẫu giày nổi bật hiện có tại cửa hàng:\n\n");
@@ -627,6 +1126,172 @@ public class AiChatServiceImpl implements AiChatService {
             sb.append("]]");
         }
 
+        // Sinh gợi ý tiếp theo phù hợp với ngữ cảnh câu hỏi quy tắc
+        List<String> ruleSuggs = new ArrayList<>();
+        if (lowerText.contains("giá") || lowerText.contains("nhiêu") || lowerText.contains("tiền")) {
+            ruleSuggs.add("Có voucher giảm giá nào áp dụng hôm nay không?");
+            ruleSuggs.add("Bên mình hỗ trợ ship COD toàn quốc không shop?");
+            ruleSuggs.add("Giày Nike đang có khuyến mãi gì thế shop?");
+        } else if (lowerText.contains("size") || lowerText.contains("kích") || lowerText.contains("cỡ")) {
+            ruleSuggs.add("Cách đo chiều dài bàn chân chọn size thế nào?");
+            ruleSuggs.add("Nếu nhận hàng đi không vừa size có được đổi mẫu không?");
+            ruleSuggs.add("Chính sách bảo hành keo đế trong bao lâu ạ?");
+        } else if (lowerText.contains("màu") || lowerText.contains("đen") || lowerText.contains("trắng")) {
+            ruleSuggs.add("Có sẵn size 42 các màu này không shop?");
+            ruleSuggs.add("Shop ơi gửi ảnh thật đôi Nike màu đen giúp em với.");
+            ruleSuggs.add("Chính sách đổi trả trong vòng 7 ngày thế nào?");
+        } else if (lowerText.contains("khuyến mãi") || lowerText.contains("giảm giá") || lowerText.contains("sale")) {
+            ruleSuggs.add("Mã voucher 'AERO10' áp dụng cho những sản phẩm nào?");
+            ruleSuggs.add("Đơn hàng từ bao nhiêu tiền thì được miễn phí ship ạ?");
+            ruleSuggs.add("Mẫu giày Adidas nào đang giảm giá nhiều nhất?");
+        } else {
+            ruleSuggs.add("Mẫu giày nào đang bán chạy nhất tuần này shop ơi?");
+            ruleSuggs.add("Có voucher giảm giá nào cho khách mới không?");
+            ruleSuggs.add("Chính sách bảo hành và đổi trả của shop thế nào ạ?");
+        }
+
+        try {
+            sb.append("\n\n[[SUGGESTIONS:").append(objectMapper.writeValueAsString(ruleSuggs)).append("]]");
+        } catch (Exception e) {
+            log.error("Lỗi serialize JSON gợi ý trong Bot quy tắc: {}", e.getMessage());
+        }
+
         return sb.toString();
     }
+
+    @Override
+    public List<String> getDynamicWelcomeSuggestions(String sessionId) {
+        // 1. Tải ngữ cảnh sản phẩm từ cache để bám sát thực tế
+        List<ProductVariantResponse> activeVariants = getActiveVariantsCached(null);
+        String productContext = buildProductContextFromVariants(activeVariants);
+
+        // 2. Tạo prompt yêu cầu sinh mảng gợi ý bằng tiếng Việt ngắn gọn, thiết thực
+        String systemTimeContext = String.format("Thời gian hiện tại: %s. ", java.time.LocalDateTime.now().toString());
+        String prompt = String.format(
+                AiChatPrompts.WELCOME_SUGGESTIONS_PROMPT,
+                productContext, AiChatPrompts.STORE_POLICIES_CONTEXT, systemTimeContext
+        );
+
+        String jsonResult = null;
+
+        // --- Cố gắng gọi GOOGLE GEMINI ---
+        String activeGeminiKey = getApiKey();
+        boolean hasGeminiKey = activeGeminiKey != null && !activeGeminiKey.isBlank() && !"your_gemini_api_key_here".equals(activeGeminiKey);
+        if (hasGeminiKey && isModelHealthy("GEMINI")) {
+            try {
+                String apiUrl = String.format("%s/models/%s:generateContent?key=%s",
+                        geminiBaseUrl, geminiModel, activeGeminiKey);
+                jsonResult = callGeminiApi(apiUrl, prompt);
+            } catch (Exception e) {
+                log.warn("Gemini không thể sinh gợi ý chào mừng: {}", e.getMessage());
+                markModelUnhealthy("GEMINI");
+            }
+        }
+
+        // --- Cố gắng gọi OPENAI CHATGPT (Fallback thứ nhất) ---
+        if (jsonResult == null) {
+            String activeOpenAiKey = getOpenAiApiKey();
+            boolean hasOpenAiKey = activeOpenAiKey != null && !activeOpenAiKey.isBlank() && !"your_openai_api_key_here".equals(activeOpenAiKey);
+            if (hasOpenAiKey && isModelHealthy("OPENAI")) {
+                try {
+                    String apiUrl = String.format("%s/chat/completions", openAiBaseUrl);
+                    jsonResult = callOpenAiApi(apiUrl, prompt);
+                } catch (Exception e) {
+                    log.warn("OpenAI không thể sinh gợi ý chào mừng: {}", e.getMessage());
+                    markModelUnhealthy("OPENAI");
+                }
+            }
+        }
+
+        // --- Cố gắng gọi ANTHROPIC CLAUDE (Fallback thứ hai) ---
+        if (jsonResult == null) {
+            String activeClaudeKey = getClaudeApiKey();
+            boolean hasClaudeKey = activeClaudeKey != null && !activeClaudeKey.isBlank() && !"your_claude_api_key_here".equals(activeClaudeKey);
+            if (hasClaudeKey && isModelHealthy("CLAUDE")) {
+                try {
+                    String apiUrl = String.format("%s/messages", claudeBaseUrl);
+                    jsonResult = callClaudeApi(apiUrl, prompt);
+                } catch (Exception e) {
+                    log.warn("Claude không thể sinh gợi ý chào mừng: {}", e.getMessage());
+                    markModelUnhealthy("CLAUDE");
+                }
+            }
+        }
+
+        // --- Cố gắng gọi DEEPSEEK (Fallback thứ ba) ---
+        if (jsonResult == null) {
+            String activeDeepSeekKey = getDeepSeekApiKey();
+            boolean hasDeepSeekKey = activeDeepSeekKey != null && !activeDeepSeekKey.isBlank() && !"your_deepseek_api_key_here".equals(activeDeepSeekKey);
+            if (hasDeepSeekKey && isModelHealthy("DEEPSEEK")) {
+                try {
+                    String apiUrl = String.format("%s/chat/completions", deepseekBaseUrl);
+                    jsonResult = callDeepSeekApi(apiUrl, prompt);
+                } catch (Exception e) {
+                    log.warn("DeepSeek không thể sinh gợi ý chào mừng: {}", e.getMessage());
+                    markModelUnhealthy("DEEPSEEK");
+                }
+            }
+        }
+
+        // Fallback sang Local AI / Cấu trúc dữ liệu cục bộ tĩnh (Tốc độ tối đa)
+        if (jsonResult == null) {
+            log.info("Không có API AI bên thứ ba khả dụng hoặc tất cả bị ngắt mạch, sử dụng gợi ý cục bộ động...");
+            try {
+                List<String> localSuggs = new ArrayList<>();
+                localSuggs.add("Đợt giảm giá này có voucher gì không shop?");
+                localSuggs.add("Chính sách bảo hành và đổi trả giày thế nào ạ?");
+                localSuggs.add("Bên mình hỗ trợ ship COD toàn quốc không shop?");
+                
+                // Trích xuất thương hiệu ngẫu nhiên từ sản phẩm hoạt động để làm gợi ý sinh động
+                if (activeVariants != null && !activeVariants.isEmpty()) {
+                    Set<String> brands = activeVariants.stream()
+                            .map(ProductVariantResponse::getTenThuongHieu)
+                            .filter(b -> b != null && !b.isBlank())
+                            .collect(Collectors.toSet());
+                    int added = 0;
+                    for (String brand : brands) {
+                        if (added >= 2) break;
+                        localSuggs.add(String.format("Shop ơi thương hiệu %s có những mẫu nào đang bán chạy?", brand));
+                        added++;
+                    }
+                }
+                
+                if (localSuggs.size() < 5) {
+                    localSuggs.add("Mẫu giày Nike nào đang hot nhất tuần này?");
+                    localSuggs.add("Adidas có sẵn size 42 không ạ?");
+                }
+                
+                return localSuggs;
+            } catch (Exception e) {
+                log.warn("Lỗi sinh gợi ý cục bộ: {}", e.getMessage());
+            }
+        }
+
+        // Parse JSON kết quả
+        try {
+            if (jsonResult != null) {
+                String cleanJson = jsonResult.replaceAll("```json|```", "").trim();
+                int startIdx = cleanJson.indexOf('[');
+                int endIdx = cleanJson.lastIndexOf(']');
+                if (startIdx != -1 && endIdx != -1 && startIdx < endIdx) {
+                    cleanJson = cleanJson.substring(startIdx, endIdx + 1);
+                }
+                return objectMapper.readValue(cleanJson, new com.fasterxml.jackson.core.type.TypeReference<List<String>>() {});
+            }
+        } catch (Exception e) {
+            log.error("Lỗi phân tích cú pháp gợi ý chào mừng từ JSON AI: {}, Chuỗi gốc: {}", e.getMessage(), jsonResult);
+        }
+
+        // Fallback tối cao
+        return List.of(
+                "Làm thế nào để đặt hàng?",
+                "Phí vận chuyển là bao nhiêu?",
+                "Kiểm tra trạng thái đơn hàng",
+                "Có voucher giảm giá không?",
+                "Sản phẩm có bảo hành không?",
+                "Hướng dẫn thanh toán online",
+                "Liên hệ nhân viên hỗ trợ"
+        );
+    }
 }
+

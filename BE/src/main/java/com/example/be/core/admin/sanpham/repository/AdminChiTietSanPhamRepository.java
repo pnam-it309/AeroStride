@@ -21,8 +21,24 @@ public interface AdminChiTietSanPhamRepository extends ChiTietSanPhamRepository,
     @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc"})
     List<ChiTietSanPham> findBySanPhamIdAndXoaMemFalse(String sanPhamId);
  
-    @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc", "chiTietDotGiamGias", "chiTietDotGiamGias.dotGiamGia"})
+    @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc"})
     List<ChiTietSanPham> findAllByXoaMemFalse();
+
+    @org.springframework.data.jpa.repository.Query("SELECT ct FROM ChiTietSanPham ct " +
+            "JOIN ct.sanPham sp " +
+            "LEFT JOIN sp.thuongHieu th " +
+            "WHERE ct.xoaMem = false AND ct.trangThai = com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG " +
+            "AND (sp.ten LIKE %:keyword% OR th.ten LIKE %:keyword% OR :keyword IS NULL) " +
+            "AND (ct.giaBan <= :maxPrice OR :maxPrice IS NULL) " +
+            "AND (ct.giaBan >= :minPrice OR :minPrice IS NULL) " +
+            "ORDER BY ct.giaBan ASC")
+    @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "mauSac", "kichThuoc"})
+    List<ChiTietSanPham> searchVariantsForAi(
+            @org.springframework.data.repository.query.Param("keyword") String keyword,
+            @org.springframework.data.repository.query.Param("minPrice") java.math.BigDecimal minPrice,
+            @org.springframework.data.repository.query.Param("maxPrice") java.math.BigDecimal maxPrice,
+            org.springframework.data.domain.Pageable pageable
+    );
 
     Optional<ChiTietSanPham> findBySanPhamIdAndMauSacIdAndKichThuocIdAndXoaMemFalse(String sanPhamId, String mauSacId, String kichThuocId);
 

@@ -41,4 +41,40 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             ORDER BY hd.ngayTao DESC
             """)
     List<Object[]> getDonHangGanDay(PageRequest pageRequest);
+
+    // Top sản phẩm bán chạy
+    @Query("""
+           SELECT sp.ten,
+                  COALESCE(SUM(hdct.soLuong * hdct.donGia), 0),
+                  COALESCE(SUM(hdct.soLuong), 0)
+           FROM HoaDonChiTiet hdct
+           JOIN hdct.chiTietSanPham ctsp
+           JOIN ctsp.sanPham sp
+           JOIN hdct.hoaDon hd
+           WHERE CAST(hd.trangThai AS int) = 4 -- HOAN_THANH
+           AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
+           AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
+           GROUP BY sp.id, sp.ten
+           ORDER BY SUM(hdct.soLuong) DESC
+           """)
+    List<Object[]> getTopProductsData(
+            @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay, org.springframework.data.domain.Pageable pageable);
+
+    // Doanh thu theo danh mục
+    @Query("""
+           SELECT dm.ten,
+                  COALESCE(SUM(hdct.soLuong * hdct.donGia), 0)
+           FROM HoaDonChiTiet hdct
+           JOIN hdct.chiTietSanPham ctsp
+           JOIN ctsp.sanPham sp
+           JOIN sp.danhMuc dm
+           JOIN hdct.hoaDon hd
+           WHERE CAST(hd.trangThai AS int) = 4 -- HOAN_THANH
+           AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
+           AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
+           GROUP BY dm.id, dm.ten
+           ORDER BY SUM(hdct.soLuong * hdct.donGia) DESC
+           """)
+    List<Object[]> getSalesByCategoryData(
+            @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 }

@@ -39,6 +39,7 @@ public final class RoutesConstant {
     // Customer routes (Mobile/Web)
     public static final String CUSTOMER = API_PREFIX + "/customer";
     public static final String CUSTOMER_CHAT = CUSTOMER + "/chat";
+    public static final String CUSTOMER_ORDER = CUSTOMER + "/order";
 
     // Common Sub-paths (Compatibility)
     public static final String HIEN_THI = "/hien-thi";
@@ -99,6 +100,7 @@ public final class RoutesConstant {
     public static final String CONVERSATIONS = "/conversations";
     public static final String CONVERSATION_MESSAGES = "/conversations/{id}/messages";
     public static final String CONVERSATION_ACCEPT = "/conversations/{id}/accept";
+    public static final String CONVERSATION_CLOSE = "/conversations/{id}/close";
     public static final String SEND = "/send";
 
     // Lich Lam Viec specific

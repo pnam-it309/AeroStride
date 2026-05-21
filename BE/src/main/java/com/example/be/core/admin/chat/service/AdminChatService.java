@@ -15,5 +15,9 @@ public interface AdminChatService {
 
     boolean acceptConversation(String id);
 
+    boolean closeConversation(String id);
+
     void sendMessage(String conversationId, String text, String senderType, String sessionId);
+
+    List<String> getDynamicWelcomeSuggestions(String sessionId);
 }

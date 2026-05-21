@@ -2,21 +2,27 @@ package com.example.be.core.admin.sanpham.service;
 
 import com.example.be.BaseServiceTest;
 import com.example.be.core.admin.sanpham.mapper.AdminSanPhamMapper;
+import com.example.be.core.admin.sanpham.model.request.CreateProductRequest;
 import com.example.be.core.admin.sanpham.model.request.ProductVariantRequest;
 import com.example.be.core.admin.sanpham.model.request.SearchProductRequest;
+import com.example.be.core.admin.sanpham.model.request.UpdateProductRequest;
+import com.example.be.core.admin.sanpham.model.response.ProductDetailResponse;
+import com.example.be.core.admin.sanpham.repository.AdminAnhChiTietSanPhamRepository;
 import com.example.be.core.admin.sanpham.repository.AdminChiTietSanPhamRepository;
 import com.example.be.core.admin.sanpham.repository.AdminSanPhamRepository;
 import com.example.be.core.admin.sanpham.service.impl.AdminSanPhamServiceImpl;
 import com.example.be.entity.ChiTietSanPham;
 import com.example.be.entity.SanPham;
 import com.example.be.infrastructure.constants.MessageConstants;
+import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.exceptions.DuplicateResourceException;
+import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
+import com.example.be.repository.*;
 import com.example.be.utils.TestDataFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -27,9 +33,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 class AdminSanPhamServiceTest extends BaseServiceTest {
 
@@ -40,7 +45,37 @@ class AdminSanPhamServiceTest extends BaseServiceTest {
     private AdminChiTietSanPhamRepository adminChiTietSanPhamRepository;
 
     @Mock
+    private AdminAnhChiTietSanPhamRepository adminAnhChiTietSanPhamRepository;
+
+    @Mock
     private AdminSanPhamMapper adminSanPhamMapper;
+
+    @Mock
+    private ThuongHieuRepository thuongHieuRepository;
+
+    @Mock
+    private DanhMucRepository danhMucRepository;
+
+    @Mock
+    private XuatXuRepository xuatXuRepository;
+
+    @Mock
+    private MucDichChayRepository mucDichChayRepository;
+
+    @Mock
+    private CoGiayRepository coGiayRepository;
+
+    @Mock
+    private ChatLieuRepository chatLieuRepository;
+
+    @Mock
+    private DeGiayRepository deGiayRepository;
+
+    @Mock
+    private MauSacRepository mauSacRepository;
+
+    @Mock
+    private KichThuocRepository kichThuocRepository;
 
     @InjectMocks
     private AdminSanPhamServiceImpl adminSanPhamService;
@@ -63,6 +98,132 @@ class AdminSanPhamServiceTest extends BaseServiceTest {
         // Assert
         assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isZero();
+    }
+
+    @Test
+    @DisplayName("Unit Test: Should create product successfully")
+    void createProduct_Success() {
+        // Arrange
+        CreateProductRequest request = new CreateProductRequest();
+        request.setTenSanPham("New Shoes");
+        request.setIdDanhMuc("dm-1");
+        request.setIdThuongHieu("th-1");
+        request.setIdXuatXu("xx-1");
+        request.setIdMucDichChay("md-1");
+        request.setIdCoGiay("cg-1");
+        request.setIdChatLieu("cl-1");
+        request.setIdDeGiay("dg-1");
+        request.setTrangThai(TrangThai.DANG_HOAT_DONG);
+
+        when(adminSanPhamRepository.existsByMaIgnoreCaseAndXoaMemFalse(anyString())).thenReturn(false);
+        when(adminSanPhamRepository.save(any(SanPham.class))).thenAnswer(invocation -> {
+            SanPham sp = invocation.getArgument(0);
+            sp.setId("new-id");
+            return sp;
+        });
+        
+        // Mock finding the product for buildProductDetailResponse
+        SanPham mockSaved = TestDataFactory.createMockSanPham();
+        when(adminSanPhamRepository.findByIdAndXoaMemFalse("new-id")).thenReturn(Optional.of(mockSaved));
+        when(adminSanPhamMapper.toProductDetailResponse(any(), any())).thenReturn(new ProductDetailResponse());
+
+        // Act
+        var result = adminSanPhamService.createProduct(request);
+
+        // Assert
+        assertThat(result).isNotNull();
+        verify(adminSanPhamRepository).save(any(SanPham.class));
+    }
+
+    @Test
+    @DisplayName("Unit Test: Should update product successfully")
+    void updateProduct_Success() {
+        // Arrange
+        String productId = "product-1";
+        UpdateProductRequest request = new UpdateProductRequest();
+        request.setTenSanPham("Updated Name");
+        request.setTrangThai(TrangThai.DANG_HOAT_DONG);
+
+        SanPham existingProduct = TestDataFactory.createMockSanPham();
+        existingProduct.setId(productId);
+
+        when(adminSanPhamRepository.findByIdAndXoaMemFalse(productId)).thenReturn(Optional.of(existingProduct));
+        when(adminSanPhamRepository.save(any(SanPham.class))).thenReturn(existingProduct);
+        when(adminSanPhamMapper.toProductDetailResponse(any(), any())).thenReturn(new ProductDetailResponse());
+
+        // Act
+        var result = adminSanPhamService.updateProduct(productId, request);
+
+        // Assert
+        assertThat(result).isNotNull();
+        verify(adminSanPhamRepository).save(existingProduct);
+        assertThat(existingProduct.getTen()).isEqualTo("Updated Name");
+    }
+
+    @Test
+    @DisplayName("Unit Test: Should soft delete product and its variants")
+    void deleteProduct_Success() {
+        // Arrange
+        String productId = "product-1";
+        SanPham existingProduct = TestDataFactory.createMockSanPham();
+        existingProduct.setId(productId);
+
+        ChiTietSanPham variant = TestDataFactory.createMockVariant(existingProduct);
+        variant.setId("variant-1");
+
+        when(adminSanPhamRepository.findByIdAndXoaMemFalse(productId)).thenReturn(Optional.of(existingProduct));
+        when(adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalse(productId)).thenReturn(List.of(variant));
+
+        // Act
+        adminSanPhamService.deleteProduct(productId);
+
+        // Assert
+        assertThat(existingProduct.isXoaMem()).isTrue();
+        assertThat(existingProduct.getTrangThai()).isEqualTo(TrangThai.DA_XOA);
+        assertThat(variant.isXoaMem()).isTrue();
+        assertThat(variant.getTrangThai()).isEqualTo(TrangThai.DA_XOA);
+        
+        verify(adminSanPhamRepository).save(existingProduct);
+        verify(adminChiTietSanPhamRepository).save(variant);
+    }
+
+    @Test
+    @DisplayName("Unit Test: Should update status for product and its variants")
+    void updateStatus_Success() {
+        // Arrange
+        String productId = "product-1";
+        SanPham existingProduct = TestDataFactory.createMockSanPham();
+        existingProduct.setId(productId);
+        existingProduct.setTrangThai(TrangThai.DANG_HOAT_DONG);
+
+        ChiTietSanPham variant = TestDataFactory.createMockVariant(existingProduct);
+        variant.setTrangThai(TrangThai.DANG_HOAT_DONG);
+
+        when(adminSanPhamRepository.findByIdAndXoaMemFalse(productId)).thenReturn(Optional.of(existingProduct));
+        when(adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalse(productId)).thenReturn(List.of(variant));
+
+        // Act
+        adminSanPhamService.updateStatus(productId, TrangThai.NGUNG_HOAT_DONG);
+
+        // Assert
+        assertThat(existingProduct.getTrangThai()).isEqualTo(TrangThai.NGUNG_HOAT_DONG);
+        assertThat(variant.getTrangThai()).isEqualTo(TrangThai.NGUNG_HOAT_DONG);
+        
+        verify(adminSanPhamRepository).save(existingProduct);
+        verify(adminChiTietSanPhamRepository).save(variant);
+    }
+
+    @Test
+    @DisplayName("Unit Test: Should throw ResourceNotFoundException when product does not exist")
+    void getProductDetail_NotFound() {
+        // Arrange
+        String productId = "invalid-id";
+        when(adminSanPhamRepository.findByIdAndXoaMemFalse(productId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> {
+            adminSanPhamService.getProductDetail(productId);
+        });
     }
 
     @Test
@@ -121,4 +282,3 @@ class AdminSanPhamServiceTest extends BaseServiceTest {
         verify(adminChiTietSanPhamRepository, never()).save(any(ChiTietSanPham.class));
     }
 }
-
