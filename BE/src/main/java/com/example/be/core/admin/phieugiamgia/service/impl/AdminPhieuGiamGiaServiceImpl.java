@@ -151,13 +151,22 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         }
     }
 
+    private static String formatVnd(java.math.BigDecimal amount) {
+        if (amount == null) return "0";
+        return String.format("%,.0f", amount).replace(",", ".");
+    }
+
     private void sendVoucherEmail(KhachHang kh, PhieuGiamGia p) {
         Map<String, Object> variables = new HashMap<>();
         variables.put("name", kh.getTen());
         variables.put("voucherCode", p.getMa());
         variables.put("voucherName", p.getTen());
-        variables.put("discountValue", p.getPhanTramGiamGia() != null ? p.getPhanTramGiamGia() + "%" : p.getSoTienGiam() + " VNĐ");
-        variables.put("minOrder", p.getDonHangToiThieu());
+        variables.put("loaiPhieu", p.getLoaiPhieu()); // "PHAN_TRAM" hoặc "TIEN_MAT"
+        variables.put("isPhanTram", "PHAN_TRAM".equalsIgnoreCase(p.getLoaiPhieu()));
+        variables.put("discountPercent", p.getPhanTramGiamGia() != null ? p.getPhanTramGiamGia() : 0);
+        variables.put("giamToiDa", p.getGiamToiDa() != null ? formatVnd(p.getGiamToiDa()) : null);
+        variables.put("soTienGiam", p.getSoTienGiam() != null ? formatVnd(p.getSoTienGiam()) : "0");
+        variables.put("minOrder", p.getDonHangToiThieu() != null ? formatVnd(p.getDonHangToiThieu()) : "0");
 
         // Better date formatting
         java.time.Instant expiryInstant = java.time.Instant.ofEpochMilli(p.getNgayKetThuc() != null ? p.getNgayKetThuc() : System.currentTimeMillis());

@@ -6,7 +6,8 @@ import org.springframework.data.jpa.domain.Specification;
 
 public final class AdminDotGiamGiaSpecification {
 
-    private AdminDotGiamGiaSpecification() {}
+    private AdminDotGiamGiaSpecification() {
+    }
 
     public static Specification<DotGiamGia> keywordLike(String keyword) {
         return (root, query, cb) -> {

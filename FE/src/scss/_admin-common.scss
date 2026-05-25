@@ -4,6 +4,10 @@
    ========================================================================== */
 
 /* 0. SIDEBAR GLOBAL CUSTOMIZATION - PREMIUM PASTEL STYLE (STATIC) */
+.v-navigation-drawer {
+    box-shadow: 4px 0 24px -4px rgba(0, 0, 0, 0.06) !important;
+    border-right: none !important;
+}
 .v-navigation-drawer .v-list-item.sidebar-link {
     transition: none !important; /* Loại bỏ mọi hiệu ứng "chảy màu" hay chuyển động */
     margin-bottom: 4px !important;
@@ -470,9 +474,9 @@
 
 /* --- Trạng thái Đợt/Phiếu giảm giá (Timeline & Visibility) --- */
 .status-chip-upcoming {
-    background: #f0fdfa !important;
-    color: #0f766e !important;
-    .v-chip__content { color: #0f766e !important; }
+    background: #fefce8 !important;
+    color: #a16207 !important;
+    .v-chip__content { color: #a16207 !important; }
 }
 
 .status-chip-expired {
@@ -488,9 +492,9 @@
 }
 
 .status-chip-private {
-    background: #fffbeb !important;
-    color: #92400e !important;
-    .v-chip__content { color: #92400e !important; }
+    background: #faf5ff !important;
+    color: #7e22ce !important;
+    .v-chip__content { color: #7e22ce !important; }
 }
 
 /* Order Type Chips */
@@ -577,6 +581,7 @@
 
 /* 7. ADMIN TABLE & FILTER COMPONENTS (Core) */
 .admin-module-page {
+    background-color: #f1f5f9 !important;
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
@@ -601,10 +606,10 @@
     min-height: 0 !important;
     /* Remove height: 100% as it pushes pagination out in flex containers */
     background: white;
-    border: 1px solid #e2e8f0 !important;
+    border: none !important;
     border-radius: 12px !important;
     overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05) !important;
 }
 
 .table-toolbar {
@@ -643,7 +648,7 @@
         z-index: 30;
         background: #f8fafc;
         color: #1d2025 !important;
-        padding: 14px 16px !important;
+        padding: 18px 20px !important;
         font-size: 13px !important;
         font-weight: 600 !important;
         border-bottom: 2px solid #e2e8f0;
@@ -697,8 +702,9 @@
 
 .filter-card {
     background: #ffffff;
-    border: 1px solid #e2e8f0 !important;
+    border: none !important;
     border-radius: 12px !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05) !important;
     width: 100%;
 
     .v-field__input,
@@ -711,6 +717,12 @@
 
     .v-field__outline {
         --v-field-border-opacity: 0.6 !important;
+        transition: color 0.2s ease, opacity 0.2s ease;
+    }
+
+    .v-field:hover .v-field__outline {
+        --v-field-border-opacity: 0.5 !important;
+        color: #1e257c !important;
     }
 
     input::placeholder,

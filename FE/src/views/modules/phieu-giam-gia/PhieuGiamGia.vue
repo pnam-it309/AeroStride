@@ -79,7 +79,7 @@ const confirmToggleStatus = (item) => {
         color: 'warning',
         action: async () => {
             try {
-                const newS = isActiveStatus(item.trangThai) ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
+                const newS = isActiveStatus(item.trangThai) ? 'NGUNG_HOAT_DONG' : 'DANG_HOAT_DONG';
 
                 await dichVuPhieuGiamGia.thayDoiTrangThaiPhieuGiamGia(item.id, newS);
 
@@ -179,7 +179,7 @@ const getVoucherTimelineStatus = (item) => {
         };
     }
 
-    // 3. Đang diễn ra
+    // 3. Đang diễn ra nhưng bị tắt
     if (!manualActive) {
         return {
             label: 'Đã kết thúc',
@@ -199,7 +199,7 @@ const getVoucherTimelineStatus = (item) => {
         switchDisabled: false,
         chipClass: 'status-chip-active',
         isEnded: false,
-        switchTooltip: 'Chuyển đổi trạng thái'
+        switchTooltip: 'Tắt hoạt động phiếu giảm giá'
     };
 };
 
@@ -249,13 +249,15 @@ onMounted(() => loadVouchers());
                 <v-col cols="6" sm="3" md="2" class="filter-cell">
                     <div class="filter-field-label">Từ ngày</div>
                     <v-text-field ref="fromDateRef" v-model="filters.tuNgay" type="date" variant="outlined"
-                        density="compact" hide-details class="compact-input date-field" @change="handleSearch"
+                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar"
+                        @click:append-inner="openDatePicker(fromDateRef)" @change="handleSearch"
                         @input="handleSearch"></v-text-field>
                 </v-col>
                 <v-col cols="6" sm="3" md="2" class="filter-cell">
                     <div class="filter-field-label">Đến ngày</div>
                     <v-text-field ref="toDateRef" v-model="filters.denNgay" type="date" variant="outlined"
-                        density="compact" hide-details class="compact-input date-field" @change="handleSearch"
+                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar"
+                        @click:append-inner="openDatePicker(toDateRef)" @change="handleSearch"
                         @input="handleSearch"></v-text-field>
                 </v-col>
             </AdminFilter>
@@ -294,7 +296,7 @@ onMounted(() => loadVouchers());
                             {{ getHinhThucLabel(getHinhThucValue(item)) }}
                         </v-chip>
                     </td>
-                    <td class="data-cell text-left px-4">
+                    <td class="data-cell text-center">
                         <div class="text-primary text-truncate" :title="'Giảm ' + getDiscountDisplay(item)">
                             Giảm {{ getDiscountDisplay(item) }}
                         </div>
@@ -314,11 +316,11 @@ onMounted(() => loadVouchers());
                         <div class="d-inline-flex flex-column align-center" style="width: 100%; overflow: hidden">
                             <div class="text-slate-700 text-truncate" style="width: 100%"
                                 :title="'Từ: ' + formatDateTime(item.ngayBatDau)">
-                                Từ: {{ formatDateTime(item.ngayBatDau) }}
+                                <span class="text-slate-400">Từ:</span> {{ formatDateTime(item.ngayBatDau) }}
                             </div>
                             <div class="text-slate-400 text-truncate" style="width: 100%"
                                 :title="'Đến: ' + formatDateTime(item.ngayKetThuc)">
-                                Đến: {{ formatDateTime(item.ngayKetThuc) }}
+                                <span class="text-slate-300">Đến:</span> {{ formatDateTime(item.ngayKetThuc) }}
                             </div>
                         </div>
                     </td>
