@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/pnam-it309/AeroStride/compare/v1.13.1...v1.14.0) (2026-05-25)
+
+
+### Features
+
+* Add MongoDB configuration ([8044891](https://github.com/pnam-it309/AeroStride/commit/804489151304ce2d8bbcf85ea4a1cfce317ff327))
+
 ## [1.13.1](https://github.com/pnam-it309/AeroStride/compare/v1.13.0...v1.13.1) (2026-05-21)
 
 
