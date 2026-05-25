@@ -18,8 +18,19 @@
             <div style="font-size: 32px; font-weight: 800; margin-bottom: 15px; border: 2px dashed rgba(255,255,255,0.4); padding: 10px; display: inline-block;" th:text="${voucherCode}">VOUCHER-CODE</div>
             <div style="font-size: 18px; font-weight: 600;" th:text="${voucherName}">Tên Voucher</div>
             <div style="margin-top: 15px; font-size: 14px;">
-                Giảm ngay <span style="font-size: 20px; font-weight: bold;" th:text="${discountValue}">10%</span> 
-                cho đơn hàng từ <span th:text="${minOrder}">500.000đ</span>
+                <!-- Giảm theo phần trăm -->
+                <div th:if="${isPhanTram}">
+                    Giảm ngay <span style="font-size: 22px; font-weight: bold;" th:text="${discountPercent} + '%'">10%</span>
+                    <span th:if="${giamToiDa != null}">
+                        &nbsp;(tối đa <span style="font-weight: bold;" th:text="${giamToiDa} + ' VNĐ'">200.000 VNĐ</span>)
+                    </span>
+                    <br>cho đơn hàng từ <span style="font-weight: bold;" th:text="${minOrder} + ' VNĐ'">500.000 VNĐ</span>
+                </div>
+                <!-- Giảm theo số tiền cố định -->
+                <div th:unless="${isPhanTram}">
+                    Giảm ngay <span style="font-size: 22px; font-weight: bold;" th:text="${soTienGiam} + ' VNĐ'">100.000 VNĐ</span>
+                    <br>cho đơn hàng từ <span style="font-weight: bold;" th:text="${minOrder} + ' VNĐ'">500.000 VNĐ</span>
+                </div>
             </div>
         </div>
         

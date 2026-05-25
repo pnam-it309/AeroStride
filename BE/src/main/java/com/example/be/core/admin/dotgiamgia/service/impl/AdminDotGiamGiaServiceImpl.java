@@ -174,7 +174,14 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     public List<ProductVariantResponse> getAvailableVariants() {
         return chiTietSanPhamRepo.findAllByXoaMemFalse()
                 .stream()
-                .map(v -> mapper.toVariantResponse(v, List.of()))
+                .map(v -> {
+                    List<com.example.be.core.admin.sanpham.model.response.ProductVariantImageResponse> images =
+                        v.getAnhChiTietSanPhams() == null ? List.of() :
+                        v.getAnhChiTietSanPhams().stream()
+                            .map(mapper::toVariantImageResponse)
+                            .collect(Collectors.toList());
+                    return mapper.toVariantResponse(v, images);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -185,7 +192,14 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
                 .stream()
                 .map(ChiTietDotGiamGia::getChiTietSanPham)
                 .filter(v -> !Boolean.TRUE.equals(v.getXoaMem()))
-                .map(v -> mapper.toVariantResponse(v, List.of()))
+                .map(v -> {
+                    List<com.example.be.core.admin.sanpham.model.response.ProductVariantImageResponse> images =
+                        v.getAnhChiTietSanPhams() == null ? List.of() :
+                        v.getAnhChiTietSanPhams().stream()
+                            .map(mapper::toVariantImageResponse)
+                            .collect(Collectors.toList());
+                    return mapper.toVariantResponse(v, images);
+                })
                 .collect(Collectors.toList());
     }
 

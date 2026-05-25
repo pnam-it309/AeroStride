@@ -26,8 +26,6 @@ export const isActiveStatus = (status) => {
         normalized === STATUS.ACTIVE || 
         normalized === 'ACTIVE' || 
         normalized === 'HOAT_DONG' || 
-        normalized === 'NGUNG_HOAT_DONG' ||
-        normalized === 'KHONG_HOAT_DONG' ||
         normalized === '0' ||
         normalized === 'TRUE'
     );

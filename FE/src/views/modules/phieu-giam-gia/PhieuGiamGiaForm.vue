@@ -279,6 +279,9 @@ onMounted(init);
                 <v-btn icon variant="flat" @click="router.back()" class="btn-back-header">
                     <v-icon>mdi-arrow-left</v-icon>
                 </v-btn>
+                <span class="text-h5 font-weight-bold text-slate-800 text-uppercase">
+                    {{ isEditMode ? 'CẬP NHẬT PHIẾU GIẢM GIÁ' : (isDetailMode ? 'CHI TIẾT PHIẾU GIẢM GIÁ' : 'THÊM PHIẾU GIẢM GIÁ') }}
+                </span>
             </div>
             <div class="d-flex gap-3">
                 <v-btn v-if="!isViewOnly" color="primary" variant="flat"
@@ -298,141 +301,113 @@ onMounted(init);
         </v-row>
 
         <v-row v-if="!loading" class="pb-16 animate-fade-in">
-            <!-- LEFT COLUMN: Info & Values -->
-            <v-col cols="12" lg="8">
-                <!-- 1. General Identification -->
+            <!-- SINGLE CARD FORM (Image 2 style - Optimized layout) -->
+            <v-col cols="12">
                 <v-card class="filter-card elevation-0 border border-slate-200 mb-6">
                     <v-card-text class="pa-8">
-                        <div class="section-header d-flex align-center mb-6">
-                            <div class="icon-blob bg-blue-lighten-5 mr-3">
-                                <v-icon color="primary" size="18">mdi-ticket-percent</v-icon>
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin chương trình</span>
-                        </div>
                         <v-row>
+                            <!-- 1. Mã phiếu giảm giá & Tên giảm giá -->
                             <v-col cols="12" md="4">
-                                <div class="field-label">Mã phiếu giảm giá</div>
+                                <div class="field-label">Mã phiếu giảm giá <span class="text-red" v-if="!isEditMode && !isDetailMode">*</span></div>
                                 <v-text-field v-model="form.ma" readonly
-                                    :placeholder="isEditMode ? '' : 'Hệ thống tự sinh khi lưu'" variant="outlined"
+                                    :placeholder="isEditMode || isDetailMode ? '' : 'Mã sẽ được hệ thống tự động tạo...'" variant="outlined"
                                     density="compact"
                                     class="custom-input mono-font"
                                     hide-details>
                                 </v-text-field>
                             </v-col>
                             <v-col cols="12" md="8">
-                                <div class="field-label">Tên chương trình <span class="text-red">*</span></div>
+                                <div class="field-label">Tên giảm giá <span class="text-red">*</span></div>
                                 <v-text-field v-model="form.ten" :readonly="isViewOnly"
                                     placeholder="Ví dụ: Voucher Mừng Sinh Nhật..." variant="outlined"
                                     density="compact" hide-details></v-text-field>
                             </v-col>
-                            <v-col cols="12">
-                                <div class="field-label">Mô tả chi tiết</div>
-                                <v-textarea v-model="form.moTa" :readonly="isViewOnly" variant="outlined"
-                                    rows="3" placeholder="Điều kiện chương trình..." hide-details
-                                    class="custom-textarea"></v-textarea>
-                            </v-col>
-                        </v-row>
-                    </v-card-text>
-                </v-card>
 
-                <!-- 2. Value Config -->
-                <v-card class="filter-card elevation-0 border border-slate-200 mb-6">
-                    <v-card-text class="pa-8">
-                        <div class="section-header d-flex align-center mb-6">
-                            <div class="icon-blob bg-amber-lighten-5 mr-3">
-                                <v-icon color="amber-darken-3" size="18">mdi-cash-register</v-icon>
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Giá trị & Giới hạn</span>
-                        </div>
-                        <v-row>
+                            <!-- 2. Hình thức giảm, Giá trị giảm & Giảm tối đa -->
                             <v-col cols="12" md="4">
                                 <div class="field-label">Hình thức giảm</div>
-                                <v-btn-toggle v-model="form.loaiPhieu" :disabled="isViewOnly" mandatory
-                                    color="primary" variant="outlined" density="compact"
-                                    class="w-100 rounded-lg custom-toggle">
-                                    <v-btn value="TIEN_MAT" class="flex-grow-1">VNĐ</v-btn>
-                                    <v-btn value="PHAN_TRAM" class="flex-grow-1">%</v-btn>
-                                </v-btn-toggle>
+                                <v-radio-group v-model="form.loaiPhieu" inline :disabled="isViewOnly" hide-details class="mt-0 pt-0">
+                                    <v-radio label="VNĐ" value="TIEN_MAT" color="primary" class="mr-15"></v-radio>
+                                    <v-radio label="Phần trăm (%)" value="PHAN_TRAM" color="primary"></v-radio>
+                                </v-radio-group>
                             </v-col>
                             <v-col cols="12" md="4">
-                                <div class="field-label">Giá trị giảm</div>
+                                <div class="field-label">
+                                    Giá trị giảm ({{ form.loaiPhieu === 'TIEN_MAT' ? 'VNĐ' : '%' }}) <span class="text-red">*</span>
+                                </div>
                                 <v-text-field v-if="form.loaiPhieu === 'TIEN_MAT'"
-                                    v-model="formattedSoTienGiam" :readonly="isViewOnly" type="text"
-                                    suffix="VNĐ" variant="outlined" density="compact"
+                                    v-model.number="form.soTienGiam" :readonly="isViewOnly" type="number"
+                                    placeholder="0" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                                 <v-text-field v-else v-model.number="form.phanTramGiamGia"
-                                    :readonly="isViewOnly" type="number" suffix="%" variant="outlined"
+                                    :readonly="isViewOnly" type="number"
+                                    placeholder="0" variant="outlined"
                                     density="compact" hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="4">
-                                <div class="field-label">Giảm tối đa</div>
-                                <v-text-field v-model="formattedGiamToiDa" :readonly="isViewOnly"
-                                    :disabled="form.loaiPhieu === 'TIEN_MAT'" suffix="VNĐ" variant="outlined"
+                                <div class="field-label">Giảm tối đa (VNĐ)</div>
+                                <v-text-field v-model.number="form.giamToiDa" :readonly="isViewOnly"
+                                    :disabled="form.loaiPhieu === 'TIEN_MAT'"
+                                    placeholder="Không giới hạn" type="number" variant="outlined"
                                     density="compact" hide-details
                                     :class="form.loaiPhieu === 'TIEN_MAT' ? 'bg-slate-50' : ''"></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="d-flex align-center gap-4 mb-2" style="height: 24px;">
-                                    <div class="field-label mb-0">Số lượng</div>
+
+                            <!-- 3. Số lượng sử dụng, Hóa đơn tối thiểu & Loại phiếu -->
+                            <v-col cols="12" md="4">
+                                <div class="d-flex align-center justify-space-between mb-2" style="height: 24px;">
+                                    <div class="field-label mb-0">Số lượng sử dụng <span class="text-red">*</span></div>
                                     <v-switch v-model="isInfinite" :disabled="isViewOnly || form.loaiHienThi === 'CA_NHAN'" label="Vô hạn"
                                         color="primary" density="compact" hide-details
-                                        class="custom-mini-switch ml-2"></v-switch>
+                                        class="custom-mini-switch"></v-switch>
                                 </div>
                                 <v-text-field :model-value="isInfinite ? 'Vô hạn' : form.soLuong"
                                     @update:model-value="val => !isInfinite && (form.soLuong = Number(val))"
                                     :type="isInfinite ? 'text' : 'number'" :disabled="isInfinite || isViewOnly || form.loaiHienThi === 'CA_NHAN'"
                                     variant="outlined" density="compact" hide-details></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="d-flex align-center mb-2" style="height: 24px;">
-                                    <div class="field-label mb-0">Đơn tối thiểu (VNĐ)</div>
+                            <v-col cols="12" md="4">
+                                <div class="field-label" style="height: 24px; display: flex; align-items: center; margin-bottom: 8px;">
+                                    Hóa đơn tối thiểu (VNĐ) <span class="text-red">*</span>
                                 </div>
-                                <v-text-field v-model="formattedGiatriToiThieu" :readonly="isViewOnly"
-                                    type="text" placeholder="0" variant="outlined" density="compact"
+                                <v-text-field v-model.number="form.giatriToiThieu" :readonly="isViewOnly"
+                                    type="number" placeholder="0" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
-                        </v-row>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-
-            <!-- RIGHT COLUMN: Release Settings -->
-            <v-col cols="12" lg="4">
-                <v-card class="filter-card elevation-0 border border-slate-200 sticky-sidebar">
-                    <v-card-text class="pa-8">
-                        <div class="section-header d-flex align-center mb-6">
-                            <div class="icon-blob bg-emerald-lighten-5 mr-3">
-                                <v-icon color="emerald-darken-2" size="18">mdi-clock-check</v-icon>
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Cài đặt phát hành</span>
-                        </div>
-                        <v-row>
-                            <v-col cols="12">
-                                <div class="field-label">Phạm vi áp dụng</div>
-                                <v-btn-toggle v-model="form.loaiHienThi" :disabled="isViewOnly || isEditMode" mandatory
-                                    color="primary" variant="outlined" density="compact"
-                                    class="w-100 rounded-lg custom-toggle">
-                                    <v-btn value="CONG_KHAI" class="flex-grow-1">Công khai</v-btn>
-                                    <v-btn value="CA_NHAN" class="flex-grow-1">Cá nhân</v-btn>
-                                </v-btn-toggle>
-                                <div v-if="isEditMode" class="text-caption text-medium-emphasis mt-2 d-flex align-center gap-1" style="font-size: 11px !important;">
+                            <v-col cols="12" md="4">
+                                <div class="field-label" style="height: 24px; display: flex; align-items: center; margin-bottom: 8px;">Loại phiếu</div>
+                                <v-radio-group v-model="form.loaiHienThi" inline :disabled="isViewOnly || isEditMode" hide-details class="mt-0 pt-0">
+                                    <v-radio label="Công khai" value="CONG_KHAI" color="primary" class="mr-10"></v-radio>
+                                    <v-radio label="Cá nhân" value="CA_NHAN" color="primary"></v-radio>
+                                </v-radio-group>
+                                <div v-if="isEditMode" class="text-caption text-medium-emphasis mt-2 d-flex align-center gap-1" style="font-size: 11px !important; line-height: 1.2;">
                                     <v-icon size="14" color="info" class="mr-1">mdi-information</v-icon>
-                                    Không thể chuyển đổi phạm vi khi chỉnh sửa
+                                    Không thể đổi loại phiếu khi sửa
                                 </div>
                             </v-col>
-                            <v-col cols="12">
-                                <div class="field-label">Ngày bắt đầu</div>
+
+                            <!-- 4. Ngày bắt đầu & Ngày kết thúc -->
+                            <v-col cols="12" md="6">
+                                <div class="field-label">Ngày bắt đầu <span class="text-red">*</span></div>
                                 <v-text-field v-model="form.ngayBatDau" :readonly="isViewOnly"
                                     type="datetime-local" variant="outlined" density="compact"
                                     append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
                                     class="date-field" hide-details></v-text-field>
                             </v-col>
-                            <v-col cols="12">
-                                <div class="field-label">Ngày kết thúc</div>
+                            <v-col cols="12" md="6">
+                                <div class="field-label">Ngày kết thúc <span class="text-red">*</span></div>
                                 <v-text-field v-model="form.ngayKetThuc" :readonly="isViewOnly"
                                     type="datetime-local" variant="outlined" density="compact"
                                     append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
                                     class="date-field" hide-details></v-text-field>
+                            </v-col>
+
+                            <!-- 5. Mô tả phiếu giảm giá -->
+                            <v-col cols="12">
+                                <div class="field-label">Mô tả phiếu giảm giá</div>
+                                <v-textarea v-model="form.moTa" :readonly="isViewOnly" variant="outlined"
+                                    rows="5" placeholder="Nhập ghi chú hoặc điều kiện áp dụng phiếu..." hide-details
+                                    class="custom-textarea"></v-textarea>
                             </v-col>
                         </v-row>
                     </v-card-text>

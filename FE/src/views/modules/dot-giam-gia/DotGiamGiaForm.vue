@@ -356,7 +356,7 @@ const init = async () => {
             maSanPham: p.maSanPham || p.sanPhamMa || p.maSp || p.maChiTietSanPham || p.ma,
             tenSanPham: p.tenSanPham || p.tenSanPhamDayDu || p.ten,
             tenSanPhamDayDu: p.tenSanPhamDayDu || p.tenSanPham || p.ten,
-            anhMauc: p.urlAnh || (p.hinhAnh?.length > 0 ? p.hinhAnh[0].url : (p.anhMauc || 'https://via.placeholder.com/40')),
+            anhMauc: p.anhMauc || (p.images?.length > 0 ? p.images[0].duongDanAnh : null) || p.urlAnh || 'https://via.placeholder.com/40',
             color: p.tenMauSac || p.color || '--',
             kichCo: p.tenKichThuoc || p.kichCo || '--',
             thuongHieu: p.sanPham?.thuongHieu?.ten || p.tenThuongHieu || p.thuongHieu || '--',
@@ -540,7 +540,7 @@ onMounted(init);
                             <v-col cols="12" sm="4">
                                 <div class="field-label-small mb-1">Tìm kiếm sản phẩm</div>
                                 <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
-                                    placeholder="Tìm theo tên hoặc mã SKU..." variant="outlined" density="compact" hide-details
+                                    placeholder="Tìm theo mã, tên" variant="outlined" density="compact" hide-details
                                     class="compact-input"></v-text-field>
                             </v-col>
                         </AdminFilter>
@@ -641,7 +641,7 @@ onMounted(init);
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Tìm kiếm sản phẩm</div>
                                 <v-text-field v-model="detailFilters.timKiem" prepend-inner-icon="mdi-magnify"
-                                    placeholder="Tên hoặc mã..." variant="outlined" density="compact" hide-details
+                                    placeholder="Tìm theo mã, tên" variant="outlined" density="compact" hide-details
                                     class="compact-input"></v-text-field>
                             </v-col>
                             <v-col cols="12" sm="2">
