@@ -1,9 +1,9 @@
 <script setup>
 import { PATH } from '@/router/routePaths';
-import { ref, computed, onMounted, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { dichVuHoaDon } from "@/services/admin/dichVuHoaDon";
-import { useNotifications } from "@/services/notificationService";
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
+import { useNotifications } from '@/services/notificationService';
 import {
     ChevronLeftIcon, PrinterIcon, EditIcon, CalendarIcon,
     PackageIcon, UserIcon, MapPinIcon, CreditCardIcon, TruckIcon,
@@ -81,13 +81,13 @@ const filteredProducts = computed(() => {
     let items = order.value.listsHoaDonChiTiet || [];
     if (productSearch.value) {
         const s = productSearch.value.toLowerCase();
-        items = items.filter(p => 
+        items = items.filter(p =>
             (p.chiTietSanPham?.sanPham?.ten || '').toLowerCase().includes(s) ||
             (p.chiTietSanPham?.maChiTietSanPham || '').toLowerCase().includes(s)
         );
     }
     if (priceRange.value) {
-        items = items.filter(p => 
+        items = items.filter(p =>
             p.donGia >= priceRange.value[0] && p.donGia <= priceRange.value[1]
         );
     }
@@ -118,14 +118,14 @@ const confirmDialog = ref({
 // Configuration logic moved up
 
 const productColumns = [
-    { key: "hinhAnh", text: "Hình ảnh" },
-    { key: "tenSanPham", text: "Tên sản phẩm" },
-    { key: "maBienThe", text: "Mã biến thể" },
-    { key: "mauSac", text: "Màu sắc" },
-    { key: "kichThuoc", text: "Kích thước" },
-    { key: "soLuong", text: "Số lượng" },
-    { key: "donGia", text: "Đơn giá" },
-    { key: "thanhTien", text: "Thành tiền" },
+    { key: 'hinhAnh', text: 'Hình ảnh' },
+    { key: 'tenSanPham', text: 'Tên sản phẩm' },
+    { key: 'maBienThe', text: 'Mã biến thể' },
+    { key: 'mauSac', text: 'Màu sắc' },
+    { key: 'kichThuoc', text: 'Kích thước' },
+    { key: 'soLuong', text: 'Số lượng' },
+    { key: 'donGia', text: 'Đơn giá' },
+    { key: 'thanhTien', text: 'Thành tiền' }
 ];
 
 const getStatusInfo = (s) => {
@@ -175,9 +175,7 @@ const previousStatus = computed(() => {
     return prev;
 });
 
-const previousStatusMeta = computed(() =>
-    previousStatus.value === null ? null : getOrderStatusMeta(previousStatus.value)
-);
+const previousStatusMeta = computed(() => (previousStatus.value === null ? null : getOrderStatusMeta(previousStatus.value)));
 
 const getStatusTimestampMap = computed(() => {
     const map = {};
@@ -199,7 +197,7 @@ const canUpdateStatus = computed(() => order.value && getOrderStatus() !== null 
 const isOrderEditable = computed(() => order.value.trangThai === 'CHO_XAC_NHAN' || getOrderStatus() < 2);
 
 const customerName = computed(() => order.value.tenKhachHang || 'Khách lẻ');
-const orderTypeLabel = computed(() => order.value.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi');
+const orderTypeLabel = computed(() => (order.value.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi'));
 
 const orderDiscountAmount = computed(() => {
     const total = order.value.tongTien || 0;
@@ -335,17 +333,17 @@ const timelineSteps = computed(() => {
 
     // Core flow steps
     const coreSteps = [
-        { key: 0, label: "Chờ xác nhận", icon: CalendarIcon, note: "Đơn hàng mới tạo" },
-        { key: 1, label: "Đã xác nhận", icon: CircleCheckIcon, note: "Đơn hàng đã được xác nhận" },
-        { key: 2, label: "Chờ giao", icon: PackageIcon, note: "Đơn hàng chờ giao" },
-        { key: 3, label: "Đang giao", icon: TruckIcon, note: "Đơn hàng đang được giao" },
-        { key: 4, label: "Hoàn thành", icon: CheckIcon, note: "Đơn hàng đã hoàn thành" }
+        { key: 0, label: 'Chờ xác nhận', icon: CalendarIcon, note: 'Đơn hàng mới tạo' },
+        { key: 1, label: 'Đã xác nhận', icon: CircleCheckIcon, note: 'Đơn hàng đã được xác nhận' },
+        { key: 2, label: 'Chờ giao', icon: PackageIcon, note: 'Đơn hàng chờ giao' },
+        { key: 3, label: 'Đang giao', icon: TruckIcon, note: 'Đơn hàng đang được giao' },
+        { key: 4, label: 'Hoàn thành', icon: CheckIcon, note: 'Đơn hàng đã hoàn thành' }
     ];
 
     // Exception steps
     const exceptionSteps = [
-        { key: 5, label: "Đã hủy", icon: CircleXIcon, note: "Đơn hàng bị hủy" },
-        { key: 6, label: "Hoàn đơn", icon: CircleXIcon, note: "Đơn hàng đã hoàn trả" }
+        { key: 5, label: 'Đã hủy', icon: CircleXIcon, note: 'Đơn hàng bị hủy' },
+        { key: 6, label: 'Hoàn đơn', icon: CircleXIcon, note: 'Đơn hàng đã hoàn trả' }
     ];
 
     let steps = [...coreSteps];
@@ -354,27 +352,27 @@ const timelineSteps = computed(() => {
 
     // Nếu trạng thái hiện tại là Hủy hoặc Hoàn đơn, chúng ta sẽ hiển thị nó là bước cuối cùng hoặc thay thế bước tương ứng
     if (status === 5 || status === 6) {
-        const exc = exceptionSteps.find(s => s.key === status);
+        const exc = exceptionSteps.find((s) => s.key === status);
         if (exc) {
             steps = [...coreSteps.slice(0, 4), exc]; // Giữ 4 bước đầu, bước 5 là trạng thái đặc biệt
         }
     }
 
-    const currentActiveIndex = steps.findIndex(s => s.key === status);
+    const currentActiveIndex = steps.findIndex((s) => s.key === status);
 
     return steps
         .filter((_, index) => index <= currentActiveIndex)
         .map((step, index) => {
-            let state = "pending";
+            let state = 'pending';
 
             if (status === 5 || status === 6) {
-                if (index < currentActiveIndex) state = "done";
-                else if (index === currentActiveIndex) state = "active";
-                else state = "disabled";
+                if (index < currentActiveIndex) state = 'done';
+                else if (index === currentActiveIndex) state = 'active';
+                else state = 'disabled';
             } else {
-                if (index < currentActiveIndex) state = "done";
-                else if (index === currentActiveIndex) state = "active";
-                else state = "pending";
+                if (index < currentActiveIndex) state = 'done';
+                else if (index === currentActiveIndex) state = 'active';
+                else state = 'pending';
             }
 
             return {
@@ -482,7 +480,11 @@ const printInvoice = async () => {
 
         const printWindow = window.open('', '_blank', 'width=900,height=1000');
         if (!printWindow) {
-            addNotification({ title: 'Lỗi', subtitle: 'Trình duyệt đã chặn cửa sổ bật lên. Vui lòng cho phép popup để in.', color: 'warning' });
+            addNotification({
+                title: 'Lỗi',
+                subtitle: 'Trình duyệt đã chặn cửa sổ bật lên. Vui lòng cho phép popup để in.',
+                color: 'warning'
+            });
             return;
         }
 
@@ -538,7 +540,8 @@ onMounted(() => {
                         <v-icon color="primary" class="mr-2" size="20">mdi-account-tie-outline</v-icon>
                         <span>Nhân viên hỗ trợ:</span>
                         <span class="font-weight-bold ml-1 text-slate-900">
-                            {{ order.tenNhanVien ? `${order.tenNhanVien} (${order.maNhanVien || 'N/A'})` : 'Hệ thống (SYSTEM)' }}
+                            {{ order.tenNhanVien ? `${order.tenNhanVien}
+                            (${order.maNhanVien || 'N/A'})` : 'Hệ thống (SYSTEM)' }}
                         </span>
                     </div>
                 </div>
@@ -715,8 +718,7 @@ onMounted(() => {
                             <v-divider class="my-5 border-opacity-25"></v-divider>
                             <div class="summary-row pb-2">
                                 <span class="text-body-2 text-slate-800">Tổng cộng:</span>
-                                <span class="text-body-2 text-primary">{{
-                                    formatCurrency(orderTotalAmount) }}</span>
+                                <span class="text-body-2 text-primary">{{ formatCurrency(orderTotalAmount) }}</span>
                             </div>
                         </div>
                     </div>
@@ -738,8 +740,7 @@ onMounted(() => {
                     </div>
                     <v-card-text class="pa-3">
                         <div class="info-group mb-3">
-                            <div class="text-body-2 text-slate-500 mb-2">Loại đơn hàng
-                            </div>
+                            <div class="text-body-2 text-slate-500 mb-2">Loại đơn hàng</div>
                             <v-chip variant="tonal" color="primary">
                                 {{ orderTypeLabel }}
                             </v-chip>
@@ -784,14 +785,18 @@ onMounted(() => {
                                     <div class="d-flex justify-space-between align-start w-100">
                                         <div>
                                             <div class="text-body-2 text-slate-500 mb-2">Phương thức thanh toán</div>
-                                            <v-chip variant="tonal" :color="getPaymentMethodColor(pay.tenPhuongThuc)" class="px-3 py-1 font-weight-bold">
-                                                <v-icon start size="16">{{ getPaymentMethodIcon(pay.tenPhuongThuc) }}</v-icon>
-                                                {{ pay.tenPhuongThuc === 'TIEN_MAT' ? 'Tiền mặt' : pay.tenPhuongThuc === 'CHUYEN_KHOAN' ? 'Chuyển khoản Ngân hàng' : pay.tenPhuongThuc }}
+                                            <v-chip variant="tonal" :color="getPaymentMethodColor(pay.tenPhuongThuc)"
+                                                class="px-3 py-1 font-weight-bold">
+                                                <v-icon start size="16">{{ getPaymentMethodIcon(pay.tenPhuongThuc)
+                                                }}</v-icon>
+                                                {{ pay.tenPhuongThuc === 'TIEN_MAT' ? 'Tiền mặt' : pay.tenPhuongThuc ===
+                                                    'CHUYEN_KHOAN' ? 'Chuyển khoản Ngân hàng' : pay.tenPhuongThuc }}
                                             </v-chip>
                                         </div>
                                         <div class="text-right">
                                             <div class="text-body-2 text-slate-500 mb-2">Tổng tiền</div>
-                                            <div class="text-primary font-weight-bold" style="font-size: 1.1rem">{{ formatCurrency(pay.soTien) }}</div>
+                                            <div class="text-primary font-weight-bold" style="font-size: 1.1rem">{{
+                                                formatCurrency(pay.soTien) }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -801,20 +806,26 @@ onMounted(() => {
                                         <div>
                                             <div class="text-body-2 text-slate-500 mb-2">Xác nhận giao dịch</div>
                                             <div class="text-body-2 text-slate-700 d-flex align-center mb-2 mt-1">
-                                                <v-icon color="primary" class="mr-2" size="18">mdi-clock-outline</v-icon>
-                                                <span><span class="font-weight-medium">Thời gian:</span> {{ formatDate(pay.ngayTao) }}</span>
+                                                <v-icon color="primary" class="mr-2"
+                                                    size="18">mdi-clock-outline</v-icon>
+                                                <span><span class="font-weight-medium">Thời gian:</span> {{
+                                                    formatDate(pay.ngayTao) }}</span>
                                             </div>
                                             <div class="text-body-2 text-slate-700 d-flex align-center">
-                                                <v-icon color="primary" class="mr-2" size="18">mdi-account-check-outline</v-icon>
-                                                <span><span class="font-weight-medium">Người xác nhận:</span> {{ pay.nguoiXacNhan || order.tenNhanVien || 'Hệ thống' }}</span>
+                                                <v-icon color="primary" class="mr-2"
+                                                    size="18">mdi-account-check-outline</v-icon>
+                                                <span><span class="font-weight-medium">Người xác nhận:</span> {{
+                                                    pay.nguoiXacNhan || order.tenNhanVien || 'Hệ thống' }}</span>
                                             </div>
                                         </div>
                                         <div class="text-right d-flex flex-column align-end">
                                             <div class="text-body-2 text-slate-500 mb-2">Trạng thái</div>
-                                            <v-chip :color="getPaymentStatusColor(pay)" size="small" variant="flat" class="px-3 rounded-lg font-weight-bold mb-2">
+                                            <v-chip :color="getPaymentStatusColor(pay)" size="small" variant="flat"
+                                                class="px-3 rounded-lg font-weight-bold mb-2">
                                                 {{ getPaymentStatusText(pay) }}
                                             </v-chip>
-                                            <div class="text-caption text-slate-600 d-flex align-center bg-slate-50 px-2 py-1 rounded">
+                                            <div
+                                                class="text-caption text-slate-600 d-flex align-center bg-slate-50 px-2 py-1 rounded">
                                                 <v-icon size="14" class="mr-1">mdi-barcode-scan</v-icon>
                                                 Mã GD: {{ pay.maGiaoDichNgoai || 'Nội bộ' }}
                                             </div>
@@ -840,7 +851,9 @@ onMounted(() => {
             <!-- Action Buttons Card (3/12) -->
             <v-col cols="12" lg="3" class="d-flex flex-column">
                 <!-- Action Buttons Card -->
-                <v-card elevation="0" class="premium-card mb-0 pa-4 bg-white d-flex flex-column justify-center ga-3 align-stretch h-100" style="border: 1px dashed rgba(30, 37, 124, 0.3) !important; background: rgba(30, 37, 124, 0.02) !important;">
+                <v-card elevation="0"
+                    class="premium-card mb-0 pa-4 bg-white d-flex flex-column justify-center ga-3 align-stretch h-100"
+                    style="border: 1px dashed rgba(30, 37, 124, 0.3) !important; background: rgba(30, 37, 124, 0.02) !important;">
                     <div class="text-body-2 text-slate-600 font-weight-bold text-center mb-1">Thao tác đơn hàng</div>
                     <v-btn variant="flat" color="primary" class="rounded-lg px-6" height="44" @click="printInvoice">
                         <template v-slot:prepend>
@@ -866,7 +879,8 @@ onMounted(() => {
                 </div>
             </div>
 
-            <AdminFilter title="Tìm kiếm sản phẩm" class="px-4 pt-4 border-b-0" @refresh="() => { productSearch = ''; priceRange = [0, maxOrderPrice]; productPagination.page = 1; }">
+            <AdminFilter title="Tìm kiếm sản phẩm" class="px-4 pt-4 border-b-0"
+                @refresh="() => { productSearch = ''; priceRange = [0, maxOrderPrice]; productPagination.page = 1; }">
                 <v-col cols="12" md="4" class="pr-6">
                     <v-text-field v-model="productSearch" placeholder="Tìm tên, mã sản phẩm..." variant="outlined"
                         density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
@@ -883,19 +897,9 @@ onMounted(() => {
                                 {{ formatCurrency(priceRange[0]) }} – {{ formatCurrency(priceRange[1]) }}
                             </span>
                         </div>
-                        <v-range-slider
-                            v-model="priceRange"
-                            :min="0"
-                            :max="maxOrderPrice"
-                            :step="10000"
-                            hide-details
-                            color="primary"
-                            track-color="#e2e8f0"
-                            track-size="3"
-                            thumb-size="14"
-                            class="blue-range-slider"
-                            @update:modelValue="productPagination.page = 1"
-                        />
+                        <v-range-slider v-model="priceRange" :min="0" :max="maxOrderPrice" :step="10000" hide-details
+                            color="primary" track-color="#e2e8f0" track-size="3" thumb-size="14"
+                            class="blue-range-slider" @update:modelValue="productPagination.page = 1" />
                     </div>
                 </v-col>
             </AdminFilter>
@@ -906,18 +910,17 @@ onMounted(() => {
                     <tr class="hover-row">
                         <td class="py-4">
                             <v-avatar size="80" class="rounded-lg border bg-slate-50 shadow-sm">
-                                <v-img
-                                    :src="item.chiTietSanPham?.hinhAnh || 'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg'"
-                                    cover></v-img>
+                                <v-img :src="item.chiTietSanPham?.hinhAnh ||
+                                    'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg'
+                                    " cover></v-img>
                             </v-avatar>
                         </td>
                         <td class="py-4">
-                            <div class="text-slate-900 text-body-2">{{
-                                item.chiTietSanPham?.sanPham?.ten || 'N/A' }}</div>
+                            <div class="text-slate-900 text-body-2">{{ item.chiTietSanPham?.sanPham?.ten || 'N/A' }}
+                            </div>
                         </td>
                         <td class="py-4">
-                            <div class="text-primary">#{{ item.chiTietSanPham?.maChiTietSanPham
-                                || 'N/A' }}</div>
+                            <div class="text-primary">#{{ item.chiTietSanPham?.maChiTietSanPham || 'N/A' }}</div>
                         </td>
                         <td class="py-4">
                             <span class="text-slate-600">
@@ -1084,15 +1087,18 @@ onMounted(() => {
                             <v-row class="ga-3" dense>
                                 <!-- Order Status Selection -->
                                 <v-col cols="12" class="mb-2">
-                                    <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Trạng thái đơn
+                                    <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Trạng thái
+                                        đơn
                                         hàng</span>
-                                    <v-select v-model="editForm.trangThai" :items="allowedStatuses" item-title="title" item-value="value" variant="outlined" rounded="lg"
-                                        density="comfortable" hide-details></v-select>
+                                    <v-select v-model="editForm.trangThai" :items="allowedStatuses" item-title="title"
+                                        item-value="value" variant="outlined" rounded="lg" density="comfortable"
+                                        hide-details></v-select>
                                 </v-col>
 
                                 <!-- Status Update Note (Visible if status changed) -->
                                 <v-col cols="12" v-if="editForm.trangThai !== order.trangThai" class="mb-2">
-                                    <span class="text-body-2 text-warning font-weight-bold d-block mb-2">Lý do cập nhật trạng
+                                    <span class="text-body-2 text-warning font-weight-bold d-block mb-2">Lý do cập nhật
+                                        trạng
                                         thái</span>
                                     <v-text-field v-model="editForm.ghiChuTrangThai"
                                         placeholder="Nhập lý do thay đổi trạng thái..." variant="outlined" rounded="lg"
@@ -1106,15 +1112,19 @@ onMounted(() => {
                             <v-row class="ga-3" dense>
                                 <!-- Phone Field -->
                                 <v-col cols="12" class="mb-2">
-                                    <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Số điện thoại nhận hàng</span>
+                                    <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Số điện thoại
+                                        nhận
+                                        hàng</span>
                                     <v-text-field v-model="editForm.soDienThoaiNguoiNhan"
                                         placeholder="Nhập số điện thoại..." variant="outlined" rounded="lg"
-                                        density="comfortable" hide-details prepend-inner-icon="mdi-phone"></v-text-field>
+                                        density="comfortable" hide-details
+                                        prepend-inner-icon="mdi-phone"></v-text-field>
                                 </v-col>
 
                                 <!-- Address Field -->
                                 <v-col cols="12" class="mb-2">
-                                    <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Địa chỉ giao hàng</span>
+                                    <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Địa chỉ giao
+                                        hàng</span>
                                     <v-textarea v-model="editForm.diaChiNguoiNhan"
                                         placeholder="Nhập địa chỉ giao hàng chi tiết..." variant="outlined" rounded="lg"
                                         density="comfortable" hide-details rows="3"
@@ -1123,10 +1133,11 @@ onMounted(() => {
 
                                 <!-- Notes Field -->
                                 <v-col cols="12" class="mb-2">
-                                    <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Ghi chú đơn hàng</span>
+                                    <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Ghi chú đơn
+                                        hàng</span>
                                     <v-textarea v-model="editForm.ghiChu"
-                                        placeholder="Ghi chú cho shipper hoặc cửa hàng..." variant="outlined" rounded="lg"
-                                        density="comfortable" hide-details rows="2"
+                                        placeholder="Ghi chú cho shipper hoặc cửa hàng..." variant="outlined"
+                                        rounded="lg" density="comfortable" hide-details rows="2"
                                         prepend-inner-icon="mdi-note-text"></v-textarea>
                                 </v-col>
                             </v-row>
@@ -1293,8 +1304,6 @@ onMounted(() => {
         box-shadow: 0 0 0 12px rgba(30, 37, 124, 0);
     }
 }
-
-
 
 /* Timeline Animations */
 .timeline-anim-enter-active {

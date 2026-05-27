@@ -139,7 +139,3 @@ const handleCheckout = () => {
     background: #eef4ff;
 }
 </style>
-
-
-
-

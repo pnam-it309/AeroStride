@@ -14,9 +14,7 @@ const normalizeApiBaseUrl = () => {
         return sanitizedBaseUrl;
     }
 
-    return sanitizedBaseUrl.startsWith('/')
-        ? sanitizedBaseUrl
-        : `/${sanitizedBaseUrl}`;
+    return sanitizedBaseUrl.startsWith('/') ? sanitizedBaseUrl : `/${sanitizedBaseUrl}`;
 };
 
 const API_BASE_URL = normalizeApiBaseUrl();
@@ -69,7 +67,7 @@ const shouldProxyImageUrl = (value) => {
  */
 const optimizeCloudinaryUrl = (url) => {
     if (!url || !url.includes('res.cloudinary.com')) return url;
-    
+
     // Check if it's an upload URL and doesn't already have transformations
     const uploadPath = '/image/upload/';
     if (url.includes(uploadPath) && !url.includes(uploadPath + 'f_auto')) {

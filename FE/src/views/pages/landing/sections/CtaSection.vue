@@ -17,9 +17,37 @@ const props = defineProps({ active: Boolean });
 </template>
 
 <style scoped lang="scss">
-.snap-section { height: 100vh; width: 100%; scroll-snap-align: start; scroll-snap-stop: always; display: flex; align-items: center; position: relative; overflow: hidden; }
-.cta-bg { position: absolute; width: 200%; height: 200%; background: radial-gradient(circle, rgba(41, 98, 255, 0.1) 0%, transparent 60%); z-index: 0; }
-.z-index-10 { z-index: 10; }
-.animate-in-up { animation: slideInUp 0.8s ease-out both; }
-@keyframes slideInUp { from { opacity: 0; transform: translateY(100px); } to { opacity: 1; transform: translateY(0); } }
+.snap-section {
+    height: 100vh;
+    width: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+.cta-bg {
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(41, 98, 255, 0.1) 0%, transparent 60%);
+    z-index: 0;
+}
+.z-index-10 {
+    z-index: 10;
+}
+.animate-in-up {
+    animation: slideInUp 0.8s ease-out both;
+}
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 </style>

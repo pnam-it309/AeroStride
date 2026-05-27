@@ -26,7 +26,8 @@ const { addNotification } = useNotifications();
 // Helper to clean location names for better matching
 const cleanName = (s) => {
     if (!s) return '';
-    return String(s).toLowerCase()
+    return String(s)
+        .toLowerCase()
         .replace(/^(thành phố|tỉnh|quận|huyện|phường|xã|thị xã|thị trấn|tp\.?|t\.?|q\.?|h\.?|x\.?)\s+/gi, '')
         .replace(/\s+/g, ' ')
         .trim();
@@ -36,7 +37,7 @@ const loading = ref(false);
 const saving = ref(false);
 const isEditMode = ref(false);
 const isDetailView = computed(() => route.path.includes('/detail') || route.query.view === 'true');
-const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật nhân viên' : 'Thêm nhân viên');
+const submitButtonText = computed(() => (isEditMode.value ? 'Cập nhật nhân viên' : 'Thêm nhân viên'));
 const showPassword = ref(false);
 
 const employeeForm = ref({
@@ -110,16 +111,22 @@ const fetchWards = async (districtCode) => {
 };
 
 import { watch } from 'vue';
-watch(() => employeeForm.value.tinh, (newVal) => {
-    employeeForm.value.thanhPho = null;
-    employeeForm.value.phuongXa = null;
-    if (newVal) fetchDistricts(newVal);
-});
+watch(
+    () => employeeForm.value.tinh,
+    (newVal) => {
+        employeeForm.value.thanhPho = null;
+        employeeForm.value.phuongXa = null;
+        if (newVal) fetchDistricts(newVal);
+    }
+);
 
-watch(() => employeeForm.value.thanhPho, (newVal) => {
-    employeeForm.value.phuongXa = null;
-    if (newVal) fetchWards(newVal);
-});
+watch(
+    () => employeeForm.value.thanhPho,
+    (newVal) => {
+        employeeForm.value.phuongXa = null;
+        if (newVal) fetchWards(newVal);
+    }
+);
 
 // Quét QR CCCD
 const showQR = ref(false);
@@ -186,15 +193,15 @@ const loadEmployee = async (id) => {
         // Load data for selects based on names from BE
         if (data.tinh || data.thanhPho || data.phuongXa) {
             await fetchProvinces();
-            const province = provinces.value.find(p => cleanName(p.name) === cleanName(data.tinh) || p.code === data.tinh);
+            const province = provinces.value.find((p) => cleanName(p.name) === cleanName(data.tinh) || p.code === data.tinh);
             if (province) {
                 employeeForm.value.tinh = province.code;
                 await fetchDistricts(province.code);
-                const district = districts.value.find(d => cleanName(d.name) === cleanName(data.thanhPho) || d.code === data.thanhPho);
+                const district = districts.value.find((d) => cleanName(d.name) === cleanName(data.thanhPho) || d.code === data.thanhPho);
                 if (district) {
                     employeeForm.value.thanhPho = district.code;
                     await fetchWards(district.code);
-                    const ward = wards.value.find(w => cleanName(w.name) === cleanName(data.phuongXa) || w.code === data.phuongXa);
+                    const ward = wards.value.find((w) => cleanName(w.name) === cleanName(data.phuongXa) || w.code === data.phuongXa);
                     if (ward) {
                         employeeForm.value.phuongXa = ward.code;
                     }
@@ -202,22 +209,22 @@ const loadEmployee = async (id) => {
             }
         } else if (data.diaChi && data.diaChi.includes(',')) {
             // Fallback to parsing if separate fields are missing
-            const parts = data.diaChi.split(',').map(p => p.trim());
+            const parts = data.diaChi.split(',').map((p) => p.trim());
             if (parts.length >= 4) {
                 employeeForm.value.diaChiChiTiet = parts.slice(0, parts.length - 3).join(', ');
                 await fetchProvinces();
                 const pName = parts[parts.length - 1];
-                const province = provinces.value.find(p => p.name.includes(pName) || pName.includes(p.name));
+                const province = provinces.value.find((p) => p.name.includes(pName) || pName.includes(p.name));
                 if (province) {
                     employeeForm.value.tinh = province.code;
                     await fetchDistricts(province.code);
                     const dName = parts[parts.length - 2];
-                    const district = districts.value.find(d => d.name.includes(dName) || dName.includes(d.name));
+                    const district = districts.value.find((d) => d.name.includes(dName) || dName.includes(d.name));
                     if (district) {
                         employeeForm.value.thanhPho = district.code;
                         await fetchWards(district.code);
                         const wName = parts[parts.length - 3];
-                        const ward = wards.value.find(w => w.name.includes(wName) || wName.includes(w.name));
+                        const ward = wards.value.find((w) => w.name.includes(wName) || wName.includes(w.name));
                         if (ward) {
                             employeeForm.value.phuongXa = ward.code;
                         }
@@ -225,7 +232,6 @@ const loadEmployee = async (id) => {
                 }
             }
         }
-
     } catch (error) {
         console.error('Error loading employee:', error);
         addNotification({ title: 'Lỗi', subtitle: 'Không thể tải thông tin nhân viên', color: 'error' });
@@ -244,9 +250,9 @@ const handleSave = () => {
             saving.value = true;
             try {
                 // Combine address fields robustly
-                const p = provinces.value.find(x => x.code === employeeForm.value.tinh);
-                const d = districts.value.find(x => x.code === employeeForm.value.thanhPho);
-                const w = wards.value.find(x => x.code === employeeForm.value.phuongXa);
+                const p = provinces.value.find((x) => x.code === employeeForm.value.tinh);
+                const d = districts.value.find((x) => x.code === employeeForm.value.thanhPho);
+                const w = wards.value.find((x) => x.code === employeeForm.value.phuongXa);
 
                 const provinceName = p ? p.name : employeeForm.value.tinhName;
                 const districtName = d ? d.name : employeeForm.value.thanhPhoName;
@@ -444,8 +450,7 @@ onMounted(async () => {
                             <v-col cols="12" md="6">
                                 <div class="field-label">Mã nhân viên</div>
                                 <v-text-field v-model="employeeForm.ma" readonly placeholder="Hệ thống tự tạo..."
-                                    variant="outlined" density="compact"
-                                    hide-details></v-text-field>
+                                    variant="outlined" density="compact" hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Họ và tên</div>
@@ -529,7 +534,6 @@ onMounted(async () => {
                         </v-row>
                     </v-card-text>
                 </v-card>
-
             </v-col>
 
             <v-col cols="12" lg="4">
@@ -691,7 +695,9 @@ onMounted(async () => {
 
 .avatar-hover:hover {
     transform: translateY(-2px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
 }
 
 .upload-overlay {

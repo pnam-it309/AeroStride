@@ -6,7 +6,7 @@ export default createVuetify({
     theme: {
         defaultTheme: 'BLUE_THEME',
         themes: {
-            BLUE_THEME,
+            BLUE_THEME
         }
     },
     defaults: {

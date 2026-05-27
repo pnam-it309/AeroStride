@@ -60,10 +60,10 @@ const loadData = async () => {
         if (scheduleRes.data.success) {
             items.value = scheduleRes.data.data;
         }
-        
+
         if (shiftRes.data.success) {
             rawShifts.value = shiftRes.data.data;
-            shiftOptions.value = ['Tất cả', ...shiftRes.data.data.map(s => s.tenCa)];
+            shiftOptions.value = ['Tất cả', ...shiftRes.data.data.map((s) => s.tenCa)];
         }
 
         if (empRes.data.success) {
@@ -72,7 +72,7 @@ const loadData = async () => {
             // Loại bỏ trùng lặp theo ID
             const uniqueEmp = [];
             const seenIds = new Set();
-            content.forEach(emp => {
+            content.forEach((emp) => {
                 if (emp.id && !seenIds.has(emp.id)) {
                     uniqueEmp.push(emp);
                     seenIds.add(emp.id);
@@ -194,7 +194,7 @@ const currentMonth = ref(new Date());
 const daysInMonth = computed(() => {
     const year = currentMonth.value.getFullYear();
     const month = currentMonth.value.getMonth();
-    
+
     if (viewMode.value === 'month') {
         const firstDay = new Date(year, month, 1).getDay();
         const days = new Date(year, month + 1, 0).getDate();
@@ -205,7 +205,7 @@ const daysInMonth = computed(() => {
         }
         for (let i = 1; i <= days; i++) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-            const schedules = items.value.filter(s => s.ngay === dateStr);
+            const schedules = items.value.filter((s) => s.ngay === dateStr);
             result.push({ day: i, date: dateStr, schedules });
         }
         return result;
@@ -215,12 +215,12 @@ const daysInMonth = computed(() => {
         const dayOfWeek = today.getDay() || 7; // 1-7
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - dayOfWeek + 1);
-        
+
         for (let i = 0; i < 7; i++) {
             const d = new Date(startOfWeek);
             d.setDate(d.getDate() + i);
             const dateStr = d.toISOString().substr(0, 10);
-            const schedules = items.value.filter(s => s.ngay === dateStr);
+            const schedules = items.value.filter((s) => s.ngay === dateStr);
             result.push({ day: d.getDate(), date: dateStr, schedules });
         }
         return result;
@@ -256,7 +256,7 @@ onMounted(() => {
 <template>
     <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <AdminBreadcrumbs :items="breadcrumbs" />
-        
+
         <div class="mb-2"></div>
 
         <div class="filter-shell">
@@ -319,11 +319,7 @@ onMounted(() => {
                         </td>
                         <td class="data-cell">{{ item.ngay }}</td>
                         <td class="data-cell">
-                            <v-chip
-                                size="small"
-                                :color="item.trangThai === 'DA_XAC_NHAN' ? 'success' : 'warning'"
-                                variant="flat"
-                            >
+                            <v-chip size="small" :color="item.trangThai === 'DA_XAC_NHAN' ? 'success' : 'warning'" variant="flat">
                                 {{ item.trangThai === 'DA_XAC_NHAN' ? 'Đã xác nhận' : 'Chờ xác nhận' }}
                             </v-chip>
                         </td>
@@ -367,8 +363,12 @@ onMounted(() => {
                 <div class="d-flex align-center justify-center mb-4">
                     <div class="d-flex align-center gap-4">
                         <v-btn icon="mdi-chevron-left" variant="text" @click="prevPeriod"></v-btn>
-                        <div class="text-subtitle-1 font-weight-black text-primary px-4" style="min-width: 180px; text-align: center;">
-                            {{ viewMode === 'month' ? `Tháng ${currentMonth.getMonth() + 1} / ${currentMonth.getFullYear()}` : `Tuần ngày ${currentMonth.getDate()}/${currentMonth.getMonth()+1}` }}
+                        <div class="text-subtitle-1 font-weight-black text-primary px-4" style="min-width: 180px; text-align: center">
+                            {{
+                                viewMode === 'month'
+                                    ? `Tháng ${currentMonth.getMonth() + 1} / ${currentMonth.getFullYear()}`
+                                    : `Tuần ngày ${currentMonth.getDate()}/${currentMonth.getMonth() + 1}`
+                            }}
                         </div>
                         <v-btn icon="mdi-chevron-right" variant="text" @click="nextPeriod"></v-btn>
                     </div>
@@ -381,10 +381,13 @@ onMounted(() => {
                         </div>
                     </div>
                     <div class="calendar-grid-body">
-                        <div v-for="(dayObj, idx) in daysInMonth" :key="idx" 
+                        <div
+                            v-for="(dayObj, idx) in daysInMonth"
+                            :key="idx"
                             class="calendar-day-cell clickable-day"
                             :class="{ 'empty-cell': !dayObj.day, 'today-cell': dayObj.date === new Date().toISOString().substr(0, 10) }"
-                            @click="handleDayClick(dayObj)">
+                            @click="handleDayClick(dayObj)"
+                        >
                             <div v-if="dayObj.day" class="d-flex justify-space-between align-center mb-1">
                                 <span class="day-number">{{ dayObj.day }}</span>
                             </div>
@@ -425,23 +428,13 @@ onMounted(() => {
                                 hide-details
                             >
                                 <template v-slot:item="{ props, item }">
-                                    <v-list-item 
-                                        v-bind="props" 
-                                        :title="item.raw.tenNhanVien"
-                                        :subtitle="item.raw.maNhanVien"
-                                    ></v-list-item>
+                                    <v-list-item v-bind="props" :title="item.raw.tenNhanVien" :subtitle="item.raw.maNhanVien"></v-list-item>
                                 </template>
                             </v-autocomplete>
                         </v-col>
                         <v-col cols="12" md="6">
                             <div class="filter-field-label">Ngày làm</div>
-                            <v-text-field
-                                v-model="addForm.ngay"
-                                type="date"
-                                variant="outlined"
-                                density="compact"
-                                hide-details
-                            />
+                            <v-text-field v-model="addForm.ngay" type="date" variant="outlined" density="compact" hide-details />
                         </v-col>
                         <v-col cols="12" md="6">
                             <div class="filter-field-label">Ca làm</div>
@@ -475,7 +468,7 @@ onMounted(() => {
                     <v-spacer></v-spacer>
                     <v-btn icon="mdi-close" variant="text" color="white" @click="showImportPreview = false"></v-btn>
                 </div>
-                
+
                 <v-card-text class="pa-4">
                     <v-alert type="info" variant="tonal" density="compact" class="mb-4 text-caption rounded-lg">
                         Vui lòng kiểm tra kỹ danh sách bên dưới trước khi xác nhận lưu vào hệ thống.
@@ -567,7 +560,7 @@ onMounted(() => {
 .clickable-day:hover {
     border-color: #1e257c;
     background-color: #f8fbff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     transform: translateY(-2px);
 }
 
@@ -624,8 +617,12 @@ onMounted(() => {
     color: #334155;
 }
 
-.bg-success { background-color: #22c55e !important; }
-.bg-warning { background-color: #eab308 !important; }
+.bg-success {
+    background-color: #22c55e !important;
+}
+.bg-warning {
+    background-color: #eab308 !important;
+}
 
 .preview-table-wrapper {
     max-height: 400px;

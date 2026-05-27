@@ -20,11 +20,16 @@ const emit = defineEmits(['refresh', 'search']);
             <v-row dense align="end" class="filter-grid">
                 <!-- Các ô filter -->
                 <slot></slot>
-                
+
                 <!-- Nút làm mới - quay lại row -->
                 <v-col cols="auto" class="filter-reset-col ml-auto align-self-end pb-1">
-                    <v-btn variant="outlined" color="primary" class="reset-btn" :disabled="loading || isRefreshing"
-                        @click="emit('refresh')">
+                    <v-btn
+                        variant="outlined"
+                        color="primary"
+                        class="reset-btn"
+                        :disabled="loading || isRefreshing"
+                        @click="emit('refresh')"
+                    >
                         <v-icon size="18">
                             {{ isRefreshing ? 'mdi-loading' : 'mdi-refresh' }}
                         </v-icon>
@@ -49,7 +54,11 @@ const emit = defineEmits(['refresh', 'search']);
     animation: filter-spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 @keyframes filter-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 </style>

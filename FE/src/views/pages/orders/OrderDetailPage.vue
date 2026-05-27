@@ -14,23 +14,23 @@ const cancelLoading = ref(false);
 const showCancelDialog = ref(false);
 
 const statusColorMap = {
-    'CHO_XAC_NHAN': 'orange',
-    'XAC_NHAN': 'blue',
-    'CHO_GIAO': 'cyan',
-    'DANG_GIAO': 'indigo',
-    'HOAN_THANH': 'green',
-    'DA_HUY': 'red',
-    'HOAN_DON': 'grey',
+    CHO_XAC_NHAN: 'orange',
+    XAC_NHAN: 'blue',
+    CHO_GIAO: 'cyan',
+    DANG_GIAO: 'indigo',
+    HOAN_THANH: 'green',
+    DA_HUY: 'red',
+    HOAN_DON: 'grey'
 };
 
 const statusIconMap = {
-    'CHO_XAC_NHAN': 'mdi-clock-outline',
-    'XAC_NHAN': 'mdi-check-circle-outline',
-    'CHO_GIAO': 'mdi-package-variant',
-    'DANG_GIAO': 'mdi-truck-delivery-outline',
-    'HOAN_THANH': 'mdi-check-decagram',
-    'DA_HUY': 'mdi-close-circle-outline',
-    'HOAN_DON': 'mdi-undo-variant',
+    CHO_XAC_NHAN: 'mdi-clock-outline',
+    XAC_NHAN: 'mdi-check-circle-outline',
+    CHO_GIAO: 'mdi-package-variant',
+    DANG_GIAO: 'mdi-truck-delivery-outline',
+    HOAN_THANH: 'mdi-check-decagram',
+    DA_HUY: 'mdi-close-circle-outline',
+    HOAN_DON: 'mdi-undo-variant'
 };
 
 const formatPrice = (price) => {
@@ -41,8 +41,11 @@ const formatPrice = (price) => {
 const formatDate = (timestamp) => {
     if (!timestamp) return '';
     return new Intl.DateTimeFormat('vi-VN', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
     }).format(new Date(timestamp));
 };
 
@@ -81,7 +84,7 @@ onMounted(() => fetchOrder());
 <template>
     <div class="order-detail-page bg-grey-lighten-4 min-vh-100">
         <MainHeader />
-        <div class="header-spacing" style="height: 104px;"></div>
+        <div class="header-spacing" style="height: 104px"></div>
 
         <v-container class="py-10" style="max-width: 900px">
             <!-- Back Button -->
@@ -213,7 +216,10 @@ onMounted(() => fetchOrder());
                             </div>
                             <div class="d-flex justify-space-between mb-2">
                                 <span class="text-body-2 text-grey-darken-1">Phí vận chuyển</span>
-                                <span class="text-body-2 font-weight-bold" :class="{ 'text-green': !order.phiVanChuyen || order.phiVanChuyen == 0 }">
+                                <span
+                                    class="text-body-2 font-weight-bold"
+                                    :class="{ 'text-green': !order.phiVanChuyen || order.phiVanChuyen == 0 }"
+                                >
                                     {{ !order.phiVanChuyen || order.phiVanChuyen == 0 ? 'Miễn phí' : formatPrice(order.phiVanChuyen) }}
                                 </span>
                             </div>
@@ -248,13 +254,22 @@ onMounted(() => fetchOrder());
                 <div class="text-center mb-4">
                     <v-icon size="56" color="red-lighten-1" class="mb-4">mdi-alert-circle-outline</v-icon>
                     <h3 class="text-h6 font-weight-black mb-2">Hủy đơn hàng?</h3>
-                    <p class="text-body-2 text-grey">Bạn có chắc chắn muốn hủy đơn hàng <strong>{{ order?.maHoaDon }}</strong>? Thao tác này không thể hoàn tác.</p>
+                    <p class="text-body-2 text-grey">
+                        Bạn có chắc chắn muốn hủy đơn hàng <strong>{{ order?.maHoaDon }}</strong
+                        >? Thao tác này không thể hoàn tác.
+                    </p>
                 </div>
                 <div class="d-flex gap-3 justify-center">
                     <v-btn variant="outlined" rounded="pill" class="font-weight-bold text-none px-8" @click="showCancelDialog = false">
                         Quay lại
                     </v-btn>
-                    <v-btn color="red" rounded="pill" class="font-weight-bold text-none px-8" :loading="cancelLoading" @click="handleCancel">
+                    <v-btn
+                        color="red"
+                        rounded="pill"
+                        class="font-weight-bold text-none px-8"
+                        :loading="cancelLoading"
+                        @click="handleCancel"
+                    >
                         Xác nhận hủy
                     </v-btn>
                 </div>
@@ -303,5 +318,7 @@ onMounted(() => fetchOrder());
     }
 }
 
-.min-vh-100 { min-height: 100vh; }
+.min-vh-100 {
+    min-height: 100vh;
+}
 </style>

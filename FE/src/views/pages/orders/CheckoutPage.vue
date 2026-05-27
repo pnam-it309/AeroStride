@@ -24,7 +24,7 @@ const shippingInfo = ref({
     tinhThanh: '',
     quanHuyen: '',
     phuongXa: '',
-    diaChi: '',
+    diaChi: ''
 });
 
 const paymentMethod = ref('COD');
@@ -37,19 +37,69 @@ const showVoucherDialog = ref(false);
 
 // Provinces data (simple hardcoded for now, can be replaced with GHN API)
 const provinces = ref([
-    'Hà Nội', 'TP. Hồ Chí Minh', 'Đà Nẵng', 'Hải Phòng', 'Cần Thơ',
-    'An Giang', 'Bà Rịa - Vũng Tàu', 'Bắc Giang', 'Bắc Kạn', 'Bạc Liêu',
-    'Bắc Ninh', 'Bến Tre', 'Bình Định', 'Bình Dương', 'Bình Phước',
-    'Bình Thuận', 'Cà Mau', 'Cao Bằng', 'Đắk Lắk', 'Đắk Nông',
-    'Điện Biên', 'Đồng Nai', 'Đồng Tháp', 'Gia Lai', 'Hà Giang',
-    'Hà Nam', 'Hà Tĩnh', 'Hải Dương', 'Hậu Giang', 'Hòa Bình',
-    'Hưng Yên', 'Khánh Hòa', 'Kiên Giang', 'Kon Tum', 'Lai Châu',
-    'Lâm Đồng', 'Lạng Sơn', 'Lào Cai', 'Long An', 'Nam Định',
-    'Nghệ An', 'Ninh Bình', 'Ninh Thuận', 'Phú Thọ', 'Phú Yên',
-    'Quảng Bình', 'Quảng Nam', 'Quảng Ngãi', 'Quảng Ninh', 'Quảng Trị',
-    'Sóc Trăng', 'Sơn La', 'Tây Ninh', 'Thái Bình', 'Thái Nguyên',
-    'Thanh Hóa', 'Thừa Thiên Huế', 'Tiền Giang', 'Trà Vinh', 'Tuyên Quang',
-    'Vĩnh Long', 'Vĩnh Phúc', 'Yên Bái'
+    'Hà Nội',
+    'TP. Hồ Chí Minh',
+    'Đà Nẵng',
+    'Hải Phòng',
+    'Cần Thơ',
+    'An Giang',
+    'Bà Rịa - Vũng Tàu',
+    'Bắc Giang',
+    'Bắc Kạn',
+    'Bạc Liêu',
+    'Bắc Ninh',
+    'Bến Tre',
+    'Bình Định',
+    'Bình Dương',
+    'Bình Phước',
+    'Bình Thuận',
+    'Cà Mau',
+    'Cao Bằng',
+    'Đắk Lắk',
+    'Đắk Nông',
+    'Điện Biên',
+    'Đồng Nai',
+    'Đồng Tháp',
+    'Gia Lai',
+    'Hà Giang',
+    'Hà Nam',
+    'Hà Tĩnh',
+    'Hải Dương',
+    'Hậu Giang',
+    'Hòa Bình',
+    'Hưng Yên',
+    'Khánh Hòa',
+    'Kiên Giang',
+    'Kon Tum',
+    'Lai Châu',
+    'Lâm Đồng',
+    'Lạng Sơn',
+    'Lào Cai',
+    'Long An',
+    'Nam Định',
+    'Nghệ An',
+    'Ninh Bình',
+    'Ninh Thuận',
+    'Phú Thọ',
+    'Phú Yên',
+    'Quảng Bình',
+    'Quảng Nam',
+    'Quảng Ngãi',
+    'Quảng Ninh',
+    'Quảng Trị',
+    'Sóc Trăng',
+    'Sơn La',
+    'Tây Ninh',
+    'Thái Bình',
+    'Thái Nguyên',
+    'Thanh Hóa',
+    'Thừa Thiên Huế',
+    'Tiền Giang',
+    'Trà Vinh',
+    'Tuyên Quang',
+    'Vĩnh Long',
+    'Vĩnh Phúc',
+    'Yên Bái'
 ]);
 
 const formatPrice = (price) => {
@@ -68,7 +118,7 @@ const voucherDiscount = computed(() => {
     if (!selectedVoucher.value) return 0;
     const v = selectedVoucher.value;
     if (v.loaiPhieu === 'PHAN_TRAM' && v.phanTramGiamGia) {
-        let discount = cartStore.cartTotal * v.phanTramGiamGia / 100;
+        let discount = (cartStore.cartTotal * v.phanTramGiamGia) / 100;
         if (v.giamToiDa && discount > v.giamToiDa) discount = v.giamToiDa;
         return Math.floor(discount);
     }
@@ -82,10 +132,12 @@ const totalAmount = computed(() => {
 
 // Validation
 const isShippingValid = computed(() => {
-    return shippingInfo.value.tenNguoiNhan.trim() &&
-           shippingInfo.value.soDienThoai.trim() &&
-           shippingInfo.value.tinhThanh &&
-           shippingInfo.value.diaChi.trim();
+    return (
+        shippingInfo.value.tenNguoiNhan.trim() &&
+        shippingInfo.value.soDienThoai.trim() &&
+        shippingInfo.value.tinhThanh &&
+        shippingInfo.value.diaChi.trim()
+    );
 });
 
 // Fetch vouchers
@@ -114,7 +166,7 @@ const handleCheckout = async () => {
     loading.value = true;
     try {
         const checkoutData = {
-            items: cartStore.cartItems.map(item => ({
+            items: cartStore.cartItems.map((item) => ({
                 idChiTietSanPham: item.idChiTietSanPham,
                 soLuong: item.soLuong
             })),
@@ -154,7 +206,7 @@ onMounted(() => {
 <template>
     <div class="checkout-page bg-grey-lighten-4 min-vh-100">
         <MainHeader />
-        <div class="header-spacing" style="height: 104px;"></div>
+        <div class="header-spacing" style="height: 104px"></div>
 
         <v-container class="py-10" style="max-width: 1200px">
             <!-- Breadcrumb -->
@@ -179,7 +231,11 @@ onMounted(() => {
                             <span class="step-label">Giao hàng</span>
                         </div>
                         <div class="step-line" :class="{ active: step > 1 }"></div>
-                        <div class="step-indicator" :class="{ active: step >= 2, completed: step > 2 }" @click="step >= 2 ? step = 2 : null">
+                        <div
+                            class="step-indicator"
+                            :class="{ active: step >= 2, completed: step > 2 }"
+                            @click="step >= 2 ? (step = 2) : null"
+                        >
                             <div class="step-circle">
                                 <v-icon v-if="step > 2" size="18">mdi-check</v-icon>
                                 <span v-else>2</span>
@@ -196,7 +252,7 @@ onMounted(() => {
                     <!-- Step 1: Shipping Info -->
                     <v-card v-if="step === 1" class="checkout-card rounded-xl pa-8" elevation="0">
                         <h2 class="text-h5 font-weight-black mb-6">Thông tin giao hàng</h2>
-                        
+
                         <v-row>
                             <v-col cols="12" sm="6">
                                 <v-text-field
@@ -205,7 +261,7 @@ onMounted(() => {
                                     variant="outlined"
                                     density="comfortable"
                                     hide-details="auto"
-                                    :rules="[v => !!v || 'Vui lòng nhập tên']"
+                                    :rules="[(v) => !!v || 'Vui lòng nhập tên']"
                                 ></v-text-field>
                             </v-col>
                             <v-col cols="12" sm="6">
@@ -215,7 +271,7 @@ onMounted(() => {
                                     variant="outlined"
                                     density="comfortable"
                                     hide-details="auto"
-                                    :rules="[v => !!v || 'Vui lòng nhập SĐT']"
+                                    :rules="[(v) => !!v || 'Vui lòng nhập SĐT']"
                                 ></v-text-field>
                             </v-col>
                             <v-col cols="12" sm="6">
@@ -253,7 +309,7 @@ onMounted(() => {
                                     variant="outlined"
                                     density="comfortable"
                                     hide-details="auto"
-                                    :rules="[v => !!v || 'Vui lòng nhập địa chỉ']"
+                                    :rules="[(v) => !!v || 'Vui lòng nhập địa chỉ']"
                                 ></v-text-field>
                             </v-col>
                             <v-col cols="12">
@@ -323,13 +379,7 @@ onMounted(() => {
                             <v-btn variant="text" class="font-weight-bold text-none" @click="step = 1">
                                 <v-icon class="mr-2">mdi-arrow-left</v-icon> Quay lại
                             </v-btn>
-                            <v-btn
-                                color="black"
-                                rounded="pill"
-                                size="large"
-                                class="font-weight-black text-none px-10"
-                                @click="step = 3"
-                            >
+                            <v-btn color="black" rounded="pill" size="large" class="font-weight-black text-none px-10" @click="step = 3">
                                 Tiếp tục
                                 <v-icon class="ml-2">mdi-arrow-right</v-icon>
                             </v-btn>
@@ -347,10 +397,17 @@ onMounted(() => {
                                     <v-icon class="mr-2" size="20" color="green">mdi-map-marker-check</v-icon>
                                     Thông tin giao hàng
                                 </h4>
-                                <v-btn variant="text" size="small" class="text-none font-weight-bold" color="blue" @click="step = 1">Sửa</v-btn>
+                                <v-btn variant="text" size="small" class="text-none font-weight-bold" color="blue" @click="step = 1"
+                                    >Sửa</v-btn
+                                >
                             </div>
-                            <p class="text-body-2"><strong>{{ shippingInfo.tenNguoiNhan }}</strong> · {{ shippingInfo.soDienThoai }}</p>
-                            <p class="text-body-2 text-grey-darken-1">{{ shippingInfo.diaChi }}, {{ shippingInfo.phuongXa }} {{ shippingInfo.quanHuyen }} {{ shippingInfo.tinhThanh }}</p>
+                            <p class="text-body-2">
+                                <strong>{{ shippingInfo.tenNguoiNhan }}</strong> · {{ shippingInfo.soDienThoai }}
+                            </p>
+                            <p class="text-body-2 text-grey-darken-1">
+                                {{ shippingInfo.diaChi }}, {{ shippingInfo.phuongXa }} {{ shippingInfo.quanHuyen }}
+                                {{ shippingInfo.tinhThanh }}
+                            </p>
                         </div>
 
                         <!-- Payment Summary -->
@@ -360,7 +417,9 @@ onMounted(() => {
                                     <v-icon class="mr-2" size="20" color="blue">mdi-credit-card-check</v-icon>
                                     Phương thức thanh toán
                                 </h4>
-                                <v-btn variant="text" size="small" class="text-none font-weight-bold" color="blue" @click="step = 2">Sửa</v-btn>
+                                <v-btn variant="text" size="small" class="text-none font-weight-bold" color="blue" @click="step = 2"
+                                    >Sửa</v-btn
+                                >
                             </div>
                             <p class="text-body-2 font-weight-bold">{{ paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng' : 'VNPay' }}</p>
                         </div>
@@ -371,7 +430,11 @@ onMounted(() => {
                                 <v-icon class="mr-2" size="20" color="orange">mdi-package-variant</v-icon>
                                 Sản phẩm ({{ cartStore.cartCount }})
                             </h4>
-                            <div v-for="item in cartStore.cartItems" :key="item.idChiTietSanPham" class="review-item d-flex align-center gap-4 py-3">
+                            <div
+                                v-for="item in cartStore.cartItems"
+                                :key="item.idChiTietSanPham"
+                                class="review-item d-flex align-center gap-4 py-3"
+                            >
                                 <div class="review-item-img">
                                     <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover width="60" height="60" class="rounded-lg"></v-img>
                                     <div v-else class="img-placeholder rounded-lg">
@@ -380,7 +443,9 @@ onMounted(() => {
                                 </div>
                                 <div class="flex-grow-1">
                                     <p class="text-body-2 font-weight-bold mb-0">{{ item.tenSanPham }}</p>
-                                    <p class="text-caption text-grey">{{ item.tenMauSac }} / {{ item.tenKichThuoc }} · x{{ item.soLuong }}</p>
+                                    <p class="text-caption text-grey">
+                                        {{ item.tenMauSac }} / {{ item.tenKichThuoc }} · x{{ item.soLuong }}
+                                    </p>
                                 </div>
                                 <span class="text-body-2 font-weight-black">{{ formatPrice(item.giaBan * item.soLuong) }}</span>
                             </div>
@@ -413,7 +478,11 @@ onMounted(() => {
 
                             <!-- Cart Items (compact) -->
                             <div class="summary-items mb-6">
-                                <div v-for="item in cartStore.cartItems" :key="item.idChiTietSanPham" class="summary-item d-flex justify-space-between py-2">
+                                <div
+                                    v-for="item in cartStore.cartItems"
+                                    :key="item.idChiTietSanPham"
+                                    class="summary-item d-flex justify-space-between py-2"
+                                >
                                     <div class="d-flex align-center gap-2">
                                         <span class="text-body-2 text-grey-darken-1">{{ item.tenSanPham }}</span>
                                         <v-chip size="x-small" variant="tonal">x{{ item.soLuong }}</v-chip>
@@ -426,11 +495,16 @@ onMounted(() => {
 
                             <!-- Voucher -->
                             <div class="voucher-section mb-4">
-                                <div v-if="selectedVoucher" class="voucher-applied d-flex align-center justify-space-between pa-3 rounded-lg">
+                                <div
+                                    v-if="selectedVoucher"
+                                    class="voucher-applied d-flex align-center justify-space-between pa-3 rounded-lg"
+                                >
                                     <div class="d-flex align-center gap-2">
                                         <v-icon size="20" color="green">mdi-ticket-percent</v-icon>
                                         <div>
-                                            <span class="text-body-2 font-weight-bold">{{ selectedVoucher.ten || selectedVoucher.ma }}</span>
+                                            <span class="text-body-2 font-weight-bold">{{
+                                                selectedVoucher.ten || selectedVoucher.ma
+                                            }}</span>
                                             <p class="text-caption text-green-darken-2 mb-0">-{{ formatPrice(voucherDiscount) }}</p>
                                         </div>
                                     </div>
@@ -466,7 +540,9 @@ onMounted(() => {
                                 </div>
                                 <div v-if="voucherDiscount > 0" class="d-flex justify-space-between mb-3">
                                     <span class="text-body-2 text-green-darken-2">Giảm giá voucher</span>
-                                    <span class="text-body-2 font-weight-bold text-green-darken-2">-{{ formatPrice(voucherDiscount) }}</span>
+                                    <span class="text-body-2 font-weight-bold text-green-darken-2"
+                                        >-{{ formatPrice(voucherDiscount) }}</span
+                                    >
                                 </div>
                             </div>
 
@@ -510,7 +586,7 @@ onMounted(() => {
                             v-for="v in availableVouchers"
                             :key="v.id"
                             class="voucher-item d-flex align-center pa-4 rounded-xl mb-3"
-                            :class="{ 'selected': selectedVoucher?.id === v.id }"
+                            :class="{ selected: selectedVoucher?.id === v.id }"
                             @click="selectVoucher(v)"
                         >
                             <div class="voucher-icon mr-4">
@@ -519,7 +595,9 @@ onMounted(() => {
                             <div class="flex-grow-1">
                                 <h4 class="text-body-2 font-weight-black">{{ v.ten || v.ma }}</h4>
                                 <p class="text-caption text-grey mb-0">
-                                    <span v-if="v.loaiPhieu === 'PHAN_TRAM'">Giảm {{ v.phanTramGiamGia }}%{{ v.giamToiDa ? ` (tối đa ${formatPrice(v.giamToiDa)})` : '' }}</span>
+                                    <span v-if="v.loaiPhieu === 'PHAN_TRAM'"
+                                        >Giảm {{ v.phanTramGiamGia }}%{{ v.giamToiDa ? ` (tối đa ${formatPrice(v.giamToiDa)})` : '' }}</span
+                                    >
                                     <span v-else>Giảm {{ formatPrice(v.soTienGiam) }}</span>
                                     <span v-if="v.donHangToiThieu"> · Đơn tối thiểu {{ formatPrice(v.donHangToiThieu) }}</span>
                                 </p>
@@ -546,7 +624,9 @@ onMounted(() => {
     font-size: 0.85rem;
     font-weight: 600;
     color: #757575;
-    &:hover { color: #111; }
+    &:hover {
+        color: #111;
+    }
 }
 
 /* Step Indicators */
@@ -580,12 +660,20 @@ onMounted(() => {
         }
 
         &.active {
-            .step-circle { background: #111; color: #fff; }
-            .step-label { color: #111; }
+            .step-circle {
+                background: #111;
+                color: #fff;
+            }
+            .step-label {
+                color: #111;
+            }
         }
 
         &.completed {
-            .step-circle { background: #4CAF50; color: #fff; }
+            .step-circle {
+                background: #4caf50;
+                color: #fff;
+            }
         }
     }
 
@@ -594,7 +682,9 @@ onMounted(() => {
         height: 2px;
         background: #e0e0e0;
         transition: background 0.3s ease;
-        &.active { background: #4CAF50; }
+        &.active {
+            background: #4caf50;
+        }
     }
 }
 
@@ -609,8 +699,13 @@ onMounted(() => {
     border: 2px solid #f0f0f0;
     cursor: pointer;
     transition: all 0.3s ease;
-    &:hover { border-color: #bbb; }
-    &.selected { border-color: #111; background: #fafafa; }
+    &:hover {
+        border-color: #bbb;
+    }
+    &.selected {
+        border-color: #111;
+        background: #fafafa;
+    }
 }
 
 /* Review Section */
@@ -648,26 +743,34 @@ onMounted(() => {
 .voucher-btn {
     border-color: #e0e0e0;
     border-style: dashed;
-    &:hover { border-color: #111; }
+    &:hover {
+        border-color: #111;
+    }
 }
 
 .voucher-applied {
-    background: #E8F5E9;
-    border: 1px solid #C8E6C9;
+    background: #e8f5e9;
+    border: 1px solid #c8e6c9;
 }
 
 .voucher-item {
     border: 1px solid #f0f0f0;
     cursor: pointer;
     transition: all 0.2s ease;
-    &:hover { border-color: #bbb; background: #fafafa; }
-    &.selected { border-color: #4CAF50; background: #E8F5E9; }
+    &:hover {
+        border-color: #bbb;
+        background: #fafafa;
+    }
+    &.selected {
+        border-color: #4caf50;
+        background: #e8f5e9;
+    }
 }
 
 .voucher-icon {
     width: 48px;
     height: 48px;
-    background: #FFF3E0;
+    background: #fff3e0;
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -681,5 +784,7 @@ onMounted(() => {
     letter-spacing: 0.5px;
 }
 
-.min-vh-100 { min-height: 100vh; }
+.min-vh-100 {
+    min-height: 100vh;
+}
 </style>

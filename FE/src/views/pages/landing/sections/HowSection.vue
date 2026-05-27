@@ -200,9 +200,19 @@ onUnmounted(() => {
                         </div>
 
                         <div class="stage-3d">
-                            <div :key="currentIndex" class="shoe-container-3d" :style="{ transform: `rotateX(${rotationX}deg) rotateY(${rotationY}deg) rotateZ(${rotationZ}deg)` }">
+                            <div
+                                :key="currentIndex"
+                                class="shoe-container-3d"
+                                :style="{ transform: `rotateX(${rotationX}deg) rotateY(${rotationY}deg) rotateZ(${rotationZ}deg)` }"
+                            >
                                 <div class="shoe-wrapper">
-                                    <v-img v-if="activeProduct.image" :src="activeProduct.image" class="shoe-img" contain loading="lazy"></v-img>
+                                    <v-img
+                                        v-if="activeProduct.image"
+                                        :src="activeProduct.image"
+                                        class="shoe-img"
+                                        contain
+                                        loading="lazy"
+                                    ></v-img>
                                     <div class="shoe-glow"></div>
                                 </div>
 
@@ -232,10 +242,17 @@ onUnmounted(() => {
 
                             <div class="nav-controls mt-10">
                                 <div class="page-num">
-                                    <span class="current">{{ currentIndex + 1 }}</span><span class="total"> / {{ products.length }}</span>
+                                    <span class="current">{{ currentIndex + 1 }}</span
+                                    ><span class="total"> / {{ products.length }}</span>
                                 </div>
                                 <div class="nav-btns">
-                                    <v-btn icon="mdi-chevron-left" variant="outlined" rounded="lg" class="mr-2" @click="prevProduct"></v-btn>
+                                    <v-btn
+                                        icon="mdi-chevron-left"
+                                        variant="outlined"
+                                        rounded="lg"
+                                        class="mr-2"
+                                        @click="prevProduct"
+                                    ></v-btn>
                                     <v-btn icon="mdi-chevron-right" variant="flat" color="black" rounded="lg" @click="nextProduct"></v-btn>
                                 </div>
                             </div>
@@ -266,8 +283,12 @@ onUnmounted(() => {
     font-family: 'Inter', sans-serif;
 }
 
-.relative { position: relative; }
-.z-10 { z-index: 10; }
+.relative {
+    position: relative;
+}
+.z-10 {
+    z-index: 10;
+}
 
 .hud-background {
     position: absolute;
@@ -279,7 +300,7 @@ onUnmounted(() => {
         left: 0;
         width: 100%;
         height: 1px;
-        background: linear-gradient(to right, transparent, rgba(0,0,0,0.05), transparent);
+        background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.05), transparent);
     }
 
     .circles {
@@ -289,15 +310,26 @@ onUnmounted(() => {
         transform: translate(-50%, -50%);
         .circle {
             border-radius: 50%;
-            border: 1px dashed rgba(0,0,0,0.05);
+            border: 1px dashed rgba(0, 0, 0, 0.05);
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
         }
-        .c1 { width: 400px; height: 400px; }
-        .c2 { width: 600px; height: 600px; animation: rotate 30s linear infinite; }
-        .c3 { width: 800px; height: 800px; animation: rotate 50s linear infinite reverse; }
+        .c1 {
+            width: 400px;
+            height: 400px;
+        }
+        .c2 {
+            width: 600px;
+            height: 600px;
+            animation: rotate 30s linear infinite;
+        }
+        .c3 {
+            width: 800px;
+            height: 800px;
+            animation: rotate 50s linear infinite reverse;
+        }
     }
 }
 
@@ -323,7 +355,7 @@ onUnmounted(() => {
 .shoe-wrapper {
     position: relative;
     transform-style: preserve-3d;
-    filter: drop-shadow(0 30px 60px rgba(0,0,0,0.15));
+    filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.15));
 }
 
 .shoe-img {
@@ -337,9 +369,24 @@ onUnmounted(() => {
     width: 100%;
     height: 100%;
     transform-style: preserve-3d;
-    .h-ring { position: absolute; border: 1px solid rgba(41, 98, 255, 0.2); border-radius: 50%; top: 50%; left: 50%; }
-    .r1 { width: 500px; height: 500px; transform: translate(-50%, -50%) rotateX(90deg); }
-    .r2 { width: 550px; height: 550px; transform: translate(-50%, -50%) rotateY(90deg); border-style: dashed; }
+    .h-ring {
+        position: absolute;
+        border: 1px solid rgba(41, 98, 255, 0.2);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+    }
+    .r1 {
+        width: 500px;
+        height: 500px;
+        transform: translate(-50%, -50%) rotateX(90deg);
+    }
+    .r2 {
+        width: 550px;
+        height: 550px;
+        transform: translate(-50%, -50%) rotateY(90deg);
+        border-style: dashed;
+    }
 }
 
 .ground-shadow {
@@ -349,43 +396,91 @@ onUnmounted(() => {
     transform: translateX(-50%);
     width: 300px;
     height: 60px;
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.1) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.1) 0%, transparent 70%);
     filter: blur(10px);
 }
 
 .hud-box {
     background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(0,0,0,0.08);
+    border: 1px solid rgba(0, 0, 0, 0.08);
     padding: 20px;
     border-radius: 4px;
     opacity: 0;
     transform: translateX(-30px);
     transition: all 0.8s ease;
-    &.active { opacity: 1; transform: translateX(0); }
-    .box-header { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 900; color: #666; margin-bottom: 18px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px; text-transform: uppercase; }
+    &.active {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    .box-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.75rem;
+        font-weight: 900;
+        color: #666;
+        margin-bottom: 18px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding-bottom: 10px;
+        text-transform: uppercase;
+    }
 }
 .spec-row {
     display: flex;
     align-items: center;
     margin-bottom: 10px;
     font-size: 0.85rem;
-    .label { color: #999; font-weight: 700; }
-    .dots { border-bottom: 1px dotted rgba(0,0,0,0.1); margin: 0 10px; height: 12px; }
-    .value { font-weight: 900; color: #000; font-family: monospace; }
+    .label {
+        color: #999;
+        font-weight: 700;
+    }
+    .dots {
+        border-bottom: 1px dotted rgba(0, 0, 0, 0.1);
+        margin: 0 10px;
+        height: 12px;
+    }
+    .value {
+        font-weight: 900;
+        color: #000;
+        font-family: monospace;
+    }
 }
 
 .main-hud-ring {
     position: absolute;
     width: 550px;
     height: 550px;
-    .ring { position: absolute; border-radius: 50%; border: 1px solid rgba(0,0,0,0.05); top: 50%; left: 50%; transform: translate(-50%, -50%); }
-    .outer { width: 100%; height: 100%; border-style: double; border-width: 4px; }
-    .inner { width: 85%; height: 85%; border-style: dashed; }
+    .ring {
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .outer {
+        width: 100%;
+        height: 100%;
+        border-style: double;
+        border-width: 4px;
+    }
+    .inner {
+        width: 85%;
+        height: 85%;
+        border-style: dashed;
+    }
     .compass {
         position: absolute;
         width: 100%;
         height: 100%;
-        .tick { position: absolute; width: 2px; height: 15px; background: rgba(0,0,0,0.1); left: 50%; transform-origin: 0 275px; }
+        .tick {
+            position: absolute;
+            width: 2px;
+            height: 15px;
+            background: rgba(0, 0, 0, 0.1);
+            left: 50%;
+            transform-origin: 0 275px;
+        }
     }
 }
 
@@ -397,8 +492,19 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     gap: 10px;
-    .text { font-size: 0.65rem; font-weight: 900; color: #999; letter-spacing: 3px; }
-    .pulse-dot { width: 8px; height: 8px; background: #2962FF; border-radius: 50%; animation: pulse 1.5s infinite; }
+    .text {
+        font-size: 0.65rem;
+        font-weight: 900;
+        color: #999;
+        letter-spacing: 3px;
+    }
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background: #2962ff;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+    }
 }
 
 .lore-content {
@@ -406,7 +512,10 @@ onUnmounted(() => {
         opacity: 0;
         transform: translateX(30px);
         transition: all 0.8s ease;
-        &.active { opacity: 1; transform: translateX(0); }
+        &.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
     }
     .category {
         display: flex;
@@ -417,23 +526,44 @@ onUnmounted(() => {
         color: #666;
         letter-spacing: 2px;
         margin-bottom: 20px;
-        .dot { width: 4px; height: 4px; background: #000; }
+        .dot {
+            width: 4px;
+            height: 4px;
+            background: #000;
+        }
     }
-    .title { font-size: 3.2rem; font-weight: 950; color: #000; line-height: 1; margin-bottom: 24px; letter-spacing: -2px; }
-    .description { font-size: 1rem; color: #444; line-height: 1.8; font-weight: 500; min-height: 100px; }
+    .title {
+        font-size: 3.2rem;
+        font-weight: 950;
+        color: #000;
+        line-height: 1;
+        margin-bottom: 24px;
+        letter-spacing: -2px;
+    }
+    .description {
+        font-size: 1rem;
+        color: #444;
+        line-height: 1.8;
+        font-weight: 500;
+        min-height: 100px;
+    }
 }
 
 .nav-controls {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-top: 1px solid rgba(0,0,0,0.1);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
     padding-top: 30px;
     .page-num {
         font-size: 1.2rem;
         font-weight: 900;
-        .current { color: #000; }
-        .total { color: #ccc; }
+        .current {
+            color: #000;
+        }
+        .total {
+            color: #ccc;
+        }
     }
 }
 
@@ -449,14 +579,40 @@ onUnmounted(() => {
     font-size: 0.65rem;
     letter-spacing: 1px;
     z-index: 20;
-    .bar-item { margin-right: 30px; display: flex; align-items: center; gap: 5px; opacity: 0.6; }
+    .bar-item {
+        margin-right: 30px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        opacity: 0.6;
+    }
 }
 
-@keyframes rotate { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
-@keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+@keyframes rotate {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
 
 @media (max-width: 960px) {
-    .tech-hud { display: none; }
-    .stage-3d { width: 100%; }
+    .tech-hud {
+        display: none;
+    }
+    .stage-3d {
+        width: 100%;
+    }
 }
 </style>

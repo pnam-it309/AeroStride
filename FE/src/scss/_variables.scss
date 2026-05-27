@@ -18,45 +18,107 @@
 
     // 👉 Typography System (Regular weights for a modern feel)
     $typography: (
-        'h1': ('size': 2.25rem, 'weight': 600, 'line-height': 2.75rem, 'font-family': inherit),
-        'h2': ('size': 1.875rem, 'weight': 600, 'line-height': 2.25rem, 'font-family': inherit),
-        'h3': ('size': 1.5rem, 'weight': 500, 'line-height': 2rem, 'font-family': inherit),
-        'h4': ('size': 1.25rem, 'weight': 500, 'line-height': 1.6rem, 'font-family': inherit),
-        'h5': ('size': 1.125rem, 'weight': 500, 'line-height': 1.6rem, 'font-family': inherit),
-        
-        // Tiêu đề: 18px - Chuyển sang 500 (Medium) thay vì 600
-        'h6': ('size': 1.125rem, 'weight': 500, 'line-height': 1.2rem, 'font-family': inherit),
-        'subtitle-1': ('size': 1.125rem, 'weight': 500, 'font-family': inherit),
-        'subtitle-2': ('size': 0.875rem, 'weight': 400, 'font-family': inherit),
-        
-        // Chữ trong dữ liệu: 13px - Chuyển toàn bộ về 400 (Regular)
-        'body-1': ('size': 0.8125rem, 'weight': 400, 'font-family': inherit),
-        'body-2': ('size': 0.8125rem, 'weight': 400, 'font-family': inherit),
-        
-        // Nút bấm: 16px - Chuyển về 500
-        'button': ('size': 1rem, 'weight': 500, 'font-family': inherit, 'text-transform': none),
-        
-        'caption': ('size': 0.75rem, 'weight': 400, 'font-family': inherit),
-        'overline': ('size': 0.75rem, 'weight': 500, 'font-family': inherit, 'text-transform': uppercase)
-    ) !default,
+            'h1': (
+                'size': 2.25rem,
+                'weight': 600,
+                'line-height': 2.75rem,
+                'font-family': inherit
+            ),
+            'h2': (
+                'size': 1.875rem,
+                'weight': 600,
+                'line-height': 2.25rem,
+                'font-family': inherit
+            ),
+            'h3': (
+                'size': 1.5rem,
+                'weight': 500,
+                'line-height': 2rem,
+                'font-family': inherit
+            ),
+            'h4': (
+                'size': 1.25rem,
+                'weight': 500,
+                'line-height': 1.6rem,
+                'font-family': inherit
+            ),
+            'h5': (
+                'size': 1.125rem,
+                'weight': 500,
+                'line-height': 1.6rem,
+                'font-family': inherit
+            ),
+            // Tiêu đề: 18px - Chuyển sang 500 (Medium) thay vì 600
+            'h6': (
+                    'size': 1.125rem,
+                    'weight': 500,
+                    'line-height': 1.2rem,
+                    'font-family': inherit
+                ),
+            'subtitle-1': (
+                'size': 1.125rem,
+                'weight': 500,
+                'font-family': inherit
+            ),
+            'subtitle-2': (
+                'size': 0.875rem,
+                'weight': 400,
+                'font-family': inherit
+            ),
+            // Chữ trong dữ liệu: 13px - Chuyển toàn bộ về 400 (Regular)
+            'body-1': (
+                    'size': 0.8125rem,
+                    'weight': 400,
+                    'font-family': inherit
+                ),
+            'body-2': (
+                'size': 0.8125rem,
+                'weight': 400,
+                'font-family': inherit
+            ),
+            // Nút bấm: 16px - Chuyển về 500
+            'button': (
+                    'size': 1rem,
+                    'weight': 500,
+                    'font-family': inherit,
+                    'text-transform': none
+                ),
+            'caption': (
+                'size': 0.75rem,
+                'weight': 400,
+                'font-family': inherit
+            ),
+            'overline': (
+                'size': 0.75rem,
+                'weight': 500,
+                'font-family': inherit,
+                'text-transform': uppercase
+            )
+        )
+        !default,
 
     // 👉 Button Styling
     $button-border-radius: $border-radius-root !default,
     $button-text-letter-spacing: 0 !default,
     $button-text-transform: none,
-    $button-elevation: ('default': 0, 'hover': 2, 'active': 4) !default,
+    $button-elevation: (
+        'default': 0,
+        'hover': 2,
+        'active': 4
+    )
+    !default,
 
     // 👉 Radius System
     $rounded: (
-        0: 0,
-        'sm': $border-radius-root * 0.5,
-        null: $border-radius-root,
-        'md': $border-radius-root * 1,
-        'lg': $border-radius-root + 3,
-        'xl': $border-radius-root + 11,
-        'pill': 9999px,
-        'circle': 50%
-    ),
+            0: 0,
+            'sm': $border-radius-root * 0.5,
+            null: $border-radius-root,
+            'md': $border-radius-root * 1,
+            'lg': $border-radius-root + 3,
+            'xl': $border-radius-root + 11,
+            'pill': 9999px,
+            'circle': 50%
+        ),
 
     // 👉 Card Styling
     $card-elevation: 2 !default,

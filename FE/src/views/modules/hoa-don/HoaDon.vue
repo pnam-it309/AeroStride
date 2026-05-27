@@ -55,8 +55,8 @@ const {
         ...(nTrangThai !== null ? { trangThai: nTrangThai } : {})
     };
     const res = await dichVuHoaDon.layHoaDonPhanTrang(params);
-    await loadCounts(); 
-    
+    await loadCounts();
+
     // Trả về đúng cấu trúc kèm tổng số bản ghi để hiển thị các nút phân trang
     return {
         content: Array.isArray(res) ? res : (res?.data || res?.content || []),
@@ -90,7 +90,7 @@ const showOrderDetailDialog = ref(false);
 const selectedOrder = ref(null);
 
 const tableHeaders = [
-    { text: 'STT',align: 'center', width: '50px' },
+    { text: 'STT', align: 'center', width: '50px' },
     { text: 'Mã hóa đơn', width: '100px' },
     { text: 'Khách hàng', width: '130px' },
     { text: 'Mã nhân viên', width: '110px' },
@@ -123,8 +123,6 @@ const loadCounts = async () => {
         console.error('Error counts:', e);
     }
 };
-
-
 
 const handleRefresh = async () => {
     isRefreshing.value = true;
@@ -159,8 +157,6 @@ const handleExport = async () => {
         console.error('Lỗi xuất Excel:', error);
     }
 };
-
-
 
 const getRowNumber = (index) => (pagination.value.page - 1) * pagination.value.size + index + 1;
 
@@ -223,7 +219,6 @@ const handlePrint = async (orderId) => {
     }
 };
 
-
 const getStatusMeta = (s) => getOrderStatusMeta(s);
 
 const viewOrderDetail = (order) => {
@@ -236,12 +231,10 @@ onMounted(() => loadOrders());
 <template>
     <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <!-- Breadcrumbs -->
-        <AdminBreadcrumbs
-            :items="[
-                { title: 'Quản lý bán hàng', disabled: false, href: '#' },
-                { title: 'Hóa đơn', disabled: true }
-            ]"
-        />
+        <AdminBreadcrumbs :items="[
+            { title: 'Quản lý bán hàng', disabled: false, href: '#' },
+            { title: 'Hóa đơn', disabled: true }
+        ]" />
 
         <div class="mb-2"></div>
 
@@ -249,106 +242,55 @@ onMounted(() => loadOrders());
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <v-col cols="12" md="4">
                     <div class="filter-field-label">Tìm kiếm</div>
-                    <v-text-field
-                        v-model="filters.search"
-                        placeholder="Tìm theo mã hóa đơn / khách hàng"
-                        persistent-placeholder
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        prepend-inner-icon="mdi-magnify"
-                        class="compact-input search-field"
-                        @input="handleSearch"
-                    ></v-text-field>
+                    <v-text-field v-model="filters.search" placeholder="Tìm theo mã hóa đơn / khách hàng"
+                        persistent-placeholder variant="outlined" density="compact" hide-details
+                        prepend-inner-icon="mdi-magnify" class="compact-input search-field"
+                        @input="handleSearch"></v-text-field>
                 </v-col>
 
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Loại đơn</div>
-                    <v-select
-                        v-model="filters.loaiDon"
-                        :items="ORDER_TYPE_OPTIONS"
-                        item-title="title"
-                        item-value="value"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        class="compact-input loai-don-field"
-                        @update:model-value="handleSearch"
-                    ></v-select>
+                    <v-select v-model="filters.loaiDon" :items="ORDER_TYPE_OPTIONS" item-title="title"
+                        item-value="value" variant="outlined" density="compact" hide-details
+                        class="compact-input loai-don-field" @update:model-value="handleSearch"></v-select>
                 </v-col>
 
 
 
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Từ ngày</div>
-                    <v-text-field
-                        ref="fromDateFieldRef"
-                        v-model="filters.fromDate"
-                        type="date"
-                        variant="outlined"
-                        density="compact"
-                        class="compact-input date-field"
-                        append-inner-icon="mdi-calendar-month-outline"
-                        hide-details
-                        @click:append-inner="openFromDatePicker"
-                        @input="handleSearch"
-                    ></v-text-field>
+                    <v-text-field ref="fromDateFieldRef" v-model="filters.fromDate" type="date" variant="outlined"
+                        density="compact" class="compact-input date-field"
+                        append-inner-icon="mdi-calendar-month-outline" hide-details
+                        @click:append-inner="openFromDatePicker" @input="handleSearch"></v-text-field>
                 </v-col>
 
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Đến ngày</div>
-                    <v-text-field
-                        ref="toDateFieldRef"
-                        v-model="filters.toDate"
-                        type="date"
-                        variant="outlined"
-                        density="compact"
-                        class="compact-input date-field"
-                        append-inner-icon="mdi-calendar-month-outline"
-                        hide-details
-                        @click:append-inner="openToDatePicker"
-                        @input="handleSearch"
-                    ></v-text-field>
+                    <v-text-field ref="toDateFieldRef" v-model="filters.toDate" type="date" variant="outlined"
+                        density="compact" class="compact-input date-field"
+                        append-inner-icon="mdi-calendar-month-outline" hide-details
+                        @click:append-inner="openToDatePicker" @input="handleSearch"></v-text-field>
                 </v-col>
             </AdminFilter>
         </div>
 
-        <AdminTable
-            class="balanced-table"
-            title="Danh sách hóa đơn"
-            :showAddButton="false"
-            show-export-button
-            :headers="tableHeaders"
-            :items="orders"
-            :total-count="pagination.totalElements"
-            :loading="loading"
-            @export="handleExport"
-        >
+        <AdminTable class="balanced-table" title="Danh sách hóa đơn" :showAddButton="false" show-export-button
+            :headers="tableHeaders" :items="orders" :total-count="pagination.totalElements" :loading="loading"
+            @export="handleExport">
             <template #extra-actions>
-                <v-btn
-                    icon
-                    variant="tonal"
-                    color="primary"
-                    class="rounded-md mr-3"
-                    size="36"
-                    @click="filters.sortDirection = filters.sortDirection === 'DESC' ? 'ASC' : 'DESC'; handleSearch()"
-                >
-                    <v-icon size="20">{{ filters.sortDirection === 'DESC' ? 'mdi-sort-clock-descending-outline' : 'mdi-sort-clock-ascending-outline' }}</v-icon>
+                <v-btn icon variant="tonal" color="primary" class="rounded-md mr-3" size="36"
+                    @click="filters.sortDirection = filters.sortDirection === 'DESC' ? 'ASC' : 'DESC'; handleSearch()">
+                    <v-icon size="20">{{ filters.sortDirection === 'DESC' ? 'mdi-sort-clock-descending-outline' :
+                        'mdi-sort-clock-ascending-outline' }}</v-icon>
                     <v-tooltip activator="parent" location="top">
                         {{ filters.sortDirection === 'DESC' ? 'Đang sắp xếp: Mới nhất' : 'Đang sắp xếp: Cũ nhất' }}
                     </v-tooltip>
                 </v-btn>
             </template>
             <template #top>
-                <v-tabs
-                    v-model="filters.trangThai"
-                    bg-color="transparent"
-                    color="primary"
-                    grow
-                    class="equal-tabs admin-tabs"
-                    @update:model-value="handleTabChange"
-                    height="54"
-                >
+                <v-tabs v-model="filters.trangThai" bg-color="transparent" color="primary" grow
+                    class="equal-tabs admin-tabs" @update:model-value="handleTabChange" height="54">
                     <v-tab :value="TAB_ALL" class="text-none px-2 tab-item">
                         <v-icon start size="16">mdi-view-grid-outline</v-icon>
                         Tất cả
@@ -393,24 +335,25 @@ onMounted(() => loadOrders());
                     </td>
 
                     <td class="data-cell">
-                        <div class="text-truncate" :title="item.tenKhachHang || 'Khách vãng lai'">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
+                        <div class="text-truncate" :title="item.tenKhachHang || 'Khách vãng lai'">
+                            {{ item.tenKhachHang || 'Khách vãng lai' }}
+                        </div>
                     </td>
 
                     <td class="data-cell text-center">
-                        <div class="text-truncate" :title="item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống'">
+                        <div class="text-truncate"
+                            :title="item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống'">
                             {{ item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống' }}
                         </div>
                     </td>
 
                     <td class="data-cell text-center">
-                        <div class="text-truncate" :title="item.soDienThoai || 'N/A'">{{ item.soDienThoai || 'N/A' }}</div>
+                        <div class="text-truncate" :title="item.soDienThoai || 'N/A'">{{ item.soDienThoai || 'N/A' }}
+                        </div>
                     </td>
 
                     <td class="data-cell">
-                        <v-chip
-                            :class="['status-chip', getOrderTypeClass(item.loaiDon)]"
-                            variant="flat"
-                        >
+                        <v-chip :class="['status-chip', getOrderTypeClass(item.loaiDon)]" variant="flat">
                             {{ getOrderTypeLabel(item.loaiDon) }}
                         </v-chip>
                     </td>
@@ -423,10 +366,7 @@ onMounted(() => loadOrders());
 
                     <td class="data-cell status-cell">
                         <template v-if="getStatusMeta(item.trangThai)">
-                            <v-chip
-                                :class="['status-chip', getStatusMeta(item.trangThai).chipClass]"
-                                variant="flat"
-                            >
+                            <v-chip :class="['status-chip', getStatusMeta(item.trangThai).chipClass]" variant="flat">
                                 <v-icon start size="16">{{ getStatusMeta(item.trangThai).icon }}</v-icon>
                                 {{ getStatusMeta(item.trangThai).text }}
                             </v-chip>
@@ -436,18 +376,10 @@ onMounted(() => loadOrders());
                         </template>
                     </td>
 
-
-
                     <td class="data-cell action-cell">
                         <div class="d-flex align-center justify-center action-group action-controls">
-                            <v-btn
-                                icon
-                                variant="text"
-                                size="28"
-                                color="slate-600"
-                                class="rounded-lg action-icon-btn"
-                                @click.stop="viewOrderDetail(item)"
-                            >
+                            <v-btn icon variant="text" size="28" color="slate-600" class="rounded-lg action-icon-btn"
+                                @click.stop="viewOrderDetail(item)">
                                 <component :is="ADMIN_ICONS.ACTION.VIEW" size="15" />
                                 <v-tooltip activator="parent" location="top">Xem chi tiết</v-tooltip>
                             </v-btn>
@@ -457,16 +389,10 @@ onMounted(() => loadOrders());
             </template>
 
             <template #pagination>
-                <AdminPagination
-                    v-model="pagination.page"
-                    :page-size="pagination.size"
-                    @update:pageSize="pagination.size = $event"
-                    @update:page-size="pagination.size = $event"
-                    :total-pages="pagination.totalPages"
-                    :total-elements="pagination.totalElements"
-                    :current-size="orders.length"
-                    @change="loadOrders"
-                />
+                <AdminPagination v-model="pagination.page" :page-size="pagination.size"
+                    @update:pageSize="pagination.size = $event" @update:page-size="pagination.size = $event"
+                    :total-pages="pagination.totalPages" :total-elements="pagination.totalElements"
+                    :current-size="orders.length" @change="loadOrders" />
             </template>
         </AdminTable>
 
@@ -478,11 +404,8 @@ onMounted(() => loadOrders());
                         <ReceiptIcon size="24" class="mr-3 text-primary" />
                         <span class="font-weight-medium">Chi tiết hóa đơn #{{ selectedOrder.maHoaDon }}</span>
                     </div>
-                    <v-chip
-                        v-if="getStatusMeta(selectedOrder.trangThai)"
-                        :class="['px-6 status-chip', getStatusMeta(selectedOrder.trangThai).chipClass]"
-                        variant="flat"
-                    >
+                    <v-chip v-if="getStatusMeta(selectedOrder.trangThai)"
+                        :class="['px-6 status-chip', getStatusMeta(selectedOrder.trangThai).chipClass]" variant="flat">
                         <v-icon start size="18">{{ getStatusMeta(selectedOrder.trangThai).icon }}</v-icon>
                         {{ getStatusMeta(selectedOrder.trangThai).text }}
                     </v-chip>
@@ -492,20 +415,25 @@ onMounted(() => loadOrders());
                 <v-card-text class="pa-6">
                     <v-row class="mb-6">
                         <v-col cols="12" md="6">
-                            <div class="text-overline text-medium-emphasis font-weight-medium mb-2">Thông tin khách hàng</div>
+                            <div class="text-overline text-medium-emphasis font-weight-medium mb-2">Thông tin khách hàng
+                            </div>
                             <p class="mb-1 text-subtitle-1">
-                                Họ tên: <span class="font-weight-medium">{{ selectedOrder.tenKhachHang || 'Khách lẻ' }}</span>
+                                Họ tên: <span class="font-weight-medium">{{ selectedOrder.tenKhachHang || 'Khách lẻ'
+                                    }}</span>
                             </p>
                             <p class="text-subtitle-1">
                                 Số điện thoại: <span class="font-weight-medium">{{ selectedOrder.soDienThoai }}</span>
                             </p>
                         </v-col>
                         <v-col cols="12" md="6">
-                            <div class="text-overline text-medium-emphasis font-weight-medium mb-2">Thông tin thanh toán</div>
+                            <div class="text-overline text-medium-emphasis font-weight-medium mb-2">Thông tin thanh toán
+                            </div>
                             <p class="mb-1 text-subtitle-1">
-                                Ngày mua: <span class="font-weight-medium">{{ formatDate(selectedOrder.ngayTao) }}</span>
+                                Ngày mua: <span class="font-weight-medium">{{ formatDate(selectedOrder.ngayTao)
+                                    }}</span>
                             </p>
-                            <p class="text-h5 font-weight-medium text-error">Tổng tiền: {{ formatCurrency(selectedOrder.tongTien) }}</p>
+                            <p class="text-h5 font-weight-medium text-error">Tổng tiền: {{
+                                formatCurrency(selectedOrder.tongTien) }}</p>
                         </v-col>
                     </v-row>
 
@@ -526,17 +454,22 @@ onMounted(() => loadOrders());
                                 <td class="pa-3 border-b">{{ item.name }}</td>
                                 <td class="pa-3 text-center border-b font-weight-bold">{{ item.quantity }}</td>
                                 <td class="pa-3 text-end border-b">{{ formatCurrency(item.price) }}</td>
-                                <td class="pa-3 text-end border-b font-weight-medium">{{ formatCurrency(item.price * item.quantity) }}</td>
+                                <td class="pa-3 text-end border-b font-weight-medium">{{ formatCurrency(item.price *
+                                    item.quantity) }}</td>
                             </tr>
-                            <TableEmptyState v-if="!selectedOrder.items || selectedOrder.items.length === 0" :colspan="4" text="Không có sản phẩm nào trong hóa đơn." />
+                            <TableEmptyState v-if="!selectedOrder.items || selectedOrder.items.length === 0"
+                                :colspan="4" text="Không có sản phẩm nào trong hóa đơn." />
                         </tbody>
                     </table>
                 </v-card-text>
 
                 <v-card-actions class="pa-4 bg-grey-lighten-4">
                     <v-spacer></v-spacer>
-                    <v-btn variant="text" class="text-none font-weight-bold" @click="showOrderDetailDialog = false">Thoát</v-btn>
-                    <v-btn color="primary" variant="flat" rounded="md" class="px-8 text-none font-weight-bold"> In hóa đơn (PDF) </v-btn>
+                    <v-btn variant="text" class="text-none font-weight-bold"
+                        @click="showOrderDetailDialog = false">Thoát</v-btn>
+                    <v-btn color="primary" variant="flat" rounded="md" class="px-8 text-none font-weight-bold"> In hóa
+                        đơn (PDF)
+                    </v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -549,11 +482,10 @@ onMounted(() => loadOrders());
     color: #1d4ed8 !important;
     border: 1px solid #dbeafe !important;
 }
+
 :deep(.order-type-offline) {
     background: #fdf2f8 !important;
     color: #be185d !important;
     border: 1px solid #fce7f3 !important;
 }
 </style>
-
-

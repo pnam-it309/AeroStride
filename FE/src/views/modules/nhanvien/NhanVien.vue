@@ -37,8 +37,8 @@ const { isRefreshing, handleRefresh: refreshData } = useRefreshHandler();
 const { addNotification } = useNotifications();
 
 const tableHeaders = [
-    { text: 'STT', width: '60px' },
-    { text: 'Mã nhân viên', width: '110px' },
+    { text: 'STT', width: '50px' },
+    { text: 'Mã nhân viên', width: '100px' },
     { text: 'Tên nhân viên', width: '140px' },
     { text: 'Tài khoản', width: '160px' },
     { text: 'Giới tính', width: '100px' },
@@ -89,6 +89,28 @@ const confirmChangeStatus = (item) => {
     });
 };
 
+const confirmResetPassword = (item) => {
+    setConfirm({
+        title: 'Reset mật khẩu',
+        message: `Bạn có chắc muốn reset mật khẩu cho nhân viên [${item.ten}]? Một mật khẩu mới sẽ được tạo và gửi qua email của họ.`,
+        color: 'warning',
+        action: () => handleResetPassword(item.id)
+    });
+};
+
+const getAddressSummary = (item) => {
+    if (!item) return '-';
+
+    const ct = item.diaChiChiTiet || item.dia_chi_chi_tiet || '';
+    const xa = item.phuongXa || item.phuong_xa || '';
+    const huyen = item.thanhPho || item.thanh_pho || '';
+    const tinh = item.tinh || '';
+
+    const parts = [ct, xa, huyen, tinh].map((p) => String(p).trim()).filter((p) => p !== '' && p !== 'null');
+
+    return parts.length > 0 ? parts.join(', ') : 'Chưa cập nhật';
+};
+
 onMounted(() => {
     loadEmployees();
 });
@@ -127,11 +149,9 @@ onMounted(() => {
             </AdminFilter>
         </div>
 
-        <AdminTable title="Danh sách nhân viên"
-            addButtonText="Tạo mới" show-export-button
-            :headers="tableHeaders" :items="employees"
-            :total-count="pagination.totalElements" :loading="loading" @add="router.push(PATH.NHAN_VIEN_FORM)"
-            @export="handleExport">
+        <AdminTable title="Danh sách nhân viên" addButtonText="Tạo mới" show-export-button :headers="tableHeaders"
+            :items="employees" :total-count="pagination.totalElements" :loading="loading"
+            @add="router.push(PATH.NHAN_VIEN_FORM)" @export="handleExport">
 
             <template #row="{ item, index }">
                 <tr class="data-row">
@@ -144,9 +164,9 @@ onMounted(() => {
                     </td>
                     <td class="data-cell text-left px-4">
                         <div class="text-slate-800 text-truncate" :title="item.tenTaiKhoan">{{ item.tenTaiKhoan || '-'
-                        }}</div>
+                            }}</div>
                         <div class="text-caption text-slate-500 text-truncate" :title="item.email">{{ item.email || '-'
-                        }}</div>
+                            }}</div>
                     </td>
                     <td class="data-cell">
                         <v-chip variant="flat" class="justify-center"
@@ -160,13 +180,22 @@ onMounted(() => {
                             <span>{{ item.sdt || '-' }}</span>
                         </div>
                     </td>
-                    <td class="data-cell text-left px-4 allow-wrap" style="min-width: 200px;">
+                    <td class="data-cell text-left px-4 allow-wrap" style="min-width: 200px">
                         <div class="text-slate-700">
-                            <span v-if="item.diaChiChiTiet">{{ item.diaChiChiTiet }}, </span>
-                            <span v-if="item.phuongXa">{{ item.phuongXa }}, </span>
-                            <span v-if="item.thanhPho">{{ item.thanhPho }}, </span>
+                            <!-- Thử cả 2 bộ tên trường do xung đột DB -->
+                            <span v-if="item.diaChiChiTiet || item.dia_chi_chi_tiet">
+                                {{ item.diaChiChiTiet || item.dia_chi_chi_tiet }},
+                            </span>
+                            <span v-if="item.phuongXa || item.phuong_xa"> {{ item.phuongXa || item.phuong_xa }}, </span>
+                            <span v-if="item.thanhPho || item.thanh_pho"> {{ item.thanhPho || item.thanh_pho }}, </span>
                             <span v-if="item.tinh">{{ item.tinh }}</span>
-                            <span v-if="!item.diaChiChiTiet && !item.phuongXa && !item.thanhPho && !item.tinh" class="text-slate-400">
+
+                            <span v-if="
+                                !(item.diaChiChiTiet || item.dia_chi_chi_tiet) &&
+                                !(item.phuongXa || item.phuong_xa) &&
+                                !(item.thanhPho || item.thanh_pho) &&
+                                !item.tinh
+                            " class="text-slate-400">
                                 Chưa cập nhật
                             </span>
                         </div>
@@ -178,12 +207,15 @@ onMounted(() => {
                         </div>
                     </td>
                     <td class="data-cell">
-                        <v-chip variant="flat" class="justify-center" :class="[
-                            'status-chip',
-                            isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive'
-                        ]">
-                            {{ getStatusLabel(item.trangThai) }}
-                        </v-chip>
+                        <template v-if="tab === 0">
+                            <v-chip variant="flat" class="justify-center"
+                                :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
+                                {{ getStatusLabel(item.trangThai) }}
+                            </v-chip>
+                        </template>
+                        <template v-else>
+                            <span class="text-caption text-primary">{{ formatDateTime(item.resetRequestedAt) }}</span>
+                        </template>
                     </td>
 
                     <td class="data-cell action-cell">
@@ -218,8 +250,4 @@ onMounted(() => {
     </v-container>
 </template>
 
-<style scoped>
-.mono-font {
-    font-family: 'JetBrains Mono', monospace;
-}
-</style>
+<style scoped></style>

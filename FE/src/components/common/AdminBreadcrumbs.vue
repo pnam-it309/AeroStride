@@ -12,7 +12,7 @@ const props = defineProps({
 const uiStore = useUIStore();
 
 const updateBreadcrumbs = () => {
-    const sanitizedItems = props.items.map(item => ({
+    const sanitizedItems = props.items.map((item) => ({
         ...item,
         to: item.to || (item.href ? undefined : '')
     }));

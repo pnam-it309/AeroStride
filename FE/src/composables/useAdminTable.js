@@ -3,7 +3,7 @@ import { ref, reactive, watch } from 'vue';
 /**
  * Composable để quản lý trạng thái bảng Admin (Pagination, Filters, Loading)
  * Giúp giảm bớt code lặp lại trong các file .vue
- * 
+ *
  * @param {Function} fetchFn - Hàm lấy dữ liệu từ service (ví dụ: dichVuNhanVien.getAll)
  * @param {Object} initialFilters - Giá trị lọc mặc định
  */
@@ -43,18 +43,24 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
             // 1. Thuật toán quét sâu (Deep Scan) để tìm dữ liệu và phân trang
             const findDataInObject = (obj, depth = 0) => {
                 if (!obj || typeof obj !== 'object' || depth > 3) return { items: [], total: null };
-                
+
                 let items = null;
                 let total = null;
 
                 const possibleArrays = ['content', 'data', 'items', 'nhanViens', 'khachHangs', 'sanPhams', 'list'];
                 for (const key of possibleArrays) {
-                    if (Array.isArray(obj[key])) { items = obj[key]; break; }
+                    if (Array.isArray(obj[key])) {
+                        items = obj[key];
+                        break;
+                    }
                 }
 
                 const possibleTotals = ['totalElements', 'totalCount', 'total', 'total_elements', 'total_count', 'total_records', 'count'];
                 for (const key of possibleTotals) {
-                    if (typeof obj[key] === 'number') { total = obj[key]; break; }
+                    if (typeof obj[key] === 'number') {
+                        total = obj[key];
+                        break;
+                    }
                 }
 
                 if (Array.isArray(obj)) items = obj;
@@ -76,17 +82,21 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
 
             const extracted = findDataInObject(result);
             items.value = extracted.items || [];
-            
-            const total = (extracted.total !== null) ? extracted.total : items.value.length;
+
+            const total = extracted.total !== null ? extracted.total : items.value.length;
             pagination.value.totalElements = total;
 
             // 2. Tính toán số trang (Đồng bộ tuyệt đối)
             let finalTotalPages = Math.ceil(total / pagination.value.size) || 1;
-            
-            const beTotalPages = result?.totalPages || result?.total_pages || 
-                               result?.data?.totalPages || result?.data?.total_pages || 
-                               result?.pagination?.totalPages || result?.data?.data?.totalPages;
-            
+
+            const beTotalPages =
+                result?.totalPages ||
+                result?.total_pages ||
+                result?.data?.totalPages ||
+                result?.data?.total_pages ||
+                result?.pagination?.totalPages ||
+                result?.data?.data?.totalPages;
+
             if (beTotalPages && extracted.total === null) {
                 finalTotalPages = beTotalPages;
             }
@@ -109,9 +119,12 @@ export function useAdminTable(fetchFn, initialFilters = {}) {
         }
     };
 
-    watch(() => [pagination.value.page, pagination.value.size], () => {
-        loadData();
-    });
+    watch(
+        () => [pagination.value.page, pagination.value.size],
+        () => {
+            loadData();
+        }
+    );
 
     const handleFilter = () => {
         pagination.value.page = 1;

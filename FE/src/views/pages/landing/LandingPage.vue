@@ -28,12 +28,7 @@ const {
     onScroll
 } = useLandingPage();
 
-const {
-    heroProduct,
-    isCatalogLoading,
-    howProducts,
-    problemProducts
-} = useLandingCatalog();
+const { heroProduct, isCatalogLoading, howProducts, problemProducts } = useLandingCatalog();
 </script>
 
 <template>
@@ -44,10 +39,14 @@ const {
 
         <!-- Section Dots Indicator -->
         <div class="section-nav" v-if="!isLoading && !isCatalogLoading">
-            <div v-for="(s, i) in LANDING_SECTIONS" :key="i" 
-                 class="dot" :class="{ active: activeSection === i }"
-                 @click="activeSection = i">
-                 <span class="tooltip">{{ s.toUpperCase() }}</span>
+            <div
+                v-for="(s, i) in LANDING_SECTIONS"
+                :key="i"
+                class="dot"
+                :class="{ active: activeSection === i }"
+                @click="activeSection = i"
+            >
+                <span class="tooltip">{{ s.toUpperCase() }}</span>
             </div>
         </div>
 
@@ -86,7 +85,9 @@ const {
     scrollbar-width: none;
     /* Optimize for smooth momentum scrolling */
     -webkit-overflow-scrolling: touch;
-    &::-webkit-scrollbar { display: none; }
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 .landing-scroll-container :deep(.snap-section) {
@@ -126,13 +127,16 @@ const {
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
-    
+
     &.active {
-        background: #2962FF;
+        background: #2962ff;
         transform: scale(1.5);
     }
-    
-    &:hover .tooltip { opacity: 1; transform: translateX(-20px); }
+
+    &:hover .tooltip {
+        opacity: 1;
+        transform: translateX(-20px);
+    }
 }
 
 .tooltip {
@@ -151,7 +155,9 @@ const {
 }
 
 .preloader-fade-leave-active {
-    transition: opacity 0.6s cubic-bezier(1, 0, 0, 1), transform 0.6s cubic-bezier(1, 0, 0, 1);
+    transition:
+        opacity 0.6s cubic-bezier(1, 0, 0, 1),
+        transform 0.6s cubic-bezier(1, 0, 0, 1);
 }
 
 .preloader-fade-leave-to {

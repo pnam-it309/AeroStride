@@ -62,16 +62,18 @@ const formData = ref(createDefaultFormData());
 const normalizeUploadedFileUrl = (value) => {
     if (!value) return '';
     if (typeof value === 'string') return value;
-    return value.fileUrl
-        || value.url
-        || value.secure_url
-        || value.duongDanAnh
-        || value.duongDan
-        || value.path
-        || value.data
-        || value.hinhAnh
-        || value.anh
-        || '';
+    return (
+        value.fileUrl ||
+        value.url ||
+        value.secure_url ||
+        value.duongDanAnh ||
+        value.duongDan ||
+        value.path ||
+        value.data ||
+        value.hinhAnh ||
+        value.anh ||
+        ''
+    );
 };
 
 const getImageUrlFromCollection = (collection) => {
@@ -79,22 +81,24 @@ const getImageUrlFromCollection = (collection) => {
         return normalizeUploadedFileUrl(collection);
     }
 
-    const mainImage = collection.find(image => image?.hinhAnhDaiDien || image?.anhDaiDien || image?.laAnhChinh);
+    const mainImage = collection.find((image) => image?.hinhAnhDaiDien || image?.anhDaiDien || image?.laAnhChinh);
     return normalizeUploadedFileUrl(mainImage) || normalizeUploadedFileUrl(collection[0]);
 };
 
 const getVariantImageUrl = (variant) => {
     if (!variant) return '';
 
-    return normalizeUploadedFileUrl(variant.urlAnh)
-        || getImageUrlFromCollection(variant.images)
-        || getImageUrlFromCollection(variant.hinhAnhs)
-        || getImageUrlFromCollection(variant.anhChiTietSanPhams)
-        || getImageUrlFromCollection(variant.hinhAnh)
-        || normalizeUploadedFileUrl(variant.anh)
-        || normalizeUploadedFileUrl(variant.duongDanAnh)
-        || normalizeUploadedFileUrl(variant.imageUrl)
-        || '';
+    return (
+        normalizeUploadedFileUrl(variant.urlAnh) ||
+        getImageUrlFromCollection(variant.images) ||
+        getImageUrlFromCollection(variant.hinhAnhs) ||
+        getImageUrlFromCollection(variant.anhChiTietSanPhams) ||
+        getImageUrlFromCollection(variant.hinhAnh) ||
+        normalizeUploadedFileUrl(variant.anh) ||
+        normalizeUploadedFileUrl(variant.duongDanAnh) ||
+        normalizeUploadedFileUrl(variant.imageUrl) ||
+        ''
+    );
 };
 
 const getNestedValue = (source, keys) => {
@@ -107,39 +111,36 @@ const getNestedValue = (source, keys) => {
     return '';
 };
 
-const getVariantColorId = (variant) => (
-    getNestedValue(variant, ['idMauSac', 'mauSacId'])
-    || getNestedValue(variant?.mauSac, ['id', 'value', 'ma'])
-    || getNestedValue(variant?.color, ['id', 'value', 'ma'])
-    || ''
-);
+const getVariantColorId = (variant) =>
+    getNestedValue(variant, ['idMauSac', 'mauSacId']) ||
+    getNestedValue(variant?.mauSac, ['id', 'value', 'ma']) ||
+    getNestedValue(variant?.color, ['id', 'value', 'ma']) ||
+    '';
 
-const getVariantColorLabel = (variant) => (
-    getNestedValue(variant, ['tenMauSac', 'mauSac', 'mau'])
-    || getNestedValue(variant?.mauSac, ['ten', 'name', 'label', 'title'])
-    || getNestedValue(variant?.color, ['ten', 'name', 'label', 'title'])
-    || ''
-);
+const getVariantColorLabel = (variant) =>
+    getNestedValue(variant, ['tenMauSac', 'mauSac', 'mau']) ||
+    getNestedValue(variant?.mauSac, ['ten', 'name', 'label', 'title']) ||
+    getNestedValue(variant?.color, ['ten', 'name', 'label', 'title']) ||
+    '';
 
-const getVariantSizeId = (variant) => (
-    getNestedValue(variant, ['idKichThuoc', 'kichThuocId', 'sizeId'])
-    || getNestedValue(variant?.kichThuoc, ['id', 'value', 'ma'])
-    || getNestedValue(variant?.size, ['id', 'value', 'ma'])
-    || ''
-);
+const getVariantSizeId = (variant) =>
+    getNestedValue(variant, ['idKichThuoc', 'kichThuocId', 'sizeId']) ||
+    getNestedValue(variant?.kichThuoc, ['id', 'value', 'ma']) ||
+    getNestedValue(variant?.size, ['id', 'value', 'ma']) ||
+    '';
 
-const getVariantSizeLabel = (variant) => (
-    getNestedValue(variant, ['tenKichThuoc', 'kichThuoc', 'size'])
-    || getNestedValue(variant?.kichThuoc, ['ten', 'name', 'label', 'title', 'giaTriKichThuoc'])
-    || getNestedValue(variant?.size, ['ten', 'name', 'label', 'title'])
-    || ''
-);
+const getVariantSizeLabel = (variant) =>
+    getNestedValue(variant, ['tenKichThuoc', 'kichThuoc', 'size']) ||
+    getNestedValue(variant?.kichThuoc, ['ten', 'name', 'label', 'title', 'giaTriKichThuoc']) ||
+    getNestedValue(variant?.size, ['ten', 'name', 'label', 'title']) ||
+    '';
 
-const normalizeSearchText = (value) => String(value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
+const normalizeSearchText = (value) =>
+    String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
 
 const comboboxFilter = (itemTitle, queryText, item) => {
     const normalizedQuery = normalizeSearchText(queryText);
@@ -170,13 +171,13 @@ const resolveOptionId = (items, rawValue, fallbackLabel = '') => {
 
     const normalizedValue = String(rawValue ?? '').trim();
     if (normalizedValue) {
-        const matchedById = optionItems.find(item => item.id === normalizedValue);
+        const matchedById = optionItems.find((item) => item.id === normalizedValue);
         if (matchedById) {
             return matchedById.id;
         }
 
         const normalizedText = normalizeSearchText(normalizedValue);
-        const matchedByLabel = optionItems.find(item => normalizeSearchText(item.ten) === normalizedText);
+        const matchedByLabel = optionItems.find((item) => normalizeSearchText(item.ten) === normalizedText);
         if (matchedByLabel) {
             return matchedByLabel.id;
         }
@@ -189,13 +190,15 @@ const resolveOptionId = (items, rawValue, fallbackLabel = '') => {
         return '';
     }
 
-    return optionItems.find(item => normalizeSearchText(item.ten) === normalizedFallback)?.id || fallbackLabel;
+    return optionItems.find((item) => normalizeSearchText(item.ten) === normalizedFallback)?.id || fallbackLabel;
 };
 
 const getResolvedOptionLabel = (items, selectedId, fallbackLabel = '') => {
     const optionItems = Array.isArray(items) ? items : [];
     const resolvedId = resolveOptionId(optionItems, selectedId, fallbackLabel);
-    const matchedOption = optionItems.find(item => item.id === resolvedId || normalizeSearchText(item.ten) === normalizeSearchText(resolvedId));
+    const matchedOption = optionItems.find(
+        (item) => item.id === resolvedId || normalizeSearchText(item.ten) === normalizeSearchText(resolvedId)
+    );
     return matchedOption?.ten || fallbackLabel || String(resolvedId || '');
 };
 
@@ -208,11 +211,12 @@ const withCurrentOption = (items, currentValue, currentLabel) => {
         return optionItems;
     }
 
-    const exists = optionItems.some(item => (
-        item.id === normalizedCurrentValue
-        || normalizeSearchText(item.ten) === normalizeSearchText(normalizedCurrentValue)
-        || normalizeSearchText(item.ten) === normalizeSearchText(normalizedCurrentLabel)
-    ));
+    const exists = optionItems.some(
+        (item) =>
+            item.id === normalizedCurrentValue ||
+            normalizeSearchText(item.ten) === normalizeSearchText(normalizedCurrentValue) ||
+            normalizeSearchText(item.ten) === normalizeSearchText(normalizedCurrentLabel)
+    );
 
     if (exists) {
         return optionItems;
@@ -237,7 +241,7 @@ const onKeyUpEnter = (event, field, service, type, label) => {
     };
     const list = lists[type] || [];
     const normalizedValue = normalizeSearchText(val);
-    const exists = list.some(item => normalizeSearchText(item.ten) === normalizedValue);
+    const exists = list.some((item) => normalizeSearchText(item.ten) === normalizedValue);
 
     if (!exists) {
         autoCreateAttribute(val, field, service, type, label);
@@ -249,7 +253,10 @@ const autoCreateAttribute = async (val, field, service, type, label) => {
         const payload = { ten: val, ma: '', moTa: 'Tự động thêm từ biến thể' };
         if (type === 'MAU_SAC') payload.maMauHex = '#000000';
 
-        const methodName = `tao${type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('')}`;
+        const methodName = `tao${type
+            .split('_')
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+            .join('')}`;
         const newEntity = await service[methodName](payload);
 
         emit('options-refreshed');
@@ -267,45 +274,36 @@ const autoCreateAttribute = async (val, field, service, type, label) => {
 const hasValue = (value) => value !== null && value !== undefined && value !== '';
 
 const rules = {
-    required: v => hasValue(v) || 'Trường này là bắt buộc',
-    min0: v => Number(v) >= 0 || 'Giá trị phải >= 0'
+    required: (v) => hasValue(v) || 'Trường này là bắt buộc',
+    min0: (v) => Number(v) >= 0 || 'Giá trị phải >= 0'
 };
 
-const skuPlaceholder = computed(() => (
-    props.productCode ? 'Hệ thống tự động tạo...' : 'SKU sẽ tự sinh khi lưu sản phẩm'
-));
+const skuPlaceholder = computed(() => (props.productCode ? 'Hệ thống tự động tạo...' : 'SKU sẽ tự sinh khi lưu sản phẩm'));
 
 const shouldLockAttributes = computed(() => props.mode === 'edit' && props.lockAttributesOnEdit);
-const lockedColorLabel = computed(() => getResolvedOptionLabel(
-    props.options.mauSacs,
-    formData.value.idMauSac,
-    getVariantColorLabel(props.variant)
-));
-const lockedSizeLabel = computed(() => getResolvedOptionLabel(
-    props.options.kichThuocs,
-    formData.value.idKichThuoc,
-    getVariantSizeLabel(props.variant)
-));
-const currentVariantImageUrl = computed(() => getVariantImageUrl(props.variant));
-const colorComboboxItems = computed(() => withCurrentOption(
-    props.options.mauSacs,
-    formData.value.idMauSac || getVariantColorId(props.variant),
-    getVariantColorLabel(props.variant) || lockedColorLabel.value
-));
-const sizeComboboxItems = computed(() => withCurrentOption(
-    props.options.kichThuocs,
-    formData.value.idKichThuoc || getVariantSizeId(props.variant),
-    getVariantSizeLabel(props.variant) || lockedSizeLabel.value
-));
-
-const getVariantSku = (variant) => (
-    variant?.maChiTietSanPham
-    || variant?.sku
-    || variant?.maSku
-    || variant?.maBienThe
-    || variant?.ma
-    || ''
+const lockedColorLabel = computed(() =>
+    getResolvedOptionLabel(props.options.mauSacs, formData.value.idMauSac, getVariantColorLabel(props.variant))
 );
+const lockedSizeLabel = computed(() =>
+    getResolvedOptionLabel(props.options.kichThuocs, formData.value.idKichThuoc, getVariantSizeLabel(props.variant))
+);
+const currentVariantImageUrl = computed(() => getVariantImageUrl(props.variant));
+const colorComboboxItems = computed(() =>
+    withCurrentOption(
+        props.options.mauSacs,
+        formData.value.idMauSac || getVariantColorId(props.variant),
+        getVariantColorLabel(props.variant) || lockedColorLabel.value
+    )
+);
+const sizeComboboxItems = computed(() =>
+    withCurrentOption(
+        props.options.kichThuocs,
+        formData.value.idKichThuoc || getVariantSizeId(props.variant),
+        getVariantSizeLabel(props.variant) || lockedSizeLabel.value
+    )
+);
+
+const getVariantSku = (variant) => variant?.maChiTietSanPham || variant?.sku || variant?.maSku || variant?.maBienThe || variant?.ma || '';
 
 const populateEditFormData = () => {
     if (!props.variant) {
@@ -371,8 +369,6 @@ watch(
     }
 );
 
-
-
 watch(
     () => [props.open, props.mode, props.variant?.maChiTietSanPham],
     ([isOpen, mode]) => {
@@ -411,8 +407,12 @@ const handleSubmit = async () => {
     formData.value = {
         ...formData.value,
         maChiTietSanPham: formData.value.maChiTietSanPham || getVariantSku(props.variant),
-        idMauSac: resolveOptionId(props.options.mauSacs, formData.value.idMauSac, getVariantColorLabel(props.variant)) || getVariantColorId(props.variant),
-        idKichThuoc: resolveOptionId(props.options.kichThuocs, formData.value.idKichThuoc, getVariantSizeLabel(props.variant)) || getVariantSizeId(props.variant)
+        idMauSac:
+            resolveOptionId(props.options.mauSacs, formData.value.idMauSac, getVariantColorLabel(props.variant)) ||
+            getVariantColorId(props.variant),
+        idKichThuoc:
+            resolveOptionId(props.options.kichThuocs, formData.value.idKichThuoc, getVariantSizeLabel(props.variant)) ||
+            getVariantSizeId(props.variant)
     };
 
     if (!formData.value.idMauSac || !formData.value.idKichThuoc) {
@@ -434,15 +434,13 @@ const refreshOptions = () => {
     emit('options-refreshed');
 };
 
-const submitButtonText = computed(() => props.mode === 'create' ? 'Thêm biến thể' : 'Cập nhật biến thể');
-const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể mới' : 'Chỉnh sửa biến thể');
+const submitButtonText = computed(() => (props.mode === 'create' ? 'Thêm biến thể' : 'Cập nhật biến thể'));
+const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến thể mới' : 'Chỉnh sửa biến thể'));
 </script>
 
 <template>
     <v-dialog v-model="dialogVisible" max-width="860" persistent transition="variant-modal-transition" scrollable>
         <v-card class="rounded-xl border shadow-2xl p-0 variant-modal-card">
-
-
             <v-card-title class="px-8 py-6 border-b d-flex align-center justify-space-between bg-slate-50/50">
                 <div>
                     <h3 class="text-h5 font-weight-bold text-slate-900 tracking-tight">
@@ -457,19 +455,16 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                         <v-col cols="12" md="4">
                             <div class="form-group h-100">
                                 <div class="mb-2 px-1">
-                                    <span class="text-caption font-weight-bold text-slate-700 tracking-wider">
-                                        Hình ảnh
-                                    </span>
+                                    <span class="text-caption font-weight-bold text-slate-700 tracking-wider"> Hình ảnh </span>
                                 </div>
                                 <div class="variant-image-panel pa-0 position-relative overflow-hidden">
                                     <div class="variant-image-panel__preview">
-                                        <div 
+                                        <div
                                             class="image-wrapper rounded-2xl cursor-pointer hover-lift transition-all w-100"
-                                            style="aspect-ratio: 1/1; position: relative; overflow: hidden; background-color: #f8fafc;"
+                                            style="aspect-ratio: 1/1; position: relative; overflow: hidden; background-color: #f8fafc"
                                             @click="triggerFileInput"
                                         >
-                                            <v-img v-if="formData.urlAnh" :src="formData.urlAnh"
-                                                cover class="fill-height w-100">
+                                            <v-img v-if="formData.urlAnh" :src="formData.urlAnh" cover class="fill-height w-100">
                                                 <template #placeholder>
                                                     <div class="d-flex align-center justify-center fill-height">
                                                         <v-progress-circular indeterminate color="primary" />
@@ -490,10 +485,15 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                     </div>
 
                                     <div class="variant-image-panel__body mt-4">
-                                        <input type="file" ref="fileInput" class="d-none" accept="image/*"
-                                            @change="handleImageUpload" />            
+                                        <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="handleImageUpload" />
                                         <div v-if="formData.urlAnh" class="d-flex justify-center mt-2">
-                                            <v-btn variant="text" color="error" density="compact" class="text-none" @click.stop="formData.urlAnh = ''">
+                                            <v-btn
+                                                variant="text"
+                                                color="error"
+                                                density="compact"
+                                                class="text-none"
+                                                @click.stop="formData.urlAnh = ''"
+                                            >
                                                 <v-icon start size="14">mdi-trash-can-outline</v-icon>
                                                 Xóa ảnh
                                             </v-btn>
@@ -508,66 +508,111 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
                                         <div class="field-label">Màu sắc</div>
-                                        <v-combobox v-model="formData.idMauSac" v-bind="comboboxProps"
-                                            :custom-filter="comboboxFilter" :items="colorComboboxItems" item-title="ten"
-                                            item-value="id" :placeholder="lockedColorLabel || 'Chọn màu sắc'"
+                                        <v-combobox
+                                            v-model="formData.idMauSac"
+                                            v-bind="comboboxProps"
+                                            :custom-filter="comboboxFilter"
+                                            :items="colorComboboxItems"
+                                            item-title="ten"
+                                            item-value="id"
+                                            :placeholder="lockedColorLabel || 'Chọn màu sắc'"
                                             variant="outlined"
-                                            density="comfortable" hide-details="auto" :return-object="false"
+                                            density="comfortable"
+                                            hide-details="auto"
+                                            :return-object="false"
                                             class="modern-select"
                                             :rules="[rules.required]"
-                                            @keyup.enter="(e) => onKeyUpEnter(e, 'idMauSac', dichVuMauSac, 'MAU_SAC', 'màu sắc')"></v-combobox>
+                                            @keyup.enter="(e) => onKeyUpEnter(e, 'idMauSac', dichVuMauSac, 'MAU_SAC', 'màu sắc')"
+                                        ></v-combobox>
                                     </div>
                                 </v-col>
 
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
                                         <div class="field-label">Số lượng tồn</div>
-                                        <FormattedNumberField v-model="formData.soLuong" min="0"
-                                            :rules="[rules.required, rules.min0]" variant="outlined"
-                                            density="comfortable" hide-details="auto" placeholder="0"
-                                            class="modern-input"></FormattedNumberField>
+                                        <FormattedNumberField
+                                            v-model="formData.soLuong"
+                                            min="0"
+                                            :rules="[rules.required, rules.min0]"
+                                            variant="outlined"
+                                            density="comfortable"
+                                            hide-details="auto"
+                                            placeholder="0"
+                                            class="modern-input"
+                                        ></FormattedNumberField>
                                     </div>
                                 </v-col>
 
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
                                         <div class="field-label">Kích thước</div>
-                                        <v-combobox v-model="formData.idKichThuoc" v-bind="comboboxProps"
-                                            :custom-filter="comboboxFilter" :items="sizeComboboxItems" item-title="ten"
-                                            item-value="id" :placeholder="lockedSizeLabel || 'Chọn kích thước'"
+                                        <v-combobox
+                                            v-model="formData.idKichThuoc"
+                                            v-bind="comboboxProps"
+                                            :custom-filter="comboboxFilter"
+                                            :items="sizeComboboxItems"
+                                            item-title="ten"
+                                            item-value="id"
+                                            :placeholder="lockedSizeLabel || 'Chọn kích thước'"
                                             variant="outlined"
-                                            density="comfortable" hide-details="auto" :return-object="false"
+                                            density="comfortable"
+                                            hide-details="auto"
+                                            :return-object="false"
                                             class="modern-select"
                                             :rules="[rules.required]"
-                                            @keyup.enter="(e) => onKeyUpEnter(e, 'idKichThuoc', dichVuKichThuoc, 'KICH_THUOC', 'kích thước')"></v-combobox>
+                                            @keyup.enter="
+                                                (e) => onKeyUpEnter(e, 'idKichThuoc', dichVuKichThuoc, 'KICH_THUOC', 'kích thước')
+                                            "
+                                        ></v-combobox>
                                     </div>
                                 </v-col>
 
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
                                         <div class="field-label">Giá nhập (VNĐ)</div>
-                                        <FormattedNumberField v-model="formData.giaNhap" min="0" :rules="[rules.min0]"
-                                            variant="outlined" density="comfortable" hide-details="auto" placeholder="0"
-                                            suffix="₫" class="modern-input"></FormattedNumberField>
+                                        <FormattedNumberField
+                                            v-model="formData.giaNhap"
+                                            min="0"
+                                            :rules="[rules.min0]"
+                                            variant="outlined"
+                                            density="comfortable"
+                                            hide-details="auto"
+                                            placeholder="0"
+                                            suffix="₫"
+                                            class="modern-input"
+                                        ></FormattedNumberField>
                                     </div>
                                 </v-col>
 
                                 <v-col cols="12">
                                     <div class="form-group">
                                         <div class="field-label">Mã SKU</div>
-                                        <v-text-field v-model="formData.maChiTietSanPham" :placeholder="skuPlaceholder"
-                                            variant="outlined" density="comfortable" readonly hide-details="auto"
-                                            class="modern-input bg-slate-50"></v-text-field>
+                                        <v-text-field
+                                            v-model="formData.maChiTietSanPham"
+                                            :placeholder="skuPlaceholder"
+                                            variant="outlined"
+                                            density="comfortable"
+                                            readonly
+                                            hide-details="auto"
+                                            class="modern-input bg-slate-50"
+                                        ></v-text-field>
                                     </div>
                                 </v-col>
 
                                 <v-col cols="12">
                                     <div class="form-group">
                                         <div class="field-label">Giá bán (VNĐ)</div>
-                                        <FormattedNumberField v-model="formData.giaBan" min="0"
-                                            :rules="[rules.required, rules.min0]" variant="outlined"
-                                            density="comfortable" hide-details="auto" placeholder="0" suffix="₫"
-                                            class="modern-input"></FormattedNumberField>
+                                        <FormattedNumberField
+                                            v-model="formData.giaBan"
+                                            min="0"
+                                            :rules="[rules.required, rules.min0]"
+                                            variant="outlined"
+                                            density="comfortable"
+                                            hide-details="auto"
+                                            placeholder="0"
+                                            suffix="₫"
+                                            class="modern-input"
+                                        ></FormattedNumberField>
                                     </div>
                                 </v-col>
                             </v-row>
@@ -579,12 +624,16 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
             <v-divider></v-divider>
 
             <v-card-actions class="px-8 py-6 bg-slate-50 d-flex justify-end gap-3">
-                <v-btn variant="tonal" color="slate-500" class="px-6 rounded-xl font-weight-medium h-11"
-                    @click="emit('close')">
+                <v-btn variant="tonal" color="slate-500" class="px-6 rounded-xl font-weight-medium h-11" @click="emit('close')">
                     Hủy bỏ
                 </v-btn>
-                <v-btn color="primary" variant="flat" class="px-8 rounded-xl font-weight-medium h-11"
-                    :loading="submitting" @click="handleSubmit">
+                <v-btn
+                    color="primary"
+                    variant="flat"
+                    class="px-8 rounded-xl font-weight-medium h-11"
+                    :loading="submitting"
+                    @click="handleSubmit"
+                >
                     <template #prepend>
                         <DeviceFloppyIcon v-if="!submitting" size="18" />
                         <v-progress-circular v-else indeterminate size="18" width="2" />
@@ -628,7 +677,7 @@ const headerTitle = computed(() => props.mode === 'create' ? 'Thêm biến thể
     gap: 12px;
 }
 
-.space-y-5>*+* {
+.space-y-5 > * + * {
     margin-top: 1.25rem;
 }
 

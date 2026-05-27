@@ -14,15 +14,28 @@ import VariantFormModal from '../bien-the-san-pham/components/VariantFormModal.v
 import FormattedNumberField from './components/FormattedNumberField.vue';
 import SafeProductImage from './components/SafeProductImage.vue';
 import {
-    ArrowLeftIcon, BoxIcon, DeviceFloppyIcon, InfoCircleIcon, PencilIcon,
-    PhotoIcon, PlusIcon, SettingsIcon, TrashIcon
+    ArrowLeftIcon,
+    BoxIcon,
+    DeviceFloppyIcon,
+    InfoCircleIcon,
+    PencilIcon,
+    PhotoIcon,
+    PlusIcon,
+    SettingsIcon,
+    TrashIcon
 } from 'vue-tabler-icons';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import QrcodeVue from 'qrcode.vue';
 import {
-    dichVuThuongHieu, dichVuDanhMuc, dichVuXuatXu,
-    dichVuChatLieu, dichVuDeGiay, dichVuCoGiay,
-    dichVuMucDichChay, dichVuMauSac, dichVuKichThuoc
+    dichVuThuongHieu,
+    dichVuDanhMuc,
+    dichVuXuatXu,
+    dichVuChatLieu,
+    dichVuDeGiay,
+    dichVuCoGiay,
+    dichVuMucDichChay,
+    dichVuMauSac,
+    dichVuKichThuoc
 } from '@/services/product/dichVuThuocTinh';
 import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
 import { exportQrImageZip } from '@/utils/qrExcelWorkbook';
@@ -56,7 +69,7 @@ const confirmDialog = ref({
 });
 
 const isEditMode = computed(() => !!route.params.id);
-const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm');
+const submitButtonText = computed(() => (isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'));
 const defaultVariantStatus = 'DANG_HOAT_DONG';
 
 // DATA OPTIONS
@@ -112,11 +125,11 @@ const toggleSize = (id) => {
 const handleAddCustomColor = async () => {
     const rawName = customColorName.value.trim();
     const rawHex = customColorHex.value.trim().toUpperCase();
-    
+
     if (!rawName || !rawHex) return;
 
     const existingColor = colors.value.find(c => (c.maMauHex || '').toUpperCase() === rawHex);
-    
+
     if (existingColor) {
         if (!selectedColors.value.includes(existingColor.id)) {
             selectedColors.value.push(existingColor.id);
@@ -138,7 +151,7 @@ const handleAddCustomColor = async () => {
         customColorHex.value = '#FF5733';
         showColorMenu.value = false;
         addNotification({ title: 'Thành công', subtitle: 'Đã thêm màu mới', color: 'success' });
-    } catch(e) {
+    } catch (e) {
         addNotification({ title: 'Lỗi', subtitle: 'Không thể thêm màu', color: 'error' });
     }
 };
@@ -147,16 +160,16 @@ const cleanSizeString = (str) => {
     let s = (str || '').toString();
     // 5. Bảo mật: Loại bỏ HTML tags để chống XSS
     s = s.replace(/<[^>]*>?/gm, '');
-    
+
     // 3. Định dạng: Chỉ giữ lại chữ cái, số, khoảng trắng và dấu .,- (Loại bỏ @, #, $, %...)
     s = s.replace(/[^a-zA-Z0-9.,\-\s]/g, '');
-    
+
     // 1. Chuẩn hóa: Loại bỏ các từ khóa thừa "Kích thước", "size", "sz"
     s = s.replace(/(?:^|\s)(?:kích thước|size|sz)\s*/gi, '');
-    
+
     // Loại bỏ chữ "s" nếu nó đứng ngay trước một con số (để biến s43, s 43 thành 43)
     s = s.replace(/(?:^|\s)s\s*(?=\d)/gi, '');
-    
+
     // 1. Loại bỏ khoảng trắng thừa ở giữa và 2 đầu
     return s.replace(/\s+/g, ' ').trim();
 };
@@ -168,7 +181,7 @@ const formatSizeDisplay = (name) => {
 
 const handleAddCustomSize = async () => {
     const rawInput = customSizeName.value;
-    
+
     // 1. Lỗi rỗng và khoảng trắng: Để trống hoặc chỉ chứa khoảng trắng
     if (!rawInput || !rawInput.trim()) return;
 
@@ -218,7 +231,7 @@ const handleAddCustomSize = async () => {
         customSizeName.value = '';
         showSizeMenu.value = false;
         addNotification({ title: 'Thành công', subtitle: 'Đã thêm kích thước mới', color: 'success' });
-    } catch(e) {
+    } catch (e) {
         addNotification({ title: 'Lỗi', subtitle: 'Không thể thêm kích thước', color: 'error' });
     }
 };
@@ -226,12 +239,12 @@ const handleAddCustomSize = async () => {
 const filteredColors = computed(() => {
     const query = normalizeSearchText(colorSearch.value);
     if (!query) return colors.value;
-    return colors.value.filter(c => normalizeSearchText(c.ten).includes(query));
+    return colors.value.filter((c) => normalizeSearchText(c.ten).includes(query));
 });
 const filteredSizes = computed(() => {
     const query = normalizeSearchText(customSizeName.value);
     if (!query) return sizes.value;
-    return sizes.value.filter(s => normalizeSearchText(s.ten).includes(query));
+    return sizes.value.filter((s) => normalizeSearchText(s.ten).includes(query));
 });
 
 // Theo dõi nội dung đang gõ trong các combobox
@@ -253,25 +266,18 @@ const getDisplayItems = (originalItems, query) => {
     // Lọc danh sách gốc trước
     let filtered = originalItems;
     if (normalizedQuery) {
-        filtered = originalItems.filter(item =>
-            normalizeSearchText(item.ten).includes(normalizedQuery)
-        );
+        filtered = originalItems.filter((item) => normalizeSearchText(item.ten).includes(normalizedQuery));
     }
 
     if (!trimmedQuery) return filtered;
 
     // Kiểm tra xem đã có item nào trùng hoàn toàn chưa
-    const existsExact = originalItems.some(item =>
-        normalizeSearchText(item.ten) === normalizedQuery
-    );
+    const existsExact = originalItems.some((item) => normalizeSearchText(item.ten) === normalizedQuery);
 
     if (existsExact) return filtered;
 
     // Chèn mục mới vào đầu danh sách đã lọc với ID đặc biệt để nhận biết click trực tiếp
-    return [
-        { id: `__new__${trimmedQuery}`, ten: trimmedQuery, isNew: true },
-        ...filtered
-    ];
+    return [{ id: `__new__${trimmedQuery}`, ten: trimmedQuery, isNew: true }, ...filtered];
 };
 
 const displayBrands = computed(() => getDisplayItems(brands.value, searchQueries.idThuongHieu, 'idThuongHieu'));
@@ -332,30 +338,34 @@ const variantTableHeaders = [
 ];
 const variantPage = ref(1);
 const variantPageSize = ref(5);
-const variantFilterProductLabel = computed(() => (
-    [product.value.maSanPham, product.value.tenSanPham].filter(Boolean).join(' • ') || 'Sản phẩm hiện tại'
-));
-const variantPriceStep = computed(() => (
-    variantPriceBounds.value.max > 1000000 ? 50000 : 1000
-));
-const filteredVariantItems = computed(() => variantItems.value.filter((item) => {
-    const keyword = variantTableFilters.keyword.trim().toLowerCase();
-    const colorLabel = getVariantColorLabel(item.idMauSac).toLowerCase();
-    const sizeLabel = getVariantSizeLabel(item.idKichThuoc).toLowerCase();
-    const matchesKeyword = !keyword
-        || String(item.maChiTietSanPham || '').toLowerCase().includes(keyword)
-        || colorLabel.includes(keyword)
-        || sizeLabel.includes(keyword);
-    const variantPrice = Number(item.giaBan ?? 0);
-    const matchesPrice = variantPrice >= variantTableFilters.khoangGia[0]
-        && variantPrice <= variantTableFilters.khoangGia[1];
+const variantFilterProductLabel = computed(
+    () => [product.value.maSanPham, product.value.tenSanPham].filter(Boolean).join(' • ') || 'Sản phẩm hiện tại'
+);
+const variantPriceStep = computed(() => (variantPriceBounds.value.max > 1000000 ? 50000 : 1000));
+const filteredVariantItems = computed(() =>
+    variantItems.value.filter((item) => {
+        const keyword = variantTableFilters.keyword.trim().toLowerCase();
+        const colorLabel = getVariantColorLabel(item.idMauSac).toLowerCase();
+        const sizeLabel = getVariantSizeLabel(item.idKichThuoc).toLowerCase();
+        const matchesKeyword =
+            !keyword ||
+            String(item.maChiTietSanPham || '')
+                .toLowerCase()
+                .includes(keyword) ||
+            colorLabel.includes(keyword) ||
+            sizeLabel.includes(keyword);
+        const variantPrice = Number(item.giaBan ?? 0);
+        const matchesPrice = variantPrice >= variantTableFilters.khoangGia[0] && variantPrice <= variantTableFilters.khoangGia[1];
 
-    return matchesKeyword
-        && (!variantTableFilters.mauSacId || item.idMauSac === variantTableFilters.mauSacId)
-        && (!variantTableFilters.kichThuocId || item.idKichThuoc === variantTableFilters.kichThuocId)
-        && (!variantTableFilters.trangThai || item.trangThai === variantTableFilters.trangThai)
-        && matchesPrice;
-}));
+        return (
+            matchesKeyword &&
+            (!variantTableFilters.mauSacId || item.idMauSac === variantTableFilters.mauSacId) &&
+            (!variantTableFilters.kichThuocId || item.idKichThuoc === variantTableFilters.kichThuocId) &&
+            (!variantTableFilters.trangThai || item.trangThai === variantTableFilters.trangThai) &&
+            matchesPrice
+        );
+    })
+);
 const totalVariantElements = computed(() => filteredVariantItems.value.length);
 const totalVariantPages = computed(() => Math.max(Math.ceil(totalVariantElements.value / variantPageSize.value), 1));
 const paginatedVariantItems = computed(() => {
@@ -363,16 +373,17 @@ const paginatedVariantItems = computed(() => {
     return filteredVariantItems.value.slice(start, start + variantPageSize.value);
 });
 const visibleVariantKeys = computed(() => paginatedVariantItems.value.map((item) => getVariantKey(item)));
-const selectedVariants = computed(() => filteredVariantItems.value.filter((item) => selectedVariantKeys.value.includes(getVariantKey(item))));
-const allVisibleVariantsSelected = computed(() => visibleVariantKeys.value.length > 0
-    && visibleVariantKeys.value.every((key) => selectedVariantKeys.value.includes(key)));
-const someVisibleVariantsSelected = computed(() => visibleVariantKeys.value.some((key) => selectedVariantKeys.value.includes(key))
-    && !allVisibleVariantsSelected.value);
+const selectedVariants = computed(() =>
+    filteredVariantItems.value.filter((item) => selectedVariantKeys.value.includes(getVariantKey(item)))
+);
+const allVisibleVariantsSelected = computed(
+    () => visibleVariantKeys.value.length > 0 && visibleVariantKeys.value.every((key) => selectedVariantKeys.value.includes(key))
+);
+const someVisibleVariantsSelected = computed(
+    () => visibleVariantKeys.value.some((key) => selectedVariantKeys.value.includes(key)) && !allVisibleVariantsSelected.value
+);
 
-const totalVariantStock = computed(() => variantItems.value.reduce(
-    (sum, item) => sum + Number(item.soLuong || 0),
-    0
-));
+const totalVariantStock = computed(() => variantItems.value.reduce((sum, item) => sum + Number(item.soLuong || 0), 0));
 
 // Grouping variants by color for better UI organization
 const variantsByColor = computed(() => {
@@ -404,7 +415,7 @@ const openBulkEdit = (colorId = null) => {
 
 const applyBulkEdit = () => {
     const { soLuong, giaNhap, giaBan } = bulkEditModal.form;
-    variantItems.value = variantItems.value.map(item => {
+    variantItems.value = variantItems.value.map((item) => {
         if (bulkEditModal.targetColorId === null || String(item.idMauSac) === String(bulkEditModal.targetColorId)) {
             return {
                 ...item,
@@ -423,33 +434,34 @@ const applyBulkEdit = () => {
     });
 };
 
-const variantContextSummary = computed(() => (
+const variantContextSummary = computed(() =>
     [
         getOptionLabel(soles, product.value.idDeGiay),
         getOptionLabel(collars, product.value.idCoGiay),
         getOptionLabel(purposes, product.value.idMucDichChay)
     ].filter((item) => item && item !== '--')
-));
-
-const getAttributeMethodName = (type) => `tao${type.split('_').map(
-    word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-).join('')}`;
-
-const getAttributeFetchMethodName = (type) => `lay${type.split('_').map(
-    word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-).join('')}`;
-
-const getBackendErrorMessage = (error, fallbackMessage) => (
-    error?.response?.data?.message
-    || error?.message
-    || fallbackMessage
 );
 
-const normalizeSearchText = (value) => String(value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
+const getAttributeMethodName = (type) =>
+    `tao${type
+        .split('_')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join('')}`;
+
+const getAttributeFetchMethodName = (type) =>
+    `lay${type
+        .split('_')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join('')}`;
+
+const getBackendErrorMessage = (error, fallbackMessage) => error?.response?.data?.message || error?.message || fallbackMessage;
+
+const normalizeSearchText = (value) =>
+    String(value ?? '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
 
 const comboboxFilter = (itemTitle, queryText, item) => {
     const normalizedQuery = normalizeSearchText(queryText);
@@ -472,7 +484,7 @@ const getVariantColorHex = (colorId) => {
 };
 
 const removeDraftVariantByObject = (variant) => {
-    variantItems.value = variantItems.value.filter(item => item !== variant);
+    variantItems.value = variantItems.value.filter((item) => item !== variant);
 };
 
 const normalizeAttributeText = (value) => {
@@ -481,8 +493,7 @@ const normalizeAttributeText = (value) => {
     }
 
     if (value && typeof value === 'object') {
-        const textCandidate = [value.ten, value.title, value.label, value.text]
-            .find(item => typeof item === 'string' && item.trim());
+        const textCandidate = [value.ten, value.title, value.label, value.text].find((item) => typeof item === 'string' && item.trim());
         if (textCandidate) {
             return textCandidate.trim();
         }
@@ -500,7 +511,7 @@ const findAttributeOption = (config, value) => {
 
     if (value && typeof value === 'object') {
         if (value.id) {
-            const matchedById = options.find(item => item.id === value.id);
+            const matchedById = options.find((item) => item.id === value.id);
             if (matchedById) {
                 return matchedById;
             }
@@ -524,10 +535,12 @@ const findAttributeOption = (config, value) => {
     }
 
     const normalizedLower = normalizeSearchText(normalizedValue);
-    return options.find(item => (
-        (item.id === normalizedValue && !String(item.id).startsWith('__new__'))
-        || normalizeSearchText(item.ten) === normalizedLower
-    )) || null;
+    return (
+        options.find(
+            (item) =>
+                (item.id === normalizedValue && !String(item.id).startsWith('__new__')) || normalizeSearchText(item.ten) === normalizedLower
+        ) || null
+    );
 };
 
 const upsertAttributeOption = (config, option) => {
@@ -536,7 +549,7 @@ const upsertAttributeOption = (config, option) => {
     }
 
     const options = config.options.value || [];
-    if (options.some(item => item.id === option.id)) {
+    if (options.some((item) => item.id === option.id)) {
         return;
     }
 
@@ -550,11 +563,7 @@ const refreshAttributeOptions = async (config) => {
     }
 
     const response = await config.service[fetchMethod]({ size: 1000 });
-    config.options.value = Array.isArray(response?.content)
-        ? response.content
-        : Array.isArray(response)
-            ? response
-            : config.options.value;
+    config.options.value = Array.isArray(response?.content) ? response.content : Array.isArray(response) ? response : config.options.value;
 };
 
 const resolveAttributeField = async (config, { notifyOnCreate = false } = {}) => {
@@ -649,7 +658,7 @@ const onKeyUpEnter = async (event, field) => {
     const val = event.target.value?.trim();
     if (!val) return;
 
-    const config = attributeConfig.find(item => item.field === field);
+    const config = attributeConfig.find((item) => item.field === field);
     if (!config) {
         return;
     }
@@ -675,16 +684,18 @@ const createDraftKey = () => `draft-${Date.now()}-${Math.random().toString(36).s
 const normalizeUploadedFileUrl = (value) => {
     if (!value) return '';
     if (typeof value === 'string') return value;
-    return value.fileUrl
-        || value.url
-        || value.secure_url
-        || value.duongDanAnh
-        || value.duongDan
-        || value.path
-        || value.data
-        || value.hinhAnh
-        || value.anh
-        || '';
+    return (
+        value.fileUrl ||
+        value.url ||
+        value.secure_url ||
+        value.duongDanAnh ||
+        value.duongDan ||
+        value.path ||
+        value.data ||
+        value.hinhAnh ||
+        value.anh ||
+        ''
+    );
 };
 
 const normalizeOptionList = (listLike) => {
@@ -693,7 +704,7 @@ const normalizeOptionList = (listLike) => {
     return [];
 };
 
-const getOptionLabel = (listLike, id) => normalizeOptionList(listLike).find(item => item.id === id)?.ten || '--';
+const getOptionLabel = (listLike, id) => normalizeOptionList(listLike).find((item) => item.id === id)?.ten || '--';
 const getVariantKey = (variant) => variant.id || variant.clientKey;
 const getVariantSkuLabel = (variant) => {
     const sku = variant.maChiTietSanPham;
@@ -709,55 +720,47 @@ const getNestedValue = (source, keys) => {
     }
     return '';
 };
-const getVariantSkuValue = (variant = {}) => (
-    variant.maChiTietSanPham
-    || variant.sku
-    || variant.maSku
-    || variant.maBienThe
-    || variant.ma
-    || ''
-);
-const getVariantColorIdValue = (variant = {}) => (
-    getNestedValue(variant, ['idMauSac', 'mauSacId'])
-    || getNestedValue(variant.mauSac, ['id', 'value', 'ma'])
-    || getNestedValue(variant.color, ['id', 'value', 'ma'])
-    || ''
-);
-const getVariantColorLabelValue = (variant = {}) => (
-    getNestedValue(variant, ['tenMauSac'])
-    || getNestedValue(variant.mauSac, ['ten', 'name', 'label', 'title'])
-    || getNestedValue(variant.color, ['ten', 'name', 'label', 'title'])
-    || ''
-);
-const getVariantSizeIdValue = (variant = {}) => (
-    getNestedValue(variant, ['idKichThuoc', 'kichThuocId', 'sizeId'])
-    || getNestedValue(variant.kichThuoc, ['id', 'value', 'ma'])
-    || getNestedValue(variant.size, ['id', 'value', 'ma'])
-    || ''
-);
-const getVariantSizeLabelValue = (variant = {}) => (
-    getNestedValue(variant, ['tenKichThuoc'])
-    || getNestedValue(variant.kichThuoc, ['ten', 'name', 'label', 'title', 'giaTriKichThuoc'])
-    || getNestedValue(variant.size, ['ten', 'name', 'label', 'title'])
-    || ''
-);
+const getVariantSkuValue = (variant = {}) =>
+    variant.maChiTietSanPham || variant.sku || variant.maSku || variant.maBienThe || variant.ma || '';
+const getVariantColorIdValue = (variant = {}) =>
+    getNestedValue(variant, ['idMauSac', 'mauSacId']) ||
+    getNestedValue(variant.mauSac, ['id', 'value', 'ma']) ||
+    getNestedValue(variant.color, ['id', 'value', 'ma']) ||
+    '';
+const getVariantColorLabelValue = (variant = {}) =>
+    getNestedValue(variant, ['tenMauSac']) ||
+    getNestedValue(variant.mauSac, ['ten', 'name', 'label', 'title']) ||
+    getNestedValue(variant.color, ['ten', 'name', 'label', 'title']) ||
+    '';
+const getVariantSizeIdValue = (variant = {}) =>
+    getNestedValue(variant, ['idKichThuoc', 'kichThuocId', 'sizeId']) ||
+    getNestedValue(variant.kichThuoc, ['id', 'value', 'ma']) ||
+    getNestedValue(variant.size, ['id', 'value', 'ma']) ||
+    '';
+const getVariantSizeLabelValue = (variant = {}) =>
+    getNestedValue(variant, ['tenKichThuoc']) ||
+    getNestedValue(variant.kichThuoc, ['ten', 'name', 'label', 'title', 'giaTriKichThuoc']) ||
+    getNestedValue(variant.size, ['ten', 'name', 'label', 'title']) ||
+    '';
 const getVariantQrValue = (variant) => variant?.maChiTietSanPham || getVariantKey(variant) || '';
 const getVariantThumbnail = (variant) => {
-    return normalizeUploadedFileUrl(
-        variant.urlAnh
-        || variant.images?.find(image => image.hinhAnhDaiDien)?.duongDanAnh
-        || variant.images?.[0]?.duongDanAnh
-        || variant.hinhAnhs?.find(image => image.hinhAnhDaiDien)?.duongDanAnh
-        || variant.hinhAnhs?.[0]?.duongDanAnh
-        || variant.anhChiTietSanPhams?.find(image => image.hinhAnhDaiDien)?.duongDanAnh
-        || variant.anhChiTietSanPhams?.[0]?.duongDanAnh
-        || variant.hinhAnh?.[0]?.duongDanAnh
-        || variant.hinhAnh?.[0]?.url
-        || variant.hinhAnh
-        || variant.duongDanAnh
-        || variant.imageUrl
-        || variant.anh
-    ) || logoPlaceholder;
+    return (
+        normalizeUploadedFileUrl(
+            variant.urlAnh ||
+            variant.images?.find((image) => image.hinhAnhDaiDien)?.duongDanAnh ||
+            variant.images?.[0]?.duongDanAnh ||
+            variant.hinhAnhs?.find((image) => image.hinhAnhDaiDien)?.duongDanAnh ||
+            variant.hinhAnhs?.[0]?.duongDanAnh ||
+            variant.anhChiTietSanPhams?.find((image) => image.hinhAnhDaiDien)?.duongDanAnh ||
+            variant.anhChiTietSanPhams?.[0]?.duongDanAnh ||
+            variant.hinhAnh?.[0]?.duongDanAnh ||
+            variant.hinhAnh?.[0]?.url ||
+            variant.hinhAnh ||
+            variant.duongDanAnh ||
+            variant.imageUrl ||
+            variant.anh
+        ) || logoPlaceholder
+    );
 };
 const getVariantCombinationKey = (colorId, sizeId) => `${colorId}-${sizeId}`;
 const getColorUploadEntry = (colorId) => colorImageState.value[colorId] || { url: '', uploading: false };
@@ -768,7 +771,8 @@ const getBulkColorForm = (colorId) => {
     }
     return bulkByColorForms.value[colorId];
 };
-const hasAnyBulkValue = (form) => ['soLuong', 'giaNhap', 'giaBan'].some((field) => form[field] !== '' && form[field] !== null && form[field] !== undefined);
+const hasAnyBulkValue = (form) =>
+    ['soLuong', 'giaNhap', 'giaBan'].some((field) => form[field] !== '' && form[field] !== null && form[field] !== undefined);
 const getVariantColorLabel = (colorId) => getOptionLabel(colors, colorId);
 const getVariantSizeLabel = (sizeId) => getOptionLabel(sizes, sizeId);
 const getVariantDescriptor = () => variantContextSummary.value.join(' • ');
@@ -778,9 +782,13 @@ const mapVariantToFormState = (variant = {}) => ({
     clientKey: variant.clientKey || createDraftKey(),
     maChiTietSanPham: getVariantSkuValue(variant),
     idMauSac: getVariantColorIdValue(variant),
-    tenMauSac: getVariantColorLabelValue(variant) || (getOptionLabel(colors, getVariantColorIdValue(variant)) !== '--' ? getOptionLabel(colors, getVariantColorIdValue(variant)) : ''),
+    tenMauSac:
+        getVariantColorLabelValue(variant) ||
+        (getOptionLabel(colors, getVariantColorIdValue(variant)) !== '--' ? getOptionLabel(colors, getVariantColorIdValue(variant)) : ''),
     idKichThuoc: getVariantSizeIdValue(variant),
-    tenKichThuoc: getVariantSizeLabelValue(variant) || (getOptionLabel(sizes, getVariantSizeIdValue(variant)) !== '--' ? getOptionLabel(sizes, getVariantSizeIdValue(variant)) : ''),
+    tenKichThuoc:
+        getVariantSizeLabelValue(variant) ||
+        (getOptionLabel(sizes, getVariantSizeIdValue(variant)) !== '--' ? getOptionLabel(sizes, getVariantSizeIdValue(variant)) : ''),
     soLuong: Number(variant.soLuong ?? 0),
     giaNhap: Number(variant.giaNhap ?? 0),
     giaBan: Number(variant.giaBan ?? 0),
@@ -814,9 +822,7 @@ const buildVariantPayload = (variant, includeImages = true) => {
     };
 
     if (includeImages) {
-        payload.images = imageUrl
-            ? [{ duongDanAnh: imageUrl, hinhAnhDaiDien: true }]
-            : [];
+        payload.images = imageUrl ? [{ duongDanAnh: imageUrl, hinhAnhDaiDien: true }] : [];
     }
 
     return payload;
@@ -844,7 +850,7 @@ const handleAttributeChange = async (field, value) => {
     // Chỉ tự động tạo nếu người dùng chọn mục "Thêm nhanh" (có prefix __new__)
     // Hoặc nếu họ nhấn Enter (được xử lý ở onKeyUpEnter)
     if (typeof value === 'string' && value.startsWith('__new__')) {
-        const config = attributeConfig.find(item => item.field === field);
+        const config = attributeConfig.find((item) => item.field === field);
         if (!config) return;
 
         try {
@@ -920,11 +926,12 @@ const handleExportVariantQrZip = async () => {
         exportQrImageZip({
             fileName: `qrcode_bien_the_da_chon_${fileSuffix}.zip`,
             items: targetVariants.map((variant, index) => ({
-                baseName: variant.maChiTietSanPham
-                    || [product.value.tenSanPham, getVariantColorLabel(variant.idMauSac), getVariantSizeLabel(variant.idKichThuoc)]
+                baseName:
+                    variant.maChiTietSanPham ||
+                    [product.value.tenSanPham, getVariantColorLabel(variant.idMauSac), getVariantSizeLabel(variant.idKichThuoc)]
                         .filter(Boolean)
-                        .join('_')
-                    || `variant_${index + 1}`,
+                        .join('_') ||
+                    `variant_${index + 1}`,
                 dataUrl: qrDataUrls[index]
             }))
         });
@@ -987,11 +994,7 @@ const toggleSelectVisibleVariants = (checked) => {
 };
 
 const updateVariantStatusLocally = (variantKey, nextStatus) => {
-    variantItems.value = variantItems.value.map((item) => (
-        getVariantKey(item) === variantKey
-            ? { ...item, trangThai: nextStatus }
-            : item
-    ));
+    variantItems.value = variantItems.value.map((item) => (getVariantKey(item) === variantKey ? { ...item, trangThai: nextStatus } : item));
 };
 
 const persistVariantStatus = async (variant, nextStatus) => {
@@ -1000,10 +1003,7 @@ const persistVariantStatus = async (variant, nextStatus) => {
         return;
     }
 
-    await dichVuBienThe.capNhatBienThe(
-        variant.id,
-        buildVariantPayload({ ...variant, trangThai: nextStatus }, false)
-    );
+    await dichVuBienThe.capNhatBienThe(variant.id, buildVariantPayload({ ...variant, trangThai: nextStatus }, false));
     updateVariantStatusLocally(getVariantKey(variant), nextStatus);
 };
 
@@ -1026,17 +1026,16 @@ const buildProductPayload = ({ includeVariants = false } = {}) => {
     };
 
     if (includeVariants) {
-        payload.variants = variantItems.value.map(item => buildVariantPayload(item, true));
+        payload.variants = variantItems.value.map((item) => buildVariantPayload(item, true));
     }
 
     return payload;
 };
 
-const hasDuplicateVariant = (payload, currentKey = null) => variantItems.value.some((item) => (
-    item.idMauSac === payload.idMauSac
-    && item.idKichThuoc === payload.idKichThuoc
-    && getVariantKey(item) !== currentKey
-));
+const hasDuplicateVariant = (payload, currentKey = null) =>
+    variantItems.value.some(
+        (item) => item.idMauSac === payload.idMauSac && item.idKichThuoc === payload.idKichThuoc && getVariantKey(item) !== currentKey
+    );
 
 const variantGroups = computed(() => {
     const groupedMap = new Map();
@@ -1057,9 +1056,7 @@ const variantGroups = computed(() => {
         });
     });
 
-    const orderedColorIds = isEditMode.value
-        ? [...groupedMap.keys()]
-        : selectedColors.value.filter((colorId) => groupedMap.has(colorId));
+    const orderedColorIds = isEditMode.value ? [...groupedMap.keys()] : selectedColors.value.filter((colorId) => groupedMap.has(colorId));
 
     const groups = orderedColorIds.map((colorId) => groupedMap.get(colorId)).filter(Boolean);
     groups.forEach((group) => {
@@ -1083,11 +1080,9 @@ const syncColorImageStateFromVariants = () => {
 
 const applyColorImageToVariants = (colorId, imageUrl) => {
     const normalizedImageUrl = normalizeUploadedFileUrl(imageUrl);
-    variantItems.value = variantItems.value.map((variant) => (
-        variant.idMauSac === colorId
-            ? { ...variant, urlAnh: normalizedImageUrl || '' }
-            : variant
-    ));
+    variantItems.value = variantItems.value.map((variant) =>
+        variant.idMauSac === colorId ? { ...variant, urlAnh: normalizedImageUrl || '' } : variant
+    );
 
     const nextState = { ...colorImageState.value };
     if (normalizedImageUrl) {
@@ -1179,11 +1174,7 @@ const applyBulkValues = (predicate, form, successMessage) => {
 };
 
 const applyBulkAllVariants = () => {
-    applyBulkValues(
-        () => true,
-        bulkAllForm.value,
-        'Đã áp dụng nhanh cho toàn bộ biến thể'
-    );
+    applyBulkValues(() => true, bulkAllForm.value, 'Đã áp dụng nhanh cho toàn bộ biến thể');
 };
 
 const applyBulkColorVariants = (colorId) => {
@@ -1226,7 +1217,7 @@ const executeGenerateVariants = async () => {
 
     const nextVariants = [];
     let nextSkuSuffix = 1;
-    
+
     // Find highest suffix in existing variants to avoid duplicates
     existingVariantMap.forEach((variant) => {
         if (variant && variant.maChiTietSanPham && variant.maChiTietSanPham.startsWith(product.value.maSanPham + '-')) {
@@ -1242,7 +1233,7 @@ const executeGenerateVariants = async () => {
         selectedSizes.value.forEach((sizeId) => {
             const combinationKey = getVariantCombinationKey(colorId, sizeId);
             const existingVariant = existingVariantMap.get(combinationKey);
-            
+
             let newSku = '';
             if (existingVariant && existingVariant.maChiTietSanPham) {
                 newSku = existingVariant.maChiTietSanPham;
@@ -1250,7 +1241,7 @@ const executeGenerateVariants = async () => {
                 newSku = `${product.value.maSanPham}-${nextSkuSuffix}`;
                 nextSkuSuffix++;
             }
-            
+
             nextVariants.push(createGeneratedVariant(
                 colorId,
                 sizeId,
@@ -1264,9 +1255,7 @@ const executeGenerateVariants = async () => {
     variantItems.value = nextVariants;
 
     const validColorIds = new Set(selectedColors.value);
-    colorImageState.value = Object.fromEntries(
-        Object.entries(colorImageState.value).filter(([colorId]) => validColorIds.has(colorId))
-    );
+    colorImageState.value = Object.fromEntries(Object.entries(colorImageState.value).filter(([colorId]) => validColorIds.has(colorId)));
 
     addNotification({
         title: 'Thành công',
@@ -1389,13 +1378,17 @@ const loadProduct = async (id) => {
     syncColorImageStateFromVariants();
 };
 
-watch(variantItems, () => {
-    updateVariantPriceBounds();
-    syncVariantSelection();
-    if (variantPage.value > totalVariantPages.value) {
-        variantPage.value = totalVariantPages.value;
-    }
-}, { deep: true });
+watch(
+    variantItems,
+    () => {
+        updateVariantPriceBounds();
+        syncVariantSelection();
+        if (variantPage.value > totalVariantPages.value) {
+            variantPage.value = totalVariantPages.value;
+        }
+    },
+    { deep: true }
+);
 
 watch(variantPageSize, () => {
     variantPage.value = 1;
@@ -1435,7 +1428,7 @@ onMounted(async () => {
 });
 
 const rules = {
-    required: value => !!value || 'Trường này là bắt buộc'
+    required: (value) => !!value || 'Trường này là bắt buộc'
 };
 
 const attributeConfig = [
@@ -1460,9 +1453,7 @@ const validateProduct = () => {
         ['idMucDichChay', 'Mục đích sử dụng']
     ];
 
-    const missing = requiredFields
-        .filter(([field]) => !product.value[field])
-        .map(([, label]) => label);
+    const missing = requiredFields.filter(([field]) => !product.value[field]).map(([, label]) => label);
 
     if (missing.length > 0) {
         addNotification({
@@ -1482,13 +1473,9 @@ const validateProduct = () => {
         return false;
     }
 
-    const invalidVariant = variantItems.value.find(item => (
-        !item.idMauSac
-        || !item.idKichThuoc
-        || item.soLuong < 0
-        || item.giaNhap < 0
-        || item.giaBan < 0
-    ));
+    const invalidVariant = variantItems.value.find(
+        (item) => !item.idMauSac || !item.idKichThuoc || item.soLuong < 0 || item.giaNhap < 0 || item.giaBan < 0
+    );
 
     if (invalidVariant) {
         addNotification({
@@ -1603,9 +1590,7 @@ const handleVariantSubmit = async (payload) => {
             variantItems.value = [...variantItems.value, nextVariant];
             addNotification({ title: 'Thành công', subtitle: 'Đã thêm biến thể nháp', color: 'success' });
         } else {
-            variantItems.value = variantItems.value.map(item => (
-                getVariantKey(item) === currentKey ? nextVariant : item
-            ));
+            variantItems.value = variantItems.value.map((item) => (getVariantKey(item) === currentKey ? nextVariant : item));
             addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật biến thể nháp', color: 'success' });
         }
 
@@ -1619,10 +1604,7 @@ const handleVariantSubmit = async (payload) => {
             await dichVuBienThe.taoBienThe(route.params.id, buildVariantPayload(normalizedPayload, true));
             addNotification({ title: 'Thành công', subtitle: 'Đã thêm biến thể mới', color: 'success' });
         } else {
-            await dichVuBienThe.capNhatBienThe(
-                variantModal.value.variant.id,
-                buildVariantPayload(normalizedPayload, true)
-            );
+            await dichVuBienThe.capNhatBienThe(variantModal.value.variant.id, buildVariantPayload(normalizedPayload, true));
             addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật biến thể', color: 'success' });
         }
 
@@ -1657,7 +1639,7 @@ const handleRemoveVariant = (variant) => {
                     await loadProduct(route.params.id);
                     addNotification({ title: 'Thành công', subtitle: 'Đã xóa biến thể', color: 'success' });
                 } else {
-                    variantItems.value = variantItems.value.filter(item => getVariantKey(item) !== getVariantKey(variant));
+                    variantItems.value = variantItems.value.filter((item) => getVariantKey(item) !== getVariantKey(variant));
                     addNotification({ title: 'Thành công', subtitle: 'Đã xóa biến thể nháp', color: 'success' });
                 }
                 confirmDialog.value.show = false;
@@ -1697,9 +1679,9 @@ const handleSave = async () => {
         show: true,
         title: creatingNew ? 'Xác nhận thêm mới' : 'Xác nhận cập nhật',
         message: creatingNew
-            ? (variantCount > 0
+            ? variantCount > 0
                 ? `Bạn có chắc chắn muốn thêm sản phẩm mới cùng ${variantCount} biến thể không?`
-                : 'Bạn có chắc chắn muốn thêm sản phẩm mới này không?')
+                : 'Bạn có chắc chắn muốn thêm sản phẩm mới này không?'
             : 'Bạn có chắc chắn muốn cập nhật thông tin sản phẩm này không?',
         color: 'success',
         action: async () => {
@@ -1710,9 +1692,7 @@ const handleSave = async () => {
                     await dichVuSanPham.taoSanPham(buildProductPayload({ includeVariants: true }));
                     addNotification({
                         title: 'Thành công',
-                        subtitle: variantCount > 0
-                            ? `Đã thêm sản phẩm mới cùng ${variantCount} biến thể`
-                            : 'Đã thêm sản phẩm mới',
+                        subtitle: variantCount > 0 ? `Đã thêm sản phẩm mới cùng ${variantCount} biến thể` : 'Đã thêm sản phẩm mới',
                         color: 'success'
                     });
                 } else {
@@ -1735,7 +1715,7 @@ const handleSave = async () => {
 </script>
 
 <template>
-    <v-container fluid class="pa-6 animate-fade-in overflow-y-auto" style="height: 100vh;">
+    <v-container fluid class="pa-6 animate-fade-in overflow-y-auto" style="height: 100vh">
         <AdminBreadcrumbs :items="[
             { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
             { title: 'Danh sách sản phẩm', disabled: false, to: PATH.SAN_PHAM },
@@ -1781,9 +1761,9 @@ const handleSave = async () => {
                             </div>
                             <span class="text-subtitle-1 text-slate-800">Sản phẩm</span>
                         </div>
-                        <v-row> 
+                        <v-row>
                             <!-- HÀNG 1: THÔNG TIN CHÍNH -->
-                           
+
                             <v-col cols="12" md="3">
                                 <div class="field-label">Mã sản phẩm</div>
                                 <v-text-field v-model="product.maSanPham" placeholder="Hệ thống tự tạo..."
@@ -1807,7 +1787,7 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
@@ -1825,7 +1805,7 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
@@ -1845,7 +1825,7 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
@@ -1863,7 +1843,7 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
@@ -1872,9 +1852,11 @@ const handleSave = async () => {
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="field-label">Đối tượng</div>
-                                <v-select v-model="product.gioiTinhKhachHang"
-                                    :items="[{ title: 'Nam', value: 'NAM' }, { title: 'Nữ', value: 'NU' }, { title: 'Unisex', value: 'UNISEX' }]"
-                                    variant="outlined" density="comfortable" hide-details
+                                <v-select v-model="product.gioiTinhKhachHang" :items="[
+                                    { title: 'Nam', value: 'NAM' },
+                                    { title: 'Nữ', value: 'NU' },
+                                    { title: 'Unisex', value: 'UNISEX' }
+                                ]" variant="outlined" density="comfortable" hide-details
                                     placeholder="Đối tượng"></v-select>
                             </v-col>
                             <v-col cols="12" md="3">
@@ -1888,7 +1870,7 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
@@ -1908,7 +1890,7 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
@@ -1926,7 +1908,7 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
@@ -1936,7 +1918,8 @@ const handleSave = async () => {
                             <v-col cols="12">
                                 <div class="field-label">Mô tả chi tiết</div>
                                 <v-textarea v-model="product.moTaChiTiet" variant="outlined" rows="3" auto-grow
-                                    placeholder="Mô tả chi tiết sản phẩm..." hide-details class="custom-textarea"></v-textarea>
+                                    placeholder="Mô tả chi tiết sản phẩm..." hide-details
+                                    class="custom-textarea"></v-textarea>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -1958,13 +1941,19 @@ const handleSave = async () => {
                             <!-- MÀU SẮC -->
                             <div class="field-label mb-3">Màu sắc</div>
                             <div class="d-flex flex-wrap gap-4 mb-8">
-                                <div v-for="c in colors.filter(x => selectedColors.includes(x.id))" :key="c.id" class="text-center cursor-pointer" @click="toggleColor(c.id)">
-                                    <div class="color-circle mx-auto" :style="{ backgroundColor: c.maMauHex || '#e2e8f0' }" :class="{ 'selected': selectedColors.includes(c.id) }">
-                                        <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18" class="check-icon">mdi-check</v-icon>
+                                <div v-for="c in colors.filter(x => selectedColors.includes(x.id))" :key="c.id"
+                                    class="text-center cursor-pointer" @click="toggleColor(c.id)">
+                                    <div class="color-circle mx-auto"
+                                        :style="{ backgroundColor: c.maMauHex || '#e2e8f0' }"
+                                        :class="{ 'selected': selectedColors.includes(c.id) }">
+                                        <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18"
+                                            class="check-icon">mdi-check</v-icon>
                                     </div>
-                                    <div class="text-caption mt-1 text-truncate" style="max-width: 48px;">{{ c.ten }}</div>
+                                    <div class="text-caption mt-1 text-truncate" style="max-width: 48px;">{{ c.ten }}
+                                    </div>
                                 </div>
-                                <v-menu v-model="showColorMenu" :close-on-content-click="false" location="bottom center" max-width="320">
+                                <v-menu v-model="showColorMenu" :close-on-content-click="false" location="bottom center"
+                                    max-width="320">
                                     <template v-slot:activator="{ props }">
                                         <div class="text-center cursor-pointer" v-bind="props">
                                             <div class="color-circle dashed mx-auto d-flex align-center justify-center">
@@ -1976,38 +1965,59 @@ const handleSave = async () => {
                                     <v-card class="rounded-xl pa-4 shadow-lg border">
                                         <div class="d-flex justify-space-between align-center mb-4">
                                             <span class="text-subtitle-1 font-weight-bold">Chọn màu sắc</span>
-                                            <v-btn icon="mdi-close" variant="text" size="small" @click="showColorMenu = false"></v-btn>
+                                            <v-btn icon="mdi-close" variant="text" size="small"
+                                                @click="showColorMenu = false"></v-btn>
                                         </div>
-                                        <v-text-field v-model="colorSearch" prepend-inner-icon="mdi-magnify" placeholder="Tìm kiếm màu sắc..." variant="outlined" density="compact" hide-details class="mb-4 bg-slate-50"></v-text-field>
-                                        
+                                        <v-text-field v-model="colorSearch" prepend-inner-icon="mdi-magnify"
+                                            placeholder="Tìm kiếm màu sắc..." variant="outlined" density="compact"
+                                            hide-details class="mb-4 bg-slate-50"></v-text-field>
+
                                         <div class="text-caption font-weight-bold text-grey mb-3">MÀU PHỔ BIẾN</div>
-                                        <div class="d-flex flex-wrap gap-3 mb-6" style="max-height: 150px; overflow-y: auto;">
-                                            <div v-for="c in filteredColors" :key="c.id" class="text-center cursor-pointer" @click="toggleColor(c.id)">
-                                                <div class="color-circle mx-auto mb-1" :style="{ backgroundColor: c.maMauHex || '#e2e8f0' }" :class="{ 'selected': selectedColors.includes(c.id) }">
-                                                    <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18" class="check-icon">mdi-check</v-icon>
+                                        <div class="d-flex flex-wrap gap-3 mb-6"
+                                            style="max-height: 150px; overflow-y: auto;">
+                                            <div v-for="c in filteredColors" :key="c.id"
+                                                class="text-center cursor-pointer" @click="toggleColor(c.id)">
+                                                <div class="color-circle mx-auto mb-1"
+                                                    :style="{ backgroundColor: c.maMauHex || '#e2e8f0' }"
+                                                    :class="{ 'selected': selectedColors.includes(c.id) }">
+                                                    <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18"
+                                                        class="check-icon">mdi-check</v-icon>
                                                 </div>
-                                                <div class="text-caption" style="font-size: 10px !important; max-width: TÙY CHỈNH MÀU SẮC40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ c.ten }}</div>
+                                                <div class="text-caption"
+                                                    style="font-size: 10px !important; max-width: TÙY CHỈNH MÀU SẮC40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                    {{ c.ten }}</div>
                                             </div>
                                         </div>
-                                        
-                                        <div class="text-caption font-weight-bold text-grey mb-3">THÊM NHANH MÀU SẮC</div>
+
+                                        <div class="text-caption font-weight-bold text-grey mb-3">THÊM NHANH MÀU SẮC
+                                        </div>
                                         <div class="d-flex gap-3 mb-4">
-                                            <div class="custom-color-preview rounded-lg position-relative overflow-hidden cursor-pointer" :style="{ backgroundColor: customColorHex }">
-                                                <input type="color" v-model="customColorHex" class="position-absolute w-100 h-100" style="opacity: 0; cursor: pointer; top: 0; left: 0; outline: none; border: none;" />
+                                            <div class="custom-color-preview rounded-lg position-relative overflow-hidden cursor-pointer"
+                                                :style="{ backgroundColor: customColorHex }">
+                                                <input type="color" v-model="customColorHex"
+                                                    class="position-absolute w-100 h-100"
+                                                    style="opacity: 0; cursor: pointer; top: 0; left: 0; outline: none; border: none;" />
                                             </div>
                                             <div class="flex-grow-1">
                                                 <div class="text-caption mb-1">TÊN MÀU</div>
-                                                <v-text-field v-model="customColorName" placeholder="Ví dụ: Xanh Mint" variant="outlined" density="compact" hide-details class="mb-3 bg-slate-50"></v-text-field>
+                                                <v-text-field v-model="customColorName" placeholder="Ví dụ: Xanh Mint"
+                                                    variant="outlined" density="compact" hide-details
+                                                    class="mb-3 bg-slate-50"></v-text-field>
                                                 <div class="text-caption mb-1">MÃ MÀU (HEX)</div>
-                                                <v-text-field v-model="customColorHex" variant="outlined" density="compact" hide-details class="bg-slate-50 mb-2"></v-text-field>
+                                                <v-text-field v-model="customColorHex" variant="outlined"
+                                                    density="compact" hide-details
+                                                    class="bg-slate-50 mb-2"></v-text-field>
                                                 <div class="d-flex align-center gap-2 px-3 py-1 bg-slate-50 rounded-lg">
-                                                    <div class="color-dot" :style="{ backgroundColor: customColorHex }"></div>
+                                                    <div class="color-dot" :style="{ backgroundColor: customColorHex }">
+                                                    </div>
                                                     <span class="text-caption font-weight-medium">Màu đang chọn</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <v-btn block color="primary" class="rounded-lg font-weight-bold text-none" @click="handleAddCustomColor">
-                                            <v-icon size="18" class="mr-2">mdi-plus-circle-outline</v-icon> Xác nhận thêm mới màu
+                                        <v-btn block color="primary" class="rounded-lg font-weight-bold text-none"
+                                            @click="handleAddCustomColor">
+                                            <v-icon size="18" class="mr-2">mdi-plus-circle-outline</v-icon> Xác nhận
+                                            thêm mới màu
                                         </v-btn>
                                     </v-card>
                                 </v-menu>
@@ -2016,34 +2026,50 @@ const handleSave = async () => {
                             <!-- KÍCH THƯỚC -->
                             <div class="field-label mb-3 mt-2">Kích thước</div>
                             <div class="d-flex flex-wrap gap-2 mb-4">
-                                <v-chip v-for="s in sizes.filter(x => selectedSizes.includes(x.id))" :key="s.id" variant="flat" color="primary" class="rounded-lg font-weight-medium px-4 cursor-pointer" @click="toggleSize(s.id)">
+                                <v-chip v-for="s in sizes.filter(x => selectedSizes.includes(x.id))" :key="s.id"
+                                    variant="flat" color="primary"
+                                    class="rounded-lg font-weight-medium px-4 cursor-pointer" @click="toggleSize(s.id)">
                                     {{ formatSizeDisplay(s.ten) }}
                                 </v-chip>
-                                
-                                <v-menu v-model="showSizeMenu" :close-on-content-click="false" location="bottom center" max-width="320">
+
+                                <v-menu v-model="showSizeMenu" :close-on-content-click="false" location="bottom center"
+                                    max-width="320">
                                     <template v-slot:activator="{ props }">
-                                        <v-chip v-bind="props" variant="outlined" style="border-style: dashed; border-width: 1px;" color="grey-darken-1" class="rounded-lg px-4 bg-transparent cursor-pointer hover-bg-slate-50">
+                                        <v-chip v-bind="props" variant="outlined"
+                                            style="border-style: dashed; border-width: 1px;" color="grey-darken-1"
+                                            class="rounded-lg px-4 bg-transparent cursor-pointer hover-bg-slate-50">
                                             <v-icon start size="16">mdi-plus</v-icon> Thêm mới
                                         </v-chip>
                                     </template>
                                     <v-card class="rounded-xl pa-4 shadow-lg border">
                                         <div class="d-flex justify-space-between align-center mb-4">
                                             <span class="text-subtitle-1 font-weight-bold">Chọn kích thước</span>
-                                            <v-btn icon="mdi-close" variant="text" size="small" @click="showSizeMenu = false"></v-btn>
+                                            <v-btn icon="mdi-close" variant="text" size="small"
+                                                @click="showSizeMenu = false"></v-btn>
                                         </div>
                                         <div class="d-flex gap-2 mb-4">
-                                            <v-text-field v-model="customSizeName" prepend-inner-icon="mdi-magnify" placeholder="Nhập kích thước" variant="outlined" density="compact" hide-details class="bg-slate-50"></v-text-field>
-                                            <v-btn color="primary" class="rounded-lg text-none font-weight-medium" height="40" @click="handleAddCustomSize">
+                                            <v-text-field v-model="customSizeName" prepend-inner-icon="mdi-magnify"
+                                                placeholder="Nhập kích thước" variant="outlined" density="compact"
+                                                hide-details class="bg-slate-50"></v-text-field>
+                                            <v-btn color="primary" class="rounded-lg text-none font-weight-medium"
+                                                height="40" @click="handleAddCustomSize">
                                                 <v-icon start size="18">mdi-plus</v-icon> Thêm
                                             </v-btn>
                                         </div>
                                         <div class="text-caption text-grey mb-3">Gợi ý kích thước</div>
-                                        <div class="d-flex flex-wrap gap-2 mb-4" style="max-height: 150px; overflow-y: auto;">
-                                            <v-chip v-for="s in filteredSizes" :key="s.id" :variant="selectedSizes.includes(s.id) ? 'flat' : 'tonal'" :color="selectedSizes.includes(s.id) ? 'primary' : 'grey-darken-1'" class="rounded-lg px-4 cursor-pointer font-weight-medium" @click="toggleSize(s.id)" :class="{ 'bg-slate-50': !selectedSizes.includes(s.id) }">
+                                        <div class="d-flex flex-wrap gap-2 mb-4"
+                                            style="max-height: 150px; overflow-y: auto;">
+                                            <v-chip v-for="s in filteredSizes" :key="s.id"
+                                                :variant="selectedSizes.includes(s.id) ? 'flat' : 'tonal'"
+                                                :color="selectedSizes.includes(s.id) ? 'primary' : 'grey-darken-1'"
+                                                class="rounded-lg px-4 cursor-pointer font-weight-medium"
+                                                @click="toggleSize(s.id)"
+                                                :class="{ 'bg-slate-50': !selectedSizes.includes(s.id) }">
                                                 {{ formatSizeDisplay(s.ten) }}
                                             </v-chip>
                                         </div>
-                                        <v-btn block color="primary" class="rounded-lg font-weight-bold text-none mt-2" @click="showSizeMenu = false">
+                                        <v-btn block color="primary" class="rounded-lg font-weight-bold text-none mt-2"
+                                            @click="showSizeMenu = false">
                                             Thêm vào danh sách
                                         </v-btn>
                                     </v-card>
@@ -2054,8 +2080,7 @@ const handleSave = async () => {
                         <v-spacer></v-spacer>
 
                         <v-btn height="44" class="mt-6 text-none font-weight-medium rounded-lg mx-auto d-flex"
-                            style="width: fit-content;"
-                            color="primary" @click="generateVariants"
+                            style="width: fit-content" color="primary" @click="generateVariants"
                             :disabled="selectedColors.length === 0 || selectedSizes.length === 0">
                             <v-icon icon="mdi-auto-fix" size="18" class="mr-2" />
                             Tạo danh sách biến thể
@@ -2120,10 +2145,11 @@ const handleSave = async () => {
                                                 formatCurrency(variantTableFilters.khoangGia[0]) }} – {{
                                                     formatCurrency(variantTableFilters.khoangGia[1]) }}</span>
                                         </div>
-                                        <v-range-slider :key="`${variantPriceBounds.min}-${variantPriceBounds.max}`" v-model="variantTableFilters.khoangGia"
-                                            :min="variantPriceBounds.min" :max="variantPriceBounds.max"
-                                            :step="variantPriceStep" hide-details color="primary" track-color="#e2e8f0"
-                                            track-size="3" thumb-size="14" class="blue-range-slider"
+                                        <v-range-slider :key="`${variantPriceBounds.min}-${variantPriceBounds.max}`"
+                                            v-model="variantTableFilters.khoangGia" :min="variantPriceBounds.min"
+                                            :max="variantPriceBounds.max" :step="variantPriceStep" hide-details
+                                            color="primary" track-color="#e2e8f0" track-size="3" thumb-size="14"
+                                            class="blue-range-slider"
                                             @update:model-value="handleVariantSliderPriceChange" />
                                     </v-col>
                                 </template>
@@ -2131,7 +2157,7 @@ const handleSave = async () => {
                         </div>
 
                         <template v-if="!isEditMode">
-                            <div class="variant-gradient-header pb-4 mb-6" style="border-bottom: 1px solid #e2e8f0;">
+                            <div class="variant-gradient-header pb-4 mb-6" style="border-bottom: 1px solid #e2e8f0">
                                 <div class="d-flex align-center justify-space-between w-100">
                                     <div class="d-flex align-center">
                                         <div class="icon-blob bg-blue-lighten-5 mr-3">
@@ -2142,15 +2168,15 @@ const handleSave = async () => {
                                         </div>
                                     </div>
                                     <div class="d-flex align-center gap-3">
-                                        <v-btn v-if="variantItems.length > 0" color="primary" variant="flat" 
+                                        <v-btn v-if="variantItems.length > 0" color="primary" variant="flat"
                                             class="text-none font-weight-bold rounded-lg px-4"
-                                            style="color: white !important;" @click="openBulkEdit(null)">
+                                            style="color: white !important" @click="openBulkEdit(null)">
                                             <v-icon icon="mdi-flash-outline" size="18" class="mr-2" />
                                             Thêm nhanh toàn bộ
                                         </v-btn>
-                                        <v-btn v-if="variantItems.length > 0" variant="flat" color="error" 
+                                        <v-btn v-if="variantItems.length > 0" variant="flat" color="error"
                                             class="text-none font-weight-bold rounded-lg px-4"
-                                            style="color: white !important;" @click="clearAllDraftVariants">
+                                            style="color: white !important" @click="clearAllDraftVariants">
                                             <TrashIcon size="18" class="mr-2" />
                                             Xóa tất cả
                                         </v-btn>
@@ -2158,23 +2184,25 @@ const handleSave = async () => {
                                 </div>
                             </div>
 
-                            <div v-if="variantItems.length > 0" class="variants-grouped-container custom-scrollbar" style="max-height: 600px; overflow-y: auto; overflow-x: hidden; padding-right: 4px;">
-                                <v-card v-for="(items, colorId) in variantsByColor" :key="colorId" 
+                            <div v-if="variantItems.length > 0" class="variants-grouped-container custom-scrollbar"
+                                style="max-height: 600px; overflow-y: auto; overflow-x: hidden; padding-right: 4px;">
+                                <v-card v-for="(items, colorId) in variantsByColor" :key="colorId"
                                     class="color-group-card mb-6">
-                                    <div class="color-group-header px-6 py-4 bg-slate-50 d-flex align-center justify-space-between border-b">
+                                    <div
+                                        class="color-group-header px-6 py-4 bg-slate-50 d-flex align-center justify-space-between border-b">
                                         <div class="d-flex align-center">
-                                            <v-avatar size="24" :color="getVariantColorHex(colorId)" class="mr-3 border" />
+                                            <v-avatar size="24" :color="getVariantColorHex(colorId)"
+                                                class="mr-3 border" />
                                             <span class="text-subtitle-2 font-weight-bold text-slate-800">
                                                 Màu sắc: {{ getVariantColorLabel(colorId) }}
                                             </span>
-                                            <span class="text-caption text-slate-500 ml-3">
-                                                ({{ items.length }} kích thước)
-                                            </span>
+                                            <span class="text-caption text-slate-500 ml-3"> ({{ items.length }} kích
+                                                thước) </span>
                                         </div>
                                         <div class="d-flex align-center gap-2">
                                             <v-btn color="primary" variant="flat" size="small"
                                                 class="text-none font-weight-bold rounded-lg px-3"
-                                                style="color: white !important;" @click="openBulkEdit(colorId)">
+                                                style="color: white !important" @click="openBulkEdit(colorId)">
                                                 <v-icon icon="mdi-flash-outline" size="16" class="mr-1" />
                                                 Thêm nhanh cho màu này
                                             </v-btn>
@@ -2182,30 +2210,45 @@ const handleSave = async () => {
                                     </div>
 
                                     <v-row no-gutters>
-                                        <v-col cols="12" md="3" class="border-r pa-6 d-flex flex-column align-center justify-center bg-slate-50/50">
+                                        <v-col cols="12" md="3"
+                                            class="border-r pa-6 d-flex flex-column align-center justify-center bg-slate-50/50">
                                             <div class="field-label mb-3 w-100 text-center">Hình ảnh theo màu</div>
                                             <div class="color-image-uploader" @click="openColorImagePicker(colorId)">
-                                                <v-img v-if="getColorUploadEntry(colorId).url" :src="getColorUploadEntry(colorId).url" 
-                                                    cover class="rounded-lg h-100" />
+                                                <v-img v-if="getColorUploadEntry(colorId).url"
+                                                    :src="getColorUploadEntry(colorId).url" cover
+                                                    class="rounded-lg h-100" />
                                                 <div v-else class="uploader-placeholder">
-                                                    <v-icon icon="mdi-camera-plus-outline" size="32" color="slate-300" />
+                                                    <v-icon icon="mdi-camera-plus-outline" size="32"
+                                                        color="slate-300" />
                                                     <span class="text-caption text-slate-400 mt-2">Tải ảnh lên</span>
                                                 </div>
-                                                <input :ref="(el) => setColorFileInputRef(colorId, el)"
-                                                    type="file" accept="image/*" class="d-none"
+                                                <input :ref="(el) => setColorFileInputRef(colorId, el)" type="file"
+                                                    accept="image/*" class="d-none"
                                                     @change="handleColorImageUpload(colorId, $event)" />
                                             </div>
-                                      
                                         </v-col>
                                         <v-col cols="12" md="9">
                                             <v-table density="comfortable" class="variant-inner-table">
                                                 <thead class="bg-slate-50">
                                                     <tr>
-                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 150px">Kích thước</th>
-                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 120px">Số lượng</th>
-                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 180px">Giá nhập</th>
-                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 180px">Giá bán (VNĐ)</th>
-                                                        <th class="text-center font-weight-bold text-slate-600" style="width: 80px">Xóa</th>
+                                                        <th class="text-left font-weight-bold text-slate-600"
+                                                            style="width: 150px">
+                                                            Kích thước
+                                                        </th>
+                                                        <th class="text-left font-weight-bold text-slate-600"
+                                                            style="width: 120px">
+                                                            Số lượng
+                                                        </th>
+                                                        <th class="text-left font-weight-bold text-slate-600"
+                                                            style="width: 180px">
+                                                            Giá nhập
+                                                        </th>
+                                                        <th class="text-left font-weight-bold text-slate-600"
+                                                            style="width: 180px">
+                                                            Giá bán (VNĐ)
+                                                        </th>
+                                                        <th class="text-center font-weight-bold text-slate-600"
+                                                            style="width: 80px">Xóa</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -2214,23 +2257,27 @@ const handleSave = async () => {
                                                             Size {{ getVariantSizeLabel(variant.idKichThuoc) }}
                                                         </td>
                                                         <td>
-                                                            <v-text-field v-model="variant.soLuong" type="number" hide-details 
-                                                                variant="outlined" density="compact" class="custom-input-dense" />
+                                                            <v-text-field v-model="variant.soLuong" type="number"
+                                                                hide-details variant="outlined" density="compact"
+                                                                class="custom-input-dense" />
                                                         </td>
                                                         <td>
-                                                            <FormattedNumberField v-model="variant.giaNhap" hide-details 
-                                                                variant="outlined" density="compact" class="custom-input-dense" />
+                                                            <FormattedNumberField v-model="variant.giaNhap" hide-details
+                                                                variant="outlined" density="compact"
+                                                                class="custom-input-dense" />
                                                         </td>
                                                         <td>
-                                                            <FormattedNumberField v-model="variant.giaBan" hide-details 
-                                                                variant="outlined" density="compact" class="custom-input-dense" />
+                                                            <FormattedNumberField v-model="variant.giaBan" hide-details
+                                                                variant="outlined" density="compact"
+                                                                class="custom-input-dense" />
                                                         </td>
                                                         <td class="text-center">
                                                             <v-btn variant="text" color="error" size="small"
                                                                 class="action-icon-btn"
                                                                 @click="removeDraftVariantByObject(variant)">
                                                                 <TrashIcon size="18" />
-                                                                <v-tooltip activator="parent" location="top" text="Xóa biến thể này" />
+                                                                <v-tooltip activator="parent" location="top"
+                                                                    text="Xóa biến thể này" />
                                                             </v-btn>
                                                         </td>
                                                     </tr>
@@ -2245,11 +2292,11 @@ const handleSave = async () => {
                                 <div class="variant-empty-state__icon">
                                     <v-icon icon="mdi-layers-outline" size="32" />
                                 </div>
-                                <div class="text-subtitle-2 font-weight-bold text-slate-700 mt-3">
-                                    Chưa có biến thể nào được tạo
-                                </div>
+                                <div class="text-subtitle-2 font-weight-bold text-slate-700 mt-3">Chưa có biến thể nào
+                                    được tạo</div>
                                 <div class="text-caption text-slate-500 mt-1">
-                                    Chọn màu sắc và kích thước ở card bên phải, sau đó bấm <span class="font-weight-bold">Tạo danh sách biến thể</span>.
+                                    Chọn màu sắc và kích thước ở card bên phải, sau đó bấm
+                                    <span class="font-weight-bold">Tạo danh sách biến thể</span>.
                                 </div>
                             </div>
                         </template>
@@ -2259,20 +2306,20 @@ const handleSave = async () => {
                             :show-add-button="false" class="mt-6 variant-admin-table">
                             <template #headers>
                                 <tr>
-                                    <th class="header-cell" style="width: 70px;">
+                                    <th class="header-cell" style="width: 70px">
                                         <v-checkbox-btn :model-value="allVisibleVariantsSelected"
                                             :indeterminate="someVisibleVariantsSelected" color="primary" hide-details
                                             density="compact" @update:model-value="toggleSelectVisibleVariants" />
                                     </th>
-                                    <th class="header-cell" style="width: 60px;">STT</th>
-                                    <th class="header-cell" style="width: 80px;">Ảnh</th>
-                                    <th class="header-cell" style="width: 140px;">Màu sắc</th>
-                                    <th class="header-cell" style="width: 140px;">Kích thước</th>
-                                    <th class="header-cell" style="width: 240px;">Mã SKU</th>
-                                    <th class="header-cell" style="width: 110px;">Tồn kho</th>
-                                    <th class="header-cell" style="width: 130px;">Giá bán</th>
-                                    <th class="header-cell" style="width: 160px;">Trạng thái</th>
-                                    <th class="header-cell" style="width: 120px;">Thao tác</th>
+                                    <th class="header-cell" style="width: 60px">STT</th>
+                                    <th class="header-cell" style="width: 80px">Ảnh</th>
+                                    <th class="header-cell" style="width: 140px">Màu sắc</th>
+                                    <th class="header-cell" style="width: 140px">Kích thước</th>
+                                    <th class="header-cell" style="width: 240px">Mã SKU</th>
+                                    <th class="header-cell" style="width: 110px">Tồn kho</th>
+                                    <th class="header-cell" style="width: 130px">Giá bán</th>
+                                    <th class="header-cell" style="width: 160px">Trạng thái</th>
+                                    <th class="header-cell" style="width: 120px">Thao tác</th>
                                 </tr>
                             </template>
 
@@ -2337,8 +2384,10 @@ const handleSave = async () => {
                                         <span class="text-primary">{{ formatCurrency(variant.giaBan) }}</span>
                                     </td>
                                     <td class="data-cell text-center">
-                                        <v-chip variant="flat"
-                                            :class="['status-chip', isActiveStatus(variant.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
+                                        <v-chip variant="flat" :class="[
+                                            'status-chip',
+                                            isActiveStatus(variant.trangThai) ? 'status-chip-active' : 'status-chip-inactive'
+                                        ]">
                                             {{ getStatusLabel(variant.trangThai) }}
                                         </v-chip>
                                     </td>
@@ -2370,7 +2419,6 @@ const handleSave = async () => {
                                     :current-size="paginatedVariantItems.length" />
                             </template>
                         </AdminTable>
-
                     </v-card-text>
                 </v-card>
             </v-col>
@@ -2392,33 +2440,38 @@ const handleSave = async () => {
                 <v-card-title class="pa-6 border-b d-flex align-center">
                     <v-icon icon="mdi-flash-circle" color="primary" class="mr-3" />
                     <span class="font-weight-bold text-slate-800">
-                        {{ bulkEditModal.targetColorId ? `Thiết lập cho màu ${getVariantColorLabel(bulkEditModal.targetColorId)}` : 'Thiết lập cho tất cả biến thể' }}
+                        {{
+                            bulkEditModal.targetColorId
+                                ? `Thiết lập cho màu ${getVariantColorLabel(bulkEditModal.targetColorId)}`
+                                : 'Thiết lập cho tất cả biến thể'
+                        }}
                     </span>
                 </v-card-title>
                 <v-card-text class="pa-8">
-                    
                     <v-row>
                         <v-col cols="12">
                             <div class="field-label">Số lượng</div>
-                            <v-text-field v-model="bulkEditModal.form.soLuong" type="number" placeholder="Nhập số lượng..." 
-                                variant="outlined" density="comfortable" hide-details class="custom-input" />
+                            <v-text-field v-model="bulkEditModal.form.soLuong" type="number"
+                                placeholder="Nhập số lượng..." variant="outlined" density="comfortable" hide-details
+                                class="custom-input" />
                         </v-col>
                         <v-col cols="12">
                             <div class="field-label">Giá nhập</div>
-                            <FormattedNumberField v-model="bulkEditModal.form.giaNhap" placeholder="Nhập giá nhập..." 
+                            <FormattedNumberField v-model="bulkEditModal.form.giaNhap" placeholder="Nhập giá nhập..."
                                 variant="outlined" density="comfortable" hide-details class="custom-input" />
                         </v-col>
                         <v-col cols="12">
                             <div class="field-label">Giá bán (VNĐ)</div>
-                            <FormattedNumberField v-model="bulkEditModal.form.giaBan" placeholder="Nhập giá bán..." 
+                            <FormattedNumberField v-model="bulkEditModal.form.giaBan" placeholder="Nhập giá bán..."
                                 variant="outlined" density="comfortable" hide-details class="custom-input" />
                         </v-col>
                     </v-row>
                 </v-card-text>
                 <v-card-actions class="pa-6 border-t bg-slate-50">
                     <v-spacer />
-                    <v-btn variant="text" color="slate-500" class="text-none font-weight-bold" @click="bulkEditModal.show = false">Hủy</v-btn>
-                    <v-btn color="primary" variant="flat" class="text-none font-weight-bold px-6 rounded-lg h-11" 
+                    <v-btn variant="text" color="slate-500" class="text-none font-weight-bold"
+                        @click="bulkEditModal.show = false">Hủy</v-btn>
+                    <v-btn color="primary" variant="flat" class="text-none font-weight-bold px-6 rounded-lg h-11"
                         @click="applyBulkEdit">Áp dụng</v-btn>
                 </v-card-actions>
             </v-card>
@@ -2542,7 +2595,8 @@ const handleSave = async () => {
 
 .attribute-list-wrapper {
     min-height: 200px;
-    height: 0; /* Let flex-grow handle it */
+    height: 0;
+    /* Let flex-grow handle it */
     overflow-y: auto;
     border: 1px solid #f1f5f9;
     border-radius: 8px;
@@ -2808,7 +2862,7 @@ const handleSave = async () => {
     border-radius: 999px;
     display: inline-block;
     margin-right: 10px;
-    background: #0085DB;
+    background: #0085db;
     box-shadow: 0 0 0 4px rgba(0, 133, 219, 0.12);
 }
 
@@ -2817,7 +2871,7 @@ const handleSave = async () => {
 }
 
 .brand-logo-icon {
-    color: #0085DB;
+    color: #0085db;
 }
 
 .variant-edit-filter-wrap {
@@ -2948,36 +3002,42 @@ const handleSave = async () => {
     height: 36px;
     border-radius: 50%;
     position: relative;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s;
-    border: 1px solid rgba(0,0,0,0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
+
 .color-circle:hover {
     transform: scale(1.1);
 }
+
 .color-circle.dashed {
     background: transparent;
     border: 2px dashed #94a3b8;
     box-shadow: none;
 }
+
 .color-circle .check-icon {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
+
 .custom-color-preview {
     width: 64px;
     height: 64px;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
 .color-dot {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    border: 1px solid rgba(0,0,0,0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
+
 .hover-bg-slate-50:hover {
     background-color: #f8fafc !important;
 }

@@ -12,9 +12,17 @@ import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminFilter from '@/components/common/AdminFilter.vue';
 import TableEmptyState from '@/components/common/TableEmptyState.vue';
 import {
-    ChevronLeftIcon, DeviceFloppyIcon, PrinterIcon, MailIcon,
-    AlertCircleIcon, InfoCircleIcon, SettingsIcon, CalendarIcon,
-    SearchIcon, FilterIcon, UsersIcon
+    ChevronLeftIcon,
+    DeviceFloppyIcon,
+    PrinterIcon,
+    MailIcon,
+    AlertCircleIcon,
+    InfoCircleIcon,
+    SettingsIcon,
+    CalendarIcon,
+    SearchIcon,
+    FilterIcon,
+    UsersIcon
 } from 'vue-tabler-icons';
 
 const route = useRoute();
@@ -37,7 +45,7 @@ const loading = ref(false);
 const saving = ref(false);
 const isDetailMode = computed(() => !!route.params.id && route.path.includes('/detail'));
 const isEditMode = computed(() => !!route.params.id && !route.path.includes('/detail'));
-const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật phiếu giảm giá' : 'Thêm phiếu giảm giá');
+const submitButtonText = computed(() => (isEditMode.value ? 'Cập nhật phiếu giảm giá' : 'Thêm phiếu giảm giá'));
 const isViewOnly = computed(() => isDetailMode.value);
 const breadcrumbTitle = computed(() => isEditMode.value ? 'Cập nhật' : (isDetailMode.value ? 'Chi tiết' : 'Thêm mới'));
 
@@ -88,12 +96,16 @@ watch(isInfinite, (val) => {
     form.value.soLuong = val ? -1 : 0;
 });
 
-watch([() => form.value.loaiHienThi, selectedCustomerIds], ([loai, selecteds]) => {
-    if (loai === 'CA_NHAN') {
-        form.value.soLuong = selecteds.length;
-        isInfinite.value = false;
-    }
-}, { deep: true });
+watch(
+    [() => form.value.loaiHienThi, selectedCustomerIds],
+    ([loai, selecteds]) => {
+        if (loai === 'CA_NHAN') {
+            form.value.soLuong = selecteds.length;
+            isInfinite.value = false;
+        }
+    },
+    { deep: true }
+);
 
 const isSelectAll = computed({
     get: () => filteredCustomers.value.length > 0 && selectedCustomerIds.value.length === filteredCustomers.value.length,
@@ -346,9 +358,9 @@ onMounted(init);
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Giảm tối đa (VNĐ)</div>
-                                <v-text-field v-model.number="form.giamToiDa" :readonly="isViewOnly || form.loaiPhieu === 'TIEN_MAT'"
-                                    placeholder="Không giới hạn" type="number"
-                                    variant="outlined" density="compact" hide-details
+                                <v-text-field v-model.number="form.giamToiDa"
+                                    :readonly="isViewOnly || form.loaiPhieu === 'TIEN_MAT'" placeholder="Không giới hạn"
+                                    type="number" variant="outlined" density="compact" hide-details
                                     :class="form.loaiPhieu === 'TIEN_MAT' ? 'bg-slate-50' : ''"></v-text-field>
                             </v-col>
 
@@ -519,7 +531,8 @@ onMounted(init);
                                             {{ formatDate(item.ngayDonHangGanNhat) }}
                                         </td>
                                     </tr>
-                                    <TableEmptyState v-if="paginatedCustomers.length === 0" :colspan="10" text="Không tìm thấy khách hàng nào phù hợp." />
+                                    <TableEmptyState v-if="paginatedCustomers.length === 0" :colspan="10"
+                                        text="Không tìm thấy khách hàng nào phù hợp." />
                                 </tbody>
                             </table>
                         </div>
@@ -629,10 +642,10 @@ onMounted(init);
 }
 
 /* CSS Đồng bộ ẩn icon mặc định trình duyệt cho cả date và datetime-local */
-:deep(input[type="date"]::-webkit-calendar-picker-indicator),
-:deep(input[type="date"]::-webkit-inner-spin-button),
-:deep(input[type="datetime-local"]::-webkit-calendar-picker-indicator),
-:deep(input[type="datetime-local"]::-webkit-inner-spin-button) {
+:deep(input[type='date']::-webkit-calendar-picker-indicator),
+:deep(input[type='date']::-webkit-inner-spin-button),
+:deep(input[type='datetime-local']::-webkit-calendar-picker-indicator),
+:deep(input[type='datetime-local']::-webkit-inner-spin-button) {
     display: none !important;
     -webkit-appearance: none !important;
 }

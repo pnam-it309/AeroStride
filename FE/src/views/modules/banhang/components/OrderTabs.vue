@@ -97,7 +97,3 @@ const orderSummaries = computed(() =>
     background: rgba(var(--v-theme-error), 0.1);
 }
 </style>
-
-
-
-

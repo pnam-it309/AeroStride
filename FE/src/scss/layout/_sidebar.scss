@@ -6,11 +6,10 @@
     height: calc((100% - 40px)) !important;
     overflow: hidden;
 
-    @media screen and (max-width:1279px) {
+    @media screen and (max-width: 1279px) {
         height: 100% !important;
         border-radius: 0;
     }
-
 
     .mini-icon {
         display: none;
@@ -35,7 +34,7 @@
 
 .verticalLayout {
     .logo {
-        @media screen and (max-width:1024px) {
+        @media screen and (max-width: 1024px) {
             width: auto;
         }
     }
@@ -94,12 +93,11 @@
     .v-list {
         color: rgb(var(--v-theme-textSecondary));
 
-
-        >.v-list-group {
+        > .v-list-group {
             position: relative;
 
-            >.v-list-item--active,
-            >.v-list-item--active:hover {
+            > .v-list-item--active,
+            > .v-list-item--active:hover {
                 background: #eef2ff !important;
                 color: #1e257c !important;
             }
@@ -165,7 +163,6 @@
             z-index: 2;
         }
 
-
         /* 1. SIDEBAR PASTEL CLEANUP */
         .v-list-item {
             position: relative !important;
@@ -173,14 +170,10 @@
             min-height: 44px !important;
             border-radius: 12px !important;
         }
-
-
     }
 }
 
-
 .v-navigation-drawer--rail {
-
     .scrollnavbar .v-list .v-list-group__items,
     .hide-menu {
         opacity: 0.8;
@@ -195,7 +188,7 @@
 .scrollnavbar {
     scrollbar-width: none !important; /* Firefox */
     -ms-overflow-style: none !important; /* IE and Edge */
-    
+
     &::-webkit-scrollbar {
         display: none !important; /* Chrome, Safari, Opera */
         width: 0 !important;
@@ -215,7 +208,7 @@
         .v-overlay__content {
             width: 100%;
 
-            @media screen and (min-width:767px) {
+            @media screen and (min-width: 767px) {
                 max-width: 96% !important;
             }
 

@@ -22,11 +22,14 @@ const fetchVouchers = async () => {
 };
 
 const copyToClipboard = (code) => {
-    navigator.clipboard.writeText(code).then(() => {
-        toast.success(`Đã sao chép mã: ${code}`);
-    }).catch(err => {
-        console.error('Could not copy text: ', err);
-    });
+    navigator.clipboard
+        .writeText(code)
+        .then(() => {
+            toast.success(`Đã sao chép mã: ${code}`);
+        })
+        .catch((err) => {
+            console.error('Could not copy text: ', err);
+        });
 };
 
 const formatPrice = (price) => {
@@ -47,8 +50,8 @@ onMounted(() => {
 <template>
     <div class="voucher-listing-page bg-grey-lighten-4 min-vh-100">
         <MainHeader />
-        
-        <div class="header-spacing" style="height: 104px;"></div>
+
+        <div class="header-spacing" style="height: 104px"></div>
 
         <v-container class="py-12">
             <div class="text-center mb-12">
@@ -74,7 +77,9 @@ onMounted(() => {
                         <div class="voucher-right">
                             <div class="voucher-info">
                                 <h3 class="voucher-title">{{ v.ten }}</h3>
-                                <p class="min-order">Đơn tối thiểu: <strong>{{ formatPrice(v.donHangToiThieu) }}</strong></p>
+                                <p class="min-order">
+                                    Đơn tối thiểu: <strong>{{ formatPrice(v.donHangToiThieu) }}</strong>
+                                </p>
                                 <p class="expiry">HSD: {{ formatDate(v.ngayKetThuc) }}</p>
                             </div>
                             <div class="voucher-action">
@@ -82,7 +87,9 @@ onMounted(() => {
                                     <span class="code">{{ v.ma }}</span>
                                     <v-btn icon="mdi-content-copy" variant="text" size="small" @click="copyToClipboard(v.ma)"></v-btn>
                                 </div>
-                                <v-btn color="black" block rounded="pill" class="mt-2 font-weight-bold" @click="copyToClipboard(v.ma)">SAO CHÉP MÃ</v-btn>
+                                <v-btn color="black" block rounded="pill" class="mt-2 font-weight-bold" @click="copyToClipboard(v.ma)"
+                                    >SAO CHÉP MÃ</v-btn
+                                >
                             </div>
                         </div>
                         <div class="cut-out top"></div>
@@ -114,12 +121,12 @@ onMounted(() => {
     border-radius: 16px;
     overflow: hidden;
     position: relative;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
     transition: transform 0.3s ease;
 
     &:hover {
         transform: translateY(-5px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
     }
 }
 
@@ -132,7 +139,7 @@ onMounted(() => {
     gap: 10px;
     color: white;
     padding: 20px;
-    
+
     .discount-val {
         font-size: 1.5rem;
         font-weight: 900;
@@ -159,7 +166,8 @@ onMounted(() => {
     overflow: hidden;
 }
 
-.min-order, .expiry {
+.min-order,
+.expiry {
     font-size: 0.85rem;
     color: #666;
     margin-bottom: 4px;
@@ -192,9 +200,15 @@ onMounted(() => {
     border-radius: 50%;
     z-index: 2;
 
-    &.top { top: -10px; }
-    &.bottom { bottom: -10px; }
+    &.top {
+        top: -10px;
+    }
+    &.bottom {
+        bottom: -10px;
+    }
 }
 
-.min-vh-100 { min-height: 100vh; }
+.min-vh-100 {
+    min-height: 100vh;
+}
 </style>

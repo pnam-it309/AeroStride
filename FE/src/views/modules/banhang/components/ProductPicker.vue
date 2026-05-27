@@ -66,12 +66,24 @@ const loadFilterOptions = async () => {
         const pick = (res) => res?.content || res || [];
         const uniqueNames = (items) => Array.from(new Set(pick(items).map((x) => x?.ten).filter(Boolean)));
         filterOptions.value = {
-            danhMuc: uniqueNames(dm),
-            mauSac: uniqueNames(ms),
-            chatLieu: uniqueNames(cl),
-            kichCo: uniqueNames(kc),
-            deGiay: uniqueNames(dg),
-            thuongHieu: uniqueNames(th)
+            danhMuc: pick(dm)
+                .map((x) => x?.ten)
+                .filter(Boolean),
+            mauSac: pick(ms)
+                .map((x) => x?.ten)
+                .filter(Boolean),
+            chatLieu: pick(cl)
+                .map((x) => x?.ten)
+                .filter(Boolean),
+            kichCo: pick(kc)
+                .map((x) => x?.ten)
+                .filter(Boolean),
+            deGiay: pick(dg)
+                .map((x) => x?.ten)
+                .filter(Boolean),
+            thuongHieu: pick(th)
+                .map((x) => x?.ten)
+                .filter(Boolean)
         };
     } catch (e) {
         console.error('Load filter options failed:', e);
@@ -249,22 +261,22 @@ const groupedProducts = computed(() => {
 const getProductState = (p) => {
     const variants = p.variants || [];
     const colors = Array.from(new Set(variants.map(v => v.tenMauSac).filter(Boolean)));
-    
+
     let color = selectedSelections.value[p.maSanPham]?.color;
     if (!color || !colors.includes(color)) {
         color = colors[0] || '';
     }
-    
+
     const colorVariants = variants.filter(v => v.tenMauSac === color);
     const sizes = Array.from(new Set(colorVariants.map(v => v.tenKichThuoc).filter(Boolean)));
-    
+
     let size = selectedSelections.value[p.maSanPham]?.size;
     if (!size || !sizes.includes(size)) {
         size = sizes[0] || '';
     }
-    
+
     const activeVariant = variants.find(v => v.tenMauSac === color && v.tenKichThuoc === size) || colorVariants[0] || variants[0] || null;
-    
+
     return {
         colors,
         color,
@@ -279,7 +291,7 @@ const selectColor = (maSanPham, color) => {
         selectedSelections.value[maSanPham] = {};
     }
     selectedSelections.value[maSanPham].color = color;
-    
+
     const p = groupedProducts.value.find(x => x.maSanPham === maSanPham);
     if (p) {
         const variants = p.variants || [];
@@ -330,17 +342,9 @@ const tableHeaders = [
             <!-- Tìm kiếm -->
             <v-col cols="12" md="4">
                 <div class="filter-field-label">Tìm kiếm</div>
-                <v-text-field
-                    v-model="keyword"
-                    placeholder="Nhập tên hoặc mã sản phẩm..."
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    bg-color="white"
-                    prepend-inner-icon="mdi-magnify"
-                    @keydown.enter="onSearch"
-                    class="compact-input"
-                >
+                <v-text-field v-model="keyword" placeholder="Nhập tên hoặc mã sản phẩm..." variant="outlined"
+                    density="compact" hide-details bg-color="white" prepend-inner-icon="mdi-magnify"
+                    @keydown.enter="onSearch" class="compact-input">
                     <template #append-inner>
                         <v-btn icon color="primary" variant="text" size="small" class="mr-n2" @click="startScanner">
                             <QrcodeIcon size="20" />
@@ -352,91 +356,49 @@ const tableHeaders = [
             <!-- Danh mục -->
             <v-col cols="12" md="2">
                 <div class="filter-field-label">Danh mục</div>
-                <v-select
-                    v-model="filters.danhMuc"
-                    :items="mapFilterItems(filterOptions.danhMuc)"
-                    item-title="title"
-                    item-value="value"
-                    density="compact"
-                    hide-details
-                    variant="outlined"
-                    class="compact-input"
-                ></v-select>
+                <v-select v-model="filters.danhMuc" :items="mapFilterItems(filterOptions.danhMuc)" item-title="title"
+                    item-value="value" density="compact" hide-details variant="outlined"
+                    class="compact-input"></v-select>
             </v-col>
 
             <!-- Thương hiệu -->
             <v-col cols="12" md="2">
                 <div class="filter-field-label">Thương hiệu</div>
-                <v-select
-                    v-model="filters.thuongHieu"
-                    :items="mapFilterItems(filterOptions.thuongHieu)"
-                    item-title="title"
-                    item-value="value"
-                    density="compact"
-                    hide-details
-                    variant="outlined"
-                    class="compact-input"
-                ></v-select>
+                <v-select v-model="filters.thuongHieu" :items="mapFilterItems(filterOptions.thuongHieu)"
+                    item-title="title" item-value="value" density="compact" hide-details variant="outlined"
+                    class="compact-input"></v-select>
             </v-col>
 
             <!-- Màu sắc -->
             <v-col cols="12" md="2">
                 <div class="filter-field-label">Màu sắc</div>
-                <v-select
-                    v-model="filters.mauSac"
-                    :items="mapFilterItems(filterOptions.mauSac)"
-                    item-title="title"
-                    item-value="value"
-                    density="compact"
-                    hide-details
-                    variant="outlined"
-                    class="compact-input"
-                ></v-select>
+                <v-select v-model="filters.mauSac" :items="mapFilterItems(filterOptions.mauSac)" item-title="title"
+                    item-value="value" density="compact" hide-details variant="outlined"
+                    class="compact-input"></v-select>
             </v-col>
 
             <!-- Chất liệu -->
             <v-col cols="12" md="2">
                 <div class="filter-field-label">Chất liệu</div>
-                <v-select
-                    v-model="filters.chatLieu"
-                    :items="mapFilterItems(filterOptions.chatLieu)"
-                    item-title="title"
-                    item-value="value"
-                    density="compact"
-                    hide-details
-                    variant="outlined"
-                    class="compact-input"
-                ></v-select>
+                <v-select v-model="filters.chatLieu" :items="mapFilterItems(filterOptions.chatLieu)" item-title="title"
+                    item-value="value" density="compact" hide-details variant="outlined"
+                    class="compact-input"></v-select>
             </v-col>
 
             <!-- Kích cỡ -->
             <v-col cols="12" md="2">
                 <div class="filter-field-label">Kích cỡ</div>
-                <v-select
-                    v-model="filters.kichCo"
-                    :items="mapFilterItems(filterOptions.kichCo)"
-                    item-title="title"
-                    item-value="value"
-                    density="compact"
-                    hide-details
-                    variant="outlined"
-                    class="compact-input"
-                ></v-select>
+                <v-select v-model="filters.kichCo" :items="mapFilterItems(filterOptions.kichCo)" item-title="title"
+                    item-value="value" density="compact" hide-details variant="outlined"
+                    class="compact-input"></v-select>
             </v-col>
 
             <!-- Đế giày -->
             <v-col cols="12" md="2">
                 <div class="filter-field-label">Đế giày</div>
-                <v-select
-                    v-model="filters.deGiay"
-                    :items="mapFilterItems(filterOptions.deGiay)"
-                    item-title="title"
-                    item-value="value"
-                    density="compact"
-                    hide-details
-                    variant="outlined"
-                    class="compact-input"
-                ></v-select>
+                <v-select v-model="filters.deGiay" :items="mapFilterItems(filterOptions.deGiay)" item-title="title"
+                    item-value="value" density="compact" hide-details variant="outlined"
+                    class="compact-input"></v-select>
             </v-col>
         </AdminFilter>
 
@@ -445,37 +407,39 @@ const tableHeaders = [
             <v-card class="rounded-xl pa-4">
                 <div class="d-flex justify-space-between align-center mb-4">
                     <span class="text-h6 font-weight-bold">Quét mã sản phẩm</span>
-                    <v-btn icon variant="text" @click="stopScanner"><XIcon /></v-btn>
+                    <v-btn icon variant="text" @click="stopScanner">
+                        <XIcon />
+                    </v-btn>
                 </div>
                 <div id="reader" style="width: 100%"></div>
-                <div class="mt-4 text-center text-caption text-grey">Đưa mã QR hoặc Barcode của sản phẩm vào khung hình</div>
+                <div class="mt-4 text-center text-caption text-grey">Đưa mã QR hoặc Barcode của sản phẩm vào khung hình
+                </div>
             </v-card>
         </v-dialog>
 
         <div class="mt-2 table-wrapper-picker">
-            <AdminTable
-                title="Kết quả tìm kiếm"
-                :headers="tableHeaders"
-                :items="pagedResults"
-                :loading="loading"
+            <AdminTable title="Kết quả tìm kiếm" :headers="tableHeaders" :items="pagedResults" :loading="loading"
                 :showAddButton="false"
                 :emptyText="hasSearched ? 'Không tìm thấy sản phẩm phù hợp' : 'Nhập từ khóa hoặc bấm TÌM KIẾM'"
-                emptyIcon="mdi-magnify"
-            >
+                emptyIcon="mdi-magnify">
                 <template #row="{ item: p }">
                     <tr>
                         <td>
                             <v-avatar rounded="lg" size="56" color="grey-lighten-4">
-                                <v-img v-if="imageSrc(getProductState(p).activeVariant) || imageSrc(p)" :src="imageSrc(getProductState(p).activeVariant) || imageSrc(p)" cover />
+                                <v-img v-if="imageSrc(getProductState(p).activeVariant) || imageSrc(p)"
+                                    :src="imageSrc(getProductState(p).activeVariant) || imageSrc(p)" cover />
                                 <BoxIcon v-else size="22" class="text-grey-darken-1" />
                             </v-avatar>
                         </td>
                         <td>
                             <div class="font-weight-bold text-truncate" :title="p.tenSanPham">{{ p.tenSanPham }}</div>
-                            <div class="text-caption text-slate-500">Tồn: <b>{{ getProductState(p).activeVariant ? getAdjustedStock(getProductState(p).activeVariant) : 0 }}</b></div>
+                            <div class="text-caption text-slate-500">Tồn: <b>{{ getProductState(p).activeVariant ?
+                                getAdjustedStock(getProductState(p).activeVariant) : 0 }}</b></div>
                         </td>
                         <td class="text-caption font-weight-bold">
-                            <div class="text-truncate" :title="getProductState(p).activeVariant?.maChiTietSanPham || p.maSanPham">{{ getProductState(p).activeVariant?.maChiTietSanPham || p.maSanPham }}</div>
+                            <div class="text-truncate"
+                                :title="getProductState(p).activeVariant?.maChiTietSanPham || p.maSanPham">{{
+                                    getProductState(p).activeVariant?.maChiTietSanPham || p.maSanPham }}</div>
                         </td>
                         <td class="text-caption">
                             <div class="text-truncate" :title="p.tenDanhMuc">{{ p.tenDanhMuc || '—' }}</div>
@@ -484,41 +448,25 @@ const tableHeaders = [
                             <div class="text-truncate" :title="p.tenThuongHieu">{{ p.tenThuongHieu || '—' }}</div>
                         </td>
                         <td>
-                            <v-select
-                                :model-value="getProductState(p).color"
+                            <v-select :model-value="getProductState(p).color"
                                 @update:model-value="selectColor(p.maSanPham, $event)"
-                                :items="getProductState(p).colors"
-                                density="compact"
-                                hide-details
-                                variant="outlined"
-                                class="mini-select"
-                            />
+                                :items="getProductState(p).colors" density="compact" hide-details variant="outlined"
+                                class="mini-select" />
                         </td>
                         <td class="text-caption">
                             <div class="text-truncate" :title="p.tenChatLieu">{{ p.tenChatLieu || '—' }}</div>
                         </td>
                         <td>
-                            <v-select
-                                :model-value="getProductState(p).size"
-                                @update:model-value="selectSize(p.maSanPham, $event)"
-                                :items="getProductState(p).sizes"
-                                density="compact"
-                                hide-details
-                                variant="outlined"
-                                class="mini-select"
-                            />
+                            <v-select :model-value="getProductState(p).size"
+                                @update:model-value="selectSize(p.maSanPham, $event)" :items="getProductState(p).sizes"
+                                density="compact" hide-details variant="outlined" class="mini-select" />
                         </td>
-                        <td class="text-right font-weight-bold text-error">{{ formatCurrency(getProductState(p).activeVariant?.giaBan || p.variants[0]?.giaBan) }}</td>
+                        <td class="text-right font-weight-bold text-error">{{
+                            formatCurrency(getProductState(p).activeVariant?.giaBan || p.variants[0]?.giaBan) }}</td>
                         <td class="text-center">
-                            <v-btn
-                                color="black"
-                                size="small"
-                                variant="flat"
-                                class="font-weight-black"
+                            <v-btn color="black" size="small" variant="flat" class="font-weight-black"
                                 :disabled="!getProductState(p).activeVariant || getAdjustedStock(getProductState(p).activeVariant) <= 0 || loadingExternal"
-                                :loading="loadingExternal"
-                                @click="selectProduct(getProductState(p).activeVariant)"
-                            >
+                                :loading="loadingExternal" @click="selectProduct(getProductState(p).activeVariant)">
                                 CHỌN
                             </v-btn>
                         </td>
@@ -526,14 +474,9 @@ const tableHeaders = [
                 </template>
 
                 <template #pagination>
-                    <AdminPagination
-                        v-model="page"
-                        :page-size="pageSize"
-                        :total-pages="totalPages"
-                        :total-elements="totalElements"
-                        :current-size="pagedResults.length"
-                        @update:pageSize="pageSize = $event"
-                    />
+                    <AdminPagination v-model="page" :page-size="pageSize" :total-pages="totalPages"
+                        :total-elements="totalElements" :current-size="pagedResults.length"
+                        @update:pageSize="pageSize = $event" />
                 </template>
             </AdminTable>
         </div>
@@ -576,19 +519,17 @@ const tableHeaders = [
 .mini-select {
     max-width: 120px;
 }
+
 .mini-select :deep(.v-field__input) {
     padding-top: 2px !important;
     padding-bottom: 2px !important;
     min-height: 28px !important;
     font-size: 12px !important;
 }
+
 .mini-select :deep(.v-field) {
     border-radius: 6px !important;
     --v-input-control-height: 28px !important;
     font-size: 12px !important;
 }
 </style>
-
-
-
-

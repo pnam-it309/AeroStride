@@ -26,23 +26,32 @@ onMounted(async () => {
     } finally {
         loading.value = false;
     }
-    setTimeout(() => { showConfetti.value = false; }, 4000);
+    setTimeout(() => {
+        showConfetti.value = false;
+    }, 4000);
 });
 </script>
 
 <template>
     <div class="order-success-page bg-white min-vh-100">
         <MainHeader />
-        <div class="header-spacing" style="height: 104px;"></div>
+        <div class="header-spacing" style="height: 104px"></div>
 
         <!-- Confetti Animation -->
         <div v-if="showConfetti" class="confetti-container">
-            <div v-for="n in 50" :key="n" class="confetti-piece" :style="{
-                left: Math.random() * 100 + '%',
-                animationDelay: Math.random() * 3 + 's',
-                animationDuration: (Math.random() * 2 + 2) + 's',
-                backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#2962FF'][Math.floor(Math.random() * 8)]
-            }"></div>
+            <div
+                v-for="n in 50"
+                :key="n"
+                class="confetti-piece"
+                :style="{
+                    left: Math.random() * 100 + '%',
+                    animationDelay: Math.random() * 3 + 's',
+                    animationDuration: Math.random() * 2 + 2 + 's',
+                    backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#2962FF'][
+                        Math.floor(Math.random() * 8)
+                    ]
+                }"
+            ></div>
         </div>
 
         <v-container class="py-16 text-center" style="max-width: 700px" v-if="!loading">
@@ -56,9 +65,7 @@ onMounted(async () => {
             </div>
 
             <h1 class="text-h4 font-weight-black mb-3">Đặt hàng thành công! 🎉</h1>
-            <p class="text-body-1 text-grey-darken-1 mb-8">
-                Cảm ơn bạn đã mua sắm tại AeroStride. Đơn hàng của bạn đang được xử lý.
-            </p>
+            <p class="text-body-1 text-grey-darken-1 mb-8">Cảm ơn bạn đã mua sắm tại AeroStride. Đơn hàng của bạn đang được xử lý.</p>
 
             <!-- Order Info Card -->
             <v-card v-if="order" class="order-info-card rounded-xl pa-8 text-left mb-10" elevation="0">
@@ -77,7 +84,9 @@ onMounted(async () => {
                 <v-row class="mb-2">
                     <v-col cols="6">
                         <p class="text-caption text-grey mb-1">Phương thức thanh toán</p>
-                        <p class="text-body-2 font-weight-bold">{{ order.phuongThucThanhToan === 'COD' ? 'Thanh toán khi nhận hàng' : order.phuongThucThanhToan }}</p>
+                        <p class="text-body-2 font-weight-bold">
+                            {{ order.phuongThucThanhToan === 'COD' ? 'Thanh toán khi nhận hàng' : order.phuongThucThanhToan }}
+                        </p>
                     </v-col>
                     <v-col cols="6">
                         <p class="text-caption text-grey mb-1">Tổng thanh toán</p>
@@ -147,7 +156,7 @@ onMounted(async () => {
     transform: translate(-50%, -50%);
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    background: linear-gradient(135deg, #4caf50, #2e7d32);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -178,13 +187,23 @@ onMounted(async () => {
 }
 
 @keyframes scaleIn {
-    from { transform: translate(-50%, -50%) scale(0); }
-    to { transform: translate(-50%, -50%) scale(1); }
+    from {
+        transform: translate(-50%, -50%) scale(0);
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1);
+    }
 }
 
 @keyframes ringPulse {
-    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; }
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 0;
+    }
 }
 
 /* Order Info Card */
@@ -215,9 +234,17 @@ onMounted(async () => {
 }
 
 @keyframes confettiFall {
-    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
 }
 
-.min-vh-100 { min-height: 100vh; }
+.min-vh-100 {
+    min-height: 100vh;
+}
 </style>

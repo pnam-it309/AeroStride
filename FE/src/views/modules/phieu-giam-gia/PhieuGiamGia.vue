@@ -199,8 +199,6 @@ const getVoucherTimelineStatus = (item) => {
     };
 };
 
-
-
 onMounted(() => loadVouchers());
 </script>
 
@@ -275,8 +273,7 @@ onMounted(() => loadVouchers());
             @export="handleExport">
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-slate-400">{{ (pagination.page - 1) * pagination.size + index
-                        + 1 }}</td>
+                    <td class="data-cell text-slate-400">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
                     <td class="data-cell text-center text-primary">
                         <div class="text-truncate" :title="item.ma || item.id">{{ item.ma || item.id || '--' }}</div>
                     </td>

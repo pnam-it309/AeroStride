@@ -12,35 +12,35 @@ const loading = ref(false);
 const errorMessage = ref('');
 
 const loginForm = ref({
-  username: '',
-  password: ''
+    username: '',
+    password: ''
 });
 
 const handleLogin = async () => {
-  if (!loginForm.value.username || !loginForm.value.password) {
-    errorMessage.value = 'Vui lòng nhập tên đăng nhập và mật khẩu';
-    return;
-  }
+    if (!loginForm.value.username || !loginForm.value.password) {
+        errorMessage.value = 'Vui lòng nhập tên đăng nhập và mật khẩu';
+        return;
+    }
 
-  loading.value = true;
-  errorMessage.value = '';
+    loading.value = true;
+    errorMessage.value = '';
 
-  try {
-    uiStore.showLoading('Đang đăng nhập...');
-    // We reuse the same dichVuXacThuc for now, assuming user and admin share the auth endpoint.
-    const response = await dichVuXacThuc.dangNhap({
-      ...loginForm.value,
-      loginType: 'CLIENT'
-    });
-    
-    uiStore.hideLoading();
-    // Redirect to home/client dashboard instead of main, but since client dashboard isn't built yet, we can push to a client route or just root
-    router.push('/');
-  } catch (error) {
-    errorMessage.value = error.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
-  } finally {
-    loading.value = false;
-  }
+    try {
+        uiStore.showLoading('Đang đăng nhập...');
+        // We reuse the same dichVuXacThuc for now, assuming user and admin share the auth endpoint.
+        const response = await dichVuXacThuc.dangNhap({
+            ...loginForm.value,
+            loginType: 'CLIENT'
+        });
+
+        uiStore.hideLoading();
+        // Redirect to home/client dashboard instead of main, but since client dashboard isn't built yet, we can push to a client route or just root
+        router.push('/');
+    } catch (error) {
+        errorMessage.value = error.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
+    } finally {
+        loading.value = false;
+    }
 };
 </script>
 
@@ -56,17 +56,17 @@ const handleLogin = async () => {
         >
             {{ errorMessage }}
         </v-alert>
-        
+
         <div class="form-container">
             <v-row class="mb-3">
                 <v-col cols="12" class="pb-2">
                     <div class="input-wrapper">
                         <v-label class="font-weight-bold mb-2 text-subtitle-2 text-grey-darken-3">Tên đăng nhập hoặc Email</v-label>
-                        <v-text-field 
+                        <v-text-field
                             v-model="loginForm.username"
-                            variant="outlined" 
-                            class="modern-input" 
-                            hide-details 
+                            variant="outlined"
+                            class="modern-input"
+                            hide-details
                             color="blue-darken-3"
                             placeholder="Nhập email hoặc tên đăng nhập"
                             prepend-inner-icon="mdi-email-outline"
@@ -78,15 +78,18 @@ const handleLogin = async () => {
                     <div class="input-wrapper">
                         <div class="d-flex justify-space-between align-center mb-2">
                             <v-label class="font-weight-bold mb-0 text-subtitle-2 text-grey-darken-3">Mật khẩu</v-label>
-                            <RouterLink :to="PATH.FORGOT_PASSWORD" class="text-blue-darken-3 text-decoration-none text-caption font-weight-bold hover-underline transition-fast">
+                            <RouterLink
+                                :to="PATH.FORGOT_PASSWORD"
+                                class="text-blue-darken-3 text-decoration-none text-caption font-weight-bold hover-underline transition-fast"
+                            >
                                 Quên mật khẩu?
                             </RouterLink>
                         </div>
-                        <v-text-field 
+                        <v-text-field
                             v-model="loginForm.password"
-                            variant="outlined" 
-                            class="modern-input" 
-                            type="password" 
+                            variant="outlined"
+                            class="modern-input"
+                            type="password"
                             hide-details
                             color="blue-darken-3"
                             placeholder="••••••••"
@@ -96,24 +99,18 @@ const handleLogin = async () => {
                     </div>
                 </v-col>
                 <v-col cols="12" class="py-0 mt-2">
-                    <v-checkbox 
-                        v-model="checkbox"
-                        hide-details 
-                        color="blue-darken-3"
-                        class="modern-checkbox"
-                        :disabled="loading"
-                    >
+                    <v-checkbox v-model="checkbox" hide-details color="blue-darken-3" class="modern-checkbox" :disabled="loading">
                         <template v-slot:label>
                             <span class="text-body-2 font-weight-medium text-grey-darken-2">Ghi nhớ đăng nhập</span>
                         </template>
                     </v-checkbox>
                 </v-col>
                 <v-col cols="12" class="mt-4">
-                    <v-btn 
-                        size="x-large" 
-                        color="blue-darken-3" 
-                        class="modern-login-btn text-white font-weight-bold text-button tracking-wide" 
-                        block 
+                    <v-btn
+                        size="x-large"
+                        color="blue-darken-3"
+                        class="modern-login-btn text-white font-weight-bold text-button tracking-wide"
+                        block
                         type="submit"
                         :loading="loading"
                         :disabled="loading"
@@ -168,13 +165,13 @@ const handleLogin = async () => {
 .modern-input :deep(.v-field--focused) {
     background: #ffffff !important;
     box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.05);
-    border-color: #1565C0 !important;
+    border-color: #1565c0 !important;
 }
 
 .modern-login-btn {
     height: 54px !important;
     border-radius: 12px !important;
-    background-color: #0D47A1 !important; /* Ép màu xanh dương đậm */
+    background-color: #0d47a1 !important; /* Ép màu xanh dương đậm */
     color: #ffffff !important; /* Ép chữ trắng */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     letter-spacing: 0.5px !important;
@@ -184,7 +181,7 @@ const handleLogin = async () => {
 .modern-login-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(13, 71, 161, 0.35) !important;
-    background-color: #1565C0 !important;
+    background-color: #1565c0 !important;
 }
 
 .hover-underline:hover {
@@ -196,8 +193,14 @@ const handleLogin = async () => {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .modern-checkbox :deep(.v-selection-control) {

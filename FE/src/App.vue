@@ -1,15 +1,15 @@
 <template>
-  <v-app>
-    <GlobalLoader />
-    <GlobalToast />
-    <RouterView />
-  </v-app>
+    <v-app>
+        <GlobalLoader />
+        <GlobalToast />
+        <RouterView />
+    </v-app>
 </template>
 
 <script setup>
-import { RouterView } from "vue-router";
-import GlobalLoader from "@/components/common/GlobalLoader.vue";
-import GlobalToast from "@/components/common/GlobalToast.vue";
+import { RouterView } from 'vue-router';
+import GlobalLoader from '@/components/common/GlobalLoader.vue';
+import GlobalToast from '@/components/common/GlobalToast.vue';
 </script>
 
 <style>

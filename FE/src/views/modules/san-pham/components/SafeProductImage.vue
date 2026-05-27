@@ -24,9 +24,13 @@ const props = defineProps({
 const resolvedSrc = computed(() => getDisplayImageUrl(props.src) || props.fallbackSrc || '');
 const currentSrc = ref(resolvedSrc.value);
 
-watch(resolvedSrc, (value) => {
-    currentSrc.value = value;
-}, { immediate: true });
+watch(
+    resolvedSrc,
+    (value) => {
+        currentSrc.value = value;
+    },
+    { immediate: true }
+);
 
 const handleError = () => {
     if (props.fallbackSrc && currentSrc.value !== props.fallbackSrc) {

@@ -68,7 +68,7 @@ onMounted(() => {
 <template>
     <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <AdminBreadcrumbs :items="breadcrumbs" />
-        
+
         <div class="mb-2"></div>
 
         <div class="filter-shell">
@@ -131,6 +131,4 @@ onMounted(() => {
         </AdminTable>
     </v-container>
 </template>
-<style>
-
-</style>
+<style></style>

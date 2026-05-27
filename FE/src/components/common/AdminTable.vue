@@ -23,7 +23,7 @@ const props = defineProps({
 const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
 
 const tableKey = computed(() => {
-    return props.headers.map(h => `${h.text || h}-${h.width || ''}-${h.align || ''}`).join('|');
+    return props.headers.map((h) => `${h.text || h}-${h.width || ''}-${h.align || ''}`).join('|');
 });
 </script>
 
@@ -37,8 +37,8 @@ const tableKey = computed(() => {
                     <h3 class="text-h6 font-weight-bold text-black tracking-tight">{{ title }}</h3>
                 </div>
                 <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions">
-                    <v-btn v-if="showTemplateButton" prepend-icon="mdi-download" variant="flat" class="admin-btn-secondary"
-                        @click="$emit('downloadTemplate')">
+                    <v-btn v-if="showTemplateButton" prepend-icon="mdi-download" variant="flat"
+                        class="admin-btn-secondary" @click="$emit('downloadTemplate')">
                         Tải mẫu
                     </v-btn>
                     <v-btn v-if="showImportButton" prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary"
@@ -67,13 +67,13 @@ const tableKey = computed(() => {
                     <thead>
                         <slot name="headers">
                             <tr>
-                                <th v-if="selectable" class="header-cell" style="width: 50px;">
+                                <th v-if="selectable" class="header-cell" style="width: 50px">
                                     <slot name="header-select"></slot>
                                 </th>
                                 <th v-for="(header, idx) in headers" :key="idx"
                                     :style="{ minWidth: header.width || 'auto', width: header.width || 'auto' }"
                                     :class="['header-cell', header.align ? 'text-' + header.align : 'text-center']"
-                                    style="white-space: nowrap;">
+                                    style="white-space: nowrap">
                                     {{ header.text || header }}
                                 </th>
                             </tr>
@@ -85,7 +85,8 @@ const tableKey = computed(() => {
                                 <slot name="row" :item="item" :index="index"></slot>
                             </template>
                         </template>
-                        <TableEmptyState v-else-if="!loading" :colspan="headers.length || 20" :icon="emptyIcon" :text="emptyText" />
+                        <TableEmptyState v-else-if="!loading" :colspan="headers.length || 20" :icon="emptyIcon"
+                            :text="emptyText" />
                     </tbody>
                 </table>
 

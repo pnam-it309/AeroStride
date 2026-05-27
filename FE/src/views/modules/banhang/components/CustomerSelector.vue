@@ -315,7 +315,3 @@ const submitQuickAdd = async () => {
     border-radius: 10px !important;
 }
 </style>
-
-
-
-

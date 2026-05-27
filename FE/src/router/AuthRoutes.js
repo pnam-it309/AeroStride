@@ -46,9 +46,10 @@ const AuthRoutes = {
             beforeEnter: async (to, from, next) => {
                 const uiStore = useUIStore();
                 uiStore.showLoading('Hệ thống đang đăng xuất...');
-                
+
+                const { useAuthStore } = await import('@/stores/authStore');
                 const authStore = useAuthStore();
-                
+
                 setTimeout(async () => {
                     await authStore.logout();
                     uiStore.hideLoading();

@@ -47,8 +47,6 @@
     transition: none !important;
 }
 
-
-
 /* Ép màu cho tất cả các thành phần bên trong khi hover hoặc active */
 .v-navigation-drawer .v-list-item:hover .v-list-item-title,
 .v-navigation-drawer .v-list-item:hover .v-icon,
@@ -63,7 +61,6 @@
 .v-navigation-drawer .v-list-item--active .v-list-item-title {
     font-weight: 700 !important;
 }
-
 
 /* Đảm bảo overlay có cùng bo góc */
 .v-navigation-drawer .v-list-item__overlay {
@@ -519,11 +516,11 @@
 
 /* --- Trạng thái Đợt/Phiếu giảm giá (Timeline & Visibility) --- */
 .status-chip-upcoming {
-    background: #fefce8 !important;
-    color: #a16207 !important;
+    background: #f0fdfa !important;
+    color: #0f766e !important;
 
     .v-chip__content {
-        color: #a16207 !important;
+        color: #0f766e !important;
     }
 }
 
@@ -546,11 +543,11 @@
 }
 
 .status-chip-private {
-    background: #faf5ff !important;
-    color: #7e22ce !important;
+    background: #fffbeb !important;
+    color: #92400e !important;
 
     .v-chip__content {
-        color: #7e22ce !important;
+        color: #92400e !important;
     }
 }
 
@@ -559,7 +556,8 @@
     min-height: 28px !important;
     padding: 0 10px !important;
     border-radius: 4px !important;
-    width: 85px !important; /* Ngắn lại cho gọn */
+    width: 85px !important;
+    /* Ngắn lại cho gọn */
     font-size: 13px !important;
     font-weight: 500 !important;
     border: 1px solid transparent !important;
@@ -849,7 +847,7 @@
         cursor: text;
     }
 
-    input[type="date"] {
+    input[type='date'] {
         position: relative;
         width: 100%;
         color: #556071 !important;
@@ -865,8 +863,6 @@
         margin: 0;
         pointer-events: none;
     }
-
-
 
     &:hover .v-field__outline {
         --v-field-border-opacity: 0.5 !important;
@@ -964,7 +960,7 @@
     height: 44px !important;
     padding-left: 20px !important;
     padding-right: 24px !important;
-    border-radius: 12px !important;
+    border-radius: 18px !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     letter-spacing: 0.01em !important;
@@ -1000,7 +996,7 @@
 .admin-btn-secondary {
     height: 44px !important;
     padding: 0 20px !important;
-    border-radius: 12px !important;
+    border-radius: 18px !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     background: #f1f5f9 !important;
@@ -1032,7 +1028,7 @@
     height: 44px !important;
     padding-left: 20px !important;
     padding-right: 24px !important;
-    border-radius: 12px !important;
+    border-radius: 18px !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     letter-spacing: 0.01em !important;
@@ -1070,7 +1066,7 @@
     height: 44px !important;
     padding-left: 20px !important;
     padding-right: 24px !important;
-    border-radius: 12px !important;
+    border-radius: 18px !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     letter-spacing: 0.01em !important;
@@ -1111,7 +1107,7 @@
 .btn-danger-outline {
     height: 40px !important;
     padding: 0 16px !important;
-    border-radius: 12px !important;
+    border-radius: 18px !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     color: #ef4444 !important;
@@ -1133,7 +1129,7 @@
 .btn-outline-primary {
     height: 44px !important;
     padding: 0 24px !important;
-    border-radius: 12px !important;
+    border-radius: 18px !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     color: #1e257c !important;
@@ -1231,7 +1227,6 @@
     }
 }
 
-
 /* 8. AVATARS & IMAGES */
 .avatar-hover {
     transition: all 0.3s ease;
@@ -1326,7 +1321,9 @@
 .premium-card-detail {
     border-radius: 16px !important;
     border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.05),
+        0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
     background: white;
 }
 
@@ -1390,7 +1387,9 @@
 
             &.active {
                 transform: scale(1.2);
-                box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+                box-shadow:
+                    0 0 0 6px #fff,
+                    0 10px 25px -5px rgba(0, 0, 0, 0.1);
                 color: #fff !important;
                 border-width: 4px;
             }
@@ -1423,37 +1422,49 @@
             &.active.warning {
                 background: #f59e0b;
                 border-color: #f59e0b;
-                box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(245, 158, 11, 0.4);
+                box-shadow:
+                    0 0 0 6px #fff,
+                    0 10px 25px -5px rgba(245, 158, 11, 0.4);
             }
 
             &.active.info {
                 background: #3b82f6;
                 border-color: #3b82f6;
-                box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+                box-shadow:
+                    0 0 0 6px #fff,
+                    0 10px 25px -5px rgba(59, 130, 246, 0.4);
             }
 
             &.active.primary {
                 background: #f97316;
                 border-color: #f97316;
-                box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(249, 115, 22, 0.4);
+                box-shadow:
+                    0 0 0 6px #fff,
+                    0 10px 25px -5px rgba(249, 115, 22, 0.4);
             }
 
             &.active.success {
                 background: #10b981;
                 border-color: #10b981;
-                box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+                box-shadow:
+                    0 0 0 6px #fff,
+                    0 10px 25px -5px rgba(16, 185, 129, 0.4);
             }
 
             &.active.error {
                 background: #ef4444;
                 border-color: #ef4444;
-                box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(239, 68, 68, 0.4);
+                box-shadow:
+                    0 0 0 6px #fff,
+                    0 10px 25px -5px rgba(239, 68, 68, 0.4);
             }
 
             &.active.orange {
                 background: #6366f1;
                 border-color: #6366f1;
-                box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+                box-shadow:
+                    0 0 0 6px #fff,
+                    0 10px 25px -5px rgba(99, 102, 241, 0.4);
             }
         }
 

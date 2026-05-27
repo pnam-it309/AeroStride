@@ -13,26 +13,24 @@ const props = defineProps({
         <div class="hero-bg-animated" :style="{ transform: `translate(${props.mouseX * 0.5}px, ${props.mouseY * 0.5}px)` }"></div>
         <v-container>
             <v-row align="center">
-                <v-col cols="12" lg="6" :class="{ 'reveal-container': true, 'active': props.active }">
+                <v-col cols="12" lg="6" :class="{ 'reveal-container': true, active: props.active }">
                     <h1 class="hero-title text-uppercase font-weight-black text-blue-darken-4 reveal-item delay-1">
                         {{ props.product?.title || 'THẾ HỆ MỚI' }} <br />
                         <span class="text-blue-accent-4">AEROSTRIDE</span>
                     </h1>
                     <p class="text-h5 text-blue-grey-darken-1 mt-6 mb-10 leading-relaxed reveal-item delay-2">
-                        {{ props.product?.subtitle || 'Công nghệ giày tương lai dành cho những người dẫn đầu. Trải nghiệm sự êm ái vượt giới hạn.' }}
+                        {{
+                            props.product?.subtitle ||
+                            'Công nghệ giày tương lai dành cho những người dẫn đầu. Trải nghiệm sự êm ái vượt giới hạn.'
+                        }}
                     </p>
                     <v-btn size="x-large" color="blue-darken-4" rounded="xl" class="px-12 elevation-10 reveal-item delay-3" to="/shoes">
                         KHÁM PHÁ NGAY
                     </v-btn>
                 </v-col>
-                <v-col cols="12" lg="6" class="text-center reveal-container" :class="{ 'active': props.active }">
+                <v-col cols="12" lg="6" class="text-center reveal-container" :class="{ active: props.active }">
                     <div class="hero-shoe-wrapper reveal-item delay-4">
-                        <v-img
-                             v-if="props.product?.imageUrl"
-                             :src="props.product.imageUrl"
-                             eager
-                             class="hero-shoe-main"
-                        ></v-img>
+                        <v-img v-if="props.product?.imageUrl" :src="props.product.imageUrl" eager class="hero-shoe-main"></v-img>
                         <div class="shoe-glow"></div>
                     </div>
                 </v-col>
@@ -66,13 +64,18 @@ const props = defineProps({
 
 .hero-shoe-main {
     width: 600px;
-    filter: drop-shadow(0 30px 60px rgba(0,0,0,0.2));
+    filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.2));
     animation: floating 6s ease-in-out infinite;
 }
 
-@keyframes floating { 
-    0%, 100% { transform: translateY(0) rotate(-5deg); } 
-    50% { transform: translateY(-30px) rotate(5deg); } 
+@keyframes floating {
+    0%,
+    100% {
+        transform: translateY(0) rotate(-5deg);
+    }
+    50% {
+        transform: translateY(-30px) rotate(5deg);
+    }
 }
 
 .shoe-glow {
@@ -82,7 +85,7 @@ const props = defineProps({
     transform: translate(-50%, -50%);
     width: 300px;
     height: 300px;
-    background: #2962FF;
+    background: #2962ff;
     filter: blur(120px);
     opacity: 0.2;
     z-index: -1;
@@ -100,20 +103,32 @@ const props = defineProps({
     transform: translateY(0);
 }
 
-.delay-1 { transition-delay: 0.1s; }
-.delay-2 { transition-delay: 0.2s; }
-.delay-3 { transition-delay: 0.3s; }
-.delay-4 { transition-delay: 0.5s; }
+.delay-1 {
+    transition-delay: 0.1s;
+}
+.delay-2 {
+    transition-delay: 0.2s;
+}
+.delay-3 {
+    transition-delay: 0.3s;
+}
+.delay-4 {
+    transition-delay: 0.5s;
+}
 
 .hero-shoe-main {
     width: 600px;
-    filter: drop-shadow(0 30px 60px rgba(0,0,0,0.2));
+    filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.2));
     animation: floating 6s ease-in-out infinite;
     transition: transform 1s cubic-bezier(0.2, 1, 0.3, 1);
 }
 
 @media (max-width: 960px) {
-    .hero-title { font-size: 3rem; }
-    .hero-shoe-main { width: 100%; }
+    .hero-title {
+        font-size: 3rem;
+    }
+    .hero-shoe-main {
+        width: 100%;
+    }
 }
 </style>

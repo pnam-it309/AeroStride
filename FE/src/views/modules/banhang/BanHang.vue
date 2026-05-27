@@ -105,9 +105,13 @@ onMounted(async () => {
     }
 });
 
-onUnmounted(() => {
-    clearVnPayPolling();
-});
+// Watchers
+watch(
+    () => selectedOrder.value?.id,
+    (id) => {
+        if (id) fetchVouchers();
+    }
+);
 
 // Watchers
 watch(() => selectedOrder.value?.id, (id) => {
@@ -361,7 +365,7 @@ const onApplyVoucher = async (voucherId) => {
     try {
         const updated = await dichVuDonHang.setVoucher(selectedOrder.value.id, voucherId);
         updateOrderInList(updated);
-    } catch (e) {}
+    } catch (e) { }
 };
 
 // Logic: Thanh toán VNPay
@@ -529,12 +533,12 @@ const startVnPayFlow = async () => {
             orderId: orderId,
             orderInfo: 'Thanh toan hoa don ' + selectedOrder.value.maHoaDon
         };
-        
+
         const data = await dichVuVnPay.createPaymentUrl(payload);
         if (!data || !data.paymentUrl) {
             throw new Error('Không lấy được URL thanh toán từ server');
         }
-        
+
         sessionStorage.setItem(VNPAY_PENDING_KEY, JSON.stringify({
             orderId: selectedOrder.value.id,
             maHoaDon: selectedOrder.value.maHoaDon,
@@ -545,9 +549,9 @@ const startVnPayFlow = async () => {
         // Popup VNPay có thể chuyển qua domain ngân hàng rồi quay về return URL backend.
         // Vì khác origin, FE không luôn đọc được location; do đó vẫn có pending-state dự phòng.
         const popup = window.open(data.paymentUrl, '_blank', 'width=900,height=750,location=yes,status=yes,scrollbars=yes');
-        
+
         confirmDialog.value.show = false;
-        
+
         vnpayDialog.value = {
             show: true,
             loading: false,
@@ -557,41 +561,41 @@ const startVnPayFlow = async () => {
             popup: popup,
             pollInterval: null
         };
-        
+
         vnpayDialog.value.pollInterval = setInterval(async () => {
             if (!popup || popup.closed) {
                 clearVnPayPolling();
                 vnpayDialog.value.statusText = 'Cửa sổ thanh toán đã bị đóng. Bạn có thể xác nhận thủ công nếu đã thanh toán.';
                 return;
             }
-            
+
             try {
                 const currentUrl = popup.location.href;
                 if (currentUrl && (currentUrl.includes('/vnpay-callback') || currentUrl.includes('vnp_ResponseCode'))) {
                     clearVnPayPolling();
-                    
+
                     vnpayDialog.value.loading = true;
                     vnpayDialog.value.statusText = 'Đang kiểm tra kết quả giao dịch...';
-                    
+
                     const urlObj = new URL(currentUrl);
                     const params = {};
                     urlObj.searchParams.forEach((val, key) => {
                         params[key] = val;
                     });
-                    
+
                     popup.close();
                     vnpayDialog.value.popup = null;
-                    
+
                     try {
                         const verifyResult = await dichVuVnPay.verifyPaymentCallback(params);
                         if (verifyResult && verifyResult.success) {
                             const txnNo = params['vnp_TransactionNo'] || `VNP_${Date.now()}`;
                             await finalizeVnPayCheckout(selectedOrder.value.tongTienSauGiam, txnNo);
                         } else {
-                            addNotification({ 
-                                title: 'Thanh toán thất bại', 
-                                subtitle: verifyResult?.message || 'VNPay xác thực giao dịch không thành công', 
-                                color: 'error' 
+                            addNotification({
+                                title: 'Thanh toán thất bại',
+                                subtitle: verifyResult?.message || 'VNPay xác thực giao dịch không thành công',
+                                color: 'error'
                             });
                             vnpayDialog.value.loading = false;
                             vnpayDialog.value.statusText = 'Giao dịch không hợp lệ hoặc đã bị hủy.';
@@ -607,7 +611,7 @@ const startVnPayFlow = async () => {
                 // FE sẽ tiếp tục chờ tới khi popup đóng hoặc khi nhận callback trên URL frontend.
             }
         }, 1000);
-        
+
     } catch (error) {
         console.error('VNPay flow error:', error);
         addNotification({ title: 'Lỗi VNPay', subtitle: getErrorMessage(error, 'Không thể khởi tạo giao dịch VNPay'), color: 'error' });
@@ -650,14 +654,27 @@ const onCheckout = () => {
             isProcessing.value = true;
             const orderSnapshot = selectedOrder.value;
             try {
-                await submitCheckout({
-                    order: orderSnapshot,
-                    payload: buildCheckoutPayload(orderSnapshot, {
-                        tienMat: orderSnapshot.tongTienSauGiam,
-                        tienChuyenKhoan: 0,
-                        maGiaoDich: `CASH_${Date.now()}`
-                    })
-                });
+                const isCash = checkoutData.value.paymentMethod === 'CASH';
+                const payload = {
+                    idKhachHang: selectedOrder.value.idKhachHang,
+                    idPhieuGiamGia: selectedOrder.value.idPhieuGiamGia,
+                    tongTien: selectedOrder.value.tongTien,
+                    tongTienSauGiam: selectedOrder.value.tongTienSauGiam,
+                    loaiDon: 'TAI_QUAY',
+                    ghiChu: checkoutData.value.note,
+                    tienMat: isCash ? selectedOrder.value.tongTienSauGiam : 0,
+                    tienChuyenKhoan: isCash ? 0 : selectedOrder.value.tongTienSauGiam
+                };
+                await dichVuDonHang.checkout(selectedOrder.value.id, payload);
+                addNotification({ title: 'Thành công', subtitle: MESSAGES.SUCCESS.PAYMENT, color: 'success' });
+
+                orders.value.splice(activeOrderIndex.value, 1);
+                if (orders.value.length === 0) await createNewOrder();
+                activeOrderIndex.value = 0;
+
+                // Reset checkout data
+                checkoutData.value.receivedAmount = 0;
+                checkoutData.value.note = '';
                 confirmDialog.value.show = false;
             } catch (e) {
                 addNotification({ title: 'Thanh toán tiền mặt thất bại', subtitle: getErrorMessage(e, MESSAGES.ERROR.PAYMENT_FAILED), color: 'error' });
@@ -671,8 +688,7 @@ const onCheckout = () => {
 
 // Helpers
 const updateOrderInList = (updated) => {
-    if (!updated?.id) return;
-    const idx = orders.value.findIndex(o => o.id === updated.id);
+    const idx = orders.value.findIndex((o) => o.id === updated.id);
     if (idx !== -1) orders.value[idx] = updated;
     clampActiveOrderIndex();
 };
@@ -747,14 +763,8 @@ const handleVnPayCallbackFromUrl = async () => {
                         <span v-if="selectedOrder"> - {{ selectedOrderItemCount }} sản phẩm trong đơn hiện tại</span>
                     </div>
                 </div>
-                <OrderTabs
-                    class="flex-grow-1 min-w-0"
-                    :orders="orders"
-                    :active-index="activeOrderIndex"
-                    @select="idx => activeOrderIndex = idx"
-                    @create="createNewOrder"
-                    @close="closeOrder"
-                />
+                <OrderTabs class="flex-grow-1 min-w-0" :orders="orders" :active-index="activeOrderIndex"
+                    @select="(idx) => (activeOrderIndex = idx)" @create="createNewOrder" @close="closeOrder" />
             </header>
 
             <v-row v-if="selectedOrder" no-gutters class="pos-grid">
@@ -765,41 +775,24 @@ const handleVnPayCallbackFromUrl = async () => {
                             <div class="text-caption text-grey-darken-1">Mã hóa đơn: {{ selectedOrder.maHoaDon }}</div>
                         </div>
                     </div>
-                    <CartTable
-                        :items="selectedOrder.listsHoaDonChiTiet"
-                        @update-qty="onUpdateQty"
-                        @remove="onRemoveItem"
-                    />
+                    <CartTable :items="selectedOrder.listsHoaDonChiTiet" @update-qty="onUpdateQty"
+                        @remove="onRemoveItem" />
                 </v-col>
 
                 <v-col cols="12" xl="4" lg="4" class="pos-column product-column">
-                    <ProductPicker
-                        :active-order-id="selectedOrder.id"
-                        :orders="orders"
-                        :loading-external="isProcessing"
-                        @add-product="onAddProduct"
-                    />
+                    <ProductPicker :active-order-id="selectedOrder.id" :orders="orders" :loading-external="isProcessing"
+                        @add-product="onAddProduct" />
                 </v-col>
 
                 <v-col cols="12" xl="3" lg="3" class="pos-column payment-column">
                     <div class="customer-block">
-                        <CustomerSelector
-                            :selected-customer-name="selectedOrder.tenKhachHang"
-                            :selected-customer-phone="selectedOrder.sdtKhachHang"
-                            :active-order-id="selectedOrder.id"
-                            @select="onSelectCustomer"
-                            @remove="onRemoveCustomer"
-                        />
+                        <CustomerSelector :selected-customer-name="selectedOrder.tenKhachHang"
+                            :selected-customer-phone="selectedOrder.sdtKhachHang" :active-order-id="selectedOrder.id"
+                            @select="onSelectCustomer" @remove="onRemoveCustomer" />
                     </div>
 
-                    <CheckoutPanel
-                        :order="selectedOrder"
-                        :vouchers="vouchers"
-                        :checkout-data="checkoutData"
-                        :loading="isProcessing"
-                        @apply-voucher="onApplyVoucher"
-                        @checkout="onCheckout"
-                    />
+                    <CheckoutPanel :order="selectedOrder" :vouchers="vouchers" :checkout-data="checkoutData"
+                        :loading="isProcessing" @apply-voucher="onApplyVoucher" @checkout="onCheckout" />
                 </v-col>
             </v-row>
 
@@ -818,14 +811,8 @@ const handleVnPayCallbackFromUrl = async () => {
         </div>
 
         <!-- Confirmation Dialog -->
-        <AdminConfirm 
-            v-model:show="confirmDialog.show"
-            :title="confirmDialog.title"
-            :message="confirmDialog.message"
-            :color="confirmDialog.color"
-            :loading="confirmDialog.loading"
-            @confirm="confirmDialog.action"
-        />
+        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
+            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
 
         <!-- VNPay Processing Dialog -->
         <v-dialog v-model="vnpayDialog.show" persistent max-width="500">
@@ -836,18 +823,23 @@ const handleVnPayCallbackFromUrl = async () => {
                         <v-icon>mdi-close</v-icon>
                     </v-btn>
                 </div>
-                
+
                 <div class="my-6">
                     <div v-if="vnpayDialog.loading" class="d-flex flex-column align-center">
-                        <v-progress-circular indeterminate color="primary" size="64" width="6" class="mb-4"></v-progress-circular>
-                        <div class="text-body-1 font-weight-medium text-grey-darken-2">{{ vnpayDialog.statusText }}</div>
+                        <v-progress-circular indeterminate color="primary" size="64" width="6"
+                            class="mb-4"></v-progress-circular>
+                        <div class="text-body-1 font-weight-medium text-grey-darken-2">{{ vnpayDialog.statusText }}
+                        </div>
                     </div>
                     <div v-else class="d-flex flex-column align-center">
                         <div class="vnpay-logo-wrapper mb-4">
-                            <v-icon size="64" color="primary" class="animate-pulse">mdi-credit-card-scan-outline</v-icon>
+                            <v-icon size="64" color="primary"
+                                class="animate-pulse">mdi-credit-card-scan-outline</v-icon>
                         </div>
                         <div class="text-h5 font-weight-bold text-primary mb-2">
-                            {{ new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(vnpayDialog.amount) }}
+                            {{ new Intl.NumberFormat('vi-VN', {
+                                style: 'currency', currency: 'VND'
+                            }).format(vnpayDialog.amount) }}
                         </div>
                         <div class="text-caption text-grey mb-4">Mã hóa đơn: <b>{{ selectedOrder?.maHoaDon }}</b></div>
                         <v-alert type="info" variant="tonal" class="rounded-lg mb-4 text-left" density="compact">
@@ -860,21 +852,12 @@ const handleVnPayCallbackFromUrl = async () => {
                 <v-divider class="my-4"></v-divider>
 
                 <div class="d-flex gap-3 justify-center">
-                    <v-btn
-                        variant="outlined"
-                        color="error"
-                        class="rounded-lg px-4"
-                        :disabled="vnpayDialog.loading"
-                        @click="cancelVnPayFlow"
-                    >
+                    <v-btn variant="outlined" color="error" class="rounded-lg px-4" :disabled="vnpayDialog.loading"
+                        @click="cancelVnPayFlow">
                         Hủy giao dịch
                     </v-btn>
-                    <v-btn
-                        color="success"
-                        class="rounded-lg px-4 font-weight-bold text-white shadow"
-                        :loading="vnpayDialog.loading"
-                        @click="confirmVnPayManual"
-                    >
+                    <v-btn color="success" class="rounded-lg px-4 font-weight-bold text-white shadow"
+                        :loading="vnpayDialog.loading" @click="confirmVnPayManual">
                         Xác nhận thanh toán
                     </v-btn>
                 </div>
@@ -882,11 +865,7 @@ const handleVnPayCallbackFromUrl = async () => {
         </v-dialog>
 
         <!-- Hóa đơn sau thanh toán -->
-        <InvoiceReceiptDialog
-            :show="receiptDialog.show"
-            :receipt="receiptDialog"
-            @close="onCloseReceipt"
-        />
+        <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" />
     </v-container>
 </template>
 
@@ -992,13 +971,16 @@ const handleVnPayCallbackFromUrl = async () => {
         height: auto;
         overflow-y: auto;
     }
+
     .pos-grid {
         flex-wrap: wrap;
     }
+
     .pos-column {
         height: auto;
         min-height: 520px;
     }
+
     .pos-header {
         align-items: flex-start;
         flex-direction: column;
@@ -1008,10 +990,21 @@ const handleVnPayCallbackFromUrl = async () => {
 .animate-pulse {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
 @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: .5; transform: scale(0.95); }
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: .5;
+        transform: scale(0.95);
+    }
 }
+
 .vnpay-logo-wrapper {
     background: #f1f5f9;
     border-radius: 50%;
@@ -1021,6 +1014,7 @@ const handleVnPayCallbackFromUrl = async () => {
     align-items: center;
     justify-content: center;
 }
+
 .gap-3 {
     gap: 12px;
 }

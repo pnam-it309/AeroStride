@@ -21,14 +21,15 @@ const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
 
-const { provinces, districts, wards, loadingLocations, fetchProvinces, fetchDistricts, fetchWards, cleanName, matchLocation } = useLocation();
+const { provinces, districts, wards, loadingLocations, fetchProvinces, fetchDistricts, fetchWards, cleanName, matchLocation } =
+    useLocation();
 const { mapCodesToNames, isLegacyAddressId, createLegacyAddressId, parseAddressString } = useAddressMapping();
 
 const loading = ref(false);
 const saving = ref(false);
 const isEditMode = ref(false);
 const isDetailView = computed(() => route.path.includes('/detail') || route.query.view === 'true');
-const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật khách hàng' : 'Thêm khách hàng');
+const submitButtonText = computed(() => (isEditMode.value ? 'Cập nhật khách hàng' : 'Thêm khách hàng'));
 
 // Address Management
 const listDiaChi = ref([]);
@@ -47,7 +48,6 @@ const isEditAddr = ref(false);
 const invoiceDetailDialog = ref(false);
 const selectedInvoice = ref(null);
 const detailLoading = ref(false);
-
 
 const customerForm = ref({
     ma: '',
@@ -85,15 +85,15 @@ const loadCustomer = async (id) => {
         listDiaChi.value = Array.isArray(rawAddresses) ? [...rawAddresses] : [];
 
         // Xác định địa chỉ mặc định hoặc địa chỉ đầu tiên của khách hàng để làm địa chỉ hiện tại
-        const defaultAddr = listDiaChi.value.find(a => a.laMacDinh) || listDiaChi.value[0];
+        const defaultAddr = listDiaChi.value.find((a) => a.laMacDinh) || listDiaChi.value[0];
 
         customerForm.value = {
             ...data,
             tinh: null,
             thanhPho: null,
             phuongXa: null,
-            diaChiChiTiet: defaultAddr ? defaultAddr.diaChiChiTiet : (data.diaChiChiTiet || ''),
-            ma: data.ma || data.maKhachHang || '', // Đảm bảo luôn có trường 'ma' để dùng làm khóa tìm kiếm
+            diaChiChiTiet: defaultAddr ? defaultAddr.diaChiChiTiet : data.diaChiChiTiet || '',
+            ma: data.ma || data.maKhachHang || '' // Đảm bảo luôn có trường 'ma' để dùng làm khóa tìm kiếm
         };
         isEditMode.value = true;
 
@@ -104,15 +104,21 @@ const loadCustomer = async (id) => {
             if (provinces.value.length === 0) {
                 await fetchProvinces();
             }
-            const province = provinces.value.find(p => cleanName(p.name) === cleanName(targetAddress.tinh) || p.code === targetAddress.tinh);
+            const province = provinces.value.find(
+                (p) => cleanName(p.name) === cleanName(targetAddress.tinh) || p.code === targetAddress.tinh
+            );
             if (province) {
                 customerForm.value.tinh = province.code;
                 await fetchDistricts(province.code);
-                const district = districts.value.find(d => cleanName(d.name) === cleanName(targetAddress.thanhPho) || d.code === targetAddress.thanhPho);
+                const district = districts.value.find(
+                    (d) => cleanName(d.name) === cleanName(targetAddress.thanhPho) || d.code === targetAddress.thanhPho
+                );
                 if (district) {
                     customerForm.value.thanhPho = district.code;
                     await fetchWards(district.code);
-                    const ward = wards.value.find(w => cleanName(w.name) === cleanName(targetAddress.phuongXa) || w.code === targetAddress.phuongXa);
+                    const ward = wards.value.find(
+                        (w) => cleanName(w.name) === cleanName(targetAddress.phuongXa) || w.code === targetAddress.phuongXa
+                    );
                     if (ward) {
                         customerForm.value.phuongXa = ward.code;
                     }
@@ -158,7 +164,6 @@ const loadCustomer = async (id) => {
         loading.value = false;
     }
 };
-
 
 const handleSave = () => {
     confirmDialog.value = {
@@ -298,16 +303,17 @@ const loadAddresses = async (khId) => {
             const newList = [...data];
 
             // Bảo toàn địa chỉ "gốc" (legacy) từ customerForm nếu có
-            const hasLegacyInfo = customerForm.value && (customerForm.value.tinh || customerForm.value.thanhPho || customerForm.value.diaChiChiTiet);
+            const hasLegacyInfo =
+                customerForm.value && (customerForm.value.tinh || customerForm.value.thanhPho || customerForm.value.diaChiChiTiet);
 
             if (hasLegacyInfo) {
                 const legacyId = createLegacyAddressId(customerForm.value.id || khId);
 
                 // Chỉ thêm nếu trong data chưa có ID này (tránh trùng lặp)
-                if (!newList.some(addr => addr.id === legacyId)) {
-                    const p = provinces.value.find(x => x.code === customerForm.value.tinh || x.name === customerForm.value.tinh);
-                    const d = districts.value.find(x => x.code === customerForm.value.thanhPho || x.name === customerForm.value.thanhPho);
-                    const w = wards.value.find(x => x.code === customerForm.value.phuongXa || x.name === customerForm.value.phuongXa);
+                if (!newList.some((addr) => addr.id === legacyId)) {
+                    const p = provinces.value.find((x) => x.code === customerForm.value.tinh || x.name === customerForm.value.tinh);
+                    const d = districts.value.find((x) => x.code === customerForm.value.thanhPho || x.name === customerForm.value.thanhPho);
+                    const w = wards.value.find((x) => x.code === customerForm.value.phuongXa || x.name === customerForm.value.phuongXa);
 
                     newList.push({
                         id: legacyId,
@@ -360,7 +366,14 @@ const openAddrDialog = (item = null) => {
 };
 
 const saveAddress = async () => {
-    if (!addrForm.value.tenNguoiNhan || !addrForm.value.sdtNguoiNhan || !addrForm.value.tinh || !addrForm.value.thanhPho || !addrForm.value.phuongXa || !addrForm.value.diaChiChiTiet) {
+    if (
+        !addrForm.value.tenNguoiNhan ||
+        !addrForm.value.sdtNguoiNhan ||
+        !addrForm.value.tinh ||
+        !addrForm.value.thanhPho ||
+        !addrForm.value.phuongXa ||
+        !addrForm.value.diaChiChiTiet
+    ) {
         addNotification({
             title: 'Thiếu thông tin',
             subtitle: 'Vui lòng nhập đầy đủ tất cả các trường bắt buộc',
@@ -468,13 +481,12 @@ onMounted(async () => {
             </div>
             <div class="d-flex gap-3">
                 <v-btn color="primary" variant="flat" class="add-btn-primary text-none px-8 rounded-xl h-11 elevation-4"
-                    style="font-size: 16px !important; font-weight: 600 !important;" :loading="saving"
+                    style="font-size: 16px !important; font-weight: 600 !important" :loading="saving"
                     @click="handleSave">
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
-                    <span style="font-size: 16px !important; font-weight: 600 !important;">{{ submitButtonText }}</span>
+                    <span style="font-size: 16px !important; font-weight: 600 !important">{{ submitButtonText }}</span>
                 </v-btn>
             </div>
-
         </div>
 
         <!-- Row 1: Personal Info & Portrait -->
@@ -755,7 +767,7 @@ onMounted(async () => {
                                         <td class="data-cell text-center">
                                             <span class="mono-font text-slate-500">{{ item.maSanPham || item.maSP ||
                                                 'N/A'
-                                            }}</span>
+                                                }}</span>
                                         </td>
                                         <td class="data-cell text-center">
                                             <span class="text-slate-800">{{ item.tenSanPham }}</span>
@@ -763,11 +775,11 @@ onMounted(async () => {
                                         <td class="data-cell text-center">
                                             <span class="mono-font text-slate-500">{{ item.maBienThe || item.maCTSP ||
                                                 'N/A'
-                                            }}</span>
+                                                }}</span>
                                         </td>
                                         <td class="data-cell text-center">
                                             <span class="text-slate-600">{{ item.tenMauSac }} / {{ item.tenKichThuoc
-                                            }}</span>
+                                                }}</span>
                                         </td>
                                         <td class="data-cell text-center">
                                             <span class="text-slate-600">{{ item.soLuong }}</span>
@@ -785,7 +797,9 @@ onMounted(async () => {
                                             }}đ
                                         </td>
                                     </tr>
-                                    <TableEmptyState v-if="!selectedInvoice?.items || selectedInvoice?.items.length === 0" :colspan="8" text="Không có sản phẩm nào trong hóa đơn này." />
+                                    <TableEmptyState
+                                        v-if="!selectedInvoice?.items || selectedInvoice?.items.length === 0"
+                                        :colspan="8" text="Không có sản phẩm nào trong hóa đơn này." />
                                 </tbody>
                                 <tfoot>
                                     <tr class="bg-slate-50">
@@ -797,7 +811,7 @@ onMounted(async () => {
                                         <td class="data-cell text-right font-weight-black text-primary py-4"
                                             style="font-size: 13px !important; color: #1e257c !important">
                                             {{ (selectedInvoice?.tongTienSauGiam || selectedInvoice?.tongTien ||
-                                                0).toLocaleString() }}đ
+                                            0).toLocaleString() }}đ
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -982,8 +996,6 @@ onMounted(async () => {
     font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
 }
 
-
-
 #khach-hang-form-container,
 #khach-hang-form-container *,
 .khach-hang-dialog-card,
@@ -1022,11 +1034,9 @@ onMounted(async () => {
     font-size: 13px !important;
 }
 
-
-
 /* CSS Global để ẩn icon mặc định của trình duyệt */
-:deep(input[type="date"]::-webkit-calendar-picker-indicator),
-:deep(input[type="date"]::-webkit-inner-spin-button) {
+:deep(input[type='date']::-webkit-calendar-picker-indicator),
+:deep(input[type='date']::-webkit-inner-spin-button) {
     display: none !important;
     -webkit-appearance: none !important;
 }
@@ -1036,5 +1046,32 @@ onMounted(async () => {
     font-size: 22px !important;
     opacity: 0.8 !important;
     color: #475569 !important;
+}
+
+/* Custom borderless inputs with soft faded background */
+:deep(.v-field) {
+    background-color: #f1f5f9 !important;
+    /* soft light slate-100 */
+    border-radius: 12px !important;
+    /* smooth rounded corners */
+    box-shadow: none !important;
+    border: none !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+:deep(.v-field__outline) {
+    display: none !important;
+    /* hide outline completely */
+}
+
+/* Hover state */
+:deep(.v-field:hover) {
+    background-color: #e2e8f0 !important;
+    /* slightly darker on hover */
+}
+
+/* Focused state */
+:deep(.v-field--focused) {
+    background-color: #e2e8f0 !important;
 }
 </style>

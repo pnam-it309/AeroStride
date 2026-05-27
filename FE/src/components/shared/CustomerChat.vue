@@ -143,23 +143,24 @@ const sendMessage = () => {
 
     let userMsg = message.value;
     const lowerMsg = userMsg.toLowerCase().trim();
-    
+
     // Kiểm tra nếu tin nhắn là yêu cầu kết nối nhân viên
-    const isHandoff = lowerMsg.includes('nhân viên') || 
-                      lowerMsg.includes('nhan vien') || 
-                      lowerMsg.includes('người thật') || 
-                      lowerMsg.includes('nguoi that') || 
-                      lowerMsg.includes('admin') || 
-                      lowerMsg.includes('gặp hỗ trợ') || 
-                      lowerMsg.includes('gap ho tro') || 
-                      lowerMsg.includes('gọi hỗ trợ') || 
-                      lowerMsg.includes('goi ho tro') || 
-                      lowerMsg.includes('liên hệ hỗ trợ') || 
-                      lowerMsg.includes('lien he ho tro') || 
-                      lowerMsg.includes('kết nối hỗ trợ') || 
-                      lowerMsg.includes('ket noi ho tro') || 
-                      lowerMsg.includes('nói chuyện với hỗ trợ') || 
-                      lowerMsg.includes('noi chuyen voi ho tro');
+    const isHandoff =
+        lowerMsg.includes('nhân viên') ||
+        lowerMsg.includes('nhan vien') ||
+        lowerMsg.includes('người thật') ||
+        lowerMsg.includes('nguoi that') ||
+        lowerMsg.includes('admin') ||
+        lowerMsg.includes('gặp hỗ trợ') ||
+        lowerMsg.includes('gap ho tro') ||
+        lowerMsg.includes('gọi hỗ trợ') ||
+        lowerMsg.includes('goi ho tro') ||
+        lowerMsg.includes('liên hệ hỗ trợ') ||
+        lowerMsg.includes('lien he ho tro') ||
+        lowerMsg.includes('kết nối hỗ trợ') ||
+        lowerMsg.includes('ket noi ho tro') ||
+        lowerMsg.includes('nói chuyện với hỗ trợ') ||
+        lowerMsg.includes('noi chuyen voi ho tro');
 
     if (isHandoff) {
         userMsg = 'Tôi muốn nói chuyện với nhân viên hỗ trợ.';
@@ -168,7 +169,7 @@ const sendMessage = () => {
     message.value = '';
     isSending.value = true;
     lastSendTime.value = now;
-    
+
     // Tạm thời hiển thị tin nhắn user để UI phản hồi nhanh
     const tempId = Date.now();
     chatHistory.value.push({
@@ -179,7 +180,7 @@ const sendMessage = () => {
     });
 
     isTyping.value = true;
-    
+
     // Tự động tắt typing indicator sau 45s nếu không có phản hồi từ WebSocket
     if (typingTimeout.value) clearTimeout(typingTimeout.value);
     typingTimeout.value = setTimeout(() => {
@@ -219,12 +220,12 @@ const parseProductJson = (text) => {
     const match = text.match(/\[\[PRODUCT_JSON:([\s\S]*?)\]\]/);
     if (!match) return null;
     let jsonStr = match[1].trim();
-    
+
     // Tự động sửa lỗi (Self-healing): Nếu chuỗi bắt đầu bằng '[' nhưng kết thúc bằng '}' (thiếu ngoặc đóng mảng do lỗi Regex cũ)
     if (jsonStr.startsWith('[') && !jsonStr.endsWith(']')) {
         jsonStr += ']';
     }
-    
+
     // Xử lý loại bỏ ngoặc đóng thừa (nếu có 3 ngoặc ở cuối từ phiên bản cũ)
     if (jsonStr.endsWith(']')) {
         const openCount = (jsonStr.match(/\[/g) || []).length;
@@ -233,7 +234,7 @@ const parseProductJson = (text) => {
             jsonStr = jsonStr.substring(0, jsonStr.length - (closeCount - openCount));
         }
     }
-    
+
     try {
         return JSON.parse(jsonStr);
     } catch (e) {
@@ -264,7 +265,7 @@ const fetchHistory = async () => {
                     ...msg,
                     sender: msg.sender === 'customer' ? 'user' : msg.sender
                 };
-                
+
                 // Thử parse data nếu có JSON sản phẩm
                 if (msg.text && msg.text.includes('[[PRODUCT_JSON:')) {
                     const products = parseProductJson(msg.text);
@@ -344,7 +345,7 @@ onMounted(() => {
             }
 
             // Xóa tin nhắn tạm thời nếu trùng nội dung (giảm giật lag)
-            chatHistory.value = chatHistory.value.filter(m => m.id > 2000000000000 || m.text !== data.text || m.sender !== 'user');
+            chatHistory.value = chatHistory.value.filter((m) => m.id > 2000000000000 || m.text !== data.text || m.sender !== 'user');
 
             chatHistory.value.push(parsed);
             updateActiveSuggestions();
@@ -364,13 +365,7 @@ const goToDetail = (id) => {
         <!-- Floating Chat Icon -->
         <div v-if="!isOpen" class="chat-fab-container" @click="isOpen = true">
             <div class="chat-badge" v-if="false">1</div>
-            <v-btn
-                icon="mdi-chat-processing"
-                color="black"
-                size="large"
-                elevation="8"
-                class="chat-fab"
-            ></v-btn>
+            <v-btn icon="mdi-chat-processing" color="black" size="large" elevation="8" class="chat-fab"></v-btn>
             <div class="chat-tooltip">Chat với chúng tôi!</div>
         </div>
 
@@ -381,7 +376,11 @@ const goToDetail = (id) => {
                 <div class="chat-header">
                     <div class="header-content">
                         <v-avatar size="34" class="header-avatar shadow-sm">
-                            <img src="@/assets/images/logos/logoclient.jpg" alt="AeroStride" style="width: 100%; height: 100%; object-fit: cover;" />
+                            <img
+                                src="@/assets/images/logos/logoclient.jpg"
+                                alt="AeroStride"
+                                style="width: 100%; height: 100%; object-fit: cover"
+                            />
                         </v-avatar>
                         <div class="header-info">
                             <div class="store-name">AeroStride Support</div>
@@ -420,20 +419,15 @@ const goToDetail = (id) => {
                                 <v-icon v-if="msg.sender === 'bot'" icon="mdi-robot" size="small" color="black"></v-icon>
                                 <v-icon v-else icon="mdi-account-tie" size="small" color="primary"></v-icon>
                             </v-avatar>
-                            
+
                             <div class="msg-content-wrap">
                                 <div v-if="msg.text" class="message-bubble" v-html="marked(msg.text)"></div>
-                                
+
                                 <!-- Product Showcase in Chat -->
                                 <div v-if="msg.products && msg.products.length" class="product-showcase-list mt-3">
-                                    <ProductShowcaseCard 
-                                        v-for="p in msg.products" 
-                                        :key="p.id" 
-                                        :product="p" 
-                                        @view-detail="goToDetail"
-                                    />
+                                    <ProductShowcaseCard v-for="p in msg.products" :key="p.id" :product="p" @view-detail="goToDetail" />
                                 </div>
-                                
+
                                 <div class="message-time">{{ msg.time }}</div>
                             </div>
                         </template>
@@ -453,7 +447,7 @@ const goToDetail = (id) => {
                 </div>
 
                 <!-- Footer -->
-                <div class="chat-footer" style="position: relative;">
+                <div class="chat-footer" style="position: relative">
                     <!-- Suggestions Panel -->
                     <transition name="chat-slide">
                         <div v-if="showSuggestions" class="suggestions-panel">
@@ -462,24 +456,17 @@ const goToDetail = (id) => {
                                 <v-icon icon="mdi-account-tie" size="small" class="mr-2"></v-icon>
                                 Gặp nhân viên hỗ trợ
                             </button>
-                            
+
                             <div class="suggestions-title">
                                 <v-icon icon="mdi-lightbulb-on" color="amber-darken-2" size="small" class="mr-1"></v-icon>
                                 Câu hỏi gợi ý:
                             </div>
-                            
+
                             <div class="suggestions-list">
-                                <button 
-                                    v-for="s in suggestions" 
-                                    :key="s" 
-                                    class="suggestion-pill"
-                                    @click="sendSuggestion(s)"
-                                >
+                                <button v-for="s in suggestions" :key="s" class="suggestion-pill" @click="sendSuggestion(s)">
                                     {{ s }}
                                 </button>
-                                <button class="suggestion-pill collapse-pill" @click="showSuggestions = false">
-                                    Thu gọn ↑
-                                </button>
+                                <button class="suggestion-pill collapse-pill" @click="showSuggestions = false">Thu gọn ↑</button>
                             </div>
                         </div>
                     </transition>
@@ -494,7 +481,7 @@ const goToDetail = (id) => {
                             class="mr-2"
                             @click="showSuggestions = !showSuggestions"
                         ></v-btn>
-                        
+
                         <textarea
                             v-model="message"
                             placeholder="Nhập câu hỏi của bạn..."
@@ -590,7 +577,7 @@ const goToDetail = (id) => {
     flex-direction: column;
     overflow: hidden;
     box-shadow: 0 24px 48px rgba(0, 0, 0, 0.16);
-    border: 1px solid rgba(0,0,0,0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 /* Header */
@@ -687,7 +674,7 @@ const goToDetail = (id) => {
             background: #000;
             color: #fff;
             border-radius: 18px 18px 0 18px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         .message-time {
             text-align: right;
@@ -709,9 +696,12 @@ const goToDetail = (id) => {
 
     :deep(p) {
         margin-bottom: 8px;
-        &:last-child { margin-bottom: 0; }
+        &:last-child {
+            margin-bottom: 0;
+        }
     }
-    :deep(ul), :deep(ol) {
+    :deep(ul),
+    :deep(ol) {
         padding-left: 20px;
         margin-bottom: 8px;
     }
@@ -730,7 +720,7 @@ const goToDetail = (id) => {
     flex-direction: column;
     gap: 16px;
     padding-bottom: 10px;
-    
+
     :deep(.product-showcase-card) {
         width: 100%;
         max-width: 100%;
@@ -775,7 +765,7 @@ const goToDetail = (id) => {
         &:focus-within {
             border-color: #000;
             background: #fff;
-            box-shadow: 0 0 0 3px rgba(0,0,0,0.03);
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.03);
         }
 
         textarea {
@@ -788,7 +778,9 @@ const goToDetail = (id) => {
             outline: none;
             max-height: 100px;
             color: #2d3436;
-            &::placeholder { color: #b2bec3; }
+            &::placeholder {
+                color: #b2bec3;
+            }
         }
     }
 
@@ -817,14 +809,25 @@ const goToDetail = (id) => {
         background: #95a5a6;
         border-radius: 50%;
         animation: typing 1s infinite ease-in-out;
-        &:nth-child(2) { animation-delay: 0.2s; }
-        &:nth-child(3) { animation-delay: 0.4s; }
+        &:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        &:nth-child(3) {
+            animation-delay: 0.4s;
+        }
     }
 }
 
 @keyframes typing {
-    0%, 100% { transform: translateY(0); opacity: 0.4; }
-    50% { transform: translateY(-4px); opacity: 1; }
+    0%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+    50% {
+        transform: translateY(-4px);
+        opacity: 1;
+    }
 }
 
 /* Transitions */
@@ -847,7 +850,9 @@ const goToDetail = (id) => {
     right: 20px;
     background: #fff;
     border-radius: 16px;
-    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.08);
+    box-shadow:
+        0 -8px 24px rgba(0, 0, 0, 0.08),
+        0 8px 24px rgba(0, 0, 0, 0.08);
     border: 1px solid rgba(0, 0, 0, 0.05);
     padding: 16px;
     z-index: 10;
@@ -875,7 +880,7 @@ const goToDetail = (id) => {
         border-color: #000;
         transform: translateY(-1px);
     }
-    
+
     &:active {
         transform: translateY(0);
     }
@@ -930,7 +935,7 @@ const goToDetail = (id) => {
         background: transparent;
         color: #999;
         border-color: #ccc;
-        
+
         &:hover {
             background: #fafafa;
             color: #333;

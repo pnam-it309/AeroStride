@@ -8,23 +8,22 @@
                     </div>
                     <div class="shield-circle"></div>
                 </div>
-                
+
                 <h1 class="text-h2 font-weight-black text-warning mb-4">Truy Cập Bị Từ Chối!</h1>
-                <h2 class="text-h5 font-weight-bold text-slate-700 mb-8">
-                    Rất tiếc, bạn không có quyền truy cập vào trang này.
-                </h2>
-                
+                <h2 class="text-h5 font-weight-bold text-slate-700 mb-8">Rất tiếc, bạn không có quyền truy cập vào trang này.</h2>
+
                 <p class="text-body-1 text-slate-500 mb-10 max-width-400 mx-auto">
-                    Khu vực này chỉ dành cho tài khoản có quyền hạn cao hơn. Nếu bạn tin rằng đây là một sự nhầm lẫn, vui lòng liên hệ quản trị viên.
+                    Khu vực này chỉ dành cho tài khoản có quyền hạn cao hơn. Nếu bạn tin rằng đây là một sự nhầm lẫn, vui lòng liên hệ quản
+                    trị viên.
                 </p>
-                
+
                 <div class="d-flex justify-center gap-4">
-                    <v-btn 
-                        variant="flat" 
-                        size="x-large" 
-                        color="warning" 
-                        rounded="xl" 
-                        class="px-10 font-weight-bold elevation-12 action-btn text-white" 
+                    <v-btn
+                        variant="flat"
+                        size="x-large"
+                        color="warning"
+                        rounded="xl"
+                        class="px-10 font-weight-bold elevation-12 action-btn text-white"
                         to="/"
                     >
                         Quay lại an toàn
@@ -51,8 +50,7 @@
 }
 
 .mesh-bg {
-    background-image: 
-        radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.05) 0px, transparent 50%);
+    background-image: radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.05) 0px, transparent 50%);
 }
 
 .content-box {
@@ -79,8 +77,12 @@
 }
 
 @keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .action-btn {
@@ -96,8 +98,12 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .orb {

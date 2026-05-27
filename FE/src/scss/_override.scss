@@ -3,14 +3,21 @@
    This file enforces global resets and base styles across the entire app.
    ========================================================================== */
 
-html, body, .v-application {
+html,
+body,
+.v-application {
     font-family: 'Inter', sans-serif !important;
     text-transform: none !important;
     -webkit-font-smoothing: antialiased;
 }
 
 /* 1. VUETIFY COMPONENT RESETS (Lowercasing & Font) */
-.v-btn, .v-tab, .v-chip, .v-list-item-title, .v-card-title, .v-label {
+.v-btn,
+.v-tab,
+.v-chip,
+.v-list-item-title,
+.v-card-title,
+.v-label {
     font-family: inherit !important;
     text-transform: none !important;
     letter-spacing: normal !important;
@@ -22,9 +29,11 @@ html, body, .v-application {
 .v-btn.rounded-md,
 .v-btn.rounded-sm {
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    border-radius: 12px !important;
-    
-    &:hover { transform: translateY(-2px); }
+    border-radius: 18px !important;
+
+    &:hover {
+        transform: translateY(-2px);
+    }
 }
 
 /* 3. FORM FIELDS & INPUTS GLOBAL */
@@ -41,12 +50,30 @@ html, body, .v-application {
 }
 
 /* 4. TYPOGRAPHY SYSTEM */
-.text-h1 { font-size: 2.25rem !important; font-weight: 700 !important; }
-.text-h2 { font-size: 1.875rem !important; font-weight: 700 !important; }
-.text-h3 { font-size: 1.5rem !important; font-weight: 600 !important; }
-.text-h4 { font-size: 1.25rem !important; font-weight: 600 !important; }
-.text-h5 { font-size: 1.125rem !important; font-weight: 600 !important; }
-.text-h6 { font-size: 1rem !important; font-weight: 600 !important; }
+.text-h1 {
+    font-size: 2.25rem !important;
+    font-weight: 700 !important;
+}
+.text-h2 {
+    font-size: 1.875rem !important;
+    font-weight: 700 !important;
+}
+.text-h3 {
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+}
+.text-h4 {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+}
+.text-h5 {
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+}
+.text-h6 {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+}
 
 /* 5. TABLE BASE STYLING */
 .v-table {
@@ -65,7 +92,15 @@ html, body, .v-application {
     margin: 0 auto;
 }
 
-.text-error { color: #ef4444 !important; }
-.text-success { color: #10b981 !important; }
-.text-warning { color: #f59e0b !important; }
-.text-primary { color: #1e257c !important; }
+.text-error {
+    color: #ef4444 !important;
+}
+.text-success {
+    color: #10b981 !important;
+}
+.text-warning {
+    color: #f59e0b !important;
+}
+.text-primary {
+    color: #1e257c !important;
+}

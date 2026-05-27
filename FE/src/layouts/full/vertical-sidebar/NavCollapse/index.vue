@@ -9,7 +9,8 @@ const props = defineProps({ item: Object, level: { type: Number, default: 1 }, h
 <template>
     <v-list-group :value="item.title" class="mb-1 nav-collapse-group" :disabled="hideTitle">
         <template v-slot:activator="{ props: activatorProps, isOpen }">
-            <v-list-item v-bind="activatorProps" rounded class="leftPadding sidebar-link transition-item" :ripple="false">
+            <v-list-item v-bind="activatorProps" rounded class="leftPadding sidebar-link transition-item"
+                :ripple="false">
                 <template v-slot:prepend>
                     <div class="navbox">
                         <span class="icon-box">
@@ -17,20 +18,20 @@ const props = defineProps({ item: Object, level: { type: Number, default: 1 }, h
                         </span>
                     </div>
                 </template>
-                <v-list-item-title v-if="!hideTitle" class="sidebar-item-title font-weight-medium">{{ item.title }}</v-list-item-title>
-                
+                <v-list-item-title v-if="!hideTitle" class="sidebar-item-title font-weight-medium">{{ item.title
+                    }}</v-list-item-title>
+
                 <template v-slot:append v-if="!hideTitle">
-                    <ChevronDownIcon 
-                        size="16" 
-                        class="rotate-icon transition-300" 
-                        :class="{ 'rotated': isOpen }"
-                    />
+                    <ChevronDownIcon size="16" class="rotate-icon transition-300" :class="{ rotated: isOpen }" />
                 </template>
             </v-list-item>
         </template>
 
-        <!---Nested Items-->
-        <NavItem v-for="(subitem, i) in item.children" :key="i" :item="subitem" :level="level + 1" :hide-title="hideTitle" class="leftPadding" />
+        <!---Nested Items Wrapper with curtain effect-->
+        <div class="nested-items-container">
+            <NavItem v-for="(subitem, i) in item.children" :key="i" :item="subitem" :level="level + 1"
+                :hide-title="hideTitle" class="leftPadding" />
+        </div>
     </v-list-group>
 </template>
 

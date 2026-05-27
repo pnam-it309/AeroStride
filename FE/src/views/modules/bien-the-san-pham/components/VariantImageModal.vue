@@ -25,23 +25,26 @@ const formData = ref({
     trangThai: 'DANG_HOAT_DONG'
 });
 
-watch(() => props.open, (isOpen) => {
-    if (isOpen && props.image) {
-        formData.value = {
-            duongDanAnh: props.image.duongDanAnh || '',
-            moTa: props.image.moTa || '',
-            hinhAnhDaiDien: props.image.hinhAnhDaiDien || false,
-            trangThai: props.image.trangThai || 'DANG_HOAT_DONG'
-        };
-    } else if (isOpen) {
-        formData.value = {
-            duongDanAnh: '',
-            moTa: '',
-            hinhAnhDaiDien: false,
-            trangThai: 'DANG_HOAT_DONG'
-        };
+watch(
+    () => props.open,
+    (isOpen) => {
+        if (isOpen && props.image) {
+            formData.value = {
+                duongDanAnh: props.image.duongDanAnh || '',
+                moTa: props.image.moTa || '',
+                hinhAnhDaiDien: props.image.hinhAnhDaiDien || false,
+                trangThai: props.image.trangThai || 'DANG_HOAT_DONG'
+            };
+        } else if (isOpen) {
+            formData.value = {
+                duongDanAnh: '',
+                moTa: '',
+                hinhAnhDaiDien: false,
+                trangThai: 'DANG_HOAT_DONG'
+            };
+        }
     }
-});
+);
 
 const triggerFileInput = () => {
     fileInput.value?.click();
@@ -91,31 +94,33 @@ const handleSubmit = () => {
 
             <div class="p-8 space-y-6">
                 <!-- Upload Area -->
-                <div 
+                <div
                     @click="triggerFileInput"
                     class="relative aspect-video rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden flex flex-column items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all group"
                 >
-                    <input 
-                        type="file" 
-                        ref="fileInput" 
-                        class="hidden" 
-                        accept="image/*" 
-                        @change="handleFileChange"
-                    />
-                    
+                    <input type="file" ref="fileInput" class="hidden" accept="image/*" @change="handleFileChange" />
+
                     <div v-if="uploading" class="text-center">
                         <v-progress-circular indeterminate color="primary" class="mb-2"></v-progress-circular>
                         <p class="text-caption font-weight-bold text-slate-500 uppercase tracking-widest">Đang xử lý...</p>
                     </div>
-                    <SafeProductImage v-else-if="formData.duongDanAnh" :src="formData.duongDanAnh"
-                        :fallback-src="logoPlaceholder" fit="contain" class="w-full h-full" />
+                    <SafeProductImage
+                        v-else-if="formData.duongDanAnh"
+                        :src="formData.duongDanAnh"
+                        :fallback-src="logoPlaceholder"
+                        fit="contain"
+                        class="w-full h-full"
+                    />
                     <div v-else class="text-center group-hover:scale-110 transition-transform duration-300">
                         <UploadIcon class="h-12 w-12 text-slate-300 mx-auto mb-3" />
                         <span class="text-sm text-slate-500 font-bold block mb-1">Nhấn để tải ảnh lên</span>
                         <span class="text-xs text-slate-400 italic">Hỗ trợ JPG, PNG, WEBP (Cloudinary)</span>
                     </div>
-                    
-                    <div v-if="formData.duongDanAnh && !uploading" class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+
+                    <div
+                        v-if="formData.duongDanAnh && !uploading"
+                        class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    >
                         <div class="text-white text-center">
                             <PhotoIcon class="h-8 w-8 mx-auto mb-1" />
                             <span class="text-xs font-bold uppercase tracking-widest">Thay đổi ảnh</span>
@@ -154,7 +159,10 @@ const handleSubmit = () => {
                         ></v-text-field>
                     </div>
 
-                    <div class="pa-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-space-between cursor-pointer" @click="formData.hinhAnhDaiDien = !formData.hinhAnhDaiDien">
+                    <div
+                        class="pa-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-space-between cursor-pointer"
+                        @click="formData.hinhAnhDaiDien = !formData.hinhAnhDaiDien"
+                    >
                         <div class="d-flex align-center gap-3">
                             <v-icon :color="formData.hinhAnhDaiDien ? 'primary' : 'slate-300'">
                                 {{ formData.hinhAnhDaiDien ? 'mdi-check-circle' : 'mdi-circle-outline' }}
@@ -164,24 +172,13 @@ const handleSubmit = () => {
                                 <p class="text-caption text-slate-500 mb-0">Hiển thị đầu tiên trong danh sách</p>
                             </div>
                         </div>
-                        <v-switch
-                            v-model="formData.hinhAnhDaiDien"
-                            color="primary"
-                            hide-details
-                            density="compact"
-                        ></v-switch>
+                        <v-switch v-model="formData.hinhAnhDaiDien" color="primary" hide-details density="compact"></v-switch>
                     </div>
                 </div>
             </div>
 
             <div class="px-8 py-6 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
-                <v-btn
-                    variant="text"
-                    @click="emit('close')"
-                    class="rounded-xl font-weight-bold px-6 h-11"
-                >
-                    Hủy bỏ
-                </v-btn>
+                <v-btn variant="text" @click="emit('close')" class="rounded-xl font-weight-bold px-6 h-11"> Hủy bỏ </v-btn>
                 <v-btn
                     color="primary"
                     @click="handleSubmit"
@@ -208,9 +205,13 @@ const handleSubmit = () => {
     animation: scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 @keyframes scale-in {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 </style>
-
-

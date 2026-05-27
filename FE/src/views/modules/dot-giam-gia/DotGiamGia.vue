@@ -87,7 +87,6 @@ const confirmToggleStatus = (item) => {
     });
 };
 
-
 const getCampaignTimelineStatus = (item) => {
     const now = Date.now();
     const start = new Date(item.ngayBatDau).getTime();
@@ -182,7 +181,6 @@ onMounted(() => loadCampaigns());
                         @input="handleSearch"></v-text-field>
                 </v-col>
 
-
                 <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select v-model="filters.trangThai" :items="[
@@ -237,12 +235,14 @@ onMounted(() => loadCampaigns());
                         <div class="text-primary">Giảm {{ getDiscountValueDisplay(item) }}</div>
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayBatDau)">{{
-                            formatDateTime(item.ngayBatDau) }}</div>
+                        <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayBatDau)">
+                            {{ formatDateTime(item.ngayBatDau) }}
+                        </div>
                     </td>
                     <td class="data-cell text-center">
-                        <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayKetThuc)">{{
-                            formatDateTime(item.ngayKetThuc) }}</div>
+                        <div class="text-slate-700 text-truncate" :title="formatDateTime(item.ngayKetThuc)">
+                            {{ formatDateTime(item.ngayKetThuc) }}
+                        </div>
                     </td>
                     <td class="data-cell">
                         <v-chip :class="['status-chip', getCampaignTimelineStatus(item).chipClass]" variant="flat">
