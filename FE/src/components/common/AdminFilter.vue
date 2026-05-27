@@ -46,7 +46,7 @@ const emit = defineEmits(['refresh', 'search']);
 }
 
 :deep(.reset-btn .mdi-loading) {
-    animation: filter-spin 1s linear infinite;
+    animation: filter-spin 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 @keyframes filter-spin {
     from { transform: rotate(0deg); }

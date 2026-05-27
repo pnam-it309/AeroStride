@@ -201,7 +201,7 @@ onMounted(() => {
                             <v-col cols="12" sm="6">
                                 <v-text-field
                                     v-model="shippingInfo.tenNguoiNhan"
-                                    label="Tên người nhận *"
+                                    label="Tên người nhận"
                                     variant="outlined"
                                     density="comfortable"
                                     hide-details="auto"
@@ -211,7 +211,7 @@ onMounted(() => {
                             <v-col cols="12" sm="6">
                                 <v-text-field
                                     v-model="shippingInfo.soDienThoai"
-                                    label="Số điện thoại *"
+                                    label="Số điện thoại"
                                     variant="outlined"
                                     density="comfortable"
                                     hide-details="auto"
@@ -222,7 +222,7 @@ onMounted(() => {
                                 <v-autocomplete
                                     v-model="shippingInfo.tinhThanh"
                                     :items="provinces"
-                                    label="Tỉnh/Thành phố *"
+                                    label="Tỉnh/Thành phố"
                                     variant="outlined"
                                     density="comfortable"
                                     hide-details="auto"
@@ -249,7 +249,7 @@ onMounted(() => {
                             <v-col cols="12">
                                 <v-text-field
                                     v-model="shippingInfo.diaChi"
-                                    label="Địa chỉ chi tiết (số nhà, tên đường) *"
+                                    label="Địa chỉ chi tiết (số nhà, tên đường)"
                                     variant="outlined"
                                     density="comfortable"
                                     hide-details="auto"

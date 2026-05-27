@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { AdminFilter, AdminTable, AdminBreadcrumbs, AdminPagination } from '@/components/common';
+import { AdminFilter, AdminTable, AdminBreadcrumbs, AdminPagination, TableEmptyState } from '@/components/common';
 import { CalendarIcon } from 'vue-tabler-icons';
 import apiService from '@/services/apiService';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
@@ -506,6 +506,7 @@ onMounted(() => {
                                         </v-chip>
                                     </td>
                                 </tr>
+                                <TableEmptyState v-if="!importPreviewData || importPreviewData.length === 0" :colspan="5" text="Không có dữ liệu hợp lệ trong file Excel." />
                             </tbody>
                         </table>
                     </div>

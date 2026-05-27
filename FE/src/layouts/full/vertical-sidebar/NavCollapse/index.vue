@@ -29,10 +29,8 @@ const props = defineProps({ item: Object, level: { type: Number, default: 1 }, h
             </v-list-item>
         </template>
 
-        <!---Nested Items Wrapper with curtain effect-->
-        <div class="nested-items-container">
-            <NavItem v-for="(subitem, i) in item.children" :key="i" :item="subitem" :level="level + 1" :hide-title="hideTitle" class="leftPadding" />
-        </div>
+        <!---Nested Items-->
+        <NavItem v-for="(subitem, i) in item.children" :key="i" :item="subitem" :level="level + 1" :hide-title="hideTitle" class="leftPadding" />
     </v-list-group>
 </template>
 
@@ -57,9 +55,6 @@ const props = defineProps({ item: Object, level: { type: Number, default: 1 }, h
 
 .nav-collapse-group :deep(.v-list-group__items) {
     --v-list-group-items-padding: 0;
-}
-
-.nested-items-container {
     border-left: 2px solid rgba(var(--v-theme-primary), 0.1);
     margin-left: 20px;
     margin-top: 2px;

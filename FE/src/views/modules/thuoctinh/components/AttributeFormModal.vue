@@ -13,10 +13,29 @@ const props = defineProps({
 
 const emit = defineEmits(['update:show', 'update:form', 'save']);
 
+import { getColorHexByName, getColorNameByHex } from '@/utils/colorDictionary';
+
 const closeModal = () => emit('update:show', false);
 const handleSave = () => emit('save');
 const updateFormField = (field, value) => {
-    emit('update:form', { ...props.form, [field]: value });
+    const updatedForm = { ...props.form, [field]: value };
+    
+    // Auto-detect color name/hex if in colors tab
+    if (props.selectedTab === 'colors') {
+        if (field === 'ten') {
+            const hex = getColorHexByName(value);
+            if (hex) {
+                updatedForm.maMauHex = hex;
+            }
+        } else if (field === 'maMauHex') {
+            const name = getColorNameByHex(value);
+            if (name && (!props.form.ten || getColorHexByName(props.form.ten))) {
+                updatedForm.ten = name;
+            }
+        }
+    }
+    
+    emit('update:form', updatedForm);
 };
 
 const submitButtonText = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm'));
@@ -24,17 +43,11 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
 </script>
 
 <template>
-    <v-menu 
-        :model-value="show" 
+    <v-dialog
+        :model-value="show"
         @update:model-value="emit('update:show', $event)"
-        :activator="activator"
-        :open-on-click="false"
-        :close-on-content-click="false"
-        location="bottom end"
-        :offset="[10, 40]"
-        transition="scale-transition"
-        min-width="480"
-        max-width="530"
+        max-width="500"
+        persistent
     >
         <v-card class="attribute-popover-card rounded-xl border-0 shadow-2xl overflow-hidden">
             <div class="px-6 py-4 border-b bg-slate-50/80 d-flex align-center justify-space-between">
@@ -149,7 +162,7 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                 </v-btn>
             </div>
         </v-card>
-    </v-menu>
+    </v-dialog>
 </template>
 
 <style scoped>

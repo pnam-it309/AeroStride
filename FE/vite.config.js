@@ -73,7 +73,7 @@ export default defineConfig(({ mode }) => {
                 }
             },
             sourcemap: false,
-            chunkSizeWarningLimit: 1000
+            chunkSizeWarningLimit: 1500
         },
         server: {
             allowedHosts: true,

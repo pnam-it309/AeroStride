@@ -1,39 +1,21 @@
-/**
- * Frontend utility for generating suggested codes.
- * Matches the logic in Backend CodeUtils.
- */
-
-const PREFIXES = {
-    SanPham: 'SP',
-    ChiTietSanPham: 'CT',
-    HoaDon: 'HD',
-    NhanVien: 'NV',
-    KhachHang: 'KH',
-    PhieuGiamGia: 'PGG',
-    DotGiamGia: 'DG'
-};
-
-const CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+import api from '@/services/apiService';
+import { API_COMMON } from '@/constants/apiPaths';
 
 /**
- * Generates a random code similar to backend.
+ * Frontend utility for generating suggested codes using Backend API.
  */
-export const generateRandomCode = (type) => {
-    const prefix = PREFIXES[type] || 'MA';
-    let result = prefix;
-    for (let i = 0; i < 8; i++) {
-        result += CHARS.charAt(Math.floor(Math.random() * CHARS.length));
+
+/**
+ * Generates a random code using backend.
+ */
+export const generateRandomCode = async (type) => {
+    try {
+        const response = await api.get(`${API_COMMON.CODE_GENERATE}?type=${type}`, { silent: true });
+        return response.data;
+    } catch (e) {
+        console.error('Lỗi khi tạo mã từ BE', e);
+        return '';
     }
-    return result;
 };
 
-/**
- * Suggests a SKU-like code for product variants.
- */
-export const suggestVariantCode = (productCode, colorCode, sizeName) => {
-    if (!productCode) return '';
-    const parts = [productCode];
-    if (colorCode) parts.push(colorCode);
-    if (sizeName) parts.push(sizeName.toString().replace(/\s+/g, ''));
-    return parts.join('-').toUpperCase();
-};
+

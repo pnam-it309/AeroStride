@@ -21,8 +21,9 @@ import { GIOI_TINH_FILTER_OPTIONS } from '@/constants/appConstants';
 import { useAddressMapping } from '@/composables/useAddressMapping';
 import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
 import { getOrderStatusMeta } from '@/utils/orderStatus';
+import { useRefreshHandler } from '@/composables/useRefreshHandler';
 
-const isRefreshing = ref(false);
+const { isRefreshing, handleRefresh: executeRefresh } = useRefreshHandler();
 const activeTab = ref('danh-sach');
 const currentView = ref('list'); // 'list' or 'invoice-history'
 
@@ -188,9 +189,7 @@ const handleReset = () => {
 };
 
 const handleRefresh = async () => {
-    isRefreshing.value = true;
-    handleReset();
-    setTimeout(() => (isRefreshing.value = false), ADDRESS_CONSTANTS.REFRESH_DELAY);
+    await executeRefresh(() => handleReset(), 1200);
 };
 
 const handleExport = async () => {
@@ -710,12 +709,6 @@ const formatAddressFull = (addr) => {
             </AdminFilter>
         </div>
 
-<<<<<<< .merge_file_paiVag
-        <!-- Table — không có tab, chỉ có bảng -->
-        <AdminTable title="Danh sách khách hàng" addButtonText="Tạo mới" show-export-button :headers="tableHeaders"
-            :items="allCustomers" :total-count="pagination.totalElements" :loading="loading"
-            @add="router.push({ name: 'KhachHangForm' })" @export="handleExport">
-=======
         <AdminTable
             title="Khách hàng"
             addButtonText="Tạo mới"
@@ -728,7 +721,6 @@ const formatAddressFull = (addr) => {
             @export="handleExport"
         >
             <template #top>
-                <!-- Tabs navigation inside the table, no transition animation -->
                 <v-tabs
                     v-model="activeTab"
                     bg-color="transparent"
@@ -748,7 +740,6 @@ const formatAddressFull = (addr) => {
                 </v-tabs>
             </template>
 
->>>>>>> .merge_file_6Tf0Lo
             <template #row="{ item, index }">
                 <!-- Row for Tab 1: Danh sách chi tiết -->
                 <tr v-if="activeTab === 'danh-sach'" class="data-row">

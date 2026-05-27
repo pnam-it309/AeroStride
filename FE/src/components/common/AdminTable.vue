@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { LayoutGridIcon } from 'vue-tabler-icons';
+import TableEmptyState from './TableEmptyState.vue';
 
 const props = defineProps({
     title: { type: String, default: 'Danh sách' },
@@ -78,27 +79,23 @@ const tableKey = computed(() => {
                             </tr>
                         </slot>
                     </thead>
-                    <tbody v-if="!loading && items.length > 0">
-                        <template v-for="(item, index) in items" :key="item.id ?? index">
-                            <slot name="row" :item="item" :index="index"></slot>
+                    <tbody :class="{ 'is-loading': loading }">
+                        <template v-if="items.length > 0">
+                            <template v-for="(item, index) in items" :key="item.id ?? index">
+                                <slot name="row" :item="item" :index="index"></slot>
+                            </template>
                         </template>
-                    </tbody>
-                    <tbody v-else>
-                        <tr>
-                            <td :colspan="headers.length || 20" class="empty-state py-16 text-center">
-                                <div v-if="loading" class="d-flex flex-column align-center">
-                                    <v-progress-circular indeterminate color="primary" size="48" width="6" class="mb-4" />
-                                    <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">Đang tải dữ
-                                        liệu...</span>
-                                </div>
-                                <div v-else class="d-flex flex-column align-center py-12 bg-slate-50/30 rounded-lg mx-4 my-2">
-                                    <v-icon :icon="emptyIcon" size="48" style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
-                                    <span class="text-slate-500" style="font-size: 14px !important; font-weight: 400 !important;">{{ emptyText }}</span>
-                                </div>
-                            </td>
-                        </tr>
+                        <TableEmptyState v-else-if="!loading" :colspan="headers.length || 20" :icon="emptyIcon" :text="emptyText" />
                     </tbody>
                 </table>
+
+                <!-- Smooth Loading Overlay -->
+                <Transition name="fade">
+                    <div v-if="loading" class="table-loading-overlay d-flex flex-column align-center justify-center">
+                        <v-progress-circular indeterminate color="primary" size="48" width="5" class="mb-4" />
+                        <span class="text-subtitle-1 font-weight-bold text-slate-600">Đang tải dữ liệu...</span>
+                    </div>
+                </Transition>
             </div>
         </v-card>
 
@@ -110,5 +107,39 @@ const tableKey = computed(() => {
 </template>
 
 <style scoped>
-/* Scoped styles removed to allow global _admin-common.scss to control borders and shadows */
+.table-wrapper {
+    position: relative;
+    min-height: 200px;
+}
+
+.table-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(2px);
+    z-index: 50;
+    border-radius: 0 0 16px 16px;
+}
+
+/* Maintain opacity for rows during loading for a softer look */
+.is-loading {
+    opacity: 0.4;
+    filter: grayscale(0.2);
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+/* Fade Transition */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.4s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
 </style>

@@ -15,6 +15,7 @@ import {
 } from '@/services/product/dichVuThuocTinh';
 import { useNotifications } from '@/services/notificationService';
 import { isActiveStatus } from '@/utils/statusUtils';
+import { generateRandomCode } from '@/utils/codeGenerator';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 
 // REUSABLE COMPONENTS
@@ -165,14 +166,22 @@ const attributeMeta = {
 
 const currentMeta = computed(() => attributeMeta[selectedTab.value] || attributeMeta.brands);
 
-const tableHeaders = computed(() => [
-    { text: 'STT', width: '50px' },
-    { text: currentMeta.value.codeLabel, width: '120px' },
-    { text: currentMeta.value.nameLabel, width: '200px' },
-    { text: 'Mô tả', width: '200px' },
-    { text: 'Trạng thái', width: '130px' },
-    { text: 'Hành động', width: '120px' }
-]);
+const tableHeaders = computed(() => {
+    const headers = [
+        { text: 'STT', width: '50px' },
+        { text: currentMeta.value.codeLabel, width: '120px' },
+        { text: currentMeta.value.nameLabel, width: '200px' }
+    ];
+    if (selectedTab.value === 'colors') {
+        headers.push({ text: 'Mã màu', width: '120px' });
+    }
+    headers.push(
+        { text: 'Mô tả', width: '200px' },
+        { text: 'Trạng thái', width: '130px' },
+        { text: 'Hành động', width: '120px' }
+    );
+    return headers;
+});
 
 const pickFirst = (item, keys, fallback = '--') => {
     for (const key of keys) {
@@ -327,8 +336,8 @@ const resetForm = () => {
     selectedItem.value = null;
 };
 
-const openCreateDialog = (event) => {
-    const target = event?.currentTarget;
+const openCreateDialog = async (event) => {
+    const target = event.currentTarget;
     if (showDialog.value && activatorElement.value === target && !isEditMode.value) {
         showDialog.value = false;
         return;
@@ -336,6 +345,23 @@ const openCreateDialog = (event) => {
     activatorElement.value = target;
     resetForm();
     isEditMode.value = false;
+    
+    try {
+        const typeMap = {
+            brands: 'ThuongHieu',
+            categories: 'DanhMuc',
+            colors: 'MauSac',
+            sizes: 'KichThuoc',
+            materials: 'ChatLieu',
+            soles: 'DeGiay',
+            collars: 'CoGiay',
+            origins: 'XuatXu',
+            purposes: 'MucDichChay'
+        };
+        const type = typeMap[selectedTab.value] || 'ThuocTinh';
+        itemForm.value.ma = await generateRandomCode(type);
+    } catch (e) {}
+
     showDialog.value = true;
 };
 

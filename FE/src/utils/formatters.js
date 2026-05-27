@@ -9,6 +9,11 @@ export const formatCurrency = (value) => {
     }).format(value);
 };
 
+export const formatNumber = (value) => {
+    if (value === null || value === undefined || value === '') return '0';
+    return new Intl.NumberFormat('vi-VN').format(Number(value));
+};
+
 export const formatDate = (date, formatStr = 'dd/MM/yyyy') => {
     if (!date) return '';
     try {

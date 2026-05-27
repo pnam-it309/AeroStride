@@ -112,8 +112,8 @@ public class DataRetrievalLibrary {
             
             for (SanPham p : products) {
                 sb.append("👟 **").append(p.getTen()).append("** (Mã: ").append(p.getMa()).append(")\n");
-                if (p.getMoTaNgan() != null && !p.getMoTaNgan().isBlank()) {
-                    sb.append("   *Kiểu dáng:* ").append(p.getMoTaNgan()).append("\n");
+                if (p.getMoTaChiTiet() != null && !p.getMoTaChiTiet().isBlank()) {
+                    sb.append("   *Kiểu dáng:* ").append(p.getMoTaChiTiet()).append("\n");
                 }
                 if (p.getChiTietSanPhams() != null && !p.getChiTietSanPhams().isEmpty()) {
                     BigDecimal minPrice = p.getChiTietSanPhams().stream()
@@ -320,8 +320,8 @@ public class DataRetrievalLibrary {
                 }
 
                 sb.append("👟 **").append(sp.getTen()).append("** (Mã: ").append(sp.getMa()).append(")\n");
-                if (sp.getMoTaNgan() != null && !sp.getMoTaNgan().isBlank()) {
-                    sb.append("   - *Kiểu dáng:* ").append(sp.getMoTaNgan()).append("\n");
+                if (sp.getMoTaChiTiet() != null && !sp.getMoTaChiTiet().isBlank()) {
+                    sb.append("   - *Kiểu dáng:* ").append(sp.getMoTaChiTiet()).append("\n");
                 }
                 if (sp.getThuongHieu() != null) {
                     sb.append("   - *Thương hiệu:* ").append(sp.getThuongHieu().getTen()).append("\n");

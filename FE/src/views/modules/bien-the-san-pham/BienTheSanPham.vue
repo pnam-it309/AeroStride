@@ -395,8 +395,27 @@ const openImageModal = (item) => {
   variantDrawer.open = true
 }
 
+const getNextSku = () => {
+  const maSp = selectedProductSummary.value?.maSanPham
+  if (!maSp) return ''
+  let maxSuffix = 0
+  const prefix = maSp + '-'
+  const variants = selectedProduct.value?.variants || []
+  variants.forEach(item => {
+    const sku = item.maChiTietSanPham || item.sku || item.maSku || item.maBienThe || item.ma || ''
+    if (sku.startsWith(prefix)) {
+      const parts = sku.split('-')
+      const num = parseInt(parts[parts.length - 1], 10)
+      if (!isNaN(num) && num > maxSuffix) {
+        maxSuffix = num
+      }
+    }
+  })
+  return `${maSp}-${maxSuffix + 1}`
+}
+
 const openCreateVariantModal = () => {
-  variantModal.variant = null
+  variantModal.variant = { maChiTietSanPham: getNextSku() }
   variantModal.mode = 'create'
   variantModal.open = true
 }

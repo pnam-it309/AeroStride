@@ -22,14 +22,14 @@ watch(() => props.show, (val) => {
   if (val) inputValue.value = '';
 });
 
-// Dynamic color mapping using Tailwind-compatible colors
-const colorClasses = computed(() => {
+// Dynamic color mapping using semantic states
+const colorState = computed(() => {
   const maps = {
-    warning: { outer: 'bg-orange-50', inner: 'bg-orange-100', icon: 'text-orange-700' },
-    error: { outer: 'bg-red-50', inner: 'bg-red-100', icon: 'text-red-700' },
-    success: { outer: 'bg-green-50', inner: 'bg-green-100', icon: 'text-green-700' },
-    primary: { outer: 'bg-blue-50', inner: 'bg-blue-100', icon: 'text-blue-900' },
-    info: { outer: 'bg-blue-50', inner: 'bg-blue-100', icon: 'text-blue-900' }
+    warning: 'is-warning',
+    error: 'is-error',
+    success: 'is-success',
+    primary: 'is-primary',
+    info: 'is-info'
   };
   return maps[props.color] || maps.primary;
 });
@@ -49,13 +49,13 @@ const handleCancel = () => {
     <v-card class="premium-confirm-card">
       <v-card-text class="pa-8 pb-4">
         <div class="d-flex align-start">
-          <!-- Icon Section with Dynamic Tailwind Classes -->
-          <div class="icon-box-wrapper mr-5" :class="colorClasses.outer">
-            <div class="icon-inner" :class="colorClasses.inner">
-              <AlertTriangleIcon v-if="color === 'warning'" size="28" :class="colorClasses.icon" />
-              <AlertTriangleIcon v-else-if="color === 'error'" size="28" :class="colorClasses.icon" />
-              <CheckIcon v-else-if="color === 'success'" size="28" :class="colorClasses.icon" />
-              <InfoCircleIcon v-else size="28" :class="colorClasses.icon" />
+          <!-- Icon Section with semantic classes -->
+          <div class="icon-box-wrapper mr-5" :class="colorState">
+            <div class="icon-inner">
+              <AlertTriangleIcon v-if="color === 'warning'" size="28" />
+              <AlertTriangleIcon v-else-if="color === 'error'" size="28" />
+              <CheckIcon v-else-if="color === 'success'" size="28" />
+              <InfoCircleIcon v-else size="28" />
             </div>
           </div>
           <div class="flex-grow-1 pt-1">
@@ -124,6 +124,21 @@ const handleCancel = () => {
   justify-content: center;
   flex-shrink: 0;
 }
+
+/* Semantic States */
+.icon-box-wrapper.is-warning { background-color: #fff7ed; }
+.icon-box-wrapper.is-warning .icon-inner { background-color: #ffedd5; color: #c2410c; }
+
+.icon-box-wrapper.is-error { background-color: #fef2f2; }
+.icon-box-wrapper.is-error .icon-inner { background-color: #fee2e2; color: #b91c1c; }
+
+.icon-box-wrapper.is-success { background-color: #f0fdf4; }
+.icon-box-wrapper.is-success .icon-inner { background-color: #dcfce7; color: #15803d; }
+
+.icon-box-wrapper.is-primary, 
+.icon-box-wrapper.is-info { background-color: #eff6ff; }
+.icon-box-wrapper.is-primary .icon-inner,
+.icon-box-wrapper.is-info .icon-inner { background-color: #dbeafe; color: #1e3a8a; }
 
 .icon-inner {
   width: 46px;

@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { PATH } from '@/router/routePaths';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
+import { generateRandomCode } from '@/utils/codeGenerator';
 import { useNotifications } from '@/services/notificationService';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
@@ -355,6 +356,11 @@ onMounted(async () => {
             if (defaultRole) {
                 employeeForm.value.idPhanQuyen = defaultRole.value;
             }
+            try {
+                employeeForm.value.ma = await generateRandomCode('NhanVien');
+            } catch (e) {
+                console.error('Lỗi khi lấy mã', e);
+            }
         }
     } catch (e) {
         console.error(e);
@@ -438,29 +444,29 @@ onMounted(async () => {
                             <v-col cols="12" md="6">
                                 <div class="field-label">Mã nhân viên</div>
                                 <v-text-field v-model="employeeForm.ma" readonly placeholder="Hệ thống tự tạo..."
-                                    variant="outlined" density="compact" class="bg-slate-50"
+                                    variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Họ và tên *</div>
+                                <div class="field-label">Họ và tên</div>
                                 <v-text-field v-model="employeeForm.ten" :readonly="isDetailView"
                                     placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Email *</div>
+                                <div class="field-label">Email</div>
                                 <v-text-field v-model="employeeForm.email" :readonly="isDetailView"
                                     placeholder="name@company.com" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Tên tài khoản *</div>
+                                <div class="field-label">Tên tài khoản</div>
                                 <v-text-field v-model="employeeForm.tenTaiKhoan" :readonly="isDetailView"
                                     placeholder="Nhập tên tài khoản..." variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Số điện thoại *</div>
+                                <div class="field-label">Số điện thoại</div>
                                 <v-text-field v-model="employeeForm.sdt" :readonly="isDetailView"
                                     placeholder="09xx.xxx.xxx" variant="outlined" density="compact"
                                     hide-details></v-text-field>
@@ -494,28 +500,28 @@ onMounted(async () => {
                                     ]" variant="outlined" density="compact" hide-details></v-select>
                             </v-col>
                             <v-col cols="12" md="4">
-                                <div class="field-label">Tỉnh / Thành phố *</div>
+                                <div class="field-label">Tỉnh / Thành phố</div>
                                 <v-select v-model="employeeForm.tinh" :readonly="isDetailView" :items="provinces"
                                     item-title="name" item-value="code" placeholder="Chọn tỉnh/thành phố"
                                     variant="outlined" density="compact" hide-details
                                     :loading="loadingLocations.provinces"></v-select>
                             </v-col>
                             <v-col cols="12" md="4">
-                                <div class="field-label">Quận / Huyện *</div>
+                                <div class="field-label">Quận / Huyện</div>
                                 <v-select v-model="employeeForm.thanhPho" :readonly="isDetailView" :items="districts"
                                     item-title="name" item-value="code" placeholder="Chọn quận/huyện" variant="outlined"
                                     density="compact" hide-details :loading="loadingLocations.districts"
                                     :disabled="isDetailView || !employeeForm.tinh"></v-select>
                             </v-col>
                             <v-col cols="12" md="4">
-                                <div class="field-label">Phường / Xã *</div>
+                                <div class="field-label">Phường / Xã</div>
                                 <v-select v-model="employeeForm.phuongXa" :readonly="isDetailView" :items="wards"
                                     item-title="name" item-value="code" placeholder="Chọn phường/xã" variant="outlined"
                                     density="compact" hide-details :loading="loadingLocations.wards"
                                     :disabled="isDetailView || !employeeForm.thanhPho"></v-select>
                             </v-col>
                             <v-col cols="12">
-                                <div class="field-label">Địa chỉ chi tiết *</div>
+                                <div class="field-label">Địa chỉ chi tiết</div>
                                 <v-textarea v-model="employeeForm.diaChiChiTiet" :readonly="isDetailView"
                                     placeholder="Số nhà, tên đường..." variant="outlined" density="compact" rows="2"
                                     hide-details></v-textarea>
@@ -637,7 +643,7 @@ onMounted(async () => {
 :deep(.v-btn:not(.add-btn-primary)),
 :deep(.v-btn:not(.add-btn-primary) span),
 :deep(.v-btn:not(.add-btn-primary) *),
-:deep(.v-btn:not(.add-btn-primary)__content) {
+:deep(.v-btn:not(.add-btn-primary) .v-btn__content) {
     font-size: 13px !important;
     font-weight: 600 !important;
 }

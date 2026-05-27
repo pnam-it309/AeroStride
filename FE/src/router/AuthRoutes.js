@@ -1,5 +1,7 @@
 import { requireGuest } from './guards';
 import { PATH } from './routePaths';
+import { useUIStore } from '@/stores/ui';
+import { useAuthStore } from '@/stores/authStore';
 
 const AuthRoutes = {
     path: '/admin',
@@ -42,11 +44,9 @@ const AuthRoutes = {
             name: 'Logout',
             path: PATH.LOGOUT,
             beforeEnter: async (to, from, next) => {
-                const { useUIStore } = await import('@/stores/ui');
                 const uiStore = useUIStore();
                 uiStore.showLoading('Hệ thống đang đăng xuất...');
                 
-                const { useAuthStore } = await import('@/stores/authStore');
                 const authStore = useAuthStore();
                 
                 setTimeout(async () => {

@@ -3,9 +3,11 @@ import { ref, onMounted, watch, computed } from 'vue';
 import { PATH } from '@/router/routePaths';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
+import { generateRandomCode } from '@/utils/codeGenerator';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { useNotifications } from '@/services/notificationService';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
+import TableEmptyState from '@/components/common/TableEmptyState.vue';
 import { ArrowLeftIcon, UserIcon, MapPinIcon, NoteIcon, PlusIcon, EditIcon, TrashIcon, StarIcon, ReceiptIcon } from 'vue-tabler-icons';
 import { useLocation } from '@/composables/useLocation';
 import axios from 'axios';
@@ -433,10 +435,16 @@ const handleDeleteAddr = (id) => {
     };
 };
 
-onMounted(() => {
+onMounted(async () => {
     fetchProvinces();
     if (route.params.id) {
         loadCustomer(route.params.id);
+    } else {
+        try {
+            customerForm.value.ma = await generateRandomCode('KhachHang');
+        } catch (e) {
+            console.error('Lỗi khi lấy mã', e);
+        }
     }
 });
 </script>
@@ -777,6 +785,7 @@ onMounted(() => {
                                             }}đ
                                         </td>
                                     </tr>
+                                    <TableEmptyState v-if="!selectedInvoice?.items || selectedInvoice?.items.length === 0" :colspan="8" text="Không có sản phẩm nào trong hóa đơn này." />
                                 </tbody>
                                 <tfoot>
                                     <tr class="bg-slate-50">

@@ -9,6 +9,7 @@ import { ReceiptIcon } from 'vue-tabler-icons';
 import AdminFilter from '@/components/common/AdminFilter.vue';
 import AdminTable from '@/components/common/AdminTable.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
+import TableEmptyState from '@/components/common/TableEmptyState.vue';
 import { downloadFile } from '@/utils/fileUtils';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
@@ -527,6 +528,7 @@ onMounted(() => loadOrders());
                                 <td class="pa-3 text-end border-b">{{ formatCurrency(item.price) }}</td>
                                 <td class="pa-3 text-end border-b font-weight-medium">{{ formatCurrency(item.price * item.quantity) }}</td>
                             </tr>
+                            <TableEmptyState v-if="!selectedOrder.items || selectedOrder.items.length === 0" :colspan="4" text="Không có sản phẩm nào trong hóa đơn." />
                         </tbody>
                     </table>
                 </v-card-text>

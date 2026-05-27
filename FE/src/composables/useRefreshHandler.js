@@ -10,9 +10,9 @@ export function useRefreshHandler() {
     /**
      * Handle refresh với delay animation
      * @param {Function} resetFn - Hàm gọi để reset dữ liệu (thường là handleReset từ useAdminTable)
-     * @param {Number} delayMs - Delay để tạo hiệu ứng loading (mặc định 800ms)
+     * @param {Number} delayMs - Delay để tạo hiệu ứng loading (mặc định 1200ms để xoay đủ vòng mềm mại)
      */
-    const handleRefresh = async (resetFn, delayMs = 800) => {
+    const handleRefresh = async (resetFn, delayMs = 1200) => {
         if (isRefreshing.value) return;
         
         isRefreshing.value = true;

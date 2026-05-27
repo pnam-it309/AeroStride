@@ -69,6 +69,12 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                     <td class="data-cell">
                         <div class="text-slate-600 text-truncate" :title="getItemName(item)">{{ getItemName(item) }}</div>
                     </td>
+                    <td class="data-cell" v-if="tab === 'colors'">
+                        <div class="d-flex align-center gap-2">
+                            <div class="color-preview-circle-small" :style="{ backgroundColor: item.maMauHex || '#cccccc' }"></div>
+                            <span class="text-slate-600">{{ item.maMauHex || '--' }}</span>
+                        </div>
+                    </td>
                     <td class="data-cell">
                         <div class="text-slate-400 text-truncate" :title="item.moTa || '---'">{{ item.moTa || '---' }}</div>
                     </td>
@@ -129,5 +135,11 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
 
 <style scoped>
 /* Scoped styles removed in favor of global _admin-common.scss */
+.color-preview-circle-small {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid #e2e8f0;
+}
 </style>
 

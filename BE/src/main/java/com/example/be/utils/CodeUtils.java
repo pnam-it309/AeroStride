@@ -21,7 +21,14 @@ public final class CodeUtils {
      * Example: SanPham.class (@CodePrefix("SP")) -> SPX7Y2Z
      */
     public static String generateRandom(Class<?> clazz) {
-        String prefix = getPrefix(clazz);
+        return generateRandom(clazz.getSimpleName());
+    }
+
+    /**
+     * Generates a RANDOM code with prefix based on String type.
+     */
+    public static String generateRandom(String type) {
+        String prefix = getPrefix(type);
         StringBuilder sb = new StringBuilder(prefix);
         for (int i = 0; i < 8; i++) {
             sb.append(CHARS.charAt(RANDOM.nextInt(CHARS.length())));
@@ -87,7 +94,10 @@ public final class CodeUtils {
         }
         
         // Fallback to legacy switch for classes not yet annotated
-        String className = clazz.getSimpleName();
+        return getPrefix(clazz.getSimpleName());
+    }
+
+    private static String getPrefix(String className) {
         return switch (className) {
             case "SanPham" -> "SP";
             case "ChiTietSanPham" -> "CT";
@@ -96,6 +106,18 @@ public final class CodeUtils {
             case "KhachHang" -> "KH";
             case "PhieuGiamGia" -> "PGG";
             case "DotGiamGia" -> "DG";
+            case "ThuocTinh" -> "TT";
+            case "MauSac" -> "MS";
+            case "KichThuoc" -> "KT";
+            case "ChatLieu" -> "CL";
+            case "KieuDang" -> "KD";
+            case "ThuongHieu" -> "TH";
+            case "NhaSanXuat" -> "NSX";
+            case "DeGiay" -> "DG";
+            case "DanhMuc" -> "DM";
+            case "CoGiay" -> "CG";
+            case "XuatXu" -> "XX";
+            case "MucDich" -> "MD";
             default -> "MA";
         };
     }

@@ -21,8 +21,8 @@ import { useNotifications } from '@/services/notificationService';
 
 const router = useRouter();
 const { addNotification } = useNotifications();
+const { isRefreshing, handleRefresh: executeRefresh } = useRefreshHandler();
 const startDateRef = ref(null);
-const endDateRef = ref(null);
 
 const {
     items: campaigns,
@@ -39,14 +39,10 @@ const {
     endDate: null
 });
 
-const isRefreshing = ref(false);
-
 const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 
 const handleRefresh = async () => {
-    isRefreshing.value = true;
-    handleReset();
-    setTimeout(() => (isRefreshing.value = false), 800);
+    await executeRefresh(() => handleReset(), 1200);
 };
 
 const handleExport = async () => {

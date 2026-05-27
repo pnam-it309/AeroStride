@@ -1093,8 +1093,7 @@ onMounted(() => {
                                 <!-- Status Update Note (Visible if status changed) -->
                                 <v-col cols="12" v-if="editForm.trangThai !== order.trangThai" class="mb-2">
                                     <span class="text-body-2 text-warning font-weight-bold d-block mb-2">Lý do cập nhật trạng
-                                        thái
-                                        *</span>
+                                        thái</span>
                                     <v-text-field v-model="editForm.ghiChuTrangThai"
                                         placeholder="Nhập lý do thay đổi trạng thái..." variant="outlined" rounded="lg"
                                         density="comfortable" hide-details></v-text-field>

@@ -3,6 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
+import { generateRandomCode } from '@/utils/codeGenerator';
 import {
     dichVuThuongHieu,
     dichVuMauSac,
@@ -16,6 +17,7 @@ import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import AdminFilter from '@/components/common/AdminFilter.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
+import TableEmptyState from '@/components/common/TableEmptyState.vue';
 import { CalendarIcon, GiftIcon, InfoCircleIcon, TagIcon, BoxIcon, SearchIcon, TrashIcon } from 'vue-tabler-icons';
 import { PATH } from '@/router/routePaths';
 
@@ -394,6 +396,12 @@ const init = async () => {
         } catch (e) {
             addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.LOAD_DATA, color: 'error' });
         } finally { loading.value = false; }
+    } else {
+        try {
+            form.value.ma = await generateRandomCode('DotGiamGia');
+        } catch (e) {
+            console.error('Lỗi khi lấy mã', e);
+        }
     }
 };
 
@@ -598,6 +606,7 @@ onMounted(init);
                                              </td>
                                          </tr>
                                     </template>
+                                    <TableEmptyState v-if="filteredProductsToSelect.length === 0" :colspan="4" text="Không tìm thấy sản phẩm nào." />
                                 </tbody>
                             </table>
                         </div>
@@ -752,14 +761,7 @@ onMounted(init);
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr v-if="filteredSelectedDetails.length === 0">
-                                        <td colspan="10" class="data-cell py-0">
-                                            <div class="empty-state-wrapper py-16">
-                                               
-                                                <div class="text-body-2 text-slate-400">Không tìm thấy sản phẩm nào phù hợp.</div>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <TableEmptyState v-if="filteredSelectedDetails.length === 0" :colspan="10" text="Không tìm thấy sản phẩm nào phù hợp." />
                                 </tbody>
                             </table>
                         </div>
@@ -1044,7 +1046,7 @@ onMounted(init);
 :deep(.v-btn:not(.btn-back-header)),
 :deep(.v-btn:not(.btn-back-header) span),
 :deep(.v-btn:not(.btn-back-header) *),
-:deep(.v-btn:not(.btn-back-header)__content) {
+:deep(.v-btn:not(.btn-back-header) .v-btn__content) {
     font-size: 13px !important;
     font-weight: 600 !important;
 }
@@ -1062,7 +1064,7 @@ onMounted(init);
 :deep(.add-btn-primary),
 :deep(.add-btn-primary span),
 :deep(.add-btn-primary *),
-:deep(.add-btn-primary__content) {
+:deep(.add-btn-primary .v-btn__content) {
     font-size: 16px !important;
     font-weight: 600 !important;
 }

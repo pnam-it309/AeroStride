@@ -20,8 +20,8 @@ import { useNotifications } from '@/services/notificationService';
 
 const router = useRouter();
 const { addNotification } = useNotifications();
+const { isRefreshing, handleRefresh: executeRefresh } = useRefreshHandler();
 const fromDateRef = ref(null);
-const toDateRef = ref(null);
 
 const {
     items: vouchers,
@@ -41,14 +41,10 @@ const {
     timelineStatus: null
 });
 
-const isRefreshing = ref(false);
-
 const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 
 const handleRefresh = async () => {
-    isRefreshing.value = true;
-    handleReset();
-    setTimeout(() => (isRefreshing.value = false), 800);
+    await executeRefresh(() => handleReset(), 1200);
 };
 
 const openDatePicker = (ref) => {
@@ -182,13 +178,13 @@ const getVoucherTimelineStatus = (item) => {
     // 3. Đang diễn ra nhưng bị tắt
     if (!manualActive) {
         return {
-            label: 'Ngừng hoạt động',
-            color: 'warning',
+            label: 'Đã kết thúc',
+            color: 'error',
             switchOn: false,
-            switchDisabled: false,
-            chipClass: 'status-chip-inactive',
-            isEnded: false,
-            switchTooltip: 'Kích hoạt lại phiếu giảm giá'
+            switchDisabled: true,
+            chipClass: 'status-chip-expired',
+            isEnded: true,
+            switchTooltip: 'Không thể đổi trạng thái lúc này (Đã kết thúc)'
         };
     }
 
@@ -373,6 +369,4 @@ onMounted(() => loadVouchers());
     </v-container>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

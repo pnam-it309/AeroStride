@@ -38,6 +38,7 @@ export const API_PRODUCT = {
 export const API_COMMON = {
     PAYMENT: '/payment',
     STORAGE: '/storage',
+    CODE_GENERATE: `${API_BASE.ADMIN}/common/code/generate`,
 };
 
 export const API_THUOC_TINH = {

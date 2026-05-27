@@ -335,7 +335,10 @@ watch(
             return;
         }
 
-        formData.value = createDefaultFormData();
+        formData.value = {
+            ...createDefaultFormData(),
+            ...(variant || {})
+        };
     },
     { immediate: true }
 );

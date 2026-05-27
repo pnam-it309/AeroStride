@@ -28,10 +28,16 @@ import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
 import { exportQrImageZip } from '@/utils/qrExcelWorkbook';
 import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
 import { generateRandomCode } from '@/utils/codeGenerator';
+import { formatCurrency, formatNumber } from '@/utils/formatters';
+import { getColorHexByName, getColorNameByHex } from '@/utils/colorDictionary';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import { useUIStore } from '@/stores/ui';
 
 const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
+const { showConfirm } = useConfirmDialog();
+const uiStore = useUIStore();
 
 const MIN_VARIANT_PRICE = 0;
 const DEFAULT_MAX_VARIANT_PRICE = 6500000;
@@ -75,43 +81,20 @@ const customColorName = ref('');
 const customColorHex = ref('#FF5733');
 const customSizeName = ref('');
 
-// Bảng màu phổ biến (Việt - Anh) mapping sang HEX
-const COLOR_DICTIONARY = {
-    // Tiếng Việt
-    'đỏ': '#FF0000', 'xanh dương': '#0000FF', 'xanh lá': '#00FF00', 
-    'vàng': '#FFFF00', 'đen': '#000000', 'trắng': '#FFFFFF', 
-    'hồng': '#FFC0CB', 'tím': '#800080', 'cam': '#FFA500', 
-    'nâu': '#8B4513', 'xám': '#808080', 'ghi': '#808080', 
-    'bạc': '#C0C0C0', 'vàng đồng': '#FFD700', 'xanh ngọc': '#40E0D0', 
-    'xanh mint': '#98FF98', 'xanh rêu': '#4A5D23', 'xanh navy': '#000080', 
-    'be': '#F5F5DC', 'kem': '#FFFDD0', 'kem sữa': '#FFFFF0',
-    'đỏ đô': '#800000', 'đỏ mận': '#800000', 'xanh coban': '#0047AB',
-    
-    // Tiếng Anh
-    'red': '#FF0000', 'blue': '#0000FF', 'green': '#00FF00', 
-    'yellow': '#FFFF00', 'black': '#000000', 'white': '#FFFFFF', 
-    'pink': '#FFC0CB', 'purple': '#800080', 'orange': '#FFA500', 
-    'brown': '#8B4513', 'gray': '#808080', 'grey': '#808080', 
-    'silver': '#C0C0C0', 'gold': '#FFD700', 'turquoise': '#40E0D0', 
-    'mint': '#98FF98', 'navy': '#000080', 'beige': '#F5F5DC', 
-    'cream': '#FFFDD0', 'cyan': '#00FFFF', 'magenta': '#FF00FF',
-    'maroon': '#800000'
-};
-
 watch(customColorName, (newName) => {
     if (!newName) return;
-    const normalizedName = newName.trim().toLowerCase();
-    
-    // Hàm bỏ dấu tiếng việt
-    const removeAccents = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const normalizedNoAccent = removeAccents(normalizedName);
-    
-    // Tìm kiếm trong từ điển
-    for (const [key, hex] of Object.entries(COLOR_DICTIONARY)) {
-        if (normalizedName === key || normalizedNoAccent === removeAccents(key)) {
-            customColorHex.value = hex;
-            break;
-        }
+    const hex = getColorHexByName(newName);
+    if (hex) {
+        customColorHex.value = hex;
+    }
+});
+
+watch(customColorHex, (newHex) => {
+    if (!newHex) return;
+    const name = getColorNameByHex(newHex);
+    // Chỉ ghi đè tên nếu chưa có tên hoặc đang khớp với một màu cơ bản
+    if (name && (!customColorName.value || getColorHexByName(customColorName.value))) {
+        customColorName.value = name;
     }
 });
 
@@ -394,7 +377,7 @@ const totalVariantStock = computed(() => variantItems.value.reduce(
 // Grouping variants by color for better UI organization
 const variantsByColor = computed(() => {
     const groups = {};
-    variantItems.value.forEach(item => {
+    filteredVariantItems.value.forEach(item => {
         if (!groups[item.idMauSac]) {
             groups[item.idMauSac] = [];
         }
@@ -687,20 +670,6 @@ const onKeyUpEnter = async (event, field) => {
 
 const createDraftKey = () => `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-const formatCurrency = (value) => {
-    if (value === null || value === undefined || value === '') return '--';
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-        maximumFractionDigits: 0
-    }).format(Number(value));
-};
-
-const formatNumber = (value) => {
-    if (value === null || value === undefined || value === '') return '0';
-    return new Intl.NumberFormat('vi-VN').format(Number(value));
-};
-
 // getStatusLabel is now imported from @/utils/statusUtils
 
 const normalizeUploadedFileUrl = (value) => {
@@ -819,7 +788,7 @@ const mapVariantToFormState = (variant = {}) => ({
     urlAnh: getVariantThumbnail(variant) === logoPlaceholder ? '' : getVariantThumbnail(variant)
 });
 
-const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackImageUrl = '') => mapVariantToFormState({
+const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackImageUrl = '', newSku = '') => mapVariantToFormState({
     ...existingVariant,
     clientKey: existingVariant.clientKey || createDraftKey(),
     idMauSac: colorId,
@@ -828,7 +797,7 @@ const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackI
     giaNhap: Number(existingVariant.giaNhap ?? 0),
     giaBan: Number(existingVariant.giaBan ?? 0),
     trangThai: existingVariant.trangThai || defaultVariantStatus,
-    maChiTietSanPham: existingVariant.maChiTietSanPham || '',
+    maChiTietSanPham: existingVariant.maChiTietSanPham || newSku || '',
     urlAnh: normalizeUploadedFileUrl(existingVariant.urlAnh || fallbackImageUrl || '')
 });
 
@@ -1247,7 +1216,7 @@ const removeColorGroup = (colorId) => {
     bulkByColorForms.value = nextBulkByColor;
 };
 
-const executeGenerateVariants = () => {
+const executeGenerateVariants = async () => {
     const existingVariantMap = new Map(
         variantItems.value.map(item => [
             getVariantCombinationKey(item.idMauSac, item.idKichThuoc),
@@ -1256,14 +1225,38 @@ const executeGenerateVariants = () => {
     );
 
     const nextVariants = [];
+    let nextSkuSuffix = 1;
+    
+    // Find highest suffix in existing variants to avoid duplicates
+    existingVariantMap.forEach((variant) => {
+        if (variant && variant.maChiTietSanPham && variant.maChiTietSanPham.startsWith(product.value.maSanPham + '-')) {
+            const parts = variant.maChiTietSanPham.split('-');
+            const num = parseInt(parts[parts.length - 1], 10);
+            if (!isNaN(num) && num >= nextSkuSuffix) {
+                nextSkuSuffix = num + 1;
+            }
+        }
+    });
+
     selectedColors.value.forEach((colorId) => {
         selectedSizes.value.forEach((sizeId) => {
             const combinationKey = getVariantCombinationKey(colorId, sizeId);
+            const existingVariant = existingVariantMap.get(combinationKey);
+            
+            let newSku = '';
+            if (existingVariant && existingVariant.maChiTietSanPham) {
+                newSku = existingVariant.maChiTietSanPham;
+            } else {
+                newSku = `${product.value.maSanPham}-${nextSkuSuffix}`;
+                nextSkuSuffix++;
+            }
+            
             nextVariants.push(createGeneratedVariant(
                 colorId,
                 sizeId,
-                existingVariantMap.get(combinationKey),
-                getColorUploadEntry(colorId).url
+                existingVariant,
+                getColorUploadEntry(colorId).url,
+                newSku
             ));
         });
     });
@@ -1300,8 +1293,8 @@ const generateVariants = () => {
         message: `Bạn có chắc chắn muốn tạo tự động ${totalToGenerate} biến thể dựa trên các thuộc tính đã chọn? Thao tác này sẽ cập nhật lại danh sách biến thể hiện tại.`,
         color: 'primary',
         loading: false,
-        action: () => {
-            executeGenerateVariants();
+        action: async () => {
+            await executeGenerateVariants();
             confirmDialog.value.show = false;
         }
     };
@@ -1430,6 +1423,8 @@ onMounted(async () => {
 
         if (route.params.id) {
             await loadProduct(route.params.id);
+        } else {
+            product.value.maSanPham = await generateRandomCode('SanPham');
         }
     } catch (error) {
         console.error('Error initializing form:', error);
@@ -1507,12 +1502,29 @@ const validateProduct = () => {
     return true;
 };
 
+const getNextSku = () => {
+    if (!product.value.maSanPham) return '';
+    let maxSuffix = 0;
+    const prefix = product.value.maSanPham + '-';
+    variantItems.value.forEach(item => {
+        const sku = item.maChiTietSanPham || '';
+        if (sku.startsWith(prefix)) {
+            const parts = sku.split('-');
+            const num = parseInt(parts[parts.length - 1], 10);
+            if (!isNaN(num) && num > maxSuffix) {
+                maxSuffix = num;
+            }
+        }
+    });
+    return `${product.value.maSanPham}-${maxSuffix + 1}`;
+};
+
 const openCreateVariantModal = () => {
     variantModal.value = {
         open: true,
         mode: 'create',
         submitting: false,
-        variant: null
+        variant: { maChiTietSanPham: getNextSku() }
     };
 };
 
@@ -1772,13 +1784,19 @@ const handleSave = async () => {
                         <v-row> 
                             <!-- HÀNG 1: THÔNG TIN CHÍNH -->
                            
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="3">
+                                <div class="field-label">Mã sản phẩm</div>
+                                <v-text-field v-model="product.maSanPham" placeholder="Hệ thống tự tạo..."
+                                    variant="outlined" density="comfortable" readonly
+                                    hide-details="auto"></v-text-field>
+                            </v-col>
+                            <v-col cols="12" md="3">
                                 <div class="field-label">Tên sản phẩm</div>
                                 <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Giày Nike Air..."
                                     :rules="[rules.required]" variant="outlined" density="comfortable"
                                     hide-details="auto"></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="3">
                                 <div class="field-label">Thương hiệu</div>
                                 <v-combobox v-model="product.idThuongHieu" v-model:search="searchQueries.idThuongHieu"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayBrands"
@@ -1796,7 +1814,7 @@ const handleSave = async () => {
                                     </template>
                                 </v-combobox>
                             </v-col>
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="3">
                                 <div class="field-label">Danh mục</div>
                                 <v-combobox v-model="product.idDanhMuc" v-model:search="searchQueries.idDanhMuc"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayCategories"
@@ -2051,6 +2069,67 @@ const handleSave = async () => {
             <v-col cols="12">
                 <v-card class="premium-card">
                     <v-card-text class="pa-8">
+                        <div v-if="variantItems.length > 0" class="variant-filter-container mb-6">
+                            <AdminFilter title="Bộ lọc nâng cao" @refresh="resetVariantTableFilters" :loading="loading">
+                                <v-col cols="12" sm="2">
+                                    <div class="variant-filter-label">Sản phẩm</div>
+                                    <v-text-field :model-value="variantFilterProductLabel" variant="outlined"
+                                        density="compact" hide-details readonly
+                                        class="variant-filter-input bg-slate-50" />
+                                </v-col>
+                                <v-col cols="12" sm="2">
+                                    <div class="variant-filter-label">Tìm kiếm nhanh</div>
+                                    <v-text-field v-model="variantTableFilters.keyword"
+                                        placeholder="Mã SKU, màu, size..." prepend-inner-icon="mdi-magnify"
+                                        variant="outlined" density="compact" hide-details clearable
+                                        class="variant-filter-input" />
+                                </v-col>
+                                <v-col cols="12" sm="2">
+                                    <div class="variant-filter-label">Màu sắc</div>
+                                    <v-select v-model="variantTableFilters.mauSacId"
+                                        :items="[{ title: 'Tất cả màu', value: '' }, ...colors.map((item) => ({ title: item.ten, value: item.id }))]"
+                                        variant="outlined" density="compact" hide-details
+                                        class="variant-filter-input" />
+                                </v-col>
+                                <v-col cols="12" sm="2">
+                                    <div class="variant-filter-label">Kích thước</div>
+                                    <v-select v-model="variantTableFilters.kichThuocId"
+                                        :items="[{ title: 'Tất cả size', value: '' }, ...sizes.map((item) => ({ title: item.ten, value: item.id }))]"
+                                        variant="outlined" density="compact" hide-details
+                                        class="variant-filter-input" />
+                                </v-col>
+                                <v-col cols="12" sm="2">
+                                    <div class="variant-filter-label">Trạng thái</div>
+                                    <v-select v-model="variantTableFilters.trangThai" :items="[
+                                        { title: 'Tất cả trạng thái', value: '' },
+                                        { title: 'Đang hoạt động', value: defaultVariantStatus },
+                                        { title: 'Ngừng hoạt động', value: 'NGUNG_HOAT_DONG' }
+                                    ]" variant="outlined" density="compact" hide-details
+                                        class="variant-filter-input" />
+                                </v-col>
+
+                                <template #after>
+                                    <v-col cols="12" class="mt-4 pa-0">
+                                        <div class="d-flex align-center justify-space-between mb-2">
+                                            <div class="d-flex align-center gap-2">
+                                                <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
+                                                <span class="text-caption font-weight-bold text-slate-600">Khoảng
+                                                    giá</span>
+                                            </div>
+                                            <span class="text-primary font-weight-bold">{{
+                                                formatCurrency(variantTableFilters.khoangGia[0]) }} – {{
+                                                    formatCurrency(variantTableFilters.khoangGia[1]) }}</span>
+                                        </div>
+                                        <v-range-slider :key="`${variantPriceBounds.min}-${variantPriceBounds.max}`" v-model="variantTableFilters.khoangGia"
+                                            :min="variantPriceBounds.min" :max="variantPriceBounds.max"
+                                            :step="variantPriceStep" hide-details color="primary" track-color="#e2e8f0"
+                                            track-size="3" thumb-size="14" class="blue-range-slider"
+                                            @update:model-value="handleVariantSliderPriceChange" />
+                                    </v-col>
+                                </template>
+                            </AdminFilter>
+                        </div>
+
                         <template v-if="!isEditMode">
                             <div class="variant-gradient-header pb-4 mb-6" style="border-bottom: 1px solid #e2e8f0;">
                                 <div class="d-flex align-center justify-space-between w-100">
@@ -2079,7 +2158,7 @@ const handleSave = async () => {
                                 </div>
                             </div>
 
-                            <div v-if="variantItems.length > 0" class="variants-grouped-container">
+                            <div v-if="variantItems.length > 0" class="variants-grouped-container custom-scrollbar" style="max-height: 600px; overflow-y: auto; overflow-x: hidden; padding-right: 4px;">
                                 <v-card v-for="(items, colorId) in variantsByColor" :key="colorId" 
                                     class="color-group-card mb-6">
                                     <div class="color-group-header px-6 py-4 bg-slate-50 d-flex align-center justify-space-between border-b">
@@ -2175,66 +2254,6 @@ const handleSave = async () => {
                             </div>
                         </template>
 
-                        <div v-if="variantItems.length > 0 && isEditMode" class="variant-filter-container mt-6">
-                            <AdminFilter title="Bộ lọc nâng cao" @refresh="resetVariantTableFilters" :loading="loading">
-                                <v-col cols="12" sm="2">
-                                    <div class="variant-filter-label">Sản phẩm</div>
-                                    <v-text-field :model-value="variantFilterProductLabel" variant="outlined"
-                                        density="compact" hide-details readonly
-                                        class="variant-filter-input bg-slate-50" />
-                                </v-col>
-                                <v-col cols="12" sm="2">
-                                    <div class="variant-filter-label">Tìm kiếm nhanh</div>
-                                    <v-text-field v-model="variantTableFilters.keyword"
-                                        placeholder="Mã SKU, màu, size..." prepend-inner-icon="mdi-magnify"
-                                        variant="outlined" density="compact" hide-details clearable
-                                        class="variant-filter-input" />
-                                </v-col>
-                                <v-col cols="12" sm="2">
-                                    <div class="variant-filter-label">Màu sắc</div>
-                                    <v-select v-model="variantTableFilters.mauSacId"
-                                        :items="[{ title: 'Tất cả màu', value: '' }, ...colors.map((item) => ({ title: item.ten, value: item.id }))]"
-                                        variant="outlined" density="compact" hide-details
-                                        class="variant-filter-input" />
-                                </v-col>
-                                <v-col cols="12" sm="2">
-                                    <div class="variant-filter-label">Kích thước</div>
-                                    <v-select v-model="variantTableFilters.kichThuocId"
-                                        :items="[{ title: 'Tất cả size', value: '' }, ...sizes.map((item) => ({ title: item.ten, value: item.id }))]"
-                                        variant="outlined" density="compact" hide-details
-                                        class="variant-filter-input" />
-                                </v-col>
-                                <v-col cols="12" sm="2">
-                                    <div class="variant-filter-label">Trạng thái</div>
-                                    <v-select v-model="variantTableFilters.trangThai" :items="[
-                                        { title: 'Tất cả trạng thái', value: '' },
-                                        { title: 'Đang hoạt động', value: defaultVariantStatus },
-                                        { title: 'Ngừng hoạt động', value: 'NGUNG_HOAT_DONG' }
-                                    ]" variant="outlined" density="compact" hide-details
-                                        class="variant-filter-input" />
-                                </v-col>
-
-                                <template #after>
-                                    <v-col cols="12" class="mt-4 pa-0">
-                                        <div class="d-flex align-center justify-space-between mb-2">
-                                            <div class="d-flex align-center gap-2">
-                                                <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
-                                                <span class="text-caption font-weight-bold text-slate-600">Khoảng
-                                                    giá</span>
-                                            </div>
-                                            <span class="text-primary font-weight-bold">{{
-                                                formatCurrency(variantTableFilters.khoangGia[0]) }} – {{
-                                                    formatCurrency(variantTableFilters.khoangGia[1]) }}</span>
-                                        </div>
-                                        <v-range-slider :key="`${variantPriceBounds.min}-${variantPriceBounds.max}`" v-model="variantTableFilters.khoangGia"
-                                            :min="variantPriceBounds.min" :max="variantPriceBounds.max"
-                                            :step="variantPriceStep" hide-details color="primary" track-color="#e2e8f0"
-                                            track-size="3" thumb-size="14" class="blue-range-slider"
-                                            @update:model-value="handleVariantSliderPriceChange" />
-                                    </v-col>
-                                </template>
-                            </AdminFilter>
-                        </div>
                         <AdminTable v-if="variantItems.length > 0 && isEditMode" title="Danh mục biến thể"
                             :headers="variantTableHeaders" :items="paginatedVariantItems" :loading="loading"
                             :show-add-button="false" class="mt-6 variant-admin-table">
