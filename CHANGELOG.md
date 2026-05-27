@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/pnam-it309/AeroStride/compare/v1.14.0...v1.15.0) (2026-05-27)
+
+
+### Features
+
+* update invoice UI, payment history, and discount rules ([cdf12ab](https://github.com/pnam-it309/AeroStride/commit/cdf12abda15d19c3fb11a714a05105beea21c443))
+
 # [1.14.0](https://github.com/pnam-it309/AeroStride/compare/v1.13.1...v1.14.0) (2026-05-25)
 
 
