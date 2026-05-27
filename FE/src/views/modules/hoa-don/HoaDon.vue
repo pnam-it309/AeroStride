@@ -40,32 +40,35 @@ const {
     loadData: loadOrders,
     handleFilter: handleSearch,
     handleReset
-} = useAdminTable(async (p) => {
-    const nTrangThai = normalizeTrangThai(p.trangThai);
-    const params = {
-        page: p.page,
-        size: p.size,
-        search: p.search || undefined,
-        tuNgay: p.fromDate || undefined,
-        denNgay: p.toDate || undefined,
-        sortDirection: p.sortDirection,
-        ...(nTrangThai !== null ? { trangThai: nTrangThai } : {})
-    };
-    const res = await dichVuHoaDon.layHoaDonPhanTrang(params);
-    await loadCounts(); 
-    
-    // Trả về đúng cấu trúc kèm tổng số bản ghi để hiển thị các nút phân trang
-    return {
-        content: Array.isArray(res) ? res : (res?.data || res?.content || []),
-        totalElements: counts.value.all || 0
-    };
-}, {
-    search: '',
-    trangThai: TAB_ALL,
-    fromDate: getTodayDate(),
-    toDate: getTodayDate(),
-    sortDirection: 'DESC'
-});
+} = useAdminTable(
+    async (p) => {
+        const nTrangThai = normalizeTrangThai(p.trangThai);
+        const params = {
+            page: p.page,
+            size: p.size,
+            search: p.search || undefined,
+            tuNgay: p.fromDate || undefined,
+            denNgay: p.toDate || undefined,
+            sortDirection: p.sortDirection,
+            ...(nTrangThai !== null ? { trangThai: nTrangThai } : {})
+        };
+        const res = await dichVuHoaDon.layHoaDonPhanTrang(params);
+        await loadCounts();
+
+        // Trả về đúng cấu trúc kèm tổng số bản ghi để hiển thị các nút phân trang
+        return {
+            content: Array.isArray(res) ? res : res?.data || res?.content || [],
+            totalElements: counts.value.all || 0
+        };
+    },
+    {
+        search: '',
+        trangThai: TAB_ALL,
+        fromDate: getTodayDate(),
+        toDate: getTodayDate(),
+        sortDirection: 'DESC'
+    }
+);
 
 const sortOptions = [
     { title: 'Mới nhất', value: 'DESC' },
@@ -86,7 +89,7 @@ const showOrderDetailDialog = ref(false);
 const selectedOrder = ref(null);
 
 const tableHeaders = [
-    { text: 'STT',align: 'center', width: '50px' },
+    { text: 'STT', align: 'center', width: '50px' },
     { text: 'Mã hóa đơn', width: '100px' },
     { text: 'Khách hàng', width: '130px' },
     { text: 'Mã nhân viên', width: '110px' },
@@ -121,8 +124,6 @@ const loadCounts = async () => {
     }
 };
 
-
-
 const handleRefresh = async () => {
     isRefreshing.value = true;
     handleReset();
@@ -155,8 +156,6 @@ const handleExport = async () => {
         console.error('Lỗi xuất Excel:', error);
     }
 };
-
-
 
 const getRowNumber = (index) => (pagination.value.page - 1) * pagination.value.size + index + 1;
 
@@ -218,7 +217,6 @@ const handlePrint = async (orderId) => {
         console.error('Lỗi in hóa đơn:', error);
     }
 };
-
 
 const getStatusMeta = (s) => getOrderStatusMeta(s);
 
@@ -376,7 +374,9 @@ onMounted(() => loadOrders());
                     </td>
 
                     <td class="data-cell">
-                        <div class="text-truncate" :title="item.tenKhachHang || 'Khách vãng lai'">{{ item.tenKhachHang || 'Khách vãng lai' }}</div>
+                        <div class="text-truncate" :title="item.tenKhachHang || 'Khách vãng lai'">
+                            {{ item.tenKhachHang || 'Khách vãng lai' }}
+                        </div>
                     </td>
 
                     <td class="data-cell text-center">
@@ -390,10 +390,7 @@ onMounted(() => loadOrders());
                     </td>
 
                     <td class="data-cell">
-                        <v-chip
-                            :class="['status-chip', getOrderTypeClass(item.loaiDon)]"
-                            variant="flat"
-                        >
+                        <v-chip :class="['status-chip', getOrderTypeClass(item.loaiDon)]" variant="flat">
                             {{ getOrderTypeLabel(item.loaiDon) }}
                         </v-chip>
                     </td>
@@ -410,10 +407,7 @@ onMounted(() => loadOrders());
 
                     <td class="data-cell status-cell">
                         <template v-if="getStatusMeta(item.trangThai)">
-                            <v-chip
-                                :class="['status-chip', getStatusMeta(item.trangThai).chipClass]"
-                                variant="flat"
-                            >
+                            <v-chip :class="['status-chip', getStatusMeta(item.trangThai).chipClass]" variant="flat">
                                 <v-icon start size="16">{{ getStatusMeta(item.trangThai).icon }}</v-icon>
                                 {{ getStatusMeta(item.trangThai).text }}
                             </v-chip>
@@ -422,8 +416,6 @@ onMounted(() => loadOrders());
                             <span class="text-medium-emphasis">—</span>
                         </template>
                     </td>
-
-
 
                     <td class="data-cell action-cell">
                         <div class="d-flex align-center justify-center action-group action-controls">
@@ -541,5 +533,3 @@ onMounted(() => loadOrders());
     border: 1px solid #fce7f3 !important;
 }
 </style>
-
-

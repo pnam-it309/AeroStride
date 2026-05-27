@@ -13,19 +13,23 @@ import { PATH } from '@/router/routePaths';
                     <v-card class="glass-container overflow-hidden elevation-24 mt-n12">
                         <v-row no-gutters>
                             <!-- Visual Branding Side -->
-                            <v-col cols="12" lg="7" class="d-none d-lg-flex flex-column align-center justify-center visual-side pa-10 text-center relative overflow-hidden">
+                            <v-col
+                                cols="12"
+                                lg="7"
+                                class="d-none d-lg-flex flex-column align-center justify-center visual-side pa-10 text-center relative overflow-hidden"
+                            >
                                 <div class="floating-elements">
                                     <div class="shape s1"></div>
                                     <div class="shape s2"></div>
                                 </div>
-                                
+
                                 <div class="content-up relative z-index-2 w-100">
                                     <div class="mb-6 transform-zoom">
                                         <Logo class="mega-logo" />
                                     </div>
                                     <h1 class="text-h2 font-weight-black mb-4 text-white gradient-text">SẢI BƯỚC CÙNG AEROSTRIDE</h1>
-                                    <br>
-                                    <br>
+                                    <br />
+                                    <br />
                                     <div class="shoe-container">
                                         <v-img
                                             src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop"
@@ -38,7 +42,7 @@ import { PATH } from '@/router/routePaths';
 
                             <!-- Auth Form Side -->
                             <v-col cols="12" lg="5" class="d-flex align-center justify-center bg-white-op-90 pa-sm-12 pa-6 relative">
-                                <div class="auth-form-wrap w-100" style="max-width: 420px;">
+                                <div class="auth-form-wrap w-100" style="max-width: 420px">
                                     <div class="text-center mb-10 d-lg-none transform-zoom">
                                         <Logo class="mega-logo" />
                                     </div>
@@ -46,17 +50,19 @@ import { PATH } from '@/router/routePaths';
                                         <h2 class="text-h3 font-weight-black mb-2 text-primary">Chào mừng đến với hệ thống</h2>
                                         <div class="d-flex align-center">
                                             <div class="h-line mr-2"></div>
-                                           
                                         </div>
                                     </div>
-                                    
+
                                     <LoginForm />
-                                    
+
                                     <div class="mt-10 text-center">
                                         <v-divider class="mb-6"></v-divider>
                                         <p class="text-body-1 text-grey-darken-1">
                                             Đối tác mới của chúng tôi?
-                                            <RouterLink :to="PATH.ADMIN_REGISTER" class="text-primary text-decoration-none font-weight-black ml-1 premium-link">
+                                            <RouterLink
+                                                :to="PATH.ADMIN_REGISTER"
+                                                class="text-primary text-decoration-none font-weight-black ml-1 premium-link"
+                                            >
                                                 Gia nhập ngay
                                             </RouterLink>
                                         </p>

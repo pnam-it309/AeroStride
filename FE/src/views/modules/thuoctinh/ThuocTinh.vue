@@ -185,8 +185,6 @@ const pickFirst = (item, keys, fallback = '--') => {
 const getItemCode = (item) => String(pickFirst(item, currentMeta.value.codeKeys));
 const getItemName = (item) => String(pickFirst(item, currentMeta.value.nameKeys));
 
-
-
 const loadItems = async () => {
     loading.value = true;
     try {
@@ -200,15 +198,33 @@ const loadItems = async () => {
         };
 
         switch (selectedTab.value) {
-            case 'brands': response = await service.layThuongHieu(params); break;
-            case 'categories': response = await service.layDanhMuc(params); break;
-            case 'colors': response = await service.layMauSac(params); break;
-            case 'sizes': response = await service.layKichThuoc(params); break;
-            case 'materials': response = await service.layChatLieu(params); break;
-            case 'soles': response = await service.layDeGiay(params); break;
-            case 'collars': response = await service.layCoGiay(params); break;
-            case 'origins': response = await service.layXuatXu(params); break;
-            case 'purposes': response = await service.layMucDichChay(params); break;
+            case 'brands':
+                response = await service.layThuongHieu(params);
+                break;
+            case 'categories':
+                response = await service.layDanhMuc(params);
+                break;
+            case 'colors':
+                response = await service.layMauSac(params);
+                break;
+            case 'sizes':
+                response = await service.layKichThuoc(params);
+                break;
+            case 'materials':
+                response = await service.layChatLieu(params);
+                break;
+            case 'soles':
+                response = await service.layDeGiay(params);
+                break;
+            case 'collars':
+                response = await service.layCoGiay(params);
+                break;
+            case 'origins':
+                response = await service.layXuatXu(params);
+                break;
+            case 'purposes':
+                response = await service.layMucDichChay(params);
+                break;
         }
 
         if (response) {
@@ -240,15 +256,33 @@ const createItem = async () => {
     const service = services[selectedTab.value];
     let res;
     switch (selectedTab.value) {
-        case 'brands': res = await service.taoThuongHieu(itemForm.value); break;
-        case 'categories': res = await service.taoDanhMuc(itemForm.value); break;
-        case 'colors': res = await service.taoMauSac(itemForm.value); break;
-        case 'sizes': res = await service.taoKichThuoc(itemForm.value); break;
-        case 'materials': res = await service.taoChatLieu(itemForm.value); break;
-        case 'soles': res = await service.taoDeGiay(itemForm.value); break;
-        case 'collars': res = await service.taoCoGiay(itemForm.value); break;
-        case 'origins': res = await service.taoXuatXu(itemForm.value); break;
-        case 'purposes': res = await service.taoMucDichChay(itemForm.value); break;
+        case 'brands':
+            res = await service.taoThuongHieu(itemForm.value);
+            break;
+        case 'categories':
+            res = await service.taoDanhMuc(itemForm.value);
+            break;
+        case 'colors':
+            res = await service.taoMauSac(itemForm.value);
+            break;
+        case 'sizes':
+            res = await service.taoKichThuoc(itemForm.value);
+            break;
+        case 'materials':
+            res = await service.taoChatLieu(itemForm.value);
+            break;
+        case 'soles':
+            res = await service.taoDeGiay(itemForm.value);
+            break;
+        case 'collars':
+            res = await service.taoCoGiay(itemForm.value);
+            break;
+        case 'origins':
+            res = await service.taoXuatXu(itemForm.value);
+            break;
+        case 'purposes':
+            res = await service.taoMucDichChay(itemForm.value);
+            break;
     }
     addNotification({
         title: 'Thêm mới thành công',
@@ -266,15 +300,33 @@ const updateItem = async () => {
     let res;
     const id = selectedItem.value.id;
     switch (selectedTab.value) {
-        case 'brands': res = await service.capNhatThuongHieu(id, itemForm.value); break;
-        case 'categories': res = await service.capNhatDanhMuc(id, itemForm.value); break;
-        case 'colors': res = await service.capNhatMauSac(id, itemForm.value); break;
-        case 'sizes': res = await service.capNhatKichThuoc(id, itemForm.value); break;
-        case 'materials': res = await service.capNhatChatLieu(id, itemForm.value); break;
-        case 'soles': res = await service.capNhatDeGiay(id, itemForm.value); break;
-        case 'collars': res = await service.capNhatCoGiay(id, itemForm.value); break;
-        case 'origins': res = await service.capNhatXuatXu(id, itemForm.value); break;
-        case 'purposes': res = await service.capNhatMucDichChay(id, itemForm.value); break;
+        case 'brands':
+            res = await service.capNhatThuongHieu(id, itemForm.value);
+            break;
+        case 'categories':
+            res = await service.capNhatDanhMuc(id, itemForm.value);
+            break;
+        case 'colors':
+            res = await service.capNhatMauSac(id, itemForm.value);
+            break;
+        case 'sizes':
+            res = await service.capNhatKichThuoc(id, itemForm.value);
+            break;
+        case 'materials':
+            res = await service.capNhatChatLieu(id, itemForm.value);
+            break;
+        case 'soles':
+            res = await service.capNhatDeGiay(id, itemForm.value);
+            break;
+        case 'collars':
+            res = await service.capNhatCoGiay(id, itemForm.value);
+            break;
+        case 'origins':
+            res = await service.capNhatXuatXu(id, itemForm.value);
+            break;
+        case 'purposes':
+            res = await service.capNhatMucDichChay(id, itemForm.value);
+            break;
     }
     const idx = dataRefs[selectedTab.value].value.findIndex((i) => i.id === id);
     if (idx !== -1) dataRefs[selectedTab.value].value[idx] = res;
@@ -303,15 +355,33 @@ const changeItemStatus = async (item) => {
     const newS = isActiveStatus(item.trangThai) ? 'NGUNG_HOAT_DONG' : 'DANG_HOAT_DONG';
     const pld = { ...item, trangThai: newS };
     switch (selectedTab.value) {
-        case 'brands': await service.capNhatThuongHieu(item.id, pld); break;
-        case 'categories': await service.capNhatDanhMuc(item.id, pld); break;
-        case 'colors': await service.capNhatMauSac(item.id, pld); break;
-        case 'sizes': await service.capNhatKichThuoc(item.id, pld); break;
-        case 'materials': await service.capNhatChatLieu(item.id, pld); break;
-        case 'soles': await service.capNhatDeGiay(item.id, pld); break;
-        case 'collars': await service.capNhatCoGiay(item.id, pld); break;
-        case 'origins': await service.capNhatXuatXu(item.id, pld); break;
-        case 'purposes': await service.capNhatMucDichChay(item.id, pld); break;
+        case 'brands':
+            await service.capNhatThuongHieu(item.id, pld);
+            break;
+        case 'categories':
+            await service.capNhatDanhMuc(item.id, pld);
+            break;
+        case 'colors':
+            await service.capNhatMauSac(item.id, pld);
+            break;
+        case 'sizes':
+            await service.capNhatKichThuoc(item.id, pld);
+            break;
+        case 'materials':
+            await service.capNhatChatLieu(item.id, pld);
+            break;
+        case 'soles':
+            await service.capNhatDeGiay(item.id, pld);
+            break;
+        case 'collars':
+            await service.capNhatCoGiay(item.id, pld);
+            break;
+        case 'origins':
+            await service.capNhatXuatXu(item.id, pld);
+            break;
+        case 'purposes':
+            await service.capNhatMucDichChay(item.id, pld);
+            break;
     }
     item.trangThai = newS;
     addNotification({
@@ -398,40 +468,58 @@ watch(selectedTab, (n) => {
         <div class="mb-2"></div>
 
         <!-- 1. FILTER -->
-        <AttributeFilter v-model:searchQuery="searchQuery" v-model:statusFilter="statusFilter" :loading="loading"
-            :isRefreshing="isRefreshing" @refresh="handleRefresh" @search="loadItems"
-            @update:statusFilter="loadItems" />
+        <AttributeFilter
+            v-model:searchQuery="searchQuery"
+            v-model:statusFilter="statusFilter"
+            :loading="loading"
+            :isRefreshing="isRefreshing"
+            @refresh="handleRefresh"
+            @search="loadItems"
+            @update:statusFilter="loadItems"
+        />
 
         <!-- 2. TABLE -->
-        <AttributeTable 
-            v-model:tab="selectedTab" 
-            :title="`Danh sách ${getCurrentTabTitle()}`" 
+        <AttributeTable
+            v-model:tab="selectedTab"
+            :title="`Danh sách ${getCurrentTabTitle()}`"
             :headers="tableHeaders"
-            :items="dataRefs[selectedTab].value" 
-            :loading="loading" 
-            :pagination="pagination" 
+            :items="dataRefs[selectedTab].value"
+            :loading="loading"
+            :pagination="pagination"
             :tabs="tabs"
-            :meta="currentMeta" 
-            @add="openCreateDialog" 
-            @edit="editItem" 
+            :meta="currentMeta"
+            @add="openCreateDialog"
+            @edit="editItem"
             @change-status="confirmChangeStatus"
-            @load-items="loadItems" 
-            @update:size="pagination.size = $event" 
+            @load-items="loadItems"
+            @update:size="pagination.size = $event"
             class="flex-grow-1 min-h-0"
         />
 
         <!-- FORM MODAL -->
-        <AttributeFormModal v-model:show="showDialog" v-model:form="itemForm" :isEditMode="isEditMode"
-            :title="getCurrentTabTitle()" :selectedTab="selectedTab" :activator="activatorElement" @save="confirmSaveItem" />
+        <AttributeFormModal
+            v-model:show="showDialog"
+            v-model:form="itemForm"
+            :isEditMode="isEditMode"
+            :title="getCurrentTabTitle()"
+            :selectedTab="selectedTab"
+            :activator="activatorElement"
+            @save="confirmSaveItem"
+        />
 
         <!-- SHARED CONFIRM -->
-        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
-            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="handleConfirm(true)"
-            @cancel="handleConfirm(false)" />
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)"
+        />
     </v-container>
 </template>
 
 <style scoped>
 /* .font-body is now defined globally in _admin-common.scss */
 </style>
-

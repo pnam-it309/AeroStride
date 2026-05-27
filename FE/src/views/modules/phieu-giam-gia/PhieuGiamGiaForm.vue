@@ -11,9 +11,17 @@ import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminFilter from '@/components/common/AdminFilter.vue';
 import {
-    ChevronLeftIcon, DeviceFloppyIcon, PrinterIcon, MailIcon,
-    AlertCircleIcon, InfoCircleIcon, SettingsIcon, CalendarIcon,
-    SearchIcon, FilterIcon, UsersIcon
+    ChevronLeftIcon,
+    DeviceFloppyIcon,
+    PrinterIcon,
+    MailIcon,
+    AlertCircleIcon,
+    InfoCircleIcon,
+    SettingsIcon,
+    CalendarIcon,
+    SearchIcon,
+    FilterIcon,
+    UsersIcon
 } from 'vue-tabler-icons';
 
 const route = useRoute();
@@ -36,7 +44,7 @@ const loading = ref(false);
 const saving = ref(false);
 const isDetailMode = computed(() => !!route.params.id && route.path.includes('/detail'));
 const isEditMode = computed(() => !!route.params.id && !route.path.includes('/detail'));
-const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật phiếu giảm giá' : 'Thêm phiếu giảm giá');
+const submitButtonText = computed(() => (isEditMode.value ? 'Cập nhật phiếu giảm giá' : 'Thêm phiếu giảm giá'));
 const isViewOnly = computed(() => isDetailMode.value);
 
 const customers = ref([]);
@@ -86,12 +94,16 @@ watch(isInfinite, (val) => {
     form.value.soLuong = val ? -1 : 0;
 });
 
-watch([() => form.value.loaiHienThi, selectedCustomerIds], ([loai, selecteds]) => {
-    if (loai === 'CA_NHAN') {
-        form.value.soLuong = selecteds.length;
-        isInfinite.value = false;
-    }
-}, { deep: true });
+watch(
+    [() => form.value.loaiHienThi, selectedCustomerIds],
+    ([loai, selecteds]) => {
+        if (loai === 'CA_NHAN') {
+            form.value.soLuong = selecteds.length;
+            isInfinite.value = false;
+        }
+    },
+    { deep: true }
+);
 
 const isSelectAll = computed({
     get: () => filteredCustomers.value.length > 0 && selectedCustomerIds.value.length === filteredCustomers.value.length,
@@ -103,12 +115,13 @@ const isSelectAll = computed({
 const filteredCustomers = computed(() => {
     return customers.value.filter((c) => {
         const search = searchGlobal.value.toLowerCase();
-        const matchesSearch = !search || 
-            c.ten?.toLowerCase().includes(search) || 
-            c.sdt?.includes(search) || 
+        const matchesSearch =
+            !search ||
+            c.ten?.toLowerCase().includes(search) ||
+            c.sdt?.includes(search) ||
             c.maKh?.toLowerCase().includes(search) ||
             c.ma?.toLowerCase().includes(search);
-            
+
         let matchesDateRange = true;
         if (filterStartDate.value || filterEndDate.value) {
             if (c.ngayDonHangGanNhat) {
@@ -125,7 +138,7 @@ const filteredCustomers = computed(() => {
                 matchesDateRange = false;
             }
         }
-        
+
         return matchesSearch && matchesDateRange;
     });
 });
@@ -266,12 +279,14 @@ onMounted(init);
 </script>
 
 <template>
-    <v-container fluid class="pa-6 animate-fade-in overflow-y-auto" style="height: 100vh;">
-        <AdminBreadcrumbs :items="[
-            { title: 'Quản lý phiếu giảm giá', disabled: false, href: '#' },
-            { title: 'Phiếu giảm giá', disabled: false, to: PATH.PHIEU_GIAM_GIA },
-            { title: isEditMode ? 'Cập nhật' : (isDetailMode ? 'Chi tiết' : 'Thêm mới'), disabled: true }
-        ]" />
+    <v-container fluid class="pa-6 animate-fade-in overflow-y-auto" style="height: 100vh">
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý phiếu giảm giá', disabled: false, href: '#' },
+                { title: 'Phiếu giảm giá', disabled: false, to: PATH.PHIEU_GIAM_GIA },
+                { title: isEditMode ? 'Cập nhật' : isDetailMode ? 'Chi tiết' : 'Thêm mới', disabled: true }
+            ]"
+        />
 
         <!-- Action Header -->
         <div class="d-flex align-center justify-space-between mb-8 mt-4">
@@ -281,9 +296,14 @@ onMounted(init);
                 </v-btn>
             </div>
             <div class="d-flex gap-3">
-                <v-btn v-if="!isViewOnly" color="primary" variant="flat"
-                    class="text-none px-8 rounded-lg h-11 elevation-4" @click="handleSave"
-                    :loading="saving">
+                <v-btn
+                    v-if="!isViewOnly"
+                    color="primary"
+                    variant="flat"
+                    class="text-none px-8 rounded-lg h-11 elevation-4"
+                    @click="handleSave"
+                    :loading="saving"
+                >
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
                     {{ submitButtonText }}
                 </v-btn>
@@ -312,24 +332,39 @@ onMounted(init);
                         <v-row>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Mã phiếu giảm giá</div>
-                                <v-text-field v-model="form.ma" readonly
-                                    :placeholder="isEditMode ? '' : 'Hệ thống tự sinh khi lưu'" variant="outlined"
+                                <v-text-field
+                                    v-model="form.ma"
+                                    readonly
+                                    :placeholder="isEditMode ? '' : 'Hệ thống tự sinh khi lưu'"
+                                    variant="outlined"
                                     density="compact"
                                     class="custom-input mono-font"
-                                    hide-details>
+                                    hide-details
+                                >
                                 </v-text-field>
                             </v-col>
                             <v-col cols="12" md="8">
                                 <div class="field-label">Tên chương trình <span class="text-red">*</span></div>
-                                <v-text-field v-model="form.ten" :readonly="isViewOnly"
-                                    placeholder="Ví dụ: Voucher Mừng Sinh Nhật..." variant="outlined"
-                                    density="compact" hide-details></v-text-field>
+                                <v-text-field
+                                    v-model="form.ten"
+                                    :readonly="isViewOnly"
+                                    placeholder="Ví dụ: Voucher Mừng Sinh Nhật..."
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                ></v-text-field>
                             </v-col>
                             <v-col cols="12">
                                 <div class="field-label">Mô tả chi tiết</div>
-                                <v-textarea v-model="form.moTa" :readonly="isViewOnly" variant="outlined"
-                                    rows="3" placeholder="Điều kiện chương trình..." hide-details
-                                    class="custom-textarea"></v-textarea>
+                                <v-textarea
+                                    v-model="form.moTa"
+                                    :readonly="isViewOnly"
+                                    variant="outlined"
+                                    rows="3"
+                                    placeholder="Điều kiện chương trình..."
+                                    hide-details
+                                    class="custom-textarea"
+                                ></v-textarea>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -347,49 +382,91 @@ onMounted(init);
                         <v-row>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Hình thức giảm</div>
-                                <v-btn-toggle v-model="form.loaiPhieu" :disabled="isViewOnly" mandatory
-                                    color="primary" variant="outlined" density="compact"
-                                    class="w-100 rounded-lg custom-toggle">
+                                <v-btn-toggle
+                                    v-model="form.loaiPhieu"
+                                    :disabled="isViewOnly"
+                                    mandatory
+                                    color="primary"
+                                    variant="outlined"
+                                    density="compact"
+                                    class="w-100 rounded-lg custom-toggle"
+                                >
                                     <v-btn value="TIEN_MAT" class="flex-grow-1">VNĐ</v-btn>
                                     <v-btn value="PHAN_TRAM" class="flex-grow-1">%</v-btn>
                                 </v-btn-toggle>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Giá trị giảm</div>
-                                <v-text-field v-if="form.loaiPhieu === 'TIEN_MAT'"
-                                    v-model="formattedSoTienGiam" :readonly="isViewOnly" type="text"
-                                    suffix="VNĐ" variant="outlined" density="compact"
-                                    hide-details></v-text-field>
-                                <v-text-field v-else v-model.number="form.phanTramGiamGia"
-                                    :readonly="isViewOnly" type="number" suffix="%" variant="outlined"
-                                    density="compact" hide-details></v-text-field>
+                                <v-text-field
+                                    v-if="form.loaiPhieu === 'TIEN_MAT'"
+                                    v-model="formattedSoTienGiam"
+                                    :readonly="isViewOnly"
+                                    type="text"
+                                    suffix="VNĐ"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                ></v-text-field>
+                                <v-text-field
+                                    v-else
+                                    v-model.number="form.phanTramGiamGia"
+                                    :readonly="isViewOnly"
+                                    type="number"
+                                    suffix="%"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                ></v-text-field>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Giảm tối đa</div>
-                                <v-text-field v-model="formattedGiamToiDa" :readonly="isViewOnly"
-                                    :disabled="form.loaiPhieu === 'TIEN_MAT'" suffix="VNĐ" variant="outlined"
-                                    density="compact" hide-details
-                                    :class="form.loaiPhieu === 'TIEN_MAT' ? 'bg-slate-50' : ''"></v-text-field>
+                                <v-text-field
+                                    v-model="formattedGiamToiDa"
+                                    :readonly="isViewOnly"
+                                    :disabled="form.loaiPhieu === 'TIEN_MAT'"
+                                    suffix="VNĐ"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    :class="form.loaiPhieu === 'TIEN_MAT' ? 'bg-slate-50' : ''"
+                                ></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="d-flex align-center gap-4 mb-2" style="height: 24px;">
+                                <div class="d-flex align-center gap-4 mb-2" style="height: 24px">
                                     <div class="field-label mb-0">Số lượng</div>
-                                    <v-switch v-model="isInfinite" :disabled="isViewOnly || form.loaiHienThi === 'CA_NHAN'" label="Vô hạn"
-                                        color="primary" density="compact" hide-details
-                                        class="custom-mini-switch ml-2"></v-switch>
+                                    <v-switch
+                                        v-model="isInfinite"
+                                        :disabled="isViewOnly || form.loaiHienThi === 'CA_NHAN'"
+                                        label="Vô hạn"
+                                        color="primary"
+                                        density="compact"
+                                        hide-details
+                                        class="custom-mini-switch ml-2"
+                                    ></v-switch>
                                 </div>
-                                <v-text-field :model-value="isInfinite ? 'Vô hạn' : form.soLuong"
-                                    @update:model-value="val => !isInfinite && (form.soLuong = Number(val))"
-                                    :type="isInfinite ? 'text' : 'number'" :disabled="isInfinite || isViewOnly || form.loaiHienThi === 'CA_NHAN'"
-                                    variant="outlined" density="compact" hide-details></v-text-field>
+                                <v-text-field
+                                    :model-value="isInfinite ? 'Vô hạn' : form.soLuong"
+                                    @update:model-value="(val) => !isInfinite && (form.soLuong = Number(val))"
+                                    :type="isInfinite ? 'text' : 'number'"
+                                    :disabled="isInfinite || isViewOnly || form.loaiHienThi === 'CA_NHAN'"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                ></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="d-flex align-center mb-2" style="height: 24px;">
+                                <div class="d-flex align-center mb-2" style="height: 24px">
                                     <div class="field-label mb-0">Đơn tối thiểu (VNĐ)</div>
                                 </div>
-                                <v-text-field v-model="formattedGiatriToiThieu" :readonly="isViewOnly"
-                                    type="text" placeholder="0" variant="outlined" density="compact"
-                                    hide-details></v-text-field>
+                                <v-text-field
+                                    v-model="formattedGiatriToiThieu"
+                                    :readonly="isViewOnly"
+                                    type="text"
+                                    placeholder="0"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                ></v-text-field>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -409,30 +486,54 @@ onMounted(init);
                         <v-row>
                             <v-col cols="12">
                                 <div class="field-label">Phạm vi áp dụng</div>
-                                <v-btn-toggle v-model="form.loaiHienThi" :disabled="isViewOnly || isEditMode" mandatory
-                                    color="primary" variant="outlined" density="compact"
-                                    class="w-100 rounded-lg custom-toggle">
+                                <v-btn-toggle
+                                    v-model="form.loaiHienThi"
+                                    :disabled="isViewOnly || isEditMode"
+                                    mandatory
+                                    color="primary"
+                                    variant="outlined"
+                                    density="compact"
+                                    class="w-100 rounded-lg custom-toggle"
+                                >
                                     <v-btn value="CONG_KHAI" class="flex-grow-1">Công khai</v-btn>
                                     <v-btn value="CA_NHAN" class="flex-grow-1">Cá nhân</v-btn>
                                 </v-btn-toggle>
-                                <div v-if="isEditMode" class="text-caption text-medium-emphasis mt-2 d-flex align-center gap-1" style="font-size: 11px !important;">
+                                <div
+                                    v-if="isEditMode"
+                                    class="text-caption text-medium-emphasis mt-2 d-flex align-center gap-1"
+                                    style="font-size: 11px !important"
+                                >
                                     <v-icon size="14" color="info" class="mr-1">mdi-information</v-icon>
                                     Không thể chuyển đổi phạm vi khi chỉnh sửa
                                 </div>
                             </v-col>
                             <v-col cols="12">
                                 <div class="field-label">Ngày bắt đầu</div>
-                                <v-text-field v-model="form.ngayBatDau" :readonly="isViewOnly"
-                                    type="datetime-local" variant="outlined" density="compact"
-                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
-                                    class="date-field" hide-details></v-text-field>
+                                <v-text-field
+                                    v-model="form.ngayBatDau"
+                                    :readonly="isViewOnly"
+                                    type="datetime-local"
+                                    variant="outlined"
+                                    density="compact"
+                                    append-inner-icon="mdi-calendar"
+                                    @click:append-inner="openDatePicker"
+                                    class="date-field"
+                                    hide-details
+                                ></v-text-field>
                             </v-col>
                             <v-col cols="12">
                                 <div class="field-label">Ngày kết thúc</div>
-                                <v-text-field v-model="form.ngayKetThuc" :readonly="isViewOnly"
-                                    type="datetime-local" variant="outlined" density="compact"
-                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
-                                    class="date-field" hide-details></v-text-field>
+                                <v-text-field
+                                    v-model="form.ngayKetThuc"
+                                    :readonly="isViewOnly"
+                                    type="datetime-local"
+                                    variant="outlined"
+                                    density="compact"
+                                    append-inner-icon="mdi-calendar"
+                                    @click:append-inner="openDatePicker"
+                                    class="date-field"
+                                    hide-details
+                                ></v-text-field>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -454,26 +555,72 @@ onMounted(init);
                             </span>
                         </div>
 
-                        <AdminFilter title="Tìm kiếm khách hàng" @refresh="() => { searchGlobal = ''; filterStartDate = null; filterEndDate = null; }">
+                        <AdminFilter
+                            title="Tìm kiếm khách hàng"
+                            @refresh="
+                                () => {
+                                    searchGlobal = '';
+                                    filterStartDate = null;
+                                    filterEndDate = null;
+                                }
+                            "
+                        >
                             <v-col cols="12" md="3">
-                                <div class="filter-field-label" style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Tìm kiếm</div>
-                                <v-text-field v-model="searchGlobal" prepend-inner-icon="mdi-magnify"
-                                    placeholder="Nhập tên, mã hoặc số điện thoại..." variant="outlined"
-                                    density="compact" hide-details clearable rounded="xl" class="compact-input"></v-text-field>
+                                <div
+                                    class="filter-field-label"
+                                    style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px"
+                                >
+                                    Tìm kiếm
+                                </div>
+                                <v-text-field
+                                    v-model="searchGlobal"
+                                    prepend-inner-icon="mdi-magnify"
+                                    placeholder="Nhập tên, mã hoặc số điện thoại..."
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    clearable
+                                    rounded="xl"
+                                    class="compact-input"
+                                ></v-text-field>
                             </v-col>
                             <v-col cols="12" md="4">
-                                <div class="filter-field-label" style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Đơn hàng từ ngày</div>
-                                <v-text-field v-model="filterStartDate" type="date" variant="outlined"
-                                    density="compact" hide-details rounded="xl"
+                                <div
+                                    class="filter-field-label"
+                                    style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px"
+                                >
+                                    Đơn hàng từ ngày
+                                </div>
+                                <v-text-field
+                                    v-model="filterStartDate"
+                                    type="date"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    rounded="xl"
                                     class="compact-input date-field"
-                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"></v-text-field>
+                                    append-inner-icon="mdi-calendar"
+                                    @click:append-inner="openDatePicker"
+                                ></v-text-field>
                             </v-col>
                             <v-col cols="12" md="4">
-                                <div class="filter-field-label" style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Đến ngày</div>
-                                <v-text-field v-model="filterEndDate" type="date" variant="outlined"
-                                    density="compact" hide-details rounded="xl"
+                                <div
+                                    class="filter-field-label"
+                                    style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px"
+                                >
+                                    Đến ngày
+                                </div>
+                                <v-text-field
+                                    v-model="filterEndDate"
+                                    type="date"
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    rounded="xl"
                                     class="compact-input date-field"
-                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"></v-text-field>
+                                    append-inner-icon="mdi-calendar"
+                                    @click:append-inner="openDatePicker"
+                                ></v-text-field>
                             </v-col>
                         </AdminFilter>
 
@@ -482,9 +629,14 @@ onMounted(init);
                                 <thead>
                                     <tr>
                                         <th class="header-cell text-center" style="width: 50px">
-                                            <v-checkbox-btn v-model="isSelectAll" :disabled="isViewOnly"
-                                                color="primary" density="compact" hide-details
-                                                class="d-inline-flex"></v-checkbox-btn>
+                                            <v-checkbox-btn
+                                                v-model="isSelectAll"
+                                                :disabled="isViewOnly"
+                                                color="primary"
+                                                density="compact"
+                                                hide-details
+                                                class="d-inline-flex"
+                                            ></v-checkbox-btn>
                                         </th>
                                         <th class="header-cell text-center" style="width: 60px">STT</th>
                                         <th class="header-cell text-center" style="width: 120px">Mã KH</th>
@@ -500,9 +652,15 @@ onMounted(init);
                                 <tbody>
                                     <tr v-for="(item, index) in paginatedCustomers" :key="item.id" class="data-row">
                                         <td class="data-cell text-center">
-                                            <v-checkbox-btn v-model="selectedCustomerIds" :value="item.id"
-                                                :disabled="isViewOnly" color="primary" density="compact"
-                                                hide-details class="d-inline-flex"></v-checkbox-btn>
+                                            <v-checkbox-btn
+                                                v-model="selectedCustomerIds"
+                                                :value="item.id"
+                                                :disabled="isViewOnly"
+                                                color="primary"
+                                                density="compact"
+                                                hide-details
+                                                class="d-inline-flex"
+                                            ></v-checkbox-btn>
                                         </td>
                                         <td class="data-cell text-center">
                                             {{ (pagination.page - 1) * pagination.size + index + 1 }}
@@ -537,9 +695,14 @@ onMounted(init);
                         </div>
 
                         <div class="pagination-footer mt-6">
-                            <AdminPagination v-model="pagination.page" :page-size="pagination.size"
-                                @update:pageSize="pagination.size = $event" :total-pages="totalPages"
-                                :total-elements="filteredCustomers.length" :current-size="paginatedCustomers.length" />
+                            <AdminPagination
+                                v-model="pagination.page"
+                                :page-size="pagination.size"
+                                @update:pageSize="pagination.size = $event"
+                                :total-pages="totalPages"
+                                :total-elements="filteredCustomers.length"
+                                :current-size="paginatedCustomers.length"
+                            />
                         </div>
                     </v-card-text>
                 </v-card>
@@ -547,8 +710,14 @@ onMounted(init);
         </v-row>
 
         <!-- CONFIRM DIALOG -->
-        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
-            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="confirmDialog.action"
+        />
     </v-container>
 </template>
 
@@ -597,7 +766,7 @@ onMounted(init);
 }
 
 .personal-mode-row {
-    &>.v-col {
+    & > .v-col {
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 }
@@ -640,10 +809,10 @@ onMounted(init);
 }
 
 /* CSS Đồng bộ ẩn icon mặc định trình duyệt cho cả date và datetime-local */
-:deep(input[type="date"]::-webkit-calendar-picker-indicator),
-:deep(input[type="date"]::-webkit-inner-spin-button),
-:deep(input[type="datetime-local"]::-webkit-calendar-picker-indicator),
-:deep(input[type="datetime-local"]::-webkit-inner-spin-button) {
+:deep(input[type='date']::-webkit-calendar-picker-indicator),
+:deep(input[type='date']::-webkit-inner-spin-button),
+:deep(input[type='datetime-local']::-webkit-calendar-picker-indicator),
+:deep(input[type='datetime-local']::-webkit-inner-spin-button) {
     display: none !important;
     -webkit-appearance: none !important;
 }

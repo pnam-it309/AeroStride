@@ -35,32 +35,57 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .promotion-bar-wrapper {
-    width: 100%; border-bottom: 1px solid #e5e5e5;
-    position: relative; overflow: hidden;
-    min-height: 44px; display: flex; align-items: center; justify-content: center;
+    width: 100%;
+    border-bottom: 1px solid #e5e5e5;
+    position: relative;
+    overflow: hidden;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .promo-content {
-    display: flex; align-items: center; justify-content: center; width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
 }
 
 .promo-text {
-    font-size: 0.85rem; font-weight: 700; color: #111;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #111;
 }
 
-.promo-link, .promo-details {
-    font-size: 0.85rem; font-weight: 800; color: #111; text-decoration: underline;
-    &:hover { opacity: 0.7; }
+.promo-link,
+.promo-details {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #111;
+    text-decoration: underline;
+    &:hover {
+        opacity: 0.7;
+    }
 }
 
 .promo-details {
-    text-decoration: none; border-bottom: 1px solid #111; padding-bottom: 1px;
+    text-decoration: none;
+    border-bottom: 1px solid #111;
+    padding-bottom: 1px;
 }
 
 /* Slide Transition */
-.fade-slide-enter-active, .fade-slide-leave-active {
+.fade-slide-enter-active,
+.fade-slide-leave-active {
     transition: all 0.5s ease;
 }
-.fade-slide-enter-from { opacity: 0; transform: translateY(10px); }
-.fade-slide-leave-to { opacity: 0; transform: translateY(-10px); }
+.fade-slide-enter-from {
+    opacity: 0;
+    transform: translateY(10px);
+}
+.fade-slide-leave-to {
+    opacity: 0;
+    transform: translateY(-10px);
+}
 </style>

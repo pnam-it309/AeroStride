@@ -7,8 +7,11 @@ import MainView from './Main.vue';
     <v-locale-provider>
         <MainView />
         <v-main class="main-content-area">
-            <v-container fluid class="page-wrapper px-0 pt-0 pb-0"
-                style="height: 100%; overflow: hidden !important; display: flex; flex-direction: column;">
+            <v-container
+                fluid
+                class="page-wrapper px-0 pt-0 pb-0"
+                style="height: 100%; overflow: hidden !important; display: flex; flex-direction: column"
+            >
                 <div class="content-shell">
                     <RouterView v-slot="{ Component, route }">
                         <transition name="route-shell" mode="out-in">
@@ -17,7 +20,10 @@ import MainView from './Main.vue';
                                     <component :is="Component" :key="route.path" />
                                 </template>
                                 <template #fallback>
-                                    <div class="d-flex align-center justify-center w-100 h-100" style="min-height: 400px; background-color: #ffffff;">
+                                    <div
+                                        class="d-flex align-center justify-center w-100 h-100"
+                                        style="min-height: 400px; background-color: #ffffff"
+                                    >
                                         <v-progress-circular indeterminate color="primary" size="48" />
                                     </div>
                                 </template>

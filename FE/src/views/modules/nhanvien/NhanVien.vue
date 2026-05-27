@@ -79,8 +79,8 @@ async function handleResetPassword(id) {
 }
 
 const tableHeaders = [
-    { text: 'STT', width: '60px' },
-    { text: 'Mã nhân viên', width: '110px' },
+    { text: 'STT', width: '50px' },
+    { text: 'Mã nhân viên', width: '100px' },
     { text: 'Tên nhân viên', width: '140px' },
     { text: 'Tài khoản', width: '160px' },
     { text: 'Giới tính', width: '100px' },
@@ -142,14 +142,14 @@ const confirmResetPassword = (item) => {
 
 const getAddressSummary = (item) => {
     if (!item) return '-';
-    
+
     const ct = item.diaChiChiTiet || item.dia_chi_chi_tiet || '';
     const xa = item.phuongXa || item.phuong_xa || '';
     const huyen = item.thanhPho || item.thanh_pho || '';
     const tinh = item.tinh || '';
-    
-    const parts = [ct, xa, huyen, tinh].map(p => String(p).trim()).filter(p => p !== '' && p !== 'null');
-    
+
+    const parts = [ct, xa, huyen, tinh].map((p) => String(p).trim()).filter((p) => p !== '' && p !== 'null');
+
     return parts.length > 0 ? parts.join(', ') : 'Chưa cập nhật';
 };
 
@@ -160,10 +160,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <v-container
-        fluid
-        class="pa-4 animate-fade-in font-body admin-module-page"
-    >
+    <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs
             :items="[
@@ -270,21 +267,25 @@ onMounted(() => {
                             <span>{{ item.sdt || '-' }}</span>
                         </div>
                     </td>
-                    <td class="data-cell text-left px-4 allow-wrap" style="min-width: 200px;">
+                    <td class="data-cell text-left px-4 allow-wrap" style="min-width: 200px">
                         <div class="text-slate-700">
                             <!-- Thử cả 2 bộ tên trường do xung đột DB -->
                             <span v-if="item.diaChiChiTiet || item.dia_chi_chi_tiet">
-                                {{ item.diaChiChiTiet || item.dia_chi_chi_tiet }}, 
+                                {{ item.diaChiChiTiet || item.dia_chi_chi_tiet }},
                             </span>
-                            <span v-if="item.phuongXa || item.phuong_xa">
-                                {{ item.phuongXa || item.phuong_xa }}, 
-                            </span>
-                            <span v-if="item.thanhPho || item.thanh_pho">
-                                {{ item.thanhPho || item.thanh_pho }}, 
-                            </span>
+                            <span v-if="item.phuongXa || item.phuong_xa"> {{ item.phuongXa || item.phuong_xa }}, </span>
+                            <span v-if="item.thanhPho || item.thanh_pho"> {{ item.thanhPho || item.thanh_pho }}, </span>
                             <span v-if="item.tinh">{{ item.tinh }}</span>
-                            
-                            <span v-if="!(item.diaChiChiTiet || item.dia_chi_chi_tiet) && !(item.phuongXa || item.phuong_xa) && !(item.thanhPho || item.thanh_pho) && !item.tinh" class="text-slate-400">
+
+                            <span
+                                v-if="
+                                    !(item.diaChiChiTiet || item.dia_chi_chi_tiet) &&
+                                    !(item.phuongXa || item.phuong_xa) &&
+                                    !(item.thanhPho || item.thanh_pho) &&
+                                    !item.tinh
+                                "
+                                class="text-slate-400"
+                            >
                                 Chưa cập nhật
                             </span>
                         </div>
@@ -300,10 +301,7 @@ onMounted(() => {
                             <v-chip
                                 variant="flat"
                                 class="justify-center"
-                                :class="[
-                                    'status-chip',
-                                    isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive'
-                                ]"
+                                :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']"
                             >
                                 {{ getStatusLabel(item.trangThai) }}
                             </v-chip>
@@ -367,5 +365,4 @@ onMounted(() => {
     </v-container>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

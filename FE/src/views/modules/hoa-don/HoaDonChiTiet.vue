@@ -1,19 +1,31 @@
 <script setup>
 import { PATH } from '@/router/routePaths';
-import { ref, computed, onMounted, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { dichVuHoaDon } from "@/services/admin/dichVuHoaDon";
-import { useNotifications } from "@/services/notificationService";
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
+import { useNotifications } from '@/services/notificationService';
 import {
-    ChevronLeftIcon, PrinterIcon, EditIcon, CalendarIcon,
-    PackageIcon, UserIcon, MapPinIcon, CreditCardIcon, TruckIcon,
-    CircleCheckIcon, CircleXIcon, CheckIcon, TrashIcon,
-    PlusIcon, LayoutListIcon, LayoutGridIcon
-} from "vue-tabler-icons";
-import AdminConfirm from "@/components/common/AdminConfirm.vue";
-import AdminBreadcrumbs from "@/components/common/AdminBreadcrumbs.vue";
-import AdminTable from "@/components/common/AdminTable.vue";
-import { getOrderStatusMeta, getOrderStatusOrdinal } from "@/utils/orderStatus";
+    ChevronLeftIcon,
+    PrinterIcon,
+    EditIcon,
+    CalendarIcon,
+    PackageIcon,
+    UserIcon,
+    MapPinIcon,
+    CreditCardIcon,
+    TruckIcon,
+    CircleCheckIcon,
+    CircleXIcon,
+    CheckIcon,
+    TrashIcon,
+    PlusIcon,
+    LayoutListIcon,
+    LayoutGridIcon
+} from 'vue-tabler-icons';
+import AdminConfirm from '@/components/common/AdminConfirm.vue';
+import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
+import AdminTable from '@/components/common/AdminTable.vue';
+import { getOrderStatusMeta, getOrderStatusOrdinal } from '@/utils/orderStatus';
 
 const route = useRoute();
 const router = useRouter();
@@ -23,8 +35,8 @@ const loaded = ref(false);
 const loading = ref(false);
 const updatingStatus = ref(false);
 const statusDialogOpen = ref(false);
-const selectedStatus = ref("");
-const pendingStatus = ref("");
+const selectedStatus = ref('');
+const pendingStatus = ref('');
 
 // Confirmation Logic
 const confirmDialog = ref({
@@ -39,36 +51,34 @@ const confirmDialog = ref({
     loading: false
 });
 
-
-
 const order = ref({
-    id: "",
-    maHoaDon: "",
-    tenKhachHang: "",
-    email: "",
-    soDienThoai: "",
+    id: '',
+    maHoaDon: '',
+    tenKhachHang: '',
+    email: '',
+    soDienThoai: '',
     trangThai: 'CHO_XAC_NHAN',
-    ngayTao: "",
+    ngayTao: '',
     tongTien: 0,
     tongTienSauGiam: 0,
     phiVanChuyen: 0,
-    loaiDon: "OFFLINE",
-    diaChi: "",
-    ghiChu: "",
+    loaiDon: 'OFFLINE',
+    diaChi: '',
+    ghiChu: '',
     listsHoaDonChiTiet: [],
     listsLichSuHoaDon: [],
     listsGiaoDichThanhToan: []
 });
 
 const productColumns = [
-    { key: "hinhAnh", text: "Hình ảnh" },
-    { key: "tenSanPham", text: "Tên sản phẩm" },
-    { key: "maBienThe", text: "Mã biến thể" },
-    { key: "mauSac", text: "Màu sắc" },
-    { key: "kichThuoc", text: "Kích thước" },
-    { key: "soLuong", text: "Số lượng" },
-    { key: "donGia", text: "Đơn giá" },
-    { key: "thanhTien", text: "Thành tiền" },
+    { key: 'hinhAnh', text: 'Hình ảnh' },
+    { key: 'tenSanPham', text: 'Tên sản phẩm' },
+    { key: 'maBienThe', text: 'Mã biến thể' },
+    { key: 'mauSac', text: 'Màu sắc' },
+    { key: 'kichThuoc', text: 'Kích thước' },
+    { key: 'soLuong', text: 'Số lượng' },
+    { key: 'donGia', text: 'Đơn giá' },
+    { key: 'thanhTien', text: 'Thành tiền' }
 ];
 
 const getStatusInfo = (s) => {
@@ -118,9 +128,7 @@ const previousStatus = computed(() => {
     return prev;
 });
 
-const previousStatusMeta = computed(() =>
-    previousStatus.value === null ? null : getOrderStatusMeta(previousStatus.value)
-);
+const previousStatusMeta = computed(() => (previousStatus.value === null ? null : getOrderStatusMeta(previousStatus.value)));
 
 const getStatusTimestampMap = computed(() => {
     const map = {};
@@ -142,7 +150,7 @@ const canUpdateStatus = computed(() => order.value && getOrderStatus() !== null 
 const isOrderEditable = computed(() => order.value.trangThai === 'CHO_XAC_NHAN' || getOrderStatus() < 2);
 
 const customerName = computed(() => order.value.tenKhachHang || 'Khách lẻ');
-const orderTypeLabel = computed(() => order.value.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi');
+const orderTypeLabel = computed(() => (order.value.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi'));
 
 const orderDiscountAmount = computed(() => {
     const total = order.value.tongTien || 0;
@@ -165,7 +173,7 @@ const sortedHistoryLogs = computed(() => {
     // Sort by date descending (Newest first)
     logs.sort((a, b) => new Date(b.ngayTao || 0) - new Date(a.ngayTao || 0));
 
-    // If no logs yet, or if the first log (oldest) isn't the creation, 
+    // If no logs yet, or if the first log (oldest) isn't the creation,
     // we don't strictly need to prepend here because we have the fallback in template.
     // However, it's better to always have the creation log at the end of the list.
 
@@ -177,29 +185,25 @@ const goBack = () => router.push(PATH.HOA_DON);
 const goToList = () => router.push(PATH.HOA_DON);
 
 // --- Payment Helpers ---
-const getPaymentItemClass = (loai) => loai === 'TIEN_MAT' ? 'bg-success-light' : 'bg-primary-light';
-const getPaymentMethodIcon = (loai) => loai === 'TIEN_MAT' ? 'mdi-cash-multiple' : 'mdi-bank-outline';
-
-
-
-
+const getPaymentItemClass = (loai) => (loai === 'TIEN_MAT' ? 'bg-success-light' : 'bg-primary-light');
+const getPaymentMethodIcon = (loai) => (loai === 'TIEN_MAT' ? 'mdi-cash-multiple' : 'mdi-bank-outline');
 
 const timelineSteps = computed(() => {
     const status = getOrderStatus();
 
     // Core flow steps
     const coreSteps = [
-        { key: 0, label: "Chờ xác nhận", icon: CalendarIcon, note: "Đơn hàng mới tạo" },
-        { key: 1, label: "Đã xác nhận", icon: CircleCheckIcon, note: "Đơn hàng đã được xác nhận" },
-        { key: 2, label: "Chờ giao", icon: PackageIcon, note: "Đơn hàng chờ giao" },
-        { key: 3, label: "Đang giao", icon: TruckIcon, note: "Đơn hàng đang được giao" },
-        { key: 4, label: "Hoàn thành", icon: CheckIcon, note: "Đơn hàng đã hoàn thành" }
+        { key: 0, label: 'Chờ xác nhận', icon: CalendarIcon, note: 'Đơn hàng mới tạo' },
+        { key: 1, label: 'Đã xác nhận', icon: CircleCheckIcon, note: 'Đơn hàng đã được xác nhận' },
+        { key: 2, label: 'Chờ giao', icon: PackageIcon, note: 'Đơn hàng chờ giao' },
+        { key: 3, label: 'Đang giao', icon: TruckIcon, note: 'Đơn hàng đang được giao' },
+        { key: 4, label: 'Hoàn thành', icon: CheckIcon, note: 'Đơn hàng đã hoàn thành' }
     ];
 
     // Exception steps
     const exceptionSteps = [
-        { key: 5, label: "Đã hủy", icon: CircleXIcon, note: "Đơn hàng bị hủy" },
-        { key: 6, label: "Hoàn đơn", icon: CircleXIcon, note: "Đơn hàng đã hoàn trả" }
+        { key: 5, label: 'Đã hủy', icon: CircleXIcon, note: 'Đơn hàng bị hủy' },
+        { key: 6, label: 'Hoàn đơn', icon: CircleXIcon, note: 'Đơn hàng đã hoàn trả' }
     ];
 
     let steps = [...coreSteps];
@@ -208,27 +212,27 @@ const timelineSteps = computed(() => {
 
     // Nếu trạng thái hiện tại là Hủy hoặc Hoàn đơn, chúng ta sẽ hiển thị nó là bước cuối cùng hoặc thay thế bước tương ứng
     if (status === 5 || status === 6) {
-        const exc = exceptionSteps.find(s => s.key === status);
+        const exc = exceptionSteps.find((s) => s.key === status);
         if (exc) {
             steps = [...coreSteps.slice(0, 4), exc]; // Giữ 4 bước đầu, bước 5 là trạng thái đặc biệt
         }
     }
 
-    const currentActiveIndex = steps.findIndex(s => s.key === status);
+    const currentActiveIndex = steps.findIndex((s) => s.key === status);
 
     return steps
         .filter((_, index) => index <= currentActiveIndex)
         .map((step, index) => {
-            let state = "pending";
+            let state = 'pending';
 
             if (status === 5 || status === 6) {
-                if (index < currentActiveIndex) state = "done";
-                else if (index === currentActiveIndex) state = "active";
-                else state = "disabled";
+                if (index < currentActiveIndex) state = 'done';
+                else if (index === currentActiveIndex) state = 'active';
+                else state = 'disabled';
             } else {
-                if (index < currentActiveIndex) state = "done";
-                else if (index === currentActiveIndex) state = "active";
-                else state = "pending";
+                if (index < currentActiveIndex) state = 'done';
+                else if (index === currentActiveIndex) state = 'active';
+                else state = 'pending';
             }
 
             return {
@@ -280,10 +284,6 @@ const requestStatusUpdate = (status) => {
     };
 };
 
-
-
-
-
 // --- Timeline Helpers ---
 const getStepIcon = (step) => step.icon;
 
@@ -294,7 +294,11 @@ const printInvoice = async () => {
 
         const printWindow = window.open('', '_blank', 'width=900,height=1000');
         if (!printWindow) {
-            addNotification({ title: 'Lỗi', subtitle: 'Trình duyệt đã chặn cửa sổ bật lên. Vui lòng cho phép popup để in.', color: 'warning' });
+            addNotification({
+                title: 'Lỗi',
+                subtitle: 'Trình duyệt đã chặn cửa sổ bật lên. Vui lòng cho phép popup để in.',
+                color: 'warning'
+            });
             return;
         }
 
@@ -313,8 +317,6 @@ const printInvoice = async () => {
     }
 };
 
-
-
 onMounted(() => {
     loadOrderDetail();
 });
@@ -323,11 +325,13 @@ onMounted(() => {
 <template>
     <v-container fluid class="pa-6 animate-fade-in screen-scroll bg-slate-50">
         <!-- Breadcrumbs -->
-        <AdminBreadcrumbs :items="[
-            { title: 'Quản lý bán hàng', disabled: false, href: '#' },
-            { title: 'Hóa đơn', disabled: false, to: PATH.HOA_DON },
-            { title: `Chi tiết #${order?.maHoaDon || '...'}`, disabled: true }
-        ]" />
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý bán hàng', disabled: false, href: '#' },
+                { title: 'Hóa đơn', disabled: false, to: PATH.HOA_DON },
+                { title: `Chi tiết #${order?.maHoaDon || '...'}`, disabled: true }
+            ]"
+        />
 
         <!-- Header -->
         <v-card elevation="0" class="premium-card-detail mb-6 pa-6 bg-white">
@@ -341,8 +345,11 @@ onMounted(() => {
                             Mã hóa đơn: <span class="ml-1">#{{ order.maHoaDon }}</span>
                         </div>
                         |
-                        <v-chip v-if="showStatusChip" variant="flat"
-                            :class="['px-4 status-chip', getOrderStatusMeta(order.trangThai)?.chipClass]">
+                        <v-chip
+                            v-if="showStatusChip"
+                            variant="flat"
+                            :class="['px-4 status-chip', getOrderStatusMeta(order.trangThai)?.chipClass]"
+                        >
                             {{ orderStatusLabel }}
                         </v-chip>
                     </div>
@@ -363,46 +370,71 @@ onMounted(() => {
 
                     <v-menu v-if="canUpdateStatus">
                         <template v-slot:activator="{ props }">
-                            <v-btn color="primary" variant="flat" class="rounded-lg px-6" height="44" v-bind="props"
-                                :loading="updatingStatus">
+                            <v-btn
+                                color="primary"
+                                variant="flat"
+                                class="rounded-lg px-6"
+                                height="44"
+                                v-bind="props"
+                                :loading="updatingStatus"
+                            >
                                 <EditIcon size="18" class="mr-2" />
                                 Cập nhật trạng thái
                             </v-btn>
                         </template>
                         <v-list class="rounded-lg shadow-xl">
                             <!-- Luồng chuyển tiếp thông thường -->
-                            <v-list-item v-if="getOrderStatus() === 0" @click="requestStatusUpdate(1)"
-                                prepend-icon="mdi-check-circle-outline">
+                            <v-list-item
+                                v-if="getOrderStatus() === 0"
+                                @click="requestStatusUpdate(1)"
+                                prepend-icon="mdi-check-circle-outline"
+                            >
                                 <v-list-item-title>Xác nhận đơn hàng</v-list-item-title>
                             </v-list-item>
-                            <v-list-item v-if="getOrderStatus() === 1" @click="requestStatusUpdate(2)"
-                                prepend-icon="mdi-package-variant-closed">
+                            <v-list-item
+                                v-if="getOrderStatus() === 1"
+                                @click="requestStatusUpdate(2)"
+                                prepend-icon="mdi-package-variant-closed"
+                            >
                                 <v-list-item-title>Gửi chờ giao</v-list-item-title>
                             </v-list-item>
-                            <v-list-item v-if="getOrderStatus() === 2" @click="requestStatusUpdate(3)"
-                                prepend-icon="mdi-truck-fast-outline">
+                            <v-list-item
+                                v-if="getOrderStatus() === 2"
+                                @click="requestStatusUpdate(3)"
+                                prepend-icon="mdi-truck-fast-outline"
+                            >
                                 <v-list-item-title>Bắt đầu giao hàng</v-list-item-title>
                             </v-list-item>
                             <!-- Nút Hoàn thành (Hiển thị cho tất cả các trạng thái chưa hoàn thành) -->
                             <v-divider v-if="getOrderStatus() < 4"></v-divider>
-                            <v-list-item v-if="getOrderStatus() < 4" @click="requestStatusUpdate(4)" color="success"
-                                prepend-icon="mdi-checkbox-marked-circle-outline">
+                            <v-list-item
+                                v-if="getOrderStatus() < 4"
+                                @click="requestStatusUpdate(4)"
+                                color="success"
+                                prepend-icon="mdi-checkbox-marked-circle-outline"
+                            >
                                 <v-list-item-title class="text-success">
                                     {{ getOrderStatus() === 3 ? 'Giao hàng thành công' : 'Hoàn thành nhanh đơn hàng' }}
                                 </v-list-item-title>
                             </v-list-item>
                             <v-divider v-if="previousStatusMeta"></v-divider>
-                            <v-list-item v-if="previousStatusMeta" @click="requestStatusUpdate(previousStatus)"
-                                prepend-icon="mdi-undo-variant">
+                            <v-list-item
+                                v-if="previousStatusMeta"
+                                @click="requestStatusUpdate(previousStatus)"
+                                prepend-icon="mdi-undo-variant"
+                            >
                                 <v-list-item-title>Quay lại: {{ previousStatusMeta.text }}</v-list-item-title>
                             </v-list-item>
                             <v-divider></v-divider>
-                            <v-list-item v-if="getOrderStatus() < 4" @click="requestStatusUpdate(5)" color="error"
-                                prepend-icon="mdi-close">
+                            <v-list-item v-if="getOrderStatus() < 4" @click="requestStatusUpdate(5)" color="error" prepend-icon="mdi-close">
                                 <v-list-item-title class="text-error">Hủy đơn hàng</v-list-item-title>
                             </v-list-item>
-                            <v-list-item v-if="getOrderStatus() === 4" @click="requestStatusUpdate(6)"
-                                color="deep-purple" prepend-icon="mdi-cash-refund">
+                            <v-list-item
+                                v-if="getOrderStatus() === 4"
+                                @click="requestStatusUpdate(6)"
+                                color="deep-purple"
+                                prepend-icon="mdi-cash-refund"
+                            >
                                 <v-list-item-title class="text-deep-purple">Hoàn đơn</v-list-item-title>
                             </v-list-item>
                         </v-list>
@@ -414,8 +446,12 @@ onMounted(() => {
         <v-card elevation="0" class="premium-card-detail mb-6 pa-6 overflow-hidden premium-timeline bg-white">
             <div class="timeline-wrap">
                 <transition-group name="timeline-anim">
-                    <div v-for="(step, index) in timelineSteps" :key="step.key" class="timeline-step"
-                        :class="[step.state, step.state === 'active' ? 'text-' + step.tone : 'text-slate-400']">
+                    <div
+                        v-for="(step, index) in timelineSteps"
+                        :key="step.key"
+                        class="timeline-step"
+                        :class="[step.state, step.state === 'active' ? 'text-' + step.tone : 'text-slate-400']"
+                    >
                         <div class="node-section">
                             <div class="node" :class="step.state">
                                 <component :is="getStepIcon(step)" size="22" />
@@ -433,7 +469,7 @@ onMounted(() => {
             </div>
         </v-card>
 
-        <v-row v-if="loaded" class="gx-4" style="align-items: stretch;">
+        <v-row v-if="loaded" class="gx-4" style="align-items: stretch">
             <!-- Left Column: Primary Content (8/12) -->
             <v-col cols="12" lg="8" class="d-flex flex-column">
                 <!-- Customer Info -->
@@ -443,14 +479,12 @@ onMounted(() => {
                             <UserIcon size="20" class="mr-3 text-primary" />
                             <span class="text-slate-800">Thông tin khách hàng</span>
                         </div>
-
                     </div>
                     <v-card-text class="pa-4">
                         <v-row align="start" class="ga-1 customer-info-row">
                             <!-- Image Column -->
                             <v-col cols="auto">
-                                <v-avatar size="150"
-                                    class="rounded-xl shadow-lg border-2 border-primary-lighten-4 bg-white">
+                                <v-avatar size="150" class="rounded-xl shadow-lg border-2 border-primary-lighten-4 bg-white">
                                     <v-img :src="customerAvatarUrl" cover></v-img>
                                 </v-avatar>
                             </v-col>
@@ -525,26 +559,28 @@ onMounted(() => {
                     </div>
                     <v-card-text class="pa-0 d-flex flex-column flex-grow-1 overflow-hidden">
                         <!-- Table-style Headers for Timeline -->
-                        <div
-                            class="d-flex align-center w-100 px-4 py-2 bg-slate-800 border-b text-body-2 text-white">
-                            <div class="text-center" style="width: 42px;"></div> <!-- Space for timeline dots -->
-                            <div class="text-center" style="width: 110px;">Trạng thái</div>
+                        <div class="d-flex align-center w-100 px-4 py-2 bg-slate-800 border-b text-body-2 text-white">
+                            <div class="text-center" style="width: 42px"></div>
+                            <!-- Space for timeline dots -->
+                            <div class="text-center" style="width: 110px">Trạng thái</div>
                             <div class="text-center flex-grow-1">Mô tả</div>
-                            <div class="text-center" style="width: 150px;">Người thực hiện</div>
-                            <div class="text-center" style="width: 180px;">Thời gian</div>
+                            <div class="text-center" style="width: 150px">Người thực hiện</div>
+                            <div class="text-center" style="width: 180px">Thời gian</div>
                         </div>
 
                         <div class="history-scroll-container pa-3 flex-grow-1">
-                            <v-timeline side="end" density="compact" line-color="slate-200"
-                                class="custom-history-timeline">
+                            <v-timeline side="end" density="compact" line-color="slate-200" class="custom-history-timeline">
                                 <!-- Actual logs from DB -->
-                                <v-timeline-item v-for="(log, idx) in sortedHistoryLogs" :key="log.id || idx"
-                                    :dot-color="getStatusInfo(log.trangThaiMoi).color" size="small">
+                                <v-timeline-item
+                                    v-for="(log, idx) in sortedHistoryLogs"
+                                    :key="log.id || idx"
+                                    :dot-color="getStatusInfo(log.trangThaiMoi).color"
+                                    size="small"
+                                >
                                     <div class="d-flex align-center w-100 py-0">
                                         <!-- Column 1: Status -->
-                                        <div style="width: 110px;" class="text-center">
-                                            <v-chip variant="flat"
-                                                :class="['status-chip', getStatusInfo(log.trangThaiMoi).chipClass]">
+                                        <div style="width: 110px" class="text-center">
+                                            <v-chip variant="flat" :class="['status-chip', getStatusInfo(log.trangThaiMoi).chipClass]">
                                                 {{ getStatusInfo(log.trangThaiMoi).text }}
                                             </v-chip>
                                         </div>
@@ -557,14 +593,13 @@ onMounted(() => {
                                         </div>
 
                                         <!-- Column 3: Performer -->
-                                        <div style="width: 150px;" class="text-center">
-                                            <span class="text-body-2 text-slate-600">{{
-                                                log.nguoiThucHien || 'SYSTEM' }}</span>
+                                        <div style="width: 150px" class="text-center">
+                                            <span class="text-body-2 text-slate-600">{{ log.nguoiThucHien || 'SYSTEM' }}</span>
                                         </div>
 
                                         <!-- Column 4: Time -->
-                                        <div style="width: 180px;" class="text-center">
-                                            <span class="text-body-2 text-slate-400" style="white-space: nowrap;">
+                                        <div style="width: 180px" class="text-center">
+                                            <span class="text-body-2 text-slate-400" style="white-space: nowrap">
                                                 {{ formatDate(log.ngayTao) }}
                                             </span>
                                         </div>
@@ -573,13 +608,17 @@ onMounted(() => {
 
                                 <!-- Always show creation as the final step (at bottom) -->
                                 <v-timeline-item
-                                    v-if="!sortedHistoryLogs.some(l => l.trangThaiMoi === 'CHO_XAC_NHAN' || l.trangThaiMoi === 0)"
-                                    :dot-color="getStatusInfo(initialHistoryLog.trangThaiMoi).color" size="small">
+                                    v-if="!sortedHistoryLogs.some((l) => l.trangThaiMoi === 'CHO_XAC_NHAN' || l.trangThaiMoi === 0)"
+                                    :dot-color="getStatusInfo(initialHistoryLog.trangThaiMoi).color"
+                                    size="small"
+                                >
                                     <div class="d-flex align-center w-100 py-0">
                                         <!-- Column 1: Status -->
-                                        <div style="width: 110px;" class="text-center">
-                                            <v-chip variant="flat"
-                                                :class="['status-chip', getStatusInfo(initialHistoryLog.trangThaiMoi).chipClass]">
+                                        <div style="width: 110px" class="text-center">
+                                            <v-chip
+                                                variant="flat"
+                                                :class="['status-chip', getStatusInfo(initialHistoryLog.trangThaiMoi).chipClass]"
+                                            >
                                                 {{ getStatusInfo(initialHistoryLog.trangThaiMoi).text }}
                                             </v-chip>
                                         </div>
@@ -592,14 +631,13 @@ onMounted(() => {
                                         </div>
 
                                         <!-- Column 3: Performer -->
-                                        <div style="width: 150px;" class="text-center">
-                                            <span class="text-body-2 text-slate-600">{{
-                                                initialHistoryLog.nguoiThucHien }}</span>
+                                        <div style="width: 150px" class="text-center">
+                                            <span class="text-body-2 text-slate-600">{{ initialHistoryLog.nguoiThucHien }}</span>
                                         </div>
 
                                         <!-- Column 4: Time -->
-                                        <div style="width: 180px;" class="text-center">
-                                            <span class="text-body-2 text-slate-400" style="white-space: nowrap;">
+                                        <div style="width: 180px" class="text-center">
+                                            <span class="text-body-2 text-slate-400" style="white-space: nowrap">
                                                 {{ formatDate(initialHistoryLog.ngayTao) }}
                                             </span>
                                         </div>
@@ -610,7 +648,6 @@ onMounted(() => {
                     </v-card-text>
                 </v-card>
             </v-col>
-
 
             <!-- Right Column: Summary, Payments & Shipping (4/12) -->
             <v-col cols="12" lg="4" class="d-flex flex-column">
@@ -624,26 +661,20 @@ onMounted(() => {
                         <div class="summary-grid">
                             <div class="summary-row mb-2">
                                 <span class="text-slate-500">Tạm tính:</span>
-                                <span class="text-body-2 text-slate-800">{{
-                                    formatCurrency(order.tongTien)
-                                }}</span>
+                                <span class="text-body-2 text-slate-800">{{ formatCurrency(order.tongTien) }}</span>
                             </div>
                             <div class="summary-row mb-2 text-error">
                                 <span>Giảm giá:</span>
-                                <span class="text-body-2">- {{ formatCurrency(Math.abs(orderDiscountAmount))
-                                }}</span>
+                                <span class="text-body-2">- {{ formatCurrency(Math.abs(orderDiscountAmount)) }}</span>
                             </div>
                             <div class="summary-row mb-2">
                                 <span class="text-slate-500">Phí vận chuyển:</span>
-                                <span class="text-body-2 text-slate-800">{{
-                                    formatCurrency(order.phiVanChuyen || 0)
-                                    }}</span>
+                                <span class="text-body-2 text-slate-800">{{ formatCurrency(order.phiVanChuyen || 0) }}</span>
                             </div>
                             <v-divider class="my-2 border-opacity-25"></v-divider>
                             <div class="summary-row">
                                 <span class="text-body-2 text-slate-800">Tổng cộng:</span>
-                                <span class="text-body-2 text-primary">{{
-                                    formatCurrency(orderTotalAmount) }}</span>
+                                <span class="text-body-2 text-primary">{{ formatCurrency(orderTotalAmount) }}</span>
                             </div>
                         </div>
                     </div>
@@ -657,8 +688,11 @@ onMounted(() => {
                     </div>
                     <v-card-text class="pa-3">
                         <div v-if="order.listsGiaoDichThanhToan?.length" class="payment-list">
-                            <div v-for="pay in order.listsGiaoDichThanhToan" :key="pay.id"
-                                class="payment-item mb-2 pa-3 rounded-md border-dashed">
+                            <div
+                                v-for="pay in order.listsGiaoDichThanhToan"
+                                :key="pay.id"
+                                class="payment-item mb-2 pa-3 rounded-md border-dashed"
+                            >
                                 <div class="d-flex justify-space-between align-center">
                                     <div class="d-flex align-center">
                                         <div class="icon-wrap mr-3" :class="getPaymentItemClass(pay.loaiGiaoDich)">
@@ -667,25 +701,18 @@ onMounted(() => {
                                             </v-icon>
                                         </div>
                                         <div>
-                                            <div class="text-slate-800 text-body-2">{{
-                                                pay.tenPhuongThuc }}
-                                            </div>
-                                            <div class="text-body-2 text-slate-500">Mã GD: {{ pay.maGiaoDichNgoai ||
-                                                'Nội bộ'
-                                                }}</div>
+                                            <div class="text-slate-800 text-body-2">{{ pay.tenPhuongThuc }}</div>
+                                            <div class="text-body-2 text-slate-500">Mã GD: {{ pay.maGiaoDichNgoai || 'Nội bộ' }}</div>
                                         </div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="text-body-2 text-primary">{{ formatCurrency(pay.soTien)
-                                            }}</div>
+                                        <div class="text-body-2 text-primary">{{ formatCurrency(pay.soTien) }}</div>
                                         <div class="text-body-2 text-slate-400">{{ formatDate(pay.ngayTao) }}</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="text-center py-8 text-slate-400">
-                            Chưa có lịch sử giao dịch
-                        </div>
+                        <div v-else class="text-center py-8 text-slate-400">Chưa có lịch sử giao dịch</div>
                     </v-card-text>
                 </v-card>
 
@@ -699,16 +726,14 @@ onMounted(() => {
                     </div>
                     <v-card-text class="pa-3 flex-grow-1">
                         <div class="info-group mb-3">
-                            <div class="text-body-2 text-slate-500 mb-2">Loại đơn hàng
-                            </div>
+                            <div class="text-body-2 text-slate-500 mb-2">Loại đơn hàng</div>
                             <v-chip variant="tonal" color="primary">
                                 {{ orderTypeLabel }}
                             </v-chip>
                         </div>
                         <v-divider class="mb-3 border-opacity-10"></v-divider>
                         <div class="info-group mb-3">
-                            <div class="text-body-2 text-slate-500 mb-2">Địa chỉ nhận
-                            </div>
+                            <div class="text-body-2 text-slate-500 mb-2">Địa chỉ nhận</div>
                             <div class="text-body-2 text-slate-700 d-flex align-start">
                                 <MapPinIcon size="18" class="mr-2 text-error mt-1" />
                                 <span>{{ order.diaChi || 'Khách nhận tại quầy' }}</span>
@@ -731,24 +756,31 @@ onMounted(() => {
                 <LayoutGridIcon size="20" class="mr-3 text-primary" />
                 <span class="text-slate-800">Sản phẩm đã đặt</span>
             </div>
-            <AdminTable :headers="productColumns" :items="order.listsHoaDonChiTiet"
-                :showAddButton="false" hideToolbar class="all-center-table full-width-admin-table">
+            <AdminTable
+                :headers="productColumns"
+                :items="order.listsHoaDonChiTiet"
+                :showAddButton="false"
+                hideToolbar
+                class="all-center-table full-width-admin-table"
+            >
                 <template #row="{ item }">
                     <tr class="hover-row">
                         <td class="py-4">
                             <v-avatar size="80" class="rounded-lg border bg-slate-50 shadow-sm">
                                 <v-img
-                                    :src="item.chiTietSanPham?.hinhAnh || 'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg'"
-                                    cover></v-img>
+                                    :src="
+                                        item.chiTietSanPham?.hinhAnh ||
+                                        'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg'
+                                    "
+                                    cover
+                                ></v-img>
                             </v-avatar>
                         </td>
                         <td class="py-4">
-                            <div class="text-slate-900 text-body-2">{{
-                                item.chiTietSanPham?.sanPham?.ten || 'N/A' }}</div>
+                            <div class="text-slate-900 text-body-2">{{ item.chiTietSanPham?.sanPham?.ten || 'N/A' }}</div>
                         </td>
                         <td class="py-4">
-                            <div class="text-primary">#{{ item.chiTietSanPham?.maChiTietSanPham
-                                || 'N/A' }}</div>
+                            <div class="text-primary">#{{ item.chiTietSanPham?.maChiTietSanPham || 'N/A' }}</div>
                         </td>
                         <td class="py-4">
                             <span class="text-slate-600">
@@ -779,10 +811,17 @@ onMounted(() => {
             <div class="mt-4 text-slate-500">Đang tải thông tin hóa đơn...</div>
         </div>
         <!-- Confirmation Dialog -->
-        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
-            :color="confirmDialog.color" :loading="confirmDialog.loading" :show-input="confirmDialog.showInput"
-            :input-label="confirmDialog.inputLabel" :input-required="confirmDialog.inputRequired"
-            @confirm="note => confirmDialog.action(note)" />
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            :show-input="confirmDialog.showInput"
+            :input-label="confirmDialog.inputLabel"
+            :input-required="confirmDialog.inputRequired"
+            @confirm="(note) => confirmDialog.action(note)"
+        />
     </v-container>
 </template>
 
@@ -918,7 +957,6 @@ onMounted(() => {
 }
 
 @keyframes timeline-pulse {
-
     0%,
     100% {
         transform: scale(1);
@@ -930,8 +968,6 @@ onMounted(() => {
         box-shadow: 0 0 0 12px rgba(30, 37, 124, 0);
     }
 }
-
-
 
 /* Timeline Animations */
 .timeline-anim-enter-active {
@@ -1044,7 +1080,8 @@ onMounted(() => {
     }
 }
 
-.premium-card, .premium-card-detail {
+.premium-card,
+.premium-card-detail {
     border: 1px solid rgba(226, 232, 240, 0.8) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
 }

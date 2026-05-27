@@ -11,19 +11,19 @@ const BLUE_THEME = {
         success: '#4bd08b',
         warning: '#f8c076',
         error: '#fb977d',
-        indigo:'#8763da',
+        indigo: '#8763da',
         purple: '#9c27b0',
         orange: '#ff9800',
         pink: '#e91e63',
         teal: '#009688',
         grey: '#9e9e9e',
         lightprimary: '#f0f1ff',
-        lightinfo:'#e1f5fa',
+        lightinfo: '#e1f5fa',
         lightsecondary: '#e7ecf0',
         lightsuccess: '#dffff3',
         lighterror: '#ffede9',
         lightwarning: '#fff6ea',
-        lightindigo:'#f1ebff',
+        lightindigo: '#f1ebff',
         textPrimary: '#000000',
         textSecondary: '#000000',
         borderColor: '#e5eaef',
@@ -34,12 +34,10 @@ const BLUE_THEME = {
         surface: '#fff',
         grey100: '#000000',
         grey200: '#000000',
-        darkbg:'#2a3447',
-        bglight:'#f5f8fb',
-        bgdark:'#111c2d'
-       
+        darkbg: '#2a3447',
+        bglight: '#f5f8fb',
+        bgdark: '#111c2d'
     }
 };
 
-
-export { BLUE_THEME};
+export { BLUE_THEME };

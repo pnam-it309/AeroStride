@@ -14,11 +14,11 @@ export function useRefreshHandler() {
      */
     const handleRefresh = async (resetFn, delayMs = 800) => {
         if (isRefreshing.value) return;
-        
+
         isRefreshing.value = true;
         try {
             resetFn();
-            await new Promise(resolve => setTimeout(resolve, delayMs));
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
         } finally {
             isRefreshing.value = false;
         }

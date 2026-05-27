@@ -6,12 +6,11 @@
             margin: 0 auto;
             background-color: rgba(var(--v-theme-containerBg));
             border-radius: 18px;
-            box-shadow: 0 2px 6px rgba(37, 83, 185, .1) !important;
+            box-shadow: 0 2px 6px rgba(37, 83, 185, 0.1) !important;
 
-            >.v-btn:first-child {
+            > .v-btn:first-child {
                 margin-inline-start: 0;
             }
-
         }
 
         &.v-toolbar {
@@ -27,7 +26,7 @@
         }
 
         &.sticky {
-            top: 0 !important
+            top: 0 !important;
         }
     }
 
@@ -37,23 +36,18 @@
                 left: 85px !important;
             }
         }
-
     }
 }
 
-
-
-
-@media screen and (max-width:1600px) and (min-width:1280px) {
+@media screen and (max-width: 1600px) and (min-width: 1280px) {
     .verticalLayout {
         .v-app-bar.v-toolbar {
             max-width: calc((100% - 270px) - 60px) !important;
         }
     }
-
 }
 
-@media screen and (max-width:1279px) {
+@media screen and (max-width: 1279px) {
     .verticalLayout {
         .v-app-bar.v-toolbar {
             max-width: calc(100% - 40px - 0px) !important;
@@ -64,7 +58,6 @@
     .v-main {
         padding-left: calc(var(--v-layout-left) + 0px) !important;
     }
-
 }
 
 @media screen and (max-width: 767px) {
@@ -73,5 +66,4 @@
             max-width: calc(100% - 30px - 0px) !important;
         }
     }
-
 }

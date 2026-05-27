@@ -74,7 +74,7 @@ onMounted(() => {
 <template>
     <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page">
         <AdminBreadcrumbs :items="breadcrumbs" />
-        
+
         <div class="mb-2"></div>
 
         <div class="filter-top invoice-filter-shell">
@@ -94,13 +94,7 @@ onMounted(() => {
             </AdminFilter>
         </div>
 
-        <AdminTable
-            title="Lịch sử hoạt động hệ thống"
-            :headers="tableHeaders"
-            :items="items"
-            :loading="loading"
-            :show-add-button="false"
-        >
+        <AdminTable title="Lịch sử hoạt động hệ thống" :headers="tableHeaders" :items="items" :loading="loading" :show-add-button="false">
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>

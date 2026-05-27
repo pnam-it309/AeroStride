@@ -43,12 +43,12 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
             class="h-100 all-center-table"
         >
             <template #top>
-                <v-tabs 
+                <v-tabs
                     :model-value="tab"
                     @update:model-value="emit('update:tab', $event)"
-                    color="primary" 
-                    class="equal-tabs admin-tabs" 
-                    grow 
+                    color="primary"
+                    class="equal-tabs admin-tabs"
+                    grow
                     height="54"
                 >
                     <v-tab v-for="tabItem in tabs" :key="tabItem.value" :value="tabItem.value" class="text-none px-4 tab-item">
@@ -94,7 +94,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                                 <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
-                            
+
                             <!-- Switch -->
                             <div class="switch-wrapper d-flex align-center">
                                 <v-switch
@@ -130,4 +130,3 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
 <style scoped>
 /* Scoped styles removed in favor of global _admin-common.scss */
 </style>
-

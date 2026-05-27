@@ -40,17 +40,17 @@ const formatPrice = (price) => {
 
 const sizes = computed(() => {
     if (!product.value?.variants) return [];
-    const uniqueSizes = [...new Set(product.value.variants.map(v => v.tenKichThuoc))];
+    const uniqueSizes = [...new Set(product.value.variants.map((v) => v.tenKichThuoc))];
     return uniqueSizes.sort((a, b) => parseFloat(a) - parseFloat(b));
 });
 
 const allImages = computed(() => {
     if (!product.value?.variants) return [];
     const images = [];
-    product.value.variants.forEach(v => {
+    product.value.variants.forEach((v) => {
         if (v.images) {
-            v.images.forEach(img => {
-                if (!images.find(i => i.duongDanAnh === img.duongDanAnh)) {
+            v.images.forEach((img) => {
+                if (!images.find((i) => i.duongDanAnh === img.duongDanAnh)) {
                     images.push(img);
                 }
             });
@@ -62,7 +62,7 @@ const allImages = computed(() => {
 // Tìm variant phù hợp với size đã chọn
 const selectedVariant = computed(() => {
     if (!product.value?.variants || !selectedSize.value) return null;
-    return product.value.variants.find(v => v.tenKichThuoc === selectedSize.value);
+    return product.value.variants.find((v) => v.tenKichThuoc === selectedSize.value);
 });
 
 // Thêm vào giỏ hàng
@@ -78,7 +78,11 @@ const addToCart = () => {
     }
 
     addingToCart.value = true;
-    const firstImage = variant.images?.length ? variant.images[0].duongDanAnh : (allImages.value.length ? allImages.value[0].duongDanAnh : '');
+    const firstImage = variant.images?.length
+        ? variant.images[0].duongDanAnh
+        : allImages.value.length
+          ? allImages.value[0].duongDanAnh
+          : '';
 
     const result = cartStore.addToCart({
         idChiTietSanPham: variant.id,
@@ -106,8 +110,8 @@ const addToCart = () => {
 <template>
     <div class="product-detail-page bg-white min-vh-100">
         <MainHeader />
-        
-        <div class="header-spacing" style="height: 104px;"></div>
+
+        <div class="header-spacing" style="height: 104px"></div>
         <PromotionBar />
 
         <v-container class="mt-12" v-if="product">
@@ -129,7 +133,9 @@ const addToCart = () => {
                     <div class="sticky-info-panel px-md-8">
                         <div class="header-info mb-8">
                             <h1 class="product-title text-h4 font-weight-black mb-1">{{ product.tenSanPham }}</h1>
-                            <p class="product-cat text-subtitle-1 font-weight-bold grey--text">{{ product.tenDanhMuc }} - {{ product.tenThuongHieu }}</p>
+                            <p class="product-cat text-subtitle-1 font-weight-bold grey--text">
+                                {{ product.tenDanhMuc }} - {{ product.tenThuongHieu }}
+                            </p>
                             <div class="product-price mt-4 text-h6 font-weight-black">{{ formatPrice(product.giaBanThapNhat) }}</div>
                         </div>
 
@@ -141,9 +147,7 @@ const addToCart = () => {
                             </div>
                             <v-row class="g-2" v-if="sizes.length > 0">
                                 <v-col v-for="size in sizes" :key="size" cols="4">
-                                    <div class="size-box" 
-                                         :class="{ 'active': selectedSize === size }"
-                                         @click="selectedSize = size">
+                                    <div class="size-box" :class="{ active: selectedSize === size }" @click="selectedSize = size">
                                         {{ size }}
                                     </div>
                                 </v-col>
@@ -153,8 +157,15 @@ const addToCart = () => {
 
                         <!-- Action Buttons -->
                         <div class="action-buttons d-flex flex-column gap-4">
-                            <v-btn block size="x-large" color="black" rounded="pill" class="font-weight-black py-6"
-                                   :loading="addingToCart" @click="addToCart">
+                            <v-btn
+                                block
+                                size="x-large"
+                                color="black"
+                                rounded="pill"
+                                class="font-weight-black py-6"
+                                :loading="addingToCart"
+                                @click="addToCart"
+                            >
                                 <v-icon class="mr-2">mdi-bag-plus-outline</v-icon>
                                 Thêm vào giỏ hàng
                             </v-btn>
@@ -212,42 +223,105 @@ const addToCart = () => {
 }
 
 .image-placeholder-large {
-    width: 100%; aspect-ratio: 1; background: #f6f6f6;
-    display: flex; align-items: center; justify-content: center;
-    position: relative; border-radius: 4px;
-    .index-label { position: absolute; bottom: 20px; left: 20px; font-size: 0.65rem; font-weight: 900; color: #ccc; letter-spacing: 2px; }
+    width: 100%;
+    aspect-ratio: 1;
+    background: #f6f6f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-radius: 4px;
+    .index-label {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        font-size: 0.65rem;
+        font-weight: 900;
+        color: #ccc;
+        letter-spacing: 2px;
+    }
 }
 
 .sticky-info-panel {
-    position: sticky; top: 140px;
+    position: sticky;
+    top: 140px;
 }
 
-.product-cat { color: #111; }
-.product-price { color: #111; }
+.product-cat {
+    color: #111;
+}
+.product-price {
+    color: #111;
+}
 
-.size-guide { font-size: 0.9rem; color: #757575; text-decoration: none; font-weight: 600; border-bottom: 1px solid transparent; &:hover { border-bottom-color: #757575; } }
+.size-guide {
+    font-size: 0.9rem;
+    color: #757575;
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 1px solid transparent;
+    &:hover {
+        border-bottom-color: #757575;
+    }
+}
 
 .size-box {
-    border: 1px solid #e5e5e5; border-radius: 4px; padding: 12px; text-align: center;
-    font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
-    &:hover { border-color: #000; }
-    &.active { border-color: #000; background: #000; color: #fff; }
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 12px;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    &:hover {
+        border-color: #000;
+    }
+    &.active {
+        border-color: #000;
+        background: #000;
+        color: #fff;
+    }
 }
 
-.desc-text { font-size: 1.05rem; line-height: 1.8; color: #111; }
+.desc-text {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #111;
+}
 .spec-list {
     list-style: disc;
-    li { font-size: 0.9rem; margin-bottom: 8px; color: #111; font-weight: 500; }
+    li {
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        color: #111;
+        font-weight: 500;
+    }
 }
 
-:deep(.v-expansion-panel-title) { font-weight: 800; font-size: 1.1rem; padding: 24px 0; }
-:deep(.v-expansion-panel-text__wrapper) { padding: 0 0 24px 0; }
+:deep(.v-expansion-panel-title) {
+    font-weight: 800;
+    font-size: 1.1rem;
+    padding: 24px 0;
+}
+:deep(.v-expansion-panel-text__wrapper) {
+    padding: 0 0 24px 0;
+}
 
-.gap-4 { gap: 16px; }
+.gap-4 {
+    gap: 16px;
+}
 
-.aspect-square { aspect-ratio: 1; }
+.aspect-square {
+    aspect-ratio: 1;
+}
 
 @media (max-width: 960px) {
-    .sticky-info-panel { position: relative; top: 0; padding: 0; margin-top: 40px; }
+    .sticky-info-panel {
+        position: relative;
+        top: 0;
+        padding: 0;
+        margin-top: 40px;
+    }
 }
 </style>

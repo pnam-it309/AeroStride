@@ -14,18 +14,18 @@ export const STATUS = {
  */
 export const isActiveStatus = (status) => {
     if (status === null || status === undefined) return false;
-    
+
     // Nếu là Number (Backend cũ trả về 0 là active)
     if (typeof status === 'number') return status === 0;
-    
+
     // Nếu là Boolean
     if (typeof status === 'boolean') return status === true;
-    
+
     const normalized = String(status).toUpperCase();
     return (
-        normalized === STATUS.ACTIVE || 
-        normalized === 'ACTIVE' || 
-        normalized === 'HOAT_DONG' || 
+        normalized === STATUS.ACTIVE ||
+        normalized === 'ACTIVE' ||
+        normalized === 'HOAT_DONG' ||
         normalized === 'NGUNG_HOAT_DONG' ||
         normalized === 'KHONG_HOAT_DONG' ||
         normalized === '0' ||

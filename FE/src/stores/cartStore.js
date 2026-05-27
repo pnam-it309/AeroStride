@@ -10,7 +10,7 @@ export const useCartStore = defineStore('cart', {
 
     getters: {
         cartCount: (state) => state.items.reduce((sum, item) => sum + item.soLuong, 0),
-        
+
         cartTotal: (state) => state.items.reduce((sum, item) => sum + item.giaBan * item.soLuong, 0),
 
         cartItems: (state) => state.items,
@@ -25,8 +25,8 @@ export const useCartStore = defineStore('cart', {
 
         addToCart(product) {
             // product: { idChiTietSanPham, tenSanPham, hinhAnh, tenMauSac, tenKichThuoc, giaBan, soLuong, soLuongTonKho }
-            const existing = this.items.find(i => i.idChiTietSanPham === product.idChiTietSanPham);
-            
+            const existing = this.items.find((i) => i.idChiTietSanPham === product.idChiTietSanPham);
+
             if (existing) {
                 const newQty = existing.soLuong + (product.soLuong || 1);
                 if (newQty > (product.soLuongTonKho || 99)) {
@@ -51,12 +51,12 @@ export const useCartStore = defineStore('cart', {
         },
 
         removeFromCart(idChiTietSanPham) {
-            this.items = this.items.filter(i => i.idChiTietSanPham !== idChiTietSanPham);
+            this.items = this.items.filter((i) => i.idChiTietSanPham !== idChiTietSanPham);
             this._persist();
         },
 
         updateQuantity(idChiTietSanPham, soLuong) {
-            const item = this.items.find(i => i.idChiTietSanPham === idChiTietSanPham);
+            const item = this.items.find((i) => i.idChiTietSanPham === idChiTietSanPham);
             if (item) {
                 if (soLuong <= 0) {
                     this.removeFromCart(idChiTietSanPham);

@@ -50,7 +50,4 @@ export const GIOI_TINH_OPTIONS = [
     { title: 'Nữ', value: false }
 ];
 
-export const GIOI_TINH_FILTER_OPTIONS = [
-    { title: 'Tất cả', value: null },
-    ...GIOI_TINH_OPTIONS
-];
+export const GIOI_TINH_FILTER_OPTIONS = [{ title: 'Tất cả', value: null }, ...GIOI_TINH_OPTIONS];

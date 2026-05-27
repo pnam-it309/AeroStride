@@ -20,7 +20,12 @@ const props = defineProps({ active: Boolean, warm: Boolean });
                 class="bento-col"
                 :class="`col-${columnIndex + 1}`"
             >
-                <div v-for="(item, itemIndex) in column" :key="`c${columnIndex}-${itemIndex}`" class="bento-card glass-card" :class="item.size">
+                <div
+                    v-for="(item, itemIndex) in column"
+                    :key="`c${columnIndex}-${itemIndex}`"
+                    class="bento-card glass-card"
+                    :class="item.size"
+                >
                     <div class="card-inner">
                         <div class="icon-wrap" :style="{ background: `${item.color}15` }">
                             <v-icon :color="item.color" size="24">{{ item.icon }}</v-icon>
@@ -60,9 +65,27 @@ const props = defineProps({ active: Boolean, warm: Boolean });
         opacity: 0.12;
     }
 
-    .glow-1 { width: 900px; height: 900px; background: #2962FF; top: -20%; left: -10%; }
-    .glow-2 { width: 700px; height: 700px; background: #00E676; bottom: -10%; right: -10%; }
-    .glow-3 { width: 520px; height: 520px; background: #6200EA; top: 35%; right: 20%; }
+    .glow-1 {
+        width: 900px;
+        height: 900px;
+        background: #2962ff;
+        top: -20%;
+        left: -10%;
+    }
+    .glow-2 {
+        width: 700px;
+        height: 700px;
+        background: #00e676;
+        bottom: -10%;
+        right: -10%;
+    }
+    .glow-3 {
+        width: 520px;
+        height: 520px;
+        background: #6200ea;
+        top: 35%;
+        right: 20%;
+    }
 }
 
 .diagonal-bento-wall {
@@ -91,21 +114,41 @@ const props = defineProps({ active: Boolean, warm: Boolean });
     transform-style: preserve-3d;
 }
 
-.col-1 { animation: scroll-up-loop 35s linear infinite running; }
-.col-2 { animation: scroll-down-loop 40s linear infinite running; }
-.col-3 { animation: scroll-up-loop 45s linear infinite running; }
-.col-4 { animation: scroll-down-loop 38s linear infinite running; }
-.col-5 { animation: scroll-up-loop 42s linear infinite running; }
-.col-6 { animation: scroll-down-loop 32s linear infinite running; }
+.col-1 {
+    animation: scroll-up-loop 35s linear infinite running;
+}
+.col-2 {
+    animation: scroll-down-loop 40s linear infinite running;
+}
+.col-3 {
+    animation: scroll-up-loop 45s linear infinite running;
+}
+.col-4 {
+    animation: scroll-down-loop 38s linear infinite running;
+}
+.col-5 {
+    animation: scroll-up-loop 42s linear infinite running;
+}
+.col-6 {
+    animation: scroll-down-loop 32s linear infinite running;
+}
 
 @keyframes scroll-up-loop {
-    0% { transform: translate3d(0, 0, 0); }
-    100% { transform: translate3d(0, -33.33%, 0); }
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+    100% {
+        transform: translate3d(0, -33.33%, 0);
+    }
 }
 
 @keyframes scroll-down-loop {
-    0% { transform: translate3d(0, -33.33%, 0); }
-    100% { transform: translate3d(0, 0, 0); }
+    0% {
+        transform: translate3d(0, -33.33%, 0);
+    }
+    100% {
+        transform: translate3d(0, 0, 0);
+    }
 }
 
 .bento-card {
@@ -114,14 +157,23 @@ const props = defineProps({ active: Boolean, warm: Boolean });
     border: 1px solid rgba(255, 255, 255, 0.58);
     border-radius: 28px;
     padding: 30px;
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), background 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    transition:
+        transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        background 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     box-shadow: 0 8px 26px rgba(0, 0, 0, 0.04);
     cursor: pointer;
     will-change: transform;
 
-    &.s { min-height: 180px; }
-    &.m { min-height: 250px; }
-    &.l { min-height: 320px; }
+    &.s {
+        min-height: 180px;
+    }
+    &.m {
+        min-height: 250px;
+    }
+    &.l {
+        min-height: 320px;
+    }
 
     &:hover {
         transform: scale(1.08) rotate(6deg) translateY(-10px);
@@ -129,8 +181,12 @@ const props = defineProps({ active: Boolean, warm: Boolean });
         box-shadow: 0 24px 50px rgba(0, 0, 0, 0.1);
         border-color: rgba(41, 98, 255, 0.25);
 
-        .icon-wrap { transform: scale(1.15) rotate(-8deg); }
-        h4 { color: #2962FF; }
+        .icon-wrap {
+            transform: scale(1.15) rotate(-8deg);
+        }
+        h4 {
+            color: #2962ff;
+        }
     }
 }
 

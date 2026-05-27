@@ -10,10 +10,8 @@ export function useLocation() {
     // Hàm chuẩn hóa địa danh cực mạnh để khớp lệnh
     const cleanName = (s) => {
         if (!s) return '';
-        let str = String(s).toLowerCase()
-            .replace(/\s+/g, ' ')
-            .trim();
-        
+        let str = String(s).toLowerCase().replace(/\s+/g, ' ').trim();
+
         // Đặc trị các thành phố lớn thường bị viết tắt
         if (str.includes('hồ chí minh') || str.includes('hcm')) return 'hcm';
         if (str.includes('hà nội') || str === 'hn') return 'hanoi';
@@ -29,7 +27,7 @@ export function useLocation() {
     const matchLocation = (list, name) => {
         if (!name) return null;
         const cleanN = cleanName(name);
-        return list.find(x => cleanName(x.name) === cleanN || cleanName(x.name).includes(cleanN) || cleanN.includes(cleanName(x.name)));
+        return list.find((x) => cleanName(x.name) === cleanN || cleanName(x.name).includes(cleanN) || cleanN.includes(cleanName(x.name)));
     };
 
     const fetchProvinces = async () => {

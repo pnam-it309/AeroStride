@@ -75,7 +75,7 @@ class ChatSocketService {
         // We simulate the topic by mapping destination to topic
         // e.g. /app/chat.send -> /topic/messages
         this.localBridge.postMessage({
-            topic: destination.replace('/app/', '/topic/'), 
+            topic: destination.replace('/app/', '/topic/'),
             payload: { ...payload, id: Date.now(), time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
         });
     }

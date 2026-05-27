@@ -10,13 +10,13 @@ export const useAuthStore = defineStore('auth', {
         loading: false,
         error: null
     }),
-    
+
     getters: {
         isLoggedIn: (state) => !!state.accessToken,
         isAdmin: (state) => state.user?.role === APP_ROLES.ADMIN,
-        isStaff: (state) => state.user?.role === APP_ROLES.STAFF,
+        isStaff: (state) => state.user?.role === APP_ROLES.STAFF
     },
-    
+
     actions: {
         async login(loginData) {
             this.loading = true;
@@ -36,7 +36,7 @@ export const useAuthStore = defineStore('auth', {
                 this.loading = false;
             }
         },
-        
+
         async logout() {
             await dichVuXacThuc.dangXuat();
             this.user = null;

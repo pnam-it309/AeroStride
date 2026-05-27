@@ -17,17 +17,17 @@ class WebSocketService {
             webSocketFactory: () => socket,
             reconnectDelay: 5000,
             heartbeatIncoming: 4000,
-            heartbeatOutgoing: 4000,
+            heartbeatOutgoing: 4000
         });
 
         this.stompClient.onConnect = (frame) => {
             this.connected = true;
             console.log('WebSocket Connected: ' + frame);
-            
+
             // Default global notifications
             this.subscribe('/topic/notifications', onMessageCallback);
             this.subscribe('/topic/messages', onMessageCallback);
-            
+
             // Subscribe to private notifications if user is logged in
             const user = JSON.parse(localStorage.getItem('user'));
             if (user && user.username) {
@@ -52,7 +52,7 @@ class WebSocketService {
         const subscription = this.stompClient.subscribe(destination, (message) => {
             callback(JSON.parse(message.body));
         });
-        
+
         this.subscriptions.set(destination, subscription);
         return subscription;
     }

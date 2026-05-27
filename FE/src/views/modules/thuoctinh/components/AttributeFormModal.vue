@@ -24,8 +24,8 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
 </script>
 
 <template>
-    <v-menu 
-        :model-value="show" 
+    <v-menu
+        :model-value="show"
         @update:model-value="emit('update:show', $event)"
         :activator="activator"
         :open-on-click="false"
@@ -48,7 +48,9 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                     <v-row dense>
                         <v-col cols="12">
                             <div class="form-group mb-4">
-                                <label class="popover-label">Mã {{ title }} <span class="text-lowercase text-slate-400">(Tự động)</span></label>
+                                <label class="popover-label"
+                                    >Mã {{ title }} <span class="text-lowercase text-slate-400">(Tự động)</span></label
+                                >
                                 <v-text-field
                                     :model-value="form.ma"
                                     readonly
@@ -132,16 +134,8 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
             </v-card-text>
 
             <div class="px-6 py-4 bg-slate-50 border-t d-flex justify-end gap-2">
-                <v-btn variant="text" color="slate-600" class="text-none px-4" @click="closeModal">
-                    Hủy
-                </v-btn>
-                <v-btn
-                    color="primary"
-                    variant="flat"
-                    class="text-none px-6 shadow-sm"
-                    @click="handleSave"
-                    :disabled="!form?.ten"
-                >
+                <v-btn variant="text" color="slate-600" class="text-none px-4" @click="closeModal"> Hủy </v-btn>
+                <v-btn color="primary" variant="flat" class="text-none px-6 shadow-sm" @click="handleSave" :disabled="!form?.ten">
                     <template #prepend>
                         <DeviceFloppyIcon size="16" />
                     </template>
@@ -154,7 +148,9 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
 
 <style scoped>
 .attribute-popover-card {
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
 }
 
 .popover-label {
@@ -166,7 +162,9 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
     padding-left: 4px;
 }
 
-.gap-2 { gap: 8px; }
+.gap-2 {
+    gap: 8px;
+}
 
 :deep(.modern-input .v-field) {
     border-radius: 10px !important;
@@ -218,4 +216,3 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
     font-weight: 600;
 }
 </style>
-

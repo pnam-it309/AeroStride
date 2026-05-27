@@ -18,20 +18,23 @@ const props = defineProps({ item: Object, level: { type: Number, default: 1 }, h
                     </div>
                 </template>
                 <v-list-item-title v-if="!hideTitle" class="sidebar-item-title font-weight-medium">{{ item.title }}</v-list-item-title>
-                
+
                 <template v-slot:append v-if="!hideTitle">
-                    <ChevronDownIcon 
-                        size="16" 
-                        class="rotate-icon transition-300" 
-                        :class="{ 'rotated': isOpen }"
-                    />
+                    <ChevronDownIcon size="16" class="rotate-icon transition-300" :class="{ rotated: isOpen }" />
                 </template>
             </v-list-item>
         </template>
 
         <!---Nested Items Wrapper with curtain effect-->
         <div class="nested-items-container">
-            <NavItem v-for="(subitem, i) in item.children" :key="i" :item="subitem" :level="level + 1" :hide-title="hideTitle" class="leftPadding" />
+            <NavItem
+                v-for="(subitem, i) in item.children"
+                :key="i"
+                :item="subitem"
+                :level="level + 1"
+                :hide-title="hideTitle"
+                class="leftPadding"
+            />
         </div>
     </v-list-group>
 </template>

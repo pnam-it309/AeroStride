@@ -25,12 +25,12 @@ export const PATH = {
     LOGIN: '/user/login',
     REGISTER: '/user/register',
     FORGOT_PASSWORD: '/user/forgot-password',
-    
+
     // Admin Auth
     ADMIN_LOGIN: '/admin/login',
     ADMIN_REGISTER: '/admin/register',
     ADMIN_FORGOT_PASSWORD: '/admin/forgot-password',
-    
+
     LOGOUT: '/auth/logout',
     SHOES: '/shoes',
     VOUCHERS: '/vouchers',
@@ -52,5 +52,5 @@ export const PATH = {
     ERROR_429: '/error/429',
     ERROR_500: '/error/500',
     ERROR_503: '/error/503',
-    ERROR_OFFLINE: '/error/offline',
+    ERROR_OFFLINE: '/error/offline'
 };

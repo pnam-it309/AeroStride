@@ -6,33 +6,24 @@
                     <img src="@/assets/images/backgrounds/errorimg.svg" class="error-image" alt="Offline" />
                     <div class="glitch-effect">Offline</div>
                 </div>
-                
+
                 <h1 class="text-h1 font-weight-black gradient-text mb-4">Mất kết nối!</h1>
-                <h2 class="text-h4 font-weight-bold text-slate-700 mb-8">
-                    Vui lòng kiểm tra lại kết nối internet của bạn.
-                </h2>
-                
+                <h2 class="text-h4 font-weight-bold text-slate-700 mb-8">Vui lòng kiểm tra lại kết nối internet của bạn.</h2>
+
                 <div class="d-flex justify-center gap-4">
-                    <v-btn 
-                        variant="flat" 
-                        size="x-large" 
-                        color="primary" 
-                        rounded="xl" 
-                        class="px-8 font-weight-bold elevation-8 action-btn" 
+                    <v-btn
+                        variant="flat"
+                        size="x-large"
+                        color="primary"
+                        rounded="xl"
+                        class="px-8 font-weight-bold elevation-8 action-btn"
                         @click="checkConnection"
                     >
                         <v-icon start icon="mdi-wifi-sync" class="mr-2"></v-icon>
                         Kiểm tra lại
                     </v-btn>
-                    
-                    <v-btn 
-                        variant="outlined" 
-                        size="x-large" 
-                        color="primary" 
-                        rounded="xl" 
-                        class="px-8 font-weight-bold action-btn" 
-                        to="/"
-                    >
+
+                    <v-btn variant="outlined" size="x-large" color="primary" rounded="xl" class="px-8 font-weight-bold action-btn" to="/">
                         Về trang chủ
                     </v-btn>
                 </div>
@@ -65,7 +56,7 @@ const checkConnection = () => {
 }
 
 .mesh-bg {
-    background-image: 
+    background-image:
         radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.05) 0px, transparent 50%),
         radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
 }
@@ -80,7 +71,7 @@ const checkConnection = () => {
 .error-image {
     width: 100%;
     max-width: 500px;
-    filter: drop-shadow(0 20px 30px rgba(0,0,0,0.1));
+    filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.1));
 }
 
 .image-wrapper {
@@ -118,8 +109,14 @@ const checkConnection = () => {
 }
 
 @keyframes scaleUp {
-    from { opacity: 0; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .orb {
@@ -146,8 +143,14 @@ const checkConnection = () => {
 }
 
 @media (max-width: 600px) {
-    .text-h1 { font-size: 3rem !important; }
-    .text-h4 { font-size: 1.25rem !important; }
-    .error-image { max-width: 300px; }
+    .text-h1 {
+        font-size: 3rem !important;
+    }
+    .text-h4 {
+        font-size: 1.25rem !important;
+    }
+    .error-image {
+        max-width: 300px;
+    }
 }
 </style>

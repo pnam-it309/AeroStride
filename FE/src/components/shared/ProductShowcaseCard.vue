@@ -49,7 +49,7 @@ const highlights = computed(() => {
             <div class="info-section pa-4">
                 <div class="category-text mb-1">{{ product.tenDanhMuc }}</div>
                 <h3 class="product-title mb-2">{{ product.tenSanPham }}</h3>
-                
+
                 <div class="price-wrap mb-4">
                     <span class="current-price">{{ formatPrice(product.giaBan) }}</span>
                     <span v-if="product.phanTramGiam > 0" class="old-price ml-2">
@@ -73,13 +73,7 @@ const highlights = computed(() => {
                 </div>
 
                 <!-- Action Button -->
-                <v-btn
-                    block
-                    color="black"
-                    rounded="pill"
-                    class="view-btn py-6"
-                    @click="emit('view-detail', product.idSanPham)"
-                >
+                <v-btn block color="black" rounded="pill" class="view-btn py-6" @click="emit('view-detail', product.idSanPham)">
                     <span class="mr-2">Xem chi tiết</span>
                     <v-icon size="small">mdi-arrow-right</v-icon>
                 </v-btn>
@@ -103,7 +97,7 @@ const highlights = computed(() => {
         transform: translateY(-8px);
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
         border-color: #000;
-        
+
         .product-image {
             transform: scale(1.05);
         }

@@ -5,14 +5,14 @@ import { APP_ROLES } from '@/constants/appConstants';
 export function requireAuth(to, from, next) {
     if (dichVuXacThuc.daDangNhap()) {
         const user = dichVuXacThuc.layUserHienTai();
-        
+
         // Nếu là khách hàng cố tình truy cập vào vùng quản trị (admin)
         if (to.path.startsWith('/admin') && user && user.role === APP_ROLES.CUSTOMER) {
             next('/'); // Chuyển hướng về trang chủ của khách hàng
         } else if (!to.path.startsWith('/admin') && user && (user.role === APP_ROLES.ADMIN || user.role === APP_ROLES.STAFF)) {
             // Nếu là admin hoặc nhân viên mà cố tình truy cập các trang cá nhân/đơn hàng riêng biệt của khách hàng
             const customerOnlyPaths = ['/my-orders', '/profile', '/thanh-toan'];
-            if (customerOnlyPaths.some(p => to.path.startsWith(p))) {
+            if (customerOnlyPaths.some((p) => to.path.startsWith(p))) {
                 next(PATH.DASHBOARD); // Chuyển hướng về trang dashboard quản trị
             } else {
                 next();
@@ -37,30 +37,30 @@ export function requireAuth(to, from, next) {
 }
 
 export function requireGuest(to, from, next) {
-  const user = dichVuXacThuc.layUserHienTai();
-  if (!dichVuXacThuc.daDangNhap() || !user) {
-    next();
-  } else {
-    if (user.role === APP_ROLES.CUSTOMER) {
-      next('/'); // Đã đăng nhập với tư cách khách hàng thì đưa về trang chủ
-    } else if (user.role === APP_ROLES.ADMIN || user.role === APP_ROLES.STAFF) {
-      next(PATH.DASHBOARD); // Đã đăng nhập với tư cách admin/staff thì đưa về trang dashboard quản trị
+    const user = dichVuXacThuc.layUserHienTai();
+    if (!dichVuXacThuc.daDangNhap() || !user) {
+        next();
     } else {
-      next('/');
+        if (user.role === APP_ROLES.CUSTOMER) {
+            next('/'); // Đã đăng nhập với tư cách khách hàng thì đưa về trang chủ
+        } else if (user.role === APP_ROLES.ADMIN || user.role === APP_ROLES.STAFF) {
+            next(PATH.DASHBOARD); // Đã đăng nhập với tư cách admin/staff thì đưa về trang dashboard quản trị
+        } else {
+            next('/');
+        }
     }
-  }
 }
 
 export function requireRole(role) {
-  return (to, from, next) => {
-    if (dichVuXacThuc.daDangNhap() && dichVuXacThuc.coVaiTro(role)) {
-      next();
-    } else {
-      if (to.path.startsWith('/admin')) {
-        next(PATH.ADMIN_LOGIN);
-      } else {
-        next(PATH.LOGIN);
-      }
-    }
-  };
+    return (to, from, next) => {
+        if (dichVuXacThuc.daDangNhap() && dichVuXacThuc.coVaiTro(role)) {
+            next();
+        } else {
+            if (to.path.startsWith('/admin')) {
+                next(PATH.ADMIN_LOGIN);
+            } else {
+                next(PATH.LOGIN);
+            }
+        }
+    };
 }

@@ -5,14 +5,14 @@ export const useNotificationStore = defineStore('notification', {
     state: () => ({
         notifications: [],
         unreadChatCount: 0,
-        isConnected: false,
+        isConnected: false
     }),
-    
+
     getters: {
-        unreadCount: (state) => state.notifications.filter(n => !n.read).length,
-        totalUnread: (state) => state.notifications.filter(n => !n.read).length + state.unreadChatCount,
+        unreadCount: (state) => state.notifications.filter((n) => !n.read).length,
+        totalUnread: (state) => state.notifications.filter((n) => !n.read).length + state.unreadChatCount
     },
-    
+
     actions: {
         init() {
             if (!this.isConnected) {
@@ -59,10 +59,10 @@ export const useNotificationStore = defineStore('notification', {
                 message: message.message || message.body || 'Bạn có một thông báo mới',
                 type: message.type || 'info',
                 timestamp: new Date(),
-                read: false,
+                read: false
             };
             this.notifications.unshift(notification);
-            
+
             // Limit stored notifications
             if (this.notifications.length > 50) {
                 this.notifications.pop();
@@ -70,14 +70,14 @@ export const useNotificationStore = defineStore('notification', {
         },
 
         markAsRead(id) {
-            const index = this.notifications.findIndex(n => n.id === id);
+            const index = this.notifications.findIndex((n) => n.id === id);
             if (index !== -1) {
                 this.notifications[index].read = true;
             }
         },
 
         markAllAsRead() {
-            this.notifications.forEach(n => (n.read = true));
+            this.notifications.forEach((n) => (n.read = true));
         },
 
         clearAll() {

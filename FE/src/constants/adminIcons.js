@@ -3,12 +3,12 @@
  * Use this file to maintain visual consistency across all management modules.
  */
 
-import { 
-    PencilIcon, 
-    TrashIcon, 
-    EyeIcon, 
-    PlusIcon, 
-    DownloadIcon, 
+import {
+    PencilIcon,
+    TrashIcon,
+    EyeIcon,
+    PlusIcon,
+    DownloadIcon,
     UploadIcon,
     SearchIcon,
     RefreshIcon,
@@ -35,7 +35,7 @@ export const ADMIN_ICONS = {
         MORE: DotsVerticalIcon,
         MAP: MapPinIcon
     },
-    
+
     // Feature Icons
     COMMON: {
         SEARCH: SearchIcon,

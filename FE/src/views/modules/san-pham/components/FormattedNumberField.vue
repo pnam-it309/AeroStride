@@ -63,19 +63,19 @@ const formatNumericValue = (value) => {
     return numberFormatter.format(parsedValue);
 };
 
-const normalizedRules = computed(() => props.rules.map((rule) => {
-    if (typeof rule !== 'function') {
-        return rule;
-    }
+const normalizedRules = computed(() =>
+    props.rules.map((rule) => {
+        if (typeof rule !== 'function') {
+            return rule;
+        }
 
-    return (value) => {
-        const parsedValue = parseNumericValue(value);
-        const normalizedValue = parsedValue === '' && String(value ?? '').trim() === ''
-            ? ''
-            : parsedValue;
-        return rule(normalizedValue);
-    };
-}));
+        return (value) => {
+            const parsedValue = parseNumericValue(value);
+            const normalizedValue = parsedValue === '' && String(value ?? '').trim() === '' ? '' : parsedValue;
+            return rule(normalizedValue);
+        };
+    })
+);
 
 watch(
     () => props.modelValue,
@@ -96,7 +96,17 @@ const handleInput = (value) => {
 </script>
 
 <template>
-    <v-text-field :model-value="displayValue" @update:model-value="handleInput" :placeholder="placeholder"
-        :rules="normalizedRules" :variant="variant" :density="density" :hide-details="hideDetails" :suffix="suffix"
-        :disabled="disabled" :readonly="readonly" inputmode="numeric" />
+    <v-text-field
+        :model-value="displayValue"
+        @update:model-value="handleInput"
+        :placeholder="placeholder"
+        :rules="normalizedRules"
+        :variant="variant"
+        :density="density"
+        :hide-details="hideDetails"
+        :suffix="suffix"
+        :disabled="disabled"
+        :readonly="readonly"
+        inputmode="numeric"
+    />
 </template>

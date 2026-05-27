@@ -1,20 +1,20 @@
 <template>
-  <v-app>
-    <RouterView v-slot="{ Component }">
-      <transition name="page-fade" mode="out-in">
-        <component :is="Component" />
-      </transition>
-    </RouterView>
-  </v-app>
+    <v-app>
+        <RouterView v-slot="{ Component }">
+            <transition name="page-fade" mode="out-in">
+                <component :is="Component" />
+            </transition>
+        </RouterView>
+    </v-app>
 </template>
 <script setup>
-import { RouterView } from "vue-router";
+import { RouterView } from 'vue-router';
 </script>
 
 <style scoped>
 .page-fade-enter-active,
 .page-fade-leave-active {
-    transition: 
+    transition:
         opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
         transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

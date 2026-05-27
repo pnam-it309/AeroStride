@@ -15,7 +15,7 @@ const chatMessages = ref([]);
 
 // Filter out system messages for admin view
 const displayMessages = computed(() => {
-    return chatMessages.value.filter(m => m.sender !== CHAT_SENDER_TYPE.SYSTEM);
+    return chatMessages.value.filter((m) => m.sender !== CHAT_SENDER_TYPE.SYSTEM);
 });
 
 const newMessage = ref('');
@@ -39,7 +39,7 @@ const scrollToBottom = () => {
 
 // Computed list based on filters
 const filteredConversations = computed(() => {
-    return customers.value.filter(c => {
+    return customers.value.filter((c) => {
         const matchesType = c.type === chatType.value;
         const matchesStatus = c.status === chatStatus.value;
         const matchesSearch = c.name.toLowerCase().includes(searchQuery.value.toLowerCase());
@@ -48,15 +48,15 @@ const filteredConversations = computed(() => {
 });
 
 const activeCount = computed(() => {
-    return customers.value.filter(c => c.type === chatType.value && c.status === 'ACTIVE').length;
+    return customers.value.filter((c) => c.type === chatType.value && c.status === 'ACTIVE').length;
 });
 
 const pendingCount = computed(() => {
-    return customers.value.filter(c => c.type === chatType.value && c.status === 'PENDING').length;
+    return customers.value.filter((c) => c.type === chatType.value && c.status === 'PENDING').length;
 });
 
 const closedCount = computed(() => {
-    return customers.value.filter(c => c.type === chatType.value && c.status === 'CLOSED').length;
+    return customers.value.filter((c) => c.type === chatType.value && c.status === 'CLOSED').length;
 });
 
 // Lấy danh sách hội thoại từ Backend
@@ -67,9 +67,9 @@ const fetchConversations = async (quiet = false) => {
     try {
         const response = await api.get(API_CHAT.CONVERSATIONS);
         customers.value = response.data?.data || [];
-        
+
         if (activeChat.value) {
-            const updatedChat = customers.value.find(c => c.id === activeChat.value.id);
+            const updatedChat = customers.value.find((c) => c.id === activeChat.value.id);
             if (updatedChat) {
                 activeChat.value.status = updatedChat.status;
                 activeChat.value.isAccepted = updatedChat.isAccepted;
@@ -78,7 +78,7 @@ const fetchConversations = async (quiet = false) => {
 
         if (activeChat.value && activeChat.value.id.startsWith('NEW_INTERNAL_')) {
             const realConv = customers.value.find(
-                c => c.type === CHAT_TYPES.INTERNAL && c.name === activeChat.value.name && !c.id.startsWith('NEW_INTERNAL_')
+                (c) => c.type === CHAT_TYPES.INTERNAL && c.name === activeChat.value.name && !c.id.startsWith('NEW_INTERNAL_')
             );
             if (realConv) {
                 activeChat.value = realConv;
@@ -108,7 +108,7 @@ const fetchMessages = async (conversationId) => {
 
 const sendMessage = async () => {
     if (!newMessage.value.trim() || !activeChat.value) return;
-    
+
     const messageData = {
         conversationId: activeChat.value.id,
         text: newMessage.value,
@@ -133,7 +133,7 @@ const selectChat = (customer) => {
 
 const acceptChat = async () => {
     if (!activeChat.value) return;
-    
+
     try {
         const response = await api.post(API_CHAT.ACCEPT(activeChat.value.id));
         if (response.data?.success) {
@@ -149,7 +149,7 @@ const acceptChat = async () => {
 
 const closeChat = async () => {
     if (!activeChat.value) return;
-    
+
     try {
         const response = await api.post(API_CHAT.CLOSE(activeChat.value.id));
         if (response.data?.success) {
@@ -172,15 +172,15 @@ onMounted(() => {
 
         chatSocket.subscribe(CHAT_TOPICS.MESSAGES, (msg) => {
             const data = typeof msg === 'string' ? JSON.parse(msg) : msg;
-            
+
             const currentUsername = authStore.user?.username;
             const isMyChat = !data.staffId || data.staffId === currentUsername || data.secondStaffId === currentUsername;
-            
+
             if (!isMyChat) return;
 
             if (data.sender === currentUsername) {
                 if (activeChat.value && data.conversationId === activeChat.value.id) {
-                    if (!chatMessages.value.find(m => m.id === data.id)) {
+                    if (!chatMessages.value.find((m) => m.id === data.id)) {
                         chatMessages.value.push(data);
                         scrollToBottom();
                     }
@@ -240,7 +240,7 @@ onMounted(() => {
                             Đóng ({{ closedCount }})
                         </v-chip>
                     </v-chip-group>
-                    
+
                     <v-text-field
                         v-model="searchQuery"
                         prepend-inner-icon="mdi-magnify"
@@ -253,7 +253,7 @@ onMounted(() => {
                         class="mt-2 search-field"
                     ></v-text-field>
                 </div>
-                
+
                 <div v-if="isLoading" class="d-flex justify-center align-center py-10">
                     <v-progress-circular indeterminate color="#1a56db"></v-progress-circular>
                 </div>
@@ -268,7 +268,14 @@ onMounted(() => {
                     >
                         <template v-slot:prepend>
                             <v-avatar size="44" class="conv-avatar">
-                                <v-img :src="(!c.avatar || c.avatar.length <= 2) ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : c.avatar" alt="avatar"></v-img>
+                                <v-img
+                                    :src="
+                                        !c.avatar || c.avatar.length <= 2
+                                            ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'
+                                            : c.avatar
+                                    "
+                                    alt="avatar"
+                                ></v-img>
                             </v-avatar>
                         </template>
                         <v-list-item-title class="conv-name">{{ c.name }}</v-list-item-title>
@@ -280,7 +287,7 @@ onMounted(() => {
                             </div>
                         </template>
                     </v-list-item>
-                    
+
                     <div v-if="filteredConversations.length === 0" class="text-center py-16 px-4">
                         <v-icon size="48" color="grey-lighten-1">mdi-message-off-outline</v-icon>
                         <div class="mt-3" style="color: #64748b">Không có cuộc trò chuyện nào</div>
@@ -296,21 +303,52 @@ onMounted(() => {
                     <div class="main-header">
                         <div class="d-flex align-center">
                             <v-avatar size="42" class="mr-3 main-avatar">
-                                <v-img :src="(!activeChat.avatar || activeChat.avatar.length <= 2) ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' : activeChat.avatar" alt="avatar"></v-img>
+                                <v-img
+                                    :src="
+                                        !activeChat.avatar || activeChat.avatar.length <= 2
+                                            ? 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png'
+                                            : activeChat.avatar
+                                    "
+                                    alt="avatar"
+                                ></v-img>
                             </v-avatar>
                             <div>
                                 <div class="main-chat-name">{{ activeChat.name }}</div>
                                 <div class="d-flex align-center">
                                     <span class="status-indicator" :class="activeChat.status.toLowerCase()"></span>
                                     <span class="status-label" :class="activeChat.status.toLowerCase()">
-                                        {{ activeChat.status === 'ACTIVE' ? 'Đang hoạt động' : activeChat.status === 'PENDING' ? 'Chờ tiếp nhận' : 'Đã đóng' }}
+                                        {{
+                                            activeChat.status === 'ACTIVE'
+                                                ? 'Đang hoạt động'
+                                                : activeChat.status === 'PENDING'
+                                                  ? 'Chờ tiếp nhận'
+                                                  : 'Đã đóng'
+                                        }}
                                     </span>
                                 </div>
                             </div>
                         </div>
                         <div class="d-flex align-center ga-2">
-                            <v-btn v-if="activeChat.status === 'PENDING'" color="#1a56db" variant="flat" prepend-icon="mdi-check-circle" @click="acceptChat" class="rounded-lg px-6 text-none font-weight-bold" style="letter-spacing: 0">Tiếp nhận</v-btn>
-                            <v-btn v-if="activeChat.status === 'PENDING' || activeChat.status === 'ACTIVE'" color="error" variant="flat" prepend-icon="mdi-close-circle" @click="closeChat" class="rounded-lg px-6 text-none font-weight-bold" style="letter-spacing: 0">Đóng phiên</v-btn>
+                            <v-btn
+                                v-if="activeChat.status === 'PENDING'"
+                                color="#1a56db"
+                                variant="flat"
+                                prepend-icon="mdi-check-circle"
+                                @click="acceptChat"
+                                class="rounded-lg px-6 text-none font-weight-bold"
+                                style="letter-spacing: 0"
+                                >Tiếp nhận</v-btn
+                            >
+                            <v-btn
+                                v-if="activeChat.status === 'PENDING' || activeChat.status === 'ACTIVE'"
+                                color="error"
+                                variant="flat"
+                                prepend-icon="mdi-close-circle"
+                                @click="closeChat"
+                                class="rounded-lg px-6 text-none font-weight-bold"
+                                style="letter-spacing: 0"
+                                >Đóng phiên</v-btn
+                            >
                             <v-btn icon="mdi-dots-vertical" variant="text" color="grey-darken-1"></v-btn>
                         </div>
                     </div>
@@ -321,14 +359,23 @@ onMounted(() => {
                             <v-progress-circular indeterminate color="#1a56db" size="32"></v-progress-circular>
                         </div>
                         <template v-else>
-                            <div v-for="(m, idx) in displayMessages" :key="m.id || idx" 
-                                 class="msg-row"
-                                 :class="m.sender === authStore.user?.username ? 'is-mine' : 'is-other'">
+                            <div
+                                v-for="(m, idx) in displayMessages"
+                                :key="m.id || idx"
+                                class="msg-row"
+                                :class="m.sender === authStore.user?.username ? 'is-mine' : 'is-other'"
+                            >
                                 <div class="msg-bubble" :class="m.sender === authStore.user?.username ? 'bubble-mine' : 'bubble-other'">
                                     <div class="bubble-text">{{ m.text }}</div>
                                     <div class="bubble-meta">
                                         <span class="bubble-time">{{ m.time }}</span>
-                                        <v-icon v-if="m.sender === authStore.user?.username" size="14" color="rgba(255,255,255,0.7)" class="ml-1">mdi-check-all</v-icon>
+                                        <v-icon
+                                            v-if="m.sender === authStore.user?.username"
+                                            size="14"
+                                            color="rgba(255,255,255,0.7)"
+                                            class="ml-1"
+                                            >mdi-check-all</v-icon
+                                        >
                                     </div>
                                 </div>
                             </div>
@@ -360,7 +407,15 @@ onMounted(() => {
                                     :disabled="activeChat.status === 'PENDING' || activeChat.status === 'CLOSED'"
                                 ></v-textarea>
                             </v-col>
-                            <v-btn icon="mdi-send" color="#1a56db" variant="flat" elevation="0" class="ml-3 rounded-xl" @click="sendMessage" :disabled="!newMessage.trim() || activeChat.status === 'PENDING' || activeChat.status === 'CLOSED'"></v-btn>
+                            <v-btn
+                                icon="mdi-send"
+                                color="#1a56db"
+                                variant="flat"
+                                elevation="0"
+                                class="ml-3 rounded-xl"
+                                @click="sendMessage"
+                                :disabled="!newMessage.trim() || activeChat.status === 'PENDING' || activeChat.status === 'CLOSED'"
+                            ></v-btn>
                         </v-row>
                     </div>
                 </template>
@@ -454,21 +509,32 @@ $blue-bg: #f0f4f8;
     :deep(.v-field__input) {
         color: #1e293b !important;
         font-size: 0.85rem;
-        &::placeholder { color: #94a3b8 !important; }
+        &::placeholder {
+            color: #94a3b8 !important;
+        }
     }
-    :deep(.v-icon) { color: #94a3b8 !important; }
+    :deep(.v-icon) {
+        color: #94a3b8 !important;
+    }
 }
 
 .conv-list {
-    &::-webkit-scrollbar { width: 4px; }
-    &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
 }
 
 .conv-item {
     padding: 14px 16px !important;
     border-bottom: 1px solid #f1f5f9;
     transition: background 0.2s ease;
-    &:hover { background: #f8fafc !important; }
+    &:hover {
+        background: #f8fafc !important;
+    }
     &.v-list-item--active {
         background: #e8eefb !important;
         border-left: 3px solid #1a56db;
@@ -510,7 +576,7 @@ $blue-bg: #f0f4f8;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     z-index: 10;
 }
 
@@ -532,46 +598,70 @@ $blue-bg: #f0f4f8;
     border-radius: 50%;
     display: inline-block;
     margin-right: 6px;
-    &.active { background: #10b981; box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
-    &.pending { background: #f59e0b; }
-    &.closed { background: #94a3b8; }
+    &.active {
+        background: #10b981;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+    &.pending {
+        background: #f59e0b;
+    }
+    &.closed {
+        background: #94a3b8;
+    }
 }
 
 .status-label {
     font-size: 0.75rem;
     font-weight: 700;
-    &.active { color: #10b981; }
-    &.pending { color: #f59e0b; }
-    &.closed { color: #94a3b8; }
+    &.active {
+        color: #10b981;
+    }
+    &.pending {
+        color: #f59e0b;
+    }
+    &.closed {
+        color: #94a3b8;
+    }
 }
 
 /* ========== MESSAGES ========== */
 .messages-area {
     padding: 24px;
-    &::-webkit-scrollbar { width: 5px; }
-    &::-webkit-scrollbar-thumb { background: #d0d7e2; border-radius: 10px; }
+    &::-webkit-scrollbar {
+        width: 5px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #d0d7e2;
+        border-radius: 10px;
+    }
 }
 
 .msg-row {
     display: flex;
     margin-bottom: 12px;
     width: 100%;
-    &.is-mine { justify-content: flex-end; }
-    &.is-other { justify-content: flex-start; }
+    &.is-mine {
+        justify-content: flex-end;
+    }
+    &.is-other {
+        justify-content: flex-start;
+    }
 }
 
 .msg-bubble {
     max-width: 60%;
     padding: 12px 16px;
     position: relative;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .bubble-mine {
     background: $blue-primary;
     color: #fff;
     border-radius: 18px 18px 4px 18px;
-    .bubble-time { color: rgba(255,255,255,0.65); }
+    .bubble-time {
+        color: rgba(255, 255, 255, 0.65);
+    }
 }
 
 .bubble-other {
@@ -579,7 +669,9 @@ $blue-bg: #f0f4f8;
     color: #1e293b;
     border-radius: 18px 18px 18px 4px;
     border: 1px solid #e5eaf0;
-    .bubble-time { color: #94a3b8; }
+    .bubble-time {
+        color: #94a3b8;
+    }
 }
 
 .bubble-text {
@@ -606,7 +698,7 @@ $blue-bg: #f0f4f8;
     background: #fff;
     border-top: 1px solid #e5eaf0;
     position: relative;
-    box-shadow: 0 -2px 8px rgba(0,0,0,0.03);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .input-textarea {
@@ -616,12 +708,15 @@ $blue-bg: #f0f4f8;
     }
 }
 
-.input-blur { filter: blur(3px); pointer-events: none; }
+.input-blur {
+    filter: blur(3px);
+    pointer-events: none;
+}
 
 .lock-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(255,255,255,0.92);
+    background: rgba(255, 255, 255, 0.92);
     z-index: 10;
     backdrop-filter: blur(4px);
     display: flex;

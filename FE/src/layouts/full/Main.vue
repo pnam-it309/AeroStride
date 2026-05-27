@@ -22,7 +22,7 @@ const { unreadChatCount } = storeToRefs(notificationStore);
 const { toggleSidebar } = uiStore;
 
 const sidebarMenu = computed(() => {
-    return sidebarItems.map(item => {
+    return sidebarItems.map((item) => {
         if (item.title === 'Quản lý tin nhắn' && unreadChatCount.value > 0) {
             return {
                 ...item,
@@ -62,8 +62,8 @@ onMounted(() => {
         <div class="sidebar-logo-wrap d-flex justify-center border-b" v-if="!sidebarCollapsed">
             <Logo />
         </div>
-        <div class="sidebar-logo-wrap d-flex justify-center border-b" v-else style="min-height: 64px; padding: 16px 0;">
-            <img src="@/assets/images/logos/logo.jpg" alt="logo" style="width: 32px; height: 32px; object-fit: contain;" />
+        <div class="sidebar-logo-wrap d-flex justify-center border-b" v-else style="min-height: 64px; padding: 16px 0">
+            <img src="@/assets/images/logos/logo.jpg" alt="logo" style="width: 32px; height: 32px; object-fit: contain" />
         </div>
 
         <perfect-scrollbar class="scrollnavbar bg-containerBg" :style="{ height: 'calc(100vh - 136px)' }">
@@ -92,7 +92,7 @@ onMounted(() => {
                     <v-btn class="mr-3 header-toggle-btn" @click="toggleSidebar" icon variant="text" color="slate-600">
                         <Menu2Icon size="22" stroke-width="2" />
                     </v-btn>
-                    
+
                     <v-breadcrumbs v-if="breadcrumbs.length" :items="breadcrumbs" class="pa-0 breadcrumbs-header">
                         <template v-slot:divider>
                             <v-icon size="small" color="grey-lighten-1">mdi-chevron-right</v-icon>
@@ -134,8 +134,8 @@ onMounted(() => {
     display: none !important;
 }
 
-.header-toggle-btn:focus, 
-.header-toggle-btn:active, 
+.header-toggle-btn:focus,
+.header-toggle-btn:active,
 .header-toggle-btn:focus-visible {
     background: transparent !important;
     background-color: transparent !important;

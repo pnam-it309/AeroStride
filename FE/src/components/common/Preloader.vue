@@ -37,11 +37,9 @@ onMounted(() => {
             <div class="content-box">
                 <div class="logo-wrapper">
                     <h1 class="brand-name">AEROSTRIDE</h1>
-                    <div class="version">ELITE INTERFACE </div>
+                    <div class="version">ELITE INTERFACE</div>
                 </div>
-                <div class="status-text">
-                    <span class="pulse">●</span> LOADING ASSETS...
-                </div>
+                <div class="status-text"><span class="pulse">●</span> LOADING ASSETS...</div>
             </div>
 
             <!-- Bottom Percentage -->
@@ -81,8 +79,12 @@ onMounted(() => {
 }
 
 @keyframes drift {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .topo-pattern {
@@ -116,7 +118,7 @@ onMounted(() => {
     bottom: 0;
     width: 6px;
     left: -2px;
-    background: #2962FF; /* Primary Blue */
+    background: #2962ff; /* Primary Blue */
     box-shadow: 0 0 15px rgba(41, 98, 255, 0.5);
     transition: height 0.1s ease;
 }
@@ -138,7 +140,7 @@ onMounted(() => {
 .version {
     font-size: 0.8rem;
     letter-spacing: 6px;
-    color: #2962FF;
+    color: #2962ff;
     margin-top: 15px;
     font-weight: 700;
 }
@@ -148,16 +150,21 @@ onMounted(() => {
     font-size: 0.9rem;
     letter-spacing: 3px;
     color: #64748b;
-    
+
     .pulse {
-        color: #2962FF;
+        color: #2962ff;
         animation: blink 1s infinite;
     }
 }
 
 @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.3;
+    }
 }
 
 .stats-box {
@@ -171,9 +178,15 @@ onMounted(() => {
     color: #1e293b;
     font-weight: 900;
     line-height: 1;
-    
-    .num { font-size: 6rem; }
-    .unit { font-size: 2rem; color: #2962FF; margin-left: 5px; }
+
+    .num {
+        font-size: 6rem;
+    }
+    .unit {
+        font-size: 2rem;
+        color: #2962ff;
+        margin-left: 5px;
+    }
 }
 
 .meta-info {
@@ -184,8 +197,16 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-    .brand-name { font-size: 2.5rem; letter-spacing: 10px; }
-    .stats-box { bottom: 30px; right: 30px; }
-    .percent-container .num { font-size: 3rem; }
+    .brand-name {
+        font-size: 2.5rem;
+        letter-spacing: 10px;
+    }
+    .stats-box {
+        bottom: 30px;
+        right: 30px;
+    }
+    .percent-container .num {
+        font-size: 3rem;
+    }
 }
 </style>

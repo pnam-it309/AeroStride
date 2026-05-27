@@ -15,7 +15,7 @@ const formatPrice = (price) => {
 };
 
 const handleQuantityChange = (id, delta) => {
-    const item = cartStore.items.find(i => i.idChiTietSanPham === id);
+    const item = cartStore.items.find((i) => i.idChiTietSanPham === id);
     if (item) {
         cartStore.updateQuantity(id, item.soLuong + delta);
     }
@@ -32,13 +32,7 @@ const handleCheckout = () => {
 </script>
 
 <template>
-    <v-navigation-drawer
-        v-model="cartStore.isDrawerOpen"
-        temporary
-        location="right"
-        width="420"
-        class="cart-drawer"
-    >
+    <v-navigation-drawer v-model="cartStore.isDrawerOpen" temporary location="right" width="420" class="cart-drawer">
         <!-- Header -->
         <div class="cart-header d-flex align-center justify-space-between px-6 py-5">
             <h3 class="text-h6 font-weight-black d-flex align-center">
@@ -59,14 +53,7 @@ const handleCheckout = () => {
                     <div class="d-flex gap-4">
                         <!-- Product Image -->
                         <div class="cart-item-image">
-                            <v-img
-                                v-if="item.hinhAnh"
-                                :src="item.hinhAnh"
-                                cover
-                                class="rounded-lg"
-                                width="90"
-                                height="90"
-                            ></v-img>
+                            <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover class="rounded-lg" width="90" height="90"></v-img>
                             <div v-else class="image-placeholder rounded-lg">
                                 <v-icon size="32" color="grey-lighten-2">mdi-shoe-sneaker</v-icon>
                             </div>
@@ -128,7 +115,10 @@ const handleCheckout = () => {
                 color="black"
                 rounded="pill"
                 class="font-weight-bold text-none"
-                @click="cartStore.closeDrawer(); router.push(PATH.SHOES)"
+                @click="
+                    cartStore.closeDrawer();
+                    router.push(PATH.SHOES);
+                "
             >
                 Khám phá sản phẩm
             </v-btn>
@@ -158,7 +148,10 @@ const handleCheckout = () => {
                     variant="outlined"
                     rounded="pill"
                     class="font-weight-bold text-none"
-                    @click="cartStore.closeDrawer(); router.push(PATH.SHOES)"
+                    @click="
+                        cartStore.closeDrawer();
+                        router.push(PATH.SHOES);
+                    "
                 >
                     Tiếp tục mua sắm
                 </v-btn>
@@ -176,22 +169,31 @@ const handleCheckout = () => {
 }
 
 .cart-header {
-    h3 { letter-spacing: -0.3px; }
+    h3 {
+        letter-spacing: -0.3px;
+    }
 }
 
 .cart-items-container {
     flex: 1;
     overflow-y: auto;
     scrollbar-width: thin;
-    &::-webkit-scrollbar { width: 4px; }
-    &::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #e0e0e0;
+        border-radius: 4px;
+    }
 }
 
 .cart-item {
     border-bottom: 1px solid #f5f5f5;
     transition: all 0.3s ease;
 
-    &:hover { background: #fafafa; }
+    &:hover {
+        background: #fafafa;
+    }
 }
 
 .image-placeholder {
@@ -214,7 +216,9 @@ const handleCheckout = () => {
 .quantity-controls {
     .v-btn {
         border-color: #e0e0e0;
-        &:hover { border-color: #000; }
+        &:hover {
+            border-color: #000;
+        }
     }
 }
 
@@ -230,9 +234,21 @@ const handleCheckout = () => {
 }
 
 /* Transitions */
-.cart-item-enter-active { transition: all 0.3s ease-out; }
-.cart-item-leave-active { transition: all 0.3s ease-in; }
-.cart-item-enter-from { opacity: 0; transform: translateX(30px); }
-.cart-item-leave-to { opacity: 0; transform: translateX(-30px); }
-.cart-item-move { transition: transform 0.3s ease; }
+.cart-item-enter-active {
+    transition: all 0.3s ease-out;
+}
+.cart-item-leave-active {
+    transition: all 0.3s ease-in;
+}
+.cart-item-enter-from {
+    opacity: 0;
+    transform: translateX(30px);
+}
+.cart-item-leave-to {
+    opacity: 0;
+    transform: translateX(-30px);
+}
+.cart-item-move {
+    transition: transform 0.3s ease;
+}
 </style>

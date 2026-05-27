@@ -7,54 +7,37 @@ const { globalLoading: overlay, progressBar, loadingMessage: message } = storeTo
 </script>
 
 <template>
-  <div>
-    <!-- TOP PROGRESS BAR (FOR NORMAL LOADING) -->
-    <v-progress-linear
-      :active="progressBar"
-      indeterminate
-      color="primary"
-      height="3"
-      class="top-progress-bar"
-    ></v-progress-linear>
+    <div>
+        <!-- TOP PROGRESS BAR (FOR NORMAL LOADING) -->
+        <v-progress-linear :active="progressBar" indeterminate color="primary" height="3" class="top-progress-bar"></v-progress-linear>
 
-    <!-- FULL SCREEN OVERLAY (FOR IMPORTANT RELOADS) -->
-    <v-overlay
-      :model-value="overlay"
-      class="align-center justify-center global-overlay"
-      persistent
-      scrim="#ffffff"
-    >
-      <div class="text-center">
-        <v-progress-circular
-          indeterminate
-          color="primary"
-          size="64"
-          width="6"
-          class="mb-4"
-        ></v-progress-circular>
-        <h2 class="text-h4 font-weight-black text-primary tracking-widest text-uppercase animate-bounce-slow">
-            {{ message }}
-        </h2>
-        <div class="mt-4 text-grey-darken-1 font-weight-bold">Vui lòng đợi trong giây lát...</div>
-      </div>
-    </v-overlay>
-  </div>
+        <!-- FULL SCREEN OVERLAY (FOR IMPORTANT RELOADS) -->
+        <v-overlay :model-value="overlay" class="align-center justify-center global-overlay" persistent scrim="#ffffff">
+            <div class="text-center">
+                <v-progress-circular indeterminate color="primary" size="64" width="6" class="mb-4"></v-progress-circular>
+                <h2 class="text-h4 font-weight-black text-primary tracking-widest text-uppercase animate-bounce-slow">
+                    {{ message }}
+                </h2>
+                <div class="mt-4 text-grey-darken-1 font-weight-bold">Vui lòng đợi trong giây lát...</div>
+            </div>
+        </v-overlay>
+    </div>
 </template>
 
 <style scoped>
 .top-progress-bar {
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 999999 !important;
-  margin: 0 !important;
-  padding: 0 !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999999 !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .global-overlay {
-  backdrop-filter: blur(15px);
-  z-index: 10000;
+    backdrop-filter: blur(15px);
+    z-index: 10000;
 }
 
 .loader-logo {
@@ -67,8 +50,15 @@ const { globalLoading: overlay, progressBar, loadingMessage: message } = storeTo
 }
 
 @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: .7; transform: scale(0.95); }
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(0.95);
+    }
 }
 
 .animate-bounce-slow {
@@ -76,8 +66,15 @@ const { globalLoading: overlay, progressBar, loadingMessage: message } = storeTo
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
-  50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+    0%,
+    100% {
+        transform: translateY(-5%);
+        animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+    50% {
+        transform: translateY(0);
+        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
 }
 
 .tracking-widest {

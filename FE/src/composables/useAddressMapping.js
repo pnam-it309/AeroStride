@@ -15,15 +15,15 @@ export function useAddressMapping() {
      */
     const mapCodesToNames = (form, provinces, districts, wards) => {
         const payload = { ...form };
-        
+
         const p = provinces.find((x) => x.code === form.tinh);
         const d = districts.find((x) => x.code === form.thanhPho);
         const w = wards.find((x) => x.code === form.phuongXa);
-        
+
         if (p) payload.tinh = p.name;
         if (d) payload.thanhPho = d.name;
         if (w) payload.phuongXa = w.name;
-        
+
         return payload;
     };
 
@@ -55,8 +55,8 @@ export function useAddressMapping() {
             return { tinh: null, thanhPho: null, phuongXa: null, diaChiChiTiet: addressString || '' };
         }
 
-        const parts = addressString.split(',').map(p => p.trim());
-        
+        const parts = addressString.split(',').map((p) => p.trim());
+
         if (parts.length >= ADDRESS_CONSTANTS.ADDRESS_PARTS_MIN) {
             // Định dạng: [Số nhà], [Phường], [Quận], [Tỉnh]
             return {

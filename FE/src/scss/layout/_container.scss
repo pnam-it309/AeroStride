@@ -18,7 +18,7 @@ html {
 .cursor-pointer {
     cursor: pointer;
 }
-@media screen and (min-width:1300px) {
+@media screen and (min-width: 1300px) {
     .maxWidth {
         max-width: 1600px;
         margin: 0 auto;
@@ -28,12 +28,12 @@ html {
     max-width: 1600px;
 }
 
-@media screen and (max-width:1024px) {
+@media screen and (max-width: 1024px) {
     .v-toolbar__content {
         justify-content: space-between;
     }
 
-    .v-toolbar__content>.v-btn:last-child {
+    .v-toolbar__content > .v-btn:last-child {
         margin-inline-end: 0px !important;
     }
 }

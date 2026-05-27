@@ -54,9 +54,12 @@ onMounted(async () => {
 });
 
 // Watchers
-watch(() => selectedOrder.value?.id, (id) => {
-    if (id) fetchVouchers();
-});
+watch(
+    () => selectedOrder.value?.id,
+    (id) => {
+        if (id) fetchVouchers();
+    }
+);
 
 // Logic: Hóa đơn
 const createNewOrder = async () => {
@@ -216,11 +219,11 @@ const onCheckout = () => {
                 };
                 await dichVuDonHang.checkout(selectedOrder.value.id, payload);
                 addNotification({ title: 'Thành công', subtitle: MESSAGES.SUCCESS.PAYMENT, color: 'success' });
-                
+
                 orders.value.splice(activeOrderIndex.value, 1);
                 if (orders.value.length === 0) await createNewOrder();
                 activeOrderIndex.value = 0;
-                
+
                 // Reset checkout data
                 checkoutData.value.receivedAmount = 0;
                 checkoutData.value.note = '';
@@ -237,7 +240,7 @@ const onCheckout = () => {
 
 // Helpers
 const updateOrderInList = (updated) => {
-    const idx = orders.value.findIndex(o => o.id === updated.id);
+    const idx = orders.value.findIndex((o) => o.id === updated.id);
     if (idx !== -1) orders.value[idx] = updated;
 };
 </script>
@@ -248,29 +251,22 @@ const updateOrderInList = (updated) => {
             <!-- Cột trái: Quản lý giỏ hàng & Sản phẩm -->
             <v-col cols="12" lg="8" class="main-panel border-r pa-6">
                 <!-- Tabs & Quick Actions -->
-                <OrderTabs 
-                    :orders="orders" 
+                <OrderTabs
+                    :orders="orders"
                     :active-index="activeOrderIndex"
-                    @select="idx => activeOrderIndex = idx"
+                    @select="(idx) => (activeOrderIndex = idx)"
                     @create="createNewOrder"
                     @close="closeOrder"
                 />
 
                 <!-- Search Bar -->
                 <div class="mb-6">
-                    <ProductPicker 
-                        :active-order-id="selectedOrder?.id"
-                        @add-product="onAddProduct"
-                    />
+                    <ProductPicker :active-order-id="selectedOrder?.id" @add-product="onAddProduct" />
                 </div>
 
                 <!-- Shopping Cart Table -->
                 <div class="cart-container">
-                    <CartTable 
-                        :items="selectedOrder?.listsHoaDonChiTiet"
-                        @update-qty="onUpdateQty"
-                        @remove="onRemoveItem"
-                    />
+                    <CartTable :items="selectedOrder?.listsHoaDonChiTiet" @update-qty="onUpdateQty" @remove="onRemoveItem" />
                 </div>
             </v-col>
 
@@ -279,7 +275,7 @@ const updateOrderInList = (updated) => {
                 <div v-if="selectedOrder" class="checkout-wrapper d-flex flex-column h-100">
                     <!-- Customer Section -->
                     <div class="mb-6">
-                        <CustomerSelector 
+                        <CustomerSelector
                             :selected-customer-name="selectedOrder.tenKhachHang"
                             :active-order-id="selectedOrder.id"
                             @select="onSelectCustomer"
@@ -290,7 +286,7 @@ const updateOrderInList = (updated) => {
                     <v-divider class="mb-6"></v-divider>
 
                     <!-- Checkout & Sum -->
-                    <CheckoutPanel 
+                    <CheckoutPanel
                         :order="selectedOrder"
                         :vouchers="vouchers"
                         :checkout-data="checkoutData"
@@ -299,7 +295,7 @@ const updateOrderInList = (updated) => {
                         @checkout="onCheckout"
                     />
                 </div>
-                
+
                 <div v-else class="fill-height d-flex align-center justify-center text-grey">
                     <v-progress-circular indeterminate color="primary"></v-progress-circular>
                 </div>
@@ -307,7 +303,7 @@ const updateOrderInList = (updated) => {
         </v-row>
 
         <!-- Confirmation Dialog -->
-        <AdminConfirm 
+        <AdminConfirm
             v-model:show="confirmDialog.show"
             :title="confirmDialog.title"
             :message="confirmDialog.message"
@@ -356,7 +352,8 @@ const updateOrderInList = (updated) => {
         height: auto;
         overflow-y: auto;
     }
-    .main-panel, .side-panel {
+    .main-panel,
+    .side-panel {
         height: auto;
     }
 }

@@ -59,12 +59,24 @@ const loadFilterOptions = async () => {
 
         const pick = (res) => res?.content || res || [];
         filterOptions.value = {
-            danhMuc: pick(dm).map((x) => x?.ten).filter(Boolean),
-            mauSac: pick(ms).map((x) => x?.ten).filter(Boolean),
-            chatLieu: pick(cl).map((x) => x?.ten).filter(Boolean),
-            kichCo: pick(kc).map((x) => x?.ten).filter(Boolean),
-            deGiay: pick(dg).map((x) => x?.ten).filter(Boolean),
-            thuongHieu: pick(th).map((x) => x?.ten).filter(Boolean)
+            danhMuc: pick(dm)
+                .map((x) => x?.ten)
+                .filter(Boolean),
+            mauSac: pick(ms)
+                .map((x) => x?.ten)
+                .filter(Boolean),
+            chatLieu: pick(cl)
+                .map((x) => x?.ten)
+                .filter(Boolean),
+            kichCo: pick(kc)
+                .map((x) => x?.ten)
+                .filter(Boolean),
+            deGiay: pick(dg)
+                .map((x) => x?.ten)
+                .filter(Boolean),
+            thuongHieu: pick(th)
+                .map((x) => x?.ten)
+                .filter(Boolean)
         };
     } catch (e) {
         console.error('Load filter options failed:', e);
@@ -373,7 +385,9 @@ const tableHeaders = [
                         </td>
                         <td>
                             <div class="font-weight-bold text-truncate" :title="p.tenSanPham">{{ p.tenSanPham }}</div>
-                            <div class="text-caption text-slate-500">Tồn: <b>{{ p.soLuongTon }}</b></div>
+                            <div class="text-caption text-slate-500">
+                                Tồn: <b>{{ p.soLuongTon }}</b>
+                            </div>
                         </td>
                         <td class="text-caption font-weight-bold">
                             <div class="text-truncate" :title="p.maChiTietSanPham">{{ p.maChiTietSanPham }}</div>
@@ -456,7 +470,3 @@ const tableHeaders = [
     }
 }
 </style>
-
-
-
-

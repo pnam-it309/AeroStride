@@ -117,7 +117,3 @@ const handleCheckout = () => {
     border-color: #cbd5e1 !important;
 }
 </style>
-
-
-
-

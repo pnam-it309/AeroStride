@@ -51,9 +51,15 @@ const visiblePages = computed(() => {
     return pages;
 });
 
-const goPrev = async () => { if (hasPrev.value) page.value--; };
-const goNext = async () => { if (hasNext.value) page.value++; };
-const goToPage = async (p) => { if (p >= 1 && p <= props.totalPages) page.value = p; };
+const goPrev = async () => {
+    if (hasPrev.value) page.value--;
+};
+const goNext = async () => {
+    if (hasNext.value) page.value++;
+};
+const goToPage = async (p) => {
+    if (p >= 1 && p <= props.totalPages) page.value = p;
+};
 </script>
 
 <template>
@@ -76,7 +82,15 @@ const goToPage = async (p) => { if (p >= 1 && p <= props.totalPages) page.value 
                     <button type="button" class="pager-btn" @click="goToPage(1)">1</button>
                     <span v-if="visiblePages[0] > 2" class="pager-ellipsis">...</span>
                 </template>
-                <button v-for="p in visiblePages" :key="p" type="button" :class="['pager-btn', { 'pager-active': p === page }]" @click="goToPage(p)">{{ p }}</button>
+                <button
+                    v-for="p in visiblePages"
+                    :key="p"
+                    type="button"
+                    :class="['pager-btn', { 'pager-active': p === page }]"
+                    @click="goToPage(p)"
+                >
+                    {{ p }}
+                </button>
                 <template v-if="visiblePages[visiblePages.length - 1] < totalPages">
                     <span v-if="visiblePages[visiblePages.length - 1] < totalPages - 1" class="pager-ellipsis">...</span>
                     <button type="button" class="pager-btn" @click="goToPage(totalPages)">{{ totalPages }}</button>

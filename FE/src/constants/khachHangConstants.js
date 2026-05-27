@@ -34,6 +34,18 @@ export const KHACH_HANG_TABLE_HEADERS = [
     { text: 'Hành động', width: '100px', align: 'center' }
 ];
 
+export const KHACH_HANG_STATS_TABLE_HEADERS = [
+    { text: 'STT', width: '60px', align: 'center' },
+    { text: 'Mã khách hàng', width: '150px', align: 'center' },
+    { text: 'Tên khách hàng', width: '120px', align: 'left' },
+    { text: 'Số đơn mua', width: '120px', align: 'center' },
+    { text: 'Số đơn hoàn', width: '120px', align: 'center' },
+    { text: 'Số tiền đã chi', width: '130px', align: 'center' },
+    { text: 'Đơn hàng gần nhất', width: '160px', align: 'center' },
+    { text: 'Trạng thái', width: '120px', align: 'center' },
+    { text: 'Hành động', width: '110px', align: 'center' }
+];
+
 // Breadcrumbs
 export const KHACH_HANG_BREADCRUMBS = [
     { title: 'Quản lý tài khoản', disabled: false, href: '#' },

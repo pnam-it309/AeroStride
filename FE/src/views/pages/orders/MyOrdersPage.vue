@@ -17,17 +17,17 @@ const tabs = [
     { label: 'Đã xác nhận', value: 'XAC_NHAN' },
     { label: 'Đang giao', value: 'DANG_GIAO' },
     { label: 'Hoàn thành', value: 'HOAN_THANH' },
-    { label: 'Đã hủy', value: 'DA_HUY' },
+    { label: 'Đã hủy', value: 'DA_HUY' }
 ];
 
 const statusColorMap = {
-    'CHO_XAC_NHAN': 'orange',
-    'XAC_NHAN': 'blue',
-    'CHO_GIAO': 'cyan',
-    'DANG_GIAO': 'indigo',
-    'HOAN_THANH': 'green',
-    'DA_HUY': 'red',
-    'HOAN_DON': 'grey',
+    CHO_XAC_NHAN: 'orange',
+    XAC_NHAN: 'blue',
+    CHO_GIAO: 'cyan',
+    DANG_GIAO: 'indigo',
+    HOAN_THANH: 'green',
+    DA_HUY: 'red',
+    HOAN_DON: 'grey'
 };
 
 const formatPrice = (price) => {
@@ -38,8 +38,11 @@ const formatPrice = (price) => {
 const formatDate = (timestamp) => {
     if (!timestamp) return '';
     return new Intl.DateTimeFormat('vi-VN', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
     }).format(new Date(timestamp));
 };
 
@@ -66,7 +69,7 @@ const goToDetail = (id) => {
 <template>
     <div class="my-orders-page bg-grey-lighten-4 min-vh-100">
         <MainHeader />
-        <div class="header-spacing" style="height: 104px;"></div>
+        <div class="header-spacing" style="height: 104px"></div>
 
         <v-container class="py-10" style="max-width: 900px">
             <h1 class="text-h4 font-weight-black mb-2">Đơn hàng của tôi</h1>
@@ -126,7 +129,11 @@ const goToDetail = (id) => {
 
                         <!-- Products Preview -->
                         <div class="px-6 py-4">
-                            <div v-for="(item, i) in (order.items || []).slice(0, 2)" :key="i" class="order-product d-flex align-center gap-4 py-2">
+                            <div
+                                v-for="(item, i) in (order.items || []).slice(0, 2)"
+                                :key="i"
+                                class="order-product d-flex align-center gap-4 py-2"
+                            >
                                 <div class="product-thumb">
                                     <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover width="56" height="56" class="rounded-lg"></v-img>
                                     <div v-else class="thumb-placeholder rounded-lg">
@@ -135,7 +142,9 @@ const goToDetail = (id) => {
                                 </div>
                                 <div class="flex-grow-1">
                                     <p class="text-body-2 font-weight-bold mb-0">{{ item.tenSanPham }}</p>
-                                    <p class="text-caption text-grey mb-0">{{ item.tenMauSac }} / {{ item.tenKichThuoc }} · x{{ item.soLuong }}</p>
+                                    <p class="text-caption text-grey mb-0">
+                                        {{ item.tenMauSac }} / {{ item.tenKichThuoc }} · x{{ item.soLuong }}
+                                    </p>
                                 </div>
                                 <span class="text-body-2 font-weight-bold">{{ formatPrice(item.thanhTien) }}</span>
                             </div>
@@ -184,7 +193,9 @@ const goToDetail = (id) => {
     .tab-chip {
         border-color: #e0e0e0;
         font-size: 0.85rem;
-        &:hover { border-color: #999; }
+        &:hover {
+            border-color: #999;
+        }
     }
 }
 
@@ -203,7 +214,7 @@ const goToDetail = (id) => {
 
     &:hover {
         border-color: #ddd;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
         transform: translateY(-2px);
     }
 }
@@ -222,10 +233,22 @@ const goToDetail = (id) => {
 }
 
 /* Transitions */
-.order-card-enter-active { transition: all 0.3s ease-out; }
-.order-card-leave-active { transition: all 0.3s ease-in; }
-.order-card-enter-from { opacity: 0; transform: translateY(20px); }
-.order-card-leave-to { opacity: 0; transform: translateY(-20px); }
+.order-card-enter-active {
+    transition: all 0.3s ease-out;
+}
+.order-card-leave-active {
+    transition: all 0.3s ease-in;
+}
+.order-card-enter-from {
+    opacity: 0;
+    transform: translateY(20px);
+}
+.order-card-leave-to {
+    opacity: 0;
+    transform: translateY(-20px);
+}
 
-.min-vh-100 { min-height: 100vh; }
+.min-vh-100 {
+    min-height: 100vh;
+}
 </style>

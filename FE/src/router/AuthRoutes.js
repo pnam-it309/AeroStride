@@ -51,10 +51,10 @@ const AuthRoutes = {
                 const { useUIStore } = await import('@/stores/ui');
                 const uiStore = useUIStore();
                 uiStore.showLoading('Hệ thống đang đăng xuất...');
-                
+
                 const { useAuthStore } = await import('@/stores/authStore');
                 const authStore = useAuthStore();
-                
+
                 setTimeout(async () => {
                     await authStore.logout();
                     uiStore.hideLoading();

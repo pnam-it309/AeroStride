@@ -16,38 +16,34 @@ const handleSearch = () => emit('search');
 
 <template>
     <div class="filter-shell">
-        <AdminFilter 
-            title="Bộ lọc thuộc tính" 
-            :loading="loading" 
-            @refresh="handleRefresh" 
-        >
+        <AdminFilter title="Bộ lọc thuộc tính" :loading="loading" @refresh="handleRefresh">
             <v-col cols="12" md="5" class="py-1">
                 <div class="filter-field-label">Tìm kiếm nhanh</div>
-                <v-text-field 
+                <v-text-field
                     :model-value="searchQuery"
                     @update:model-value="emit('update:searchQuery', $event)"
-                    placeholder="Tên, mã..." 
-                    variant="outlined" 
+                    placeholder="Tên, mã..."
+                    variant="outlined"
                     density="compact"
-                    hide-details 
-                    prepend-inner-icon="mdi-magnify" 
+                    hide-details
+                    prepend-inner-icon="mdi-magnify"
                     class="compact-input"
                     @keyup.enter="handleSearch"
                 ></v-text-field>
             </v-col>
             <v-col cols="12" md="5" class="py-1">
                 <div class="filter-field-label">Trạng thái</div>
-                <v-select 
+                <v-select
                     :model-value="statusFilter"
                     @update:model-value="emit('update:statusFilter', $event)"
                     :items="[
                         { title: 'Tất cả', value: null },
                         { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
                         { title: 'Ngừng hoạt động', value: 'NGUNG_HOAT_DONG' }
-                    ]" 
-                    variant="outlined" 
-                    density="compact" 
-                    hide-details 
+                    ]"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
                     class="compact-input"
                 ></v-select>
             </v-col>
@@ -58,4 +54,3 @@ const handleSearch = () => emit('search');
 <style scoped>
 /* Scoped styles removed in favor of global _admin-common.scss */
 </style>
-

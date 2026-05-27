@@ -13,14 +13,22 @@ const toEnumKey = (value) => {
 
     if (typeof value === 'number' && Number.isFinite(value)) {
         switch (value) {
-            case 0: return 'CHO_XAC_NHAN';
-            case 1: return 'XAC_NHAN';
-            case 2: return 'CHO_GIAO';
-            case 3: return 'DANG_GIAO';
-            case 4: return 'HOAN_THANH';
-            case 5: return 'DA_HUY';
-            case 6: return 'HOAN_DON';
-            default: return null;
+            case 0:
+                return 'CHO_XAC_NHAN';
+            case 1:
+                return 'XAC_NHAN';
+            case 2:
+                return 'CHO_GIAO';
+            case 3:
+                return 'DANG_GIAO';
+            case 4:
+                return 'HOAN_THANH';
+            case 5:
+                return 'DA_HUY';
+            case 6:
+                return 'HOAN_DON';
+            default:
+                return null;
         }
     }
 

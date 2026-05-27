@@ -3,12 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
-import {
-    dichVuThuongHieu,
-    dichVuMauSac,
-    dichVuKichThuoc,
-    dichVuChatLieu
-} from '@/services/product/dichVuThuocTinh';
+import { dichVuThuongHieu, dichVuMauSac, dichVuKichThuoc, dichVuChatLieu } from '@/services/product/dichVuThuocTinh';
 import { useNotifications } from '@/services/notificationService';
 import { MESSAGES } from '@/constants/messages';
 import { STATUS } from '@/utils/statusUtils';
@@ -37,7 +32,7 @@ const toLocalDatetimeString = (timestamp) => {
 
 const loading = ref(false);
 const saving = ref(false);
-const products = ref([]); 
+const products = ref([]);
 const searchQuery = ref('');
 
 // Attribute Options
@@ -54,7 +49,7 @@ const selectionPageSize = ref(5);
 const dynamicMaxPrice = ref(6500000); // Mặc định 6.5 triệu, sẽ cập nhật sau khi load data
 const loadMaxPrice = async () => {
     try {
-        const maxPrice = await dichVuSanPham.layGiaLonNhat(); 
+        const maxPrice = await dichVuSanPham.layGiaLonNhat();
         if (maxPrice !== undefined && maxPrice !== null) {
             dynamicMaxPrice.value = Math.max(maxPrice, 50000);
             detailFilters.value.khoangGia = [0, dynamicMaxPrice.value];
@@ -71,7 +66,7 @@ const detailFilters = ref({
     kichCo: null,
     mauSac: null,
     loaiSan: null,
-    khoangGia: [0, dynamicMaxPrice.value] 
+    khoangGia: [0, dynamicMaxPrice.value]
 });
 
 // Pagination for Bottom Table (Selected Details)
@@ -86,13 +81,12 @@ const resetDetailFilters = () => {
         kichCo: null,
         mauSac: null,
         loaiSan: null,
-        khoangGia: [0, dynamicMaxPrice.value] 
+        khoangGia: [0, dynamicMaxPrice.value]
     };
 };
 
-
 const isEditMode = computed(() => !!route.params.id && !route.path.includes('/detail'));
-const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật đợt giảm giá' : 'Thêm đợt giảm giá');
+const submitButtonText = computed(() => (isEditMode.value ? 'Cập nhật đợt giảm giá' : 'Thêm đợt giảm giá'));
 const isDetailView = computed(() => route.path.includes('/detail'));
 const primaryColor = '#2E4E8E';
 
@@ -114,13 +108,13 @@ const selectedVariantsIds = ref([]); // Các biến thể thực sự được c
 
 const baseProducts = computed(() => {
     const map = new Map();
-    products.value.forEach(p => {
-        const prodId = p.idSanPham || p.id; 
+    products.value.forEach((p) => {
+        const prodId = p.idSanPham || p.id;
         const prodMa = p.maSanPham || p.sanPhamMa || p.maSp || p.maChiTietSanPham || p.ma;
         if (!map.has(prodId)) {
             map.set(prodId, {
                 id: prodId,
-                ma: prodMa, 
+                ma: prodMa,
                 ten: p.tenSanPham || p.tenSanPhamDayDu,
                 variants: []
             });
@@ -134,10 +128,7 @@ const filteredProductsToSelect = computed(() => {
     let result = baseProducts.value;
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
-        result = result.filter(p => 
-            (p.ten && p.ten.toLowerCase().includes(query)) || 
-            (p.ma && p.ma.toLowerCase().includes(query))
-        );
+        result = result.filter((p) => (p.ten && p.ten.toLowerCase().includes(query)) || (p.ma && p.ma.toLowerCase().includes(query)));
     }
     return result;
 });
@@ -153,34 +144,36 @@ const totalSelectionPages = computed(() => {
 });
 
 // Reset page when search changes
-watch(searchQuery, () => { selectionPage.value = 1; });
+watch(searchQuery, () => {
+    selectionPage.value = 1;
+});
 
 const isProductSelected = (productId) => {
-    const product = baseProducts.value.find(p => p.id === productId);
+    const product = baseProducts.value.find((p) => p.id === productId);
     if (!product || product.variants.length === 0) return false;
-    return product.variants.every(v => selectedVariantsIds.value.includes(v.id));
+    return product.variants.every((v) => selectedVariantsIds.value.includes(v.id));
 };
 
 const isProductIndeterminate = (productId) => {
-    const product = baseProducts.value.find(p => p.id === productId);
+    const product = baseProducts.value.find((p) => p.id === productId);
     if (!product || product.variants.length === 0) return false;
-    const selectedCount = product.variants.filter(v => selectedVariantsIds.value.includes(v.id)).length;
+    const selectedCount = product.variants.filter((v) => selectedVariantsIds.value.includes(v.id)).length;
     return selectedCount > 0 && selectedCount < product.variants.length;
 };
 
 const toggleProductSelection = (productId) => {
-    const product = baseProducts.value.find(p => p.id === productId);
+    const product = baseProducts.value.find((p) => p.id === productId);
     if (!product) return;
-    
+
     const allSelected = isProductSelected(productId);
-    const variantIds = product.variants.map(v => v.id);
-    
+    const variantIds = product.variants.map((v) => v.id);
+
     if (allSelected) {
         // Unselect all variants
-        selectedVariantsIds.value = selectedVariantsIds.value.filter(vid => !variantIds.includes(vid));
+        selectedVariantsIds.value = selectedVariantsIds.value.filter((vid) => !variantIds.includes(vid));
     } else {
         // Select all variants
-        variantIds.forEach(vid => {
+        variantIds.forEach((vid) => {
             if (!selectedVariantsIds.value.includes(vid)) {
                 selectedVariantsIds.value.push(vid);
             }
@@ -189,19 +182,18 @@ const toggleProductSelection = (productId) => {
 };
 
 const isAllProductsSelected = computed(() => {
-    return paginatedProductsToSelect.value.length > 0 && 
-           paginatedProductsToSelect.value.every(p => isProductSelected(p.id));
+    return paginatedProductsToSelect.value.length > 0 && paginatedProductsToSelect.value.every((p) => isProductSelected(p.id));
 });
 
 const toggleAllProductsSelection = () => {
     if (isAllProductsSelected.value) {
-        paginatedProductsToSelect.value.forEach(p => {
-            const variantIds = p.variants.map(v => v.id);
-            selectedVariantsIds.value = selectedVariantsIds.value.filter(vid => !variantIds.includes(vid));
+        paginatedProductsToSelect.value.forEach((p) => {
+            const variantIds = p.variants.map((v) => v.id);
+            selectedVariantsIds.value = selectedVariantsIds.value.filter((vid) => !variantIds.includes(vid));
         });
     } else {
-        paginatedProductsToSelect.value.forEach(p => {
-            p.variants.forEach(v => {
+        paginatedProductsToSelect.value.forEach((p) => {
+            p.variants.forEach((v) => {
                 if (!selectedVariantsIds.value.includes(v.id)) {
                     selectedVariantsIds.value.push(v.id);
                 }
@@ -221,37 +213,41 @@ const toggleExpand = (productId) => {
 
 // Biến thể hiển thị ở bảng dưới = (Các biến thể đã được chọn) + (Các biến thể của sản phẩm đang 'mở')
 const bottomTableVariants = computed(() => {
-    return products.value.filter(p => selectedVariantsIds.value.includes(p.id));
+    return products.value.filter((p) => selectedVariantsIds.value.includes(p.id));
 });
 
 const filteredSelectedDetails = computed(() => {
     let result = [...bottomTableVariants.value];
-    
+
     const filters = detailFilters.value;
-    
+
     // Áp dụng bộ lọc an toàn và linh hoạt
     if (filters.timKiem) {
         const query = filters.timKiem.toLowerCase();
-        result = result.filter(p => 
-            (p.tenSanPham && p.tenSanPham.toLowerCase().includes(query)) || 
-            (p.ma && p.ma.toLowerCase().includes(query))
+        result = result.filter(
+            (p) => (p.tenSanPham && p.tenSanPham.toLowerCase().includes(query)) || (p.ma && p.ma.toLowerCase().includes(query))
         );
     }
-    if (filters.thuongHieu) result = result.filter(p => p.thuongHieu === filters.thuongHieu);
-    if (filters.chatLieu) result = result.filter(p => p.chatLieu === filters.chatLieu);
-    if (filters.kichCo) result = result.filter(p => String(p.kichCo || '').toLowerCase().includes(String(filters.kichCo).toLowerCase()));
-    if (filters.mauSac) result = result.filter(p => p.color === filters.mauSac);
-    if (filters.loaiSan) result = result.filter(p => p.loaiSan === filters.loaiSan);
-    
+    if (filters.thuongHieu) result = result.filter((p) => p.thuongHieu === filters.thuongHieu);
+    if (filters.chatLieu) result = result.filter((p) => p.chatLieu === filters.chatLieu);
+    if (filters.kichCo)
+        result = result.filter((p) =>
+            String(p.kichCo || '')
+                .toLowerCase()
+                .includes(String(filters.kichCo).toLowerCase())
+        );
+    if (filters.mauSac) result = result.filter((p) => p.color === filters.mauSac);
+    if (filters.loaiSan) result = result.filter((p) => p.loaiSan === filters.loaiSan);
+
     // Lọc theo giá sau giảm (Chỉ lọc nếu dải giá bị thay đổi đáng kể)
     const minPrice = filters.khoangGia[0] || 0;
     const maxPrice = filters.khoangGia[1] || dynamicMaxPrice.value;
-    
-    result = result.filter(p => {
+
+    result = result.filter((p) => {
         const giaSauGiam = calculateDiscountedPrice(p.giaGoc || 0);
         return giaSauGiam >= minPrice && giaSauGiam <= maxPrice;
     });
-    
+
     return result;
 });
 
@@ -266,14 +262,23 @@ const totalBottomPages = computed(() => {
 });
 
 // Reset bottom page when filters change
-watch(detailFilters, () => { bottomPage.value = 1; }, { deep: true });
-watch(selectedVariantsIds, () => { 
-    // Nếu trang hiện tại không còn dữ liệu sau khi xóa, quay về trang trước
-    if (bottomPage.value > totalBottomPages.value) {
-        bottomPage.value = Math.max(1, totalBottomPages.value);
-    }
-}, { deep: true });
-
+watch(
+    detailFilters,
+    () => {
+        bottomPage.value = 1;
+    },
+    { deep: true }
+);
+watch(
+    selectedVariantsIds,
+    () => {
+        // Nếu trang hiện tại không còn dữ liệu sau khi xóa, quay về trang trước
+        if (bottomPage.value > totalBottomPages.value) {
+            bottomPage.value = Math.max(1, totalBottomPages.value);
+        }
+    },
+    { deep: true }
+);
 
 const calculateDiscountedPrice = (originalPrice) => {
     return originalPrice * (1 - (form.value.soTienGiam || 0) / 100);
@@ -303,18 +308,18 @@ const toggleBottomSelection = (id) => {
 };
 
 const toggleAllBottomSelection = () => {
-    const allIds = filteredSelectedDetails.value.map(p => p.id);
-    const allSelected = allIds.every(id => bottomTableSelection.value.includes(id));
+    const allIds = filteredSelectedDetails.value.map((p) => p.id);
+    const allSelected = allIds.every((id) => bottomTableSelection.value.includes(id));
     if (allSelected) {
-        bottomTableSelection.value = bottomTableSelection.value.filter(id => !allIds.includes(id));
+        bottomTableSelection.value = bottomTableSelection.value.filter((id) => !allIds.includes(id));
     } else {
-        const newIds = allIds.filter(id => !bottomTableSelection.value.includes(id));
+        const newIds = allIds.filter((id) => !bottomTableSelection.value.includes(id));
         bottomTableSelection.value.push(...newIds);
     }
 };
 
 const removeBulkSelected = () => {
-    selectedVariantsIds.value = selectedVariantsIds.value.filter(id => !bottomTableSelection.value.includes(id));
+    selectedVariantsIds.value = selectedVariantsIds.value.filter((id) => !bottomTableSelection.value.includes(id));
     bottomTableSelection.value = [];
 };
 
@@ -344,10 +349,10 @@ const init = async () => {
             dichVuChatLieu.layChatLieu({ trangThai: STATUS.ACTIVE })
         ]);
 
-        brands.value = (brandData?.content || brandData || []).map(b => b.ten);
-        colors.value = (colorData?.content || colorData || []).map(c => c.ten);
-        sizes.value = (sizeData?.content || sizeData || []).map(s => s.ten);
-        materials.value = (materialData?.content || materialData || []).map(m => m.ten);
+        brands.value = (brandData?.content || brandData || []).map((b) => b.ten);
+        colors.value = (colorData?.content || colorData || []).map((c) => c.ten);
+        sizes.value = (sizeData?.content || sizeData || []).map((s) => s.ten);
+        materials.value = (materialData?.content || materialData || []).map((m) => m.ten);
 
         const data = await dichVuDotGiamGia.layDanhSachSanPhamApDung();
         products.value = (data || []).map((p, i) => ({
@@ -356,7 +361,7 @@ const init = async () => {
             maSanPham: p.maSanPham || p.sanPhamMa || p.maSp || p.maChiTietSanPham || p.ma,
             tenSanPham: p.tenSanPham || p.tenSanPhamDayDu || p.ten,
             tenSanPhamDayDu: p.tenSanPhamDayDu || p.tenSanPham || p.ten,
-            anhMauc: p.urlAnh || (p.hinhAnh?.length > 0 ? p.hinhAnh[0].url : (p.anhMauc || 'https://via.placeholder.com/40')),
+            anhMauc: p.urlAnh || (p.hinhAnh?.length > 0 ? p.hinhAnh[0].url : p.anhMauc || 'https://via.placeholder.com/40'),
             color: p.tenMauSac || p.color || '--',
             kichCo: p.tenKichThuoc || p.kichCo || '--',
             thuongHieu: p.sanPham?.thuongHieu?.ten || p.tenThuongHieu || p.thuongHieu || '--',
@@ -375,7 +380,9 @@ const init = async () => {
                 }
             }
         }
-    } catch (e) { console.error('Error loading products:', e); }
+    } catch (e) {
+        console.error('Error loading products:', e);
+    }
 
     if (isEditMode.value || isDetailView.value) {
         loading.value = true;
@@ -388,19 +395,27 @@ const init = async () => {
             };
             const applied = await dichVuDotGiamGia.layDanhSachBienTheApDung(route.params.id);
             selectedVariantsIds.value = applied.map((v) => v.id);
-            
+
             // KHÔNG tự động 'active' ở trên để bảng dưới chỉ hiện những cái đã chọn ban đầu
             expandedProductIds.value = [];
         } catch (e) {
             addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.LOAD_DATA, color: 'error' });
-        } finally { loading.value = false; }
+        } finally {
+            loading.value = false;
+        }
     }
 };
 
 const confirmDialog = ref({ show: false, title: '', message: '', color: 'primary', action: null, loading: false });
 
 const handleSave = () => {
-    if (!form.value.ten || !form.value.soTienGiam || !form.value.ngayBatDau || !form.value.ngayKetThuc || selectedVariantsIds.value.length === 0) {
+    if (
+        !form.value.ten ||
+        !form.value.soTienGiam ||
+        !form.value.ngayBatDau ||
+        !form.value.ngayKetThuc ||
+        selectedVariantsIds.value.length === 0
+    ) {
         addNotification({ title: 'Thiếu thông tin', subtitle: 'Vui lòng điền đủ các trường và chọn ít nhất 1 sản phẩm', color: 'warning' });
         return;
     }
@@ -444,13 +459,15 @@ onMounted(init);
 </script>
 
 <template>
-    <v-container fluid class="pa-6 animate-fade-in overflow-y-auto" style="height: 100vh;">
+    <v-container fluid class="pa-6 animate-fade-in overflow-y-auto" style="height: 100vh">
         <!-- Breadcrumbs -->
-        <AdminBreadcrumbs :items="[
-            { title: 'Quản lý đợt giảm giá', disabled: false, href: '#' },
-            { title: 'Đợt giảm giá', disabled: false, to: PATH.DOT_GIAM_GIA },
-            { title: isEditMode ? 'Cập nhật' : (isDetailView ? 'Chi tiết' : 'Thêm mới'), disabled: true }
-        ]" />
+        <AdminBreadcrumbs
+            :items="[
+                { title: 'Quản lý đợt giảm giá', disabled: false, href: '#' },
+                { title: 'Đợt giảm giá', disabled: false, to: PATH.DOT_GIAM_GIA },
+                { title: isEditMode ? 'Cập nhật' : isDetailView ? 'Chi tiết' : 'Thêm mới', disabled: true }
+            ]"
+        />
 
         <!-- Action Header -->
         <div class="d-flex align-center justify-space-between mb-8 mt-4">
@@ -460,9 +477,14 @@ onMounted(init);
                 </v-btn>
             </div>
             <div class="d-flex gap-3">
-                <v-btn v-if="!isDetailView" color="primary" variant="flat"
-                    class="text-none px-8 rounded-lg h-11 elevation-4" @click="handleSave"
-                    :loading="saving">
+                <v-btn
+                    v-if="!isDetailView"
+                    color="primary"
+                    variant="flat"
+                    class="text-none px-8 rounded-lg h-11 elevation-4"
+                    @click="handleSave"
+                    :loading="saving"
+                >
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
                     {{ submitButtonText }}
                 </v-btn>
@@ -478,7 +500,7 @@ onMounted(init);
 
         <v-row v-else class="match-height-row pb-16">
             <v-col cols="12" md="5" class="d-flex flex-column">
-                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1" style="min-height: 580px;">
+                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1" style="min-height: 580px">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
@@ -489,45 +511,78 @@ onMounted(init);
 
                         <div class="mb-5">
                             <div class="field-label">Mã đợt giảm giá</div>
-                            <v-text-field v-model="form.ma" readonly placeholder="Mã tự sinh..." variant="outlined"
-                                density="comfortable" class="bg-slate-50 mono-font" hide-details></v-text-field>
+                            <v-text-field
+                                v-model="form.ma"
+                                readonly
+                                placeholder="Mã tự sinh..."
+                                variant="outlined"
+                                density="comfortable"
+                                class="bg-slate-50 mono-font"
+                                hide-details
+                            ></v-text-field>
                         </div>
 
                         <div class="mb-5">
                             <div class="field-label">Tên đợt giảm giá *</div>
-                            <v-text-field v-model="form.ten" :readonly="isDetailView"
-                                placeholder="Nhập tên đợt giảm giá" variant="outlined" density="comfortable"
-                                hide-details></v-text-field>
+                            <v-text-field
+                                v-model="form.ten"
+                                :readonly="isDetailView"
+                                placeholder="Nhập tên đợt giảm giá"
+                                variant="outlined"
+                                density="comfortable"
+                                hide-details
+                            ></v-text-field>
                         </div>
 
                         <div class="mb-5">
                             <div class="field-label">Mức giảm giá (%) <span class="text-red">*</span></div>
-                            <v-text-field v-model.number="form.soTienGiam" :readonly="isDetailView" type="number"
-                                suffix="%" placeholder="0" variant="outlined" density="comfortable"
-                                hide-details></v-text-field>
+                            <v-text-field
+                                v-model.number="form.soTienGiam"
+                                :readonly="isDetailView"
+                                type="number"
+                                suffix="%"
+                                placeholder="0"
+                                variant="outlined"
+                                density="comfortable"
+                                hide-details
+                            ></v-text-field>
                         </div>
 
                         <div class="mb-5">
                             <div class="field-label">Ngày bắt đầu <span class="text-red">*</span></div>
-                            <v-text-field v-model="form.ngayBatDau" :readonly="isDetailView" type="datetime-local"
-                                append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
-                                variant="outlined" density="comfortable" hide-details
-                                class="date-field"></v-text-field>
+                            <v-text-field
+                                v-model="form.ngayBatDau"
+                                :readonly="isDetailView"
+                                type="datetime-local"
+                                append-inner-icon="mdi-calendar"
+                                @click:append-inner="openDatePicker"
+                                variant="outlined"
+                                density="comfortable"
+                                hide-details
+                                class="date-field"
+                            ></v-text-field>
                         </div>
 
                         <div class="mb-6">
                             <div class="field-label">Ngày kết thúc <span class="text-red">*</span></div>
-                            <v-text-field v-model="form.ngayKetThuc" :readonly="isDetailView" type="datetime-local"
-                                append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
-                                variant="outlined" density="comfortable" hide-details
-                                class="date-field"></v-text-field>
+                            <v-text-field
+                                v-model="form.ngayKetThuc"
+                                :readonly="isDetailView"
+                                type="datetime-local"
+                                append-inner-icon="mdi-calendar"
+                                @click:append-inner="openDatePicker"
+                                variant="outlined"
+                                density="comfortable"
+                                hide-details
+                                class="date-field"
+                            ></v-text-field>
                         </div>
                     </v-card-text>
                 </v-card>
             </v-col>
 
             <v-col cols="12" md="7" class="d-flex flex-column">
-                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1" style="min-height: 580px;">
+                <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1" style="min-height: 580px">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-amber-lighten-5 mr-3">
@@ -536,24 +591,40 @@ onMounted(init);
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách sản phẩm</span>
                         </div>
 
-                        <AdminFilter title="Tìm kiếm sản phẩm" @refresh="searchQuery = ''; selectionPage = 1">
+                        <AdminFilter
+                            title="Tìm kiếm sản phẩm"
+                            @refresh="
+                                searchQuery = '';
+                                selectionPage = 1;
+                            "
+                        >
                             <v-col cols="12" sm="4">
                                 <div class="field-label-small mb-1">Tìm kiếm sản phẩm</div>
-                                <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
-                                    placeholder="Tìm theo tên hoặc mã SKU..." variant="outlined" density="compact" hide-details
-                                    class="compact-input"></v-text-field>
+                                <v-text-field
+                                    v-model="searchQuery"
+                                    prepend-inner-icon="mdi-magnify"
+                                    placeholder="Tìm theo tên hoặc mã SKU..."
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    class="compact-input"
+                                ></v-text-field>
                             </v-col>
                         </AdminFilter>
 
-                        <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="height: 380px;">
+                        <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="height: 380px">
                             <table class="native-admin-table">
                                 <thead>
                                     <tr>
                                         <th class="header-cell text-center" style="width: 40px"></th>
                                         <th class="header-cell text-center" style="width: 60px">
-                                            <v-checkbox-btn density="compact" color="primary" hide-details
+                                            <v-checkbox-btn
+                                                density="compact"
+                                                color="primary"
+                                                hide-details
                                                 :model-value="isAllProductsSelected"
-                                                @change="toggleAllProductsSelection"></v-checkbox-btn>
+                                                @change="toggleAllProductsSelection"
+                                            ></v-checkbox-btn>
                                         </th>
                                         <th class="header-cell text-center">Mã sản phẩm</th>
                                         <th class="header-cell text-center">Tên sản phẩm</th>
@@ -568,10 +639,16 @@ onMounted(init);
                                                 </v-btn>
                                             </td>
                                             <td class="data-cell text-center">
-                                                <v-checkbox-btn :model-value="isProductSelected(item.id)"
+                                                <v-checkbox-btn
+                                                    :model-value="isProductSelected(item.id)"
                                                     :indeterminate="isProductIndeterminate(item.id)"
-                                                    @update:model-value="toggleProductSelection(item.id)" :readonly="isDetailView"
-                                                    color="primary" hide-details density="compact" class="d-inline-flex"></v-checkbox-btn>
+                                                    @update:model-value="toggleProductSelection(item.id)"
+                                                    :readonly="isDetailView"
+                                                    color="primary"
+                                                    hide-details
+                                                    density="compact"
+                                                    class="d-inline-flex"
+                                                ></v-checkbox-btn>
                                             </td>
                                             <td class="data-cell text-center text-primary font-weight-bold text-slate-600">
                                                 {{ item.ma }}
@@ -580,23 +657,32 @@ onMounted(init);
                                                 {{ item.ten }}
                                             </td>
                                         </tr>
-                                         <!-- Variant rows -->
-                                         <tr v-if="expandedProductIds.includes(item.id)" v-for="variant in item.variants" :key="variant.id" class="variant-row bg-slate-50/50">
-                                             <td class="data-cell text-right pr-3">
-                                                 
-                                             </td>
-                                             <td class="data-cell text-center">
-                                                 <v-checkbox-btn :model-value="selectedVariantsIds.includes(variant.id)"
-                                                     @update:model-value="toggleVariantSelection(variant.id)" :readonly="isDetailView"
-                                                     color="primary" hide-details density="compact" class="d-inline-flex"></v-checkbox-btn>
-                                             </td>
-                                             <td class="data-cell text-center text-slate-500 font-weight-medium">
-                                                 <span class="text-slate-300 font-weight-bold mr-1">↳</span> {{ variant.ma }}
-                                             </td>
-                                             <td class="data-cell text-center text-slate-500">
-                                                 {{ variant.color }} - {{ variant.kichCo }} - {{ variant.chatLieu }}
-                                             </td>
-                                         </tr>
+                                        <!-- Variant rows -->
+                                        <tr
+                                            v-if="expandedProductIds.includes(item.id)"
+                                            v-for="variant in item.variants"
+                                            :key="variant.id"
+                                            class="variant-row bg-slate-50/50"
+                                        >
+                                            <td class="data-cell text-right pr-3"></td>
+                                            <td class="data-cell text-center">
+                                                <v-checkbox-btn
+                                                    :model-value="selectedVariantsIds.includes(variant.id)"
+                                                    @update:model-value="toggleVariantSelection(variant.id)"
+                                                    :readonly="isDetailView"
+                                                    color="primary"
+                                                    hide-details
+                                                    density="compact"
+                                                    class="d-inline-flex"
+                                                ></v-checkbox-btn>
+                                            </td>
+                                            <td class="data-cell text-center text-slate-500 font-weight-medium">
+                                                <span class="text-slate-300 font-weight-bold mr-1">↳</span> {{ variant.ma }}
+                                            </td>
+                                            <td class="data-cell text-center text-slate-500">
+                                                {{ variant.color }} - {{ variant.kichCo }} - {{ variant.chatLieu }}
+                                            </td>
+                                        </tr>
                                     </template>
                                 </tbody>
                             </table>
@@ -622,16 +708,30 @@ onMounted(init);
                             <div class="icon-blob bg-emerald-lighten-5 mr-3">
                                 <v-icon color="emerald-darken-2" size="18">mdi-format-list-checks</v-icon>
                             </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách chi tiết sản phẩm được chọn 
+                            <span class="text-subtitle-1 font-weight-bold text-slate-800"
+                                >Danh sách chi tiết sản phẩm được chọn
                                 <span class="text-primary ml-1">({{ selectedVariantsIds.length }})</span>
                             </span>
                             <v-spacer></v-spacer>
-                            <v-btn v-if="bottomTableSelection.length > 0" variant="flat" color="primary" class="mr-2"
-                                prepend-icon="mdi-trash-can-outline" size="small" @click="removeBulkSelected" style="height: 36px; text-transform: none;">
+                            <v-btn
+                                v-if="bottomTableSelection.length > 0"
+                                variant="flat"
+                                color="primary"
+                                class="mr-2"
+                                prepend-icon="mdi-trash-can-outline"
+                                size="small"
+                                @click="removeBulkSelected"
+                                style="height: 36px; text-transform: none"
+                            >
                                 Xóa đã chọn ({{ bottomTableSelection.length }})
                             </v-btn>
-                            <v-btn variant="outlined" color="primary"
-                                prepend-icon="mdi-trash-can-outline" @click="removeAllSelected" style="height: 36px; text-transform: none; border-width: 1px;">
+                            <v-btn
+                                variant="outlined"
+                                color="primary"
+                                prepend-icon="mdi-trash-can-outline"
+                                @click="removeAllSelected"
+                                style="height: 36px; text-transform: none; border-width: 1px"
+                            >
                                 Xóa tất cả
                             </v-btn>
                         </div>
@@ -640,33 +740,67 @@ onMounted(init);
                         <AdminFilter title="Bộ lọc sản phẩm" @refresh="resetDetailFilters">
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Tìm kiếm sản phẩm</div>
-                                <v-text-field v-model="detailFilters.timKiem" prepend-inner-icon="mdi-magnify"
-                                    placeholder="Tên hoặc mã..." variant="outlined" density="compact" hide-details
-                                    class="compact-input"></v-text-field>
+                                <v-text-field
+                                    v-model="detailFilters.timKiem"
+                                    prepend-inner-icon="mdi-magnify"
+                                    placeholder="Tên hoặc mã..."
+                                    variant="outlined"
+                                    density="compact"
+                                    hide-details
+                                    class="compact-input"
+                                ></v-text-field>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Thương hiệu</div>
-                                <v-select v-model="detailFilters.thuongHieu" :items="brands"
-                                    density="compact" variant="outlined" hide-details clearable
-                                    placeholder="Thương hiệu" class="compact-input"></v-select>
+                                <v-select
+                                    v-model="detailFilters.thuongHieu"
+                                    :items="brands"
+                                    density="compact"
+                                    variant="outlined"
+                                    hide-details
+                                    clearable
+                                    placeholder="Thương hiệu"
+                                    class="compact-input"
+                                ></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Chất liệu</div>
-                                <v-select v-model="detailFilters.chatLieu" :items="materials"
-                                    density="compact" variant="outlined" hide-details clearable
-                                    placeholder="Chất liệu" class="compact-input"></v-select>
+                                <v-select
+                                    v-model="detailFilters.chatLieu"
+                                    :items="materials"
+                                    density="compact"
+                                    variant="outlined"
+                                    hide-details
+                                    clearable
+                                    placeholder="Chất liệu"
+                                    class="compact-input"
+                                ></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Kích cỡ</div>
-                                <v-select v-model="detailFilters.kichCo" :items="sizes"
-                                    density="compact" variant="outlined" hide-details clearable
-                                    placeholder="Kích cỡ" class="compact-input"></v-select>
+                                <v-select
+                                    v-model="detailFilters.kichCo"
+                                    :items="sizes"
+                                    density="compact"
+                                    variant="outlined"
+                                    hide-details
+                                    clearable
+                                    placeholder="Kích cỡ"
+                                    class="compact-input"
+                                ></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Màu sắc</div>
-                                <v-select v-model="detailFilters.mauSac" :items="colors"
-                                    density="compact" variant="outlined" hide-details clearable
-                                    placeholder="Màu sắc" class="compact-input"></v-select>
+                                <v-select
+                                    v-model="detailFilters.mauSac"
+                                    :items="colors"
+                                    density="compact"
+                                    variant="outlined"
+                                    hide-details
+                                    clearable
+                                    placeholder="Màu sắc"
+                                    class="compact-input"
+                                ></v-select>
                             </v-col>
 
                             <template #after>
@@ -676,23 +810,43 @@ onMounted(init);
                                             <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
                                             <span class="text-caption font-weight-bold text-slate-600">Lọc theo giá sau giảm</span>
                                         </div>
-                                        <span class="price-range-value text-primary font-weight-bold">{{ formatCurrency(detailFilters.khoangGia[0]) }} – {{ formatCurrency(detailFilters.khoangGia[1]) }}</span>
+                                        <span class="price-range-value text-primary font-weight-bold"
+                                            >{{ formatCurrency(detailFilters.khoangGia[0]) }} –
+                                            {{ formatCurrency(detailFilters.khoangGia[1]) }}</span
+                                        >
                                     </div>
-                                    <v-range-slider :key="`0-${dynamicMaxPrice}`" v-model="detailFilters.khoangGia" :max="dynamicMaxPrice" :min="0"
-                                        :step="10000" hide-details color="primary" track-color="#e2e8f0"
-                                        track-size="3" thumb-size="14" class="blue-range-slider"></v-range-slider>
+                                    <v-range-slider
+                                        :key="`0-${dynamicMaxPrice}`"
+                                        v-model="detailFilters.khoangGia"
+                                        :max="dynamicMaxPrice"
+                                        :min="0"
+                                        :step="10000"
+                                        hide-details
+                                        color="primary"
+                                        track-color="#e2e8f0"
+                                        track-size="3"
+                                        thumb-size="14"
+                                        class="blue-range-slider"
+                                    ></v-range-slider>
                                 </v-col>
                             </template>
                         </AdminFilter>
 
-                        <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="max-height: 400px;">
+                        <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="max-height: 400px">
                             <table class="native-admin-table">
                                 <thead>
                                     <tr>
                                         <th class="header-cell text-center" style="width: 50px">
-                                            <v-checkbox-btn density="compact" color="primary" hide-details
-                                                :model-value="filteredSelectedDetails.length > 0 && filteredSelectedDetails.every(p => bottomTableSelection.includes(p.id))"
-                                                @change="toggleAllBottomSelection"></v-checkbox-btn>
+                                            <v-checkbox-btn
+                                                density="compact"
+                                                color="primary"
+                                                hide-details
+                                                :model-value="
+                                                    filteredSelectedDetails.length > 0 &&
+                                                    filteredSelectedDetails.every((p) => bottomTableSelection.includes(p.id))
+                                                "
+                                                @change="toggleAllBottomSelection"
+                                            ></v-checkbox-btn>
                                         </th>
                                         <th class="header-cell text-center" style="width: 50px">STT</th>
                                         <th class="header-cell text-center" style="width: 80px">Ảnh</th>
@@ -706,10 +860,19 @@ onMounted(init);
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="(item, index) in paginatedSelectedDetails" :key="item.id + '-' + item.ma + '-' + index" class="data-row">
+                                    <tr
+                                        v-for="(item, index) in paginatedSelectedDetails"
+                                        :key="item.id + '-' + item.ma + '-' + index"
+                                        class="data-row"
+                                    >
                                         <td class="data-cell text-center">
-                                            <v-checkbox-btn color="primary" hide-details density="compact" 
-                                                :model-value="isVariantSelected(item.id)" @update:model-value="toggleVariantSelection(item.id)"></v-checkbox-btn>
+                                            <v-checkbox-btn
+                                                color="primary"
+                                                hide-details
+                                                density="compact"
+                                                :model-value="isVariantSelected(item.id)"
+                                                @update:model-value="toggleVariantSelection(item.id)"
+                                            ></v-checkbox-btn>
                                         </td>
                                         <td class="data-cell text-center text-slate-500 font-weight-medium">
                                             {{ (bottomPage - 1) * bottomPageSize + index + 1 }}
@@ -719,9 +882,7 @@ onMounted(init);
                                                 <v-avatar rounded="lg" size="44" class="border">
                                                     <v-img :src="item.anhMauc" cover></v-img>
                                                 </v-avatar>
-                                                <div v-if="form.soTienGiam > 0" class="discount-badge">
-                                                    -{{ form.soTienGiam }}%
-                                                </div>
+                                                <div v-if="form.soTienGiam > 0" class="discount-badge">-{{ form.soTienGiam }}%</div>
                                             </div>
                                         </td>
                                         <td class="data-cell text-center text-primary font-weight-medium">
@@ -731,10 +892,12 @@ onMounted(init);
                                             {{ item.tenSanPham }}
                                         </td>
                                         <td class="data-cell text-center">
-                                            <div class="text-caption text-slate-400 text-decoration-line-through">{{
-                                                formatCurrency(item.giaGoc) }}</div>
-                                            <div class="discounted-price font-weight-bold">{{
-                                                formatCurrency(calculateDiscountedPrice(item.giaGoc)) }}</div>
+                                            <div class="text-caption text-slate-400 text-decoration-line-through">
+                                                {{ formatCurrency(item.giaGoc) }}
+                                            </div>
+                                            <div class="discounted-price font-weight-bold">
+                                                {{ formatCurrency(calculateDiscountedPrice(item.giaGoc)) }}
+                                            </div>
                                         </td>
                                         <td class="data-cell text-center">
                                             {{ item.thuongHieu }}
@@ -747,7 +910,19 @@ onMounted(init);
                                         </td>
                                         <td class="data-cell text-center">
                                             <div class="d-flex align-center justify-center gap-2">
-                                                <div class="color-dot" :style="{ backgroundColor: item.color === 'Xanh dương' ? '#3b82f6' : item.color === 'Xanh lá' ? '#22c55e' : item.color === 'Đen' ? '#000' : '#ccc' }"></div>
+                                                <div
+                                                    class="color-dot"
+                                                    :style="{
+                                                        backgroundColor:
+                                                            item.color === 'Xanh dương'
+                                                                ? '#3b82f6'
+                                                                : item.color === 'Xanh lá'
+                                                                  ? '#22c55e'
+                                                                  : item.color === 'Đen'
+                                                                    ? '#000'
+                                                                    : '#ccc'
+                                                    }"
+                                                ></div>
                                                 <span>{{ item.color }}</span>
                                             </div>
                                         </td>
@@ -755,7 +930,6 @@ onMounted(init);
                                     <tr v-if="filteredSelectedDetails.length === 0">
                                         <td colspan="10" class="data-cell py-0">
                                             <div class="empty-state-wrapper py-16">
-                                               
                                                 <div class="text-body-2 text-slate-400">Không tìm thấy sản phẩm nào phù hợp.</div>
                                             </div>
                                         </td>
@@ -887,7 +1061,9 @@ onMounted(init);
     background: #ffffff !important;
     border: 2px solid #3b82f6 !important;
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
-    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease !important;
 }
 
 :deep(.blue-range-slider .v-slider-thumb:hover .v-slider-thumb__surface),
@@ -931,7 +1107,7 @@ onMounted(init);
 
     .data-row {
         transition: background-color 0.2s ease;
-        
+
         &:hover {
             background-color: #f1f5f9;
         }
@@ -997,8 +1173,8 @@ onMounted(init);
 }
 
 /* CSS Đồng bộ ẩn icon mặc định trình duyệt */
-:deep(input[type="datetime-local"]::-webkit-calendar-picker-indicator),
-:deep(input[type="datetime-local"]::-webkit-inner-spin-button) {
+:deep(input[type='datetime-local']::-webkit-calendar-picker-indicator),
+:deep(input[type='datetime-local']::-webkit-inner-spin-button) {
     display: none !important;
     -webkit-appearance: none !important;
 }

@@ -11,17 +11,19 @@ onMounted(() => {
         currentShoeIndex.value = (currentShoeIndex.value + 1) % shoes.length;
     }, 3000);
 });
-
 </script>
 <template>
     <div class="client-auth-wrapper bg-white min-h-screen d-flex align-center justify-center">
         <!-- Main Container -->
         <v-container fluid class="pa-0 h-100vh">
             <v-row no-gutters class="h-100vh">
-
                 <!-- Left Side: Dynamic Visual / Branding -->
-                <v-col cols="12" md="6" lg="7"
-                    class="d-none d-md-flex position-relative visual-section align-center justify-center overflow-hidden bg-white">
+                <v-col
+                    cols="12"
+                    md="6"
+                    lg="7"
+                    class="d-none d-md-flex position-relative visual-section align-center justify-center overflow-hidden bg-white"
+                >
                     <!-- Overlay gradient -->
                     <div class="overlay-gradient-blue"></div>
 
@@ -34,24 +36,30 @@ onMounted(() => {
                             <LogoClient class="mega-logo subtle-logo" dark />
                         </div>
 
-                        <h1 class="text-h2 font-weight-black text-black mb-6 tracking-tight hero-text text-uppercase"
-                            style="letter-spacing: -1px;">
+                        <h1
+                            class="text-h2 font-weight-black text-black mb-6 tracking-tight hero-text text-uppercase"
+                            style="letter-spacing: -1px"
+                        >
                             BƯỚC ĐI<br /><span class="text-blue-accent-4">ĐỘT PHÁ</span>
                         </h1>
-                        <p
-                            class="text-body-1 text-black font-weight-medium max-w-md mx-auto mb-10 leading-relaxed opacity-80">
-                            Khám phá bộ sưu tập giày thể thao đẳng cấp. Trải nghiệm phong cách và hiệu suất đỉnh cao
-                            cùng AeroStride.
+                        <p class="text-body-1 text-black font-weight-medium max-w-md mx-auto mb-10 leading-relaxed opacity-80">
+                            Khám phá bộ sưu tập giày thể thao đẳng cấp. Trải nghiệm phong cách và hiệu suất đỉnh cao cùng AeroStride.
                         </p>
 
                         <!-- Animated Shoe Slider -->
                         <div class="shoe-showcase mt-8">
                             <div class="slider-wrapper">
                                 <transition-group name="fade-slide">
-                                    <v-img v-for="(shoe, index) in shoes" v-show="currentShoeIndex === index"
-                                        :key="shoe" :src="shoe"
+                                    <v-img
+                                        v-for="(shoe, index) in shoes"
+                                        v-show="currentShoeIndex === index"
+                                        :key="shoe"
+                                        :src="shoe"
                                         class="mx-auto floating-shoe-premium drop-shadow-2xl rounded-xl absolute-shoe"
-                                        width="100%" max-width="500" cover></v-img>
+                                        width="100%"
+                                        max-width="500"
+                                        cover
+                                    ></v-img>
                                 </transition-group>
                             </div>
                         </div>
@@ -60,7 +68,7 @@ onMounted(() => {
 
                 <!-- Right Side: Login Form -->
                 <v-col cols="12" md="6" lg="5" class="d-flex align-center justify-center form-section bg-white">
-                    <div class="auth-form-container w-100 px-sm-12 px-6 py-10" style="max-width: 500px;">
+                    <div class="auth-form-container w-100 px-sm-12 px-6 py-10" style="max-width: 500px">
                         <!-- Mobile Logo -->
                         <div class="text-center mb-10 d-md-none transform-zoom">
                             <LogoClient class="mega-logo" />
@@ -69,8 +77,7 @@ onMounted(() => {
                         <!-- Header -->
                         <div class="mb-10 text-center">
                             <h2 class="text-h4 font-weight-black mb-3 text-black">Chào mừng trở lại</h2>
-                            <p class="text-body-1 text-grey-darken-1">Đăng nhập để tiếp tục mua sắm và quản lý đơn hàng
-                                của bạn.</p>
+                            <p class="text-body-1 text-grey-darken-1">Đăng nhập để tiếp tục mua sắm và quản lý đơn hàng của bạn.</p>
                         </div>
 
                         <!-- Form Component -->
@@ -80,15 +87,16 @@ onMounted(() => {
                         <div class="mt-12 text-center">
                             <p class="text-body-1 text-grey-darken-2">
                                 Bạn chưa có tài khoản?
-                                <RouterLink :to="PATH.REGISTER"
-                                    class="text-blue-darken-3 text-decoration-none font-weight-bold ml-2 premium-link border-b-2 border-blue-darken-3 pb-1 hover-effect">
+                                <RouterLink
+                                    :to="PATH.REGISTER"
+                                    class="text-blue-darken-3 text-decoration-none font-weight-bold ml-2 premium-link border-b-2 border-blue-darken-3 pb-1 hover-effect"
+                                >
                                     Đăng ký ngay
                                 </RouterLink>
                             </p>
                         </div>
                     </div>
                 </v-col>
-
             </v-row>
         </v-container>
     </div>
@@ -116,9 +124,9 @@ onMounted(() => {
 }
 
 .text-primary-accent {
-    color: #2962FF;
+    color: #2962ff;
     /* Blue Accent 4 */
-    background: linear-gradient(135deg, #0091EA 0%, #2962FF 100%);
+    background: linear-gradient(135deg, #0091ea 0%, #2962ff 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -211,8 +219,8 @@ onMounted(() => {
 }
 
 .hover-effect:hover {
-    color: #0D47A1 !important;
-    border-color: #0D47A1 !important;
+    color: #0d47a1 !important;
+    border-color: #0d47a1 !important;
 }
 
 /* New Styles for Slider and Logo */

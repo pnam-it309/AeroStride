@@ -50,7 +50,7 @@ const fetchFilters = async () => {
             { title: 'Danh mục', key: 'idDanhMuc', items: data.danhMucs },
             { title: 'Màu sắc', key: 'idMauSac', items: data.mauSacs },
             { title: 'Kích thước', key: 'idKichThuoc', items: data.kichThuocs },
-            { title: 'Giới tính', key: 'gioiTinhKhachHang', items: data.gioiTinhKhachHangs.map(g => ({ id: g, ten: g })) }
+            { title: 'Giới tính', key: 'gioiTinhKhachHang', items: data.gioiTinhKhachHangs.map((g) => ({ id: g, ten: g })) }
         ];
     } catch (error) {
         console.error('Error fetching filters:', error);
@@ -85,10 +85,13 @@ onMounted(() => {
     fetchProducts();
 });
 
-watch(() => route.query, (newQuery) => {
-    searchParams.value = { ...searchParams.value, ...newQuery };
-    fetchProducts();
-});
+watch(
+    () => route.query,
+    (newQuery) => {
+        searchParams.value = { ...searchParams.value, ...newQuery };
+        fetchProducts();
+    }
+);
 
 const formatPrice = (price) => {
     if (!price) return '0 ₫';
@@ -101,10 +104,10 @@ const goToDetail = (id) => {
 
 const translateGender = (gender) => {
     const map = {
-        'NAM': 'Nam',
-        'NU': 'Nữ',
-        'TRE_EM': 'Trẻ em',
-        'UNISEX': 'Unisex'
+        NAM: 'Nam',
+        NU: 'Nữ',
+        TRE_EM: 'Trẻ em',
+        UNISEX: 'Unisex'
     };
     return map[gender] || gender;
 };
@@ -113,9 +116,9 @@ const translateGender = (gender) => {
 <template>
     <div class="shoe-listing-page bg-white min-vh-100">
         <MainHeader />
-        
+
         <!-- Separate Promotion Bar -->
-        <div class="header-spacing" style="height: 104px;"></div>
+        <div class="header-spacing" style="height: 104px"></div>
         <PromotionBar />
 
         <!-- Sub-header (Title & Global Filters) -->
@@ -133,9 +136,27 @@ const translateGender = (gender) => {
                             </v-btn>
                         </template>
                         <v-list>
-                            <v-list-item @click="searchParams.sortBy = 'newest'; fetchProducts()">Mới nhất</v-list-item>
-                            <v-list-item @click="searchParams.sortBy = 'price_desc'; fetchProducts()">Giá: Cao - Thấp</v-list-item>
-                            <v-list-item @click="searchParams.sortBy = 'price_asc'; fetchProducts()">Giá: Thấp - Cao</v-list-item>
+                            <v-list-item
+                                @click="
+                                    searchParams.sortBy = 'newest';
+                                    fetchProducts();
+                                "
+                                >Mới nhất</v-list-item
+                            >
+                            <v-list-item
+                                @click="
+                                    searchParams.sortBy = 'price_desc';
+                                    fetchProducts();
+                                "
+                                >Giá: Cao - Thấp</v-list-item
+                            >
+                            <v-list-item
+                                @click="
+                                    searchParams.sortBy = 'price_asc';
+                                    fetchProducts();
+                                "
+                                >Giá: Thấp - Cao</v-list-item
+                            >
                         </v-list>
                     </v-menu>
                 </div>
@@ -154,12 +175,28 @@ const translateGender = (gender) => {
                             <v-expansion-panel v-for="filter in filters" :key="filter.title" :title="filter.title" class="filter-panel">
                                 <v-expansion-panel-text>
                                     <v-radio-group v-model="searchParams[filter.key]" @change="handleFilterChange">
-                                        <v-radio v-for="item in filter.items" :key="item.id || item" :label="item.ten || translateGender(item)" :value="item.id || item" color="black" density="compact"></v-radio>
+                                        <v-radio
+                                            v-for="item in filter.items"
+                                            :key="item.id || item"
+                                            :label="item.ten || translateGender(item)"
+                                            :value="item.id || item"
+                                            color="black"
+                                            density="compact"
+                                        ></v-radio>
                                     </v-radio-group>
                                 </v-expansion-panel-text>
                             </v-expansion-panel>
                         </v-expansion-panels>
-                        <v-btn variant="text" color="grey" @click="searchParams = { sortBy: 'newest' }; handleFilterChange()" class="mt-4 text-none">Xóa tất cả</v-btn>
+                        <v-btn
+                            variant="text"
+                            color="grey"
+                            @click="
+                                searchParams = { sortBy: 'newest' };
+                                handleFilterChange();
+                            "
+                            class="mt-4 text-none"
+                            >Xóa tất cả</v-btn
+                        >
                     </v-col>
                 </transition>
 
@@ -176,7 +213,7 @@ const translateGender = (gender) => {
                                     <div class="corner-border tl"></div>
                                     <div class="corner-border br"></div>
                                 </div>
-                                
+
                                 <!-- Content -->
                                 <div class="product-info">
                                     <span class="promo-label">{{ p.tenThuongHieu }}</span>
@@ -215,56 +252,130 @@ const translateGender = (gender) => {
 }
 
 .listing-subheader {
-    background: #fff; border-bottom: 1px solid #f0f0f0;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 /* Sidebar Filters */
 .filter-sidebar {
-    position: sticky; top: 120px; height: calc(100vh - 120px); overflow-y: auto;
-    scrollbar-width: none; &::-webkit-scrollbar { display: none; }
+    position: sticky;
+    top: 120px;
+    height: calc(100vh - 120px);
+    overflow-y: auto;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
-.filter-main-label { font-size: 1.1rem; font-weight: 900; color: #000; }
+.filter-main-label {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #000;
+}
 .filter-panel {
     border-top: 1px solid #f0f0f0 !important;
-    :deep(.v-expansion-panel-title) { font-weight: 750; font-size: 0.95rem; padding: 15px 0; }
-    :deep(.v-expansion-panel-text__wrapper) { padding: 0 0 15px 0; }
+    :deep(.v-expansion-panel-title) {
+        font-weight: 750;
+        font-size: 0.95rem;
+        padding: 15px 0;
+    }
+    :deep(.v-expansion-panel-text__wrapper) {
+        padding: 0 0 15px 0;
+    }
 }
 
-.filter-item-text { font-size: 0.9rem; font-weight: 600; color: #111; }
+.filter-item-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #111;
+}
 
 /* Product Card Placeholder */
 .product-card-placeholder {
-    cursor: pointer; transition: transform 0.3s ease;
+    cursor: pointer;
+    transition: transform 0.3s ease;
     &:hover {
-        .image-box-placeholder { background: #eeeeee; }
-        .product-name { color: #2962FF; }
+        .image-box-placeholder {
+            background: #eeeeee;
+        }
+        .product-name {
+            color: #2962ff;
+        }
     }
 }
 
 .image-box-placeholder {
-    width: 100%; aspect-ratio: 1; background: #f6f6f6;
-    display: flex; align-items: center; justify-content: center;
-    position: relative; overflow: hidden;
+    width: 100%;
+    aspect-ratio: 1;
+    background: #f6f6f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
     transition: background 0.3s ease;
 
     .corner-border {
-        position: absolute; width: 20px; height: 20px; border: 1px solid rgba(0,0,0,0.05);
-        &.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
-        &.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        &.tl {
+            top: 10px;
+            left: 10px;
+            border-right: none;
+            border-bottom: none;
+        }
+        &.br {
+            bottom: 10px;
+            right: 10px;
+            border-left: none;
+            border-top: none;
+        }
     }
 }
 
 .product-info {
-    .promo-label { color: #FF3D00; font-size: 0.85rem; font-weight: 900; display: block; margin-bottom: 4px; }
-    .product-name { font-size: 1rem; font-weight: 900; color: #000; margin-bottom: 2px; }
-    .product-category { color: #757575; font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
-    .product-price { font-size: 1rem; font-weight: 800; color: #111; }
+    .promo-label {
+        color: #ff3d00;
+        font-size: 0.85rem;
+        font-weight: 900;
+        display: block;
+        margin-bottom: 4px;
+    }
+    .product-name {
+        font-size: 1rem;
+        font-weight: 900;
+        color: #000;
+        margin-bottom: 2px;
+    }
+    .product-category {
+        color: #757575;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    .product-price {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #111;
+    }
 }
 
 /* Transitions */
-.sidebar-slide-enter-active, .sidebar-slide-leave-active { transition: all 0.4s ease; }
-.sidebar-slide-enter-from, .sidebar-slide-leave-to { opacity: 0; transform: translateX(-30px); margin-left: -200px; }
+.sidebar-slide-enter-active,
+.sidebar-slide-leave-active {
+    transition: all 0.4s ease;
+}
+.sidebar-slide-enter-from,
+.sidebar-slide-leave-to {
+    opacity: 0;
+    transform: translateX(-30px);
+    margin-left: -200px;
+}
 
-.min-vh-100 { min-height: 100vh; }
+.min-vh-100 {
+    min-height: 100vh;
+}
 </style>

@@ -22,7 +22,7 @@ const props = defineProps({
 const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
 
 const tableKey = computed(() => {
-    return props.headers.map(h => `${h.text || h}-${h.width || ''}-${h.align || ''}`).join('|');
+    return props.headers.map((h) => `${h.text || h}-${h.width || ''}-${h.align || ''}`).join('|');
 });
 </script>
 
@@ -36,21 +36,42 @@ const tableKey = computed(() => {
                     <h3 class="text-h6 font-weight-bold text-black tracking-tight">{{ title }}</h3>
                 </div>
                 <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions">
-                    <v-btn v-if="showTemplateButton" prepend-icon="mdi-download" variant="flat" class="admin-btn-secondary"
-                        @click="$emit('downloadTemplate')">
+                    <v-btn
+                        v-if="showTemplateButton"
+                        prepend-icon="mdi-download"
+                        variant="flat"
+                        class="admin-btn-secondary"
+                        @click="$emit('downloadTemplate')"
+                    >
                         Tải mẫu
                     </v-btn>
-                    <v-btn v-if="showImportButton" prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary"
-                        @click="$emit('import')">
+                    <v-btn
+                        v-if="showImportButton"
+                        prepend-icon="mdi-upload"
+                        variant="flat"
+                        class="admin-btn-secondary"
+                        @click="$emit('import')"
+                    >
                         Nhập Excel
                     </v-btn>
-                    <v-btn v-if="showExportButton" prepend-icon="mdi-microsoft-excel" variant="flat"
-                        class="admin-btn-export" @click="$emit('export')">
+                    <v-btn
+                        v-if="showExportButton"
+                        prepend-icon="mdi-microsoft-excel"
+                        variant="flat"
+                        class="admin-btn-export"
+                        @click="$emit('export')"
+                    >
                         {{ exportButtonText }}
                     </v-btn>
                     <slot name="extra-actions"></slot>
-                    <v-btn v-if="showAddButton" prepend-icon="mdi-plus" variant="flat" color="primary"
-                        class="add-btn-primary" @click="$emit('add', $event)">
+                    <v-btn
+                        v-if="showAddButton"
+                        prepend-icon="mdi-plus"
+                        variant="flat"
+                        color="primary"
+                        class="add-btn-primary"
+                        @click="$emit('add', $event)"
+                    >
                         {{ addButtonText }}
                     </v-btn>
                 </div>
@@ -66,13 +87,16 @@ const tableKey = computed(() => {
                     <thead>
                         <slot name="headers">
                             <tr>
-                                <th v-if="selectable" class="header-cell" style="width: 50px;">
+                                <th v-if="selectable" class="header-cell" style="width: 50px">
                                     <slot name="header-select"></slot>
                                 </th>
-                                <th v-for="(header, idx) in headers" :key="idx"
+                                <th
+                                    v-for="(header, idx) in headers"
+                                    :key="idx"
                                     :style="{ minWidth: header.width || 'auto', width: header.width || 'auto' }"
                                     :class="['header-cell', header.align ? 'text-' + header.align : 'text-center']"
-                                    style="white-space: nowrap;">
+                                    style="white-space: nowrap"
+                                >
                                     {{ header.text || header }}
                                 </th>
                             </tr>
@@ -88,12 +112,13 @@ const tableKey = computed(() => {
                             <td :colspan="headers.length || 20" class="empty-state py-16 text-center">
                                 <div v-if="loading" class="d-flex flex-column align-center">
                                     <v-progress-circular indeterminate color="primary" size="48" width="6" class="mb-4" />
-                                    <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">Đang tải dữ
-                                        liệu...</span>
+                                    <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">Đang tải dữ liệu...</span>
                                 </div>
                                 <div v-else class="d-flex flex-column align-center py-12 bg-slate-50/30 rounded-lg mx-4 my-2">
-                                    <v-icon :icon="emptyIcon" size="48" style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
-                                    <span class="text-slate-500" style="font-size: 14px !important; font-weight: 400 !important;">{{ emptyText }}</span>
+                                    <v-icon :icon="emptyIcon" size="48" style="color: #94a3b8 !important; opacity: 0.6" class="mb-3" />
+                                    <span class="text-slate-500" style="font-size: 14px !important; font-weight: 400 !important">{{
+                                        emptyText
+                                    }}</span>
                                 </div>
                             </td>
                         </tr>
