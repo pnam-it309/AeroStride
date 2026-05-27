@@ -22,4 +22,6 @@ public class AdminHoaDonResponse {
     private BigDecimal tongTienSauGiam;
     private Integer trangThai;
     private String ghiChu;
+    private String diaChiNguoiNhan;
+    private java.util.List<String> bienThes;
 }

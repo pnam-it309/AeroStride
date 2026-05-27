@@ -57,6 +57,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
 
     private void prepareRequest(AdminHoaDonRequest req) {
         if (req.getSearch() != null && req.getSearch().trim().isEmpty()) req.setSearch(null);
+        if (req.getIdKhachHang() != null && req.getIdKhachHang().trim().isEmpty()) req.setIdKhachHang(null);
         if (req.getTenKhachHang() != null && req.getTenKhachHang().trim().isEmpty()) req.setTenKhachHang(null);
         if (req.getLoaiDon() != null && req.getLoaiDon().trim().isEmpty()) req.setLoaiDon(null);
         if (req.getNgayTao() != null && req.getNgayTao().trim().isEmpty()) req.setNgayTao(null);

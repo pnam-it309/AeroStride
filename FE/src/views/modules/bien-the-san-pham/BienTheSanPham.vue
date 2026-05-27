@@ -24,7 +24,7 @@ import QrcodeVue from 'qrcode.vue'
 import { exportQrImageZip } from '@/utils/qrExcelWorkbook'
 
 const MIN_VARIANT_PRICE = 0
-const MAX_VARIANT_PRICE = 100000000
+const MAX_VARIANT_PRICE = 6500000
 const VARIANT_PRICE_STEP = 50000
 
 const router = useRouter()

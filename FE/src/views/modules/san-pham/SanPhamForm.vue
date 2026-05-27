@@ -34,7 +34,7 @@ const router = useRouter();
 const { addNotification } = useNotifications();
 
 const MIN_VARIANT_PRICE = 0;
-const DEFAULT_MAX_VARIANT_PRICE = 100000000;
+const DEFAULT_MAX_VARIANT_PRICE = 6500000;
 
 const loading = ref(false);
 const saving = ref(false);

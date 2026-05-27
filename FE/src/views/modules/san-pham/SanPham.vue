@@ -14,7 +14,7 @@ import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useRefreshHandler } from '@/composables/useRefreshHandler';
 
 const MIN_PRICE = 0;
-const DEFAULT_MAX_PRICE = 100000000;
+const DEFAULT_MAX_PRICE = 6500000;
 const PRICE_STEP = 500000;
 const PRODUCT_FETCH_SIZE = 1000;
 

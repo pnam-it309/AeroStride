@@ -24,14 +24,14 @@ export const TRANG_THAI_FILTER_OPTIONS = [
 
 // Table headers
 export const KHACH_HANG_TABLE_HEADERS = [
-    { text: 'STT', width: '50px' },
-    { text: 'Mã khách hàng', width: '90px' },
-    { text: 'Tên khách hàng', width: '100px' },
-    { text: 'Giới tính', width: '90px' },
-    { text: 'Thông tin liên hệ', width: '150px' },
-    { text: 'Địa chỉ', width: '170px' },
-    { text: 'Trạng thái', width: '90px' },
-    { text: 'Hành động', width: '100px' }
+    { text: 'STT', width: '50px', align: 'center' },
+    { text: 'Mã khách hàng', width: '90px', align: 'center' },
+    { text: 'Tên khách hàng', width: '100px', align: 'left' },
+    { text: 'Giới tính', width: '90px', align: 'center' },
+    { text: 'Thông tin liên hệ', width: '150px', align: 'left' },
+    { text: 'Địa chỉ', width: '170px', align: 'left' },
+    { text: 'Trạng thái', width: '90px', align: 'center' },
+    { text: 'Hành động', width: '100px', align: 'center' }
 ];
 
 // Breadcrumbs

@@ -17,9 +17,12 @@ html, body, .v-application {
 }
 
 /* 2. GLOBAL BUTTON FEEL */
-.v-btn {
+.v-btn,
+.v-btn.rounded-lg,
+.v-btn.rounded-md,
+.v-btn.rounded-sm {
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    border-radius: 6px !important;
+    border-radius: 12px !important;
     
     &:hover { transform: translateY(-2px); }
 }

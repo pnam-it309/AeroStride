@@ -501,6 +501,6 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     public java.math.BigDecimal getMaxPrice() {
         return adminChiTietSanPhamRepository.findFirstByXoaMemFalseOrderByGiaBanDesc()
                 .map(ChiTietSanPham::getGiaBan)
-                .orElse(new java.math.BigDecimal("100000000"));
+                .orElse(new java.math.BigDecimal("6500000"));
     }
 }

@@ -10,6 +10,8 @@ public class AdminHoaDonRequest extends PageRequest {
     
     private String search;        // Tìm kiếm nhanh (thường là Mã hóa đơn)
 
+    private String idKhachHang;   // Lọc riêng theo ID khách hàng
+
     private String tenKhachHang;  // Lọc riêng theo tên khách hàng
 
     private String soDienThoai;   // Lọc riêng theo số điện thoại (nếu cần)

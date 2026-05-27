@@ -30,7 +30,8 @@ public class AdminKhachHangRepositoryCustomImpl implements AdminKhachHangReposit
             " CONCAT(COALESCE(dc.diaChiChiTiet, ''), ', ', COALESCE(dc.phuongXa, ''), ', ', COALESCE(dc.thanhPho, ''), ', ', COALESCE(dc.tinh, ''))," +
             " SUM(CASE WHEN hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_THANH THEN hd.tongTienSauGiam ELSE 0.0 END)," +
             " MAX(hd.ngayTao)," +
-            " COUNT(CASE WHEN hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_THANH THEN hd.id ELSE NULL END)" +
+            " COUNT(CASE WHEN hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_THANH THEN hd.id ELSE NULL END)," +
+            " COUNT(CASE WHEN hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_DON THEN hd.id ELSE NULL END)" +
             ")";
 
     private static final String FROM_CLAUSE =
