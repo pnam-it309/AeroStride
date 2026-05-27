@@ -6,7 +6,7 @@ import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { useUIStore } from '@/stores/ui';
 import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import { downloadFile } from '@/utils/fileUtils';
-import { formatDateTime } from '@/utils/formatters';
+import { formatDateTime, formatCurrency } from '@/utils/formatters';
 import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
 import { PlusIcon, PencilIcon, StarIcon, TrashIcon, MapPinIcon } from 'vue-tabler-icons';
 import axios from 'axios';
@@ -19,18 +19,173 @@ import { useNotifications } from '@/services/notificationService';
 import { TRANG_THAI_KHACH_HANG, TRANG_THAI_FILTER_OPTIONS, KHACH_HANG_TABLE_HEADERS, KHACH_HANG_BREADCRUMBS, ADDRESS_CONSTANTS } from '@/constants/khachHangConstants';
 import { GIOI_TINH_FILTER_OPTIONS } from '@/constants/appConstants';
 import { useAddressMapping } from '@/composables/useAddressMapping';
+import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
+import { getOrderStatusMeta } from '@/utils/orderStatus';
 
 const isRefreshing = ref(false);
+const activeTab = ref('danh-sach');
+const currentView = ref('list'); // 'list' or 'invoice-history'
 
-const {
-    items: allCustomers,
-    loading,
-    pagination,
-    filters,
-    loadData: loadCustomers,
-    handleFilter: handleLocalFilterChange,
-    handleReset
-} = useAdminTable(dichVuKhachHang.layKhachHangPhanTrang, { search: '', gioiTinh: null, trangThai: null });
+// ─── Invoices State ───
+const customerInvoices = ref([]);
+const invoicesLoading = ref(false);
+const selectedKHForInvoices = ref(null);
+const selectedInvoices = ref([]); // For checkbox selection array
+
+const invoicesPage = ref(1);
+const invoicesSize = ref(5);
+const invoicesTotalElements = ref(0);
+const invoicesTotalPages = ref(1);
+
+const invoicesFilters = ref({
+    search: '',
+    trangThai: null
+});
+
+const INVOICE_STATUS_FILTER_OPTIONS = [
+    { title: 'Tất cả', value: null },
+    { title: 'Chờ xác nhận', value: 0 },
+    { title: 'Đã xác nhận', value: 1 },
+    { title: 'Chờ giao', value: 2 },
+    { title: 'Đang giao', value: 3 },
+    { title: 'Đã hoàn thành', value: 4 },
+    { title: 'Hủy', value: 5 },
+    { title: 'Hoàn đơn', value: 6 }
+];
+
+const invoiceHistoryTableHeaders = [
+    { text: 'STT', width: '7%', align: 'center' },
+    { text: 'Mã hóa đơn', width: '15%', align: 'center' },
+    { text: 'Biến thể sản phẩm', width: '30%', align: 'left' },
+    { text: 'Tên khách hàng', width: '15%', align: 'left' },
+    { text: 'Nhận hàng', width: '20%', align: 'left' },
+    { text: 'Trạng thái hóa đơn', width: '13%', align: 'center' }
+];
+
+const handleInvoicesFilterChange = () => {
+    invoicesPage.value = 1;
+    fetchCustomerInvoices();
+};
+
+const handleInvoicesRefresh = () => {
+    invoicesFilters.value.search = '';
+    invoicesFilters.value.trangThai = null;
+    invoicesPage.value = 1;
+    fetchCustomerInvoices();
+};
+
+const openInvoicesDialog = async (customer) => {
+    selectedKHForInvoices.value = customer;
+    selectedInvoices.value = [];
+    invoicesPage.value = 1;
+    invoicesFilters.value.search = '';
+    invoicesFilters.value.trangThai = null;
+    currentView.value = 'invoice-history';
+    await fetchCustomerInvoices();
+};
+
+const backToList = () => {
+    currentView.value = 'list';
+    selectedKHForInvoices.value = null;
+    selectedInvoices.value = [];
+};
+
+const fetchCustomerInvoices = async () => {
+    if (!selectedKHForInvoices.value) return;
+    invoicesLoading.value = true;
+    try {
+        const res = await dichVuHoaDon.layHoaDonPhanTrang({
+            page: invoicesPage.value - 1,
+            size: invoicesSize.value,
+            idKhachHang: selectedKHForInvoices.value.id,
+            search: invoicesFilters.value.search || undefined,
+            trangThai: invoicesFilters.value.trangThai !== null ? invoicesFilters.value.trangThai : undefined
+        });
+        
+        let data = [];
+        if (Array.isArray(res)) {
+            data = res;
+            invoicesTotalElements.value = res.length;
+            invoicesTotalPages.value = 1;
+        } else if (res?.data) {
+            data = res.data.content || res.data.items || res.data || [];
+            invoicesTotalElements.value = res.data.totalElements || data.length;
+            invoicesTotalPages.value = res.data.totalPages || 1;
+        } else {
+            data = res.content || res.items || [];
+            invoicesTotalElements.value = res.totalElements || data.length;
+            invoicesTotalPages.value = res.totalPages || 1;
+        }
+        customerInvoices.value = data;
+    } catch (error) {
+        console.error('Error fetching customer invoices:', error);
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Không thể tải danh sách hóa đơn khách hàng',
+            color: 'error'
+        });
+    } finally {
+        invoicesLoading.value = false;
+    }
+};
+
+
+
+const isAllInvoicesSelected = computed(() => {
+    return customerInvoices.value.length > 0 && selectedInvoices.value.length === customerInvoices.value.length;
+});
+
+const toggleSelectAllInvoices = () => {
+    if (isAllInvoicesSelected.value) {
+        selectedInvoices.value = [];
+    } else {
+        selectedInvoices.value = [...customerInvoices.value];
+    }
+};
+
+const listTab = useAdminTable(dichVuKhachHang.layKhachHangPhanTrang, { search: '', gioiTinh: null, trangThai: null });
+const statsTab = useAdminTable(dichVuKhachHang.layKhachHangPhanTrang, { search: '', gioiTinh: null, trangThai: null });
+
+// Sync filters from listTab to statsTab
+watch(
+    () => listTab.filters.value,
+    (newVal) => {
+        statsTab.filters.value = { ...newVal };
+    },
+    { deep: true }
+);
+
+// Automatic fetch on tab switch if data is empty
+watch(activeTab, (newTab) => {
+    if (newTab === 'danh-sach' && listTab.items.value.length === 0) {
+        listTab.loadData();
+    } else if (newTab === 'thong-ke' && statsTab.items.value.length === 0) {
+        statsTab.loadData();
+    }
+});
+
+const allCustomers = computed(() => (activeTab.value === 'danh-sach' ? listTab.items.value : statsTab.items.value));
+const loading = computed(() => (activeTab.value === 'danh-sach' ? listTab.loading.value : statsTab.loading.value));
+const pagination = computed(() => (activeTab.value === 'danh-sach' ? listTab.pagination.value : statsTab.pagination.value));
+const filters = listTab.filters;
+
+const loadCustomers = () => {
+    if (activeTab.value === 'danh-sach') {
+        listTab.loadData();
+    } else {
+        statsTab.loadData();
+    }
+};
+
+const handleLocalFilterChange = () => {
+    listTab.handleFilter();
+    statsTab.handleFilter();
+};
+
+const handleReset = () => {
+    listTab.handleReset();
+    statsTab.handleReset();
+};
 
 const handleRefresh = async () => {
     isRefreshing.value = true;
@@ -63,18 +218,31 @@ const { confirmDialog, setConfirm, clearConfirm, handleConfirm } = useConfirmDia
 const addrDialog = ref(false);
 const selectedKH = ref(null);
 
-const customerBreadcrumbs = KHACH_HANG_BREADCRUMBS;
+const customerBreadcrumbs = computed(() => {
+    if (currentView.value === 'invoice-history') {
+        return [
+            { title: 'Quản lý tài khoản', disabled: false, href: '#' },
+            { title: 'Khách hàng', disabled: false, to: '/admin/khach-hang' },
+            { title: `Lịch sử mua hàng: ${selectedKHForInvoices.value?.ten || ''}`, disabled: true }
+        ];
+    }
+    return KHACH_HANG_BREADCRUMBS;
+});
 
 watch(addrDialog, (isOpen) => {
     if (isOpen) {
         uiStore.setBreadcrumbs([
             { title: 'Quản lý tài khoản', disabled: false, href: '#' },
-            { title: 'Khách hàng', disabled: false, to: '/khach-hang' },
+            { title: 'Khách hàng', disabled: false, to: '/admin/khach-hang' },
             { title: `Địa chỉ: ${selectedKH.value?.ten || ''}`, disabled: true }
         ]);
     } else {
-        uiStore.setBreadcrumbs(customerBreadcrumbs);
+        uiStore.setBreadcrumbs(customerBreadcrumbs.value);
     }
+});
+
+watch(currentView, () => {
+    uiStore.setBreadcrumbs(customerBreadcrumbs.value);
 });
 
 // ─── Address Dialog ───────────────────────────────────────────────
@@ -371,6 +539,17 @@ const handleDeleteAddr = (addrId) => {
 
 const tableHeaders = KHACH_HANG_TABLE_HEADERS;
 
+const statsTableHeaders = [
+    { text: 'STT', width: '60px', align: 'center' },
+    { text: 'Mã khách hàng', width: '150px', align: 'center' },
+    { text: 'Tên khách hàng', width: '120px', align: 'left' },
+    { text: 'Số đơn mua', width: '120px', align: 'center' },
+    { text: 'Số đơn hoàn', width: '120px', align: 'center' },
+    { text: 'Số tiền đã chi', width: '130px', align: 'center' },
+    { text: 'Trạng thái', width: '120px', align: 'center' },
+    { text: 'Hành động', width: '110px', align: 'center' }
+];
+
 onMounted(() => {
     loadCustomers();
 });
@@ -501,7 +680,8 @@ const formatAddressFull = (addr) => {
 
         <div class="mb-2"></div>
 
-        <!-- Filter -->
+        <div v-if="currentView === 'list'">
+            <!-- Filter -->
         <div class="filter-shell">
             <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
                 <!-- Tìm kiếm -->
@@ -530,12 +710,48 @@ const formatAddressFull = (addr) => {
             </AdminFilter>
         </div>
 
+<<<<<<< .merge_file_paiVag
         <!-- Table — không có tab, chỉ có bảng -->
         <AdminTable title="Danh sách khách hàng" addButtonText="Tạo mới" show-export-button :headers="tableHeaders"
             :items="allCustomers" :total-count="pagination.totalElements" :loading="loading"
             @add="router.push({ name: 'KhachHangForm' })" @export="handleExport">
+=======
+        <AdminTable
+            title="Khách hàng"
+            addButtonText="Tạo mới"
+            show-export-button
+            :headers="activeTab === 'danh-sach' ? tableHeaders : statsTableHeaders"
+            :items="allCustomers"
+            :total-count="pagination.totalElements"
+            :loading="loading"
+            @add="router.push({ name: 'KhachHangForm' })"
+            @export="handleExport"
+        >
+            <template #top>
+                <!-- Tabs navigation inside the table, no transition animation -->
+                <v-tabs
+                    v-model="activeTab"
+                    bg-color="transparent"
+                    color="primary"
+                    height="54"
+                    align-tabs="start"
+                    class="admin-tabs"
+                >
+                    <v-tab value="danh-sach" class="text-none px-4 tab-item">
+                        <v-icon start class="mr-2" size="13">mdi-account-multiple-outline</v-icon>
+                        Danh sách khách hàng
+                    </v-tab>
+                    <v-tab value="thong-ke" class="text-none px-4 tab-item">
+                        <v-icon start class="mr-2" size="13">mdi-chart-line</v-icon>
+                        Tổng đơn mua hàng
+                    </v-tab>
+                </v-tabs>
+            </template>
+
+>>>>>>> .merge_file_6Tf0Lo
             <template #row="{ item, index }">
-                <tr class="data-row">
+                <!-- Row for Tab 1: Danh sách chi tiết -->
+                <tr v-if="activeTab === 'danh-sach'" class="data-row">
                     <td class="data-cell text-center text-black font-weight-medium">
                         {{ (pagination.page - 1) * pagination.size + index + 1 }}
                     </td>
@@ -596,6 +812,61 @@ const formatAddressFull = (addr) => {
                         </div>
                     </td>
                 </tr>
+
+                <!-- Row for Tab 2: Thống kê mua hàng -->
+                <tr v-else class="data-row">
+                    <td class="data-cell text-center text-black font-weight-medium">
+                        {{ (pagination.page - 1) * pagination.size + index + 1 }}
+                    </td>
+                    <td class="data-cell text-center">
+                        <div class="text-truncate" :title="item.ma">{{ item.ma || '-' }}</div>
+                    </td>
+                    <td class="data-cell text-left px-4">
+                        <div class="text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
+                    </td>
+                    <td class="data-cell text-center">
+                        {{ item.tongDonHang || 0 }}
+                    </td>
+                    <td class="data-cell text-center">
+                        {{ item.tongDonHoan || 0 }}
+                    </td>
+                    <td class="data-cell text-center font-weight-bold" style="color: #1e257c !important">
+                        {{ formatCurrency(item.tongChiTieu || 0) }}
+                    </td>
+                    <td class="data-cell">
+                        <v-chip
+                            variant="flat"
+                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']"
+                        >
+                            {{ getStatusLabel(item.trangThai) }}
+                        </v-chip>
+                    </td>
+                    <td class="data-cell action-cell">
+                        <div class="d-flex align-center justify-center action-controls">
+                            <!-- Chi tiết -->
+                            <v-btn
+                                variant="text"
+                                class="action-icon-btn"
+                                @click.stop="openInvoicesDialog(item)"
+                            >
+                                <component :is="ADMIN_ICONS.ACTION.VIEW" size="15" />
+                                <v-tooltip activator="parent" location="top">Chi tiết hóa đơn</v-tooltip>
+                            </v-btn>
+                            <!-- Switch trạng thái -->
+                            <div class="switch-wrapper">
+                                <v-switch
+                                    :model-value="isActiveStatus(item.trangThai)"
+                                    color="primary"
+                                    hide-details
+                                    density="compact"
+                                    class="tight-switch action-switch"
+                                    @click.prevent.stop="confirmChangeStatus(item)"
+                                />
+                                <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
             </template>
 
             <template #pagination>
@@ -605,6 +876,137 @@ const formatAddressFull = (addr) => {
                     @change="loadCustomers" />
             </template>
         </AdminTable>
+        </div>
+
+        <div v-else-if="currentView === 'invoice-history'" class="invoice-history-container animate-fade-in font-body">
+            <!-- Header: Back button, title -->
+            <div class="d-flex align-center gap-2 mb-3 mt-1">
+                <v-btn
+                    icon
+                    variant="flat"
+                    color="white"
+                    class="border shadow-sm rounded-lg"
+                    size="36"
+                    style="height: 36px !important; width: 36px !important; min-height: 36px !important;"
+                    @click="backToList"
+                >
+                    <v-icon size="18" color="slate-700">mdi-arrow-left</v-icon>
+                </v-btn>
+                <div class="text-h6 font-weight-black text-slate-800" style="font-family: 'Inter', sans-serif !important; font-size: 15px !important;">
+                    Hóa đơn đã mua — {{ selectedKHForInvoices?.ten }}
+                </div>
+            </div>
+
+            <!-- Filter -->
+            <div class="filter-shell">
+                <AdminFilter title="Bộ lọc" :loading="invoicesLoading" :is-refreshing="invoicesLoading" @refresh="handleInvoicesRefresh">
+                    <!-- Tìm kiếm -->
+                    <v-col cols="12" md="4" class="filter-cell">
+                        <div class="filter-field-label" style="font-family: 'Inter', sans-serif !important;">Tìm kiếm</div>
+                        <v-text-field
+                            v-model="invoicesFilters.search"
+                            placeholder="Mã hóa đơn..."
+                            prepend-inner-icon="mdi-magnify"
+                            variant="outlined"
+                            density="compact"
+                            hide-details
+                            class="compact-input"
+                            style="font-family: 'Inter', sans-serif !important;"
+                            @update:model-value="handleInvoicesFilterChange"
+                        />
+                    </v-col>
+
+                    <!-- Trạng thái -->
+                    <v-col cols="12" md="3" class="filter-cell">
+                        <div class="filter-field-label" style="font-family: 'Inter', sans-serif !important;">Trạng thái hóa đơn</div>
+                        <v-select
+                            v-model="invoicesFilters.trangThai"
+                            :items="INVOICE_STATUS_FILTER_OPTIONS"
+                            variant="outlined"
+                            density="compact"
+                            hide-details
+                            class="compact-input"
+                            style="font-family: 'Inter', sans-serif !important;"
+                            @update:model-value="handleInvoicesFilterChange"
+                        />
+                    </v-col>
+                </AdminFilter>
+            </div>
+
+            <!-- Table Card -->
+            <AdminTable
+                hide-toolbar
+                :headers="invoiceHistoryTableHeaders"
+                :items="customerInvoices"
+                :loading="invoicesLoading"
+                empty-text="Chưa có hóa đơn nào được tìm thấy cho khách hàng này"
+                empty-icon="mdi-receipt-text-off"
+            >
+                <template #row="{ item, index }">
+                    <tr class="data-row">
+                        <td class="data-cell text-center text-black font-weight-medium">
+                            {{ (invoicesPage - 1) * invoicesSize + index + 1 }}
+                        </td>
+                        <td class="data-cell text-center text-slate-800" style="font-family: monospace !important;">
+                            {{ item.maHoaDon }}
+                        </td>
+                        <td class="data-cell text-left px-4">
+                            <div class="d-flex flex-column gap-1" style="word-break: break-word; white-space: normal;">
+                                <div v-for="(variant, idx) in item.bienThes" :key="idx" class="text-body-2 text-slate-700">
+                                    {{ variant }}
+                                </div>
+                                <span v-if="!item.bienThes || item.bienThes.length === 0" class="text-slate-400 italic">Không có sản phẩm</span>
+                            </div>
+                        </td>
+                        <td class="data-cell text-left px-4 text-slate-800" style="word-break: break-word; white-space: normal;">
+                            {{ selectedKHForInvoices?.ten }}
+                        </td>
+                        <td class="data-cell text-left px-4">
+                            <div class="d-flex flex-column" style="word-break: break-word; white-space: normal;">
+                                <div v-if="item.soDienThoai" class="text-slate-700 mb-1">
+                                    <v-icon size="14" class="mr-1 text-slate-400" style="font-size: 14px !important">mdi-phone</v-icon>
+                                    {{ item.soDienThoai }}
+                                </div>
+                                <div v-if="item.diaChiNguoiNhan" class="text-slate-500 line-height-1-4">
+                                    <v-icon size="14" class="mr-1 text-slate-400" style="font-size: 14px !important">mdi-map-marker</v-icon>
+                                    {{ item.diaChiNguoiNhan }}
+                                </div>
+                                <div v-if="!item.soDienThoai && !item.diaChiNguoiNhan" class="text-slate-400">
+                                    -
+                                </div>
+                            </div>
+                        </td>
+                        <td class="data-cell text-center">
+                            <template v-if="getOrderStatusMeta(item.trangThai)">
+                                <v-chip
+                                    :class="['status-chip', getOrderStatusMeta(item.trangThai).chipClass]"
+                                    variant="flat"
+                                    size="small"
+                                >
+                                    <v-icon start size="14" style="font-size: 14px !important">{{ getOrderStatusMeta(item.trangThai).icon }}</v-icon>
+                                    {{ getOrderStatusMeta(item.trangThai).text }}
+                                </v-chip>
+                            </template>
+                            <template v-else>
+                                -
+                            </template>
+                        </td>
+                    </tr>
+                </template>
+
+                <template #pagination>
+                    <AdminPagination
+                        v-model="invoicesPage"
+                        :page-size="invoicesSize"
+                        @update:page-size="invoicesSize = $event"
+                        :total-pages="invoicesTotalPages"
+                        :total-elements="invoicesTotalElements"
+                        :current-size="customerInvoices.length"
+                        @change="fetchCustomerInvoices"
+                    />
+                </template>
+            </AdminTable>
+        </div>
 
         <!-- Confirm Dialog -->
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
@@ -812,6 +1214,8 @@ const formatAddressFull = (addr) => {
                 </v-card-text>
             </v-card>
         </v-dialog>
+
+
     </v-container>
 </template>
 <style scoped></style>

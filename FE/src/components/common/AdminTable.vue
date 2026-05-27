@@ -1,7 +1,8 @@
 <script setup>
+import { computed } from 'vue';
 import { LayoutGridIcon } from 'vue-tabler-icons';
 
-defineProps({
+const props = defineProps({
     title: { type: String, default: 'Danh sách' },
     headers: { type: Array, default: () => [] },
     items: { type: Array, default: () => [] },
@@ -19,6 +20,10 @@ defineProps({
 });
 
 const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
+
+const tableKey = computed(() => {
+    return props.headers.map(h => `${h.text || h}-${h.width || ''}-${h.align || ''}`).join('|');
+});
 </script>
 
 <template>
@@ -57,7 +62,7 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
 
             <!-- Main Table Table -->
             <div class="table-wrapper">
-                <table class="native-admin-table">
+                <table :key="tableKey" class="native-admin-table">
                     <thead>
                         <slot name="headers">
                             <tr>
@@ -66,7 +71,8 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                                 </th>
                                 <th v-for="(header, idx) in headers" :key="idx"
                                     :style="{ minWidth: header.width || 'auto', width: header.width || 'auto' }"
-                                    class="header-cell" style="white-space: nowrap;">
+                                    :class="['header-cell', header.align ? 'text-' + header.align : 'text-center']"
+                                    style="white-space: nowrap;">
                                     {{ header.text || header }}
                                 </th>
                             </tr>

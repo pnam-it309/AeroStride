@@ -133,8 +133,8 @@ public class VnPayServiceImpl implements PaymentService {
             throw new IllegalArgumentException("Amount must be greater than 0");
         }
         
-        // VNPay maximum amount limit (999,999,99 VND = 999,999.99 when divided by 100)
-        BigDecimal maxAmount = new BigDecimal("9999999.99");
+        // VNPay maximum amount limit (1,000,000,000 VND)
+        BigDecimal maxAmount = new BigDecimal("1000000000.00");
         if (request.getAmount().compareTo(maxAmount) > 0) {
             throw new IllegalArgumentException("Amount exceeds maximum allowed limit of " + maxAmount);
         }

@@ -170,7 +170,7 @@ const setMainImage = async (imgId) => {
                 <v-icon icon="mdi-package-variant" size="18" color="primary" />
                 <h2 class="text-h6 text-slate-900 mb-0" style="font-size: 1.15rem !important;">Quản lý hình ảnh</h2>
             </div>
-            <p class="text-primary" style="font-size: 13px !important;">{{ variant.maChiTietSanPham ? variant.maChiTietSanPham.split('-')[0] : '--' }}</p>
+            <p class="text-primary" style="font-size: 13px !important;">{{ variant.maChiTietSanPham || '--' }}</p>
         </div>
         <v-btn icon variant="tonal" density="comfortable" color="slate-400" @click="emit('update:show', false)" class="rounded-lg">
           <XIcon size="20" />

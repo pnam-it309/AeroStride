@@ -27,14 +27,23 @@ public class AdminKhachHangRepositoryCustomImpl implements AdminKhachHangReposit
             " kh.id, kh.ma, kh.ten, kh.email, kh.tenTaiKhoan," +
             " kh.gioiTinh, kh.sdt, kh.ngaySinh, kh.hinhAnh, kh.ghiChu," +
             " kh.trangThai, kh.ngayTao, kh.ngayCapNhat," +
-            " CONCAT(COALESCE(dc.diaChiChiTiet, ''), ', ', COALESCE(dc.phuongXa, ''), ', ', COALESCE(dc.thanhPho, ''), ', ', COALESCE(dc.tinh, ''))" +
+            " CONCAT(COALESCE(dc.diaChiChiTiet, ''), ', ', COALESCE(dc.phuongXa, ''), ', ', COALESCE(dc.thanhPho, ''), ', ', COALESCE(dc.tinh, ''))," +
+            " SUM(CASE WHEN hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_THANH THEN hd.tongTienSauGiam ELSE 0.0 END)," +
+            " MAX(hd.ngayTao)," +
+            " COUNT(CASE WHEN hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_THANH THEN hd.id ELSE NULL END)," +
+            " COUNT(CASE WHEN hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_DON THEN hd.id ELSE NULL END)" +
             ")";
 
     private static final String FROM_CLAUSE =
             " FROM KhachHang kh" +
-            " LEFT JOIN kh.diaChi dc";
+            " LEFT JOIN kh.diaChi dc" +
+            " LEFT JOIN HoaDon hd ON hd.khachHang = kh";
 
-    private static final String GROUP_BY_CLAUSE = ""; // No longer needed since no aggregates
+    private static final String GROUP_BY_CLAUSE =
+            " GROUP BY kh.id, kh.ma, kh.ten, kh.email, kh.tenTaiKhoan," +
+            "          kh.gioiTinh, kh.sdt, kh.ngaySinh, kh.hinhAnh, kh.ghiChu," +
+            "          kh.trangThai, kh.ngayTao, kh.ngayCapNhat," +
+            "          dc.diaChiChiTiet, dc.phuongXa, dc.thanhPho, dc.tinh";
 
     // ── Interface implementations ─────────────────────────────────────────
 

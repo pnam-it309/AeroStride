@@ -51,7 +51,7 @@ const selectionPage = ref(1);
 const selectionPageSize = ref(5);
 
 // --- PHẦN THÊM MỚI: Khởi tạo các biến lọc cho bảng dưới ---
-const dynamicMaxPrice = ref(5000000); // Mặc định 5 triệu, sẽ cập nhật sau khi load data
+const dynamicMaxPrice = ref(6500000); // Mặc định 6.5 triệu, sẽ cập nhật sau khi load data
 const loadMaxPrice = async () => {
     try {
         const maxPrice = await dichVuSanPham.layGiaLonNhat(); 
@@ -370,7 +370,7 @@ const init = async () => {
             if (actualMax > 0) {
                 dynamicMaxPrice.value = actualMax;
                 // Nếu giá trị lọc hiện tại đang là mặc định hoặc lớn hơn thực tế quá nhiều, cập nhật lại
-                if (detailFilters.value.khoangGia[1] >= 5000000 || detailFilters.value.khoangGia[1] === 0) {
+                if (detailFilters.value.khoangGia[1] >= 6500000 || detailFilters.value.khoangGia[1] === 0) {
                     detailFilters.value.khoangGia = [0, actualMax];
                 }
             }

@@ -59,8 +59,7 @@ public class SanPham extends BaseCodeNameEntity {
     @Enumerated(EnumType.STRING)
     private GioiTinhKhachHang gioiTinhKhachHang;
 
-    @Column(name = "mo_ta_ngan")
-    private String moTaNgan;
+
 
     @Column(name = "hinh_anh")
     private String hinhAnh;
