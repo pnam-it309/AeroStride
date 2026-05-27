@@ -494,4 +494,49 @@ CREATE TABLE lich_su_hoat_dong (
     nguoi_sua VARCHAR(255)
 );
 
+
+CREATE TABLE IF NOT EXISTS kien_thuc_ai (
+    id VARCHAR(36) PRIMARY KEY,
+    muc_dich VARCHAR(255) NOT NULL,
+    tu_khoa TEXT,
+    mau_cau_tra_loi TEXT,
+    do_uu_tien INT
+);
+
+CREATE TABLE IF NOT EXISTS tu_dong_nghia_ai (
+    id VARCHAR(36) PRIMARY KEY,
+    tu_goc VARCHAR(255) NOT NULL,
+    tu_chuan_hoa VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS cuoc_hoi_thoai (
+    id VARCHAR(36) PRIMARY KEY,
+    id_khach_hang VARCHAR(36),
+    id_nhan_vien VARCHAR(36),
+    id_nhan_vien_nhan VARCHAR(36),
+    ma_phien VARCHAR(255),
+    da_chap_nhan BIT DEFAULT 0,
+    loai_hoi_thoai VARCHAR(50),
+    trang_thai_hoi_thoai VARCHAR(50),
+    trang_thai INT,
+    ngay_tao BIGINT,
+    ngay_cap_nhat BIGINT,
+    nguoi_tao VARCHAR(255),
+    nguoi_cap_nhat VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS tin_nhan (
+    id VARCHAR(36) PRIMARY KEY,
+    id_cuoc_hoi_thoai VARCHAR(36),
+    loai_nguoi_gui VARCHAR(255),
+    id_nguoi_gui VARCHAR(255),
+    ten_nguoi_gui VARCHAR(255),
+    noi_dung TEXT,
+    trang_thai INT,
+    ngay_tao BIGINT,
+    ngay_cap_nhat BIGINT,
+    nguoi_tao VARCHAR(255),
+    nguoi_cap_nhat VARCHAR(255)
+);
+
 SET FOREIGN_KEY_CHECKS = 1;

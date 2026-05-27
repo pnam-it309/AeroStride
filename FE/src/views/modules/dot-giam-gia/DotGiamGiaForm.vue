@@ -494,21 +494,21 @@ onMounted(init);
                         </div>
 
                         <div class="mb-5">
-                            <div class="field-label">Tên đợt giảm giá *</div>
+                            <div class="field-label">Tên đợt giảm giá</div>
                             <v-text-field v-model="form.ten" :readonly="isDetailView"
                                 placeholder="Nhập tên đợt giảm giá" variant="outlined" density="comfortable"
                                 hide-details></v-text-field>
                         </div>
 
                         <div class="mb-5">
-                            <div class="field-label">Mức giảm giá (%) <span class="text-red">*</span></div>
+                            <div class="field-label">Mức giảm giá (%)</div>
                             <v-text-field v-model.number="form.soTienGiam" :readonly="isDetailView" type="number"
                                 suffix="%" placeholder="0" variant="outlined" density="comfortable"
                                 hide-details></v-text-field>
                         </div>
 
                         <div class="mb-5">
-                            <div class="field-label">Ngày bắt đầu <span class="text-red">*</span></div>
+                            <div class="field-label">Ngày bắt đầu</div>
                             <v-text-field v-model="form.ngayBatDau" :readonly="isDetailView" type="datetime-local"
                                 append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
                                 variant="outlined" density="comfortable" hide-details
@@ -516,7 +516,7 @@ onMounted(init);
                         </div>
 
                         <div class="mb-6">
-                            <div class="field-label">Ngày kết thúc <span class="text-red">*</span></div>
+                            <div class="field-label">Ngày kết thúc</div>
                             <v-text-field v-model="form.ngayKetThuc" :readonly="isDetailView" type="datetime-local"
                                 append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
                                 variant="outlined" density="comfortable" hide-details

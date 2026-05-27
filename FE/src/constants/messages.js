@@ -8,8 +8,7 @@ export const MESSAGES = {
         DELETE: 'Xóa thành công',
         ADD: 'Thêm mới thành công',
         PAYMENT: 'Hóa đơn đã được thanh toán',
-        UPLOAD: 'Tải ảnh lên thành công',
-        RESET_PASSWORD: 'Yêu cầu reset mật khẩu đã được gửi'
+        UPLOAD: 'Tải ảnh lên thành công'
     },
     ERROR: {
         SYSTEM: 'Có lỗi hệ thống xảy ra. Vui lòng thử lại sau!',

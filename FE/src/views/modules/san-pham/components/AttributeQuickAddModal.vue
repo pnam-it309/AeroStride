@@ -62,7 +62,7 @@ const handleSave = async () => {
       <v-card-text class="pa-6">
         <v-row>
             <v-col cols="12">
-                <div class="field-label mb-1">Tên {{ title }} *</div>
+                <div class="field-label mb-1">Tên {{ title }}</div>
                 <v-text-field v-model="form.ten" placeholder="Nhập tên..." variant="outlined" density="comfortable" hide-details></v-text-field>
             </v-col>
             <v-col cols="12">

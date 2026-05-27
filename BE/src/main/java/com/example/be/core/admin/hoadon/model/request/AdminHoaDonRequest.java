@@ -12,6 +12,8 @@ public class AdminHoaDonRequest extends PageRequest {
 
     private String tenKhachHang;  // Lọc riêng theo tên khách hàng
 
+    private String idKhachHang;   // Lọc chính xác theo ID khách hàng
+
     private String soDienThoai;   // Lọc riêng theo số điện thoại (nếu cần)
 
     private Integer trangThai;    // Nhận giá trị 0, 1, 2, 3, 4 từ Select của FE

@@ -16,14 +16,14 @@ export default defineConfig(({ mode }) => {
             }),
             viteCompression({
                 verbose: true,
-                disable: false,
+                disable: mode === 'development', // Bắt buộc phải tắt lúc dev, nếu không mỗi lần load nó lại ngồi nén file rất lâu
                 threshold: 10240, // Compress files larger than 10KB
                 algorithm: 'gzip',
                 ext: '.gz',
             }),
             viteCompression({
                 verbose: true,
-                disable: false,
+                disable: mode === 'development', // Bắt buộc phải tắt lúc dev
                 threshold: 10240,
                 algorithm: 'brotliCompress',
                 ext: '.br',
@@ -78,9 +78,10 @@ export default defineConfig(({ mode }) => {
         server: {
             allowedHosts: true,
             watch: {
-                usePolling: true,
+                usePolling: true, // Bật lại cho Docker HMR
                 interval: 1000,
-                ignored: ['**/node_modules/**', '**/dist/**'],
+                // Bổ sung thêm các thư mục không cần thiết để giảm tải quá trình quét của Polling
+                ignored: ['**/node_modules/**', '**/dist/**', '**/.git/**', '**/.vscode/**', '**/.idea/**'],
             },
             host: true,
             strictPort: true,

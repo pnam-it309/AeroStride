@@ -54,3 +54,20 @@ export const GIOI_TINH_FILTER_OPTIONS = [
     { title: 'Tất cả', value: null },
     ...GIOI_TINH_OPTIONS
 ];
+
+/**
+ * ORDER_TYPES - Các loại hình đơn hàng
+ */
+export const ORDER_TYPES = {
+    ALL: null,
+    ONLINE: 'ONLINE',
+    TAI_QUAY: 'TAI_QUAY',
+    OFFLINE: 'OFFLINE'
+};
+
+export const ORDER_TYPE_OPTIONS = [
+    { title: 'Tất cả', value: null },
+    { title: 'Trực tuyến', value: ORDER_TYPES.ONLINE },
+    { title: 'Cửa hàng', value: ORDER_TYPES.TAI_QUAY }
+];
+

@@ -36,7 +36,6 @@ export const API_PRODUCT = {
 };
 
 export const API_COMMON = {
-    RESET_PASSWORD: '/reset-password-requests',
     PAYMENT: '/payment',
     STORAGE: '/storage',
 };

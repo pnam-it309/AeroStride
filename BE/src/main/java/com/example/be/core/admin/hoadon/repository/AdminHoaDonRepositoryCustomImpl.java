@@ -52,6 +52,10 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
             builder.and(kh.ten.toLowerCase().contains(req.getTenKhachHang().toLowerCase().trim()));
         }
 
+        if (req.getIdKhachHang() != null && !req.getIdKhachHang().trim().isEmpty()) {
+            builder.and(kh.id.eq(req.getIdKhachHang()));
+        }
+
         if (req.getTrangThai() != null) {
             try {
                 OrderStatus status = OrderStatus.values()[req.getTrangThai()];
@@ -62,7 +66,11 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
         }
 
         if (req.getLoaiDon() != null && !req.getLoaiDon().trim().isEmpty()) {
-            builder.and(hd.loaiDon.eq(req.getLoaiDon()));
+            if ("TAI_QUAY".equalsIgnoreCase(req.getLoaiDon()) || "OFFLINE".equalsIgnoreCase(req.getLoaiDon())) {
+                builder.and(hd.loaiDon.in("TAI_QUAY", "OFFLINE"));
+            } else {
+                builder.and(hd.loaiDon.eq(req.getLoaiDon()));
+            }
         }
 
         if (req.getTuNgayLong() != null) {

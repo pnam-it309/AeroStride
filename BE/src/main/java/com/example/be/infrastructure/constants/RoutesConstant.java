@@ -7,7 +7,6 @@ public final class RoutesConstant {
     
     // Auth routes
     public static final String AUTH = API_PREFIX + "/auth";
-    public static final String RESET_PASSWORD = API_PREFIX + "/reset-password-requests";
     
     // Admin routes
     public static final String ADMIN = API_PREFIX + "/admin";
@@ -53,7 +52,6 @@ public final class RoutesConstant {
     public static final String EXPORT_EXCEL = "/export-excel";
     public static final String DOWNLOAD_TEMPLATE = "/download-template";
     public static final String IMPORT_EXCEL = "/import-excel";
-    public static final String PENDING = "/pending";
     public static final String ID = "/{id}";
 
     // Ban Hang specific
@@ -83,8 +81,6 @@ public final class RoutesConstant {
     public static final String KHACH_HANG_DETAIL = "/khach-hang/{khId}";
     public static final String AVATAR = "/avatar";
     public static final String PHAN_QUYEN = "/phan-quyen";
-    public static final String REQUEST = "/request";
-    public static final String APPROVE = "/approve/{id}";
 
     // San Pham specific
     public static final String FORM_OPTIONS = "/form-options";

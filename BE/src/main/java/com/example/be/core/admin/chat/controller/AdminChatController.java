@@ -1,7 +1,7 @@
 package com.example.be.core.admin.chat.controller;
 
 import com.example.be.core.admin.chat.model.AdminChatResponse;
-import com.example.be.core.admin.chat.model.ChatMessageResponse;
+import com.example.be.core.admin.chat.model.TinNhanResponse;
 import com.example.be.core.admin.chat.model.SendMessageRequest;
 import com.example.be.core.admin.chat.service.AdminChatService;
 import com.example.be.core.common.dto.ApiResponse;
@@ -32,7 +32,7 @@ public class AdminChatController {
     }
 
     @GetMapping(RoutesConstant.CONVERSATION_MESSAGES)
-    public ResponseEntity<ApiResponse<List<ChatMessageResponse>>> getMessages(@PathVariable String id) {
+    public ResponseEntity<ApiResponse<List<TinNhanResponse>>> getDanhSachTinNhan(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success(chatService.getMessagesByConversation(id)));
     }
 

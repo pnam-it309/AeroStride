@@ -8,13 +8,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "chat_conversation")
+@Table(name = "cuoc_hoi_thoai")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChatConversation extends PrimaryEntity {
+public class CuocHoiThoai extends PrimaryEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_khach_hang")
@@ -26,35 +26,35 @@ public class ChatConversation extends PrimaryEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_nhan_vien_nhan")
-    private NhanVien secondNhanVien; // Dùng cho chat nội bộ (người nhận)
+    private NhanVien nhanVienNhan; // Dùng cho chat nội bộ (người nhận)
 
-    @Column(name = "session_id")
-    private String sessionId; // Dùng cho khách vãng lai chưa đăng nhập
+    @Column(name = "ma_phien")
+    private String maPhien; // Dùng cho khách vãng lai chưa đăng nhập
 
     @Builder.Default
-    @Column(name = "is_accepted")
-    private Boolean isAccepted = false;
+    @Column(name = "da_chap_nhan")
+    private Boolean daChapNhan = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type")
+    @Column(name = "loai_hoi_thoai")
     @Builder.Default
-    private ChatType type = ChatType.CUSTOMER;
+    private LoaiHoiThoai loaiHoiThoai = LoaiHoiThoai.CUSTOMER;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
+    @Column(name = "trang_thai_hoi_thoai")
     @Builder.Default
-    private ChatStatus status = ChatStatus.PENDING;
+    private TrangThaiHoiThoai trangThaiHoiThoai = TrangThaiHoiThoai.PENDING;
 
-    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "cuocHoiThoai", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("ngayTao ASC")
     @Builder.Default
-    private List<ChatMessage> messages = new ArrayList<>();
+    private List<TinNhan> danhSachTinNhan = new ArrayList<>();
 
-    public enum ChatType {
+    public enum LoaiHoiThoai {
         CUSTOMER, INTERNAL
     }
 
-    public enum ChatStatus {
+    public enum TrangThaiHoiThoai {
         PENDING, ACTIVE, CLOSED
     }
 }

@@ -15,6 +15,7 @@ import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { useAdminTable } from '@/composables/useAdminTable';
 import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
 import { getOrderStatusMeta } from '@/utils/orderStatus';
+import { ORDER_TYPES, ORDER_TYPE_OPTIONS } from '@/constants/appConstants';
 
 const router = useRouter();
 const TAB_ALL = 'ALL';
@@ -49,6 +50,7 @@ const {
         tuNgay: p.fromDate || undefined,
         denNgay: p.toDate || undefined,
         sortDirection: p.sortDirection,
+        loaiDon: p.loaiDon || undefined,
         ...(nTrangThai !== null ? { trangThai: nTrangThai } : {})
     };
     const res = await dichVuHoaDon.layHoaDonPhanTrang(params);
@@ -62,6 +64,7 @@ const {
 }, {
     search: '',
     trangThai: TAB_ALL,
+    loaiDon: null,
     fromDate: getTodayDate(),
     toDate: getTodayDate(),
     sortDirection: 'DESC'
@@ -92,7 +95,6 @@ const tableHeaders = [
     { text: 'Mã nhân viên', width: '110px' },
     { text: 'Số điện thoại', width: '110px' },
     { text: 'Loại hóa đơn', width: '100px' },
-    { text: 'Loại thanh toán', width: '120px' },
     { text: 'Tổng tiền', width: '90px' },
     { text: 'Trạng thái', width: '120px' },
     { text: 'Hành động', width: '100px' }
@@ -147,6 +149,7 @@ const handleExport = async () => {
             tuNgay: filters.value.fromDate || undefined,
             denNgay: filters.value.toDate || undefined,
             sortDirection: filters.value.sortDirection,
+            loaiDon: filters.value.loaiDon || undefined,
             ...(normalizedTrangThai !== null ? { trangThai: normalizedTrangThai } : {})
         };
         const blob = await dichVuHoaDon.xuatExcelHoaDon(params);
@@ -183,7 +186,7 @@ const getOrderTypeClass = (orderType) => {
         .toUpperCase()
         .trim();
 
-    if (normalizedType.includes('ONLINE') || normalizedType.includes('TRUC TUYEN')) {
+    if (normalizedType.includes(ORDER_TYPES.ONLINE) || normalizedType.includes('TRUC TUYEN')) {
         return 'order-type-online';
     }
 
@@ -197,11 +200,11 @@ const getOrderTypeLabel = (orderType) => {
         .toUpperCase()
         .trim();
 
-    if (normalizedType.includes('ONLINE') || normalizedType.includes('TRUC TUYEN')) {
-        return 'ONLINE';
+    if (normalizedType.includes(ORDER_TYPES.ONLINE) || normalizedType.includes('TRUC TUYEN')) {
+        return 'Trực tuyến';
     }
 
-    return 'OFFLINE';
+    return 'Cửa hàng';
 };
 
 const getPaymentLabel = (item) => item.tenLoaiThanhToan || item.loaiThanhToan || item.hinhThucThanhToan || 'Chưa cập nhật';
@@ -259,23 +262,21 @@ onMounted(() => loadOrders());
                 </v-col>
 
                 <v-col cols="12" md="2">
-                    <div class="filter-field-label">Hiển thị</div>
+                    <div class="filter-field-label">Loại đơn</div>
                     <v-select
-                        v-model="filters.sortDirection"
-                        :items="sortOptions"
+                        v-model="filters.loaiDon"
+                        :items="ORDER_TYPE_OPTIONS"
                         item-title="title"
                         item-value="value"
                         variant="outlined"
                         density="compact"
                         hide-details
-                        class="compact-input sort-field"
+                        class="compact-input loai-don-field"
                         @update:model-value="handleSearch"
-                    >
-                        <template v-slot:prepend-inner>
-                            <v-icon size="20" color="primary">mdi-sort</v-icon>
-                        </template>
-                    </v-select>
+                    ></v-select>
                 </v-col>
+
+
 
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Từ ngày</div>
@@ -322,6 +323,21 @@ onMounted(() => loadOrders());
             :loading="loading"
             @export="handleExport"
         >
+            <template #extra-actions>
+                <v-btn
+                    icon
+                    variant="tonal"
+                    color="primary"
+                    class="rounded-md mr-3"
+                    size="36"
+                    @click="filters.sortDirection = filters.sortDirection === 'DESC' ? 'ASC' : 'DESC'; handleSearch()"
+                >
+                    <v-icon size="20">{{ filters.sortDirection === 'DESC' ? 'mdi-sort-clock-descending-outline' : 'mdi-sort-clock-ascending-outline' }}</v-icon>
+                    <v-tooltip activator="parent" location="top">
+                        {{ filters.sortDirection === 'DESC' ? 'Đang sắp xếp: Mới nhất' : 'Đang sắp xếp: Cũ nhất' }}
+                    </v-tooltip>
+                </v-btn>
+            </template>
             <template #top>
                 <v-tabs
                     v-model="filters.trangThai"
@@ -396,10 +412,6 @@ onMounted(() => loadOrders());
                         >
                             {{ getOrderTypeLabel(item.loaiDon) }}
                         </v-chip>
-                    </td>
-
-                    <td class="data-cell text-center">
-                        <div class="text-truncate" :title="getPaymentLabel(item)">{{ getPaymentLabel(item) }}</div>
                     </td>
 
                     <td class="data-cell price-value">

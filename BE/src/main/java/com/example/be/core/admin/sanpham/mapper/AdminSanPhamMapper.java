@@ -83,14 +83,34 @@ public class AdminSanPhamMapper {
         java.math.BigDecimal activeDiscount = java.math.BigDecimal.ZERO;
         long now = System.currentTimeMillis();
         if (variant.getChiTietDotGiamGias() != null) {
+            java.util.List<com.example.be.entity.DotGiamGia> validCampaigns = new java.util.ArrayList<>();
             for (com.example.be.entity.ChiTietDotGiamGia ct : variant.getChiTietDotGiamGias()) {
                 com.example.be.entity.DotGiamGia d = ct.getDotGiamGia();
                 if (d != null && d.getTrangThai() == com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG) {
                     if (d.getNgayBatDau() != null && d.getNgayKetThuc() != null
                             && d.getNgayBatDau() <= now && now <= d.getNgayKetThuc()) {
-                        if (d.getSoTienGiam() != null && d.getSoTienGiam().compareTo(activeDiscount) > 0) {
-                            activeDiscount = d.getSoTienGiam();
+                        if (d.getSoTienGiam() != null) {
+                            validCampaigns.add(d);
                         }
+                    }
+                }
+            }
+            if (!validCampaigns.isEmpty()) {
+                validCampaigns.sort((c1, c2) -> c2.getSoTienGiam().compareTo(c1.getSoTienGiam()));
+                if (validCampaigns.size() == 1) {
+                    activeDiscount = validCampaigns.get(0).getSoTienGiam();
+                } else {
+                    com.example.be.entity.DotGiamGia d1 = validCampaigns.get(0);
+                    com.example.be.entity.DotGiamGia d2 = validCampaigns.get(1);
+                    java.math.BigDecimal m1 = d1.getSoTienGiam();
+                    java.math.BigDecimal m2 = d2.getSoTienGiam();
+                    long overlapStart = Math.max(d1.getNgayBatDau(), d2.getNgayBatDau());
+                    long overlapEnd = Math.min(d1.getNgayKetThuc(), d2.getNgayKetThuc());
+                    long overlapDays = (overlapEnd - overlapStart) / (1000L * 60 * 60 * 24);
+                    if (overlapDays < 3) {
+                        activeDiscount = m1;
+                    } else {
+                        activeDiscount = m1.add(m2).divide(new java.math.BigDecimal("2"), 0, java.math.RoundingMode.HALF_UP);
                     }
                 }
             }

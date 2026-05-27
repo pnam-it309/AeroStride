@@ -268,11 +268,35 @@ public class DataRetrievalLibrary {
 
                 BigDecimal maxDiscountVal = BigDecimal.ZERO;
                 String discountType = "PHAN_TRAM";
+                List<DotGiamGia> validCampaigns = new java.util.ArrayList<>();
                 for (ChiTietDotGiamGia ct : cts) {
                     DotGiamGia d = ct.getDotGiamGia();
-                    if (d != null && d.getSoTienGiam() != null && d.getSoTienGiam().compareTo(maxDiscountVal) > 0) {
-                        maxDiscountVal = d.getSoTienGiam();
-                        discountType = d.getLoaiGiamGia();
+                    if (d != null && d.getSoTienGiam() != null) {
+                        validCampaigns.add(d);
+                        discountType = d.getLoaiGiamGia(); // simplified, usually all are percentages based on requirement
+                    }
+                }
+                
+                if (!validCampaigns.isEmpty()) {
+                    validCampaigns.sort((c1, c2) -> c2.getSoTienGiam().compareTo(c1.getSoTienGiam()));
+                    if (validCampaigns.size() == 1) {
+                        maxDiscountVal = validCampaigns.get(0).getSoTienGiam();
+                    } else {
+                        DotGiamGia d1 = validCampaigns.get(0);
+                        DotGiamGia d2 = validCampaigns.get(1);
+                        BigDecimal m1 = d1.getSoTienGiam();
+                        BigDecimal m2 = d2.getSoTienGiam();
+                        long overlapStart = Math.max(d1.getNgayBatDau() != null ? d1.getNgayBatDau() : 0, d2.getNgayBatDau() != null ? d2.getNgayBatDau() : 0);
+                        long overlapEnd = Math.min(d1.getNgayKetThuc() != null ? d1.getNgayKetThuc() : Long.MAX_VALUE, d2.getNgayKetThuc() != null ? d2.getNgayKetThuc() : Long.MAX_VALUE);
+                        long overlapDays = 0;
+                        if (overlapEnd >= overlapStart && overlapStart > 0 && overlapEnd < Long.MAX_VALUE) {
+                            overlapDays = (overlapEnd - overlapStart) / (1000L * 60 * 60 * 24);
+                        }
+                        if (overlapDays < 3) {
+                            maxDiscountVal = m1;
+                        } else {
+                            maxDiscountVal = m1.add(m2).divide(new BigDecimal("2"), 0, java.math.RoundingMode.HALF_UP);
+                        }
                     }
                 }
 

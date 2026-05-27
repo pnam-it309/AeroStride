@@ -1,12 +1,12 @@
 package com.example.be.core.admin.chat.service.impl;
 
-import com.example.be.core.admin.chat.model.ChatMessageResponse;
-import com.example.be.core.admin.chat.repository.AdminChatMessageRepository;
+import com.example.be.core.admin.chat.model.TinNhanResponse;
+import com.example.be.core.admin.chat.repository.AdminTinNhanRepository;
 import com.example.be.core.admin.chat.service.AiChatService;
 import com.example.be.core.admin.sanpham.model.response.ProductVariantResponse;
 import com.example.be.core.admin.sanpham.service.AdminSanPhamService;
-import com.example.be.entity.ChatConversation;
-import com.example.be.entity.ChatMessage;
+import com.example.be.entity.CuocHoiThoai;
+import com.example.be.entity.TinNhan;
 import com.example.be.infrastructure.constants.ChatConstants;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.constants.AiChatPrompts;
@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 public class AiChatServiceImpl implements AiChatService {
 
     private final AdminSanPhamService sanPhamService;
-    private final AdminChatMessageRepository messageRepository;
+    private final AdminTinNhanRepository messageRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -221,7 +221,7 @@ public class AiChatServiceImpl implements AiChatService {
      */
     public AiChatServiceImpl(
             AdminSanPhamService sanPhamService,
-            AdminChatMessageRepository messageRepository,
+            AdminTinNhanRepository messageRepository,
             SimpMessagingTemplate messagingTemplate,
             RestTemplateBuilder restTemplateBuilder,
             AiLocalService aiLocalService,
@@ -242,7 +242,7 @@ public class AiChatServiceImpl implements AiChatService {
 
     @Async
     @Override
-    public void generateAndSendResponse(ChatConversation conversation, String customerText) {
+    public void generateAndSendResponse(CuocHoiThoai conversation, String customerText) {
         log.info("AI đang xử lý tin nhắn: {}", customerText);
 
         // [Handoff Interceptor] Phát hiện từ khóa yêu cầu gặp nhân viên để phản hồi tức thì
@@ -631,8 +631,8 @@ public class AiChatServiceImpl implements AiChatService {
      * Ví dụ: Khách hỏi "Nó có size 42 không?" → AI hiểu "Nó" là sản phẩm vừa hỏi trước đó.
      */
     private String buildChatHistory(String conversationId) {
-        List<ChatMessage> recentMessages =
-                messageRepository.findTop10ByConversationIdOrderByNgayTaoDesc(conversationId);
+        List<TinNhan> recentMessages =
+                messageRepository.findTop10ByCuocHoiThoai_IdOrderByNgayTaoDesc(conversationId);
 
         if (recentMessages.isEmpty()) {
             return "";
@@ -643,9 +643,9 @@ public class AiChatServiceImpl implements AiChatService {
 
         StringBuilder sb = new StringBuilder();
         sb.append("LỊCH SỬ HỘI THOẠI GẦN ĐÂY:\n");
-        for (ChatMessage msg : recentMessages) {
-            String role = "bot".equals(msg.getSenderType()) ? "Trợ lý AI" : "Khách hàng";
-            sb.append(String.format("%s: %s\n", role, msg.getContent()));
+        for (TinNhan msg : recentMessages) {
+            String role = "bot".equals(msg.getLoaiNguoiGui()) ? "Trợ lý AI" : "Khách hàng";
+            sb.append(String.format("%s: %s\n", role, msg.getNoiDung()));
         }
         sb.append("\n");
         return sb.toString();
@@ -684,22 +684,22 @@ public class AiChatServiceImpl implements AiChatService {
     /**
      * Lưu tin nhắn bot vào CSDL và broadcast qua WebSocket.
      */
-    private void saveAndBroadcast(ChatConversation conversation, String text) {
-        ChatMessage botMessage = ChatMessage.builder()
-                .conversation(conversation)
-                .senderType("bot")
-                .content(text)
+    private void saveAndBroadcast(CuocHoiThoai conversation, String text) {
+        TinNhan botMessage = TinNhan.builder()
+                .cuocHoiThoai(conversation)
+                .loaiNguoiGui("bot")
+                .noiDung(text)
                 .build();
 
-        ChatMessage savedMessage = messageRepository.save(botMessage);
+        TinNhan savedMessage = messageRepository.save(botMessage);
 
-        ChatMessageResponse responseDto = ChatMessageResponse.builder()
+        TinNhanResponse responseDto = TinNhanResponse.builder()
                 .id(savedMessage.getId())
-                .conversationId(conversation.getId())
-                .sessionId(conversation.getSessionId())
-                .sender("bot")
-                .text(text)
-                .time(formatTime(savedMessage.getNgayTao()))
+                .idCuocHoiThoai(conversation.getId())
+                .maPhien(conversation.getMaPhien())
+                .nguoiGui("bot")
+                .noiDung(text)
+                .thoiGian(formatTime(savedMessage.getNgayTao()))
                 .build();
 
         messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, responseDto);

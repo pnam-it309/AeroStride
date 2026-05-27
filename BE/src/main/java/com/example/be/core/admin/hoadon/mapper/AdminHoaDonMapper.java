@@ -32,6 +32,8 @@ public interface AdminHoaDonMapper {
     AdminLichSuHoaDonResponse toLichSuResponse(LichSuTrangThaiHoaDon history);
 
     @Mapping(target = "tenPhuongThuc", source = "phuongThucThanhToan.ten")
+    @Mapping(target = "trangThai", source = "trangThai", qualifiedByName = "mapTrangThai")
+    @Mapping(target = "nguoiXacNhan", source = "nguoiTao")
     AdminGiaoDichThanhToanResponse toGiaoDichResponse(GiaoDichThanhToan payment);
 
     @Named("getThumbnail")
@@ -40,5 +42,13 @@ public interface AdminHoaDonMapper {
             return null;
         }
         return ctsp.getAnhChiTietSanPhams().iterator().next().getDuongDanAnh();
+    }
+
+    @Named("mapTrangThai")
+    default Integer mapTrangThai(com.example.be.infrastructure.constants.TrangThai status) {
+        if (status == null) {
+            return null;
+        }
+        return status.ordinal();
     }
 }

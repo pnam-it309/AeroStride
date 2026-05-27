@@ -168,11 +168,11 @@ const loadEmployee = async (id) => {
     loading.value = true;
     try {
         const data = await dichVuNhanVien.layChiTietNhanVien(id);
-        
+
         // Map nested phanQuyen.id to idPhanQuyen for the select component
         const idPhanQuyen = data.idPhanQuyen || (data.phanQuyen ? data.phanQuyen.id : null);
-        
-        employeeForm.value = { 
+
+        employeeForm.value = {
             ...data,
             idPhanQuyen,
             tinh: null, // Reset to null first to trigger watchers correctly later
@@ -181,7 +181,7 @@ const loadEmployee = async (id) => {
             diaChiChiTiet: data.diaChiChiTiet || data.diaChi || ''
         };
         isEditMode.value = true;
-        
+
         // Load data for selects based on names from BE
         if (data.tinh || data.thanhPho || data.phuongXa) {
             await fetchProvinces();
@@ -246,7 +246,7 @@ const handleSave = () => {
                 const p = provinces.value.find(x => x.code === employeeForm.value.tinh);
                 const d = districts.value.find(x => x.code === employeeForm.value.thanhPho);
                 const w = wards.value.find(x => x.code === employeeForm.value.phuongXa);
-                
+
                 const provinceName = p ? p.name : employeeForm.value.tinhName;
                 const districtName = d ? d.name : employeeForm.value.thanhPhoName;
                 const wardName = w ? w.name : employeeForm.value.phuongXaName;
@@ -257,7 +257,7 @@ const handleSave = () => {
                     districtName,
                     provinceName
                 ].filter(part => part && String(part).trim() !== '');
-                
+
                 const combinedAddress = addrParts.length > 0 ? addrParts.join(', ') : '';
 
                 const payload = {
@@ -325,7 +325,7 @@ const openDatePicker = (event) => {
     // Tìm input type="date" gần nhất trong cùng một v-input container
     const container = event.target.closest('.v-input');
     const input = container ? container.querySelector('input[type="date"]') : null;
-    
+
     if (input) {
         if (typeof input.showPicker === 'function') {
             input.showPicker();
@@ -367,13 +367,11 @@ onMounted(async () => {
 <template>
     <v-container fluid class="pa-6 animate-fade-in overflow-y-auto font-body" style="height: 100vh">
         <!-- Breadcrumbs -->
-        <AdminBreadcrumbs
-            :items="[
-                { title: 'Quản lý tài khoản', disabled: false, href: '#' },
-                { title: 'Nhân viên', disabled: false, to: PATH.NHAN_VIEN },
-                { title: isEditMode ? 'Cập nhật' : 'Thêm mới', disabled: true }
-            ]"
-        />
+        <AdminBreadcrumbs :items="[
+            { title: 'Quản lý tài khoản', disabled: false, href: '#' },
+            { title: 'Nhân viên', disabled: false, to: PATH.NHAN_VIEN },
+            { title: isEditMode ? 'Cập nhật' : 'Thêm mới', disabled: true }
+        ]" />
 
         <!-- Action Header -->
         <div class="d-flex align-center justify-space-between mb-8 mt-4">
@@ -383,21 +381,12 @@ onMounted(async () => {
                 </v-btn>
             </div>
             <div class="d-flex gap-3 header-actions__buttons">
-                <v-btn
-                    variant="flat"
-                    class="admin-btn-qr text-none"
-                    @click="showQR = true"
-                >
+                <v-btn variant="flat" class="admin-btn-qr text-none" @click="showQR = true">
                     <v-icon size="20" class="mr-2">mdi-qrcode-scan</v-icon>
                     <span>Quét QR CCCD</span>
                 </v-btn>
-                <v-btn
-                    color="primary"
-                    variant="flat"
-                    class="add-btn-primary text-none"
-                    :loading="saving"
-                    @click="handleSave"
-                >
+                <v-btn color="primary" variant="flat" class="add-btn-primary text-none" :loading="saving"
+                    @click="handleSave">
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
                     <span>{{ submitButtonText }}</span>
                 </v-btn>
@@ -422,7 +411,8 @@ onMounted(async () => {
                 <v-divider></v-divider>
                 <v-card-actions class="pa-4 bg-slate-50">
                     <v-spacer></v-spacer>
-                    <v-btn color="slate-400" variant="text" class="text-none font-weight-medium" @click="showQR = false">Hủy bỏ</v-btn>
+                    <v-btn color="slate-400" variant="text" class="text-none font-weight-medium"
+                        @click="showQR = false">Hủy bỏ</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -447,174 +437,88 @@ onMounted(async () => {
                         <v-row>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Mã nhân viên</div>
-                                <v-text-field
-                                    v-model="employeeForm.ma"
-                                    readonly
-                                    placeholder="Hệ thống tự tạo..."
-                                    variant="outlined"
-                                    density="compact"
-                                    class="bg-slate-50"
-                                    hide-details
-                                ></v-text-field>
+                                <v-text-field v-model="employeeForm.ma" readonly placeholder="Hệ thống tự tạo..."
+                                    variant="outlined" density="compact" class="bg-slate-50"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Họ và tên *</div>
-                                <v-text-field
-                                    v-model="employeeForm.ten"
-                                    :readonly="isDetailView"
-                                    placeholder="Ví dụ: Nguyễn Văn A"
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                ></v-text-field>
+                                <v-text-field v-model="employeeForm.ten" :readonly="isDetailView"
+                                    placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" density="compact"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Email *</div>
-                                <v-text-field
-                                    v-model="employeeForm.email"
-                                    :readonly="isDetailView"
-                                    placeholder="name@company.com"
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                ></v-text-field>
+                                <v-text-field v-model="employeeForm.email" :readonly="isDetailView"
+                                    placeholder="name@company.com" variant="outlined" density="compact"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Tên tài khoản *</div>
-                                <v-text-field
-                                    v-model="employeeForm.tenTaiKhoan"
-                                    :readonly="isDetailView"
-                                    placeholder="Nhập tên tài khoản..."
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                ></v-text-field>
+                                <v-text-field v-model="employeeForm.tenTaiKhoan" :readonly="isDetailView"
+                                    placeholder="Nhập tên tài khoản..." variant="outlined" density="compact"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Số điện thoại *</div>
-                                <v-text-field
-                                    v-model="employeeForm.sdt"
-                                    :readonly="isDetailView"
-                                    placeholder="09xx.xxx.xxx"
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                ></v-text-field>
+                                <v-text-field v-model="employeeForm.sdt" :readonly="isDetailView"
+                                    placeholder="09xx.xxx.xxx" variant="outlined" density="compact"
+                                    hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
-                                <v-text-field
-                                    v-model="employeeForm.ngaySinh"
-                                    :readonly="isDetailView"
-                                    type="date"
-                                    append-inner-icon="mdi-calendar"
-                                    @click:append-inner="openDatePicker"
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                    clearable
-                                    class="date-input-small"
-                                ></v-text-field>
+                                <v-text-field v-model="employeeForm.ngaySinh" :readonly="isDetailView" type="date"
+                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
+                                    variant="outlined" density="compact" hide-details clearable
+                                    class="date-input-small"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Giới tính</div>
-                                <v-select
-                                    v-model="employeeForm.gioiTinh"
-                                    :readonly="isDetailView"
-                                    :items="[
-                                        { title: 'Nam', value: true },
-                                        { title: 'Nữ', value: false }
-                                    ]"
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                ></v-select>
+                                <v-select v-model="employeeForm.gioiTinh" :readonly="isDetailView" :items="[
+                                    { title: 'Nam', value: true },
+                                    { title: 'Nữ', value: false }
+                                ]" variant="outlined" density="compact" hide-details></v-select>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Vai trò</div>
-                                <v-select
-                                    v-model="employeeForm.idPhanQuyen"
-                                    :readonly="isDetailView"
-                                    :items="roles"
-                                    item-title="title"
-                                    item-value="value"
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                ></v-select>
+                                <v-select v-model="employeeForm.idPhanQuyen" :readonly="isDetailView" :items="roles"
+                                    item-title="title" item-value="value" variant="outlined" density="compact"
+                                    hide-details></v-select>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Trạng thái</div>
-                                <v-select
-                                    v-model="employeeForm.trangThai"
-                                    :readonly="isDetailView || !isEditMode"
+                                <v-select v-model="employeeForm.trangThai" :readonly="isDetailView || !isEditMode"
                                     :items="[
                                         { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
                                         { title: 'Ngừng hoạt động', value: 'NGUNG_HOAT_DONG' }
-                                    ]"
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                ></v-select>
+                                    ]" variant="outlined" density="compact" hide-details></v-select>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Tỉnh / Thành phố *</div>
-                                <v-select
-                                    v-model="employeeForm.tinh"
-                                    :readonly="isDetailView"
-                                    :items="provinces"
-                                    item-title="name"
-                                    item-value="code"
-                                    placeholder="Chọn tỉnh/thành phố"
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                    :loading="loadingLocations.provinces"
-                                ></v-select>
+                                <v-select v-model="employeeForm.tinh" :readonly="isDetailView" :items="provinces"
+                                    item-title="name" item-value="code" placeholder="Chọn tỉnh/thành phố"
+                                    variant="outlined" density="compact" hide-details
+                                    :loading="loadingLocations.provinces"></v-select>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Quận / Huyện *</div>
-                                <v-select
-                                    v-model="employeeForm.thanhPho"
-                                    :readonly="isDetailView"
-                                    :items="districts"
-                                    item-title="name"
-                                    item-value="code"
-                                    placeholder="Chọn quận/huyện"
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                    :loading="loadingLocations.districts"
-                                    :disabled="isDetailView || !employeeForm.tinh"
-                                ></v-select>
+                                <v-select v-model="employeeForm.thanhPho" :readonly="isDetailView" :items="districts"
+                                    item-title="name" item-value="code" placeholder="Chọn quận/huyện" variant="outlined"
+                                    density="compact" hide-details :loading="loadingLocations.districts"
+                                    :disabled="isDetailView || !employeeForm.tinh"></v-select>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Phường / Xã *</div>
-                                <v-select
-                                    v-model="employeeForm.phuongXa"
-                                    :readonly="isDetailView"
-                                    :items="wards"
-                                    item-title="name"
-                                    item-value="code"
-                                    placeholder="Chọn phường/xã"
-                                    variant="outlined"
-                                    density="compact"
-                                    hide-details
-                                    :loading="loadingLocations.wards"
-                                    :disabled="isDetailView || !employeeForm.thanhPho"
-                                ></v-select>
+                                <v-select v-model="employeeForm.phuongXa" :readonly="isDetailView" :items="wards"
+                                    item-title="name" item-value="code" placeholder="Chọn phường/xã" variant="outlined"
+                                    density="compact" hide-details :loading="loadingLocations.wards"
+                                    :disabled="isDetailView || !employeeForm.thanhPho"></v-select>
                             </v-col>
                             <v-col cols="12">
                                 <div class="field-label">Địa chỉ chi tiết *</div>
-                                <v-textarea
-                                    v-model="employeeForm.diaChiChiTiet"
-                                    :readonly="isDetailView"
-                                    placeholder="Số nhà, tên đường..."
-                                    variant="outlined"
-                                    density="compact"
-                                    rows="2"
-                                    hide-details
-                                ></v-textarea>
+                                <v-textarea v-model="employeeForm.diaChiChiTiet" :readonly="isDetailView"
+                                    placeholder="Số nhà, tên đường..." variant="outlined" density="compact" rows="2"
+                                    hide-details></v-textarea>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -633,12 +537,9 @@ onMounted(async () => {
                         </div>
 
                         <div class="position-relative d-inline-block mx-auto mb-6">
-                            <v-avatar
-                                size="160"
-                                color="blue-lighten-5"
+                            <v-avatar size="160" color="blue-lighten-5"
                                 class="border-xl border-white elevation-6 cursor-pointer avatar-hover transition-all overflow-hidden"
-                                @click="handleFileClick"
-                            >
+                                @click="handleFileClick">
                                 <v-img :src="employeeForm.hinhAnh || FB_DEFAULT_AVATAR" cover>
                                     <template v-slot:placeholder>
                                         <v-row class="fill-height ma-0" align="center" justify="center">
@@ -647,7 +548,8 @@ onMounted(async () => {
                                     </template>
                                 </v-img>
                                 <div v-if="uploading" class="upload-overlay d-flex align-center justify-center">
-                                    <v-progress-circular indeterminate size="40" color="white" width="5"></v-progress-circular>
+                                    <v-progress-circular indeterminate size="40" color="white"
+                                        width="5"></v-progress-circular>
                                 </div>
                             </v-avatar>
                             <div v-if="!isDetailView" class="camera-icon-bubble" @click="handleFileClick">
@@ -658,15 +560,9 @@ onMounted(async () => {
 
                         <div v-if="!isDetailView" class="text-left">
                             <div class="field-label">Liên kết ảnh (URL)</div>
-                            <v-text-field
-                                v-if="!isDetailView"
-                                v-model="employeeForm.hinhAnh"
-                                placeholder="Dán URL ảnh hoặc nhấn vào vòng tròn"
-                                variant="outlined"
-                                density="comfortable"
-                                hide-details
-                                class="bg-slate-50"
-                            ></v-text-field>
+                            <v-text-field v-if="!isDetailView" v-model="employeeForm.hinhAnh"
+                                placeholder="Dán URL ảnh hoặc nhấn vào vòng tròn" variant="outlined"
+                                density="comfortable" hide-details class="bg-slate-50"></v-text-field>
                             <p class="text-caption font-weight-medium text-slate-400 mt-3 px-1">
                                 Ảnh đại diện sẽ hiển thị trên hồ sơ và thanh thực đơn cá nhân.
                             </p>
@@ -678,22 +574,19 @@ onMounted(async () => {
                     <v-card-text class="pa-8 opacity-60">
                         <div class="d-flex align-center mb-2">
                             <v-icon color="slate-400" size="20" class="mr-2">mdi-history</v-icon>
-                            <span class="text-caption font-weight-medium text-slate-500 uppercase tracking-wider">Hoạt động cuối</span>
+                            <span class="text-caption font-weight-medium text-slate-500 uppercase tracking-wider">Hoạt
+                                động cuối</span>
                         </div>
-                        <div class="text-body-2 font-weight-medium text-slate-400">Chưa ghi nhận hoạt động nào của nhân viên này.</div>
+                        <div class="text-body-2 font-weight-medium text-slate-400">Chưa ghi nhận hoạt động nào của nhân
+                            viên này.</div>
                     </v-card-text>
                 </v-card>
             </v-col>
         </v-row>
 
         <!-- SHARED CONFIRM -->
-        <AdminConfirm
-            v-model:show="confirmDialog.show"
-            :title="confirmDialog.title"
-            :message="confirmDialog.message"
-            :color="confirmDialog.color"
-            @confirm="confirmDialog.action"
-        />
+        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
+            :color="confirmDialog.color" @confirm="confirmDialog.action" />
     </v-container>
 </template>
 
@@ -720,7 +613,8 @@ onMounted(async () => {
 :deep(.v-field__input input::placeholder) {
     font-size: 13px !important;
     font-weight: 400 !important;
-    text-transform: none !important; /* Bỏ in hoa */
+    text-transform: none !important;
+    /* Bỏ in hoa */
 }
 
 /* Khử viết hoa toàn bộ cho các phần tử con */
@@ -803,6 +697,7 @@ onMounted(async () => {
     background: rgba(0, 0, 0, 0.4);
     z-index: 5;
 }
+
 :deep(input[type="date"]::-webkit-calendar-picker-indicator) {
     display: none;
     -webkit-appearance: none;

@@ -1,7 +1,7 @@
 package com.example.be.core.common.chat.local.service;
 
-import com.example.be.entity.AiSynonym;
-import com.example.be.repository.AiSynonymRepository;
+import com.example.be.entity.TuDongNghiaAi;
+import com.example.be.repository.TuDongNghiaAiRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @RequiredArgsConstructor
 public class AiWordLibrary {
-    private final AiSynonymRepository aiSynonymRepository;
+    private final TuDongNghiaAiRepository aiSynonymRepository;
     
     // In-memory cache for synonyms to avoid DB queries per word
     private final Map<String, String> synonymCache = new ConcurrentHashMap<>();
@@ -25,8 +25,8 @@ public class AiWordLibrary {
                 if (synonymCache.isEmpty() || (now - lastCacheLoad > CACHE_TTL)) {
                     synonymCache.clear();
                     aiSynonymRepository.findAll().forEach(syn -> {
-                        if (syn.getWord() != null && syn.getCanonicalWord() != null) {
-                            synonymCache.put(syn.getWord().toLowerCase().trim(), syn.getCanonicalWord());
+                        if (syn.getTuGoc() != null && syn.getTuChuanHoa() != null) {
+                            synonymCache.put(syn.getTuGoc().toLowerCase().trim(), syn.getTuChuanHoa());
                         }
                     });
                     lastCacheLoad = now;

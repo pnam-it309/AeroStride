@@ -247,8 +247,7 @@ const setMainImage = async (imgId) => {
 
                 <div class="d-flex align-center justify-space-between mb-4 px-1">
                     <h5 class="text-slate-700" style="font-size: 13px !important;">Thư viện ({{ images.length }})</h5>
-                    <span class="text-slate-400" style="font-size: 13px !important;">* Click để đặt làm ảnh chính</span>
-                </div>
+                    <span class="text-slate-400" style="font-size: 13px !important;">Click để đặt làm ảnh chính</span>                </div>
 
                 <v-row v-if="images.length > 0" dense class="gallery-grid">
                     <v-col v-for="img in images" :key="img.id" cols="6" sm="4">

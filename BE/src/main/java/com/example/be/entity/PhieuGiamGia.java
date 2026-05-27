@@ -23,7 +23,8 @@ import java.math.BigDecimal;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @AttributeOverrides({
     @AttributeOverride(name = "ma", column = @Column(name = "ma_phieu_giam_gia")),
-    @AttributeOverride(name = "ten", column = @Column(name = "ten_phieu"))
+    @AttributeOverride(name = "ten", column = @Column(name = "ten_phieu")),
+    @AttributeOverride(name = "moTa", column = @Column(name = "ghi_chu", insertable = false, updatable = false))
 })
 public class PhieuGiamGia extends BaseCodeNameEntity {
 

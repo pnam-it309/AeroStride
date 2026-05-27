@@ -5,7 +5,7 @@
 
 /* 1. BASE CHIP MIXIN (Thay cho extend để an toàn hơn với @use) */
 @mixin admin-chip-base {
-    border-radius: 16px !important;
+    border-radius: 30px !important;
     font-size: 13px !important;
     font-weight: 600 !important;
     justify-content: center !important;
@@ -167,7 +167,7 @@
     border: 1px solid #e2e8f0 !important;
     min-width: 24px !important;
     height: 24px !important;
-    border-radius: 6px !important;
+    border-radius: 999px !important;
     font-size: 13px !important;
     font-weight: 800 !important;
     margin-left: 8px !important;

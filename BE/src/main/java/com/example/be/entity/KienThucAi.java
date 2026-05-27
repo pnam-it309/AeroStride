@@ -13,26 +13,26 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "ai_knowledge")
+@Table(name = "kien_thuc_ai")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AiKnowledge {
+public class KienThucAi {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(name = "intent", nullable = false)
-    private String intent;
+    @Column(name = "muc_dich", nullable = false)
+    private String mucDich;
 
-    @Column(name = "keywords", columnDefinition = "TEXT")
-    private String keywords; // Comma-separated keywords or patterns
+    @Column(name = "tu_khoa", columnDefinition = "TEXT")
+    private String tuKhoa; // Comma-separated keywords or patterns
 
-    @Column(name = "response_template", columnDefinition = "TEXT")
-    private String responseTemplate;
+    @Column(name = "mau_cau_tra_loi", columnDefinition = "TEXT")
+    private String mauCauTraLoi;
 
-    @Column(name = "priority")
-    private Integer priority;
+    @Column(name = "do_uu_tien")
+    private Integer doUuTien;
 }

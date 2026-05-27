@@ -85,13 +85,6 @@ public final class MessageConstants {
     public static final String ATTRIBUTE_MA_EXISTS = "Mã thuộc tính đã tồn tại!";
     public static final String ATTRIBUTE_TEN_EXISTS = "Tên thuộc tính đã tồn tại!";
 
-    // ============ Reset password ============
-    public static final String RESET_PASSWORD_REQUEST_SUCCESS = "Đã gửi yêu cầu reset mật khẩu tới admin";
-    public static final String RESET_PASSWORD_APPROVE_SUCCESS = "Đã reset mật khẩu và gửi email cho nhân viên";
-    public static final String RESET_PASSWORD_NOT_FOUND = "Không tìm thấy nhân viên với email này";
-    public static final String RESET_PASSWORD_ALREADY_PENDING = "Đã có yêu cầu đang chờ xử lý";
-    public static final String RESET_PASSWORD_INVALID_REQUEST = "Yêu cầu không hợp lệ hoặc đã xử lý";
-
     // ============ CENTRALIZED EXCEPTION MESSAGES ============
     public static final String EXCEL_EXPORT_ERROR = "Lỗi xuất file Excel: ";
     public static final String TEMPLATE_LOAD_ERROR = "Lỗi tải template: ";

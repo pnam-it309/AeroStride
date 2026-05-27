@@ -491,19 +491,19 @@ onMounted(() => {
                                     hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="8">
-                                <div class="field-label">Họ và tên *</div>
+                                <div class="field-label">Họ và tên</div>
                                 <v-text-field v-model="customerForm.ten" :readonly="isDetailView"
                                     placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Email *</div>
+                                <div class="field-label">Email</div>
                                 <v-text-field v-model="customerForm.email" :readonly="isDetailView"
                                     placeholder="khachhang@gmail.com" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Số điện thoại *</div>
+                                <div class="field-label">Số điện thoại</div>
                                 <v-text-field v-model="customerForm.sdt" :readonly="isDetailView"
                                     placeholder="09xx.xxx.xxx" variant="outlined" density="compact"
                                     hide-details></v-text-field>
@@ -593,7 +593,7 @@ onMounted(() => {
                         <div v-if="(!isEditMode || listDiaChi.length === 0) && !isDetailView" class="mb-4">
                             <v-row>
                                 <v-col cols="12" md="4">
-                                    <div class="field-label">Tỉnh / Thành phố *</div>
+                                    <div class="field-label">Tỉnh / Thành phố</div>
                                     <v-autocomplete v-model="customerForm.tinh" :items="provinces" item-title="name"
                                         item-value="code" placeholder="Chọn Tỉnh / Thành phố" variant="outlined"
                                         density="compact" @update:model-value="
@@ -606,7 +606,7 @@ onMounted(() => {
                                 </v-col>
 
                                 <v-col cols="12" md="4">
-                                    <div class="field-label">Quận / Huyện *</div>
+                                    <div class="field-label">Quận / Huyện</div>
                                     <v-autocomplete v-model="customerForm.thanhPho" :items="districts" item-title="name"
                                         item-value="code" placeholder="Chọn Quận / Huyện" variant="outlined"
                                         density="compact" :disabled="!customerForm.tinh" @update:model-value="
@@ -618,14 +618,14 @@ onMounted(() => {
                                 </v-col>
 
                                 <v-col cols="12" md="4">
-                                    <div class="field-label">Phường / Xã *</div>
+                                    <div class="field-label">Phường / Xã</div>
                                     <v-autocomplete v-model="customerForm.phuongXa" :items="wards" item-title="name"
                                         item-value="code" placeholder="Chọn Phường / Xã" variant="outlined"
                                         density="compact" :disabled="!customerForm.thanhPho" />
                                 </v-col>
 
                                 <v-col cols="12">
-                                    <div class="field-label">Địa chỉ cụ thể (Số nhà, đường...) *</div>
+                                    <div class="field-label">Địa chỉ cụ thể (Số nhà, đường...)</div>
                                     <v-textarea v-model="customerForm.diaChiChiTiet" placeholder="Nhập địa chỉ cụ thể"
                                         variant="outlined" rows="2" hide-details />
                                 </v-col>
@@ -747,7 +747,7 @@ onMounted(() => {
                                         <td class="data-cell text-center">
                                             <span class="mono-font text-slate-500">{{ item.maSanPham || item.maSP ||
                                                 'N/A'
-                                                }}</span>
+                                            }}</span>
                                         </td>
                                         <td class="data-cell text-center">
                                             <span class="text-slate-800">{{ item.tenSanPham }}</span>
@@ -755,11 +755,11 @@ onMounted(() => {
                                         <td class="data-cell text-center">
                                             <span class="mono-font text-slate-500">{{ item.maBienThe || item.maCTSP ||
                                                 'N/A'
-                                                }}</span>
+                                            }}</span>
                                         </td>
                                         <td class="data-cell text-center">
                                             <span class="text-slate-600">{{ item.tenMauSac }} / {{ item.tenKichThuoc
-                                                }}</span>
+                                            }}</span>
                                         </td>
                                         <td class="data-cell text-center">
                                             <span class="text-slate-600">{{ item.soLuong }}</span>
@@ -814,17 +814,17 @@ onMounted(() => {
                 <v-card-text class="pa-6">
                     <v-row>
                         <v-col cols="12" md="6">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tên người nhận *</div>
+                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tên người nhận</div>
                             <v-text-field v-model="addrForm.tenNguoiNhan" placeholder="Nhập tên" variant="outlined"
                                 density="compact" class="font-weight-medium" hide-details></v-text-field>
                         </v-col>
                         <v-col cols="12" md="6">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Số điện thoại *</div>
+                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Số điện thoại</div>
                             <v-text-field v-model="addrForm.sdtNguoiNhan" placeholder="09xx..." variant="outlined"
                                 density="compact" class="font-weight-medium" hide-details></v-text-field>
                         </v-col>
                         <v-col cols="12" md="4">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tỉnh / Thành phố *</div>
+                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tỉnh / Thành phố</div>
                             <v-autocomplete v-model="addrForm.tinh" :items="provinces" item-title="name"
                                 item-value="code" placeholder="Chọn" variant="outlined" density="compact" hide-details
                                 :loading="loadingLocations.provinces" @update:model-value="
@@ -836,7 +836,7 @@ onMounted(() => {
                                 "></v-autocomplete>
                         </v-col>
                         <v-col cols="12" md="4">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Quận / Huyện *</div>
+                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Quận / Huyện</div>
                             <v-autocomplete v-model="addrForm.thanhPho" :items="districts" item-title="name"
                                 item-value="code" placeholder="Chọn" variant="outlined" density="compact" hide-details
                                 :loading="loadingLocations.districts" :disabled="!addrForm.tinh" @update:model-value="
@@ -847,13 +847,13 @@ onMounted(() => {
                                 "></v-autocomplete>
                         </v-col>
                         <v-col cols="12" md="4">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Phường / Xã *</div>
+                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Phường / Xã</div>
                             <v-autocomplete v-model="addrForm.phuongXa" :items="wards" item-title="name"
                                 item-value="code" placeholder="Chọn" variant="outlined" density="compact" hide-details
                                 :loading="loadingLocations.wards" :disabled="!addrForm.thanhPho"></v-autocomplete>
                         </v-col>
                         <v-col cols="12">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Địa chỉ cụ thể *</div>
+                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Địa chỉ cụ thể</div>
                             <v-textarea v-model="addrForm.diaChiChiTiet" placeholder="Số nhà, đường..."
                                 variant="outlined" rows="2" class="font-weight-medium" hide-details></v-textarea>
                         </v-col>

@@ -50,14 +50,15 @@ export const ADDRESS_CONSTANTS = {
 // Default avatar URL
 export const DEFAULT_AVATAR_URL = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
-// Invoice table headers
-export const INVOICE_TABLE_HEADERS = [
+// Invoice headers used in Customer and Employee modules
+export const CUSTOMER_INVOICE_HEADERS = [
     { text: 'STT', width: '60px' },
-    { text: 'Mã sản phẩm' },
-    { text: 'Tên sản phẩm' },
-    { text: 'Mã biến thể' },
-    { text: 'Tên biến thể' },
-    { text: 'Số lượng', width: '100px' },
-    { text: 'Đơn giá', width: '130px' },
-    { text: 'Thành tiền', width: '140px' }
+    { text: 'Mã đơn hàng', width: '130px' },
+    { text: 'Ngày tạo', width: '150px' },
+    { text: 'Loại đơn', width: '110px' },
+    { text: 'Tổng tiền', width: '130px' },
+    { text: 'Trạng thái', width: '140px' },
+    { text: 'Thao tác', width: '100px' }
 ];
+
+export const INVOICE_TABLE_HEADERS = CUSTOMER_INVOICE_HEADERS;

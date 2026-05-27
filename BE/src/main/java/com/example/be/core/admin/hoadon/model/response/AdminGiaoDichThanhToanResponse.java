@@ -16,4 +16,6 @@ public class AdminGiaoDichThanhToanResponse {
     private String maGiaoDichNgoai;
     private String ghiChu;
     private Long ngayTao;
+    private Integer trangThai;
+    private String nguoiXacNhan;
 }

@@ -1,8 +1,8 @@
 package com.example.be.core.common.chat.local.service;
 
-import com.example.be.entity.AiKnowledge;
+import com.example.be.entity.KienThucAi;
 import com.example.be.entity.SanPham;
-import com.example.be.repository.AiKnowledgeRepository;
+import com.example.be.repository.KienThucAiRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 @Slf4j
 public class AiLocalService {
-    private final AiKnowledgeRepository aiKnowledgeRepository;
+    private final KienThucAiRepository aiKnowledgeRepository;
     private final AiWordLibrary wordLibrary;
     private final DataRetrievalLibrary dataLibrary;
     private final ObjectMapper objectMapper;
@@ -28,16 +28,16 @@ public class AiLocalService {
     private final Map<String, ChatState> sessionStates = new ConcurrentHashMap<>();
 
     private final Map<String, Pattern> compiledPatterns = new ConcurrentHashMap<>();
-    private volatile List<AiKnowledge> cachedKnowledgeList = null;
+    private volatile List<KienThucAi> cachedKnowledgeList = null;
     private volatile long lastKnowledgeLoad = 0;
     private static final long KNOWLEDGE_CACHE_TTL = 30000; // 30 seconds
 
-    private List<AiKnowledge> getKnowledgeCached() {
+    private List<KienThucAi> getKnowledgeCached() {
         long now = System.currentTimeMillis();
         if (cachedKnowledgeList == null || (now - lastKnowledgeLoad > KNOWLEDGE_CACHE_TTL)) {
             synchronized (this) {
                 if (cachedKnowledgeList == null || (now - lastKnowledgeLoad > KNOWLEDGE_CACHE_TTL)) {
-                    cachedKnowledgeList = aiKnowledgeRepository.findAllByOrderByPriorityDesc();
+                    cachedKnowledgeList = aiKnowledgeRepository.findAllByOrderByDoUuTienDesc();
                     lastKnowledgeLoad = now;
                 }
             }
@@ -176,18 +176,18 @@ public class AiLocalService {
         }
 
         // 2. Tra cứu Knowledge Base trong DB
-        List<AiKnowledge> knowledges = getKnowledgeCached();
-        for (AiKnowledge k : knowledges) {
-            if (isMatch(normalizedInput, k.getKeywords())) {
-                if ("PRODUCT_SEARCH".equals(k.getIntent())) {
-                    String searchTerm = extractSearchTerm(normalizedInput, k.getKeywords());
+        List<KienThucAi> knowledges = getKnowledgeCached();
+        for (KienThucAi k : knowledges) {
+            if (isMatch(normalizedInput, k.getTuKhoa())) {
+                if ("PRODUCT_SEARCH".equals(k.getMucDich())) {
+                    String searchTerm = extractSearchTerm(normalizedInput, k.getTuKhoa());
                     List<SanPham> searchResult = dataLibrary.searchProducts(searchTerm);
                     if (searchResult.isEmpty() || searchTerm.isEmpty()) {
                         return "Dạ, bạn muốn tìm loại gì hoặc là muốn tìm dòng sản phẩm nào ạ? 🥰";
                     }
                 }
                 String response = formatResponse(k, normalizedInput);
-                if ("PRODUCT_LIST".equals(k.getIntent()) || "PRODUCT_SEARCH".equals(k.getIntent())) {
+                if ("PRODUCT_LIST".equals(k.getMucDich()) || "PRODUCT_SEARCH".equals(k.getMucDich())) {
                     // Nạp hàng đợi để hỏi độ hài lòng
                     state.alternativeProducts.clear();
                     List<SanPham> list = dataLibrary.getTopProducts(5);
@@ -526,16 +526,16 @@ public class AiLocalService {
         return pattern.matcher(input.toLowerCase()).matches();
     }
 
-    private String formatResponse(AiKnowledge knowledge, String input) {
-        String template = knowledge.getResponseTemplate();
+    private String formatResponse(KienThucAi knowledge, String input) {
+        String template = knowledge.getMauCauTraLoi();
         
-        switch (knowledge.getIntent()) {
+        switch (knowledge.getMucDich()) {
             case "PRODUCT_LIST":
                 String productsInfo = dataLibrary.getTopProductsInfo(5);
                 return template.replace("{products}", productsInfo);
             
             case "PRODUCT_SEARCH":
-                String searchTerm = extractSearchTerm(input, knowledge.getKeywords());
+                String searchTerm = extractSearchTerm(input, knowledge.getTuKhoa());
                 List<SanPham> searchResult = dataLibrary.searchProducts(searchTerm);
                 if (searchResult.isEmpty() || searchTerm.isEmpty()) {
                     return "Dạ, bạn muốn tìm loại gì hoặc là muốn tìm dòng sản phẩm nào ạ? 🥰";

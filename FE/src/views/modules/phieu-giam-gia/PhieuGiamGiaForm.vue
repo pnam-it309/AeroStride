@@ -110,21 +110,6 @@ const filteredCustomers = computed(() => {
             c.ma?.toLowerCase().includes(search);
             
         let matchesDateRange = true;
-        if (filterStartDate.value || filterEndDate.value) {
-            if (c.ngayDonHangGanNhat) {
-                const orderTime = c.ngayDonHangGanNhat;
-                if (filterStartDate.value) {
-                    const start = new Date(filterStartDate.value).setHours(0, 0, 0, 0);
-                    if (orderTime < start) matchesDateRange = false;
-                }
-                if (filterEndDate.value) {
-                    const end = new Date(filterEndDate.value).setHours(23, 59, 59, 999);
-                    if (orderTime > end) matchesDateRange = false;
-                }
-            } else {
-                matchesDateRange = false;
-            }
-        }
         
         return matchesSearch && matchesDateRange;
     });
@@ -308,7 +293,7 @@ onMounted(init);
                         <v-row>
                             <!-- 1. Mã phiếu giảm giá & Tên giảm giá -->
                             <v-col cols="12" md="4">
-                                <div class="field-label">Mã phiếu giảm giá <span class="text-red" v-if="!isEditMode && !isDetailMode">*</span></div>
+                                <div class="field-label">Mã phiếu giảm giá</div>
                                 <v-text-field v-model="form.ma" readonly
                                     :placeholder="isEditMode || isDetailMode ? '' : 'Mã sẽ được hệ thống tự động tạo...'" variant="outlined"
                                     density="compact"
@@ -317,7 +302,7 @@ onMounted(init);
                                 </v-text-field>
                             </v-col>
                             <v-col cols="12" md="8">
-                                <div class="field-label">Tên giảm giá <span class="text-red">*</span></div>
+                                <div class="field-label">Tên giảm giá</div>
                                 <v-text-field v-model="form.ten" :readonly="isViewOnly"
                                     placeholder="Ví dụ: Voucher Mừng Sinh Nhật..." variant="outlined"
                                     density="compact" hide-details></v-text-field>
@@ -333,7 +318,7 @@ onMounted(init);
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">
-                                    Giá trị giảm ({{ form.loaiPhieu === 'TIEN_MAT' ? 'VNĐ' : '%' }}) <span class="text-red">*</span>
+                                    Giá trị giảm ({{ form.loaiPhieu === 'TIEN_MAT' ? 'VNĐ' : '%' }})
                                 </div>
                                 <v-text-field v-if="form.loaiPhieu === 'TIEN_MAT'"
                                     v-model.number="form.soTienGiam" :readonly="isViewOnly" type="number"
@@ -356,7 +341,7 @@ onMounted(init);
                             <!-- 3. Số lượng sử dụng, Hóa đơn tối thiểu & Loại phiếu -->
                             <v-col cols="12" md="4">
                                 <div class="d-flex align-center justify-space-between mb-2" style="height: 24px;">
-                                    <div class="field-label mb-0">Số lượng sử dụng <span class="text-red">*</span></div>
+                                    <div class="field-label mb-0">Số lượng sử dụng</div>
                                     <v-switch v-model="isInfinite" :disabled="isViewOnly || form.loaiHienThi === 'CA_NHAN'" label="Vô hạn"
                                         color="primary" density="compact" hide-details
                                         class="custom-mini-switch"></v-switch>
@@ -368,7 +353,7 @@ onMounted(init);
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label" style="height: 24px; display: flex; align-items: center; margin-bottom: 8px;">
-                                    Hóa đơn tối thiểu (VNĐ) <span class="text-red">*</span>
+                                    Hóa đơn tối thiểu (VNĐ)
                                 </div>
                                 <v-text-field v-model.number="form.giatriToiThieu" :readonly="isViewOnly"
                                     type="number" placeholder="0" variant="outlined" density="compact"
@@ -388,14 +373,14 @@ onMounted(init);
 
                             <!-- 4. Ngày bắt đầu & Ngày kết thúc -->
                             <v-col cols="12" md="6">
-                                <div class="field-label">Ngày bắt đầu <span class="text-red">*</span></div>
+                                <div class="field-label">Ngày bắt đầu</div>
                                 <v-text-field v-model="form.ngayBatDau" :readonly="isViewOnly"
                                     type="datetime-local" variant="outlined" density="compact"
                                     append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
                                     class="date-field" hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Ngày kết thúc <span class="text-red">*</span></div>
+                                <div class="field-label">Ngày kết thúc</div>
                                 <v-text-field v-model="form.ngayKetThuc" :readonly="isViewOnly"
                                     type="datetime-local" variant="outlined" density="compact"
                                     append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
@@ -430,25 +415,11 @@ onMounted(init);
                         </div>
 
                         <AdminFilter title="Tìm kiếm khách hàng" @refresh="() => { searchGlobal = ''; filterStartDate = null; filterEndDate = null; }">
-                            <v-col cols="12" md="3">
+                            <v-col cols="12" md="12">
                                 <div class="filter-field-label" style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Tìm kiếm</div>
                                 <v-text-field v-model="searchGlobal" prepend-inner-icon="mdi-magnify"
                                     placeholder="Nhập tên, mã hoặc số điện thoại..." variant="outlined"
                                     density="compact" hide-details clearable rounded="xl" class="compact-input"></v-text-field>
-                            </v-col>
-                            <v-col cols="12" md="4">
-                                <div class="filter-field-label" style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Đơn hàng từ ngày</div>
-                                <v-text-field v-model="filterStartDate" type="date" variant="outlined"
-                                    density="compact" hide-details rounded="xl"
-                                    class="compact-input date-field"
-                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"></v-text-field>
-                            </v-col>
-                            <v-col cols="12" md="4">
-                                <div class="filter-field-label" style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Đến ngày</div>
-                                <v-text-field v-model="filterEndDate" type="date" variant="outlined"
-                                    density="compact" hide-details rounded="xl"
-                                    class="compact-input date-field"
-                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"></v-text-field>
                             </v-col>
                         </AdminFilter>
 
@@ -467,9 +438,6 @@ onMounted(init);
                                         <th class="header-cell text-center">Số điện thoại</th>
                                         <th class="header-cell text-center">Email</th>
                                         <th class="header-cell text-center" style="width: 120px">Ngày sinh</th>
-                                        <th class="header-cell text-center" style="width: 150px">Tổng chi tiêu</th>
-                                        <th class="header-cell text-center" style="width: 130px">Tổng đơn hàng</th>
-                                        <th class="header-cell text-center" style="width: 160px">Đơn hàng gần nhất</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -496,15 +464,6 @@ onMounted(init);
                                         </td>
                                         <td class="data-cell text-center">
                                             {{ formatDate(item.ngaySinh) }}
-                                        </td>
-                                        <td class="data-cell text-center">
-                                            {{ formatCurrency(item.tongChiTieu) }}
-                                        </td>
-                                        <td class="data-cell text-center">
-                                            {{ item.tongDonHang || 0 }}
-                                        </td>
-                                        <td class="data-cell text-center">
-                                            {{ formatDate(item.ngayDonHangGanNhat) }}
                                         </td>
                                     </tr>
                                 </tbody>

@@ -1,7 +1,7 @@
 package com.example.be.core.admin.chat.service;
 
 import com.example.be.core.admin.chat.model.AdminChatResponse;
-import com.example.be.core.admin.chat.model.ChatMessageResponse;
+import com.example.be.core.admin.chat.model.TinNhanResponse;
 
 import java.util.List;
 
@@ -9,9 +9,9 @@ public interface AdminChatService {
 
     List<AdminChatResponse> getAllConversations();
 
-    List<ChatMessageResponse> getMessagesByConversation(String id);
+    List<TinNhanResponse> getMessagesByConversation(String id);
 
-    List<ChatMessageResponse> getMessagesBySessionId(String sessionId);
+    List<TinNhanResponse> getMessagesBySessionId(String sessionId);
 
     boolean acceptConversation(String id);
 

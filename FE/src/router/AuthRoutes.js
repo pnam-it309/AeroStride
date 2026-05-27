@@ -31,12 +31,6 @@ const AuthRoutes = {
             beforeEnter: requireGuest,
             component: () => import('@/views/authentication/admin/BoxedRegister.vue')
         },
-        {
-            name: 'AdminForgotPassword',
-            path: PATH.ADMIN_FORGOT_PASSWORD,
-            beforeEnter: requireGuest,
-            component: () => import('@/views/authentication/admin/ForgotPassword.vue')
-        },
         // Client Auth (Vẫn giữ absolute path để có thể truy cập từ /user/login)
         {
             name: 'ClientLogin',

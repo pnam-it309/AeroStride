@@ -13,20 +13,20 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "ai_synonym")
+@Table(name = "tu_dong_nghia_ai")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AiSynonym {
+public class TuDongNghiaAi {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(name = "word", nullable = false)
-    private String word; // User's word
+    @Column(name = "tu_goc", nullable = false)
+    private String tuGoc; // User's word
 
-    @Column(name = "canonical_word", nullable = false)
-    private String canonicalWord; // Standard word for logic
+    @Column(name = "tu_chuan_hoa", nullable = false)
+    private String tuChuanHoa; // Standard word for logic
 }

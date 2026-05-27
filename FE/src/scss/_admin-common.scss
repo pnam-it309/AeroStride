@@ -8,10 +8,12 @@
     box-shadow: 4px 0 24px -4px rgba(0, 0, 0, 0.06) !important;
     border-right: none !important;
 }
+
 .v-navigation-drawer .v-list-item.sidebar-link {
-    transition: none !important; /* Loại bỏ mọi hiệu ứng "chảy màu" hay chuyển động */
+    transition: none !important;
+    /* Loại bỏ mọi hiệu ứng "chảy màu" hay chuyển động */
     margin-bottom: 4px !important;
-    border-radius: 12px !important;
+    border-radius: 16px !important;
     margin-left: 12px !important;
     margin-right: 12px !important;
     color: #475569 !important;
@@ -25,7 +27,7 @@
 /* Hiệu ứng HOVER và ACTIVE: Hiện ngay nền xanh nhạt tĩnh, không loang lổ */
 .v-navigation-drawer .v-list-item.sidebar-link:hover,
 .v-navigation-drawer .v-list-item.sidebar-link.v-list-item--active {
-    background-color: #f0f1ff !important; 
+    background-color: #f0f1ff !important;
     color: #1e257c !important;
     transition: none !important;
 }
@@ -65,18 +67,18 @@
 
 /* Đảm bảo overlay có cùng bo góc */
 .v-navigation-drawer .v-list-item__overlay {
-    border-radius: 12px !important;
+    border-radius: 16px !important;
 }
 
 /* Icon rotation cho sub-menu */
-.v-navigation-drawer .v-list-group--active > .v-list-item .v-list-item__append i {
+.v-navigation-drawer .v-list-group--active>.v-list-item .v-list-item__append i {
     transform: rotate(180deg);
 }
 
 /* Hiệu ứng cho sub-menu items */
 .v-navigation-drawer .v-list-group__items {
     background: rgba(0, 0, 0, 0.02);
-    border-radius: 12px;
+    border-radius: 16px;
     margin: 4px 12px !important;
 }
 
@@ -103,8 +105,15 @@
 }
 
 @keyframes premiumFadeIn {
-    from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ==========================================================================
@@ -112,7 +121,7 @@
    ========================================================================== */
 
 /* Vuetify Field Global Overrides */
-.v-field__input, 
+.v-field__input,
 .v-field__input input,
 .v-textarea textarea,
 .v-select__selection-text {
@@ -129,13 +138,15 @@
 .v-field__outline {
     --v-field-border-width: 1px !important;
     --v-field-border-opacity: 0.35 !important;
-    color: #94a3b8 !important; /* slate-400 */
+    color: #94a3b8 !important;
+    /* slate-400 */
 }
 
 .v-field--focused .v-field__outline {
     --v-field-border-width: 1px !important;
     --v-field-border-opacity: 1 !important;
-    color: #1e257c !important; /* brand primary */
+    color: #1e257c !important;
+    /* brand primary */
 }
 
 /* Global Typography Helpers */
@@ -200,7 +211,7 @@
     width: 32px !important;
     height: 32px !important;
     padding: 0 !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 
     .v-btn,
@@ -262,18 +273,19 @@
 }
 
 /* Ép màu chữ trắng cho các nút và chip quan trọng trên toàn hệ thống admin */
-.v-btn.bg-primary, 
-.v-btn.bg-success, 
-.v-btn.bg-error, 
+.v-btn.bg-primary,
+.v-btn.bg-success,
+.v-btn.bg-error,
 .v-btn.bg-warning,
 .v-chip.bg-primary,
 .v-chip.bg-success,
 .v-chip.bg-error,
 .v-chip.bg-warning {
     color: #fff !important;
-    .v-btn__content, 
+
+    .v-btn__content,
     .v-chip__content,
-    .v-icon, 
+    .v-icon,
     svg {
         color: #fff !important;
     }
@@ -281,7 +293,7 @@
 
 /* 3. CARDS & SECTIONS */
 .premium-card {
-    border-radius: 8px !important;
+    border-radius: 16px !important;
     border: 1px solid rgba(226, 232, 240, 0.8) !important;
     box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05) !important;
     background: #ffffff !important;
@@ -299,7 +311,7 @@
 .icon-blob {
     width: 36px;
     height: 36px;
-    border-radius: 8px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -340,13 +352,19 @@
 .gender-chip-male {
     background: #f0f1ff !important;
     color: #1e257c !important;
-    .v-chip__content { color: #1e257c !important; }
+
+    .v-chip__content {
+        color: #1e257c !important;
+    }
 }
 
 .gender-chip-female {
     background: #fef2f2 !important;
     color: #991b1b !important;
-    .v-chip__content { color: #991b1b !important; }
+
+    .v-chip__content {
+        color: #991b1b !important;
+    }
 }
 
 /* ==========================================================================
@@ -358,7 +376,7 @@
 .status-chip-active {
     background-color: #e8f5e9 !important;
     color: #206924 !important;
-    
+
     .v-chip__content {
         color: #206924 !important;
     }
@@ -368,7 +386,7 @@
     background-color: #fef2f2 !important;
     color: #991b1b !important;
     border: 1px solid #fee2e2 !important;
-    
+
     .v-chip__content {
         color: #991b1b !important;
     }
@@ -378,7 +396,7 @@
     background-color: #fef2f2 !important;
     color: #991b1b !important;
     border: 1px solid #fee2e2 !important;
-    
+
     .v-chip__content {
         color: #991b1b !important;
     }
@@ -388,7 +406,7 @@
     background-color: #fffbeb !important;
     color: #92400e !important;
     border: 1px solid #fef3c7 !important;
-    
+
     .v-chip__content {
         color: #92400e !important;
     }
@@ -420,81 +438,120 @@
     background: #fdf5f3 !important;
     color: #9c2a1a !important;
     border: 1px solid #f9deda !important;
-    .v-chip__content { color: #9c2a1a !important; }
+
+    .v-chip__content {
+        color: #9c2a1a !important;
+    }
 }
 
 .status-chip-pending {
     background: #fff7ed !important;
     color: #c2410c !important;
-    .v-chip__content { color: #c2410c !important; }
+
+    .v-chip__content {
+        color: #c2410c !important;
+    }
 }
 
 .status-chip-confirmed {
     background: #f0f1ff !important;
     color: #1e257c !important;
-    .v-chip__content { color: #1e257c !important; }
+
+    .v-chip__content {
+        color: #1e257c !important;
+    }
 }
 
 .status-chip-delivering {
     background: #eff6ff !important;
     color: #1e40af !important;
-    .v-chip__content { color: #1e40af !important; }
+
+    .v-chip__content {
+        color: #1e40af !important;
+    }
 }
 
 .status-chip-waiting-delivery {
     background: #fffbeb !important;
     color: #92400e !important;
-    .v-chip__content { color: #92400e !important; }
+
+    .v-chip__content {
+        color: #92400e !important;
+    }
 }
 
 .status-chip-completed {
     background: #f0fdf4 !important;
     color: #166534 !important;
-    .v-chip__content { color: #166534 !important; }
+
+    .v-chip__content {
+        color: #166534 !important;
+    }
 }
 
 .status-chip-cancelled {
     background: #fef2f2 !important;
     color: #991b1b !important;
     border: 1px solid #fee2e2 !important;
-    .v-chip__content { color: #991b1b !important; }
+
+    .v-chip__content {
+        color: #991b1b !important;
+    }
 }
 
 .status-chip-refunded {
     background: #f5f3ff !important;
     color: #5b21b6 !important;
-    .v-chip__content { color: #5b21b6 !important; }
+
+    .v-chip__content {
+        color: #5b21b6 !important;
+    }
 }
 
 .status-chip-unknown {
     background: #f8fafc !important;
     color: #475569 !important;
-    .v-chip__content { color: #475569 !important; }
+
+    .v-chip__content {
+        color: #475569 !important;
+    }
 }
 
 /* --- Trạng thái Đợt/Phiếu giảm giá (Timeline & Visibility) --- */
 .status-chip-upcoming {
     background: #fefce8 !important;
     color: #a16207 !important;
-    .v-chip__content { color: #a16207 !important; }
+
+    .v-chip__content {
+        color: #a16207 !important;
+    }
 }
 
 .status-chip-expired {
     background: #fef2f2 !important;
     color: #991b1b !important;
-    .v-chip__content { color: #991b1b !important; }
+
+    .v-chip__content {
+        color: #991b1b !important;
+    }
 }
 
 .status-chip-public {
     background: #eff6ff !important;
     color: #1e40af !important;
-    .v-chip__content { color: #1e40af !important; }
+
+    .v-chip__content {
+        color: #1e40af !important;
+    }
 }
 
 .status-chip-private {
     background: #faf5ff !important;
     color: #7e22ce !important;
-    .v-chip__content { color: #7e22ce !important; }
+
+    .v-chip__content {
+        color: #7e22ce !important;
+    }
 }
 
 /* Order Type Chips */
@@ -502,7 +559,8 @@
     min-height: 28px !important;
     padding: 0 10px !important;
     border-radius: 4px !important;
-    width: 85px !important; /* Ngắn lại cho gọn */
+    width: 85px !important;
+    /* Ngắn lại cho gọn */
     font-size: 13px !important;
     font-weight: 500 !important;
     border: 1px solid transparent !important;
@@ -519,14 +577,20 @@
     background: #fff7ed !important;
     color: #9a3412 !important;
     border: 1px solid #ffedd5 !important;
-    .v-chip__content { color: #9a3412 !important; }
+
+    .v-chip__content {
+        color: #9a3412 !important;
+    }
 }
 
 .order-type-online {
     background: #f0fdf4 !important;
     color: #166534 !important;
     border: 1px solid #dcfce7 !important;
-    .v-chip__content { color: #166534 !important; }
+
+    .v-chip__content {
+        color: #166534 !important;
+    }
 }
 
 /* Global Chip Text Override - Cleaned Up */
@@ -607,7 +671,7 @@
     /* Remove height: 100% as it pushes pagination out in flex containers */
     background: white;
     border: none !important;
-    border-radius: 12px !important;
+    border-radius: 16px !important;
     overflow: hidden;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05) !important;
 }
@@ -638,7 +702,8 @@
 
 .native-admin-table {
     width: 100%;
-    table-layout: fixed; /* Force respect column widths */
+    table-layout: fixed;
+    /* Force respect column widths */
     border-collapse: separate;
     border-spacing: 0;
 
@@ -660,25 +725,30 @@
         &.text-center {
             text-align: center !important;
         }
+
         &.text-left {
             text-align: left !important;
         }
+
         &.text-right {
             text-align: right !important;
         }
     }
 
     .data-cell {
-        padding: 10px 16px !important; /* Sử dụng padding thoáng cho top/bottom để tăng độ dễ nhìn khi nhiều dữ liệu */
+        padding: 10px 16px !important;
+        /* Sử dụng padding thoáng cho top/bottom để tăng độ dễ nhìn khi nhiều dữ liệu */
         font-size: 13px !important;
         font-weight: 400 !important;
-        line-height: 1.6 !important; /* Tăng độ giãn dòng nhẹ cho dữ liệu nhiều */
+        line-height: 1.6 !important;
+        /* Tăng độ giãn dòng nhẹ cho dữ liệu nhiều */
         color: #1d2025 !important;
         vertical-align: middle;
         border-bottom: 1px solid #f1f5f9;
         background: white;
         text-align: center;
-        height: 76px !important; /* Tăng độ cao dòng lên 76px để thoáng hàng hơn */
+        height: 76px !important;
+        /* Tăng độ cao dòng lên 76px để thoáng hàng hơn */
         min-height: 76px !important;
     }
 
@@ -691,7 +761,9 @@
     flex: none !important;
     background: #ffffff;
     padding: 12px 20px;
-    border-top: 1px solid #e2e8f0;
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05) !important;
     z-index: 10;
     display: flex;
     align-items: center;
@@ -703,7 +775,7 @@
 .filter-card {
     background: #ffffff;
     border: none !important;
-    border-radius: 12px !important;
+    border-radius: 16px !important;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05) !important;
     width: 100%;
 
@@ -788,7 +860,7 @@
         opacity: 0.5;
         z-index: 1;
         cursor: pointer !important;
-        
+
         .v-icon {
             font-size: 20px !important;
             color: #64748b !important;
@@ -801,8 +873,10 @@
             --v-field-border-opacity: 0.5 !important;
             color: #1e257c !important;
         }
+
         .v-field__append-inner {
             opacity: 1;
+
             .v-icon {
                 color: #1e257c !important;
             }
@@ -816,6 +890,7 @@
 
     .v-field--focused .v-field__append-inner {
         opacity: 1;
+
         .v-icon {
             color: #1e257c !important;
         }
@@ -825,7 +900,7 @@
         --v-field-border-opacity: 1 !important;
         color: #1e257c !important;
     }
-    
+
     background-color: #ffffff !important;
     cursor: default !important;
 
@@ -842,7 +917,7 @@
     width: 40px !important;
     min-width: 40px !important;
     height: 40px !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     border: 1px solid #cbd5e1 !important;
     background: #ffffff !important;
     color: #1e293b !important;
@@ -870,7 +945,7 @@
     height: 44px !important;
     padding-left: 20px !important;
     padding-right: 24px !important;
-    border-radius: 4px !important;
+    border-radius: 12px !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     letter-spacing: 0.01em !important;
@@ -906,7 +981,7 @@
 .admin-btn-secondary {
     height: 44px !important;
     padding: 0 20px !important;
-    border-radius: 4px !important;
+    border-radius: 12px !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     background: #f1f5f9 !important;
@@ -938,11 +1013,12 @@
     height: 44px !important;
     padding-left: 20px !important;
     padding-right: 24px !important;
-    border-radius: 4px !important;
+    border-radius: 12px !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     letter-spacing: 0.01em !important;
-    background: #107c41 !important; /* Excel Green */
+    background: #107c41 !important;
+    /* Excel Green */
     box-shadow: 0 4px 14px rgba(16, 124, 65, 0.3) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 
@@ -975,11 +1051,12 @@
     height: 44px !important;
     padding-left: 20px !important;
     padding-right: 24px !important;
-    border-radius: 4px !important;
+    border-radius: 12px !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     letter-spacing: 0.01em !important;
-    background: #4f46e5 !important; /* Indigo-600 */
+    background: #4f46e5 !important;
+    /* Indigo-600 */
     box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 
@@ -1015,7 +1092,7 @@
 .btn-danger-outline {
     height: 40px !important;
     padding: 0 16px !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     color: #ef4444 !important;
@@ -1037,7 +1114,7 @@
 .btn-outline-primary {
     height: 44px !important;
     padding: 0 24px !important;
-    border-radius: 10px !important;
+    border-radius: 12px !important;
     font-size: 16px !important;
     font-weight: 600 !important;
     color: #1e257c !important;
@@ -1258,18 +1335,6 @@
         gap: 0;
     }
 
-    /* The 'Track' or background bar */
-    .timeline-wrap::before {
-        content: '';
-        position: absolute;
-        top: 22px; /* Center of the node */
-        left: 50px;
-        right: 50px;
-        height: 6px;
-        background: #f1f5f9;
-        border-radius: 10px;
-        z-index: -1;
-    }
 
     .timeline-step {
         flex: 1;
@@ -1315,7 +1380,7 @@
                 background: #f8fafc;
                 border-color: #cbd5e1;
                 color: #94a3b8;
-                
+
                 /* Sublte checkmark if needed, but keeping it clean */
                 &::after {
                     content: '✓';
@@ -1336,12 +1401,41 @@
             }
 
             /* Status Specific Active Colors - Full Vibrancy */
-            &.active.warning { background: #f59e0b; border-color: #f59e0b; box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(245, 158, 11, 0.4); }
-            &.active.info { background: #3b82f6; border-color: #3b82f6; box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(59, 130, 246, 0.4); }
-            &.active.primary { background: #f97316; border-color: #f97316; box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(249, 115, 22, 0.4); }
-            &.active.success { background: #10b981; border-color: #10b981; box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(16, 185, 129, 0.4); }
-            &.active.error { background: #ef4444; border-color: #ef4444; box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(239, 68, 68, 0.4); }
-            &.active.orange { background: #6366f1; border-color: #6366f1; box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(99, 102, 241, 0.4); }
+            &.active.warning {
+                background: #f59e0b;
+                border-color: #f59e0b;
+                box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(245, 158, 11, 0.4);
+            }
+
+            &.active.info {
+                background: #3b82f6;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+            }
+
+            &.active.primary {
+                background: #f97316;
+                border-color: #f97316;
+                box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(249, 115, 22, 0.4);
+            }
+
+            &.active.success {
+                background: #10b981;
+                border-color: #10b981;
+                box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+            }
+
+            &.active.error {
+                background: #ef4444;
+                border-color: #ef4444;
+                box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(239, 68, 68, 0.4);
+            }
+
+            &.active.orange {
+                background: #6366f1;
+                border-color: #6366f1;
+                box-shadow: 0 0 0 6px #fff, 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+            }
         }
 
         /* Connecting lines */
@@ -1365,28 +1459,48 @@
             }
 
             &.active {
-                background: #94a3b8; /* Default gray for passed segments */
+                background: #94a3b8;
+                /* Default gray for passed segments */
             }
         }
-        
-        &.done .line.left, &.done .line.right {
-            background: #cbd5e1 !important; /* Neutral slate for completed segments */
+
+        &.done .line.left,
+        &.done .line.right {
+            background: #cbd5e1 !important;
+            /* Neutral slate for completed segments */
         }
-        
+
         &.active .line.left {
             background: #cbd5e1 !important;
         }
-        
+
         &.done .timeline-info .label {
             color: #64748b;
         }
-        
-        &.active.warning .timeline-info .label { color: #f59e0b; }
-        &.active.info .timeline-info .label { color: #3b82f6; }
-        &.active.primary .timeline-info .label { color: #f97316; }
-        &.active.success .timeline-info .label { color: #10b981; }
-        &.active.error .timeline-info .label { color: #ef4444; }
-        &.active.orange .timeline-info .label { color: #6366f1; }
+
+        &.active.warning .timeline-info .label {
+            color: #f59e0b;
+        }
+
+        &.active.info .timeline-info .label {
+            color: #3b82f6;
+        }
+
+        &.active.primary .timeline-info .label {
+            color: #f97316;
+        }
+
+        &.active.success .timeline-info .label {
+            color: #10b981;
+        }
+
+        &.active.error .timeline-info .label {
+            color: #ef4444;
+        }
+
+        &.active.orange .timeline-info .label {
+            color: #6366f1;
+        }
     }
 
     .timeline-info {
@@ -1409,9 +1523,20 @@
 }
 
 @keyframes timeline-pulse {
-    0% { transform: scale(1); opacity: 0.5; }
-    70% { transform: scale(1.4); opacity: 0; }
-    100% { transform: scale(1); opacity: 0; }
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+
+    70% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 0;
+    }
 }
 
 /* 12. SPECIALIZED TEXT & EFFECTS */
@@ -1465,7 +1590,7 @@
     height: 28px !important;
     min-width: 28px !important;
     padding: 0 !important;
-    border-radius: 8px !important;
+    border-radius: 10px !important;
     color: #475569 !important;
     /* Slate-600 */
     background: transparent !important;
@@ -1510,11 +1635,13 @@
 }
 
 .tab-count-status {
-    color: #ffffff !important; /* Chữ trắng cho các trạng thái */
+    color: #ffffff !important;
+    /* Chữ trắng cho các trạng thái */
 }
 
 .tab-count-all {
-    color: #0f172a !important; /* Chữ đen/slate cho tab Tất cả */
+    color: #0f172a !important;
+    /* Chữ đen/slate cho tab Tất cả */
     border: 1px solid #e2e8f0 !important;
     box-shadow: none !important;
     background-color: #f8fafc !important;
@@ -1533,19 +1660,19 @@
 .history-scroll-container {
     max-height: 450px;
     overflow-y: auto;
-    
+
     &::-webkit-scrollbar {
         width: 6px;
     }
-    
+
     &::-webkit-scrollbar-track {
         background: transparent;
     }
-    
+
     &::-webkit-scrollbar-thumb {
         background: #e2e8f0;
         border-radius: 10px;
-        
+
         &:hover {
             background: #cbd5e1;
         }
