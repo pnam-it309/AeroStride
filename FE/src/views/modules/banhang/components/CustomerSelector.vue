@@ -1,11 +1,11 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { UserIcon, PhoneIcon, XIcon } from 'vue-tabler-icons';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { useNotifications } from '@/services/notificationService';
 
-const props = defineProps(['selectedCustomerName', 'activeOrderId']);
+const props = defineProps(['selectedCustomerName', 'selectedCustomerPhone', 'activeOrderId']);
 const emit = defineEmits(['select', 'remove']);
 const { addNotification } = useNotifications();
 
@@ -15,6 +15,12 @@ const loading = ref(false);
 const showQuickAddDialog = ref(false);
 const quickAddLoading = ref(false);
 const quickAddForm = ref({ sdt: '', email: '' });
+let searchTimer = null;
+
+const selectedCustomerLabel = computed(() => {
+    if (!props.selectedCustomerName || props.selectedCustomerName === 'Khách lẻ') return '';
+    return props.selectedCustomerName;
+});
 
 const normalizeText = (value) =>
     String(value ?? '')
@@ -62,26 +68,46 @@ const findExistingCustomerByContact = async (phone, email) => {
     return findExactCustomer(extractCustomerList(allCustomers), phone, email) || null;
 };
 
-const onSearch = async () => {
-    if (!search.value || search.value.length < 2) {
+watch(search, (value) => {
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        onSearch(value);
+    }, 300);
+});
+
+const onSearch = async (keyword = search.value) => {
+    const normalizedKeyword = normalizeText(keyword);
+    if (!normalizedKeyword || normalizedKeyword.length < 2) {
         results.value = [];
         return;
     }
     loading.value = true;
     try {
-        const data = await dichVuDonHang.searchKhachHang(search.value);
+        const data = await dichVuDonHang.searchKhachHang(normalizedKeyword);
         results.value = data || [];
     } catch (e) {
-        console.error(e);
+        addNotification({
+            title: 'Lỗi',
+            subtitle: e?.response?.data?.message || 'Không thể tải danh sách khách hàng.',
+            color: 'error'
+        });
     } finally {
         loading.value = false;
     }
 };
 
 const selectCustomer = (c) => {
+    if (!c?.id) return;
     emit('select', c);
     search.value = '';
     results.value = [];
+};
+
+const customerTitle = (customer) => customer?.tenKhachHang || customer?.ten || customer?.sdt || 'Khách hàng';
+const customerSubtitle = (customer) => {
+    const phone = customer?.sdt ? `SĐT: ${customer.sdt}` : '';
+    const email = customer?.email ? `Email: ${customer.email}` : '';
+    return [phone, email].filter(Boolean).join(' - ') || 'Chưa có thông tin liên hệ';
 };
 
 const resetQuickAddForm = () => {
@@ -175,11 +201,11 @@ const submitQuickAdd = async () => {
     <div class="customer-selector">
         <div class="d-flex justify-space-between align-center mb-3">
             <h3 class="text-subtitle-1 font-weight-bold">
-                <UserIcon size="18" class="mr-1 text-#2E4E8E" style="vertical-align: middle" />
+                <UserIcon size="18" class="mr-1" style="vertical-align: middle; color: #2E4E8E" />
                 Khách hàng
             </h3>
             <v-btn
-                v-if="!selectedCustomerName"
+                v-if="!selectedCustomerLabel"
                 size="small"
                 variant="text"
                 color="#2E4E8E"
@@ -191,37 +217,55 @@ const submitQuickAdd = async () => {
             </v-btn>
         </div>
 
-        <div v-if="selectedCustomerName" class="selected-customer-card pa-3 border rounded-lg bg-primary-lighten-5 d-flex align-center">
+        <div v-if="selectedCustomerLabel" class="selected-customer-card pa-3 border rounded-lg bg-primary-lighten-5 d-flex align-center">
             <div class="flex-grow-1">
-                <div class="font-weight-bold text-body-2">{{ selectedCustomerName }}</div>
-                <div class="text-caption text-grey-darken-1">Khách hàng thân thiết</div>
+                <div class="font-weight-bold text-body-2">{{ selectedCustomerLabel }}</div>
+                <div class="text-caption text-grey-darken-1">
+                    {{ selectedCustomerPhone ? `SĐT: ${selectedCustomerPhone}` : 'Khách hàng đã gắn với hóa đơn' }}
+                </div>
             </div>
             <v-btn icon size="x-small" variant="text" color="grey-darken-1" @click="emit('remove')">
                 <XIcon size="16" />
             </v-btn>
         </div>
 
-        <div v-else class="position-relative">
-            <v-text-field
-                v-model="search"
+        <div v-else>
+            <v-autocomplete
+                :model-value="null"
+                v-model:search="search"
+                :items="results"
+                :loading="loading"
+                :custom-filter="() => true"
+                :item-title="customerTitle"
+                item-value="id"
+                return-object
+                clearable
                 placeholder="Tìm tên hoặc số điện thoại..."
                 variant="outlined"
                 density="comfortable"
                 hide-details
                 prepend-inner-icon="mdi-account-search"
-                @input="onSearch"
-            ></v-text-field>
-
-            <v-card v-if="results.length > 0" class="search-overlay mt-1 shadow-lg border overflow-hidden">
-                <v-list class="pa-0">
-                    <v-list-item v-for="c in results" :key="c.id" class="pa-3 border-b" @click="selectCustomer(c)">
-                        <v-list-item-title class="font-weight-bold">{{ c.ten }}</v-list-item-title>
+                no-data-text="Nhập ít nhất 2 ký tự để tìm khách hàng"
+                @update:model-value="selectCustomer"
+            >
+                <template #item="{ props: itemProps, item }">
+                    <v-list-item v-bind="itemProps" class="py-2">
+                        <template #prepend>
+                            <v-avatar color="primary" variant="tonal" size="34">
+                                <UserIcon size="18" />
+                            </v-avatar>
+                        </template>
+                        <v-list-item-title class="font-weight-bold">{{ customerTitle(item.raw) }}</v-list-item-title>
                         <v-list-item-subtitle class="d-flex align-center mt-1">
-                            <PhoneIcon size="14" class="mr-1 opacity-60" /> {{ c.sdt }}
+                            <PhoneIcon size="14" class="mr-1 opacity-60" />
+                            {{ customerSubtitle(item.raw) }}
                         </v-list-item-subtitle>
                     </v-list-item>
-                </v-list>
-            </v-card>
+                </template>
+                <template #selection="{ item }">
+                    <span>{{ customerTitle(item.raw) }}</span>
+                </template>
+            </v-autocomplete>
         </div>
 
         <v-dialog v-model="showQuickAddDialog" max-width="520" transition="dialog-bottom-transition">
@@ -267,12 +311,8 @@ const submitQuickAdd = async () => {
     background-color: rgba(var(--v-theme-primary), 0.05);
 }
 
-.search-overlay {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 999;
+.customer-selector :deep(.v-field) {
+    border-radius: 10px !important;
 }
 </style>
 

@@ -50,8 +50,7 @@ public class CreateProductRequest {
     @Size(max = 1000, message = "hinhAnh khong duoc vuot qua 1000 ky tu")
     private String hinhAnh;
 
-    @Size(max = 1000, message = "moTaNgan khong duoc vuot qua 1000 ky tu")
-    private String moTaNgan;
+
 
     private String moTaChiTiet;
 

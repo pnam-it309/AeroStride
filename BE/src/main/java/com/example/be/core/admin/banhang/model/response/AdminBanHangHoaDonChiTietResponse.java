@@ -13,9 +13,12 @@ public class AdminBanHangHoaDonChiTietResponse {
     private String id;
     private String idChiTietSanPham;
     private String tenSanPham;
+    private String maChiTietSanPham;
     private String tenMauSac;
     private String tenKichThuoc;
     private Integer soLuong;
     private BigDecimal donGia;
     private BigDecimal thanhTien;
+    private Integer soLuongTon;
+    private String hinhAnh;
 }

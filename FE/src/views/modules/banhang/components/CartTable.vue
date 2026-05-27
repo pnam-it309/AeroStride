@@ -33,13 +33,17 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
                     <td>
                         <div class="d-flex align-center py-3">
                             <v-avatar color="grey-lighten-4" rounded="lg" size="44" class="mr-3 border">
-                                <BoxIcon size="20" class="text-grey" />
+                                <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover />
+                                <BoxIcon v-else size="20" class="text-grey" />
                             </v-avatar>
                             <div>
                                 <div class="font-weight-bold text-subtitle-2">{{ item.tenSanPham }}</div>
                                 <div class="d-flex gap-2 mt-1">
                                     <span class="text-caption text-slate-500 font-weight-medium">Size: {{ item.tenKichThuoc }}</span>
                                     <span class="text-caption text-slate-500 font-weight-medium">Màu: {{ item.tenMauSac }}</span>
+                                </div>
+                                <div v-if="item.maChiTietSanPham" class="text-caption text-grey mt-1">
+                                    SKU: <span class="font-weight-bold">{{ item.maChiTietSanPham }}</span>
                                 </div>
                             </div>
                         </div>
@@ -78,6 +82,16 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
     /* Fixed typo from original logic */
     align-items: center;
     padding: 2px;
+}
+
+.cart-card {
+    flex: 1;
+    min-height: 0;
+    border-radius: 8px !important;
+}
+
+.pos-table {
+    height: 100%;
 }
 
 .qty-value {

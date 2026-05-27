@@ -67,13 +67,186 @@ const sizes = ref([]);
 // Tìm kiếm nhanh cho Chip Group
 const colorSearch = ref('');
 const sizeSearch = ref('');
+
+// UI Refs cho Biến thể
+const showColorMenu = ref(false);
+const showSizeMenu = ref(false);
+const customColorName = ref('');
+const customColorHex = ref('#FF5733');
+const customSizeName = ref('');
+
+// Bảng màu phổ biến (Việt - Anh) mapping sang HEX
+const COLOR_DICTIONARY = {
+    // Tiếng Việt
+    'đỏ': '#FF0000', 'xanh dương': '#0000FF', 'xanh lá': '#00FF00', 
+    'vàng': '#FFFF00', 'đen': '#000000', 'trắng': '#FFFFFF', 
+    'hồng': '#FFC0CB', 'tím': '#800080', 'cam': '#FFA500', 
+    'nâu': '#8B4513', 'xám': '#808080', 'ghi': '#808080', 
+    'bạc': '#C0C0C0', 'vàng đồng': '#FFD700', 'xanh ngọc': '#40E0D0', 
+    'xanh mint': '#98FF98', 'xanh rêu': '#4A5D23', 'xanh navy': '#000080', 
+    'be': '#F5F5DC', 'kem': '#FFFDD0', 'kem sữa': '#FFFFF0',
+    'đỏ đô': '#800000', 'đỏ mận': '#800000', 'xanh coban': '#0047AB',
+    
+    // Tiếng Anh
+    'red': '#FF0000', 'blue': '#0000FF', 'green': '#00FF00', 
+    'yellow': '#FFFF00', 'black': '#000000', 'white': '#FFFFFF', 
+    'pink': '#FFC0CB', 'purple': '#800080', 'orange': '#FFA500', 
+    'brown': '#8B4513', 'gray': '#808080', 'grey': '#808080', 
+    'silver': '#C0C0C0', 'gold': '#FFD700', 'turquoise': '#40E0D0', 
+    'mint': '#98FF98', 'navy': '#000080', 'beige': '#F5F5DC', 
+    'cream': '#FFFDD0', 'cyan': '#00FFFF', 'magenta': '#FF00FF',
+    'maroon': '#800000'
+};
+
+watch(customColorName, (newName) => {
+    if (!newName) return;
+    const normalizedName = newName.trim().toLowerCase();
+    
+    // Hàm bỏ dấu tiếng việt
+    const removeAccents = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const normalizedNoAccent = removeAccents(normalizedName);
+    
+    // Tìm kiếm trong từ điển
+    for (const [key, hex] of Object.entries(COLOR_DICTIONARY)) {
+        if (normalizedName === key || normalizedNoAccent === removeAccents(key)) {
+            customColorHex.value = hex;
+            break;
+        }
+    }
+});
+
+const toggleColor = (id) => {
+    const idx = selectedColors.value.indexOf(id);
+    if (idx > -1) selectedColors.value.splice(idx, 1);
+    else selectedColors.value.push(id);
+};
+const toggleSize = (id) => {
+    const idx = selectedSizes.value.indexOf(id);
+    if (idx > -1) selectedSizes.value.splice(idx, 1);
+    else selectedSizes.value.push(id);
+};
+
+const handleAddCustomColor = async () => {
+    const rawName = customColorName.value.trim();
+    const rawHex = customColorHex.value.trim().toUpperCase();
+    
+    if (!rawName || !rawHex) return;
+
+    const existingColor = colors.value.find(c => (c.maMauHex || '').toUpperCase() === rawHex);
+    
+    if (existingColor) {
+        if (!selectedColors.value.includes(existingColor.id)) {
+            selectedColors.value.push(existingColor.id);
+            addNotification({ title: 'Thành công', subtitle: `Tự động chọn màu "${existingColor.ten}" do trùng mã HEX`, color: 'success' });
+        } else {
+            addNotification({ title: 'Lỗi', subtitle: 'Màu này đã được chọn', color: 'error' });
+        }
+        customColorName.value = '';
+        customColorHex.value = '#FF5733';
+        showColorMenu.value = false;
+        return;
+    }
+
+    try {
+        const newColor = await dichVuMauSac.taoMauSac({ ten: rawName, maMauHex: rawHex });
+        colors.value = [newColor, ...colors.value];
+        selectedColors.value.push(newColor.id);
+        customColorName.value = '';
+        customColorHex.value = '#FF5733';
+        showColorMenu.value = false;
+        addNotification({ title: 'Thành công', subtitle: 'Đã thêm màu mới', color: 'success' });
+    } catch(e) {
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể thêm màu', color: 'error' });
+    }
+};
+
+const cleanSizeString = (str) => {
+    let s = (str || '').toString();
+    // 5. Bảo mật: Loại bỏ HTML tags để chống XSS
+    s = s.replace(/<[^>]*>?/gm, '');
+    
+    // 3. Định dạng: Chỉ giữ lại chữ cái, số, khoảng trắng và dấu .,- (Loại bỏ @, #, $, %...)
+    s = s.replace(/[^a-zA-Z0-9.,\-\s]/g, '');
+    
+    // 1. Chuẩn hóa: Loại bỏ các từ khóa thừa "Kích thước", "size", "sz"
+    s = s.replace(/(?:^|\s)(?:kích thước|size|sz)\s*/gi, '');
+    
+    // Loại bỏ chữ "s" nếu nó đứng ngay trước một con số (để biến s43, s 43 thành 43)
+    s = s.replace(/(?:^|\s)s\s*(?=\d)/gi, '');
+    
+    // 1. Loại bỏ khoảng trắng thừa ở giữa và 2 đầu
+    return s.replace(/\s+/g, ' ').trim();
+};
+
+const formatSizeDisplay = (name) => {
+    const norm = cleanSizeString(name).toUpperCase();
+    return norm ? `Size ${norm}` : (name || '');
+};
+
+const handleAddCustomSize = async () => {
+    const rawInput = customSizeName.value;
+    
+    // 1. Lỗi rỗng và khoảng trắng: Để trống hoặc chỉ chứa khoảng trắng
+    if (!rawInput || !rawInput.trim()) return;
+
+    const normalizedSize = cleanSizeString(rawInput);
+
+    if (!normalizedSize) {
+        addNotification({ title: 'Lỗi', subtitle: 'Kích thước không hợp lệ', color: 'error' });
+        return;
+    }
+
+    // Lỗi chứa cả chữ và số (ví dụ: 43zzzzz, size43a)
+    const hasLetters = /[a-zA-Z]/.test(normalizedSize);
+    const hasNumbers = /[0-9]/.test(normalizedSize);
+    if (hasLetters && hasNumbers) {
+        addNotification({ title: 'Lỗi', subtitle: 'Kích thước không hợp lệ (không gõ trộn lẫn chữ và số)', color: 'error' });
+        return;
+    }
+
+    // 4. Lỗi giới hạn độ dài (giới hạn xuống 5 ký tự để tránh 4300000)
+    if (normalizedSize.length > 5) {
+        addNotification({ title: 'Lỗi', subtitle: 'Kích thước quá dài (tối đa 5 ký tự)', color: 'error' });
+        return;
+    }
+
+    // 2. Lỗi trùng lặp: Kiểm tra trùng lặp không phân biệt hoa thường
+    const existingSize = sizes.value.find(s => cleanSizeString(s.ten).toLowerCase() === normalizedSize.toLowerCase());
+
+    if (existingSize) {
+        // Trùng lặp với dữ liệu đã tồn tại trong hệ thống
+        if (selectedSizes.value.includes(existingSize.id)) {
+            addNotification({ title: 'Lỗi', subtitle: 'Kích thước này đã được chọn', color: 'error' });
+        } else {
+            selectedSizes.value.push(existingSize.id);
+            addNotification({ title: 'Thành công', subtitle: 'Đã chọn kích thước có sẵn', color: 'success' });
+            showSizeMenu.value = false;
+        }
+        customSizeName.value = '';
+        return;
+    }
+
+    // 3. Nếu hợp lệ và chưa tồn tại -> Lưu mới
+    try {
+        const finalSizeName = `Size ${normalizedSize.toUpperCase()}`;
+        const newSize = await dichVuKichThuoc.taoKichThuoc({ ten: finalSizeName });
+        sizes.value = [newSize, ...sizes.value];
+        selectedSizes.value.push(newSize.id);
+        customSizeName.value = '';
+        showSizeMenu.value = false;
+        addNotification({ title: 'Thành công', subtitle: 'Đã thêm kích thước mới', color: 'success' });
+    } catch(e) {
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể thêm kích thước', color: 'error' });
+    }
+};
+
 const filteredColors = computed(() => {
     const query = normalizeSearchText(colorSearch.value);
     if (!query) return colors.value;
     return colors.value.filter(c => normalizeSearchText(c.ten).includes(query));
 });
 const filteredSizes = computed(() => {
-    const query = normalizeSearchText(sizeSearch.value);
+    const query = normalizeSearchText(customSizeName.value);
     if (!query) return sizes.value;
     return sizes.value.filter(s => normalizeSearchText(s.ten).includes(query));
 });
@@ -312,7 +485,7 @@ const comboboxProps = {
 
 const getVariantColorHex = (colorId) => {
     const color = colors.value.find(c => c.id === colorId);
-    return color?.maMau || '#ffffff';
+    return color?.maMauHex || '#ffffff';
 };
 
 const removeDraftVariantByObject = (variant) => {
@@ -556,7 +729,7 @@ const getVariantKey = (variant) => variant.id || variant.clientKey;
 const getVariantSkuLabel = (variant) => {
     const sku = variant.maChiTietSanPham;
     if (!sku) return 'Tự sinh sau khi lưu sản phẩm';
-    return sku.split('-')[0] || sku;
+    return sku;
 };
 const getNestedValue = (source, keys) => {
     for (const key of keys) {
@@ -879,7 +1052,7 @@ const buildProductPayload = ({ includeVariants = false } = {}) => {
         gioiTinhKhachHang: product.value.gioiTinhKhachHang,
         trangThai: product.value.trangThai,
         hinhAnh: product.value.hinhAnh || '',
-        moTaNgan: product.value.moTaNgan || '',
+
         moTaChiTiet: product.value.moTaChiTiet || ''
     };
 
@@ -1195,7 +1368,7 @@ const product = ref({
     idMucDichChay: null,
     gioiTinhKhachHang: 'UNISEX',
     trangThai: defaultVariantStatus,
-    moTaNgan: '',
+
     moTaChiTiet: '',
     hinhAnh: ''
 });
@@ -1215,7 +1388,7 @@ const loadProduct = async (id) => {
         idMucDichChay: data.idMucDichChay || null,
         gioiTinhKhachHang: data.gioiTinhKhachHang || 'UNISEX',
         trangThai: data.trangThai || defaultVariantStatus,
-        moTaNgan: data.moTaNgan || '',
+
         moTaChiTiet: data.moTaChiTiet || '',
         hinhAnh: data.hinhAnh || ''
     };
@@ -1596,24 +1769,16 @@ const handleSave = async () => {
                             </div>
                             <span class="text-subtitle-1 text-slate-800">Sản phẩm</span>
                         </div>
-                        <v-row>
+                        <v-row> 
                             <!-- HÀNG 1: THÔNG TIN CHÍNH -->
-                            <v-col cols="12" md="2">
-                                <div class="field-label">Mã sản phẩm</div>
-                                <v-text-field v-model="product.maSanPham"
-                                    :placeholder="isEditMode ? 'SP-XXXX' : 'Hệ thống tự sinh khi lưu'"
-                                    variant="outlined" density="comfortable" class="custom-input mono-font"
-                                    hide-details
-                                    readonly>
-                                </v-text-field>
-                            </v-col>
+                           
                             <v-col cols="12" md="4">
                                 <div class="field-label">Tên sản phẩm</div>
                                 <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Giày Nike Air..."
                                     :rules="[rules.required]" variant="outlined" density="comfortable"
                                     hide-details="auto"></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="3">
+                            <v-col cols="12" md="4">
                                 <div class="field-label">Thương hiệu</div>
                                 <v-combobox v-model="product.idThuongHieu" v-model:search="searchQueries.idThuongHieu"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayBrands"
@@ -1631,7 +1796,7 @@ const handleSave = async () => {
                                     </template>
                                 </v-combobox>
                             </v-col>
-                            <v-col cols="12" md="3">
+                            <v-col cols="12" md="4">
                                 <div class="field-label">Danh mục</div>
                                 <v-combobox v-model="product.idDanhMuc" v-model:search="searchQueries.idDanhMuc"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayCategories"
@@ -1714,7 +1879,7 @@ const handleSave = async () => {
                             </v-col>
 
                             <!-- HÀNG 3: THÔNG SỐ VÀ MÔ TẢ -->
-                            <v-col cols="12" md="3">
+                            <v-col cols="12" md="6">
                                 <div class="field-label">Loại đế</div>
                                 <v-combobox v-model="product.idDeGiay" v-model:search="searchQueries.idDeGiay"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displaySoles"
@@ -1732,7 +1897,7 @@ const handleSave = async () => {
                                     </template>
                                 </v-combobox>
                             </v-col>
-                            <v-col cols="12" md="3">
+                            <v-col cols="12" md="6">
                                 <div class="field-label">Loại cổ</div>
                                 <v-combobox v-model="product.idCoGiay" v-model:search="searchQueries.idCoGiay"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayCollars"
@@ -1749,11 +1914,6 @@ const handleSave = async () => {
                                         </v-list-item>
                                     </template>
                                 </v-combobox>
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="field-label">Mô tả ngắn</div>
-                                <v-textarea v-model="product.moTaNgan" variant="outlined" rows="1" auto-grow
-                                    placeholder="Tóm tắt đặc điểm..." hide-details class="custom-textarea"></v-textarea>
                             </v-col>
                             <v-col cols="12">
                                 <div class="field-label">Mô tả chi tiết</div>
@@ -1776,32 +1936,102 @@ const handleSave = async () => {
                             <span class="text-subtitle-1 text-slate-800">Biến thể sản phẩm</span>
                         </div>
 
-                        <v-row class="mt-2 flex-grow-1">
-                            <v-col cols="6" class="py-0 d-flex flex-column">
-                                <div class="field-label mb-2">Màu sắc</div>
-                                <div class="attribute-list-wrapper flex-grow-1">
-                                    <v-list density="compact" class="pa-0 bg-transparent">
-                                        <v-list-item v-for="c in colors" :key="c.id" class="pa-0 min-h-0">
-                                            <v-checkbox v-model="selectedColors" :label="c.ten" :value="c.id"
-                                                color="primary" hide-details density="compact"
-                                                class="attribute-checkbox"></v-checkbox>
-                                        </v-list-item>
-                                    </v-list>
+                        <div class="mt-2 flex-grow-1">
+                            <!-- MÀU SẮC -->
+                            <div class="field-label mb-3">Màu sắc</div>
+                            <div class="d-flex flex-wrap gap-4 mb-8">
+                                <div v-for="c in colors.filter(x => selectedColors.includes(x.id))" :key="c.id" class="text-center cursor-pointer" @click="toggleColor(c.id)">
+                                    <div class="color-circle mx-auto" :style="{ backgroundColor: c.maMauHex || '#e2e8f0' }" :class="{ 'selected': selectedColors.includes(c.id) }">
+                                        <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18" class="check-icon">mdi-check</v-icon>
+                                    </div>
+                                    <div class="text-caption mt-1 text-truncate" style="max-width: 48px;">{{ c.ten }}</div>
                                 </div>
-                            </v-col>
-                            <v-col cols="6" class="py-0 d-flex flex-column">
-                                <div class="field-label mb-2">Kích thước</div>
-                                <div class="attribute-list-wrapper flex-grow-1">
-                                    <v-list density="compact" class="pa-0 bg-transparent">
-                                        <v-list-item v-for="s in sizes" :key="s.id" class="pa-0 min-h-0">
-                                            <v-checkbox v-model="selectedSizes" :label="s.ten" :value="s.id"
-                                                color="primary" hide-details density="compact"
-                                                class="attribute-checkbox"></v-checkbox>
-                                        </v-list-item>
-                                    </v-list>
-                                </div>
-                            </v-col>
-                        </v-row>
+                                <v-menu v-model="showColorMenu" :close-on-content-click="false" location="bottom center" max-width="320">
+                                    <template v-slot:activator="{ props }">
+                                        <div class="text-center cursor-pointer" v-bind="props">
+                                            <div class="color-circle dashed mx-auto d-flex align-center justify-center">
+                                                <v-icon size="20" color="grey-darken-1">mdi-plus</v-icon>
+                                            </div>
+                                            <div class="text-caption mt-1 text-grey-darken-1">Thêm</div>
+                                        </div>
+                                    </template>
+                                    <v-card class="rounded-xl pa-4 shadow-lg border">
+                                        <div class="d-flex justify-space-between align-center mb-4">
+                                            <span class="text-subtitle-1 font-weight-bold">Chọn màu sắc</span>
+                                            <v-btn icon="mdi-close" variant="text" size="small" @click="showColorMenu = false"></v-btn>
+                                        </div>
+                                        <v-text-field v-model="colorSearch" prepend-inner-icon="mdi-magnify" placeholder="Tìm kiếm màu sắc..." variant="outlined" density="compact" hide-details class="mb-4 bg-slate-50"></v-text-field>
+                                        
+                                        <div class="text-caption font-weight-bold text-grey mb-3">MÀU PHỔ BIẾN</div>
+                                        <div class="d-flex flex-wrap gap-3 mb-6" style="max-height: 150px; overflow-y: auto;">
+                                            <div v-for="c in filteredColors" :key="c.id" class="text-center cursor-pointer" @click="toggleColor(c.id)">
+                                                <div class="color-circle mx-auto mb-1" :style="{ backgroundColor: c.maMauHex || '#e2e8f0' }" :class="{ 'selected': selectedColors.includes(c.id) }">
+                                                    <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18" class="check-icon">mdi-check</v-icon>
+                                                </div>
+                                                <div class="text-caption" style="font-size: 10px !important; max-width: TÙY CHỈNH MÀU SẮC40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ c.ten }}</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="text-caption font-weight-bold text-grey mb-3">THÊM NHANH MÀU SẮC</div>
+                                        <div class="d-flex gap-3 mb-4">
+                                            <div class="custom-color-preview rounded-lg position-relative overflow-hidden cursor-pointer" :style="{ backgroundColor: customColorHex }">
+                                                <input type="color" v-model="customColorHex" class="position-absolute w-100 h-100" style="opacity: 0; cursor: pointer; top: 0; left: 0; outline: none; border: none;" />
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="text-caption mb-1">TÊN MÀU</div>
+                                                <v-text-field v-model="customColorName" placeholder="Ví dụ: Xanh Mint" variant="outlined" density="compact" hide-details class="mb-3 bg-slate-50"></v-text-field>
+                                                <div class="text-caption mb-1">MÃ MÀU (HEX)</div>
+                                                <v-text-field v-model="customColorHex" variant="outlined" density="compact" hide-details class="bg-slate-50 mb-2"></v-text-field>
+                                                <div class="d-flex align-center gap-2 px-3 py-1 bg-slate-50 rounded-lg">
+                                                    <div class="color-dot" :style="{ backgroundColor: customColorHex }"></div>
+                                                    <span class="text-caption font-weight-medium">Màu đang chọn</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <v-btn block color="primary" class="rounded-lg font-weight-bold text-none" @click="handleAddCustomColor">
+                                            <v-icon size="18" class="mr-2">mdi-plus-circle-outline</v-icon> Xác nhận thêm mới màu
+                                        </v-btn>
+                                    </v-card>
+                                </v-menu>
+                            </div>
+
+                            <!-- KÍCH THƯỚC -->
+                            <div class="field-label mb-3 mt-2">Kích thước</div>
+                            <div class="d-flex flex-wrap gap-2 mb-4">
+                                <v-chip v-for="s in sizes.filter(x => selectedSizes.includes(x.id))" :key="s.id" variant="flat" color="primary" class="rounded-lg font-weight-medium px-4 cursor-pointer" @click="toggleSize(s.id)">
+                                    {{ formatSizeDisplay(s.ten) }}
+                                </v-chip>
+                                
+                                <v-menu v-model="showSizeMenu" :close-on-content-click="false" location="bottom center" max-width="320">
+                                    <template v-slot:activator="{ props }">
+                                        <v-chip v-bind="props" variant="outlined" style="border-style: dashed; border-width: 1px;" color="grey-darken-1" class="rounded-lg px-4 bg-transparent cursor-pointer hover-bg-slate-50">
+                                            <v-icon start size="16">mdi-plus</v-icon> Thêm mới
+                                        </v-chip>
+                                    </template>
+                                    <v-card class="rounded-xl pa-4 shadow-lg border">
+                                        <div class="d-flex justify-space-between align-center mb-4">
+                                            <span class="text-subtitle-1 font-weight-bold">Chọn kích thước</span>
+                                            <v-btn icon="mdi-close" variant="text" size="small" @click="showSizeMenu = false"></v-btn>
+                                        </div>
+                                        <div class="d-flex gap-2 mb-4">
+                                            <v-text-field v-model="customSizeName" prepend-inner-icon="mdi-magnify" placeholder="Nhập kích thước" variant="outlined" density="compact" hide-details class="bg-slate-50"></v-text-field>
+                                            <v-btn color="primary" class="rounded-lg text-none font-weight-medium" height="40" @click="handleAddCustomSize">
+                                                <v-icon start size="18">mdi-plus</v-icon> Thêm
+                                            </v-btn>
+                                        </div>
+                                        <div class="text-caption text-grey mb-3">Gợi ý kích thước</div>
+                                        <div class="d-flex flex-wrap gap-2 mb-4" style="max-height: 150px; overflow-y: auto;">
+                                            <v-chip v-for="s in filteredSizes" :key="s.id" :variant="selectedSizes.includes(s.id) ? 'flat' : 'tonal'" :color="selectedSizes.includes(s.id) ? 'primary' : 'grey-darken-1'" class="rounded-lg px-4 cursor-pointer font-weight-medium" @click="toggleSize(s.id)" :class="{ 'bg-slate-50': !selectedSizes.includes(s.id) }">
+                                                {{ formatSizeDisplay(s.ten) }}
+                                            </v-chip>
+                                        </div>
+                                        <v-btn block color="primary" class="rounded-lg font-weight-bold text-none mt-2" @click="showSizeMenu = false">
+                                            Thêm vào danh sách
+                                        </v-btn>
+                                    </v-card>
+                                </v-menu>
+                            </div>
+                        </div>
 
                         <v-spacer></v-spacer>
 
@@ -2692,6 +2922,45 @@ const handleSave = async () => {
         width: calc(50% - 4px);
         min-width: 140px;
     }
+}
+
+.color-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+.color-circle:hover {
+    transform: scale(1.1);
+}
+.color-circle.dashed {
+    background: transparent;
+    border: 2px dashed #94a3b8;
+    box-shadow: none;
+}
+.color-circle .check-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+.custom-color-preview {
+    width: 64px;
+    height: 64px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+.color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+.hover-bg-slate-50:hover {
+    background-color: #f8fafc !important;
 }
 </style>
 

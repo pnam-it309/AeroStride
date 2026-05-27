@@ -35,7 +35,7 @@ public class AdminSanPhamMapper {
                 .idDeGiay(sanPham.getDeGiay() != null ? sanPham.getDeGiay().getId() : null)
                 .tenDeGiay(sanPham.getDeGiay() != null ? sanPham.getDeGiay().getTen() : null)
                 .gioiTinhKhachHang(sanPham.getGioiTinhKhachHang())
-                .moTaNgan(sanPham.getMoTaNgan())
+
                 .hinhAnh(sanPham.getHinhAnh())
                 .trangThai(sanPham.getTrangThai())
                 .ngayTao(sanPham.getNgayTao())
@@ -67,7 +67,7 @@ public class AdminSanPhamMapper {
                 .idDeGiay(sanPham.getDeGiay() != null ? sanPham.getDeGiay().getId() : null)
                 .tenDeGiay(sanPham.getDeGiay() != null ? sanPham.getDeGiay().getTen() : null)
                 .gioiTinhKhachHang(sanPham.getGioiTinhKhachHang())
-                .moTaNgan(sanPham.getMoTaNgan())
+
                 .moTaChiTiet(sanPham.getMoTaChiTiet())
                 .hinhAnh(sanPham.getHinhAnh())
                 .trangThai(sanPham.getTrangThai())

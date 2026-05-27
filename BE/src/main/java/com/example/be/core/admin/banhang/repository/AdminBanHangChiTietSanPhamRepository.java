@@ -18,11 +18,18 @@ public interface AdminBanHangChiTietSanPhamRepository extends ChiTietSanPhamRepo
 
     @Query("""
         SELECT ct FROM ChiTietSanPham ct
+        LEFT JOIN FETCH ct.sanPham sp
+        LEFT JOIN FETCH sp.danhMuc
+        LEFT JOIN FETCH sp.thuongHieu
+        LEFT JOIN FETCH sp.chatLieu
+        LEFT JOIN FETCH sp.deGiay
+        LEFT JOIN FETCH ct.mauSac
+        LEFT JOIN FETCH ct.kichThuoc
         WHERE (ct.xoaMem IS NULL OR ct.xoaMem = false)
         AND (
             ct.maChiTietSanPham LIKE %:keyword%
-            OR ct.sanPham.ten LIKE %:keyword%
-            OR ct.sanPham.ma LIKE %:keyword%
+            OR sp.ten LIKE %:keyword%
+            OR sp.ma LIKE %:keyword%
         )
         """)
     Page<ChiTietSanPham> searchByKeywordLite(@Param("keyword") String keyword, Pageable pageable);

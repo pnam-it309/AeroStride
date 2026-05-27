@@ -1,12 +1,13 @@
 <script setup>
 import { computed } from 'vue';
-import { CashIcon, CreditCardIcon, Receipt2Icon, TicketIcon } from 'vue-tabler-icons';
+import { CashIcon, CreditCardIcon, Receipt2Icon } from 'vue-tabler-icons';
 
 const props = defineProps(['order', 'vouchers', 'checkoutData', 'loading']);
 const emit = defineEmits(['apply-voucher', 'checkout']);
 
 const discount = computed(() => (props.order?.tongTien || 0) - (props.order?.tongTienSauGiam || 0));
 const changeAmount = computed(() => Math.max(0, (props.checkoutData.receivedAmount || 0) - (props.order?.tongTienSauGiam || 0)));
+const itemCount = computed(() => (props.order?.listsHoaDonChiTiet || []).reduce((sum, item) => sum + (Number(item.soLuong) || 0), 0));
 
 const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
 
@@ -16,8 +17,16 @@ const handleCheckout = () => {
 </script>
 
 <template>
-    <div class="checkout-panel h-100 d-flex flex-column">
-        <div class="pricing-summary pa-5 rounded-xl border-dashed border-2 bg-grey-lighten-5 mb-6">
+    <div class="checkout-panel d-flex flex-column">
+        <div class="panel-section pricing-summary pa-4 mb-4">
+            <div class="d-flex justify-space-between align-center mb-4">
+                <div>
+                    <div class="text-subtitle-1 font-weight-bold">Tổng kết đơn</div>
+                    <div class="text-caption text-grey-darken-1">{{ itemCount }} sản phẩm</div>
+                </div>
+                <v-chip color="primary" variant="tonal" size="small">{{ order?.maHoaDon }}</v-chip>
+            </div>
+
             <div class="d-flex justify-space-between mb-3 text-subtitle-2 text-grey-darken-1">
                 <span>Tạm tính:</span>
                 <span class="font-weight-bold">{{ formatCurrency(order?.tongTien) }}</span>
@@ -45,13 +54,13 @@ const handleCheckout = () => {
 
             <v-divider class="my-4 border-dashed"></v-divider>
 
-            <div class="d-flex justify-space-between align-center mb-2">
-                <span class="text-h6 font-weight-bold">Tổng thanh toán:</span>
-                <span class="text-h4 font-weight-bold text-#2E4E8E">{{ formatCurrency(order?.tongTienSauGiam) }}</span>
+            <div class="total-box">
+                <span class="text-caption text-grey-darken-1">Tổng thanh toán</span>
+                <span class="text-h5 font-weight-bold" style="color: #2E4E8E">{{ formatCurrency(order?.tongTienSauGiam) }}</span>
             </div>
         </div>
 
-        <div class="payment-selection mb-6">
+        <div class="panel-section payment-selection pa-4 mb-4">
             <p class="text-subtitle-2 font-weight-bold mb-3 d-flex align-center">
                 <Receipt2Icon size="18" class="mr-1" /> Hình thức thanh toán
             </p>
@@ -62,16 +71,16 @@ const handleCheckout = () => {
                         <span class="text-caption font-weight-bold">Tiền mặt</span>
                     </div>
                 </v-btn>
-                <v-btn value="TRANSFER" variant="outlined" class="flex-grow-1 h-14 rounded-lg border-2">
+                <v-btn value="VNPAY" variant="outlined" class="flex-grow-1 h-14 rounded-lg border-2">
                     <div class="d-flex flex-column align-center">
                         <CreditCardIcon size="20" class="mb-1" />
-                        <span class="text-caption font-weight-bold">Chuyển khoản</span>
+                        <span class="text-caption font-weight-bold">Chuyển khoản / VNPay</span>
                     </div>
                 </v-btn>
             </v-btn-toggle>
         </div>
 
-        <div v-if="checkoutData.paymentMethod === 'CASH'" class="cash-input mb-6">
+        <div v-if="checkoutData.paymentMethod === 'CASH'" class="cash-input mb-4">
             <v-text-field
                 v-model.number="checkoutData.receivedAmount"
                 label="Tiền khách đưa"
@@ -87,13 +96,13 @@ const handleCheckout = () => {
             </div>
         </div>
 
-        <v-textarea v-model="checkoutData.note" label="Ghi chú hóa đơn" variant="outlined" rows="2" class="mb-6" hide-details></v-textarea>
+        <v-textarea v-model="checkoutData.note" label="Ghi chú hóa đơn" variant="outlined" rows="2" class="mb-4" hide-details></v-textarea>
 
         <v-btn
             block
             color="#2E4E8E"
-            height="20"
-            class="text-h6 font-weight-bold rounded-xl btn-checkout shadow-lg"
+            height="52"
+            class="text-h6 font-weight-bold rounded-xl btn-checkout shadow-lg text-white"
             :loading="loading"
             :disabled="!order?.listsHoaDonChiTiet?.length"
             @click="handleCheckout"
@@ -111,10 +120,23 @@ const handleCheckout = () => {
     background: transparent !important;
 }
 .btn-checkout {
-    background: linear-gradient(45deg, rgb(var(--v-theme-#2E4E8E)), #346ac0) !important;
+    background: linear-gradient(45deg, #2E4E8E, #346ac0) !important;
 }
 .pricing-summary {
     border-color: #cbd5e1 !important;
+}
+.panel-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+}
+.total-box {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #eef4ff;
 }
 </style>
 

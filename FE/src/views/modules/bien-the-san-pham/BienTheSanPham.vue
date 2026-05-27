@@ -417,6 +417,11 @@ const openEditVariantModal = (item) => {
 
 const handleQrScan = (code) => {
   if (!code) return
+  
+  if (selectedProductId.value !== 'ALL') {
+    selectedProductId.value = 'ALL'
+  }
+  
   filters.keyword = code
   pagination.page = 1
   syncVariantSelection()
@@ -664,6 +669,10 @@ onMounted(async () => {
   await Promise.all([loadMaxPrice(), fetchFormOptions(), fetchProductOptions()])
   const routeProductId = route.query.productId?.toString()
   selectedProductId.value = routeProductId || 'ALL'
+  
+  if (route.query.keyword) {
+    filters.keyword = route.query.keyword.toString()
+  }
 })
 </script>
 
@@ -813,7 +822,7 @@ onMounted(async () => {
             </td>
             <td class="data-cell text-center">
               <div class="text-truncate" :title="item.maChiTietSanPham">
-                <span class="text-truncate">{{ item.maChiTietSanPham ? item.maChiTietSanPham.split('-')[0] : '--' }}</span>
+                <span class="text-truncate">{{ item.maChiTietSanPham || '--' }}</span>
               </div>
             </td>
             <td class="data-cell text-center">

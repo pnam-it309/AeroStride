@@ -79,7 +79,7 @@ const confirmToggleStatus = (item) => {
         color: 'warning',
         action: async () => {
             try {
-                const newS = isActiveStatus(item.trangThai) ? 'KHONG_HOAT_DONG' : 'DANG_HOAT_DONG';
+                const newS = isActiveStatus(item.trangThai) ? 'NGUNG_HOAT_DONG' : 'DANG_HOAT_DONG';
 
                 await dichVuPhieuGiamGia.thayDoiTrangThaiPhieuGiamGia(item.id, newS);
 
@@ -182,13 +182,13 @@ const getVoucherTimelineStatus = (item) => {
     // 3. Đang diễn ra
     if (!manualActive) {
         return {
-            label: 'Đã kết thúc',
-            color: 'error',
+            label: 'Ngừng hoạt động',
+            color: 'warning',
             switchOn: false,
-            switchDisabled: true,
-            chipClass: 'status-chip-expired',
-            isEnded: true,
-            switchTooltip: 'Không thể đổi trạng thái lúc này (Đã kết thúc)'
+            switchDisabled: false,
+            chipClass: 'status-chip-inactive',
+            isEnded: false,
+            switchTooltip: 'Kích hoạt lại phiếu giảm giá'
         };
     }
 

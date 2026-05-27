@@ -35,7 +35,7 @@ public class ProductResponse {
     private String idDeGiay;
     private String tenDeGiay;
     private GioiTinhKhachHang gioiTinhKhachHang;
-    private String moTaNgan;
+
     private String hinhAnh;
     private TrangThai trangThai;
     private Long ngayTao;

@@ -509,8 +509,9 @@ const formatNumber = (value) => {
 };
 
 const handleQrScan = async (decodedText) => {
-    filters.search = decodedText;
-    await handleSearch();
+    if (!decodedText) return;
+    addNotification({ title: 'Đang chuyển hướng', subtitle: `Đã quét được mã: ${decodedText}`, color: 'info' });
+    router.push({ name: 'BienTheSanPham', query: { keyword: decodedText } });
 };
 
 watch(filteredProducts, () => {

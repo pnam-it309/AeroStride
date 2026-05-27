@@ -38,6 +38,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     private final AdminBanHangPhuongThucThanhToanRepository phuongThucThanhToanRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public List<AdminBanHangHoaDonResponse> getHoaDonCho() {
         return hoaDonRepository.findAllByTrangThaiAndLoaiDon(OrderStatus.CHO_XAC_NHAN, "TAI_QUAY")
                 .stream().map(this::mapToHoaDonResponse).collect(Collectors.toList());
@@ -118,6 +119,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     }
 
     @Override
+    @Transactional
     public void removeHoaDonChiTiet(String idHoaDon, String idHoaDonChiTiet) {
         if (!hoaDonChiTietRepository.existsById(idHoaDonChiTiet)) {
             throw new ResourceNotFoundException(MessageConstants.PRODUCT_DETAIL_NOT_FOUND);
@@ -156,6 +158,12 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Transactional
     public void checkout(String idHoaDon, AdminBanHangCheckoutRequest request) {
         HoaDon hd = getHoaDonOrThrow(idHoaDon);
+        
+        // Kiểm tra hóa đơn chưa được thanh toán
+        if (hd.getTrangThai() == OrderStatus.HOAN_THANH) {
+            throw new BusinessException("Hóa đơn này đã được thanh toán.");
+        }
+        
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
         if (details.isEmpty()) {
             throw new BusinessException(MessageConstants.HOA_DON_EMPTY);
@@ -163,8 +171,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
         for (HoaDonChiTiet d : details) {
             ChiTietSanPham ct = d.getChiTietSanPham();
+            if (ct == null) continue;
             if (ct.getSoLuong() < d.getSoLuong()) {
-                throw new BusinessException(String.format(MessageConstants.PRODUCT_OUT_OF_STOCK_FORMAT, ct.getSanPham().getTen()));
+                String tenSP = (ct.getSanPham() != null) ? ct.getSanPham().getTen() : ct.getMaChiTietSanPham();
+                throw new BusinessException(String.format(MessageConstants.PRODUCT_OUT_OF_STOCK_FORMAT, tenSP));
             }
             ct.setSoLuong(ct.getSoLuong() - d.getSoLuong());
             chiTietSanPhamRepository.save(ct);
@@ -187,7 +197,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         }
     }
 
+
     @Override
+    @Transactional(readOnly = true)
     public List<BanHangSanPhamResponse> searchSanPham(String keyword) {
         // Limit results to avoid loading the whole DB when keyword is empty
         return chiTietSanPhamRepository
@@ -207,7 +219,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                         .tenKichThuoc(ct.getKichThuoc() != null ? ct.getKichThuoc().getTen() : null)
                         .soLuongTon(ct.getSoLuong())
                         .giaBan(ct.getGiaBan())
-                        .hinhAnh(ct.getSanPham() != null ? ct.getSanPham().getHinhAnh() : null)
+                        .hinhAnh(getHinhAnhVariant(ct))
                         .build())
                 .collect(Collectors.toList());
     }
@@ -274,7 +286,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .maGiaoDichNgoai(maGiaoDichNgoai)
                 .loaiGiaoDich("THANH_TOAN")
                 .build();
-        gd.setId(HelperUtils.generateUUID());
+        // Không set id thủ công: để id=null → Spring Data JPA gọi persist() → @PrePersist set id qua @GeneratedValue
+        // Nếu set id thủ công → isNew()=false → Spring Data JPA gọi merge() → StaleObjectStateException
         gd.setTrangThai(TrangThai.DANG_HOAT_DONG);
         gd.setNgayTao(System.currentTimeMillis());
         giaoDichThanhToanRepository.save(gd);
@@ -282,16 +295,22 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     private AdminBanHangHoaDonResponse mapToHoaDonResponse(HoaDon hd) {
         List<AdminBanHangHoaDonChiTietResponse> detailDTOs = hoaDonChiTietRepository.findAllByHoaDon(hd).stream()
-                .map(d -> AdminBanHangHoaDonChiTietResponse.builder()
-                    .id(d.getId())
-                    .idChiTietSanPham(d.getChiTietSanPham().getId())
-                    .tenSanPham(d.getChiTietSanPham().getSanPham().getTen())
-                    .tenMauSac(d.getChiTietSanPham().getMauSac().getTen())
-                    .tenKichThuoc(d.getChiTietSanPham().getKichThuoc().getTen())
-                    .soLuong(d.getSoLuong())
-                    .donGia(d.getDonGia())
-                    .thanhTien(d.getDonGia().multiply(BigDecimal.valueOf(d.getSoLuong())))
-                    .build()).collect(Collectors.toList());
+                .map(d -> {
+                    ChiTietSanPham ct = d.getChiTietSanPham();
+                    return AdminBanHangHoaDonChiTietResponse.builder()
+                        .id(d.getId())
+                        .idChiTietSanPham(ct.getId())
+                        .maChiTietSanPham(ct.getMaChiTietSanPham())
+                        .tenSanPham(ct.getSanPham() != null ? ct.getSanPham().getTen() : "")
+                        .tenMauSac(ct.getMauSac() != null ? ct.getMauSac().getTen() : "")
+                        .tenKichThuoc(ct.getKichThuoc() != null ? ct.getKichThuoc().getTen() : "")
+                        .soLuong(d.getSoLuong())
+                        .donGia(d.getDonGia())
+                        .thanhTien(d.getDonGia().multiply(BigDecimal.valueOf(d.getSoLuong())))
+                        .soLuongTon(ct.getSoLuong())
+                        .hinhAnh(getHinhAnhVariant(ct))
+                        .build();
+                }).collect(Collectors.toList());
 
         return AdminBanHangHoaDonResponse.builder()
                 .id(hd.getId())
@@ -304,5 +323,21 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .tongTienSauGiam(hd.getTongTienSauGiam())
                 .listsHoaDonChiTiet(detailDTOs)
                 .build();
+    }
+
+    private String getHinhAnhVariant(ChiTietSanPham ct) {
+        if (ct.getAnhChiTietSanPhams() != null && !ct.getAnhChiTietSanPhams().isEmpty()) {
+            for (AnhChiTietSanPham img : ct.getAnhChiTietSanPhams()) {
+                if (Boolean.TRUE.equals(img.getHinhAnhDaiDien()) && !Boolean.TRUE.equals(img.getXoaMem())) {
+                    return img.getDuongDanAnh();
+                }
+            }
+            for (AnhChiTietSanPham img : ct.getAnhChiTietSanPhams()) {
+                if (!Boolean.TRUE.equals(img.getXoaMem())) {
+                    return img.getDuongDanAnh();
+                }
+            }
+        }
+        return ct.getSanPham() != null ? ct.getSanPham().getHinhAnh() : null;
     }
 }
