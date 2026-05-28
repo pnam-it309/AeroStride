@@ -178,9 +178,9 @@ class AdminSanPhamServiceTest extends BaseServiceTest {
         adminSanPhamService.deleteProduct(productId);
 
         // Assert
-        assertThat(existingProduct.isXoaMem()).isTrue();
+        assertThat(existingProduct.getXoaMem()).isTrue();
         assertThat(existingProduct.getTrangThai()).isEqualTo(TrangThai.DA_XOA);
-        assertThat(variant.isXoaMem()).isTrue();
+        assertThat(variant.getXoaMem()).isTrue();
         assertThat(variant.getTrangThai()).isEqualTo(TrangThai.DA_XOA);
         
         verify(adminSanPhamRepository).save(existingProduct);
