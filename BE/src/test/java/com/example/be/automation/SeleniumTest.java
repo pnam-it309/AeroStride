@@ -13,8 +13,13 @@ public class SeleniumTest {
 
     @BeforeAll
     static void beforeAll() {
-        driver = new ChromeDriver();
-        driver.manage().window().maximize();
+        org.openqa.selenium.chrome.ChromeOptions options = new org.openqa.selenium.chrome.ChromeOptions();
+        options.addArguments("--headless=new");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--window-size=1920,1080");
+        driver = new ChromeDriver(options);
     }
 
 //    public void Login(String username, String password) {
