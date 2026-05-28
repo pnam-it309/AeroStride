@@ -54,6 +54,37 @@ public final class AccountUtils {
     }
 
     /**
+     * Tên tài khoản là tên + 2 chữ cái đầu của họ và tên đệm + hậu tố random 3 chữ cái 3 chữ số
+     */
+    public static String taoTenTaiKhoanNhanVienTuHoTen(String hoTen) {
+        if (hoTen == null || hoTen.isBlank()) return "nhanvien" + generateRandomSuffix(3, 3);
+        String[] parts = hoTen.trim().split("\\s+");
+        String ten = xoaDau(parts[parts.length - 1]).toLowerCase();
+        
+        StringBuilder vietTat = new StringBuilder();
+        int count = 0;
+        for (int i = 0; i < parts.length - 1 && count < 2; i++) {
+            vietTat.append(xoaDau(String.valueOf(parts[i].charAt(0))).toLowerCase());
+            count++;
+        }
+        
+        return ten + vietTat + generateRandomSuffix(3, 3);
+    }
+
+    private static String generateRandomSuffix(int lettersCount, int numbersCount) {
+        String letters = "abcdefghijklmnopqrstuvwxyz";
+        String numbers = "0123456789";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < lettersCount; i++) {
+            sb.append(letters.charAt(SECURE_RANDOM.nextInt(letters.length())));
+        }
+        for (int i = 0; i < numbersCount; i++) {
+            sb.append(numbers.charAt(SECURE_RANDOM.nextInt(numbers.length())));
+        }
+        return sb.toString();
+    }
+
+    /**
      * Generates a unique USER_ prefixed username using UUID.
      */
     public static String taoTenTaiKhoanUuid() {

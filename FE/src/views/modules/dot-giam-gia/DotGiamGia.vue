@@ -17,6 +17,7 @@ import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { useAdminTable } from '@/composables/useAdminTable';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import { useRefreshHandler } from '@/composables/useRefreshHandler';
 import { useNotifications } from '@/services/notificationService';
 
 const router = useRouter();

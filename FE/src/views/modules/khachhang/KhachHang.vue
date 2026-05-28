@@ -1137,30 +1137,4 @@ const formatAddressFull = (addr) => {
     </v-container>
 </template>
 <style scoped>
-/* Custom borderless inputs with soft faded background */
-:deep(.v-field) {
-    background-color: #f1f5f9 !important;
-    /* soft light slate-100 */
-    border-radius: 12px !important;
-    /* smooth rounded corners */
-    box-shadow: none !important;
-    border: none !important;
-    transition: all 0.2s ease-in-out !important;
-}
-
-:deep(.v-field__outline) {
-    display: none !important;
-    /* hide outline completely */
-}
-
-/* Hover state */
-:deep(.v-field:hover) {
-    background-color: #e2e8f0 !important;
-    /* slightly darker on hover */
-}
-
-/* Focused state */
-:deep(.v-field--focused) {
-    background-color: #e2e8f0 !important;
-}
 </style>

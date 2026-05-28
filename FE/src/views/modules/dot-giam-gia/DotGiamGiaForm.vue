@@ -505,7 +505,7 @@ onMounted(init);
             <v-col cols="12" md="5" class="d-flex flex-column">
                 <v-card class="premium-card elevation-0 border border-slate-200 mb-6 flex-grow-1"
                     style="min-height: 580px">
-                    <v-card-text class="pa-8">
+                    <v-card-text class="pa-8 d-flex flex-column h-100">
                         <div class="section-header d-flex align-center mb-6">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
                                 <v-icon color="primary" size="18">mdi-ticket-percent</v-icon>
@@ -513,38 +513,40 @@ onMounted(init);
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin đợt giảm giá</span>
                         </div>
 
-                        <div class="mb-5">
-                            <div class="field-label">Mã đợt giảm giá</div>
-                            <v-text-field v-model="form.ma" readonly placeholder="Mã tự sinh..." variant="outlined"
-                                density="comfortable" class="bg-slate-50 mono-font" hide-details></v-text-field>
-                        </div>
+                        <div class="form-fields-container flex-grow-1 d-flex flex-column justify-center">
+                            <div class="mb-5">
+                                <div class="field-label">Mã đợt giảm giá</div>
+                                <v-text-field v-model="form.ma" readonly placeholder="Mã tự sinh..." variant="outlined"
+                                    density="comfortable" class="bg-slate-50 mono-font" hide-details></v-text-field>
+                            </div>
 
-                        <div class="mb-5">
-                            <div class="field-label">Tên đợt giảm giá</div>
-                            <v-text-field v-model="form.ten" :readonly="isDetailView"
-                                placeholder="Nhập tên đợt giảm giá" variant="outlined" density="comfortable"
-                                hide-details></v-text-field>
-                        </div>
+                            <div class="mb-5">
+                                <div class="field-label">Tên đợt giảm giá</div>
+                                <v-text-field v-model="form.ten" :readonly="isDetailView"
+                                    placeholder="Nhập tên đợt giảm giá" variant="outlined" density="comfortable"
+                                    hide-details></v-text-field>
+                            </div>
 
-                        <div class="mb-5">
-                            <div class="field-label">Mức giảm giá (%)</div>
-                            <v-text-field v-model.number="form.soTienGiam" :readonly="isDetailView" type="number"
-                                suffix="%" placeholder="0" variant="outlined" density="comfortable"
-                                hide-details></v-text-field>
-                        </div>
+                            <div class="mb-5">
+                                <div class="field-label">Mức giảm giá (%)</div>
+                                <v-text-field v-model.number="form.soTienGiam" :readonly="isDetailView" type="number"
+                                    suffix="%" placeholder="0" variant="outlined" density="comfortable"
+                                    hide-details></v-text-field>
+                            </div>
 
-                        <div class="mb-5">
-                            <div class="field-label">Ngày bắt đầu</div>
-                            <v-text-field v-model="form.ngayBatDau" :readonly="isDetailView" type="datetime-local"
-                                append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker" variant="outlined"
-                                density="comfortable" hide-details class="date-field"></v-text-field>
-                        </div>
+                            <div class="mb-5">
+                                <div class="field-label">Ngày bắt đầu</div>
+                                <v-text-field v-model="form.ngayBatDau" :readonly="isDetailView" type="datetime-local"
+                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker" variant="outlined"
+                                    density="comfortable" hide-details class="date-field"></v-text-field>
+                            </div>
 
-                        <div class="mb-6">
-                            <div class="field-label">Ngày kết thúc</div>
-                            <v-text-field v-model="form.ngayKetThuc" :readonly="isDetailView" type="datetime-local"
-                                append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker" variant="outlined"
-                                density="comfortable" hide-details class="date-field"></v-text-field>
+                            <div class="mb-6">
+                                <div class="field-label">Ngày kết thúc</div>
+                                <v-text-field v-model="form.ngayKetThuc" :readonly="isDetailView" type="datetime-local"
+                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker" variant="outlined"
+                                    density="comfortable" hide-details class="date-field"></v-text-field>
+                            </div>
                         </div>
                     </v-card-text>
                 </v-card>
@@ -567,14 +569,9 @@ onMounted(init);
                         ">
                             <v-col cols="12" sm="4">
                                 <div class="field-label-small mb-1">Tìm kiếm sản phẩm</div>
-                                <<<<<<< HEAD <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
-                                    placeholder="Tìm theo mã, tên" variant="outlined" density="compact" hide-details
-                                    class="compact-input"></v-text-field>
-                                    =======
-                                    <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
-                                        placeholder="Tìm theo tên hoặc mã SKU..." variant="outlined" density="compact"
-                                        hide-details class="compact-input"></v-text-field>
-                                    >>>>>>> origin/feat/fix_kh
+                                <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
+                                    placeholder="Tìm theo tên hoặc mã SKU..." variant="outlined" density="compact"
+                                    hide-details class="compact-input"></v-text-field>
                             </v-col>
                         </AdminFilter>
 
@@ -596,18 +593,22 @@ onMounted(init);
                                     <template v-for="(item, index) in paginatedProductsToSelect" :key="item.ma">
                                         <tr class="data-row">
                                             <td class="data-cell text-center">
-                                                <v-btn icon variant="text" size="small" density="compact"
-                                                    @click="toggleExpand(item.id)">
-                                                    <v-icon>{{ expandedProductIds.includes(item.id) ? 'mdi-minus' :
-                                                        'mdi-plus' }}</v-icon>
-                                                </v-btn>
+                                                <div class="d-flex align-center justify-center" style="height: 32px">
+                                                    <v-btn icon variant="text" size="small" density="compact"
+                                                        @click="toggleExpand(item.id)">
+                                                        <v-icon>{{ expandedProductIds.includes(item.id) ? 'mdi-minus' :
+                                                            'mdi-plus' }}</v-icon>
+                                                    </v-btn>
+                                                </div>
                                             </td>
                                             <td class="data-cell text-center">
-                                                <v-checkbox-btn :model-value="isProductSelected(item.id)"
-                                                    :indeterminate="isProductIndeterminate(item.id)"
-                                                    @update:model-value="toggleProductSelection(item.id)"
-                                                    :readonly="isDetailView" color="primary" hide-details
-                                                    density="compact" class="d-inline-flex"></v-checkbox-btn>
+                                                <div class="d-flex align-center justify-center" style="height: 32px">
+                                                    <v-checkbox-btn :model-value="isProductSelected(item.id)"
+                                                        :indeterminate="isProductIndeterminate(item.id)"
+                                                        @update:model-value="toggleProductSelection(item.id)"
+                                                        :readonly="isDetailView" color="primary" hide-details
+                                                        density="compact" class="d-inline-flex m-0 p-0"></v-checkbox-btn>
+                                                </div>
                                             </td>
                                             <td
                                                 class="data-cell text-center text-primary font-weight-bold text-slate-600">
@@ -622,10 +623,12 @@ onMounted(init);
                                             :key="variant.id" class="variant-row bg-slate-50/50">
                                             <td class="data-cell text-right pr-3"></td>
                                             <td class="data-cell text-center">
-                                                <v-checkbox-btn :model-value="selectedVariantsIds.includes(variant.id)"
-                                                    @update:model-value="toggleVariantSelection(variant.id)"
-                                                    :readonly="isDetailView" color="primary" hide-details
-                                                    density="compact" class="d-inline-flex"></v-checkbox-btn>
+                                                <div class="d-flex align-center justify-center" style="height: 32px">
+                                                    <v-checkbox-btn :model-value="selectedVariantsIds.includes(variant.id)"
+                                                        @update:model-value="toggleVariantSelection(variant.id)"
+                                                        :readonly="isDetailView" color="primary" hide-details
+                                                        density="compact" class="d-inline-flex m-0 p-0"></v-checkbox-btn>
+                                                </div>
                                             </td>
                                             <td class="data-cell text-center text-slate-500 font-weight-medium">
                                                 <span class="text-slate-300 font-weight-bold mr-1">↳</span> {{
@@ -678,14 +681,9 @@ onMounted(init);
                         <AdminFilter title="Bộ lọc sản phẩm" @refresh="resetDetailFilters">
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Tìm kiếm sản phẩm</div>
-                                <<<<<<< HEAD <v-text-field v-model="detailFilters.timKiem"
-                                    prepend-inner-icon="mdi-magnify" placeholder="Tìm theo mã, tên" variant="outlined"
-                                    density="compact" hide-details class="compact-input"></v-text-field>
-                                    =======
-                                    <v-text-field v-model="detailFilters.timKiem" prepend-inner-icon="mdi-magnify"
-                                        placeholder="Tên hoặc mã..." variant="outlined" density="compact" hide-details
-                                        class="compact-input"></v-text-field>
-                                    >>>>>>> origin/feat/fix_kh
+                                <v-text-field v-model="detailFilters.timKiem" prepend-inner-icon="mdi-magnify"
+                                    placeholder="Tìm theo mã, tên" variant="outlined" density="compact" hide-details
+                                    class="compact-input"></v-text-field>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Thương hiệu</div>
@@ -811,18 +809,8 @@ onMounted(init);
                                             </div>
                                         </td>
                                     </tr>
-                                    <<<<<<< HEAD <TableEmptyState v-if="filteredSelectedDetails.length === 0"
-                                        :colspan="10" text="Không tìm thấy sản phẩm nào phù hợp." />
-                                    =======
-                                    <tr v-if="filteredSelectedDetails.length === 0">
-                                        <td colspan="10" class="data-cell py-0">
-                                            <div class="empty-state-wrapper py-16">
-                                                <div class="text-body-2 text-slate-400">Không tìm thấy sản phẩm nào phù
-                                                    hợp.</div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    >>>>>>> origin/feat/fix_kh
+                                    <TableEmptyState v-if="filteredSelectedDetails.length === 0" :colspan="10"
+                                        text="Không tìm thấy sản phẩm nào phù hợp." />
                                 </tbody>
                             </table>
                         </div>
@@ -1148,5 +1136,10 @@ onMounted(init);
 :deep(.discount-badge) {
     font-size: 10px !important;
     font-weight: 700 !important;
+}
+
+/* Xoá margin mặc định của v-checkbox-btn */
+:deep(.v-selection-control) {
+    min-height: unset !important;
 }
 </style>

@@ -27,3 +27,14 @@ export const formatDate = (date, formatStr = 'dd/MM/yyyy') => {
 export const formatDateTime = (date) => {
     return formatDate(date, 'HH:mm dd/MM/yyyy');
 };
+
+/**
+ * Safely parse a value to number with fallback
+ * @param {any} value - Value to parse
+ * @param {number} fallback - Fallback if not a finite number
+ * @returns {number}
+ */
+export const toNumber = (value, fallback = 0) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+};

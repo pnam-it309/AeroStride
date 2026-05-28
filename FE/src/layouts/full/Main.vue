@@ -191,7 +191,7 @@ onMounted(() => {
 :deep(.v-list-group__items) {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
     overflow: hidden;
-    background: rgba(0, 0, 0, 0.02);
+    background: transparent;
     border-radius: 12px;
     margin: 4px 8px !important;
 }

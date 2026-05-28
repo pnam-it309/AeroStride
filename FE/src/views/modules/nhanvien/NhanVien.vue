@@ -206,16 +206,11 @@ onMounted(() => {
                             {{ item.tenPhanQuyen || 'Nhân viên' }}
                         </div>
                     </td>
-                    <td class="data-cell">
-                        <template v-if="tab === 0">
-                            <v-chip variant="flat" class="justify-center"
-                                :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
-                                {{ getStatusLabel(item.trangThai) }}
-                            </v-chip>
-                        </template>
-                        <template v-else>
-                            <span class="text-caption text-primary">{{ formatDateTime(item.resetRequestedAt) }}</span>
-                        </template>
+                    <td class="data-cell text-center">
+                        <v-chip variant="flat" class="justify-center"
+                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
+                            {{ getStatusLabel(item.trangThai) }}
+                        </v-chip>
                     </td>
 
                     <td class="data-cell action-cell">

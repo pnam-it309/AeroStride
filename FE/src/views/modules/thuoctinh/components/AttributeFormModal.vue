@@ -66,9 +66,10 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                             <div class="form-group mb-4">
                                 <label class="popover-label">Tên {{ title }}</label>
                                 <v-text-field :model-value="form.ten"
-                                    @update:model-value="updateFormField('ten', $event)" placeholder="Nhập tên..."
+                                    @update:model-value="updateFormField('ten', selectedTab === 'sizes' ? String($event || '').replace(/[^0-9]/g, '') : $event)"
+                                    placeholder="Nhập tên..."
                                     variant="outlined" density="compact" hide-details autofocus
-                                    class="modern-input"></v-text-field>
+                                    class="modern-input" :type="selectedTab === 'sizes' ? 'number' : 'text'" min="0"></v-text-field>
                             </div>
 
                             <!-- Color Specific -->
@@ -92,8 +93,8 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                             <div v-if="selectedTab === 'sizes'" class="form-group mb-4">
                                 <label class="popover-label">Giá trị (Số)</label>
                                 <v-text-field :model-value="form.giaTriKichThuoc"
-                                    @update:model-value="updateFormField('giaTriKichThuoc', $event)" type="number"
-                                    placeholder="Ví dụ: 42" variant="outlined" density="compact" hide-details
+                                    @update:model-value="updateFormField('giaTriKichThuoc', String($event || '').replace(/[^0-9]/g, ''))" type="number"
+                                    placeholder="Ví dụ: 42" variant="outlined" density="compact" hide-details min="0"
                                     class="modern-input"></v-text-field>
                             </div>
 

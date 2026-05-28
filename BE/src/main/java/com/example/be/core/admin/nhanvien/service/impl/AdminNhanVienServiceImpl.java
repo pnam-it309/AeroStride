@@ -97,8 +97,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         // Tự sinh tenTaiKhoan unique
         String tenTaiKhoan;
         do {
-            tenTaiKhoan = AccountUtils.taoTenTaiKhoanTuHoTen(request.getTen())
-                    + SECURE_RANDOM_SUFFIX();
+            tenTaiKhoan = AccountUtils.taoTenTaiKhoanNhanVienTuHoTen(request.getTen());
         } while (adminNhanVienRepository.existsByTenTaiKhoan(tenTaiKhoan));
 
         String matKhauTam = AccountUtils.taoMatKhauNgauNhien(10);
@@ -259,6 +258,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
                 .trangThai(nv.getTrangThai())
                 .ngayTao(nv.getNgayTao())
                 .ngayCapNhat(nv.getNgayCapNhat())
+                .idPhanQuyen(nv.getPhanQuyen() != null ? nv.getPhanQuyen().getId() : null)
                 .maPhanQuyen(nv.getPhanQuyen() != null ? nv.getPhanQuyen().getMa() : null)
                 .tenPhanQuyen(nv.getPhanQuyen() != null ? nv.getPhanQuyen().getTen() : null)
                 .quyenHan(nv.getPhanQuyen() != null ? nv.getPhanQuyen().getQuyenHan() : null)

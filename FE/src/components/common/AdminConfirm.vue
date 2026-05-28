@@ -25,16 +25,8 @@ watch(
     }
 );
 
-// Dynamic color mapping using Tailwind-compatible colors
-const colorClasses = computed(() => {
-    const maps = {
-        warning: { outer: 'bg-orange-50', inner: 'bg-orange-100', icon: 'text-orange-700' },
-        error: { outer: 'bg-red-50', inner: 'bg-red-100', icon: 'text-red-700' },
-        success: { outer: 'bg-green-50', inner: 'bg-green-100', icon: 'text-green-700' },
-        primary: { outer: 'bg-blue-50', inner: 'bg-blue-100', icon: 'text-blue-900' },
-        info: { outer: 'bg-blue-50', inner: 'bg-blue-100', icon: 'text-blue-900' }
-    };
-    return maps[props.color] || maps.primary;
+const colorClass = computed(() => {
+    return props.color ? `is-${props.color}` : 'is-primary';
 });
 
 const handleConfirm = () => {
@@ -52,13 +44,13 @@ const handleCancel = () => {
         <v-card class="premium-confirm-card">
             <v-card-text class="pa-8 pb-4">
                 <div class="d-flex align-start">
-                    <!-- Icon Section with Dynamic Tailwind Classes -->
-                    <div class="icon-box-wrapper mr-5" :class="colorClasses.outer">
-                        <div class="icon-inner" :class="colorClasses.inner">
-                            <AlertTriangleIcon v-if="color === 'warning'" size="28" :class="colorClasses.icon" />
-                            <AlertTriangleIcon v-else-if="color === 'error'" size="28" :class="colorClasses.icon" />
-                            <CheckIcon v-else-if="color === 'success'" size="28" :class="colorClasses.icon" />
-                            <InfoCircleIcon v-else size="28" :class="colorClasses.icon" />
+                    <!-- Icon Section with Scoped Classes -->
+                    <div class="icon-box-wrapper mr-5" :class="colorClass">
+                        <div class="icon-inner">
+                            <AlertTriangleIcon v-if="color === 'warning'" size="28" />
+                            <AlertTriangleIcon v-else-if="color === 'error'" size="28" />
+                            <CheckIcon v-else-if="color === 'success'" size="28" />
+                            <InfoCircleIcon v-else size="28" />
                         </div>
                     </div>
                     <div class="flex-grow-1 pt-1">

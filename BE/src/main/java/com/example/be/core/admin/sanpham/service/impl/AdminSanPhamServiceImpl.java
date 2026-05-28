@@ -209,6 +209,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             sp.setDeGiay(deGiayRepository.findById(req.getIdDeGiay()).orElse(null));
             sp.setGioiTinhKhachHang(req.getGioiTinhKhachHang());
             sp.setHinhAnh(req.getHinhAnh());
+            sp.setMoTaChiTiet(req.getMoTaChiTiet());
             sp.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : TrangThai.DANG_HOAT_DONG);
         } else if (request instanceof UpdateProductRequest req) {
             sp.setTen(req.getTenSanPham());
@@ -221,6 +222,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             sp.setDeGiay(deGiayRepository.findById(req.getIdDeGiay()).orElse(null));
             sp.setGioiTinhKhachHang(req.getGioiTinhKhachHang());
             sp.setHinhAnh(req.getHinhAnh());
+            sp.setMoTaChiTiet(req.getMoTaChiTiet());
             sp.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : TrangThai.DANG_HOAT_DONG);
         }
         sp.setMa(code);

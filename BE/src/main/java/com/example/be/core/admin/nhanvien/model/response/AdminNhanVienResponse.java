@@ -29,6 +29,7 @@ public class AdminNhanVienResponse {
     private Long ngayCapNhat;
 
     // từ bảng phan_quyen (join)
+    private String idPhanQuyen;
     private String maPhanQuyen;
     private String tenPhanQuyen;
     private String quyenHan;
