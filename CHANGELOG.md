@@ -1,3 +1,10 @@
+## [1.15.1](https://github.com/pnam-it309/AeroStride/compare/v1.15.0...v1.15.1) (2026-05-29)
+
+
+### Bug Fixes
+
+* update UI and fix bugs ([2e1031b](https://github.com/pnam-it309/AeroStride/commit/2e1031bb4759ceead521ebe5c232fecc32bfdb89))
+
 # [1.15.0](https://github.com/pnam-it309/AeroStride/compare/v1.14.0...v1.15.0) (2026-05-27)
 
 
