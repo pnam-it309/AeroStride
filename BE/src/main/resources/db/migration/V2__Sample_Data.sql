@@ -170,19 +170,24 @@ INSERT INTO phieu_giam_gia_ca_nhan (id, id_khach_hang, id_phieu_giam_gia, ma_phi
 
 -- 19. Bảng Hóa Đơn (hoa_don)
 INSERT INTO hoa_don (id, id_phieu_giam_gia, id_phieu_giam_gia_ca_nhan, id_khach_hang, id_nhan_vien, ma_hoa_don, loai_don, phi_van_chuyen, tong_tien, tong_tien_sau_giam, tien_nguoi_mua, dia_chi_nguoi_nhan, so_dien_thoai_nguoi_nhan, ngay_du_kien_nhan, ghi_chu, trang_thai, ngay_tao) VALUES
-('hd1', 'pgg1', NULL, 'kh1', 'nv1', 'HD001', 'OFFLINE', 0.00, 1500000.00, 1450000.00, 1450000.00, 'Tại cửa hàng', '0901112222', NULL, NULL, 3, 1711814400000),
+('hd1', 'pgg1', NULL, 'kh1', 'nv1', 'HD001', 'OFFLINE', 0.00, 3000000.00, 2900000.00, 2900000.00, 'Tại cửa hàng', '0901112222', NULL, NULL, 3, 1711814400000),
 ('hd2', NULL, 'pcn2', 'kh2', 'nv2', 'HD002', 'ONLINE', 30000.00, 1800000.00, 1780000.00, 1780000.00, '45 Lê Lợi, Quận 1, TPHCM', '0902223333', 1712073600000, NULL, 1, 1711850000000),
-('hd3', NULL, NULL, 'kh3', 'nv1', 'HD003', 'OFFLINE', 0.00, 1200000.00, 1200000.00, 1200000.00, 'Tại cửa hàng', '0903334444', NULL, NULL, 3, 1711860000000),
+('hd3', NULL, NULL, 'kh3', 'nv1', 'HD003', 'OFFLINE', 0.00, 3400000.00, 3400000.00, 3400000.00, 'Tại cửa hàng', '0903334444', NULL, NULL, 3, 1711860000000),
 ('hd4', 'pgg2', NULL, 'kh4', 'nv2', 'HD004', 'ONLINE', 0.00, 2200000.00, 2150000.00, 2150000.00, '90 Đinh Tiên Hoàng, Hải Phòng', '0904445555', 1712160000000, NULL, 0, 1711870000000),
-('hd5', NULL, NULL, NULL, 'nv1', 'HD005', 'OFFLINE', 0.00, 1500000.00, 1500000.00, 1500000.00, 'Khách lẻ', NULL, NULL, NULL, 3, 1711880000000);
+('hd5', NULL, NULL, NULL, 'nv1', 'HD005', 'OFFLINE', 0.00, 1500000.00, 1500000.00, 1500000.00, 'Khách lẻ', NULL, NULL, NULL, 3, 1711880000000),
+('hd6', NULL, NULL, 'kh5', 'nv3', 'HD006', 'ONLINE', 35000.00, 2700000.00, 2735000.00, 2735000.00, '12 Nguyễn Trãi, Ninh Kiều, Cần Thơ', '0905556666', 1712246400000, 'Giao giờ hành chính', 2, 1711890000000);
 
 -- 20. Bảng Hóa Đơn Chi Tiết (hoa_don_chi_tiet)
 INSERT INTO hoa_don_chi_tiet (id, id_hoa_don, id_chi_tiet_san_pham, ma_hoa_don_chi_tiet, so_luong, don_gia, trang_thai, ngay_tao) VALUES
 ('hdct1', 'hd1', 'ct1', 'HDCT001', 1, 1500000.00, 0, 1711814400000),
-('hdct2', 'hd2', 'ct3', 'HDCT002', 1, 1800000.00, 0, 1711850000000),
-('hdct3', 'hd3', 'ct4', 'HDCT003', 1, 1200000.00, 0, 1711860000000),
-('hdct4', 'hd4', 'ct5', 'HDCT004', 1, 2200000.00, 0, 1711870000000),
-('hdct5', 'hd5', 'ct1', 'HDCT005', 1, 1500000.00, 0, 1711880000000);
+('hdct2', 'hd1', 'ct2', 'HDCT002', 1, 1500000.00, 0, 1711814400000),
+('hdct3', 'hd2', 'ct3', 'HDCT003', 1, 1800000.00, 0, 1711850000000),
+('hdct4', 'hd3', 'ct4', 'HDCT004', 1, 1200000.00, 0, 1711860000000),
+('hdct5', 'hd3', 'ct5', 'HDCT005', 1, 2200000.00, 0, 1711860000000),
+('hdct6', 'hd4', 'ct5', 'HDCT006', 1, 2200000.00, 0, 1711870000000),
+('hdct7', 'hd5', 'ct1', 'HDCT007', 1, 1500000.00, 0, 1711880000000),
+('hdct8', 'hd6', 'ct2', 'HDCT008', 1, 1500000.00, 0, 1711890000000),
+('hdct9', 'hd6', 'ct4', 'HDCT009', 1, 1200000.00, 0, 1711890000000);
 
 -- 21. Bảng Lịch Sử Trạng Thái Hóa Đơn (lich_su_trang_thai_hoa_don)
 INSERT INTO lich_su_trang_thai_hoa_don (id, id_hoa_don, trang_thai_cu, trang_thai_moi, ghi_chu, nguoi_thuc_hien, thoi_gian) VALUES

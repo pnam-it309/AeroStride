@@ -193,7 +193,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         repo.save(p);
 
         if ("CA_NHAN".equals(p.getHinhThuc()) && oldStatus != p.getTrangThai()) {
-            String statusDesc = p.getTrangThai() == TrangThai.DANG_HOAT_DONG ? "được kích hoạt hoạt động" : "tạm dừng hoạt động";
+            String statusDesc = p.getTrangThai() == TrangThai.DANG_HOAT_DONG ? "được kích hoạt hoạt động" : "đã kết thúc";
             sendVoucherStatusEmail(p, statusDesc);
         }
     }
@@ -205,10 +205,13 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PHIEU_GIAM_GIA_NOT_FOUND));
         TrangThai oldStatus = p.getTrangThai();
         p.setTrangThai(status);
+        if (status == TrangThai.NGUNG_HOAT_DONG) {
+            p.setNgayKetThuc(System.currentTimeMillis());
+        }
         repo.saveAndFlush(p);
 
         if ("CA_NHAN".equals(p.getHinhThuc()) && oldStatus != status) {
-            String statusDesc = status == TrangThai.DANG_HOAT_DONG ? "được kích hoạt hoạt động" : "tạm dừng hoạt động";
+            String statusDesc = status == TrangThai.DANG_HOAT_DONG ? "được kích hoạt hoạt động" : "đã kết thúc";
             sendVoucherStatusEmail(p, statusDesc);
         }
     }
@@ -392,7 +395,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         }
 
         String explanation = "Chúng tôi xin thông báo về sự thay đổi trạng thái của phiếu giảm giá dành riêng cho bạn từ AeroStride.";
-        if ("hết hạn sử dụng".equals(statusDesc)) {
+        if ("hết hạn sử dụng".equals(statusDesc) || "đã kết thúc".equals(statusDesc)) {
             explanation = "Rất tiếc, thời gian áp dụng của phiếu giảm giá dành riêng cho bạn đã kết thúc.";
         }
 

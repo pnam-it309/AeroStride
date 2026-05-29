@@ -682,14 +682,14 @@ onMounted(() => {
                     <div class="summary-section pa-3 pt-6 flex-grow-1 d-flex align-center">
                         <div class="summary-grid w-100">
                             <div class="summary-row mb-5">
-                                <span class="text-slate-500">Tạm tính:</span>
+                                <span class="text-slate-500">Tổng tiền hàng:</span>
                                 <span class="text-body-2 text-slate-800">{{
                                     formatCurrency(order.tongTien)
                                     }}</span>
                             </div>
-                            <div class="summary-row mb-5 text-error">
-                                <span>Giảm giá:</span>
-                                <span class="text-body-2">- {{ formatCurrency(Math.abs(orderDiscountAmount))
+                            <div class="summary-row mb-5" style="color: #ef4444 !important;">
+                                <span class="font-weight-medium">Giảm giá:</span>
+                                <span class="text-body-2 font-weight-bold">- {{ formatCurrency(Math.abs(orderDiscountAmount))
                                     }}</span>
                             </div>
                             <div class="summary-row mb-4">
@@ -910,26 +910,26 @@ onMounted(() => {
                     <tr class="hover-row">
                         <td class="py-4">
                             <v-avatar size="80" class="rounded-lg border bg-slate-50 shadow-sm">
-                                <v-img :src="item.chiTietSanPham?.hinhAnh ||
+                                <v-img :src="item.hinhAnh ||
                                     'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg'
                                     " cover></v-img>
                             </v-avatar>
                         </td>
                         <td class="py-4">
-                            <div class="text-slate-900 text-body-2">{{ item.chiTietSanPham?.sanPham?.ten || 'N/A' }}
+                            <div class="text-slate-900 text-body-2">{{ item.tenSanPham || 'N/A' }}
                             </div>
                         </td>
                         <td class="py-4">
-                            <div class="text-primary">#{{ item.chiTietSanPham?.maChiTietSanPham || 'N/A' }}</div>
+                            <div class="text-primary">#{{ item.maChiTietSanPham || item.maSanPham || 'N/A' }}</div>
                         </td>
                         <td class="py-4">
                             <span class="text-slate-600">
-                                {{ item.chiTietSanPham?.mauSac?.ten || '—' }}
+                                {{ item.mauSac || '—' }}
                             </span>
                         </td>
                         <td class="py-4">
                             <span class="text-slate-600">
-                                {{ item.chiTietSanPham?.kichThuoc?.ten || '—' }}
+                                {{ item.kichThuoc || '—' }}
                             </span>
                         </td>
                         <td class="py-4">

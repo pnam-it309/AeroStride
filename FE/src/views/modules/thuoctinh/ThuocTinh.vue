@@ -15,6 +15,7 @@ import {
 } from '@/services/product/dichVuThuocTinh';
 import { useNotifications } from '@/services/notificationService';
 import { isActiveStatus } from '@/utils/statusUtils';
+import { SYSTEM_STATUS } from '@/constants/statusConstants';
 import { generateRandomCode } from '@/utils/codeGenerator';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 
@@ -79,7 +80,7 @@ const collars = ref([]);
 const origins = ref([]);
 const purposes = ref([]);
 
-const itemForm = ref({ ten: '', moTa: '', trangThai: 'DANG_HOAT_DONG', maMauHex: '#000000', giaTriKichThuoc: '' });
+const itemForm = ref({ ten: '', moTa: '', trangThai: SYSTEM_STATUS.ACTIVE, maMauHex: '#000000', giaTriKichThuoc: '' });
 
 const tabs = [
     { value: 'brands', title: 'Thương hiệu', icon: 'mdi-tag' },
@@ -361,7 +362,7 @@ const confirmChangeStatus = (item) => {
 
 const changeItemStatus = async (item) => {
     const service = services[selectedTab.value];
-    const newS = isActiveStatus(item.trangThai) ? 'NGUNG_HOAT_DONG' : 'DANG_HOAT_DONG';
+    const newS = isActiveStatus(item.trangThai) ? SYSTEM_STATUS.INACTIVE : SYSTEM_STATUS.ACTIVE;
     const pld = { ...item, trangThai: newS };
     switch (selectedTab.value) {
         case 'brands':
@@ -402,7 +403,7 @@ const changeItemStatus = async (item) => {
 };
 
 const resetForm = () => {
-    itemForm.value = { ten: '', moTa: '', trangThai: 'DANG_HOAT_DONG', maMauHex: '#000000', giaTriKichThuoc: '' };
+    itemForm.value = { ten: '', moTa: '', trangThai: SYSTEM_STATUS.ACTIVE, maMauHex: '#000000', giaTriKichThuoc: '' };
     selectedItem.value = null;
 };
 

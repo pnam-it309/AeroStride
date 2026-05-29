@@ -357,7 +357,7 @@ onMounted(init);
                                     hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="4">
-                                <div class="field-label">Giảm tối đa (VNĐ)</div>
+                                <div class="field-label">Giảm tối đa</div>
                                 <v-text-field v-model.number="form.giamToiDa"
                                     :readonly="isViewOnly || form.loaiPhieu === 'TIEN_MAT'" placeholder="Không giới hạn"
                                     type="number" variant="outlined" density="compact" hide-details
@@ -486,7 +486,7 @@ onMounted(init);
                                                 density="compact" hide-details class="d-inline-flex"></v-checkbox-btn>
                                         </th>
                                         <th class="header-cell text-center" style="width: 60px">STT</th>
-                                        <th class="header-cell text-center" style="width: 120px">Mã KH</th>
+                                        <th class="header-cell text-center" style="width: 130px">Mã KH</th>
                                         <th class="header-cell text-center">Tên khách hàng</th>
                                         <th class="header-cell text-center">Số điện thoại</th>
                                         <th class="header-cell text-center">Email</th>

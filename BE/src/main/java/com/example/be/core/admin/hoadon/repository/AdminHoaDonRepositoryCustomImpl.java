@@ -193,12 +193,14 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                     .fetch();
 
             Map<String, List<String>> itemMap = new HashMap<>();
+            Map<String, List<AdminHoaDonResponse.OrderDetailResponse>> detailsMap = new HashMap<>();
             for (Tuple item : items) {
                 String hdId = item.get(hdct.hoaDon.id);
                 String spTen = item.get(sp.ten);
                 String msTen = item.get(ms.ten);
                 String ktTen = item.get(kt.ten);
                 Integer sl = item.get(hdct.soLuong);
+                BigDecimal dg = item.get(hdct.donGia);
 
                 StringBuilder sb = new StringBuilder(spTen);
                 if (msTen != null || ktTen != null) {
@@ -213,10 +215,21 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                 sb.append(" (x").append(sl).append(")");
 
                 itemMap.computeIfAbsent(hdId, k -> new java.util.ArrayList<>()).add(sb.toString());
+                
+                detailsMap.computeIfAbsent(hdId, k -> new java.util.ArrayList<>()).add(
+                    AdminHoaDonResponse.OrderDetailResponse.builder()
+                        .tenSanPham(spTen)
+                        .mauSac(msTen != null ? msTen : "-")
+                        .kichThuoc(ktTen != null ? ktTen : "-")
+                        .soLuong(sl)
+                        .donGia(dg)
+                        .build()
+                );
             }
 
             for (AdminHoaDonResponse res : content) {
                 res.setBienThes(itemMap.getOrDefault(res.getId(), java.util.Collections.emptyList()));
+                res.setDetails(detailsMap.getOrDefault(res.getId(), java.util.Collections.emptyList()));
             }
         }
 

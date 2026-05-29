@@ -2,6 +2,7 @@ package com.example.be.core.admin.hoadon.model.response;
 
 import lombok.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -23,5 +24,19 @@ public class AdminHoaDonResponse {
     private Integer trangThai;
     private String ghiChu;
     private String diaChiNguoiNhan;
-    private java.util.List<String> bienThes;
+    private List<String> bienThes;
+    private List<OrderDetailResponse> details;
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class OrderDetailResponse {
+        private String tenSanPham;
+        private String mauSac;
+        private String kichThuoc;
+        private Integer soLuong;
+        private BigDecimal donGia;
+    }
 }

@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
+import { SYSTEM_STATUS, STATUS_OPTIONS } from '@/constants/statusConstants';
 import { formatCurrency } from '@/utils/formatters';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
@@ -401,7 +402,7 @@ const confirmToggleStatus = (product) => {
         color: 'warning',
         action: async () => {
             try {
-                const nextStatus = isActiveStatus(product.trangThai) ? 'NGUNG_HOAT_DONG' : 'DANG_HOAT_DONG';
+                const nextStatus = isActiveStatus(product.trangThai) ? SYSTEM_STATUS.INACTIVE : SYSTEM_STATUS.ACTIVE;
                 await updateSingleProductStatus(product, nextStatus);
                 await loadProducts();
                 addNotification({
@@ -595,11 +596,7 @@ onBeforeUnmount(() => {
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select
                         v-model="filters.trangThai"
-                        :items="[
-                            { title: 'Tất cả', value: null },
-                            { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
-                            { title: 'Ngừng hoạt động', value: 'NGUNG_HOAT_DONG' }
-                        ]"
+                        :items="STATUS_OPTIONS"
                         variant="outlined"
                         density="compact"
                         hide-details
@@ -674,6 +671,7 @@ onBeforeUnmount(() => {
                     color="primary"
                     hide-details
                     density="compact"
+                    style="margin: auto; display: inline-flex; width: auto;"
                     @update:model-value="toggleSelectVisibleProducts"
                 />
             </template>
@@ -690,12 +688,13 @@ onBeforeUnmount(() => {
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell">
+                    <td class="data-cell px-0" style="width: 50px; text-align: center;">
                         <v-checkbox-btn
                             :model-value="selectedProductIds.includes(item.id)"
                             color="primary"
                             hide-details
                             density="compact"
+                            style="margin: auto; display: inline-flex; width: auto;"
                             @update:model-value="toggleProductSelection(item.id, $event)"
                         />
                     </td>

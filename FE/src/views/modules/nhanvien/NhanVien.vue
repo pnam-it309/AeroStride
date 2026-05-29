@@ -5,6 +5,7 @@ import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import { PATH } from '@/router/routePaths';
 import { formatDateTime } from '@/utils/formatters';
 import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
+import { SYSTEM_STATUS } from '@/constants/statusConstants';
 
 // REUSABLE COMPONENTS
 import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
@@ -74,7 +75,7 @@ const confirmChangeStatus = (item) => {
         color: 'warning',
         action: async () => {
             try {
-                const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'NGUNG_HOAT_DONG' : 'DANG_HOAT_DONG';
+                const newS = item.trangThai === SYSTEM_STATUS.ACTIVE ? SYSTEM_STATUS.INACTIVE : SYSTEM_STATUS.ACTIVE;
                 await dichVuNhanVien.thayDoiTrangThaiNhanVien(item.id, newS);
                 item.trangThai = newS;
             } catch (e) {

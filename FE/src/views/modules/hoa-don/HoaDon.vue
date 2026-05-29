@@ -104,7 +104,7 @@ const tableHeaders = [
 const loadCounts = async () => {
     try {
         const params = {
-            search: filters.value.keyword || undefined,
+            search: filters.value.search || undefined,
             tuNgay: filters.value.fromDate || undefined,
             denNgay: filters.value.toDate || undefined
         };

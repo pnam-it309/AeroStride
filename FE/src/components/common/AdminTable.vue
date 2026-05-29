@@ -67,7 +67,7 @@ const tableKey = computed(() => {
                     <thead>
                         <slot name="headers">
                             <tr>
-                                <th v-if="selectable" class="header-cell" style="width: 50px">
+                                <th v-if="selectable" class="header-cell px-0" style="width: 50px; text-align: center">
                                     <slot name="header-select"></slot>
                                 </th>
                                 <th v-for="(header, idx) in headers" :key="idx"

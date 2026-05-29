@@ -24,6 +24,7 @@ public class ProductVariantResponse {
     private String tenSanPhamDayDu;
     private String tenThuongHieu;
     private String tenChatLieu;
+    private String hinhAnh;
     private String maChiTietSanPham;
     private String idMauSac;
     private String tenMauSac;

@@ -24,6 +24,7 @@ public interface AdminHoaDonMapper {
     @Mapping(target = "idCtsp", source = "chiTietSanPham.id")
     @Mapping(target = "tenSanPham", source = "chiTietSanPham.sanPham.ten")
     @Mapping(target = "maSanPham", source = "chiTietSanPham.sanPham.ma")
+    @Mapping(target = "maChiTietSanPham", source = "chiTietSanPham.maChiTietSanPham")
     @Mapping(target = "mauSac", source = "chiTietSanPham.mauSac.ten")
     @Mapping(target = "kichThuoc", source = "chiTietSanPham.kichThuoc.ten")
     @Mapping(target = "hinhAnh", source = "chiTietSanPham", qualifiedByName = "getThumbnail")

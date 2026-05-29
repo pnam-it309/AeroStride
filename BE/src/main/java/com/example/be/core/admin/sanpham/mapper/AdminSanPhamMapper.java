@@ -129,6 +129,7 @@ public class AdminSanPhamMapper {
                     : null)
                 .tenThuongHieu(variant.getSanPham() != null && variant.getSanPham().getThuongHieu() != null ? variant.getSanPham().getThuongHieu().getTen() : null)
                 .tenChatLieu(variant.getSanPham() != null && variant.getSanPham().getChatLieu() != null ? variant.getSanPham().getChatLieu().getTen() : null)
+                .hinhAnh(variant.getSanPham() != null ? variant.getSanPham().getHinhAnh() : null)
                 .maChiTietSanPham(variant.getMaChiTietSanPham())
                 .idMauSac(variant.getMauSac() != null ? variant.getMauSac().getId() : null)
                 .tenMauSac(variant.getMauSac() != null ? variant.getMauSac().getTen() : null)

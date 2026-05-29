@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router';
 import { dichVuDotGiamGia } from '@/services/admin/dichVuDotGiamGia';
 import { formatCurrency, formatDateTime } from '@/utils/formatters';
 import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
+import { SYSTEM_STATUS, STATUS_OPTIONS } from '@/constants/statusConstants';
 
 // REUSABLE COMPONENTS
 import AdminFilter from '@/components/common/AdminFilter.vue';
@@ -63,13 +64,16 @@ const confirmToggleStatus = (item) => {
         color: 'warning',
         action: async () => {
             try {
-                const newS = item.trangThai === 'DANG_HOAT_DONG' ? 'NGUNG_HOAT_DONG' : 'DANG_HOAT_DONG';
+                const newS = item.trangThai === SYSTEM_STATUS.ACTIVE ? SYSTEM_STATUS.INACTIVE : SYSTEM_STATUS.ACTIVE;
                 console.log(`[Discount] Changing status of ${item.id} to ${newS}`);
 
                 await dichVuDotGiamGia.thayDoiTrangThaiDotGiamGia(item.id, newS);
 
                 // Cập nhật trạng thái local
                 item.trangThai = newS;
+                if (newS === SYSTEM_STATUS.INACTIVE) {
+                    item.ngayKetThuc = Date.now();
+                }
 
                 addNotification({
                     title: 'Thành công',
@@ -186,7 +190,7 @@ onMounted(() => loadCampaigns());
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select v-model="filters.trangThai" :items="[
                         { title: 'Tất cả trạng thái', value: null },
-                        { title: 'Đang hoạt động', value: 'DANG_HOAT_DONG' },
+                        { title: 'Đang hoạt động', value: SYSTEM_STATUS.ACTIVE },
                         { title: 'Sắp diễn ra', value: 'SAP_DIEN_RA' },
                         { title: 'Đã kết thúc', value: 'DA_KET_THUC' }
                     ]" variant="outlined" density="compact" hide-details class="compact-input"

@@ -11,6 +11,7 @@ import { ArrowLeftIcon, DeviceFloppyIcon, UserIcon } from 'vue-tabler-icons';
 
 import QrcodeStream from '@/components/common/CCCDQRScanner';
 import { parseCCCDQR } from '@/utils/cccdQR';
+import { SYSTEM_STATUS, STATUS_OPTIONS } from '@/constants/statusConstants';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import axios from 'axios';
 
@@ -49,7 +50,7 @@ const employeeForm = ref({
     ngaySinh: '',
     idPhanQuyen: null,
     gioiTinh: true,
-    trangThai: TRANG_THAI_NHAN_VIEN.DANG_HOAT_DONG,
+    trangThai: SYSTEM_STATUS.ACTIVE,
     hinhAnh: '',
     diaChi: '',
     tinh: null,
@@ -59,8 +60,8 @@ const employeeForm = ref({
 });
 
 const TRANG_THAI_OPTIONS = [
-    { title: 'Đang hoạt động', value: TRANG_THAI_NHAN_VIEN.DANG_HOAT_DONG },
-    { title: 'Ngừng hoạt động', value: TRANG_THAI_NHAN_VIEN.NGUNG_HOAT_DONG }
+    { title: 'Đang hoạt động', value: SYSTEM_STATUS.ACTIVE },
+    { title: 'Ngừng hoạt động', value: SYSTEM_STATUS.INACTIVE }
 ];
 
 // Address Selection Logic

@@ -13,6 +13,7 @@ public class AdminHoaDonChiTietResponse {
     private String idCtsp;
     private String tenSanPham;
     private String maSanPham;
+    private String maChiTietSanPham;
     private String mauSac;
     private String kichThuoc;
     private Integer soLuong;

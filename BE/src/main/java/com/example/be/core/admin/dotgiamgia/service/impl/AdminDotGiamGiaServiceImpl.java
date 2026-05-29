@@ -134,6 +134,9 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
         DotGiamGia d = repo.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DOT_GIAM_GIA_NOT_FOUND));
         d.setTrangThai(status);
+        if (status == TrangThai.NGUNG_HOAT_DONG) {
+            d.setNgayKetThuc(System.currentTimeMillis());
+        }
         repo.saveAndFlush(d);
     }
 

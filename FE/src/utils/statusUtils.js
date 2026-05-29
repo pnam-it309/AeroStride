@@ -3,9 +3,11 @@
  * Đồng bộ logic giữa các module: Nhân viên, Khách hàng, Sản phẩm, Giảm giá...
  */
 
+import { SYSTEM_STATUS } from '@/constants/statusConstants';
+
 export const STATUS = {
-    ACTIVE: 'DANG_HOAT_DONG',
-    INACTIVE: 'NGUNG_HOAT_DONG'
+    ACTIVE: SYSTEM_STATUS.ACTIVE,
+    INACTIVE: SYSTEM_STATUS.INACTIVE
 };
 
 /**
@@ -23,26 +25,24 @@ export const isActiveStatus = (status) => {
 
     const normalized = String(status).toUpperCase();
     return (
-        normalized === STATUS.ACTIVE ||
+        normalized === SYSTEM_STATUS.ACTIVE ||
         normalized === 'ACTIVE' ||
         normalized === 'HOAT_DONG' ||
-        normalized === 'NGUNG_HOAT_DONG' ||
-        normalized === 'KHONG_HOAT_DONG' ||
         normalized === '0' ||
         normalized === 'TRUE'
     );
 };
 
 /**
- * Trả về nhãn hiển thị trạng thái tiếng Việt
+ * Trả về nhãn hiển thị cho trạng thái
  */
 export const getStatusLabel = (status) => {
-    return isActiveStatus(status) ? 'Đang hoạt động' : 'Ngừng hoạt động';
+    return isActiveStatus(status) ? SYSTEM_STATUS.LABELS.ACTIVE : SYSTEM_STATUS.LABELS.INACTIVE;
 };
 
 /**
  * Trả về class CSS hoặc màu sắc cho Chip trạng thái
  */
 export const getStatusColor = (status) => {
-    return isActiveStatus(status) ? 'success' : 'warning';
+    return isActiveStatus(status) ? SYSTEM_STATUS.COLORS.ACTIVE : SYSTEM_STATUS.COLORS.INACTIVE;
 };

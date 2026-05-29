@@ -8,6 +8,7 @@ import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumb
 import { downloadFile } from '@/utils/fileUtils';
 import { formatDateTime, formatCurrency } from '@/utils/formatters';
 import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
+import { SYSTEM_STATUS, STATUS_OPTIONS } from '@/constants/statusConstants';
 import { PlusIcon, PencilIcon, StarIcon, TrashIcon, MapPinIcon } from 'vue-tabler-icons';
 import axios from 'axios';
 
@@ -51,10 +52,12 @@ const INVOICE_STATUS_FILTER_OPTIONS = [
 const invoiceHistoryTableHeaders = [
     { text: 'STT', width: '50px', align: 'center' },
     { text: 'Mã hóa đơn', width: '90px', align: 'center' },
-    { text: 'Sản phẩm', width: '180px', align: 'left' },
-    { text: 'Tên khách hàng', width: '100px', align: 'left' },
-    { text: 'Nhận hàng', width: '80px', align: 'left' },
-    { text: 'Giá trị đơn hàng', width: '80px', align: 'center' },
+    { text: 'Tên sản phẩm', width: '150px', align: 'left' },
+    { text: 'Màu sắc', width: '80px', align: 'center' },
+    { text: 'Kích thước', width: '80px', align: 'center' },
+    { text: 'Số lượng', width: '70px', align: 'center' },
+    { text: 'Nhận hàng', width: '120px', align: 'left' },
+    { text: 'Giá trị đơn hàng', width: '110px', align: 'center' },
     { text: 'Trạng thái', width: '100px', align: 'center' }
 ];
 
@@ -551,9 +554,9 @@ const confirmChangeStatus = (item) => {
         action: async () => {
             try {
                 const newS =
-                    item.trangThai === TRANG_THAI_KHACH_HANG.DANG_HOAT_DONG
-                        ? TRANG_THAI_KHACH_HANG.NGUNG_HOAT_DONG
-                        : TRANG_THAI_KHACH_HANG.DANG_HOAT_DONG;
+                    item.trangThai === SYSTEM_STATUS.ACTIVE
+                        ? SYSTEM_STATUS.INACTIVE
+                        : SYSTEM_STATUS.ACTIVE;
                 await dichVuKhachHang.thayDoiTrangThaiKhachHang(item.id, newS);
 
                 // Cập nhật local
@@ -838,28 +841,66 @@ const formatAddressFull = (addr) => {
                 empty-icon="mdi-receipt-text-off">
                 <template #row="{ item, index }">
                     <tr class="data-row">
+                        <!-- STT -->
                         <td class="data-cell text-center text-black font-weight-medium"
                             style="font-size: 13px !important">
-                            {{ (invoicesTab.pagination.value.page - 1) * invoicesTab.pagination.value.size + index + 1
-                            }}
+                            {{ (invoicesTab.pagination.value.page - 1) * invoicesTab.pagination.value.size +
+                                index + 1 }}
                         </td>
+
+                        <!-- Mã hóa đơn -->
                         <td class="data-cell text-center text-slate-800" style="font-size: 13px !important">
-                            {{ item.maHoaDon }}
+                            <span class="font-weight-bold">{{ item.maHoaDon }}</span>
                         </td>
-                        <td class="data-cell text-left px-4" style="font-size: 13px !important">
-                            <div class="d-flex flex-column gap-1" style="word-break: break-word; white-space: normal">
-                                <div v-for="(variant, idx) in item.bienThes" :key="idx" class="text-slate-700"
-                                    style="font-size: 13px !important">
-                                    {{ variant }}
+
+                        <!-- Tên sản phẩm (Danh sách) -->
+                        <td class="data-cell text-left px-4 text-slate-700" style="font-size: 13px !important">
+                            <div class="d-flex flex-column gap-2 py-1">
+                                <div v-for="(detail, dIdx) in item.details" :key="dIdx" class="text-truncate"
+                                    style="max-width: 200px">
+                                    {{ detail.tenSanPham || 'N/A' }}
                                 </div>
-                                <span v-if="!item.bienThes || item.bienThes.length === 0" class="text-slate-400 italic"
-                                    style="font-size: 13px !important">Không có sản phẩm</span>
+                                <span v-if="!item.details || item.details.length === 0" class="text-slate-400 italic">Không có sản phẩm</span>
                             </div>
                         </td>
-                        <td class="data-cell text-left px-4 text-slate-800"
-                            style="word-break: break-word; white-space: normal; font-size: 13px !important">
-                            {{ selectedKHForInvoices?.ten }}
+
+                        <!-- Màu sắc (Danh sách) -->
+                        <td class="data-cell text-center text-slate-600" style="font-size: 13px !important">
+                            <div class="d-flex flex-column gap-2 py-1 align-center">
+                                <div v-for="(detail, dIdx) in item.details" :key="dIdx">
+                                    <v-chip v-if="detail.mauSac && detail.mauSac !== '-'" size="x-small" variant="tonal" color="secondary"
+                                        class="font-weight-medium">
+                                        {{ detail.mauSac }}
+                                    </v-chip>
+                                    <span v-else>-</span>
+                                </div>
+                            </div>
                         </td>
+
+                        <!-- Kích thước (Danh sách) -->
+                        <td class="data-cell text-center text-slate-600" style="font-size: 13px !important">
+                            <div class="d-flex flex-column gap-2 py-1 align-center">
+                                <div v-for="(detail, dIdx) in item.details" :key="dIdx">
+                                    <v-chip v-if="detail.kichThuoc && detail.kichThuoc !== '-'" size="x-small" variant="tonal" color="info"
+                                        class="font-weight-medium">
+                                        {{ detail.kichThuoc }}
+                                    </v-chip>
+                                    <span v-else>-</span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Số lượng (Danh sách) -->
+                        <td class="data-cell text-center text-black font-weight-bold"
+                            style="font-size: 13px !important">
+                            <div class="d-flex flex-column gap-2 py-1 align-center">
+                                <div v-for="(detail, dIdx) in item.details" :key="dIdx">
+                                    {{ detail.soLuong || 0 }}
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Thông tin nhận hàng -->
                         <td class="data-cell text-left px-4" style="font-size: 13px !important">
                             <div class="d-flex flex-column" style="word-break: break-word; white-space: normal">
                                 <div v-if="item.soDienThoai" class="text-slate-700 mb-1"
@@ -869,32 +910,31 @@ const formatAddressFull = (addr) => {
                                     {{ item.soDienThoai }}
                                 </div>
                                 <div v-if="item.diaChiNguoiNhan" class="text-slate-500 line-height-1-4"
-                                    style="font-size: 13px !important">
+                                    style="font-size: 12px !important">
                                     <v-icon size="14" class="mr-1 text-slate-400"
                                         style="font-size: 14px !important">mdi-map-marker</v-icon>
                                     {{ item.diaChiNguoiNhan }}
                                 </div>
-                                <div v-if="!item.soDienThoai && !item.diaChiNguoiNhan" class="text-slate-400"
-                                    style="font-size: 13px !important">
-                                    -
-                                </div>
                             </div>
                         </td>
+
+                        <!-- Tổng tiền -->
                         <td class="data-cell text-center font-weight-bold"
                             style="color: #1e257c !important; font-size: 13px !important">
                             {{ formatCurrency(item.tongTienSauGiam || item.tongTien || 0) }}
                         </td>
+
+                        <!-- Trạng thái -->
                         <td class="data-cell text-center" style="font-size: 13px !important">
                             <template v-if="getOrderStatusMeta(item.trangThai)">
                                 <v-chip :class="['status-chip', getOrderStatusMeta(item.trangThai).chipClass]"
-                                    variant="flat" size="small" style="font-size: 13px !important">
+                                    variant="flat" size="small" style="font-size: 12px !important">
                                     <v-icon start size="14" style="font-size: 14px !important">{{
                                         getOrderStatusMeta(item.trangThai).icon
                                         }}</v-icon>
                                     {{ getOrderStatusMeta(item.trangThai).text }}
                                 </v-chip>
                             </template>
-                            <template v-else> - </template>
                         </td>
                     </tr>
                 </template>
@@ -1065,37 +1105,37 @@ const formatAddressFull = (addr) => {
                             <v-form v-else class="px-8 pt-2 pb-6">
                                 <v-row dense>
                                     <v-col cols="12" md="6">
-                                        <div class="field-label">Tên người nhận *</div>
+                                        <div class="field-label">Tên người nhận</div>
                                         <v-text-field v-model="addrForm.tenNguoiNhan" placeholder="Ví dụ: Nguyễn Văn A"
                                             variant="outlined" density="compact" hide-details />
                                     </v-col>
                                     <v-col cols="12" md="6">
-                                        <div class="field-label">Số điện thoại *</div>
+                                        <div class="field-label">Số điện thoại</div>
                                         <v-text-field v-model="addrForm.sdtNguoiNhan" placeholder="09xx.xxx.xxx"
                                             variant="outlined" density="compact" hide-details />
                                     </v-col>
                                     <v-col cols="12">
-                                        <div class="field-label">Tỉnh / Thành phố *</div>
+                                        <div class="field-label">Tỉnh / Thành phố</div>
                                         <v-autocomplete v-model="addrForm.tinh" :items="provinces" item-title="name"
                                             item-value="code" placeholder="Chọn tỉnh thành" variant="outlined"
                                             density="compact" hide-details :loading="loadingLoc.provinces" />
                                     </v-col>
                                     <v-col cols="12" md="6">
-                                        <div class="field-label">Quận / Huyện *</div>
+                                        <div class="field-label">Quận / Huyện</div>
                                         <v-autocomplete v-model="addrForm.thanhPho" :items="districts" item-title="name"
                                             item-value="code" placeholder="Chọn quận huyện" variant="outlined"
                                             density="compact" hide-details :disabled="!addrForm.tinh"
                                             :loading="loadingLoc.districts" />
                                     </v-col>
                                     <v-col cols="12" md="6">
-                                        <div class="field-label">Phường / Xã *</div>
+                                        <div class="field-label">Phường / Xã</div>
                                         <v-autocomplete v-model="addrForm.phuongXa" :items="wards" item-title="name"
                                             item-value="code" placeholder="Chọn phường xã" variant="outlined"
                                             density="compact" hide-details :disabled="!addrForm.thanhPho"
                                             :loading="loadingLoc.wards" />
                                     </v-col>
                                     <v-col cols="12">
-                                        <div class="field-label">Địa chỉ cụ thể *</div>
+                                        <div class="field-label">Địa chỉ cụ thể</div>
                                         <v-textarea v-model="addrForm.diaChiChiTiet"
                                             placeholder="Số nhà, tên đường, tòa nhà..." variant="outlined" rows="2"
                                             hide-details />

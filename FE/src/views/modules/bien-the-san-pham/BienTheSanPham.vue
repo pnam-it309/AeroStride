@@ -287,7 +287,7 @@ const getOptionIdByLabel = (items, label) => {
 
 const getVariantPrimaryImageUrl = (variant) => {
     const mainImage = variant?.images?.find((image) => image?.hinhAnhDaiDien);
-    const fallbackImage = variant?.images?.[0] || variant?.hinhAnh?.[0] || variant?.hinhAnh;
+    const fallbackImage = variant?.images?.[0] || (Array.isArray(variant?.hinhAnh) ? variant?.hinhAnh[0] : variant?.hinhAnh);
 
     return normalizeImageUrl(variant?.urlAnh) || normalizeImageUrl(mainImage) || normalizeImageUrl(fallbackImage);
 };
@@ -776,10 +776,11 @@ onMounted(async () => {
 
                 <template #headers>
                     <tr>
-                        <th class="header-cell" style="width: 40px;">
+                        <th class="header-cell px-0" style="width: 50px; text-align: center;">
                             <v-checkbox-btn :model-value="allVisibleVariantsSelected"
                                 :indeterminate="someVisibleVariantsSelected" color="primary" hide-details
-                                density="compact" @update:model-value="toggleSelectVisibleVariants" />
+                                density="compact" style="margin: auto; display: inline-flex; width: auto;"
+                                @update:model-value="toggleSelectVisibleVariants" />
                         </th>
                         <th class="header-cell" style="width: 40px;">STT</th>
                         <th class="header-cell" style="width: 90px;">Mã sản phẩm</th>
@@ -815,9 +816,9 @@ onMounted(async () => {
 
                 <template #row="{ item, index }">
                     <tr class="data-row">
-                        <td class="data-cell">
+                        <td class="data-cell px-0" style="width: 50px; text-align: center;">
                             <v-checkbox-btn :model-value="selectedVariantIds.includes(item.id)" color="primary"
-                                hide-details density="compact"
+                                hide-details density="compact" style="margin: auto; display: inline-flex; width: auto;"
                                 @update:model-value="toggleVariantSelection(item.id, $event)" />
                         </td>
                         <td class="data-cell text-center">
