@@ -1,3 +1,10 @@
+## [1.17.4](https://github.com/pnam-it309/AeroStride/compare/v1.17.3...v1.17.4) (2026-05-30)
+
+
+### Bug Fixes
+
+* **BE:** provide default values for AI properties to prevent PlaceholderResolutionException on startup ([93c920b](https://github.com/pnam-it309/AeroStride/commit/93c920b1ebd9f677c88609393f4537c70df9d4c2))
+
 ## [1.17.3](https://github.com/pnam-it309/AeroStride/compare/v1.17.2...v1.17.3) (2026-05-30)
 
 
