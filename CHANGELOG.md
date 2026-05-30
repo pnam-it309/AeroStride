@@ -1,3 +1,10 @@
+## [1.17.2](https://github.com/pnam-it309/AeroStride/compare/v1.17.1...v1.17.2) (2026-05-30)
+
+
+### Bug Fixes
+
+* **BE:** add BOM platform to all configurations to fix lombok resolution ([9c9c26f](https://github.com/pnam-it309/AeroStride/commit/9c9c26f629bfbcd6e1b81e689b0a46ed14f4c29e))
+
 ## [1.17.1](https://github.com/pnam-it309/AeroStride/compare/v1.17.0...v1.17.1) (2026-05-30)
 
 
