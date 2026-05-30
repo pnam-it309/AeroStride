@@ -1,3 +1,10 @@
+## [1.17.3](https://github.com/pnam-it309/AeroStride/compare/v1.17.2...v1.17.3) (2026-05-30)
+
+
+### Bug Fixes
+
+* **BE:** add BOM to developmentOnly configuration ([758db51](https://github.com/pnam-it309/AeroStride/commit/758db517d2ad613c85340a788d5eb38bb4767e1f))
+
 ## [1.17.2](https://github.com/pnam-it309/AeroStride/compare/v1.17.1...v1.17.2) (2026-05-30)
 
 
