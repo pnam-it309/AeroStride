@@ -30,8 +30,17 @@ ext {
 
 
 dependencies {
-    implementation platform("org.springframework.boot:spring-boot-dependencies:3.4.6")
-    implementation platform("org.springframework.ai:spring-ai-bom:${springAiVersion}")
+    def springBootBom = platform("org.springframework.boot:spring-boot-dependencies:3.4.6")
+    def springAiBom = platform("org.springframework.ai:spring-ai-bom:${springAiVersion}")
+    
+    implementation springBootBom
+    annotationProcessor springBootBom
+    compileOnly springBootBom
+    testImplementation springBootBom
+    runtimeOnly springBootBom
+
+    implementation springAiBom
+    testImplementation springAiBom
 
     testImplementation 'org.seleniumhq.selenium:selenium-java:4.33.0'
     testImplementation 'io.github.bonigarcia:webdrivermanager:6.1.0'
