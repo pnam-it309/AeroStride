@@ -38,6 +38,7 @@ dependencies {
     compileOnly springBootBom
     testImplementation springBootBom
     runtimeOnly springBootBom
+    developmentOnly springBootBom
 
     implementation springAiBom
     testImplementation springAiBom
