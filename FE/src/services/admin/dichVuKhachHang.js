@@ -4,7 +4,7 @@ import { API_ADMIN } from '@/constants/apiPaths';
 export const dichVuKhachHang = {
     // Lấy tất cả khách hàng
     async layTatCaKhachHang() {
-        const response = await api.get(`${API_ADMIN.KHACH_HANG}/hien-thi`);
+        const response = await api.get(`${API_ADMIN.KHACH_HANG}/hien-thi`, { params: { size: 99999 } });
         return response.data?.data || response.data;
     },
 

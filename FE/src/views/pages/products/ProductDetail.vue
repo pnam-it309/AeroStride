@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import PromotionBar from '@/components/shared/PromotionBar.vue';
@@ -8,6 +8,7 @@ import CartDrawer from '@/components/shared/CartDrawer.vue';
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 import { useCartStore } from '@/stores/cartStore';
 import { useToastStore } from '@/stores/toastStore';
+import { useSeoMeta } from '@/composables/useSeoMeta';
 
 const route = useRoute();
 const cartStore = useCartStore();
@@ -29,8 +30,17 @@ const fetchProduct = async () => {
     }
 };
 
+const { setProductSeo } = useSeoMeta();
+
 onMounted(() => {
     fetchProduct();
+});
+
+// Cập nhật SEO khi product data load xong
+watch(product, (newProduct) => {
+    if (newProduct) {
+        setProductSeo(newProduct);
+    }
 });
 
 const formatPrice = (price) => {

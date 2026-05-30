@@ -31,25 +31,25 @@ export const router = createRouter({
             path: PATH.CHECKOUT,
             name: 'Checkout',
             component: () => import('@/views/pages/orders/CheckoutPage.vue'),
-            meta: { requiresCustomerAuth: true }
+            meta: { requiresCustomerAuth: true, seoTitle: 'Thanh Toán' }
         },
         {
             path: `${PATH.ORDER_SUCCESS}/:id`,
             name: 'OrderSuccess',
             component: () => import('@/views/pages/orders/OrderSuccessPage.vue'),
-            meta: { requiresCustomerAuth: true }
+            meta: { requiresCustomerAuth: true, seoTitle: 'Đặt Hàng Thành Công' }
         },
         {
             path: PATH.ORDERS,
             name: 'MyOrders',
             component: () => import('@/views/pages/orders/MyOrdersPage.vue'),
-            meta: { requiresCustomerAuth: true }
+            meta: { requiresCustomerAuth: true, seoTitle: 'Đơn Hàng Của Tôi' }
         },
         {
             path: `${PATH.ORDER_DETAIL}/:id`,
             name: 'OrderDetail',
             component: () => import('@/views/pages/orders/OrderDetailPage.vue'),
-            meta: { requiresCustomerAuth: true }
+            meta: { requiresCustomerAuth: true, seoTitle: 'Chi Tiết Đơn Hàng' }
         },
         // Error Routes
         {
@@ -114,6 +114,11 @@ export const router = createRouter({
 
 // Global guard: Customer auth pages (checkout, orders)
 router.beforeEach((to, from, next) => {
+    // SEO: Update document title based on route meta
+    if (to.meta.seoTitle) {
+        document.title = `${to.meta.seoTitle} | AeroStride`;
+    }
+
     if (to.meta.requiresCustomerAuth) {
         const { dichVuXacThuc } = require('@/services/auth/dichVuXacThuc');
         if (!dichVuXacThuc.daDangNhap()) {

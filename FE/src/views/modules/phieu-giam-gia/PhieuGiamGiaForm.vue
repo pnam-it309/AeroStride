@@ -625,6 +625,15 @@ onMounted(init);
 
 .table-wrapper {
     background: #fff;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.table-wrapper thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #f8fafc; /* match header background */
 }
 
 .border-s-dashed {

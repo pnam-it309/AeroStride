@@ -787,10 +787,12 @@ onMounted(() => {
                                             <div class="text-body-2 text-slate-500 mb-2">Phương thức thanh toán</div>
                                             <v-chip variant="tonal" :color="getPaymentMethodColor(pay.tenPhuongThuc)"
                                                 class="px-3 py-1 font-weight-bold">
-                                                <v-icon start size="16">{{ getPaymentMethodIcon(pay.tenPhuongThuc)
-                                                }}</v-icon>
+                                                <v-icon start size="16">{{ getPaymentMethodIcon(pay.tenPhuongThuc) }}</v-icon>
                                                 {{ pay.tenPhuongThuc === 'TIEN_MAT' ? 'Tiền mặt' : pay.tenPhuongThuc ===
-                                                    'CHUYEN_KHOAN' ? 'Chuyển khoản Ngân hàng' : pay.tenPhuongThuc }}
+                                                    'CHUYEN_KHOAN' ? 'Chuyển khoản' : pay.tenPhuongThuc }}
+                                                <span v-if="pay.tenPhuongThuc !== 'TIEN_MAT' && pay.ghiChu" class="ml-1">
+                                                    - {{ pay.ghiChu.length > 30 ? pay.ghiChu.substring(0, 30) + '...' : pay.ghiChu }}
+                                                </span>
                                             </v-chip>
                                         </div>
                                         <div class="text-right">

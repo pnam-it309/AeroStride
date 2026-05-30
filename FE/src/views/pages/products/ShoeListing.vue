@@ -1,10 +1,11 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import PromotionBar from '@/components/shared/PromotionBar.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
+import { useSeoMeta } from '@/composables/useSeoMeta';
 
 const router = useRouter();
 const route = useRoute();
@@ -80,9 +81,19 @@ const handleFilterChange = () => {
     fetchProducts();
 };
 
+// SEO
+const { setSeoMeta } = useSeoMeta();
+const updateSeo = () => {
+    setSeoMeta({
+        title: `Tất Cả Giày Thể Thao (${totalElements.value} sản phẩm)`,
+        description: `Khám phá ${totalElements.value}+ đôi giày thể thao chính hãng tại AeroStride. Lọc theo thương hiệu, màu sắc, kích thước. Giao hàng nhanh, đổi trả miễn phí.`,
+        url: window.location.origin + '/shoes'
+    });
+};
+
 onMounted(() => {
     fetchFilters();
-    fetchProducts();
+    fetchProducts().then(() => nextTick(updateSeo));
 });
 
 watch(

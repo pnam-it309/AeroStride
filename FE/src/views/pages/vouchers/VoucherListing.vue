@@ -4,6 +4,7 @@ import MainHeader from '@/components/shared/MainHeader.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 import { dichVuVoucher } from '@/services/public/dichVuVoucher';
 import { useToastStore } from '@/stores/toastStore';
+import { useSeoMeta } from '@/composables/useSeoMeta';
 
 const toast = useToastStore();
 const vouchers = ref([]);
@@ -42,8 +43,16 @@ const formatDate = (timestamp) => {
     return new Date(timestamp).toLocaleDateString('vi-VN');
 };
 
+// SEO
+const { setSeoMeta } = useSeoMeta();
+
 onMounted(() => {
     fetchVouchers();
+    setSeoMeta({
+        title: 'Kho Voucher Ưu Đãi - Mã Giảm Giá Giày',
+        description: 'Săn mã giảm giá cực hời tại AeroStride. Voucher giảm giá giày thể thao chính hãng, cập nhật mới mỗi ngày. Chốt ngay đôi giày ưng ý với giá tốt nhất.',
+        url: window.location.origin + '/vouchers'
+    });
 });
 </script>
 

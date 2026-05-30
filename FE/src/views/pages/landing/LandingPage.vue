@@ -1,10 +1,12 @@
 <script setup>
+import { onMounted } from 'vue';
 import { PATH } from '@/router/routePaths';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import Preloader from '@/components/common/Preloader.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 import { useLandingPage } from '@/composables/useLandingPage';
 import { useLandingCatalog } from '@/composables/useLandingCatalog';
+import { useSeoMeta } from '@/composables/useSeoMeta';
 
 import MainHeader from '@/components/shared/MainHeader.vue';
 import HeroSection from './sections/HeroSection.vue';
@@ -29,6 +31,15 @@ const {
 } = useLandingPage();
 
 const { heroProduct, isCatalogLoading, howProducts, problemProducts } = useLandingCatalog();
+
+// SEO
+const { setSeoMeta } = useSeoMeta();
+onMounted(() => {
+    setSeoMeta({
+        title: 'Giày Thể Thao Chính Hãng - Mua Sắm Online',
+        description: 'AeroStride - Cửa hàng giày thể thao chính hãng hàng đầu Việt Nam. Mua sắm giày Nike, Adidas, Puma với giá tốt nhất, giao hàng nhanh toàn quốc, đổi trả miễn phí 30 ngày.'
+    });
+});
 </script>
 
 <template>

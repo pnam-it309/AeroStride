@@ -14,6 +14,10 @@ import com.example.be.core.common.chat.local.service.AiLocalService;
 import lombok.extern.slf4j.Slf4j;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.ai.chat.client.ChatClient;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -54,6 +58,7 @@ public class AiChatServiceImpl implements AiChatService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final AiLocalService aiLocalService;
+    private final ChatClient chatClient;
 
     @Value("${google.gemini.api-key}")
     private String geminiApiKeyString;
@@ -225,12 +230,16 @@ public class AiChatServiceImpl implements AiChatService {
             SimpMessagingTemplate messagingTemplate,
             RestTemplateBuilder restTemplateBuilder,
             AiLocalService aiLocalService,
+            ObjectProvider<ChatClient.Builder> chatClientBuilderProvider,
             @Value("${google.gemini.timeout-ms:30000}") int timeoutMs
     ) {
         this.sanPhamService = sanPhamService;
         this.messageRepository = messageRepository;
         this.messagingTemplate = messagingTemplate;
         this.aiLocalService = aiLocalService;
+
+        ChatClient.Builder builder = chatClientBuilderProvider.getIfAvailable();
+        this.chatClient = (builder != null) ? builder.build() : null;
 
         // [Cải tiến 3] RestTemplate có Timeout → chống treo luồng @Async
         // Tăng mặc định lên 30s để hỗ trợ prompt phức tạp
@@ -266,6 +275,10 @@ public class AiChatServiceImpl implements AiChatService {
                 "Chính sách bảo hành và đổi trả",
                 "Xem địa chỉ showroom AeroStride"
             );
+            
+            String chatHistory = buildChatHistory(conversation.getId());
+            String prompt = buildPrompt(chatHistory, customerText, conversation);
+            
             try {
                 handoffResponse += "\n\n[[SUGGESTIONS:" + objectMapper.writeValueAsString(waitingSuggs) + "]]";
             } catch (Exception e) {
@@ -277,18 +290,36 @@ public class AiChatServiceImpl implements AiChatService {
         }
 
         // 1. Lấy danh sách sản phẩm thông minh dựa trên Index Database
-        List<ProductVariantResponse> activeVariants = getActiveVariantsIntelligent(customerText);
-        String productContext = buildProductContextFromVariants(activeVariants);
         String chatHistory = buildChatHistory(conversation.getId());
-        String prompt = buildPrompt(productContext, chatHistory, customerText);
+        String prompt = buildPrompt(chatHistory, customerText, conversation);
 
-        // --- Cố gắng gọi GOOGLE GEMINI ---
+        // --- Cố gắng gọi OPENAI CHATGPT (Primary Model có hỗ trợ Tool/Function) ---
+        String activeOpenAiKey = getOpenAiApiKey();
+        boolean hasOpenAiKey = activeOpenAiKey != null && !activeOpenAiKey.isBlank() && !"your_openai_api_key_here".equals(activeOpenAiKey);
+
+        if (hasOpenAiKey && isModelHealthy("OPENAI")) {
+            try {
+                log.info("Khởi động gọi OpenAI ChatGPT API (với Spring AI)...");
+                String apiUrl = String.format("%s/chat/completions", openAiBaseUrl);
+                String botResponseText = callOpenAiApi(apiUrl, prompt);
+                saveAndBroadcast(conversation, botResponseText);
+                log.info("OpenAI ChatGPT phản hồi thành công.");
+                return; // Xử lý xong, kết thúc!
+            } catch (Exception e) {
+                log.warn("OpenAI ChatGPT API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
+                markModelUnhealthy("OPENAI");
+            }
+        } else {
+            log.info("OpenAI ChatGPT API Key chưa cấu hình hoặc không khỏe mạnh. Bỏ qua OpenAI.");
+        }
+
+        // --- Cố gắng gọi GOOGLE GEMINI (Fallback thứ nhất) ---
         String activeGeminiKey = getApiKey();
         boolean hasGeminiKey = activeGeminiKey != null && !activeGeminiKey.isBlank() && !"your_gemini_api_key_here".equals(activeGeminiKey);
         
         if (hasGeminiKey && isModelHealthy("GEMINI")) {
             try {
-                log.info("Khởi động gọi Google Gemini API...");
+                log.info("Tự động chuyển đổi: Khởi động gọi Google Gemini API...");
                 String apiUrl = String.format("%s/models/%s:generateContent?key=%s",
                         geminiBaseUrl, geminiModel, activeGeminiKey);
                 String botResponseText = callGeminiApi(apiUrl, prompt);
@@ -301,26 +332,6 @@ public class AiChatServiceImpl implements AiChatService {
             }
         } else {
             log.info("Google Gemini API Key chưa cấu hình hoặc không khỏe mạnh. Bỏ qua Gemini.");
-        }
-
-        // --- Cố gắng gọi OPENAI CHATGPT (Fallback thứ nhất) ---
-        String activeOpenAiKey = getOpenAiApiKey();
-        boolean hasOpenAiKey = activeOpenAiKey != null && !activeOpenAiKey.isBlank() && !"your_openai_api_key_here".equals(activeOpenAiKey);
-
-        if (hasOpenAiKey && isModelHealthy("OPENAI")) {
-            try {
-                log.info("Tự động chuyển đổi: Khởi động gọi OpenAI ChatGPT API...");
-                String apiUrl = String.format("%s/chat/completions", openAiBaseUrl);
-                String botResponseText = callOpenAiApi(apiUrl, prompt);
-                saveAndBroadcast(conversation, botResponseText);
-                log.info("OpenAI ChatGPT phản hồi thành công.");
-                return; // Xử lý xong, kết thúc!
-            } catch (Exception e) {
-                log.warn("OpenAI ChatGPT API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
-                markModelUnhealthy("OPENAI");
-            }
-        } else {
-            log.info("OpenAI ChatGPT API Key chưa cấu hình hoặc không khỏe mạnh. Bỏ qua OpenAI.");
         }
 
         // --- Cố gắng gọi ANTHROPIC CLAUDE (Fallback thứ hai) ---
@@ -600,25 +611,23 @@ public class AiChatServiceImpl implements AiChatService {
     private String buildProductContextFromVariants(List<ProductVariantResponse> variants) {
         if (variants.isEmpty()) return "Hiện tại không có sản phẩm nào khả dụng.\n";
 
-        Map<String, List<ProductVariantResponse>> groupedProducts = variants.stream()
+        java.util.Map<String, List<ProductVariantResponse>> groupedProducts = variants.stream()
                 .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
 
         StringBuilder sb = new StringBuilder();
         sb.append("DANH SÁCH GIÀY GỢI Ý (AeroStride):\n");
 
         groupedProducts.forEach((tenSp, vars) -> {
-            // Nếu context quá dài (trên 15k ký tự), ngừng thêm để bảo vệ an toàn prompt
             if (sb.length() > 15000) return;
 
             sb.append(String.format("- %s (Thương hiệu: %s)\n", tenSp, vars.get(0).getTenThuongHieu()));
             String sizes = vars.stream().map(ProductVariantResponse::getGiaTriKichThuoc).distinct().sorted().collect(Collectors.joining(", "));
             String colors = vars.stream().map(ProductVariantResponse::getTenMauSac).distinct().collect(Collectors.joining(", "));
-            BigDecimal minPrice = vars.stream().map(ProductVariantResponse::getGiaBan).min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+            java.math.BigDecimal minPrice = vars.stream().map(ProductVariantResponse::getGiaBan).min(java.math.BigDecimal::compareTo).orElse(java.math.BigDecimal.ZERO);
 
             sb.append(String.format("  + Size: %s | Màu: %s | Giá từ: %s VNĐ\n", sizes, colors, minPrice));
 
-            // Khuyến mãi nếu có
-            vars.stream().filter(v -> v.getPhanTramGiam() != null && v.getPhanTramGiam().compareTo(BigDecimal.ZERO) > 0)
+            vars.stream().filter(v -> v.getPhanTramGiam() != null && v.getPhanTramGiam().compareTo(java.math.BigDecimal.ZERO) > 0)
                 .map(ProductVariantResponse::getPhanTramGiam).findFirst()
                 .ifPresent(km -> sb.append(String.format("  + ĐANG GIẢM GIÁ: %s%%\n", km)));
         });
@@ -633,6 +642,11 @@ public class AiChatServiceImpl implements AiChatService {
     private String buildChatHistory(String conversationId) {
         List<TinNhan> recentMessages =
                 messageRepository.findTop10ByCuocHoiThoai_IdOrderByNgayTaoDesc(conversationId);
+
+        // Giảm số lượng tin nhắn từ 10 xuống 5 để tối ưu hóa context size (giúp phản hồi nhanh hơn)
+        if (recentMessages.size() > 5) {
+            recentMessages = recentMessages.subList(0, 5);
+        }
 
         if (recentMessages.isEmpty()) {
             return "";
@@ -654,10 +668,24 @@ public class AiChatServiceImpl implements AiChatService {
     /**
      * Xây dựng prompt hoàn chỉnh cho Gemini API.
      */
-    private String buildPrompt(String productContext, String chatHistory, String customerText) {
+    private String buildPrompt(String chatHistory, String customerText, CuocHoiThoai conversation) {
+        StringBuilder userContext = new StringBuilder();
+        userContext.append("THÔNG TIN NGƯỜI DÙNG HIỆN TẠI (Sử dụng ID này nếu gọi MCP Tool lấy dữ liệu cá nhân):\n");
+        userContext.append("- Mã phiên (Session ID): ").append(conversation.getMaPhien() != null ? conversation.getMaPhien() : "Không có").append("\n");
+        if (conversation.getKhachHang() != null) {
+            com.example.be.entity.KhachHang kh = conversation.getKhachHang();
+            userContext.append("- ID Người dùng: ").append(kh.getId()).append("\n");
+            userContext.append("- Họ tên: ").append(kh.getTen() != null ? kh.getTen() : "Không rõ").append("\n");
+            userContext.append("- Số điện thoại: ").append(kh.getSdt() != null ? kh.getSdt() : "Không rõ").append("\n");
+            userContext.append("- Email: ").append(kh.getEmail() != null ? kh.getEmail() : "Không rõ").append("\n");
+        } else {
+            userContext.append("- Trạng thái: Khách vãng lai (Chưa đăng nhập)\n");
+        }
+        userContext.append("\n");
+
         return String.format(
                 AiChatPrompts.MAIN_SYSTEM_PROMPT,
-                productContext, AiChatPrompts.STORE_POLICIES_CONTEXT, chatHistory, customerText
+                userContext.toString() + chatHistory, customerText
         );
     }
 
@@ -741,6 +769,15 @@ public class AiChatServiceImpl implements AiChatService {
      */
     @SuppressWarnings("unchecked")
     private String callOpenAiApi(String apiUrl, String prompt) {
+        if (this.chatClient != null) {
+            log.info("Sử dụng Spring AI ChatClient (với Tool searchProducts) để gọi OpenAI...");
+            return chatClient.prompt()
+                    .user(prompt)
+                    .tools("searchProducts", "getStorePolicies")
+                    .call()
+                    .content();
+        }
+
         Map<String, Object> requestBody = new HashMap<>();
         requestBody.put("model", openAiModel);
 
