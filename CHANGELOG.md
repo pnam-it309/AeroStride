@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/pnam-it309/AeroStride/compare/v1.16.0...v1.17.0) (2026-05-30)
+
+
+### Features
+
+* **BE:** add dynamic sitemap generator for products ([170814e](https://github.com/pnam-it309/AeroStride/commit/170814e2094649e59627e67a334bd0fbd997509d))
+
 # [1.16.0](https://github.com/pnam-it309/AeroStride/compare/v1.15.1...v1.16.0) (2026-05-30)
 
 
