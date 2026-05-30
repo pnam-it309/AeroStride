@@ -1,3 +1,10 @@
+## [1.17.1](https://github.com/pnam-it309/AeroStride/compare/v1.17.0...v1.17.1) (2026-05-30)
+
+
+### Bug Fixes
+
+* **BE:** migrate from dependency-management plugin to gradle native BOM to fix CI build on gradle 9.3.1 ([bf040c9](https://github.com/pnam-it309/AeroStride/commit/bf040c91e84a17ee95eff13f366995c3427ed44a))
+
 # [1.17.0](https://github.com/pnam-it309/AeroStride/compare/v1.16.0...v1.17.0) (2026-05-30)
 
 
