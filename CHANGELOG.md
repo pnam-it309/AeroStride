@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/pnam-it309/AeroStride/compare/v1.15.1...v1.16.0) (2026-05-30)
+
+
+### Features
+
+* **SEO:** implement basic SEO with meta tags, robots.txt and sitemap ([5aeb316](https://github.com/pnam-it309/AeroStride/commit/5aeb31645710d3112b7be3594b61445e88fc45ef))
+
 ## [1.15.1](https://github.com/pnam-it309/AeroStride/compare/v1.15.0...v1.15.1) (2026-05-29)
 
 
