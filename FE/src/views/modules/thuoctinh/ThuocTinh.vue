@@ -224,6 +224,46 @@ const loadItems = async () => {
 };
 
 const confirmSaveItem = () => {
+    if (selectedTab.value === 'sizes') {
+        const rawInput = itemForm.value.ten;
+        if (!rawInput || !rawInput.trim()) {
+            addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập tên kích thước', color: 'error' });
+            return;
+        }
+
+        let s = rawInput.replace(/<[^>]*>?/gm, '');
+        s = s.replace(/[^a-zA-Z0-9.,\-\s]/g, '');
+        s = s.replace(/(?:^|\s)(?:kích thước|size|sz)\s*/gi, '');
+        s = s.replace(/(?:^|\s)s\s*(?=\d)/gi, '');
+        const normalizedSize = s.replace(/\s+/g, ' ').trim();
+        
+        if (!normalizedSize) {
+            addNotification({ title: 'Lỗi', subtitle: 'Kích thước không hợp lệ', color: 'error' });
+            return;
+        }
+
+        const parsedStr = normalizedSize.replace(',', '.');
+        const sizeNumber = Number(parsedStr);
+
+        if (isNaN(sizeNumber)) {
+            addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải là số (VD: 39 hoặc 39.5)', color: 'error' });
+            return;
+        }
+
+        if (sizeNumber < 15 || sizeNumber > 50) {
+            addNotification({ title: 'Lỗi', subtitle: 'Kích thước giày phải từ 15 đến 50', color: 'error' });
+            return;
+        }
+
+        if (sizeNumber % 0.5 !== 0) {
+            addNotification({ title: 'Lỗi', subtitle: 'Phần thập phân chỉ được là .5 (VD: 39.5, 40.5)', color: 'error' });
+            return;
+        }
+
+        itemForm.value.ten = `Size ${sizeNumber}`;
+        itemForm.value.giaTriKichThuoc = sizeNumber.toString();
+    }
+
     const modeText = isEditMode.value ? 'CẬP NHẬT' : 'THÊM MỚI';
     setConfirm({
         title: `Xác nhận ${modeText.toLowerCase()}`,

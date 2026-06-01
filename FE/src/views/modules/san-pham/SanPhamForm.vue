@@ -196,19 +196,30 @@ const handleAddCustomSize = async () => {
         return;
     }
 
-    // Lỗi chứa cả chữ và số (ví dụ: 43zzzzz, size43a)
-    const hasLetters = /[a-zA-Z]/.test(normalizedSize);
-    const hasNumbers = /[0-9]/.test(normalizedSize);
-    if (hasLetters && hasNumbers) {
-        addNotification({ title: 'Lỗi', subtitle: 'Kích thước không hợp lệ (không gõ trộn lẫn chữ và số)', color: 'error' });
+    // Xử lý dấu phẩy thành dấu chấm cho số thập phân
+    const parsedStr = normalizedSize.replace(',', '.');
+    const sizeNumber = Number(parsedStr);
+
+    // 1. Phải là số
+    if (isNaN(sizeNumber)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải là số (VD: 39 hoặc 39.5)', color: 'error' });
         return;
     }
 
-    // 4. Lỗi giới hạn độ dài (giới hạn xuống 5 ký tự để tránh 4300000)
-    if (normalizedSize.length > 5) {
-        addNotification({ title: 'Lỗi', subtitle: 'Kích thước quá dài (tối đa 5 ký tự)', color: 'error' });
+    // 2. Range từ 15 đến 50
+    if (sizeNumber < 15 || sizeNumber > 50) {
+        addNotification({ title: 'Lỗi', subtitle: 'Kích thước giày phải từ 15 đến 50', color: 'error' });
         return;
     }
+
+    // 3. Bước nhảy là 0.5
+    if (sizeNumber % 0.5 !== 0) {
+        addNotification({ title: 'Lỗi', subtitle: 'Phần thập phân chỉ được là .5 (VD: 39.5, 40.5)', color: 'error' });
+        return;
+    }
+
+    // 4. Định dạng lại final (ví dụ 40.0 -> 40)
+    const finalNumericSize = sizeNumber.toString();
 
     // 2. Lỗi trùng lặp: Kiểm tra trùng lặp không phân biệt hoa thường
     const existingSize = sizes.value.find(s => cleanSizeString(s.ten).toLowerCase() === normalizedSize.toLowerCase());
@@ -228,7 +239,7 @@ const handleAddCustomSize = async () => {
 
     // 3. Nếu hợp lệ và chưa tồn tại -> Lưu mới
     try {
-        const finalSizeName = `Size ${normalizedSize.toUpperCase()}`;
+        const finalSizeName = `Size ${finalNumericSize}`;
         const newSize = await dichVuKichThuoc.taoKichThuoc({ ten: finalSizeName });
         sizes.value = [newSize, ...sizes.value];
         selectedSizes.value.push(newSize.id);
@@ -391,7 +402,6 @@ const totalVariantStock = computed(() => variantItems.value.reduce(
     0
 ));
 
-// Grouping variants by color for better UI organization
 const variantsByColor = computed(() => {
     const groups = {};
     variantItems.value.forEach(item => {
@@ -401,6 +411,58 @@ const variantsByColor = computed(() => {
         groups[item.idMauSac].push(item);
     });
     return groups;
+});
+
+const activeColorTab = ref('ALL');
+
+const quickApplyValues = reactive({
+    giaBan: '',
+    giaNhap: '',
+    soLuong: ''
+});
+
+const handleQuickApply = () => {
+    const { giaBan, giaNhap, soLuong } = quickApplyValues;
+    if (giaBan === '' && giaNhap === '' && soLuong === '') return;
+
+    variantItems.value = variantItems.value.map(item => {
+        if (activeColorTab.value === 'ALL' || String(item.idMauSac) === String(activeColorTab.value)) {
+            return {
+                ...item,
+                giaBan: giaBan !== '' ? Number(giaBan) : item.giaBan,
+                giaNhap: giaNhap !== '' ? Number(giaNhap) : item.giaNhap,
+                soLuong: soLuong !== '' ? Number(soLuong) : item.soLuong
+            };
+        }
+        return item;
+    });
+
+    quickApplyValues.giaBan = '';
+    quickApplyValues.giaNhap = '';
+    quickApplyValues.soLuong = '';
+    addNotification({ title: 'Thành công', subtitle: 'Đã áp dụng nhanh giá trị', color: 'success' });
+};
+
+const visibleVariantItems = computed(() => {
+    if (activeColorTab.value === 'ALL') {
+        return variantItems.value;
+    }
+    return variantItems.value.filter(item => String(item.idMauSac) === String(activeColorTab.value));
+});
+
+const createVariantPage = ref(1);
+const createVariantPageSize = ref(5);
+const createVariantTotalPages = computed(() => Math.max(Math.ceil(visibleVariantItems.value.length / createVariantPageSize.value), 1));
+const paginatedVisibleVariantItems = computed(() => {
+    const start = (createVariantPage.value - 1) * createVariantPageSize.value;
+    return visibleVariantItems.value.slice(start, start + createVariantPageSize.value);
+});
+
+watch(activeColorTab, () => {
+    createVariantPage.value = 1;
+});
+watch(createVariantPageSize, () => {
+    createVariantPage.value = 1;
 });
 
 const bulkEditModal = reactive({
@@ -2079,87 +2141,121 @@ const handleSave = async () => {
                                 </div>
                             </div>
 
-                            <div v-if="variantItems.length > 0" class="variants-grouped-container">
-                                <v-card v-for="(items, colorId) in variantsByColor" :key="colorId" 
-                                    class="color-group-card mb-6">
-                                    <div class="color-group-header px-6 py-4 bg-slate-50 d-flex align-center justify-space-between border-b">
-                                        <div class="d-flex align-center">
-                                            <v-avatar size="24" :color="getVariantColorHex(colorId)" class="mr-3 border" />
-                                            <span class="text-subtitle-2 font-weight-bold text-slate-800">
-                                                Màu sắc: {{ getVariantColorLabel(colorId) }}
-                                            </span>
-                                            <span class="text-caption text-slate-500 ml-3">
-                                                ({{ items.length }} kích thước)
-                                            </span>
+                            <div v-if="variantItems.length > 0" class="variants-tab-container mb-6">
+                                <v-row no-gutters class="border rounded-lg overflow-hidden" style="height: 600px;">
+                                    <!-- Sidebar Màu sắc -->
+                                    <v-col cols="12" md="3" class="bg-slate-50 d-flex flex-column h-100" style="border-right: 1px solid #cbd5e1;">
+                                        <div class="pa-2 flex-shrink-0">
+                                            <v-list class="bg-transparent pa-0" lines="one">
+                                                <v-list-item
+                                                    :class="['rounded-lg transition-all', activeColorTab === 'ALL' ? 'bg-white elevation-2 text-primary font-weight-bold' : 'text-slate-700 hover-bg-slate-100']"
+                                                    @click="activeColorTab = 'ALL'">
+                                                    <template v-slot:prepend>
+                                                        <v-icon icon="mdi-format-list-bulleted" :color="activeColorTab === 'ALL' ? 'primary' : 'slate-500'" class="mr-3" />
+                                                    </template>
+                                                    <v-list-item-title :class="activeColorTab === 'ALL' ? 'font-weight-bold' : 'font-weight-medium'">Tất cả màu</v-list-item-title>
+                                                </v-list-item>
+                                            </v-list>
+                                            <v-divider class="mt-4 mb-2 opacity-50" color="slate-300"></v-divider>
                                         </div>
-                                        <div class="d-flex align-center gap-2">
-                                            <v-btn color="primary" variant="flat" size="small"
-                                                class="text-none font-weight-bold rounded-lg px-3"
-                                                style="color: white !important;" @click="openBulkEdit(colorId)">
-                                                <v-icon icon="mdi-flash-outline" size="16" class="mr-1" />
-                                                Thêm nhanh cho màu này
-                                            </v-btn>
-                                        </div>
-                                    </div>
 
-                                    <v-row no-gutters>
-                                        <v-col cols="12" md="3" class="border-r pa-6 d-flex flex-column align-center justify-center bg-slate-50/50">
-                                            <div class="field-label mb-3 w-100 text-center">Hình ảnh theo màu</div>
-                                            <div class="color-image-uploader" @click="openColorImagePicker(colorId)">
-                                                <v-img v-if="getColorUploadEntry(colorId).url" :src="getColorUploadEntry(colorId).url" 
-                                                    cover class="rounded-lg h-100" />
-                                                <div v-else class="uploader-placeholder">
-                                                    <v-icon icon="mdi-camera-plus-outline" size="32" color="slate-300" />
-                                                    <span class="text-caption text-slate-400 mt-2">Tải ảnh lên</span>
-                                                </div>
-                                                <input :ref="(el) => setColorFileInputRef(colorId, el)"
-                                                    type="file" accept="image/*" class="d-none"
-                                                    @change="handleColorImageUpload(colorId, $event)" />
+                                        <div class="flex-grow-1 px-2 pb-2" style="overflow-y: auto; min-height: 0;">
+                                            <v-list class="bg-transparent pa-0" lines="one">
+
+                                            <v-list-item v-for="(items, colorId) in variantsByColor" :key="colorId"
+                                                :class="['rounded-lg mb-2 transition-all', activeColorTab === String(colorId) ? 'bg-white elevation-2 text-primary' : 'text-slate-700 hover-bg-slate-100']"
+                                                @click="activeColorTab = String(colorId)">
+                                                <template v-slot:prepend>
+                                                    <div class="mr-3" :style="{ backgroundColor: getVariantColorHex(colorId), width: '16px', height: '16px', borderRadius: '50%', border: '1px solid #94a3b8' }"></div>
+                                                </template>
+                                                <v-list-item-title :class="activeColorTab === String(colorId) ? 'font-weight-bold' : 'font-weight-medium'">{{ getVariantColorLabel(colorId) }}</v-list-item-title>
+                                                <template v-slot:append>
+                                                    <v-badge :content="String(items.length)" :color="activeColorTab === String(colorId) ? 'primary' : 'slate-200'" :text-color="activeColorTab === String(colorId) ? 'white' : 'slate-700'" inline />
+                                                </template>
+                                            </v-list-item>
+                                            </v-list>
+                                        </div>
+                                    </v-col>
+
+                                    <!-- Nội dung bảng biến thể -->
+                                    <v-col cols="12" md="9" class="bg-white d-flex flex-column h-100">
+                                        <div class="pa-4 border-b d-flex align-center justify-space-between flex-shrink-0">
+                                            <div class="text-subtitle-1 font-weight-bold text-slate-800">
+                                                {{ activeColorTab === 'ALL' ? 'Đang xem tất cả biến thể' : 'Đang xem màu: ' + getVariantColorLabel(activeColorTab) }}
                                             </div>
-                                      
-                                        </v-col>
-                                        <v-col cols="12" md="9">
-                                            <v-table density="comfortable" class="variant-inner-table">
+                                            <div class="d-flex align-center gap-2" v-if="activeColorTab !== 'ALL'">
+                                                <span class="text-caption font-weight-bold text-slate-500 mr-2 d-none d-sm-block">ÁP DỤNG NHANH:</span>
+                                                <v-text-field v-model="quickApplyValues.giaBan" placeholder="Giá bán" variant="outlined" density="compact" hide-details class="custom-input-dense" style="width: 120px" type="number" />
+                                                <v-text-field v-model="quickApplyValues.giaNhap" placeholder="Giá nhập" variant="outlined" density="compact" hide-details class="custom-input-dense" style="width: 120px" type="number" />
+                                                <v-text-field v-model="quickApplyValues.soLuong" placeholder="Số lượng" variant="outlined" density="compact" hide-details class="custom-input-dense" style="width: 100px" type="number" />
+                                                <v-btn color="primary" variant="flat" size="small" class="text-none rounded font-weight-bold" style="color: white !important" height="40" @click="handleQuickApply">
+                                                    <v-icon icon="mdi-flash" size="16" class="mr-1" /> Cập nhật
+                                                </v-btn>
+                                            </div>
+                                        </div>
+
+                                        <div v-if="activeColorTab !== 'ALL'" class="pa-4 bg-slate-50 d-flex align-center justify-center flex-shrink-0" style="border-bottom: 2px solid #cbd5e1; box-shadow: 0 4px 6px -4px rgba(0,0,0,0.05); z-index: 10;">
+                                            <div class="d-flex flex-column align-center">
+                                                <div class="text-caption font-weight-bold text-slate-600 mb-2">HÌNH ẢNH ĐẠI DIỆN CHO MÀU NÀY</div>
+                                                <div class="color-image-uploader" @click="openColorImagePicker(activeColorTab)" style="width: 120px; height: 120px; border-radius: 8px; border: 2px dashed #cbd5e1; cursor: pointer; overflow: hidden; background: white">
+                                                    <v-img v-if="getColorUploadEntry(activeColorTab).url" :src="getColorUploadEntry(activeColorTab).url" cover class="w-100 h-100" />
+                                                    <div v-else class="w-100 h-100 d-flex flex-column align-center justify-center">
+                                                        <v-icon icon="mdi-camera-plus" color="slate-400" size="28" />
+                                                        <span class="text-caption text-slate-400 mt-1">Tải ảnh lên</span>
+                                                    </div>
+                                                    <input :ref="(el) => setColorFileInputRef(activeColorTab, el)" type="file" accept="image/*" class="d-none" @change="handleColorImageUpload(activeColorTab, $event)" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex-grow-1" style="min-height: 0;">
+                                            <v-table density="comfortable" class="variant-inner-table h-100" fixed-header>
                                                 <thead class="bg-slate-50">
                                                     <tr>
-                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 150px">Kích thước</th>
-                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 120px">Số lượng</th>
-                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 180px">Giá nhập</th>
-                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 180px">Giá bán (VNĐ)</th>
-                                                        <th class="text-center font-weight-bold text-slate-600" style="width: 80px">Xóa</th>
+                                                        <th class="text-left font-weight-bold text-slate-600">Thuộc tính (Màu/Size)</th>
+                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 140px">Giá bán (đ)</th>
+                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 140px">Giá nhập (đ)</th>
+                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 110px">Số lượng sản phẩm</th>
+                                                        <th class="text-center font-weight-bold text-slate-600" style="width: 60px">Xóa</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <tr v-for="variant in items" :key="variant.idKichThuoc">
+                                                    <tr v-for="variant in paginatedVisibleVariantItems" :key="variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc">
                                                         <td class="font-weight-medium text-slate-700">
-                                                            Size {{ getVariantSizeLabel(variant.idKichThuoc) }}
+                                                            <div class="d-flex align-center">
+                                                                <div class="mr-2" :style="{ backgroundColor: getVariantColorHex(variant.idMauSac), width: '14px', height: '14px', borderRadius: '50%', border: '1px solid #94a3b8' }"></div>
+                                                                <div>
+                                                                    <div class="text-body-2 font-weight-bold">{{ getVariantSizeLabel(variant.idKichThuoc) }}</div>
+                                                                    <div class="text-caption text-slate-500">{{ getVariantColorLabel(variant.idMauSac) }}</div>
+                                                                </div>
+                                                            </div>
                                                         </td>
                                                         <td>
-                                                            <v-text-field v-model="variant.soLuong" type="number" hide-details 
-                                                                variant="outlined" density="compact" class="custom-input-dense" />
+                                                            <FormattedNumberField v-model="variant.giaBan" hide-details variant="outlined" density="compact" class="custom-input-dense" />
                                                         </td>
                                                         <td>
-                                                            <FormattedNumberField v-model="variant.giaNhap" hide-details 
-                                                                variant="outlined" density="compact" class="custom-input-dense" />
+                                                            <FormattedNumberField v-model="variant.giaNhap" hide-details variant="outlined" density="compact" class="custom-input-dense" />
                                                         </td>
                                                         <td>
-                                                            <FormattedNumberField v-model="variant.giaBan" hide-details 
-                                                                variant="outlined" density="compact" class="custom-input-dense" />
+                                                            <v-text-field v-model="variant.soLuong" type="number" hide-details variant="outlined" density="compact" class="custom-input-dense" />
                                                         </td>
                                                         <td class="text-center">
-                                                            <v-btn variant="text" color="error" size="small"
-                                                                class="action-icon-btn"
-                                                                @click="removeDraftVariantByObject(variant)">
+                                                            <v-btn variant="text" color="error" size="small" class="action-icon-btn" @click="removeDraftVariantByObject(variant)">
                                                                 <TrashIcon size="18" />
-                                                                <v-tooltip activator="parent" location="top" text="Xóa biến thể này" />
                                                             </v-btn>
                                                         </td>
                                                     </tr>
                                                 </tbody>
                                             </v-table>
-                                        </v-col>
-                                    </v-row>
-                                </v-card>
+                                        </div>
+                                        <div class="flex-shrink-0 border-t bg-white">
+                                            <AdminPagination v-model="createVariantPage" :page-size="createVariantPageSize"
+                                                @update:pageSize="createVariantPageSize = $event" :total-pages="createVariantTotalPages"
+                                                :total-elements="visibleVariantItems.length"
+                                                :current-size="paginatedVisibleVariantItems.length" />
+                                        </div>
+                                    </v-col>
+                                </v-row>
                             </div>
 
                             <div v-else class="variant-empty-state">
