@@ -64,35 +64,68 @@ public class AdminKhachHangRepositoryCustomImpl implements AdminKhachHangReposit
 
     @Override
     public Page<AdminKhachHangResponse> filterAll(
-            String keyword,
-            TrangThai trangThai,
-            Boolean gioiTinh,
+            com.example.be.core.admin.khachhang.model.request.AdminKhachHangRequest request,
             Pageable pageable
     ) {
         StringBuilder where = new StringBuilder(" WHERE 1=1");
         StringBuilder countJpql = new StringBuilder("SELECT COUNT(kh) FROM KhachHang kh WHERE 1=1");
         Map<String, Object> params = new HashMap<>();
 
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            String filterKeyword = "%" + keyword.toLowerCase().trim() + "%";
+        if (request.getKeyword() != null && !request.getKeyword().trim().isEmpty()) {
+            String filterKeyword = "%" + request.getKeyword().toLowerCase().trim() + "%";
             String condition = " AND (LOWER(kh.ten) LIKE :keyword OR LOWER(kh.email) LIKE :keyword OR kh.sdt LIKE :keyword OR LOWER(kh.ma) LIKE :keyword)";
             where.append(condition);
             countJpql.append(condition);
             params.put("keyword", filterKeyword);
         }
 
-        if (trangThai != null) {
+        if (request.getTrangThai() != null) {
             String condition = " AND kh.trangThai = :trangThai";
             where.append(condition);
             countJpql.append(condition);
-            params.put("trangThai", trangThai);
+            params.put("trangThai", request.getTrangThai());
         }
 
-        if (gioiTinh != null) {
+        if (request.getGioiTinh() != null) {
             String condition = " AND kh.gioiTinh = :gioiTinh";
             where.append(condition);
             countJpql.append(condition);
-            params.put("gioiTinh", gioiTinh);
+            params.put("gioiTinh", request.getGioiTinh());
+        }
+        
+        if (request.getSdtSearch() != null && !request.getSdtSearch().trim().isEmpty()) {
+            String condition = " AND kh.sdt LIKE :sdtSearch";
+            where.append(condition);
+            countJpql.append(condition);
+            params.put("sdtSearch", "%" + request.getSdtSearch().trim() + "%");
+        }
+        
+        if (request.getMinTongChiTieu() != null) {
+            String condition = " AND (SELECT COALESCE(SUM(hd.tongTienSauGiam), 0.0) FROM HoaDon hd WHERE hd.khachHang = kh AND hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_THANH) >= :minTongChiTieu";
+            where.append(condition);
+            countJpql.append(condition);
+            params.put("minTongChiTieu", request.getMinTongChiTieu());
+        }
+
+        if (request.getMaxTongChiTieu() != null) {
+            String condition = " AND (SELECT COALESCE(SUM(hd.tongTienSauGiam), 0.0) FROM HoaDon hd WHERE hd.khachHang = kh AND hd.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_THANH) <= :maxTongChiTieu";
+            where.append(condition);
+            countJpql.append(condition);
+            params.put("maxTongChiTieu", request.getMaxTongChiTieu());
+        }
+        
+        if (request.getMinNgayDonHang() != null) {
+            String condition = " AND (SELECT MAX(hd.ngayTao) FROM HoaDon hd WHERE hd.khachHang = kh) >= :minNgayDonHang";
+            where.append(condition);
+            countJpql.append(condition);
+            params.put("minNgayDonHang", request.getMinNgayDonHang().atStartOfDay());
+        }
+        
+        if (request.getMaxNgayDonHang() != null) {
+            String condition = " AND (SELECT MAX(hd.ngayTao) FROM HoaDon hd WHERE hd.khachHang = kh) <= :maxNgayDonHang";
+            where.append(condition);
+            countJpql.append(condition);
+            params.put("maxNgayDonHang", request.getMaxNgayDonHang().plusDays(1).atStartOfDay().minusNanos(1));
         }
 
         // Build main query from shared fragments

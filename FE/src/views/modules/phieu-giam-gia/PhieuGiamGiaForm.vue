@@ -246,8 +246,8 @@ const confirmDialog = ref({
 const handleSave = () => {
     confirmDialog.value = {
         show: true,
-        title: isEditMode.value ? 'Cập nhật Voucher' : 'Thiết lập Voucher mới',
-        message: `Xác nhận lưu thông tin Voucher [${form.value.ten || 'Không tên'}]?`,
+        title: isEditMode.value ? 'Cập nhật phiếu giảm giá' : 'Thiết lập phiếu giảm giá mới',
+        message: `Xác nhận lưu thông tin phiếu giảm giá [${form.value.ten || 'Không tên'}]?`,
         color: 'primary',
         action: async () => {
             confirmDialog.value.loading = true;
@@ -265,10 +265,10 @@ const handleSave = () => {
 
                 if (isEditMode.value) {
                     await dichVuPhieuGiamGia.capNhatPhieuGiamGia(route.params.id, payload);
-                    addNotification({ title: 'Thành công', subtitle: 'Cấu hình voucher hoàn tất', color: 'success' });
+                    addNotification({ title: 'Thành công', subtitle: 'Cấu hình phiếu giảm giá hoàn tất', color: 'success' });
                 } else {
                     await dichVuPhieuGiamGia.taoPhieuGiamGia(payload);
-                    addNotification({ title: 'Thành công', subtitle: 'Đã tạo voucher mới', color: 'success' });
+                    addNotification({ title: 'Thành công', subtitle: 'Đã tạo phiếu giảm giá mới', color: 'success' });
                 }
                 confirmDialog.value.show = false;
                 router.push(PATH.PHIEU_GIAM_GIA);
@@ -312,7 +312,7 @@ onMounted(init);
         <v-row v-if="loading">
             <v-col cols="12" class="text-center py-16">
                 <v-progress-circular indeterminate color="primary" size="64" />
-                <div class="mt-4 text-subtitle-1 font-weight-bold text-slate-500">Đang tải cấu hình voucher...</div>
+                <div class="mt-4 text-subtitle-1 font-weight-bold text-slate-500">Đang tải cấu hình phiếu giảm giá...</div>
             </v-col>
         </v-row>
 
@@ -333,7 +333,7 @@ onMounted(init);
                             <v-col cols="12" md="8">
                                 <div class="field-label">Tên giảm giá </div>
                                 <v-text-field v-model="form.ten" :readonly="isViewOnly"
-                                    placeholder="Ví dụ: Voucher Mừng Sinh Nhật..." variant="outlined" density="compact"
+                                    placeholder="Ví dụ: Phiếu giảm giá Mừng Sinh Nhật..." variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
 

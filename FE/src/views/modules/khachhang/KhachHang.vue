@@ -96,15 +96,25 @@ const backToList = () => {
 };
 
 const listTab = useAdminTable(dichVuKhachHang.layKhachHangPhanTrang, { search: '', gioiTinh: null, trangThai: null });
-const statsTab = useAdminTable(dichVuKhachHang.layKhachHangPhanTrang, { search: '', gioiTinh: null, trangThai: null });
-
-// Sync filters from listTab to statsTab
-watch(
-    () => listTab.filters.value,
-    (newVal) => {
-        statsTab.filters.value = { ...newVal };
+const statsTab = useAdminTable(
+    async (params) => {
+        const payload = { ...params };
+        if (payload.khoangChiTieu && payload.khoangChiTieu.length === 2) {
+            payload.minTongChiTieu = payload.khoangChiTieu[0];
+            payload.maxTongChiTieu = payload.khoangChiTieu[1];
+        }
+        delete payload.khoangChiTieu;
+        return dichVuKhachHang.layKhachHangPhanTrang(payload);
     },
-    { deep: true }
+    { 
+        search: '', 
+        gioiTinh: null, 
+        trangThai: null,
+        sdtSearch: '',
+        khoangChiTieu: [0, 50000000],
+        minNgayDonHang: null,
+        maxNgayDonHang: null
+    }
 );
 
 // Automatic fetch on tab switch if data is empty
@@ -119,7 +129,8 @@ watch(activeTab, (newTab) => {
 const allCustomers = computed(() => (activeTab.value === 'danh-sach' ? listTab.items.value : statsTab.items.value));
 const loading = computed(() => (activeTab.value === 'danh-sach' ? listTab.loading.value : statsTab.loading.value));
 const pagination = computed(() => (activeTab.value === 'danh-sach' ? listTab.pagination.value : statsTab.pagination.value));
-const filters = listTab.filters;
+const listFilters = listTab.filters;
+const statsFilters = statsTab.filters;
 
 const loadCustomers = () => {
     if (activeTab.value === 'danh-sach') {
@@ -625,29 +636,81 @@ const formatAddressFull = (addr) => {
             <!-- Filter -->
             <div class="filter-shell">
                 <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-                    <!-- Tìm kiếm -->
-                    <v-col cols="12" md="4" class="filter-cell">
-                        <div class="filter-field-label">Tìm kiếm</div>
-                        <v-text-field v-model="filters.search" placeholder="Tên, SĐT, Email, Mã..." variant="outlined"
-                            density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
-                            @input="handleLocalFilterChange" />
-                    </v-col>
+                    <!-- ===== BỘ LỌC TAB 1: DANH SÁCH ===== -->
+                    <template v-if="activeTab === 'danh-sach'">
+                        <!-- Tìm kiếm -->
+                        <v-col cols="12" md="4" class="filter-cell">
+                            <div class="filter-field-label">Tìm kiếm</div>
+                            <v-text-field v-model="listFilters.search" placeholder="Tên, SĐT, Email, Mã..." variant="outlined"
+                                density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
+                                @input="handleLocalFilterChange" />
+                        </v-col>
 
-                    <!-- Giới tính -->
-                    <v-col cols="12" md="3" class="filter-cell">
-                        <div class="filter-field-label">Giới tính</div>
-                        <v-select v-model="filters.gioiTinh" :items="GIOI_TINH_FILTER_OPTIONS" variant="outlined"
-                            density="compact" hide-details class="compact-input"
-                            @update:model-value="handleLocalFilterChange" />
-                    </v-col>
+                        <!-- Giới tính -->
+                        <v-col cols="12" md="3" class="filter-cell">
+                            <div class="filter-field-label">Giới tính</div>
+                            <v-select v-model="listFilters.gioiTinh" :items="GIOI_TINH_FILTER_OPTIONS" variant="outlined"
+                                density="compact" hide-details class="compact-input"
+                                @update:model-value="handleLocalFilterChange" />
+                        </v-col>
 
-                    <!-- Trạng thái -->
-                    <v-col cols="12" md="3" class="filter-cell">
-                        <div class="filter-field-label">Trạng thái</div>
-                        <v-select v-model="filters.trangThai" :items="TRANG_THAI_FILTER_OPTIONS" variant="outlined"
-                            density="compact" hide-details class="compact-input"
-                            @update:model-value="handleLocalFilterChange" />
-                    </v-col>
+                        <!-- Trạng thái -->
+                        <v-col cols="12" md="3" class="filter-cell">
+                            <div class="filter-field-label">Trạng thái</div>
+                            <v-select v-model="listFilters.trangThai" :items="TRANG_THAI_FILTER_OPTIONS" variant="outlined"
+                                density="compact" hide-details class="compact-input"
+                                @update:model-value="handleLocalFilterChange" />
+                        </v-col>
+                    </template>
+
+                    <!-- ===== BỘ LỌC TAB 2: TỔNG ĐƠN MUA HÀNG ===== -->
+                    <template v-else>
+                        <!-- Tìm kiếm cơ bản -->
+                        <v-col cols="12" md="2" class="filter-cell">
+                            <div class="filter-field-label">Tìm kiếm chung</div>
+                            <v-text-field v-model="statsFilters.search" placeholder="Tên, Email, Mã..." variant="outlined"
+                                density="compact" hide-details class="compact-input"
+                                @input="handleLocalFilterChange" />
+                        </v-col>
+
+                        <!-- Tìm kiếm SĐT -->
+                        <v-col cols="12" md="2" class="filter-cell">
+                            <div class="filter-field-label">Số điện thoại</div>
+                            <v-text-field v-model="statsFilters.sdtSearch" placeholder="Nhập SĐT..." variant="outlined"
+                                density="compact" hide-details class="compact-input"
+                                @input="handleLocalFilterChange" />
+                        </v-col>
+
+                        <!-- Khoảng tiền đã chi -->
+                        <v-col cols="12" md="4" class="filter-cell">
+                            <div class="d-flex align-center justify-space-between mb-1">
+                                <div class="filter-field-label mb-0">Khoảng tiền đã chi</div>
+                                <span class="filter-range-value text-caption text-primary font-weight-bold">
+                                    {{ formatCurrency(statsFilters.khoangChiTieu[0]) }} – {{ formatCurrency(statsFilters.khoangChiTieu[1]) }}
+                                </span>
+                            </div>
+                            <v-range-slider v-model="statsFilters.khoangChiTieu"
+                                :max="50000000" :min="0" :step="100000" hide-details
+                                color="primary" track-color="#e2e8f0" track-size="3" thumb-size="14"
+                                class="blue-range-slider" @end="handleLocalFilterChange" />
+                        </v-col>
+                        
+                        <!-- Ngày đặt hàng từ -->
+                        <v-col cols="12" md="2" class="filter-cell">
+                            <div class="filter-field-label">Đơn mới nhất (Từ)</div>
+                            <v-text-field v-model="statsFilters.minNgayDonHang" type="date" variant="outlined"
+                                density="compact" hide-details class="compact-input"
+                                @input="handleLocalFilterChange" />
+                        </v-col>
+
+                        <!-- Ngày đặt hàng đến -->
+                        <v-col cols="12" md="2" class="filter-cell">
+                            <div class="filter-field-label">Đơn mới nhất (Đến)</div>
+                            <v-text-field v-model="statsFilters.maxNgayDonHang" type="date" variant="outlined"
+                                density="compact" hide-details class="compact-input"
+                                @input="handleLocalFilterChange" />
+                        </v-col>
+                    </template>
                 </AdminFilter>
             </div>
 
@@ -746,6 +809,9 @@ const formatAddressFull = (addr) => {
                         </td>
                         <td class="data-cell text-left px-4">
                             <div class="text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
+                        </td>
+                        <td class="data-cell text-center">
+                            <div class="text-truncate" :title="item.sdt">{{ item.sdt || '-' }}</div>
                         </td>
                         <td class="data-cell text-center">
                             {{ item.tongDonHang || 0 }}

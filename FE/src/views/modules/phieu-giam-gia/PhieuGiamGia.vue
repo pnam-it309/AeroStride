@@ -26,11 +26,11 @@ const { isRefreshing, handleRefresh: executeRefresh } = useRefreshHandler();
 const fromDateRef = ref(null);
 
 const {
-    items: vouchers,
+    items: danhSachPhieuGiamGia,
     loading,
     pagination,
     filters,
-    loadData: loadVouchers,
+    loadData: taiDanhSachPhieuGiamGia,
     handleFilter: handleSearch,
     handleReset
 } = useAdminTable(dichVuPhieuGiamGia.layPhieuGiamGiaPhanTrang, {
@@ -93,7 +93,7 @@ const confirmToggleStatus = (item) => {
                     color: 'success'
                 });
             } catch (e) {
-                console.error('[Voucher] Status change error:', e);
+                console.error('[Phiếu giảm giá] Status change error:', e);
                 addNotification({
                     title: 'Lỗi',
                     subtitle: 'Không thể thay đổi trạng thái phiếu giảm giá',
@@ -148,7 +148,7 @@ const getHinhThucLabel = (value) => {
     return value;
 };
 
-const getVoucherTimelineStatus = (item) => {
+const getPhieuGiamGiaTimelineStatus = (item) => {
     const now = Date.now();
     const start = item.ngayBatDau;
     const end = item.ngayKetThuc;
@@ -204,7 +204,7 @@ const getVoucherTimelineStatus = (item) => {
     };
 };
 
-onMounted(() => loadVouchers());
+onMounted(() => taiDanhSachPhieuGiamGia());
 </script>
 
 <template>
@@ -274,7 +274,7 @@ onMounted(() => loadVouchers());
             { text: 'Thời gian áp dụng', width: '180px' },
             { text: 'Trạng thái', width: '140px' },
             { text: 'Hành động', width: '110px' }
-        ]" :items="vouchers" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog"
+        ]" :items="danhSachPhieuGiamGia" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog"
             @export="handleExport">
             <template #row="{ item, index }">
                 <tr class="data-row">
@@ -323,13 +323,13 @@ onMounted(() => loadVouchers());
                         </div>
                     </td>
                     <td class="data-cell">
-                        <v-chip :class="['status-chip', getVoucherTimelineStatus(item).chipClass]" variant="flat">
-                            {{ getVoucherTimelineStatus(item).label }}
+                        <v-chip :class="['status-chip', getPhieuGiamGiaTimelineStatus(item).chipClass]" variant="flat">
+                            {{ getPhieuGiamGiaTimelineStatus(item).label }}
                         </v-chip>
                     </td>
                     <td class="data-cell action-cell text-center">
                         <div class="d-flex align-center justify-center action-controls">
-                            <span class="d-inline-block" v-if="getVoucherTimelineStatus(item).isEnded">
+                            <span class="d-inline-block" v-if="getPhieuGiamGiaTimelineStatus(item).isEnded">
                                 <v-btn icon variant="text" :ripple="false" size="28" color="slate-700"
                                     class="action-icon-btn opacity-50" style="pointer-events: none">
                                     <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
@@ -344,13 +344,13 @@ onMounted(() => loadVouchers());
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
-                                <v-switch :model-value="getVoucherTimelineStatus(item).switchOn"
-                                    :disabled="getVoucherTimelineStatus(item).switchDisabled" color="primary"
+                                <v-switch :model-value="getPhieuGiamGiaTimelineStatus(item).switchOn"
+                                    :disabled="getPhieuGiamGiaTimelineStatus(item).switchDisabled" color="primary"
                                     hide-details density="compact" class="tight-switch action-switch"
-                                    :class="{ 'opacity-50': getVoucherTimelineStatus(item).switchDisabled }"
-                                    @click.prevent.stop="!getVoucherTimelineStatus(item).switchDisabled && confirmToggleStatus(item)" />
+                                    :class="{ 'opacity-50': getPhieuGiamGiaTimelineStatus(item).switchDisabled }"
+                                    @click.prevent.stop="!getPhieuGiamGiaTimelineStatus(item).switchDisabled && confirmToggleStatus(item)" />
                                 <v-tooltip activator="parent" location="top">
-                                    {{ getVoucherTimelineStatus(item).switchTooltip }}
+                                    {{ getPhieuGiamGiaTimelineStatus(item).switchTooltip }}
                                 </v-tooltip>
                             </div>
                         </div>
@@ -360,7 +360,7 @@ onMounted(() => loadVouchers());
             <template #pagination>
                 <AdminPagination v-model="pagination.page" :page-size="pagination.size"
                     @update:pageSize="pagination.size = $event" :total-pages="pagination.totalPages"
-                    :total-elements="pagination.totalElements" :current-size="vouchers.length" @change="loadVouchers" />
+                    :total-elements="pagination.totalElements" :current-size="danhSachPhieuGiamGia.length" @change="taiDanhSachPhieuGiamGia" />
             </template>
         </AdminTable>
 

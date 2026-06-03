@@ -129,6 +129,25 @@ services:
           cpus: '0.5'
           memory: 1G
 
+  mcp-server:
+    build:
+      context: ../mcp-server
+      dockerfile: Dockerfile
+    container_name: aerostride-mcp-server
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    networks:
+      - aerostride-net
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
+
   phpmyadmin:
     image: ${PHPMYADMIN_IMAGE}
     container_name: aerostride-phpmyadmin

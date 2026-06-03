@@ -235,6 +235,27 @@ const onKeyUpEnter = (event, field, service, type, label) => {
     const val = event.target.value?.trim();
     if (!val) return;
 
+    if (type === 'KICH_THUOC') {
+        const hasNumbers = /[0-9]/.test(val);
+        if (hasNumbers) {
+            if (/[\.,\s\-]/.test(val) || !Number.isInteger(Number(val))) {
+                addNotification({ title: 'Lỗi', subtitle: 'Kích thước không được chứa số thập phân hoặc ký tự đặc biệt', color: 'error' });
+                return;
+            }
+
+            const sizeNum = parseInt(val, 10);
+            if (isNaN(sizeNum) || sizeNum < 30 || sizeNum > 80) {
+                addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải nằm trong khoảng từ 30 đến 80', color: 'error' });
+                return;
+            }
+        }
+        
+        if (val.length > 5) {
+            addNotification({ title: 'Lỗi', subtitle: 'Kích thước quá dài (tối đa 5 ký tự)', color: 'error' });
+            return;
+        }
+    }
+
     const lists = {
         MAU_SAC: props.options.mauSacs || [],
         KICH_THUOC: props.options.kichThuocs || []

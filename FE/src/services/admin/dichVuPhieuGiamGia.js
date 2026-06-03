@@ -21,14 +21,14 @@ export const dichVuPhieuGiamGia = {
     },
 
     // Tạo phiếu giảm giá mới
-    async taoPhieuGiamGia(voucherData) {
-        const response = await api.post(`${API_ADMIN.PHIEU_GIAM_GIA}/add`, voucherData);
+    async taoPhieuGiamGia(duLieuPhieuGiamGia) {
+        const response = await api.post(`${API_ADMIN.PHIEU_GIAM_GIA}/add`, duLieuPhieuGiamGia);
         return response.data.data;
     },
 
     // Cập nhật phiếu giảm giá
-    async capNhatPhieuGiamGia(id, voucherData) {
-        const response = await api.put(`${API_ADMIN.PHIEU_GIAM_GIA}/update/${id}`, voucherData);
+    async capNhatPhieuGiamGia(id, duLieuPhieuGiamGia) {
+        const response = await api.put(`${API_ADMIN.PHIEU_GIAM_GIA}/update/${id}`, duLieuPhieuGiamGia);
         return response.data.data;
     },
 
@@ -45,8 +45,8 @@ export const dichVuPhieuGiamGia = {
     },
 
     // Tạo mã phiếu giảm giá
-    async taoMaPhieuGiamGia(voucherId, quantity) {
-        const response = await api.post(`${API_ADMIN.PHIEU_GIAM_GIA}/${voucherId}/generate-codes`, { quantity });
+    async taoMaPhieuGiamGia(idPhieuGiamGia, quantity) {
+        const response = await api.post(`${API_ADMIN.PHIEU_GIAM_GIA}/${idPhieuGiamGia}/generate-codes`, { quantity });
         return response.data.data;
     },
 

@@ -44,5 +44,12 @@ public class AdminKhachHangRequest extends PageRequest {
     // search, filter
     private String keyword;        // tìm tên / email / sdt / mã
     private TrangThai trangThai;     // null = tất cả
+    
+    // filter for stats tab
+    private String sdtSearch;
+    private Double minTongChiTieu;
+    private Double maxTongChiTieu;
+    private LocalDate minNgayDonHang;
+    private LocalDate maxNgayDonHang;
 
 }

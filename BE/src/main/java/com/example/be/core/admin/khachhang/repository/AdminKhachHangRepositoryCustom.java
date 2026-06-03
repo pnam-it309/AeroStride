@@ -14,9 +14,7 @@ public interface AdminKhachHangRepositoryCustom {
     AdminKhachHangResponse detail(String id);
 
     Page<AdminKhachHangResponse> filterAll(
-            String keyword,
-            TrangThai trangThai,
-            Boolean gioiTinh,
+            com.example.be.core.admin.khachhang.model.request.AdminKhachHangRequest request,
             Pageable pageable
     );
 }

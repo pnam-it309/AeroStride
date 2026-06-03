@@ -8,7 +8,12 @@ import '@/scss/style.scss';
 import { PerfectScrollbarPlugin } from 'vue3-perfect-scrollbar';
 import 'vue3-perfect-scrollbar/style.css';
 import { vMaska } from 'maska/vue';
+import { createHead } from '@unhead/vue/client';
+
 const app = createApp(App);
+const head = createHead();
+
+app.use(head);
 app.use(router);
 app.use(PerfectScrollbarPlugin);
 app.use(createPinia());

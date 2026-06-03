@@ -31,7 +31,7 @@ ENV GRADLE_OPTS=${GRADLE_OPTS}
 
 # Development Entrypoint:
 # Runs compilation quietly in background (for DevTools hot-reload) and starts the app
-ENTRYPOINT ["sh", "-c", "(while true; do ./gradlew classes -q --no-daemon; sleep 5; done) & ./gradlew bootRun"]
+ENTRYPOINT ["sh", "-c", "(while true; do ./gradlew classes -q --no-daemon --no-configuration-cache; sleep 5; done) & ./gradlew bootRun --no-configuration-cache"]
 
 # Stage 2: Builder stage (Production)
 FROM build AS builder

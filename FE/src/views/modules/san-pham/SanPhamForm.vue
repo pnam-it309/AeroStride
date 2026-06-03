@@ -201,6 +201,19 @@ const handleAddCustomSize = async () => {
         return;
     }
 
+    if (hasNumbers) {
+        if (/[\.,\s\-]/.test(normalizedSize) || !Number.isInteger(Number(normalizedSize))) {
+            addNotification({ title: 'Lỗi', subtitle: 'Kích thước không được chứa số thập phân hoặc ký tự đặc biệt', color: 'error' });
+            return;
+        }
+
+        const sizeNum = parseInt(normalizedSize, 10);
+        if (isNaN(sizeNum) || sizeNum < 30 || sizeNum > 80) {
+            addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải nằm trong khoảng từ 30 đến 80', color: 'error' });
+            return;
+        }
+    }
+
     // 4. Lỗi giới hạn độ dài (giới hạn xuống 5 ký tự để tránh 4300000)
     if (normalizedSize.length > 5) {
         addNotification({ title: 'Lỗi', subtitle: 'Kích thước quá dài (tối đa 5 ký tự)', color: 'error' });

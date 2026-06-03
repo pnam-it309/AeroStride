@@ -48,9 +48,7 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
     public Page<AdminKhachHangResponse> search(AdminKhachHangRequest request) {
         return SearchUtils.execute(request, pageable -> 
             adminKhachHangRepository.filterAll(
-                request.getKeyword(),
-                request.getTrangThai(),
-                request.getGioiTinh(),
+                request,
                 pageable
             )
         );

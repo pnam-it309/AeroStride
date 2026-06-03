@@ -38,6 +38,7 @@ export const KHACH_HANG_STATS_TABLE_HEADERS = [
     { text: 'STT', width: '60px', align: 'center' },
     { text: 'Mã khách hàng', width: '150px', align: 'center' },
     { text: 'Tên khách hàng', width: '120px', align: 'left' },
+    { text: 'Số điện thoại', width: '120px', align: 'center' },
     { text: 'Số đơn mua', width: '120px', align: 'center' },
     { text: 'Số đơn hoàn', width: '120px', align: 'center' },
     { text: 'Số tiền đã chi', width: '130px', align: 'center' },
