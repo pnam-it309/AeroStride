@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/pnam-it309/AeroStride/compare/v1.17.4...v1.18.0) (2026-06-03)
+
+
+### Features
+
+* **fullstack:** update KhachHang, PhieuGiamGia, SanPham, and Docker configurations ([ae5abce](https://github.com/pnam-it309/AeroStride/commit/ae5abceb30ded1ac3d7d188f4957c2a6b175da04))
+
 ## [1.17.4](https://github.com/pnam-it309/AeroStride/compare/v1.17.3...v1.17.4) (2026-05-30)
 
 
