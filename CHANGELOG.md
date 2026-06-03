@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/pnam-it309/AeroStride/compare/v1.19.0...v1.20.0) (2026-06-03)
+
+
+### Features
+
+* **product:** update SanPhamForm and configuration files ([8d558a0](https://github.com/pnam-it309/AeroStride/commit/8d558a020d30a2952e83fe306cc930435a85174e))
+
 # [1.19.0](https://github.com/pnam-it309/AeroStride/compare/v1.18.0...v1.19.0) (2026-06-03)
 
 
