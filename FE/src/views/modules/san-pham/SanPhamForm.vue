@@ -14,47 +14,27 @@ import VariantFormModal from '../bien-the-san-pham/components/VariantFormModal.v
 import FormattedNumberField from './components/FormattedNumberField.vue';
 import SafeProductImage from './components/SafeProductImage.vue';
 import {
-    ArrowLeftIcon,
-    BoxIcon,
-    DeviceFloppyIcon,
-    InfoCircleIcon,
-    PencilIcon,
-    PhotoIcon,
-    PlusIcon,
-    SettingsIcon,
-    TrashIcon
+    ArrowLeftIcon, BoxIcon, DeviceFloppyIcon, InfoCircleIcon, PencilIcon,
+    PhotoIcon, PlusIcon, SettingsIcon, TrashIcon
 } from 'vue-tabler-icons';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import QrcodeVue from 'qrcode.vue';
 import {
-    dichVuThuongHieu,
-    dichVuDanhMuc,
-    dichVuXuatXu,
-    dichVuChatLieu,
-    dichVuDeGiay,
-    dichVuCoGiay,
-    dichVuMucDichChay,
-    dichVuMauSac,
-    dichVuKichThuoc
+    dichVuThuongHieu, dichVuDanhMuc, dichVuXuatXu,
+    dichVuChatLieu, dichVuDeGiay, dichVuCoGiay,
+    dichVuMucDichChay, dichVuMauSac, dichVuKichThuoc
 } from '@/services/product/dichVuThuocTinh';
 import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
 import { exportQrImageZip } from '@/utils/qrExcelWorkbook';
 import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
-import { SYSTEM_STATUS } from '@/constants/statusConstants';
 import { generateRandomCode } from '@/utils/codeGenerator';
-import { formatCurrency, formatNumber } from '@/utils/formatters';
-import { getColorHexByName, getColorNameByHex } from '@/utils/colorDictionary';
-import { useConfirmDialog } from '@/composables/useConfirmDialog';
-import { useUIStore } from '@/stores/ui';
 
 const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
-const { showConfirm } = useConfirmDialog();
-const uiStore = useUIStore();
 
 const MIN_VARIANT_PRICE = 0;
-const DEFAULT_MAX_VARIANT_PRICE = 6500000;
+const DEFAULT_MAX_VARIANT_PRICE = 100000000;
 
 const loading = ref(false);
 const saving = ref(false);
@@ -70,8 +50,8 @@ const confirmDialog = ref({
 });
 
 const isEditMode = computed(() => !!route.params.id);
-const submitButtonText = computed(() => (isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'));
-const defaultVariantStatus = SYSTEM_STATUS.ACTIVE;
+const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm');
+const defaultVariantStatus = 'DANG_HOAT_DONG';
 
 // DATA OPTIONS
 const brands = ref([]);
@@ -95,20 +75,43 @@ const customColorName = ref('');
 const customColorHex = ref('#FF5733');
 const customSizeName = ref('');
 
+// Bảng màu phổ biến (Việt - Anh) mapping sang HEX
+const COLOR_DICTIONARY = {
+    // Tiếng Việt
+    'đỏ': '#FF0000', 'xanh dương': '#0000FF', 'xanh lá': '#00FF00',
+    'vàng': '#FFFF00', 'đen': '#000000', 'trắng': '#FFFFFF',
+    'hồng': '#FFC0CB', 'tím': '#800080', 'cam': '#FFA500',
+    'nâu': '#8B4513', 'xám': '#808080', 'ghi': '#808080',
+    'bạc': '#C0C0C0', 'vàng đồng': '#FFD700', 'xanh ngọc': '#40E0D0',
+    'xanh mint': '#98FF98', 'xanh rêu': '#4A5D23', 'xanh navy': '#000080',
+    'be': '#F5F5DC', 'kem': '#FFFDD0', 'kem sữa': '#FFFFF0',
+    'đỏ đô': '#800000', 'đỏ mận': '#800000', 'xanh coban': '#0047AB',
+
+    // Tiếng Anh
+    'red': '#FF0000', 'blue': '#0000FF', 'green': '#00FF00',
+    'yellow': '#FFFF00', 'black': '#000000', 'white': '#FFFFFF',
+    'pink': '#FFC0CB', 'purple': '#800080', 'orange': '#FFA500',
+    'brown': '#8B4513', 'gray': '#808080', 'grey': '#808080',
+    'silver': '#C0C0C0', 'gold': '#FFD700', 'turquoise': '#40E0D0',
+    'mint': '#98FF98', 'navy': '#000080', 'beige': '#F5F5DC',
+    'cream': '#FFFDD0', 'cyan': '#00FFFF', 'magenta': '#FF00FF',
+    'maroon': '#800000'
+};
+
 watch(customColorName, (newName) => {
     if (!newName) return;
-    const hex = getColorHexByName(newName);
-    if (hex) {
-        customColorHex.value = hex;
-    }
-});
+    const normalizedName = newName.trim().toLowerCase();
 
-watch(customColorHex, (newHex) => {
-    if (!newHex) return;
-    const name = getColorNameByHex(newHex);
-    // Chỉ ghi đè tên nếu chưa có tên hoặc đang khớp với một màu cơ bản
-    if (name && (!customColorName.value || getColorHexByName(customColorName.value))) {
-        customColorName.value = name;
+    // Hàm bỏ dấu tiếng việt
+    const removeAccents = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const normalizedNoAccent = removeAccents(normalizedName);
+
+    // Tìm kiếm trong từ điển
+    for (const [key, hex] of Object.entries(COLOR_DICTIONARY)) {
+        if (normalizedName === key || normalizedNoAccent === removeAccents(key)) {
+            customColorHex.value = hex;
+            break;
+        }
     }
 });
 
@@ -248,6 +251,18 @@ const handleAddCustomSize = async () => {
     }
 };
 
+const filteredColors = computed(() => {
+    const query = normalizeSearchText(colorSearch.value);
+    if (!query) return colors.value;
+    return colors.value.filter(c => normalizeSearchText(c.ten).includes(query));
+});
+const filteredSizes = computed(() => {
+    const query = normalizeSearchText(customSizeName.value);
+    if (!query) return sizes.value;
+    return sizes.value.filter(s => normalizeSearchText(s.ten).includes(query));
+});
+
+// Theo dõi nội dung đang gõ trong các combobox
 const searchQueries = reactive({
     idThuongHieu: '',
     idXuatXu: '',
@@ -266,18 +281,25 @@ const getDisplayItems = (originalItems, query) => {
     // Lọc danh sách gốc trước
     let filtered = originalItems;
     if (normalizedQuery) {
-        filtered = originalItems.filter((item) => normalizeSearchText(item.ten).includes(normalizedQuery));
+        filtered = originalItems.filter(item =>
+            normalizeSearchText(item.ten).includes(normalizedQuery)
+        );
     }
 
     if (!trimmedQuery) return filtered;
 
     // Kiểm tra xem đã có item nào trùng hoàn toàn chưa
-    const existsExact = originalItems.some((item) => normalizeSearchText(item.ten) === normalizedQuery);
+    const existsExact = originalItems.some(item =>
+        normalizeSearchText(item.ten) === normalizedQuery
+    );
 
     if (existsExact) return filtered;
 
     // Chèn mục mới vào đầu danh sách đã lọc với ID đặc biệt để nhận biết click trực tiếp
-    return [{ id: `__new__${trimmedQuery}`, ten: trimmedQuery, isNew: true }, ...filtered];
+    return [
+        { id: `__new__${trimmedQuery}`, ten: trimmedQuery, isNew: true },
+        ...filtered
+    ];
 };
 
 const displayBrands = computed(() => getDisplayItems(brands.value, searchQueries.idThuongHieu, 'idThuongHieu'));
@@ -287,10 +309,6 @@ const displayMaterials = computed(() => getDisplayItems(materials.value, searchQ
 const displaySoles = computed(() => getDisplayItems(soles.value, searchQueries.idDeGiay, 'idDeGiay'));
 const displayCollars = computed(() => getDisplayItems(collars.value, searchQueries.idCoGiay, 'idCoGiay'));
 const displayPurposes = computed(() => getDisplayItems(purposes.value, searchQueries.idMucDichChay, 'idMucDichChay'));
-const displayColors = computed(() => getDisplayItems(colors.value, searchQueries.idMauSac, 'idMauSac'));
-const displaySizes = computed(() => getDisplayItems(sizes.value, searchQueries.idKichThuoc, 'idKichThuoc'));
-
-const productNameSuggestions = ref([]);
 
 const selectedColors = ref([]);
 const selectedSizes = ref([]);
@@ -342,34 +360,30 @@ const variantTableHeaders = [
 ];
 const variantPage = ref(1);
 const variantPageSize = ref(5);
-const variantFilterProductLabel = computed(
-    () => [product.value.maSanPham, product.value.tenSanPham].filter(Boolean).join(' • ') || 'Sản phẩm hiện tại'
-);
-const variantPriceStep = computed(() => (variantPriceBounds.value.max > 1000000 ? 50000 : 1000));
-const filteredVariantItems = computed(() =>
-    variantItems.value.filter((item) => {
-        const keyword = variantTableFilters.keyword.trim().toLowerCase();
-        const colorLabel = getVariantColorLabel(item.idMauSac).toLowerCase();
-        const sizeLabel = getVariantSizeLabel(item.idKichThuoc).toLowerCase();
-        const matchesKeyword =
-            !keyword ||
-            String(item.maChiTietSanPham || '')
-                .toLowerCase()
-                .includes(keyword) ||
-            colorLabel.includes(keyword) ||
-            sizeLabel.includes(keyword);
-        const variantPrice = Number(item.giaBan ?? 0);
-        const matchesPrice = variantPrice >= variantTableFilters.khoangGia[0] && variantPrice <= variantTableFilters.khoangGia[1];
+const variantFilterProductLabel = computed(() => (
+    [product.value.maSanPham, product.value.tenSanPham].filter(Boolean).join(' • ') || 'Sản phẩm hiện tại'
+));
+const variantPriceStep = computed(() => (
+    variantPriceBounds.value.max > 1000000 ? 50000 : 1000
+));
+const filteredVariantItems = computed(() => variantItems.value.filter((item) => {
+    const keyword = variantTableFilters.keyword.trim().toLowerCase();
+    const colorLabel = getVariantColorLabel(item.idMauSac).toLowerCase();
+    const sizeLabel = getVariantSizeLabel(item.idKichThuoc).toLowerCase();
+    const matchesKeyword = !keyword
+        || String(item.maChiTietSanPham || '').toLowerCase().includes(keyword)
+        || colorLabel.includes(keyword)
+        || sizeLabel.includes(keyword);
+    const variantPrice = Number(item.giaBan ?? 0);
+    const matchesPrice = variantPrice >= variantTableFilters.khoangGia[0]
+        && variantPrice <= variantTableFilters.khoangGia[1];
 
-        return (
-            matchesKeyword &&
-            (!variantTableFilters.mauSacId || item.idMauSac === variantTableFilters.mauSacId) &&
-            (!variantTableFilters.kichThuocId || item.idKichThuoc === variantTableFilters.kichThuocId) &&
-            (!variantTableFilters.trangThai || item.trangThai === variantTableFilters.trangThai) &&
-            matchesPrice
-        );
-    })
-);
+    return matchesKeyword
+        && (!variantTableFilters.mauSacId || item.idMauSac === variantTableFilters.mauSacId)
+        && (!variantTableFilters.kichThuocId || item.idKichThuoc === variantTableFilters.kichThuocId)
+        && (!variantTableFilters.trangThai || item.trangThai === variantTableFilters.trangThai)
+        && matchesPrice;
+}));
 const totalVariantElements = computed(() => filteredVariantItems.value.length);
 const totalVariantPages = computed(() => Math.max(Math.ceil(totalVariantElements.value / variantPageSize.value), 1));
 const paginatedVariantItems = computed(() => {
@@ -377,21 +391,20 @@ const paginatedVariantItems = computed(() => {
     return filteredVariantItems.value.slice(start, start + variantPageSize.value);
 });
 const visibleVariantKeys = computed(() => paginatedVariantItems.value.map((item) => getVariantKey(item)));
-const selectedVariants = computed(() =>
-    filteredVariantItems.value.filter((item) => selectedVariantKeys.value.includes(getVariantKey(item)))
-);
-const allVisibleVariantsSelected = computed(
-    () => visibleVariantKeys.value.length > 0 && visibleVariantKeys.value.every((key) => selectedVariantKeys.value.includes(key))
-);
-const someVisibleVariantsSelected = computed(
-    () => visibleVariantKeys.value.some((key) => selectedVariantKeys.value.includes(key)) && !allVisibleVariantsSelected.value
-);
+const selectedVariants = computed(() => filteredVariantItems.value.filter((item) => selectedVariantKeys.value.includes(getVariantKey(item))));
+const allVisibleVariantsSelected = computed(() => visibleVariantKeys.value.length > 0
+    && visibleVariantKeys.value.every((key) => selectedVariantKeys.value.includes(key)));
+const someVisibleVariantsSelected = computed(() => visibleVariantKeys.value.some((key) => selectedVariantKeys.value.includes(key))
+    && !allVisibleVariantsSelected.value);
 
-const totalVariantStock = computed(() => variantItems.value.reduce((sum, item) => sum + Number(item.soLuong || 0), 0));
+const totalVariantStock = computed(() => variantItems.value.reduce(
+    (sum, item) => sum + Number(item.soLuong || 0),
+    0
+));
 
 const variantsByColor = computed(() => {
     const groups = {};
-    filteredVariantItems.value.forEach(item => {
+    variantItems.value.forEach(item => {
         if (!groups[item.idMauSac]) {
             groups[item.idMauSac] = [];
         }
@@ -470,7 +483,7 @@ const openBulkEdit = (colorId = null) => {
 
 const applyBulkEdit = () => {
     const { soLuong, giaNhap, giaBan } = bulkEditModal.form;
-    variantItems.value = variantItems.value.map((item) => {
+    variantItems.value = variantItems.value.map(item => {
         if (bulkEditModal.targetColorId === null || String(item.idMauSac) === String(bulkEditModal.targetColorId)) {
             return {
                 ...item,
@@ -489,34 +502,33 @@ const applyBulkEdit = () => {
     });
 };
 
-const variantContextSummary = computed(() =>
+const variantContextSummary = computed(() => (
     [
         getOptionLabel(soles, product.value.idDeGiay),
         getOptionLabel(collars, product.value.idCoGiay),
         getOptionLabel(purposes, product.value.idMucDichChay)
     ].filter((item) => item && item !== '--')
+));
+
+const getAttributeMethodName = (type) => `tao${type.split('_').map(
+    word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+).join('')}`;
+
+const getAttributeFetchMethodName = (type) => `lay${type.split('_').map(
+    word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+).join('')}`;
+
+const getBackendErrorMessage = (error, fallbackMessage) => (
+    error?.response?.data?.message
+    || error?.message
+    || fallbackMessage
 );
 
-const getAttributeMethodName = (type) =>
-    `tao${type
-        .split('_')
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join('')}`;
-
-const getAttributeFetchMethodName = (type) =>
-    `lay${type
-        .split('_')
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join('')}`;
-
-const getBackendErrorMessage = (error, fallbackMessage) => error?.response?.data?.message || error?.message || fallbackMessage;
-
-const normalizeSearchText = (value) =>
-    String(value ?? '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim();
+const normalizeSearchText = (value) => String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
 
 const comboboxFilter = (itemTitle, queryText, item) => {
     const normalizedQuery = normalizeSearchText(queryText);
@@ -539,7 +551,7 @@ const getVariantColorHex = (colorId) => {
 };
 
 const removeDraftVariantByObject = (variant) => {
-    variantItems.value = variantItems.value.filter((item) => item !== variant);
+    variantItems.value = variantItems.value.filter(item => item !== variant);
 };
 
 const normalizeAttributeText = (value) => {
@@ -548,7 +560,8 @@ const normalizeAttributeText = (value) => {
     }
 
     if (value && typeof value === 'object') {
-        const textCandidate = [value.ten, value.title, value.label, value.text].find((item) => typeof item === 'string' && item.trim());
+        const textCandidate = [value.ten, value.title, value.label, value.text]
+            .find(item => typeof item === 'string' && item.trim());
         if (textCandidate) {
             return textCandidate.trim();
         }
@@ -566,7 +579,7 @@ const findAttributeOption = (config, value) => {
 
     if (value && typeof value === 'object') {
         if (value.id) {
-            const matchedById = options.find((item) => item.id === value.id);
+            const matchedById = options.find(item => item.id === value.id);
             if (matchedById) {
                 return matchedById;
             }
@@ -590,12 +603,10 @@ const findAttributeOption = (config, value) => {
     }
 
     const normalizedLower = normalizeSearchText(normalizedValue);
-    return (
-        options.find(
-            (item) =>
-                (item.id === normalizedValue && !String(item.id).startsWith('__new__')) || normalizeSearchText(item.ten) === normalizedLower
-        ) || null
-    );
+    return options.find(item => (
+        (item.id === normalizedValue && !String(item.id).startsWith('__new__'))
+        || normalizeSearchText(item.ten) === normalizedLower
+    )) || null;
 };
 
 const upsertAttributeOption = (config, option) => {
@@ -604,7 +615,7 @@ const upsertAttributeOption = (config, option) => {
     }
 
     const options = config.options.value || [];
-    if (options.some((item) => item.id === option.id)) {
+    if (options.some(item => item.id === option.id)) {
         return;
     }
 
@@ -618,7 +629,11 @@ const refreshAttributeOptions = async (config) => {
     }
 
     const response = await config.service[fetchMethod]({ size: 1000 });
-    config.options.value = Array.isArray(response?.content) ? response.content : Array.isArray(response) ? response : config.options.value;
+    config.options.value = Array.isArray(response?.content)
+        ? response.content
+        : Array.isArray(response)
+            ? response
+            : config.options.value;
 };
 
 const resolveAttributeField = async (config, { notifyOnCreate = false } = {}) => {
@@ -713,7 +728,7 @@ const onKeyUpEnter = async (event, field) => {
     const val = event.target.value?.trim();
     if (!val) return;
 
-    const config = attributeConfig.find((item) => item.field === field);
+    const config = attributeConfig.find(item => item.field === field);
     if (!config) {
         return;
     }
@@ -734,23 +749,35 @@ const onKeyUpEnter = async (event, field) => {
 
 const createDraftKey = () => `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+const formatCurrency = (value) => {
+    if (value === null || value === undefined || value === '') return '--';
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        maximumFractionDigits: 0
+    }).format(Number(value));
+};
+
+const formatNumber = (value) => {
+    if (value === null || value === undefined || value === '') return '0';
+    return new Intl.NumberFormat('vi-VN').format(Number(value));
+};
+
 // getStatusLabel is now imported from @/utils/statusUtils
 
 const normalizeUploadedFileUrl = (value) => {
     if (!value) return '';
     if (typeof value === 'string') return value;
-    return (
-        value.fileUrl ||
-        value.url ||
-        value.secure_url ||
-        value.duongDanAnh ||
-        value.duongDan ||
-        value.path ||
-        value.data ||
-        value.hinhAnh ||
-        value.anh ||
-        ''
-    );
+    return value.fileUrl
+        || value.url
+        || value.secure_url
+        || value.duongDanAnh
+        || value.duongDan
+        || value.path
+        || value.data
+        || value.hinhAnh
+        || value.anh
+        || '';
 };
 
 const normalizeOptionList = (listLike) => {
@@ -759,7 +786,7 @@ const normalizeOptionList = (listLike) => {
     return [];
 };
 
-const getOptionLabel = (listLike, id) => normalizeOptionList(listLike).find((item) => item.id === id)?.ten || '--';
+const getOptionLabel = (listLike, id) => normalizeOptionList(listLike).find(item => item.id === id)?.ten || '--';
 const getVariantKey = (variant) => variant.id || variant.clientKey;
 const getVariantSkuLabel = (variant) => {
     const sku = variant.maChiTietSanPham;
@@ -775,47 +802,55 @@ const getNestedValue = (source, keys) => {
     }
     return '';
 };
-const getVariantSkuValue = (variant = {}) =>
-    variant.maChiTietSanPham || variant.sku || variant.maSku || variant.maBienThe || variant.ma || '';
-const getVariantColorIdValue = (variant = {}) =>
-    getNestedValue(variant, ['idMauSac', 'mauSacId']) ||
-    getNestedValue(variant.mauSac, ['id', 'value', 'ma']) ||
-    getNestedValue(variant.color, ['id', 'value', 'ma']) ||
-    '';
-const getVariantColorLabelValue = (variant = {}) =>
-    getNestedValue(variant, ['tenMauSac']) ||
-    getNestedValue(variant.mauSac, ['ten', 'name', 'label', 'title']) ||
-    getNestedValue(variant.color, ['ten', 'name', 'label', 'title']) ||
-    '';
-const getVariantSizeIdValue = (variant = {}) =>
-    getNestedValue(variant, ['idKichThuoc', 'kichThuocId', 'sizeId']) ||
-    getNestedValue(variant.kichThuoc, ['id', 'value', 'ma']) ||
-    getNestedValue(variant.size, ['id', 'value', 'ma']) ||
-    '';
-const getVariantSizeLabelValue = (variant = {}) =>
-    getNestedValue(variant, ['tenKichThuoc']) ||
-    getNestedValue(variant.kichThuoc, ['ten', 'name', 'label', 'title', 'giaTriKichThuoc']) ||
-    getNestedValue(variant.size, ['ten', 'name', 'label', 'title']) ||
-    '';
+const getVariantSkuValue = (variant = {}) => (
+    variant.maChiTietSanPham
+    || variant.sku
+    || variant.maSku
+    || variant.maBienThe
+    || variant.ma
+    || ''
+);
+const getVariantColorIdValue = (variant = {}) => (
+    getNestedValue(variant, ['idMauSac', 'mauSacId'])
+    || getNestedValue(variant.mauSac, ['id', 'value', 'ma'])
+    || getNestedValue(variant.color, ['id', 'value', 'ma'])
+    || ''
+);
+const getVariantColorLabelValue = (variant = {}) => (
+    getNestedValue(variant, ['tenMauSac'])
+    || getNestedValue(variant.mauSac, ['ten', 'name', 'label', 'title'])
+    || getNestedValue(variant.color, ['ten', 'name', 'label', 'title'])
+    || ''
+);
+const getVariantSizeIdValue = (variant = {}) => (
+    getNestedValue(variant, ['idKichThuoc', 'kichThuocId', 'sizeId'])
+    || getNestedValue(variant.kichThuoc, ['id', 'value', 'ma'])
+    || getNestedValue(variant.size, ['id', 'value', 'ma'])
+    || ''
+);
+const getVariantSizeLabelValue = (variant = {}) => (
+    getNestedValue(variant, ['tenKichThuoc'])
+    || getNestedValue(variant.kichThuoc, ['ten', 'name', 'label', 'title', 'giaTriKichThuoc'])
+    || getNestedValue(variant.size, ['ten', 'name', 'label', 'title'])
+    || ''
+);
 const getVariantQrValue = (variant) => variant?.maChiTietSanPham || getVariantKey(variant) || '';
 const getVariantThumbnail = (variant) => {
-    return (
-        normalizeUploadedFileUrl(
-            variant.urlAnh ||
-            variant.images?.find((image) => image.hinhAnhDaiDien)?.duongDanAnh ||
-            variant.images?.[0]?.duongDanAnh ||
-            variant.hinhAnhs?.find((image) => image.hinhAnhDaiDien)?.duongDanAnh ||
-            variant.hinhAnhs?.[0]?.duongDanAnh ||
-            variant.anhChiTietSanPhams?.find((image) => image.hinhAnhDaiDien)?.duongDanAnh ||
-            variant.anhChiTietSanPhams?.[0]?.duongDanAnh ||
-            (Array.isArray(variant.hinhAnh) ? variant.hinhAnh[0]?.duongDanAnh : null) ||
-            (Array.isArray(variant.hinhAnh) ? variant.hinhAnh[0]?.url : null) ||
-            variant.hinhAnh ||
-            variant.duongDanAnh ||
-            variant.imageUrl ||
-            variant.anh
-        ) || logoPlaceholder
-    );
+    return normalizeUploadedFileUrl(
+        variant.urlAnh
+        || variant.images?.find(image => image.hinhAnhDaiDien)?.duongDanAnh
+        || variant.images?.[0]?.duongDanAnh
+        || variant.hinhAnhs?.find(image => image.hinhAnhDaiDien)?.duongDanAnh
+        || variant.hinhAnhs?.[0]?.duongDanAnh
+        || variant.anhChiTietSanPhams?.find(image => image.hinhAnhDaiDien)?.duongDanAnh
+        || variant.anhChiTietSanPhams?.[0]?.duongDanAnh
+        || variant.hinhAnh?.[0]?.duongDanAnh
+        || variant.hinhAnh?.[0]?.url
+        || variant.hinhAnh
+        || variant.duongDanAnh
+        || variant.imageUrl
+        || variant.anh
+    ) || logoPlaceholder;
 };
 const getVariantCombinationKey = (colorId, sizeId) => `${colorId}-${sizeId}`;
 const getColorUploadEntry = (colorId) => colorImageState.value[colorId] || { url: '', uploading: false };
@@ -826,8 +861,7 @@ const getBulkColorForm = (colorId) => {
     }
     return bulkByColorForms.value[colorId];
 };
-const hasAnyBulkValue = (form) =>
-    ['soLuong', 'giaNhap', 'giaBan'].some((field) => form[field] !== '' && form[field] !== null && form[field] !== undefined);
+const hasAnyBulkValue = (form) => ['soLuong', 'giaNhap', 'giaBan'].some((field) => form[field] !== '' && form[field] !== null && form[field] !== undefined);
 const getVariantColorLabel = (colorId) => getOptionLabel(colors, colorId);
 const getVariantSizeLabel = (sizeId) => getOptionLabel(sizes, sizeId);
 const getVariantDescriptor = () => variantContextSummary.value.join(' • ');
@@ -837,13 +871,9 @@ const mapVariantToFormState = (variant = {}) => ({
     clientKey: variant.clientKey || createDraftKey(),
     maChiTietSanPham: getVariantSkuValue(variant),
     idMauSac: getVariantColorIdValue(variant),
-    tenMauSac:
-        getVariantColorLabelValue(variant) ||
-        (getOptionLabel(colors, getVariantColorIdValue(variant)) !== '--' ? getOptionLabel(colors, getVariantColorIdValue(variant)) : ''),
+    tenMauSac: getVariantColorLabelValue(variant) || (getOptionLabel(colors, getVariantColorIdValue(variant)) !== '--' ? getOptionLabel(colors, getVariantColorIdValue(variant)) : ''),
     idKichThuoc: getVariantSizeIdValue(variant),
-    tenKichThuoc:
-        getVariantSizeLabelValue(variant) ||
-        (getOptionLabel(sizes, getVariantSizeIdValue(variant)) !== '--' ? getOptionLabel(sizes, getVariantSizeIdValue(variant)) : ''),
+    tenKichThuoc: getVariantSizeLabelValue(variant) || (getOptionLabel(sizes, getVariantSizeIdValue(variant)) !== '--' ? getOptionLabel(sizes, getVariantSizeIdValue(variant)) : ''),
     soLuong: Number(variant.soLuong ?? 0),
     giaNhap: Number(variant.giaNhap ?? 0),
     giaBan: Number(variant.giaBan ?? 0),
@@ -851,7 +881,7 @@ const mapVariantToFormState = (variant = {}) => ({
     urlAnh: getVariantThumbnail(variant) === logoPlaceholder ? '' : getVariantThumbnail(variant)
 });
 
-const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackImageUrl = '', newSku = '') => mapVariantToFormState({
+const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackImageUrl = '') => mapVariantToFormState({
     ...existingVariant,
     clientKey: existingVariant.clientKey || createDraftKey(),
     idMauSac: colorId,
@@ -860,7 +890,7 @@ const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackI
     giaNhap: Number(existingVariant.giaNhap ?? 0),
     giaBan: Number(existingVariant.giaBan ?? 0),
     trangThai: existingVariant.trangThai || defaultVariantStatus,
-    maChiTietSanPham: existingVariant.maChiTietSanPham || newSku || '',
+    maChiTietSanPham: existingVariant.maChiTietSanPham || '',
     urlAnh: normalizeUploadedFileUrl(existingVariant.urlAnh || fallbackImageUrl || '')
 });
 
@@ -877,7 +907,9 @@ const buildVariantPayload = (variant, includeImages = true) => {
     };
 
     if (includeImages) {
-        payload.images = imageUrl ? [{ duongDanAnh: imageUrl, hinhAnhDaiDien: true }] : [];
+        payload.images = imageUrl
+            ? [{ duongDanAnh: imageUrl, hinhAnhDaiDien: true }]
+            : [];
     }
 
     return payload;
@@ -905,7 +937,7 @@ const handleAttributeChange = async (field, value) => {
     // Chỉ tự động tạo nếu người dùng chọn mục "Thêm nhanh" (có prefix __new__)
     // Hoặc nếu họ nhấn Enter (được xử lý ở onKeyUpEnter)
     if (typeof value === 'string' && value.startsWith('__new__')) {
-        const config = attributeConfig.find((item) => item.field === field);
+        const config = attributeConfig.find(item => item.field === field);
         if (!config) return;
 
         try {
@@ -918,120 +950,6 @@ const handleAttributeChange = async (field, value) => {
                 color: 'error'
             });
         }
-    }
-};
-
-const handleMultipleAttributeChange = async (field, valueArr) => {
-    if (!Array.isArray(valueArr)) return;
-
-    const newlyAddedIndex = valueArr.findIndex(v => typeof v === 'string' && v.startsWith('__new__'));
-    if (newlyAddedIndex !== -1) {
-        const text = valueArr[newlyAddedIndex].replace('__new__', '');
-        valueArr.splice(newlyAddedIndex, 1);
-
-        if (field === 'idKichThuoc') {
-            const num = Number(text);
-            if (isNaN(num) || !Number.isInteger(num) || num < 30 || num > 80) {
-                addNotification({
-                    title: 'Lỗi',
-                    subtitle: 'Kích thước chỉ được nhập số nguyên từ 30 đến 80',
-                    color: 'error'
-                });
-                return;
-            }
-        }
-
-        const config = field === 'idMauSac'
-            ? { field: 'idMauSac', service: dichVuMauSac, type: 'MAU_SAC', label: 'màu sắc', options: colors }
-            : { field: 'idKichThuoc', service: dichVuKichThuoc, type: 'KICH_THUOC', label: 'kích thước', options: sizes };
-
-        try {
-            const createdOption = await config.service[getAttributeMethodName(config.type)]({
-                ten: text,
-                moTa: 'Tự động thêm nhanh'
-            });
-            if (field === 'idMauSac') {
-                createdOption.maMauHex = '#e2e8f0';
-            }
-            upsertAttributeOption(config, createdOption);
-
-            if (field === 'idMauSac') {
-                selectedColors.value = [...selectedColors.value, createdOption.id];
-            } else {
-                selectedSizes.value = [...selectedSizes.value, createdOption.id];
-            }
-
-            addNotification({
-                title: 'Thành công',
-                subtitle: `Đã thêm nhanh ${config.label}: ${text}`,
-                color: 'success'
-            });
-            searchQueries[field] = '';
-        } catch (error) {
-            console.error(error);
-            addNotification({
-                title: 'Lỗi',
-                subtitle: getBackendErrorMessage(error, `Không thể thêm nhanh ${config.label}`),
-                color: 'error'
-            });
-        }
-    }
-};
-
-const onKeyUpEnterMultiple = async (event, field) => {
-    const val = event.target.value?.trim();
-    if (!val) return;
-
-    if (field === 'idKichThuoc') {
-        const num = Number(val);
-        if (isNaN(num) || !Number.isInteger(num) || num < 30 || num > 80) {
-            addNotification({
-                title: 'Lỗi',
-                subtitle: 'Kích thước chỉ được nhập số nguyên từ 30 đến 80',
-                color: 'error'
-            });
-            return;
-        }
-    }
-
-    const config = field === 'idMauSac'
-        ? { field: 'idMauSac', service: dichVuMauSac, type: 'MAU_SAC', label: 'màu sắc', options: colors }
-        : { field: 'idKichThuoc', service: dichVuKichThuoc, type: 'KICH_THUOC', label: 'kích thước', options: sizes };
-
-    try {
-        const createdOption = await config.service[getAttributeMethodName(config.type)]({
-            ten: val,
-            moTa: 'Tự động thêm nhanh'
-        });
-        if (field === 'idMauSac') {
-            createdOption.maMauHex = '#e2e8f0';
-        }
-        upsertAttributeOption(config, createdOption);
-
-        if (field === 'idMauSac') {
-            if (!selectedColors.value.includes(createdOption.id)) {
-                selectedColors.value = [...selectedColors.value, createdOption.id];
-            }
-        } else {
-            if (!selectedSizes.value.includes(createdOption.id)) {
-                selectedSizes.value = [...selectedSizes.value, createdOption.id];
-            }
-        }
-        event.target.value = '';
-        searchQueries[field] = '';
-
-        addNotification({
-            title: 'Thành công',
-            subtitle: `Đã thêm nhanh ${config.label}: ${val}`,
-            color: 'success'
-        });
-    } catch (error) {
-        console.error(error);
-        addNotification({
-            title: 'Lỗi',
-            subtitle: getBackendErrorMessage(error, `Không thể thêm nhanh ${config.label}`),
-            color: 'error'
-        });
     }
 };
 
@@ -1095,12 +1013,11 @@ const handleExportVariantQrZip = async () => {
         exportQrImageZip({
             fileName: `qrcode_bien_the_da_chon_${fileSuffix}.zip`,
             items: targetVariants.map((variant, index) => ({
-                baseName:
-                    variant.maChiTietSanPham ||
-                    [product.value.tenSanPham, getVariantColorLabel(variant.idMauSac), getVariantSizeLabel(variant.idKichThuoc)]
+                baseName: variant.maChiTietSanPham
+                    || [product.value.tenSanPham, getVariantColorLabel(variant.idMauSac), getVariantSizeLabel(variant.idKichThuoc)]
                         .filter(Boolean)
-                        .join('_') ||
-                    `variant_${index + 1}`,
+                        .join('_')
+                    || `variant_${index + 1}`,
                 dataUrl: qrDataUrls[index]
             }))
         });
@@ -1163,7 +1080,11 @@ const toggleSelectVisibleVariants = (checked) => {
 };
 
 const updateVariantStatusLocally = (variantKey, nextStatus) => {
-    variantItems.value = variantItems.value.map((item) => (getVariantKey(item) === variantKey ? { ...item, trangThai: nextStatus } : item));
+    variantItems.value = variantItems.value.map((item) => (
+        getVariantKey(item) === variantKey
+            ? { ...item, trangThai: nextStatus }
+            : item
+    ));
 };
 
 const persistVariantStatus = async (variant, nextStatus) => {
@@ -1172,7 +1093,10 @@ const persistVariantStatus = async (variant, nextStatus) => {
         return;
     }
 
-    await dichVuBienThe.capNhatBienThe(variant.id, buildVariantPayload({ ...variant, trangThai: nextStatus }, false));
+    await dichVuBienThe.capNhatBienThe(
+        variant.id,
+        buildVariantPayload({ ...variant, trangThai: nextStatus }, false)
+    );
     updateVariantStatusLocally(getVariantKey(variant), nextStatus);
 };
 
@@ -1195,16 +1119,17 @@ const buildProductPayload = ({ includeVariants = false } = {}) => {
     };
 
     if (includeVariants) {
-        payload.variants = variantItems.value.map((item) => buildVariantPayload(item, true));
+        payload.variants = variantItems.value.map(item => buildVariantPayload(item, true));
     }
 
     return payload;
 };
 
-const hasDuplicateVariant = (payload, currentKey = null) =>
-    variantItems.value.some(
-        (item) => item.idMauSac === payload.idMauSac && item.idKichThuoc === payload.idKichThuoc && getVariantKey(item) !== currentKey
-    );
+const hasDuplicateVariant = (payload, currentKey = null) => variantItems.value.some((item) => (
+    item.idMauSac === payload.idMauSac
+    && item.idKichThuoc === payload.idKichThuoc
+    && getVariantKey(item) !== currentKey
+));
 
 const variantGroups = computed(() => {
     const groupedMap = new Map();
@@ -1225,7 +1150,9 @@ const variantGroups = computed(() => {
         });
     });
 
-    const orderedColorIds = isEditMode.value ? [...groupedMap.keys()] : selectedColors.value.filter((colorId) => groupedMap.has(colorId));
+    const orderedColorIds = isEditMode.value
+        ? [...groupedMap.keys()]
+        : selectedColors.value.filter((colorId) => groupedMap.has(colorId));
 
     const groups = orderedColorIds.map((colorId) => groupedMap.get(colorId)).filter(Boolean);
     groups.forEach((group) => {
@@ -1249,9 +1176,11 @@ const syncColorImageStateFromVariants = () => {
 
 const applyColorImageToVariants = (colorId, imageUrl) => {
     const normalizedImageUrl = normalizeUploadedFileUrl(imageUrl);
-    variantItems.value = variantItems.value.map((variant) =>
-        variant.idMauSac === colorId ? { ...variant, urlAnh: normalizedImageUrl || '' } : variant
-    );
+    variantItems.value = variantItems.value.map((variant) => (
+        variant.idMauSac === colorId
+            ? { ...variant, urlAnh: normalizedImageUrl || '' }
+            : variant
+    ));
 
     const nextState = { ...colorImageState.value };
     if (normalizedImageUrl) {
@@ -1343,7 +1272,11 @@ const applyBulkValues = (predicate, form, successMessage) => {
 };
 
 const applyBulkAllVariants = () => {
-    applyBulkValues(() => true, bulkAllForm.value, 'Đã áp dụng nhanh cho toàn bộ biến thể');
+    applyBulkValues(
+        () => true,
+        bulkAllForm.value,
+        'Đã áp dụng nhanh cho toàn bộ biến thể'
+    );
 };
 
 const applyBulkColorVariants = (colorId) => {
@@ -1376,7 +1309,7 @@ const removeColorGroup = (colorId) => {
     bulkByColorForms.value = nextBulkByColor;
 };
 
-const executeGenerateVariants = async () => {
+const executeGenerateVariants = () => {
     const existingVariantMap = new Map(
         variantItems.value.map(item => [
             getVariantCombinationKey(item.idMauSac, item.idKichThuoc),
@@ -1385,38 +1318,14 @@ const executeGenerateVariants = async () => {
     );
 
     const nextVariants = [];
-    let nextSkuSuffix = 1;
-
-    // Find highest suffix in existing variants to avoid duplicates
-    existingVariantMap.forEach((variant) => {
-        if (variant && variant.maChiTietSanPham && variant.maChiTietSanPham.startsWith(product.value.maSanPham + '-')) {
-            const parts = variant.maChiTietSanPham.split('-');
-            const num = parseInt(parts[parts.length - 1], 10);
-            if (!isNaN(num) && num >= nextSkuSuffix) {
-                nextSkuSuffix = num + 1;
-            }
-        }
-    });
-
     selectedColors.value.forEach((colorId) => {
         selectedSizes.value.forEach((sizeId) => {
             const combinationKey = getVariantCombinationKey(colorId, sizeId);
-            const existingVariant = existingVariantMap.get(combinationKey);
-
-            let newSku = '';
-            if (existingVariant && existingVariant.maChiTietSanPham) {
-                newSku = existingVariant.maChiTietSanPham;
-            } else {
-                newSku = `${product.value.maSanPham}-${nextSkuSuffix}`;
-                nextSkuSuffix++;
-            }
-
             nextVariants.push(createGeneratedVariant(
                 colorId,
                 sizeId,
-                existingVariant,
-                getColorUploadEntry(colorId).url,
-                newSku
+                existingVariantMap.get(combinationKey),
+                getColorUploadEntry(colorId).url
             ));
         });
     });
@@ -1424,7 +1333,9 @@ const executeGenerateVariants = async () => {
     variantItems.value = nextVariants;
 
     const validColorIds = new Set(selectedColors.value);
-    colorImageState.value = Object.fromEntries(Object.entries(colorImageState.value).filter(([colorId]) => validColorIds.has(colorId)));
+    colorImageState.value = Object.fromEntries(
+        Object.entries(colorImageState.value).filter(([colorId]) => validColorIds.has(colorId))
+    );
 
     addNotification({
         title: 'Thành công',
@@ -1451,8 +1362,8 @@ const generateVariants = () => {
         message: `Bạn có chắc chắn muốn tạo tự động ${totalToGenerate} biến thể dựa trên các thuộc tính đã chọn? Thao tác này sẽ cập nhật lại danh sách biến thể hiện tại.`,
         color: 'primary',
         loading: false,
-        action: async () => {
-            await executeGenerateVariants();
+        action: () => {
+            executeGenerateVariants();
             confirmDialog.value.show = false;
         }
     };
@@ -1547,17 +1458,13 @@ const loadProduct = async (id) => {
     syncColorImageStateFromVariants();
 };
 
-watch(
-    variantItems,
-    () => {
-        updateVariantPriceBounds();
-        syncVariantSelection();
-        if (variantPage.value > totalVariantPages.value) {
-            variantPage.value = totalVariantPages.value;
-        }
-    },
-    { deep: true }
-);
+watch(variantItems, () => {
+    updateVariantPriceBounds();
+    syncVariantSelection();
+    if (variantPage.value > totalVariantPages.value) {
+        variantPage.value = totalVariantPages.value;
+    }
+}, { deep: true });
 
 watch(variantPageSize, () => {
     variantPage.value = 1;
@@ -1583,18 +1490,8 @@ onMounted(async () => {
     try {
         await fetchFormOptions();
 
-        try {
-            const listResponse = await dichVuSanPham.layDanhSachSanPham({ size: 1000 });
-            const list = listResponse.content || listResponse || [];
-            productNameSuggestions.value = [...new Set(list.map(p => p.tenSanPham).filter(Boolean))];
-        } catch(e) {
-            // ignore
-        }
-
         if (route.params.id) {
             await loadProduct(route.params.id);
-        } else {
-            product.value.maSanPham = await generateRandomCode('SanPham');
         }
     } catch (error) {
         console.error('Error initializing form:', error);
@@ -1605,7 +1502,7 @@ onMounted(async () => {
 });
 
 const rules = {
-    required: (value) => !!value || 'Trường này là bắt buộc'
+    required: value => !!value || 'Trường này là bắt buộc'
 };
 
 const attributeConfig = [
@@ -1630,7 +1527,9 @@ const validateProduct = () => {
         ['idMucDichChay', 'Mục đích sử dụng']
     ];
 
-    const missing = requiredFields.filter(([field]) => !product.value[field]).map(([, label]) => label);
+    const missing = requiredFields
+        .filter(([field]) => !product.value[field])
+        .map(([, label]) => label);
 
     if (missing.length > 0) {
         addNotification({
@@ -1650,9 +1549,13 @@ const validateProduct = () => {
         return false;
     }
 
-    const invalidVariant = variantItems.value.find(
-        (item) => !item.idMauSac || !item.idKichThuoc || item.soLuong < 0 || item.giaNhap < 0 || item.giaBan < 0
-    );
+    const invalidVariant = variantItems.value.find(item => (
+        !item.idMauSac
+        || !item.idKichThuoc
+        || item.soLuong < 0
+        || item.giaNhap < 0
+        || item.giaBan < 0
+    ));
 
     if (invalidVariant) {
         addNotification({
@@ -1666,29 +1569,12 @@ const validateProduct = () => {
     return true;
 };
 
-const getNextSku = () => {
-    if (!product.value.maSanPham) return '';
-    let maxSuffix = 0;
-    const prefix = product.value.maSanPham + '-';
-    variantItems.value.forEach(item => {
-        const sku = item.maChiTietSanPham || '';
-        if (sku.startsWith(prefix)) {
-            const parts = sku.split('-');
-            const num = parseInt(parts[parts.length - 1], 10);
-            if (!isNaN(num) && num > maxSuffix) {
-                maxSuffix = num;
-            }
-        }
-    });
-    return `${product.value.maSanPham}-${maxSuffix + 1}`;
-};
-
 const openCreateVariantModal = () => {
     variantModal.value = {
         open: true,
         mode: 'create',
         submitting: false,
-        variant: { maChiTietSanPham: getNextSku() }
+        variant: null
     };
 };
 
@@ -1711,7 +1597,7 @@ const closeVariantModal = () => {
 };
 
 const handleToggleVariantStatus = (variant) => {
-    const nextStatus = isActiveStatus(variant.trangThai) ? 'NGUNG_HOAT_DONG' : defaultVariantStatus;
+    const nextStatus = isVariantActiveStatus(variant.trangThai) ? 'NGUNG_HOAT_DONG' : defaultVariantStatus;
     confirmDialog.value = {
         show: true,
         title: 'Đổi trạng thái biến thể',
@@ -1767,7 +1653,9 @@ const handleVariantSubmit = async (payload) => {
             variantItems.value = [...variantItems.value, nextVariant];
             addNotification({ title: 'Thành công', subtitle: 'Đã thêm biến thể nháp', color: 'success' });
         } else {
-            variantItems.value = variantItems.value.map((item) => (getVariantKey(item) === currentKey ? nextVariant : item));
+            variantItems.value = variantItems.value.map(item => (
+                getVariantKey(item) === currentKey ? nextVariant : item
+            ));
             addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật biến thể nháp', color: 'success' });
         }
 
@@ -1781,7 +1669,10 @@ const handleVariantSubmit = async (payload) => {
             await dichVuBienThe.taoBienThe(route.params.id, buildVariantPayload(normalizedPayload, true));
             addNotification({ title: 'Thành công', subtitle: 'Đã thêm biến thể mới', color: 'success' });
         } else {
-            await dichVuBienThe.capNhatBienThe(variantModal.value.variant.id, buildVariantPayload(normalizedPayload, true));
+            await dichVuBienThe.capNhatBienThe(
+                variantModal.value.variant.id,
+                buildVariantPayload(normalizedPayload, true)
+            );
             addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật biến thể', color: 'success' });
         }
 
@@ -1816,7 +1707,7 @@ const handleRemoveVariant = (variant) => {
                     await loadProduct(route.params.id);
                     addNotification({ title: 'Thành công', subtitle: 'Đã xóa biến thể', color: 'success' });
                 } else {
-                    variantItems.value = variantItems.value.filter((item) => getVariantKey(item) !== getVariantKey(variant));
+                    variantItems.value = variantItems.value.filter(item => getVariantKey(item) !== getVariantKey(variant));
                     addNotification({ title: 'Thành công', subtitle: 'Đã xóa biến thể nháp', color: 'success' });
                 }
                 confirmDialog.value.show = false;
@@ -1856,9 +1747,9 @@ const handleSave = async () => {
         show: true,
         title: creatingNew ? 'Xác nhận thêm mới' : 'Xác nhận cập nhật',
         message: creatingNew
-            ? variantCount > 0
+            ? (variantCount > 0
                 ? `Bạn có chắc chắn muốn thêm sản phẩm mới cùng ${variantCount} biến thể không?`
-                : 'Bạn có chắc chắn muốn thêm sản phẩm mới này không?'
+                : 'Bạn có chắc chắn muốn thêm sản phẩm mới này không?')
             : 'Bạn có chắc chắn muốn cập nhật thông tin sản phẩm này không?',
         color: 'success',
         action: async () => {
@@ -1869,7 +1760,9 @@ const handleSave = async () => {
                     await dichVuSanPham.taoSanPham(buildProductPayload({ includeVariants: true }));
                     addNotification({
                         title: 'Thành công',
-                        subtitle: variantCount > 0 ? `Đã thêm sản phẩm mới cùng ${variantCount} biến thể` : 'Đã thêm sản phẩm mới',
+                        subtitle: variantCount > 0
+                            ? `Đã thêm sản phẩm mới cùng ${variantCount} biến thể`
+                            : 'Đã thêm sản phẩm mới',
                         color: 'success'
                     });
                 } else {
@@ -1892,7 +1785,7 @@ const handleSave = async () => {
 </script>
 
 <template>
-    <v-container fluid class="pa-6 animate-fade-in overflow-y-auto" style="height: 100vh">
+    <v-container fluid class="pa-6 animate-fade-in overflow-y-auto" style="height: 100vh;">
         <AdminBreadcrumbs :items="[
             { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
             { title: 'Danh sách sản phẩm', disabled: false, to: PATH.SAN_PHAM },
@@ -1941,20 +1834,13 @@ const handleSave = async () => {
                         <v-row>
                             <!-- HÀNG 1: THÔNG TIN CHÍNH -->
 
-                            <v-col cols="12" md="3">
-                                <div class="field-label">Mã sản phẩm</div>
-                                <v-text-field v-model="product.maSanPham" placeholder="Hệ thống tự tạo..."
-                                    variant="outlined" density="comfortable" readonly
+                            <v-col cols="12" md="4">
+                                <div class="field-label">Tên sản phẩm</div>
+                                <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Giày Nike Air..."
+                                    :rules="[rules.required]" variant="outlined" density="comfortable"
                                     hide-details="auto"></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="3">
-                                <div class="field-label">Tên sản phẩm</div>
-                                <v-combobox v-model="product.tenSanPham" :items="productNameSuggestions"
-                                    placeholder="Ví dụ: Giày Nike Air..." :rules="[rules.required]"
-                                    variant="outlined" density="comfortable" hide-details="auto"
-                                    :return-object="false"></v-combobox>
-                            </v-col>
-                            <v-col cols="12" md="3">
+                            <v-col cols="12" md="4">
                                 <div class="field-label">Thương hiệu</div>
                                 <v-combobox v-model="product.idThuongHieu" v-model:search="searchQueries.idThuongHieu"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayBrands"
@@ -1965,14 +1851,14 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
                                     </template>
                                 </v-combobox>
                             </v-col>
-                            <v-col cols="12" md="3">
+                            <v-col cols="12" md="4">
                                 <div class="field-label">Danh mục</div>
                                 <v-combobox v-model="product.idDanhMuc" v-model:search="searchQueries.idDanhMuc"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayCategories"
@@ -1983,7 +1869,7 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
@@ -2003,7 +1889,7 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
@@ -2021,7 +1907,7 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
@@ -2030,11 +1916,9 @@ const handleSave = async () => {
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="field-label">Đối tượng</div>
-                                <v-select v-model="product.gioiTinhKhachHang" :items="[
-                                    { title: 'Nam', value: 'NAM' },
-                                    { title: 'Nữ', value: 'NU' },
-                                    { title: 'Unisex', value: 'UNISEX' }
-                                ]" variant="outlined" density="comfortable" hide-details
+                                <v-select v-model="product.gioiTinhKhachHang"
+                                    :items="[{ title: 'Nam', value: 'NAM' }, { title: 'Nữ', value: 'NU' }, { title: 'Unisex', value: 'UNISEX' }]"
+                                    variant="outlined" density="comfortable" hide-details
                                     placeholder="Đối tượng"></v-select>
                             </v-col>
                             <v-col cols="12" md="3">
@@ -2048,7 +1932,7 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
@@ -2068,7 +1952,7 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
@@ -2086,7 +1970,7 @@ const handleSave = async () => {
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm
+                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
                                                     nhanh</span>
                                             </template>
                                         </v-list-item>
@@ -2118,47 +2002,147 @@ const handleSave = async () => {
                         <div class="mt-2 flex-grow-1">
                             <!-- MÀU SẮC -->
                             <div class="field-label mb-3">Màu sắc</div>
-                            <div class="mb-6">
-                                <v-combobox v-model="selectedColors" v-model:search="searchQueries.idMauSac"
-                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displayColors"
-                                    item-title="ten" item-value="id" placeholder="Chọn hoặc thêm màu sắc..."
-                                    variant="outlined" density="comfortable" multiple chips closable-chips
-                                    :return-object="false" @keyup.enter="(e) => onKeyUpEnterMultiple(e, 'idMauSac')"
-                                    @update:model-value="(val) => handleMultipleAttributeChange('idMauSac', val)">
-                                    <template #item="{ props, item }">
-                                        <v-list-item v-bind="props">
-                                            <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
-                                            </template>
-                                        </v-list-item>
+                            <div class="d-flex flex-wrap gap-4 mb-8">
+                                <div v-for="c in colors.filter(x => selectedColors.includes(x.id))" :key="c.id"
+                                    class="text-center cursor-pointer" @click="toggleColor(c.id)">
+                                    <div class="color-circle mx-auto"
+                                        :style="{ backgroundColor: c.maMauHex || '#e2e8f0' }"
+                                        :class="{ 'selected': selectedColors.includes(c.id) }">
+                                        <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18"
+                                            class="check-icon">mdi-check</v-icon>
+                                    </div>
+                                    <div class="text-caption mt-1 text-truncate" style="max-width: 48px;">{{ c.ten }}
+                                    </div>
+                                </div>
+                                <v-menu v-model="showColorMenu" :close-on-content-click="false" location="bottom center"
+                                    max-width="320">
+                                    <template v-slot:activator="{ props }">
+                                        <div class="text-center cursor-pointer" v-bind="props">
+                                            <div class="color-circle dashed mx-auto d-flex align-center justify-center">
+                                                <v-icon size="20" color="grey-darken-1">mdi-plus</v-icon>
+                                            </div>
+                                            <div class="text-caption mt-1 text-grey-darken-1">Thêm</div>
+                                        </div>
                                     </template>
-                                </v-combobox>
+                                    <v-card class="rounded-xl pa-4 shadow-lg border">
+                                        <div class="d-flex justify-space-between align-center mb-4">
+                                            <span class="text-subtitle-1 font-weight-bold">Chọn màu sắc</span>
+                                            <v-btn icon="mdi-close" variant="text" size="small"
+                                                @click="showColorMenu = false"></v-btn>
+                                        </div>
+                                        <v-text-field v-model="colorSearch" prepend-inner-icon="mdi-magnify"
+                                            placeholder="Tìm kiếm màu sắc..." variant="outlined" density="compact"
+                                            hide-details class="mb-4 bg-slate-50"></v-text-field>
+
+                                        <div class="text-caption font-weight-bold text-grey mb-3">MÀU PHỔ BIẾN</div>
+                                        <div class="d-flex flex-wrap gap-3 mb-6"
+                                            style="max-height: 150px; overflow-y: auto;">
+                                            <div v-for="c in filteredColors" :key="c.id"
+                                                class="text-center cursor-pointer" @click="toggleColor(c.id)">
+                                                <div class="color-circle mx-auto mb-1"
+                                                    :style="{ backgroundColor: c.maMauHex || '#e2e8f0' }"
+                                                    :class="{ 'selected': selectedColors.includes(c.id) }">
+                                                    <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18"
+                                                        class="check-icon">mdi-check</v-icon>
+                                                </div>
+                                                <div class="text-caption"
+                                                    style="font-size: 10px !important; max-width: TÙY CHỈNH MÀU SẮC40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                    {{ c.ten }}</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-caption font-weight-bold text-grey mb-3">THÊM NHANH MÀU SẮC
+                                        </div>
+                                        <div class="d-flex gap-3 mb-4">
+                                            <div class="custom-color-preview rounded-lg position-relative overflow-hidden cursor-pointer"
+                                                :style="{ backgroundColor: customColorHex }">
+                                                <input type="color" v-model="customColorHex"
+                                                    class="position-absolute w-100 h-100"
+                                                    style="opacity: 0; cursor: pointer; top: 0; left: 0; outline: none; border: none;" />
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="text-caption mb-1">TÊN MÀU</div>
+                                                <v-text-field v-model="customColorName" placeholder="Ví dụ: Xanh Mint"
+                                                    variant="outlined" density="compact" hide-details
+                                                    class="mb-3 bg-slate-50"></v-text-field>
+                                                <div class="text-caption mb-1">MÃ MÀU (HEX)</div>
+                                                <v-text-field v-model="customColorHex" variant="outlined"
+                                                    density="compact" hide-details
+                                                    class="bg-slate-50 mb-2"></v-text-field>
+                                                <div class="d-flex align-center gap-2 px-3 py-1 bg-slate-50 rounded-lg">
+                                                    <div class="color-dot" :style="{ backgroundColor: customColorHex }">
+                                                    </div>
+                                                    <span class="text-caption font-weight-medium">Màu đang chọn</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <v-btn block color="primary" class="rounded-lg font-weight-bold text-none"
+                                            @click="handleAddCustomColor">
+                                            <v-icon size="18" class="mr-2">mdi-plus-circle-outline</v-icon> Xác nhận
+                                            thêm mới màu
+                                        </v-btn>
+                                    </v-card>
+                                </v-menu>
                             </div>
 
                             <!-- KÍCH THƯỚC -->
-                            <div class="field-label mb-3">Kích thước</div>
-                            <div class="mb-4">
-                                <v-combobox v-model="selectedSizes" v-model:search="searchQueries.idKichThuoc"
-                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displaySizes"
-                                    item-title="ten" item-value="id" placeholder="Chọn hoặc thêm kích thước..."
-                                    variant="outlined" density="comfortable" multiple chips closable-chips
-                                    :return-object="false" @keyup.enter="(e) => onKeyUpEnterMultiple(e, 'idKichThuoc')"
-                                    @update:model-value="(val) => handleMultipleAttributeChange('idKichThuoc', val)">
-                                    <template #item="{ props, item }">
-                                        <v-list-item v-bind="props">
-                                            <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px">Thêm nhanh</span>
-                                            </template>
-                                        </v-list-item>
+                            <div class="field-label mb-3 mt-2">Kích thước</div>
+                            <div class="d-flex flex-wrap gap-2 mb-4">
+                                <v-chip v-for="s in sizes.filter(x => selectedSizes.includes(x.id))" :key="s.id"
+                                    variant="flat" color="primary"
+                                    class="rounded-lg font-weight-medium px-4 cursor-pointer" @click="toggleSize(s.id)">
+                                    {{ formatSizeDisplay(s.ten) }}
+                                </v-chip>
+
+                                <v-menu v-model="showSizeMenu" :close-on-content-click="false" location="bottom center"
+                                    max-width="320">
+                                    <template v-slot:activator="{ props }">
+                                        <v-chip v-bind="props" variant="outlined"
+                                            style="border-style: dashed; border-width: 1px;" color="grey-darken-1"
+                                            class="rounded-lg px-4 bg-transparent cursor-pointer hover-bg-slate-50">
+                                            <v-icon start size="16">mdi-plus</v-icon> Thêm mới
+                                        </v-chip>
                                     </template>
-                                </v-combobox>
+                                    <v-card class="rounded-xl pa-4 shadow-lg border">
+                                        <div class="d-flex justify-space-between align-center mb-4">
+                                            <span class="text-subtitle-1 font-weight-bold">Chọn kích thước</span>
+                                            <v-btn icon="mdi-close" variant="text" size="small"
+                                                @click="showSizeMenu = false"></v-btn>
+                                        </div>
+                                        <div class="d-flex gap-2 mb-4">
+                                            <v-text-field v-model="customSizeName" prepend-inner-icon="mdi-magnify"
+                                                placeholder="Nhập kích thước" variant="outlined" density="compact"
+                                                hide-details class="bg-slate-50"></v-text-field>
+                                            <v-btn color="primary" class="rounded-lg text-none font-weight-medium"
+                                                height="40" @click="handleAddCustomSize">
+                                                <v-icon start size="18">mdi-plus</v-icon> Thêm
+                                            </v-btn>
+                                        </div>
+                                        <div class="text-caption text-grey mb-3">Gợi ý kích thước</div>
+                                        <div class="d-flex flex-wrap gap-2 mb-4"
+                                            style="max-height: 150px; overflow-y: auto;">
+                                            <v-chip v-for="s in filteredSizes" :key="s.id"
+                                                :variant="selectedSizes.includes(s.id) ? 'flat' : 'tonal'"
+                                                :color="selectedSizes.includes(s.id) ? 'primary' : 'grey-darken-1'"
+                                                class="rounded-lg px-4 cursor-pointer font-weight-medium"
+                                                @click="toggleSize(s.id)"
+                                                :class="{ 'bg-slate-50': !selectedSizes.includes(s.id) }">
+                                                {{ formatSizeDisplay(s.ten) }}
+                                            </v-chip>
+                                        </div>
+                                        <v-btn block color="primary" class="rounded-lg font-weight-bold text-none mt-2"
+                                            @click="showSizeMenu = false">
+                                            Thêm vào danh sách
+                                        </v-btn>
+                                    </v-card>
+                                </v-menu>
                             </div>
                         </div>
 
                         <v-spacer></v-spacer>
 
                         <v-btn height="44" class="mt-6 text-none font-weight-medium rounded-lg mx-auto d-flex"
-                            style="width: fit-content" color="primary" @click="generateVariants"
+                            style="width: fit-content;" color="primary" @click="generateVariants"
                             :disabled="selectedColors.length === 0 || selectedSizes.length === 0">
                             <v-icon icon="mdi-auto-fix" size="18" class="mr-2" />
                             Tạo danh sách biến thể
@@ -2184,13 +2168,13 @@ const handleSave = async () => {
                                         </div>
                                     </div>
                                     <div class="d-flex align-center gap-3">
-                                        <v-btn v-if="variantItems.length > 0" color="primary" variant="flat" 
+                                        <v-btn v-if="variantItems.length > 0" color="primary" variant="flat"
                                             class="text-none font-weight-bold rounded-lg px-4"
                                             style="color: white !important;" @click="openBulkEdit(null)">
                                             <v-icon icon="mdi-flash-outline" size="18" class="mr-2" />
                                             Thêm nhanh toàn bộ
                                         </v-btn>
-                                        <v-btn v-if="variantItems.length > 0" variant="flat" color="error" 
+                                        <v-btn v-if="variantItems.length > 0" variant="flat" color="error"
                                             class="text-none font-weight-bold rounded-lg px-4"
                                             style="color: white !important;" @click="clearAllDraftVariants">
                                             <TrashIcon size="18" class="mr-2" />
@@ -2203,16 +2187,22 @@ const handleSave = async () => {
                             <div v-if="variantItems.length > 0" class="variants-tab-container mb-6">
                                 <v-row no-gutters class="border rounded-lg overflow-hidden" style="height: 600px;">
                                     <!-- Sidebar Màu sắc -->
-                                    <v-col cols="12" md="3" class="bg-slate-50 d-flex flex-column h-100" style="border-right: 1px solid #cbd5e1;">
+                                    <v-col cols="12" md="3" class="bg-slate-50 d-flex flex-column h-100"
+                                        style="border-right: 1px solid #cbd5e1;">
                                         <div class="pa-2 flex-shrink-0">
                                             <v-list class="bg-transparent pa-0" lines="one">
                                                 <v-list-item
                                                     :class="['rounded-lg transition-all', activeColorTab === 'ALL' ? 'bg-white elevation-2 text-primary font-weight-bold' : 'text-slate-700 hover-bg-slate-100']"
                                                     @click="activeColorTab = 'ALL'">
                                                     <template v-slot:prepend>
-                                                        <v-icon icon="mdi-format-list-bulleted" :color="activeColorTab === 'ALL' ? 'primary' : 'slate-500'" class="mr-3" />
+                                                        <v-icon icon="mdi-format-list-bulleted"
+                                                            :color="activeColorTab === 'ALL' ? 'primary' : 'slate-500'"
+                                                            class="mr-3" />
                                                     </template>
-                                                    <v-list-item-title :class="activeColorTab === 'ALL' ? 'font-weight-bold' : 'font-weight-medium'">Tất cả màu</v-list-item-title>
+                                                    <v-list-item-title
+                                                        :class="activeColorTab === 'ALL' ? 'font-weight-bold' : 'font-weight-medium'">Tất
+                                                        cả
+                                                        màu</v-list-item-title>
                                                 </v-list-item>
                                             </v-list>
                                             <v-divider class="mt-4 mb-2 opacity-50" color="slate-300"></v-divider>
@@ -2221,85 +2211,138 @@ const handleSave = async () => {
                                         <div class="flex-grow-1 px-2 pb-2" style="overflow-y: auto; min-height: 0;">
                                             <v-list class="bg-transparent pa-0" lines="one">
 
-                                            <v-list-item v-for="(items, colorId) in variantsByColor" :key="colorId"
-                                                :class="['rounded-lg mb-2 transition-all', activeColorTab === String(colorId) ? 'bg-white elevation-2 text-primary' : 'text-slate-700 hover-bg-slate-100']"
-                                                @click="activeColorTab = String(colorId)">
-                                                <template v-slot:prepend>
-                                                    <div class="mr-3" :style="{ backgroundColor: getVariantColorHex(colorId), width: '16px', height: '16px', borderRadius: '50%', border: '1px solid #94a3b8' }"></div>
-                                                </template>
-                                                <v-list-item-title :class="activeColorTab === String(colorId) ? 'font-weight-bold' : 'font-weight-medium'">{{ getVariantColorLabel(colorId) }}</v-list-item-title>
-                                                <template v-slot:append>
-                                                    <v-badge :content="String(items.length)" :color="activeColorTab === String(colorId) ? 'primary' : 'slate-200'" :text-color="activeColorTab === String(colorId) ? 'white' : 'slate-700'" inline />
-                                                </template>
-                                            </v-list-item>
+                                                <v-list-item v-for="(items, colorId) in variantsByColor" :key="colorId"
+                                                    :class="['rounded-lg mb-2 transition-all', activeColorTab === String(colorId) ? 'bg-white elevation-2 text-primary' : 'text-slate-700 hover-bg-slate-100']"
+                                                    @click="activeColorTab = String(colorId)">
+                                                    <template v-slot:prepend>
+                                                        <div class="mr-3"
+                                                            :style="{ backgroundColor: getVariantColorHex(colorId), width: '16px', height: '16px', borderRadius: '50%', border: '1px solid #94a3b8' }">
+                                                        </div>
+                                                    </template>
+                                                    <v-list-item-title
+                                                        :class="activeColorTab === String(colorId) ? 'font-weight-bold' : 'font-weight-medium'">{{
+                                                            getVariantColorLabel(colorId) }}</v-list-item-title>
+                                                    <template v-slot:append>
+                                                        <v-badge :content="String(items.length)"
+                                                            :color="activeColorTab === String(colorId) ? 'primary' : 'slate-200'"
+                                                            :text-color="activeColorTab === String(colorId) ? 'white' : 'slate-700'"
+                                                            inline />
+                                                    </template>
+                                                </v-list-item>
                                             </v-list>
                                         </div>
                                     </v-col>
 
                                     <!-- Nội dung bảng biến thể -->
                                     <v-col cols="12" md="9" class="bg-white d-flex flex-column h-100">
-                                        <div class="pa-4 border-b d-flex align-center justify-space-between flex-shrink-0">
+                                        <div
+                                            class="pa-4 border-b d-flex align-center justify-space-between flex-shrink-0">
                                             <div class="text-subtitle-1 font-weight-bold text-slate-800">
-                                                {{ activeColorTab === 'ALL' ? 'Đang xem tất cả biến thể' : 'Đang xem màu: ' + getVariantColorLabel(activeColorTab) }}
+                                                {{ activeColorTab === 'ALL' ? 'Đang xem tất cả biến thể' :
+                                                    'Đang xem màu: ' + getVariantColorLabel(activeColorTab) }}
                                             </div>
                                             <div class="d-flex align-center gap-2" v-if="activeColorTab !== 'ALL'">
-                                                <span class="text-caption font-weight-bold text-slate-500 mr-2 d-none d-sm-block">ÁP DỤNG NHANH:</span>
-                                                <v-text-field v-model="quickApplyValues.giaBan" placeholder="Giá bán" variant="outlined" density="compact" hide-details class="custom-input-dense" style="width: 120px" type="number" />
-                                                <v-text-field v-model="quickApplyValues.giaNhap" placeholder="Giá nhập" variant="outlined" density="compact" hide-details class="custom-input-dense" style="width: 120px" type="number" />
-                                                <v-text-field v-model="quickApplyValues.soLuong" placeholder="Số lượng" variant="outlined" density="compact" hide-details class="custom-input-dense" style="width: 100px" type="number" />
-                                                <v-btn color="primary" variant="flat" size="small" class="text-none rounded font-weight-bold" style="color: white !important" height="40" @click="handleQuickApply">
+                                                <span
+                                                    class="text-caption font-weight-bold text-slate-500 mr-2 d-none d-sm-block">
+                                                    áp dụng nhanh:</span>
+                                                <v-text-field v-model="quickApplyValues.giaBan" placeholder="Giá bán"
+                                                    variant="outlined" density="compact" hide-details
+                                                    class="custom-input-dense" style="width: 120px" type="number" />
+                                                <v-text-field v-model="quickApplyValues.giaNhap" placeholder="Giá nhập"
+                                                    variant="outlined" density="compact" hide-details
+                                                    class="custom-input-dense" style="width: 120px" type="number" />
+                                                <v-text-field v-model="quickApplyValues.soLuong" placeholder="Số lượng"
+                                                    variant="outlined" density="compact" hide-details
+                                                    class="custom-input-dense" style="width: 100px" type="number" />
+                                                <v-btn color="primary" variant="flat" size="small"
+                                                    class="text-none rounded font-weight-bold"
+                                                    style="color: white !important" height="40"
+                                                    @click="handleQuickApply">
                                                     <v-icon icon="mdi-flash" size="16" class="mr-1" /> Cập nhật
                                                 </v-btn>
                                             </div>
                                         </div>
 
-                                        <div v-if="activeColorTab !== 'ALL'" class="pa-4 bg-slate-50 d-flex align-center justify-center flex-shrink-0" style="border-bottom: 2px solid #cbd5e1; box-shadow: 0 4px 6px -4px rgba(0,0,0,0.05); z-index: 10;">
+                                        <div v-if="activeColorTab !== 'ALL'"
+                                            class="pa-4 bg-slate-50 d-flex align-center justify-center flex-shrink-0"
+                                            style="border-bottom: 2px solid #cbd5e1; box-shadow: 0 4px 6px -4px rgba(0,0,0,0.05); z-index: 10;">
                                             <div class="d-flex flex-column align-center">
-                                                <div class="text-caption font-weight-bold text-slate-600 mb-2">HÌNH ẢNH ĐẠI DIỆN CHO MÀU NÀY</div>
-                                                <div class="color-image-uploader" @click="openColorImagePicker(activeColorTab)" style="width: 120px; height: 120px; border-radius: 8px; border: 2px dashed #cbd5e1; cursor: pointer; overflow: hidden; background: white">
-                                                    <v-img v-if="getColorUploadEntry(activeColorTab).url" :src="getColorUploadEntry(activeColorTab).url" cover class="w-100 h-100" />
-                                                    <div v-else class="w-100 h-100 d-flex flex-column align-center justify-center">
+                                                <div class="text-caption font-weight-bold text-slate-600 mb-2">HÌNH ẢNH
+                                                    ĐẠI DIỆN CHO MÀU NÀY</div>
+                                                <div class="color-image-uploader"
+                                                    @click="openColorImagePicker(activeColorTab)"
+                                                    style="width: 120px; height: 120px; border-radius: 8px; border: 2px dashed #cbd5e1; cursor: pointer; overflow: hidden; background: white">
+                                                    <v-img v-if="getColorUploadEntry(activeColorTab).url"
+                                                        :src="getColorUploadEntry(activeColorTab).url" cover
+                                                        class="w-100 h-100" />
+                                                    <div v-else
+                                                        class="w-100 h-100 d-flex flex-column align-center justify-center">
                                                         <v-icon icon="mdi-camera-plus" color="slate-400" size="28" />
-                                                        <span class="text-caption text-slate-400 mt-1">Tải ảnh lên</span>
+                                                        <span class="text-caption text-slate-400 mt-1">Tải ảnh
+                                                            lên</span>
                                                     </div>
-                                                    <input :ref="(el) => setColorFileInputRef(activeColorTab, el)" type="file" accept="image/*" class="d-none" @change="handleColorImageUpload(activeColorTab, $event)" />
+                                                    <input :ref="(el) => setColorFileInputRef(activeColorTab, el)"
+                                                        type="file" accept="image/*" class="d-none"
+                                                        @change="handleColorImageUpload(activeColorTab, $event)" />
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div class="flex-grow-1" style="min-height: 0;">
-                                            <v-table density="comfortable" class="variant-inner-table h-100" fixed-header>
+                                            <v-table density="comfortable" class="variant-inner-table h-100"
+                                                fixed-header>
                                                 <thead class="bg-slate-50">
                                                     <tr>
-                                                        <th class="text-left font-weight-bold text-slate-600">Thuộc tính (Màu/Size)</th>
-                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 140px">Giá bán (đ)</th>
-                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 140px">Giá nhập (đ)</th>
-                                                        <th class="text-left font-weight-bold text-slate-600" style="width: 110px">Số lượng sản phẩm</th>
-                                                        <th class="text-center font-weight-bold text-slate-600" style="width: 60px">Xóa</th>
+                                                        <th class="text-left font-weight-bold text-slate-600">Thuộc tính
+                                                            (Màu/Size)</th>
+                                                        <th class="text-left font-weight-bold text-slate-600"
+                                                            style="width: 140px">Giá bán (đ)</th>
+                                                        <th class="text-left font-weight-bold text-slate-600"
+                                                            style="width: 140px">Giá nhập (đ)</th>
+                                                        <th class="text-left font-weight-bold text-slate-600"
+                                                            style="width: 110px">Số lượng sản phẩm
+                                                        </th>
+                                                        <th class="text-center font-weight-bold text-slate-600"
+                                                            style="width: 60px">Xóa</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <tr v-for="variant in paginatedVisibleVariantItems" :key="variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc">
+                                                    <tr v-for="variant in paginatedVisibleVariantItems"
+                                                        :key="variant.clientKey || variant.idMauSac + '-' + variant.idKichThuoc">
                                                         <td class="font-weight-medium text-slate-700">
                                                             <div class="d-flex align-center">
-                                                                <div class="mr-2" :style="{ backgroundColor: getVariantColorHex(variant.idMauSac), width: '14px', height: '14px', borderRadius: '50%', border: '1px solid #94a3b8' }"></div>
+                                                                <div class="mr-2"
+                                                                    :style="{ backgroundColor: getVariantColorHex(variant.idMauSac), width: '14px', height: '14px', borderRadius: '50%', border: '1px solid #94a3b8' }">
+                                                                </div>
                                                                 <div>
-                                                                    <div class="text-body-2 font-weight-bold">{{ getVariantSizeLabel(variant.idKichThuoc) }}</div>
-                                                                    <div class="text-caption text-slate-500">{{ getVariantColorLabel(variant.idMauSac) }}</div>
+                                                                    <div class="text-body-2 font-weight-bold">{{
+                                                                        getVariantSizeLabel(variant.idKichThuoc) }}
+                                                                    </div>
+                                                                    <div class="text-caption text-slate-500">{{
+                                                                        getVariantColorLabel(variant.idMauSac)
+                                                                    }}</div>
                                                                 </div>
                                                             </div>
                                                         </td>
                                                         <td>
-                                                            <FormattedNumberField v-model="variant.giaBan" hide-details variant="outlined" density="compact" class="custom-input-dense" />
+                                                            <FormattedNumberField v-model="variant.giaBan" hide-details
+                                                                variant="outlined" density="compact"
+                                                                class="custom-input-dense" />
                                                         </td>
                                                         <td>
-                                                            <FormattedNumberField v-model="variant.giaNhap" hide-details variant="outlined" density="compact" class="custom-input-dense" />
+                                                            <FormattedNumberField v-model="variant.giaNhap" hide-details
+                                                                variant="outlined" density="compact"
+                                                                class="custom-input-dense" />
                                                         </td>
                                                         <td>
-                                                            <v-text-field v-model="variant.soLuong" type="number" hide-details variant="outlined" density="compact" class="custom-input-dense" />
+                                                            <v-text-field v-model="variant.soLuong" type="number"
+                                                                hide-details variant="outlined" density="compact"
+                                                                class="custom-input-dense" />
                                                         </td>
                                                         <td class="text-center">
-                                                            <v-btn variant="text" color="error" size="small" class="action-icon-btn" @click="removeDraftVariantByObject(variant)">
+                                                            <v-btn variant="text" color="error" size="small"
+                                                                class="action-icon-btn"
+                                                                @click="removeDraftVariantByObject(variant)">
                                                                 <TrashIcon size="18" />
                                                             </v-btn>
                                                         </td>
@@ -2308,8 +2351,10 @@ const handleSave = async () => {
                                             </v-table>
                                         </div>
                                         <div class="flex-shrink-0 border-t bg-white">
-                                            <AdminPagination v-model="createVariantPage" :page-size="createVariantPageSize"
-                                                @update:pageSize="createVariantPageSize = $event" :total-pages="createVariantTotalPages"
+                                            <AdminPagination v-model="createVariantPage"
+                                                :page-size="createVariantPageSize"
+                                                @update:pageSize="createVariantPageSize = $event"
+                                                :total-pages="createVariantTotalPages"
                                                 :total-elements="visibleVariantItems.length"
                                                 :current-size="paginatedVisibleVariantItems.length" />
                                         </div>
@@ -2325,7 +2370,9 @@ const handleSave = async () => {
                                     Chưa có biến thể nào được tạo
                                 </div>
                                 <div class="text-caption text-slate-500 mt-1">
-                                    Chọn màu sắc và kích thước ở card bên phải, sau đó bấm <span class="font-weight-bold">Tạo danh sách biến thể</span>.
+                                    Chọn màu sắc và kích thước ở card bên phải, sau đó bấm <span
+                                        class="font-weight-bold">Tạo danh sách biến
+                                        thể</span>.
                                 </div>
                             </div>
                         </template>
@@ -2391,171 +2438,25 @@ const handleSave = async () => {
                                 </template>
                             </AdminFilter>
                         </div>
-
-                        <template v-if="!isEditMode">
-                            <div class="variant-gradient-header pb-4 mb-6" style="border-bottom: 1px solid #e2e8f0">
-                                <div class="d-flex align-center justify-space-between w-100">
-                                    <div class="d-flex align-center">
-                                        <div class="icon-blob bg-blue-lighten-5 mr-3">
-                                            <v-icon icon="mdi-view-grid-plus-outline" size="18" class="text-primary" />
-                                        </div>
-                                        <div>
-                                            <div class="text-subtitle-1 text-slate-800">Danh sách biến thể</div>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex align-center gap-3">
-                                        <v-btn v-if="variantItems.length > 0" color="primary" variant="flat"
-                                            class="text-none font-weight-bold rounded-lg px-4"
-                                            style="color: white !important" @click="openBulkEdit(null)">
-                                            <v-icon icon="mdi-flash-outline" size="18" class="mr-2" />
-                                            Thêm nhanh toàn bộ
-                                        </v-btn>
-                                        <v-btn v-if="variantItems.length > 0" variant="flat" color="error"
-                                            class="text-none font-weight-bold rounded-lg px-4"
-                                            style="color: white !important" @click="clearAllDraftVariants">
-                                            <TrashIcon size="18" class="mr-2" />
-                                            Xóa tất cả
-                                        </v-btn>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div v-if="variantItems.length > 0" class="variants-grouped-container custom-scrollbar"
-                                style="max-height: 600px; overflow-y: auto; overflow-x: hidden; padding-right: 4px;">
-                                <v-card v-for="(items, colorId) in variantsByColor" :key="colorId"
-                                    class="color-group-card mb-6">
-                                    <div
-                                        class="color-group-header px-6 py-4 bg-slate-50 d-flex align-center justify-space-between border-b">
-                                        <div class="d-flex align-center">
-                                            <v-avatar size="24" :color="getVariantColorHex(colorId)"
-                                                class="mr-3 border" />
-                                            <span class="text-subtitle-2 font-weight-bold text-slate-800">
-                                                Màu sắc: {{ getVariantColorLabel(colorId) }}
-                                            </span>
-                                            <span class="text-caption text-slate-500 ml-3"> ({{ items.length }} kích
-                                                thước) </span>
-                                        </div>
-                                        <div class="d-flex align-center gap-2">
-                                            <v-btn color="primary" variant="flat" size="small"
-                                                class="text-none font-weight-bold rounded-lg px-3"
-                                                style="color: white !important" @click="openBulkEdit(colorId)">
-                                                <v-icon icon="mdi-flash-outline" size="16" class="mr-1" />
-                                                Thêm nhanh cho màu này
-                                            </v-btn>
-                                        </div>
-                                    </div>
-
-                                    <v-row no-gutters>
-                                        <v-col cols="12" md="3"
-                                            class="border-r pa-6 d-flex flex-column align-center justify-center bg-slate-50/50">
-                                            <div class="field-label mb-3 w-100 text-center">Hình ảnh theo màu</div>
-                                            <div class="color-image-uploader" @click="openColorImagePicker(colorId)">
-                                                <v-img v-if="getColorUploadEntry(colorId).url"
-                                                    :src="getColorUploadEntry(colorId).url" cover
-                                                    class="rounded-lg h-100" />
-                                                <div v-else class="uploader-placeholder">
-                                                    <v-icon icon="mdi-camera-plus-outline" size="32"
-                                                        color="slate-300" />
-                                                    <span class="text-caption text-slate-400 mt-2">Tải ảnh lên</span>
-                                                </div>
-                                                <input :ref="(el) => setColorFileInputRef(colorId, el)" type="file"
-                                                    accept="image/*" class="d-none"
-                                                    @change="handleColorImageUpload(colorId, $event)" />
-                                            </div>
-                                        </v-col>
-                                        <v-col cols="12" md="9">
-                                            <v-table density="comfortable" class="variant-inner-table">
-                                                <thead class="bg-slate-50">
-                                                    <tr>
-                                                        <th class="text-left font-weight-bold text-slate-600"
-                                                            style="width: 150px">
-                                                            Kích thước
-                                                        </th>
-                                                        <th class="text-left font-weight-bold text-slate-600"
-                                                            style="width: 120px">
-                                                            Số lượng
-                                                        </th>
-                                                        <th class="text-left font-weight-bold text-slate-600"
-                                                            style="width: 180px">
-                                                            Giá nhập
-                                                        </th>
-                                                        <th class="text-left font-weight-bold text-slate-600"
-                                                            style="width: 180px">
-                                                            Giá bán (VNĐ)
-                                                        </th>
-                                                        <th class="text-center font-weight-bold text-slate-600"
-                                                            style="width: 80px">Xóa</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr v-for="variant in items" :key="variant.idKichThuoc">
-                                                        <td class="font-weight-medium text-slate-700">
-                                                            Size {{ getVariantSizeLabel(variant.idKichThuoc) }}
-                                                        </td>
-                                                        <td>
-                                                            <v-text-field v-model="variant.soLuong" type="number"
-                                                                hide-details variant="outlined" density="compact"
-                                                                class="custom-input-dense" />
-                                                        </td>
-                                                        <td>
-                                                            <FormattedNumberField v-model="variant.giaNhap" hide-details
-                                                                variant="outlined" density="compact"
-                                                                class="custom-input-dense" />
-                                                        </td>
-                                                        <td>
-                                                            <FormattedNumberField v-model="variant.giaBan" hide-details
-                                                                variant="outlined" density="compact"
-                                                                class="custom-input-dense" />
-                                                        </td>
-                                                        <td class="text-center">
-                                                            <v-btn variant="text" color="error" size="small"
-                                                                class="action-icon-btn"
-                                                                @click="removeDraftVariantByObject(variant)">
-                                                                <TrashIcon size="18" />
-                                                                <v-tooltip activator="parent" location="top"
-                                                                    text="Xóa biến thể này" />
-                                                            </v-btn>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </v-table>
-                                        </v-col>
-                                    </v-row>
-                                </v-card>
-                            </div>
-
-                            <div v-else class="variant-empty-state">
-                                <div class="variant-empty-state__icon">
-                                    <v-icon icon="mdi-layers-outline" size="32" />
-                                </div>
-                                <div class="text-subtitle-2 font-weight-bold text-slate-700 mt-3">Chưa có biến thể nào
-                                    được tạo</div>
-                                <div class="text-caption text-slate-500 mt-1">
-                                    Chọn màu sắc và kích thước ở card bên phải, sau đó bấm
-                                    <span class="font-weight-bold">Tạo danh sách biến thể</span>.
-                                </div>
-                            </div>
-                        </template>
-
                         <AdminTable v-if="variantItems.length > 0 && isEditMode" title="Danh mục biến thể"
                             :headers="variantTableHeaders" :items="paginatedVariantItems" :loading="loading"
                             :show-add-button="false" class="mt-6 variant-admin-table">
                             <template #headers>
                                 <tr>
-                                    <th class="header-cell" style="width: 70px">
+                                    <th class="header-cell" style="width: 70px;">
                                         <v-checkbox-btn :model-value="allVisibleVariantsSelected"
                                             :indeterminate="someVisibleVariantsSelected" color="primary" hide-details
                                             density="compact" @update:model-value="toggleSelectVisibleVariants" />
                                     </th>
-                                    <th class="header-cell" style="width: 60px">STT</th>
-                                    <th class="header-cell" style="width: 80px">Ảnh</th>
-                                    <th class="header-cell" style="width: 140px">Màu sắc</th>
-                                    <th class="header-cell" style="width: 140px">Kích thước</th>
-                                    <th class="header-cell" style="width: 240px">Mã SKU</th>
-                                    <th class="header-cell" style="width: 110px">Tồn kho</th>
-                                    <th class="header-cell" style="width: 130px">Giá bán</th>
-                                    <th class="header-cell" style="width: 160px">Trạng thái</th>
-                                    <th class="header-cell" style="width: 120px">Thao tác</th>
+                                    <th class="header-cell" style="width: 60px;">STT</th>
+                                    <th class="header-cell" style="width: 80px;">Ảnh</th>
+                                    <th class="header-cell" style="width: 140px;">Màu sắc</th>
+                                    <th class="header-cell" style="width: 140px;">Kích thước</th>
+                                    <th class="header-cell" style="width: 240px;">Mã SKU</th>
+                                    <th class="header-cell" style="width: 110px;">Tồn kho</th>
+                                    <th class="header-cell" style="width: 130px;">Giá bán</th>
+                                    <th class="header-cell" style="width: 160px;">Trạng thái</th>
+                                    <th class="header-cell" style="width: 120px;">Thao tác</th>
                                 </tr>
                             </template>
 
@@ -2620,10 +2521,8 @@ const handleSave = async () => {
                                         <span class="text-primary">{{ formatCurrency(variant.giaBan) }}</span>
                                     </td>
                                     <td class="data-cell text-center">
-                                        <v-chip variant="flat" :class="[
-                                            'status-chip',
-                                            isActiveStatus(variant.trangThai) ? 'status-chip-active' : 'status-chip-inactive'
-                                        ]">
+                                        <v-chip variant="flat"
+                                            :class="['status-chip', isActiveStatus(variant.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
                                             {{ getStatusLabel(variant.trangThai) }}
                                         </v-chip>
                                     </td>
@@ -2655,6 +2554,7 @@ const handleSave = async () => {
                                     :current-size="paginatedVariantItems.length" />
                             </template>
                         </AdminTable>
+
                     </v-card-text>
                 </v-card>
             </v-col>
@@ -2676,14 +2576,12 @@ const handleSave = async () => {
                 <v-card-title class="pa-6 border-b d-flex align-center">
                     <v-icon icon="mdi-flash-circle" color="primary" class="mr-3" />
                     <span class="font-weight-bold text-slate-800">
-                        {{
-                            bulkEditModal.targetColorId
-                                ? `Thiết lập cho màu ${getVariantColorLabel(bulkEditModal.targetColorId)}`
-                                : 'Thiết lập cho tất cả biến thể'
-                        }}
+                        {{ bulkEditModal.targetColorId ? `Thiết lập cho màu
+                        ${getVariantColorLabel(bulkEditModal.targetColorId)}` : 'Thiết lập cho tất cả biến thể' }}
                     </span>
                 </v-card-title>
                 <v-card-text class="pa-8">
+
                     <v-row>
                         <v-col cols="12">
                             <div class="field-label">Số lượng</div>
@@ -3098,7 +2996,7 @@ const handleSave = async () => {
     border-radius: 999px;
     display: inline-block;
     margin-right: 10px;
-    background: #0085db;
+    background: #0085DB;
     box-shadow: 0 0 0 4px rgba(0, 133, 219, 0.12);
 }
 
@@ -3107,7 +3005,7 @@ const handleSave = async () => {
 }
 
 .brand-logo-icon {
-    color: #0085db;
+    color: #0085DB;
 }
 
 .variant-edit-filter-wrap {

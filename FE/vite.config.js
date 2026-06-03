@@ -30,10 +30,10 @@ export default defineConfig(({ mode }) => {
                 algorithm: 'brotliCompress',
                 ext: '.br',
             }),
-            vitePrerender({
+            /* vitePrerender({
                 staticDir: path.join(__dirname, 'dist'),
                 routes: ['/', '/shoes', '/vouchers'],
-            })
+            }) */
         ],
         base: './',
         resolve: {
