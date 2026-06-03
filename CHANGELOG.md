@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/pnam-it309/AeroStride/compare/v1.18.0...v1.19.0) (2026-06-03)
+
+
+### Features
+
+* hoàn thiện tính  năng ADD sản phẩm ([c69c9f4](https://github.com/pnam-it309/AeroStride/commit/c69c9f4c062aaf4c97f1df688bdcd142ae508462))
+
 # [1.18.0](https://github.com/pnam-it309/AeroStride/compare/v1.17.4...v1.18.0) (2026-06-03)
 
 
