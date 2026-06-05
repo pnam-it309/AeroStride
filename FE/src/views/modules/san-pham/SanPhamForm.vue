@@ -206,15 +206,15 @@ const handleAddCustomSize = async () => {
         return;
     }
 
-    // 2. Range từ 15 đến 50
-    if (sizeNumber < 15 || sizeNumber > 50) {
-        addNotification({ title: 'Lỗi', subtitle: 'Kích thước giày phải từ 15 đến 50', color: 'error' });
+    // 2. Range > 0 và < 99
+    if (sizeNumber <= 0 || sizeNumber >= 99) {
+        addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải lớn hơn 0 và nhỏ hơn 99', color: 'error' });
         return;
     }
 
-    // 3. Bước nhảy là 0.5
-    if (sizeNumber % 0.5 !== 0) {
-        addNotification({ title: 'Lỗi', subtitle: 'Phần thập phân chỉ được là .5 (VD: 39.5, 40.5)', color: 'error' });
+    // 3. Phải là số nguyên (không có .5, .0...)
+    if (!Number.isInteger(sizeNumber)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải là số nguyên (ví dụ: 39, 40)', color: 'error' });
         return;
     }
 
@@ -251,15 +251,33 @@ const handleAddCustomSize = async () => {
     }
 };
 
+const addAllFilteredSizes = () => {
+    filteredSizes.value.forEach(s => {
+        if (!selectedSizes.value.includes(s.id)) {
+            selectedSizes.value.push(s.id);
+        }
+    });
+    showSizeMenu.value = false;
+};
+
 const filteredColors = computed(() => {
     const query = normalizeSearchText(colorSearch.value);
     if (!query) return colors.value;
     return colors.value.filter(c => normalizeSearchText(c.ten).includes(query));
 });
+const sortedSizes = computed(() => {
+    return [...sizes.value].sort((a, b) => {
+        // Lấy ra phần số trong chuỗi (ví dụ: 'Size 40' -> 40, '39.5' -> 39.5)
+        const numA = parseFloat(a.ten.replace(/[^0-9.]/g, '')) || 0;
+        const numB = parseFloat(b.ten.replace(/[^0-9.]/g, '')) || 0;
+        return numA - numB;
+    });
+});
+
 const filteredSizes = computed(() => {
     const query = normalizeSearchText(customSizeName.value);
-    if (!query) return sizes.value;
-    return sizes.value.filter(s => normalizeSearchText(s.ten).includes(query));
+    if (!query) return sortedSizes.value;
+    return sortedSizes.value.filter(s => normalizeSearchText(s.ten).includes(query));
 });
 
 // Theo dõi nội dung đang gõ trong các combobox
@@ -1428,7 +1446,7 @@ const product = ref({
     idDeGiay: null,
     idCoGiay: null,
     idMucDichChay: null,
-    gioiTinhKhachHang: 'UNISEX',
+    gioiTinhKhachHang: null,
     trangThai: defaultVariantStatus,
 
     moTaChiTiet: '',
@@ -1448,7 +1466,7 @@ const loadProduct = async (id) => {
         idDeGiay: data.idDeGiay || null,
         idCoGiay: data.idCoGiay || null,
         idMucDichChay: data.idMucDichChay || null,
-        gioiTinhKhachHang: data.gioiTinhKhachHang || 'UNISEX',
+        gioiTinhKhachHang: data.gioiTinhKhachHang || null,
         trangThai: data.trangThai || defaultVariantStatus,
 
         moTaChiTiet: data.moTaChiTiet || '',
@@ -1918,7 +1936,8 @@ const handleSave = async () => {
                                 <div class="field-label">Đối tượng</div>
                                 <v-select v-model="product.gioiTinhKhachHang"
                                     :items="[{ title: 'Nam', value: 'NAM' }, { title: 'Nữ', value: 'NU' }, { title: 'Unisex', value: 'UNISEX' }]"
-                                    variant="outlined" density="comfortable" hide-details
+                                    :rules="[rules.required]" clearable
+                                    variant="outlined" density="comfortable"
                                     placeholder="Đối tượng"></v-select>
                             </v-col>
                             <v-col cols="12" md="3">
@@ -2088,7 +2107,7 @@ const handleSave = async () => {
                             <!-- KÍCH THƯỚC -->
                             <div class="field-label mb-3 mt-2">Kích thước</div>
                             <div class="d-flex flex-wrap gap-2 mb-4">
-                                <v-chip v-for="s in sizes.filter(x => selectedSizes.includes(x.id))" :key="s.id"
+                                <v-chip v-for="s in sortedSizes.filter(x => selectedSizes.includes(x.id))" :key="s.id"
                                     variant="flat" color="primary"
                                     class="rounded-lg font-weight-medium px-4 cursor-pointer" @click="toggleSize(s.id)">
                                     {{ formatSizeDisplay(s.ten) }}
@@ -2131,8 +2150,8 @@ const handleSave = async () => {
                                             </v-chip>
                                         </div>
                                         <v-btn block color="primary" class="rounded-lg font-weight-bold text-none mt-2"
-                                            @click="showSizeMenu = false">
-                                            Thêm vào danh sách
+                                            @click="addAllFilteredSizes">
+                                            Thêm tất cả vào danh sách
                                         </v-btn>
                                     </v-card>
                                 </v-menu>
@@ -2185,7 +2204,7 @@ const handleSave = async () => {
                             </div>
 
                             <div v-if="variantItems.length > 0" class="variants-tab-container mb-6">
-                                <v-row no-gutters class="border rounded-lg overflow-hidden" style="height: 600px;">
+                                <v-row no-gutters class="rounded-lg overflow-hidden" style="height: 600px; border: 1px solid #cbd5e1 !important;">
                                     <!-- Sidebar Màu sắc -->
                                     <v-col cols="12" md="3" class="bg-slate-50 d-flex flex-column h-100"
                                         style="border-right: 1px solid #cbd5e1;">
@@ -2253,7 +2272,7 @@ const handleSave = async () => {
                                                     class="custom-input-dense" style="width: 120px" type="number" />
                                                 <v-text-field v-model="quickApplyValues.soLuong" placeholder="Số lượng"
                                                     variant="outlined" density="compact" hide-details
-                                                    class="custom-input-dense" style="width: 100px" type="number" />
+                                                    class="custom-input-dense" style="width: 120px" type="number" />
                                                 <v-btn color="primary" variant="flat" size="small"
                                                     class="text-none rounded font-weight-bold"
                                                     style="color: white !important" height="40"
@@ -2264,22 +2283,19 @@ const handleSave = async () => {
                                         </div>
 
                                         <div v-if="activeColorTab !== 'ALL'"
-                                            class="pa-4 bg-slate-50 d-flex align-center justify-center flex-shrink-0"
-                                            style="border-bottom: 2px solid #cbd5e1; box-shadow: 0 4px 6px -4px rgba(0,0,0,0.05); z-index: 10;">
+                                            class="py-3 bg-slate-50 d-flex align-center justify-center flex-shrink-0"
+                                            style="border-bottom: 2px solid #cbd5e1; box-shadow: inset 0 -4px 6px -4px rgba(0,0,0,0.05); z-index: 10;">
                                             <div class="d-flex flex-column align-center">
-                                                <div class="text-caption font-weight-bold text-slate-600 mb-2">HÌNH ẢNH
-                                                    ĐẠI DIỆN CHO MÀU NÀY</div>
-                                                <div class="color-image-uploader"
+                                                <div class="text-caption font-weight-bold text-slate-600 mb-2">HÌNH ẢNH ĐẠI DIỆN CHO MÀU NÀY</div>
+                                                <div class="color-image-uploader elevation-1"
                                                     @click="openColorImagePicker(activeColorTab)"
-                                                    style="width: 120px; height: 120px; border-radius: 8px; border: 2px dashed #cbd5e1; cursor: pointer; overflow: hidden; background: white">
+                                                    style="width: 70px; height: 70px; border-radius: 8px; border: 2px dashed #cbd5e1; cursor: pointer; overflow: hidden; background: white">
                                                     <v-img v-if="getColorUploadEntry(activeColorTab).url"
                                                         :src="getColorUploadEntry(activeColorTab).url" cover
                                                         class="w-100 h-100" />
                                                     <div v-else
-                                                        class="w-100 h-100 d-flex flex-column align-center justify-center">
-                                                        <v-icon icon="mdi-camera-plus" color="slate-400" size="28" />
-                                                        <span class="text-caption text-slate-400 mt-1">Tải ảnh
-                                                            lên</span>
+                                                        class="w-100 h-100 d-flex align-center justify-center">
+                                                        <v-icon icon="mdi-camera-plus" color="slate-400" size="24" />
                                                     </div>
                                                     <input :ref="(el) => setColorFileInputRef(activeColorTab, el)"
                                                         type="file" accept="image/*" class="d-none"
@@ -2289,21 +2305,21 @@ const handleSave = async () => {
                                         </div>
 
                                         <div class="flex-grow-1" style="min-height: 0;">
-                                            <v-table density="comfortable" class="variant-inner-table h-100"
+                                            <v-table class="variant-inner-table h-100"
                                                 fixed-header>
-                                                <thead class="bg-slate-50">
+                                                <thead class="bg-white">
                                                     <tr>
-                                                        <th class="text-left font-weight-bold text-slate-600">Thuộc tính
+                                                        <th class="text-left font-weight-bold text-slate-800 text-caption" style="border-bottom: 1px solid #cbd5e1 !important;">Thuộc tính
                                                             (Màu/Size)</th>
-                                                        <th class="text-left font-weight-bold text-slate-600"
-                                                            style="width: 140px">Giá bán (đ)</th>
-                                                        <th class="text-left font-weight-bold text-slate-600"
-                                                            style="width: 140px">Giá nhập (đ)</th>
-                                                        <th class="text-left font-weight-bold text-slate-600"
-                                                            style="width: 110px">Số lượng sản phẩm
+                                                        <th class="text-left font-weight-bold text-slate-800 text-caption"
+                                                            style="width: 140px; border-bottom: 1px solid #cbd5e1 !important;">Giá bán (đ)</th>
+                                                        <th class="text-left font-weight-bold text-slate-800 text-caption"
+                                                            style="width: 140px; border-bottom: 1px solid #cbd5e1 !important;">Giá nhập (đ)</th>
+                                                        <th class="text-left font-weight-bold text-slate-800 text-caption"
+                                                            style="width: 110px; border-bottom: 1px solid #cbd5e1 !important;">Số lượng sản phẩm
                                                         </th>
-                                                        <th class="text-center font-weight-bold text-slate-600"
-                                                            style="width: 60px">Xóa</th>
+                                                        <th class="text-center font-weight-bold text-slate-800 text-caption"
+                                                            style="width: 60px; border-bottom: 1px solid #cbd5e1 !important;">Hành động</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -2350,7 +2366,7 @@ const handleSave = async () => {
                                                 </tbody>
                                             </v-table>
                                         </div>
-                                        <div class="flex-shrink-0 border-t bg-white">
+                                        <div class="flex-shrink-0 bg-white py-3 px-4" style="border-top: 2px solid #cbd5e1 !important;">
                                             <AdminPagination v-model="createVariantPage"
                                                 :page-size="createVariantPageSize"
                                                 @update:pageSize="createVariantPageSize = $event"
