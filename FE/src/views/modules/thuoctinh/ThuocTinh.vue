@@ -276,13 +276,13 @@ const confirmSaveItem = () => {
             return;
         }
 
-        if (sizeNumber < 15 || sizeNumber > 50) {
-            addNotification({ title: 'Lỗi', subtitle: 'Kích thước giày phải từ 15 đến 50', color: 'error' });
+        if (sizeNumber <= 0 || sizeNumber >= 99) {
+            addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải lớn hơn 0 và nhỏ hơn 99', color: 'error' });
             return;
         }
 
-        if (sizeNumber % 0.5 !== 0) {
-            addNotification({ title: 'Lỗi', subtitle: 'Phần thập phân chỉ được là .5 (VD: 39.5, 40.5)', color: 'error' });
+        if (!Number.isInteger(sizeNumber)) {
+            addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải là số nguyên (ví dụ: 39, 40)', color: 'error' });
             return;
         }
 
