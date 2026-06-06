@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/pnam-it309/AeroStride/compare/v1.20.0...v1.21.0) (2026-06-06)
+
+
+### Features
+
+* add mobile application ([fd4853e](https://github.com/pnam-it309/AeroStride/commit/fd4853eb61b7a925ba8905a6c4829519f858f998))
+
 # [1.20.0](https://github.com/pnam-it309/AeroStride/compare/v1.19.0...v1.20.0) (2026-06-03)
 
 
