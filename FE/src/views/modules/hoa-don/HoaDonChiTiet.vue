@@ -900,7 +900,7 @@ onMounted(() => {
                             </span>
                         </div>
                         <v-range-slider v-model="priceRange" :min="0" :max="maxOrderPrice" :step="10000" hide-details
-                            color="primary" track-color="#e2e8f0" track-size="3" thumb-size="14"
+                            color="primary" track-color="#e2e8f0" track-size="2" thumb-size="14"
                             class="blue-range-slider" @update:modelValue="productPagination.page = 1" />
                     </div>
                 </v-col>

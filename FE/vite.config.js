@@ -103,6 +103,11 @@ export default defineConfig(({ mode }) => {
                     changeOrigin: true,
                     secure: false,
                 },
+                '/uploads': {
+                    target: `http://${env.BACKEND_HOST}:${env.BACKEND_PORT}`,
+                    changeOrigin: true,
+                    secure: false,
+                },
                 '/ws': {
                     target: `http://${env.BACKEND_HOST}:${env.BACKEND_PORT}`,
                     changeOrigin: true,

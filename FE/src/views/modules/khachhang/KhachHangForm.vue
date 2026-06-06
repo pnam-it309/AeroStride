@@ -67,6 +67,48 @@ const customerForm = ref({
     hinhAnh: ''
 });
 
+const resolvedAvatarUrl = computed(() => {
+    const img = customerForm.value.hinhAnh;
+    if (!img) return DEFAULT_AVATAR_URL;
+
+    // 1. If it's a seed filename like 'kh11.jpg' or 'kh11'
+    if (/^kh(\d+)(\.jpg)?$/i.test(img)) {
+        return DEFAULT_AVATAR_URL;
+    }
+
+    // 2. Absolute uploads path
+    if (img.startsWith('/uploads/')) {
+        return img;
+    }
+    if (img.startsWith('uploads/')) {
+        return `/${img}`;
+    }
+
+    // 3. Absolute URLs (Cloudinary, standard http/https, data urls, blob urls)
+    if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('data:') || img.startsWith('blob:')) {
+        if (img.includes('/uploads/')) {
+            const index = img.indexOf('/uploads/');
+            return img.substring(index);
+        }
+        return img;
+    }
+
+    // 4. If it already contains '/api/common/storage/files/'
+    if (img.includes('/api/common/storage/files/')) {
+        const apiBase = import.meta.env.VITE_API_URL || '';
+        const cleanBase = apiBase.replace(/\/+$/, '');
+        const cleanImg = img.startsWith('/') ? img : `/${img}`;
+        return `${cleanBase}${cleanImg}`;
+    }
+
+    // 5. If it's a relative path containing /
+    if (img.includes('/') && !img.startsWith('/')) {
+        return `/uploads/${img}`;
+    }
+
+    return dichVuFile.layUrlFile(img);
+});
+
 const confirmDialog = ref({
     show: false,
     title: '',
@@ -531,9 +573,9 @@ onMounted(async () => {
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
                                 <v-text-field v-model="customerForm.ngaySinh" :readonly="isDetailView" type="date"
-                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
+                                    append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker"
                                     variant="outlined" bg-color="white" density="compact" hide-details
-                                    clearable></v-text-field>
+                                    clearable class="date-field"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Giới tính</div>
@@ -560,7 +602,7 @@ onMounted(async () => {
                             <v-avatar size="160" color="blue-lighten-5"
                                 class="border-xl border-white elevation-6 cursor-pointer avatar-hover transition-all overflow-hidden"
                                 @click="handleFileClick">
-                                <v-img :src="customerForm.hinhAnh || DEFAULT_AVATAR_URL" cover>
+                                <v-img :src="resolvedAvatarUrl" cover>
                                     <template v-slot:placeholder>
                                         <v-row class="fill-height ma-0" align="center" justify="center">
                                             <v-progress-circular indeterminate color="primary"></v-progress-circular>
@@ -1054,9 +1096,10 @@ onMounted(async () => {
     -webkit-appearance: none !important;
 }
 
-/* Ép icon lịch to lên kể cả khi dùng density compact */
-.date-field-custom .v-field__append-inner .v-icon {
-    font-size: 22px !important;
+/* Ép icon lịch của date-field lên 20px để đồng bộ */
+#khach-hang-form-container :deep(.date-field .v-icon),
+.khach-hang-dialog-card :deep(.date-field .v-icon) {
+    font-size: 20px !important;
     opacity: 0.8 !important;
     color: #475569 !important;
 }

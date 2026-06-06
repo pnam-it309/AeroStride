@@ -25,25 +25,26 @@ export const TRANG_THAI_FILTER_OPTIONS = [
 // Table headers
 export const KHACH_HANG_TABLE_HEADERS = [
     { text: 'STT', width: '50px', align: 'center' },
-    { text: 'Mã khách hàng', width: '90px', align: 'center' },
+    { text: 'Ảnh', width: '70px', align: 'center' },
+    { text: 'Mã khách hàng', width: '120px', align: 'center' },
     { text: 'Tên khách hàng', width: '100px', align: 'left' },
-    { text: 'Giới tính', width: '90px', align: 'center' },
-    { text: 'Thông tin liên hệ', width: '150px', align: 'left' },
-    { text: 'Địa chỉ', width: '170px', align: 'left' },
-    { text: 'Trạng thái', width: '90px', align: 'center' },
-    { text: 'Hành động', width: '100px', align: 'center' }
+    { text: 'Giới tính', width: '100px', align: 'center' },
+    { text: 'Thông tin liên hệ', width: '160px', align: 'left' },
+    { text: 'Địa chỉ', width: '220px', align: 'left' },
+    { text: 'Trạng thái', width: '120px', align: 'center' },
+    { text: 'Hành động', width: '110px', align: 'center' }
 ];
 
 export const KHACH_HANG_STATS_TABLE_HEADERS = [
-    { text: 'STT', width: '60px', align: 'center' },
-    { text: 'Mã khách hàng', width: '150px', align: 'center' },
-    { text: 'Tên khách hàng', width: '120px', align: 'left' },
-    { text: 'Số điện thoại', width: '120px', align: 'center' },
-    { text: 'Số đơn mua', width: '120px', align: 'center' },
-    { text: 'Số đơn hoàn', width: '120px', align: 'center' },
+    { text: 'STT', width: '50px', align: 'center' },
+    { text: 'Ảnh', width: '70px', align: 'center' },
+    { text: 'Mã khách hàng', width: '110px', align: 'center' },
+    { text: 'Tên khách hàng', width: '110px', align: 'left' },
+    { text: 'Số điện thoại', width: '110px', align: 'center' },
+    { text: 'Số đơn mua', width: '100px', align: 'center' },
+    { text: 'Số đơn hoàn', width: '100px', align: 'center' },
     { text: 'Số tiền đã chi', width: '130px', align: 'center' },
-    { text: 'Đơn hàng gần nhất', width: '160px', align: 'center' },
-    { text: 'Trạng thái', width: '120px', align: 'center' },
+    { text: 'Đơn hàng gần nhất', width: '170px', align: 'center' },
     { text: 'Hành động', width: '110px', align: 'center' }
 ];
 

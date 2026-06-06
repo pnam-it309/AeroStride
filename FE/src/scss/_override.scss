@@ -41,10 +41,12 @@ body,
     font-family: 'Inter', sans-serif !important;
     font-weight: 500 !important;
 }
+
 .v-field__outline {
     --v-field-border-width: 1px !important;
     --v-field-border-opacity: 0.3 !important;
 }
+
 .v-field--focused .v-field__outline {
     --v-field-border-opacity: 1 !important;
 }
@@ -54,22 +56,27 @@ body,
     font-size: 2.25rem !important;
     font-weight: 700 !important;
 }
+
 .text-h2 {
     font-size: 1.875rem !important;
     font-weight: 700 !important;
 }
+
 .text-h3 {
     font-size: 1.5rem !important;
     font-weight: 600 !important;
 }
+
 .text-h4 {
     font-size: 1.25rem !important;
     font-weight: 600 !important;
 }
+
 .text-h5 {
     font-size: 1.125rem !important;
     font-weight: 600 !important;
 }
+
 .text-h6 {
     font-size: 1rem !important;
     font-weight: 600 !important;
@@ -78,6 +85,7 @@ body,
 /* 5. TABLE BASE STYLING */
 .v-table {
     background: transparent !important;
+
     th {
         background-color: #f8fafc !important;
         font-weight: 600 !important;
@@ -95,12 +103,28 @@ body,
 .text-error {
     color: #ef4444 !important;
 }
+
 .text-success {
     color: #10b981 !important;
 }
+
 .text-warning {
     color: #f59e0b !important;
 }
+
 .text-primary {
     color: #1e257c !important;
+}
+
+/* 7. BLUE RANGE SLIDER OVERRIDE */
+.blue-range-slider.v-slider {
+    .v-slider-track {
+        height: 2px !important;
+    }
+
+    .v-slider-track__background,
+    .v-slider-track__fill {
+        height: 2px !important;
+        border-radius: 1px !important;
+    }
 }

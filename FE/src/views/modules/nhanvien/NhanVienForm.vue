@@ -480,9 +480,9 @@ onMounted(async () => {
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
                                 <v-text-field v-model="employeeForm.ngaySinh" :readonly="isDetailView" type="date"
-                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
+                                    append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker"
                                     variant="outlined" bg-color="white" density="compact" hide-details clearable
-                                    class="date-input-small"></v-text-field>
+                                    class="date-field"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Giới tính</div>
@@ -716,9 +716,4 @@ onMounted(async () => {
     -webkit-appearance: none;
 }
 
-/* Chỉnh nhỏ lại icon lịch giống với form Khách hàng */
-:deep(.date-input-small .v-field__append-inner .v-icon) {
-    font-size: 16px !important;
-    opacity: 0.7 !important;
-}
 </style>

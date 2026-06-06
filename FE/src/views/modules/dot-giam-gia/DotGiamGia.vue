@@ -200,14 +200,14 @@ onMounted(() => loadCampaigns());
                 <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Từ ngày</div>
                     <v-text-field ref="startDateRef" v-model="filters.startDate" type="date" variant="outlined"
-                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar"
+                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month-outline"
                         @click:append-inner="openDatePicker(startDateRef)" @change="handleSearch"></v-text-field>
                 </v-col>
 
                 <v-col cols="12" md="2" class="filter-cell">
                     <div class="filter-field-label">Đến ngày</div>
                     <v-text-field ref="endDateRef" v-model="filters.endDate" type="date" variant="outlined"
-                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar"
+                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month-outline"
                         @click:append-inner="openDatePicker(endDateRef)" @change="handleSearch"></v-text-field>
                 </v-col>
             </AdminFilter>
