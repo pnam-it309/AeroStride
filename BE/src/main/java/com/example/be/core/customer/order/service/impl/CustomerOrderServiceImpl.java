@@ -33,6 +33,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     private static final BigDecimal PHI_VAN_CHUYEN = new BigDecimal("30000");
     private static final BigDecimal FREE_SHIP_THRESHOLD = new BigDecimal("5000000");
 
+    // Xử lý logic đặt hàng trực tuyến (checkout), tính toán tổng tiền, áp dụng voucher, tạo hóa đơn và cập nhật tồn kho
     @Override
     @Transactional
     public CustomerOrderResponse checkout(CustomerOrderCheckoutRequest request, String username) {
@@ -188,6 +189,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         return mapToResponse(hoaDon, payMethod);
     }
 
+    // Lấy danh sách các đơn hàng (hóa đơn online) của khách hàng, có thể lọc theo trạng thái
     @Override
     public List<CustomerOrderResponse> getMyOrders(String username, String trangThai) {
         KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
@@ -206,6 +208,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         return hoaDons.stream().map(hd -> mapToResponse(hd, null)).collect(Collectors.toList());
     }
 
+    // Lấy thông tin chi tiết của một đơn hàng cụ thể thuộc về khách hàng
     @Override
     public CustomerOrderResponse getOrderDetail(String id, String username) {
         HoaDon hoaDon = hoaDonRepository.findById(id)
@@ -221,6 +224,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         return mapToResponse(hoaDon, null);
     }
 
+    // Hủy đơn hàng đang chờ xác nhận, hoàn lại số lượng tồn kho và lượt sử dụng voucher
     @Override
     @Transactional
     public void cancelOrder(String id, String username) {
@@ -273,6 +277,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         log.info("Hủy đơn hàng thành công: hoaDon={}, khachHang={}", id, username);
     }
 
+    // Lấy danh sách phiếu giảm giá công khai hợp lệ dựa theo tổng tiền giỏ hàng hiện hành
     @Override
     public List<PhieuGiamGia> getAvailableVouchers(BigDecimal tongTien) {
         long now = System.currentTimeMillis();
@@ -287,6 +292,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
     // ===== PRIVATE HELPERS =====
 
+    // Mapper chuyển đổi từ entity HoaDon sang DTO CustomerOrderResponse để trả về frontend
     private CustomerOrderResponse mapToResponse(HoaDon hoaDon, String payMethod) {
         List<HoaDonChiTiet> items = hoaDonChiTietRepository.findAllByHoaDon(hoaDon);
 

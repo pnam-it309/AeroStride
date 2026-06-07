@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Module: Bán hàng tại quầy (Admin)
+ * Component: CustomerSelector
+ * Chức năng: Cho phép tìm kiếm và chọn khách hàng để gắn vào hóa đơn, 
+ *            hoặc tạo nhanh khách hàng mới dựa trên SĐT/Email.
+ */
 import { computed, ref, watch } from 'vue';
 import { UserIcon, PhoneIcon, XIcon } from 'vue-tabler-icons';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
@@ -22,12 +28,15 @@ const selectedCustomerLabel = computed(() => {
     return props.selectedCustomerName;
 });
 
+// Chuẩn hóa chuỗi văn bản: xóa khoảng trắng thừa, chuyển thành chữ thường
 const normalizeText = (value) =>
     String(value ?? '')
         .trim()
         .toLowerCase();
+// Chuẩn hóa số điện thoại: loại bỏ tất cả các ký tự không phải số
 const normalizePhone = (value) => String(value ?? '').replace(/\D/g, '');
 
+// Trích xuất mảng khách hàng từ cấu trúc dữ liệu trả về của API
 const extractCustomerList = (response) => {
     if (Array.isArray(response)) return response;
     if (Array.isArray(response?.content)) return response.content;
@@ -36,6 +45,7 @@ const extractCustomerList = (response) => {
     return [];
 };
 
+// Tìm khách hàng khớp chính xác thông tin SĐT hoặc email trong một danh sách
 const findExactCustomer = (list, phone, email) => {
     const normalizedPhone = normalizePhone(phone);
     const normalizedEmail = normalizeText(email);
@@ -50,6 +60,7 @@ const findExactCustomer = (list, phone, email) => {
     });
 };
 
+// Kiểm tra và tìm kiếm khách hàng đã tồn tại trong DB dựa trên SĐT/Email
 const findExistingCustomerByContact = async (phone, email) => {
     const keywords = [phone, email].filter((keyword) => normalizeText(keyword).length > 0);
 
@@ -75,6 +86,7 @@ watch(search, (value) => {
     }, 300);
 });
 
+// Gửi yêu cầu tìm kiếm lên server với từ khóa (Debounced)
 const onSearch = async (keyword = search.value) => {
     const normalizedKeyword = normalizeText(keyword);
     if (!normalizedKeyword || normalizedKeyword.length < 2) {
@@ -96,6 +108,7 @@ const onSearch = async (keyword = search.value) => {
     }
 };
 
+// Xử lý khi user chọn một khách hàng từ danh sách kết quả tìm kiếm
 const selectCustomer = (c) => {
     if (!c?.id) return;
     emit('select', c);
@@ -103,22 +116,27 @@ const selectCustomer = (c) => {
     results.value = [];
 };
 
+// Trả về chuỗi tiêu đề dùng hiển thị trên dòng danh sách autocomplete
 const customerTitle = (customer) => customer?.tenKhachHang || customer?.ten || customer?.sdt || 'Khách hàng';
+// Trả về chuỗi mô tả (subtitle) hiển thị phụ bên dưới tiêu đề
 const customerSubtitle = (customer) => {
     const phone = customer?.sdt ? `SĐT: ${customer.sdt}` : '';
     const email = customer?.email ? `Email: ${customer.email}` : '';
     return [phone, email].filter(Boolean).join(' - ') || 'Chưa có thông tin liên hệ';
 };
 
+// Xóa form tạo nhanh khách hàng
 const resetQuickAddForm = () => {
     quickAddForm.value = { sdt: '', email: '' };
 };
 
+// Mở dialog tạo nhanh khách hàng
 const openQuickAddDialog = () => {
     resetQuickAddForm();
     showQuickAddDialog.value = true;
 };
 
+// Xử lý submit form tạo nhanh: Kiểm tra xem SĐT đã tồn tại chưa, nếu chưa thì gọi API tạo
 const submitQuickAdd = async () => {
     const phone = quickAddForm.value.sdt?.trim() || '';
     const email = quickAddForm.value.email?.trim() || '';

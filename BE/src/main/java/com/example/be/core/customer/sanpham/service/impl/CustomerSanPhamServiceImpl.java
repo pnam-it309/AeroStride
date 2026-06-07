@@ -44,6 +44,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
     private final CustomerSanPhamMauSacRepository mauSacRepository;
     private final CustomerSanPhamKichThuocRepository kichThuocRepository;
 
+    // Lấy danh sách sản phẩm (có hỗ trợ lọc theo danh mục, thương hiệu, màu sắc, giới tính...)
     @Override
     public PageResponse<CustomerProductResponse> getProducts(CustomerSearchProductRequest request) {
         Specification<SanPham> spec = Specification.where(CustomerSanPhamSpecification.notDeleted())
@@ -97,6 +98,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
         }));
     }
 
+    // Lấy danh sách các thuộc tính (danh mục, thương hiệu, màu sắc, size...) để hiển thị lên bộ lọc tìm kiếm
     @Override
     public CustomerProductFormOptionsResponse getFormOptions() {
         Sort sortByName = Sort.by(Sort.Direction.ASC, "ten");
@@ -118,6 +120,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 .build();
     }
 
+    // Lấy thông tin chi tiết của một sản phẩm kèm theo danh sách các biến thể của nó
     @Override
     public CustomerProductDetailResponse getProductDetail(String id) {
         SanPham sp = customerSanPhamRepository.findByIdAndXoaMemFalse(id)
@@ -157,6 +160,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 .build();
     }
 
+    // Mapper chuyển đổi danh sách các thực thể danh mục, thương hiệu, màu sắc... sang DTO dùng chung
     private List<CustomerProductOptionResponse> mapOptions(List<? extends BaseCodeNameEntity> entities) {
         return entities.stream()
                 .filter(Objects::nonNull)
@@ -172,6 +176,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 .toList();
     }
 
+    // Mapper chuyển đổi danh sách biến thể (ChiTietSanPham) sang DTO, có tính toán áp dụng khuyến mãi
     private List<CustomerProductVariantResponse> mapVariants(List<ChiTietSanPham> variants) {
         if (variants == null || variants.isEmpty()) {
             return Collections.emptyList();

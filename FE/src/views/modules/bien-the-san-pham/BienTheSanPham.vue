@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Module: Biến thể sản phẩm (Admin)
+ * View: BienTheSanPham
+ * Chức năng: Quản lý danh sách chi tiết các biến thể của sản phẩm. Cho phép tìm kiếm, lọc
+ *            quét mã QR, tải xuống mã QR, chỉnh sửa giá/số lượng, thêm/cập nhật biến thể.
+ */
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ArrowLeftIcon, QrcodeIcon } from 'vue-tabler-icons';
@@ -72,14 +78,17 @@ const confirmDialog = ref({
 
 const numberFormatter = new Intl.NumberFormat('vi-VN');
 
+// Trích xuất nội dung lỗi từ backend để hiển thị thông báo
 const getBackendErrorMessage = (error, fallbackMessage) =>
     error?.response?.data?.message || error?.response?.data?.errors?.[0]?.defaultMessage || error?.message || fallbackMessage;
 
+// Chuyển đổi một giá trị sang số hợp lệ, nếu lỗi trả về giá trị mặc định
 const toNumber = (value, fallback = 0) => {
     const parsedValue = Number(value);
     return Number.isFinite(parsedValue) ? parsedValue : fallback;
 };
 
+// Format tiền tệ VNĐ
 const formatCurrency = (value) => {
     if (value === null || value === undefined) return '--';
     return new Intl.NumberFormat('vi-VN', {
@@ -158,15 +167,18 @@ const someVisibleVariantsSelected = computed(
     () => visibleVariantIds.value.some((id) => selectedVariantIds.value.includes(id)) && !allVisibleVariantsSelected.value
 );
 
+// Bỏ chọn tất cả các biến thể
 const clearVariantSelection = () => {
     selectedVariantIds.value = [];
 };
 
+// Đồng bộ lại danh sách chọn sau khi lọc/đổi trang, loại bỏ những biến thể không còn hiển thị
 const syncVariantSelection = () => {
     const validIds = new Set(filteredVariants.value.map((item) => item.id));
     selectedVariantIds.value = selectedVariantIds.value.filter((id) => validIds.has(id));
 };
 
+// Đưa các form filter về trạng thái ban đầu
 const resetFilters = () => {
     filters.keyword = '';
     filters.mauSacId = '';
@@ -177,6 +189,7 @@ const resetFilters = () => {
     clearVariantSelection();
 };
 
+// Tải các option bộ lọc (màu sắc, kích thước, trạng thái) từ API
 const fetchFormOptions = async () => {
     try {
         const response = await dichVuSanPham.layOptionsForm().catch(() => null);
@@ -204,6 +217,7 @@ const fetchFormOptions = async () => {
     }
 };
 
+// Tải danh sách tên sản phẩm để hiển thị trong select box bộ lọc
 const fetchProductOptions = async () => {
     try {
         const response = await dichVuSanPham.layDanhSachSanPham({ page: 0, size: 100 });
@@ -213,6 +227,7 @@ const fetchProductOptions = async () => {
     }
 };
 
+// Lấy mức giá biến thể cao nhất từ API để thiết lập giới hạn cho thanh trượt
 const loadMaxPrice = async () => {
     try {
         const maxPrice = await dichVuSanPham.layGiaLonNhat();
@@ -233,6 +248,7 @@ const loadMaxPrice = async () => {
     }
 };
 
+// Gọi API lấy danh sách biến thể theo ID Sản phẩm (Hoặc tất cả nếu chọn ALL)
 const fetchSelectedProduct = async (productId) => {
     loading.value = true;
     try {
@@ -264,7 +280,10 @@ const fetchSelectedProduct = async (productId) => {
     }
 };
 
+// Lấy Tên option (ví dụ tên màu sắc) thông qua ID option
 const getOptionLabel = (items, id) => items.find((item) => item.id === id)?.ten || '';
+
+// Lấy ID option thông qua tên option, so sánh không phân biệt hoa thường và dấu
 const getOptionIdByLabel = (items, label) => {
     const normalizedLabel = String(label ?? '')
         .normalize('NFD')
@@ -285,6 +304,7 @@ const getOptionIdByLabel = (items, label) => {
     );
 };
 
+// Tìm kiếm url hình ảnh đại diện của một biến thể
 const getVariantPrimaryImageUrl = (variant) => {
     const mainImage = variant?.images?.find((image) => image?.hinhAnhDaiDien);
     const fallbackImage = variant?.images?.[0] || (Array.isArray(variant?.hinhAnh) ? variant?.hinhAnh[0] : variant?.hinhAnh);
@@ -292,6 +312,7 @@ const getVariantPrimaryImageUrl = (variant) => {
     return normalizeImageUrl(variant?.urlAnh) || normalizeImageUrl(mainImage) || normalizeImageUrl(fallbackImage);
 };
 
+// Build object thông tin biến thể để lưu trong state frontend (không gọi API)
 const buildLocalVariantViewModel = (payload, existingVariant = {}) => ({
     ...existingVariant,
     ...payload,
@@ -308,6 +329,7 @@ const buildLocalVariantViewModel = (payload, existingVariant = {}) => ({
     urlAnh: getVariantPrimaryImageUrl(payload) || getVariantPrimaryImageUrl(existingVariant) || ''
 });
 
+// Cập nhật lại UI dựa theo biến thể sau khi đã cập nhật/thêm thành công
 const syncVariantToLocalState = (nextVariant) => {
     if (!selectedProduct.value) return;
 
@@ -329,6 +351,7 @@ const syncVariantToLocalState = (nextVariant) => {
     };
 };
 
+// Đóng Modal thêm/sửa biến thể
 const closeVariantModal = () => {
     variantModal.open = false;
     variantModal.mode = 'create';
@@ -336,6 +359,7 @@ const closeVariantModal = () => {
     variantModal.variant = null;
 };
 
+// Xử lý nộp form Thêm mới hoặc Cập nhật biến thể
 const handleVariantSubmit = (payload) => {
     confirmDialog.value = {
         show: true,
@@ -382,12 +406,14 @@ const handleVariantSubmit = (payload) => {
     };
 };
 
+// Mở Modal chỉnh sửa nhiều ảnh biến thể
 const openImageModal = (item) => {
     variantDrawer.variant = item;
     variantDrawer.initialTab = 1;
     variantDrawer.open = true;
 };
 
+// Tính toán mã SKU tự động kế tiếp cho biến thể (SP01-1, SP01-2)
 const getNextSku = () => {
     const maSp = selectedProductSummary.value?.maSanPham
     if (!maSp) return ''
@@ -407,12 +433,14 @@ const getNextSku = () => {
     return `${maSp}-${maxSuffix + 1}`
 }
 
+// Mở Modal để thêm mới 1 biến thể
 const openCreateVariantModal = () => {
     variantModal.variant = { maChiTietSanPham: getNextSku() }
     variantModal.mode = 'create'
     variantModal.open = true
 }
 
+// Mở Modal để chỉnh sửa 1 biến thể đã chọn
 const openEditVariantModal = (item) => {
     variantModal.variant = {
         ...item,
@@ -427,6 +455,7 @@ const openEditVariantModal = (item) => {
     variantModal.open = true;
 };
 
+// Chuyển hướng kết quả sau khi dùng Camera quét được mã QR
 const handleQrScan = (code) => {
     if (!code) return
 
@@ -440,15 +469,18 @@ const handleQrScan = (code) => {
     addNotification({ title: 'Quét mã thành công', subtitle: `Mã: ${code}`, color: 'success' })
 }
 
+// Chuẩn hóa một Object chứa hình ảnh hoặc chuỗi thành URL dạng Text
 const normalizeImageUrl = (value) => {
     if (!value) return '';
     if (typeof value === 'string') return value;
     return value.duongDanAnh || value.url || value.fileUrl || value.secure_url || value.data || '';
 };
 
+// Lấy URL ảnh thu nhỏ của biến thể, dự phòng nếu không có
 const getVariantThumbnail = (item) => {
     return getVariantPrimaryImageUrl(item) || logoPlaceholder;
 };
+// Lấy mã Sản phẩm gốc của một biến thể
 const getVariantProductCode = (item) => {
     if (item?.maSanPham) return item.maSanPham;
     if (selectedProductSummary.value.maSanPham) return selectedProductSummary.value.maSanPham;
@@ -461,14 +493,17 @@ const getVariantProductCode = (item) => {
     return sku || '--';
 };
 
+// Lấy Text hiển thị khi quét QR (ưu tiên mã biến thể/SKU)
 const getVariantQrValue = (item) => item?.maChiTietSanPham || item?.maSanPham || String(item?.id || '');
 
+// Mở Popup xem QR code phóng to của 1 biến thể
 const openQrDialog = (item) => {
     qrDialog.variant = item;
     qrDialog.value = getVariantQrValue(item);
     qrDialog.open = true;
 };
 
+// Vẽ Canvas mã QR ẩn trên UI để lấy base64 cho việc xuất Excel/ZIP
 const renderVariantQrCanvases = async (variants) => {
     qrExportItems.value = variants.map((variant) => ({
         id: variant.id,
@@ -484,6 +519,7 @@ const renderVariantQrCanvases = async (variants) => {
     return qrDataUrls;
 };
 
+// Gom các QR code của biến thể đang chọn thành 1 file ZIP và kích hoạt tải về
 const handleExportVariantQrZip = async () => {
     const targetVariants = selectedVariants.value;
     if (!targetVariants.length) {
@@ -529,6 +565,7 @@ const handleExportVariantQrZip = async () => {
     }
 };
 
+// Build object JSON gửi lên API thêm/sửa biến thể
 const buildVariantRequestPayload = (payload, existingVariant = null) => {
     const currentImageUrl = getVariantPrimaryImageUrl(existingVariant);
     const nextImageUrl = normalizeImageUrl(payload?.urlAnh);
@@ -560,6 +597,7 @@ const buildVariantRequestPayload = (payload, existingVariant = null) => {
     return requestPayload;
 };
 
+// Build object JSON cho API chỉ cập nhật trạng thái biến thể
 const buildVariantStatusPayload = (variant, nextStatus) => ({
     maChiTietSanPham: variant.maChiTietSanPham || null,
     idMauSac: variant.idMauSac,
@@ -570,6 +608,7 @@ const buildVariantStatusPayload = (variant, nextStatus) => ({
     trangThai: nextStatus
 });
 
+// Thay đổi trạng thái biến thể phía Frontend (sau khi API báo thành công)
 const updateVariantStatusLocally = (variantId, nextStatus) => {
     if (!selectedProduct.value?.variants?.length) return;
 
@@ -579,6 +618,7 @@ const updateVariantStatusLocally = (variantId, nextStatus) => {
     };
 };
 
+// Xác nhận thay đổi bật/tắt trạng thái 1 biến thể
 const handleToggleVariantStatus = (variant) => {
     const nextStatus = isActiveStatus(variant.trangThai) ? 'NGUNG_HOAT_DONG' : 'DANG_HOAT_DONG';
     confirmDialog.value = {
@@ -603,6 +643,7 @@ const handleToggleVariantStatus = (variant) => {
     };
 };
 
+// Chọn/Bỏ chọn 1 checkbox dòng biến thể
 const toggleVariantSelection = (variantId, checked) => {
     if (checked) {
         if (!selectedVariantIds.value.includes(variantId)) {
@@ -614,6 +655,7 @@ const toggleVariantSelection = (variantId, checked) => {
     selectedVariantIds.value = selectedVariantIds.value.filter((id) => id !== variantId);
 };
 
+// Chọn tất cả / Bỏ chọn tất cả các dòng biến thể đang có trên màn hình
 const toggleSelectVisibleVariants = (checked) => {
     if (checked) {
         const mergedIds = new Set([...selectedVariantIds.value, ...visibleVariantIds.value]);
@@ -625,6 +667,7 @@ const toggleSelectVisibleVariants = (checked) => {
     selectedVariantIds.value = selectedVariantIds.value.filter((id) => !visibleIdSet.has(id));
 };
 
+// Lưu ảnh QR đang hiển thị trên Modal to xuống máy
 const downloadCurrentQrCode = () => {
     const canvas = qrCodeWrapper.value?.querySelector('canvas');
     if (!canvas || !qrDialog.variant) {

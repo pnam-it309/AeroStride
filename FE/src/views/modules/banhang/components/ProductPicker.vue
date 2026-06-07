@@ -1,11 +1,20 @@
 <script setup>
+/**
+ * Module: Bán hàng tại quầy (Admin)
+ * Component: ProductPicker
+ * Chức năng: Tìm kiếm và thêm sản phẩm vào giỏ hàng. Hỗ trợ tìm theo tên, mã, 
+ *            lọc theo thuộc tính, và quét mã vạch (Barcode/QR code).
+ */
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
-import { BoxIcon, QrcodeIcon, XIcon } from 'vue-tabler-icons';
+import { BoxIcon, XIcon } from 'vue-tabler-icons';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
+import { useNotifications } from '@/services/notificationService';
+import { isActiveStatus } from '@/utils/statusUtils';
 import AdminTable from '@/components/common/AdminTable.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminFilter from '@/components/common/AdminFilter.vue';
+import ProductVariantModal from './ProductVariantModal.vue';
 import {
     dichVuDanhMuc,
     dichVuMauSac,
@@ -24,10 +33,10 @@ const props = defineProps({
     }
 });
 const emit = defineEmits(['add-product']);
+const { addNotification } = useNotifications();
 
 const keyword = ref('');
 const results = ref([]);
-const selectedSelections = ref({});
 const loading = ref(false);
 const hasSearched = ref(false);
 
@@ -52,6 +61,7 @@ const filterOptions = ref({
     thuongHieu: []
 });
 
+// Tải dữ liệu các tùy chọn bộ lọc (danh mục, màu sắc, chất liệu...) từ API
 const loadFilterOptions = async () => {
     try {
         const [dm, ms, cl, kc, dg, th] = await Promise.all([
@@ -64,26 +74,13 @@ const loadFilterOptions = async () => {
         ]);
 
         const pick = (res) => res?.content || res || [];
-        const uniqueNames = (items) => Array.from(new Set(pick(items).map((x) => x?.ten).filter(Boolean)));
         filterOptions.value = {
-            danhMuc: pick(dm)
-                .map((x) => x?.ten)
-                .filter(Boolean),
-            mauSac: pick(ms)
-                .map((x) => x?.ten)
-                .filter(Boolean),
-            chatLieu: pick(cl)
-                .map((x) => x?.ten)
-                .filter(Boolean),
-            kichCo: pick(kc)
-                .map((x) => x?.ten)
-                .filter(Boolean),
-            deGiay: pick(dg)
-                .map((x) => x?.ten)
-                .filter(Boolean),
-            thuongHieu: pick(th)
-                .map((x) => x?.ten)
-                .filter(Boolean)
+            danhMuc: pick(dm).map((x) => x?.ten).filter(Boolean),
+            mauSac: pick(ms).map((x) => x?.ten).filter(Boolean),
+            chatLieu: pick(cl).map((x) => x?.ten).filter(Boolean),
+            kichCo: pick(kc).map((x) => x?.ten).filter(Boolean),
+            deGiay: pick(dg).map((x) => x?.ten).filter(Boolean),
+            thuongHieu: pick(th).map((x) => x?.ten).filter(Boolean)
         };
     } catch (e) {
         console.error('Load filter options failed:', e);
@@ -98,6 +95,7 @@ watch(keyword, (newVal) => {
     }, 400);
 });
 
+// Chuyển đổi danh sách thuộc tính thành mảng các lựa chọn { title, value } cho <v-select>
 const mapFilterItems = (options) => {
     return [
         { title: 'Tất cả', value: 'ALL' },
@@ -105,14 +103,53 @@ const mapFilterItems = (options) => {
     ];
 };
 
+const getVariantStock = (variant) => Number(variant?.soLuongTon ?? variant?.soLuong ?? 0);
+
+const groupVariantsByProduct = (items) => {
+    const groups = new Map();
+
+    (items || []).forEach((variant) => {
+        const key = variant.maSanPham || variant.tenSanPham || variant.id;
+        if (!groups.has(key)) {
+            groups.set(key, {
+                id: key,
+                maSanPham: variant.maSanPham,
+                tenSanPham: variant.tenSanPham,
+                tenDanhMuc: variant.tenDanhMuc,
+                tenThuongHieu: variant.tenThuongHieu,
+                tenChatLieu: variant.tenChatLieu,
+                tenDeGiay: variant.tenDeGiay,
+                hinhAnh: variant.hinhAnh,
+                variants: []
+            });
+        }
+
+        groups.get(key).variants.push({
+            ...variant,
+            soLuong: getVariantStock(variant)
+        });
+    });
+
+    return Array.from(groups.values()).map((group) => {
+        const prices = group.variants.map((variant) => Number(variant.giaBan || 0)).filter((price) => price >= 0);
+        return {
+            ...group,
+            tongSoLuongTon: group.variants.reduce((sum, variant) => sum + getVariantStock(variant), 0),
+            giaBanThapNhat: prices.length ? Math.min(...prices) : null,
+            giaBanCaoNhat: prices.length ? Math.max(...prices) : null
+        };
+    });
+};
+
+// Gửi yêu cầu tìm kiếm sản phẩm tới server dựa trên keyword.
+// Dùng endpoint bán hàng để lấy trực tiếp biến thể hợp lệ và tồn kho đã trừ realtime từ DB.
 const onSearch = async () => {
     if (debounceTimer) clearTimeout(debounceTimer);
     hasSearched.value = true;
     loading.value = true;
     try {
-        const data = await dichVuDonHang.searchSanPham(keyword.value || '');
-        results.value = data || [];
-        selectedSelections.value = {};
+        const response = await dichVuDonHang.searchSanPham(keyword.value?.trim() || '');
+        results.value = groupVariantsByProduct(Array.isArray(response) ? response : []);
         page.value = 1;
     } catch (e) {
         console.error(e);
@@ -125,6 +162,7 @@ const onSearch = async () => {
 const showScanner = ref(false);
 let html5QrcodeScanner = null;
 
+// Khởi động camera quét mã vạch/QR bằng html5-qrcode
 const startScanner = () => {
     showScanner.value = true;
     setTimeout(() => {
@@ -133,6 +171,7 @@ const startScanner = () => {
     }, 300);
 };
 
+// Dừng camera và đóng hộp thoại quét mã
 const stopScanner = () => {
     if (html5QrcodeScanner) {
         html5QrcodeScanner.clear().catch((error) => console.error('Failed to clear scanner', error));
@@ -141,15 +180,38 @@ const stopScanner = () => {
     showScanner.value = false;
 };
 
+// Xử lý khi quét mã thành công: tìm kiếm sản phẩm theo mã và tự động thêm vào giỏ
 const onScanSuccess = async (decodedText) => {
     stopScanner();
-    // Giả định mã quét được là mã chi tiết sản phẩm
+    // Validate khoảng trắng
+    const keyword = decodedText?.trim();
+    if (!keyword) return;
+    if (!props.activeOrderId) {
+        addNotification({ title: 'Chưa có hóa đơn', subtitle: 'Vui lòng tạo hoặc chọn hóa đơn trước khi quét mã.', color: 'warning' });
+        return;
+    }
+
     try {
-        const results = await dichVuDonHang.searchSanPham(decodedText);
-        if (results && results.length > 0) {
-            // Nếu tìm thấy đúng 1 sản phẩm khớp mã, thêm luôn
-            const exactMatch = results.find((p) => p.maChiTietSanPham === decodedText) || results[0];
-            emit('add-product', exactMatch);
+        const variants = await dichVuDonHang.searchSanPham(keyword);
+        if (variants && variants.length > 0) {
+            const exactMatch = variants.find((v) => v.maChiTietSanPham === keyword) || variants[0];
+            
+            if (exactMatch) {
+                if (exactMatch.trangThai !== undefined && !isActiveStatus(exactMatch.trangThai)) {
+                    addNotification({ title: 'Thất bại', subtitle: 'Sản phẩm đã ngừng bán', color: 'error' });
+                    return;
+                }
+                const currentStock = getAdjustedStock(exactMatch);
+                if (currentStock <= 0) {
+                    addNotification({ title: 'Thất bại', subtitle: 'Sản phẩm đã hết hàng', color: 'error' });
+                    return;
+                }
+                
+                // QR/barcode của biến thể được cộng trực tiếp 1 sản phẩm vào giỏ.
+                emit('add-product', { ...exactMatch, _soLuongMuonThem: 1 });
+            }
+        } else {
+            addNotification({ title: 'Không tìm thấy', subtitle: `Không tìm thấy mã sản phẩm ${keyword}`, color: 'warning' });
         }
     } catch (e) {
         console.error('Scan error:', e);
@@ -164,6 +226,7 @@ const onScanFailure = (error) => {
 let barcodeBuffer = '';
 let lastKeyTime = 0;
 
+// Lắng nghe phím bấm từ bàn phím hoặc súng quét mã vạch (barcode scanner emulator)
 const handleGlobalKeyDown = (e) => {
     // Nếu đang tập trung vào input thì không xử lý tự động
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -194,28 +257,20 @@ onUnmounted(() => {
     window.removeEventListener('keydown', handleGlobalKeyDown);
 });
 
+// Phát sự kiện thêm sản phẩm được chọn vào giỏ hàng
 const selectProduct = (p) => {
     emit('add-product', p);
     // keep keyword/results for fast adding multiple items like the sample UX
 };
 
+// Tính toán số lượng tồn kho thực tế còn lại (trừ đi số lượng đang nằm trong các giỏ hàng chờ)
 const getAdjustedStock = (p) => {
-    if (!props.orders) return p.soLuongTon || 0;
-    let sumInCarts = 0;
-    props.orders.forEach(order => {
-        if (order.listsHoaDonChiTiet) {
-            order.listsHoaDonChiTiet.forEach(item => {
-                if (item.idChiTietSanPham === p.id) {
-                    sumInCarts += item.soLuong || 0;
-                }
-            });
-        }
-    });
-    return Math.max(0, (p.soLuongTon || 0) - sumInCarts);
+    return Math.max(0, getVariantStock(p));
 };
 
 const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
 
+// Tính toán danh sách sản phẩm sau khi áp dụng các bộ lọc ở frontend
 const filteredResults = computed(() => {
     const rs = results.value || [];
     const f = filters.value;
@@ -223,116 +278,88 @@ const filteredResults = computed(() => {
         if (val === 'ALL') return true;
         return String(key || '') === String(val);
     };
+    const anyVariantMatch = (variants, key, val) => {
+        if (val === 'ALL') return true;
+        return (variants || []).some((variant) => String(variant?.[key] || '') === String(val));
+    };
 
     return rs.filter((x) => {
+        const active = x.trangThai === undefined || isActiveStatus(x.trangThai);
+        
         return (
+            active &&
             match(x.tenDanhMuc, f.danhMuc) &&
-            match(x.tenMauSac, f.mauSac) &&
             match(x.tenChatLieu, f.chatLieu) &&
-            match(x.tenKichThuoc, f.kichCo) &&
             match(x.tenDeGiay, f.deGiay) &&
-            match(x.tenThuongHieu, f.thuongHieu)
+            match(x.tenThuongHieu, f.thuongHieu) &&
+            anyVariantMatch(x.variants, 'tenMauSac', f.mauSac) &&
+            anyVariantMatch(x.variants, 'tenKichThuoc', f.kichCo)
         );
     });
 });
 
-const groupedProducts = computed(() => {
-    const list = filteredResults.value || [];
-    const groups = {};
-    list.forEach(item => {
-        const key = item.maSanPham || item.tenSanPham;
-        if (!groups[key]) {
-            groups[key] = {
-                maSanPham: item.maSanPham,
-                tenSanPham: item.tenSanPham,
-                tenDanhMuc: item.tenDanhMuc,
-                tenThuongHieu: item.tenThuongHieu,
-                tenChatLieu: item.tenChatLieu,
-                tenDeGiay: item.tenDeGiay,
-                hinhAnh: item.hinhAnh,
-                variants: []
-            };
-        }
-        groups[key].variants.push(item);
-    });
-    return Object.values(groups);
+// Chuẩn hóa danh sách kết quả, gán variants từ chiTietSanPhams
+const mappedResults = computed(() => {
+    return filteredResults.value.map(p => ({
+        ...p,
+        variants: p.variants || []
+    }));
 });
 
-const getProductState = (p) => {
-    const variants = p.variants || [];
-    const colors = Array.from(new Set(variants.map(v => v.tenMauSac).filter(Boolean)));
+// Modal trạng thái
+const showVariantModal = ref(false);
+const selectedProductForModal = ref(null);
+const loadingVariant = ref({});
 
-    let color = selectedSelections.value[p.maSanPham]?.color;
-    if (!color || !colors.includes(color)) {
-        color = colors[0] || '';
-    }
-
-    const colorVariants = variants.filter(v => v.tenMauSac === color);
-    const sizes = Array.from(new Set(colorVariants.map(v => v.tenKichThuoc).filter(Boolean)));
-
-    let size = selectedSelections.value[p.maSanPham]?.size;
-    if (!size || !sizes.includes(size)) {
-        size = sizes[0] || '';
-    }
-
-    const activeVariant = variants.find(v => v.tenMauSac === color && v.tenKichThuoc === size) || colorVariants[0] || variants[0] || null;
-
-    return {
-        colors,
-        color,
-        sizes,
-        size,
-        activeVariant
-    };
-};
-
-const selectColor = (maSanPham, color) => {
-    if (!selectedSelections.value[maSanPham]) {
-        selectedSelections.value[maSanPham] = {};
-    }
-    selectedSelections.value[maSanPham].color = color;
-
-    const p = groupedProducts.value.find(x => x.maSanPham === maSanPham);
-    if (p) {
-        const variants = p.variants || [];
-        const colorVariants = variants.filter(v => v.tenMauSac === color);
-        const sizes = Array.from(new Set(colorVariants.map(v => v.tenKichThuoc).filter(Boolean)));
-        selectedSelections.value[maSanPham].size = sizes[0] || '';
+// Mở modal khi bấm "Chọn mua"
+const openVariantModal = async (p) => {
+    if (p.variants && p.variants.length > 0) {
+        selectedProductForModal.value = p;
+        showVariantModal.value = true;
+        return;
     }
 };
 
-const selectSize = (maSanPham, size) => {
-    if (!selectedSelections.value[maSanPham]) {
-        selectedSelections.value[maSanPham] = {};
-    }
-    selectedSelections.value[maSanPham].size = size;
+// Xử lý khi user chọn xong trong Modal
+const handleAddToCartFromModal = ({ variant, quantity }) => {
+    emit('add-product', { ...variant, _soLuongMuonThem: quantity });
 };
 
-const totalElements = computed(() => groupedProducts.value.length);
+const getTotalGroupStock = (p) => {
+    return Number(p.tongSoLuongTon || 0);
+};
+
+const getPriceRange = (p) => {
+    if (p.giaBanThapNhat == null && p.giaBanCaoNhat == null) return '--';
+    if (p.giaBanThapNhat === p.giaBanCaoNhat) return formatCurrency(p.giaBanThapNhat);
+    return `${formatCurrency(p.giaBanThapNhat)} - ${formatCurrency(p.giaBanCaoNhat)}`;
+};
+
+const totalElements = computed(() => mappedResults.value.length);
 const totalPages = computed(() => Math.max(1, Math.ceil(totalElements.value / pageSize.value)));
 const pagedResults = computed(() => {
     const start = (page.value - 1) * pageSize.value;
-    return groupedProducts.value.slice(start, start + pageSize.value);
+    return mappedResults.value.slice(start, start + pageSize.value);
 });
 
+// Lấy URL hình ảnh của biến thể (hoặc ảnh gốc)
 const imageSrc = (p) => {
-    const src = p?.hinhAnh;
-    if (!src) return null;
-    return src;
+    const src = p?.hinhAnh || p?.variants?.[0]?.hinhAnh;
+    return src || null;
 };
 
 const tableHeaders = [
-    { text: 'Ảnh', width: '70px' },
-    { text: 'Tên' },
-    { text: 'Mã', width: '130px' },
-    { text: 'Danh mục', width: '100px' },
-    { text: 'Thương hiệu', width: '110px' },
-    { text: 'Màu sắc', width: '130px' },
-    { text: 'Chất liệu', width: '90px' },
-    { text: 'Size', width: '95px' },
-    { text: 'Giá', width: '110px' },
-    { text: 'Thao tác', width: '100px' }
+    { text: 'STT', width: '50px', align: 'center' },
+    { text: 'Ảnh', width: '70px', align: 'center' },
+    { text: 'Sản phẩm', align: 'left' },
+    { text: 'Tồn kho', width: '100px', align: 'center' },
+    { text: 'Đơn giá', width: '130px', align: 'right' },
+    { text: 'Thao tác', width: '120px', align: 'center' }
 ];
+
+defineExpose({
+    refresh: onSearch
+});
 </script>
 
 <template>
@@ -347,7 +374,7 @@ const tableHeaders = [
                     @keydown.enter="onSearch" class="compact-input">
                     <template #append-inner>
                         <v-btn icon color="primary" variant="text" size="small" class="mr-n2" @click="startScanner">
-                            <QrcodeIcon size="20" />
+                            <v-icon>mdi-qrcode-scan</v-icon>
                         </v-btn>
                     </template>
                 </v-text-field>
@@ -420,54 +447,39 @@ const tableHeaders = [
         <div class="mt-2 table-wrapper-picker">
             <AdminTable title="Kết quả tìm kiếm" :headers="tableHeaders" :items="pagedResults" :loading="loading"
                 :showAddButton="false"
+                class="custom-scroll-table balanced-table"
                 :emptyText="hasSearched ? 'Không tìm thấy sản phẩm phù hợp' : 'Nhập từ khóa hoặc bấm TÌM KIẾM'"
                 emptyIcon="mdi-magnify">
-                <template #row="{ item: p }">
-                    <tr>
-                        <td>
+                <template #row="{ item: p, index }">
+                    <tr class="data-row">
+                        <td class="data-cell text-center font-weight-bold text-slate-500">
+                            {{ (page - 1) * pageSize + index + 1 }}
+                        </td>
+                        <td class="data-cell text-center">
                             <v-avatar rounded="lg" size="56" color="grey-lighten-4">
-                                <v-img v-if="imageSrc(getProductState(p).activeVariant) || imageSrc(p)"
-                                    :src="imageSrc(getProductState(p).activeVariant) || imageSrc(p)" cover />
+                                <v-img v-if="imageSrc(p)" :src="imageSrc(p)" cover />
                                 <BoxIcon v-else size="22" class="text-grey-darken-1" />
                             </v-avatar>
                         </td>
-                        <td>
+                        <td class="data-cell text-left">
                             <div class="font-weight-bold text-truncate" :title="p.tenSanPham">{{ p.tenSanPham }}</div>
-                            <div class="text-caption text-slate-500">Tồn: <b>{{ getProductState(p).activeVariant ?
-                                getAdjustedStock(getProductState(p).activeVariant) : 0 }}</b></div>
+                            <div class="text-caption text-slate-500">Mã: {{ p.maSanPham }}</div>
                         </td>
-                        <td class="text-caption font-weight-bold">
-                            <div class="text-truncate"
-                                :title="getProductState(p).activeVariant?.maChiTietSanPham || p.maSanPham">{{
-                                    getProductState(p).activeVariant?.maChiTietSanPham || p.maSanPham }}</div>
+                        <td class="data-cell text-center font-weight-bold text-primary">
+                            {{ getTotalGroupStock(p) }}
                         </td>
-                        <td class="text-caption">
-                            <div class="text-truncate" :title="p.tenDanhMuc">{{ p.tenDanhMuc || '—' }}</div>
+                        <td class="data-cell text-right font-weight-bold text-slate-700">
+                            {{ getPriceRange(p) }}
                         </td>
-                        <td class="text-caption">
-                            <div class="text-truncate" :title="p.tenThuongHieu">{{ p.tenThuongHieu || '—' }}</div>
-                        </td>
-                        <td>
-                            <v-select :model-value="getProductState(p).color"
-                                @update:model-value="selectColor(p.maSanPham, $event)"
-                                :items="getProductState(p).colors" density="compact" hide-details variant="outlined"
-                                class="mini-select" />
-                        </td>
-                        <td class="text-caption">
-                            <div class="text-truncate" :title="p.tenChatLieu">{{ p.tenChatLieu || '—' }}</div>
-                        </td>
-                        <td>
-                            <v-select :model-value="getProductState(p).size"
-                                @update:model-value="selectSize(p.maSanPham, $event)" :items="getProductState(p).sizes"
-                                density="compact" hide-details variant="outlined" class="mini-select" />
-                        </td>
-                        <td class="text-right font-weight-bold text-error">{{
-                            formatCurrency(getProductState(p).activeVariant?.giaBan || p.variants[0]?.giaBan) }}</td>
-                        <td class="text-center">
-                            <v-btn color="black" size="small" variant="flat" class="font-weight-black"
-                                :disabled="!getProductState(p).activeVariant || getAdjustedStock(getProductState(p).activeVariant) <= 0 || loadingExternal"
-                                :loading="loadingExternal" @click="selectProduct(getProductState(p).activeVariant)">
-                                CHỌN
+                        <td class="data-cell text-center">
+                            <v-btn v-if="getTotalGroupStock(p) > 0" color="blue-lighten-5" size="small" variant="flat" class="font-weight-bold text-primary rounded-lg px-4"
+                                :disabled="loadingExternal || loadingVariant[p.id]"
+                                :loading="loadingVariant[p.id]" @click="openVariantModal(p)">
+                                Chọn mua
+                            </v-btn>
+                            <v-btn v-else color="grey-lighten-3" size="small" variant="flat" class="font-weight-bold text-grey-darken-1 rounded-lg px-4"
+                                disabled>
+                                Hết hàng
                             </v-btn>
                         </td>
                     </tr>
@@ -480,17 +492,22 @@ const tableHeaders = [
                 </template>
             </AdminTable>
         </div>
+
+        <ProductVariantModal 
+            :show="showVariantModal" 
+            @update:show="showVariantModal = $event"
+            :productGroup="selectedProductForModal"
+            @add-to-cart="handleAddToCartFromModal"
+        />
     </div>
 </template>
 
 <style scoped>
 .table-wrapper-picker {
-    max-height: calc(100vh - 360px);
-    min-height: 360px;
-    overflow-y: auto;
-    overflow-x: hidden;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
 }
 
 .filter-field-label {
@@ -511,7 +528,6 @@ const tableHeaders = [
 
 @media (max-width: 960px) {
     .table-wrapper-picker {
-        max-height: 350px;
         min-height: 280px;
     }
 }
@@ -531,5 +547,19 @@ const tableHeaders = [
     border-radius: 6px !important;
     --v-input-control-height: 28px !important;
     font-size: 12px !important;
+}
+
+/* Enable vertical scroll for table when items exceed ~10 rows */
+.custom-scroll-table :deep(.table-wrapper) {
+    max-height: 550px;
+    overflow-y: auto;
+}
+
+.custom-scroll-table :deep(.native-admin-table thead th) {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #f8fafc !important;
+    box-shadow: inset 0 -1px 0 #e2e8f0;
 }
 </style>

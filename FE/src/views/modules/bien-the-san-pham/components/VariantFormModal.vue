@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Module: Biến thể sản phẩm (Admin)
+ * Component: VariantFormModal
+ * Chức năng: Form chỉnh sửa chi tiết của 1 biến thể (ảnh, kích cỡ, màu sắc, giá nhập, giá bán, số lượng).
+ *            Hỗ trợ tự động tạo thuộc tính nếu nhập giá trị chưa tồn tại.
+ */
 import { computed, ref, watch } from 'vue';
 import { DeviceFloppyIcon, PhotoIcon, PlusIcon, RefreshIcon, TrashIcon } from 'vue-tabler-icons';
 import { dichVuFile } from '@/services/core/dichVuFile';
@@ -46,6 +52,7 @@ const dialogVisible = computed({
     }
 });
 
+// Tạo template rỗng cho form
 const createDefaultFormData = () => ({
     maChiTietSanPham: '',
     idMauSac: '',
@@ -59,6 +66,7 @@ const createDefaultFormData = () => ({
 
 const formData = ref(createDefaultFormData());
 
+// Trích xuất URL hình ảnh từ một object hỗn hợp các field tải lên
 const normalizeUploadedFileUrl = (value) => {
     if (!value) return '';
     if (typeof value === 'string') return value;
@@ -76,6 +84,7 @@ const normalizeUploadedFileUrl = (value) => {
     );
 };
 
+// Trích xuất ảnh đại diện chính từ một mảng các ảnh
 const getImageUrlFromCollection = (collection) => {
     if (!Array.isArray(collection)) {
         return normalizeUploadedFileUrl(collection);
@@ -85,6 +94,7 @@ const getImageUrlFromCollection = (collection) => {
     return normalizeUploadedFileUrl(mainImage) || normalizeUploadedFileUrl(collection[0]);
 };
 
+// Tổng hợp tất cả các field khả thi để lấy URL ảnh của biến thể
 const getVariantImageUrl = (variant) => {
     if (!variant) return '';
 
@@ -101,6 +111,7 @@ const getVariantImageUrl = (variant) => {
     );
 };
 
+// Tiện ích lấy giá trị của thuộc tính nằm sâu (nested object)
 const getNestedValue = (source, keys) => {
     for (const key of keys) {
         const value = source?.[key];
@@ -135,6 +146,7 @@ const getVariantSizeLabel = (variant) =>
     getNestedValue(variant?.size, ['ten', 'name', 'label', 'title']) ||
     '';
 
+// Loại bỏ dấu, chuyển chữ thường để thuận tiện cho việc tìm kiếm
 const normalizeSearchText = (value) =>
     String(value ?? '')
         .normalize('NFD')
@@ -142,6 +154,7 @@ const normalizeSearchText = (value) =>
         .toLowerCase()
         .trim();
 
+// Lọc item trong Combobox bằng thuật toán không phân biệt có/không dấu
 const comboboxFilter = (itemTitle, queryText, item) => {
     const normalizedQuery = normalizeSearchText(queryText);
     if (!normalizedQuery) {
@@ -157,6 +170,7 @@ const comboboxProps = {
     autoSelectFirst: 'exact'
 };
 
+// Cố gắng tìm id đúng nhất của một Option dựa theo title hoặc text
 const resolveOptionId = (items, rawValue, fallbackLabel = '') => {
     const optionItems = Array.isArray(items) ? items : [];
 
@@ -202,6 +216,7 @@ const getResolvedOptionLabel = (items, selectedId, fallbackLabel = '') => {
     return matchedOption?.ten || fallbackLabel || String(resolvedId || '');
 };
 
+// Trả về một mảng Options mới đảm bảo luôn chứa option hiện tại (tránh việc ID có mà text trống)
 const withCurrentOption = (items, currentValue, currentLabel) => {
     const optionItems = Array.isArray(items) ? items : [];
     const normalizedCurrentValue = String(currentValue ?? '').trim();
@@ -231,6 +246,7 @@ const withCurrentOption = (items, currentValue, currentLabel) => {
     ];
 };
 
+// Bắt sự kiện khi user Enter trong combobox (nếu là chữ mới, gọi auto create)
 const onKeyUpEnter = (event, field, service, type, label) => {
     const val = event.target.value?.trim();
     if (!val) return;
@@ -269,6 +285,7 @@ const onKeyUpEnter = (event, field, service, type, label) => {
     }
 };
 
+// Tự động gửi API để tạo nhanh thuộc tính (màu, size, ...)
 const autoCreateAttribute = async (val, field, service, type, label) => {
     try {
         const payload = { ten: val, ma: '', moTa: 'Tự động thêm từ biến thể' };
@@ -326,6 +343,7 @@ const sizeComboboxItems = computed(() =>
 
 const getVariantSku = (variant) => variant?.maChiTietSanPham || variant?.sku || variant?.maSku || variant?.maBienThe || variant?.ma || '';
 
+// Hàm điền dữ liệu của biến thể hiện tại vào form khi mở Edit mode
 const populateEditFormData = () => {
     if (!props.variant) {
         formData.value = createDefaultFormData();
@@ -402,10 +420,12 @@ watch(
     }
 );
 
+// Mở hộp thoại chọn tệp
 const triggerFileInput = () => {
     fileInput.value?.click();
 };
 
+// Xử lý sự kiện sau khi chọn ảnh, upload lên Cloud và lấy URL
 const handleImageUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -424,6 +444,7 @@ const handleImageUpload = async (event) => {
     }
 };
 
+// Xử lý gửi Form
 const handleSubmit = async () => {
     formData.value = {
         ...formData.value,

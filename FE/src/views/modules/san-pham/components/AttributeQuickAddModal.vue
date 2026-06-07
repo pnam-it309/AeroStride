@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Module: Sản phẩm (Admin)
+ * Component: AttributeQuickAddModal
+ * Chức năng: Form modal nhỏ giúp người dùng thêm nhanh các thuộc tính sản phẩm
+ *            (ví dụ: thương hiệu, danh mục, màu sắc...) ngay từ giao diện tạo/sửa.
+ */
 import { ref, reactive, watch } from 'vue';
 import { XIcon, CheckIcon, DeviceFloppyIcon } from 'vue-tabler-icons';
 import { useNotifications } from '@/services/notificationService';
@@ -20,6 +26,7 @@ const form = reactive({
     moTa: ''
 });
 
+// Xóa dữ liệu cũ trên form trước khi nhập liệu mới
 const resetForm = () => {
     form.ten = '';
     form.ma = '';
@@ -33,6 +40,7 @@ watch(
     }
 );
 
+// Xử lý sự kiện lưu: validate dữ liệu, gọi API tạo thuộc tính, thông báo kết quả
 const handleSave = async () => {
     if (!form.ten) {
         addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập tên', color: 'error' });

@@ -1,10 +1,18 @@
 <script setup>
+/**
+ * Module: Bán hàng tại quầy (Admin/POS)
+ * View: BanHang
+ * Chức năng: Màn hình chính xử lý tạo hóa đơn, thêm sản phẩm, cập nhật số lượng,
+ *            chọn khách hàng, áp dụng voucher, thanh toán bằng tiền mặt/chuyển khoản (VNPay),
+ *            và in hóa đơn sau khi hoàn tất.
+ */
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { dichVuVnPay } from './dichVuVnPay';
 import { dichVuPhieuGiamGia } from '@/services/admin/dichVuPhieuGiamGia';
 import { useNotifications } from '@/services/notificationService';
 import { MESSAGES } from '@/constants/messages';
+import { useUIStore } from '@/stores/ui';
 
 // Import Components
 import OrderTabs from './components/OrderTabs.vue';
@@ -16,6 +24,7 @@ import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import InvoiceReceiptDialog from './components/InvoiceReceiptDialog.vue';
 
 const { addNotification } = useNotifications();
+const uiStore = useUIStore();
 const MAX_WAITING_ORDERS = 5;
 const VNPAY_PENDING_KEY = 'aerostride_pos_vnpay_pending';
 const BYPASS_PAYMENT_RECORD_INSERT = false; // Đã fix backend: gd.setId() bị xóa, không còn lỗi merge().
@@ -27,6 +36,7 @@ const activeOrderIndex = ref(0);
 const vouchers = ref([]);
 const isProcessing = ref(false);
 const isAutoApplyingVoucher = ref(false);
+const productPickerRef = ref(null);
 
 // State hiển thị hóa đơn sau thanh toán
 const receiptDialog = ref({
@@ -59,6 +69,7 @@ const selectedOrderItemCount = computed(() =>
     (selectedOrder.value?.listsHoaDonChiTiet || []).reduce((sum, item) => sum + (Number(item.soLuong) || 0), 0)
 );
 
+// Chuẩn hóa định dạng danh sách đơn hàng trả về từ nhiều dạng API response khác nhau
 const normalizeOrderList = (payload) => {
     if (Array.isArray(payload)) return payload;
     if (Array.isArray(payload?.content)) return payload.content;
@@ -66,6 +77,7 @@ const normalizeOrderList = (payload) => {
     return [];
 };
 
+// Đảm bảo chỉ số tab hóa đơn đang kích hoạt luôn nằm trong khoảng hợp lệ
 const clampActiveOrderIndex = () => {
     if (!orders.value.length) {
         activeOrderIndex.value = 0;
@@ -77,6 +89,7 @@ const clampActiveOrderIndex = () => {
     }
 };
 
+// Gán danh sách hóa đơn từ API và trỏ đến hóa đơn mong muốn (nếu có)
 const setOrders = (payload, { preferOrderId = null } = {}) => {
     orders.value = normalizeOrderList(payload);
 
@@ -90,8 +103,21 @@ const setOrders = (payload, { preferOrderId = null } = {}) => {
     clampActiveOrderIndex();
 };
 
+// Global keydown handler for F10
+const handleGlobalKeyDown = (e) => {
+    if (e.key === 'F10') {
+        e.preventDefault();
+        onCheckout();
+    }
+};
+
 // Lifecycle
 onMounted(async () => {
+    uiStore.setBreadcrumbs([
+        { title: 'Bán hàng', disabled: false, href: '/admin/ban-hang' },
+        { title: 'Tạo đơn hàng', disabled: true }
+    ]);
+    window.addEventListener('keydown', handleGlobalKeyDown);
     loading.value = true;
     try {
         const data = await dichVuDonHang.layDonHangCho();
@@ -105,13 +131,9 @@ onMounted(async () => {
     }
 });
 
-// Watchers
-watch(
-    () => selectedOrder.value?.id,
-    (id) => {
-        if (id) fetchVouchers();
-    }
-);
+onUnmounted(() => {
+    window.removeEventListener('keydown', handleGlobalKeyDown);
+});
 
 // Watchers
 watch(() => selectedOrder.value?.id, (id) => {
@@ -126,6 +148,7 @@ watch(
 );
 
 // Logic: Hóa đơn
+// Tạo mới một hóa đơn chờ (tab hóa đơn mới), tối đa 5 hóa đơn
 const createNewOrder = async ({ silent = false, force = false } = {}) => {
     if (isProcessing.value && !force) return; // Prevent double clicks
     if (orders.value.length >= MAX_WAITING_ORDERS) {
@@ -149,6 +172,7 @@ const createNewOrder = async ({ silent = false, force = false } = {}) => {
     }
 };
 
+// Xóa một hóa đơn chờ (tab hóa đơn)
 const closeOrder = (orderId, index) => {
     confirmDialog.value = {
         show: true,
@@ -163,6 +187,9 @@ const closeOrder = (orderId, index) => {
                 clampActiveOrderIndex();
                 if (orders.value.length === 0) await createNewOrder();
                 confirmDialog.value.show = false;
+                if (productPickerRef.value && typeof productPickerRef.value.refresh === 'function') {
+                    productPickerRef.value.refresh();
+                }
             } catch (e) {
                 addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.DELETE_DATA, color: 'error' });
             } finally {
@@ -173,6 +200,7 @@ const closeOrder = (orderId, index) => {
 };
 
 // Logic: Sản phẩm
+// Xử lý thêm một sản phẩm vào hóa đơn đang được chọn
 const onAddProduct = async (product) => {
     if (!selectedOrder.value) {
         addNotification({ title: 'Cảnh báo', subtitle: 'Vui lòng chọn hoặc tạo hóa đơn trước.', color: 'warning' });
@@ -183,11 +211,17 @@ const onAddProduct = async (product) => {
     try {
         const updated = await dichVuDonHang.addSanPham(selectedOrder.value.id, {
             idChiTietSanPham: product.id,
-            soLuong: 1
+            soLuong: product._soLuongMuonThem || 1
         });
         updateOrderInList(updated);
-        await refreshBestVoucher(updated);
         addNotification({ title: 'Thêm thành công', subtitle: product.tenSanPham, color: 'success' });
+        // Fire-and-forget: không await để tránh treo isProcessing khi debounce
+        refreshBestVoucher(updated);
+        
+        // Tải lại bảng sản phẩm bên ngoài để cập nhật hiển thị tồn kho mới
+        if (productPickerRef.value && typeof productPickerRef.value.refresh === 'function') {
+            productPickerRef.value.refresh();
+        }
     } catch (e) {
         addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK, color: 'error' });
     } finally {
@@ -195,41 +229,64 @@ const onAddProduct = async (product) => {
     }
 };
 
-const onUpdateQty = async (item, delta) => {
-    const newQty = item.soLuong + delta;
-    if (newQty < 1) return;
+// Xử lý thay đổi số lượng của 1 sản phẩm trong giỏ hàng (tăng/giảm)
+const onUpdateQty = async (item, delta, inputEventTarget = null) => {
+    let newQty = item.soLuong + delta;
+    if (newQty < 1) {
+        // Trừ thẳng trực tiếp về 0 => tự động xóa khỏi giỏ
+        try {
+            if (!selectedOrder.value?.id) return;
+            const updated = await dichVuDonHang.removeSanPham(selectedOrder.value.id, item.id);
+            const data = await dichVuDonHang.layDonHangCho();
+            setOrders(data, { preferOrderId: selectedOrder.value.id });
+            refreshBestVoucher();
+            if (productPickerRef.value && typeof productPickerRef.value.refresh === 'function') {
+                productPickerRef.value.refresh();
+            }
+        } catch (e) {
+            addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.DELETE_DATA, color: 'error' });
+        }
+        return;
+    }
 
     if (delta > 0) {
-        let sumInOtherCarts = 0;
-        orders.value.forEach(order => {
-            if (order.id !== selectedOrder.value.id && order.listsHoaDonChiTiet) {
-                order.listsHoaDonChiTiet.forEach(oItem => {
-                    if (oItem.idChiTietSanPham === item.idChiTietSanPham) {
-                        sumInOtherCarts += oItem.soLuong || 0;
-                    }
-                });
-            }
-        });
-        const maxAllowed = Math.max(0, (item.soLuongTon || 0) - sumInOtherCarts);
+        // Tồn kho trong DB đã được trừ ngay lập tức khi thêm vào giỏ.
+        // Vậy số lượng có thể thêm tối đa (maxAllowed) chính là số đang có + tồn kho còn lại.
+        const maxAllowed = item.soLuong + (item.soLuongTon || 0);
         if (newQty > maxAllowed) {
             addNotification({
-                title: 'Không đủ hàng',
-                subtitle: `Không thể tăng số lượng. Sản phẩm đã đạt giới hạn tồn kho cho phép (Tối đa ${maxAllowed} sản phẩm có thể thêm).`,
+                title: 'Vượt quá tồn kho',
+                subtitle: `Chỉ còn tối đa ${maxAllowed} sản phẩm. Hệ thống đã tự động điều chỉnh.`,
                 color: 'warning'
             });
-            return;
+            newQty = maxAllowed;
+            if (newQty === item.soLuong) {
+                // Đã đạt max từ trước, chỉ khôi phục lại hiển thị ô input
+                if (inputEventTarget) {
+                    inputEventTarget.value = item.soLuong;
+                }
+                return;
+            }
         }
     }
 
     try {
         const updated = await dichVuDonHang.updateSoLuong(selectedOrder.value.id, item.id, newQty);
         updateOrderInList(updated);
-        await refreshBestVoucher(updated);
+        refreshBestVoucher(updated);
+        if (productPickerRef.value && typeof productPickerRef.value.refresh === 'function') {
+            productPickerRef.value.refresh();
+        }
     } catch (e) {
+        // Khôi phục giá trị input nếu gọi API lỗi
+        if (inputEventTarget) {
+            inputEventTarget.value = item.soLuong;
+        }
         addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK, color: 'error' });
     }
 };
 
+// Xóa 1 sản phẩm khỏi giỏ hàng
 const onRemoveItem = (item) => {
     const currentOrderId = selectedOrder.value?.id || null;
     confirmDialog.value = {
@@ -244,8 +301,11 @@ const onRemoveItem = (item) => {
                 await dichVuDonHang.removeSanPham(currentOrderId, item.id);
                 const data = await dichVuDonHang.layDonHangCho();
                 setOrders(data, { preferOrderId: currentOrderId });
-                await refreshBestVoucher();
+                refreshBestVoucher();
                 confirmDialog.value.show = false;
+                if (productPickerRef.value && typeof productPickerRef.value.refresh === 'function') {
+                    productPickerRef.value.refresh();
+                }
             } catch (e) {
                 addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.DELETE_DATA, color: 'error' });
             } finally {
@@ -256,26 +316,29 @@ const onRemoveItem = (item) => {
 };
 
 // Logic: Khách hàng & Voucher
+// Gắn một khách hàng vào hóa đơn
 const onSelectCustomer = async (customer) => {
     try {
         const updated = await dichVuDonHang.setKhachHang(selectedOrder.value.id, customer.id);
         updateOrderInList(updated);
-        await refreshBestVoucher(updated);
+        refreshBestVoucher(updated);
     } catch (e) {
         addNotification({ title: 'Lỗi khách hàng', subtitle: getErrorMessage(e, 'Không thể gắn khách hàng vào hóa đơn.'), color: 'error' });
     }
 };
 
+// Gỡ bỏ khách hàng khỏi hóa đơn (đưa về khách lẻ)
 const onRemoveCustomer = async () => {
     try {
         const updated = await dichVuDonHang.setKhachHang(selectedOrder.value.id, null);
         updateOrderInList(updated);
-        await refreshBestVoucher(updated);
+        refreshBestVoucher(updated);
     } catch (e) {
         addNotification({ title: 'Lỗi khách hàng', subtitle: getErrorMessage(e, 'Không thể bỏ khách hàng khỏi hóa đơn.'), color: 'error' });
     }
 };
 
+// Tính toán số tiền được giảm tương ứng với 1 voucher và tổng giá trị đơn hàng
 const calculateVoucherDiscount = (voucher, total) => {
     if (!voucher || !total) return 0;
     const minimum = Number(voucher.donHangToiThieu || 0);
@@ -291,16 +354,19 @@ const calculateVoucherDiscount = (voucher, total) => {
     return Number(voucher.soTienGiam || 0);
 };
 
+// Kiểm tra voucher có phải loại Cá Nhân hay không
 const isPersonalVoucher = (voucher) => {
     const value = String(voucher?.hinhThuc ?? '').toUpperCase();
     return value === 'CA_NHAN' || value === 'CANHAN' || value === 'PERSONAL' || value === 'PRIVATE';
 };
 
+// Kiểm tra voucher có phải loại Công Khai (tất cả mọi người) hay không
 const isPublicVoucher = (voucher) => {
     const value = String(voucher?.hinhThuc ?? '').toUpperCase();
     return !value || value === 'CONG_KHAI' || value === 'CONGKHAI' || value === 'PUBLIC' || value === 'ALL';
 };
 
+// Bóc tách mảng voucher từ response API
 const extractVoucherPageContent = (response) => {
     if (Array.isArray(response?.data?.content)) return response.data.content;
     if (Array.isArray(response?.content)) return response.content;
@@ -309,6 +375,7 @@ const extractVoucherPageContent = (response) => {
     return [];
 };
 
+// Tải danh sách tất cả các voucher thỏa mãn điều kiện áp dụng cho hóa đơn hiện tại
 const loadEligibleVouchers = async (order) => {
     const total = Number(order?.tongTien || 0);
     const customerId = order?.idKhachHang || null;
@@ -329,6 +396,7 @@ const loadEligibleVouchers = async (order) => {
     });
 };
 
+// Tự động lấy ra voucher có giá trị giảm giá cao nhất
 const pickBestVoucher = (items, total) => {
     return [...(items || [])]
         .map((voucher) => ({
@@ -339,28 +407,52 @@ const pickBestVoucher = (items, total) => {
         .sort((a, b) => b.discount - a.discount)[0]?.voucher || null;
 };
 
-const refreshBestVoucher = async (orderOverride = selectedOrder.value) => {
-    if (!orderOverride?.id || isAutoApplyingVoucher.value) return;
-    try {
-        const availableVouchers = await loadEligibleVouchers(orderOverride);
-        vouchers.value = availableVouchers || [];
-
-        const bestVoucher = pickBestVoucher(vouchers.value, orderOverride.tongTien || 0);
-        const bestVoucherId = bestVoucher?.id || null;
-        const currentVoucherId = orderOverride.idPhieuGiamGia || null;
-
-        if (bestVoucherId !== currentVoucherId) {
-            isAutoApplyingVoucher.value = true;
-            const updated = await dichVuDonHang.setVoucher(orderOverride.id, bestVoucherId);
-            updateOrderInList(updated);
+// Làm mới danh sách voucher và tự động áp dụng mã có lợi nhất
+let refreshVoucherTimeout = null;
+let pendingVoucherResolve = null;
+const refreshBestVoucher = (orderOverride = selectedOrder.value) => {
+    return new Promise((resolve) => {
+        if (!orderOverride?.id) return resolve();
+        if (refreshVoucherTimeout) {
+            clearTimeout(refreshVoucherTimeout);
+            // Giải phóng Promise cũ để tránh treo vĩnh viễn
+            if (pendingVoucherResolve) {
+                pendingVoucherResolve();
+                pendingVoucherResolve = null;
+            }
         }
-    } catch (e) {
-        vouchers.value = [];
-    } finally {
-        isAutoApplyingVoucher.value = false;
-    }
+        pendingVoucherResolve = resolve;
+        
+        refreshVoucherTimeout = setTimeout(async () => {
+            if (isAutoApplyingVoucher.value) {
+                pendingVoucherResolve = null;
+                return resolve();
+            }
+            isAutoApplyingVoucher.value = true;
+            try {
+                const availableVouchers = await loadEligibleVouchers(orderOverride);
+                vouchers.value = availableVouchers || [];
+
+                const bestVoucher = pickBestVoucher(vouchers.value, orderOverride.tongTien || 0);
+                const bestVoucherId = bestVoucher?.id || null;
+                const currentVoucherId = orderOverride.idPhieuGiamGia || null;
+
+                if (bestVoucherId !== currentVoucherId) {
+                    const updated = await dichVuDonHang.setVoucher(orderOverride.id, bestVoucherId);
+                    updateOrderInList(updated);
+                }
+            } catch (e) {
+                vouchers.value = [];
+            } finally {
+                isAutoApplyingVoucher.value = false;
+                pendingVoucherResolve = null;
+                resolve();
+            }
+        }, 300); // 300ms debounce
+    });
 };
 
+// Cố định 1 voucher do người dùng tự chọn trên giao diện
 const onApplyVoucher = async (voucherId) => {
     try {
         const updated = await dichVuDonHang.setVoucher(selectedOrder.value.id, voucherId);
@@ -372,13 +464,16 @@ const onApplyVoucher = async (voucherId) => {
 const vnpayDialog = ref({
     show: false,
     loading: false,
+    verified: false,
     statusText: '',
     orderId: '',
     amount: 0,
-    popup: null,
     pollInterval: null
 });
 
+let vnpayPopup = null;
+
+// Dọn dẹp tiến trình lắng nghe thanh toán VNPay
 const clearVnPayPolling = () => {
     if (vnpayDialog.value.pollInterval) {
         clearInterval(vnpayDialog.value.pollInterval);
@@ -386,22 +481,46 @@ const clearVnPayPolling = () => {
     }
 };
 
+// Đóng cửa sổ/Tiến trình VNPay
 const closeVnPayFlow = () => {
     clearVnPayPolling();
-    if (vnpayDialog.value.popup && !vnpayDialog.value.popup.closed) {
-        vnpayDialog.value.popup.close();
+    try {
+        if (vnpayPopup && !vnpayPopup.closed) {
+            vnpayPopup.close();
+        }
+    } catch (e) {
+        console.warn('Cannot check/close VNPay popup due to SecurityError:', e);
     }
     vnpayDialog.value.show = false;
     vnpayDialog.value.loading = false;
-    vnpayDialog.value.popup = null;
+    vnpayDialog.value.verified = false;
+    vnpayPopup = null;
 };
 
+// Hủy bỏ giao dịch VNPay
 const cancelVnPayFlow = () => {
     sessionStorage.removeItem(VNPAY_PENDING_KEY);
     closeVnPayFlow();
     addNotification({ title: 'Hủy thanh toán', subtitle: 'Giao dịch VNPay đã được hủy bỏ', color: 'info' });
 };
 
+const handleVnPayCanceled = (subtitle = 'Cửa sổ VNPay đã đóng trước khi hệ thống nhận được kết quả thanh toán thành công.') => {
+    sessionStorage.removeItem(VNPAY_PENDING_KEY);
+    closeVnPayFlow();
+    addNotification({
+        title: 'Giao dịch bị hủy',
+        subtitle,
+        color: 'warning'
+    });
+};
+
+const isVnPayCallbackSuccess = (params = {}) =>
+    params.vnp_ResponseCode === '00' && (!params.vnp_TransactionStatus || params.vnp_TransactionStatus === '00' || params.vnp_TransactionStatus === '0');
+
+const isVnPayVerifySuccess = (verifyResult, params = {}) =>
+    Boolean(verifyResult?.success) && Number(verifyResult?.status || 200) === 200 && isVnPayCallbackSuccess(params);
+
+// Chuẩn bị DTO thanh toán gửi lên backend
 const buildCheckoutPayload = (order, overrides = {}) => {
     const payableAmount = Number(order?.tongTienSauGiam || 0);
     return {
@@ -421,6 +540,7 @@ const buildCheckoutPayload = (order, overrides = {}) => {
 
 const hasPaymentAmount = (payload) => Number(payload?.tienMat || 0) > 0 || Number(payload?.tienChuyenKhoan || 0) > 0;
 
+// Cắt giảm trường tiền mặt/chuyển khoản để fix một số lỗi mapping với backend
 const buildCheckoutPayloadWithoutPaymentRecord = (payload) => {
     const paymentNote = [
         payload?.ghiChu,
@@ -437,6 +557,7 @@ const buildCheckoutPayloadWithoutPaymentRecord = (payload) => {
     };
 };
 
+// Xử lý logic trên UI khi 1 hóa đơn đã được thanh toán thành công (Xóa tab, tạo tab mới)
 const completePaidOrder = async (orderId) => {
     const index = orders.value.findIndex((order) => order.id === orderId);
     if (index !== -1) {
@@ -450,6 +571,7 @@ const completePaidOrder = async (orderId) => {
     checkoutData.value.note = '';
 };
 
+// Hiển thị dialog in hóa đơn sau khi thanh toán
 const showReceipt = (order, paymentMethod, receivedAmount, note) => {
     receiptDialog.value = {
         show: true,
@@ -465,6 +587,7 @@ const onCloseReceipt = async () => {
     receiptDialog.value.show = false;
 };
 
+// Gửi request checkout đến API, sau đó trigger in hóa đơn
 const submitCheckout = async ({ order = selectedOrder.value, payload, successMessage = MESSAGES.SUCCESS.PAYMENT, showReceiptAfter = true }) => {
     if (!order?.id) {
         throw new Error('Không tìm thấy hóa đơn đang thanh toán.');
@@ -495,6 +618,7 @@ const submitCheckout = async ({ order = selectedOrder.value, payload, successMes
     }
 };
 
+// Hoàn tất luồng thanh toán chuyển khoản với mã giao dịch trả về
 const finalizeVnPayCheckout = async (tienChuyenKhoan, maGiaoDich, order = selectedOrder.value) => {
     vnpayDialog.value.loading = true;
     vnpayDialog.value.statusText = 'Đang xác nhận hóa đơn và cập nhật tồn kho...';
@@ -506,6 +630,7 @@ const finalizeVnPayCheckout = async (tienChuyenKhoan, maGiaoDich, order = select
                 maGiaoDich
             })
         });
+        vnpayDialog.value.verified = true;
         sessionStorage.removeItem(VNPAY_PENDING_KEY);
         closeVnPayFlow();
     } catch (error) {
@@ -515,12 +640,7 @@ const finalizeVnPayCheckout = async (tienChuyenKhoan, maGiaoDich, order = select
     }
 };
 
-const confirmVnPayManual = () => {
-    const timestamp = Date.now();
-    const manualTxn = `VNP_manual_${timestamp}`;
-    finalizeVnPayCheckout(selectedOrder.value.tongTienSauGiam, manualTxn);
-};
-
+// Khởi tạo quy trình thanh toán VNPay, popup thanh toán và polling trạng thái
 const startVnPayFlow = async () => {
     confirmDialog.value.loading = true;
     try {
@@ -531,7 +651,8 @@ const startVnPayFlow = async () => {
         const payload = {
             amount: selectedOrder.value.tongTienSauGiam,
             orderId: orderId,
-            orderInfo: 'Thanh toan hoa don ' + selectedOrder.value.maHoaDon
+            orderInfo: 'Thanh toan hoa don ' + selectedOrder.value.maHoaDon,
+            returnUrl: `${window.location.origin}${window.location.pathname}`
         };
 
         const data = await dichVuVnPay.createPaymentUrl(payload);
@@ -549,23 +670,33 @@ const startVnPayFlow = async () => {
         // Popup VNPay có thể chuyển qua domain ngân hàng rồi quay về return URL backend.
         // Vì khác origin, FE không luôn đọc được location; do đó vẫn có pending-state dự phòng.
         const popup = window.open(data.paymentUrl, '_blank', 'width=900,height=750,location=yes,status=yes,scrollbars=yes');
+        vnpayPopup = popup;
 
         confirmDialog.value.show = false;
 
         vnpayDialog.value = {
-            show: true,
+            show: false,
             loading: false,
+            verified: false,
             statusText: 'Vui lòng hoàn tất thanh toán trong cửa sổ VNPay.',
             orderId: orderId,
             amount: selectedOrder.value.tongTienSauGiam,
-            popup: popup,
             pollInterval: null
         };
 
         vnpayDialog.value.pollInterval = setInterval(async () => {
-            if (!popup || popup.closed) {
-                clearVnPayPolling();
-                vnpayDialog.value.statusText = 'Cửa sổ thanh toán đã bị đóng. Bạn có thể xác nhận thủ công nếu đã thanh toán.';
+            let isClosed = false;
+            try {
+                isClosed = !popup || popup.closed;
+            } catch (e) {
+                // Ignore SecurityError (cross-origin window), assume not closed
+                isClosed = false;
+            }
+
+            if (isClosed) {
+                if (!vnpayDialog.value.verified) {
+                    handleVnPayCanceled();
+                }
                 return;
             }
 
@@ -584,26 +715,21 @@ const startVnPayFlow = async () => {
                     });
 
                     popup.close();
-                    vnpayDialog.value.popup = null;
+                    vnpayPopup = null;
 
                     try {
                         const verifyResult = await dichVuVnPay.verifyPaymentCallback(params);
-                        if (verifyResult && verifyResult.success) {
+                        if (isVnPayVerifySuccess(verifyResult, params)) {
                             const txnNo = params['vnp_TransactionNo'] || `VNP_${Date.now()}`;
-                            await finalizeVnPayCheckout(selectedOrder.value.tongTienSauGiam, txnNo);
+                            const paidOrder = getStoredVnPayOrder() || selectedOrder.value;
+                            vnpayDialog.value.verified = true;
+                            await finalizeVnPayCheckout(paidOrder?.tongTienSauGiam || vnpayDialog.value.amount, txnNo, paidOrder);
                         } else {
-                            addNotification({
-                                title: 'Thanh toán thất bại',
-                                subtitle: verifyResult?.message || 'VNPay xác thực giao dịch không thành công',
-                                color: 'error'
-                            });
-                            vnpayDialog.value.loading = false;
-                            vnpayDialog.value.statusText = 'Giao dịch không hợp lệ hoặc đã bị hủy.';
+                            handleVnPayCanceled(verifyResult?.message || 'VNPay không trả về trạng thái thanh toán thành công.');
                         }
                     } catch (err) {
                         console.error('Verify callback error:', err);
-                        vnpayDialog.value.loading = false;
-                        vnpayDialog.value.statusText = 'Không thể xác thực giao dịch tự động. Vui lòng bấm xác nhận thủ công.';
+                        handleVnPayCanceled('Không thể xác thực kết quả VNPay. Hóa đơn chưa được hoàn tất.');
                     }
                 }
             } catch (e) {
@@ -621,6 +747,7 @@ const startVnPayFlow = async () => {
 };
 
 // Logic: Thanh toán
+// Handler chính cho nút "Thanh toán"
 const onCheckout = () => {
     if (!selectedOrder.value?.listsHoaDonChiTiet?.length) {
         addNotification({ title: 'Cảnh báo', subtitle: 'Vui lòng thêm sản phẩm trước khi thanh toán.', color: 'warning' });
@@ -687,6 +814,7 @@ const onCheckout = () => {
 };
 
 // Helpers
+// Thay thế hóa đơn trong mảng bằng dữ liệu mới nhất
 const updateOrderInList = (updated) => {
     const idx = orders.value.findIndex((o) => o.id === updated.id);
     if (idx !== -1) orders.value[idx] = updated;
@@ -707,6 +835,7 @@ const getStoredVnPayOrder = () => {
     }
 };
 
+// Lắng nghe và xử lý khi backend trả về callback trên URL từ ngân hàng (VNPay Return)
 const handleVnPayCallbackFromUrl = async () => {
     const params = new URLSearchParams(window.location.search);
     if (!params.has('vnp_ResponseCode')) return;
@@ -728,7 +857,7 @@ const handleVnPayCallbackFromUrl = async () => {
 
     try {
         const verifyResult = await dichVuVnPay.verifyPaymentCallback(callbackParams);
-        if (!verifyResult?.success) {
+        if (!isVnPayVerifySuccess(verifyResult, callbackParams)) {
             throw new Error(verifyResult?.message || 'VNPay không xác nhận giao dịch thành công.');
         }
 
@@ -768,24 +897,29 @@ const handleVnPayCallbackFromUrl = async () => {
             </header>
 
             <v-row v-if="selectedOrder" no-gutters class="pos-grid">
-                <v-col cols="12" xl="5" lg="5" class="pos-column cart-column">
-                    <div class="column-head">
-                        <div>
-                            <div class="text-subtitle-1 font-weight-bold">Giỏ hàng</div>
-                            <div class="text-caption text-grey-darken-1">Mã hóa đơn: {{ selectedOrder.maHoaDon }}</div>
-                        </div>
+                <!-- Left Column: Product Picker and Cart -->
+                <v-col cols="12" xl="8" lg="8" md="8" class="d-flex flex-column gap-3 pr-3">
+                    <div class="pos-column product-column" style="padding: 16px;">
+                        <ProductPicker ref="productPickerRef" :active-order-id="selectedOrder.id" :orders="orders" :loading-external="isProcessing"
+                            @add-product="onAddProduct" />
                     </div>
-                    <CartTable :items="selectedOrder.listsHoaDonChiTiet" @update-qty="onUpdateQty"
-                        @remove="onRemoveItem" />
+                    
+                    <div class="pos-column cart-column" style="padding: 16px;">
+                        <div class="column-head">
+                            <div class="d-flex align-center gap-2">
+                                <v-icon color="primary">mdi-cart-outline</v-icon>
+                                <span class="text-subtitle-1 font-weight-bold text-slate-800">Giỏ hàng ({{ selectedOrderItemCount }} món)</span>
+                            </div>
+                            <v-btn variant="text" color="error" size="small" class="font-weight-bold px-0 text-none" @click="closeOrder(selectedOrder.id, activeOrderIndex)">Xoá tất cả</v-btn>
+                        </div>
+                        <CartTable :items="selectedOrder.listsHoaDonChiTiet" @update-qty="onUpdateQty"
+                            @remove="onRemoveItem" />
+                    </div>
                 </v-col>
 
-                <v-col cols="12" xl="4" lg="4" class="pos-column product-column">
-                    <ProductPicker :active-order-id="selectedOrder.id" :orders="orders" :loading-external="isProcessing"
-                        @add-product="onAddProduct" />
-                </v-col>
-
-                <v-col cols="12" xl="3" lg="3" class="pos-column payment-column">
-                    <div class="customer-block">
+                <!-- Right Column: Customer and Checkout -->
+                <v-col cols="12" xl="4" lg="4" md="4" class="pos-column payment-column" style="padding: 16px;">
+                    <div class="customer-block mb-4 border-0 pa-0">
                         <CustomerSelector :selected-customer-name="selectedOrder.tenKhachHang"
                             :selected-customer-phone="selectedOrder.sdtKhachHang" :active-order-id="selectedOrder.id"
                             @select="onSelectCustomer" @remove="onRemoveCustomer" />
@@ -814,56 +948,6 @@ const handleVnPayCallbackFromUrl = async () => {
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
             :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
 
-        <!-- VNPay Processing Dialog -->
-        <v-dialog v-model="vnpayDialog.show" persistent max-width="500">
-            <v-card class="rounded-xl pa-6 text-center">
-                <div class="d-flex justify-space-between align-center mb-4">
-                    <span class="text-h6 font-weight-bold">Thanh toán qua VNPay</span>
-                    <v-btn icon variant="text" size="small" :disabled="vnpayDialog.loading" @click="cancelVnPayFlow">
-                        <v-icon>mdi-close</v-icon>
-                    </v-btn>
-                </div>
-
-                <div class="my-6">
-                    <div v-if="vnpayDialog.loading" class="d-flex flex-column align-center">
-                        <v-progress-circular indeterminate color="primary" size="64" width="6"
-                            class="mb-4"></v-progress-circular>
-                        <div class="text-body-1 font-weight-medium text-grey-darken-2">{{ vnpayDialog.statusText }}
-                        </div>
-                    </div>
-                    <div v-else class="d-flex flex-column align-center">
-                        <div class="vnpay-logo-wrapper mb-4">
-                            <v-icon size="64" color="primary"
-                                class="animate-pulse">mdi-credit-card-scan-outline</v-icon>
-                        </div>
-                        <div class="text-h5 font-weight-bold text-primary mb-2">
-                            {{ new Intl.NumberFormat('vi-VN', {
-                                style: 'currency', currency: 'VND'
-                            }).format(vnpayDialog.amount) }}
-                        </div>
-                        <div class="text-caption text-grey mb-4">Mã hóa đơn: <b>{{ selectedOrder?.maHoaDon }}</b></div>
-                        <v-alert type="info" variant="tonal" class="rounded-lg mb-4 text-left" density="compact">
-                            Một cửa sổ thanh toán VNPay đã được mở. Vui lòng hoàn tất thanh toán trên cửa sổ đó.
-                        </v-alert>
-                        <div class="text-body-2 text-grey-darken-1">{{ vnpayDialog.statusText }}</div>
-                    </div>
-                </div>
-
-                <v-divider class="my-4"></v-divider>
-
-                <div class="d-flex gap-3 justify-center">
-                    <v-btn variant="outlined" color="error" class="rounded-lg px-4" :disabled="vnpayDialog.loading"
-                        @click="cancelVnPayFlow">
-                        Hủy giao dịch
-                    </v-btn>
-                    <v-btn color="success" class="rounded-lg px-4 font-weight-bold text-white shadow"
-                        :loading="vnpayDialog.loading" @click="confirmVnPayManual">
-                        Xác nhận thanh toán
-                    </v-btn>
-                </div>
-            </v-card>
-        </v-dialog>
-
         <!-- Hóa đơn sau thanh toán -->
         <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" />
     </v-container>
@@ -871,13 +955,17 @@ const handleVnPayCallbackFromUrl = async () => {
 
 <style scoped>
 .pos-wrapper {
-    height: calc(100vh - 64px);
-    overflow: hidden;
     background: #eef2f6;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+}
+
+.pos-wrapper :deep(.v-btn) {
+    text-transform: none;
+    letter-spacing: normal;
 }
 
 .pos-shell {
-    height: 100%;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -899,14 +987,9 @@ const handleVnPayCallbackFromUrl = async () => {
 .pos-grid {
     flex: 1;
     min-height: 0;
-    gap: 14px;
-    flex-wrap: nowrap;
 }
 
 .pos-column {
-    height: 100%;
-    min-height: 0;
-    overflow-y: auto;
     background: #ffffff;
     border: 1px solid #dfe5ee;
     border-radius: 8px;
@@ -927,6 +1010,9 @@ const handleVnPayCallbackFromUrl = async () => {
     display: flex;
     flex-direction: column;
     gap: 14px;
+    position: sticky;
+    top: 16px;
+    align-self: flex-start;
 }
 
 .column-head {

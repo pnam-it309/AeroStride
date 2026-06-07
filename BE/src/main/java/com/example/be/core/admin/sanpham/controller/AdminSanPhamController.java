@@ -38,16 +38,19 @@ public class AdminSanPhamController {
 
     private final AdminSanPhamService adminSanPhamService;
 
+    // Lấy các tùy chọn (form options) cần thiết khi tạo/sửa sản phẩm (thương hiệu, chất liệu, đế giày,...)
     @GetMapping(RoutesConstant.FORM_OPTIONS)
     public ResponseEntity<ApiResponse<ProductFormOptionsResponse>> getFormOptions() {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getFormOptions(), MessageConstants.SAN_PHAM_FORM_OPTIONS_SUCCESS));
     }
 
+    // Tạo mới một sản phẩm cùng với thông tin chi tiết
     @PostMapping
     public ResponseEntity<ApiResponse<ProductDetailResponse>> createProduct(@Valid @RequestBody CreateProductRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.createProduct(request), MessageConstants.SAN_PHAM_CREATE_SUCCESS));
     }
 
+    // Lấy danh sách sản phẩm (có phân trang và tìm kiếm theo tiêu chí)
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> getProducts(SearchProductRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getProducts(request), MessageConstants.SAN_PHAM_LIST_SUCCESS));
@@ -81,6 +84,7 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.UPDATE_STATUS_SUCCESS));
     }
 
+    // Lấy danh sách biến thể (màu sắc, kích thước, số lượng) của một sản phẩm
     @GetMapping(RoutesConstant.VARIANTS_SUB)
     public ResponseEntity<ApiResponse<List<ProductVariantResponse>>> getVariantsByProductId(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getVariantsByProductId(id), MessageConstants.VARIANT_LIST_SUCCESS));
@@ -91,6 +95,7 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getAllVariants(), MessageConstants.VARIANT_LIST_SUCCESS));
     }
 
+    // Thêm mới một biến thể (chi tiết sản phẩm) cho sản phẩm hiện tại
     @PostMapping(RoutesConstant.VARIANTS_SUB)
     public ResponseEntity<ApiResponse<ProductVariantResponse>> addVariant(
             @PathVariable String id,
@@ -99,6 +104,7 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.addVariant(id, request), MessageConstants.VARIANT_ADD_SUCCESS));
     }
 
+    // Cập nhật thông tin của một biến thể (số lượng, giá, trạng thái,...)
     @PutMapping(RoutesConstant.VARIANT_ID)
     public ResponseEntity<ApiResponse<ProductVariantResponse>> updateVariant(
             @PathVariable String variantId,
@@ -113,6 +119,7 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.VARIANT_DELETE_SUCCESS));
     }
 
+    // Thêm hình ảnh mới cho một biến thể cụ thể
     @PostMapping(RoutesConstant.VARIANT_IMAGES)
     public ResponseEntity<ApiResponse<ProductVariantImageResponse>> addVariantImage(
             @PathVariable String variantId,
@@ -129,6 +136,7 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.updateVariantImage(imageId, request), MessageConstants.VARIANT_IMAGE_UPDATE_SUCCESS));
     }
 
+    // Thiết lập một hình ảnh thành ảnh đại diện (ảnh chính) cho biến thể
     @PutMapping(RoutesConstant.VARIANT_IMAGE_MAIN)
     public ResponseEntity<ApiResponse<ProductVariantImageResponse>> setMainVariantImage(@PathVariable String imageId) {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.setMainVariantImage(imageId), MessageConstants.VARIANT_IMAGE_SET_MAIN_SUCCESS));

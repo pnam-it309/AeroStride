@@ -103,8 +103,11 @@ public class PaymentController {
         
         // Verify transaction status
         String vnp_TransactionStatus = params.get("vnp_TransactionStatus");
-        if (vnp_TransactionStatus == null || !vnp_TransactionStatus.equals("0")) {
-            throw new IllegalArgumentException("Invalid transaction status: " + vnp_TransactionStatus);
+        if (vnp_TransactionStatus != null) {
+            String cleanStatus = vnp_TransactionStatus.trim().replace("\"", "");
+            if (!cleanStatus.equals("00") && !cleanStatus.equals("0")) {
+                throw new IllegalArgumentException("Invalid transaction status: " + vnp_TransactionStatus);
+            }
         }
         
         log.info("VNPay callback validation successful for order: {} with amount: {}", vnp_TxnRef, vnp_Amount);

@@ -50,8 +50,11 @@ public class VnPayServiceImpl implements PaymentService {
         String vnp_Command = "pay";
         String vnp_TmnCode = tmnCode;
         
-        // Construct return URL using Base URL and API Version constant
-        String returnUrl = baseUrl + apiPrefix + "/payment/vnpay-callback";
+        // POS frontend needs VNPay to return to the browser origin so it can verify
+        // the callback and only then finalize the invoice.
+        String returnUrl = request.getReturnUrl() != null && !request.getReturnUrl().isBlank()
+                ? request.getReturnUrl().trim()
+                : baseUrl + apiPrefix + "/payment/vnpay-callback";
         
         // VNPay amount is multiplied by 100
         long amount = request.getAmount().multiply(new BigDecimal(100)).longValue();

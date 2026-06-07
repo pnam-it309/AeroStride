@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Module: Bán hàng tại quầy (Admin)
+ * Component: InvoiceReceiptDialog
+ * Chức năng: Hiển thị popup chứa hóa đơn bán lẻ sau khi thanh toán thành công,
+ *            có hỗ trợ tính năng in hóa đơn bằng máy in nhiệt/A4.
+ */
 import { computed } from 'vue';
 import { PrinterIcon, XIcon, CircleCheckIcon } from 'vue-tabler-icons';
 
@@ -12,8 +18,10 @@ const props = defineProps({
 });
 const emit = defineEmits(['close']);
 
+// Format tiền tệ chuẩn Việt Nam
 const fmt = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
 
+// Định dạng thời gian in hóa đơn (VD: 14/05/2026 15:30:00)
 const fmtDate = (ts) => {
     const d = ts ? new Date(ts) : new Date();
     return d.toLocaleString('vi-VN', {
@@ -38,6 +46,7 @@ const paymentLabel = computed(() => {
     return pm;
 });
 
+// Gọi lệnh in của trình duyệt để in hóa đơn
 const handlePrint = () => {
     window.print();
 };

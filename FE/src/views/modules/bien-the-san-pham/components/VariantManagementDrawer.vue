@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * Module: Quản lý Hình ảnh Biến thể Sản phẩm (Variant Management Drawer)
+ * Chức năng: Component dạng Drawer (ngăn kéo) cho phép người dùng xem, thêm, xóa và
+ * đặt ảnh chính (ảnh đại diện) cho một biến thể sản phẩm cụ thể.
+ */
 import { ref, watch, reactive } from 'vue';
 import { XIcon, PhotoIcon, DeviceFloppyIcon, SettingsIcon, TrashIcon, InfoCircleIcon, PlusIcon, UploadIcon } from 'vue-tabler-icons';
 import { useNotifications } from '@/services/notificationService';
@@ -54,6 +59,7 @@ watch(
     }
 );
 
+// Xử lý việc cập nhật các thuộc tính cơ bản của biến thể (trạng thái, số lượng, giá,...)
 const handleUpdateStatus = async () => {
     submitting.value = true;
     try {
@@ -86,6 +92,7 @@ const triggerFileInput = () => {
     fileInput.value?.click();
 };
 
+// Xử lý sự kiện khi người dùng chọn file ảnh từ máy tính để tải lên
 const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -121,6 +128,7 @@ const handleFileChange = async (event) => {
     }
 };
 
+// Xóa một hình ảnh khỏi danh sách hình ảnh của biến thể hiện tại
 const deleteImage = async (imgId) => {
     if (!confirm('Xác nhận xóa ảnh này?')) return;
     try {
@@ -136,6 +144,7 @@ const deleteImage = async (imgId) => {
     }
 };
 
+// Thiết lập một hình ảnh được chọn làm ảnh đại diện (main image) cho biến thể
 const setMainImage = async (imgId) => {
     try {
         await dichVuBienThe.datAnhChinh(props.variant.id, imgId);

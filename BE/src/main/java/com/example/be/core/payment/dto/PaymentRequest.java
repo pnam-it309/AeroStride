@@ -15,4 +15,5 @@ public class PaymentRequest {
     private BigDecimal amount;
     private String orderId;
     private String orderInfo;
+    private String returnUrl;
 }

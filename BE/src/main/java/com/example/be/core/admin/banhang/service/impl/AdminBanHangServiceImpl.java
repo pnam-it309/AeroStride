@@ -65,20 +65,36 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Transactional
     public void deleteHoaDon(String id) {
         HoaDon hd = hoaDonRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_EXIST));
-        hoaDonChiTietRepository.deleteAll(hoaDonChiTietRepository.findAllByHoaDon(hd));
+        List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
+        
+        // Hoàn trả tồn kho bằng atomic UPDATE
+        for (HoaDonChiTiet d : details) {
+            chiTietSanPhamRepository.restoreStock(d.getChiTietSanPham().getId(), d.getSoLuong());
+        }
+        
+        hoaDonChiTietRepository.deleteAll(details);
         hoaDonRepository.delete(hd);
     }
 
     @Override
     @Transactional
     public AdminBanHangHoaDonResponse addSanPham(String idHoaDon, AdminBanHangHoaDonChiTietRequest request) {
+        if (request == null || request.getIdChiTietSanPham() == null || request.getIdChiTietSanPham().isBlank()) {
+            throw new BusinessException("Thiếu thông tin biến thể sản phẩm.");
+        }
+        if (request.getSoLuong() == null || request.getSoLuong() <= 0) {
+            throw new BusinessException("Số lượng thêm vào giỏ phải lớn hơn 0.");
+        }
+
+        // Bước 1: Trừ tồn kho bằng atomic UPDATE
+        int affected = chiTietSanPhamRepository.deductStock(request.getIdChiTietSanPham(), request.getSoLuong());
+        if (affected == 0) {
+            throw new BusinessException(MessageConstants.PRODUCT_OUT_OF_STOCK);
+        }
+
         HoaDon hoaDon = getHoaDonOrThrow(idHoaDon);
         ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(request.getIdChiTietSanPham())
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
-
-        if (ctsp.getSoLuong() < request.getSoLuong()) {
-            throw new BusinessException(MessageConstants.PRODUCT_OUT_OF_STOCK);
-        }
 
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findByHoaDonAndChiTietSanPham(hoaDon, ctsp);
         if (hdct != null) {
@@ -105,11 +121,21 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHoaDonChiTiet)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_IN_HOA_DON));
         
+        String ctspId = hdct.getChiTietSanPham().getId();
+        int oldQty = hdct.getSoLuong();
+
         if (soLuong <= 0) {
+            chiTietSanPhamRepository.restoreStock(ctspId, oldQty);
             hoaDonChiTietRepository.delete(hdct);
         } else {
-            if (hdct.getChiTietSanPham().getSoLuong() < soLuong) {
-                throw new BusinessException(MessageConstants.PRODUCT_INSUFFICIENT_QTY);
+            int delta = soLuong - oldQty;
+            if (delta > 0) {
+                int affected = chiTietSanPhamRepository.deductStock(ctspId, delta);
+                if (affected == 0) {
+                    throw new BusinessException(MessageConstants.PRODUCT_INSUFFICIENT_QTY);
+                }
+            } else if (delta < 0) {
+                chiTietSanPhamRepository.restoreStock(ctspId, Math.abs(delta));
             }
             hdct.setSoLuong(soLuong);
             hoaDonChiTietRepository.save(hdct);
@@ -121,10 +147,12 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Override
     @Transactional
     public void removeHoaDonChiTiet(String idHoaDon, String idHoaDonChiTiet) {
-        if (!hoaDonChiTietRepository.existsById(idHoaDonChiTiet)) {
-            throw new ResourceNotFoundException(MessageConstants.PRODUCT_DETAIL_NOT_FOUND);
-        }
-        hoaDonChiTietRepository.deleteById(idHoaDonChiTiet);
+        HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHoaDonChiTiet)
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PRODUCT_DETAIL_NOT_FOUND));
+        
+        chiTietSanPhamRepository.restoreStock(hdct.getChiTietSanPham().getId(), hdct.getSoLuong());
+        
+        hoaDonChiTietRepository.delete(hdct);
         updateHoaDonTotals(getHoaDonOrThrow(idHoaDon));
     }
 
@@ -169,16 +197,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             throw new BusinessException(MessageConstants.HOA_DON_EMPTY);
         }
 
-        for (HoaDonChiTiet d : details) {
-            ChiTietSanPham ct = d.getChiTietSanPham();
-            if (ct == null) continue;
-            if (ct.getSoLuong() < d.getSoLuong()) {
-                String tenSP = (ct.getSanPham() != null) ? ct.getSanPham().getTen() : ct.getMaChiTietSanPham();
-                throw new BusinessException(String.format(MessageConstants.PRODUCT_OUT_OF_STOCK_FORMAT, tenSP));
-            }
-            ct.setSoLuong(ct.getSoLuong() - d.getSoLuong());
-            chiTietSanPhamRepository.save(ct);
-        }
+        // Tồn kho đã được trừ lúc thêm vào giỏ hàng, nên không cần trừ lại ở đây nữa.
+        // Chỉ cần cập nhật trạng thái hóa đơn.
 
         hd.setTrangThai(OrderStatus.HOAN_THANH); 
         hd.setLoaiDon(request.getLoaiDon());

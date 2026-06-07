@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Module: Quản lý sản phẩm (Admin)
+ * View: SanPham
+ * Chức năng: Màn hình danh sách sản phẩm. Cho phép lọc, tìm kiếm, xem khoảng giá, 
+ *            đổi trạng thái (đơn lẻ hoặc hàng loạt), xuất/nhập Excel, và quét mã QR.
+ */
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
@@ -62,11 +68,13 @@ const filters = reactive({
 
 let priceSearchTimer = null;
 
+// Chuyển đổi một giá trị sang số hợp lệ, nếu lỗi trả về giá trị mặc định
 const toNumber = (value, fallback = 0) => {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+// Trích xuất tất cả các mức giá bán khả dụng (của bản thân sản phẩm và tất cả biến thể)
 const getProductPriceCandidates = (item) => {
     const nestedVariantCollections = [item?.variants, item?.chiTietSanPhams, item?.bienThes, item?.danhSachBienThe].filter(Array.isArray);
 
@@ -79,16 +87,19 @@ const getProductPriceCandidates = (item) => {
         .filter((value) => Number.isFinite(value));
 };
 
+// Lấy giá bán thấp nhất của sản phẩm
 const getProductLowestPrice = (item) => {
     const priceCandidates = getProductPriceCandidates(item);
     return priceCandidates.length ? Math.min(...priceCandidates) : 0;
 };
 
+// Lấy giá bán cao nhất của sản phẩm
 const getProductHighestPrice = (item) => {
     const priceCandidates = getProductPriceCandidates(item);
     return priceCandidates.length ? Math.max(...priceCandidates) : getProductLowestPrice(item);
 };
 
+// Kiểm tra xem sản phẩm có mức giá nằm trong khoảng giá đang lọc hay không
 const productPriceMatches = (item) => {
     const selectedMin = filters.khoangGia[0];
     const selectedMax = filters.khoangGia[1];
@@ -120,15 +131,18 @@ const hasSelectedInactiveProducts = computed(() => selectedProducts.value.some((
 const canBulkActivateProducts = computed(() => selectedProducts.value.length > 0 && hasSelectedInactiveProducts.value);
 const canBulkDeactivateProducts = computed(() => selectedProducts.value.length > 0 && hasSelectedActiveProducts.value);
 
+// Bỏ chọn tất cả các sản phẩm
 const clearProductSelection = () => {
     selectedProductIds.value = [];
 };
 
+// Đồng bộ lại danh sách chọn sau khi lọc/đổi trang, loại bỏ những sản phẩm không còn hiển thị
 const syncProductSelection = () => {
     const validIds = new Set(filteredProducts.value.map((item) => item.id));
     selectedProductIds.value = selectedProductIds.value.filter((id) => validIds.has(id));
 };
 
+// Xóa tất cả các bộ lọc, đưa về trạng thái mặc định
 const resetProductFiltersState = () => {
     filters.search = '';
     filters.khoangGia = [MIN_PRICE, productPriceBounds.value.max];
@@ -142,6 +156,7 @@ const resetProductFiltersState = () => {
     clearProductSelection();
 };
 
+// Build object tham số gửi lên API tìm kiếm sản phẩm
 const buildProductQueryParams = () => ({
     page: 0,
     size: PRODUCT_FETCH_SIZE,
@@ -153,6 +168,7 @@ const buildProductQueryParams = () => ({
     chatLieuId: filters.chatLieu || undefined
 });
 
+// Cập nhật lại giới hạn cực đại, cực tiểu cho thanh trượt khoảng giá dựa theo dữ liệu hiện tại
 const updateProductPriceBounds = (items) => {
     const detectedMaxPrice = items.reduce(
         (maxValue, item) => Math.max(maxValue, getProductLowestPrice(item), getProductHighestPrice(item)),
@@ -172,6 +188,7 @@ const updateProductPriceBounds = (items) => {
     filters.khoangGia = sanitizePriceRange(filters.khoangGia, safeMaxPrice);
 };
 
+// Gọi API lấy danh sách sản phẩm và cập nhật state
 const loadProducts = async () => {
     if (loading.value) return;
 
@@ -197,6 +214,7 @@ const loadProducts = async () => {
     }
 };
 
+// Gọi API lấy mức giá lớn nhất có trong database để làm max cho thanh trượt
 const loadMaxPrice = async () => {
     try {
         const maxPrice = await dichVuSanPham.layGiaLonNhat();
@@ -212,6 +230,7 @@ const loadMaxPrice = async () => {
     }
 };
 
+// Gọi API lấy các tùy chọn cho các dropdown bộ lọc (danh mục, thương hiệu...)
 const loadFilterOptions = async () => {
     try {
         const options = await dichVuSanPham.layOptionsForm();
@@ -232,12 +251,14 @@ const loadFilterOptions = async () => {
     }
 };
 
+// Xử lý sự kiện submit tìm kiếm (khi nhấn Enter/Click nút)
 const handleSearch = async () => {
     pagination.page = 1;
     clearProductSelection();
     await loadProducts();
 };
 
+// Xử lý sự kiện làm mới dữ liệu
 const handleRefresh = async () => {
     await refreshData(async () => {
         resetProductFiltersState();
@@ -245,6 +266,7 @@ const handleRefresh = async () => {
     });
 };
 
+// Debounce việc lọc giá khi kéo thanh trượt
 const schedulePriceSearch = () => {
     priceFilterDirty.value = true;
     if (priceSearchTimer) {
@@ -257,6 +279,8 @@ const schedulePriceSearch = () => {
     }, 120);
 };
 
+// <- chỗ này viêt commet để biết mik làm gì đoạn này >
+// Đảm bảo khoảng giá hợp lệ, min <= max, không vượt qua khoảng cho phép
 const sanitizePriceRange = (range, maxPrice = productPriceBounds.value.max) => {
     const safeMaxPrice = Math.max(MIN_PRICE, toNumber(maxPrice, DEFAULT_MAX_PRICE));
     const rawMin = Math.max(MIN_PRICE, toNumber(range?.[0], MIN_PRICE));
@@ -266,6 +290,7 @@ const sanitizePriceRange = (range, maxPrice = productPriceBounds.value.max) => {
     return [nextMin, nextMax];
 };
 
+// Cập nhật cận trên/dưới của khoảng giá (từ input textbox nếu có)
 const updatePriceFilterBoundary = (boundary, value) => {
     const nextRange = [...filters.khoangGia];
     if (boundary === 'min') {
@@ -278,11 +303,13 @@ const updatePriceFilterBoundary = (boundary, value) => {
     schedulePriceSearch();
 };
 
+// Xử lý sự kiện khi thanh trượt thay đổi
 const handleSliderPriceChange = (value) => {
     filters.khoangGia = sanitizePriceRange(value);
     schedulePriceSearch();
 };
 
+// Chống XSS cho các chuỗi dữ liệu đưa vào Excel
 const escapeCell = (value) =>
     String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -290,6 +317,7 @@ const escapeCell = (value) =>
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
 
+// Khởi tạo file Excel dạng HTML table và trigger tải về
 const exportHtmlTableToExcel = ({ headers, rows, fileName }) => {
     const tableRows = [headers, ...rows]
         .map((columns) => `<tr>${columns.map((column) => `<td>${escapeCell(column)}</td>`).join('')}</tr>`)
@@ -312,12 +340,14 @@ const exportHtmlTableToExcel = ({ headers, rows, fileName }) => {
     downloadFile(blob, fileName);
 };
 
+// Format chuỗi khoảng giá để hiển thị trên bảng
 const getPriceRange = (item) => {
     if (item?.giaBanThapNhat == null && item?.giaBanCaoNhat == null) return '--';
     if (item?.giaBanThapNhat === item?.giaBanCaoNhat) return formatCurrency(item.giaBanThapNhat);
     return `${formatCurrency(item.giaBanThapNhat)} - ${formatCurrency(item.giaBanCaoNhat)}`;
 };
 
+// Xuất danh sách sản phẩm (chỉ những sản phẩm đang chọn, nếu không thì xuất tất cả theo bộ lọc)
 const handleExportProducts = () => {
     const targetProducts = selectedProducts.value.length ? selectedProducts.value : filteredProducts.value;
     if (!targetProducts.length) {
@@ -351,6 +381,7 @@ const handleExportProducts = () => {
     });
 };
 
+// Tải template file excel nhập liệu sản phẩm mẫu
 const handleDownloadTemplate = async () => {
     try {
         const blob = await dichVuSanPham.taiTemplateExcel();
@@ -365,6 +396,7 @@ const handleDownloadTemplate = async () => {
     }
 };
 
+// Gọi API upload file excel đã nhập để thêm/sửa nhanh sản phẩm
 const handleImport = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -391,10 +423,12 @@ const handleImport = async (event) => {
     }
 };
 
+// Thay đổi trạng thái 1 sản phẩm
 const updateSingleProductStatus = async (product, nextStatus) => {
     await dichVuSanPham.thayDoiTrangThai(product.id, nextStatus);
 };
 
+// Xác nhận với user trước khi thay đổi trạng thái sản phẩm
 const confirmToggleStatus = (product) => {
     setConfirm({
         title: 'Xác nhận trạng thái',
@@ -422,6 +456,7 @@ const confirmToggleStatus = (product) => {
     });
 };
 
+// Thay đổi trạng thái hàng loạt nhiều sản phẩm đang chọn
 const handleBulkProductStatus = (nextStatus) => {
     if (!selectedProducts.value.length) {
         addNotification({
@@ -470,6 +505,7 @@ const handleBulkProductStatus = (nextStatus) => {
     });
 };
 
+// Xử lý bật/tắt chọn 1 sản phẩm đơn lẻ
 const toggleProductSelection = (productId, checked) => {
     if (checked) {
         if (!selectedProductIds.value.includes(productId)) {
@@ -481,6 +517,7 @@ const toggleProductSelection = (productId, checked) => {
     selectedProductIds.value = selectedProductIds.value.filter((id) => id !== productId);
 };
 
+// Chọn/Bỏ chọn tất cả các sản phẩm đang hiển thị ở trang hiện tại
 const toggleSelectVisibleProducts = (checked) => {
     if (checked) {
         const mergedIds = new Set([...selectedProductIds.value, ...visibleProductIds.value]);
@@ -492,11 +529,13 @@ const toggleSelectVisibleProducts = (checked) => {
     selectedProductIds.value = selectedProductIds.value.filter((id) => !visibleIdSet.has(id));
 };
 
+// Format số thông thường sang định dạng có dấu phẩy
 const formatNumber = (value) => {
     if (value === null || value === undefined) return '0';
     return new Intl.NumberFormat('vi-VN').format(Number(value));
 };
 
+// Chuyển hướng sang màn quản lý biến thể với mã QR vừa quét được
 const handleQrScan = async (decodedText) => {
     if (!decodedText) return;
     addNotification({ title: 'Đang chuyển hướng', subtitle: `Đã quét được mã: ${decodedText}`, color: 'info' });
