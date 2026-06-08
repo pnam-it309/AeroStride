@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/pnam-it309/AeroStride/compare/v1.21.0...v1.22.0) (2026-06-08)
+
+
+### Features
+
+* **ui:** update status reason label and notification color ([a7fa1aa](https://github.com/pnam-it309/AeroStride/commit/a7fa1aa587984834563fe293d427520ffda5c495))
+
 # [1.21.0](https://github.com/pnam-it309/AeroStride/compare/v1.20.0...v1.21.0) (2026-06-06)
 
 
