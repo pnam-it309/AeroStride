@@ -3,10 +3,11 @@
  */
 
 import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Colors, Brand, FontSizes, FontWeights, Spacing } from '@/constants/theme';
 import { useCart } from '@/context/CartContext';
 
@@ -21,18 +22,22 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: theme.tabBar,
-          borderTopColor: theme.tabBarBorder,
+          position: 'absolute',
+          backgroundColor: 'transparent',
+          borderTopColor: 'rgba(255, 255, 255, 0.1)',
           borderTopWidth: 1,
           height: 60,
           paddingBottom: 6,
           paddingTop: 6,
-          elevation: 20,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
+          elevation: 0,
         },
+        tabBarBackground: () => (
+          <BlurView 
+            tint="dark" 
+            intensity={80} 
+            style={StyleSheet.absoluteFill} 
+          />
+        ),
         tabBarActiveTintColor: Brand.primary,
         tabBarInactiveTintColor: theme.textTertiary,
         tabBarLabelStyle: {
@@ -60,7 +65,7 @@ export default function TabLayout() {
           title: 'Sản phẩm',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name={focused ? 'grid' : 'grid-outline'}
+              name={focused ? 'library' : 'library-outline'}
               size={22}
               color={color}
             />

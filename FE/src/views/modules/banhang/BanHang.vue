@@ -97,7 +97,6 @@ onMounted(async () => {
         const data = await dichVuDonHang.layDonHangCho();
         setOrders(data);
         await handleVnPayCallbackFromUrl();
-        if (orders.value.length === 0) await createNewOrder();
     } catch (error) {
         addNotification({ title: 'Lỗi', subtitle: getErrorMessage(error, MESSAGES.ERROR.CONNECT_SERVER), color: 'error' });
     } finally {

@@ -19,6 +19,8 @@ public interface AdminHoaDonMapper {
     @Mapping(target = "listsHoaDonChiTiet", source = "listsHoaDonChiTiet")
     @Mapping(target = "listsLichSuHoaDon", source = "listsLichSuHoaDon")
     @Mapping(target = "listsGiaoDichThanhToan", source = "listsGiaoDichThanhToan")
+    @Mapping(target = "maPhieuGiamGia", expression = "java(hoaDon.getPhieuGiamGia() != null ? hoaDon.getPhieuGiamGia().getMa() : (hoaDon.getPhieuGiamGiaCaNhan() != null ? hoaDon.getPhieuGiamGiaCaNhan().getPhieuGiamGia().getMa() : null))")
+    @Mapping(target = "tenPhieuGiamGia", expression = "java(hoaDon.getPhieuGiamGia() != null ? hoaDon.getPhieuGiamGia().getTen() : (hoaDon.getPhieuGiamGiaCaNhan() != null ? hoaDon.getPhieuGiamGiaCaNhan().getPhieuGiamGia().getTen() : null))")
     AdminHoaDonDetailResponse toDetailResponse(HoaDon hoaDon);
 
     @Mapping(target = "idCtsp", source = "chiTietSanPham.id")

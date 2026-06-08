@@ -12,6 +12,7 @@ import {
 } from "vue-tabler-icons";
 import { AdminConfirm, AdminBreadcrumbs, AdminTable, AdminPagination, AdminFilter } from "@/components/common";
 import { getOrderStatusMeta, getOrderStatusOrdinal } from "@/utils/orderStatus";
+import { ORDER_STATUS_ORDINALS } from "@/constants/hoaDonConstants";
 
 const route = useRoute();
 const router = useRouter();
@@ -52,12 +53,16 @@ const order = ref({
     ghiChu: "",
     listsHoaDonChiTiet: [],
     listsLichSuHoaDon: [],
-    listsGiaoDichThanhToan: []
+    listsGiaoDichThanhToan: [],
+    maPhieuGiamGia: null,
+    tenPhieuGiamGia: null
 });
 
 
 // Product table logic
 const productSearch = ref("");
+const productColorFilter = ref(null);
+const productSizeFilter = ref(null);
 
 const maxOrderPrice = computed(() => {
     const items = order.value?.listsHoaDonChiTiet || [];
@@ -77,19 +82,39 @@ const productPagination = ref({
     size: 5,
 });
 
+const availableColors = computed(() => {
+    const items = order.value?.listsHoaDonChiTiet || [];
+    const colors = items.map(p => p.mauSac).filter(c => c && c !== '—');
+    return ['Tất cả', ...new Set(colors)];
+});
+
+const availableSizes = computed(() => {
+    const items = order.value?.listsHoaDonChiTiet || [];
+    const sizes = items.map(p => p.kichThuoc).filter(s => s && s !== '—');
+    return ['Tất cả', ...new Set(sizes)];
+});
+
 const filteredProducts = computed(() => {
     let items = order.value.listsHoaDonChiTiet || [];
     if (productSearch.value) {
         const s = productSearch.value.toLowerCase();
         items = items.filter(p =>
             (p.chiTietSanPham?.sanPham?.ten || '').toLowerCase().includes(s) ||
-            (p.chiTietSanPham?.maChiTietSanPham || '').toLowerCase().includes(s)
+            (p.chiTietSanPham?.maChiTietSanPham || '').toLowerCase().includes(s) ||
+            (p.tenSanPham || '').toLowerCase().includes(s) ||
+            (p.maChiTietSanPham || p.maSanPham || '').toLowerCase().includes(s)
         );
     }
     if (priceRange.value) {
         items = items.filter(p =>
             p.donGia >= priceRange.value[0] && p.donGia <= priceRange.value[1]
         );
+    }
+    if (productColorFilter.value && productColorFilter.value !== 'Tất cả') {
+        items = items.filter(p => p.mauSac === productColorFilter.value);
+    }
+    if (productSizeFilter.value && productSizeFilter.value !== 'Tất cả') {
+        items = items.filter(p => p.kichThuoc === productSizeFilter.value);
     }
     return items;
 });
@@ -193,8 +218,8 @@ const getStatusTimestampMap = computed(() => {
 const orderStatusLabel = computed(() => getStatusLabel(order.value.trangThai));
 const orderStatusTone = computed(() => getStatusTone(order.value.trangThai));
 const showStatusChip = computed(() => loaded.value && getOrderStatusMeta(order.value.trangThai));
-const canUpdateStatus = computed(() => order.value && getOrderStatus() !== null && getOrderStatus() < 4);
-const isOrderEditable = computed(() => order.value.trangThai === 'CHO_XAC_NHAN' || getOrderStatus() < 2);
+const canUpdateStatus = computed(() => order.value && getOrderStatus() !== null && getOrderStatus() < ORDER_STATUS_ORDINALS.HOAN_THANH);
+const isOrderEditable = computed(() => order.value.trangThai === 'CHO_XAC_NHAN' || getOrderStatus() < ORDER_STATUS_ORDINALS.CHO_GIAO);
 
 const customerName = computed(() => order.value.tenKhachHang || 'Khách lẻ');
 const orderTypeLabel = computed(() => (order.value.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi'));
@@ -399,6 +424,8 @@ const requestStatusUpdate = (status) => {
         targetStatus = selectedStatus.value;
     }
 
+    const targetOrdinal = getOrderStatusOrdinal(targetStatus);
+
     confirmDialog.value = {
         show: true,
         title: 'Cập nhật trạng thái',
@@ -406,11 +433,11 @@ const requestStatusUpdate = (status) => {
         color: 'primary',
         showInput: true,
         inputLabel: 'Ghi chú cập nhật',
-        inputRequired: targetStatus === 4, // Yêu cầu ghi chú khi hủy đơn
+        inputRequired: targetOrdinal === ORDER_STATUS_ORDINALS.DA_HUY || targetOrdinal === ORDER_STATUS_ORDINALS.HOAN_DON, // Yêu cầu ghi chú khi hủy đơn hoặc trả hàng
         action: async (note) => {
             confirmDialog.value.loading = true;
             try {
-                await dichVuHoaDon.capNhatTrangThaiHoaDon(order.value.id, targetStatus, note);
+                await dichVuHoaDon.capNhatTrangThaiHoaDon(order.value.id, targetOrdinal, note);
                 addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật trạng thái đơn hàng', color: 'success' });
                 await loadOrderDetail();
                 confirmDialog.value.show = false;
@@ -448,9 +475,10 @@ const submitEditOrder = async () => {
 
         // 2. Update Status if changed
         if (editForm.value.trangThai !== order.value.trangThai) {
+            const targetOrdinal = getOrderStatusOrdinal(editForm.value.trangThai);
             await dichVuHoaDon.capNhatTrangThaiHoaDon(
                 order.value.id,
-                editForm.value.trangThai,
+                targetOrdinal,
                 editForm.value.ghiChuTrangThai || "Cập nhật trạng thái từ modal chỉnh sửa"
             );
         }
@@ -687,10 +715,27 @@ onMounted(() => {
                                     formatCurrency(order.tongTien)
                                     }}</span>
                             </div>
+                            <div class="summary-row mb-3">
+                                <span class="text-slate-500">Mã giảm giá:</span>
+                                <div class="text-right d-flex align-center justify-end">
+                                    <template v-if="order.maPhieuGiamGia">
+                                        <v-chip size="x-small" color="error" variant="flat" class="mr-2">Phiếu giảm giá</v-chip>
+                                        <span class="text-body-2 font-weight-bold text-slate-800">{{ order.maPhieuGiamGia }}</span>
+                                    </template>
+                                    <template v-else-if="orderDiscountAmount > 0">
+                                        <v-chip size="x-small" color="error" variant="flat">Đợt giảm giá</v-chip>
+                                    </template>
+                                    <template v-else>
+                                        <span class="text-body-2 text-slate-500 d-flex align-center">
+                                            <v-icon size="14" class="mr-1">mdi-minus-circle-outline</v-icon>
+                                            Chưa áp dụng
+                                        </span>
+                                    </template>
+                                </div>
+                            </div>
                             <div class="summary-row mb-5" style="color: #ef4444 !important;">
                                 <span class="font-weight-medium">Giảm giá:</span>
-                                <span class="text-body-2 font-weight-bold">- {{ formatCurrency(Math.abs(orderDiscountAmount))
-                                    }}</span>
+                                <span class="text-body-2 font-weight-bold">- {{ formatCurrency(Math.abs(orderDiscountAmount)) }}</span>
                             </div>
                             <div class="summary-row mb-4">
                                 <span class="text-slate-500 d-flex align-center">
@@ -882,28 +927,43 @@ onMounted(() => {
             </div>
 
             <AdminFilter title="Tìm kiếm sản phẩm" class="px-4 pt-4 border-b-0"
-                @refresh="() => { productSearch = ''; priceRange = [0, maxOrderPrice]; productPagination.page = 1; }">
-                <v-col cols="12" md="4" class="pr-6">
-                    <v-text-field v-model="productSearch" placeholder="Tìm tên, mã sản phẩm..." variant="outlined"
-                        density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
-                        @input="productPagination.page = 1"></v-text-field>
-                </v-col>
-                <v-col cols="12" md="6" class="pa-0 d-flex align-center pl-2 pr-4">
-                    <div class="d-flex flex-column w-100">
-                        <div class="d-flex align-center justify-space-between mb-1" style="height: 20px;">
-                            <div class="d-flex align-center gap-2">
-                                <v-icon size="15" color="#3b82f6" class="mr-2">mdi-cash-multiple</v-icon>
-                                <span class="text-caption font-weight-medium text-slate-700">Khoảng giá</span>
+                @refresh="() => { productSearch = ''; priceRange = [0, maxOrderPrice]; productColorFilter = null; productSizeFilter = null; productPagination.page = 1; }">
+                <v-row dense class="w-100 align-center">
+                    <v-col cols="12" md="3" class="pr-2">
+                        <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Từ khóa</div>
+                        <v-text-field v-model="productSearch" placeholder="Tìm tên, mã..." variant="outlined"
+                            density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
+                            @input="productPagination.page = 1"></v-text-field>
+                    </v-col>
+                    <v-col cols="12" md="2" class="px-2">
+                        <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Màu sắc</div>
+                        <v-select v-model="productColorFilter" :items="availableColors" placeholder="Tất cả" variant="outlined"
+                            density="compact" hide-details
+                            @update:modelValue="productPagination.page = 1"></v-select>
+                    </v-col>
+                    <v-col cols="12" md="2" class="px-2">
+                        <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Kích thước</div>
+                        <v-select v-model="productSizeFilter" :items="availableSizes" placeholder="Tất cả" variant="outlined"
+                            density="compact" hide-details
+                            @update:modelValue="productPagination.page = 1"></v-select>
+                    </v-col>
+                    <v-col cols="12" md="5" class="pa-0 d-flex align-center pl-2">
+                        <div class="d-flex flex-column w-100">
+                            <div class="d-flex align-center justify-space-between mb-1" style="height: 20px;">
+                                <div class="d-flex align-center gap-2">
+                                    <v-icon size="15" color="#3b82f6" class="mr-2">mdi-cash-multiple</v-icon>
+                                    <span class="text-caption font-weight-medium text-slate-700">Khoảng giá</span>
+                                </div>
+                                <span class="text-caption font-weight-medium text-slate-700">
+                                    {{ formatCurrency(priceRange[0]) }} – {{ formatCurrency(priceRange[1]) }}
+                                </span>
                             </div>
-                            <span class="text-caption font-weight-medium text-slate-700">
-                                {{ formatCurrency(priceRange[0]) }} – {{ formatCurrency(priceRange[1]) }}
-                            </span>
+                            <v-range-slider v-model="priceRange" :min="0" :max="maxOrderPrice" :step="10000" hide-details
+                                color="primary" track-color="#e2e8f0" track-size="3" thumb-size="14"
+                                class="blue-range-slider" @update:modelValue="productPagination.page = 1" />
                         </div>
-                        <v-range-slider v-model="priceRange" :min="0" :max="maxOrderPrice" :step="10000" hide-details
-                            color="primary" track-color="#e2e8f0" track-size="3" thumb-size="14"
-                            class="blue-range-slider" @update:modelValue="productPagination.page = 1" />
-                    </div>
-                </v-col>
+                    </v-col>
+                </v-row>
             </AdminFilter>
 
             <AdminTable :headers="productColumns" :items="paginatedProducts" :showAddButton="false" hideToolbar
@@ -1099,11 +1159,11 @@ onMounted(() => {
 
                                 <!-- Status Update Note (Visible if status changed) -->
                                 <v-col cols="12" v-if="editForm.trangThai !== order.trangThai" class="mb-2">
-                                    <span class="text-body-2 text-warning font-weight-bold d-block mb-2">Lý do cập nhật
+                                    <span class="text-body-2 text-warning font-weight-bold d-block mb-2">Mô tả cập nhật
                                         trạng
                                         thái</span>
                                     <v-text-field v-model="editForm.ghiChuTrangThai"
-                                        placeholder="Nhập lý do thay đổi trạng thái..." variant="outlined" rounded="lg"
+                                        placeholder="Nhập mô tả thay đổi trạng thái..." variant="outlined" rounded="lg"
                                         density="comfortable" hide-details></v-text-field>
                                 </v-col>
                             </v-row>

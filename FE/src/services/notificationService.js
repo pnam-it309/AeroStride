@@ -7,6 +7,12 @@ export const useNotifications = () => {
     const addNotification = (notif) => {
         const toast = useToastStore();
 
+        // Change default success color (green) to primary (blue)
+        let displayColor = notif.color || 'primary';
+        if (displayColor === 'success') {
+            displayColor = 'primary';
+        }
+
         // Add to notification list (for the bell icon)
         notifications.value.unshift({
             id: Date.now(),
@@ -14,16 +20,15 @@ export const useNotifications = () => {
             subtitle: notif.subtitle || '',
             time: 'Vừa xong',
             icon: notif.icon || 'CircleCheckIcon',
-            color: notif.color || 'success',
+            color: displayColor,
             isNew: true
         });
 
         // Show toast (snackbar)
-        const toastType = notif.color === 'error' ? 'error' : notif.color === 'warning' ? 'warning' : 'success';
         toast.showToast(
             notif.subtitle || notif.title || 'Thông báo mới',
-            notif.color || 'success',
-            notif.icon || (notif.color === 'error' ? 'mdi-alert-circle' : 'mdi-check-circle'),
+            displayColor,
+            notif.icon || (displayColor === 'error' ? 'mdi-alert-circle' : 'mdi-check-circle'),
             3000
         );
     };

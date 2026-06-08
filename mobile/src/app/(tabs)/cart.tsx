@@ -37,7 +37,7 @@ export default function CartScreen() {
           <Text style={[styles.title, { color: theme.text }]}>Giỏ hàng</Text>
         </View>
         <View style={styles.emptyContainer}>
-          <Text style={{ fontSize: 64 }}>🛒</Text>
+          <Ionicons name="cart-outline" size={64} color={theme.textTertiary} />
           <Text style={[styles.emptyTitle, { color: theme.text }]}>Giỏ hàng trống</Text>
           <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
             Hãy thêm sản phẩm yêu thích vào giỏ hàng

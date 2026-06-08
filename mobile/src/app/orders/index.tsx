@@ -132,7 +132,7 @@ export default function OrdersScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={{ fontSize: 48 }}>📦</Text>
+              <Ionicons name="cube-outline" size={48} color={theme.textTertiary} />
               <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
                 Chưa có đơn hàng nào
               </Text>

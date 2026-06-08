@@ -26,6 +26,9 @@ public class AdminHoaDonDetailResponse {
     private Long ngayTao;
     private Long ngayCapNhat;
 
+    private String maPhieuGiamGia;
+    private String tenPhieuGiamGia;
+
     private String tenKhachHang;
     private String soDienThoaiKhachHang;
     private String emailKhachHang;

@@ -1510,6 +1510,12 @@ onMounted(async () => {
 
         if (route.params.id) {
             await loadProduct(route.params.id);
+        } else {
+            try {
+                product.value.maSanPham = await generateRandomCode('SanPham');
+            } catch (e) {
+                console.error('Lỗi khi lấy mã', e);
+            }
         }
     } catch (error) {
         console.error('Error initializing form:', error);
@@ -1852,13 +1858,20 @@ const handleSave = async () => {
                         <v-row>
                             <!-- HÀNG 1: THÔNG TIN CHÍNH -->
 
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="3">
+                                <div class="field-label">Mã sản phẩm</div>
+                                <v-text-field v-model="product.maSanPham" readonly
+                                    :placeholder="isEditMode ? '' : 'Mã tự động tạo...'"
+                                    variant="outlined" density="comfortable" class="custom-input mono-font" hide-details>
+                                </v-text-field>
+                            </v-col>
+                            <v-col cols="12" md="3">
                                 <div class="field-label">Tên sản phẩm</div>
                                 <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Giày Nike Air..."
                                     :rules="[rules.required]" variant="outlined" density="comfortable"
                                     hide-details="auto"></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="3">
                                 <div class="field-label">Thương hiệu</div>
                                 <v-combobox v-model="product.idThuongHieu" v-model:search="searchQueries.idThuongHieu"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayBrands"
@@ -1876,7 +1889,7 @@ const handleSave = async () => {
                                     </template>
                                 </v-combobox>
                             </v-col>
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="3">
                                 <div class="field-label">Danh mục</div>
                                 <v-combobox v-model="product.idDanhMuc" v-model:search="searchQueries.idDanhMuc"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayCategories"

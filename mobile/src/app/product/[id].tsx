@@ -141,9 +141,9 @@ export default function ProductDetailScreen() {
     });
 
     if (result.success) {
-      Alert.alert('✅ Thành công', result.message);
+      Alert.alert('Thành công', result.message);
     } else {
-      Alert.alert('⚠️ Lưu ý', result.message);
+      Alert.alert('Lưu ý', result.message);
     }
   };
 
@@ -203,7 +203,7 @@ export default function ProductDetailScreen() {
             </ScrollView>
           ) : (
             <View style={styles.placeholderImage}>
-              <Text style={{ fontSize: 80 }}>👟</Text>
+              <Ionicons name="shoe-prints-outline" size={80} color={theme.textTertiary} />
             </View>
           )}
 

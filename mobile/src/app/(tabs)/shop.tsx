@@ -121,7 +121,7 @@ export default function ShopScreen() {
           {imageSource ? (
             <Image source={imageSource} style={styles.image} contentFit="cover" transition={300} />
           ) : (
-            <Text style={{ fontSize: 36 }}>👟</Text>
+            <Ionicons name="shoe-prints-outline" size={36} color={theme.textTertiary} />
           )}
         </View>
         <View style={styles.info}>
@@ -238,7 +238,7 @@ export default function ShopScreen() {
           onEndReachedThreshold={0.3}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={{ fontSize: 48 }}>🔍</Text>
+              <Ionicons name="search-outline" size={48} color={theme.textTertiary} />
               <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
                 Không tìm thấy sản phẩm
               </Text>
