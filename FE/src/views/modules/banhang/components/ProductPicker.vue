@@ -166,9 +166,19 @@ let html5QrcodeScanner = null;
 const startScanner = () => {
     showScanner.value = true;
     setTimeout(() => {
+        const el = document.getElementById('reader');
+        if (!el || el.clientWidth === 0) {
+            startScanner();
+            return;
+        }
+
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.clear().catch(e => console.error(e));
+        }
+
         html5QrcodeScanner = new Html5QrcodeScanner('reader', { fps: 10, qrbox: { width: 250, height: 250 } }, /* verbose= */ false);
         html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-    }, 300);
+    }, 150);
 };
 
 // Dừng camera và đóng hộp thoại quét mã

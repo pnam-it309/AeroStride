@@ -36,6 +36,7 @@ const activeOrderIndex = ref(0);
 const vouchers = ref([]);
 const isProcessing = ref(false);
 const isAutoApplyingVoucher = ref(false);
+const manualVoucherLocks = ref({});
 const productPickerRef = ref(null);
 
 // State hiển thị hóa đơn sau thanh toán
@@ -214,7 +215,7 @@ const onAddProduct = async (product) => {
             soLuong: product._soLuongMuonThem || 1
         });
         updateOrderInList(updated);
-        addNotification({ title: 'Thêm thành công', subtitle: product.tenSanPham, color: 'success' });
+        addNotification({ title: 'Đã thêm SP vào giỏ hàng thành công', subtitle: product.tenSanPham, color: 'success' });
         // Fire-and-forget: không await để tránh treo isProcessing khi debounce
         refreshBestVoucher(updated);
         
@@ -436,9 +437,27 @@ const refreshBestVoucher = (orderOverride = selectedOrder.value) => {
                 const bestVoucher = pickBestVoucher(vouchers.value, orderOverride.tongTien || 0);
                 const bestVoucherId = bestVoucher?.id || null;
                 const currentVoucherId = orderOverride.idPhieuGiamGia || null;
+                const isManual = manualVoucherLocks.value[orderOverride.id] === true;
 
-                if (bestVoucherId !== currentVoucherId) {
-                    const updated = await dichVuDonHang.setVoucher(orderOverride.id, bestVoucherId);
+                let targetVoucherId = currentVoucherId;
+
+                if (!isManual) {
+                    targetVoucherId = bestVoucherId;
+                } else {
+                    if (currentVoucherId) {
+                        const currentVoucher = vouchers.value.find(v => String(v.id) === String(currentVoucherId));
+                        const isCurrentValid = currentVoucher && Number(orderOverride.tongTien || 0) >= Number(currentVoucher.donHangToiThieu || 0);
+                        if (!isCurrentValid) {
+                            targetVoucherId = bestVoucherId;
+                            manualVoucherLocks.value[orderOverride.id] = false;
+                        }
+                    } else {
+                        targetVoucherId = null;
+                    }
+                }
+
+                if (targetVoucherId !== currentVoucherId) {
+                    const updated = await dichVuDonHang.setVoucher(orderOverride.id, targetVoucherId);
                     updateOrderInList(updated);
                 }
             } catch (e) {
@@ -455,6 +474,7 @@ const refreshBestVoucher = (orderOverride = selectedOrder.value) => {
 // Cố định 1 voucher do người dùng tự chọn trên giao diện
 const onApplyVoucher = async (voucherId) => {
     try {
+        manualVoucherLocks.value[selectedOrder.value.id] = true;
         const updated = await dichVuDonHang.setVoucher(selectedOrder.value.id, voucherId);
         updateOrderInList(updated);
     } catch (e) { }

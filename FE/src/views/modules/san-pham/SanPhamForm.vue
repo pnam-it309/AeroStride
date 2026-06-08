@@ -1856,7 +1856,7 @@ const handleSave = async () => {
                                 <div class="field-label">Tên sản phẩm</div>
                                 <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Giày Nike Air..."
                                     :rules="[rules.required]" variant="outlined" density="comfortable"
-                                    hide-details="auto"></v-text-field>
+                                    hide-details="auto" maxlength="250"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Thương hiệu</div>
@@ -2065,7 +2065,7 @@ const handleSave = async () => {
                                                         class="check-icon">mdi-check</v-icon>
                                                 </div>
                                                 <div class="text-caption"
-                                                    style="font-size: 10px !important; max-width: TÙY CHỈNH MÀU SẮC40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                    style="font-size: 10px !important; max-width: 40px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                                     {{ c.ten }}</div>
                                             </div>
                                         </div>
@@ -2082,11 +2082,11 @@ const handleSave = async () => {
                                             <div class="flex-grow-1">
                                                 <div class="text-caption mb-1">TÊN MÀU</div>
                                                 <v-text-field v-model="customColorName" placeholder="Ví dụ: Xanh Mint"
-                                                    variant="outlined" density="compact" hide-details
+                                                    variant="outlined" density="compact" hide-details maxlength="250"
                                                     class="mb-3 bg-slate-50"></v-text-field>
                                                 <div class="text-caption mb-1">MÃ MÀU (HEX)</div>
                                                 <v-text-field v-model="customColorHex" variant="outlined"
-                                                    density="compact" hide-details
+                                                    density="compact" hide-details maxlength="250"
                                                     class="bg-slate-50 mb-2"></v-text-field>
                                                 <div class="d-flex align-center gap-2 px-3 py-1 bg-slate-50 rounded-lg">
                                                     <div class="color-dot" :style="{ backgroundColor: customColorHex }">
@@ -2129,9 +2129,9 @@ const handleSave = async () => {
                                                 @click="showSizeMenu = false"></v-btn>
                                         </div>
                                         <div class="d-flex gap-2 mb-4">
-                                            <v-text-field v-model="customSizeName" prepend-inner-icon="mdi-magnify"
+                                            <v-text-field :model-value="customSizeName" @update:model-value="customSizeName = String($event || '').replace(/[^0-9]/g, '')" prepend-inner-icon="mdi-magnify"
                                                 placeholder="Nhập kích thước" variant="outlined" density="compact"
-                                                hide-details class="bg-slate-50"></v-text-field>
+                                                hide-details class="bg-slate-50" maxlength="250" type="number" min="0"></v-text-field>
                                             <v-btn color="primary" class="rounded-lg text-none font-weight-medium"
                                                 height="40" @click="handleAddCustomSize">
                                                 <v-icon start size="18">mdi-plus</v-icon> Thêm
@@ -2264,15 +2264,15 @@ const handleSave = async () => {
                                                 <span
                                                     class="text-caption font-weight-bold text-slate-500 mr-2 d-none d-sm-block">
                                                     áp dụng nhanh:</span>
-                                                <v-text-field v-model="quickApplyValues.giaBan" placeholder="Giá bán"
+                                                <FormattedNumberField v-model="quickApplyValues.giaBan" placeholder="Giá bán"
                                                     variant="outlined" density="compact" hide-details
-                                                    class="custom-input-dense" style="width: 120px" type="number" />
-                                                <v-text-field v-model="quickApplyValues.giaNhap" placeholder="Giá nhập"
+                                                    class="custom-input-dense" style="width: 120px" />
+                                                <FormattedNumberField v-model="quickApplyValues.giaNhap" placeholder="Giá nhập"
                                                     variant="outlined" density="compact" hide-details
-                                                    class="custom-input-dense" style="width: 120px" type="number" />
-                                                <v-text-field v-model="quickApplyValues.soLuong" placeholder="Số lượng"
+                                                    class="custom-input-dense" style="width: 120px" />
+                                                <FormattedNumberField v-model="quickApplyValues.soLuong" placeholder="Số lượng"
                                                     variant="outlined" density="compact" hide-details
-                                                    class="custom-input-dense" style="width: 120px" type="number" />
+                                                    class="custom-input-dense" style="width: 120px" />
                                                 <v-btn color="primary" variant="flat" size="small"
                                                     class="text-none rounded font-weight-bold"
                                                     style="color: white !important" height="40"
@@ -2351,7 +2351,7 @@ const handleSave = async () => {
                                                                 class="custom-input-dense" />
                                                         </td>
                                                         <td>
-                                                            <v-text-field v-model="variant.soLuong" type="number"
+                                                            <FormattedNumberField v-model="variant.soLuong"
                                                                 hide-details variant="outlined" density="compact"
                                                                 class="custom-input-dense" />
                                                         </td>
@@ -2601,7 +2601,7 @@ const handleSave = async () => {
                     <v-row>
                         <v-col cols="12">
                             <div class="field-label">Số lượng</div>
-                            <v-text-field v-model="bulkEditModal.form.soLuong" type="number"
+                            <FormattedNumberField v-model="bulkEditModal.form.soLuong"
                                 placeholder="Nhập số lượng..." variant="outlined" density="comfortable" hide-details
                                 class="custom-input" />
                         </v-col>

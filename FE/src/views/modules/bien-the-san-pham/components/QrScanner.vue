@@ -31,11 +31,21 @@ onMounted(() => {
 
 const startScanner = () => {
     setTimeout(() => {
+        const el = document.getElementById('qr-reader');
+        if (!el || el.clientWidth === 0) {
+            startScanner();
+            return;
+        }
+        
+        if (scanner.value) {
+            scanner.value.clear().catch(e => console.error(e));
+        }
+        
         scanner.value = new Html5QrcodeScanner('qr-reader', { fps: 10, qrbox: { width: 250, height: 250 } }, /* verbose= */ false);
         scanner.value.render(onScanSuccess, (err) => {
             // silent fail for non-detections
         });
-    }, 100);
+    }, 150);
 };
 
 watch(
