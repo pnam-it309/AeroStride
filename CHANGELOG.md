@@ -1,3 +1,15 @@
+# [1.23.0](https://github.com/pnam-it309/AeroStride/compare/v1.22.0...v1.23.0) (2026-06-08)
+
+
+### Bug Fixes
+
+* Update toast notification message when adding product to cart ([046b415](https://github.com/pnam-it309/AeroStride/commit/046b415f172b1ec3d7df87d0ddee82e460e71c64))
+
+
+### Features
+
+* Fix barcode scanner NaN width bug, fix duplicate customer UI, upgrade auto voucher best-fit logic ([d843c21](https://github.com/pnam-it309/AeroStride/commit/d843c21b889c485cb67eaa26f48fb314e32d024f))
+
 # [1.22.0](https://github.com/pnam-it309/AeroStride/compare/v1.21.0...v1.22.0) (2026-06-08)
 
 
