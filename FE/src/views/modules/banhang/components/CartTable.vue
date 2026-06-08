@@ -5,6 +5,24 @@ const props = defineProps(['items']);
 const emit = defineEmits(['update-qty', 'remove']);
 
 const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
+
+const handleDirectInput = (item, event) => {
+    let val = event.target.value;
+    if (!/^\d+$/.test(val)) {
+        event.target.value = item.soLuong;
+        return;
+    }
+    let newQty = parseInt(val, 10);
+    if (isNaN(newQty) || newQty < 0) newQty = 0;
+    
+    const delta = newQty - item.soLuong;
+    if (delta !== 0) {
+        // Pass event.target so BanHang can force the input back if max is exceeded
+        emit('update-qty', item, delta, event.target);
+    } else {
+        event.target.value = item.soLuong;
+    }
+};
 </script>
 
 <template>
@@ -53,7 +71,13 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
                             <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, -1)">
                                 <MinusIcon size="14" />
                             </v-btn>
-                            <span class="qty-value">{{ item.soLuong }}</span>
+                            <input 
+                                type="number" 
+                                class="qty-input-table text-center font-weight-bold" 
+                                :value="item.soLuong" 
+                                @change="(e) => handleDirectInput(item, e)"
+                                min="0"
+                            />
                             <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, 1)">
                                 <PlusIcon size="14" />
                             </v-btn>
@@ -94,10 +118,22 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
     height: 100%;
 }
 
-.qty-value {
-    min-width: 32px;
-    font-weight: 700;
+.qty-input-table {
+    min-width: 40px;
+    max-width: 50px;
     text-align: center;
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 0;
+    margin: 0;
+    -moz-appearance: textfield;
+}
+
+.qty-input-table::-webkit-outer-spin-button,
+.qty-input-table::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .item-row:hover {

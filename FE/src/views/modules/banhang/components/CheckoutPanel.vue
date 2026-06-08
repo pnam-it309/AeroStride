@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * Module: Giao diện Thanh toán (Checkout Panel)
+ * Chức năng: Quản lý giao diện và xử lý logic thanh toán tại quầy (chọn voucher, tính tổng tiền,
+ * chọn phương thức thanh toán tiền mặt/VNPAY, tiền thừa).
+ */
 import { computed } from 'vue';
 import { CashIcon, CreditCardIcon, Receipt2Icon } from 'vue-tabler-icons';
 
@@ -100,14 +105,15 @@ const handleCheckout = () => {
 
         <v-btn
             block
-            color="#2E4E8E"
+            color="#4285F4"
             height="52"
-            class="text-h6 font-weight-bold rounded-xl btn-checkout shadow-lg text-white"
+            class="text-h6 font-weight-bold rounded-lg btn-checkout shadow-md text-white"
             :loading="loading"
             :disabled="!order?.listsHoaDonChiTiet?.length"
             @click="handleCheckout"
+            elevation="0"
         >
-            XÁC NHẬN THANH TOÁN
+            THANH TOÁN (F10)
         </v-btn>
     </div>
 </template>
@@ -120,7 +126,9 @@ const handleCheckout = () => {
     background: transparent !important;
 }
 .btn-checkout {
-    background: linear-gradient(45deg, #2E4E8E, #346ac0) !important;
+    background: #4285F4 !important;
+    text-transform: none;
+    letter-spacing: 0;
 }
 .pricing-summary {
     border-color: #cbd5e1 !important;

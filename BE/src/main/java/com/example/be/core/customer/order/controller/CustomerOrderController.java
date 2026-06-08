@@ -21,10 +21,16 @@ import java.util.List;
 @RestController
 @RequestMapping(RoutesConstant.CUSTOMER + "/order")
 @RequiredArgsConstructor
+/**
+ * Module: Đặt hàng (Customer)
+ * Chức năng: Quản lý API phục vụ quá trình đặt hàng trực tuyến của khách hàng.
+ * Bao gồm các chức năng như checkout, xem danh sách đơn hàng của tôi, xem chi tiết, hủy đơn, lấy voucher hợp lệ.
+ */
 public class CustomerOrderController {
 
     private final CustomerOrderService customerOrderService;
 
+    // Xử lý thanh toán và tạo đơn hàng trực tuyến cho khách hàng
     @PostMapping("/checkout")
     @PreAuthorize("hasRole('KHACH_HANG')")
     public ResponseEntity<ApiResponse<CustomerOrderResponse>> checkout(
@@ -36,6 +42,7 @@ public class CustomerOrderController {
         return ResponseEntity.ok(ApiResponse.success(response, "Đặt hàng thành công"));
     }
 
+    // Lấy danh sách đơn hàng cá nhân của khách hàng (có thể lọc theo trạng thái)
     @GetMapping("/my-orders")
     @PreAuthorize("hasRole('KHACH_HANG')")
     public ResponseEntity<ApiResponse<List<CustomerOrderResponse>>> getMyOrders(
@@ -47,6 +54,7 @@ public class CustomerOrderController {
         return ResponseEntity.ok(ApiResponse.success(orders));
     }
 
+    // Xem chi tiết một đơn hàng cụ thể của khách hàng
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('KHACH_HANG')")
     public ResponseEntity<ApiResponse<CustomerOrderResponse>> getOrderDetail(
@@ -58,6 +66,7 @@ public class CustomerOrderController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    // Hủy đơn hàng (nếu đơn hàng đang ở trạng thái cho phép hủy)
     @PutMapping("/{id}/cancel")
     @PreAuthorize("hasRole('KHACH_HANG')")
     public ResponseEntity<ApiResponse<Void>> cancelOrder(
@@ -69,6 +78,7 @@ public class CustomerOrderController {
         return ResponseEntity.ok(ApiResponse.success(null, "Hủy đơn hàng thành công"));
     }
 
+    // Lấy danh sách các mã giảm giá (voucher) có thể áp dụng cho tổng tiền giỏ hàng hiện tại
     @GetMapping("/vouchers")
     public ResponseEntity<ApiResponse<List<PhieuGiamGia>>> getAvailableVouchers(
             @RequestParam(required = false) BigDecimal tongTien

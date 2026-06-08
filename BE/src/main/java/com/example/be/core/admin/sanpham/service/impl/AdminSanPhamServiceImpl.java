@@ -56,21 +56,25 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     private final MauSacRepository mauSacRepository;
     private final KichThuocRepository kichThuocRepository;
 
+    // Lấy danh sách biến thể theo ID sản phẩm gốc
     @Override
     public List<ProductVariantResponse> getVariantsByProductId(String productId) {
         return mapVariants(adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(productId));
     }
 
+    // Lấy toàn bộ danh sách biến thể sản phẩm đang hoạt động
     @Override
     public List<ProductVariantResponse> getAllVariants() {
         return mapVariants(adminChiTietSanPhamRepository.findAllByXoaMemFalse());
     }
 
+    // Lấy danh sách các tùy chọn cho form (danh mục, thương hiệu, chất liệu, đế giày...)
     @Override
     public ProductFormOptionsResponse getFormOptions() {
         return productOptionService.getFormOptions();
     }
 
+    // Tạo mới một sản phẩm và các biến thể đi kèm, tự động generate mã sản phẩm nếu chưa có
     @Override
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
@@ -96,6 +100,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         return buildProductDetailResponse(sanPham.getId());
     }
 
+    // Lấy danh sách sản phẩm (có phân trang và tìm kiếm theo điều kiện) kết hợp thông tin tồn kho
     @Override
     @Cacheable(value = "products", key = "#request.toString()", unless = "#result == null")
     public PageResponse<ProductResponse> getProducts(SearchProductRequest request) {
@@ -114,12 +119,14 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         return PageResponse.from(page.map(sp -> adminSanPhamMapper.toProductResponse(sp, stats.get(sp.getId()))));
     }
 
+    // Lấy thông tin chi tiết một sản phẩm (bao gồm các biến thể)
     @Override
     @Cacheable(value = "productDetail", key = "#id", unless = "#result == null")
     public ProductDetailResponse getProductDetail(String id) {
         return buildProductDetailResponse(id);
     }
 
+    // Cập nhật thông tin chung của sản phẩm gốc
     @Override
     @Transactional
     @Caching(evict = {
@@ -133,6 +140,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         return buildProductDetailResponse(id);
     }
 
+    // Xóa mềm sản phẩm và toàn bộ các biến thể thuộc sản phẩm đó
     @Override
     @Transactional
     @Caching(evict = {
@@ -148,6 +156,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalse(id).forEach(this::softDeleteVariant);
     }
 
+    // Thay đổi trạng thái (hoạt động/ngừng hoạt động) của sản phẩm và cập nhật cả biến thể
     @Override
     @Transactional
     @Caching(evict = {
@@ -165,6 +174,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         });
     }
 
+    // Thêm mới một biến thể sản phẩm với màu sắc, kích thước, số lượng cụ thể
     @Override
     @Transactional
     @Caching(evict = {
@@ -175,6 +185,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         return mapVariant(createOrUpdateVariant(null, getProductOrThrow(productId), request));
     }
 
+    // Cập nhật thông tin của một biến thể đã có
     @Override
     @Transactional
     @Caching(evict = {
@@ -186,6 +197,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         return mapVariant(createOrUpdateVariant(v, v.getSanPham(), request));
     }
 
+    // Xóa mềm một biến thể (không hiển thị ngoài giao diện nữa)
     @Override
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
@@ -414,6 +426,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         // Implementation for product import
     }
 
+    // Thêm hình ảnh mới cho một biến thể cụ thể
     @Override
     @Transactional
     public ProductVariantImageResponse addVariantImage(String variantId, ProductVariantImageRequest request) {
@@ -434,6 +447,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         return adminSanPhamMapper.toVariantImageResponse(adminAnhChiTietSanPhamRepository.save(image));
     }
 
+    // Cập nhật thuộc tính của hình ảnh biến thể (VD: đổi thành ảnh đại diện)
     @Override
     @Transactional
     public ProductVariantImageResponse updateVariantImage(String imageId, UpdateProductVariantImageRequest request) {
@@ -459,6 +473,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         return adminSanPhamMapper.toVariantImageResponse(adminAnhChiTietSanPhamRepository.save(image));
     }
 
+    // Thiết lập một hình ảnh thành ảnh đại diện chính của biến thể
     @Override
     @Transactional
     public ProductVariantImageResponse setMainVariantImage(String imageId) {
@@ -470,6 +485,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         return adminSanPhamMapper.toVariantImageResponse(adminAnhChiTietSanPhamRepository.save(image));
     }
 
+    // Xóa một hình ảnh khỏi biến thể, nếu là ảnh chính sẽ tự động đổi ảnh khác lên thay
     @Override
     @Transactional
     public void deleteVariantImage(String imageId) {

@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Module: Bán hàng tại quầy (Admin)
+ * Component: OrderTabs
+ * Chức năng: Hiển thị thanh tabs các hóa đơn đang chờ thanh toán (tối đa 5 hóa đơn),
+ *            cho phép tạo thêm hoặc chuyển đổi giữa các hóa đơn.
+ */
 import { computed } from 'vue';
 import { PlusIcon, ReceiptIcon, XIcon } from 'vue-tabler-icons';
 
@@ -7,6 +13,7 @@ const MAX_WAITING_ORDERS = 5;
 const props = defineProps(['orders', 'activeIndex']);
 const emit = defineEmits(['select', 'create', 'close']);
 
+// Format tổng tiền hiển thị trên mỗi tab (không lấy số thập phân)
 const formatCurrency = (value) =>
     new Intl.NumberFormat('vi-VN', {
         style: 'currency',

@@ -24,22 +24,30 @@ import java.util.List;
 @RequestMapping(RoutesConstant.ADMIN_BAN_HANG)
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
+/**
+ * Module: Bán hàng tại quầy (Admin)
+ * Chức năng: Quản lý API phục vụ quá trình bán hàng tại quầy của nhân viên/quản trị viên.
+ * Bao gồm tạo hóa đơn chờ, thêm sản phẩm, cập nhật số lượng, áp dụng voucher, chọn khách hàng và thanh toán.
+ */
 public class AdminBanHangController {
 
     private final AdminBanHangService adminBanHangService;
 
+    // Lấy danh sách hóa đơn đang ở trạng thái chờ (chưa thanh toán)
     @GetMapping
     public ResponseEntity<ApiResponse<List<AdminBanHangHoaDonResponse>>> getHoaDonCho() {
         log.info("Fetching draft/pending counter sale invoices");
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.getHoaDonCho()));
     }
 
+    // Tạo mới một hóa đơn chờ
     @PostMapping
     public ResponseEntity<ApiResponse<AdminBanHangHoaDonResponse>> createHoaDon() {
         log.info("Creating a new counter sale invoice draft");
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.createHoaDon()));
     }
 
+    // Xóa một hóa đơn chờ theo ID
     @DeleteMapping(RoutesConstant.ID)
     public ResponseEntity<ApiResponse<Void>> deleteHoaDon(@PathVariable String id) {
         log.info("Deleting counter sale invoice draft: {}", id);
@@ -47,6 +55,7 @@ public class AdminBanHangController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
+    // Thêm một sản phẩm (chi tiết hóa đơn) vào hóa đơn chờ
     @PostMapping(RoutesConstant.ADD_PRODUCT)
     public ResponseEntity<ApiResponse<AdminBanHangHoaDonResponse>> addProduct(
             @PathVariable String id,
@@ -56,6 +65,7 @@ public class AdminBanHangController {
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.addSanPham(id, request)));
     }
 
+    // Cập nhật số lượng của một sản phẩm trong hóa đơn
     @PutMapping(RoutesConstant.UPDATE_QUANTITY)
     public ResponseEntity<ApiResponse<AdminBanHangHoaDonResponse>> updateQuantity(
             @PathVariable String id,
@@ -66,6 +76,7 @@ public class AdminBanHangController {
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.updateSoLuong(id, idHdct, soLuong)));
     }
 
+    // Xóa một sản phẩm khỏi hóa đơn
     @DeleteMapping(RoutesConstant.REMOVE_PRODUCT)
     public ResponseEntity<ApiResponse<Void>> removeProduct(@PathVariable String id, @PathVariable String idHdct) {
         log.info("Removing product from counter sale invoice: id={}, detailId={}", id, idHdct);
@@ -73,6 +84,7 @@ public class AdminBanHangController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
+    // Gắn thông tin khách hàng vào hóa đơn
     @PutMapping(RoutesConstant.KHACH_HANG_SUB)
     public ResponseEntity<ApiResponse<AdminBanHangHoaDonResponse>> setKhachHang(
             @PathVariable String id,
@@ -82,6 +94,7 @@ public class AdminBanHangController {
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.setKhachHang(id, idKhachHang)));
     }
 
+    // Áp dụng hoặc gỡ bỏ mã giảm giá (voucher) cho hóa đơn
     @PutMapping(RoutesConstant.VOUCHER_SUB)
     public ResponseEntity<ApiResponse<AdminBanHangHoaDonResponse>> setVoucher(
             @PathVariable String id,
@@ -91,6 +104,7 @@ public class AdminBanHangController {
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.setPhieuGiamGia(id, idVoucher)));
     }
 
+    // Thực hiện thanh toán và hoàn tất hóa đơn
     @PostMapping(RoutesConstant.CHECKOUT)
     public ResponseEntity<ApiResponse<Void>> checkout(
             @PathVariable String id,
@@ -101,18 +115,21 @@ public class AdminBanHangController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
+    // Tìm kiếm nhanh sản phẩm để thêm vào hóa đơn
     @GetMapping(RoutesConstant.SEARCH_SAN_PHAM)
     public ResponseEntity<ApiResponse<List<BanHangSanPhamResponse>>> searchSanPham(@RequestParam(defaultValue = "") String keyword) {
         log.info("Searching products for counter sales with keyword: {}", keyword);
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.searchSanPham(keyword)));
     }
 
+    // Tìm kiếm khách hàng theo từ khóa (tên, sđt)
     @GetMapping(RoutesConstant.SEARCH_KHACH_HANG)
     public ResponseEntity<ApiResponse<List<AdminBanHangKhachHangResponse>>> searchKhachHang(@RequestParam(defaultValue = "") String keyword) {
         log.info("Searching customers for counter sales with keyword: {}", keyword);
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.searchKhachHang(keyword)));
     }
 
+    // Lấy danh sách voucher hợp lệ dựa trên tổng tiền hóa đơn
     @GetMapping(RoutesConstant.VOUCHERS)
     public ResponseEntity<ApiResponse<List<PhieuGiamGia>>> getVouchers(@RequestParam BigDecimal tongTien) {
         log.info("Fetching applicable vouchers for amount: {}", tongTien);

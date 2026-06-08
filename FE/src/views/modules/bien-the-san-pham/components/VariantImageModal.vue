@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Module: Biến thể sản phẩm (Admin)
+ * Component: VariantImageModal
+ * Chức năng: Form modal tải lên và chỉnh sửa thông tin hình ảnh của biến thể 
+ *            (gồm URL, ảnh đại diện, mô tả ảnh).
+ */
 import { ref, watch } from 'vue';
 import { XIcon, DeviceFloppyIcon, UploadIcon, PhotoIcon } from 'vue-tabler-icons';
 import { dichVuFile } from '@/services/core/dichVuFile';
@@ -46,10 +52,12 @@ watch(
     }
 );
 
+// Mở hộp thoại chọn file của hệ điều hành
 const triggerFileInput = () => {
     fileInput.value?.click();
 };
 
+// Lắng nghe sự kiện người dùng chọn file, validate định dạng ảnh, gửi file lên server/cloud
 const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -74,6 +82,7 @@ const handleFileChange = async (event) => {
     }
 };
 
+// Đẩy dữ liệu form (gồm URL vừa upload) ra component cha để lưu
 const handleSubmit = () => {
     emit('submit', { ...formData.value });
 };

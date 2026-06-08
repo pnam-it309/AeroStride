@@ -35,7 +35,7 @@ public class ProductVariantRequest {
     private BigDecimal giaNhap;
 
     @NotNull(message = "giaBan khong duoc de trong")
-    @DecimalMin(value = "0.0", inclusive = true, message = "giaBan phai lon hon hoac bang 0")
+    @DecimalMin(value = "1.0", inclusive = true, message = "giaBan phai lon hon hoac bang 1")
     private BigDecimal giaBan;
 
     private TrangThai trangThai;

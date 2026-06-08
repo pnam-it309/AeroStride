@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Module: Sản phẩm (Admin)
+ * Component: AttributeQuickAddModal
+ * Chức năng: Form modal nhỏ giúp người dùng thêm nhanh các thuộc tính sản phẩm
+ *            (ví dụ: thương hiệu, danh mục, màu sắc...) ngay từ giao diện tạo/sửa.
+ */
 import { ref, reactive, watch } from 'vue';
 import { XIcon, CheckIcon, DeviceFloppyIcon } from 'vue-tabler-icons';
 import { useNotifications } from '@/services/notificationService';
@@ -20,6 +26,7 @@ const form = reactive({
     moTa: ''
 });
 
+// Xóa dữ liệu cũ trên form trước khi nhập liệu mới
 const resetForm = () => {
     form.ten = '';
     form.ma = '';
@@ -33,6 +40,7 @@ watch(
     }
 );
 
+// Xử lý sự kiện lưu: validate dữ liệu, gọi API tạo thuộc tính, thông báo kết quả
 const handleSave = async () => {
     if (!form.ten) {
         addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập tên', color: 'error' });
@@ -68,12 +76,14 @@ const handleSave = async () => {
                     <v-col cols="12">
                         <div class="field-label mb-1">Tên {{ title }}</div>
                         <v-text-field v-model="form.ten" placeholder="Nhập tên..." variant="outlined"
-                            density="comfortable" hide-details></v-text-field>
+                            density="comfortable" hide-details maxlength="250"
+                            :type="type === 'KICH_THUOC' ? 'number' : 'text'"
+                            @update:model-value="form.ten = type === 'KICH_THUOC' ? String($event || '').replace(/[^0-9]/g, '') : $event"></v-text-field>
                     </v-col>
                     <v-col cols="12">
                         <div class="field-label mb-1">Mã (Tùy chọn)</div>
                         <v-text-field v-model="form.ma" placeholder="Hệ thống tự tạo nếu để trống" variant="outlined"
-                            density="comfortable" hide-details></v-text-field>
+                            density="comfortable" hide-details maxlength="250"></v-text-field>
                     </v-col>
                     <v-col cols="12">
                         <div class="field-label mb-1">Mô tả</div>

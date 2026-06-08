@@ -2,6 +2,11 @@ import { defineStore } from 'pinia';
 
 const CART_STORAGE_KEY = 'aerostride_cart';
 
+/**
+ * Module: Giỏ hàng (Cart Store)
+ * Chức năng: Quản lý trạng thái giỏ hàng của khách hàng trên giao diện, bao gồm thêm, sửa, xóa,
+ * tính tổng tiền, và lưu trữ cục bộ (localStorage) để không bị mất dữ liệu khi tải lại trang.
+ */
 export const useCartStore = defineStore('cart', {
     state: () => ({
         items: JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [],
@@ -23,6 +28,7 @@ export const useCartStore = defineStore('cart', {
             localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(this.items));
         },
 
+        // Thêm một sản phẩm (kèm số lượng, kích thước, màu sắc) vào giỏ hàng
         addToCart(product) {
             // product: { idChiTietSanPham, tenSanPham, hinhAnh, tenMauSac, tenKichThuoc, giaBan, soLuong, soLuongTonKho }
             const existing = this.items.find((i) => i.idChiTietSanPham === product.idChiTietSanPham);
@@ -50,11 +56,13 @@ export const useCartStore = defineStore('cart', {
             return { success: true, message: 'Đã thêm vào giỏ hàng' };
         },
 
+        // Xóa hoàn toàn một sản phẩm khỏi giỏ hàng dựa trên ID chi tiết sản phẩm
         removeFromCart(idChiTietSanPham) {
             this.items = this.items.filter((i) => i.idChiTietSanPham !== idChiTietSanPham);
             this._persist();
         },
 
+        // Cập nhật số lượng của một sản phẩm đã có trong giỏ hàng
         updateQuantity(idChiTietSanPham, soLuong) {
             const item = this.items.find((i) => i.idChiTietSanPham === idChiTietSanPham);
             if (item) {
@@ -71,6 +79,7 @@ export const useCartStore = defineStore('cart', {
             return { success: true };
         },
 
+        // Xóa toàn bộ sản phẩm trong giỏ hàng (làm trống giỏ hàng)
         clearCart() {
             this.items = [];
             this._persist();
