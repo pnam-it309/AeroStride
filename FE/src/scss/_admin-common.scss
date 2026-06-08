@@ -1708,6 +1708,15 @@
         }
     }
 }
+
 /* Make all input fields white globally */
-.v-text-field .v-field, .v-select .v-field, .v-textarea .v-field, .v-autocomplete .v-field { background-color: #ffffff !important; }
-.v-field--disabled { background-color: #f1f5f9 !important; }
+.v-text-field .v-field,
+.v-select .v-field,
+.v-textarea .v-field,
+.v-autocomplete .v-field {
+    background-color: #ffffff !important;
+}
+
+.v-field--disabled {
+    background-color: #f1f5f9 !important;
+}

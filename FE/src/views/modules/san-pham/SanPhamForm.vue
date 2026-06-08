@@ -2460,7 +2460,7 @@ const handleSave = async () => {
                                         <v-range-slider :key="`${variantPriceBounds.min}-${variantPriceBounds.max}`"
                                             v-model="variantTableFilters.khoangGia" :min="variantPriceBounds.min"
                                             :max="variantPriceBounds.max" :step="variantPriceStep" hide-details
-                                            color="primary" track-color="#e2e8f0" track-size="3" thumb-size="14"
+                                            color="primary" track-color="#e2e8f0" track-size="2" thumb-size="14"
                                             class="blue-range-slider"
                                             @update:model-value="handleVariantSliderPriceChange" />
                                     </v-col>

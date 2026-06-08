@@ -408,13 +408,13 @@ onMounted(init);
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày bắt đầu </div>
                                 <v-text-field v-model="form.ngayBatDau" :readonly="isViewOnly" type="datetime-local"
-                                    variant="outlined" density="compact" append-inner-icon="mdi-calendar"
+                                    variant="outlined" density="compact" append-inner-icon="mdi-calendar-month-outline"
                                     @click:append-inner="openDatePicker" class="date-field" hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày kết thúc </div>
                                 <v-text-field v-model="form.ngayKetThuc" :readonly="isViewOnly" type="datetime-local"
-                                    variant="outlined" density="compact" append-inner-icon="mdi-calendar"
+                                    variant="outlined" density="compact" append-inner-icon="mdi-calendar-month-outline"
                                     @click:append-inner="openDatePicker" class="date-field" hide-details></v-text-field>
                             </v-col>
 
@@ -463,7 +463,7 @@ onMounted(init);
                                     hàng từ ngày</div>
                                 <v-text-field v-model="filterStartDate" type="date" variant="outlined" density="compact"
                                     hide-details rounded="xl" class="compact-input date-field"
-                                    append-inner-icon="mdi-calendar"
+                                    append-inner-icon="mdi-calendar-month-outline"
                                     @click:append-inner="openDatePicker"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="4">
@@ -472,7 +472,7 @@ onMounted(init);
                                     ngày</div>
                                 <v-text-field v-model="filterEndDate" type="date" variant="outlined" density="compact"
                                     hide-details rounded="xl" class="compact-input date-field"
-                                    append-inner-icon="mdi-calendar"
+                                    append-inner-icon="mdi-calendar-month-outline"
                                     @click:append-inner="openDatePicker"></v-text-field>
                             </v-col>
                         </AdminFilter>

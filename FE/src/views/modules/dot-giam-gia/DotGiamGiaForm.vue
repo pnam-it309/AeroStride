@@ -537,14 +537,14 @@ onMounted(init);
                             <div class="mb-5">
                                 <div class="field-label">Ngày bắt đầu</div>
                                 <v-text-field v-model="form.ngayBatDau" :readonly="isDetailView" type="datetime-local"
-                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker" variant="outlined"
+                                    append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker" variant="outlined"
                                     density="comfortable" hide-details class="date-field"></v-text-field>
                             </div>
 
                             <div class="mb-6">
                                 <div class="field-label">Ngày kết thúc</div>
                                 <v-text-field v-model="form.ngayKetThuc" :readonly="isDetailView" type="datetime-local"
-                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker" variant="outlined"
+                                    append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker" variant="outlined"
                                     density="comfortable" hide-details class="date-field"></v-text-field>
                             </div>
                         </div>
@@ -724,7 +724,7 @@ onMounted(init);
                                     </div>
                                     <v-range-slider :key="`0-${dynamicMaxPrice}`" v-model="detailFilters.khoangGia"
                                         :max="dynamicMaxPrice" :min="0" :step="10000" hide-details color="primary"
-                                        track-color="#e2e8f0" track-size="3" thumb-size="14"
+                                        track-color="#e2e8f0" track-size="2" thumb-size="14"
                                         class="blue-range-slider"></v-range-slider>
                                 </v-col>
                             </template>
@@ -920,13 +920,13 @@ onMounted(init);
 
 /* Blue range slider */
 :deep(.blue-range-slider .v-slider-track) {
-    height: 4px !important;
+    height: 2px !important;
 }
 
 :deep(.blue-range-slider .v-slider-track__background),
 :deep(.blue-range-slider .v-slider-track__fill) {
-    height: 4px !important;
-    border-radius: 2px !important;
+    height: 2px !important;
+    border-radius: 1px !important;
 }
 
 :deep(.blue-range-slider .v-slider-thumb .v-slider-thumb__surface) {

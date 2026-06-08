@@ -744,7 +744,7 @@ onMounted(async () => {
                         </div>
                         <v-range-slider :key="`${MIN_VARIANT_PRICE}-${dynamicMaxPrice}`" v-model="filters.khoangGia"
                             :max="dynamicMaxPrice" :min="MIN_VARIANT_PRICE" :step="VARIANT_PRICE_STEP" hide-details
-                            color="primary" track-color="#e2e8f0" track-size="3" thumb-size="14"
+                            color="primary" track-color="#e2e8f0" track-size="2" thumb-size="14"
                             class="blue-range-slider" />
                     </v-col>
                 </template>
@@ -1007,11 +1007,11 @@ onMounted(async () => {
         }
 
         :deep(.v-slider-track__background) {
-            height: 3px !important;
+            height: 2px !important;
         }
 
         :deep(.v-slider-track__fill) {
-            height: 3px !important;
+            height: 2px !important;
         }
 
         :deep(.v-slider-thumb__surface) {

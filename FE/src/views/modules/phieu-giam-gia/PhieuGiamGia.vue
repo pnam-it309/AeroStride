@@ -248,14 +248,14 @@ onMounted(() => taiDanhSachPhieuGiamGia());
                 <v-col cols="6" sm="3" md="2" class="filter-cell">
                     <div class="filter-field-label">Từ ngày</div>
                     <v-text-field ref="fromDateRef" v-model="filters.tuNgay" type="date" variant="outlined"
-                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar"
+                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month-outline"
                         @click:append-inner="openDatePicker(fromDateRef)" @change="handleSearch"
                         @input="handleSearch"></v-text-field>
                 </v-col>
                 <v-col cols="6" sm="3" md="2" class="filter-cell">
                     <div class="filter-field-label">Đến ngày</div>
                     <v-text-field ref="toDateRef" v-model="filters.denNgay" type="date" variant="outlined"
-                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar"
+                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month-outline"
                         @click:append-inner="openDatePicker(toDateRef)" @change="handleSearch"
                         @input="handleSearch"></v-text-field>
                 </v-col>

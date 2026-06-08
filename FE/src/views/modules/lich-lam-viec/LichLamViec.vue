@@ -23,6 +23,17 @@ const filters = ref({
 
 // Add Dialog State
 const showAddDialog = ref(false);
+const ngayRef = ref(null);
+const openDatePicker = (fieldRef) => {
+    const input = fieldRef?.$el?.querySelector('input[type="date"]');
+    if (input) {
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+        } else {
+            input.click();
+        }
+    }
+};
 const addForm = ref({
     nhanVien: [],
     ca: null,
@@ -434,7 +445,8 @@ onMounted(() => {
                         </v-col>
                         <v-col cols="12" md="6">
                             <div class="filter-field-label">Ngày làm</div>
-                            <v-text-field v-model="addForm.ngay" type="date" variant="outlined" density="compact" hide-details />
+                            <v-text-field ref="ngayRef" v-model="addForm.ngay" type="date" variant="outlined" density="compact" hide-details
+                                append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker(ngayRef)" />
                         </v-col>
                         <v-col cols="12" md="6">
                             <div class="filter-field-label">Ca làm</div>

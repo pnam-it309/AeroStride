@@ -624,7 +624,7 @@ onBeforeUnmount(() => {
                             hide-details
                             color="primary"
                             track-color="#e2e8f0"
-                            track-size="3"
+                            track-size="2"
                             thumb-size="14"
                             class="blue-range-slider"
                             @update:model-value="handleSliderPriceChange"
@@ -801,4 +801,14 @@ onBeforeUnmount(() => {
     </v-container>
 </template>
 
-<style scoped></style>
+<style scoped>
+:deep(.blue-range-slider .v-slider-track) {
+    height: 2px !important;
+}
+
+:deep(.blue-range-slider .v-slider-track__background),
+:deep(.blue-range-slider .v-slider-track__fill) {
+    height: 2px !important;
+    border-radius: 1px !important;
+}
+</style>
