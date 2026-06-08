@@ -215,7 +215,7 @@ const onAddProduct = async (product) => {
             soLuong: product._soLuongMuonThem || 1
         });
         updateOrderInList(updated);
-        addNotification({ title: 'Đã thêm SP vào giỏ hàng thành công', subtitle: product.tenSanPham, color: 'success' });
+        addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm vào giỏ hàng', color: 'success' });
         // Fire-and-forget: không await để tránh treo isProcessing khi debounce
         refreshBestVoucher(updated);
         
