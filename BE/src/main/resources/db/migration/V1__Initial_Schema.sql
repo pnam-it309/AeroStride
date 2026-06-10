@@ -31,10 +31,10 @@ CREATE TABLE nhan_vien (
     ten_tai_khoan VARCHAR(100) UNIQUE,
     mat_khau VARCHAR(255),
     hinh_anh VARCHAR(500),
-    tinh VARCHAR(300),
-    thanh_pho VARCHAR(300),
-    phuong_xa VARCHAR(300),
-    dia_chi_chi_tiet VARCHAR(300),
+    tinh NVARCHAR(300),
+    thanh_pho NVARCHAR(300),
+    phuong_xa NVARCHAR(300),
+    dia_chi_chi_tiet NVARCHAR(300),
     xoa_mem BIT DEFAULT 0,
     trang_thai INT,
     ngay_tao BIGINT,
@@ -103,7 +103,6 @@ CREATE TABLE xuat_xu (
     id VARCHAR(36) PRIMARY KEY,
     ma_xuat_xu VARCHAR(50) UNIQUE,
     ten_xuat_xu VARCHAR(255),
-    mo_ta TEXT,
     trang_thai INT,
     xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
@@ -116,7 +115,6 @@ CREATE TABLE muc_dich_chay (
     id VARCHAR(36) PRIMARY KEY,
     ma_muc_dich_chay VARCHAR(50) UNIQUE,
     ten_muc_dich_chay VARCHAR(255),
-    mo_ta TEXT,
     trang_thai INT,
     xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
@@ -129,7 +127,6 @@ CREATE TABLE thuong_hieu (
     id VARCHAR(36) PRIMARY KEY,
     ma_thuong_hieu VARCHAR(50) UNIQUE,
     ten_thuong_hieu VARCHAR(255),
-    mo_ta TEXT,
     trang_thai INT,
     xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
@@ -142,7 +139,6 @@ CREATE TABLE danh_muc (
     id VARCHAR(36) PRIMARY KEY,
     ma_danh_muc VARCHAR(50) UNIQUE,
     ten_danh_muc VARCHAR(255),
-    mo_ta TEXT,
     trang_thai INT,
     xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
@@ -155,7 +151,6 @@ CREATE TABLE co_giay (
     id VARCHAR(36) PRIMARY KEY,
     ma_co_giay VARCHAR(50) UNIQUE,
     ten_co_giay VARCHAR(255),
-    mo_ta TEXT,
     trang_thai INT,
     xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
@@ -168,7 +163,6 @@ CREATE TABLE chat_lieu (
     id VARCHAR(36) PRIMARY KEY,
     ma_chat_lieu VARCHAR(50) UNIQUE,
     ten_chat_lieu VARCHAR(255),
-    mo_ta TEXT,
     trang_thai INT,
     xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
@@ -181,7 +175,6 @@ CREATE TABLE de_giay (
     id VARCHAR(36) PRIMARY KEY,
     ma_de_giay VARCHAR(50) UNIQUE,
     ten_de_giay VARCHAR(255),
-    mo_ta TEXT,
     trang_thai INT,
     xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
@@ -195,7 +188,6 @@ CREATE TABLE kich_thuoc (
     ma_kich_thuoc VARCHAR(50) UNIQUE,
     ten_kich_thuoc VARCHAR(255),
     gia_tri_kich_thuoc VARCHAR(50),
-    mo_ta TEXT,
     trang_thai INT,
     xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
@@ -209,7 +201,6 @@ CREATE TABLE mau_sac (
     ma_mau_sac VARCHAR(50) UNIQUE,
     ten_mau_sac VARCHAR(255),
     ma_mau_hex VARCHAR(10),
-    mo_ta TEXT,
     trang_thai INT,
     xoa_mem BIT DEFAULT 0,
     ngay_tao BIGINT,
@@ -451,92 +442,6 @@ CREATE TABLE giao_dich_thanh_toan (
     ghi_chu TEXT,
     FOREIGN KEY (id_hoa_don) REFERENCES hoa_don(id),
     FOREIGN KEY (id_phuong_thuc_thanh_toan) REFERENCES phuong_thuc_thanh_toan(id)
-);
-
--- Create table for work shifts
-CREATE TABLE ca_lam (
-    id VARCHAR(36) PRIMARY KEY,
-    ten_ca VARCHAR(255),
-    gio_bat_dau TIME,
-    gio_ket_thuc TIME,
-    mo_ta TEXT,
-    xoa_mem BOOLEAN DEFAULT FALSE,
-    ngay_tao DATETIME,
-    ngay_sua DATETIME,
-    nguoi_tao VARCHAR(255),
-    nguoi_sua VARCHAR(255)
-);
-
--- Create table for work schedules
-CREATE TABLE lich_lam_viec (
-    id VARCHAR(36) PRIMARY KEY,
-    id_nhan_vien VARCHAR(36),
-    id_ca_lam VARCHAR(36),
-    ngay_lam DATE,
-    trang_thai_lich VARCHAR(50),
-    ngay_tao DATETIME,
-    ngay_sua DATETIME,
-    nguoi_tao VARCHAR(255),
-    nguoi_sua VARCHAR(255),
-    CONSTRAINT fk_lich_lam_viec_nhan_vien FOREIGN KEY (id_nhan_vien) REFERENCES nhan_vien(id),
-    CONSTRAINT fk_lich_lam_viec_ca_lam FOREIGN KEY (id_ca_lam) REFERENCES ca_lam(id)
-);
-
--- Create table for activity history
-CREATE TABLE lich_su_hoat_dong (
-    id VARCHAR(36) PRIMARY KEY,
-    nguoi_thuc_hien VARCHAR(255),
-    hanh_dong VARCHAR(255),
-    doi_tuong VARCHAR(255),
-    ngay_tao DATETIME,
-    ngay_sua DATETIME,
-    nguoi_tao VARCHAR(255),
-    nguoi_sua VARCHAR(255)
-);
-
-
-CREATE TABLE IF NOT EXISTS kien_thuc_ai (
-    id VARCHAR(36) PRIMARY KEY,
-    muc_dich VARCHAR(255) NOT NULL,
-    tu_khoa TEXT,
-    mau_cau_tra_loi TEXT,
-    do_uu_tien INT
-);
-
-CREATE TABLE IF NOT EXISTS tu_dong_nghia_ai (
-    id VARCHAR(36) PRIMARY KEY,
-    tu_goc VARCHAR(255) NOT NULL,
-    tu_chuan_hoa VARCHAR(255) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS cuoc_hoi_thoai (
-    id VARCHAR(36) PRIMARY KEY,
-    id_khach_hang VARCHAR(36),
-    id_nhan_vien VARCHAR(36),
-    id_nhan_vien_nhan VARCHAR(36),
-    ma_phien VARCHAR(255),
-    da_chap_nhan BIT DEFAULT 0,
-    loai_hoi_thoai VARCHAR(50),
-    trang_thai_hoi_thoai VARCHAR(50),
-    trang_thai INT,
-    ngay_tao BIGINT,
-    ngay_cap_nhat BIGINT,
-    nguoi_tao VARCHAR(255),
-    nguoi_cap_nhat VARCHAR(255)
-);
-
-CREATE TABLE IF NOT EXISTS tin_nhan (
-    id VARCHAR(36) PRIMARY KEY,
-    id_cuoc_hoi_thoai VARCHAR(36),
-    loai_nguoi_gui VARCHAR(255),
-    id_nguoi_gui VARCHAR(255),
-    ten_nguoi_gui VARCHAR(255),
-    noi_dung TEXT,
-    trang_thai INT,
-    ngay_tao BIGINT,
-    ngay_cap_nhat BIGINT,
-    nguoi_tao VARCHAR(255),
-    nguoi_cap_nhat VARCHAR(255)
 );
 
 SET FOREIGN_KEY_CHECKS = 1;

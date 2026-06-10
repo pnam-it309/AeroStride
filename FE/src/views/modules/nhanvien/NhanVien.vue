@@ -10,7 +10,7 @@ import { SYSTEM_STATUS } from '@/constants/statusConstants';
 // REUSABLE COMPONENTS
 import { AdminFilter, AdminTable, AdminPagination, AdminConfirm, AdminBreadcrumbs } from '@/components/common';
 import { downloadFile } from '@/utils/fileUtils';
-import { ADMIN_ICONS } from '@/constants/adminIcons';
+import { EditIcon, RefreshIcon } from 'vue-tabler-icons';
 
 import { useNotifications } from '@/services/notificationService';
 
@@ -32,22 +32,22 @@ const {
 } = useAdminTable(dichVuNhanVien.layNhanVienPhanTrang, { search: '', gioiTinh: null, trangThai: null });
 
 const router = useRouter();
-const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
+const { confirmDialog, setConfirm, clearConfirm, handleConfirm } = useConfirmDialog();
 const { isRefreshing, handleRefresh: refreshData } = useRefreshHandler();
 
 const { addNotification } = useNotifications();
 
 const tableHeaders = [
-    { text: 'STT', width: '50px' },
-    { text: 'Mã nhân viên', width: '100px' },
-    { text: 'Tên nhân viên', width: '140px' },
-    { text: 'Tài khoản', width: '160px' },
-    { text: 'Giới tính', width: '100px' },
-    { text: 'Số điện thoại', width: '120px' },
-    { text: 'Địa chỉ', width: '220px' },
-    { text: 'Chức vụ', width: '110px' },
-    { text: 'Trạng thái', width: '140px' },
-    { text: 'Hành động', width: '120px' }
+    { text: 'STT', width: '60px', align: 'center' },
+    { text: 'Mã nhân viên', width: '100px', align: 'center' },
+    { text: 'Tên nhân viên', width: '130px', align: 'center' },
+    { text: 'Tên tài khoản', width: '100px', align: 'center' },
+    { text: 'Giới tính', width: '120px', align: 'center' },
+    { text: 'Thông tin liên hệ', width: '230px', align: 'start' },
+    { text: 'Địa chỉ', width: '200px', align: 'start' },
+    { text: 'Chức vụ', width: '120px', align: 'center' },
+    { text: 'Trạng thái', width: '130px', align: 'center' },
+    { text: 'Hành động', width: '130px', align: 'center' }
 ];
 
 const handleRefresh = async () => {
@@ -107,7 +107,7 @@ const getAddressSummary = (item) => {
     const huyen = item.thanhPho || item.thanh_pho || '';
     const tinh = item.tinh || '';
 
-    const parts = [ct, xa, huyen, tinh].map((p) => String(p).trim()).filter((p) => p !== '' && p !== 'null');
+    const parts = [ct, xa, huyen, tinh].map(p => String(p).trim()).filter(p => p !== '' && p !== 'null');
 
     return parts.length > 0 ? parts.join(', ') : 'Chưa cập nhật';
 };
@@ -165,9 +165,9 @@ onMounted(() => {
                     </td>
                     <td class="data-cell text-left px-4">
                         <div class="text-slate-800 text-truncate" :title="item.tenTaiKhoan">{{ item.tenTaiKhoan || '-'
-                            }}</div>
+                        }}</div>
                         <div class="text-caption text-slate-500 text-truncate" :title="item.email">{{ item.email || '-'
-                            }}</div>
+                        }}</div>
                     </td>
                     <td class="data-cell">
                         <v-chip variant="flat" class="justify-center"
@@ -181,22 +181,23 @@ onMounted(() => {
                             <span>{{ item.sdt || '-' }}</span>
                         </div>
                     </td>
-                    <td class="data-cell text-left px-4 allow-wrap" style="min-width: 200px">
-                        <div class="text-slate-700">
+                    <td class="data-cell text-left px-4" style="min-width: 200px;">
+                        <div class="text-slate-700" style="font-size: 13px; line-height: 1.4;">
                             <!-- Thử cả 2 bộ tên trường do xung đột DB -->
                             <span v-if="item.diaChiChiTiet || item.dia_chi_chi_tiet">
                                 {{ item.diaChiChiTiet || item.dia_chi_chi_tiet }},
                             </span>
-                            <span v-if="item.phuongXa || item.phuong_xa"> {{ item.phuongXa || item.phuong_xa }}, </span>
-                            <span v-if="item.thanhPho || item.thanh_pho"> {{ item.thanhPho || item.thanh_pho }}, </span>
+                            <span v-if="item.phuongXa || item.phuong_xa">
+                                {{ item.phuongXa || item.phuong_xa }},
+                            </span>
+                            <span v-if="item.thanhPho || item.thanh_pho">
+                                {{ item.thanhPho || item.thanh_pho }},
+                            </span>
                             <span v-if="item.tinh">{{ item.tinh }}</span>
 
-                            <span v-if="
-                                !(item.diaChiChiTiet || item.dia_chi_chi_tiet) &&
-                                !(item.phuongXa || item.phuong_xa) &&
-                                !(item.thanhPho || item.thanh_pho) &&
-                                !item.tinh
-                            " class="text-slate-400">
+                            <span
+                                v-if="!(item.diaChiChiTiet || item.dia_chi_chi_tiet) && !(item.phuongXa || item.phuong_xa) && !(item.thanhPho || item.thanh_pho) && !item.tinh"
+                                class="text-slate-400">
                                 Chưa cập nhật
                             </span>
                         </div>
@@ -215,10 +216,14 @@ onMounted(() => {
                     </td>
 
                     <td class="data-cell action-cell">
-                        <div class="d-flex align-center justify-center action-controls">
+                        <div v-if="tab === 0" class="d-flex align-center justify-center action-controls">
+                            <v-btn variant="text" class="action-icon-btn" @click.stop="confirmResetPassword(item)">
+                                <RefreshIcon size="15" />
+                                <v-tooltip activator="parent" location="top">Reset mật khẩu</v-tooltip>
+                            </v-btn>
                             <v-btn variant="text" class="action-icon-btn"
-                                @click="router.push(`${PATH.NHAN_VIEN_FORM}/${item.id}`)">
-                                <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
+                                @click.stop="router.push(`${PATH.NHAN_VIEN_FORM}/${item.id}`)">
+                                <EditIcon size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
