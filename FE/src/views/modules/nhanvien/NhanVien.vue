@@ -41,9 +41,9 @@ const tableHeaders = [
     { text: 'STT', width: '60px', align: 'center' },
     { text: 'Mã nhân viên', width: '100px', align: 'center' },
     { text: 'Tên nhân viên', width: '130px', align: 'center' },
-    { text: 'Tên tài khoản', width: '100px', align: 'center' },
+    { text: 'Tên tài khoản', width: '160px', align: 'center' },
     { text: 'Giới tính', width: '120px', align: 'center' },
-    { text: 'Thông tin liên hệ', width: '230px', align: 'start' },
+    { text: 'Số điện thoại', width: '100px', align: 'center' },
     { text: 'Địa chỉ', width: '200px', align: 'start' },
     { text: 'Chức vụ', width: '120px', align: 'center' },
     { text: 'Trạng thái', width: '130px', align: 'center' },
@@ -90,14 +90,7 @@ const confirmChangeStatus = (item) => {
     });
 };
 
-const confirmResetPassword = (item) => {
-    setConfirm({
-        title: 'Reset mật khẩu',
-        message: `Bạn có chắc muốn reset mật khẩu cho nhân viên [${item.ten}]? Một mật khẩu mới sẽ được tạo và gửi qua email của họ.`,
-        color: 'warning',
-        action: () => handleResetPassword(item.id)
-    });
-};
+
 
 const getAddressSummary = (item) => {
     if (!item) return '-';
@@ -216,11 +209,8 @@ onMounted(() => {
                     </td>
 
                     <td class="data-cell action-cell">
-                        <div v-if="tab === 0" class="d-flex align-center justify-center action-controls">
-                            <v-btn variant="text" class="action-icon-btn" @click.stop="confirmResetPassword(item)">
-                                <RefreshIcon size="15" />
-                                <v-tooltip activator="parent" location="top">Reset mật khẩu</v-tooltip>
-                            </v-btn>
+                        <div class="d-flex align-center justify-center action-controls">
+
                             <v-btn variant="text" class="action-icon-btn"
                                 @click.stop="router.push(`${PATH.NHAN_VIEN_FORM}/${item.id}`)">
                                 <EditIcon size="15" />

@@ -31,7 +31,7 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
                 nv.gioiTinh, nv.sdt, nv.ngaySinh, nv.hinhAnh,
                 nv.tinh, nv.thanhPho, nv.phuongXa, nv.diaChiChiTiet,
                 nv.trangThai, nv.ngayTao, nv.ngayCapNhat,
-                pq.ma, pq.ten, pq.quyenHan)
+                pq.id, pq.ma, pq.ten, pq.quyenHan)
             FROM NhanVien nv
             LEFT JOIN nv.phanQuyen pq
             ORDER BY nv.ngayTao DESC
@@ -45,7 +45,7 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
             nv.gioiTinh, nv.sdt, nv.ngaySinh, nv.hinhAnh,
             nv.tinh, nv.thanhPho, nv.phuongXa, nv.diaChiChiTiet,
             nv.trangThai, nv.ngayTao, nv.ngayCapNhat,
-            pq.ma, pq.ten, pq.quyenHan)
+            pq.id, pq.ma, pq.ten, pq.quyenHan)
         FROM NhanVien nv
         LEFT JOIN nv.phanQuyen pq
         ORDER BY nv.ngayTao DESC
@@ -62,7 +62,7 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
             nv.gioiTinh, nv.sdt, nv.ngaySinh, nv.hinhAnh,
             nv.tinh, nv.thanhPho, nv.phuongXa, nv.diaChiChiTiet,
             nv.trangThai, nv.ngayTao, nv.ngayCapNhat,
-            pq.ma, pq.ten, pq.quyenHan)
+            pq.id, pq.ma, pq.ten, pq.quyenHan)
         FROM NhanVien nv
         LEFT JOIN nv.phanQuyen pq
         WHERE nv.id = :id
@@ -76,7 +76,7 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
         nv.gioiTinh, nv.sdt, nv.ngaySinh, nv.hinhAnh,
         nv.tinh, nv.thanhPho, nv.phuongXa, nv.diaChiChiTiet,
         nv.trangThai, nv.ngayTao, nv.ngayCapNhat,
-        pq.ma, pq.ten, pq.quyenHan)
+        pq.id, pq.ma, pq.ten, pq.quyenHan)
     FROM NhanVien nv
     LEFT JOIN nv.phanQuyen pq
     WHERE LOWER(nv.ten)   LIKE LOWER(CONCAT('%', :keyword, '%'))
@@ -104,7 +104,7 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
         nv.gioiTinh, nv.sdt, nv.ngaySinh, nv.hinhAnh,
         nv.tinh, nv.thanhPho, nv.phuongXa, nv.diaChiChiTiet,
         nv.trangThai, nv.ngayTao, nv.ngayCapNhat,
-        pq.ma, pq.ten, pq.quyenHan)
+        pq.id, pq.ma, pq.ten, pq.quyenHan)
     FROM NhanVien nv
     LEFT JOIN nv.phanQuyen pq
     WHERE (:keyword IS NULL OR

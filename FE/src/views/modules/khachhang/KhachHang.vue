@@ -624,16 +624,6 @@ const handleDeleteAddr = (addrId) => {
     });
 };
 
-const tableHeaders = [
-    { text: 'STT', width: '50px', align: 'center' },
-    { text: 'Mã khách hàng', width: '100px', align: 'center' },
-    { text: 'Tên khách hàng', width: '80px', align: 'start' },
-    { text: 'Giới tính', width: '90px', align: 'center' },
-    { text: 'Thông tin liên hệ', width: '120px', align: 'start' },
-    { text: 'Địa chỉ', width: '180px', align: 'start' },
-    { text: 'Trạng thái', width: '90px', align: 'center' },
-    { text: 'Hành động', width: '100px', align: 'center' }
-];
 
 onMounted(() => {
     loadCustomers();
@@ -814,8 +804,6 @@ const formatAddressFull = (addr) => {
                             />
                         </v-col>
                     </template>
-
-                    <!-- ===== BỘ LỌC TAB 2: TỔNG ĐƠN MUA HÀNG ===== -->
                     <template v-else>
                         <!-- Tìm kiếm chung -->
                         <v-col cols="12" md="5" class="filter-cell">
@@ -866,8 +854,8 @@ const formatAddressFull = (addr) => {
                         </v-col>
                     </template>
 
-                    <template #after v-if="activeTab !== 'danh-sach'">
-                        <v-row dense class="mt-2">
+                    <template #after>
+                        <v-row dense class="mt-2" v-if="activeTab !== 'danh-sach'">
                             <v-col cols="12" class="filter-cell filter-range-row">
                                 <div class="d-flex align-center justify-space-between mb-1">
                                     <div class="filter-field-label mb-0">Khoảng tiền đã chi</div>
@@ -899,7 +887,7 @@ const formatAddressFull = (addr) => {
                 title="Khách hàng"
                 addButtonText="Tạo mới"
                 show-export-button
-                :headers="activeTab === 'danh-sach' ? tableHeaders : statsTableHeaders"
+                :headers="activeTab === 'danh-sach' ? KHACH_HANG_TABLE_HEADERS : KHACH_HANG_STATS_TABLE_HEADERS"
                 :items="allCustomers"
                 :total-count="pagination.totalElements"
                 :loading="loading"
@@ -1062,82 +1050,6 @@ const formatAddressFull = (addr) => {
             v-else-if="currentView === 'invoice-history'"
             class="invoice-history-container admin-table-main-root animate-fade-in font-body"
         >
-            <template #row="{ item, index }">
-                <tr class="data-row">
-                    <td class="data-cell text-slate-400">
-                        {{ (pagination.page - 1) * pagination.size + index + 1 }}
-                    </td>
-                    <td class="data-cell">
-                        <div class="text-truncate" :title="item.ma">{{ item.ma || '-' }}</div>
-                    </td>
-                    <td class="data-cell text-left px-4">
-                        <div class="text-truncate font-weight-medium text-slate-700" :title="item.ten">{{ item.ten || '-' }}</div>
-                    </td>
-                    <td class="data-cell">
-                        <v-chip
-                            size="small"
-                            variant="flat"
-                            :class="['gender-chip', item.gioiTinh ? 'gender-chip-male' : 'gender-chip-female']"
-                        >
-                            {{ item.gioiTinh === true ? 'Nam' : item.gioiTinh === false ? 'Nữ' : '-' }}
-                        </v-chip>
-                    </td>
-                    <td class="data-cell contact-cell px-4">
-                        <div class="d-inline-flex flex-column align-start" style="width: 100%; overflow: hidden;">
-                            <div class="info-line text-slate-700 mb-1 text-truncate" style="width: 100%;" :title="item.sdt">
-                                <v-icon size="14" class="mr-2 text-slate-400">mdi-phone</v-icon>
-                                <span>{{ item.sdt || '-' }}</span>
-                            </div>
-                            <div v-if="hasValue(item.email)" class="info-line d-flex align-center text-slate-500 text-truncate" style="width: 100%;" :title="item.email">
-                                <v-icon size="14" class="mr-2">mdi-email-outline</v-icon>{{ item.email }}
-                            </div>
-                        </div>
-                    </td>
-                    <td class="data-cell text-left px-4">
-                        <div class="line-clamp-2 text-slate-500" :title="getAddressSummary(item)">{{ getAddressSummary(item) }}</div>
-                    </td>
-                    <td class="data-cell">
-                        <v-chip
-                            size="small"
-                            variant="flat"
-                            :class="['status-chip', item.trangThai === 'DANG_HOAT_DONG' ? 'status-chip-active' : 'status-chip-inactive']"
-                        >
-                            {{ getStatusLabel(item.trangThai) }}
-                        </v-chip>
-                    </td>
-                    <td class="data-cell action-cell">
-                        <div class="d-flex align-center justify-center action-controls">
-                            <!-- Địa chỉ -->
-                            <v-btn variant="text" class="action-icon-btn" @click.stop="openAddrDialog(item)">
-                                <MapPinIcon />
-                                <v-tooltip activator="parent" location="top">Quản lý địa chỉ</v-tooltip>
-                            </v-btn>
-                            <!-- Chỉnh sửa -->
-                            <v-btn
-                                variant="text"
-                                class="action-icon-btn"
-                                @click.stop="router.push({ name: 'KhachHangForm', params: { id: item.id } })"
-                            >
-                                <EditIcon />
-                                <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
-                            </v-btn>
-                            <!-- Switch trạng thái -->
-                            <div class="switch-wrapper">
-                                <v-switch
-                                    :model-value="isActiveStatus(item.trangThai)"
-                                    color="primary"
-                                    hide-details
-                                    density="compact"
-                                    class="tight-switch action-switch"
-                                    @click.prevent.stop="confirmChangeStatus(item)"
-                                />
-                                <v-tooltip activator="parent" location="top">Chuyển đổi trạng thái</v-tooltip>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            </template>
-
             <!-- Filter -->
             <div class="filter-shell">
                 <AdminFilter

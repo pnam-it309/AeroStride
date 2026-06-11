@@ -260,8 +260,8 @@ const onKeyUpEnter = (event, field, service, type, label) => {
             }
 
             const sizeNum = parseInt(val, 10);
-            if (isNaN(sizeNum) || sizeNum < 30 || sizeNum > 80) {
-                addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải nằm trong khoảng từ 30 đến 80', color: 'error' });
+            if (isNaN(sizeNum) || sizeNum < 40 || sizeNum > 60) {
+                addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải từ 40 đến 60', color: 'error' });
                 return;
             }
         }
@@ -469,6 +469,28 @@ const handleSubmit = async () => {
     const result = await formRef.value?.validate();
     if (!result?.valid) return;
 
+    const giaNhap = Number(formData.value.giaNhap);
+    const giaBan = Number(formData.value.giaBan);
+    const soLuong = Number(formData.value.soLuong);
+
+    if (!Number.isInteger(soLuong) || soLuong < 0) {
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Số lượng tồn kho phải là số nguyên lớn hơn hoặc bằng 0.',
+            color: 'error'
+        });
+        return;
+    }
+
+    if (giaBan < giaNhap) {
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Giá bán không được thấp hơn giá nhập.',
+            color: 'error'
+        });
+        return;
+    }
+
     emit('submit', { ...formData.value });
 };
 
@@ -549,7 +571,7 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                             <v-row class="variant-modal-fields">
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
-                                        <div class="field-label">Màu sắc</div>
+                                        <div class="field-label">Màu sắc <span class="text-error">*</span></div>
                                         <v-combobox
                                             v-model="formData.idMauSac"
                                             v-bind="comboboxProps"
@@ -571,7 +593,7 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
-                                        <div class="field-label">Số lượng tồn</div>
+                                        <div class="field-label">Số lượng tồn <span class="text-error">*</span></div>
                                         <FormattedNumberField
                                             v-model="formData.soLuong"
                                             min="0"
@@ -587,7 +609,7 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 
                                 <v-col cols="12" md="6">
                                     <div class="form-group">
-                                        <div class="field-label">Kích thước</div>
+                                        <div class="field-label">Kích thước <span class="text-error">*</span></div>
                                         <v-combobox
                                             v-model="formData.idKichThuoc"
                                             v-bind="comboboxProps"
@@ -643,7 +665,7 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 
                                 <v-col cols="12">
                                     <div class="form-group">
-                                        <div class="field-label">Giá bán (VNĐ)</div>
+                                        <div class="field-label">Giá bán (VNĐ) <span class="text-error">*</span></div>
                                         <FormattedNumberField
                                             v-model="formData.giaBan"
                                             min="0"

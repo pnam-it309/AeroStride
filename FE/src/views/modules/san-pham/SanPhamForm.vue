@@ -63,6 +63,7 @@ const origins = ref([]);
 const purposes = ref([]);
 const colors = ref([]);
 const sizes = ref([]);
+const existingProductNames = ref([]);
 
 // Tìm kiếm nhanh cho Chip Group
 const colorSearch = ref('');
@@ -206,9 +207,9 @@ const handleAddCustomSize = async () => {
         return;
     }
 
-    // 2. Range > 0 và < 99
-    if (sizeNumber <= 0 || sizeNumber >= 99) {
-        addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải lớn hơn 0 và nhỏ hơn 99', color: 'error' });
+    // 2. Range 40 đến 70
+    if (sizeNumber < 40 || sizeNumber > 70) {
+        addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải từ 40 đến 70', color: 'error' });
         return;
     }
 
@@ -1121,7 +1122,7 @@ const persistVariantStatus = async (variant, nextStatus) => {
 const buildProductPayload = ({ includeVariants = false } = {}) => {
     const payload = {
         maSanPham: product.value.maSanPham || null,
-        tenSanPham: product.value.tenSanPham,
+        tenSanPham: product.value.tenSanPham || null,
         idThuongHieu: product.value.idThuongHieu,
         idDanhMuc: product.value.idDanhMuc,
         idXuatXu: product.value.idXuatXu,
@@ -1393,7 +1394,16 @@ const removeDraftVariantByIndex = (index) => {
 
 const fetchFormOptions = async () => {
     try {
-        const opts = await dichVuSanPham.layOptionsForm().catch(() => null);
+        const [opts, productsRes] = await Promise.all([
+            dichVuSanPham.layOptionsForm().catch(() => null),
+            dichVuSanPham.layDanhSachSanPham({ size: 1000 }).catch(() => null)
+        ]);
+
+        if (productsRes) {
+            const productList = Array.isArray(productsRes.content) ? productsRes.content : (Array.isArray(productsRes) ? productsRes : []);
+            existingProductNames.value = [...new Set(productList.map(p => p.tenSanPham).filter(Boolean))];
+        }
+
         if (opts) {
             brands.value = opts.thuongHieus || [];
             categories.value = opts.danhMucs || [];
@@ -1437,7 +1447,7 @@ const fetchFormOptions = async () => {
 // FORM STATE
 const product = ref({
     maSanPham: '',
-    tenSanPham: '',
+    tenSanPham: null,
     moTa: '',
     idThuongHieu: null,
     idDanhMuc: null,
@@ -1457,7 +1467,7 @@ const loadProduct = async (id) => {
     const data = await dichVuSanPham.layChiTietSanPham(id);
     product.value = {
         maSanPham: data.maSanPham || data.ma || '',
-        tenSanPham: data.tenSanPham || '',
+        tenSanPham: data.tenSanPham || null,
         moTa: data.moTa || '',
         idThuongHieu: data.idThuongHieu || null,
         idDanhMuc: data.idDanhMuc || null,
@@ -1564,6 +1574,15 @@ const validateProduct = () => {
         return false;
     }
 
+    if (product.value.tenSanPham && product.value.tenSanPham.length > 255) {
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Tên sản phẩm không được vượt quá 255 ký tự',
+            color: 'error'
+        });
+        return false;
+    }
+
     if (!isEditMode.value && variantItems.value.length === 0) {
         addNotification({
             title: 'Thiếu biến thể',
@@ -1573,21 +1592,56 @@ const validateProduct = () => {
         return false;
     }
 
-    const invalidVariant = variantItems.value.find(item => (
-        !item.idMauSac
-        || !item.idKichThuoc
-        || item.soLuong < 0
-        || item.giaNhap < 0
-        || item.giaBan < 0
-    ));
+    for (let i = 0; i < variantItems.value.length; i++) {
+        const item = variantItems.value[i];
+        if (!item.idMauSac || !item.idKichThuoc) {
+            addNotification({
+                title: 'Lỗi',
+                subtitle: 'Danh sách biến thể có dữ liệu chưa hợp lệ. Vui lòng kiểm tra lại màu sắc và kích thước.',
+                color: 'error'
+            });
+            return false;
+        }
 
-    if (invalidVariant) {
-        addNotification({
-            title: 'Lỗi',
-            subtitle: 'Danh sách biến thể có dữ liệu chưa hợp lệ. Vui lòng kiểm tra lại màu sắc, kích thước, tồn kho và giá.',
-            color: 'error'
-        });
-        return false;
+        const soLuong = Number(item.soLuong);
+        const giaNhap = Number(item.giaNhap);
+        const giaBan = Number(item.giaBan);
+
+        if (isNaN(soLuong) || soLuong < 0 || !Number.isInteger(soLuong)) {
+            addNotification({
+                title: 'Lỗi',
+                subtitle: 'Số lượng tồn kho của biến thể không hợp lệ (phải là số nguyên lớn hơn hoặc bằng 0).',
+                color: 'error'
+            });
+            return false;
+        }
+
+        if (isNaN(giaNhap) || giaNhap < 0) {
+            addNotification({
+                title: 'Lỗi',
+                subtitle: 'Giá nhập của biến thể không hợp lệ.',
+                color: 'error'
+            });
+            return false;
+        }
+
+        if (isNaN(giaBan) || giaBan < 0) {
+            addNotification({
+                title: 'Lỗi',
+                subtitle: 'Giá bán của biến thể không hợp lệ.',
+                color: 'error'
+            });
+            return false;
+        }
+
+        if (giaBan < giaNhap) {
+            addNotification({
+                title: 'Lỗi',
+                subtitle: `Biến thể (Màu: ${item.tenMauSac || getVariantColorLabel(item.idMauSac)}, Size: ${item.tenKichThuoc || getVariantSizeLabel(item.idKichThuoc)}) có giá bán (${formatCurrency(giaBan)}) thấp hơn giá nhập (${formatCurrency(giaNhap)}). Vui lòng kiểm tra lại.`,
+                color: 'error'
+            });
+            return false;
+        }
     }
 
     return true;
@@ -1861,18 +1915,19 @@ const handleSave = async () => {
                             <v-col cols="12" md="3">
                                 <div class="field-label">Mã sản phẩm</div>
                                 <v-text-field v-model="product.maSanPham" readonly
-                                    :placeholder="isEditMode ? '' : 'Mã tự động tạo...'"
-                                    variant="outlined" density="comfortable" class="custom-input mono-font" hide-details>
+                                    :placeholder="isEditMode ? '' : 'Mã tự động tạo...'" variant="outlined"
+                                    density="comfortable" class="custom-input mono-font" hide-details>
                                 </v-text-field>
                             </v-col>
                             <v-col cols="12" md="3">
-                                <div class="field-label">Tên sản phẩm</div>
-                                <v-text-field v-model="product.tenSanPham" placeholder="Ví dụ: Giày Nike Air..."
-                                    :rules="[rules.required]" variant="outlined" density="comfortable"
-                                    hide-details="auto" maxlength="250"></v-text-field>
+                                <div class="field-label">Tên sản phẩm <span class="text-error">*</span></div>
+                                <v-combobox v-model="product.tenSanPham" :items="existingProductNames"
+                                    placeholder="Ví dụ: Giày Nike Air..." :rules="[rules.required]" variant="outlined"
+                                    density="comfortable" hide-details="auto" maxlength="250"
+                                    :return-object="false"></v-combobox>
                             </v-col>
                             <v-col cols="12" md="3">
-                                <div class="field-label">Thương hiệu</div>
+                                <div class="field-label">Thương hiệu <span class="text-error">*</span></div>
                                 <v-combobox v-model="product.idThuongHieu" v-model:search="searchQueries.idThuongHieu"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayBrands"
                                     item-title="ten" item-value="id" :rules="[rules.required]"
@@ -1890,7 +1945,7 @@ const handleSave = async () => {
                                 </v-combobox>
                             </v-col>
                             <v-col cols="12" md="3">
-                                <div class="field-label">Danh mục</div>
+                                <div class="field-label">Danh mục <span class="text-error">*</span></div>
                                 <v-combobox v-model="product.idDanhMuc" v-model:search="searchQueries.idDanhMuc"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayCategories"
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Danh mục..."
@@ -1910,7 +1965,7 @@ const handleSave = async () => {
 
                             <!-- HÀNG 2: THUỘC TÍNH PHÂN LOẠI -->
                             <v-col cols="12" md="3">
-                                <div class="field-label">Xuất xứ</div>
+                                <div class="field-label">Xuất xứ <span class="text-error">*</span></div>
                                 <v-combobox v-model="product.idXuatXu" v-model:search="searchQueries.idXuatXu"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayOrigins"
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Xuất xứ"
@@ -1928,7 +1983,7 @@ const handleSave = async () => {
                                 </v-combobox>
                             </v-col>
                             <v-col cols="12" md="3">
-                                <div class="field-label">Chất liệu</div>
+                                <div class="field-label">Chất liệu <span class="text-error">*</span></div>
                                 <v-combobox v-model="product.idChatLieu" v-model:search="searchQueries.idChatLieu"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayMaterials"
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Chất liệu"
@@ -1946,15 +2001,14 @@ const handleSave = async () => {
                                 </v-combobox>
                             </v-col>
                             <v-col cols="12" md="3">
-                                <div class="field-label">Đối tượng</div>
+                                <div class="field-label">Đối tượng <span class="text-error">*</span></div>
                                 <v-select v-model="product.gioiTinhKhachHang"
                                     :items="[{ title: 'Nam', value: 'NAM' }, { title: 'Nữ', value: 'NU' }, { title: 'Unisex', value: 'UNISEX' }]"
-                                    :rules="[rules.required]" clearable
-                                    variant="outlined" density="comfortable"
+                                    :rules="[rules.required]" clearable variant="outlined" density="comfortable"
                                     placeholder="Đối tượng"></v-select>
                             </v-col>
                             <v-col cols="12" md="3">
-                                <div class="field-label">Mục đích</div>
+                                <div class="field-label">Mục đích <span class="text-error">*</span></div>
                                 <v-combobox v-model="product.idMucDichChay" v-model:search="searchQueries.idMucDichChay"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayPurposes"
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Mục đích"
@@ -1974,7 +2028,7 @@ const handleSave = async () => {
 
                             <!-- HÀNG 3: THÔNG SỐ VÀ MÔ TẢ -->
                             <v-col cols="12" md="6">
-                                <div class="field-label">Loại đế</div>
+                                <div class="field-label">Loại đế <span class="text-error">*</span></div>
                                 <v-combobox v-model="product.idDeGiay" v-model:search="searchQueries.idDeGiay"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displaySoles"
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Loại đế"
@@ -1992,7 +2046,7 @@ const handleSave = async () => {
                                 </v-combobox>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Loại cổ</div>
+                                <div class="field-label">Loại cổ <span class="text-error">*</span></div>
                                 <v-combobox v-model="product.idCoGiay" v-model:search="searchQueries.idCoGiay"
                                     v-bind="comboboxProps" :custom-filter="() => true" :items="displayCollars"
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Loại cổ"
@@ -2033,7 +2087,7 @@ const handleSave = async () => {
 
                         <div class="mt-2 flex-grow-1">
                             <!-- MÀU SẮC -->
-                            <div class="field-label mb-3">Màu sắc</div>
+                            <div class="field-label mb-3">Màu sắc <span class="text-error">*</span></div>
                             <div class="d-flex flex-wrap gap-4 mb-8">
                                 <div v-for="c in colors.filter(x => selectedColors.includes(x.id))" :key="c.id"
                                     class="text-center cursor-pointer" @click="toggleColor(c.id)">
@@ -2118,7 +2172,7 @@ const handleSave = async () => {
                             </div>
 
                             <!-- KÍCH THƯỚC -->
-                            <div class="field-label mb-3 mt-2">Kích thước</div>
+                            <div class="field-label mb-3 mt-2">Kích thước <span class="text-error">*</span></div>
                             <div class="d-flex flex-wrap gap-2 mb-4">
                                 <v-chip v-for="s in sortedSizes.filter(x => selectedSizes.includes(x.id))" :key="s.id"
                                     variant="flat" color="primary"
@@ -2142,9 +2196,11 @@ const handleSave = async () => {
                                                 @click="showSizeMenu = false"></v-btn>
                                         </div>
                                         <div class="d-flex gap-2 mb-4">
-                                            <v-text-field :model-value="customSizeName" @update:model-value="customSizeName = String($event || '').replace(/[^0-9]/g, '')" prepend-inner-icon="mdi-magnify"
-                                                placeholder="Nhập kích thước" variant="outlined" density="compact"
-                                                hide-details class="bg-slate-50" maxlength="250" type="number" min="0"></v-text-field>
+                                            <v-text-field :model-value="customSizeName"
+                                                @update:model-value="customSizeName = String($event || '').replace(/[^0-9]/g, '')"
+                                                prepend-inner-icon="mdi-magnify" placeholder="Nhập kích thước"
+                                                variant="outlined" density="compact" hide-details class="bg-slate-50"
+                                                maxlength="250" type="number" min="0"></v-text-field>
                                             <v-btn color="primary" class="rounded-lg text-none font-weight-medium"
                                                 height="40" @click="handleAddCustomSize">
                                                 <v-icon start size="18">mdi-plus</v-icon> Thêm
@@ -2217,7 +2273,8 @@ const handleSave = async () => {
                             </div>
 
                             <div v-if="variantItems.length > 0" class="variants-tab-container mb-6">
-                                <v-row no-gutters class="rounded-lg overflow-hidden" style="height: 600px; border: 1px solid #cbd5e1 !important;">
+                                <v-row no-gutters class="rounded-lg overflow-hidden"
+                                    style="height: 600px; border: 1px solid #cbd5e1 !important;">
                                     <!-- Sidebar Màu sắc -->
                                     <v-col cols="12" md="3" class="bg-slate-50 d-flex flex-column h-100"
                                         style="border-right: 1px solid #cbd5e1;">
@@ -2277,15 +2334,15 @@ const handleSave = async () => {
                                                 <span
                                                     class="text-caption font-weight-bold text-slate-500 mr-2 d-none d-sm-block">
                                                     áp dụng nhanh:</span>
-                                                <FormattedNumberField v-model="quickApplyValues.giaBan" placeholder="Giá bán"
-                                                    variant="outlined" density="compact" hide-details
-                                                    class="custom-input-dense" style="width: 120px" />
-                                                <FormattedNumberField v-model="quickApplyValues.giaNhap" placeholder="Giá nhập"
-                                                    variant="outlined" density="compact" hide-details
-                                                    class="custom-input-dense" style="width: 120px" />
-                                                <FormattedNumberField v-model="quickApplyValues.soLuong" placeholder="Số lượng"
-                                                    variant="outlined" density="compact" hide-details
-                                                    class="custom-input-dense" style="width: 120px" />
+                                                <FormattedNumberField v-model="quickApplyValues.giaBan"
+                                                    placeholder="Giá bán" variant="outlined" density="compact"
+                                                    hide-details class="custom-input-dense" style="width: 120px" />
+                                                <FormattedNumberField v-model="quickApplyValues.giaNhap"
+                                                    placeholder="Giá nhập" variant="outlined" density="compact"
+                                                    hide-details class="custom-input-dense" style="width: 120px" />
+                                                <FormattedNumberField v-model="quickApplyValues.soLuong"
+                                                    placeholder="Số lượng" variant="outlined" density="compact"
+                                                    hide-details class="custom-input-dense" style="width: 120px" />
                                                 <v-btn color="primary" variant="flat" size="small"
                                                     class="text-none rounded font-weight-bold"
                                                     style="color: white !important" height="40"
@@ -2299,15 +2356,15 @@ const handleSave = async () => {
                                             class="py-3 bg-slate-50 d-flex align-center justify-center flex-shrink-0"
                                             style="border-bottom: 2px solid #cbd5e1; box-shadow: inset 0 -4px 6px -4px rgba(0,0,0,0.05); z-index: 10;">
                                             <div class="d-flex flex-column align-center">
-                                                <div class="text-caption font-weight-bold text-slate-600 mb-2">HÌNH ẢNH ĐẠI DIỆN CHO MÀU NÀY</div>
+                                                <div class="text-caption font-weight-bold text-slate-600 mb-2">HÌNH ẢNH
+                                                    ĐẠI DIỆN CHO MÀU NÀY</div>
                                                 <div class="color-image-uploader elevation-1"
                                                     @click="openColorImagePicker(activeColorTab)"
                                                     style="width: 70px; height: 70px; border-radius: 8px; border: 2px dashed #cbd5e1; cursor: pointer; overflow: hidden; background: white">
                                                     <v-img v-if="getColorUploadEntry(activeColorTab).url"
                                                         :src="getColorUploadEntry(activeColorTab).url" cover
                                                         class="w-100 h-100" />
-                                                    <div v-else
-                                                        class="w-100 h-100 d-flex align-center justify-center">
+                                                    <div v-else class="w-100 h-100 d-flex align-center justify-center">
                                                         <v-icon icon="mdi-camera-plus" color="slate-400" size="24" />
                                                     </div>
                                                     <input :ref="(el) => setColorFileInputRef(activeColorTab, el)"
@@ -2318,21 +2375,26 @@ const handleSave = async () => {
                                         </div>
 
                                         <div class="flex-grow-1" style="min-height: 0;">
-                                            <v-table class="variant-inner-table h-100"
-                                                fixed-header>
+                                            <v-table class="variant-inner-table h-100" fixed-header>
                                                 <thead class="bg-white">
                                                     <tr>
-                                                        <th class="text-left font-weight-bold text-slate-800 text-caption" style="border-bottom: 1px solid #cbd5e1 !important;">Thuộc tính
+                                                        <th class="text-left font-weight-bold text-slate-800 text-caption"
+                                                            style="border-bottom: 1px solid #cbd5e1 !important;">Thuộc
+                                                            tính
                                                             (Màu/Size)</th>
                                                         <th class="text-left font-weight-bold text-slate-800 text-caption"
-                                                            style="width: 140px; border-bottom: 1px solid #cbd5e1 !important;">Giá bán (đ)</th>
+                                                            style="width: 140px; border-bottom: 1px solid #cbd5e1 !important;">
+                                                            Giá bán (đ)</th>
                                                         <th class="text-left font-weight-bold text-slate-800 text-caption"
-                                                            style="width: 140px; border-bottom: 1px solid #cbd5e1 !important;">Giá nhập (đ)</th>
+                                                            style="width: 140px; border-bottom: 1px solid #cbd5e1 !important;">
+                                                            Giá nhập (đ)</th>
                                                         <th class="text-left font-weight-bold text-slate-800 text-caption"
-                                                            style="width: 110px; border-bottom: 1px solid #cbd5e1 !important;">Số lượng sản phẩm
+                                                            style="width: 110px; border-bottom: 1px solid #cbd5e1 !important;">
+                                                            Số lượng sản phẩm
                                                         </th>
                                                         <th class="text-center font-weight-bold text-slate-800 text-caption"
-                                                            style="width: 60px; border-bottom: 1px solid #cbd5e1 !important;">Hành động</th>
+                                                            style="width: 60px; border-bottom: 1px solid #cbd5e1 !important;">
+                                                            Hành động</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -2349,7 +2411,7 @@ const handleSave = async () => {
                                                                     </div>
                                                                     <div class="text-caption text-slate-500">{{
                                                                         getVariantColorLabel(variant.idMauSac)
-                                                                    }}</div>
+                                                                        }}</div>
                                                                 </div>
                                                             </div>
                                                         </td>
@@ -2364,8 +2426,8 @@ const handleSave = async () => {
                                                                 class="custom-input-dense" />
                                                         </td>
                                                         <td>
-                                                            <FormattedNumberField v-model="variant.soLuong"
-                                                                hide-details variant="outlined" density="compact"
+                                                            <FormattedNumberField v-model="variant.soLuong" hide-details
+                                                                variant="outlined" density="compact"
                                                                 class="custom-input-dense" />
                                                         </td>
                                                         <td class="text-center">
@@ -2379,7 +2441,8 @@ const handleSave = async () => {
                                                 </tbody>
                                             </v-table>
                                         </div>
-                                        <div class="flex-shrink-0 bg-white py-3 px-4" style="border-top: 2px solid #cbd5e1 !important;">
+                                        <div class="flex-shrink-0 bg-white py-3 px-4"
+                                            style="border-top: 2px solid #cbd5e1 !important;">
                                             <AdminPagination v-model="createVariantPage"
                                                 :page-size="createVariantPageSize"
                                                 @update:pageSize="createVariantPageSize = $event"
@@ -2613,18 +2676,17 @@ const handleSave = async () => {
 
                     <v-row>
                         <v-col cols="12">
-                            <div class="field-label">Số lượng</div>
-                            <FormattedNumberField v-model="bulkEditModal.form.soLuong"
-                                placeholder="Nhập số lượng..." variant="outlined" density="comfortable" hide-details
-                                class="custom-input" />
+                            <div class="field-label">Số lượng <span class="text-error">*</span></div>
+                            <FormattedNumberField v-model="bulkEditModal.form.soLuong" placeholder="Nhập số lượng..."
+                                variant="outlined" density="comfortable" hide-details class="custom-input" />
                         </v-col>
                         <v-col cols="12">
-                            <div class="field-label">Giá nhập</div>
+                            <div class="field-label">Giá nhập <span class="text-error">*</span></div>
                             <FormattedNumberField v-model="bulkEditModal.form.giaNhap" placeholder="Nhập giá nhập..."
                                 variant="outlined" density="comfortable" hide-details class="custom-input" />
                         </v-col>
                         <v-col cols="12">
-                            <div class="field-label">Giá bán (VNĐ)</div>
+                            <div class="field-label">Giá bán (VNĐ) <span class="text-error">*</span></div>
                             <FormattedNumberField v-model="bulkEditModal.form.giaBan" placeholder="Nhập giá bán..."
                                 variant="outlined" density="comfortable" hide-details class="custom-input" />
                         </v-col>

@@ -38,7 +38,7 @@ const saving = ref(false);
 const isEditMode = ref(false);
 const isDetailView = computed(() => route.path.includes('/detail') || route.query.view === 'true');
 const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật nhân viên' : 'Thêm nhân viên');
-const showPassword = ref(false);
+
 
 const employeeForm = ref({
     ma: '',
@@ -242,6 +242,52 @@ const loadEmployee = async (id) => {
 };
 
 const handleSave = () => {
+    const rawName = employeeForm.value.ten;
+    if (!rawName || !String(rawName).trim()) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập họ và tên nhân viên', color: 'error' });
+        return;
+    }
+    if (String(rawName).trim().length > 255) {
+        addNotification({ title: 'Lỗi', subtitle: 'Họ và tên không được vượt quá 255 ký tự', color: 'error' });
+        return;
+    }
+
+    const email = employeeForm.value.email;
+    if (!email || !String(email).trim()) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập email', color: 'error' });
+        return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Email không đúng định dạng', color: 'error' });
+        return;
+    }
+
+    const phone = employeeForm.value.sdt;
+    if (!phone || !String(phone).trim()) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập số điện thoại', color: 'error' });
+        return;
+    }
+    const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+    if (!phoneRegex.test(phone) || String(phone).length < 10 || String(phone).length > 11) {
+        addNotification({ title: 'Lỗi', subtitle: 'Số điện thoại không hợp lệ', color: 'error' });
+        return;
+    }
+
+    if (employeeForm.value.ngaySinh) {
+        const bd = new Date(employeeForm.value.ngaySinh).getTime();
+        const now = new Date().getTime();
+        if (bd > now) {
+            addNotification({ title: 'Lỗi', subtitle: 'Ngày sinh không thể ở trong tương lai', color: 'error' });
+            return;
+        }
+    }
+
+    if (!employeeForm.value.tinh || !employeeForm.value.thanhPho || !employeeForm.value.phuongXa || !employeeForm.value.diaChiChiTiet) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng điền đầy đủ địa chỉ thường trú', color: 'error' });
+        return;
+    }
+
     confirmDialog.value = {
         show: true,
         title: isEditMode.value ? 'Cập nhật nhân viên' : 'Thêm nhân viên mới',
@@ -294,7 +340,8 @@ const handleSave = () => {
                 router.push(PATH.NHAN_VIEN);
             } catch (error) {
                 console.error('Employee save error:', error);
-                addNotification({ title: 'Lỗi', subtitle: 'Có lỗi xảy ra khi lưu thông tin', color: 'error' });
+                const errMsg = error.response?.data?.message || error.response?.data || 'Có lỗi xảy ra khi lưu thông tin';
+                addNotification({ title: 'Lỗi', subtitle: errMsg, color: 'error' });
             } finally {
                 saving.value = false;
                 confirmDialog.value.show = false;
@@ -454,20 +501,20 @@ onMounted(async () => {
                                     variant="outlined" density="comfortable" class="bg-slate-50"
                                     hide-details></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="8">
-                                <div class="field-label">Họ và tên *</div>
+                            <v-col cols="12" md="6">
+                                <div class="field-label">Họ và tên <span class="text-error">*</span></div>
                                 <v-text-field v-model="employeeForm.ten" :readonly="isDetailView"
                                     placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Email / Tài khoản *</div>
+                                <div class="field-label">Email / Tài khoản <span class="text-error">*</span></div>
                                 <v-text-field v-model="employeeForm.email" :readonly="isDetailView"
                                     placeholder="name@company.com" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Số điện thoại *</div>
+                                <div class="field-label">Số điện thoại <span class="text-error">*</span></div>
                                 <v-text-field v-model="employeeForm.sdt" :readonly="isDetailView"
                                     placeholder="09xx.xxx.xxx" variant="outlined" density="compact"
                                     hide-details></v-text-field>
@@ -478,12 +525,7 @@ onMounted(async () => {
                                     placeholder="Nhập tên tài khoản..." variant="outlined" bg-color="white"
                                     density="compact" hide-details></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="field-label">Số điện thoại</div>
-                                <v-text-field v-model="employeeForm.sdt" :readonly="isDetailView"
-                                    placeholder="09xx.xxx.xxx" variant="outlined" bg-color="white" density="compact"
-                                    hide-details></v-text-field>
-                            </v-col>
+
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
                                 <v-text-field v-model="employeeForm.ngaySinh" :readonly="isDetailView" type="date"

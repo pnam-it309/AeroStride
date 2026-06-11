@@ -250,13 +250,27 @@ const loadItems = async () => {
 };
 
 const confirmSaveItem = () => {
-    if (selectedTab.value === 'sizes') {
-        const rawInput = itemForm.value.ten;
-        if (!rawInput || !rawInput.trim()) {
-            addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập tên kích thước', color: 'error' });
+    const rawName = itemForm.value.ten;
+    if (!rawName || !String(rawName).trim()) {
+        addNotification({ title: 'Lỗi', subtitle: `Vui lòng nhập tên ${getCurrentTabTitle().toLowerCase()}`, color: 'error' });
+        return;
+    }
+
+    if (String(rawName).trim().length > 255) {
+        addNotification({ title: 'Lỗi', subtitle: `Tên ${getCurrentTabTitle().toLowerCase()} không được vượt quá 255 ký tự`, color: 'error' });
+        return;
+    }
+
+    if (selectedTab.value === 'colors') {
+        const hex = itemForm.value.maMauHex;
+        if (!hex || !/^#[0-9A-Fa-f]{3,6}$/i.test(hex)) {
+            addNotification({ title: 'Lỗi', subtitle: 'Mã màu Hex không hợp lệ (VD: #FFFFFF)', color: 'error' });
             return;
         }
+    }
 
+    if (selectedTab.value === 'sizes') {
+        const rawInput = itemForm.value.ten;
         let s = rawInput.replace(/<[^>]*>?/gm, '');
         s = s.replace(/[^a-zA-Z0-9.,\-\s]/g, '');
         s = s.replace(/(?:^|\s)(?:kích thước|size|sz)\s*/gi, '');

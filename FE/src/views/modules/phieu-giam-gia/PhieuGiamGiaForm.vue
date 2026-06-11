@@ -244,6 +244,81 @@ const confirmDialog = ref({
 });
 
 const handleSave = () => {
+    const rawName = form.value.ten;
+    if (!rawName || !String(rawName).trim()) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập tên phiếu giảm giá', color: 'error' });
+        return;
+    }
+    if (String(rawName).trim().length > 255) {
+        addNotification({ title: 'Lỗi', subtitle: 'Tên phiếu giảm giá không được vượt quá 255 ký tự', color: 'error' });
+        return;
+    }
+
+    if (form.value.loaiPhieu === 'TIEN_MAT') {
+        const val = Number(form.value.soTienGiam);
+        if (!val || val <= 0) {
+            addNotification({ title: 'Lỗi', subtitle: 'Số tiền giảm phải lớn hơn 0', color: 'error' });
+            return;
+        }
+        if (!Number.isInteger(val)) {
+            addNotification({ title: 'Lỗi', subtitle: 'Số tiền giảm phải là số nguyên', color: 'error' });
+            return;
+        }
+    } else {
+        const val = Number(form.value.phanTramGiamGia);
+        if (!val || val <= 0 || val > 100) {
+            addNotification({ title: 'Lỗi', subtitle: 'Phần trăm giảm giá phải từ 1 đến 100', color: 'error' });
+            return;
+        }
+        if (!Number.isInteger(val)) {
+            addNotification({ title: 'Lỗi', subtitle: 'Phần trăm giảm giá phải là số nguyên', color: 'error' });
+            return;
+        }
+        
+        const giamToiDa = Number(form.value.giamToiDa);
+        if (giamToiDa < 0) {
+            addNotification({ title: 'Lỗi', subtitle: 'Mức giảm tối đa không hợp lệ', color: 'error' });
+            return;
+        }
+    }
+
+    if (!isInfinite.value) {
+        const sl = Number(form.value.soLuong);
+        if (!sl || sl <= 0 || !Number.isInteger(sl)) {
+            addNotification({ title: 'Lỗi', subtitle: 'Số lượng phiếu phải là số nguyên dương', color: 'error' });
+            return;
+        }
+    }
+
+    const minOrder = Number(form.value.giatriToiThieu);
+    if (minOrder < 0 || !Number.isInteger(minOrder)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Hóa đơn tối thiểu không hợp lệ', color: 'error' });
+        return;
+    }
+
+    if (!form.value.ngayBatDau) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng chọn ngày bắt đầu', color: 'error' });
+        return;
+    }
+
+    if (!form.value.ngayKetThuc) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng chọn ngày kết thúc', color: 'error' });
+        return;
+    }
+
+    const startDate = new Date(form.value.ngayBatDau).getTime();
+    const endDate = new Date(form.value.ngayKetThuc).getTime();
+
+    if (startDate >= endDate) {
+        addNotification({ title: 'Lỗi', subtitle: 'Ngày kết thúc phải sau ngày bắt đầu', color: 'error' });
+        return;
+    }
+
+    if (form.value.loaiHienThi === 'CA_NHAN' && selectedCustomerIds.value.length === 0) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng chọn ít nhất 1 khách hàng', color: 'error' });
+        return;
+    }
+
     confirmDialog.value = {
         show: true,
         title: isEditMode.value ? 'Cập nhật phiếu giảm giá' : 'Thiết lập phiếu giảm giá mới',
@@ -331,7 +406,7 @@ onMounted(init);
                                 </v-text-field>
                             </v-col>
                             <v-col cols="12" md="8">
-                                <div class="field-label">Tên giảm giá </div>
+                                <div class="field-label">Tên giảm giá <span class="text-error">*</span></div>
                                 <v-text-field v-model="form.ten" :readonly="isViewOnly"
                                     placeholder="Ví dụ: Phiếu giảm giá Mừng Sinh Nhật..." variant="outlined" density="compact"
                                     hide-details></v-text-field>
@@ -339,7 +414,7 @@ onMounted(init);
 
                             <!-- 2. Hình thức giảm, Giá trị giảm & Giảm tối đa -->
                             <v-col cols="12" md="4">
-                                <div class="field-label">Hình thức giảm</div>
+                                <div class="field-label">Hình thức giảm <span class="text-error">*</span></div>
                                 <v-radio-group v-model="form.loaiPhieu" inline :readonly="isViewOnly" hide-details
                                     class="mt-0 pt-0">
                                     <v-radio label="VNĐ" value="TIEN_MAT" color="primary" class="mr-15"></v-radio>
@@ -348,7 +423,7 @@ onMounted(init);
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">
-                                    Giá trị giảm ({{ form.loaiPhieu === 'TIEN_MAT' ? 'VNĐ' : '%' }})</div>
+                                    Giá trị giảm ({{ form.loaiPhieu === 'TIEN_MAT' ? 'VNĐ' : '%' }}) <span class="text-error">*</span></div>
                                 <v-text-field v-if="form.loaiPhieu === 'TIEN_MAT'" v-model.number="form.soTienGiam"
                                     :readonly="isViewOnly" type="number" placeholder="0" variant="outlined"
                                     density="compact" hide-details></v-text-field>
@@ -367,7 +442,7 @@ onMounted(init);
                             <!-- 3. Số lượng sử dụng, Hóa đơn tối thiểu & Loại phiếu -->
                             <v-col cols="12" md="4">
                                 <div class="d-flex align-center justify-space-between mb-2" style="height: 24px;">
-                                    <div class="field-label mb-0">Số lượng sử dụng </div>
+                                    <div class="field-label mb-0">Số lượng sử dụng <span class="text-error">*</span></div>
                                     <v-switch v-model="isInfinite"
                                         :readonly="isViewOnly || form.loaiHienThi === 'CA_NHAN'" label="Vô hạn"
                                         color="primary" density="compact" hide-details
@@ -382,7 +457,7 @@ onMounted(init);
                             <v-col cols="12" md="4">
                                 <div class="field-label"
                                     style="height: 24px; display: flex; align-items: center; margin-bottom: 8px;">
-                                    Hóa đơn tối thiểu (VNĐ)</div>
+                                    Hóa đơn tối thiểu (VNĐ) <span class="text-error">*</span></div>
                                 <v-text-field v-model.number="form.giatriToiThieu" :readonly="isViewOnly" type="number"
                                     placeholder="0" variant="outlined" density="compact" hide-details></v-text-field>
                             </v-col>
@@ -406,13 +481,13 @@ onMounted(init);
 
                             <!-- 4. Ngày bắt đầu & Ngày kết thúc -->
                             <v-col cols="12" md="6">
-                                <div class="field-label">Ngày bắt đầu </div>
+                                <div class="field-label">Ngày bắt đầu <span class="text-error">*</span></div>
                                 <v-text-field v-model="form.ngayBatDau" :readonly="isViewOnly" type="datetime-local"
                                     variant="outlined" density="compact" append-inner-icon="mdi-calendar-month-outline"
                                     @click:append-inner="openDatePicker" class="date-field" hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Ngày kết thúc </div>
+                                <div class="field-label">Ngày kết thúc <span class="text-error">*</span></div>
                                 <v-text-field v-model="form.ngayKetThuc" :readonly="isViewOnly" type="datetime-local"
                                     variant="outlined" density="compact" append-inner-icon="mdi-calendar-month-outline"
                                     @click:append-inner="openDatePicker" class="date-field" hide-details></v-text-field>

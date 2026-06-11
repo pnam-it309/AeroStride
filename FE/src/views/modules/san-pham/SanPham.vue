@@ -568,17 +568,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <v-container
-        fluid
-        class="pa-4 animate-fade-in font-body admin-module-page"
-        style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important"
-    >
-        <AdminBreadcrumbs
-            :items="[
-                { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
-                { title: 'Danh sách sản phẩm', disabled: true }
-            ]"
-        />
+    <v-container fluid class="pa-4 animate-fade-in font-body admin-module-page"
+        style="height: 100% !important; display: flex; flex-direction: column; overflow: hidden !important">
+        <AdminBreadcrumbs :items="[
+            { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
+            { title: 'Danh sách sản phẩm', disabled: true }
+        ]" />
 
         <div class="mb-2"></div>
 
@@ -586,62 +581,33 @@ onBeforeUnmount(() => {
             <AdminFilter @refresh="handleRefresh" :loading="isRefreshing">
                 <v-col cols="12" md="3">
                     <div class="filter-field-label">Tìm kiếm</div>
-                    <v-text-field
-                        v-model="filters.search"
-                        placeholder="Mã hoặc tên sản phẩm..."
-                        prepend-inner-icon="mdi-magnify"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        clearable
-                        class="compact-input"
-                        @update:model-value="handleSearch"
-                    />
+                    <v-text-field v-model="filters.search" placeholder="Mã hoặc tên sản phẩm..."
+                        prepend-inner-icon="mdi-magnify" variant="outlined" density="compact" hide-details clearable
+                        class="compact-input" @update:model-value="handleSearch" />
                 </v-col>
 
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Danh mục</div>
-                    <v-select
-                        v-model="filters.danhMuc"
-                        :items="[
-                            { title: 'Tất cả danh mục', value: null },
-                            ...filterOptions.danhMucs.map((danhMuc) => ({ title: danhMuc.ten, value: danhMuc.id }))
-                        ]"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        class="compact-input"
-                        @update:model-value="handleSearch"
-                    />
+                    <v-select v-model="filters.danhMuc" :items="[
+                        { title: 'Tất cả danh mục', value: null },
+                        ...filterOptions.danhMucs.map((danhMuc) => ({ title: danhMuc.ten, value: danhMuc.id }))
+                    ]" variant="outlined" density="compact" hide-details class="compact-input"
+                        @update:model-value="handleSearch" />
                 </v-col>
 
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Thương hiệu</div>
-                    <v-select
-                        v-model="filters.thuongHieu"
-                        :items="[
-                            { title: 'Tất cả thương hiệu', value: null },
-                            ...filterOptions.thuongHieus.map((thuongHieu) => ({ title: thuongHieu.ten, value: thuongHieu.id }))
-                        ]"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        class="compact-input"
-                        @update:model-value="handleSearch"
-                    />
+                    <v-select v-model="filters.thuongHieu" :items="[
+                        { title: 'Tất cả thương hiệu', value: null },
+                        ...filterOptions.thuongHieus.map((thuongHieu) => ({ title: thuongHieu.ten, value: thuongHieu.id }))
+                    ]" variant="outlined" density="compact" hide-details class="compact-input"
+                        @update:model-value="handleSearch" />
                 </v-col>
 
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Trạng thái</div>
-                    <v-select
-                        v-model="filters.trangThai"
-                        :items="STATUS_OPTIONS"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        class="compact-input"
-                        @update:model-value="handleSearch"
-                    />
+                    <v-select v-model="filters.trangThai" :items="STATUS_OPTIONS" variant="outlined" density="compact"
+                        hide-details class="compact-input" @update:model-value="handleSearch" />
                 </v-col>
                 <template #after>
                     <v-col cols="12" class="mt-4 pa-0">
@@ -654,48 +620,28 @@ onBeforeUnmount(() => {
                                 {{ formatCurrency(filters.khoangGia[0]) }} – {{ formatCurrency(filters.khoangGia[1]) }}
                             </span>
                         </div>
-                        <v-range-slider
-                            :key="`${productPriceBounds.min}-${productPriceBounds.max}`"
-                            v-model="filters.khoangGia"
-                            :min="productPriceBounds.min"
-                            :max="productPriceBounds.max"
-                            :step="PRICE_STEP"
-                            hide-details
-                            color="primary"
-                            track-color="#e2e8f0"
-                            track-size="2"
-                            thumb-size="14"
-                            class="blue-range-slider"
-                            @update:model-value="handleSliderPriceChange"
-                        />
+                        <v-range-slider :key="`${productPriceBounds.min}-${productPriceBounds.max}`"
+                            v-model="filters.khoangGia" :min="productPriceBounds.min" :max="productPriceBounds.max"
+                            :step="PRICE_STEP" hide-details color="primary" track-color="#e2e8f0" track-size="2"
+                            thumb-size="14" class="blue-range-slider" @update:model-value="handleSliderPriceChange" />
                     </v-col>
                 </template>
             </AdminFilter>
         </div>
 
-        <AdminTable
-            title="Danh sách sản phẩm"
-            addButtonText="Tạo mới"
-            class="balanced-table"
-            :headers="[
-                { text: 'STT', width: '60px' },
-                { text: 'Mã sản phẩm', width: '110px' },
-                { text: 'Tên sản phẩm', width: '180px' },
-                { text: 'Thương hiệu', width: '110px' },
-                { text: 'Danh mục', width: '110px' },
-                { text: 'Tổng số lượng', width: '120px' },
-                { text: 'Khoảng giá', width: '150px' },
-                { text: 'Trạng thái', width: '110px' },
-                { text: 'Hành động', width: '140px' }
-            ]"
-            :items="paginatedProducts"
-            :loading="loading"
-            :showExportButton="true"
-            :exportButtonText="productExportButtonText"
-            selectable
-            @add="router.push({ name: 'SanPhamForm' })"
-            @export="handleExportProducts"
-        >
+        <AdminTable title="Danh sách sản phẩm" addButtonText="Tạo mới" class="balanced-table" :headers="[
+            { text: 'STT', width: '60px' },
+            { text: 'Mã sản phẩm', width: '110px' },
+            { text: 'Tên sản phẩm', width: '120px' },
+            { text: 'Thương hiệu', width: '110px' },
+            { text: 'Danh mục', width: '110px' },
+            { text: 'Tổng số lượng', width: '120px' },
+            { text: 'Khoảng giá', width: '150px' },
+            { text: 'Trạng thái', width: '110px' },
+            { text: 'Hành động', width: '140px' }
+        ]" :items="paginatedProducts" :loading="loading" :showExportButton="true"
+            :exportButtonText="productExportButtonText" selectable @add="router.push({ name: 'SanPhamForm' })"
+            @export="handleExportProducts">
             <template #extra-actions>
                 <v-btn variant="flat" class="admin-btn-qr text-none" @click="showQrScanner = true">
                     <v-icon size="20" class="mr-2">mdi-qrcode-scan</v-icon>
@@ -704,15 +650,10 @@ onBeforeUnmount(() => {
             </template>
 
             <template #header-select>
-                <v-checkbox-btn
-                    :model-value="allVisibleProductsSelected"
-                    :indeterminate="someVisibleProductsSelected"
-                    color="primary"
-                    hide-details
-                    density="compact"
+                <v-checkbox-btn :model-value="allVisibleProductsSelected" :indeterminate="someVisibleProductsSelected"
+                    color="primary" hide-details density="compact"
                     style="margin: auto; display: inline-flex; width: auto;"
-                    @update:model-value="toggleSelectVisibleProducts"
-                />
+                    @update:model-value="toggleSelectVisibleProducts" />
             </template>
 
             <template #top>
@@ -728,14 +669,9 @@ onBeforeUnmount(() => {
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell px-0" style="width: 50px; text-align: center;">
-                        <v-checkbox-btn
-                            :model-value="selectedProductIds.includes(item.id)"
-                            color="primary"
-                            hide-details
-                            density="compact"
-                            style="margin: auto; display: inline-flex; width: auto;"
-                            @update:model-value="toggleProductSelection(item.id, $event)"
-                        />
+                        <v-checkbox-btn :model-value="selectedProductIds.includes(item.id)" color="primary" hide-details
+                            density="compact" style="margin: auto; display: inline-flex; width: auto;"
+                            @update:model-value="toggleProductSelection(item.id, $event)" />
                     </td>
 
                     <td class="data-cell">
@@ -753,7 +689,8 @@ onBeforeUnmount(() => {
                     </td>
 
                     <td class="data-cell text-center">
-                        <div class="text-truncate" :title="item.tenThuongHieu || '--'">{{ item.tenThuongHieu || '--' }}</div>
+                        <div class="text-truncate" :title="item.tenThuongHieu || '--'">{{ item.tenThuongHieu || '--' }}
+                        </div>
                     </td>
 
                     <td class="data-cell text-center">
@@ -771,41 +708,28 @@ onBeforeUnmount(() => {
                     </td>
 
                     <td class="data-cell">
-                        <v-chip
-                            variant="flat"
-                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']"
-                        >
+                        <v-chip variant="flat"
+                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
 
                     <td class="data-cell action-cell">
                         <div class="d-flex align-center justify-center action-controls">
-                            <v-btn
-                                variant="text"
-                                class="action-icon-btn"
-                                @click="router.push({ name: 'BienTheSanPham', query: { productId: item.id } })"
-                            >
+                            <v-btn variant="text" class="action-icon-btn"
+                                @click="router.push({ name: 'BienTheSanPham', query: { productId: item.id } })">
                                 <component :is="ADMIN_ICONS.ACTION.VIEW" size="15" />
                                 <v-tooltip activator="parent" location="top" text="Xem biến thể" />
                             </v-btn>
-                            <v-btn
-                                variant="text"
-                                class="action-icon-btn"
-                                @click="router.push({ name: 'SanPhamForm', params: { id: item.id } })"
-                            >
+                            <v-btn variant="text" class="action-icon-btn"
+                                @click="router.push({ name: 'SanPhamForm', params: { id: item.id } })">
                                 <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top" text="Chỉnh sửa" />
                             </v-btn>
                             <div class="switch-wrapper">
-                                <v-switch
-                                    :model-value="isActiveStatus(item.trangThai)"
-                                    color="primary"
-                                    hide-details
-                                    density="compact"
-                                    class="tight-switch action-switch"
-                                    @click.prevent.stop="confirmToggleStatus(item)"
-                                />
+                                <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details
+                                    density="compact" class="tight-switch action-switch"
+                                    @click.prevent.stop="confirmToggleStatus(item)" />
                                 <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái" />
                             </div>
                         </div>
@@ -814,27 +738,16 @@ onBeforeUnmount(() => {
             </template>
 
             <template #pagination>
-                <AdminPagination
-                    v-model="pagination.page"
-                    :page-size="pagination.size"
-                    @update:pageSize="pagination.size = $event"
-                    @update:page-size="pagination.size = $event"
-                    :total-pages="totalPages"
-                    :total-elements="totalElements"
-                    :current-size="paginatedProducts.length"
-                />
+                <AdminPagination v-model="pagination.page" :page-size="pagination.size"
+                    @update:pageSize="pagination.size = $event" @update:page-size="pagination.size = $event"
+                    :total-pages="totalPages" :total-elements="totalElements"
+                    :current-size="paginatedProducts.length" />
             </template>
         </AdminTable>
 
-        <AdminConfirm
-            v-model:show="confirmDialog.show"
-            :title="confirmDialog.title"
-            :message="confirmDialog.message"
-            :color="confirmDialog.color"
-            :loading="confirmDialog.loading"
-            @confirm="handleConfirm(true)"
-            @cancel="handleConfirm(false)"
-        />
+        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
+            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)" />
 
         <QrScanner v-model:show="showQrScanner" @scan="handleQrScan" />
     </v-container>

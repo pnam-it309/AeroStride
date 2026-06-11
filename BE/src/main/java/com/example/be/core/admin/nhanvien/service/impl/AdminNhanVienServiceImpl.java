@@ -160,7 +160,7 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     public void delete(String id) {
         NhanVien nv = adminNhanVienRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với id: " + id));
-        nv.setTrangThai(TrangThai.KHONG_HOAT_DONG);
+        nv.setTrangThai(TrangThai.NGUNG_HOAT_DONG);
         adminNhanVienRepository.save(nv);
     }
 

@@ -1,15 +1,32 @@
 <script setup>
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { ChevronDownIcon } from 'vue-tabler-icons';
 import NavItem from '../NavItem/index.vue';
 import Icon from '../Icon.vue';
 
 const props = defineProps({ item: Object, level: { type: Number, default: 1 }, hideTitle: Boolean });
+const route = useRoute();
+
+const isActive = computed(() => {
+    if (!props.item?.children) return false;
+    const path = route.path;
+    return props.item.children.some(child => {
+        if (!child.to) return false;
+        if (path === child.to) return true;
+        if (child.to === '/' || child.to === '/admin/thong-ke') return false;
+        if (child.to === '/admin/san-pham' && path.startsWith('/admin/san-pham/bien-the')) return false;
+        if (path.startsWith(child.to + '/')) return true;
+        return false;
+    });
+});
 </script>
 
 <template>
     <v-list-group :value="item.title" class="mb-1 nav-collapse-group" :disabled="hideTitle">
         <template v-slot:activator="{ props: activatorProps, isOpen }">
             <v-list-item v-bind="activatorProps" rounded class="leftPadding sidebar-link transition-item"
+                :class="{ 'v-list-item--active text-primary bg-lightprimary': isActive && (!isOpen || hideTitle) }"
                 :ripple="false">
                 <template v-slot:prepend>
                     <div class="navbox">

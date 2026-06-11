@@ -420,16 +420,52 @@ const init = async () => {
 const confirmDialog = ref({ show: false, title: '', message: '', color: 'primary', action: null, loading: false });
 
 const handleSave = () => {
-    if (
-        !form.value.ten ||
-        !form.value.soTienGiam ||
-        !form.value.ngayBatDau ||
-        !form.value.ngayKetThuc ||
-        selectedVariantsIds.value.length === 0
-    ) {
-        addNotification({ title: 'Thiếu thông tin', subtitle: 'Vui lòng điền đủ các trường và chọn ít nhất 1 sản phẩm', color: 'warning' });
+    const rawName = form.value.ten;
+    if (!rawName || !String(rawName).trim()) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập tên đợt giảm giá', color: 'error' });
         return;
     }
+    if (String(rawName).trim().length > 255) {
+        addNotification({ title: 'Lỗi', subtitle: 'Tên đợt giảm giá không được vượt quá 255 ký tự', color: 'error' });
+        return;
+    }
+
+    const discountAmount = Number(form.value.soTienGiam);
+    if (!discountAmount || discountAmount <= 0) {
+        addNotification({ title: 'Lỗi', subtitle: 'Mức giảm giá phải lớn hơn 0', color: 'error' });
+        return;
+    }
+    if (discountAmount > 100) {
+        addNotification({ title: 'Lỗi', subtitle: 'Mức giảm giá không được vượt quá 100%', color: 'error' });
+        return;
+    }
+    if (!Number.isInteger(discountAmount)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Mức giảm giá phải là số nguyên', color: 'error' });
+        return;
+    }
+
+    if (!form.value.ngayBatDau) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng chọn ngày bắt đầu', color: 'error' });
+        return;
+    }
+    if (!form.value.ngayKetThuc) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng chọn ngày kết thúc', color: 'error' });
+        return;
+    }
+
+    const startDate = new Date(form.value.ngayBatDau).getTime();
+    const endDate = new Date(form.value.ngayKetThuc).getTime();
+
+    if (startDate >= endDate) {
+        addNotification({ title: 'Lỗi', subtitle: 'Ngày kết thúc phải sau ngày bắt đầu', color: 'error' });
+        return;
+    }
+
+    if (selectedVariantsIds.value.length === 0) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng chọn ít nhất 1 sản phẩm áp dụng', color: 'error' });
+        return;
+    }
+
     confirmDialog.value = {
         show: true,
         title: isEditMode.value ? 'Xác nhận cập nhật' : 'Xác nhận thêm mới',
@@ -521,28 +557,28 @@ onMounted(init);
                             </div>
 
                             <div class="mb-5">
-                                <div class="field-label">Tên đợt giảm giá</div>
+                                <div class="field-label">Tên đợt giảm giá <span class="text-error">*</span></div>
                                 <v-text-field v-model="form.ten" :readonly="isDetailView"
                                     placeholder="Nhập tên đợt giảm giá" variant="outlined" density="comfortable"
                                     hide-details></v-text-field>
                             </div>
 
                             <div class="mb-5">
-                                <div class="field-label">Mức giảm giá (%)</div>
+                                <div class="field-label">Mức giảm giá (%) <span class="text-error">*</span></div>
                                 <v-text-field v-model.number="form.soTienGiam" :readonly="isDetailView" type="number"
                                     suffix="%" placeholder="0" variant="outlined" density="comfortable"
                                     hide-details></v-text-field>
                             </div>
 
                             <div class="mb-5">
-                                <div class="field-label">Ngày bắt đầu</div>
+                                <div class="field-label">Ngày bắt đầu <span class="text-error">*</span></div>
                                 <v-text-field v-model="form.ngayBatDau" :readonly="isDetailView" type="datetime-local"
                                     append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker" variant="outlined"
                                     density="comfortable" hide-details class="date-field"></v-text-field>
                             </div>
 
                             <div class="mb-6">
-                                <div class="field-label">Ngày kết thúc</div>
+                                <div class="field-label">Ngày kết thúc <span class="text-error">*</span></div>
                                 <v-text-field v-model="form.ngayKetThuc" :readonly="isDetailView" type="datetime-local"
                                     append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker" variant="outlined"
                                     density="comfortable" hide-details class="date-field"></v-text-field>

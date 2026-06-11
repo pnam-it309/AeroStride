@@ -13,7 +13,8 @@ defineProps({
     showTemplateButton: { type: Boolean, default: false },
     exportButtonText: { type: String, default: 'Tải Excel' },
     emptyText: { type: String, default: 'Không có dữ liệu phù hợp để hiển thị' },
-    emptyIcon: { type: String, default: 'mdi-package-variant' }
+    emptyIcon: { type: String, default: 'mdi-package-variant' },
+    selectable: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
@@ -57,6 +58,9 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                 <thead>
                     <slot name="headers">
                         <tr>
+                            <th v-if="selectable" style="width: 50px" class="header-cell text-center px-0">
+                                <slot name="header-select"></slot>
+                            </th>
                             <th v-for="(header, idx) in headers" :key="idx"
                                 :style="{ width: header.width || 'auto' }"
                                 :class="['header-cell', 
