@@ -1,3 +1,10 @@
+## [1.23.1](https://github.com/pnam-it309/AeroStride/compare/v1.23.0...v1.23.1) (2026-06-11)
+
+
+### Bug Fixes
+
+* **fe:** fix KhachHang syntax error and add validation for KhachHangForm ([301fbc6](https://github.com/pnam-it309/AeroStride/commit/301fbc6810a871876cfe86f35caf03dfe71512e8))
+
 # [1.23.0](https://github.com/pnam-it309/AeroStride/compare/v1.22.0...v1.23.0) (2026-06-08)
 
 
