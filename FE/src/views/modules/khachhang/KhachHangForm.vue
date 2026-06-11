@@ -10,18 +10,19 @@ import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import TableEmptyState from '@/components/common/TableEmptyState.vue';
 import { ArrowLeftIcon, UserIcon, MapPinIcon, NoteIcon, PlusIcon, EditIcon, TrashIcon, StarIcon, ReceiptIcon } from 'vue-tabler-icons';
 import { useLocation } from '@/composables/useLocation';
-import { useAddressMapping } from '@/composables/useAddressMapping';
-import { TRANG_THAI_KHACH_HANG } from '@/constants/khachHangConstants';
 import axios from 'axios';
 
 import { dichVuFile } from '@/services/core/dichVuFile';
-
-
-const FB_DEFAULT_AVATAR = 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+import { TRANG_THAI_KHACH_HANG, ADDRESS_CONSTANTS, DEFAULT_AVATAR_URL, INVOICE_TABLE_HEADERS } from '@/constants/khachHangConstants';
+import { GIOI_TINH_OPTIONS } from '@/constants/appConstants';
+import { useAddressMapping } from '@/composables/useAddressMapping';
 
 const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
+
+const formRef = ref(null);
+const addrFormRef = ref(null);
 
 const { provinces, districts, wards, loadingLocations, fetchProvinces, fetchDistricts, fetchWards, cleanName, matchLocation } =
     useLocation();
@@ -31,7 +32,7 @@ const loading = ref(false);
 const saving = ref(false);
 const isEditMode = ref(false);
 const isDetailView = computed(() => route.path.includes('/detail') || route.query.view === 'true');
-const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật khách hàng' : 'Thêm khách hàng');
+const submitButtonText = computed(() => (isEditMode.value ? 'Cập nhật khách hàng' : 'Thêm khách hàng'));
 
 // Address Management
 const listDiaChi = ref([]);
@@ -70,7 +71,45 @@ const customerForm = ref({
 });
 
 const resolvedAvatarUrl = computed(() => {
-    return customerForm.value.hinhAnh || FB_DEFAULT_AVATAR;
+    const img = customerForm.value.hinhAnh;
+    if (!img) return DEFAULT_AVATAR_URL;
+
+    // 1. If it's a seed filename like 'kh11.jpg' or 'kh11'
+    if (/^kh(\d+)(\.jpg)?$/i.test(img)) {
+        return DEFAULT_AVATAR_URL;
+    }
+
+    // 2. Absolute uploads path
+    if (img.startsWith('/uploads/')) {
+        return img;
+    }
+    if (img.startsWith('uploads/')) {
+        return `/${img}`;
+    }
+
+    // 3. Absolute URLs (Cloudinary, standard http/https, data urls, blob urls)
+    if (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('data:') || img.startsWith('blob:')) {
+        if (img.includes('/uploads/')) {
+            const index = img.indexOf('/uploads/');
+            return img.substring(index);
+        }
+        return img;
+    }
+
+    // 4. If it already contains '/api/common/storage/files/'
+    if (img.includes('/api/common/storage/files/')) {
+        const apiBase = import.meta.env.VITE_API_URL || '';
+        const cleanBase = apiBase.replace(/\/+$/, '');
+        const cleanImg = img.startsWith('/') ? img : `/${img}`;
+        return `${cleanBase}${cleanImg}`;
+    }
+
+    // 5. If it's a relative path containing /
+    if (img.includes('/') && !img.startsWith('/')) {
+        return `/uploads/${img}`;
+    }
+
+    return dichVuFile.layUrlFile(img);
 });
 
 const confirmDialog = ref({
@@ -171,44 +210,15 @@ const loadCustomer = async (id) => {
     }
 };
 
-const handleSave = () => {
-    const rawName = customerForm.value.ten;
-    if (!rawName || !String(rawName).trim()) {
-        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập họ và tên khách hàng', color: 'error' });
-        return;
-    }
-    if (String(rawName).trim().length > 255) {
-        addNotification({ title: 'Lỗi', subtitle: 'Họ và tên không được vượt quá 255 ký tự', color: 'error' });
-        return;
-    }
-
-    const email = customerForm.value.email;
-    if (!email || !String(email).trim()) {
-        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập email', color: 'error' });
-        return;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        addNotification({ title: 'Lỗi', subtitle: 'Email không đúng định dạng', color: 'error' });
-        return;
-    }
-
-    const phone = customerForm.value.sdt;
-    if (!phone || !String(phone).trim()) {
-        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập số điện thoại', color: 'error' });
-        return;
-    }
-    const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
-    if (!phoneRegex.test(phone) || String(phone).length < 10 || String(phone).length > 11) {
-        addNotification({ title: 'Lỗi', subtitle: 'Số điện thoại không hợp lệ', color: 'error' });
-        return;
-    }
-    
-    if (customerForm.value.ngaySinh) {
-        const bd = new Date(customerForm.value.ngaySinh).getTime();
-        const now = new Date().getTime();
-        if (bd > now) {
-            addNotification({ title: 'Lỗi', subtitle: 'Ngày sinh không thể ở trong tương lai', color: 'error' });
+const handleSave = async () => {
+    if (formRef.value) {
+        const { valid } = await formRef.value.validate();
+        if (!valid) {
+            addNotification({
+                title: 'Lỗi xác thực',
+                subtitle: 'Vui lòng kiểm tra lại các trường thông tin không hợp lệ',
+                color: 'error'
+            });
             return;
         }
     }
@@ -413,20 +423,16 @@ const openAddrDialog = (item = null) => {
 };
 
 const saveAddress = async () => {
-    if (
-        !addrForm.value.tenNguoiNhan ||
-        !addrForm.value.sdtNguoiNhan ||
-        !addrForm.value.tinh ||
-        !addrForm.value.thanhPho ||
-        !addrForm.value.phuongXa ||
-        !addrForm.value.diaChiChiTiet
-    ) {
-        addNotification({
-            title: 'Thiếu thông tin',
-            subtitle: 'Vui lòng nhập đầy đủ tất cả các trường bắt buộc',
-            color: 'warning'
-        });
-        return;
+    if (addrFormRef.value) {
+        const { valid } = await addrFormRef.value.validate();
+        if (!valid) {
+            addNotification({
+                title: 'Lỗi xác thực',
+                subtitle: 'Vui lòng kiểm tra lại các trường thông tin không hợp lệ',
+                color: 'error'
+            });
+            return;
+        }
     }
     try {
         const payload = { ...addrForm.value, idKhachHang: route.params.id };
@@ -527,26 +533,19 @@ onMounted(async () => {
                 </v-btn>
             </div>
             <div class="d-flex gap-3">
-                <v-btn color="primary" variant="flat"
-                    class="text-none font-weight-bold text-white px-8 rounded-xl h-11 elevation-4" :loading="saving"
+                <v-btn color="primary" variant="flat" class="add-btn-primary text-none px-8 rounded-xl h-11 elevation-4"
+                    style="font-size: 16px !important; font-weight: 600 !important" :loading="saving"
                     @click="handleSave">
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
                     <span style="font-size: 16px !important; font-weight: 600 !important">{{ submitButtonText }}</span>
                 </v-btn>
             </div>
-
         </div>
 
-
-        <v-row v-if="loading">
-            <v-col cols="12" class="text-center py-16">
-                <v-progress-circular indeterminate color="primary" size="64" width="6"></v-progress-circular>
-                <div class="mt-4 text-subtitle-1 font-weight-medium text-slate-500">Đang tải hồ sơ khách hàng...</div>
-            </v-col>
-        </v-row>
-
-        <v-row class="pb-16">
-            <v-col cols="12" lg="6">
+        <!-- Row 1: Personal Info & Portrait -->
+        <v-form ref="formRef">
+            <v-row class="mb-6 d-flex align-stretch">
+                <v-col cols="12" lg="8" class="d-flex">
                 <!-- Basic Info -->
                 <v-card class="filter-card elevation-0 border border-slate-200 w-100 d-flex flex-column mb-0">
                     <v-card-text class="pa-8 flex-grow-1">
@@ -560,52 +559,59 @@ onMounted(async () => {
                         <v-row>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Mã khách hàng</div>
-                                <v-text-field v-model="customerForm.ma" :readonly="isDetailView" placeholder="KH-XXXX"
-                                    variant="outlined" density="compact"
-                                    class="font-weight-medium bg-slate-50 mono-font" hide-details></v-text-field>
+                                <v-text-field v-model="customerForm.ma" readonly
+                                    :placeholder="isEditMode ? 'KH-XXXX' : 'Hệ thống tự sinh khi lưu'"
+                                    variant="outlined" bg-color="white" density="compact"
+                                    class="font-weight-medium mono-font" hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="8">
                                 <div class="field-label">Họ và tên <span class="text-error">*</span></div>
                                 <v-text-field v-model="customerForm.ten" :readonly="isDetailView"
-                                    placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" density="compact"
-                                    hide-details></v-text-field>
+                                    :rules="[(v) => !!v || 'Vui lòng nhập họ và tên']"
+                                    placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" bg-color="white"
+                                    density="compact" hide-details="auto"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Email <span class="text-error">*</span></div>
                                 <v-text-field v-model="customerForm.email" :readonly="isDetailView"
-                                    placeholder="khachhang@gmail.com" variant="outlined" density="compact"
-                                    hide-details></v-text-field>
+                                    :rules="[
+                                        (v) => !!v || 'Vui lòng nhập email',
+                                        (v) => /.+@.+\..+/.test(v) || 'Email không hợp lệ'
+                                    ]"
+                                    placeholder="khachhang@gmail.com" variant="outlined" bg-color="white"
+                                    density="compact" hide-details="auto"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Số điện thoại <span class="text-error">*</span></div>
                                 <v-text-field v-model="customerForm.sdt" :readonly="isDetailView"
-                                    placeholder="09xx.xxx.xxx" variant="outlined" density="compact"
-                                    hide-details></v-text-field>
+                                    :rules="[
+                                        (v) => !!v || 'Vui lòng nhập số điện thoại',
+                                        (v) => /^[0-9]{10}$/.test(v) || 'Số điện thoại phải có 10 chữ số'
+                                    ]"
+                                    placeholder="09xx.xxx.xxx" variant="outlined" bg-color="white" density="compact"
+                                    hide-details="auto"></v-text-field>
                             </v-col>
-
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
                                 <v-text-field v-model="customerForm.ngaySinh" :readonly="isDetailView" type="date"
-                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
-                                    variant="outlined" density="compact" hide-details clearable></v-text-field>
+                                    append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker"
+                                    variant="outlined" bg-color="white" density="compact" hide-details clearable
+                                    class="date-field"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Giới tính</div>
-                                <v-select v-model="customerForm.gioiTinh" :readonly="isDetailView" :items="[
-                                    { title: 'Nam', value: true },
-                                    { title: 'Nữ', value: false }
-                                ]" variant="outlined" density="compact" hide-details></v-select>
+                                <v-select v-model="customerForm.gioiTinh" :readonly="isDetailView"
+                                    :items="GIOI_TINH_OPTIONS" variant="outlined" bg-color="white" density="compact"
+                                    hide-details></v-select>
                             </v-col>
                         </v-row>
                     </v-card-text>
                 </v-card>
-
-
             </v-col>
 
-            <v-col cols="12" lg="6">
-                <v-card class="filter-card elevation-0 mb-6">
-                    <v-card-text class="pa-8 text-center">
+            <v-col cols="12" lg="4" class="d-flex">
+                <v-card class="filter-card elevation-0 border border-slate-200 w-100 d-flex flex-column mb-0">
+                    <v-card-text class="pa-8 text-center flex-grow-1">
                         <div class="section-header d-flex align-center mb-6 text-left">
                             <div class="icon-blob bg-blue-lighten-5 mr-3">
                                 <v-icon color="primary" size="18">mdi-camera</v-icon>
@@ -787,6 +793,7 @@ onMounted(async () => {
                 </v-card>
             </v-col>
         </v-row>
+        </v-form>
 
         <!-- SHARED CONFIRM -->
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
@@ -899,24 +906,31 @@ onMounted(async () => {
                     <v-icon start class="mr-3">mdi-map-marker-plus</v-icon>
                     {{ isEditAddr ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới' }}</v-card-title>
                 <v-card-text class="pa-6">
+                    <v-form ref="addrFormRef">
                     <v-row>
                         <v-col cols="12" md="6">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tên người nhận</div>
+                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tên người nhận <span class="text-error">*</span></div>
                             <v-text-field v-model="addrForm.tenNguoiNhan" placeholder="Nhập tên" variant="outlined"
+                                :rules="[(v) => !!v || 'Vui lòng nhập tên người nhận']"
                                 bg-color="white" density="compact" class="font-weight-medium"
-                                hide-details></v-text-field>
+                                hide-details="auto"></v-text-field>
                         </v-col>
                         <v-col cols="12" md="6">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Số điện thoại</div>
+                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Số điện thoại <span class="text-error">*</span></div>
                             <v-text-field v-model="addrForm.sdtNguoiNhan" placeholder="09xx..." variant="outlined"
+                                :rules="[
+                                    (v) => !!v || 'Vui lòng nhập số điện thoại',
+                                    (v) => /^[0-9]{10}$/.test(v) || 'Số điện thoại không hợp lệ'
+                                ]"
                                 bg-color="white" density="compact" class="font-weight-medium"
-                                hide-details></v-text-field>
+                                hide-details="auto"></v-text-field>
                         </v-col>
                         <v-col cols="12" md="4">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tỉnh / Thành phố</div>
+                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tỉnh / Thành phố <span class="text-error">*</span></div>
                             <v-autocomplete v-model="addrForm.tinh" :items="provinces" item-title="name"
+                                :rules="[(v) => !!v || 'Vui lòng chọn tỉnh/thành phố']"
                                 item-value="code" placeholder="Chọn" variant="outlined" bg-color="white"
-                                density="compact" hide-details :loading="loadingLocations.provinces"
+                                density="compact" hide-details="auto" :loading="loadingLocations.provinces"
                                 @update:model-value="
                                     (val) => {
                                         addrForm.thanhPho = null;
@@ -926,10 +940,11 @@ onMounted(async () => {
                                 "></v-autocomplete>
                         </v-col>
                         <v-col cols="12" md="4">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Quận / Huyện</div>
+                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Quận / Huyện <span class="text-error">*</span></div>
                             <v-autocomplete v-model="addrForm.thanhPho" :items="districts" item-title="name"
+                                :rules="[(v) => !!v || 'Vui lòng chọn quận/huyện']"
                                 item-value="code" placeholder="Chọn" variant="outlined" bg-color="white"
-                                density="compact" hide-details :loading="loadingLocations.districts"
+                                density="compact" hide-details="auto" :loading="loadingLocations.districts"
                                 :disabled="!addrForm.tinh" @update:model-value="
                                     (val) => {
                                         addrForm.phuongXa = null;
@@ -938,23 +953,26 @@ onMounted(async () => {
                                 "></v-autocomplete>
                         </v-col>
                         <v-col cols="12" md="4">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Phường / Xã</div>
+                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Phường / Xã <span class="text-error">*</span></div>
                             <v-autocomplete v-model="addrForm.phuongXa" :items="wards" item-title="name"
+                                :rules="[(v) => !!v || 'Vui lòng chọn phường/xã']"
                                 item-value="code" placeholder="Chọn" variant="outlined" bg-color="white"
-                                density="compact" hide-details :loading="loadingLocations.wards"
+                                density="compact" hide-details="auto" :loading="loadingLocations.wards"
                                 :disabled="!addrForm.thanhPho"></v-autocomplete>
                         </v-col>
                         <v-col cols="12">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Địa chỉ cụ thể</div>
+                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Địa chỉ cụ thể <span class="text-error">*</span></div>
                             <v-textarea v-model="addrForm.diaChiChiTiet" placeholder="Số nhà, đường..."
+                                :rules="[(v) => !!v || 'Vui lòng nhập địa chỉ cụ thể']"
                                 variant="outlined" bg-color="white" rows="2" class="font-weight-medium"
-                                hide-details></v-textarea>
+                                hide-details="auto"></v-textarea>
                         </v-col>
                         <v-col cols="12" v-if="listDiaChi.length > 0">
                             <v-checkbox v-model="addrForm.laMacDinh" label="Đặt làm địa chỉ mặc định" color="primary"
                                 hide-details density="compact"></v-checkbox>
                         </v-col>
                     </v-row>
+                    </v-form>
                 </v-card-text>
                 <v-divider></v-divider>
                 <v-card-actions class="pa-4 bg-grey-lighten-4">
@@ -1115,22 +1133,6 @@ onMounted(async () => {
 #khach-hang-form-container :deep(.date-field .v-icon),
 .khach-hang-dialog-card :deep(.date-field .v-icon) {
     font-size: 20px !important;
-    opacity: 0.8 !important;
-    color: #475569 !important;
-}
-</style>
-
-<style>
-/* CSS Global để ẩn icon mặc định của trình duyệt */
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="date"]::-webkit-inner-spin-button {
-    display: none !important;
-    -webkit-appearance: none !important;
-}
-
-/* Ép icon lịch to lên kể cả khi dùng density compact */
-.date-field-custom .v-field__append-inner .v-icon {
-    font-size: 22px !important;
     opacity: 0.8 !important;
     color: #475569 !important;
 }
