@@ -17,7 +17,7 @@ public interface LichLamViecService {
 
     List<CaLamResponse> getAllShifts();
 
-    Page<LichSuHoatDongResponse> getActivityHistory(Pageable pageable);
+    Page<LichSuHoatDongResponse> getActivityHistory(String search, Pageable pageable);
 
     byte[] exportTemplate() throws IOException;
 
@@ -25,9 +25,18 @@ public interface LichLamViecService {
 
     String addSchedule(Map<String, Object> request);
 
+    String updateSchedule(String id, Map<String, Object> request);
+
     List<Map<String, Object>> previewImport(MultipartFile file);
 
     String confirmImport(List<Map<String, Object>> data);
 
     void deleteSchedule(String id);
+
+    // Shift (Ca Lam) CRUD
+    String createShift(Map<String, Object> request);
+
+    String updateShift(String id, Map<String, Object> request);
+
+    void deleteShift(String id);
 }

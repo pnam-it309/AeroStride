@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { AdminFilter, AdminTable, AdminPagination, AdminBreadcrumbs } from '@/components/common';
 import apiService from '@/services/apiService';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
@@ -18,6 +18,17 @@ const pagination = ref({
 
 const filters = ref({
     search: ''
+});
+
+// Dialog state
+const showDialog = ref(false);
+const isEdit = ref(false);
+const editId = ref(null);
+const form = ref({
+    tenCa: '',
+    gioBatDau: '08:00',
+    gioKetThuc: '17:00',
+    moTa: ''
 });
 
 const breadcrumbs = [
@@ -40,7 +51,8 @@ const loadData = async () => {
         const response = await apiService.get(API_LICH_LAM_VIEC.SHIFTS);
         if (response.data.success) {
             items.value = response.data.data;
-            pagination.value.totalElements = items.value.length;
+            pagination.value.totalElements = filteredItems.value.length;
+            pagination.value.totalPages = Math.ceil(filteredItems.value.length / pagination.value.size);
         }
     } catch (error) {
         console.error('Error fetching shifts:', error);
@@ -48,6 +60,14 @@ const loadData = async () => {
         loading.value = false;
     }
 };
+
+const filteredItems = computed(() => {
+    return items.value.filter(item => {
+        return !filters.value.search || 
+            item.tenCa.toLowerCase().includes(filters.value.search.toLowerCase()) ||
+            (item.moTa && item.moTa.toLowerCase().includes(filters.value.search.toLowerCase()));
+    });
+});
 
 const handleRefresh = async () => {
     isRefreshing.value = true;
@@ -57,7 +77,79 @@ const handleRefresh = async () => {
 
 const handleFilter = () => {
     pagination.value.page = 1;
-    loadData();
+};
+
+// Shift dialog operations
+const openAddDialog = () => {
+    isEdit.value = false;
+    editId.value = null;
+    form.value = {
+        tenCa: '',
+        gioBatDau: '08:00',
+        gioKetThuc: '17:00',
+        moTa: ''
+    };
+    showDialog.value = true;
+};
+
+const openEditDialog = (item) => {
+    isEdit.value = true;
+    editId.value = item.id;
+    form.value = {
+        tenCa: item.tenCa,
+        gioBatDau: item.gioBatDau,
+        gioKetThuc: item.gioKetThuc,
+        moTa: item.moTa || ''
+    };
+    showDialog.value = true;
+};
+
+const saveShift = async () => {
+    if (!form.value.tenCa || !form.value.gioBatDau || !form.value.gioKetThuc) {
+        alert('Vui lòng nhập đầy đủ thông tin ca làm!');
+        return;
+    }
+    
+    loading.value = true;
+    try {
+        let res;
+        if (isEdit.value) {
+            res = await apiService.put(`${API_LICH_LAM_VIEC.SHIFTS}/${editId.value}`, form.value);
+        } else {
+            res = await apiService.post(API_LICH_LAM_VIEC.SHIFTS, form.value);
+        }
+        
+        if (res.data.success) {
+            alert(isEdit.value ? 'Cập nhật ca làm thành công!' : 'Tạo ca làm thành công!');
+            showDialog.value = false;
+            loadData();
+        }
+    } catch (error) {
+        console.error('Error saving shift:', error);
+        alert(error.response?.data?.message || 'Có lỗi xảy ra khi lưu ca làm!');
+    } finally {
+        loading.value = false;
+    }
+};
+
+const handleDelete = async (item) => {
+    if (!confirm(`Bạn có chắc chắn muốn xóa ca làm "${item.tenCa}" không?`)) {
+        return;
+    }
+    
+    loading.value = true;
+    try {
+        const res = await apiService.delete(`${API_LICH_LAM_VIEC.SHIFTS}/${item.id}`);
+        if (res.data.success) {
+            alert('Xóa ca làm thành công!');
+            loadData();
+        }
+    } catch (error) {
+        console.error('Error deleting shift:', error);
+        alert(error.response?.data?.message || 'Có lỗi xảy ra khi xóa ca làm!');
+    } finally {
+        loading.value = false;
+    }
 };
 
 onMounted(() => {
@@ -92,25 +184,27 @@ onMounted(() => {
         <AdminTable
             title="Danh mục các ca làm việc"
             :headers="tableHeaders"
-            :items="items"
+            :items="filteredItems"
             :loading="loading"
+            :show-add-button="true"
             addButtonText="Tạo mới"
             class="all-center-table"
+            @add="openAddDialog"
         >
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell">{{ index + 1 }}</td>
-                    <td class="data-cell">{{ item.tenCa }}</td>
+                    <td class="data-cell font-weight-bold">{{ item.tenCa }}</td>
                     <td class="data-cell">{{ item.gioBatDau }}</td>
                     <td class="data-cell">{{ item.gioKetThuc }}</td>
                     <td class="data-cell text-truncate" style="max-width: 300px">{{ item.moTa }}</td>
                     <td class="data-cell action-cell">
                         <div class="action-controls">
-                            <v-btn variant="text" color="primary" class="action-icon-btn" size="small">
+                            <v-btn variant="text" color="primary" class="action-icon-btn" size="small" @click="openEditDialog(item)">
                                 <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
-                            <v-btn variant="text" color="error" class="action-icon-btn" size="small">
+                            <v-btn variant="text" color="error" class="action-icon-btn" size="small" @click="handleDelete(item)">
                                 <component :is="ADMIN_ICONS.ACTION.DELETE" size="15" />
                                 <v-tooltip activator="parent" location="top">Xóa</v-tooltip>
                             </v-btn>
@@ -129,6 +223,55 @@ onMounted(() => {
                 />
             </template>
         </AdminTable>
+
+        <!-- Add/Edit Shift Dialog -->
+        <v-dialog v-model="showDialog" max-width="500">
+            <v-card class="rounded-xl pa-4">
+                <v-card-title class="text-h6 font-weight-bold d-flex align-center">
+                    <v-icon color="primary" class="mr-3">{{ isEdit ? 'mdi-pencil-circle' : 'mdi-plus-circle' }}</v-icon>
+                    {{ isEdit ? 'Cập nhật ca làm việc' : 'Thêm ca làm việc' }}
+                </v-card-title>
+                <v-card-text>
+                    <v-row>
+                        <v-col cols="12">
+                            <div class="filter-field-label">Tên ca làm</div>
+                            <v-text-field
+                                v-model="form.tenCa"
+                                placeholder="Nhập tên ca (VD: Ca Sáng)"
+                                variant="outlined"
+                                density="compact"
+                                hide-details
+                            />
+                        </v-col>
+                        <v-col cols="12" md="6">
+                            <div class="filter-field-label">Giờ bắt đầu</div>
+                            <v-text-field v-model="form.gioBatDau" type="time" variant="outlined" density="compact" hide-details />
+                        </v-col>
+                        <v-col cols="12" md="6">
+                            <div class="filter-field-label">Giờ kết thúc</div>
+                            <v-text-field v-model="form.gioKetThuc" type="time" variant="outlined" density="compact" hide-details />
+                        </v-col>
+                        <v-col cols="12">
+                            <div class="filter-field-label">Mô tả</div>
+                            <v-textarea
+                                v-model="form.moTa"
+                                placeholder="Nhập mô tả ca làm..."
+                                variant="outlined"
+                                density="compact"
+                                rows="3"
+                                hide-details
+                            />
+                        </v-col>
+                    </v-row>
+                </v-card-text>
+                <v-card-actions class="pa-4">
+                    <v-spacer></v-spacer>
+                    <v-btn variant="text" color="grey" @click="showDialog = false">Hủy</v-btn>
+                    <v-btn color="primary" variant="flat" @click="saveShift" class="px-6 rounded-lg">Lưu lại</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-container>
 </template>
-<style></style>
+
+<style scoped></style>

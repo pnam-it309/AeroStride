@@ -40,7 +40,8 @@ const loadData = async () => {
         const response = await apiService.get(API_LICH_LAM_VIEC.ACTIVITIES, {
             params: {
                 page: pagination.value.page - 1,
-                size: pagination.value.size
+                size: pagination.value.size,
+                search: filters.value.search
             }
         });
         if (response.data.success) {

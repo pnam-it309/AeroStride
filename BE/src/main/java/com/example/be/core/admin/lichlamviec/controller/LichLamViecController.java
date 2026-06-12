@@ -39,10 +39,11 @@ public class LichLamViecController {
 
     @GetMapping(RoutesConstant.ACTIVITIES)
     public ResponseEntity<ApiResponse<?>> getActivities(
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.getActivityHistory(pageable)));
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.getActivityHistory(search, pageable)));
     }
 
     @GetMapping(RoutesConstant.EXPORT_TEMPLATE)
@@ -74,9 +75,31 @@ public class LichLamViecController {
         return ResponseEntity.ok(ApiResponse.success(lichLamViecService.addSchedule(request)));
     }
 
+    @PutMapping(RoutesConstant.SCHEDULES + "/{id}")
+    public ResponseEntity<ApiResponse<?>> updateSchedule(@PathVariable String id, @RequestBody Map<String, Object> request) {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.updateSchedule(id, request)));
+    }
+
     @DeleteMapping(RoutesConstant.SCHEDULES + "/{id}")
     public ResponseEntity<ApiResponse<?>> deleteSchedule(@PathVariable String id) {
         lichLamViecService.deleteSchedule(id);
         return ResponseEntity.ok(ApiResponse.success("Đã xóa lịch làm việc thành công!"));
+    }
+
+    // Shift CRUD Controller Endpoints
+    @PostMapping(RoutesConstant.SHIFTS)
+    public ResponseEntity<ApiResponse<?>> createShift(@RequestBody Map<String, Object> request) {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.createShift(request)));
+    }
+
+    @PutMapping(RoutesConstant.SHIFTS + "/{id}")
+    public ResponseEntity<ApiResponse<?>> updateShift(@PathVariable String id, @RequestBody Map<String, Object> request) {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.updateShift(id, request)));
+    }
+
+    @DeleteMapping(RoutesConstant.SHIFTS + "/{id}")
+    public ResponseEntity<ApiResponse<?>> deleteShift(@PathVariable String id) {
+        lichLamViecService.deleteShift(id);
+        return ResponseEntity.ok(ApiResponse.success("Đã xóa ca làm việc thành công!"));
     }
 }
