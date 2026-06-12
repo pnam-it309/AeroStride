@@ -1,3 +1,10 @@
+## [1.23.2](https://github.com/pnam-it309/AeroStride/compare/v1.23.1...v1.23.2) (2026-06-12)
+
+
+### Bug Fixes
+
+* resolve ui latency issues, fix image caching and url extraction ([990b4ff](https://github.com/pnam-it309/AeroStride/commit/990b4ffdc5ef70c74d42b0abefea665f28735156))
+
 ## [1.23.1](https://github.com/pnam-it309/AeroStride/compare/v1.23.0...v1.23.1) (2026-06-11)
 
 
