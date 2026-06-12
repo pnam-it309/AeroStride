@@ -28,7 +28,8 @@ export const useToastStore = defineStore('toast', {
 
         showToast(message, color, icon, timeout) {
             this.message = message;
-            this.color = color;
+            // Force primary (dark blue) color for all toasts per user request
+            this.color = 'primary';
             this.icon = icon;
             this.timeout = timeout;
             this.show = true;

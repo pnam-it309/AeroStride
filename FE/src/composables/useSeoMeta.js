@@ -1,4 +1,5 @@
 import { useHead, useSeoMeta as useUnheadSeoMeta } from '@unhead/vue';
+import { ref, computed } from 'vue';
 
 const DEFAULTS = {
     siteName: 'AeroStride',
@@ -11,67 +12,72 @@ const DEFAULTS = {
 };
 
 export function useSeoMeta() {
-    function setSeoMeta({ title, description, image, url, type, jsonLd } = {}) {
-        const fullTitle = title ? `${title}${DEFAULTS.titleSuffix}` : DEFAULTS.siteName;
-        const desc = description || DEFAULTS.description;
-        const ogImage = image || DEFAULTS.image;
-        const ogType = type || DEFAULTS.type;
-        const canonicalUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
+    const title = ref(DEFAULTS.siteName);
+    const description = ref(DEFAULTS.description);
+    const image = ref(DEFAULTS.image);
+    const url = ref(typeof window !== 'undefined' ? window.location.href : '');
+    const type = ref(DEFAULTS.type);
+    const jsonLd = ref(null);
 
-        useUnheadSeoMeta({
-            title: fullTitle,
-            description: desc,
-            ogTitle: fullTitle,
-            ogDescription: desc,
-            ogImage: ogImage,
-            ogUrl: canonicalUrl,
-            ogType: ogType,
-            ogSiteName: DEFAULTS.siteName,
-            ogLocale: DEFAULTS.locale,
-            twitterCard: DEFAULTS.twitterCard,
-            twitterTitle: fullTitle,
-            twitterDescription: desc,
-            twitterImage: ogImage
-        });
+    const fullTitle = computed(() => title.value !== DEFAULTS.siteName ? `${title.value}${DEFAULTS.titleSuffix}` : DEFAULTS.siteName);
 
-        useHead({
-            link: [
-                {
-                    rel: 'canonical',
-                    href: canonicalUrl
-                }
-            ]
-        });
+    // Call useUnheadSeoMeta and useHead synchronously during setup!
+    useUnheadSeoMeta({
+        title: fullTitle,
+        description: description,
+        ogTitle: fullTitle,
+        ogDescription: description,
+        ogImage: image,
+        ogUrl: url,
+        ogType: type,
+        ogSiteName: DEFAULTS.siteName,
+        ogLocale: DEFAULTS.locale,
+        twitterCard: DEFAULTS.twitterCard,
+        twitterTitle: fullTitle,
+        twitterDescription: description,
+        twitterImage: image
+    });
 
-        if (jsonLd) {
-            useHead({
-                script: [
-                    {
-                        type: 'application/ld+json',
-                        innerHTML: JSON.stringify(jsonLd)
-                    }
-                ]
-            });
-        }
+    useHead({
+        link: computed(() => [
+            {
+                rel: 'canonical',
+                href: url.value
+            }
+        ]),
+        script: computed(() => jsonLd.value ? [
+            {
+                type: 'application/ld+json',
+                innerHTML: JSON.stringify(jsonLd.value)
+            }
+        ] : [])
+    });
+
+    function setSeoMeta(config = {}) {
+        if (config.title) title.value = config.title;
+        if (config.description) description.value = config.description;
+        if (config.image) image.value = config.image;
+        if (config.url) url.value = config.url;
+        if (config.type) type.value = config.type;
+        if (config.jsonLd) jsonLd.value = config.jsonLd;
     }
 
     function setProductSeo(product) {
         if (!product) return;
 
-        const title = product.tenSanPham || 'Sản phẩm';
-        const description = product.moTa
+        const pTitle = product.tenSanPham || 'Sản phẩm';
+        const pDescription = product.moTa
             ? product.moTa.substring(0, 160)
             : `Mua ${product.tenSanPham} chính hãng tại AeroStride. ${product.tenThuongHieu || ''} - ${product.tenDanhMuc || ''}. Giao hàng nhanh, đổi trả miễn phí.`;
 
         const firstImage = product.variants?.[0]?.images?.[0]?.duongDanAnh || DEFAULTS.image;
-
         const canonicalUrl = typeof window !== 'undefined' ? window.location.href : '';
 
-        const jsonLd = {
+        const pJsonLd = {
             '@context': 'https://schema.org',
             '@type': 'Product',
             name: product.tenSanPham,
-            description: description,
+            description: pDescription,
             image: firstImage,
             brand: {
                 '@type': 'Brand',
@@ -92,19 +98,22 @@ export function useSeoMeta() {
         };
 
         setSeoMeta({
-            title,
-            description,
+            title: pTitle,
+            description: pDescription,
             image: firstImage,
             type: 'product',
-            jsonLd
+            jsonLd: pJsonLd,
+            url: canonicalUrl
         });
     }
 
     function resetSeo() {
-        setSeoMeta({
-            title: null,
-            description: DEFAULTS.description
-        });
+        title.value = DEFAULTS.siteName;
+        description.value = DEFAULTS.description;
+        image.value = DEFAULTS.image;
+        url.value = typeof window !== 'undefined' ? window.location.href : '';
+        type.value = DEFAULTS.type;
+        jsonLd.value = null;
     }
 
     return {

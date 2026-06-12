@@ -20,8 +20,6 @@ const props = defineProps({ active: Boolean });
 .snap-section {
     height: 100vh;
     width: 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
     display: flex;
     align-items: center;
     position: relative;

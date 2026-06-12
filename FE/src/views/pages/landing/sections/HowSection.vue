@@ -71,17 +71,17 @@ const decoratedProducts = computed(() => {
         ];
     }
     return props.products.map((p, index) => ({
-        code: p.title || 'AEROSTRIDE',
-        category: p.subtitle || 'PREMIUM',
-        desc: p.summary || 'Trải nghiệm đỉnh cao công nghệ giày thể thao.',
+        id: p.id,
+        code: p.tenSanPham || 'AeroStride Prime',
+        category: p.tenThuongHieu || 'PERFORMANCE',
+        desc: 'Trải nghiệm đỉnh cao công nghệ giày thể thao.',
         specs: [
             { label: 'KHỐI LƯỢNG', value: '210g' },
             { label: 'THÔNG KHÍ', value: '95%' },
             { label: 'HOÀN NĂNG', value: '82%' },
             { label: 'LỰC KÉO', value: 'PRO' }
         ],
-        image: p.imageUrl,
-        id: p.id
+        image: p.hinhAnh || ''
     }));
 });
 
@@ -276,8 +276,6 @@ onUnmounted(() => {
 .showcase-360-section {
     height: 100vh;
     width: 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
     background: #fdfdfd;
     position: relative;
     font-family: 'Inter', sans-serif;

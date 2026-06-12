@@ -24,6 +24,7 @@ import {
     FilterIcon,
     UsersIcon
 } from 'vue-tabler-icons';
+import FormattedNumberField from '@/views/modules/san-pham/components/FormattedNumberField.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -253,6 +254,14 @@ const handleSave = () => {
         addNotification({ title: 'Lỗi', subtitle: 'Tên phiếu giảm giá không được vượt quá 255 ký tự', color: 'error' });
         return;
     }
+    if (!/^[\p{L}0-9\s]+$/u.test(rawName)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Tên phiếu giảm giá không được chứa ký tự đặc biệt', color: 'error' });
+        return;
+    }
+    if (rawName.trim() !== rawName) {
+        addNotification({ title: 'Lỗi', subtitle: 'Tên phiếu giảm giá không được chứa khoảng trắng ở 2 đầu', color: 'error' });
+        return;
+    }
 
     if (form.value.loaiPhieu === 'TIEN_MAT') {
         const val = Number(form.value.soTienGiam);
@@ -293,6 +302,10 @@ const handleSave = () => {
     const minOrder = Number(form.value.giatriToiThieu);
     if (minOrder < 0 || !Number.isInteger(minOrder)) {
         addNotification({ title: 'Lỗi', subtitle: 'Hóa đơn tối thiểu không hợp lệ', color: 'error' });
+        return;
+    }
+    if (form.value.loaiPhieu === 'TIEN_MAT' && minOrder < Number(form.value.soTienGiam)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Hóa đơn tối thiểu phải lớn hơn hoặc bằng mức giảm giá', color: 'error' });
         return;
     }
 
@@ -408,8 +421,14 @@ onMounted(init);
                             <v-col cols="12" md="8">
                                 <div class="field-label">Tên giảm giá <span class="text-error">*</span></div>
                                 <v-text-field v-model="form.ten" :readonly="isViewOnly"
+                                    :rules="[
+                                        (v) => !!v || 'Vui lòng nhập tên giảm giá',
+                                        (v) => (v && v.trim() === v) || 'Không được chứa khoảng trắng ở 2 đầu',
+                                        (v) => (v && /^[\p{L}0-9\s]+$/u.test(v)) || 'Không được chứa ký tự đặc biệt',
+                                        (v) => (v && v.length <= 255) || 'Không vượt quá 255 ký tự'
+                                    ]"
                                     placeholder="Ví dụ: Phiếu giảm giá Mừng Sinh Nhật..." variant="outlined" density="compact"
-                                    hide-details></v-text-field>
+                                    hide-details="auto"></v-text-field>
                             </v-col>
 
                             <!-- 2. Hình thức giảm, Giá trị giảm & Giảm tối đa -->
@@ -424,19 +443,19 @@ onMounted(init);
                             <v-col cols="12" md="4">
                                 <div class="field-label">
                                     Giá trị giảm ({{ form.loaiPhieu === 'TIEN_MAT' ? 'VNĐ' : '%' }}) <span class="text-error">*</span></div>
-                                <v-text-field v-if="form.loaiPhieu === 'TIEN_MAT'" v-model.number="form.soTienGiam"
-                                    :readonly="isViewOnly" type="number" placeholder="0" variant="outlined"
-                                    density="compact" hide-details></v-text-field>
+                                <FormattedNumberField v-if="form.loaiPhieu === 'TIEN_MAT'" v-model="form.soTienGiam"
+                                    :readonly="isViewOnly" placeholder="0" variant="outlined"
+                                    density="compact" hide-details></FormattedNumberField>
                                 <v-text-field v-else v-model.number="form.phanTramGiamGia" :readonly="isViewOnly"
                                     type="number" placeholder="0" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Giảm tối đa</div>
-                                <v-text-field v-model.number="form.giamToiDa"
+                                <FormattedNumberField v-model="form.giamToiDa"
                                     :readonly="isViewOnly || form.loaiPhieu === 'TIEN_MAT'" placeholder="Không giới hạn"
-                                    type="number" variant="outlined" density="compact" hide-details
-                                    :class="form.loaiPhieu === 'TIEN_MAT' ? 'bg-slate-50' : ''"></v-text-field>
+                                    variant="outlined" density="compact" hide-details
+                                    :class="form.loaiPhieu === 'TIEN_MAT' ? 'bg-slate-50' : ''"></FormattedNumberField>
                             </v-col>
 
                             <!-- 3. Số lượng sử dụng, Hóa đơn tối thiểu & Loại phiếu -->
@@ -450,7 +469,8 @@ onMounted(init);
                                 </div>
                                 <v-text-field :model-value="isInfinite ? 'Vô hạn' : form.soLuong"
                                     @update:model-value="val => !isInfinite && (form.soLuong = Number(val))"
-                                    :type="isInfinite ? 'text' : 'number'"
+                                    :type="isInfinite ? 'text' : 'number'" min="0"
+                                    @keydown="e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()"
                                     :readonly="isInfinite || isViewOnly || form.loaiHienThi === 'CA_NHAN'"
                                     variant="outlined" density="compact" hide-details></v-text-field>
                             </v-col>
@@ -458,8 +478,8 @@ onMounted(init);
                                 <div class="field-label"
                                     style="height: 24px; display: flex; align-items: center; margin-bottom: 8px;">
                                     Hóa đơn tối thiểu (VNĐ) <span class="text-error">*</span></div>
-                                <v-text-field v-model.number="form.giatriToiThieu" :readonly="isViewOnly" type="number"
-                                    placeholder="0" variant="outlined" density="compact" hide-details></v-text-field>
+                                <FormattedNumberField v-model="form.giatriToiThieu" :readonly="isViewOnly"
+                                    placeholder="0" variant="outlined" density="compact" hide-details></FormattedNumberField>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label"

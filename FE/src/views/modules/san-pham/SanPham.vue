@@ -342,8 +342,11 @@ const exportHtmlTableToExcel = ({ headers, rows, fileName }) => {
 
 // Format chuỗi khoảng giá để hiển thị trên bảng
 const getPriceRange = (item) => {
-    if (item?.giaBanThapNhat == null && item?.giaBanCaoNhat == null) return '--';
-    if (item?.giaBanThapNhat === item?.giaBanCaoNhat) return formatCurrency(item.giaBanThapNhat);
+    if (item?.giaBanThapNhat == null && item?.giaBanCaoNhat == null) return formatCurrency(0);
+    if (item?.giaBanThapNhat === item?.giaBanCaoNhat) {
+        if (item.giaBanThapNhat === 0) return formatCurrency(0);
+        return `${formatCurrency(0)} - ${formatCurrency(item.giaBanCaoNhat)}`;
+    }
     return `${formatCurrency(item.giaBanThapNhat)} - ${formatCurrency(item.giaBanCaoNhat)}`;
 };
 

@@ -58,14 +58,14 @@ const decoratedShoes = computed(() => {
         ];
     }
     return props.products.map((p, index) => ({
-        title: p.title || 'AEROSTRIDE',
-        tag: p.subtitle || 'PREMIUM',
+        title: p.tenSanPham || 'AEROSTRIDE',
+        tag: p.tenThuongHieu || 'PREMIUM',
         color: index === 0 ? '#2962FF' : index === 1 ? '#D50000' : '#6200EA',
         bgType: index === 0 ? 'rain' : index === 1 ? 'cubes' : 'orbits',
         rotation:
             index === 0 ? 'rotate(-22deg) translateY(-8px)' : index === 1 ? 'rotate(12deg) translateX(10px)' : 'rotate(0deg) scale(1.05)',
         features: ['BỀN BỈ', 'ÊM ÁI', 'TỐI ƯU'],
-        image: p.imageUrl,
+        image: p.hinhAnh || '',
         id: p.id
     }));
 });
@@ -314,8 +314,6 @@ watch(
 .snap-section {
     height: 100vh;
     width: 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
     position: relative;
     background: #ffffff;
     perspective: 1000px;

@@ -51,33 +51,6 @@
     }
 }
 
-@keyframes addButtonPress {
-    0% {
-        transform: translateY(0) scale(1);
-        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
-    }
-    50% {
-        transform: translateY(1px) scale(0.96);
-        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.12);
-    }
-    100% {
-        transform: translateY(0) scale(1);
-        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
-    }
-}
-
-@keyframes editButtonPress {
-    0% {
-        transform: scale(1) rotate(0deg);
-    }
-    50% {
-        transform: scale(0.94) rotate(-1.5deg);
-    }
-    100% {
-        transform: scale(1) rotate(0deg);
-    }
-}
-
 @keyframes modalPopIn {
     from {
         opacity: 0;
@@ -136,27 +109,19 @@
 
 .add-btn-primary {
     transition:
-        transform 0.18s ease,
         box-shadow 0.18s ease,
         filter 0.18s ease !important;
-    will-change: transform, box-shadow;
+    will-change: box-shadow;
 }
 
 .add-btn-primary:hover {
-    transform: translateY(-1px);
     box-shadow: 0 12px 24px rgba(37, 99, 235, 0.2);
-}
-
-.add-btn-primary:active {
-    animation: addButtonPress 220ms ease-out;
 }
 
 .action-icon-btn--edit {
     transition:
-        transform 0.18s ease,
         background-color 0.18s ease,
         color 0.18s ease !important;
-    will-change: transform;
 }
 
 .action-icon-btn--edit:hover {

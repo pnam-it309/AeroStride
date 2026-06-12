@@ -38,8 +38,8 @@ export function useLandingPage() {
         }
     };
 
-    const onScroll = (e) => {
-        latestScrollTop = e.target.scrollTop;
+    const onScroll = () => {
+        latestScrollTop = window.scrollY;
 
         if (scrollFrame) {
             return;
@@ -56,6 +56,16 @@ export function useLandingPage() {
             }
         });
     };
+
+    onMounted(() => {
+        window.addEventListener('scroll', onScroll, { passive: true });
+        // other onMounted logic if any...
+    });
+
+    onUnmounted(() => {
+        window.removeEventListener('scroll', onScroll);
+        // other onUnmounted logic if any...
+    });
 
     const handleLogout = async () => {
         await dichVuXacThuc.dangXuat();

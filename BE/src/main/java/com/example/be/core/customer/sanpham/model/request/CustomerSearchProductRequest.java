@@ -26,4 +26,18 @@ public class CustomerSearchProductRequest extends PageRequest {
         setSortBy("ngayTao");
         setSortDirection("desc");
     }
+
+    @Override
+    public String getSortBy() {
+        String sort = super.getSortBy();
+        if ("newest".equals(sort)) {
+            super.setSortDirection("desc");
+            return "ngayTao";
+        } else if ("price_asc".equals(sort) || "price_desc".equals(sort)) {
+            // Spring Data can't sort by computed fields easily here, fallback to ngayTao
+            super.setSortDirection("price_asc".equals(sort) ? "asc" : "desc");
+            return "ngayTao"; 
+        }
+        return sort;
+    }
 }

@@ -567,7 +567,11 @@ onMounted(async () => {
                             <v-col cols="12" md="8">
                                 <div class="field-label">Họ và tên <span class="text-error">*</span></div>
                                 <v-text-field v-model="customerForm.ten" :readonly="isDetailView"
-                                    :rules="[(v) => !!v || 'Vui lòng nhập họ và tên']"
+                                    :rules="[
+                                        (v) => !!v || 'Vui lòng nhập họ và tên',
+                                        (v) => /^[\p{L}0-9\s]+$/u.test(v) || 'Họ và tên không được chứa ký tự đặc biệt',
+                                        (v) => (v && v.trim() === v) || 'Không được chứa khoảng trắng ở 2 đầu'
+                                    ]"
                                     placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" bg-color="white"
                                     density="compact" hide-details="auto"></v-text-field>
                             </v-col>
@@ -594,8 +598,22 @@ onMounted(async () => {
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
                                 <v-text-field v-model="customerForm.ngaySinh" :readonly="isDetailView" type="date"
+                                    :rules="[
+                                        (v) => {
+                                            if (!v) return true;
+                                            const bd = new Date(v);
+                                            const now = new Date();
+                                            if (bd.getTime() > now.getTime()) return 'Ngày sinh không thể ở trong tương lai';
+                                            let age = now.getFullYear() - bd.getFullYear();
+                                            const m = now.getMonth() - bd.getMonth();
+                                            if (m < 0 || (m === 0 && now.getDate() < bd.getDate())) {
+                                                age--;
+                                            }
+                                            return age >= 18 || 'Khách hàng phải từ 18 tuổi trở lên';
+                                        }
+                                    ]"
                                     append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker"
-                                    variant="outlined" bg-color="white" density="compact" hide-details clearable
+                                    variant="outlined" bg-color="white" density="compact" hide-details="auto" clearable
                                     class="date-field"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">

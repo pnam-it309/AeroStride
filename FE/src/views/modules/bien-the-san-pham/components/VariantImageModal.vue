@@ -70,8 +70,17 @@ const handleFileChange = async (event) => {
 
     uploading.value = true;
     try {
-        const result = await dichVuFile.taiLenFile(file);
-        formData.value.duongDanAnh = result.fileUrl;
+        const uploadResult = await dichVuFile.taiLenFile(file);
+        
+        // Trích xuất URL an toàn
+        const fileUrl = uploadResult?.fileUrl || uploadResult?.url || uploadResult?.secure_url || uploadResult?.duongDanAnh || (typeof uploadResult === 'string' ? uploadResult : '');
+        
+        if (!fileUrl) {
+            addNotification({ title: 'Lỗi', subtitle: 'Không thể lấy URL ảnh từ máy chủ', color: 'error' });
+            return;
+        }
+
+        formData.value.duongDanAnh = fileUrl;
         addNotification({ title: 'Thành công', subtitle: 'Tải ảnh lên thành công', color: 'success' });
     } catch (error) {
         addNotification({ title: 'Lỗi', subtitle: 'Không thể tải ảnh lên Cloudinary', color: 'error' });

@@ -81,9 +81,10 @@ export default defineConfig(({ mode }) => {
         server: {
             allowedHosts: true,
             watch: {
-                usePolling: true, // Bật lại cho Docker HMR
+                // Chỉ bật usePolling khi chạy trong Docker (WSL2), trên Windows chạy local thì tắt đi để tránh mất 20s+ khởi động
+                usePolling: env.IS_DOCKER === 'true' || process.env.CHOKIDAR_USEPOLLING === 'true', 
                 interval: 1000,
-                // Bổ sung thêm các thư mục không cần thiết để giảm tải quá trình quét của Polling
+                // Bổ sung thêm các thư mục không cần thiết để giảm tải quá trình quét của Polling (khi bật)
                 ignored: ['**/node_modules/**', '**/dist/**', '**/.git/**', '**/.vscode/**', '**/.idea/**'],
             },
             host: true,

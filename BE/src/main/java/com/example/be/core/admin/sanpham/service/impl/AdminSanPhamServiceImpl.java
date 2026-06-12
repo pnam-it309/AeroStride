@@ -429,6 +429,10 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     // Thêm hình ảnh mới cho một biến thể cụ thể
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products", allEntries = true),
+        @CacheEvict(value = "productDetail", allEntries = true)
+    })
     public ProductVariantImageResponse addVariantImage(String variantId, ProductVariantImageRequest request) {
         ChiTietSanPham variant = getVariantOrThrow(variantId);
 
@@ -450,6 +454,10 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     // Cập nhật thuộc tính của hình ảnh biến thể (VD: đổi thành ảnh đại diện)
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products", allEntries = true),
+        @CacheEvict(value = "productDetail", allEntries = true)
+    })
     public ProductVariantImageResponse updateVariantImage(String imageId, UpdateProductVariantImageRequest request) {
         AnhChiTietSanPham image = getVariantImageOrThrow(imageId);
 
@@ -476,6 +484,10 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     // Thiết lập một hình ảnh thành ảnh đại diện chính của biến thể
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products", allEntries = true),
+        @CacheEvict(value = "productDetail", allEntries = true)
+    })
     public ProductVariantImageResponse setMainVariantImage(String imageId) {
         AnhChiTietSanPham image = getVariantImageOrThrow(imageId);
         unsetMainImageFlags(image.getChiTietSanPham().getId());
@@ -488,6 +500,10 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     // Xóa một hình ảnh khỏi biến thể, nếu là ảnh chính sẽ tự động đổi ảnh khác lên thay
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products", allEntries = true),
+        @CacheEvict(value = "productDetail", allEntries = true)
+    })
     public void deleteVariantImage(String imageId) {
         AnhChiTietSanPham image = getVariantImageOrThrow(imageId);
         String variantId = image.getChiTietSanPham().getId();

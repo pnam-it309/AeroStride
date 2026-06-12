@@ -7,11 +7,8 @@ export const useNotifications = () => {
     const addNotification = (notif) => {
         const toast = useToastStore();
 
-        // Change default success color (green) to primary (blue)
-        let displayColor = notif.color || 'primary';
-        if (displayColor === 'success') {
-            displayColor = 'primary';
-        }
+        // Force all notifications to use the primary (dark blue) color
+        let displayColor = 'primary';
 
         // Add to notification list (for the bell icon)
         notifications.value.unshift({

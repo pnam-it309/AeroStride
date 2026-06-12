@@ -54,6 +54,7 @@ public class DataRetrievalLibrary {
     private final KichThuocRepository kichThuocRepository;
     private final MauSacRepository mauSacRepository;
     private final ChiTietDotGiamGiaRepository chiTietDotGiamGiaRepository;
+    private final org.springframework.transaction.support.TransactionTemplate transactionTemplate;
 
     // Cache structures for all formatted markdown queries
     private final java.util.Map<String, CachedData> cache = new java.util.concurrent.ConcurrentHashMap<>();
@@ -88,7 +89,15 @@ public class DataRetrievalLibrary {
         if (allProductsCache == null || now > allProductsCacheExpires) {
             synchronized (this) {
                 if (allProductsCache == null || now > allProductsCacheExpires) {
-                    allProductsCache = sanPhamRepository.findAll();
+                    allProductsCache = transactionTemplate.execute(status -> {
+                        List<SanPham> list = sanPhamRepository.findAll();
+                        for (SanPham sp : list) {
+                            if (sp.getChiTietSanPhams() != null) {
+                                sp.getChiTietSanPhams().size(); // Force lazy loading initialization
+                            }
+                        }
+                        return list;
+                    });
                     allProductsCacheExpires = now + CACHE_TTL_MS;
                 }
             }

@@ -41,7 +41,8 @@ export const PATH = {
     PROFILE: '/profile',
     ORDERS: '/my-orders',
     CHECKOUT: '/checkout',
-    ORDER_SUCCESS: '/order-success',
+    FAVORITES: '/favorites',
+    ORDER_SUCCESS: '/order/success',
     ORDER_DETAIL: '/my-orders',
     // Error
     ERROR_401: '/error/401',

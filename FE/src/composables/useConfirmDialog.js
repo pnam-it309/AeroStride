@@ -23,7 +23,7 @@ export function useConfirmDialog() {
             show: true,
             title: config.title || 'Xác nhận',
             message: config.message || 'Bạn có chắc chắn?',
-            color: config.color || 'primary',
+            color: 'primary',
             action: config.action || null,
             loading: false
         };

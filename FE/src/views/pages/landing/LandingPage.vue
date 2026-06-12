@@ -16,6 +16,7 @@ import SocialSection from './sections/SocialSection.vue';
 import HowSection from './sections/HowSection.vue';
 import FaqSection from './sections/FaqSection.vue';
 import CtaSection from './sections/CtaSection.vue';
+import CartDrawer from '@/components/shared/CartDrawer.vue';
 
 const {
     activeSection,
@@ -50,18 +51,13 @@ onMounted(() => {
 
         <!-- Section Dots Indicator -->
         <div class="section-nav" v-if="!isLoading && !isCatalogLoading">
-            <div
-                v-for="(s, i) in LANDING_SECTIONS"
-                :key="i"
-                class="dot"
-                :class="{ active: activeSection === i }"
-                @click="activeSection = i"
-            >
+            <div v-for="(s, i) in LANDING_SECTIONS" :key="i" class="dot" :class="{ active: activeSection === i }"
+                @click="activeSection = i">
                 <span class="tooltip">{{ s.toUpperCase() }}</span>
             </div>
         </div>
 
-        <div class="landing-scroll-container" @scroll="onScroll" v-if="!isLoading && !isCatalogLoading">
+        <div class="landing-scroll-container" v-if="!isLoading && !isCatalogLoading">
             <!-- Premium Global Header & Mega Menu -->
             <MainHeader v-if="!isLoading && !isCatalogLoading" />
 
@@ -80,6 +76,9 @@ onMounted(() => {
             </footer>
         </div>
 
+        <!-- Cart Drawer -->
+        <CartDrawer v-if="!isLoading && !isCatalogLoading" />
+
         <!-- Global Chat System -->
         <CustomerChat v-if="!isLoading && !isCatalogLoading" />
     </div>
@@ -89,13 +88,13 @@ onMounted(() => {
 .landing-scroll-container {
     height: 100vh;
     overflow-y: scroll;
-    scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
     overscroll-behavior-y: contain;
     -ms-overflow-style: none;
     scrollbar-width: none;
     /* Optimize for smooth momentum scrolling */
     -webkit-overflow-scrolling: touch;
+
     &::-webkit-scrollbar {
         display: none;
     }
@@ -177,6 +176,18 @@ onMounted(() => {
 }
 
 .footer-landing {
-    scroll-snap-align: end;
+    position: relative;
+    z-index: 100;
+}
+
+:deep(.snap-section) {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    background: #ffffff;
+    /* Default background for all sections */
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.03);
+    /* Subtle shadow when sliding over */
+    will-change: transform;
 }
 </style>

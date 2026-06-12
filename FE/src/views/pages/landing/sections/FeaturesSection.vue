@@ -45,8 +45,6 @@ const props = defineProps({ active: Boolean, warm: Boolean });
 .features-section {
     height: 100vh;
     width: 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
     position: relative;
     background: #ffffff;
     display: flex;

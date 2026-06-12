@@ -188,7 +188,8 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         PhieuGiamGia p = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PHIEU_GIAM_GIA_UPDATE_ERROR));
         TrangThai oldStatus = p.getTrangThai();
-        BeanUtils.copyProperties(req, p);
+        
+        BeanUtils.copyProperties(req, p, "trangThai", "ma");
         p.setId(id); // Ensure ID is preserved
         repo.save(p);
 

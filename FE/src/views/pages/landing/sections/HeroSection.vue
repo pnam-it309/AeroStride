@@ -14,24 +14,26 @@ const props = defineProps({
         <v-container>
             <v-row align="center">
                 <v-col cols="12" lg="6" :class="{ 'reveal-container': true, active: props.active }">
-                    <h1 class="hero-title text-uppercase font-weight-black text-blue-darken-4 reveal-item delay-1">
-                        {{ props.product?.title || 'THẾ HỆ MỚI' }} <br />
-                        <span class="text-blue-accent-4">AEROSTRIDE</span>
+                    <h1 class="hero-title reveal-item delay-1 text-black">
+                        {{ props.product?.tenSanPham || 'AeroStride' }}
                     </h1>
-                    <p class="text-h5 text-blue-grey-darken-1 mt-6 mb-10 leading-relaxed reveal-item delay-2">
-                        {{
-                            props.product?.subtitle ||
-                            'Công nghệ giày tương lai dành cho những người dẫn đầu. Trải nghiệm sự êm ái vượt giới hạn.'
-                        }}
+                    <p class="hero-subtitle reveal-item delay-2 text-grey-darken-3">
+                        {{ props.product?.tenThuongHieu || 'PREMIUM' }}
                     </p>
-                    <v-btn size="x-large" color="blue-darken-4" rounded="xl" class="px-12 elevation-10 reveal-item delay-3" to="/shoes">
+                    <div class="hero-price reveal-item delay-3 text-black mb-8">
+                        {{ props.product?.giaBanThapNhat ? formatPrice(props.product.giaBanThapNhat) : '1.200.000 ₫' }}
+                    </div>
+                    <v-btn size="x-large" color="blue-darken-4" rounded="xl" class="px-12 elevation-10 reveal-item delay-4" to="/shoes">
                         KHÁM PHÁ NGAY
                     </v-btn>
                 </v-col>
                 <v-col cols="12" lg="6" class="text-center reveal-container" :class="{ active: props.active }">
                     <div class="hero-shoe-wrapper reveal-item delay-4">
-                        <v-img v-if="props.product?.imageUrl" :src="props.product.imageUrl" eager class="hero-shoe-main"></v-img>
-                        <div class="shoe-glow"></div>
+                        <v-img
+                            :src="props.product?.hinhAnh || ''"
+                            class="the-shoe mx-auto drop-shadow-2xl"
+                            loading="lazy"
+                        ></v-img>
                     </div>
                 </v-col>
             </v-row>
@@ -43,8 +45,6 @@ const props = defineProps({
 .snap-section {
     height: 100vh;
     width: 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
     position: relative;
     overflow: hidden;
 }

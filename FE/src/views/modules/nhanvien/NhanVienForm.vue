@@ -251,6 +251,14 @@ const handleSave = () => {
         addNotification({ title: 'Lỗi', subtitle: 'Họ và tên không được vượt quá 255 ký tự', color: 'error' });
         return;
     }
+    if (!/^[\p{L}0-9\s]+$/u.test(rawName)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Họ và tên không được chứa ký tự đặc biệt', color: 'error' });
+        return;
+    }
+    if (rawName.trim() !== rawName) {
+        addNotification({ title: 'Lỗi', subtitle: 'Họ và tên không được chứa khoảng trắng ở 2 đầu', color: 'error' });
+        return;
+    }
 
     const email = employeeForm.value.email;
     if (!email || !String(email).trim()) {
@@ -275,10 +283,19 @@ const handleSave = () => {
     }
 
     if (employeeForm.value.ngaySinh) {
-        const bd = new Date(employeeForm.value.ngaySinh).getTime();
-        const now = new Date().getTime();
-        if (bd > now) {
+        const bdDate = new Date(employeeForm.value.ngaySinh);
+        const nowDate = new Date();
+        if (bdDate.getTime() > nowDate.getTime()) {
             addNotification({ title: 'Lỗi', subtitle: 'Ngày sinh không thể ở trong tương lai', color: 'error' });
+            return;
+        }
+        let age = nowDate.getFullYear() - bdDate.getFullYear();
+        const m = nowDate.getMonth() - bdDate.getMonth();
+        if (m < 0 || (m === 0 && nowDate.getDate() < bdDate.getDate())) {
+            age--;
+        }
+        if (age < 18) {
+            addNotification({ title: 'Lỗi', subtitle: 'Nhân viên phải từ 18 tuổi trở lên', color: 'error' });
             return;
         }
     }
@@ -504,20 +521,34 @@ onMounted(async () => {
                             <v-col cols="12" md="6">
                                 <div class="field-label">Họ và tên <span class="text-error">*</span></div>
                                 <v-text-field v-model="employeeForm.ten" :readonly="isDetailView"
+                                    :rules="[
+                                        (v) => !!v || 'Vui lòng nhập họ và tên',
+                                        (v) => (v && v.trim() === v) || 'Không được chứa khoảng trắng ở 2 đầu',
+                                        (v) => (v && /^[\p{L}0-9\s]+$/u.test(v)) || 'Không được chứa ký tự đặc biệt'
+                                    ]"
                                     placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" density="compact"
-                                    hide-details></v-text-field>
+                                    hide-details="auto"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Email / Tài khoản <span class="text-error">*</span></div>
                                 <v-text-field v-model="employeeForm.email" :readonly="isDetailView"
+                                    :rules="[
+                                        (v) => !!v || 'Vui lòng nhập Email',
+                                        (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Email không hợp lệ'
+                                    ]"
                                     placeholder="name@company.com" variant="outlined" density="compact"
-                                    hide-details></v-text-field>
+                                    hide-details="auto"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Số điện thoại <span class="text-error">*</span></div>
-                                <v-text-field v-model="employeeForm.sdt" :readonly="isDetailView"
+                                <v-text-field :model-value="employeeForm.sdt" @update:model-value="val => employeeForm.sdt = val.replace(/\D/g, '')" 
+                                    :readonly="isDetailView"
+                                    :rules="[
+                                        (v) => !!v || 'Vui lòng nhập số điện thoại',
+                                        (v) => /^0[0-9]{9}$/.test(v) || 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0'
+                                    ]"
                                     placeholder="09xx.xxx.xxx" variant="outlined" density="compact"
-                                    hide-details></v-text-field>
+                                    hide-details="auto" maxlength="10"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6" v-if="isEditMode">
                                 <div class="field-label">Tên tài khoản</div>
@@ -529,8 +560,20 @@ onMounted(async () => {
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
                                 <v-text-field v-model="employeeForm.ngaySinh" :readonly="isDetailView" type="date"
+                                    :rules="[
+                                        (v) => {
+                                            if (!v) return true;
+                                            const dob = new Date(v);
+                                            const today = new Date();
+                                            if (dob > today) return 'Ngày sinh không được ở tương lai';
+                                            let age = today.getFullYear() - dob.getFullYear();
+                                            const m = today.getMonth() - dob.getMonth();
+                                            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                                            return age >= 18 || 'Nhân viên phải từ 18 tuổi trở lên';
+                                        }
+                                    ]"
                                     append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
-                                    variant="outlined" density="compact" hide-details clearable></v-text-field>
+                                    variant="outlined" density="compact" hide-details="auto" clearable></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Giới tính</div>

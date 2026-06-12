@@ -1404,16 +1404,21 @@ const fetchFormOptions = async () => {
             existingProductNames.value = [...new Set(productList.map(p => p.tenSanPham).filter(Boolean))];
         }
 
+        const filterActive = (list) => {
+            if (!Array.isArray(list)) return [];
+            return list.filter(item => !item.trangThai || item.trangThai === 'DANG_HOAT_DONG');
+        };
+
         if (opts) {
-            brands.value = opts.thuongHieus || [];
-            categories.value = opts.danhMucs || [];
-            origins.value = opts.xuatXus || [];
-            purposes.value = opts.mucDichChays || [];
-            collars.value = opts.coGiays || [];
-            materials.value = opts.chatLieus || [];
-            soles.value = opts.deGiays || [];
-            colors.value = opts.mauSacs || [];
-            sizes.value = opts.kichThuocs || [];
+            brands.value = filterActive(opts.thuongHieus);
+            categories.value = filterActive(opts.danhMucs);
+            origins.value = filterActive(opts.xuatXus);
+            purposes.value = filterActive(opts.mucDichChays);
+            collars.value = filterActive(opts.coGiays);
+            materials.value = filterActive(opts.chatLieus);
+            soles.value = filterActive(opts.deGiays);
+            colors.value = filterActive(opts.mauSacs);
+            sizes.value = filterActive(opts.kichThuocs);
             return;
         }
 
@@ -1429,15 +1434,15 @@ const fetchFormOptions = async () => {
             dichVuKichThuoc.layKichThuoc({ size: 1000 })
         ]);
 
-        brands.value = b.content || b || [];
-        categories.value = c.content || c || [];
-        origins.value = o.content || o || [];
-        purposes.value = p.content || p || [];
-        collars.value = col.content || col || [];
-        materials.value = m.content || m || [];
-        soles.value = s.content || s || [];
-        colors.value = mau.content || mau || [];
-        sizes.value = size.content || size || [];
+        brands.value = filterActive(b.content || b);
+        categories.value = filterActive(c.content || c);
+        origins.value = filterActive(o.content || o);
+        purposes.value = filterActive(p.content || p);
+        collars.value = filterActive(col.content || col);
+        materials.value = filterActive(m.content || m);
+        soles.value = filterActive(s.content || s);
+        colors.value = filterActive(mau.content || mau);
+        sizes.value = filterActive(size.content || size);
     } catch (error) {
         console.error('Lỗi khi tải options:', error);
         addNotification({ title: 'Cảnh báo', subtitle: 'Không thể tải đầy đủ thuộc tính', color: 'warning' });
@@ -1536,7 +1541,15 @@ onMounted(async () => {
 });
 
 const rules = {
-    required: value => !!value || 'Trường này là bắt buộc'
+    required: value => !!value || 'Trường này là bắt buộc',
+    noSpecialChar: value => {
+        if (!value) return true;
+        return /^[\p{L}0-9\s]+$/u.test(value) || 'Không được chứa ký tự đặc biệt';
+    },
+    noLeadingTrailingSpace: value => {
+        if (!value) return true;
+        return value.trim() === value || 'Không được chứa khoảng trắng ở 2 đầu';
+    }
 };
 
 const attributeConfig = [
@@ -1922,7 +1935,7 @@ const handleSave = async () => {
                             <v-col cols="12" md="3">
                                 <div class="field-label">Tên sản phẩm <span class="text-error">*</span></div>
                                 <v-combobox v-model="product.tenSanPham" :items="existingProductNames"
-                                    placeholder="Ví dụ: Giày Nike Air..." :rules="[rules.required]" variant="outlined"
+                                    placeholder="Ví dụ: Giày Nike Air..." :rules="[rules.required, rules.noSpecialChar, rules.noLeadingTrailingSpace]" variant="outlined"
                                     density="comfortable" hide-details="auto" maxlength="250"
                                     :return-object="false"></v-combobox>
                             </v-col>

@@ -429,6 +429,14 @@ const handleSave = () => {
         addNotification({ title: 'Lỗi', subtitle: 'Tên đợt giảm giá không được vượt quá 255 ký tự', color: 'error' });
         return;
     }
+    if (!/^[\p{L}0-9\s]+$/u.test(rawName)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Tên đợt giảm giá không được chứa ký tự đặc biệt', color: 'error' });
+        return;
+    }
+    if (rawName.trim() !== rawName) {
+        addNotification({ title: 'Lỗi', subtitle: 'Tên đợt giảm giá không được chứa khoảng trắng ở 2 đầu', color: 'error' });
+        return;
+    }
 
     const discountAmount = Number(form.value.soTienGiam);
     if (!discountAmount || discountAmount <= 0) {
@@ -559,8 +567,14 @@ onMounted(init);
                             <div class="mb-5">
                                 <div class="field-label">Tên đợt giảm giá <span class="text-error">*</span></div>
                                 <v-text-field v-model="form.ten" :readonly="isDetailView"
+                                    :rules="[
+                                        (v) => !!v || 'Vui lòng nhập tên đợt giảm giá',
+                                        (v) => (v && v.trim() === v) || 'Không được chứa khoảng trắng ở 2 đầu',
+                                        (v) => (v && /^[\p{L}0-9\s]+$/u.test(v)) || 'Không được chứa ký tự đặc biệt',
+                                        (v) => (v && v.length <= 255) || 'Không vượt quá 255 ký tự'
+                                    ]"
                                     placeholder="Nhập tên đợt giảm giá" variant="outlined" density="comfortable"
-                                    hide-details></v-text-field>
+                                    hide-details="auto"></v-text-field>
                             </div>
 
                             <div class="mb-5">

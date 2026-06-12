@@ -107,10 +107,18 @@ const handleFileChange = async (event) => {
     try {
         // 1. Upload to Cloudinary
         const uploadResult = await dichVuFile.taiLenFile(file);
+        
+        // Trích xuất URL an toàn (hỗ trợ cả object và string)
+        const fileUrl = uploadResult?.fileUrl || uploadResult?.url || uploadResult?.secure_url || uploadResult?.duongDanAnh || (typeof uploadResult === 'string' ? uploadResult : '');
+
+        if (!fileUrl) {
+            addNotification({ title: 'Lỗi', subtitle: 'Không thể lấy URL ảnh từ máy chủ', color: 'error' });
+            return;
+        }
 
         // 2. Save to database for this variant
         const newImage = await dichVuBienThe.themAnh(props.variant.id, {
-            duongDanAnh: uploadResult.fileUrl,
+            duongDanAnh: fileUrl,
             moTa: `Ảnh của ${props.variant.maChiTietSanPham}`,
             hinhAnhDaiDien: images.value.length === 0
         });

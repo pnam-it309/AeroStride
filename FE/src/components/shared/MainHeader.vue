@@ -3,10 +3,30 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import { PATH } from '@/router/routePaths';
 import { useAuthStore } from '@/stores/authStore';
+import { useCartStore } from '@/stores/cartStore';
+import { useToastStore } from '@/stores/toastStore';
 import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
+const cartStore = useCartStore();
+const toastStore = useToastStore();
 const router = useRouter();
+
+const favoriteCount = ref(0);
+
+const updateFavoriteCount = () => {
+    let favorites = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
+    favoriteCount.value = favorites.length;
+};
+
+const handleFavoriteClick = () => {
+    if (favoriteCount.value > 0) {
+        router.push(PATH.FAVORITES);
+    } else {
+        toastStore.showToast('Bạn chưa có sản phẩm yêu thích nào!', 'info');
+        router.push(PATH.FAVORITES); // Vẫn cho phép vào xem trang rỗng
+    }
+};
 
 const handleLogout = async () => {
     await authStore.logout();
@@ -55,16 +75,39 @@ const navLinks = [
     { name: 'Mã giảm giá', id: 'vouchers', path: PATH.VOUCHERS, color: '#FF1744' }
 ];
 
+const isHidden = ref(false);
+let lastScrollY = 0;
+
 const handleScroll = () => {
-    isScrolled.value = window.scrollY > 50;
+    const currentScrollY = window.scrollY;
+    isScrolled.value = currentScrollY > 50;
+
+    if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Cuộn xuống -> Ẩn
+        isHidden.value = true;
+        closeMegaMenu();
+    } else if (currentScrollY < lastScrollY) {
+        // Cuộn lên -> Hiện
+        isHidden.value = false;
+    }
+    lastScrollY = currentScrollY;
+};
+
+const handleMouseEnter = () => {
+    isHidden.value = false;
 };
 
 onMounted(() => {
     window.addEventListener('scroll', handleScroll);
+    updateFavoriteCount();
+    window.addEventListener('storage', updateFavoriteCount);
+    window.addEventListener('favorites-updated', updateFavoriteCount);
 });
 
 onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll);
+    window.removeEventListener('storage', updateFavoriteCount);
+    window.removeEventListener('favorites-updated', updateFavoriteCount);
 });
 
 const openMegaMenu = (id) => {
@@ -79,32 +122,33 @@ const closeMegaMenu = () => {
 </script>
 
 <template>
-    <header class="main-header-system" :class="{ scrolled: isScrolled, 'mega-active': isMenuOpen }">
+    <div class="header-hover-zone" @mouseenter="handleMouseEnter"></div>
+    <header class="main-header-system" :class="{ scrolled: isScrolled, 'mega-active': isMenuOpen, 'header-hidden': isHidden }" @mouseenter="handleMouseEnter">
         <!-- Top Utility Bar -->
         <div class="top-utility-bar">
-            <div class="container-custom d-flex justify-end gap-6 px-12">
-                <a href="#" class="u-link">Find a Store</a>
+            <div class="container-custom d-flex justify-end gap-6 px-12 w-100">
+                <a href="#" class="u-link">Hệ thống cửa hàng</a>
                 <span class="divider">|</span>
-                <a href="#" class="u-link">Help</a>
+                <a href="#" class="u-link">Trợ giúp</a>
                 <span class="divider">|</span>
-                <a href="#" class="u-link">Join Us</a>
+                <a href="#" class="u-link">Tham gia cùng chúng tôi</a>
                 <span class="divider">|</span>
-                <router-link v-if="!authStore.isLoggedIn" :to="PATH.LOGIN" class="u-link d-flex align-center" title="Sign In">
+                <router-link v-if="!authStore.isLoggedIn" :to="PATH.LOGIN" class="u-link d-flex align-center" title="Đăng nhập">
                     <v-icon size="20" color="black" class="mr-1">mdi-account-circle-outline</v-icon>
                 </router-link>
                 <div v-else class="d-flex align-center cursor-pointer" style="height: 100%">
-                    <v-menu location="bottom end" transition="slide-y-transition">
+                    <v-menu location="bottom end" offset="4" transition="slide-y-transition">
                         <template v-slot:activator="{ props }">
                             <div v-bind="props" class="d-flex align-center gap-1">
                                 <v-icon size="18" color="black">mdi-account-circle-outline</v-icon>
-                                <span class="u-link font-weight-black">{{ authStore.user?.username || 'Member' }}</span>
+                                <span class="u-link">{{ authStore.user?.hoTen || authStore.user?.username || 'Thành viên' }}</span>
                             </div>
                         </template>
                         <v-list density="compact" width="180" class="rounded-lg mt-2 border shadow-sm">
-                            <v-list-item prepend-icon="mdi-account-outline" title="My Profile" :to="PATH.PROFILE"></v-list-item>
-                            <v-list-item prepend-icon="mdi-package-variant-closed" title="Orders" :to="PATH.ORDERS"></v-list-item>
+                            <v-list-item prepend-icon="mdi-account-outline" title="Tài khoản của tôi" :to="PATH.PROFILE"></v-list-item>
+                            <v-list-item prepend-icon="mdi-package-variant-closed" title="Đơn mua" :to="PATH.ORDERS"></v-list-item>
                             <v-divider class="my-1"></v-divider>
-                            <v-list-item prepend-icon="mdi-logout" title="Sign Out" @click="handleLogout" color="error"></v-list-item>
+                            <v-list-item prepend-icon="mdi-logout" title="Đăng xuất" @click="handleLogout" color="error"></v-list-item>
                         </v-list>
                     </v-menu>
                 </div>
@@ -135,8 +179,18 @@ const closeMegaMenu = () => {
                         <v-icon size="22" class="search-icon" @click="handleSearch">mdi-magnify</v-icon>
                         <input type="text" placeholder="Tìm kiếm" class="search-input" v-model="searchQuery" @keyup.enter="handleSearch" />
                     </div>
-                    <v-icon size="24" class="action-icon">mdi-heart-outline</v-icon>
-                    <v-icon size="24" class="action-icon">mdi-bag-outline</v-icon>
+                    <div class="cursor-pointer" style="display: flex; align-items: center;" @click="handleFavoriteClick">
+                        <v-badge :content="favoriteCount" color="error" v-if="favoriteCount > 0" offset-x="2" offset-y="2">
+                            <v-icon size="24" class="action-icon">mdi-heart-outline</v-icon>
+                        </v-badge>
+                        <v-icon v-else size="24" class="action-icon">mdi-heart-outline</v-icon>
+                    </div>
+                    <div class="cursor-pointer" style="display: flex; align-items: center;" @click="cartStore.openDrawer()">
+                        <v-badge :content="cartStore.cartCount" color="error" v-if="cartStore.cartCount > 0" offset-x="2" offset-y="2">
+                            <v-icon size="24" class="action-icon">mdi-shopping-outline</v-icon>
+                        </v-badge>
+                        <v-icon v-else size="24" class="action-icon">mdi-shopping-outline</v-icon>
+                    </div>
                 </div>
             </div>
 
@@ -155,10 +209,10 @@ const closeMegaMenu = () => {
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="featured-promo p-6 rounded-lg bg-grey-lighten-4">
-                                    <h4 class="menu-label mb-4">MEMBER EXCLUSIVE</h4>
-                                    <p class="text-caption mb-4">Get the latest AeroStride X1 before anyone else. Join us now for free.</p>
-                                    <v-btn block color="black" rounded="pill" size="small" :to="PATH.SHOES" @click="closeMegaMenu"
-                                        >SHOP NOW</v-btn
+                                    <h4 class="menu-label mb-4" style="text-transform: none; font-weight: normal;">Dành riêng cho thành viên</h4>
+                                    <p class="text-caption mb-4" style="font-weight: normal;">Sở hữu những mẫu giày mới nhất ngay hôm nay. Đăng ký thành viên hoàn toàn miễn phí.</p>
+                                    <v-btn block color="black" rounded="pill" size="small" :to="PATH.SHOES" @click="closeMegaMenu" style="text-transform: none; font-weight: normal;"
+                                        >Mua ngay</v-btn
                                     >
                                 </div>
                             </v-col>
@@ -179,7 +233,7 @@ const closeMegaMenu = () => {
     top: 0;
     left: 0;
     width: 100%;
-    z-index: 9999;
+    z-index: 1000;
     background: rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.3);
@@ -195,6 +249,19 @@ const closeMegaMenu = () => {
         background: #ffffff !important;
         box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
     }
+
+    &.header-hidden {
+        transform: translateY(-100%);
+    }
+}
+
+.header-hover-zone {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 25px;
+    z-index: 1001; /* Above header so it triggers even when header is hidden */
 }
 
 .top-utility-bar {
@@ -203,8 +270,8 @@ const closeMegaMenu = () => {
     display: flex;
     align-items: center;
     .u-link {
-        font-size: 0.7rem;
-        font-weight: 700;
+        font-size: 0.8rem;
+        font-weight: normal;
         color: #111;
         text-decoration: none;
         &:hover {
@@ -237,7 +304,7 @@ const closeMegaMenu = () => {
     padding: 15px 0;
     .nav-link {
         font-size: 0.95rem;
-        font-weight: 700;
+        font-weight: normal;
         color: #111;
         text-decoration: none;
     }

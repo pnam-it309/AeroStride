@@ -125,7 +125,6 @@ const handleLogin = async () => {
 }
 
 .login-btn:hover {
-    transform: translateY(-5px) scale(1.02);
     box-shadow: 0 15px 30px rgba(var(--v-theme-primary), 0.45) !important;
 }
 

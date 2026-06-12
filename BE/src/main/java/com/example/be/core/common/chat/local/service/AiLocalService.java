@@ -214,10 +214,29 @@ public class AiLocalService {
         }
 
         // 4. Xử lý Logic Java Rule-based dự phòng
-        return generateRuleBasedResponse(lowerInput);
+        return generateRuleBasedResponse(state, lowerInput);
     }
 
-    private String generateRuleBasedResponse(String lowerInput) {
+    private String generateRuleBasedResponse(ChatState state, String lowerInput) {
+        if (lowerInput.contains("đề xuất") || lowerInput.contains("gợi ý") || lowerInput.contains("tư vấn giày") || 
+            lowerInput.contains("tìm giày") || lowerInput.contains("tìm sản phẩm") || lowerInput.contains("giới thiệu") || 
+            lowerInput.contains("không biết") || lowerInput.contains("chưa biết") || lowerInput.contains("chọn loại nào") || 
+            lowerInput.contains("tư vấn cho t") || lowerInput.contains("tu van") || lowerInput.contains("de xuat") || 
+            lowerInput.contains("goi y") || lowerInput.contains("bán chạy") || lowerInput.contains("ban chay")) {
+            
+            state.alternativeProducts.clear();
+            List<SanPham> list = dataLibrary.getTopProducts(5);
+            for (SanPham p : list) {
+                state.alternativeProducts.add(p.getTen() + " (Mã: " + p.getMa() + ")");
+            }
+            if (!state.alternativeProducts.isEmpty()) {
+                String current = state.alternativeProducts.poll();
+                state.conversationData.put("currentProduct", current);
+                state.currentState = "SATISFACTION_CHECK";
+                return "Dạ, nếu bạn đang phân vân, shop xin phép được gợi ý các mẫu giày hot nhất hiện nay nhé! 🥰\n\nĐể bắt đầu, shop xin giới thiệu mẫu giày cực kỳ được yêu thích: **" + current + "**.\n\nKhông biết mẫu giày này có đúng gu của bạn không ạ?";
+            }
+        }
+
         if (lowerInput.contains("chào") || lowerInput.contains("hello") || lowerInput.contains("hi ") || lowerInput.equals("hi") || lowerInput.contains("alo")) {
             return "Dạ, AeroStride xin kính chào quý khách! Tôi là trợ lý ảo hỗ trợ chăm sóc khách hàng tự động. Tôi có thể giúp bạn tìm kiếm giày, tư vấn size, chính sách giao hàng, bảo hành đổi trả hoặc khuyến mãi. Bạn đang quan tâm đến sản phẩm hoặc chính sách nào ạ?";
         }
@@ -405,7 +424,7 @@ public class AiLocalService {
         state.currentState = "NORMAL";
         state.alternativeProducts.clear();
         state.conversationData.clear();
-        return "Dạ shop đã ghi nhận phản hồi của mình ạ. " + generateRuleBasedResponse(normalizedInput);
+        return "Dạ shop đã ghi nhận phản hồi của mình ạ. " + generateRuleBasedResponse(state, normalizedInput);
     }
 
     private String handleCollectingPreferencesState(ChatState state, String normalizedInput) {

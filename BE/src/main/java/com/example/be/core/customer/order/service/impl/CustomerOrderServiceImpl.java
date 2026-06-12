@@ -191,6 +191,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
     // Lấy danh sách các đơn hàng (hóa đơn online) của khách hàng, có thể lọc theo trạng thái
     @Override
+    @Transactional(readOnly = true)
     public List<CustomerOrderResponse> getMyOrders(String username, String trangThai) {
         KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin khách hàng"));
@@ -210,6 +211,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
     // Lấy thông tin chi tiết của một đơn hàng cụ thể thuộc về khách hàng
     @Override
+    @Transactional(readOnly = true)
     public CustomerOrderResponse getOrderDetail(String id, String username) {
         HoaDon hoaDon = hoaDonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
@@ -298,13 +300,19 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
         List<CustomerOrderResponse.OrderItemResponse> itemResponses = items.stream().map(hdct -> {
             ChiTietSanPham ctsp = hdct.getChiTietSanPham();
-            String tenSanPham = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : "";
+            String tenSanPham = "";
             String hinhAnh = "";
-            if (ctsp.getAnhChiTietSanPhams() != null && !ctsp.getAnhChiTietSanPhams().isEmpty()) {
-                hinhAnh = ctsp.getAnhChiTietSanPhams().iterator().next().getDuongDanAnh();
+            String tenMauSac = "";
+            String tenKichThuoc = "";
+
+            if (ctsp != null) {
+                tenSanPham = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : "";
+                if (ctsp.getAnhChiTietSanPhams() != null && !ctsp.getAnhChiTietSanPhams().isEmpty()) {
+                    hinhAnh = ctsp.getAnhChiTietSanPhams().iterator().next().getDuongDanAnh();
+                }
+                tenMauSac = ctsp.getMauSac() != null ? ctsp.getMauSac().getTen() : "";
+                tenKichThuoc = ctsp.getKichThuoc() != null ? ctsp.getKichThuoc().getTen() : "";
             }
-            String tenMauSac = ctsp.getMauSac() != null ? ctsp.getMauSac().getTen() : "";
-            String tenKichThuoc = ctsp.getKichThuoc() != null ? ctsp.getKichThuoc().getTen() : "";
 
             return CustomerOrderResponse.OrderItemResponse.builder()
                     .id(hdct.getId())

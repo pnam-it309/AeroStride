@@ -230,8 +230,6 @@ const currentPromo = computed(() => promotions[activeIndex.value]);
 .promo-timeline-section {
     height: 100vh;
     width: 100%;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
     position: relative;
     background: #ffffff;
     display: flex;

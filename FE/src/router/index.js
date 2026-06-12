@@ -3,7 +3,7 @@ import MainRoutes from './MainRoutes';
 import AuthRoutes from './AuthRoutes';
 import { requireAuth, requireGuest } from './guards';
 import { PATH } from './routePaths';
-
+import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 export const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -46,10 +46,22 @@ export const router = createRouter({
             meta: { requiresCustomerAuth: true, seoTitle: 'Đơn Hàng Của Tôi' }
         },
         {
+            path: PATH.PROFILE,
+            name: 'CustomerProfile',
+            component: () => import('@/views/pages/customer/CustomerProfilePage.vue'),
+            meta: { requiresCustomerAuth: true, seoTitle: 'Hồ Sơ Của Tôi' }
+        },
+        {
             path: `${PATH.ORDER_DETAIL}/:id`,
             name: 'OrderDetail',
             component: () => import('@/views/pages/orders/OrderDetailPage.vue'),
             meta: { requiresCustomerAuth: true, seoTitle: 'Chi Tiết Đơn Hàng' }
+        },
+        {
+            path: PATH.FAVORITES,
+            name: 'FavoritesPage',
+            component: () => import('@/views/pages/customer/FavoritesPage.vue'),
+            meta: { seoTitle: 'Danh Sách Yêu Thích' }
         },
         // Error Routes
         {
@@ -120,7 +132,6 @@ router.beforeEach((to, from, next) => {
     }
 
     if (to.meta.requiresCustomerAuth) {
-        const { dichVuXacThuc } = require('@/services/auth/dichVuXacThuc');
         if (!dichVuXacThuc.daDangNhap()) {
             next(PATH.LOGIN);
         } else {
