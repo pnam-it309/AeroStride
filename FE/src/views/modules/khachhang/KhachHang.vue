@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, onMounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 
 import { useUIStore } from '@/stores/ui';
@@ -75,26 +75,12 @@ const getInvoiceTypeChipClass = (value) => {
     return '';
 };
 
-// Invoice detail dialog state
-const invoiceDetailDialog = ref(false);
-const selectedInvoice = ref(null);
-const detailLoading = ref(false);
-
-const openInvoiceDetail = async (item) => {
-    detailLoading.value = true;
-    try {
-        // Try to fetch detail by id; fallback to maHoaDon where API supports it
-        const id = item.id || item.hoaDonId || null;
-        const data = id ? await dichVuHoaDon.layChiTietHoaDon(id) : await dichVuHoaDon.layChiTietHoaDon(item.maHoaDon);
-        selectedInvoice.value = data;
-        invoiceDetailDialog.value = true;
-    } catch (e) {
-        console.error('Error loading invoice detail', e);
-        if (typeof addNotification === 'function') {
-            addNotification({ title: 'Lỗi', subtitle: 'Không thể tải chi tiết hóa đơn', color: 'error' });
-        }
-    } finally {
-        detailLoading.value = false;
+const openInvoiceDetail = (item) => {
+    const id = item.id || item.hoaDonId || null;
+    if (id) {
+        router.push({ name: 'HoaDonChiTiet', params: { id: id }, query: { from: 'khachhang', khId: selectedKHForInvoices.value?.id } });
+    } else if (typeof addNotification === 'function') {
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể mở chi tiết hóa đơn', color: 'error' });
     }
 };
 
@@ -277,6 +263,7 @@ const handleExport = async () => {
 };
 
 const router = useRouter();
+const route = useRoute();
 const uiStore = useUIStore();
 const { addNotification } = useNotifications();
 
@@ -607,8 +594,20 @@ const handleDeleteAddr = (addrId) => {
 const tableHeaders = KHACH_HANG_TABLE_HEADERS;
 const statsTableHeaders = KHACH_HANG_STATS_TABLE_HEADERS;
 
-onMounted(() => {
+onMounted(async () => {
     loadCustomers();
+    if (route.query.view === 'invoices' && route.query.khId) {
+        activeTab.value = 'thong-ke';
+        try {
+            const cus = await dichVuKhachHang.layChiTietKhachHang(route.query.khId);
+            if (cus) {
+                await openInvoicesDialog(cus);
+                router.replace('/admin/khach-hang');
+            }
+        } catch (e) {
+            console.error('Lỗi khi tải chi tiết khách hàng để xem hóa đơn:', e);
+        }
+    }
 });
 
 const hasValue = (v) => v && String(v).trim().length > 0;
@@ -698,7 +697,7 @@ const confirmChangeStatus = (item) => {
     });
 };
 
-onMounted(() => loadCustomers());
+
 
 // addr form watchers
 watch(
@@ -746,8 +745,8 @@ const formatAddressFull = (addr) => {
                         <!-- Tìm kiếm -->
                         <v-col cols="12" md="4" class="filter-cell">
                             <div class="filter-field-label">Tìm kiếm</div>
-                            <v-text-field v-model="listFilters.search" placeholder="Tên, SĐT, Email, Mã..."
-                                variant="outlined" density="compact" hide-details prepend-inner-icon="mdi-magnify"
+                            <v-text-field v-model="listFilters.search" placeholder="Mã, tên, số điện thoại, email..."
+                                variant="outlined" bg-color="white" density="compact" hide-details
                                 class="compact-input" @input="handleLocalFilterChange" />
                         </v-col>
 
@@ -755,7 +754,7 @@ const formatAddressFull = (addr) => {
                         <v-col cols="12" md="3" class="filter-cell">
                             <div class="filter-field-label">Giới tính</div>
                             <v-select v-model="listFilters.gioiTinh" :items="GIOI_TINH_FILTER_OPTIONS"
-                                variant="outlined" density="compact" hide-details class="compact-input"
+                                variant="outlined" bg-color="white" density="compact" hide-details class="compact-input"
                                 @update:model-value="handleLocalFilterChange" />
                         </v-col>
 
@@ -763,7 +762,7 @@ const formatAddressFull = (addr) => {
                         <v-col cols="12" md="3" class="filter-cell">
                             <div class="filter-field-label">Trạng thái</div>
                             <v-select v-model="listFilters.trangThai" :items="TRANG_THAI_FILTER_OPTIONS"
-                                variant="outlined" density="compact" hide-details class="compact-input"
+                                variant="outlined" bg-color="white" density="compact" hide-details class="compact-input"
                                 @update:model-value="handleLocalFilterChange" />
                         </v-col>
                     </template>
@@ -774,7 +773,7 @@ const formatAddressFull = (addr) => {
                         <v-col cols="12" md="5" class="filter-cell">
                             <div class="filter-field-label">Tìm kiếm chung (mã, tên, sdt, email)</div>
                             <v-text-field v-model="statsFilters.search" placeholder="Mã, tên, số điện thoại, email..."
-                                variant="outlined" density="compact" hide-details class="compact-input"
+                                variant="outlined" bg-color="white" density="compact" hide-details class="compact-input"
                                 @input="handleLocalFilterChange" />
                         </v-col>
 
@@ -782,7 +781,7 @@ const formatAddressFull = (addr) => {
                         <v-col cols="12" md="3" class="filter-cell">
                             <div class="filter-field-label">Từ ngày</div>
                             <v-text-field ref="fromDateFieldRef" v-model="statsFilters.minNgayDonHang" type="date"
-                                variant="outlined" density="compact" hide-details class="compact-input date-field"
+                                variant="outlined" bg-color="white" density="compact" hide-details class="compact-input date-field"
                                 append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openFromDatePicker"
                                 @input="handleLocalFilterChange" />
                         </v-col>
@@ -791,7 +790,7 @@ const formatAddressFull = (addr) => {
                         <v-col cols="12" md="3" class="filter-cell">
                             <div class="filter-field-label">Đến ngày</div>
                             <v-text-field ref="toDateFieldRef" v-model="statsFilters.maxNgayDonHang" type="date"
-                                variant="outlined" density="compact" hide-details class="compact-input date-field"
+                                variant="outlined" bg-color="white" density="compact" hide-details class="compact-input date-field"
                                 append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openToDatePicker"
                                 @input="handleLocalFilterChange" />
                         </v-col>
@@ -1001,7 +1000,7 @@ const formatAddressFull = (addr) => {
             </div>
 
             <!-- Table Card -->
-            <AdminTable hide-toolbar :headers="invoiceHistoryTableHeaders" :items="invoicesTab.items.value"
+            <AdminTable title="Lịch sử hóa đơn" :show-add-button="false" :headers="invoiceHistoryTableHeaders" :items="invoicesTab.items.value"
                 :loading="invoicesTab.loading.value" empty-text="Chưa có hóa đơn nào được tìm thấy cho khách hàng này!"
                 empty-icon="mdi-receipt-text-off">
                 <template #row="{ item, index }">
@@ -1076,114 +1075,6 @@ const formatAddressFull = (addr) => {
             :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="handleConfirm(true)"
             @cancel="handleConfirm(false)" />
 
-        <!-- INVOICE DETAIL DIALOG -->
-        <v-dialog v-model="invoiceDetailDialog" max-width="1300" transition="dialog-bottom-transition" scrollable>
-            <v-card class="premium-card rounded-xl khach-hang-dialog-card">
-                <v-card-title class="pa-6 border-b text-primary d-flex align-center">
-                    <v-icon class="mr-3">mdi-receipt</v-icon>
-                    <span class="invoice-dialog-title">Chi tiết hóa đơn:</span>&nbsp;
-                    <span class="invoice-dialog-code">{{ selectedInvoice?.maHoaDon || selectedInvoice?.ma }}</span>
-                    <v-spacer />
-                    <v-btn icon variant="text" size="small" @click="invoiceDetailDialog = false">
-                        <v-icon>mdi-close</v-icon>
-                    </v-btn>
-                </v-card-title>
-
-                <v-card-text class="pa-6">
-                    <div v-if="detailLoading" class="text-center py-16">
-                        <v-progress-circular indeterminate color="primary" size="64" />
-                        <div class="mt-4 font-weight-bold text-slate-500">Đang tải chi tiết hóa đơn...</div>
-                    </div>
-
-                    <div v-else>
-                        <div class="admin-table-container border rounded-xl overflow-hidden bg-white">
-                            <table class="native-admin-table w-100">
-                                <thead>
-                                    <tr>
-                                        <th class="header-cell text-center" style="width: 60px">STT</th>
-                                        <th class="header-cell text-center" style="width: 80px">Ảnh</th>
-                                        <th class="header-cell text-center">Mã biến thể</th>
-                                        <th class="header-cell text-center">Tên biến thể</th>
-                                        <th class="header-cell text-center">Màu sắc</th>
-                                        <th class="header-cell text-center">Cỡ</th>
-                                        <th class="header-cell text-center" style="width: 100px">Số lượng</th>
-                                        <th class="header-cell text-center" style="width: 130px">Đơn giá</th>
-                                        <th class="header-cell text-center" style="width: 140px">Thành tiền</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="(item, index) in selectedInvoice?.items ||
-                                        selectedInvoice?.listsHoaDonChiTiet ||
-                                        selectedInvoice?.listsHoaDonChiTiet" :key="index" class="data-row">
-                                        <td class="data-cell text-center text-slate-400">{{ index + 1 }}</td>
-                                        <td class="data-cell text-center">
-                                            <div class="invoice-product-square">
-                                                <v-img v-if="item.hinhAnh || item.anh" :src="item.hinhAnh || item.anh"
-                                                    width="56" height="56" class="rounded-sm" cover />
-                                                <div v-else class="invoice-product-square-placeholder">
-                                                    <v-icon size="20" color="grey">mdi-shoe-sneaker</v-icon>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="data-cell text-center mono-font">
-                                            {{ item.maBienThe || item.maCTSP || item.maSanPham || 'N/A' }}
-                                        </td>
-                                        <td class="data-cell text-center">{{ item.tenBienThe || item.tenSanPham ||
-                                            item.ten ||
-                                            'N/A' }}</td>
-                                        <td class="data-cell text-center">{{ item.tenMauSac || item.mauSac || '-' }}
-                                        </td>
-                                        <td class="data-cell text-center">{{ item.tenKichThuoc || item.kichThuoc || '-'
-                                        }}</td>
-                                        <td class="data-cell text-center">{{ item.soLuong || item.soLuongDat || 0 }}
-                                        </td>
-                                        <td class="data-cell text-center invoice-amount">
-                                            {{ formatCurrency(item.donGia || item.giaTien || 0) }}
-                                        </td>
-                                        <td class="data-cell text-center invoice-amount">
-                                            {{ formatCurrency(item.thanhTien || (item.donGia || item.giaTien || 0) *
-                                                (item.soLuong || 0)) }}
-                                        </td>
-                                    </tr>
-                                    <tr v-if="
-                                        !(
-                                            selectedInvoice?.items ||
-                                            selectedInvoice?.listsHoaDonChiTiet ||
-                                            selectedInvoice?.listsHoaDonChiTiet
-                                        ) || (selectedInvoice?.items || selectedInvoice?.listsHoaDonChiTiet || []).length === 0
-                                    ">
-                                        <td colspan="8" class="text-center text-slate-500 py-6">
-                                            Không có sản phẩm nào trong hóa đơn này.
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <tfoot>
-                                    <tr class="bg-slate-50">
-                                        <td colspan="7"
-                                            class="data-cell text-right font-weight-bold text-slate-800 py-4"
-                                            style="font-size: 13px">
-                                            Tổng tiền:
-                                        </td>
-                                        <td class="data-cell text-right font-weight-bold invoice-total-amount py-4"
-                                            style="font-size: 13px">
-                                            {{ formatCurrency(selectedInvoice?.tongTienSauGiam ||
-                                                selectedInvoice?.tongTien ||
-                                                0) }}
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </v-card-text>
-
-                <v-card-actions class="pa-4 bg-slate-50 border-t">
-                    <v-spacer />
-                    <v-btn color="slate-500" variant="text" class="text-none font-weight-bold"
-                        @click="invoiceDetailDialog = false">Đóng</v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
 
         <!-- ═══════════════════════════════════════════════════
          Dialog Quản lý địa chỉ (2 cột: danh sách | form)

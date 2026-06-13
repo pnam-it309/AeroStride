@@ -132,18 +132,26 @@
     font-size: 16px !important;
 }
 
+.v-field {
+    border-radius: 16px !important;
+}
+
 .v-field__outline {
     --v-field-border-width: 1px !important;
-    --v-field-border-opacity: 0.35 !important;
-    color: #94a3b8 !important;
-    /* slate-400 */
+    --v-field-border-opacity: 1 !important;
+    color: #cbd5e1 !important; /* slate-300: viền nhạt */
+    transition: color 0.2s ease, opacity 0.2s ease !important;
+}
+
+.v-field:hover .v-field__outline {
+    color: #1e257c !important; /* Đổi màu xanh đậm khi hover như màn hình chính */
+    --v-field-border-opacity: 0.6 !important;
 }
 
 .v-field--focused .v-field__outline {
     --v-field-border-width: 1px !important;
     --v-field-border-opacity: 1 !important;
-    color: #1e257c !important;
-    /* brand primary */
+    color: #1e257c !important; /* Màu xanh đậm khi focus */
 }
 
 /* Global Typography Helpers */
@@ -175,7 +183,7 @@
 /* Vuetify Menu & List Global Overrides (Dropdowns) */
 .v-overlay-container .v-list-item-title {
     font-family: 'Inter', sans-serif !important;
-    font-size: 16px !important;
+    font-size: 13px !important;
     font-weight: 500 !important;
 }
 

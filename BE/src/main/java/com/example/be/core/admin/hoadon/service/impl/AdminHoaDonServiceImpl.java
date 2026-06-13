@@ -126,7 +126,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 .trangThaiCu(oldStatus != null ? oldStatus.ordinal() : null)
                 .trangThaiMoi(newStatus.ordinal())
                 .ghiChu(note != null && !note.trim().isEmpty() ? note : "Cập nhật trạng thái")
-                .nguoiThucHien("ADMIN")
+                .nguoiThucHien(com.example.be.utils.SecurityUtils.getCurrentUserEmail().orElse("ADMIN"))
                 .build();
         history.setNgayTao(System.currentTimeMillis());
         lichSuTrangThaiHoaDonRepository.save(history);
@@ -231,7 +231,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 .trangThaiMoi(hd.getTrangThai().ordinal())
                 .trangThaiCu(hd.getTrangThai().ordinal())
                 .ghiChu(note)
-                .nguoiThucHien("ADMIN")
+                .nguoiThucHien(com.example.be.utils.SecurityUtils.getCurrentUserEmail().orElse("ADMIN"))
                 .build();
         history.setNgayTao(System.currentTimeMillis());
         lichSuTrangThaiHoaDonRepository.save(history);

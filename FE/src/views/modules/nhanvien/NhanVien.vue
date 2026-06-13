@@ -125,19 +125,19 @@ onMounted(() => {
                 <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm nhân viên</div>
                     <v-text-field v-model="filters.search" placeholder="Tên, SĐT, Email..." variant="outlined"
-                        density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
+                        bg-color="white" density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
                         @keyup.enter="handleSearch"></v-text-field>
                 </v-col>
                 <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Giới tính</div>
                     <v-select v-model="filters.gioiTinh" :items="GIOI_TINH_FILTER_OPTIONS" variant="outlined"
-                        density="compact" hide-details class="compact-input"
+                        bg-color="white" density="compact" hide-details class="compact-input"
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
                 <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select v-model="filters.trangThai" :items="TRANG_THAI_FILTER_OPTIONS" variant="outlined"
-                        density="compact" hide-details class="compact-input"
+                        bg-color="white" density="compact" hide-details class="compact-input"
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
             </AdminFilter>

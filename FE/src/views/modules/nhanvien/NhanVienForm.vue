@@ -442,7 +442,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <v-container fluid class="pa-6 animate-fade-in overflow-y-auto font-body" style="height: 100vh">
+    <v-container id="nhan-vien-form-container" fluid class="pa-6 animate-fade-in overflow-y-auto font-body" style="height: 100vh">
         <!-- Breadcrumbs -->
         <AdminBreadcrumbs :items="[
             { title: 'Quản lý tài khoản', disabled: false, href: '#' },
@@ -797,5 +797,15 @@ onMounted(async () => {
 :deep(input[type="date"]::-webkit-calendar-picker-indicator) {
     display: none;
     -webkit-appearance: none;
+}
+
+/* Ép màu đỏ tươi cho các cảnh báo lỗi */
+#nhan-vien-form-container :deep(.v-messages__message) {
+    color: #ef4444 !important; /* Đỏ tươi */
+    font-weight: 500 !important;
+    font-size: 11px !important;
+}
+#nhan-vien-form-container :deep(.v-field--error) {
+    --v-field-border-color: #ef4444 !important;
 }
 </style>

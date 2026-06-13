@@ -567,6 +567,7 @@ onMounted(async () => {
                             <v-col cols="12" md="8">
                                 <div class="field-label">Họ và tên <span class="text-error">*</span></div>
                                 <v-text-field v-model="customerForm.ten" :readonly="isDetailView"
+                                    @blur="customerForm.ten = customerForm.ten ? customerForm.ten.replace(/\s+/g, ' ').trim() : ''"
                                     :rules="[
                                         (v) => !!v || 'Vui lòng nhập họ và tên',
                                         (v) => /^[\p{L}0-9\s]+$/u.test(v) || 'Họ và tên không được chứa ký tự đặc biệt',
@@ -578,6 +579,7 @@ onMounted(async () => {
                             <v-col cols="12" md="6">
                                 <div class="field-label">Email <span class="text-error">*</span></div>
                                 <v-text-field v-model="customerForm.email" :readonly="isDetailView"
+                                    @blur="customerForm.email = customerForm.email ? customerForm.email.replace(/\s+/g, '') : ''"
                                     :rules="[
                                         (v) => !!v || 'Vui lòng nhập email',
                                         (v) => /.+@.+\..+/.test(v) || 'Email không hợp lệ'
@@ -588,9 +590,10 @@ onMounted(async () => {
                             <v-col cols="12" md="6">
                                 <div class="field-label">Số điện thoại <span class="text-error">*</span></div>
                                 <v-text-field v-model="customerForm.sdt" :readonly="isDetailView"
+                                    @input="customerForm.sdt = customerForm.sdt ? customerForm.sdt.replace(/[^\d+]/g, '') : ''"
                                     :rules="[
                                         (v) => !!v || 'Vui lòng nhập số điện thoại',
-                                        (v) => /^[0-9]{10}$/.test(v) || 'Số điện thoại phải có 10 chữ số'
+                                        (v) => /^(0|\+84)[0-9]{9}$/.test(v) || 'Số điện thoại phải hợp lệ (VD: 09xx hoặc +849xx)'
                                     ]"
                                     placeholder="09xx.xxx.xxx" variant="outlined" bg-color="white" density="compact"
                                     hide-details="auto"></v-text-field>
@@ -736,7 +739,7 @@ onMounted(async () => {
                             </v-row>
                         </div>
 
-                        <div v-else-if="listDiaChi.length > 0" class="address-list-scrollable custom-scrollbar"
+                        <div v-else-if="listDiaChi.length > 0" class="address-list-scrollable custom-scrollbar pt-1"
                             style="max-height: 400px; overflow-y: auto; padding-right: 8px; margin-right: -8px;">
                             <div v-for="addr in listDiaChi" :key="addr.id"
                                 class="mb-4 pa-5 border rounded-xl d-flex align-center gap-4 bg-white shadow-sm hover-addr-card transition-all">
@@ -1153,5 +1156,15 @@ onMounted(async () => {
     font-size: 20px !important;
     opacity: 0.8 !important;
     color: #475569 !important;
+}
+
+/* Ép màu đỏ tươi cho các cảnh báo lỗi */
+#khach-hang-form-container :deep(.v-messages__message) {
+    color: #ef4444 !important; /* Đỏ tươi */
+    font-weight: 500 !important;
+    font-size: 11px !important;
+}
+#khach-hang-form-container :deep(.v-field--error) {
+    --v-field-border-color: #ef4444 !important;
 }
 </style>
