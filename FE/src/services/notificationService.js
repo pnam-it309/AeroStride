@@ -6,7 +6,7 @@ const notifications = ref([]);
 export const useNotifications = () => {
   const addNotification = (notif) => {
     const toast = useToastStore();
-    
+
     // Add to notification list (for the bell icon)
     notifications.value.unshift({
       id: Date.now(),
@@ -18,18 +18,24 @@ export const useNotifications = () => {
       isNew: true
     });
 
-    // Show toast (snackbar)
-    const toastType = notif.color === 'error' ? 'error' : (notif.color === 'warning' ? 'warning' : 'success');
+    // Use the passed color or default to primary
+    let displayColor = notif.color || 'primary';
+
+    const markAllAsRead = () => {
+      notifications.value.forEach(n => n.isNew = false);
+    };
+
+    // Show toast (snackbar) with 5s timeout
     toast.showToast(
       notif.subtitle || notif.title || 'Thông báo mới',
-      notif.color || 'success',
-      notif.icon || (notif.color === 'error' ? 'mdi-alert-circle' : 'mdi-check-circle'),
-      3000
+      displayColor,
+      notif.icon || (displayColor === 'error' ? 'mdi-alert-circle' : (displayColor === 'warning' ? 'mdi-alert' : 'mdi-check-circle')),
+      notif.timeout || 2000
     );
   };
 
   const markAllAsRead = () => {
-    notifications.value.forEach(n => n.isNew = false);
+    notifications.value.forEach((n) => (n.isNew = false));
   };
 
   return {

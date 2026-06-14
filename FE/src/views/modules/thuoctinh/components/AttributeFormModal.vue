@@ -171,6 +171,12 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
 :deep(.modern-input .v-field) {
     border-radius: 10px !important;
     background-color: #ffffff !important;
+}
+
+:deep(.modern-input .v-field__input),
+:deep(.modern-input input),
+:deep(.modern-input textarea),
+:deep(.modern-input) {
     font-size: 13px !important;
 }
 

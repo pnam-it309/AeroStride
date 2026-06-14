@@ -6,22 +6,23 @@ import {
   QrcodeIcon
 } from 'vue-tabler-icons'
 import { ADMIN_ICONS } from '@/constants/adminIcons';
-import AdminFilter from '@/components/common/AdminFilter.vue'
-import AdminTable from '@/components/common/AdminTable.vue'
-import AdminPagination from '@/components/common/AdminPagination.vue'
-import AdminConfirm from '@/components/common/AdminConfirm.vue'
-import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue'
-import { useNotifications } from '@/services/notificationService'
-import { dichVuSanPham } from '@/services/product/dichVuSanPham'
-import { dichVuBienThe } from '@/services/product/dichVuBienThe'
-import { dichVuMauSac, dichVuKichThuoc } from '@/services/product/dichVuThuocTinh'
-import logoPlaceholder from '@/assets/images/logos/logo-light.svg'
-import VariantFormModal from './components/VariantFormModal.vue'
-import VariantManagementDrawer from './components/VariantManagementDrawer.vue'
-import QrScanner from './components/QrScanner.vue'
-import SafeProductImage from '../san-pham/components/SafeProductImage.vue'
-import QrcodeVue from 'qrcode.vue'
-import { exportQrImageZip } from '@/utils/qrExcelWorkbook'
+import AdminFilter from '@/components/common/AdminFilter.vue';
+import AdminTable from '@/components/common/AdminTable.vue';
+import AdminPagination from '@/components/common/AdminPagination.vue';
+import AdminConfirm from '@/components/common/AdminConfirm.vue';
+import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
+import { PATH } from '@/router/routePaths';
+import { useNotifications } from '@/services/notificationService';
+import { dichVuSanPham } from '@/services/product/dichVuSanPham';
+import { dichVuBienThe } from '@/services/product/dichVuBienThe';
+import { dichVuMauSac, dichVuKichThuoc } from '@/services/product/dichVuThuocTinh';
+import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
+import VariantFormModal from './components/VariantFormModal.vue';
+import VariantManagementDrawer from './components/VariantManagementDrawer.vue';
+import QrScanner from './components/QrScanner.vue';
+import SafeProductImage from '../san-pham/components/SafeProductImage.vue';
+import QrcodeVue from 'qrcode.vue';
+import { exportQrImageZip } from '@/utils/qrExcelWorkbook';
 
 const MIN_VARIANT_PRICE = 0
 const MAX_VARIANT_PRICE = 6500000
@@ -153,12 +154,14 @@ const paginatedVariants = computed(() => {
   return filteredVariants.value.slice(start, start + pagination.size)
 })
 
-const visibleVariantIds = computed(() => paginatedVariants.value.map((item) => item.id))
-const selectedVariants = computed(() => filteredVariants.value.filter((item) => selectedVariantIds.value.includes(item.id)))
-const allVisibleVariantsSelected = computed(() => visibleVariantIds.value.length > 0
-  && visibleVariantIds.value.every((id) => selectedVariantIds.value.includes(id)))
-const someVisibleVariantsSelected = computed(() => visibleVariantIds.value.some((id) => selectedVariantIds.value.includes(id))
-  && !allVisibleVariantsSelected.value)
+const filteredVariantIds = computed(() => filteredVariants.value.map((item) => item.id));
+const selectedVariants = computed(() => filteredVariants.value.filter((item) => selectedVariantIds.value.includes(item.id)));
+const allVariantsSelected = computed(
+    () => filteredVariantIds.value.length > 0 && filteredVariantIds.value.every((id) => selectedVariantIds.value.includes(id))
+);
+const someVariantsSelected = computed(
+    () => filteredVariantIds.value.some((id) => selectedVariantIds.value.includes(id)) && !allVariantsSelected.value
+);
 
 const clearVariantSelection = () => {
   selectedVariantIds.value = []
@@ -236,35 +239,39 @@ const loadMaxPrice = async () => {
 }
 
 const fetchSelectedProduct = async (productId) => {
-  loading.value = true
-  try {
-    if (!productId || productId === 'ALL') {
-      const allVariants = await dichVuBienThe.layTatCaBienThe()
-      selectedProduct.value = {
-        tenSanPham: 'Tất cả sản phẩm',
-        variants: allVariants || []
-      }
-    } else {
-      const data = await dichVuSanPham.layChiTietSanPham(productId)
-      selectedProduct.value = {
-        ...data,
-        maSanPham: data.maSanPham || data.ma || '',
-      }
-    }
+    loading.value = true;
+    try {
+        if (!productId || productId === 'ALL') {
+            const allVariants = await dichVuBienThe.layTatCaBienThe();
+            selectedProduct.value = {
+                tenSanPham: 'Tất cả sản phẩm',
+                variants: allVariants || []
+            };
+        } else {
+            const [productData, variantsData] = await Promise.all([
+                dichVuSanPham.layChiTietSanPham(productId).catch(() => ({})),
+                dichVuBienThe.layBienTheTheoSanPham(productId).catch(() => [])
+            ]);
+            selectedProduct.value = {
+                ...productData,
+                maSanPham: productData.maSanPham || productData.ma || '',
+                variants: variantsData || []
+            };
+        }
 
-    syncVariantSelection()
-  } catch (error) {
-    selectedProduct.value = null
-    clearVariantSelection()
-    addNotification({
-      title: 'Lỗi',
-      subtitle: 'Không thể tải danh sách biến thể',
-      color: 'error'
-    })
-  } finally {
-    loading.value = false
-  }
-}
+        syncVariantSelection();
+    } catch (error) {
+        selectedProduct.value = null;
+        clearVariantSelection();
+        addNotification({
+            title: 'Lỗi',
+            subtitle: 'Không thể tải danh sách biến thể',
+            color: 'error'
+        });
+    } finally {
+        loading.value = false;
+    }
+};
 
 const getOptionLabel = (items, id) => items.find((item) => item.id === id)?.ten || ''
 const getOptionIdByLabel = (items, label) => {
@@ -423,11 +430,7 @@ const handleQrScan = (code) => {
   addNotification({ title: 'Quét mã thành công', subtitle: `Mã: ${code}`, color: 'success' })
 }
 
-const normalizeImageUrl = (value) => {
-  if (!value) return ''
-  if (typeof value === 'string') return value
-  return value.duongDanAnh || value.url || value.fileUrl || value.secure_url || value.data || ''
-}
+// normalizeImageUrl đã được chuyển lên trên để dùng chung
 
 const getVariantThumbnail = (item) => {
   return getVariantPrimaryImageUrl(item) || logoPlaceholder
@@ -468,22 +471,19 @@ const renderVariantQrCanvases = async (variants) => {
 }
 
 const handleExportVariantQrZip = async () => {
-  const targetVariants = selectedVariants.value
+  const targetVariants = selectedVariants.value;
   if (!targetVariants.length) {
     addNotification({
       title: 'Thông báo',
-      subtitle: 'Chọn ít nhất 1 biến thể để xuất ZIP QR',
+      subtitle: 'Vui lòng chọn ít nhất 1 biến thể để tải mã QR',
       color: 'warning'
-    })
-    return
+    });
+    return;
   }
 
   try {
-    const fileSuffix = selectedProductSummary.value.maSanPham || 'tat_ca'
-    const qrDataUrls = await renderVariantQrCanvases(targetVariants)
-    if (qrDataUrls.length !== targetVariants.length || qrDataUrls.some((item) => !item)) {
-      throw new Error('Không thể tạo đủ dữ liệu QR để xuất ZIP')
-    }
+    const qrDataUrls = await renderVariantQrCanvases(targetVariants);
+    const fileSuffix = new Date().getTime();
 
     exportQrImageZip({
       fileName: `qrcode_bien_the_da_chon_${fileSuffix}.zip`,
@@ -598,16 +598,15 @@ const toggleVariantSelection = (variantId, checked) => {
   selectedVariantIds.value = selectedVariantIds.value.filter((id) => id !== variantId)
 }
 
-const toggleSelectVisibleVariants = (checked) => {
-  if (checked) {
-    const mergedIds = new Set([...selectedVariantIds.value, ...visibleVariantIds.value])
-    selectedVariantIds.value = Array.from(mergedIds)
-    return
-  }
+// Chọn tất cả / Bỏ chọn tất cả các dòng biến thể đang lọc
+const toggleSelectAllVariants = (checked) => {
+    if (checked) {
+        selectedVariantIds.value = [...filteredVariantIds.value];
+        return;
+    }
 
-  const visibleIdSet = new Set(visibleVariantIds.value)
-  selectedVariantIds.value = selectedVariantIds.value.filter((id) => !visibleIdSet.has(id))
-}
+    selectedVariantIds.value = [];
+};
 
 const downloadCurrentQrCode = () => {
   const canvas = qrCodeWrapper.value?.querySelector('canvas')
@@ -676,7 +675,23 @@ onMounted(async () => {
       { title: selectedProductSummary.title, disabled: true }
     ]" />
 
-    <div class="mb-4"></div>
+        <div class="d-flex align-center justify-space-between mb-4 mt-2">
+            <div class="d-flex align-center gap-4">
+                <v-btn icon variant="flat" @click="router.push(PATH.SAN_PHAM)" style="background-color: transparent !important; box-shadow: none !important;">
+                    <ArrowLeftIcon size="20" />
+                    <v-tooltip activator="parent" location="top" text="Quay lại danh sách sản phẩm" />
+                </v-btn>
+                <div class="text-h6 font-weight-bold text-slate-800">{{ selectedProductSummary.title }}</div>
+            </div>
+            
+            <div class="d-flex gap-3">
+                <v-btn color="primary" variant="flat" class="text-none rounded-lg px-4 font-weight-bold shadow"
+                    @click="openCreateVariantModal" v-if="selectedProductId !== 'ALL'">
+                    <v-icon icon="mdi-plus" class="mr-2" size="20" />
+                    Thêm biến thể mới
+                </v-btn>
+            </div>
+        </div>
 
     <div class="filter-shell">
       <AdminFilter title="Bộ lọc nâng cao" @refresh="resetFilters" :loading="loading">
@@ -745,48 +760,44 @@ onMounted(async () => {
         :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'" addButtonText="Tạo mới"
         @add="openCreateVariantModal" class="h-100 all-center-table">
 
-        <template #extra-actions>
-          <v-btn prepend-icon="mdi-qrcode-scan" variant="flat" color="primary" class="add-btn-primary text-none"
-            @click="showQrScanner = true">
-            Quét mã QR
-          </v-btn>
-        </template>
+                <template #extra-actions>
+                    <v-btn prepend-icon="mdi-qrcode" variant="flat" class="admin-btn-secondary"
+                        @click="handleExportVariantQrZip">
+                        Tải mã QR
+                        <v-tooltip activator="parent" location="top" text="Tải mã QR" />
+                    </v-btn>
+                    
+                </template>
 
-        <template #headers>
-          <tr>
-            <th class="header-cell" style="width: 40px;">
-              <v-checkbox-btn :model-value="allVisibleVariantsSelected" :indeterminate="someVisibleVariantsSelected"
-                color="primary" hide-details density="compact" @update:model-value="toggleSelectVisibleVariants" />
-            </th>
-            <th class="header-cell" style="width: 40px;">STT</th>
-            <th class="header-cell" style="width: 90px;">Mã sản phẩm</th>
-            <th class="header-cell" style="width: 100px;">Hình ảnh</th>
-            <th class="header-cell" style="width: 90px;">Mã SKU</th>
-            <th class="header-cell" style="width: 90px;">Màu sắc</th>
-            <th class="header-cell" style="width: 90px;">Kích thước</th>
-            <th class="header-cell" style="width: 120px;">Giá bán niêm yết</th>
-            <th class="header-cell" style="width: 120px;">Trạng thái</th>
-            <th class="header-cell" style="width: 120px;">Hành động</th>
-          </tr>
-        </template>
+                <template #headers>
+                    <tr>
+                        <th class="header-cell px-0" style="width: 50px; text-align: center;">
+                            <v-checkbox-btn :model-value="allVariantsSelected"
+                                :indeterminate="someVariantsSelected" color="primary" hide-details
+                                density="compact" style="margin: auto; display: inline-flex; width: auto;"
+                                @update:model-value="toggleSelectAllVariants" />
+                        </th>
+                        <th class="header-cell" style="width: 40px;">STT</th>
+                        <th class="header-cell" style="width: 90px;">Mã sản phẩm</th>
+                        <th class="header-cell" style="width: 100px;">Hình ảnh</th>
+                        <th class="header-cell" style="width: 90px;">Mã SKU</th>
+                        <th class="header-cell" style="width: 90px;">Màu sắc</th>
+                        <th class="header-cell" style="width: 90px;">Kích thước</th>
+                        <th class="header-cell" style="width: 120px;">Giá bán niêm yết</th>
+                        <th class="header-cell" style="width: 120px;">Trạng thái</th>
+                        <th class="header-cell" style="width: 120px;">Hành động</th>
+                    </tr>
+                </template>
 
-        <template #top>
-          <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
-            <div class="d-flex align-center flex-wrap gap-2">
-              <span class="text-caption font-weight-medium text-slate-500">
-                Đã chọn {{ selectedVariantIds.length }} biến thể
-              </span>
-            </div>
-
-            <div class="d-flex align-center flex-wrap gap-2">
-              <v-btn v-if="selectedVariantIds.length > 0" size="small" variant="tonal" color="primary"
-                class="text-none font-weight-bold" @click="handleExportVariantQrZip">
-                Xuất ZIP QR
-                <v-tooltip activator="parent" location="top" text="Xuất ảnh QR của các biến thể đã chọn" />
-              </v-btn>
-            </div>
-          </div>
-        </template>
+                <template #top>
+                    <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
+                        <div class="d-flex align-center flex-wrap gap-2">
+                            <span class="text-caption font-weight-medium text-slate-500">
+                                Đã chọn {{ selectedVariantIds.length }} biến thể
+                            </span>
+                        </div>
+                    </div>
+                </template>
 
         <template #row="{ item, index }">
           <tr class="data-row">

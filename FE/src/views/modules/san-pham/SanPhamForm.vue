@@ -1201,7 +1201,10 @@ const product = ref({
 });
 
 const loadProduct = async (id) => {
-    const data = await dichVuSanPham.layChiTietSanPham(id);
+    const [data, variantsData] = await Promise.all([
+        dichVuSanPham.layChiTietSanPham(id),
+        dichVuBienThe.layBienTheTheoSanPham(id).catch(() => [])
+    ]);
     product.value = {
         maSanPham: data.maSanPham || data.ma || '',
         tenSanPham: data.tenSanPham || '',
@@ -1219,7 +1222,7 @@ const loadProduct = async (id) => {
         moTaChiTiet: data.moTaChiTiet || '',
         hinhAnh: data.hinhAnh || ''
     };
-    variantItems.value = (data.variants || []).map(mapVariantToFormState);
+    variantItems.value = (variantsData || []).map(mapVariantToFormState);
     syncColorImageStateFromVariants();
 };
 

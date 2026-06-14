@@ -55,9 +55,30 @@ const tableKey = computed(() => {
                     </v-btn>
                 </div>
             </div>
+<<<<<<< HEAD
 
             <div v-if="$slots.top" class="table-top">
                 <slot name="top"></slot>
+=======
+            <div class="d-flex align-center flex-wrap justify-end gap-2">
+                <slot name="extra-actions"></slot>
+                <v-btn v-if="showTemplateButton" prepend-icon="mdi-download" variant="flat" class="admin-btn-secondary"
+                    @click="$emit('downloadTemplate')">
+                    Tải mẫu
+                </v-btn>
+                <v-btn v-if="showImportButton" prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary"
+                    @click="$emit('import')">
+                    Nhập Excel
+                </v-btn>
+                <v-btn v-if="showExportButton" prepend-icon="mdi-microsoft-excel" variant="flat"
+                    class="admin-btn-secondary" @click="$emit('export')">
+                    {{ exportButtonText }}
+                </v-btn>
+                <v-btn v-if="showAddButton" prepend-icon="mdi-plus" variant="flat" color="primary"
+                    class="add-btn-primary" @click="$emit('add')">
+                    {{ addButtonText }}
+                </v-btn>
+>>>>>>> dc17e6a (fix giao dien san pham)
             </div>
 
             <!-- Main Table Table -->
