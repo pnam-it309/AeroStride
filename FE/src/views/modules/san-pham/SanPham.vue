@@ -115,13 +115,13 @@ const paginatedProducts = computed(() => {
     const start = (pagination.page - 1) * pagination.size;
     return filteredProducts.value.slice(start, start + pagination.size);
 });
-const visibleProductIds = computed(() => paginatedProducts.value.map((item) => item.id));
+const filteredProductIds = computed(() => filteredProducts.value.map((item) => item.id));
 const selectedProducts = computed(() => filteredProducts.value.filter((item) => selectedProductIds.value.includes(item.id)));
-const allVisibleProductsSelected = computed(
-    () => visibleProductIds.value.length > 0 && visibleProductIds.value.every((id) => selectedProductIds.value.includes(id))
+const allProductsSelected = computed(
+    () => filteredProductIds.value.length > 0 && filteredProductIds.value.every((id) => selectedProductIds.value.includes(id))
 );
-const someVisibleProductsSelected = computed(
-    () => visibleProductIds.value.some((id) => selectedProductIds.value.includes(id)) && !allVisibleProductsSelected.value
+const someProductsSelected = computed(
+    () => filteredProductIds.value.some((id) => selectedProductIds.value.includes(id)) && !allProductsSelected.value
 );
 const productExportButtonText = computed(() =>
     selectedProductIds.value.length ? `Xuất Excel (${selectedProductIds.value.length})` : 'Xuất Excel'
@@ -197,7 +197,11 @@ const loadProducts = async () => {
         const response = await dichVuSanPham.layDanhSachSanPham(buildProductQueryParams());
         const result = response?.data || response;
         const fetchedProducts = Array.isArray(result?.content) ? result.content : [];
-        products.value = fetchedProducts;
+        products.value = fetchedProducts.sort((a, b) => {
+            const maA = a.maSanPham || a.ma || '';
+            const maB = b.maSanPham || b.ma || '';
+            return maB.localeCompare(maA, undefined, { numeric: true, sensitivity: 'base' });
+        });
         updateProductPriceBounds(fetchedProducts);
         syncProductSelection();
     } catch (error) {
@@ -520,16 +524,14 @@ const toggleProductSelection = (productId, checked) => {
     selectedProductIds.value = selectedProductIds.value.filter((id) => id !== productId);
 };
 
-// Chọn/Bỏ chọn tất cả các sản phẩm đang hiển thị ở trang hiện tại
-const toggleSelectVisibleProducts = (checked) => {
+// Chọn/Bỏ chọn tất cả các sản phẩm đang hiển thị trên tất cả phân trang
+const toggleSelectAllProducts = (checked) => {
     if (checked) {
-        const mergedIds = new Set([...selectedProductIds.value, ...visibleProductIds.value]);
-        selectedProductIds.value = Array.from(mergedIds);
+        selectedProductIds.value = [...filteredProductIds.value];
         return;
     }
 
-    const visibleIdSet = new Set(visibleProductIds.value);
-    selectedProductIds.value = selectedProductIds.value.filter((id) => !visibleIdSet.has(id));
+    selectedProductIds.value = [];
 };
 
 // Format số thông thường sang định dạng có dấu phẩy
@@ -653,10 +655,10 @@ onBeforeUnmount(() => {
             </template>
 
             <template #header-select>
-                <v-checkbox-btn :model-value="allVisibleProductsSelected" :indeterminate="someVisibleProductsSelected"
+                <v-checkbox-btn :model-value="allProductsSelected" :indeterminate="someProductsSelected"
                     color="primary" hide-details density="compact"
                     style="margin: auto; display: inline-flex; width: auto;"
-                    @update:model-value="toggleSelectVisibleProducts" />
+                    @update:model-value="toggleSelectAllProducts" />
             </template>
 
             <template #top>

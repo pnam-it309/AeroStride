@@ -158,13 +158,13 @@ const paginatedVariants = computed(() => {
     return filteredVariants.value.slice(start, start + pagination.size);
 });
 
-const visibleVariantIds = computed(() => paginatedVariants.value.map((item) => item.id));
+const filteredVariantIds = computed(() => filteredVariants.value.map((item) => item.id));
 const selectedVariants = computed(() => filteredVariants.value.filter((item) => selectedVariantIds.value.includes(item.id)));
-const allVisibleVariantsSelected = computed(
-    () => visibleVariantIds.value.length > 0 && visibleVariantIds.value.every((id) => selectedVariantIds.value.includes(id))
+const allVariantsSelected = computed(
+    () => filteredVariantIds.value.length > 0 && filteredVariantIds.value.every((id) => selectedVariantIds.value.includes(id))
 );
-const someVisibleVariantsSelected = computed(
-    () => visibleVariantIds.value.some((id) => selectedVariantIds.value.includes(id)) && !allVisibleVariantsSelected.value
+const someVariantsSelected = computed(
+    () => filteredVariantIds.value.some((id) => selectedVariantIds.value.includes(id)) && !allVariantsSelected.value
 );
 
 // Bỏ chọn tất cả các biến thể
@@ -264,6 +264,19 @@ const fetchSelectedProduct = async (productId) => {
                 ...data,
                 maSanPham: data.maSanPham || data.ma || ''
             };
+        }
+        
+        if (selectedProduct.value?.variants) {
+            selectedProduct.value.variants.sort((a, b) => {
+                const spA = a.maSanPham || '';
+                const spB = b.maSanPham || '';
+                const spCmp = spB.localeCompare(spA, undefined, { numeric: true, sensitivity: 'base' });
+                if (spCmp !== 0) return spCmp;
+
+                const skuA = a.maChiTietSanPham || '';
+                const skuB = b.maChiTietSanPham || '';
+                return skuB.localeCompare(skuA, undefined, { numeric: true, sensitivity: 'base' });
+            });
         }
 
         syncVariantSelection();
@@ -655,16 +668,14 @@ const toggleVariantSelection = (variantId, checked) => {
     selectedVariantIds.value = selectedVariantIds.value.filter((id) => id !== variantId);
 };
 
-// Chọn tất cả / Bỏ chọn tất cả các dòng biến thể đang có trên màn hình
-const toggleSelectVisibleVariants = (checked) => {
+// Chọn tất cả / Bỏ chọn tất cả các dòng biến thể đang lọc
+const toggleSelectAllVariants = (checked) => {
     if (checked) {
-        const mergedIds = new Set([...selectedVariantIds.value, ...visibleVariantIds.value]);
-        selectedVariantIds.value = Array.from(mergedIds);
+        selectedVariantIds.value = [...filteredVariantIds.value];
         return;
     }
 
-    const visibleIdSet = new Set(visibleVariantIds.value);
-    selectedVariantIds.value = selectedVariantIds.value.filter((id) => !visibleIdSet.has(id));
+    selectedVariantIds.value = [];
 };
 
 // Lưu ảnh QR đang hiển thị trên Modal to xuống máy
@@ -820,10 +831,10 @@ onMounted(async () => {
                 <template #headers>
                     <tr>
                         <th class="header-cell px-0" style="width: 50px; text-align: center;">
-                            <v-checkbox-btn :model-value="allVisibleVariantsSelected"
-                                :indeterminate="someVisibleVariantsSelected" color="primary" hide-details
+                            <v-checkbox-btn :model-value="allVariantsSelected"
+                                :indeterminate="someVariantsSelected" color="primary" hide-details
                                 density="compact" style="margin: auto; display: inline-flex; width: auto;"
-                                @update:model-value="toggleSelectVisibleVariants" />
+                                @update:model-value="toggleSelectAllVariants" />
                         </th>
                         <th class="header-cell" style="width: 40px;">STT</th>
                         <th class="header-cell" style="width: 90px;">Mã sản phẩm</th>
@@ -847,11 +858,11 @@ onMounted(async () => {
                         </div>
 
                         <div class="d-flex align-center flex-wrap gap-2">
-                            <v-btn v-if="selectedVariantIds.length > 0" size="small" variant="tonal" color="primary"
-                                class="text-none font-weight-bold" @click="handleExportVariantQrZip">
-                                Xuất ZIP QR
+                            <v-btn v-if="selectedVariantIds.length > 0" prepend-icon="mdi-qrcode" variant="flat"
+                                class="admin-btn-secondary" @click="handleExportVariantQrZip">
+                                Tải mã QR
                                 <v-tooltip activator="parent" location="top"
-                                    text="Xuất ảnh QR của các biến thể đã chọn" />
+                                    text="Tải ảnh QR của các biến thể đã chọn" />
                             </v-btn>
                         </div>
                     </div>

@@ -6,7 +6,6 @@
  *            cho phép tạo thêm hoặc chuyển đổi giữa các hóa đơn.
  */
 import { computed } from 'vue';
-import { PlusIcon, ReceiptIcon, XIcon } from 'vue-tabler-icons';
 
 const MAX_WAITING_ORDERS = 5;
 
@@ -35,37 +34,34 @@ const orderSummaries = computed(() =>
 </script>
 
 <template>
-    <div class="order-tabs d-flex align-center gap-2 overflow-x-auto pb-2">
+    <div class="order-tabs d-flex align-center gap-1 overflow-x-auto">
         <v-btn
             v-for="(order, idx) in orders"
             :key="order.id"
-            :variant="activeIndex === idx ? 'flat' : 'tonal'"
-            :color="activeIndex === idx ? '#2E4E8E' : 'grey-lighten-3'"
-            height="56"
+            variant="flat"
+            :color="activeIndex === idx ? 'white' : 'grey-lighten-4'"
+            :class="activeIndex === idx ? 'active-tab' : 'inactive-tab'"
+            height="36"
             class="order-tab rounded-lg text-none px-4 transition-all"
             @click="emit('select', idx)"
         >
-            <ReceiptIcon size="18" class="mr-2 opacity-70 flex-shrink-0" />
-            <span class="tab-copy">
-                <span class="font-weight-bold">Đơn {{ idx + 1 }}</span>
-                <span class="tab-summary">
-                    {{ orderSummaries[idx]?.quantity || 0 }} SP - {{ formatCurrency(orderSummaries[idx]?.total) }}
-                </span>
+            <span style="font-size: 13px;">
+                {{ orders.length === 1 ? 'Đơn mới' : 'Đơn ' + (idx + 1) }}
             </span>
             <v-btn
                 v-if="orders.length > 1"
                 icon
-                size="x-small"
+                size="20"
                 variant="text"
-                class="ml-2 hover-close"
+                class="ml-2 hover-close mr-n2"
                 @click.stop="emit('close', order.id, idx)"
             >
-                <XIcon size="14" />
+                <v-icon size="14">mdi-close</v-icon>
             </v-btn>
         </v-btn>
 
-        <v-btn v-if="orders.length < MAX_WAITING_ORDERS" icon color="primary" variant="tonal" size="48" class="rounded-lg flex-shrink-0" @click="emit('create')">
-            <PlusIcon size="24" />
+        <v-btn v-if="orders.length < MAX_WAITING_ORDERS" icon color="white" variant="flat" size="36" class="rounded-lg flex-shrink-0" style="border: 1px solid #cbd5e1;" @click="emit('create')">
+            <v-icon size="18" color="grey-darken-1">mdi-plus</v-icon>
         </v-btn>
     </div>
 </template>
@@ -78,8 +74,17 @@ const orderSummaries = computed(() =>
     transition: all 0.2s ease;
 }
 .order-tab {
-    min-width: 164px;
-    justify-content: flex-start;
+    justify-content: center;
+}
+.active-tab {
+    color: #1e257c !important;
+    border: 1px solid #1e257c !important;
+    font-weight: 600 !important;
+}
+.inactive-tab {
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+    font-weight: 400 !important;
 }
 .tab-copy {
     display: inline-flex;

@@ -1,6 +1,4 @@
 <script setup>
-import { ShoppingCartIcon, TrashIcon, MinusIcon, PlusIcon, BoxIcon } from 'vue-tabler-icons';
-
 const props = defineProps(['items']);
 const emit = defineEmits(['update-qty', 'remove']);
 
@@ -23,99 +21,210 @@ const handleDirectInput = (item, event) => {
         event.target.value = item.soLuong;
     }
 };
+
+const getColorChipStyle = (colorName) => {
+    if (!colorName) return {};
+    const name = colorName.toLowerCase().trim();
+    let bg = '#f8fafc';
+    let border = '#cbd5e1';
+    let text = '#475569';
+    
+    if (name.includes('đen') || name.includes('black')) {
+        bg = '#f1f5f9';
+        border = '#94a3b8';
+        text = '#0f172a';
+    } else if (name.includes('trắng') || name.includes('white')) {
+        bg = '#ffffff';
+        border = '#cbd5e1';
+        text = '#334155';
+    } else if (name.includes('đỏ') || name.includes('red')) {
+        bg = '#fef2f2';
+        border = '#fca5a5';
+        text = '#dc2626';
+    } else if (name.includes('xanh dương') || name.includes('blue') || name.includes('navy')) {
+        bg = '#eff6ff';
+        border = '#bfdbfe';
+        text = '#2563eb';
+    } else if (name.includes('xanh lá') || name.includes('green') || name.includes('lục')) {
+        bg = '#f0fdf4';
+        border = '#bbf7d0';
+        text = '#16a34a';
+    } else if (name.includes('vàng') || name.includes('yellow')) {
+        bg = '#fefce8';
+        border = '#fef08a';
+        text = '#ca8a04';
+    } else if (name.includes('cam') || name.includes('orange')) {
+        bg = '#fff7ed';
+        border = '#ffedd5';
+        text = '#ea580c';
+    } else if (name.includes('hồng') || name.includes('pink')) {
+        bg = '#fdf2f8';
+        border = '#fbcfe8';
+        text = '#db2777';
+    } else if (name.includes('xám') || name.includes('ghi') || name.includes('grey') || name.includes('gray')) {
+        bg = '#f1f5f9';
+        border = '#cbd5e1';
+        text = '#475569';
+    } else if (name.includes('nâu') || name.includes('brown')) {
+        bg = '#fdf8f6';
+        border = '#d7ccc8';
+        text = '#5d4037';
+    } else if (name.includes('tím') || name.includes('purple')) {
+        bg = '#faf5ff';
+        border = '#e9d5ff';
+        text = '#7c3aed';
+    }
+    
+    return {
+        backgroundColor: bg,
+        borderColor: border,
+        color: text
+    };
+};
 </script>
 
 <template>
-    <v-card class="cart-card border shadow-none overflow-hidden h-full d-flex flex-column">
-        <v-table class="pos-table flex-grow-1" fixed-header>
-            <thead>
-                <tr>
-                    <th class="text-left py-4">Sản phẩm</th>
-                    <th class="text-center py-4" style="width: 150px">Số lượng</th>
-                    <th class="text-right py-4" style="width: 150px">Đơn giá</th>
-                    <th class="text-right py-4" style="width: 150px">Thành tiền</th>
-                    <th class="text-center py-4" style="width: 50px"></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-if="!items?.length">
-                    <td colspan="5" class="text-center py-16">
-                        <div class="opacity-20 mb-4">
-                            <ShoppingCartIcon size="64" />
+    <div class="cart-items-container custom-scrollbar overflow-y-auto pr-1">
+        <div v-if="!items?.length" class="text-center py-8 empty-cart-box">
+            <v-icon size="40" class="text-slate-300 mb-1">mdi-cart-outline</v-icon>
+            <div class="text-slate-400 font-weight-medium" style="font-size: 13px;">Giỏ hàng trống</div>
+        </div>
+        
+        <div 
+            v-else 
+            v-for="item in items" 
+            :key="item.id" 
+            class="cart-item-card d-flex align-center justify-space-between gap-4"
+        >
+            <!-- Left Part: Image and Product Details -->
+            <div class="d-flex align-center gap-4 flex-grow-1 min-w-0">
+                <v-avatar rounded="lg" size="64" color="grey-lighten-5" class="border flex-shrink-0">
+                    <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover />
+                    <v-icon v-else size="24" class="text-slate-400">mdi-package-variant</v-icon>
+                </v-avatar>
+                
+                <div class="d-flex flex-column gap-1.5 min-w-0 flex-grow-1">
+                    <!-- Product Name -->
+                    <div class="product-name-txt font-weight-semibold text-slate-800 text-truncate" style="font-size: 13px; line-height: 1.4;">
+                        {{ item.tenSanPham }}
+                    </div>
+                    
+                    <!-- Product Codes -->
+                    <div class="d-flex align-center gap-3 mt-0.5" style="font-size: 13px;">
+                        <span v-if="item.maSanPham" class="product-code-pastel-chip">{{ item.maSanPham }}</span>
+                        <span v-if="item.maChiTietSanPham" class="text-slate-500 font-weight-medium">SKU: {{ item.maChiTietSanPham }}</span>
+                    </div>
+                    
+                    <!-- Variant Selection: Color and Size -->
+                    <div class="d-flex align-center gap-6 mt-1 flex-wrap" style="font-size: 13px;">
+                        <div class="d-flex align-center gap-1.5">
+                            <span class="text-slate-500 font-weight-medium">Màu:</span>
+                            <span v-if="item.tenMauSac" class="color-pastel-chip" :style="getColorChipStyle(item.tenMauSac)">
+                                {{ item.tenMauSac }}
+                            </span>
+                            <span v-else class="text-slate-400">--</span>
                         </div>
-                        <p class="text-h6 text-medium-emphasis">Giỏ hàng đang trống</p>
-                        <p class="text-body-2 text-grey">Tìm mã hoặc tên sản phẩm để thêm vào đơn</p>
-                    </td>
-                </tr>
-                <tr v-for="item in items" :key="item.id" class="item-row">
-                    <td>
-                        <div class="d-flex align-center py-3">
-                            <v-avatar color="grey-lighten-4" rounded="lg" size="44" class="mr-3 border">
-                                <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover />
-                                <BoxIcon v-else size="20" class="text-grey" />
-                            </v-avatar>
-                            <div>
-                                <div class="font-weight-bold text-subtitle-2">{{ item.tenSanPham }}</div>
-                                <div class="d-flex gap-2 mt-1">
-                                    <span class="text-caption text-slate-500 font-weight-medium">Size: {{ item.tenKichThuoc }}</span>
-                                    <span class="text-caption text-slate-500 font-weight-medium">Màu: {{ item.tenMauSac }}</span>
-                                </div>
-                                <div v-if="item.maChiTietSanPham" class="text-caption text-grey mt-1">
-                                    SKU: <span class="font-weight-bold">{{ item.maChiTietSanPham }}</span>
-                                </div>
-                            </div>
+                        <div class="d-flex align-center gap-1.5">
+                            <span class="text-slate-500 font-weight-medium">Size:</span>
+                            <span class="text-slate-700 font-weight-bold">
+                                {{ item.tenKichThuoc ? String(item.tenKichThuoc).replace(/^(Size|Cỡ)\s*/i, '') : '--' }}
+                            </span>
                         </div>
-                    </td>
-                    <td class="text-center">
-                        <div class="qty-control">
-                            <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, -1)">
-                                <MinusIcon size="14" />
-                            </v-btn>
-                            <input 
-                                type="number" 
-                                class="qty-input-table text-center font-weight-bold" 
-                                :value="item.soLuong" 
-                                @change="(e) => handleDirectInput(item, e)"
-                                min="0"
-                            />
-                            <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, 1)">
-                                <PlusIcon size="14" />
-                            </v-btn>
-                        </div>
-                    </td>
-                    <td class="text-right text-body-2">{{ formatCurrency(item.donGia) }}</td>
-                    <td class="text-right font-weight-bold text-primary">{{ formatCurrency(item.thanhTien) }}</td>
-                    <td class="text-center">
-                        <v-btn icon variant="text" color="error" size="small" @click="emit('remove', item)">
-                            <TrashIcon size="18" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Part: Quantity, Prices and Actions -->
+            <div class="d-flex align-center gap-6 flex-shrink-0">
+                <!-- Unit Price -->
+                <div class="text-right" style="min-width: 100px;">
+                    <div class="text-slate-400 text-caption font-weight-medium mb-1">Đơn giá</div>
+                    <div class="text-slate-700 font-weight-medium" style="font-size: 13px;">{{ formatCurrency(item.donGia) }}</div>
+                </div>
+
+                <!-- Quantity Control -->
+                <div class="d-flex flex-column align-center">
+                    <div class="text-slate-400 text-caption font-weight-medium mb-1">Số lượng</div>
+                    <div class="qty-control">
+                        <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, -1)">
+                            <v-icon size="14" color="grey-darken-1">mdi-minus</v-icon>
                         </v-btn>
-                    </td>
-                </tr>
-            </tbody>
-        </v-table>
-    </v-card>
+                        <input 
+                            type="number" 
+                            class="qty-input-table text-center" 
+                            :value="item.soLuong" 
+                            @change="(e) => handleDirectInput(item, e)"
+                            min="0"
+                        />
+                        <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, 1)">
+                            <v-icon size="14" color="grey-darken-1">mdi-plus</v-icon>
+                        </v-btn>
+                    </div>
+                </div>
+
+                <!-- Total Price -->
+                <div class="text-right" style="min-width: 110px;">
+                    <div class="text-slate-400 text-caption font-weight-medium mb-1">Thành tiền</div>
+                    <div class="font-weight-bold text-primary" style="font-size: 13px;">{{ formatCurrency(item.thanhTien) }}</div>
+                </div>
+
+                <!-- Delete Button -->
+                <v-btn icon variant="outlined" class="delete-item-btn" @click="emit('remove', item)">
+                    <v-icon size="16">mdi-close</v-icon>
+                </v-btn>
+            </div>
+        </div>
+    </div>
 </template>
 
 <style scoped>
-/* Scoped styles removed in favor of global _admin-common.scss */
+.cart-items-container {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.empty-cart-box {
+    background-color: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+}
+
+.cart-item-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.cart-item-card:hover {
+    border-color: #94a3b8;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
 .qty-control {
     background: #f1f5f9;
     border-radius: 8px;
     display: inline-flex;
-    align-center: center !important;
-    /* Fixed typo from original logic */
     align-items: center;
     padding: 2px;
 }
 
-.cart-card {
-    flex: 1;
-    min-height: 0;
-    border-radius: 8px !important;
+.product-name-txt {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #334155 !important;
 }
 
-.pos-table {
-    height: 100%;
+.text-primary {
+    color: #1e257c !important;
 }
 
 .qty-input-table {
@@ -127,6 +236,9 @@ const handleDirectInput = (item, event) => {
     outline: none;
     padding: 0;
     margin: 0;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    color: #334155 !important;
     -moz-appearance: textfield;
 }
 
@@ -136,7 +248,60 @@ const handleDirectInput = (item, event) => {
     margin: 0;
 }
 
-.item-row:hover {
-    background-color: #f8fafc;
+.delete-item-btn {
+    border-radius: 6px !important;
+    border: 1px solid #fca5a5 !important;
+    color: #ef4444 !important;
+    background-color: transparent !important;
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+}
+
+.delete-item-btn:hover {
+    background-color: #fef2f2 !important;
+    border-color: #ef4444 !important;
+}
+
+.product-code-pastel-chip {
+    display: inline-flex;
+    align-items: center;
+    background-color: #fcfcfc !important;
+    border: 1px solid #0e18a5 !important;
+    color: #323ee6 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
+    line-height: 1.2 !important;
+}
+
+.color-pastel-chip {
+    display: inline-flex;
+    align-items: center;
+    border-width: 1px !important;
+    border-style: solid !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
+    line-height: 1.2 !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 </style>

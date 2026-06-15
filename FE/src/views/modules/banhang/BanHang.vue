@@ -338,6 +338,16 @@ const onRemoveCustomer = async () => {
     }
 };
 
+// Cập nhật thông tin giao nhận hàng cho hóa đơn hiện tại
+const onUpdateShipping = (shippingData) => {
+    if (!selectedOrder.value) return;
+    selectedOrder.value.loaiDon = shippingData.loaiDon;
+    selectedOrder.value.soDienThoaiNguoiNhan = shippingData.soDienThoaiNguoiNhan;
+    selectedOrder.value.diaChiNguoiNhan = shippingData.diaChiNguoiNhan;
+    selectedOrder.value.ngayDuKienNhan = shippingData.ngayDuKienNhan;
+    selectedOrder.value.phiVanChuyen = shippingData.phiVanChuyen;
+};
+
 // Tính toán số tiền được giảm tương ứng với 1 voucher và tổng giá trị đơn hàng
 const calculateVoucherDiscount = (voucher, total) => {
     if (!voucher || !total) return 0;
@@ -541,18 +551,20 @@ const isVnPayVerifySuccess = (verifyResult, params = {}) =>
 
 // Chuẩn bị DTO thanh toán gửi lên backend
 const buildCheckoutPayload = (order, overrides = {}) => {
-    const payableAmount = Number(order?.tongTienSauGiam || 0);
     return {
         idKhachHang: order?.idKhachHang || null,
         idPhieuGiamGia: order?.idPhieuGiamGia || null,
         tongTien: order?.tongTien || 0,
-        phiVanChuyen: 0,
-        tongTienSauGiam: payableAmount,
-        loaiDon: 'TAI_QUAY',
+        phiVanChuyen: order?.phiVanChuyen || 0,
+        tongTienSauGiam: order?.tongTienSauGiam || 0,
+        loaiDon: order?.loaiDon || 'TAI_QUAY',
         ghiChu: checkoutData.value.note || '',
         tienMat: 0,
         tienChuyenKhoan: 0,
         maGiaoDich: null,
+        diaChiNguoiNhan: order?.diaChiNguoiNhan || '',
+        soDienThoaiNguoiNhan: order?.soDienThoaiNguoiNhan || '',
+        ngayDuKienNhan: order?.ngayDuKienNhan || null,
         ...overrides
     };
 };
@@ -667,8 +679,9 @@ const startVnPayFlow = async () => {
             throw new Error('Hóa đơn chưa có sản phẩm.');
         }
         const orderId = selectedOrder.value.maHoaDon + '_' + Date.now();
+        const totalPayable = Number(selectedOrder.value.tongTienSauGiam || 0) + Number(selectedOrder.value.phiVanChuyen || 0);
         const payload = {
-            amount: selectedOrder.value.tongTienSauGiam,
+            amount: totalPayable,
             orderId: orderId,
             orderInfo: 'Thanh toan hoa don ' + selectedOrder.value.maHoaDon,
             returnUrl: `${window.location.origin}${window.location.pathname}`
@@ -682,7 +695,7 @@ const startVnPayFlow = async () => {
         sessionStorage.setItem(VNPAY_PENDING_KEY, JSON.stringify({
             orderId: selectedOrder.value.id,
             maHoaDon: selectedOrder.value.maHoaDon,
-            amount: selectedOrder.value.tongTienSauGiam,
+            amount: totalPayable,
             createdAt: Date.now()
         }));
 
@@ -773,7 +786,9 @@ const onCheckout = () => {
         return;
     }
 
-    if (checkoutData.value.paymentMethod === 'CASH' && Number(checkoutData.value.receivedAmount || 0) < Number(selectedOrder.value.tongTienSauGiam || 0)) {
+    const totalPayable = Number(selectedOrder.value.tongTienSauGiam || 0) + Number(selectedOrder.value.phiVanChuyen || 0);
+
+    if (checkoutData.value.paymentMethod === 'CASH' && Number(checkoutData.value.receivedAmount || 0) < totalPayable) {
         addNotification({ title: 'Cảnh báo', subtitle: MESSAGES.ERROR.INSUFFICIENT_FUNDS, color: 'warning' });
         return;
     }
@@ -782,7 +797,7 @@ const onCheckout = () => {
         confirmDialog.value = {
             show: true,
             title: 'Xác nhận thanh toán VNPay',
-            message: `Hệ thống sẽ mở cổng thanh toán VNPay với số tiền [${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrder.value.tongTienSauGiam)}]. Bạn có muốn tiếp tục không?`,
+            message: `Hệ thống sẽ mở cổng thanh toán VNPay với số tiền [${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPayable)}]. Bạn có muốn tiếp tục không?`,
             color: 'primary',
             action: startVnPayFlow,
             loading: false
@@ -793,7 +808,7 @@ const onCheckout = () => {
     confirmDialog.value = {
         show: true,
         title: 'Xác nhận thanh toán',
-        message: `Bạn xác nhận thanh toán hóa đơn với tổng tiền [${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(selectedOrder.value.tongTienSauGiam)}]?`,
+        message: `Bạn xác nhận thanh toán hóa đơn với tổng tiền [${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalPayable)}]?`,
         color: 'primary',
         action: async () => {
             confirmDialog.value.loading = true;
@@ -806,10 +821,14 @@ const onCheckout = () => {
                     idPhieuGiamGia: selectedOrder.value.idPhieuGiamGia,
                     tongTien: selectedOrder.value.tongTien,
                     tongTienSauGiam: selectedOrder.value.tongTienSauGiam,
-                    loaiDon: 'TAI_QUAY',
+                    loaiDon: selectedOrder.value.loaiDon || 'TAI_QUAY',
                     ghiChu: checkoutData.value.note,
-                    tienMat: isCash ? selectedOrder.value.tongTienSauGiam : 0,
-                    tienChuyenKhoan: isCash ? 0 : selectedOrder.value.tongTienSauGiam
+                    tienMat: isCash ? totalPayable : 0,
+                    tienChuyenKhoan: isCash ? 0 : totalPayable,
+                    phiVanChuyen: selectedOrder.value.phiVanChuyen || 0,
+                    diaChiNguoiNhan: selectedOrder.value.diaChiNguoiNhan || '',
+                    soDienThoaiNguoiNhan: selectedOrder.value.soDienThoaiNguoiNhan || '',
+                    ngayDuKienNhan: selectedOrder.value.ngayDuKienNhan || null
                 };
                 await dichVuDonHang.checkout(selectedOrder.value.id, payload);
                 addNotification({ title: 'Thành công', subtitle: MESSAGES.SUCCESS.PAYMENT, color: 'success' });
@@ -904,48 +923,49 @@ const handleVnPayCallbackFromUrl = async () => {
     <v-container fluid class="pos-wrapper pa-0">
         <div class="pos-shell">
             <header class="pos-header">
-                <div>
-                    <div class="text-h6 font-weight-bold text-slate-900">Bán hàng tại quầy</div>
-                    <div class="text-caption text-grey-darken-1">
-                        {{ orders.length }}/{{ MAX_WAITING_ORDERS }} hóa đơn chờ
-                        <span v-if="selectedOrder"> - {{ selectedOrderItemCount }} sản phẩm trong đơn hiện tại</span>
-                    </div>
-                </div>
                 <OrderTabs class="flex-grow-1 min-w-0" :orders="orders" :active-index="activeOrderIndex"
                     @select="(idx) => (activeOrderIndex = idx)" @create="createNewOrder" @close="closeOrder" />
             </header>
 
             <v-row v-if="selectedOrder" no-gutters class="pos-grid">
-                <!-- Left Column: Product Picker and Cart -->
-                <v-col cols="12" xl="8" lg="8" md="8" class="d-flex flex-column gap-3 pr-3">
+                <!-- Left Column: Product Picker, Cart and Checkout Panel -->
+                <v-col cols="12" xl="8" lg="8" md="8" class="pos-left-column d-flex flex-column gap-3 pr-3">
                     <div class="pos-column product-column" style="padding: 16px;">
                         <ProductPicker ref="productPickerRef" :active-order-id="selectedOrder.id" :orders="orders" :loading-external="isProcessing"
                             @add-product="onAddProduct" />
                     </div>
                     
-                    <div class="pos-column cart-column" style="padding: 16px;">
+                    <div class="cart-column">
                         <div class="column-head">
                             <div class="d-flex align-center gap-2">
                                 <v-icon color="primary">mdi-cart-outline</v-icon>
-                                <span class="text-subtitle-1 font-weight-bold text-slate-800">Giỏ hàng ({{ selectedOrderItemCount }} món)</span>
+                                <span class="font-weight-bold text-slate-800" style="font-size: 14px;">Giỏ hàng ({{ selectedOrderItemCount }} món)</span>
                             </div>
-                            <v-btn variant="text" color="error" size="small" class="font-weight-bold px-0 text-none" @click="closeOrder(selectedOrder.id, activeOrderIndex)">Xoá tất cả</v-btn>
+                            <span class="font-weight-bold" style="font-size: 14px; color: #2E4E8E; cursor: pointer; user-select: none;" @click="closeOrder(selectedOrder.id, activeOrderIndex)">Xoá tất cả</span>
                         </div>
                         <CartTable :items="selectedOrder.listsHoaDonChiTiet" @update-qty="onUpdateQty"
                             @remove="onRemoveItem" />
                     </div>
+
+                    <!-- Order Total and Checkout Options -->
+                    <div class="pos-column checkout-column mt-1" style="padding: 16px;">
+                        <CheckoutPanel :order="selectedOrder" :vouchers="vouchers" :checkout-data="checkoutData"
+                            :loading="isProcessing" show-left-only @apply-voucher="onApplyVoucher" @checkout="onCheckout" />
+                    </div>
                 </v-col>
 
-                <!-- Right Column: Customer and Checkout -->
+                <!-- Right Column: Customer Info -->
                 <v-col cols="12" xl="4" lg="4" md="4" class="pos-column payment-column" style="padding: 16px;">
-                    <div class="customer-block mb-4 border-0 pa-0">
-                        <CustomerSelector :selected-customer-name="selectedOrder.tenKhachHang"
-                            :selected-customer-phone="selectedOrder.sdtKhachHang" :active-order-id="selectedOrder.id"
-                            @select="onSelectCustomer" @remove="onRemoveCustomer" />
+                    <div class="customer-block border-0 pa-0">
+                        <CustomerSelector :order="selectedOrder"
+                            @select="onSelectCustomer" @remove="onRemoveCustomer"
+                            @update-shipping="onUpdateShipping" />
                     </div>
 
-                    <CheckoutPanel :order="selectedOrder" :vouchers="vouchers" :checkout-data="checkoutData"
-                        :loading="isProcessing" @apply-voucher="onApplyVoucher" @checkout="onCheckout" />
+                    <div class="pos-column checkout-column mt-auto" style="padding: 16px;">
+                        <CheckoutPanel :order="selectedOrder" :vouchers="vouchers" :checkout-data="checkoutData"
+                            :loading="isProcessing" show-right-only @apply-voucher="onApplyVoucher" @checkout="onCheckout" />
+                    </div>
                 </v-col>
             </v-row>
 
@@ -955,8 +975,8 @@ const handleVnPayCallbackFromUrl = async () => {
 
             <div v-else class="empty-orders-state">
                 <v-icon size="56" color="grey-lighten-1">mdi-receipt-text-outline</v-icon>
-                <div class="text-subtitle-1 font-weight-bold mt-3">Chưa có hóa đơn chờ</div>
-                <div class="text-body-2 text-grey-darken-1 mt-1">Tạo hóa đơn mới để bắt đầu bán hàng tại quầy.</div>
+                <div class="font-weight-bold mt-3" style="font-size: 14px;">Chưa có hóa đơn chờ</div>
+                <div class="text-slate-500 mb-4" style="font-size: 13px;">Tạo một hóa đơn mới để bắt đầu bán hàng tại quầy.</div>
                 <v-btn color="primary" class="mt-4 rounded-lg" :loading="isProcessing" @click="createNewOrder">
                     Tạo hóa đơn
                 </v-btn>
@@ -976,7 +996,7 @@ const handleVnPayCallbackFromUrl = async () => {
 .pos-wrapper {
     background: #eef2f6;
     height: calc(100vh - 64px);
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 .pos-wrapper :deep(.v-btn) {
@@ -989,18 +1009,16 @@ const handleVnPayCallbackFromUrl = async () => {
     flex-direction: column;
     gap: 14px;
     padding: 16px;
+    height: 100%;
+    min-height: 0;
 }
 
 .pos-header {
     display: flex;
     align-items: center;
     gap: 18px;
-    min-height: 74px;
-    padding: 12px 16px;
-    background: #ffffff;
-    border: 1px solid #dfe5ee;
-    border-radius: 8px;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+    padding: 0;
+    margin-bottom: 8px;
 }
 
 .pos-grid {
@@ -1016,9 +1034,18 @@ const handleVnPayCallbackFromUrl = async () => {
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
 }
 
+.pos-left-column {
+    height: 100%;
+    min-height: 0;
+}
+
 .cart-column {
     display: flex;
     flex-direction: column;
+}
+
+.checkout-column {
+    flex-shrink: 0;
 }
 
 .product-column {
@@ -1029,9 +1056,9 @@ const handleVnPayCallbackFromUrl = async () => {
     display: flex;
     flex-direction: column;
     gap: 14px;
-    position: sticky;
-    top: 16px;
-    align-self: flex-start;
+    height: 100%;
+    align-self: stretch;
+    min-height: 0;
 }
 
 .column-head {
@@ -1075,6 +1102,21 @@ const handleVnPayCallbackFromUrl = async () => {
     .pos-wrapper {
         height: auto;
         overflow-y: auto;
+    }
+
+    .pos-shell {
+        height: auto;
+    }
+
+    .pos-left-column {
+        height: auto;
+    }
+
+    .payment-column {
+        height: auto;
+        align-self: flex-start;
+        position: sticky;
+        top: 16px;
     }
 
     .pos-grid {
