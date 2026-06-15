@@ -1,3 +1,10 @@
+## [1.23.3](https://github.com/pnam-it309/AeroStride/compare/v1.23.2...v1.23.3) (2026-06-15)
+
+
+### Bug Fixes
+
+* **sanpham:** optimize APIs and fix duplicate validation check ([cbd0f94](https://github.com/pnam-it309/AeroStride/commit/cbd0f9428df38bae5278bcefd03165e04f4635f0))
+
 ## [1.23.2](https://github.com/pnam-it309/AeroStride/compare/v1.23.1...v1.23.2) (2026-06-12)
 
 
