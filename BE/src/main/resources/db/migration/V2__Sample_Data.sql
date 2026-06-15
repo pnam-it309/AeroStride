@@ -114,11 +114,11 @@ INSERT INTO mau_sac (id, ma_mau_sac, ten_mau_sac, ma_mau_hex, trang_thai, xoa_me
 
 -- 12. Bảng Sản Phẩm (san_pham)
 INSERT INTO san_pham (id, id_thuong_hieu, id_danh_muc, id_xuat_xu, id_muc_dich_chay, id_chat_lieu, id_de_giay, id_co_giay, ma_san_pham, ten_san_pham, gioi_tinh_khach_hang, hinh_anh, mo_ta_ngan, mo_ta_chi_tiet, trang_thai, xoa_mem, ngay_tao) VALUES
-('sp1', 'th1', 'dm1', 'xx3', 'md3', 'cl1', 'dg1', 'cg1', 'SP001', 'Nike Air Max 2024', 'UNISEX', 'sp1.jpg', 'Dòng giày chạy bộ cao cấp Nike Air Max 2024.', 'Mô tả chi tiết giày Nike SP1', 0, 0, 1711814400000),
-('sp2', 'th2', 'dm2', 'xx3', 'md1', 'cl2', 'dg2', 'cg2', 'SP002', 'Adidas UltraBoost', 'UNISEX', 'sp2.jpg', 'Trải nghiệm đỉnh cao với Adidas UltraBoost.', 'Mô tả chi tiết giày Adidas SP2', 0, 0, 1711814400000),
-('sp3', 'th3', 'dm1', 'xx2', 'md2', 'cl3', 'dg3', 'cg3', 'SP003', 'Puma Speed', 'UNISEX', 'sp3.jpg', 'Giày chạy tốc độ Puma Speed đầy mạnh mẽ.', 'Mô tả chi tiết giày Puma SP3', 0, 0, 1711814400000),
-('sp4', 'th4', 'dm4', 'xx2', 'md3', 'cl4', 'dg4', 'cg1', 'SP004', 'New Balance Classic', 'UNISEX', 'sp4.jpg', 'Phong cách cổ điển New Balance Classic.', 'Mô tả chi tiết giày NB SP4', 0, 0, 1711814400000),
-('sp5', 'th5', 'dm4', 'xx1', 'md3', 'cl5', 'dg5', 'cg2', 'SP005', 'Converse All Star', 'UNISEX', 'sp5.jpg', 'Biểu tượng giới trẻ Converse All Star.', 'Mô tả chi tiết giày Converse SP5', 0, 0, 1711814400000);
+('sp1', 'th1', 'dm1', 'xx3', 'md3', 'cl1', 'dg1', 'cg1', 'SP001', 'Nike Air Max 2024', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Dòng giày chạy bộ cao cấp Nike Air Max 2024.', 'Mô tả chi tiết giày Nike SP1', 0, 0, 1711814400000),
+('sp2', 'th2', 'dm2', 'xx3', 'md1', 'cl2', 'dg2', 'cg2', 'SP002', 'Adidas UltraBoost', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Trải nghiệm đỉnh cao với Adidas UltraBoost.', 'Mô tả chi tiết giày Adidas SP2', 0, 0, 1711814400000),
+('sp3', 'th3', 'dm1', 'xx2', 'md2', 'cl3', 'dg3', 'cg3', 'SP003', 'Puma Speed', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Giày chạy tốc độ Puma Speed đầy mạnh mẽ.', 'Mô tả chi tiết giày Puma SP3', 0, 0, 1711814400000),
+('sp4', 'th4', 'dm4', 'xx2', 'md3', 'cl4', 'dg4', 'cg1', 'SP004', 'New Balance Classic', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Phong cách cổ điển New Balance Classic.', 'Mô tả chi tiết giày NB SP4', 0, 0, 1711814400000),
+('sp5', 'th5', 'dm4', 'xx1', 'md3', 'cl5', 'dg5', 'cg2', 'SP005', 'Converse All Star', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Biểu tượng giới trẻ Converse All Star.', 'Mô tả chi tiết giày Converse SP5', 0, 0, 1711814400000);
 
 -- 13. Bảng Chi Tiết Sản Phẩm (chi_tiet_san_pham)
 INSERT INTO chi_tiet_san_pham (id, id_san_pham, id_kich_thuoc, id_mau_sac, ma_chi_tiet_san_pham, so_luong, gia_nhap, gia_ban, trang_thai, xoa_mem, ngay_tao) VALUES
@@ -130,11 +130,11 @@ INSERT INTO chi_tiet_san_pham (id, id_san_pham, id_kich_thuoc, id_mau_sac, ma_ch
 
 -- 14. Bảng Ảnh Chi Tiết Sản Phẩm (anh_chi_tiet_san_pham)
 INSERT INTO anh_chi_tiet_san_pham (id, id_chi_tiet_san_pham, duong_dan_anh, hinh_anh_dai_dien, mo_ta, xoa_mem, trang_thai, ngay_tao) VALUES
-('a1', 'ct1', 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=1974&auto=format&fit=crop', 1, 'Ảnh mặt trước', 0, 0, 1711814400000),
-('a2', 'ct1', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=2070&auto=format&fit=crop', 0, 'Ảnh mặt bên', 0, 0, 1711814400000),
-('a3', 'ct2', 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=1974&auto=format&fit=crop', 1, 'Ảnh đại diện ct2', 0, 0, 1711814400000),
-('a4', 'ct3', 'https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=2012&auto=format&fit=crop', 1, 'Ảnh đại diện ct3', 0, 0, 1711814400000),
-('a5', 'ct4', 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?q=80&w=1964&auto=format&fit=crop', 1, 'Ảnh đại diện ct4', 0, 0, 1711814400000);
+('a1', 'ct1', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 1, 'Ảnh mặt trước', 0, 0, 1711814400000),
+('a2', 'ct1', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 0, 'Ảnh mặt bên', 0, 0, 1711814400000),
+('a3', 'ct2', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 1, 'Ảnh đại diện ct2', 0, 0, 1711814400000),
+('a4', 'ct3', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 1, 'Ảnh đại diện ct3', 0, 0, 1711814400000),
+('a5', 'ct4', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 1, 'Ảnh đại diện ct4', 0, 0, 1711814400000);
 
 -- 15. Bảng Đợt Giảm Giá (dot_giam_gia)
 INSERT INTO dot_giam_gia (id, ma_dot_giam_gia, ten_dot_giam_gia, loai_giam_gia, so_tien_giam, dieu_kien_giam_gia, ngay_bat_dau, ngay_ket_thuc, muc_uu_tien, trang_thai, ngay_tao) VALUES
@@ -214,11 +214,11 @@ INSERT INTO giao_dich_thanh_toan (id, id_hoa_don, id_phuong_thuc_thanh_toan, ma_
 ('gd5', 'hd5', 'pt1', 'GD005', 1500000.00, 'PAYMENT', NULL, 'REF005', NULL, NULL, NULL, NULL, 1711880000000, 1, 'Khách lẻ trả tiền mặt');
 
 
-INSERT INTO ca_lam (id, ten_ca, gio_bat_dau, gio_ket_thuc, mo_ta, ngay_tao) VALUES 
-(UUID(), 'Ca Sáng', '08:00:00', '12:00:00', 'Ca làm việc buổi sáng', NOW()),
-(UUID(), 'Ca Chiều', '13:00:00', '17:00:00', 'Ca làm việc buổi chiều', NOW()),
-(UUID(), 'Ca Tối', '18:00:00', '22:00:00', 'Ca làm việc buổi tối', NOW());
-
+-- INSERT INTO ca_lam (id, ten_ca, gio_bat_dau, gio_ket_thuc, mo_ta, ngay_tao) VALUES
+-- (UUID(), 'Ca Sáng', '08:00:00', '12:00:00', 'Ca làm việc buổi sáng', NOW()),
+-- (UUID(), 'Ca Chiều', '13:00:00', '17:00:00', 'Ca làm việc buổi chiều', NOW()),
+-- (UUID(), 'Ca Tối', '18:00:00', '22:00:00', 'Ca làm việc buổi tối', NOW());
+--
 
 -- update id_dia_chi
 -- UPDATE dia_chi SET id_khach_hang = 'kh1' WHERE id = 'dc1';

@@ -115,13 +115,13 @@ const paginatedProducts = computed(() => {
     const start = (pagination.page - 1) * pagination.size;
     return filteredProducts.value.slice(start, start + pagination.size);
 });
-const visibleProductIds = computed(() => paginatedProducts.value.map((item) => item.id));
+const filteredProductIds = computed(() => filteredProducts.value.map((item) => item.id));
 const selectedProducts = computed(() => filteredProducts.value.filter((item) => selectedProductIds.value.includes(item.id)));
-const allVisibleProductsSelected = computed(
-    () => visibleProductIds.value.length > 0 && visibleProductIds.value.every((id) => selectedProductIds.value.includes(id))
+const allProductsSelected = computed(
+    () => filteredProductIds.value.length > 0 && filteredProductIds.value.every((id) => selectedProductIds.value.includes(id))
 );
-const someVisibleProductsSelected = computed(
-    () => visibleProductIds.value.some((id) => selectedProductIds.value.includes(id)) && !allVisibleProductsSelected.value
+const someProductsSelected = computed(
+    () => filteredProductIds.value.some((id) => selectedProductIds.value.includes(id)) && !allProductsSelected.value
 );
 const productExportButtonText = computed(() =>
     selectedProductIds.value.length ? `Xuất Excel (${selectedProductIds.value.length})` : 'Xuất Excel'
@@ -160,6 +160,8 @@ const resetProductFiltersState = () => {
 const buildProductQueryParams = () => ({
     page: 0,
     size: PRODUCT_FETCH_SIZE,
+    sortBy: 'ma',
+    sortDirection: 'asc',
     keyword: filters.search?.trim() || undefined,
     danhMucId: filters.danhMuc || undefined,
     thuongHieuId: filters.thuongHieu || undefined,
@@ -350,13 +352,13 @@ const getPriceRange = (item) => {
     return `${formatCurrency(item.giaBanThapNhat)} - ${formatCurrency(item.giaBanCaoNhat)}`;
 };
 
-// Xuất danh sách sản phẩm (chỉ những sản phẩm đang chọn, nếu không thì xuất tất cả theo bộ lọc)
+// Xuất danh sách sản phẩm (chỉ những sản phẩm đang chọn)
 const handleExportProducts = () => {
-    const targetProducts = selectedProducts.value.length ? selectedProducts.value : filteredProducts.value;
+    const targetProducts = selectedProducts.value;
     if (!targetProducts.length) {
         addNotification({
             title: 'Thông báo',
-            subtitle: 'Không có sản phẩm để xuất Excel',
+            subtitle: 'Vui lòng chọn ít nhất 1 sản phẩm để xuất Excel',
             color: 'warning'
         });
         return;
@@ -520,16 +522,14 @@ const toggleProductSelection = (productId, checked) => {
     selectedProductIds.value = selectedProductIds.value.filter((id) => id !== productId);
 };
 
-// Chọn/Bỏ chọn tất cả các sản phẩm đang hiển thị ở trang hiện tại
-const toggleSelectVisibleProducts = (checked) => {
+// Chọn/Bỏ chọn tất cả các sản phẩm đang hiển thị trên tất cả phân trang
+const toggleSelectAllProducts = (checked) => {
     if (checked) {
-        const mergedIds = new Set([...selectedProductIds.value, ...visibleProductIds.value]);
-        selectedProductIds.value = Array.from(mergedIds);
+        selectedProductIds.value = [...filteredProductIds.value];
         return;
     }
 
-    const visibleIdSet = new Set(visibleProductIds.value);
-    selectedProductIds.value = selectedProductIds.value.filter((id) => !visibleIdSet.has(id));
+    selectedProductIds.value = [];
 };
 
 // Format số thông thường sang định dạng có dấu phẩy
@@ -645,18 +645,11 @@ onBeforeUnmount(() => {
         ]" :items="paginatedProducts" :loading="loading" :showExportButton="true"
             :exportButtonText="productExportButtonText" selectable @add="router.push({ name: 'SanPhamForm' })"
             @export="handleExportProducts">
-            <template #extra-actions>
-                <v-btn variant="flat" class="admin-btn-qr text-none" @click="showQrScanner = true">
-                    <v-icon size="20" class="mr-2">mdi-qrcode-scan</v-icon>
-                    <span>Quét QR</span>
-                </v-btn>
-            </template>
 
             <template #header-select>
-                <v-checkbox-btn :model-value="allVisibleProductsSelected" :indeterminate="someVisibleProductsSelected"
-                    color="primary" hide-details density="compact"
-                    style="margin: auto; display: inline-flex; width: auto;"
-                    @update:model-value="toggleSelectVisibleProducts" />
+                <v-checkbox-btn :model-value="allProductsSelected" :indeterminate="someProductsSelected" color="primary"
+                    hide-details density="compact" style="margin: auto; display: inline-flex; width: auto;"
+                    @update:model-value="toggleSelectAllProducts" />
             </template>
 
             <template #top>

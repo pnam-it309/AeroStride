@@ -1475,8 +1475,10 @@ const product = ref({
 });
 
 const loadProduct = async (id) => {
-    const data = await dichVuSanPham.layChiTietSanPham(id);
-    originalProductName.value = data.tenSanPham || '';
+    const [data, variantsData] = await Promise.all([
+        dichVuSanPham.layChiTietSanPham(id),
+        dichVuBienThe.layBienTheTheoSanPham(id).catch(() => [])
+    ]);
     product.value = {
         maSanPham: data.maSanPham || data.ma || '',
         tenSanPham: data.tenSanPham || null,
@@ -1494,7 +1496,7 @@ const loadProduct = async (id) => {
         moTaChiTiet: data.moTaChiTiet || '',
         hinhAnh: data.hinhAnh || ''
     };
-    variantItems.value = (data.variants || []).map(mapVariantToFormState);
+    variantItems.value = (variantsData || []).map(mapVariantToFormState);
     syncColorImageStateFromVariants();
 };
 
@@ -1532,7 +1534,7 @@ const loadInitData = async () => {
 
         if (route.params.id) {
             await loadProduct(route.params.id);
-            
+
             // Check if there are variants to merge
             const mergeKey = 'mergeVariants_' + route.params.id;
             const mergeVariantsStr = localStorage.getItem(mergeKey);
@@ -1912,13 +1914,13 @@ const proceedWithSave = (creatingNew, variantCount) => {
 const handleMergeDuplicate = () => {
     const dupProdId = duplicateAttributeDialog.value.duplicateProduct.id;
     duplicateAttributeDialog.value.show = false;
-    
+
     // Store new variants in localStorage to merge after redirect
     const newVariantsToMerge = variantItems.value;
     if (newVariantsToMerge.length > 0) {
         localStorage.setItem('mergeVariants_' + dupProdId, JSON.stringify(newVariantsToMerge));
     }
-    
+
     router.push({ path: `/admin/san-pham/form/${dupProdId}` });
 };
 
@@ -2032,8 +2034,9 @@ const handleSave = async () => {
                             <v-col cols="12" md="3">
                                 <div class="field-label">Tên sản phẩm <span class="text-error">*</span></div>
                                 <v-combobox v-model="product.tenSanPham" :items="existingProductNames"
-                                    placeholder="Ví dụ: Giày Nike Air..." :rules="[rules.required, rules.noSpecialChar, rules.uniqueProductName]" variant="outlined"
-                                    density="comfortable" hide-details="auto" maxlength="250"
+                                    placeholder="Ví dụ: Giày Nike Air..."
+                                    :rules="[rules.required, rules.noSpecialChar, rules.uniqueProductName]"
+                                    variant="outlined" density="comfortable" hide-details="auto" maxlength="250"
                                     :return-object="false"></v-combobox>
                             </v-col>
                             <v-col cols="12" md="3">
@@ -2521,7 +2524,7 @@ const handleSave = async () => {
                                                                     </div>
                                                                     <div class="text-caption text-slate-500">{{
                                                                         getVariantColorLabel(variant.idMauSac)
-                                                                        }}</div>
+                                                                    }}</div>
                                                                 </div>
                                                             </div>
                                                         </td>
@@ -2825,12 +2828,20 @@ const handleSave = async () => {
                     <span class="text-h6 font-weight-bold">Trùng lặp thuộc tính</span>
                 </v-card-title>
                 <v-card-text class="pa-5 pt-6 text-body-1 text-slate-700 leading-relaxed">
-                    Đã tồn tại một sản phẩm khác có chính xác <span class="font-weight-bold text-red">cùng các thuộc tính</span> (Thương hiệu, Danh mục, Xuất xứ, Mục đích chạy, Cổ giày, Chất liệu, Đế giày).<br><br>
-                    Tên sản phẩm trùng: <span class="font-weight-bold">[{{ duplicateAttributeDialog.duplicateProduct?.ten }}]</span><br><br>
-                    Để phân biệt, vui lòng <span class="font-weight-bold text-primary">đặt tên sản phẩm hiện tại (tên đệm) khác đi</span> so với sản phẩm đã tồn tại, hoặc chỉnh sửa các thuộc tính để tránh trùng lặp hoàn toàn.
+                    Đã tồn tại một sản phẩm khác có chính xác <span class="font-weight-bold text-red">cùng các thuộc
+                        tính</span>
+                    (Thương hiệu, Danh mục, Xuất xứ, Mục đích chạy, Cổ giày, Chất liệu, Đế giày).<br><br>
+                    Tên sản phẩm trùng: <span class="font-weight-bold">[{{
+                        duplicateAttributeDialog.duplicateProduct?.ten
+                        }}]</span><br><br>
+                    Để phân biệt, vui lòng <span class="font-weight-bold text-primary">đặt tên sản phẩm hiện tại (tên
+                        đệm) khác
+                        đi</span> so với sản phẩm đã tồn tại, hoặc chỉnh sửa các thuộc tính để tránh trùng lặp hoàn
+                    toàn.
                 </v-card-text>
                 <v-card-actions class="pa-4 bg-slate-50 border-t justify-end">
-                    <v-btn color="primary" variant="flat" class="text-none px-6 font-weight-bold" @click="duplicateAttributeDialog.show = false">
+                    <v-btn color="primary" variant="flat" class="text-none px-6 font-weight-bold"
+                        @click="duplicateAttributeDialog.show = false">
                         Đã hiểu
                     </v-btn>
                 </v-card-actions>
