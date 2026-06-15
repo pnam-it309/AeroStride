@@ -106,14 +106,14 @@ public class AiLocalService {
         // Tự động phát hiện vòng lặp tin nhắn chào mặc định khi bot không hiểu nhiều lần liên tiếp
         if (response.contains("AeroStride trợ lý ảo xin nghe")) {
             state.consecutiveFallbacks++;
-            
+
             if (state.consecutiveFallbacks >= 2) {
                 // Tự động kết nối với nhân viên (Handoff) để bảo vệ trải nghiệm khách hàng
                 state.currentState = "NORMAL";
                 state.alternativeProducts.clear();
                 state.conversationData.clear();
                 state.consecutiveFallbacks = 0; // reset counter after handoff
-                
+
                 String handoffText = "Tôi đã kết nối bạn với nhân viên hỗ trợ. Vui lòng chờ trong giây lát...";
                 try {
                     List<String> waitingSuggs = List.of(
@@ -139,13 +139,13 @@ public class AiLocalService {
         String lowerInput = normalizedInput.toLowerCase();
 
         // 1. Phát hiện cảm xúc tiêu cực / khiếu nại của khách hàng để kích hoạt quy trình xin lỗi
-        if (lowerInput.contains("lỗi") || lowerInput.contains("hỏng") || lowerInput.contains("rách") || 
-            lowerInput.contains("bong keo") || lowerInput.contains("bung keo") || lowerInput.contains("tệ") || 
-            lowerInput.contains("chán") || lowerInput.contains("kém") || lowerInput.contains("thất vọng") || 
-            lowerInput.contains("bực mình") || lowerInput.contains("khiếu nại") || lowerInput.contains("giao chậm") || 
-            lowerInput.contains("chậm trễ") || lowerInput.contains("đợi lâu") || lowerInput.contains("thiếu hàng") || 
+        if (lowerInput.contains("lỗi") || lowerInput.contains("hỏng") || lowerInput.contains("rách") ||
+            lowerInput.contains("bong keo") || lowerInput.contains("bung keo") || lowerInput.contains("tệ") ||
+            lowerInput.contains("chán") || lowerInput.contains("kém") || lowerInput.contains("thất vọng") ||
+            lowerInput.contains("bực mình") || lowerInput.contains("khiếu nại") || lowerInput.contains("giao chậm") ||
+            lowerInput.contains("chậm trễ") || lowerInput.contains("đợi lâu") || lowerInput.contains("thiếu hàng") ||
             lowerInput.contains("nhầm size") || lowerInput.contains("nhầm màu") || lowerInput.contains("không hài lòng")) {
-            
+
             String complaintReason = "trải nghiệm chưa được trọn vẹn";
             if (lowerInput.contains("keo") || lowerInput.contains("hỏng") || lowerInput.contains("rách") || lowerInput.contains("lỗi")) {
                 complaintReason = "sự cố về chất lượng sản phẩm (lỗi keo/đế/chất liệu)";
@@ -157,7 +157,7 @@ public class AiLocalService {
 
             state.currentState = "APOLOGIZING";
             state.conversationData.put("complaintReason", complaintReason);
-            
+
             // Xếp các sản phẩm mới nhất vào Queue thay thế
             state.alternativeProducts.clear();
             List<SanPham> topProducts = dataLibrary.getTopProducts(4);
@@ -218,12 +218,12 @@ public class AiLocalService {
     }
 
     private String generateRuleBasedResponse(ChatState state, String lowerInput) {
-        if (lowerInput.contains("đề xuất") || lowerInput.contains("gợi ý") || lowerInput.contains("tư vấn giày") || 
-            lowerInput.contains("tìm giày") || lowerInput.contains("tìm sản phẩm") || lowerInput.contains("giới thiệu") || 
-            lowerInput.contains("không biết") || lowerInput.contains("chưa biết") || lowerInput.contains("chọn loại nào") || 
-            lowerInput.contains("tư vấn cho t") || lowerInput.contains("tu van") || lowerInput.contains("de xuat") || 
+        if (lowerInput.contains("đề xuất") || lowerInput.contains("gợi ý") || lowerInput.contains("tư vấn giày") ||
+            lowerInput.contains("tìm giày") || lowerInput.contains("tìm sản phẩm") || lowerInput.contains("giới thiệu") ||
+            lowerInput.contains("không biết") || lowerInput.contains("chưa biết") || lowerInput.contains("chọn loại nào") ||
+            lowerInput.contains("tư vấn cho t") || lowerInput.contains("tu van") || lowerInput.contains("de xuat") ||
             lowerInput.contains("goi y") || lowerInput.contains("bán chạy") || lowerInput.contains("ban chay")) {
-            
+
             state.alternativeProducts.clear();
             List<SanPham> list = dataLibrary.getTopProducts(5);
             for (SanPham p : list) {
@@ -240,15 +240,15 @@ public class AiLocalService {
         if (lowerInput.contains("chào") || lowerInput.contains("hello") || lowerInput.contains("hi ") || lowerInput.equals("hi") || lowerInput.contains("alo")) {
             return "Dạ, AeroStride xin kính chào quý khách! Tôi là trợ lý ảo hỗ trợ chăm sóc khách hàng tự động. Tôi có thể giúp bạn tìm kiếm giày, tư vấn size, chính sách giao hàng, bảo hành đổi trả hoặc khuyến mãi. Bạn đang quan tâm đến sản phẩm hoặc chính sách nào ạ?";
         }
-        
+
         if (lowerInput.contains("địa chỉ") || lowerInput.contains("ở đâu") || lowerInput.contains("chi nhánh") || lowerInput.contains("cửa hàng") || lowerInput.contains("showroom")) {
             return "Quý khách có thể ghé showroom chính thức của AeroStride tại: 123 Đường Cầu Giấy, Quận Cầu Giấy, Hà Nội. Giờ mở cửa từ 08:30 đến 22:00 hàng ngày (kể cả Thứ 7, Chủ Nhật và ngày lễ) ạ.";
         }
-        
+
         if (lowerInput.contains("ship") || lowerInput.contains("giao hàng") || lowerInput.contains("phí vận chuyển") || lowerInput.contains("nhận hàng") || lowerInput.contains("vận chuyển") || lowerInput.contains("bao lâu")) {
             return "Chính sách giao hàng của AeroStride:\n- MIỄN PHÍ giao hàng toàn quốc cho đơn hàng từ 1.000.000 VNĐ (đơn dưới 1M phí ship đồng giá 30k).\n- Thời gian giao hàng: Nội thành Hà Nội/HCM: 1-2 ngày; các tỉnh khác: 3-5 ngày.\n- Hỗ trợ thanh toán COD khi nhận hàng.";
         }
-        
+
         if (lowerInput.contains("đổi trả") || lowerInput.contains("bảo hành") || lowerInput.contains("lỗi") || lowerInput.contains("hoàn tiền") || lowerInput.contains("trả hàng") || lowerInput.contains("chật") || lowerInput.contains("rộng")) {
             return "Chính sách đổi trả & bảo hành tại AeroStride:\n- Đổi trả miễn phí trong vòng 7 ngày kể từ khi nhận hàng cho trường hợp không vừa size hoặc muốn đổi mẫu mới (giày chưa qua sử dụng, còn nguyên tem mác và hộp).\n- Bảo hành bong keo, hở đế, sứt chỉ hoàn toàn miễn phí trong vòng 6 tháng.\n- Hoàn tiền 100% nếu phát hiện lỗi từ nhà sản xuất.";
         }
@@ -258,8 +258,8 @@ public class AiLocalService {
         }
 
         // Tích hợp từ khóa động cho khuyến mãi, đợt giảm giá, phiếu giảm giá và sản phẩm khuyến mãi
-        if (lowerInput.contains("sản phẩm khuyến mãi") || lowerInput.contains("sản phẩm giảm giá") || 
-            lowerInput.contains("sản phẩm đang sale") || lowerInput.contains("giày sale") || 
+        if (lowerInput.contains("sản phẩm khuyến mãi") || lowerInput.contains("sản phẩm giảm giá") ||
+            lowerInput.contains("sản phẩm đang sale") || lowerInput.contains("giày sale") ||
             lowerInput.contains("đang khuyến mãi") || lowerInput.contains("san pham khuyen mai") ||
             (lowerInput.contains("sản phẩm") && lowerInput.contains("khuyến mãi")) ||
             (lowerInput.contains("giày") && lowerInput.contains("khuyến mãi")) ||
@@ -267,21 +267,21 @@ public class AiLocalService {
             return dataLibrary.getPromoProductsInfo();
         }
 
-        if (lowerInput.contains("đợt giảm giá") || lowerInput.contains("chương trình giảm giá") || 
-            lowerInput.contains("sự kiện sale") || lowerInput.contains("dot giam gia") || 
+        if (lowerInput.contains("đợt giảm giá") || lowerInput.contains("chương trình giảm giá") ||
+            lowerInput.contains("sự kiện sale") || lowerInput.contains("dot giam gia") ||
             lowerInput.contains("chương trình khuyến mãi")) {
             return dataLibrary.getActiveDiscountsInfo();
         }
 
-        if (lowerInput.contains("phiếu giảm giá") || lowerInput.contains("mã giảm giá") || 
-            lowerInput.contains("voucher") || lowerInput.contains("coupon") || 
+        if (lowerInput.contains("phiếu giảm giá") || lowerInput.contains("mã giảm giá") ||
+            lowerInput.contains("voucher") || lowerInput.contains("coupon") ||
             lowerInput.contains("mã giảm") || lowerInput.contains("phieu giam gia")) {
             return dataLibrary.getActiveCouponsInfo();
         }
 
         if (lowerInput.contains("khuyến mãi") || lowerInput.contains("giảm giá") || lowerInput.contains("voucher") || lowerInput.contains("sale") || lowerInput.contains("mã giảm") || lowerInput.contains("ưu đãi")) {
-            return "Dạ, AeroStride đang áp dụng rất nhiều chương trình ưu đãi vô cùng lớn dành cho anh/chị:\n\n" + 
-                   dataLibrary.getActiveDiscountsInfo() + "\n\n" + 
+            return "Dạ, AeroStride đang áp dụng rất nhiều chương trình ưu đãi vô cùng lớn dành cho anh/chị:\n\n" +
+                   dataLibrary.getActiveDiscountsInfo() + "\n\n" +
                    dataLibrary.getActiveCouponsInfo();
         }
 
@@ -302,10 +302,6 @@ public class AiLocalService {
             return dataLibrary.getBrandsInfo();
         }
 
-        if (lowerInput.contains("danh mục") || lowerInput.contains("danh muc") || lowerInput.contains("dòng giày") || lowerInput.contains("phân loại")) {
-            return dataLibrary.getCategoriesInfo();
-        }
-
         if (lowerInput.contains("xuất xứ") || lowerInput.contains("xuat xu") || lowerInput.contains("sản xuất ở đâu") || lowerInput.contains("nguồn gốc") || lowerInput.contains("made in")) {
             return dataLibrary.getOriginsInfo();
         }
@@ -318,14 +314,14 @@ public class AiLocalService {
             return "Dạ, để kiểm tra trạng thái đơn hàng nhanh nhất, bạn vui lòng cung cấp Số điện thoại đặt hàng hoặc Mã đơn hàng của bạn tại đây, hệ thống sẽ lập tức tra cứu thông tin vận chuyển cho bạn nhé!";
         }
 
-        if (lowerInput.contains("nhân viên") || lowerInput.contains("nhan vien") || 
-            lowerInput.contains("người thật") || lowerInput.contains("nguoi that") || 
-            lowerInput.contains("admin") || lowerInput.contains("gặp nhân viên") || 
-            lowerInput.contains("gặp hỗ trợ") || lowerInput.contains("gap ho tro") || 
-            lowerInput.contains("gọi hỗ trợ") || lowerInput.contains("goi ho tro") || 
-            lowerInput.contains("liên hệ hỗ trợ") || lowerInput.contains("lien he ho tro") || 
-            lowerInput.contains("kết nối hỗ trợ") || lowerInput.contains("ket noi ho tro") || 
-            lowerInput.contains("nói chuyện với hỗ trợ") || lowerInput.contains("noi chuyen voi ho tro") || 
+        if (lowerInput.contains("nhân viên") || lowerInput.contains("nhan vien") ||
+            lowerInput.contains("người thật") || lowerInput.contains("nguoi that") ||
+            lowerInput.contains("admin") || lowerInput.contains("gặp nhân viên") ||
+            lowerInput.contains("gặp hỗ trợ") || lowerInput.contains("gap ho tro") ||
+            lowerInput.contains("gọi hỗ trợ") || lowerInput.contains("goi ho tro") ||
+            lowerInput.contains("liên hệ hỗ trợ") || lowerInput.contains("lien he ho tro") ||
+            lowerInput.contains("kết nối hỗ trợ") || lowerInput.contains("ket noi ho tro") ||
+            lowerInput.contains("nói chuyện với hỗ trợ") || lowerInput.contains("noi chuyen voi ho tro") ||
             lowerInput.contains("gọi admin") || lowerInput.contains("goi admin")) {
             return "Tôi đã kết nối bạn với nhân viên hỗ trợ. Vui lòng chờ trong giây lát...";
         }
@@ -362,12 +358,12 @@ public class AiLocalService {
         }
 
         // Khách từ chối, yêu cầu gặp người thật hoặc hoàn tiền
-        if (isNegativeResponse(normalizedInput) || 
-            lowerInput.contains("hoàn tiền") || lowerInput.contains("người thật") || lowerInput.contains("nguoi that") || 
-            lowerInput.contains("nhân viên") || lowerInput.contains("nhan vien") || 
-            lowerInput.contains("gặp hỗ trợ") || lowerInput.contains("gap ho tro") || 
+        if (isNegativeResponse(normalizedInput) ||
+            lowerInput.contains("hoàn tiền") || lowerInput.contains("người thật") || lowerInput.contains("nguoi that") ||
+            lowerInput.contains("nhân viên") || lowerInput.contains("nhan vien") ||
+            lowerInput.contains("gặp hỗ trợ") || lowerInput.contains("gap ho tro") ||
             lowerInput.contains("gặp nhân viên") || lowerInput.contains("admin")) {
-            
+
             state.currentState = "NORMAL";
             state.alternativeProducts.clear();
             state.conversationData.clear();
@@ -401,12 +397,12 @@ public class AiLocalService {
             if (!state.alternativeProducts.isEmpty()) {
                 String nextProduct = state.alternativeProducts.poll();
                 state.conversationData.put("currentProduct", nextProduct);
-                
+
                 String transitionPhrase = "Dạ shop hiểu ạ! Gu thẩm mỹ của mỗi người đều có nét riêng biệt độc đáo. Đừng lo lắng, em lập tức lấy ra một mẫu giày mang phong cách khác biệt hoàn toàn từ bộ sưu tập mới đây ạ:\n\n";
                 if (rejectionCount >= 2) {
                     transitionPhrase = "Dạ vâng, shop quyết không bỏ cuộc đến khi tìm được đôi giày hoàn hảo nhất cho mình! Em đã lọc kỹ trong kho ra một siêu phẩm tiếp theo:\n\n";
                 }
-                
+
                 return transitionPhrase + "👟 Gợi ý tiếp theo là: **" + nextProduct + "**.\n" +
                        "Dòng này có phối màu cực kỳ thời thượng, phong cách năng động thể thao trẻ trung.\n\n" +
                        "Anh/chị có thấy mẫu này ưng mắt và làm mình hài lòng hơn chưa ạ? 💕";
@@ -429,7 +425,7 @@ public class AiLocalService {
 
     private String handleCollectingPreferencesState(ChatState state, String normalizedInput) {
         String lowerInput = normalizedInput.toLowerCase();
-        
+
         String style = "thể thao";
         if (lowerInput.contains("chạy") || lowerInput.contains("tập") || lowerInput.contains("gym") || lowerInput.contains("thể thao")) {
             style = "giày chạy bộ/thể thao năng động";
@@ -445,7 +441,7 @@ public class AiLocalService {
         }
 
         state.conversationData.put("preferredStyle", style + " + " + color);
-        
+
         // Tìm kiếm thực tế trong cơ sở dữ liệu dựa trên từ khóa tìm được hoặc nạp lại top products
         List<SanPham> searchResults = dataLibrary.searchProducts(lowerInput.contains("chạy") ? "Runner" : "Aero");
         if (searchResults.isEmpty()) {
@@ -528,7 +524,7 @@ public class AiLocalService {
 
     private boolean isMatch(String input, String keywordString) {
         if (keywordString == null || keywordString.isEmpty()) return false;
-        
+
         Pattern pattern = compiledPatterns.computeIfAbsent(keywordString, kws -> {
             String[] keywords = kws.split(",");
             StringBuilder regex = new StringBuilder(".*\\b(?:");
@@ -541,25 +537,25 @@ public class AiLocalService {
             regex.append(")\\b.*");
             return Pattern.compile(regex.toString(), Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CHARACTER_CLASS);
         });
-        
+
         return pattern.matcher(input.toLowerCase()).matches();
     }
 
     private String formatResponse(KienThucAi knowledge, String input) {
         String template = knowledge.getMauCauTraLoi();
-        
+
         switch (knowledge.getMucDich()) {
             case "PRODUCT_LIST":
                 String productsInfo = dataLibrary.getTopProductsInfo(5);
                 return template.replace("{products}", productsInfo);
-            
+
             case "PRODUCT_SEARCH":
                 String searchTerm = extractSearchTerm(input, knowledge.getTuKhoa());
                 List<SanPham> searchResult = dataLibrary.searchProducts(searchTerm);
                 if (searchResult.isEmpty() || searchTerm.isEmpty()) {
                     return "Dạ, bạn muốn tìm loại gì hoặc là muốn tìm dòng sản phẩm nào ạ? 🥰";
                 }
-                
+
                 try {
                     String json = objectMapper.writeValueAsString(searchResult);
                     return template.replace("{search_term}", searchTerm) + " [[PRODUCT_JSON:" + json + "]]";
@@ -584,11 +580,11 @@ public class AiLocalService {
         if (input == null) return false;
         String lower = input.toLowerCase().trim();
         lower = lower.replaceAll("[.,!?#]", "").trim();
-        
+
         if (lower.equals("không") || lower.equals("khong") || lower.equals("ko") || lower.equals("k") || lower.equals("no")) {
             return true;
         }
-        
+
         return lower.contains("không thích") || lower.contains("khong thich") ||
                lower.contains("không ưng") || lower.contains("khong ung") ||
                lower.contains("xấu") || lower.contains("xau") ||
@@ -617,15 +613,15 @@ public class AiLocalService {
         if (input == null) return false;
         String lower = input.toLowerCase().trim();
         lower = lower.replaceAll("[.,!?#]", "").trim();
-        
-        if (lower.equals("có") || lower.equals("co") || lower.equals("dạ") || lower.equals("da") || 
-            lower.equals("được") || lower.equals("duoc") || lower.equals("ok") || lower.equals("yes") || 
+
+        if (lower.equals("có") || lower.equals("co") || lower.equals("dạ") || lower.equals("da") ||
+            lower.equals("được") || lower.equals("duoc") || lower.equals("ok") || lower.equals("yes") ||
             lower.equals("ừ") || lower.equals("uha") || lower.equals("uh") || lower.equals("yep") ||
             lower.equals("hài lòng") || lower.equals("hai long") || lower.equals("ưng") || lower.equals("ung") ||
             lower.equals("đẹp") || lower.equals("dep") || lower.equals("thích") || lower.equals("thich")) {
             return true;
         }
-        
+
         return lower.contains("ưng ý") || lower.contains("ung y") ||
                lower.contains("rất ưng") || lower.contains("rat ung") ||
                lower.contains("hài lòng") || lower.contains("hai long") ||

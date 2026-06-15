@@ -20,7 +20,7 @@ import {
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import QrcodeVue from 'qrcode.vue';
 import {
-    dichVuThuongHieu, dichVuDanhMuc, dichVuXuatXu,
+    dichVuThuongHieu, dichVuXuatXu,
     dichVuChatLieu, dichVuDeGiay, dichVuCoGiay,
     dichVuMucDichChay, dichVuMauSac, dichVuKichThuoc
 } from '@/services/product/dichVuThuocTinh';
@@ -55,7 +55,7 @@ const defaultVariantStatus = 'DANG_HOAT_DONG';
 
 // DATA OPTIONS
 const brands = ref([]);
-const categories = ref([]);
+
 const materials = ref([]);
 const soles = ref([]);
 const collars = ref([]);
@@ -285,7 +285,6 @@ const filteredSizes = computed(() => {
 const searchQueries = reactive({
     idThuongHieu: '',
     idXuatXu: '',
-    idDanhMuc: '',
     idChatLieu: '',
     idDeGiay: '',
     idCoGiay: '',
@@ -323,7 +322,7 @@ const getDisplayItems = (originalItems, query) => {
 
 const displayBrands = computed(() => getDisplayItems(brands.value, searchQueries.idThuongHieu, 'idThuongHieu'));
 const displayOrigins = computed(() => getDisplayItems(origins.value, searchQueries.idXuatXu, 'idXuatXu'));
-const displayCategories = computed(() => getDisplayItems(categories.value, searchQueries.idDanhMuc, 'idDanhMuc'));
+
 const displayMaterials = computed(() => getDisplayItems(materials.value, searchQueries.idChatLieu, 'idChatLieu'));
 const displaySoles = computed(() => getDisplayItems(soles.value, searchQueries.idDeGiay, 'idDeGiay'));
 const displayCollars = computed(() => getDisplayItems(collars.value, searchQueries.idCoGiay, 'idCoGiay'));
@@ -1124,7 +1123,7 @@ const buildProductPayload = ({ includeVariants = false } = {}) => {
         maSanPham: product.value.maSanPham || null,
         tenSanPham: product.value.tenSanPham || null,
         idThuongHieu: product.value.idThuongHieu,
-        idDanhMuc: product.value.idDanhMuc,
+
         idXuatXu: product.value.idXuatXu,
         idChatLieu: product.value.idChatLieu,
         idDeGiay: product.value.idDeGiay,
@@ -1411,7 +1410,7 @@ const fetchFormOptions = async () => {
 
         if (opts) {
             brands.value = filterActive(opts.thuongHieus);
-            categories.value = filterActive(opts.danhMucs);
+
             origins.value = filterActive(opts.xuatXus);
             purposes.value = filterActive(opts.mucDichChays);
             collars.value = filterActive(opts.coGiays);
@@ -1424,7 +1423,6 @@ const fetchFormOptions = async () => {
 
         const [b, c, o, p, col, m, s, mau, size] = await Promise.all([
             dichVuThuongHieu.layThuongHieu({ size: 1000 }),
-            dichVuDanhMuc.layDanhMuc({ size: 1000 }),
             dichVuXuatXu.layXuatXu({ size: 1000 }),
             dichVuMucDichChay.layMucDichChay({ size: 1000 }),
             dichVuCoGiay.layCoGiay({ size: 1000 }),
@@ -1435,7 +1433,7 @@ const fetchFormOptions = async () => {
         ]);
 
         brands.value = filterActive(b.content || b);
-        categories.value = filterActive(c.content || c);
+
         origins.value = filterActive(o.content || o);
         purposes.value = filterActive(p.content || p);
         collars.value = filterActive(col.content || col);
@@ -1455,7 +1453,7 @@ const product = ref({
     tenSanPham: null,
     moTa: '',
     idThuongHieu: null,
-    idDanhMuc: null,
+
     idXuatXu: null,
     idChatLieu: null,
     idDeGiay: null,
@@ -1475,7 +1473,7 @@ const loadProduct = async (id) => {
         tenSanPham: data.tenSanPham || null,
         moTa: data.moTa || '',
         idThuongHieu: data.idThuongHieu || null,
-        idDanhMuc: data.idDanhMuc || null,
+
         idXuatXu: data.idXuatXu || null,
         idChatLieu: data.idChatLieu || null,
         idDeGiay: data.idDeGiay || null,
@@ -1554,7 +1552,7 @@ const rules = {
 
 const attributeConfig = [
     { field: 'idThuongHieu', service: dichVuThuongHieu, type: 'THUONG_HIEU', label: 'thương hiệu', options: brands },
-    { field: 'idDanhMuc', service: dichVuDanhMuc, type: 'DANH_MUC', label: 'danh mục', options: categories },
+
     { field: 'idXuatXu', service: dichVuXuatXu, type: 'XUAT_XU', label: 'xuất xứ', options: origins },
     { field: 'idChatLieu', service: dichVuChatLieu, type: 'CHAT_LIEU', label: 'chất liệu', options: materials },
     { field: 'idDeGiay', service: dichVuDeGiay, type: 'DE_GIAY', label: 'đế giày', options: soles },
@@ -1566,7 +1564,7 @@ const validateProduct = () => {
     const requiredFields = [
         ['tenSanPham', 'Tên sản phẩm'],
         ['idThuongHieu', 'Thương hiệu'],
-        ['idDanhMuc', 'Danh mục'],
+
         ['idXuatXu', 'Xuất xứ'],
         ['idChatLieu', 'Chất liệu'],
         ['idDeGiay', 'Loại đế giày'],
@@ -1957,24 +1955,7 @@ const handleSave = async () => {
                                     </template>
                                 </v-combobox>
                             </v-col>
-                            <v-col cols="12" md="3">
-                                <div class="field-label">Danh mục <span class="text-error">*</span></div>
-                                <v-combobox v-model="product.idDanhMuc" v-model:search="searchQueries.idDanhMuc"
-                                    v-bind="comboboxProps" :custom-filter="() => true" :items="displayCategories"
-                                    item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Danh mục..."
-                                    variant="outlined" density="comfortable" :return-object="false"
-                                    @keyup.enter="(e) => onKeyUpEnter(e, 'idDanhMuc')"
-                                    @update:model-value="(val) => handleAttributeChange('idDanhMuc', val)">
-                                    <template #item="{ props, item }">
-                                        <v-list-item v-bind="props">
-                                            <template #append v-if="item.raw.isNew">
-                                                <span class="text-primary ml-2" style="font-size: 13px;">Thêm
-                                                    nhanh</span>
-                                            </template>
-                                        </v-list-item>
-                                    </template>
-                                </v-combobox>
-                            </v-col>
+
 
                             <!-- HÀNG 2: THUỘC TÍNH PHÂN LOẠI -->
                             <v-col cols="12" md="3">

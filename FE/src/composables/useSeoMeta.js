@@ -68,7 +68,7 @@ export function useSeoMeta() {
         const pTitle = product.tenSanPham || 'Sản phẩm';
         const pDescription = product.moTa
             ? product.moTa.substring(0, 160)
-            : `Mua ${product.tenSanPham} chính hãng tại AeroStride. ${product.tenThuongHieu || ''} - ${product.tenDanhMuc || ''}. Giao hàng nhanh, đổi trả miễn phí.`;
+            : `Mua ${product.tenSanPham} chính hãng tại AeroStride. ${product.tenThuongHieu || ''}. Giao hàng nhanh, đổi trả miễn phí.`;
 
         const firstImage = product.variants?.[0]?.images?.[0]?.duongDanAnh || DEFAULTS.image;
         const canonicalUrl = typeof window !== 'undefined' ? window.location.href : '';

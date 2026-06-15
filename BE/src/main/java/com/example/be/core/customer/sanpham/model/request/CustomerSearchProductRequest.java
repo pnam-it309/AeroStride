@@ -12,7 +12,6 @@ import lombok.ToString;
 public class CustomerSearchProductRequest extends PageRequest {
 
     private String keyword;
-    private String danhMucId;
     private String thuongHieuId;
     private TrangThai trangThai;
     private String gioiTinhKhachHang;

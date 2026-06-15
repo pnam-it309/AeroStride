@@ -21,7 +21,6 @@ import java.util.Objects;
 public class ProductOptionService {
 
     private final ThuongHieuRepository thuongHieuRepository;
-    private final DanhMucRepository danhMucRepository;
     private final XuatXuRepository xuatXuRepository;
     private final MucDichChayRepository mucDichChayRepository;
     private final CoGiayRepository coGiayRepository;
@@ -34,7 +33,6 @@ public class ProductOptionService {
     public ProductFormOptionsResponse getFormOptions() {
         Sort sortByName = Sort.by(Sort.Direction.ASC, "ten");
         return ProductFormOptionsResponse.builder()
-                .danhMucs(mapOptions(danhMucRepository.findAll(sortByName)))
                 .thuongHieus(mapOptions(thuongHieuRepository.findAll(sortByName)))
                 .xuatXus(mapOptions(xuatXuRepository.findAll(sortByName)))
                 .mucDichChays(mapOptions(mucDichChayRepository.findAll(sortByName)))

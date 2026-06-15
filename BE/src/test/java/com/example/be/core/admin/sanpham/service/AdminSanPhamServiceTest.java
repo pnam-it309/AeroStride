@@ -54,9 +54,6 @@ class AdminSanPhamServiceTest extends BaseServiceTest {
     private ThuongHieuRepository thuongHieuRepository;
 
     @Mock
-    private DanhMucRepository danhMucRepository;
-
-    @Mock
     private XuatXuRepository xuatXuRepository;
 
     @Mock
@@ -106,7 +103,6 @@ class AdminSanPhamServiceTest extends BaseServiceTest {
         // Arrange
         CreateProductRequest request = new CreateProductRequest();
         request.setTenSanPham("New Shoes");
-        request.setIdDanhMuc("dm-1");
         request.setIdThuongHieu("th-1");
         request.setIdXuatXu("xx-1");
         request.setIdMucDichChay("md-1");

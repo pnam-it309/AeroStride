@@ -48,7 +48,7 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
                     .id(sp.getId())
                     .maSanPham(sp.getMa())
                     .tenSanPham(sp.getTen())
-                    .tenDanhMuc(sp.getDanhMuc() != null ? sp.getDanhMuc().getTen() : null)
+
                     .tenThuongHieu(sp.getThuongHieu() != null ? sp.getThuongHieu().getTen() : null)
                     .hinhAnh(sp.getHinhAnh())
                     .giaBanThapNhat(s != null ? s.getGiaBanThapNhat() : null)

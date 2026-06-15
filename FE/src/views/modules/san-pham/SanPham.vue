@@ -33,7 +33,6 @@ const { isRefreshing, handleRefresh: refreshData } = useRefreshHandler();
 const loading = ref(false);
 const products = ref([]);
 const filterOptions = ref({
-    danhMucs: [],
     thuongHieus: [],
     xuatXus: [],
     mucDichChays: [],
@@ -60,7 +59,6 @@ const filters = reactive({
     search: '',
     khoangGia: [MIN_PRICE, DEFAULT_MAX_PRICE],
     trangThai: null,
-    danhMuc: null,
     thuongHieu: null,
     gioiTinh: null,
     chatLieu: null
@@ -147,7 +145,6 @@ const resetProductFiltersState = () => {
     filters.search = '';
     filters.khoangGia = [MIN_PRICE, productPriceBounds.value.max];
     filters.trangThai = null;
-    filters.danhMuc = null;
     filters.thuongHieu = null;
     filters.gioiTinh = null;
     filters.chatLieu = null;
@@ -161,7 +158,6 @@ const buildProductQueryParams = () => ({
     page: 0,
     size: PRODUCT_FETCH_SIZE,
     keyword: filters.search?.trim() || undefined,
-    danhMucId: filters.danhMuc || undefined,
     thuongHieuId: filters.thuongHieu || undefined,
     trangThai: filters.trangThai || undefined,
     gioiTinhKhachHang: filters.gioiTinh || undefined,
@@ -234,7 +230,6 @@ const loadMaxPrice = async () => {
 const loadFilterOptions = async () => {
     try {
         const options = await dichVuSanPham.layOptionsForm();
-        filterOptions.value.danhMucs = options?.danhMucs || [];
         filterOptions.value.thuongHieus = options?.thuongHieus || [];
         filterOptions.value.xuatXus = options?.xuatXus || [];
         filterOptions.value.mucDichChays = options?.mucDichChays || [];
@@ -363,13 +358,12 @@ const handleExportProducts = () => {
     }
 
     exportHtmlTableToExcel({
-        headers: ['STT', 'Mã sản phẩm', 'Tên sản phẩm', 'Thương hiệu', 'Danh mục', 'Tổng số lượng', 'Khoảng giá', 'Trạng thái'],
+        headers: ['STT', 'Mã sản phẩm', 'Tên sản phẩm', 'Thương hiệu', 'Tổng số lượng', 'Khoảng giá', 'Trạng thái'],
         rows: targetProducts.map((item, index) => [
             index + 1,
             item.maSanPham || '--',
             item.tenSanPham || '--',
             item.tenThuongHieu || '--',
-            item.tenDanhMuc || '--',
             toNumber(item.tongSoLuongTon, 0),
             getPriceRange(item),
             getStatusLabel(item.trangThai)
@@ -589,14 +583,6 @@ onBeforeUnmount(() => {
                         class="compact-input" @update:model-value="handleSearch" />
                 </v-col>
 
-                <v-col cols="12" md="2">
-                    <div class="filter-field-label">Danh mục</div>
-                    <v-select v-model="filters.danhMuc" :items="[
-                        { title: 'Tất cả danh mục', value: null },
-                        ...filterOptions.danhMucs.map((danhMuc) => ({ title: danhMuc.ten, value: danhMuc.id }))
-                    ]" variant="outlined" density="compact" hide-details class="compact-input"
-                        @update:model-value="handleSearch" />
-                </v-col>
 
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Thương hiệu</div>
@@ -637,7 +623,6 @@ onBeforeUnmount(() => {
             { text: 'Mã sản phẩm', width: '110px' },
             { text: 'Tên sản phẩm', width: '120px' },
             { text: 'Thương hiệu', width: '110px' },
-            { text: 'Danh mục', width: '110px' },
             { text: 'Tổng số lượng', width: '120px' },
             { text: 'Khoảng giá', width: '150px' },
             { text: 'Trạng thái', width: '110px' },
@@ -696,9 +681,6 @@ onBeforeUnmount(() => {
                         </div>
                     </td>
 
-                    <td class="data-cell text-center">
-                        <div class="text-truncate" :title="item.tenDanhMuc || '--'">{{ item.tenDanhMuc || '--' }}</div>
-                    </td>
 
                     <td class="data-cell text-center">
                         <span class="text-primary">{{ formatNumber(item.tongSoLuongTon || 0) }}</span>

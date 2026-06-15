@@ -47,7 +47,6 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     
     // Core Repos for resolving entities
     private final ThuongHieuRepository thuongHieuRepository;
-    private final DanhMucRepository danhMucRepository;
     private final XuatXuRepository xuatXuRepository;
     private final MucDichChayRepository mucDichChayRepository;
     private final CoGiayRepository coGiayRepository;
@@ -212,7 +211,6 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         // Use a common interface or reflection if needed, but for now simple check
         if (request instanceof CreateProductRequest req) {
             sp.setTen(req.getTenSanPham());
-            sp.setDanhMuc(danhMucRepository.findById(req.getIdDanhMuc()).orElse(null));
             sp.setThuongHieu(thuongHieuRepository.findById(req.getIdThuongHieu()).orElse(null));
             sp.setXuatXu(xuatXuRepository.findById(req.getIdXuatXu()).orElse(null));
             sp.setMucDichChay(mucDichChayRepository.findById(req.getIdMucDichChay()).orElse(null));
@@ -225,7 +223,6 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             sp.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : TrangThai.DANG_HOAT_DONG);
         } else if (request instanceof UpdateProductRequest req) {
             sp.setTen(req.getTenSanPham());
-            sp.setDanhMuc(danhMucRepository.findById(req.getIdDanhMuc()).orElse(null));
             sp.setThuongHieu(thuongHieuRepository.findById(req.getIdThuongHieu()).orElse(null));
             sp.setXuatXu(xuatXuRepository.findById(req.getIdXuatXu()).orElse(null));
             sp.setMucDichChay(mucDichChayRepository.findById(req.getIdMucDichChay()).orElse(null));

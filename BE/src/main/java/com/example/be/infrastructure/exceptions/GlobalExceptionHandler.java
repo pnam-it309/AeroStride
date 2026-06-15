@@ -80,6 +80,15 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(HttpStatus.FORBIDDEN, "ERR_FORBIDDEN", "You do not have permission to access this resource.", request.getRequestURI(), ErrorSeverity.RECOVERABLE);
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Object>> handleHttpMessageNotReadableException(org.springframework.http.converter.HttpMessageNotReadableException e, HttpServletRequest request) {
+        log.warn("JSON Parse error at {}: {}", request.getRequestURI(), e.getMessage());
+        try {
+            java.nio.file.Files.writeString(java.nio.file.Paths.get("json_error.txt"), e.getMessage());
+        } catch (Exception ex) {}
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "ERR_JSON_PARSE", e.getMessage(), request.getRequestURI(), ErrorSeverity.SYNTAX);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidationException(MethodArgumentNotValidException e, HttpServletRequest request) {
         String message = e.getBindingResult().getFieldErrors().stream()
@@ -87,6 +96,9 @@ public class GlobalExceptionHandler {
                 .reduce((a, b) -> a + "; " + b)
                 .orElse("Validation failed");
         log.warn("Validation error at {}: {}", request.getRequestURI(), message);
+        try {
+            java.nio.file.Files.writeString(java.nio.file.Paths.get("validation_error.txt"), message);
+        } catch (Exception ex) {}
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "ERR_VAL_INVALID_PARAMS", message, request.getRequestURI(), ErrorSeverity.SYNTAX);
     }
 

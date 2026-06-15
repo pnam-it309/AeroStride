@@ -66,12 +66,12 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     public void deleteHoaDon(String id) {
         HoaDon hd = hoaDonRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_EXIST));
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
-        
+
         // Hoàn trả tồn kho bằng atomic UPDATE
         for (HoaDonChiTiet d : details) {
             chiTietSanPhamRepository.restoreStock(d.getChiTietSanPham().getId(), d.getSoLuong());
         }
-        
+
         hoaDonChiTietRepository.deleteAll(details);
         hoaDonRepository.delete(hd);
     }
@@ -120,7 +120,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     public AdminBanHangHoaDonResponse updateSoLuong(String idHoaDon, String idHoaDonChiTiet, Integer soLuong) {
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHoaDonChiTiet)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_IN_HOA_DON));
-        
+
         String ctspId = hdct.getChiTietSanPham().getId();
         int oldQty = hdct.getSoLuong();
 
@@ -149,9 +149,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     public void removeHoaDonChiTiet(String idHoaDon, String idHoaDonChiTiet) {
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHoaDonChiTiet)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PRODUCT_DETAIL_NOT_FOUND));
-        
+
         chiTietSanPhamRepository.restoreStock(hdct.getChiTietSanPham().getId(), hdct.getSoLuong());
-        
+
         hoaDonChiTietRepository.delete(hdct);
         updateHoaDonTotals(getHoaDonOrThrow(idHoaDon));
     }
@@ -186,12 +186,12 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Transactional
     public void checkout(String idHoaDon, AdminBanHangCheckoutRequest request) {
         HoaDon hd = getHoaDonOrThrow(idHoaDon);
-        
+
         // Kiểm tra hóa đơn chưa được thanh toán
         if (hd.getTrangThai() == OrderStatus.HOAN_THANH) {
             throw new BusinessException("Hóa đơn này đã được thanh toán.");
         }
-        
+
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
         if (details.isEmpty()) {
             throw new BusinessException(MessageConstants.HOA_DON_EMPTY);
@@ -200,7 +200,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         // Tồn kho đã được trừ lúc thêm vào giỏ hàng, nên không cần trừ lại ở đây nữa.
         // Chỉ cần cập nhật trạng thái hóa đơn.
 
-        hd.setTrangThai(OrderStatus.HOAN_THANH); 
+        hd.setTrangThai(OrderStatus.HOAN_THANH);
         hd.setLoaiDon(request.getLoaiDon());
         hd.setPhiVanChuyen(request.getPhiVanChuyen() != null ? request.getPhiVanChuyen() : BigDecimal.ZERO);
         hd.setTongTien(request.getTongTien());
@@ -231,7 +231,6 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                         .tenSanPham(ct.getSanPham() != null ? ct.getSanPham().getTen() : null)
                         .maSanPham(ct.getSanPham() != null ? ct.getSanPham().getMa() : null)
                         .maChiTietSanPham(ct.getMaChiTietSanPham())
-                        .tenDanhMuc(ct.getSanPham() != null && ct.getSanPham().getDanhMuc() != null ? ct.getSanPham().getDanhMuc().getTen() : null)
                         .tenThuongHieu(ct.getSanPham() != null && ct.getSanPham().getThuongHieu() != null ? ct.getSanPham().getThuongHieu().getTen() : null)
                         .tenChatLieu(ct.getSanPham() != null && ct.getSanPham().getChatLieu() != null ? ct.getSanPham().getChatLieu().getTen() : null)
                         .tenDeGiay(ct.getSanPham() != null && ct.getSanPham().getDeGiay() != null ? ct.getSanPham().getDeGiay().getTen() : null)
@@ -270,12 +269,12 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .map(d -> d.getDonGia().multiply(BigDecimal.valueOf(d.getSoLuong())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         hd.setTongTien(total);
-        
+
         BigDecimal discounted = total;
         if (hd.getPhieuGiamGia() != null) {
             PhieuGiamGia v = hd.getPhieuGiamGia();
             BigDecimal threshold = v.getDonHangToiThieu() != null ? v.getDonHangToiThieu() : BigDecimal.ZERO;
-            
+
             if (total.compareTo(threshold) >= 0) {
                 BigDecimal val = BigDecimal.ZERO;
                 if ("PHAN_TRAM".equalsIgnoreCase(v.getLoaiPhieu()) || "PERCENT".equalsIgnoreCase(v.getLoaiPhieu())) {

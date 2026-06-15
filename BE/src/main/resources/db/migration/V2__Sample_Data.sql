@@ -64,14 +64,6 @@ INSERT INTO thuong_hieu (id, ma_thuong_hieu, ten_thuong_hieu, trang_thai, xoa_me
 ('th4', 'TH004', 'New Balance', 0, 0, 1711814400000),
 ('th5', 'TH005', 'Converse', 0, 0, 1711814400000);
 
--- 6. Bảng Danh Mục (danh_muc)
-INSERT INTO danh_muc (id, ma_danh_muc, ten_danh_muc, trang_thai, xoa_mem, ngay_tao) VALUES
-('dm1', 'DM001', 'Giày Chạy Bộ', 0, 0, 1711814400000),
-('dm2', 'DM002', 'Giày Thể Thao', 0, 0, 1711814400000),
-('dm3', 'DM003', 'Giày Bóng Đá', 0, 0, 1711814400000),
-('dm4', 'DM004', 'Giày Sneaker', 0, 0, 1711814400000),
-('dm5', 'DM005', 'Giày Lười', 0, 0, 1711814400000);
-
 -- 7. Bảng cỡ Giày (co_giay)
 INSERT INTO co_giay (id, ma_co_giay, ten_co_giay, trang_thai, xoa_mem, ngay_tao) VALUES
 ('cg1', 'CG001', 'Cổ Thấp', 0, 0, 1711814400000),
@@ -113,12 +105,12 @@ INSERT INTO mau_sac (id, ma_mau_sac, ten_mau_sac, ma_mau_hex, trang_thai, xoa_me
 ('ms5', 'MS005', 'Xám', '#808080', 0, 0, 1711814400000);
 
 -- 12. Bảng Sản Phẩm (san_pham)
-INSERT INTO san_pham (id, id_thuong_hieu, id_danh_muc, id_xuat_xu, id_muc_dich_chay, id_chat_lieu, id_de_giay, id_co_giay, ma_san_pham, ten_san_pham, gioi_tinh_khach_hang, hinh_anh, mo_ta_ngan, mo_ta_chi_tiet, trang_thai, xoa_mem, ngay_tao) VALUES
-('sp1', 'th1', 'dm1', 'xx3', 'md3', 'cl1', 'dg1', 'cg1', 'SP001', 'Nike Air Max 2024', 'UNISEX', 'sp1.jpg', 'Dòng giày chạy bộ cao cấp Nike Air Max 2024.', 'Mô tả chi tiết giày Nike SP1', 0, 0, 1711814400000),
-('sp2', 'th2', 'dm2', 'xx3', 'md1', 'cl2', 'dg2', 'cg2', 'SP002', 'Adidas UltraBoost', 'UNISEX', 'sp2.jpg', 'Trải nghiệm đỉnh cao với Adidas UltraBoost.', 'Mô tả chi tiết giày Adidas SP2', 0, 0, 1711814400000),
-('sp3', 'th3', 'dm1', 'xx2', 'md2', 'cl3', 'dg3', 'cg3', 'SP003', 'Puma Speed', 'UNISEX', 'sp3.jpg', 'Giày chạy tốc độ Puma Speed đầy mạnh mẽ.', 'Mô tả chi tiết giày Puma SP3', 0, 0, 1711814400000),
-('sp4', 'th4', 'dm4', 'xx2', 'md3', 'cl4', 'dg4', 'cg1', 'SP004', 'New Balance Classic', 'UNISEX', 'sp4.jpg', 'Phong cách cổ điển New Balance Classic.', 'Mô tả chi tiết giày NB SP4', 0, 0, 1711814400000),
-('sp5', 'th5', 'dm4', 'xx1', 'md3', 'cl5', 'dg5', 'cg2', 'SP005', 'Converse All Star', 'UNISEX', 'sp5.jpg', 'Biểu tượng giới trẻ Converse All Star.', 'Mô tả chi tiết giày Converse SP5', 0, 0, 1711814400000);
+INSERT INTO san_pham (id, id_thuong_hieu, id_xuat_xu, id_muc_dich_chay, id_chat_lieu, id_de_giay, id_co_giay, ma_san_pham, ten_san_pham, gioi_tinh_khach_hang, hinh_anh, mo_ta_ngan, mo_ta_chi_tiet, trang_thai, xoa_mem, ngay_tao) VALUES
+('sp1', 'th1', 'xx3', 'md3', 'cl1', 'dg1', 'cg1', 'SP001', 'Nike Air Max 2024', 'UNISEX', 'sp1.jpg', 'Dòng giày chạy bộ cao cấp Nike Air Max 2024.', 'Mô tả chi tiết giày Nike SP1', 0, 0, 1711814400000),
+('sp2', 'th2', 'xx3', 'md1', 'cl2', 'dg2', 'cg2', 'SP002', 'Adidas UltraBoost', 'UNISEX', 'sp2.jpg', 'Trải nghiệm đỉnh cao với Adidas UltraBoost.', 'Mô tả chi tiết giày Adidas SP2', 0, 0, 1711814400000),
+('sp3', 'th3', 'xx2', 'md2', 'cl3', 'dg3', 'cg3', 'SP003', 'Puma Speed', 'UNISEX', 'sp3.jpg', 'Giày chạy tốc độ Puma Speed đầy mạnh mẽ.', 'Mô tả chi tiết giày Puma SP3', 0, 0, 1711814400000),
+('sp4', 'th4', 'xx2', 'md3', 'cl4', 'dg4', 'cg1', 'SP004', 'New Balance Classic', 'UNISEX', 'sp4.jpg', 'Phong cách cổ điển New Balance Classic.', 'Mô tả chi tiết giày NB SP4', 0, 0, 1711814400000),
+('sp5', 'th5', 'xx1', 'md3', 'cl5', 'dg5', 'cg2', 'SP005', 'Converse All Star', 'UNISEX', 'sp5.jpg', 'Biểu tượng giới trẻ Converse All Star.', 'Mô tả chi tiết giày Converse SP5', 0, 0, 1711814400000);
 
 -- 13. Bảng Chi Tiết Sản Phẩm (chi_tiet_san_pham)
 INSERT INTO chi_tiet_san_pham (id, id_san_pham, id_kich_thuoc, id_mau_sac, ma_chi_tiet_san_pham, so_luong, gia_nhap, gia_ban, trang_thai, xoa_mem, ngay_tao) VALUES

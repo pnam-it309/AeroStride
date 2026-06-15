@@ -114,7 +114,6 @@ public final class CodeUtils {
             case "ThuongHieu" -> "TH";
             case "NhaSanXuat" -> "NSX";
             case "DeGiay" -> "DG";
-            case "DanhMuc" -> "DM";
             case "CoGiay" -> "CG";
             case "XuatXu" -> "XX";
             case "MucDich" -> "MD";

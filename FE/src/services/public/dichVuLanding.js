@@ -19,7 +19,7 @@ export const dichVuLanding = {
             id: product.id,
             index,
             title: product.tenSanPham,
-            subtitle: product.tenDanhMuc || product.tenThuongHieu || '',
+            subtitle: product.tenThuongHieu || '',
             summary: product.moTaNgan || '',
             imageUrl: resolveImageUrl(product.hinhAnh),
             color: '#2962FF',

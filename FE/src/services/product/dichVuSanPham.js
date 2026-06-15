@@ -2,7 +2,6 @@ import api from '../apiService';
 import { API_ADMIN } from '@/constants/apiPaths';
 import {
     dichVuThuongHieu,
-    dichVuDanhMuc,
     dichVuXuatXu,
     dichVuMucDichChay,
     dichVuChatLieu,
@@ -25,9 +24,8 @@ const loadOptionSafely = async (request) => {
 export const dichVuSanPham = {
     // Lấy options cho form sản phẩm
     async layOptionsForm() {
-        const [thuongHieus, danhMucs, xuatXus, mucDichChays, chatLieus, deGiays, coGiays, mauSacs, kichThuocs] = await Promise.all([
+        const [thuongHieus, xuatXus, mucDichChays, chatLieus, deGiays, coGiays, mauSacs, kichThuocs] = await Promise.all([
             loadOptionSafely(dichVuThuongHieu.layThuongHieu),
-            loadOptionSafely(dichVuDanhMuc.layDanhMuc),
             loadOptionSafely(dichVuXuatXu.layXuatXu),
             loadOptionSafely(dichVuMucDichChay.layMucDichChay),
             loadOptionSafely(dichVuChatLieu.layChatLieu),
@@ -39,7 +37,6 @@ export const dichVuSanPham = {
 
         return {
             thuongHieus,
-            danhMucs,
             xuatXus,
             mucDichChays,
             chatLieus,

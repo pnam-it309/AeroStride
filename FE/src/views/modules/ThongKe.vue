@@ -23,7 +23,7 @@ const revenueStats = ref({
 });
 
 const topProducts = ref([]);
-const salesByCategory = ref([]);
+
 const monthlyRevenue = ref([]);
 
 // Cấu hình reactive cho ApexCharts
@@ -112,75 +112,7 @@ const areaChartOptions = ref({
     }
 });
 
-const donutChartSeries = ref([]);
 
-const donutChartOptions = ref({
-    chart: {
-        type: 'donut',
-        height: 300,
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
-    },
-    colors: ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'],
-    labels: [],
-    legend: {
-        position: 'bottom',
-        fontSize: '12px',
-        fontWeight: 500,
-        labels: {
-            colors: '#334155'
-        },
-        markers: {
-            radius: 12
-        }
-    },
-    plotOptions: {
-        pie: {
-            donut: {
-                size: '72%',
-                labels: {
-                    show: true,
-                    total: {
-                        show: true,
-                        label: 'Tổng doanh thu',
-                        fontSize: '13px',
-                        fontWeight: 600,
-                        color: '#64748b',
-                        formatter: function (w) {
-                            const total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
-                            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(total);
-                        }
-                    },
-                    value: {
-                        show: true,
-                        fontSize: '16px',
-                        fontWeight: 700,
-                        color: '#1e293b',
-                        formatter: function (val) {
-                            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
-                        }
-                    }
-                }
-            }
-        }
-    },
-    dataLabels: {
-        enabled: true,
-        formatter: function (val) {
-            return val.toFixed(1) + '%';
-        },
-        dropShadow: {
-            enabled: false
-        }
-    },
-    tooltip: {
-        y: {
-            formatter: function (val) {
-                return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
-            }
-        },
-        theme: 'light'
-    }
-});
 
 const periodOptions = [
     { title: 'Hôm nay', value: 'today' },
@@ -275,27 +207,7 @@ const loadStatistics = async () => {
                 topProducts.value = [];
             }
 
-            if (overview.doanhThuTheoDanhMuc && overview.doanhThuTheoDanhMuc.length > 0) {
-                salesByCategory.value = overview.doanhThuTheoDanhMuc.map((item) => ({
-                    name: item.name,
-                    value: item.value || 0,
-                    percentage: item.percentage || 0
-                }));
 
-                // Cập nhật biểu đồ Donut
-                donutChartSeries.value = salesByCategory.value.map((item) => item.value);
-                donutChartOptions.value = {
-                    ...donutChartOptions.value,
-                    labels: salesByCategory.value.map((item) => item.name)
-                };
-            } else {
-                salesByCategory.value = [];
-                donutChartSeries.value = [];
-                donutChartOptions.value = {
-                    ...donutChartOptions.value,
-                    labels: []
-                };
-            }
         }
 
         const startOfYear = `${selectedYear.value}-01-01`;
@@ -532,28 +444,7 @@ onMounted(() => {
                 </v-card>
             </v-col>
 
-            <!-- Donut Chart: Sales Proportion by Category -->
-            <v-col cols="12" lg="4">
-                <v-card class="premium-card h-100">
-                    <div class="card-title-bar">
-                        <span class="font-weight-bold text-dark text-uppercase" style="font-size: 13px; letter-spacing: 0.05em"
-                            >Tỷ trọng theo danh mục</span
-                        >
-                        <v-icon color="slate-400">mdi-chart-donut</v-icon>
-                    </div>
-                    <v-card-text class="pa-4 d-flex align-center justify-center">
-                        <div v-if="loading" class="d-flex align-center justify-center" style="height: 300px; width: 100%">
-                            <v-progress-circular indeterminate color="primary"></v-progress-circular>
-                        </div>
-                        <div v-else style="width: 100%">
-                            <div v-if="donutChartSeries.length === 0" class="text-center text-slate-400 py-12">
-                                Không có dữ liệu trong thời gian này
-                            </div>
-                            <apexchart v-else type="donut" height="300" :options="donutChartOptions" :series="donutChartSeries"></apexchart>
-                        </div>
-                    </v-card-text>
-                </v-card>
-            </v-col>
+
         </v-row>
 
         <!-- Row 2: Detailed Lists & Grid -->
