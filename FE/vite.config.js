@@ -5,11 +5,34 @@ import vuetify from 'vite-plugin-vuetify';
 import viteCompression from 'vite-plugin-compression';
 import path from 'path';
 
+function optimizeTablerIcons() {
+    return {
+        name: 'optimize-tabler-icons',
+        enforce: 'pre',
+        apply: 'build', // ONLY apply during production build, prevents 10s delay in dev mode
+        transform(code, id) {
+            if (id.includes('node_modules')) return null;
+            if (code.includes('vue-tabler-icons')) {
+                const regex = /import\s+\{([^}]+)\}\s+from\s+['"]vue-tabler-icons['"]/g;
+                return {
+                    code: code.replace(regex, (match, imports) => {
+                        const iconNames = imports.split(',').map(i => i.trim()).filter(Boolean);
+                        return iconNames.map(icon => `import ${icon} from 'vue-tabler-icons/icons/${icon}.js';`).join('\n');
+                    }),
+                    map: null
+                };
+            }
+            return null;
+        }
+    };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
     return {
         plugins: [
+            optimizeTablerIcons(),
             vue(),
             vuetify({
                 autoImport: true,
@@ -48,11 +71,11 @@ export default defineConfig(({ mode }) => {
                 'pinia',
                 'vue',
                 'vue-router',
-                'vue-tabler-icons',
                 '@vuelidate/core',
                 '@vuelidate/validators',
                 'apexcharts',
-                'vue3-apexcharts'
+                'vue3-apexcharts',
+                'vue-tabler-icons'
             ]
         },
         build: {

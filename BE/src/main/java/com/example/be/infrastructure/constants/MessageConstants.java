@@ -102,6 +102,7 @@ public final class MessageConstants {
     public static final String ANH_BIEN_THE_NOT_FOUND = "Ảnh biến thể không tồn tại";
     public static final String SAN_PHAM_NOT_FOUND = "Sản phẩm không tồn tại";
     public static final String SAN_PHAM_MA_EXISTS = "Mã sản phẩm đã tồn tại: ";
+    public static final String SAN_PHAM_TEN_EXISTS = "Tên sản phẩm đã tồn tại";
     public static final String INVALID_STATUS_TRANSITION = "Trạng thái không hợp lệ: chuyển từ %s sang %s";
 
     // ============ POS sales exception constants ============

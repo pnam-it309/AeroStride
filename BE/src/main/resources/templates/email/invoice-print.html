@@ -156,10 +156,15 @@
                 <h1 class="invoice-title">Hóa đơn bán hàng</h1>
                 <div class="invoice-date">Ngày <span th:text="${#dates.format(ngayIn, 'dd')}">01</span> tháng <span th:text="${#dates.format(ngayIn, 'MM')}">01</span> năm <span th:text="${#dates.format(ngayIn, 'yyyy')}">2026</span></div>
             </div>
-            <div class="meta-side">
-                <div>Mẫu số: <strong>01GTKT3/001</strong></div>
-                <div>Ký hiệu: <strong>AS/24P</strong></div>
-                <div>Số: <strong style="color: #ef4444;" th:text="${hd.maHoaDon}">HD001</strong></div>
+            <div class="meta-side" style="display: flex; align-items: flex-start; justify-content: flex-end; gap: 15px;">
+                <div style="text-align: right;">
+                    <div>Mẫu số: <strong>01GTKT3/001</strong></div>
+                    <div>Ký hiệu: <strong>AS/24P</strong></div>
+                    <div>Số: <strong style="color: #ef4444;" th:text="${hd.maHoaDon}">HD001</strong></div>
+                </div>
+                <div>
+                    <img th:src="@{'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' + ${hd.maHoaDon}}" alt="QR Code" width="70" height="70" style="border: 1px solid #cbd5e1; padding: 2px; border-radius: 4px;" />
+                </div>
             </div>
         </div>
 

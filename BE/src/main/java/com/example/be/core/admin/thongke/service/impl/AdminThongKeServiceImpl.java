@@ -22,21 +22,24 @@ import java.util.List;
 public class AdminThongKeServiceImpl implements AdminThongKeService {
 
     private final AdminThongKeRepository thongKeRepository;
+    private final com.example.be.repository.KhachHangRepository khachHangRepository;
 
     @Override
     public AdminThongKeResponse getTongQuan(LocalDate tuNgay, LocalDate denNgay) {
-        // DRY: Sử dụng AccountUtils để parse date đồng nhất
         Long tuNgayMs = AccountUtils.parseDateToLong(tuNgay != null ? tuNgay.toString() : null, false);
         Long denNgayMs = AccountUtils.parseDateToLong(denNgay != null ? denNgay.toString() : null, true);
 
-        BigDecimal tongDoanhThu = thongKeRepository.sumDoanhThu(tuNgayMs, denNgayMs);
-        Long tongDonHang = thongKeRepository.countTongDon(tuNgayMs, denNgayMs);
-        Long donHoanThanh = thongKeRepository.countByTrangThai(4, tuNgayMs, denNgayMs); // OrderStatus.HOAN_THANH (ordinal: 4)
-        Long donChoXacNhan = thongKeRepository.countByTrangThai(0, tuNgayMs, denNgayMs); // CHO_XAC_NHAN (ordinal: 0)
-        Long donDangGiao = thongKeRepository.countByTrangThai(3, tuNgayMs, denNgayMs);  // DANG_GIAO (ordinal: 3)
-        Long donDaHuy = thongKeRepository.countByTrangThai(5, tuNgayMs, denNgayMs);     // DA_HUY (ordinal: 5)
+        List<Object[]> stats = thongKeRepository.getOverviewStats(tuNgayMs, denNgayMs);
+        Object[] overviewRow = stats != null && !stats.isEmpty() ? stats.get(0) : new Object[6];
 
-        Long tongKhachHang = thongKeRepository.count();
+        BigDecimal tongDoanhThu = overviewRow[0] != null ? new BigDecimal(overviewRow[0].toString()) : BigDecimal.ZERO;
+        Long tongDonHang = overviewRow[1] != null ? Long.parseLong(overviewRow[1].toString()) : 0L;
+        Long donHoanThanh = overviewRow[2] != null ? Long.parseLong(overviewRow[2].toString()) : 0L;
+        Long donChoXacNhan = overviewRow[3] != null ? Long.parseLong(overviewRow[3].toString()) : 0L;
+        Long donDangGiao = overviewRow[4] != null ? Long.parseLong(overviewRow[4].toString()) : 0L;
+        Long donDaHuy = overviewRow[5] != null ? Long.parseLong(overviewRow[5].toString()) : 0L;
+
+        Long tongKhachHang = khachHangRepository.count();
 
         // Top 5 sản phẩm bán chạy
         List<Object[]> topProdRows = thongKeRepository.getTopProductsData(tuNgayMs, denNgayMs, PageRequest.of(0, 5));

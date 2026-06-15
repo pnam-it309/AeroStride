@@ -7,6 +7,8 @@ import com.example.be.core.admin.sanpham.model.request.SearchProductRequest;
 import com.example.be.core.admin.sanpham.model.request.UpdateProductRequest;
 import com.example.be.core.admin.sanpham.model.request.UpdateProductVariantImageRequest;
 import com.example.be.core.admin.sanpham.model.response.ProductDetailResponse;
+import com.example.be.core.admin.sanpham.model.response.DuplicateAttributeResponse;
+import com.example.be.core.admin.sanpham.model.request.CheckDuplicateAttributesRequest;
 import com.example.be.core.admin.sanpham.model.response.ProductFormOptionsResponse;
 import com.example.be.core.admin.sanpham.model.response.ProductResponse;
 import com.example.be.core.admin.sanpham.model.response.ProductVariantImageResponse;
@@ -28,6 +30,8 @@ public interface AdminSanPhamService {
     ProductDetailResponse getProductDetail(String id);
 
     ProductDetailResponse updateProduct(String id, UpdateProductRequest request);
+
+    DuplicateAttributeResponse checkDuplicateAttributes(CheckDuplicateAttributesRequest request);
 
     void deleteProduct(String id);
 

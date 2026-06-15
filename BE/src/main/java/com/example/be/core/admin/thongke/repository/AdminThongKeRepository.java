@@ -14,23 +14,19 @@ import java.util.List;
 public interface AdminThongKeRepository extends HoaDonRepository, 
         JpaSpecificationExecutor<HoaDon>, AdminThongKeRepositoryCustom {
 
-    // Tổng doanh thu (chỉ đơn DELIVERED - ordinal 3)
-    @Query("SELECT COALESCE(SUM(hd.tongTien), 0) FROM HoaDon hd WHERE CAST(hd.trangThai AS int) = 3" +
-           " AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)" +
-           " AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)")
-    java.math.BigDecimal sumDoanhThu(@Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
-
-    // Đếm theo trạng thái
-    @Query("SELECT COUNT(hd) FROM HoaDon hd WHERE CAST(hd.trangThai AS int) = :trangThai" +
-           " AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)" +
-           " AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)")
-    Long countByTrangThai(@Param("trangThai") int trangThai, @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
-
-    // Tổng số đơn
-    @Query("SELECT COUNT(hd) FROM HoaDon hd" +
-           " WHERE (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)" +
-           " AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)")
-    Long countTongDon(@Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
+    @Query("""
+           SELECT 
+                COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 3 THEN hd.tongTien ELSE 0 END), 0),
+                COUNT(hd),
+                SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN CAST(hd.trangThai AS int) = 0 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN CAST(hd.trangThai AS int) = 3 THEN 1 ELSE 0 END),
+                SUM(CASE WHEN CAST(hd.trangThai AS int) = 5 THEN 1 ELSE 0 END)
+           FROM HoaDon hd
+           WHERE (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
+           AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
+           """)
+    List<Object[]> getOverviewStats(@Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
     // Đơn hàng gần đây
     @Query("""

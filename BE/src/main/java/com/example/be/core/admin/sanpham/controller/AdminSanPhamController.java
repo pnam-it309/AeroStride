@@ -50,6 +50,12 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.createProduct(request), MessageConstants.SAN_PHAM_CREATE_SUCCESS));
     }
 
+    @PostMapping("/check-attributes")
+    public ResponseEntity<ApiResponse<com.example.be.core.admin.sanpham.model.response.DuplicateAttributeResponse>> checkDuplicateAttributes(
+            @Valid @RequestBody com.example.be.core.admin.sanpham.model.request.CheckDuplicateAttributesRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.checkDuplicateAttributes(request), "Kiểm tra trùng thuộc tính thành công"));
+    }
+
     // Lấy danh sách sản phẩm (có phân trang và tìm kiếm theo tiêu chí)
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> getProducts(SearchProductRequest request) {

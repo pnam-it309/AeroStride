@@ -87,6 +87,9 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         if (adminSanPhamRepository.existsByMaIgnoreCaseAndXoaMemFalse(code)) {
             throw new DuplicateResourceException(MessageConstants.SAN_PHAM_MA_EXISTS + code);
         }
+        if (request.getTenSanPham() != null && adminSanPhamRepository.existsByTenIgnoreCaseAndXoaMemFalse(request.getTenSanPham())) {
+            throw new DuplicateResourceException(MessageConstants.SAN_PHAM_TEN_EXISTS);
+        }
 
         SanPham sanPham = new SanPham();
         applyProductData(sanPham, request, code);
@@ -135,9 +138,35 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     })
     public ProductDetailResponse updateProduct(String id, UpdateProductRequest request) {
         SanPham sp = getProductOrThrow(id);
+        if (request.getTenSanPham() != null && adminSanPhamRepository.existsByTenIgnoreCaseAndXoaMemFalseAndIdNot(request.getTenSanPham(), id)) {
+            throw new DuplicateResourceException(MessageConstants.SAN_PHAM_TEN_EXISTS);
+        }
         applyProductData(sp, request, sp.getMa());
         adminSanPhamRepository.save(sp);
         return buildProductDetailResponse(id);
+    }
+
+    @Override
+    public DuplicateAttributeResponse checkDuplicateAttributes(CheckDuplicateAttributesRequest request) {
+        Optional<SanPham> duplicate = adminSanPhamRepository.findFirstByThuongHieuIdAndDanhMucIdAndXuatXuIdAndMucDichChayIdAndCoGiayIdAndChatLieuIdAndDeGiayIdAndXoaMemFalse(
+                request.getIdThuongHieu(),
+                request.getIdDanhMuc(),
+                request.getIdXuatXu(),
+                request.getIdMucDichChay(),
+                request.getIdCoGiay(),
+                request.getIdChatLieu(),
+                request.getIdDeGiay()
+        );
+
+        if (duplicate.isPresent()) {
+            return DuplicateAttributeResponse.builder()
+                    .exists(true)
+                    .id(duplicate.get().getId())
+                    .ten(duplicate.get().getTen())
+                    .build();
+        }
+
+        return DuplicateAttributeResponse.builder().exists(false).build();
     }
 
     // Xóa mềm sản phẩm và toàn bộ các biến thể thuộc sản phẩm đó

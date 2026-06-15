@@ -83,9 +83,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleValidationException(MethodArgumentNotValidException e, HttpServletRequest request) {
         String message = e.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .reduce((a, b) -> a + "; " + b)
-                .orElse("Validation failed");
+                .map(org.springframework.validation.FieldError::getDefaultMessage)
+                .distinct()
+                .collect(java.util.stream.Collectors.joining(", "));
+        if (message.isEmpty()) {
+            message = "Validation failed";
+        }
         log.warn("Validation error at {}: {}", request.getRequestURI(), message);
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "ERR_VAL_INVALID_PARAMS", message, request.getRequestURI(), ErrorSeverity.SYNTAX);
     }

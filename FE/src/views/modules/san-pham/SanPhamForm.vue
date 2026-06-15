@@ -49,6 +49,11 @@ const confirmDialog = ref({
     loading: false
 });
 
+const duplicateAttributeDialog = ref({
+    show: false,
+    duplicateProduct: null
+});
+
 const isEditMode = computed(() => !!route.params.id);
 const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm');
 const defaultVariantStatus = 'DANG_HOAT_DONG';
@@ -1145,8 +1150,8 @@ const buildProductPayload = ({ includeVariants = false } = {}) => {
 };
 
 const hasDuplicateVariant = (payload, currentKey = null) => variantItems.value.some((item) => (
-    item.idMauSac === payload.idMauSac
-    && item.idKichThuoc === payload.idKichThuoc
+    String(item.idMauSac) === String(payload.idMauSac)
+    && String(item.idKichThuoc) === String(payload.idKichThuoc)
     && getVariantKey(item) !== currentKey
 ));
 
@@ -1450,6 +1455,7 @@ const fetchFormOptions = async () => {
 };
 
 // FORM STATE
+const originalProductName = ref('');
 const product = ref({
     maSanPham: '',
     tenSanPham: null,
@@ -1470,6 +1476,7 @@ const product = ref({
 
 const loadProduct = async (id) => {
     const data = await dichVuSanPham.layChiTietSanPham(id);
+    originalProductName.value = data.tenSanPham || '';
     product.value = {
         maSanPham: data.maSanPham || data.ma || '',
         tenSanPham: data.tenSanPham || null,
@@ -1518,13 +1525,33 @@ watch(
     }
 );
 
-onMounted(async () => {
+const loadInitData = async () => {
     loading.value = true;
     try {
         await fetchFormOptions();
 
         if (route.params.id) {
             await loadProduct(route.params.id);
+            
+            // Check if there are variants to merge
+            const mergeKey = 'mergeVariants_' + route.params.id;
+            const mergeVariantsStr = localStorage.getItem(mergeKey);
+            if (mergeVariantsStr) {
+                try {
+                    const variantsToMerge = JSON.parse(mergeVariantsStr);
+                    if (Array.isArray(variantsToMerge) && variantsToMerge.length > 0) {
+                        // Append to current variants, avoiding duplicates if possible
+                        // Ensure they don't have IDs since they are new to this product
+                        const sanitizedToMerge = variantsToMerge.map(v => ({ ...v, id: null, ma: '' }));
+                        variantItems.value = [...variantItems.value, ...sanitizedToMerge];
+                        addNotification({ title: 'Đã gộp', subtitle: `Đã tự động thêm ${variantsToMerge.length} biến thể từ sản phẩm trùng lặp. Vui lòng bấm Cập nhật để lưu.`, color: 'info' });
+                    }
+                } catch (e) {
+                    console.error('Lỗi khi parse biến thể gộp', e);
+                } finally {
+                    localStorage.removeItem(mergeKey);
+                }
+            }
         } else {
             try {
                 product.value.maSanPham = await generateRandomCode('SanPham');
@@ -1538,6 +1565,16 @@ onMounted(async () => {
     } finally {
         loading.value = false;
     }
+};
+
+watch(() => route.params.id, () => {
+    if (route.name === 'SanPhamForm') {
+        loadInitData();
+    }
+});
+
+onMounted(() => {
+    loadInitData();
 });
 
 const rules = {
@@ -1546,9 +1583,14 @@ const rules = {
         if (!value) return true;
         return /^[\p{L}0-9\s]+$/u.test(value) || 'Không được chứa ký tự đặc biệt';
     },
-    noLeadingTrailingSpace: value => {
+    uniqueProductName: value => {
         if (!value) return true;
-        return value.trim() === value || 'Không được chứa khoảng trắng ở 2 đầu';
+        const valStr = String(value).trim().toLowerCase();
+        if (isEditMode.value && originalProductName.value && valStr === String(originalProductName.value).trim().toLowerCase()) {
+            return true;
+        }
+        const exists = existingProductNames.value.some(name => String(name).trim().toLowerCase() === valStr);
+        return !exists || 'Tên sản phẩm đã tồn tại. Vui lòng thêm hậu tố (tên đệm) để phân biệt.';
     }
 };
 
@@ -1594,6 +1636,20 @@ const validateProduct = () => {
             color: 'error'
         });
         return false;
+    }
+
+    const valStr = String(product.value.tenSanPham).trim().toLowerCase();
+    const isSameAsOriginal = isEditMode.value && originalProductName.value && valStr === String(originalProductName.value).trim().toLowerCase();
+    if (!isSameAsOriginal) {
+        const exists = existingProductNames.value.some(name => String(name).trim().toLowerCase() === valStr);
+        if (exists) {
+            addNotification({
+                title: 'Lỗi trùng tên',
+                subtitle: 'Tên sản phẩm đã tồn tại. Vui lòng nhập thêm tên đệm để phân biệt.',
+                color: 'error'
+            });
+            return false;
+        }
     }
 
     if (!isEditMode.value && variantItems.value.length === 0) {
@@ -1812,28 +1868,7 @@ const handleRemoveVariant = (variant) => {
     };
 };
 
-const handleSave = async () => {
-    for (const config of attributeConfig) {
-        try {
-            await resolveAttributeField(config);
-        } catch (error) {
-            console.error(error);
-            addNotification({
-                title: 'Lỗi',
-                subtitle: getBackendErrorMessage(error, `Không thể tạo tự động ${config.label}`),
-                color: 'error'
-            });
-            return;
-        }
-    }
-
-    if (!validateProduct()) {
-        return;
-    }
-
-    const creatingNew = !isEditMode.value;
-    const variantCount = variantItems.value.length;
-
+const proceedWithSave = (creatingNew, variantCount) => {
     confirmDialog.value = {
         show: true,
         title: creatingNew ? 'Xác nhận thêm mới' : 'Xác nhận cập nhật',
@@ -1842,7 +1877,7 @@ const handleSave = async () => {
                 ? `Bạn có chắc chắn muốn thêm sản phẩm mới cùng ${variantCount} biến thể không?`
                 : 'Bạn có chắc chắn muốn thêm sản phẩm mới này không?')
             : 'Bạn có chắc chắn muốn cập nhật thông tin sản phẩm này không?',
-        color: 'success',
+        color: 'primary',
         action: async () => {
             confirmDialog.value.loading = true;
             saving.value = true;
@@ -1865,13 +1900,75 @@ const handleSave = async () => {
                 router.push(PATH.SAN_PHAM);
             } catch (error) {
                 console.error(error);
-                addNotification({ title: 'Lỗi', subtitle: 'Không thể lưu sản phẩm', color: 'error' });
+                addNotification({ title: 'Lỗi', subtitle: getBackendErrorMessage(error, 'Không thể lưu sản phẩm'), color: 'error' });
             } finally {
                 confirmDialog.value.loading = false;
                 saving.value = false;
             }
         }
     };
+};
+
+const handleMergeDuplicate = () => {
+    const dupProdId = duplicateAttributeDialog.value.duplicateProduct.id;
+    duplicateAttributeDialog.value.show = false;
+    
+    // Store new variants in localStorage to merge after redirect
+    const newVariantsToMerge = variantItems.value;
+    if (newVariantsToMerge.length > 0) {
+        localStorage.setItem('mergeVariants_' + dupProdId, JSON.stringify(newVariantsToMerge));
+    }
+    
+    router.push({ path: `/admin/san-pham/form/${dupProdId}` });
+};
+
+const handleSave = async () => {
+    for (const config of attributeConfig) {
+        try {
+            await resolveAttributeField(config);
+        } catch (error) {
+            console.error(error);
+            addNotification({
+                title: 'Lỗi',
+                subtitle: getBackendErrorMessage(error, `Không thể tạo tự động ${config.label}`),
+                color: 'error'
+            });
+            return;
+        }
+    }
+
+    if (!validateProduct()) {
+        return;
+    }
+
+    const creatingNew = !isEditMode.value;
+    const variantCount = variantItems.value.length;
+
+    if (creatingNew) {
+        try {
+            const payload = {
+                idThuongHieu: product.value.idThuongHieu,
+                idDanhMuc: product.value.idDanhMuc,
+                idXuatXu: product.value.idXuatXu,
+                idMucDichChay: product.value.idMucDichChay,
+                idCoGiay: product.value.idCoGiay,
+                idChatLieu: product.value.idChatLieu,
+                idDeGiay: product.value.idDeGiay
+            };
+            const checkRes = await dichVuSanPham.checkDuplicateAttributes(payload);
+            if (checkRes && checkRes.exists) {
+                duplicateAttributeDialog.value = {
+                    show: true,
+                    duplicateProduct: checkRes
+                };
+                return;
+            }
+        } catch (error) {
+            console.error('Lỗi khi kiểm tra thuộc tính trùng lặp', error);
+        }
+    }
+
+    proceedWithSave(creatingNew, variantCount);
 };
 </script>
 
@@ -1935,7 +2032,7 @@ const handleSave = async () => {
                             <v-col cols="12" md="3">
                                 <div class="field-label">Tên sản phẩm <span class="text-error">*</span></div>
                                 <v-combobox v-model="product.tenSanPham" :items="existingProductNames"
-                                    placeholder="Ví dụ: Giày Nike Air..." :rules="[rules.required, rules.noSpecialChar, rules.noLeadingTrailingSpace]" variant="outlined"
+                                    placeholder="Ví dụ: Giày Nike Air..." :rules="[rules.required, rules.noSpecialChar, rules.uniqueProductName]" variant="outlined"
                                     density="comfortable" hide-details="auto" maxlength="250"
                                     :return-object="false"></v-combobox>
                             </v-col>
@@ -2720,6 +2817,25 @@ const handleSave = async () => {
                 <QrcodeVue :value="item.value" :size="120" level="H" render-as="canvas" />
             </div>
         </div>
+
+        <v-dialog v-model="duplicateAttributeDialog.show" max-width="500">
+            <v-card class="rounded-xl elevation-10">
+                <v-card-title class="d-flex align-center bg-red-lighten-5 text-red-darken-3 pa-4 border-b">
+                    <v-icon size="28" class="mr-3">mdi-alert-circle</v-icon>
+                    <span class="text-h6 font-weight-bold">Trùng lặp thuộc tính</span>
+                </v-card-title>
+                <v-card-text class="pa-5 pt-6 text-body-1 text-slate-700 leading-relaxed">
+                    Đã tồn tại một sản phẩm khác có chính xác <span class="font-weight-bold text-red">cùng các thuộc tính</span> (Thương hiệu, Danh mục, Xuất xứ, Mục đích chạy, Cổ giày, Chất liệu, Đế giày).<br><br>
+                    Tên sản phẩm trùng: <span class="font-weight-bold">[{{ duplicateAttributeDialog.duplicateProduct?.ten }}]</span><br><br>
+                    Để phân biệt, vui lòng <span class="font-weight-bold text-primary">đặt tên sản phẩm hiện tại (tên đệm) khác đi</span> so với sản phẩm đã tồn tại, hoặc chỉnh sửa các thuộc tính để tránh trùng lặp hoàn toàn.
+                </v-card-text>
+                <v-card-actions class="pa-4 bg-slate-50 border-t justify-end">
+                    <v-btn color="primary" variant="flat" class="text-none px-6 font-weight-bold" @click="duplicateAttributeDialog.show = false">
+                        Đã hiểu
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-container>
 </template>
 
