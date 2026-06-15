@@ -16,7 +16,6 @@ import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminFilter from '@/components/common/AdminFilter.vue';
 import ProductVariantModal from './ProductVariantModal.vue';
 import {
-    dichVuDanhMuc,
     dichVuMauSac,
     dichVuChatLieu,
     dichVuKichThuoc,
@@ -44,7 +43,6 @@ const page = ref(1);
 const pageSize = ref(10);
 
 const filters = ref({
-    danhMuc: 'ALL',
     mauSac: 'ALL',
     chatLieu: 'ALL',
     kichCo: 'ALL',
@@ -53,7 +51,6 @@ const filters = ref({
 });
 
 const filterOptions = ref({
-    danhMuc: [],
     mauSac: [],
     chatLieu: [],
     kichCo: [],
@@ -64,8 +61,7 @@ const filterOptions = ref({
 // Tải dữ liệu các tùy chọn bộ lọc (danh mục, màu sắc, chất liệu...) từ API
 const loadFilterOptions = async () => {
     try {
-        const [dm, ms, cl, kc, dg, th] = await Promise.all([
-            dichVuDanhMuc.layDanhMuc({ size: 1000 }),
+        const [ms, cl, kc, dg, th] = await Promise.all([
             dichVuMauSac.layMauSac({ size: 1000 }),
             dichVuChatLieu.layChatLieu({ size: 1000 }),
             dichVuKichThuoc.layKichThuoc({ size: 1000 }),
@@ -75,7 +71,6 @@ const loadFilterOptions = async () => {
 
         const pick = (res) => res?.content || res || [];
         filterOptions.value = {
-            danhMuc: pick(dm).map((x) => x?.ten).filter(Boolean),
             mauSac: pick(ms).map((x) => x?.ten).filter(Boolean),
             chatLieu: pick(cl).map((x) => x?.ten).filter(Boolean),
             kichCo: pick(kc).map((x) => x?.ten).filter(Boolean),
@@ -115,7 +110,6 @@ const groupVariantsByProduct = (items) => {
                 id: key,
                 maSanPham: variant.maSanPham,
                 tenSanPham: variant.tenSanPham,
-                tenDanhMuc: variant.tenDanhMuc,
                 tenThuongHieu: variant.tenThuongHieu,
                 tenChatLieu: variant.tenChatLieu,
                 tenDeGiay: variant.tenDeGiay,
@@ -298,7 +292,6 @@ const filteredResults = computed(() => {
         
         return (
             active &&
-            match(x.tenDanhMuc, f.danhMuc) &&
             match(x.tenChatLieu, f.chatLieu) &&
             match(x.tenDeGiay, f.deGiay) &&
             match(x.tenThuongHieu, f.thuongHieu) &&
@@ -390,13 +383,6 @@ defineExpose({
                 </v-text-field>
             </v-col>
 
-            <!-- Danh mục -->
-            <v-col cols="12" md="2">
-                <div class="filter-field-label">Danh mục</div>
-                <v-select v-model="filters.danhMuc" :items="mapFilterItems(filterOptions.danhMuc)" item-title="title"
-                    item-value="value" density="compact" hide-details variant="outlined"
-                    class="compact-input"></v-select>
-            </v-col>
 
             <!-- Thương hiệu -->
             <v-col cols="12" md="2">

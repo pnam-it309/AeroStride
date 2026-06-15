@@ -15,7 +15,6 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductFormOptionsResponse {
 
-    private List<ProductOptionResponse> danhMucs;
     private List<ProductOptionResponse> thuongHieus;
     private List<ProductOptionResponse> xuatXus;
     private List<ProductOptionResponse> mucDichChays;

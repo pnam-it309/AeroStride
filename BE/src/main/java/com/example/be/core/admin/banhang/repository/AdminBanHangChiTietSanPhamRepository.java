@@ -38,7 +38,6 @@ public interface AdminBanHangChiTietSanPhamRepository extends ChiTietSanPhamRepo
     @Query("""
         SELECT ct FROM ChiTietSanPham ct
         LEFT JOIN FETCH ct.sanPham sp
-        LEFT JOIN FETCH sp.danhMuc
         LEFT JOIN FETCH sp.thuongHieu
         LEFT JOIN FETCH sp.chatLieu
         LEFT JOIN FETCH sp.deGiay

@@ -34,7 +34,6 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
     private final CustomerSanPhamAnhChiTietRepository customerSanPhamAnhChiTietRepository;
     private final CustomerSanPhamChiTietDotGiamGiaRepository customerSanPhamChiTietDotGiamGiaRepository;
 
-    private final CustomerSanPhamDanhMucRepository danhMucRepository;
     private final CustomerSanPhamThuongHieuRepository thuongHieuRepository;
     private final CustomerSanPhamXuatXuRepository xuatXuRepository;
     private final CustomerSanPhamMucDichChayRepository mucDichChayRepository;
@@ -50,7 +49,6 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
         Specification<SanPham> spec = Specification.where(CustomerSanPhamSpecification.notDeleted())
                 .and(CustomerSanPhamSpecification.hasKeyword(request.getKeyword()))
                 .and(CustomerSanPhamSpecification.hasTrangThai(request.getTrangThai() != null ? request.getTrangThai() : TrangThai.DANG_HOAT_DONG))
-                .and(CustomerSanPhamSpecification.hasDanhMuc(request.getDanhMucId()))
                 .and(CustomerSanPhamSpecification.hasThuongHieu(request.getThuongHieuId()))
                 .and(CustomerSanPhamSpecification.hasGioiTinhKhachHang(request.getGioiTinhKhachHang()))
                 .and(CustomerSanPhamSpecification.hasXuatXu(request.getXuatXuId()))
@@ -70,8 +68,6 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                     .id(sp.getId())
                     .maSanPham(sp.getMa())
                     .tenSanPham(sp.getTen())
-                    .idDanhMuc(sp.getDanhMuc() != null ? sp.getDanhMuc().getId() : null)
-                    .tenDanhMuc(sp.getDanhMuc() != null ? sp.getDanhMuc().getTen() : null)
                     .idThuongHieu(sp.getThuongHieu() != null ? sp.getThuongHieu().getId() : null)
                     .tenThuongHieu(sp.getThuongHieu() != null ? sp.getThuongHieu().getTen() : null)
                     .idXuatXu(sp.getXuatXu() != null ? sp.getXuatXu().getId() : null)
@@ -103,7 +99,6 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
     public CustomerProductFormOptionsResponse getFormOptions() {
         Sort sortByName = Sort.by(Sort.Direction.ASC, "ten");
         return CustomerProductFormOptionsResponse.builder()
-                .danhMucs(mapOptions(danhMucRepository.findAll(sortByName)))
                 .thuongHieus(mapOptions(thuongHieuRepository.findAll(sortByName)))
                 .xuatXus(mapOptions(xuatXuRepository.findAll(sortByName)))
                 .mucDichChays(mapOptions(mucDichChayRepository.findAll(sortByName)))
@@ -133,8 +128,6 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 .id(sp.getId())
                 .maSanPham(sp.getMa())
                 .tenSanPham(sp.getTen())
-                .idDanhMuc(sp.getDanhMuc() != null ? sp.getDanhMuc().getId() : null)
-                .tenDanhMuc(sp.getDanhMuc() != null ? sp.getDanhMuc().getTen() : null)
                 .idThuongHieu(sp.getThuongHieu() != null ? sp.getThuongHieu().getId() : null)
                 .tenThuongHieu(sp.getThuongHieu() != null ? sp.getThuongHieu().getTen() : null)
                 .idXuatXu(sp.getXuatXu() != null ? sp.getXuatXu().getId() : null)

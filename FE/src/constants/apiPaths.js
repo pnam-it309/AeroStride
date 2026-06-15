@@ -43,7 +43,6 @@ export const API_COMMON = {
 
 export const API_THUOC_TINH = {
     THUONG_HIEU: `${API_ADMIN.THUOC_TINH}/thuong-hieu`,
-    DANH_MUC: `${API_ADMIN.THUOC_TINH}/danh-muc`,
     MAU_SAC: `${API_ADMIN.THUOC_TINH}/mau-sac`,
     KICH_THUOC: `${API_ADMIN.THUOC_TINH}/kich-thuoc`,
     CHAT_LIEU: `${API_ADMIN.THUOC_TINH}/chat-lieu`,

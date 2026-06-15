@@ -47,7 +47,6 @@ const highlights = computed(() => {
 
             <!-- Info Section -->
             <div class="info-section pa-4">
-                <div class="category-text mb-1">{{ product.tenDanhMuc }}</div>
                 <h3 class="product-title mb-2">{{ product.tenSanPham }}</h3>
 
                 <div class="price-wrap mb-4">

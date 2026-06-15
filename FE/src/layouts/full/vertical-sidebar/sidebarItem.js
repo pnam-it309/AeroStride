@@ -56,7 +56,7 @@ const sidebarItem = [
         BgColor: 'purple',
         children: [
             { title: 'Thương hiệu', icon: TagIcon, to: `${PATH.THUOC_TINH}/thuong-hieu`, BgColor: 'purple' },
-            { title: 'Danh mục', icon: TagIcon, to: `${PATH.THUOC_TINH}/danh-muc`, BgColor: 'purple' },
+
             { title: 'Xuất xứ', icon: TagIcon, to: `${PATH.THUOC_TINH}/xuat-xu`, BgColor: 'purple' },
             { title: 'Mục đích chạy', icon: TagIcon, to: `${PATH.THUOC_TINH}/muc-dich-chay`, BgColor: 'purple' },
             { title: 'Chất liệu', icon: TagIcon, to: `${PATH.THUOC_TINH}/chat-lieu`, BgColor: 'purple' },

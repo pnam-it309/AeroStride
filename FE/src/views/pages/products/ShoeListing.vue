@@ -21,7 +21,6 @@ const pageSize = ref(12);
 const searchParams = ref({
     keyword: route.query.keyword || '',
     idThuongHieu: route.query.idThuongHieu || null,
-    idDanhMuc: route.query.idDanhMuc || null,
     idMauSac: route.query.idMauSac || null,
     idKichThuoc: route.query.idKichThuoc || null,
     idChatLieu: route.query.idChatLieu || null,
@@ -37,7 +36,6 @@ const searchParams = ref({
 
 const selectedFilters = ref({
     thuongHieus: [],
-    danhMucs: [],
     mauSacs: [],
     kichThuocs: [],
     gioiTinhKhachHangs: []
@@ -48,7 +46,6 @@ const fetchFilters = async () => {
         const data = await dichVuSanPhamPublic.layBoLoc();
         filters.value = [
             { title: 'Thương hiệu', key: 'idThuongHieu', items: data.thuongHieus },
-            { title: 'Danh mục', key: 'idDanhMuc', items: data.danhMucs },
             { title: 'Màu sắc', key: 'idMauSac', items: data.mauSacs },
             { title: 'Kích thước', key: 'idKichThuoc', items: data.kichThuocs },
             { title: 'Giới tính', key: 'gioiTinhKhachHang', items: data.gioiTinhKhachHangs.map((g) => ({ id: g, ten: g })) }
@@ -229,7 +226,7 @@ const translateGender = (gender) => {
                                 <div class="product-info">
                                     <span class="promo-label">{{ p.tenThuongHieu }}</span>
                                     <h4 class="product-name">{{ p.tenSanPham }}</h4>
-                                    <p class="product-category">{{ p.tenDanhMuc }}</p>
+
                                     <p class="product-price">{{ formatPrice(p.giaBanThapNhat) }}</p>
                                 </div>
                             </div>

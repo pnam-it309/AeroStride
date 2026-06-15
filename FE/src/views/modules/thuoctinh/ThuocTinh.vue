@@ -1,10 +1,9 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
-import { PATH } from '@/router/routePaths';
 import { useRoute, useRouter } from 'vue-router';
+import { PATH } from '@/router/routePaths';
 import {
     dichVuThuongHieu,
-    dichVuDanhMuc,
     dichVuMauSac,
     dichVuKichThuoc,
     dichVuChatLieu,
@@ -55,7 +54,6 @@ const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 
 const routeMap = {
     'thuong-hieu': 'brands',
-    'danh-muc': 'categories',
     'xuat-xu': 'origins',
     'muc-dich-chay': 'purposes',
     'chat-lieu': 'materials',
@@ -71,7 +69,6 @@ const reverseRouteMap = Object.entries(routeMap).reduce((acc, [k, v]) => {
 }, {});
 
 const brands = ref([]);
-const categories = ref([]);
 const colors = ref([]);
 const sizes = ref([]);
 const materials = ref([]);
@@ -84,7 +81,6 @@ const itemForm = ref({ ten: '', moTa: '', trangThai: SYSTEM_STATUS.ACTIVE, maMau
 
 const tabs = [
     { value: 'brands', title: 'Thương hiệu', icon: 'mdi-tag' },
-    { value: 'categories', title: 'Danh mục', icon: 'mdi-folder' },
     { value: 'colors', title: 'Màu sắc', icon: 'mdi-palette' },
     { value: 'sizes', title: 'Kích thước', icon: 'mdi-ruler' },
     { value: 'materials', title: 'Chất liệu', icon: 'mdi-texture' },
@@ -96,7 +92,6 @@ const tabs = [
 
 const services = {
     brands: dichVuThuongHieu,
-    categories: dichVuDanhMuc,
     colors: dichVuMauSac,
     sizes: dichVuKichThuoc,
     materials: dichVuChatLieu,
@@ -106,7 +101,7 @@ const services = {
     purposes: dichVuMucDichChay
 };
 
-const dataRefs = { brands, categories, colors, sizes, materials, soles, collars, origins, purposes };
+const dataRefs = { brands, colors, sizes, materials, soles, collars, origins, purposes };
 
 const attributeMeta = {
     brands: {
@@ -115,12 +110,7 @@ const attributeMeta = {
         codeKeys: ['maThuongHieu', 'ma', 'ma_thuong_hieu'],
         nameKeys: ['tenThuongHieu', 'ten', 'ten_thuong_hieu']
     },
-    categories: {
-        codeLabel: 'Mã danh mục',
-        nameLabel: 'Tên danh mục',
-        codeKeys: ['maDanhMuc', 'ma', 'ma_danh_muc'],
-        nameKeys: ['tenDanhMuc', 'ten', 'ten_danh_muc']
-    },
+
     colors: {
         codeLabel: 'Mã màu sắc',
         nameLabel: 'Tên màu sắc',
@@ -211,9 +201,7 @@ const loadItems = async () => {
             case 'brands':
                 response = await service.layThuongHieu(params);
                 break;
-            case 'categories':
-                response = await service.layDanhMuc(params);
-                break;
+
             case 'colors':
                 response = await service.layMauSac(params);
                 break;
@@ -323,9 +311,7 @@ const createItem = async () => {
         case 'brands':
             res = await service.taoThuongHieu(itemForm.value);
             break;
-        case 'categories':
-            res = await service.taoDanhMuc(itemForm.value);
-            break;
+
         case 'colors':
             res = await service.taoMauSac(itemForm.value);
             break;
@@ -367,9 +353,7 @@ const updateItem = async () => {
         case 'brands':
             res = await service.capNhatThuongHieu(id, itemForm.value);
             break;
-        case 'categories':
-            res = await service.capNhatDanhMuc(id, itemForm.value);
-            break;
+
         case 'colors':
             res = await service.capNhatMauSac(id, itemForm.value);
             break;
@@ -422,9 +406,7 @@ const changeItemStatus = async (item) => {
         case 'brands':
             await service.capNhatThuongHieu(item.id, pld);
             break;
-        case 'categories':
-            await service.capNhatDanhMuc(item.id, pld);
-            break;
+
         case 'colors':
             await service.capNhatMauSac(item.id, pld);
             break;
@@ -474,7 +456,6 @@ const openCreateDialog = async (event) => {
     try {
         const typeMap = {
             brands: 'ThuongHieu',
-            categories: 'DanhMuc',
             colors: 'MauSac',
             sizes: 'KichThuoc',
             materials: 'ChatLieu',

@@ -17,7 +17,6 @@ public class CustomerLandingProductResponse {
     private String id;
     private String maSanPham;
     private String tenSanPham;
-    private String tenDanhMuc;
     private String tenThuongHieu;
     private String hinhAnh;
     private BigDecimal giaBanThapNhat;

@@ -32,10 +32,6 @@ public class SanPham extends BaseCodeNameEntity {
     private ThuongHieu thuongHieu;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_danh_muc")
-    private DanhMuc danhMuc;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_xuat_xu")
     private XuatXu xuatXu;
 

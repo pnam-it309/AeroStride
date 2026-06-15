@@ -53,29 +53,6 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                     .build());
         }
 
-        // Doanh thu theo danh mục
-        List<Object[]> catRows = thongKeRepository.getSalesByCategoryData(tuNgayMs, denNgayMs);
-        List<AdminThongKeResponse.DoanhThuDanhMuc> salesByCategory = new java.util.ArrayList<>();
-        BigDecimal totalCatRevenue = BigDecimal.ZERO;
-        for (Object[] row : catRows) {
-            if (row[1] != null) {
-                totalCatRevenue = totalCatRevenue.add(new BigDecimal(row[1].toString()));
-            }
-        }
-        for (Object[] row : catRows) {
-            BigDecimal value = row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO;
-            double percentage = 0.0;
-            if (totalCatRevenue.compareTo(BigDecimal.ZERO) > 0) {
-                percentage = value.multiply(new BigDecimal(100))
-                        .divide(totalCatRevenue, 2, java.math.RoundingMode.HALF_UP)
-                        .doubleValue();
-            }
-            salesByCategory.add(AdminThongKeResponse.DoanhThuDanhMuc.builder()
-                    .name(row[0] != null ? row[0].toString() : "Khác")
-                    .value(value)
-                    .percentage(percentage)
-                    .build());
-        }
 
         return AdminThongKeResponse.builder()
                 .tongDoanhThu(tongDoanhThu != null ? tongDoanhThu : BigDecimal.ZERO)
@@ -87,7 +64,6 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                 .tongKhachHang(tongKhachHang)
                 .sanPhamSapHet(0L)
                 .topSanPhamBanChay(topProducts)
-                .doanhThuTheoDanhMuc(salesByCategory)
                 .build();
     }
 

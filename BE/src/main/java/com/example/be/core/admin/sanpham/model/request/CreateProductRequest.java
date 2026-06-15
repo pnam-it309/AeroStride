@@ -23,9 +23,6 @@ public class CreateProductRequest {
     @Size(max = 255, message = "tenSanPham khong duoc vuot qua 255 ky tu")
     private String tenSanPham;
 
-    @NotBlank(message = "idDanhMuc khong duoc de trong")
-    private String idDanhMuc;
-
     @NotBlank(message = "idThuongHieu khong duoc de trong")
     private String idThuongHieu;
 

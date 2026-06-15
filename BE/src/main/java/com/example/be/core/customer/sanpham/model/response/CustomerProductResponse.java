@@ -20,8 +20,7 @@ public class CustomerProductResponse {
     private String id;
     private String maSanPham;
     private String tenSanPham;
-    private String idDanhMuc;
-    private String tenDanhMuc;
+    
     private String idThuongHieu;
     private String tenThuongHieu;
     private String idXuatXu;

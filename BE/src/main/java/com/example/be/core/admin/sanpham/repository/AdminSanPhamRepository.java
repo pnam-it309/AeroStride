@@ -18,7 +18,7 @@ public interface AdminSanPhamRepository extends SanPhamRepository, JpaSpecificat
     @Override
     @EntityGraph(attributePaths = {
             "thuongHieu",
-            "danhMuc",
+            
             "xuatXu",
             "mucDichChay",
             "coGiay",
@@ -29,7 +29,7 @@ public interface AdminSanPhamRepository extends SanPhamRepository, JpaSpecificat
 
     @EntityGraph(attributePaths = {
             "thuongHieu",
-            "danhMuc",
+            
             "xuatXu",
             "mucDichChay",
             "coGiay",

@@ -25,25 +25,6 @@ export const dichVuThuongHieu = {
     }
 };
 
-// Service danh mục
-export const dichVuDanhMuc = {
-    async layDanhMuc(params) {
-        return getWithParams(API_THUOC_TINH.DANH_MUC, params);
-    },
-    async taoDanhMuc(data) {
-        const response = await api.post(`${API_THUOC_TINH.DANH_MUC}/add`, data);
-        return response.data.data;
-    },
-    async capNhatDanhMuc(id, data) {
-        const response = await api.put(`${API_THUOC_TINH.DANH_MUC}/${id}`, data);
-        return response.data.data;
-    },
-    async xoaDanhMuc(id) {
-        const response = await api.delete(`${API_THUOC_TINH.DANH_MUC}/${id}`);
-        return response.data;
-    }
-};
-
 // Service màu sắc
 export const dichVuMauSac = {
     async layMauSac(params) {

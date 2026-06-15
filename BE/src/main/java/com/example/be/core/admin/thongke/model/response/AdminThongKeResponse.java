@@ -30,8 +30,6 @@ public class AdminThongKeResponse {
     // Top sản phẩm bán chạy
     private List<SanPhamBanChay> topSanPhamBanChay;
 
-    // Doanh thu theo danh mục
-    private List<DoanhThuDanhMuc> doanhThuTheoDanhMuc;
 
     @Getter
     @Setter
@@ -71,14 +69,5 @@ public class AdminThongKeResponse {
         private Double growth;
     }
 
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class DoanhThuDanhMuc {
-        private String name;
-        private BigDecimal value;
-        private Double percentage;
-    }
+
 }

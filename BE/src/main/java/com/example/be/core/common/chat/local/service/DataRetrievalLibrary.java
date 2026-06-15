@@ -8,7 +8,6 @@ import com.example.be.entity.DeGiay;
 import com.example.be.entity.ChatLieu;
 import com.example.be.entity.CoGiay;
 import com.example.be.entity.ThuongHieu;
-import com.example.be.entity.DanhMuc;
 import com.example.be.entity.XuatXu;
 import com.example.be.entity.KichThuoc;
 import com.example.be.entity.MauSac;
@@ -22,7 +21,6 @@ import com.example.be.repository.DeGiayRepository;
 import com.example.be.repository.ChatLieuRepository;
 import com.example.be.repository.CoGiayRepository;
 import com.example.be.repository.ThuongHieuRepository;
-import com.example.be.repository.DanhMucRepository;
 import com.example.be.repository.XuatXuRepository;
 import com.example.be.repository.KichThuocRepository;
 import com.example.be.repository.MauSacRepository;
@@ -49,7 +47,6 @@ public class DataRetrievalLibrary {
     private final ChatLieuRepository chatLieuRepository;
     private final CoGiayRepository coGiayRepository;
     private final ThuongHieuRepository thuongHieuRepository;
-    private final DanhMucRepository danhMucRepository;
     private final XuatXuRepository xuatXuRepository;
     private final KichThuocRepository kichThuocRepository;
     private final MauSacRepository mauSacRepository;
@@ -428,27 +425,6 @@ public class DataRetrievalLibrary {
             StringBuilder sb = new StringBuilder("Các thương hiệu giày AeroStride phân phối chính hãng bao gồm:\n");
             for (ThuongHieu item : list) {
                 sb.append(" - ⭐ **").append(item.getTen()).append("** (Mã: ").append(item.getMa()).append(")");
-                if (item.getMoTa() != null && !item.getMoTa().isBlank()) {
-                    sb.append(": ").append(item.getMoTa());
-                }
-                sb.append("\n");
-            }
-            return sb.toString().trim();
-        });
-    }
-
-    public String getCategoriesInfo() {
-        return getOrCompute("categories_info", () -> {
-            List<DanhMuc> list = danhMucRepository.findAll().stream()
-                    .filter(item -> !Boolean.TRUE.equals(item.getXoaMem()))
-                    .filter(item -> item.getTrangThai() == TrangThai.DANG_HOAT_DONG)
-                    .collect(Collectors.toList());
-            if (list.isEmpty()) {
-                return "Dạ hiện tại hệ thống chưa cập nhật các danh mục sản phẩm ạ.";
-            }
-            StringBuilder sb = new StringBuilder("Giày của AeroStride được phân loại theo các dòng danh mục chuyên biệt:\n");
-            for (DanhMuc item : list) {
-                sb.append(" - 📁 **").append(item.getTen()).append("** (Mã: ").append(item.getMa()).append(")");
                 if (item.getMoTa() != null && !item.getMoTa().isBlank()) {
                     sb.append(": ").append(item.getMoTa());
                 }

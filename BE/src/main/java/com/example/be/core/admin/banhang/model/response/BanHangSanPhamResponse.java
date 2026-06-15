@@ -14,7 +14,7 @@ public class BanHangSanPhamResponse {
     private String tenSanPham;
     private String maChiTietSanPham;
     private String maSanPham;
-    private String tenDanhMuc;
+
     private String tenThuongHieu;
     private String tenChatLieu;
     private String tenDeGiay;

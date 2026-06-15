@@ -135,18 +135,6 @@ CREATE TABLE thuong_hieu (
     nguoi_cap_nhat VARCHAR(100)
 );
 
-CREATE TABLE danh_muc (
-    id VARCHAR(36) PRIMARY KEY,
-    ma_danh_muc VARCHAR(50) UNIQUE,
-    ten_danh_muc VARCHAR(255),
-    trang_thai INT,
-    xoa_mem BIT DEFAULT 0,
-    ngay_tao BIGINT,
-    ngay_cap_nhat BIGINT,
-    nguoi_tao VARCHAR(100),
-    nguoi_cap_nhat VARCHAR(100)
-);
-
 CREATE TABLE co_giay (
     id VARCHAR(36) PRIMARY KEY,
     ma_co_giay VARCHAR(50) UNIQUE,
@@ -213,7 +201,6 @@ CREATE TABLE mau_sac (
 CREATE TABLE san_pham (
     id VARCHAR(36) PRIMARY KEY,
     id_thuong_hieu VARCHAR(36),
-    id_danh_muc VARCHAR(36),
     id_xuat_xu VARCHAR(36),
     id_muc_dich_chay VARCHAR(36),
     id_chat_lieu VARCHAR(36),
@@ -232,7 +219,6 @@ CREATE TABLE san_pham (
     nguoi_tao VARCHAR(100),
     nguoi_cap_nhat VARCHAR(100),
     FOREIGN KEY (id_thuong_hieu) REFERENCES thuong_hieu(id),
-    FOREIGN KEY (id_danh_muc) REFERENCES danh_muc(id),
     FOREIGN KEY (id_xuat_xu) REFERENCES xuat_xu(id),
     FOREIGN KEY (id_muc_dich_chay) REFERENCES muc_dich_chay(id),
     FOREIGN KEY (id_chat_lieu) REFERENCES chat_lieu(id),
@@ -442,6 +428,37 @@ CREATE TABLE giao_dich_thanh_toan (
     ghi_chu TEXT,
     FOREIGN KEY (id_hoa_don) REFERENCES hoa_don(id),
     FOREIGN KEY (id_phuong_thuc_thanh_toan) REFERENCES phuong_thuc_thanh_toan(id)
+);
+
+-- Bảng Ca Làm
+CREATE TABLE ca_lam (
+    id VARCHAR(36) PRIMARY KEY,
+    ten_ca VARCHAR(255),
+    gio_bat_dau TIME,
+    gio_ket_thuc TIME,
+    mo_ta TEXT,
+    xoa_mem BIT DEFAULT 0,
+    trang_thai INT,
+    ngay_tao BIGINT,
+    ngay_cap_nhat BIGINT,
+    nguoi_tao VARCHAR(100),
+    nguoi_cap_nhat VARCHAR(100)
+);
+
+-- Bảng Lịch Làm Việc
+CREATE TABLE lich_lam_viec (
+    id VARCHAR(36) PRIMARY KEY,
+    id_nhan_vien VARCHAR(36),
+    id_ca_lam VARCHAR(36),
+    ngay_lam DATE,
+    trang_thai_lich VARCHAR(50),
+    trang_thai INT,
+    ngay_tao BIGINT,
+    ngay_cap_nhat BIGINT,
+    nguoi_tao VARCHAR(100),
+    nguoi_cap_nhat VARCHAR(100),
+    FOREIGN KEY (id_nhan_vien) REFERENCES nhan_vien(id),
+    FOREIGN KEY (id_ca_lam) REFERENCES ca_lam(id)
 );
 
 SET FOREIGN_KEY_CHECKS = 1;

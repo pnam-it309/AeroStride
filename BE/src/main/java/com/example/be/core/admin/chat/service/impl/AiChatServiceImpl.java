@@ -1148,7 +1148,6 @@ public class AiChatServiceImpl implements AiChatService {
                     map.put("tenSanPham", v.getTenSanPham());
                     map.put("giaBan", v.getGiaBan());
                     map.put("tenThuongHieu", v.getTenThuongHieu() != null ? v.getTenThuongHieu() : "");
-                    map.put("tenDanhMuc", "Giày");
                     String imgUrl = (v.getImages() != null && !v.getImages().isEmpty()) ? v.getImages().get(0).getDuongDanAnh() : "";
                     map.put("hinhAnh", imgUrl);
                     map.put("phanTramGiam", v.getPhanTramGiam() != null ? v.getPhanTramGiam() : 0);

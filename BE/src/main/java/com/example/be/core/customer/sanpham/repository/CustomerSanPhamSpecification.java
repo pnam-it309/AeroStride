@@ -34,13 +34,6 @@ public final class CustomerSanPhamSpecification {
         );
     }
 
-    public static Specification<SanPham> hasDanhMuc(String danhMucId) {
-        if (!StringUtils.hasText(danhMucId)) {
-            return null;
-        }
-        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("danhMuc").get("id"), danhMucId.trim());
-    }
-
     public static Specification<SanPham> hasThuongHieu(String thuongHieuId) {
         if (!StringUtils.hasText(thuongHieuId)) {
             return null;

@@ -2,7 +2,6 @@ import api from '../apiService';
 import { API_ADMIN } from '@/constants/apiPaths';
 import {
     dichVuThuongHieu,
-    dichVuDanhMuc,
     dichVuXuatXu,
     dichVuMucDichChay,
     dichVuChatLieu,

@@ -272,7 +272,7 @@ const toggleFavorite = () => {
                         <div class="header-info mb-8">
                             <h1 class="product-title text-h4 font-weight-black mb-1">{{ product.tenSanPham }}</h1>
                             <p class="product-cat text-subtitle-1 font-weight-bold grey--text">
-                                {{ product.tenDanhMuc }} - {{ product.tenThuongHieu }}
+                                {{ product.tenThuongHieu }}
                             </p>
                             <div class="product-price mt-4 text-h5 font-weight-black text-blue-darken-4">{{
                                 formatPrice(displayPrice) }}</div>

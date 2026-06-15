@@ -64,14 +64,6 @@ INSERT INTO thuong_hieu (id, ma_thuong_hieu, ten_thuong_hieu, trang_thai, xoa_me
 ('th4', 'TH004', 'New Balance', 0, 0, 1711814400000),
 ('th5', 'TH005', 'Converse', 0, 0, 1711814400000);
 
--- 6. Bảng Danh Mục (danh_muc)
-INSERT INTO danh_muc (id, ma_danh_muc, ten_danh_muc, trang_thai, xoa_mem, ngay_tao) VALUES
-('dm1', 'DM001', 'Giày Chạy Bộ', 0, 0, 1711814400000),
-('dm2', 'DM002', 'Giày Thể Thao', 0, 0, 1711814400000),
-('dm3', 'DM003', 'Giày Bóng Đá', 0, 0, 1711814400000),
-('dm4', 'DM004', 'Giày Sneaker', 0, 0, 1711814400000),
-('dm5', 'DM005', 'Giày Lười', 0, 0, 1711814400000);
-
 -- 7. Bảng cỡ Giày (co_giay)
 INSERT INTO co_giay (id, ma_co_giay, ten_co_giay, trang_thai, xoa_mem, ngay_tao) VALUES
 ('cg1', 'CG001', 'Cổ Thấp', 0, 0, 1711814400000),
