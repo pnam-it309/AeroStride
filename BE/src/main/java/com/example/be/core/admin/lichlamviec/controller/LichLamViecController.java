@@ -1,5 +1,7 @@
 package com.example.be.core.admin.lichlamviec.controller;
 
+import com.example.be.core.admin.lichlamviec.model.request.CaLamRequest;
+import com.example.be.core.admin.lichlamviec.model.request.LichLamViecRequest;
 import com.example.be.core.admin.lichlamviec.service.LichLamViecService;
 import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.infrastructure.constants.RoutesConstant;
@@ -71,12 +73,12 @@ public class LichLamViecController {
     }
 
     @PostMapping(RoutesConstant.SCHEDULES)
-    public ResponseEntity<ApiResponse<?>> addSchedule(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<?>> addSchedule(@RequestBody LichLamViecRequest request) {
         return ResponseEntity.ok(ApiResponse.success(lichLamViecService.addSchedule(request)));
     }
 
     @PutMapping(RoutesConstant.SCHEDULES + "/{id}")
-    public ResponseEntity<ApiResponse<?>> updateSchedule(@PathVariable String id, @RequestBody Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<?>> updateSchedule(@PathVariable String id, @RequestBody LichLamViecRequest request) {
         return ResponseEntity.ok(ApiResponse.success(lichLamViecService.updateSchedule(id, request)));
     }
 
@@ -88,12 +90,12 @@ public class LichLamViecController {
 
     // Shift CRUD Controller Endpoints
     @PostMapping(RoutesConstant.SHIFTS)
-    public ResponseEntity<ApiResponse<?>> createShift(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<?>> createShift(@RequestBody CaLamRequest request) {
         return ResponseEntity.ok(ApiResponse.success(lichLamViecService.createShift(request)));
     }
 
     @PutMapping(RoutesConstant.SHIFTS + "/{id}")
-    public ResponseEntity<ApiResponse<?>> updateShift(@PathVariable String id, @RequestBody Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<?>> updateShift(@PathVariable String id, @RequestBody CaLamRequest request) {
         return ResponseEntity.ok(ApiResponse.success(lichLamViecService.updateShift(id, request)));
     }
 

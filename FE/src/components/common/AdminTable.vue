@@ -29,6 +29,8 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                 <h3 class="text-h6 font-weight-medium text-dark tracking-tight">{{ title }}</h3>
             </div>
             <div class="d-flex align-center flex-wrap justify-end gap-2">
+                <!-- Slot cho content tùy chỉnh (tab toggle, navigation...) -->
+                <slot name="extra-actions"></slot>
                 <v-btn v-if="showTemplateButton" prepend-icon="mdi-download" variant="flat" class="admin-btn-secondary"
                     @click="$emit('downloadTemplate')">
                     Tải mẫu

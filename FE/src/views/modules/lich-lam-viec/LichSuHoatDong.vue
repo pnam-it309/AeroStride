@@ -28,9 +28,9 @@ const breadcrumbs = [
 
 const tableHeaders = [
     { text: 'STT', width: '50px' },
-    { text: 'Người thực hiện', width: '150px' },
-    { text: 'Hành động', width: '250px' },
-    { text: 'Đối tượng', width: '150px' },
+    { text: 'Người thực hiện', width: '100px' },
+    { text: 'Hành động', width: '150px' },
+    { text: 'Đối tượng', width: '300px' },
     { text: 'Thời gian', width: '180px' }
 ];
 

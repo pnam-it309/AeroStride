@@ -1,5 +1,7 @@
 package com.example.be.core.admin.lichlamviec.service;
 
+import com.example.be.core.admin.lichlamviec.model.request.CaLamRequest;
+import com.example.be.core.admin.lichlamviec.model.request.LichLamViecRequest;
 import com.example.be.core.admin.lichlamviec.model.CaLamResponse;
 import com.example.be.core.admin.lichlamviec.model.LichLamViecResponse;
 import com.example.be.core.admin.lichlamviec.model.LichSuHoatDongResponse;
@@ -23,9 +25,9 @@ public interface LichLamViecService {
 
     String importExcel(MultipartFile file) throws IOException;
 
-    String addSchedule(Map<String, Object> request);
+    String addSchedule(LichLamViecRequest request);
 
-    String updateSchedule(String id, Map<String, Object> request);
+    String updateSchedule(String id, LichLamViecRequest request);
 
     List<Map<String, Object>> previewImport(MultipartFile file);
 
@@ -34,9 +36,9 @@ public interface LichLamViecService {
     void deleteSchedule(String id);
 
     // Shift (Ca Lam) CRUD
-    String createShift(Map<String, Object> request);
+    String createShift(CaLamRequest request);
 
-    String updateShift(String id, Map<String, Object> request);
+    String updateShift(String id, CaLamRequest request);
 
     void deleteShift(String id);
 }

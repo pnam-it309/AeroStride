@@ -41,7 +41,7 @@ const tableHeaders = [
     { text: 'Tên ca', width: '200px' },
     { text: 'Giờ bắt đầu', width: '150px' },
     { text: 'Giờ kết thúc', width: '150px' },
-    { text: 'Mô tả', width: '300px' },
+    { text: 'Mô tả', width: '150px' },
     { text: 'Hành động', width: '100px' }
 ];
 
