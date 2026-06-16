@@ -42,5 +42,9 @@ public interface AdminSanPhamRepository extends SanPhamRepository, JpaSpecificat
 
     boolean existsByMaIgnoreCaseAndXoaMemFalseAndIdNot(String ma, String id);
 
+    Optional<SanPham> findByTenIgnoreCaseAndXoaMemFalse(String ten);
+
+    boolean existsByTenIgnoreCaseAndXoaMemFalse(String ten);
+
     boolean existsByMa(String ma);
 }

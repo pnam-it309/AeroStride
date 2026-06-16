@@ -22,6 +22,12 @@ const loadOptionSafely = async (request) => {
 };
 
 export const dichVuSanPham = {
+    // Kiem tra ten san pham trung
+    async kiemTraTenSanPham(name) {
+        const response = await api.get(`${API_ADMIN.SAN_PHAM}/check-name`, { params: { name } });
+        return response.data.data;
+    },
+
     // Lấy options cho form sản phẩm
     async layOptionsForm() {
         const [thuongHieus, xuatXus, mucDichChays, chatLieus, deGiays, coGiays, mauSacs, kichThuocs] = await Promise.all([

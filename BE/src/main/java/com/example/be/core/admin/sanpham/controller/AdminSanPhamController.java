@@ -44,6 +44,12 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getFormOptions(), MessageConstants.SAN_PHAM_FORM_OPTIONS_SUCCESS));
     }
 
+    @GetMapping("/check-name")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> checkNameExist(@RequestParam String name) {
+        java.util.Map<String, Object> data = adminSanPhamService.checkNameExist(name.trim());
+        return ResponseEntity.ok(ApiResponse.success(data, MessageConstants.SAN_PHAM_CHECK_NAME_SUCCESS));
+    }
+
     // Tạo mới một sản phẩm cùng với thông tin chi tiết
     @PostMapping
     public ResponseEntity<ApiResponse<ProductDetailResponse>> createProduct(@Valid @RequestBody CreateProductRequest request) {

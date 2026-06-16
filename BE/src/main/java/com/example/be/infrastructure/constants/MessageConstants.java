@@ -63,6 +63,7 @@ public final class MessageConstants {
 
     // ============ Sản phẩm ============
     public static final String SAN_PHAM_FORM_OPTIONS_SUCCESS = "Lấy dữ liệu form sản phẩm thành công";
+    public static final String SAN_PHAM_CHECK_NAME_SUCCESS = "Kiểm tra tên sản phẩm thành công";
     public static final String SAN_PHAM_CREATE_SUCCESS = "Tạo sản phẩm thành công";
     public static final String SAN_PHAM_LIST_SUCCESS = "Lấy danh sách sản phẩm thành công";
     public static final String SAN_PHAM_DETAIL_SUCCESS = "Lấy chi tiết sản phẩm thành công";

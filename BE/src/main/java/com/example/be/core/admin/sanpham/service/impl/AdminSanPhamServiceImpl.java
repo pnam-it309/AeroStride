@@ -44,6 +44,19 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     
     // Delegate lookup logic to ProductOptionService (SRP)
     private final ProductOptionService productOptionService;
+
+    @Override
+    public java.util.Map<String, Object> checkNameExist(String name) {
+        java.util.Optional<SanPham> sanPham = adminSanPhamRepository.findByTenIgnoreCaseAndXoaMemFalse(name.trim());
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        if (sanPham.isPresent()) {
+            response.put("exists", true);
+            response.put("productId", sanPham.get().getId());
+        } else {
+            response.put("exists", false);
+        }
+        return response;
+    }
     
     // Core Repos for resolving entities
     private final ThuongHieuRepository thuongHieuRepository;
@@ -78,6 +91,9 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
     public ProductDetailResponse createProduct(CreateProductRequest request) {
+        if (adminSanPhamRepository.existsByTenIgnoreCaseAndXoaMemFalse(request.getTenSanPham().trim())) {
+            throw new com.example.be.infrastructure.exceptions.DuplicateResourceException("Tên sản phẩm đã tồn tại. Vui lòng chọn tên khác hoặc cập nhật sản phẩm cũ.");
+        }
         validateVariantRequests(request.getVariants());
         String code = StringUtils.hasText(request.getMaSanPham()) 
                 ? request.getMaSanPham().trim().toUpperCase() 

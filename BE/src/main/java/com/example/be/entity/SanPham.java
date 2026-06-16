@@ -22,7 +22,7 @@ import java.util.List;
 @CodePrefix("SP")
 @AttributeOverrides({
     @AttributeOverride(name = "ma", column = @Column(name = "ma_san_pham")),
-    @AttributeOverride(name = "ten", column = @Column(name = "ten_san_pham"))
+    @AttributeOverride(name = "ten", column = @Column(name = "ten_san_pham", unique = true, nullable = false))
 })
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class SanPham extends BaseCodeNameEntity {
