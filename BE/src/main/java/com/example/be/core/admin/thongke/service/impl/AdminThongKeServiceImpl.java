@@ -6,6 +6,7 @@ import com.example.be.core.admin.thongke.repository.AdminThongKeSpecification;
 import com.example.be.core.admin.thongke.service.AdminThongKeService;
 import com.example.be.entity.HoaDon;
 import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.repository.KhachHangRepository;
 import com.example.be.utils.AccountUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +23,7 @@ import java.util.List;
 public class AdminThongKeServiceImpl implements AdminThongKeService {
 
     private final AdminThongKeRepository thongKeRepository;
+    private final KhachHangRepository khachHangRepository;
 
     @Override
     public AdminThongKeResponse getTongQuan(LocalDate tuNgay, LocalDate denNgay) {
@@ -36,7 +38,11 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         Long donDangGiao = thongKeRepository.countByTrangThai(3, tuNgayMs, denNgayMs);  // DANG_GIAO (ordinal: 3)
         Long donDaHuy = thongKeRepository.countByTrangThai(5, tuNgayMs, denNgayMs);     // DA_HUY (ordinal: 5)
 
-        Long tongKhachHang = thongKeRepository.count();
+        Long tongKhachHang = khachHangRepository.count();
+        BigDecimal giaTriTrungBinh = BigDecimal.ZERO;
+        if (donHoanThanh != null && donHoanThanh > 0 && tongDoanhThu != null) {
+            giaTriTrungBinh = tongDoanhThu.divide(BigDecimal.valueOf(donHoanThanh), 0, java.math.RoundingMode.HALF_UP);
+        }
 
         // Top 5 sản phẩm bán chạy
         List<Object[]> topProdRows = thongKeRepository.getTopProductsData(tuNgayMs, denNgayMs, PageRequest.of(0, 5));
@@ -82,6 +88,7 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                 .donHangDangGiao(donDangGiao != null ? donDangGiao : 0L)
                 .donHangDaHuy(donDaHuy != null ? donDaHuy : 0L)
                 .tongKhachHang(tongKhachHang)
+                .giaTriTrungBinh(giaTriTrungBinh)
                 .sanPhamSapHet(0L)
                 .topSanPhamBanChay(topProducts)
                 .doanhThuTheoDanhMuc(salesByCategory)
@@ -97,7 +104,7 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         Long denNgayMs = AccountUtils.parseDateToLong(denNgay.toString(), true);
 
         // Build Specification dynamically using clean criteria
-        Specification<HoaDon> spec = Specification.where(AdminThongKeSpecification.hasTrangThai(OrderStatus.DANG_GIAO))
+        Specification<HoaDon> spec = Specification.where(AdminThongKeSpecification.hasTrangThai(OrderStatus.HOAN_THANH))
                 .and(AdminThongKeSpecification.ngayTaoGreaterOrEqual(tuNgayMs))
                 .and(AdminThongKeSpecification.ngayTaoLessOrEqual(denNgayMs));
 

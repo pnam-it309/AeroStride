@@ -19,6 +19,7 @@ public class AdminThongKeResponse {
     private Long donHangDangGiao;
     private Long donHangDaHuy;
     private Long tongKhachHang;
+    private BigDecimal giaTriTrungBinh;
     private Long sanPhamSapHet;
 
     // Doanh thu theo ngày (cho biểu đồ)

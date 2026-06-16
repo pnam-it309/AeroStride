@@ -14,8 +14,8 @@ import java.util.List;
 public interface AdminThongKeRepository extends HoaDonRepository, 
         JpaSpecificationExecutor<HoaDon>, AdminThongKeRepositoryCustom {
 
-    // Tổng doanh thu (chỉ đơn DELIVERED - ordinal 3)
-    @Query("SELECT COALESCE(SUM(hd.tongTien), 0) FROM HoaDon hd WHERE CAST(hd.trangThai AS int) = 3" +
+    // Tổng doanh thu chỉ tính đơn đã hoàn thành - OrderStatus.HOAN_THANH ordinal 4
+    @Query("SELECT COALESCE(SUM(hd.tongTien), 0) FROM HoaDon hd WHERE CAST(hd.trangThai AS int) = 4" +
            " AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)" +
            " AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)")
     java.math.BigDecimal sumDoanhThu(@Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
