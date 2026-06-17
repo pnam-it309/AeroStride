@@ -23,6 +23,8 @@ public interface AdminSanPhamService {
 
     ProductFormOptionsResponse getFormOptions();
 
+    java.util.Map<String, Object> checkNameExist(String name);
+
     ProductDetailResponse createProduct(CreateProductRequest request);
 
     PageResponse<ProductResponse> getProducts(SearchProductRequest request);

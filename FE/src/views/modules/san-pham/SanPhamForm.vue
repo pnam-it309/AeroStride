@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch, reactive, nextTick } from 'vue';
+import debounce from 'lodash/debounce';
 import { PATH } from '@/router/routePaths';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
@@ -1453,7 +1454,42 @@ const fetchFormOptions = async () => {
 };
 
 // FORM STATE
-const originalProductName = ref('');
+const tenError = ref('');
+const existingProductId = ref(null);
+
+const checkProductName = debounce(async (name) => {
+    if (!name || !name.trim()) {
+        tenError.value = '';
+        existingProductId.value = null;
+        return;
+    }
+
+    // Only check if creating a new product
+    if (isEditMode.value) return;
+
+    try {
+        const result = await dichVuSanPham.kiemTraTenSanPham(name);
+        if (result && result.exists) {
+            tenError.value = 'Tên sản phẩm đã tồn tại trong hệ thống!';
+            existingProductId.value = result.productId;
+        } else {
+            tenError.value = '';
+            existingProductId.value = null;
+        }
+    } catch (error) {
+        console.error('Lỗi khi check tên sản phẩm', error);
+    }
+}, 500);
+
+// Note: watch block moved below product initialization
+// Navigate to edit page to add variants
+const handleNavigateToUpdate = () => {
+    if (existingProductId.value) {
+        router.push(`${PATH.SAN_PHAM_FORM}/${existingProductId.value}`);
+    }
+};
+
+// FORM STATE
 const product = ref({
     maSanPham: '',
     tenSanPham: null,
@@ -1470,6 +1506,13 @@ const product = ref({
 
     moTaChiTiet: '',
     hinhAnh: ''
+});
+
+// Watch for product name changes
+watch(() => product.value.tenSanPham, (newVal) => {
+    if (!isEditMode.value) {
+        checkProductName(newVal);
+    }
 });
 
 const loadProduct = async (id) => {
@@ -1619,6 +1662,15 @@ const validateProduct = () => {
     const missing = requiredFields
         .filter(([field]) => !product.value[field])
         .map(([, label]) => label);
+
+    if (tenError.value) {
+        addNotification({
+            title: 'Lỗi',
+            subtitle: tenError.value,
+            color: 'error'
+        });
+        return false;
+    }
 
     if (missing.length > 0) {
         addNotification({
@@ -2036,6 +2088,16 @@ const handleSave = async () => {
                                     :rules="[rules.required, rules.noSpecialChar, rules.uniqueProductName]"
                                     variant="outlined" density="comfortable" hide-details="auto" maxlength="250"
                                     :return-object="false"></v-combobox>
+                                <v-alert v-if="tenError" type="error" variant="tonal" density="compact"
+                                    class="mt-2 text-caption">
+                                    {{ tenError }}
+                                    <div class="mt-1" v-if="existingProductId">
+                                        <a href="#" @click.prevent="handleNavigateToUpdate"
+                                            class="text-decoration-underline font-weight-bold text-error">
+                                            Chuyển sang Cập nhật sản phẩm này
+                                        </a>
+                                    </div>
+                                </v-alert>
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="field-label">Thương hiệu <span class="text-error">*</span></div>
@@ -2505,7 +2567,7 @@ const handleSave = async () => {
                                                                     </div>
                                                                     <div class="text-caption text-slate-500">{{
                                                                         getVariantColorLabel(variant.idMauSac)
-                                                                    }}</div>
+                                                                        }}</div>
                                                                 </div>
                                                             </div>
                                                         </td>
@@ -2814,7 +2876,7 @@ const handleSave = async () => {
                     (Thương hiệu, Danh mục, Xuất xứ, Mục đích chạy, Cổ giày, Chất liệu, Đế giày).<br><br>
                     Tên sản phẩm trùng: <span class="font-weight-bold">[{{
                         duplicateAttributeDialog.duplicateProduct?.ten
-                        }}]</span><br><br>
+                    }}]</span><br><br>
                     Để phân biệt, vui lòng <span class="font-weight-bold text-primary">đặt tên sản phẩm hiện tại (tên
                         đệm) khác
                         đi</span> so với sản phẩm đã tồn tại, hoặc chỉnh sửa các thuộc tính để tránh trùng lặp hoàn
