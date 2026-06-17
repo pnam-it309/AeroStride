@@ -10,7 +10,9 @@ import lombok.Setter;
 public class LichLamViecResponse {
     private String id;
     private String nhanVien;
+    private String nhanVienId;
     private String ca;
+    private String caId;
     private String ngay;
     private String trangThai;
 }

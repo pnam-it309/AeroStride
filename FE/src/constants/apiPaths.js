@@ -63,6 +63,7 @@ export const API_CHAT = {
 };
 
 export const API_LICH_LAM_VIEC = {
+    BASE: `${API_BASE.ADMIN}/lich-lam-viec`,
     SCHEDULES: `${API_BASE.ADMIN}/lich-lam-viec/schedules`,
     SHIFTS: `${API_BASE.ADMIN}/lich-lam-viec/shifts`,
     ACTIVITIES: `${API_BASE.ADMIN}/lich-lam-viec/activities`

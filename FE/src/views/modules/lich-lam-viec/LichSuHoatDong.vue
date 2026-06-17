@@ -28,9 +28,9 @@ const breadcrumbs = [
 
 const tableHeaders = [
     { text: 'STT', width: '50px' },
-    { text: 'Người thực hiện', width: '150px' },
-    { text: 'Hành động', width: '250px' },
-    { text: 'Đối tượng', width: '150px' },
+    { text: 'Người thực hiện', width: '100px' },
+    { text: 'Hành động', width: '150px' },
+    { text: 'Đối tượng', width: '300px' },
     { text: 'Thời gian', width: '180px' }
 ];
 
@@ -40,7 +40,8 @@ const loadData = async () => {
         const response = await apiService.get(API_LICH_LAM_VIEC.ACTIVITIES, {
             params: {
                 page: pagination.value.page - 1,
-                size: pagination.value.size
+                size: pagination.value.size,
+                search: filters.value.search
             }
         });
         if (response.data.success) {

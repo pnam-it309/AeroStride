@@ -1,5 +1,7 @@
 package com.example.be.core.admin.lichlamviec.service.impl;
 
+import com.example.be.core.admin.lichlamviec.model.request.CaLamRequest;
+import com.example.be.core.admin.lichlamviec.model.request.LichLamViecRequest;
 import com.example.be.core.admin.lichlamviec.model.CaLamResponse;
 import com.example.be.core.admin.lichlamviec.model.LichLamViecResponse;
 import com.example.be.core.admin.lichlamviec.model.LichSuHoatDongResponse;
@@ -27,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -55,7 +58,9 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                 .map(l -> LichLamViecResponse.builder()
                         .id(l.getId())
                         .nhanVien(l.getNhanVien() != null ? l.getNhanVien().getTen() : "N/A")
+                        .nhanVienId(l.getNhanVien() != null ? l.getNhanVien().getId() : null)
                         .ca(l.getCaLam() != null ? l.getCaLam().getTenCa() : "N/A")
+                        .caId(l.getCaLam() != null ? l.getCaLam().getId() : null)
                         .ngay(l.getNgayLam().format(dateFormatter))
                         .trangThai(l.getTrangThaiLich() != null ? l.getTrangThaiLich().name() : "N/A")
                         .build())
@@ -78,8 +83,8 @@ public class LichLamViecServiceImpl implements LichLamViecService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<LichSuHoatDongResponse> getActivityHistory(Pageable pageable) {
-        return lichSuHoatDongRepository.findAllByOrderByNgayTaoDesc(pageable)
+    public Page<LichSuHoatDongResponse> getActivityHistory(String search, Pageable pageable) {
+        return lichSuHoatDongRepository.searchActivities(search, pageable)
                 .map(h -> LichSuHoatDongResponse.builder()
                         .id(h.getId())
                         .nguoiThucHien(h.getNguoiTao())
@@ -105,11 +110,11 @@ public class LichLamViecServiceImpl implements LichLamViecService {
 
     @Override
     @Transactional
-    public String addSchedule(Map<String, Object> request) {
-        Object nhanVienObj = request.get("nhanVien");
-        String caName = (String) request.get("ca");
-        String ngayStr = (String) request.get("ngay");
-        String trangThaiStr = (String) request.get("trangThai");
+    public String addSchedule(LichLamViecRequest request) {
+        List<String> nhanVienIds = request.getNhanVien();
+        List<String> caNames = request.getCa();
+        String ngayStr = request.getNgay();
+        String trangThaiStr = request.getTrangThai();
 
         LocalDate ngayLam = LocalDate.parse(ngayStr);
         LichLamViec.TrangThaiLichLamViec trangThai = LichLamViec.TrangThaiLichLamViec.CHO_XAC_NHAN;
@@ -121,19 +126,20 @@ public class LichLamViecServiceImpl implements LichLamViecService {
             }
         }
 
-        final String finalCaName = caName;
-        CaLam caLam = caLamRepository.findByXoaMemFalse().stream()
-                .filter(c -> c.getTenCa().equalsIgnoreCase(finalCaName))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Ca làm việc không tồn tại: " + finalCaName));
+        if (caNames == null || caNames.isEmpty()) {
+            throw new RuntimeException("Danh sách ca làm không được để trống!");
+        }
 
-        List<String> nhanVienIds = new ArrayList<>();
-        if (nhanVienObj instanceof List) {
-            for (Object obj : (List<?>) nhanVienObj) {
-                nhanVienIds.add(String.valueOf(obj));
-            }
-        } else if (nhanVienObj != null) {
-            nhanVienIds.add(String.valueOf(nhanVienObj));
+        List<CaLam> caLams = caLamRepository.findByXoaMemFalse().stream()
+                .filter(c -> caNames.stream().anyMatch(name -> name.equalsIgnoreCase(c.getTenCa())))
+                .toList();
+
+        if (caLams.isEmpty()) {
+            throw new RuntimeException("Không tìm thấy ca làm việc hợp lệ!");
+        }
+
+        if (nhanVienIds == null || nhanVienIds.isEmpty()) {
+            throw new RuntimeException("Danh sách nhân viên không được để trống!");
         }
 
         List<NhanVien> nhanViens = nhanVienRepository.findAllById(nhanVienIds);
@@ -141,24 +147,79 @@ public class LichLamViecServiceImpl implements LichLamViecService {
             throw new RuntimeException("Không tìm thấy nhân viên hợp lệ!");
         }
 
+        int scheduleCount = 0;
         for (NhanVien nv : nhanViens) {
-            LichLamViec schedule = LichLamViec.builder()
-                    .nhanVien(nv)
-                    .caLam(caLam)
-                    .ngayLam(ngayLam)
-                    .trangThaiLich(trangThai)
-                    .build();
-            lichLamViecRepository.save(schedule);
+            for (CaLam caLam : caLams) {
+                LichLamViec schedule = LichLamViec.builder()
+                        .nhanVien(nv)
+                        .caLam(caLam)
+                        .ngayLam(ngayLam)
+                        .trangThaiLich(trangThai)
+                        .build();
+                lichLamViecRepository.save(schedule);
 
-            // Log activity history
-            LichSuHoatDong activity = LichSuHoatDong.builder()
-                    .hanhDong("Tạo lịch làm việc")
-                    .doiTuong("Nhân viên " + nv.getTen() + " (" + nv.getMa() + ") - Ngày " + ngayStr + " (" + caName + ")")
-                    .build();
-            lichSuHoatDongRepository.save(activity);
+                // Log activity history
+                LichSuHoatDong activity = LichSuHoatDong.builder()
+                        .hanhDong("Tạo lịch làm việc")
+                        .doiTuong("Nhân viên " + nv.getTen() + " (" + nv.getMa() + ") - Ngày " + ngayStr + " (" + caLam.getTenCa() + ")")
+                        .build();
+                lichSuHoatDongRepository.save(activity);
+                scheduleCount++;
+            }
         }
 
-        return "Đã thêm lịch làm việc cho " + nhanViens.size() + " nhân viên vào ngày " + ngayStr;
+        return "Đã thêm " + scheduleCount + " lịch làm việc thành công!";
+    }
+
+    @Override
+    @Transactional
+    public String updateSchedule(String id, LichLamViecRequest request) {
+        LichLamViec schedule = lichLamViecRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch làm việc với ID: " + id));
+
+        List<String> nhanVienIds = request.getNhanVien();
+        String ngayStr = request.getNgay();
+        String trangThaiStr = request.getTrangThai();
+
+        if (ngayStr != null) {
+            schedule.setNgayLam(LocalDate.parse(ngayStr));
+        }
+
+        if (trangThaiStr != null) {
+            try {
+                schedule.setTrangThaiLich(LichLamViec.TrangThaiLichLamViec.valueOf(trangThaiStr));
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+
+        String caName = (request.getCa() != null && !request.getCa().isEmpty()) ? request.getCa().get(0) : null;
+        if (caName != null) {
+            final String finalCaName = caName;
+            CaLam caLam = caLamRepository.findByXoaMemFalse().stream()
+                    .filter(c -> c.getTenCa().equalsIgnoreCase(finalCaName))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Ca làm việc không tồn tại: " + finalCaName));
+            schedule.setCaLam(caLam);
+        }
+
+        if (nhanVienIds != null && !nhanVienIds.isEmpty()) {
+            String firstId = nhanVienIds.get(0);
+            NhanVien nv = nhanVienRepository.findById(firstId)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên với ID: " + firstId));
+            schedule.setNhanVien(nv);
+        }
+
+        lichLamViecRepository.save(schedule);
+
+        // Log activity history
+        LichSuHoatDong activity = LichSuHoatDong.builder()
+                .hanhDong("Cập nhật lịch làm việc")
+                .doiTuong("Nhân viên " + schedule.getNhanVien().getTen() + " (" + schedule.getNhanVien().getMa() + ") - Ngày " + schedule.getNgayLam() + " (" + schedule.getCaLam().getTenCa() + ")")
+                .build();
+        lichSuHoatDongRepository.save(activity);
+
+        return "Cập nhật lịch làm việc thành công!";
     }
 
     @Override
@@ -279,5 +340,96 @@ public class LichLamViecServiceImpl implements LichLamViecService {
     @Transactional
     public void deleteSchedule(String id) {
         lichLamViecRepository.deleteById(id);
+    }
+
+    // Shift (Ca Lam) CRUD implementations
+    @Override
+    @Transactional
+    public String createShift(CaLamRequest request) {
+        String tenCa = request.getTenCa();
+        String gioBatDauStr = request.getGioBatDau();
+        String gioKetThucStr = request.getGioKetThuc();
+        String moTa = request.getMoTa();
+
+        if (tenCa == null || tenCa.trim().isEmpty()) {
+            throw new RuntimeException("Tên ca làm việc không được để trống!");
+        }
+
+        boolean exists = caLamRepository.findByXoaMemFalse().stream()
+                .anyMatch(c -> c.getTenCa().equalsIgnoreCase(tenCa));
+        if (exists) {
+            throw new RuntimeException("Tên ca làm việc đã tồn tại!");
+        }
+
+        CaLam caLam = CaLam.builder()
+                .tenCa(tenCa)
+                .gioBatDau(LocalTime.parse(gioBatDauStr, timeFormatter))
+                .gioKetThuc(LocalTime.parse(gioKetThucStr, timeFormatter))
+                .moTa(moTa)
+                .xoaMem(false)
+                .build();
+
+        caLamRepository.save(caLam);
+
+        LichSuHoatDong activity = LichSuHoatDong.builder()
+                .hanhDong("Tạo ca làm việc")
+                .doiTuong("Ca " + tenCa + " (" + gioBatDauStr + " - " + gioKetThucStr + ")")
+                .build();
+        lichSuHoatDongRepository.save(activity);
+
+        return "Tạo ca làm việc thành công!";
+    }
+
+    @Override
+    @Transactional
+    public String updateShift(String id, CaLamRequest request) {
+        CaLam caLam = caLamRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ca làm việc với ID: " + id));
+
+        String tenCa = request.getTenCa();
+        String gioBatDauStr = request.getGioBatDau();
+        String gioKetThucStr = request.getGioKetThuc();
+        String moTa = request.getMoTa();
+
+        if (tenCa == null || tenCa.trim().isEmpty()) {
+            throw new RuntimeException("Tên ca làm việc không được để trống!");
+        }
+
+        boolean exists = caLamRepository.findByXoaMemFalse().stream()
+                .anyMatch(c -> !c.getId().equals(id) && c.getTenCa().equalsIgnoreCase(tenCa));
+        if (exists) {
+            throw new RuntimeException("Tên ca làm việc đã tồn tại!");
+        }
+
+        caLam.setTenCa(tenCa);
+        caLam.setGioBatDau(LocalTime.parse(gioBatDauStr, timeFormatter));
+        caLam.setGioKetThuc(LocalTime.parse(gioKetThucStr, timeFormatter));
+        caLam.setMoTa(moTa);
+
+        caLamRepository.save(caLam);
+
+        LichSuHoatDong activity = LichSuHoatDong.builder()
+                .hanhDong("Cập nhật ca làm việc")
+                .doiTuong("Ca " + tenCa + " (" + gioBatDauStr + " - " + gioKetThucStr + ")")
+                .build();
+        lichSuHoatDongRepository.save(activity);
+
+        return "Cập nhật ca làm việc thành công!";
+    }
+
+    @Override
+    @Transactional
+    public void deleteShift(String id) {
+        CaLam caLam = caLamRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ca làm việc với ID: " + id));
+
+        caLam.setXoaMem(true);
+        caLamRepository.save(caLam);
+
+        LichSuHoatDong activity = LichSuHoatDong.builder()
+                .hanhDong("Xóa ca làm việc")
+                .doiTuong("Ca " + caLam.getTenCa())
+                .build();
+        lichSuHoatDongRepository.save(activity);
     }
 }
