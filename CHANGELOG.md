@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/pnam-it309/AeroStride/compare/v1.23.3...v1.24.0) (2026-06-17)
+
+
+### Features
+
+* Quản lý lịch ([f2ad41c](https://github.com/pnam-it309/AeroStride/commit/f2ad41ce63c90629e5c7d3c07eb089e765200e0c))
+
 ## [1.23.3](https://github.com/pnam-it309/AeroStride/compare/v1.23.2...v1.23.3) (2026-06-15)
 
 
