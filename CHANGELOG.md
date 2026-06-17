@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/pnam-it309/AeroStride/compare/v1.24.0...v1.25.0) (2026-06-17)
+
+
+### Features
+
+* implement normalized master-variant architecture to prevent duplicate product names ([b6ba4b0](https://github.com/pnam-it309/AeroStride/commit/b6ba4b078affa63b24565fc2867adffcfb569c2c))
+
 # [1.24.0](https://github.com/pnam-it309/AeroStride/compare/v1.23.3...v1.24.0) (2026-06-17)
 
 
