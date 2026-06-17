@@ -1,3 +1,10 @@
+## [1.25.1](https://github.com/pnam-it309/AeroStride/compare/v1.25.0...v1.25.1) (2026-06-17)
+
+
+### Bug Fixes
+
+* resolve Vue UI warnings, fix flyway migrations, and remove generated files from tracking ([c010776](https://github.com/pnam-it309/AeroStride/commit/c010776d43b9314c8e8cdc74d565c6c03b48627a))
+
 # [1.25.0](https://github.com/pnam-it309/AeroStride/compare/v1.24.0...v1.25.0) (2026-06-17)
 
 
