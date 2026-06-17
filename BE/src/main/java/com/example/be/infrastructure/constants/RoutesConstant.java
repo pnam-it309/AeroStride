@@ -21,7 +21,6 @@ public final class RoutesConstant {
     public static final String ADMIN_COMMON = ADMIN + "/common";
     public static final String ADMIN_DIA_CHI = ADMIN + "/dia-chi";
     public static final String ADMIN_THUOC_TINH_CHAT_LIEU = ADMIN_THUOC_TINH + "/chat-lieu";
-    public static final String ADMIN_THUOC_TINH_DANH_MUC = ADMIN_THUOC_TINH + "/danh-muc";
     public static final String ADMIN_THUOC_TINH_THUONG_HIEU = ADMIN_THUOC_TINH + "/thuong-hieu";
     public static final String ADMIN_THUOC_TINH_MAU_SAC = ADMIN_THUOC_TINH + "/mau-sac";
     public static final String ADMIN_THUOC_TINH_KICH_THUOC = ADMIN_THUOC_TINH + "/kich-thuoc";

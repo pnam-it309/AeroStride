@@ -11,13 +11,19 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class FlywayConfig {
 
+    // Chặn Flyway chạy mặc định trước Hibernate
     @Bean
     public FlywayMigrationStrategy flywayMigrationStrategy() {
         return flyway -> {
-            // Automatically repair checksum mismatches (e.g. when developers edit existing migration scripts)
-            flyway.repair();
-            // Then proceed with migration
-            flyway.migrate();
+            // Không làm gì ở đây để defer quá trình migrate cho đến khi Hibernate tạo xong bảng
         };
+    }
+
+    // Chạy Flyway sau khi toàn bộ ứng dụng (bao gồm Hibernate tạo bảng) đã khởi động xong
+    @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
+    public void runFlyway(org.springframework.boot.context.event.ApplicationReadyEvent event) {
+        org.flywaydb.core.Flyway flyway = event.getApplicationContext().getBean(org.flywaydb.core.Flyway.class);
+        flyway.repair();
+        flyway.migrate();
     }
 }

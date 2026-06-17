@@ -9,7 +9,7 @@ INSERT IGNORE INTO thuong_hieu (id, ma_thuong_hieu, ten_thuong_hieu, trang_thai,
 ('th10', 'TH010', 'Reebok', 0, 0, 1711814500000);
 
 -- Thêm Sản Phẩm Mới (Bắt đầu từ sp6)
-INSERT IGNORE INTO san_pham (id, id_thuong_hieu, id_xuat_xu, id_muc_dich_chay, id_chat_lieu, id_de_giay, id_co_giay, ma_san_pham, ten_san_pham, gioi_tinh_khach_hang, hinh_anh, mo_ta_ngan, mo_ta_chi_tiet, trang_thai, xoa_mem, ngay_tao) VALUES
+INSERT IGNORE INTO san_pham (id, id_thuong_hieu, id_xuat_xu, id_muc_dich_chay, id_chat_lieu, id_de_giay, id_co_giay, ma_san_pham, ten_san_pham, gioi_tinh_khach_hang, hinh_anh, mo_ta, mo_ta_chi_tiet, trang_thai, xoa_mem, ngay_tao) VALUES
 ('sp6', 'th6', 'xx1', 'md3', 'cl3', 'dg1', 'cg1', 'SP006', 'Bitis Hunter Street', 'UNISEX', 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?q=80&w=1996&auto=format&fit=crop', 'Dòng giày thể thao đường phố của Bitis.', 'Mô tả chi tiết giày Bitis Hunter', 0, 0, 1711814600000),
 ('sp7', 'th7', 'xx2', 'md3', 'cl3', 'dg1', 'cg1', 'SP007', 'Vans Old Skool', 'UNISEX', 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=1974&auto=format&fit=crop', 'Huyền thoại Vans trượt ván.', 'Mô tả chi tiết giày Vans Old Skool', 0, 0, 1711814600000),
 ('sp8', 'th8', 'xx3', 'md1', 'cl2', 'dg5', 'cg1', 'SP008', 'Asics Gel-Kayano 30', 'NAM', 'https://images.unsplash.com/photo-1560769629-975ec94e6a86?q=80&w=1964&auto=format&fit=crop', 'Giày chạy bộ đường dài chuyên nghiệp.', 'Mô tả chi tiết giày Asics Gel', 0, 0, 1711814600000),
@@ -377,7 +377,7 @@ INSERT IGNORE INTO hoa_don_chi_tiet (id, id_hoa_don, id_chi_tiet_san_pham, ma_ho
 ('hdct15', 'hd15', 'ct_sp16_1', 'HDCT015', 1, 6500000.00, 0, 1711824000000);
 
 -- Lịch Sử Trạng Thái Hóa Đơn
-INSERT IGNORE INTO lich_su_trang_thai_hoa_don (id, id_hoa_don, trang_thai_cu, trang_thai_moi, ghi_chu, nguoi_thuc_hien, thoi_gian) VALUES
+INSERT IGNORE INTO lich_su_trang_thai_hoa_don (id, id_hoa_don, trang_thai_cu, trang_thai_moi, ghi_chu, nguoi_thuc_hien, ngay_tao) VALUES
 ('ls6', 'hd6', 0, 4, 'Hủy đơn hàng', 'kh6', 1711815500000),
 ('ls7', 'hd7', 0, 3, 'Giao dịch thành công', 'nv1', 1711816500000),
 ('ls8', 'hd8', 0, 3, 'Thanh toán tại quầy', 'nv1', 1711817500000),
@@ -388,7 +388,7 @@ INSERT IGNORE INTO lich_su_trang_thai_hoa_don (id, id_hoa_don, trang_thai_cu, tr
 ('ls13', 'hd13', 0, 4, 'Khách trả hàng', 'nv2', 1711822500000),
 ('ls14', 'hd14', 2, 3, 'Giao hàng thành công', 'Shipper', 1711823500000);
 -- Giao Dịch Thanh Toán Bổ Sung cho toàn bộ các hóa đơn mẫu (hd6 -> hd299)
-INSERT IGNORE INTO giao_dich_thanh_toan (id, id_hoa_don, id_phuong_thuc_thanh_toan, ma_giao_dich_thanh_toan, so_tien, loai_giao_dich, ma_giao_dich_ngoai, ma_tham_chieu, thoi_gian_tao, trang_thai, ghi_chu) VALUES
+INSERT IGNORE INTO giao_dich_thanh_toan (id, id_hoa_don, id_phuong_thuc_thanh_toan, ma_giao_dich_thanh_toan, so_tien, loai_giao_dich, ma_giao_dich_ngoai, ma_tham_chieu, ngay_tao, trang_thai, ghi_chu) VALUES
 ('gd6', 'hd6', 'pt1', 'GD006', 880000.00, 'PAYMENT', NULL, 'REF006', 1711815000000, 1, 'Thanh toán tiền mặt'),
 ('gd7', 'hd7', 'pt2', 'GD007', 3500000.00, 'PAYMENT', 'BANK777', 'REF007', 1711816000000, 1, 'Chuyển khoản thành công'),
 ('gd8', 'hd8', 'pt1', 'GD008', 3800000.00, 'PAYMENT', NULL, 'REF008', 1711817000000, 1, 'Tiền mặt tại quầy'),

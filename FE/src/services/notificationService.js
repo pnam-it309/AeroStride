@@ -10,9 +10,9 @@ export const useNotifications = () => {
     // Add to notification list (for the bell icon)
     notifications.value.unshift({
       id: Date.now(),
-      title: notif.title || 'Thông báo hệ thống',
+      title: notif.title || 'Th�ng b�o h? th?ng',
       subtitle: notif.subtitle || '',
-      time: 'Vừa xong',
+      time: 'V?a xong',
       icon: notif.icon || 'CircleCheckIcon',
       color: notif.color || 'success',
       isNew: true
@@ -21,13 +21,9 @@ export const useNotifications = () => {
     // Use the passed color or default to primary
     let displayColor = notif.color || 'primary';
 
-    const markAllAsRead = () => {
-      notifications.value.forEach(n => n.isNew = false);
-    };
-
     // Show toast (snackbar) with 5s timeout
     toast.showToast(
-      notif.subtitle || notif.title || 'Thông báo mới',
+      notif.subtitle || notif.title || 'Th�ng b�o m?i',
       displayColor,
       notif.icon || (displayColor === 'error' ? 'mdi-alert-circle' : (displayColor === 'warning' ? 'mdi-alert' : 'mdi-check-circle')),
       notif.timeout || 2000
@@ -38,22 +34,9 @@ export const useNotifications = () => {
     notifications.value.forEach((n) => (n.isNew = false));
   };
 
-  // Show toast (snackbar)
-  toast.showToast(
-    notif.subtitle || notif.title || 'Thông báo mới',
-    displayColor,
-    notif.icon || (displayColor === 'error' ? 'mdi-alert-circle' : 'mdi-check-circle'),
-    3000
-  );
-};
-
-const markAllAsRead = () => {
-  notifications.value.forEach((n) => (n.isNew = false));
-};
-
-return {
-  notifications,
-  addNotification,
-  markAllAsRead
-};
+  return {
+    notifications,
+    addNotification,
+    markAllAsRead
+  };
 };

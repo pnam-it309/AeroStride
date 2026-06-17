@@ -105,12 +105,12 @@ INSERT INTO mau_sac (id, ma_mau_sac, ten_mau_sac, ma_mau_hex, trang_thai, xoa_me
 ('ms5', 'MS005', 'Xám', '#808080', 0, 0, 1711814400000);
 
 -- 12. Bảng Sản Phẩm (san_pham)
-INSERT INTO san_pham (id, id_thuong_hieu, id_danh_muc, id_xuat_xu, id_muc_dich_chay, id_chat_lieu, id_de_giay, id_co_giay, ma_san_pham, ten_san_pham, gioi_tinh_khach_hang, hinh_anh, mo_ta_ngan, mo_ta_chi_tiet, trang_thai, xoa_mem, ngay_tao) VALUES
-('sp1', 'th1', 'dm1', 'xx3', 'md3', 'cl1', 'dg1', 'cg1', 'SP001', 'Nike Air Max 2024', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Dòng giày chạy bộ cao cấp Nike Air Max 2024.', 'Mô tả chi tiết giày Nike SP1', 0, 0, 1711814400000),
-('sp2', 'th2', 'dm2', 'xx3', 'md1', 'cl2', 'dg2', 'cg2', 'SP002', 'Adidas UltraBoost', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Trải nghiệm đỉnh cao với Adidas UltraBoost.', 'Mô tả chi tiết giày Adidas SP2', 0, 0, 1711814400000),
-('sp3', 'th3', 'dm1', 'xx2', 'md2', 'cl3', 'dg3', 'cg3', 'SP003', 'Puma Speed', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Giày chạy tốc độ Puma Speed đầy mạnh mẽ.', 'Mô tả chi tiết giày Puma SP3', 0, 0, 1711814400000),
-('sp4', 'th4', 'dm4', 'xx2', 'md3', 'cl4', 'dg4', 'cg1', 'SP004', 'New Balance Classic', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Phong cách cổ điển New Balance Classic.', 'Mô tả chi tiết giày NB SP4', 0, 0, 1711814400000),
-('sp5', 'th5', 'dm4', 'xx1', 'md3', 'cl5', 'dg5', 'cg2', 'SP005', 'Converse All Star', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Biểu tượng giới trẻ Converse All Star.', 'Mô tả chi tiết giày Converse SP5', 0, 0, 1711814400000);
+INSERT INTO san_pham (id, id_thuong_hieu, id_xuat_xu, id_muc_dich_chay, id_chat_lieu, id_de_giay, id_co_giay, ma_san_pham, ten_san_pham, gioi_tinh_khach_hang, hinh_anh, mo_ta, mo_ta_chi_tiet, trang_thai, xoa_mem, ngay_tao) VALUES
+('sp1', 'th1', 'xx3', 'md3', 'cl1', 'dg1', 'cg1', 'SP001', 'Nike Air Max 2024', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Dòng giày chạy bộ cao cấp Nike Air Max 2024.', 'Mô tả chi tiết giày Nike SP1', 0, 0, 1711814400000),
+('sp2', 'th2', 'xx3', 'md1', 'cl2', 'dg2', 'cg2', 'SP002', 'Adidas UltraBoost', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Trải nghiệm đỉnh cao với Adidas UltraBoost.', 'Mô tả chi tiết giày Adidas SP2', 0, 0, 1711814400000),
+('sp3', 'th3', 'xx2', 'md2', 'cl3', 'dg3', 'cg3', 'SP003', 'Puma Speed', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Giày chạy tốc độ Puma Speed đầy mạnh mẽ.', 'Mô tả chi tiết giày Puma SP3', 0, 0, 1711814400000),
+('sp4', 'th4', 'xx2', 'md3', 'cl4', 'dg4', 'cg1', 'SP004', 'New Balance Classic', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Phong cách cổ điển New Balance Classic.', 'Mô tả chi tiết giày NB SP4', 0, 0, 1711814400000),
+('sp5', 'th5', 'xx1', 'md3', 'cl5', 'dg5', 'cg2', 'SP005', 'Converse All Star', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Biểu tượng giới trẻ Converse All Star.', 'Mô tả chi tiết giày Converse SP5', 0, 0, 1711814400000);
 
 -- 13. Bảng Chi Tiết Sản Phẩm (chi_tiet_san_pham)
 INSERT INTO chi_tiet_san_pham (id, id_san_pham, id_kich_thuoc, id_mau_sac, ma_chi_tiet_san_pham, so_luong, gia_nhap, gia_ban, trang_thai, xoa_mem, ngay_tao) VALUES
@@ -182,7 +182,7 @@ INSERT INTO hoa_don_chi_tiet (id, id_hoa_don, id_chi_tiet_san_pham, ma_hoa_don_c
 ('hdct9', 'hd6', 'ct4', 'HDCT009', 1, 1200000.00, 0, 1711890000000);
 
 -- 21. Bảng Lịch Sử Trạng Thái Hóa Đơn (lich_su_trang_thai_hoa_don)
-INSERT INTO lich_su_trang_thai_hoa_don (id, id_hoa_don, trang_thai_cu, trang_thai_moi, ghi_chu, nguoi_thuc_hien, thoi_gian) VALUES
+INSERT INTO lich_su_trang_thai_hoa_don (id, id_hoa_don, trang_thai_cu, trang_thai_moi, ghi_chu, nguoi_thuc_hien, ngay_tao) VALUES
 ('ls1', 'hd1', 0, 3, 'Hoàn thành thanh toán tại quầy', 'nv1', 1711815000000),
 ('ls2', 'hd2', 0, 1, 'Xác nhận đơn hàng', 'nv2', 1711851000000),
 ('ls3', 'hd3', 0, 3, 'Khách lấy hàng tại quầy', 'nv1', 1711861000000),
@@ -198,7 +198,7 @@ INSERT INTO phuong_thuc_thanh_toan (id, ma_phuong_thuc_thanh_toan, ten_phuong_th
 ('pt5', 'PT005', 'Thẻ tín dụng/Ghi nợ', 0, 1711814400000);
 
 -- 23. Bảng Giao Dịch Thanh Toán (giao_dich_thanh_toan)
-INSERT INTO giao_dich_thanh_toan (id, id_hoa_don, id_phuong_thuc_thanh_toan, ma_giao_dich_thanh_toan, so_tien, loai_giao_dich, ma_giao_dich_ngoai, ma_tham_chieu, duong_dan_thanh_toan, du_lieu_qr, thoi_gian_het_han, du_lieu_phan_hoi, thoi_gian_tao, trang_thai, ghi_chu) VALUES
+INSERT INTO giao_dich_thanh_toan (id, id_hoa_don, id_phuong_thuc_thanh_toan, ma_giao_dich_thanh_toan, so_tien, loai_giao_dich, ma_giao_dich_ngoai, ma_tham_chieu, duong_dan_thanh_toan, du_lieu_qr, thoi_gian_het_han, du_lieu_phan_hoi, ngay_tao, trang_thai, ghi_chu) VALUES
 ('gd1', 'hd1', 'pt1', 'GD001', 1450000.00, 'PAYMENT', NULL, 'REF001', NULL, NULL, NULL, NULL, 1711814400000, 1, 'Thanh toán tiền mặt'),
 ('gd2', 'hd2', 'pt2', 'GD002', 1780000.00, 'PAYMENT', 'BANK123456', 'REF002', 'https://vnpay.vn/pay/hd2', 'QR_CODE_DATA', 1711853600000, 'SUCCESS', 1711850000000, 1, 'Chuyển khoản thành công'),
 ('gd3', 'hd3', 'pt1', 'GD003', 1200000.00, 'PAYMENT', NULL, 'REF003', NULL, NULL, NULL, NULL, 1711860000000, 1, 'Tiền mặt'),

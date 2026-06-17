@@ -11,7 +11,7 @@ import { useNotifications } from '@/services/notificationService';
 
 const props = defineProps({
     show: Boolean,
-    type: String, // 'THUONG_HIEU', 'DANH_MUC', etc.
+    type: String, // 'THUONG_HIEU', etc.
     title: String,
     service: Object
 });

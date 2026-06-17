@@ -49,6 +49,8 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                     </v-btn>
                 </div>
             </div>
+
+            <!-- Top Slot Area -->
             <div v-if="$slots.top" class="table-top">
                 <slot name="top"></slot>
                 <div class="d-flex align-center flex-wrap justify-end gap-2">
@@ -70,58 +72,59 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                         {{ addButtonText }}
                     </v-btn>
                 </div>
+            </div>
 
-                <!-- Main Table Table -->
-                <div class="table-wrapper">
-                    <table class="native-admin-table">
-                        <thead>
-                            <slot name="headers">
-                                <tr>
-                                    <th v-if="selectable" style="width: 50px" class="header-cell text-center px-0">
-                                        <slot name="header-select"></slot>
-                                    </th>
-                                    <th v-for="(header, idx) in headers" :key="idx"
-                                        :style="{ width: header.width || 'auto' }" :class="['header-cell',
-                                            header.align === 'start' ? 'text-left' :
-                                                header.align === 'end' ? 'text-right' : 'text-center']">
-                                        {{ header.text || header }}
-                                    </th>
-                                </tr>
-                            </slot>
-                        </thead>
-                        <tbody v-if="!loading && items.length > 0">
-                            <template v-for="(item, index) in items" :key="item.id ?? index">
-                                <slot name="row" :item="item" :index="index"></slot>
-                            </template>
-                        </tbody>
-                        <tbody v-else>
+            <!-- Main Table -->
+            <div class="table-wrapper">
+                <table class="native-admin-table">
+                    <thead>
+                        <slot name="headers">
                             <tr>
-                                <td :colspan="headers.length || 20" class="empty-state py-16 text-center">
-                                    <div v-if="loading" class="d-flex flex-column align-center">
-                                        <v-progress-circular indeterminate color="primary" size="48" width="6"
-                                            class="mb-4" />
-                                        <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">Đang tải dữ
-                                            liệu...</span>
-                                    </div>
-                                    <div v-else
-                                        class="d-flex flex-column align-center py-12 bg-slate-50/30 rounded-lg mx-4 my-2">
-                                        <v-icon :icon="emptyIcon" size="48"
-                                            style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
-                                        <span class="text-slate-500"
-                                            style="font-size: 14px !important; font-weight: 400 !important;">{{
-                                                emptyText }}</span>
-                                    </div>
-                                </td>
+                                <th v-if="selectable" style="width: 50px" class="header-cell text-center px-0">
+                                    <slot name="header-select"></slot>
+                                </th>
+                                <th v-for="(header, idx) in headers" :key="idx"
+                                    :style="{ width: header.width || 'auto' }" :class="['header-cell',
+                                        header.align === 'start' ? 'text-left' :
+                                            header.align === 'end' ? 'text-right' : 'text-center']">
+                                    {{ header.text || header }}
+                                </th>
                             </tr>
-                        </tbody>
-                    </table>
-                </div>
+                        </slot>
+                    </thead>
+                    <tbody v-if="!loading && items.length > 0">
+                        <template v-for="(item, index) in items" :key="item.id ?? index">
+                            <slot name="row" :item="item" :index="index"></slot>
+                        </template>
+                    </tbody>
+                    <tbody v-else>
+                        <tr>
+                            <td :colspan="headers.length || 20" class="empty-state py-16 text-center">
+                                <div v-if="loading" class="d-flex flex-column align-center">
+                                    <v-progress-circular indeterminate color="primary" size="48" width="6"
+                                        class="mb-4" />
+                                    <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">Đang tải dữ liệu...</span>
+                                </div>
+                                <div v-else
+                                    class="d-flex flex-column align-center py-12 bg-slate-50/30 rounded-lg mx-4 my-2">
+                                    <v-icon :icon="emptyIcon" size="48"
+                                        style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
+                                    <span class="text-slate-500"
+                                        style="font-size: 14px !important; font-weight: 400 !important;">{{
+                                            emptyText }}</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                <!-- Pagination Area -->
-                <div class="pagination-footer">
-                    <slot name="pagination"></slot>
-                </div>
+            <!-- Pagination Area -->
+            <div class="pagination-footer">
+                <slot name="pagination"></slot>
+            </div>
         </v-card>
+    </div>
 </template>
 
 <style scoped>

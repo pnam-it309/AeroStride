@@ -2000,7 +2000,6 @@ const handleSave = async () => {
         try {
             const payload = {
                 idThuongHieu: product.value.idThuongHieu,
-                idDanhMuc: product.value.idDanhMuc,
                 idXuatXu: product.value.idXuatXu,
                 idMucDichChay: product.value.idMucDichChay,
                 idCoGiay: product.value.idCoGiay,

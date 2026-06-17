@@ -48,7 +48,7 @@ public interface AdminSanPhamRepository extends SanPhamRepository, JpaSpecificat
 
     boolean existsByMa(String ma);
 
-    Optional<SanPham> findFirstByThuongHieuIdAndDanhMucIdAndXuatXuIdAndMucDichChayIdAndCoGiayIdAndChatLieuIdAndDeGiayIdAndXoaMemFalse(
-            String idThuongHieu, String idDanhMuc, String idXuatXu, String idMucDichChay, String idCoGiay, String idChatLieu, String idDeGiay
+    Optional<SanPham> findFirstByThuongHieuIdAndXuatXuIdAndMucDichChayIdAndCoGiayIdAndChatLieuIdAndDeGiayIdAndXoaMemFalse(
+            String idThuongHieu, String idXuatXu, String idMucDichChay, String idCoGiay, String idChatLieu, String idDeGiay
     );
 }

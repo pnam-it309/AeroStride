@@ -5,7 +5,7 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Bảng Phân Quyền
-CREATE TABLE phan_quyen (
+CREATE TABLE IF NOT EXISTS phan_quyen (
     id VARCHAR(36) PRIMARY KEY,
     ma_phan_quyen VARCHAR(50) UNIQUE,
     ten_phan_quyen VARCHAR(100),
@@ -19,7 +19,7 @@ CREATE TABLE phan_quyen (
 );
 
 -- Bảng Nhân Viên (có vai_tro: NHAN_VIEN | QUAN_TRI_VIEN)
-CREATE TABLE nhan_vien (
+CREATE TABLE IF NOT EXISTS nhan_vien (
     id VARCHAR(36) PRIMARY KEY,
     id_phan_quyen VARCHAR(36),
     ma_nhan_vien VARCHAR(50) UNIQUE,
@@ -45,7 +45,7 @@ CREATE TABLE nhan_vien (
 );
 
 -- Bảng Địa Chỉ
-CREATE TABLE dia_chi (
+CREATE TABLE IF NOT EXISTS dia_chi (
     id VARCHAR(36) PRIMARY KEY,
     ma_dia_chi VARCHAR(50) UNIQUE,
     tinh VARCHAR(100),
@@ -65,7 +65,7 @@ CREATE TABLE dia_chi (
 );
 
 -- Bảng Khách Hàng (có vai_tro: KHACH_HANG)
-CREATE TABLE khach_hang (
+CREATE TABLE IF NOT EXISTS khach_hang (
     id VARCHAR(36) PRIMARY KEY,
     id_dia_chi VARCHAR(36),
     ma_nguoi_dung VARCHAR(50) UNIQUE,
@@ -88,7 +88,7 @@ CREATE TABLE khach_hang (
 );
 
 -- Bảng Refresh Token (liên kết với khach_hang hoặc nhan_vien)
-CREATE TABLE refresh_token (
+CREATE TABLE IF NOT EXISTS refresh_token (
     id VARCHAR(36) PRIMARY KEY,
     token VARCHAR(512) NOT NULL UNIQUE,
     expiry_date TIMESTAMP NOT NULL,
@@ -99,7 +99,7 @@ CREATE TABLE refresh_token (
 );
 
 -- Các bảng thuộc tính sản phẩm
-CREATE TABLE xuat_xu (
+CREATE TABLE IF NOT EXISTS xuat_xu (
     id VARCHAR(36) PRIMARY KEY,
     ma_xuat_xu VARCHAR(50) UNIQUE,
     ten_xuat_xu VARCHAR(255),
@@ -111,7 +111,7 @@ CREATE TABLE xuat_xu (
     nguoi_cap_nhat VARCHAR(100)
 );
 
-CREATE TABLE muc_dich_chay (
+CREATE TABLE IF NOT EXISTS muc_dich_chay (
     id VARCHAR(36) PRIMARY KEY,
     ma_muc_dich_chay VARCHAR(50) UNIQUE,
     ten_muc_dich_chay VARCHAR(255),
@@ -123,7 +123,7 @@ CREATE TABLE muc_dich_chay (
     nguoi_cap_nhat VARCHAR(100)
 );
 
-CREATE TABLE thuong_hieu (
+CREATE TABLE IF NOT EXISTS thuong_hieu (
     id VARCHAR(36) PRIMARY KEY,
     ma_thuong_hieu VARCHAR(50) UNIQUE,
     ten_thuong_hieu VARCHAR(255),
@@ -135,7 +135,7 @@ CREATE TABLE thuong_hieu (
     nguoi_cap_nhat VARCHAR(100)
 );
 
-CREATE TABLE co_giay (
+CREATE TABLE IF NOT EXISTS co_giay (
     id VARCHAR(36) PRIMARY KEY,
     ma_co_giay VARCHAR(50) UNIQUE,
     ten_co_giay VARCHAR(255),
@@ -147,7 +147,7 @@ CREATE TABLE co_giay (
     nguoi_cap_nhat VARCHAR(100)
 );
 
-CREATE TABLE chat_lieu (
+CREATE TABLE IF NOT EXISTS chat_lieu (
     id VARCHAR(36) PRIMARY KEY,
     ma_chat_lieu VARCHAR(50) UNIQUE,
     ten_chat_lieu VARCHAR(255),
@@ -159,7 +159,7 @@ CREATE TABLE chat_lieu (
     nguoi_cap_nhat VARCHAR(100)
 );
 
-CREATE TABLE de_giay (
+CREATE TABLE IF NOT EXISTS de_giay (
     id VARCHAR(36) PRIMARY KEY,
     ma_de_giay VARCHAR(50) UNIQUE,
     ten_de_giay VARCHAR(255),
@@ -171,7 +171,7 @@ CREATE TABLE de_giay (
     nguoi_cap_nhat VARCHAR(100)
 );
 
-CREATE TABLE kich_thuoc (
+CREATE TABLE IF NOT EXISTS kich_thuoc (
     id VARCHAR(36) PRIMARY KEY,
     ma_kich_thuoc VARCHAR(50) UNIQUE,
     ten_kich_thuoc VARCHAR(255),
@@ -184,7 +184,7 @@ CREATE TABLE kich_thuoc (
     nguoi_cap_nhat VARCHAR(100)
 );
 
-CREATE TABLE mau_sac (
+CREATE TABLE IF NOT EXISTS mau_sac (
     id VARCHAR(36) PRIMARY KEY,
     ma_mau_sac VARCHAR(50) UNIQUE,
     ten_mau_sac VARCHAR(255),
@@ -198,7 +198,7 @@ CREATE TABLE mau_sac (
 );
 
 -- Bảng Sản Phẩm
-CREATE TABLE san_pham (
+CREATE TABLE IF NOT EXISTS san_pham (
     id VARCHAR(36) PRIMARY KEY,
     id_thuong_hieu VARCHAR(36),
     id_xuat_xu VARCHAR(36),
@@ -210,7 +210,7 @@ CREATE TABLE san_pham (
     ten_san_pham VARCHAR(255),
     gioi_tinh_khach_hang VARCHAR(20) NOT NULL,
     hinh_anh VARCHAR(255),
-    mo_ta_ngan TEXT,
+    mo_ta TEXT,
     mo_ta_chi_tiet TEXT,
     trang_thai INT,
     xoa_mem BIT DEFAULT 0,
@@ -227,7 +227,7 @@ CREATE TABLE san_pham (
 );
 
 -- Bảng Chi Tiết Sản Phẩm
-CREATE TABLE chi_tiet_san_pham (
+CREATE TABLE IF NOT EXISTS chi_tiet_san_pham (
     id VARCHAR(36) PRIMARY KEY,
     id_san_pham VARCHAR(36),
     id_kich_thuoc VARCHAR(36),
@@ -249,7 +249,7 @@ CREATE TABLE chi_tiet_san_pham (
 );
 
 -- Bảng Ảnh Chi Tiết Sản Phẩm
-CREATE TABLE anh_chi_tiet_san_pham (
+CREATE TABLE IF NOT EXISTS anh_chi_tiet_san_pham (
     id VARCHAR(36) PRIMARY KEY,
     id_chi_tiet_san_pham VARCHAR(36),
     duong_dan_anh VARCHAR(500),
@@ -265,7 +265,7 @@ CREATE TABLE anh_chi_tiet_san_pham (
 );
 
 -- Bảng Đợt Giảm Giá
-CREATE TABLE dot_giam_gia (
+CREATE TABLE IF NOT EXISTS dot_giam_gia (
     id VARCHAR(36) PRIMARY KEY,
     ma_dot_giam_gia VARCHAR(50) UNIQUE,
     ten_dot_giam_gia VARCHAR(255),
@@ -284,7 +284,7 @@ CREATE TABLE dot_giam_gia (
 );
 
 -- Bảng Chi Tiết Đợt Giảm Giá
-CREATE TABLE chi_tiet_dot_giam_gia (
+CREATE TABLE IF NOT EXISTS chi_tiet_dot_giam_gia (
     id VARCHAR(36) PRIMARY KEY,
     id_dot_giam_gia VARCHAR(36),
     id_chi_tiet_san_pham VARCHAR(36),
@@ -299,7 +299,7 @@ CREATE TABLE chi_tiet_dot_giam_gia (
 );
 
 -- Bảng Phiếu Giảm Giá
-CREATE TABLE phieu_giam_gia (
+CREATE TABLE IF NOT EXISTS phieu_giam_gia (
     id VARCHAR(36) PRIMARY KEY,
     ma_phieu_giam_gia VARCHAR(50) UNIQUE,
     ten_phieu VARCHAR(255),
@@ -321,7 +321,7 @@ CREATE TABLE phieu_giam_gia (
 );
 
 -- Bảng Phiếu Giảm Giá Cá Nhân
-CREATE TABLE phieu_giam_gia_ca_nhan (
+CREATE TABLE IF NOT EXISTS phieu_giam_gia_ca_nhan (
     id VARCHAR(36) PRIMARY KEY,
     id_khach_hang VARCHAR(36),
     id_phieu_giam_gia VARCHAR(36),
@@ -340,7 +340,7 @@ CREATE TABLE phieu_giam_gia_ca_nhan (
 );
 
 -- Bảng Hóa Đơn
-CREATE TABLE hoa_don (
+CREATE TABLE IF NOT EXISTS hoa_don (
     id VARCHAR(36) PRIMARY KEY,
     id_phieu_giam_gia VARCHAR(36),
     id_phieu_giam_gia_ca_nhan VARCHAR(36),
@@ -368,7 +368,7 @@ CREATE TABLE hoa_don (
 );
 
 -- Bảng Hóa Đơn Chi Tiết
-CREATE TABLE hoa_don_chi_tiet (
+CREATE TABLE IF NOT EXISTS hoa_don_chi_tiet (
     id VARCHAR(36) PRIMARY KEY,
     id_hoa_don VARCHAR(36),
     id_chi_tiet_san_pham VARCHAR(36),
@@ -385,19 +385,19 @@ CREATE TABLE hoa_don_chi_tiet (
 );
 
 -- Bảng Lịch Sử Trạng Thái Hóa Đơn
-CREATE TABLE lich_su_trang_thai_hoa_don (
+CREATE TABLE IF NOT EXISTS lich_su_trang_thai_hoa_don (
     id VARCHAR(36) PRIMARY KEY,
     id_hoa_don VARCHAR(36),
     trang_thai_cu INT,
     trang_thai_moi INT,
     ghi_chu TEXT,
     nguoi_thuc_hien VARCHAR(100),
-    thoi_gian BIGINT,
+    ngay_tao BIGINT NOT NULL,
     FOREIGN KEY (id_hoa_don) REFERENCES hoa_don(id)
 );
 
 -- Bảng Phương Thức Thanh Toán
-CREATE TABLE phuong_thuc_thanh_toan (
+CREATE TABLE IF NOT EXISTS phuong_thuc_thanh_toan (
     id VARCHAR(36) PRIMARY KEY,
     ma_phuong_thuc_thanh_toan VARCHAR(50) UNIQUE,
     ten_phuong_thuc_thanh_toan VARCHAR(255),
@@ -409,7 +409,7 @@ CREATE TABLE phuong_thuc_thanh_toan (
 );
 
 -- Bảng Giao Dịch Thanh Toán
-CREATE TABLE giao_dich_thanh_toan (
+CREATE TABLE IF NOT EXISTS giao_dich_thanh_toan (
     id VARCHAR(36) PRIMARY KEY,
     id_hoa_don VARCHAR(36),
     id_phuong_thuc_thanh_toan VARCHAR(36),
@@ -422,7 +422,7 @@ CREATE TABLE giao_dich_thanh_toan (
     du_lieu_qr TEXT,
     thoi_gian_het_han BIGINT,
     du_lieu_phan_hoi TEXT,
-    thoi_gian_tao BIGINT,
+    ngay_tao BIGINT,
     thoi_gian_cap_nhat BIGINT,
     trang_thai INT,
     ghi_chu TEXT,
@@ -431,7 +431,7 @@ CREATE TABLE giao_dich_thanh_toan (
 );
 
 -- Bảng Ca Làm
-CREATE TABLE ca_lam (
+CREATE TABLE IF NOT EXISTS ca_lam (
     id VARCHAR(36) PRIMARY KEY,
     ten_ca VARCHAR(255),
     gio_bat_dau TIME,
@@ -446,7 +446,7 @@ CREATE TABLE ca_lam (
 );
 
 -- Bảng Lịch Làm Việc
-CREATE TABLE lich_lam_viec (
+CREATE TABLE IF NOT EXISTS lich_lam_viec (
     id VARCHAR(36) PRIMARY KEY,
     id_nhan_vien VARCHAR(36),
     id_ca_lam VARCHAR(36),

@@ -163,9 +163,8 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
     @Override
     public DuplicateAttributeResponse checkDuplicateAttributes(CheckDuplicateAttributesRequest request) {
-        Optional<SanPham> duplicate = adminSanPhamRepository.findFirstByThuongHieuIdAndDanhMucIdAndXuatXuIdAndMucDichChayIdAndCoGiayIdAndChatLieuIdAndDeGiayIdAndXoaMemFalse(
+        Optional<SanPham> duplicate = adminSanPhamRepository.findFirstByThuongHieuIdAndXuatXuIdAndMucDichChayIdAndCoGiayIdAndChatLieuIdAndDeGiayIdAndXoaMemFalse(
                 request.getIdThuongHieu(),
-                request.getIdDanhMuc(),
                 request.getIdXuatXu(),
                 request.getIdMucDichChay(),
                 request.getIdCoGiay(),

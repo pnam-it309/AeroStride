@@ -10,9 +10,6 @@ public class CheckDuplicateAttributesRequest {
     @NotBlank(message = "Thương hiệu không được để trống")
     private String idThuongHieu;
 
-    @NotBlank(message = "Danh mục không được để trống")
-    private String idDanhMuc;
-
     @NotBlank(message = "Xuất xứ không được để trống")
     private String idXuatXu;
 
