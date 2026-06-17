@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { dichVuThongKe } from '@/services/admin/dichVuThongKe';
 import apexchart from 'vue3-apexcharts';
@@ -8,6 +8,7 @@ const loading = ref(false);
 const selectedPeriod = ref('month');
 const selectedYear = ref(new Date().getFullYear());
 const selectedMonth = ref(new Date().getMonth() + 1);
+const selectedChartTab = ref('revenue');
 
 const revenueStats = ref({
     totalRevenue: 0,
@@ -113,6 +114,73 @@ const areaChartOptions = ref({
 });
 
 
+
+const statusBarOptions = ref({
+    chart: {
+        type: 'bar',
+        height: 320,
+        toolbar: {
+            show: false
+        },
+        fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
+    },
+    colors: ['#4f939c', '#e39b32', '#6fba83', '#c9473d'],
+    plotOptions: {
+        bar: {
+            distributed: true,
+            borderRadius: 4,
+            columnWidth: '48%'
+        }
+    },
+    dataLabels: {
+        enabled: false
+    },
+    legend: {
+        show: false
+    },
+    grid: {
+        borderColor: '#e5e7eb',
+        strokeDashArray: 4
+    },
+    xaxis: {
+        categories: ['Chờ xác nhận', 'Đang giao hàng', 'Đã hoàn thành', 'Đã hủy bỏ'],
+        axisBorder: {
+            show: true,
+            color: '#e5e7eb'
+        },
+        axisTicks: {
+            show: false
+        },
+        labels: {
+            style: {
+                colors: '#334155',
+                fontSize: '12px',
+                fontWeight: 500
+            }
+        }
+    },
+    yaxis: {
+        min: 0,
+        labels: {
+            formatter: function (value) {
+                return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(value);
+            },
+            style: {
+                colors: '#64748b',
+                fontSize: '12px',
+                fontWeight: 500
+            }
+        }
+    },
+    tooltip: {
+        y: {
+            formatter: function (val) {
+                return `${new Intl.NumberFormat('vi-VN').format(val)} đơn`;
+            }
+        },
+        theme: 'light'
+    }
+});
 
 const periodOptions = [
     { title: 'Hôm nay', value: 'today' },
@@ -265,293 +333,750 @@ const getGrowthIcon = (growth) => {
     return growth >= 0 ? 'mdi-trending-up' : 'mdi-trending-down';
 };
 
+const statusItems = [
+    { label: 'Chờ xác nhận', valueKey: 'donHangChoXacNhan', icon: 'mdi-clock-outline', color: 'warning' },
+    { label: 'Đang giao hàng', valueKey: 'donHangDangGiao', icon: 'mdi-truck-fast-outline', color: 'info' },
+    { label: 'Đã hoàn thành', valueKey: 'donHangHoanThanh', icon: 'mdi-check-circle-outline', color: 'success' },
+    { label: 'Đã hủy bỏ', valueKey: 'donHangDaHuy', icon: 'mdi-close-circle-outline', color: 'error' }
+];
+
+const statusChartItems = computed(() => [
+    { label: 'Chờ xác nhận', amount: 0, count: revenueStats.value.donHangChoXacNhan, active: true },
+    { label: 'Đang giao hàng', amount: 0, count: revenueStats.value.donHangDangGiao },
+    { label: 'Đã hoàn thành', amount: revenueStats.value.totalRevenue, count: revenueStats.value.donHangHoanThanh },
+    { label: 'Đã hủy bỏ', amount: 0, count: revenueStats.value.donHangDaHuy }
+]);
+
+const statusBarSeries = computed(() => [
+    {
+        name: 'Số đơn',
+        data: [
+            revenueStats.value.donHangChoXacNhan,
+            revenueStats.value.donHangDangGiao,
+            revenueStats.value.donHangHoanThanh,
+            revenueStats.value.donHangDaHuy
+        ]
+    }
+]);
+
+const kpiCards = [
+    {
+        title: 'Tổng doanh thu',
+        valueKey: 'totalRevenue',
+        icon: 'mdi-currency-usd',
+        color: 'primary',
+        tone: 'blue',
+        formatter: formatCurrency,
+        description: 'Dựa trên đơn giao thành công'
+    },
+    {
+        title: 'Tổng đơn hàng',
+        valueKey: 'totalOrders',
+        icon: 'mdi-shopping-outline',
+        color: 'success',
+        tone: 'green',
+        formatter: formatNumber,
+        description: 'Trong thời gian này'
+    },
+    {
+        title: 'Giá trị trung bình',
+        valueKey: 'averageOrderValue',
+        icon: 'mdi-chart-line',
+        color: 'info',
+        tone: 'cyan',
+        formatter: formatCurrency,
+        description: 'Mỗi đơn hàng thành công'
+    },
+    {
+        title: 'Tổng khách hàng',
+        valueKey: 'tongKhachHang',
+        icon: 'mdi-account-group',
+        color: 'warning',
+        tone: 'orange',
+        formatter: formatNumber,
+        description: 'Đăng ký trên hệ thống'
+    }
+];
+
 onMounted(() => {
     loadStatistics();
 });
 </script>
 <template>
     <div class="pa-6 font-body thong-ke-container">
-        <!-- Breadcrumbs -->
-        <AdminBreadcrumbs
-            :items="[
-                { title: 'Quản lý bán hàng', disabled: false, href: '#' },
-                { title: 'Thống kê', disabled: true }
-            ]"
-        />
+        <AdminBreadcrumbs :items="[
+            { title: 'Quản lý bán hàng', disabled: false, href: '#' },
+            { title: 'Thống kê', disabled: true }
+        ]" />
 
-        <div class="mb-4"></div>
-
-        <!-- Period Selector -->
-        <v-card class="premium-card mb-6">
-            <v-card-text class="pa-6">
-                <v-row align="center">
-                    <v-col cols="12" md="3">
+        <section class="stats-shell mt-4">
+            <div class="stats-toolbar">
+                <div class="stats-filters">
+                    <div class="stats-filter-field">
                         <div class="filter-field-label">Kỳ thống kê</div>
-                        <v-select
-                            v-model="selectedPeriod"
-                            :items="periodOptions"
-                            variant="outlined"
-                            density="compact"
-                            hide-details
-                            @update:model-value="loadStatistics"
-                        ></v-select>
-                    </v-col>
-                    <v-col cols="12" md="2">
+                        <v-select v-model="selectedPeriod" :items="periodOptions" variant="outlined" density="compact"
+                            hide-details class="stats-filter" @update:model-value="loadStatistics" />
+                    </div>
+                    <div class="stats-filter-field stats-filter-field-year">
                         <div class="filter-field-label">Năm</div>
-                        <v-select
-                            v-model="selectedYear"
+                        <v-select v-model="selectedYear"
                             :items="Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i)"
-                            variant="outlined"
-                            density="compact"
-                            hide-details
-                            @update:model-value="loadStatistics"
-                        ></v-select>
-                    </v-col>
-                    <v-col cols="12" md="2" v-if="selectedPeriod === 'month'">
+                            variant="outlined" density="compact" hide-details class="stats-filter stats-filter-year"
+                            @update:model-value="loadStatistics" />
+                    </div>
+                    <div v-if="selectedPeriod === 'month'" class="stats-filter-field stats-filter-field-year">
                         <div class="filter-field-label">Tháng</div>
-                        <v-select
-                            v-model="selectedMonth"
+                        <v-select v-model="selectedMonth"
                             :items="Array.from({ length: 12 }, (_, i) => ({ title: `Tháng ${i + 1}`, value: i + 1 }))"
-                            variant="outlined"
-                            density="compact"
-                            hide-details
-                            @update:model-value="loadStatistics"
-                        ></v-select>
-                    </v-col>
-                    <v-col cols="12" md="auto" class="ml-auto align-self-end">
-                        <v-btn color="primary" variant="flat" @click="loadStatistics" class="px-6" height="40">
-                            <v-icon start size="18">mdi-refresh</v-icon>
-                            Cập nhật dữ liệu
-                        </v-btn>
-                    </v-col>
-                </v-row>
-            </v-card-text>
-        </v-card>
+                            variant="outlined" density="compact" hide-details class="stats-filter stats-filter-year"
+                            @update:model-value="loadStatistics" />
+                    </div>
+                    <v-btn color="primary" variant="flat" class="stats-refresh-btn px-6" height="40" :loading="loading"
+                        @click="loadStatistics">
+                        <v-icon start size="18">mdi-refresh</v-icon>
+                        Cập nhật dữ liệu
+                    </v-btn>
+                </div>
+            </div>
 
-        <!-- Revenue Statistics -->
-        <v-row class="mb-2">
-            <v-col cols="12" sm="6" md="3">
-                <v-card class="premium-card pa-6 h-100">
-                    <div class="d-flex align-center justify-space-between mb-4">
-                        <div class="icon-blob bg-primary-light">
-                            <v-icon color="primary">mdi-currency-usd</v-icon>
-                        </div>
+            <div class="kpi-grid">
+                <article v-for="item in kpiCards" :key="item.valueKey" class="kpi-card">
+                    <div class="kpi-icon" :class="`kpi-icon-${item.tone}`">
+                        <v-icon :color="item.color" size="22">{{ item.icon }}</v-icon>
                     </div>
-                    <div>
-                        <p class="text-caption text-slate-500 font-weight-medium text-uppercase mb-1 tracking-wider">Tổng doanh thu</p>
-                        <p class="text-h5 font-weight-bold text-dark">{{ formatCurrency(revenueStats.totalRevenue) }}</p>
-                        <p class="text-caption text-slate-400 mt-2">Dựa trên đơn giao thành công</p>
-                    </div>
-                </v-card>
-            </v-col>
+                    <p>{{ item.title }}</p>
+                    <strong>{{ item.formatter(revenueStats[item.valueKey]) }}</strong>
+                    <small>{{ item.description }}</small>
+                </article>
+            </div>
 
-            <v-col cols="12" sm="6" md="3">
-                <v-card class="premium-card pa-6 h-100">
-                    <div class="d-flex align-center justify-space-between mb-4">
-                        <div class="icon-blob bg-success-light">
-                            <v-icon color="success">mdi-shopping</v-icon>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="text-caption text-slate-500 font-weight-medium text-uppercase mb-1 tracking-wider">Tổng đơn hàng</p>
-                        <p class="text-h5 font-weight-bold text-dark">{{ formatNumber(revenueStats.totalOrders) }}</p>
-                        <p class="text-caption text-slate-400 mt-2">Trong thời gian này</p>
-                    </div>
-                </v-card>
-            </v-col>
+            <section class="stats-panel trend-panel">
+                <div class="stats-tabs">
+                    <button type="button" :class="{ active: selectedChartTab === 'revenue' }"
+                        @click="selectedChartTab = 'revenue'">
+                        XU HƯỚNG DOANH THU (NĂM {{ selectedYear }})
+                    </button>
+                    <button type="button" :class="{ active: selectedChartTab === 'status' }"
+                        @click="selectedChartTab = 'status'">
+                        Trạng thái
+                    </button>
+                </div>
 
-            <v-col cols="12" sm="6" md="3">
-                <v-card class="premium-card pa-6 h-100">
-                    <div class="d-flex align-center justify-space-between mb-4">
-                        <div class="icon-blob bg-info-light">
-                            <v-icon color="info">mdi-chart-line</v-icon>
-                        </div>
+                <div v-if="selectedChartTab === 'revenue'" class="tab-panel">
+                    <div v-if="loading" class="panel-loader panel-loader-tall">
+                        <v-progress-circular indeterminate color="primary" />
                     </div>
-                    <div>
-                        <p class="text-caption text-slate-500 font-weight-medium text-uppercase mb-1 tracking-wider">Giá trị trung bình</p>
-                        <p class="text-h5 font-weight-bold text-dark">{{ formatCurrency(revenueStats.averageOrderValue) }}</p>
-                        <p class="text-caption text-slate-400 mt-2">Mỗi đơn hàng thành công</p>
+                    <apexchart v-else type="area" height="320" :options="areaChartOptions" :series="areaChartSeries" />
+                </div>
+
+                <div v-else class="tab-panel">
+                    <div v-if="loading" class="panel-loader panel-loader-tall">
+                        <v-progress-circular indeterminate color="primary" />
                     </div>
-                </v-card>
-            </v-col>
-
-            <v-col cols="12" sm="6" md="3">
-                <v-card class="premium-card pa-6 h-100">
-                    <div class="d-flex align-center justify-space-between mb-4">
-                        <div class="icon-blob bg-warning-light">
-                            <v-icon color="warning">mdi-account-group</v-icon>
+                    <div v-else class="status-chart-wrap">
+                        <div class="status-summary-row">
+                            <article v-for="item in statusChartItems" :key="item.label" class="status-summary-item"
+                                :class="{ active: item.active }">
+                                <span>{{ item.label }}</span>
+                                <strong>{{ formatCurrency(item.amount) }}</strong>
+                                <small>{{ formatNumber(item.count) }} đơn</small>
+                            </article>
                         </div>
+                        <apexchart type="bar" height="320" :options="statusBarOptions" :series="statusBarSeries" />
                     </div>
-                    <div>
-                        <p class="text-caption text-slate-500 font-weight-medium text-uppercase mb-1 tracking-wider">Tổng khách hàng</p>
-                        <p class="text-h5 font-weight-bold text-dark">{{ formatNumber(revenueStats.tongKhachHang) }}</p>
-                        <p class="text-caption text-slate-400 mt-2">Đăng ký trên hệ thống</p>
+                </div>
+            </section>
+
+            <div class="split-grid">
+                <section class="stats-panel top-products-panel">
+                    <div class="simple-card-heading">
+                        <h2>SẢN PHẨM BÁN CHẠY</h2>
+                        <v-icon color="#0f172a" size="22">mdi-crown-outline</v-icon>
                     </div>
-                </v-card>
-            </v-col>
-        </v-row>
-
-        <!-- Order Status Summary -->
-        <v-row class="mb-4">
-            <v-col cols="12">
-                <v-card class="premium-card pa-4">
-                    <div class="d-flex flex-wrap align-center justify-space-around py-2" style="gap: 16px">
-                        <div class="d-flex align-center">
-                            <v-badge color="warning" :content="formatNumber(revenueStats.donHangChoXacNhan)" inline class="mr-2"></v-badge>
-                            <span class="text-caption text-slate-500 font-weight-medium text-uppercase tracking-wider">Chờ xác nhận</span>
-                        </div>
-                        <v-divider vertical class="mx-2 d-none d-sm-block" style="height: 24px"></v-divider>
-                        <div class="d-flex align-center">
-                            <v-badge color="info" :content="formatNumber(revenueStats.donHangDangGiao)" inline class="mr-2"></v-badge>
-                            <span class="text-caption text-slate-500 font-weight-medium text-uppercase tracking-wider">Đang giao hàng</span>
-                        </div>
-                        <v-divider vertical class="mx-2 d-none d-sm-block" style="height: 24px"></v-divider>
-                        <div class="d-flex align-center">
-                            <v-badge color="success" :content="formatNumber(revenueStats.donHangHoanThanh)" inline class="mr-2"></v-badge>
-                            <span class="text-caption text-slate-500 font-weight-medium text-uppercase tracking-wider">Đã hoàn thành</span>
-                        </div>
-                        <v-divider vertical class="mx-2 d-none d-sm-block" style="height: 24px"></v-divider>
-                        <div class="d-flex align-center">
-                            <v-badge color="error" :content="formatNumber(revenueStats.donHangDaHuy)" inline class="mr-2"></v-badge>
-                            <span class="text-caption text-slate-500 font-weight-medium text-uppercase tracking-wider">Đã hủy bỏ</span>
-                        </div>
+                    <div v-if="loading" class="panel-loader">
+                        <v-progress-circular indeterminate color="primary" />
                     </div>
-                </v-card>
-            </v-col>
-        </v-row>
-
-        <div class="mb-4"></div>
-
-        <!-- Row 1: Premium Interactive Charts -->
-        <v-row class="mb-6">
-            <!-- Area Chart: Monthly Revenue Trend -->
-            <v-col cols="12" lg="8">
-                <v-card class="premium-card h-100">
-                    <div class="card-title-bar">
-                        <span class="font-weight-bold text-dark text-uppercase" style="font-size: 13px; letter-spacing: 0.05em"
-                            >Xu hướng doanh thu (Năm {{ selectedYear }})</span
-                        >
-                        <v-icon color="slate-400">mdi-chart-areaspline</v-icon>
+                    <div v-else-if="topProducts.length === 0" class="empty-state">Không có dữ liệu trong thời gian này
                     </div>
-                    <v-card-text class="pa-4">
-                        <div v-if="loading" class="d-flex align-center justify-center" style="height: 320px">
-                            <v-progress-circular indeterminate color="primary"></v-progress-circular>
-                        </div>
-                        <div v-else>
-                            <apexchart type="area" height="320" :options="areaChartOptions" :series="areaChartSeries"></apexchart>
-                        </div>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-
-
-        </v-row>
-
-        <!-- Row 2: Detailed Lists & Grid -->
-        <v-row>
-            <!-- Top Products List -->
-            <v-col cols="12" lg="6">
-                <v-card class="premium-card h-100">
-                    <div class="card-title-bar">
-                        <span class="font-weight-bold text-dark text-uppercase" style="font-size: 13px; letter-spacing: 0.05em"
-                            >Sản phẩm bán chạy</span
-                        >
-                        <v-icon color="slate-400">mdi-crown-outline</v-icon>
-                    </div>
-                    <v-list class="pa-4">
-                        <div v-if="loading" class="d-flex align-center justify-center py-12">
-                            <v-progress-circular indeterminate color="primary"></v-progress-circular>
-                        </div>
-                        <template v-else>
-                            <div v-if="topProducts.length === 0" class="text-center text-slate-400 py-12">
-                                Không có dữ liệu trong thời gian này
+                    <div v-else class="top-products">
+                        <div v-for="(product, index) in topProducts" :key="product.name" class="product-row">
+                            <span class="rank">{{ index + 1 }}</span>
+                            <div class="product-info">
+                                <strong>{{ product.name }}</strong>
+                                <small>{{ formatNumber(product.quantity) }} sản phẩm · {{
+                                    formatCurrency(product.revenue) }}</small>
                             </div>
-                            <v-list-item
-                                v-for="(product, index) in topProducts"
-                                :key="product.name"
-                                class="rounded-lg mb-2 bg-slate-50"
-                                v-else
-                            >
-                                <template v-slot:prepend>
-                                    <div class="text-h6 font-weight-bold text-primary mr-4" style="min-width: 24px">{{ index + 1 }}</div>
-                                </template>
-                                <v-list-item-title class="font-weight-medium text-slate-900">{{ product.name }}</v-list-item-title>
-                                <v-list-item-subtitle class="font-weight-medium">
-                                    {{ formatNumber(product.quantity) }} sản phẩm <span class="mx-1">•</span>
-                                    {{ formatCurrency(product.revenue) }}
-                                </v-list-item-subtitle>
-                                <template v-slot:append>
-                                    <v-chip
-                                        size="x-small"
-                                        :color="getGrowthColor(product.growth)"
-                                        variant="tonal"
-                                        class="font-weight-medium px-2"
-                                    >
-                                        {{ product.growth >= 0 ? '+' : '' }}{{ product.growth }}%
-                                    </v-chip>
-                                </template>
-                            </v-list-item>
-                        </template>
-                    </v-list>
-                </v-card>
-            </v-col>
-
-            <!-- Monthly Revenue Detailed Grid -->
-            <v-col cols="12" lg="6">
-                <v-card class="premium-card h-100">
-                    <div class="card-title-bar">
-                        <span class="font-weight-bold text-dark text-uppercase" style="font-size: 13px; letter-spacing: 0.05em"
-                            >Chi tiết doanh thu tháng (Năm {{ selectedYear }})</span
-                        >
-                        <v-icon color="slate-400">mdi-calendar-month</v-icon>
-                    </div>
-                    <v-card-text class="pa-4">
-                        <div v-if="loading" class="d-flex align-center justify-center py-12">
-                            <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                            <v-chip size="x-small" :color="getGrowthColor(product.growth)" variant="tonal">
+                                <v-icon start size="14">{{ getGrowthIcon(product.growth) }}</v-icon>
+                                {{ product.growth >= 0 ? '+' : '' }}{{ product.growth }}%
+                            </v-chip>
                         </div>
-                        <v-row v-else class="ma-0" style="gap: 8px 0">
-                            <v-col v-for="month in monthlyRevenue" :key="month.month" cols="6" sm="4" md="4" class="pa-1">
-                                <div
-                                    class="pa-3 text-center rounded-lg border bg-slate-50 hover-addr-card h-100 d-flex flex-column justify-center"
-                                >
-                                    <div
-                                        class="text-caption text-slate-500 font-weight-medium text-uppercase mb-1 tracking-wider"
-                                        style="font-size: 10px !important"
-                                    >
-                                        {{ month.month }}
-                                    </div>
-                                    <div
-                                        class="text-subtitle-2 font-weight-bold text-dark"
-                                        style="font-size: 12px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis"
-                                    >
-                                        {{ formatCurrency(month.revenue) }}
-                                    </div>
-                                </div>
-                            </v-col>
-                        </v-row>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-        </v-row>
+                    </div>
+                </section>
+
+                <section class="stats-panel category-share-panel">
+                    <div class="simple-card-heading">
+                        <h2>TỶ TRỌNG THEO DANH MỤC</h2>
+                        <v-icon color="#0f172a" size="22">mdi-chart-donut</v-icon>
+                    </div>
+                    <div v-if="loading" class="panel-loader">
+                        <v-progress-circular indeterminate color="primary" />
+                    </div>
+                    <div v-else-if="donutChartSeries.length === 0" class="empty-state">Không có dữ liệu trong thời gian
+                        này</div>
+                    <div v-else class="category-chart-body">
+                        <apexchart type="donut" height="300" :options="donutChartOptions" :series="donutChartSeries" />
+                    </div>
+                </section>
+            </div>
+
+            <section class="stats-panel monthly-detail-panel">
+                <div class="simple-card-heading">
+                    <h2>CHI TIẾT DOANH THU THÁNG (NĂM {{ selectedYear }})</h2>
+                    <v-icon color="#0f172a" size="22">mdi-calendar-month</v-icon>
+                </div>
+                <div v-if="loading" class="panel-loader">
+                    <v-progress-circular indeterminate color="primary" />
+                </div>
+                <div v-else class="month-grid">
+                    <div v-for="month in monthlyRevenue" :key="month.month" class="month-cell">
+                        <span>{{ month.month }}</span>
+                        <strong>{{ formatCurrency(month.revenue) }}</strong>
+                    </div>
+                </div>
+            </section>
+        </section>
     </div>
 </template>
 
 <style scoped>
-.bg-info-light {
-    background: #e0f2fe;
-}
-.bg-warning-light {
-    background: #fff7ed;
-}
-.bg-primary-light {
-    background: #eff6ff;
-}
-.bg-success-light {
-    background: #ecfdf5;
-}
-
 .thong-ke-container {
     height: 100%;
     overflow-y: auto !important;
+    background: #f6f7fb;
+}
+
+.stats-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.stats-toolbar,
+.kpi-card,
+.stats-panel {
+    border: 1px solid #e4e8f0;
+    background: #ffffff;
+    box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+.stats-toolbar {
+    display: flex;
+    align-items: flex-end;
+    padding: 14px 18px;
+    border-radius: 12px;
+}
+
+.stats-title-tabs,
+.section-label {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.stats-title-tabs span,
+.section-label {
+    padding: 11px 14px;
+}
+
+.stats-title-tabs span+span {
+    border-left: 1px solid #e2e8f0;
+}
+
+.stats-filters {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.stats-filter-field {
+    flex: 0 0 252px;
+    width: 252px;
+    max-width: 252px;
+}
+
+.stats-filter-field-year {
+    flex: 0 0 164px;
+    width: 164px;
+    max-width: 164px;
+}
+
+.filter-field-label {
+    margin-bottom: 6px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.stats-filter {
+    width: 100%;
+}
+
+.stats-filter-year {
+    width: 100%;
+}
+
+.stats-refresh-btn {
+    margin-left: auto;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0;
+    min-width: 168px;
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.kpi-card {
+    min-height: 120px;
+    padding: 20px 22px;
+    border-radius: 12px;
+}
+
+.kpi-icon {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    margin-bottom: 18px;
+    place-items: center;
+    border-radius: 50%;
+    background: #f3f6fb;
+}
+
+.kpi-icon-blue {
+    background: #eef4ff;
+}
+
+.kpi-icon-green {
+    background: #dcfce7;
+}
+
+.kpi-icon-cyan {
+    background: #e0f7ff;
+}
+
+.kpi-icon-orange {
+    background: #fff3df;
+}
+
+.kpi-card p {
+    margin: 0 0 8px;
+    color: #111827;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.kpi-card strong {
+    display: block;
+    color: #0f172a;
+    font-size: 21px;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.kpi-card small {
+    display: block;
+    margin-top: 8px;
+    color: #111827;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+.stats-panel {
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.trend-panel {
+    padding: 0;
+    overflow: hidden;
+}
+
+.stats-tabs {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #eef2f7;
+    background: #f8fafc;
+}
+
+.stats-tabs button {
+    min-height: 48px;
+    padding: 0 22px;
+    border: 0;
+    border-right: 1px solid #eef2f7;
+    background: transparent;
+    color: #475569;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.stats-tabs button.active {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: inset 0 -2px 0 #4f46e5;
+}
+
+.tab-panel {
+    padding: 16px;
+}
+
+.status-chart-wrap {
+    border-top: 0;
+}
+
+.status-summary-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    padding: 14px 16px 16px;
+    border-bottom: 0;
+}
+
+.status-summary-item {
+    position: relative;
+    min-height: 86px;
+    padding: 14px 16px;
+    border: 1px solid #eef2f7;
+    border-radius: 12px;
+    background: #fbfcff;
+    text-align: right;
+}
+
+.status-summary-item span {
+    display: block;
+    margin-bottom: 8px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-summary-item strong {
+    display: block;
+    color: #0f172a;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.status-summary-item small {
+    display: block;
+    margin-top: 6px;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 16px 0 10px;
+}
+
+.panel-heading.compact {
+    align-items: center;
+}
+
+.panel-heading h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.panel-heading p {
+    margin: 4px 0 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.simple-card-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.simple-card-heading h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.top-products-panel,
+.category-share-panel,
+.monthly-detail-panel {
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.top-products-panel .simple-card-heading,
+.category-share-panel .simple-card-heading,
+.monthly-detail-panel .simple-card-heading {
+    min-height: 52px;
+    margin-bottom: 0;
+    padding: 0 22px;
+    border-bottom: 1px solid #e7edf5;
+    background: #f8fafc;
+}
+
+.top-products-panel .simple-card-heading h2,
+.category-share-panel .simple-card-heading h2,
+.monthly-detail-panel .simple-card-heading h2 {
+    font-size: 13px;
+    letter-spacing: 0.03em;
+}
+
+.top-products-panel .panel-loader,
+.top-products-panel .empty-state,
+.top-products-panel .top-products,
+.category-share-panel .panel-loader,
+.category-share-panel .empty-state {
+    min-height: 310px;
+}
+
+.top-products-panel .empty-state,
+.category-share-panel .empty-state {
+    color: #111827;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.top-products-panel .top-products {
+    padding: 18px 20px;
+}
+
+.category-chart-body {
+    min-height: 310px;
+    padding: 18px 16px 0;
+}
+
+.monthly-detail-panel .panel-loader {
+    min-height: 260px;
+}
+
+.panel-loader {
+    display: flex;
+    min-height: 240px;
+    align-items: center;
+    justify-content: center;
+}
+
+.panel-loader-tall {
+    min-height: 320px;
+}
+
+.split-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 24px;
+}
+
+.empty-state {
+    display: grid;
+    min-height: 220px;
+    place-items: center;
+    color: #94a3b8;
+    font-weight: 700;
+    text-align: center;
+}
+
+.top-products {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.product-row {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #eef2f7;
+    border-radius: 8px;
+    background: #fbfcff;
+}
+
+.rank {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 8px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-weight: 800;
+}
+
+.product-info {
+    min-width: 0;
+}
+
+.product-info strong,
+.product-info small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.product-info strong {
+    color: #0f172a;
+    font-size: 14px;
+}
+
+.product-info small {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.month-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+    padding: 16px;
+}
+
+.month-cell {
+    min-height: 78px;
+    padding: 12px;
+    border: 1px solid #eef2f7;
+    border-radius: 8px;
+    background: #fbfcff;
+}
+
+.month-cell span {
+    display: block;
+    margin-bottom: 8px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.month-cell strong {
+    display: block;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 1180px) {
+    .kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .status-summary-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .month-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 780px) {
+    .thong-ke-container {
+        padding: 16px !important;
+    }
+
+    .stats-toolbar,
+    .split-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .stats-filters,
+    .stats-filter-field,
+    .stats-filter-field-year,
+    .stats-filter,
+    .stats-filter-year,
+    .stats-refresh-btn {
+        width: 100%;
+    }
+
+    .stats-refresh-btn {
+        margin-left: 0;
+    }
+
+    .kpi-grid,
+    .split-grid,
+    .month-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .status-summary-row {
+        grid-template-columns: 1fr;
+    }
+
+    .status-summary-item {
+        text-align: left;
+    }
+
+    .stats-tabs {
+        overflow-x: auto;
+    }
+
+    .stats-tabs button {
+        flex: 0 0 auto;
+        padding: 0 16px;
+        white-space: nowrap;
+    }
+
+    .product-row {
+        grid-template-columns: 34px minmax(0, 1fr);
+    }
+
+    .product-row .v-chip {
+        grid-column: 2;
+        width: fit-content;
+    }
 }
 </style>

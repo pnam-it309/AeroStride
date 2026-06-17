@@ -6,6 +6,7 @@ import com.example.be.core.admin.thongke.repository.AdminThongKeSpecification;
 import com.example.be.core.admin.thongke.service.AdminThongKeService;
 import com.example.be.entity.HoaDon;
 import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.repository.KhachHangRepository;
 import com.example.be.utils.AccountUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -62,6 +63,7 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                 .donHangDangGiao(donDangGiao != null ? donDangGiao : 0L)
                 .donHangDaHuy(donDaHuy != null ? donDaHuy : 0L)
                 .tongKhachHang(tongKhachHang)
+                .giaTriTrungBinh(giaTriTrungBinh)
                 .sanPhamSapHet(0L)
                 .topSanPhamBanChay(topProducts)
                 .build();
@@ -76,7 +78,7 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         Long denNgayMs = AccountUtils.parseDateToLong(denNgay.toString(), true);
 
         // Build Specification dynamically using clean criteria
-        Specification<HoaDon> spec = Specification.where(AdminThongKeSpecification.hasTrangThai(OrderStatus.DANG_GIAO))
+        Specification<HoaDon> spec = Specification.where(AdminThongKeSpecification.hasTrangThai(OrderStatus.HOAN_THANH))
                 .and(AdminThongKeSpecification.ngayTaoGreaterOrEqual(tuNgayMs))
                 .and(AdminThongKeSpecification.ngayTaoLessOrEqual(denNgayMs));
 
