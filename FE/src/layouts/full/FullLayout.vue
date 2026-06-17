@@ -14,21 +14,23 @@ import MainView from './Main.vue';
             >
                 <div class="content-shell">
                     <RouterView v-slot="{ Component, route }">
-                        <transition name="route-shell" mode="out-in">
-                            <Suspense :timeout="0">
-                                <template #default>
-                                    <component :is="Component" :key="route.path" />
-                                </template>
-                                <template #fallback>
-                                    <div
-                                        class="d-flex align-center justify-center w-100 h-100"
-                                        style="min-height: 400px; background-color: #ffffff"
-                                    >
-                                        <v-progress-circular indeterminate color="primary" size="48" />
-                                    </div>
-                                </template>
-                            </Suspense>
-                        </transition>
+                        <template v-if="Component">
+                            <transition name="route-shell" mode="out-in">
+                                <Suspense :timeout="0">
+                                    <template #default>
+                                        <component :is="Component" :key="route.path" />
+                                    </template>
+                                    <template #fallback>
+                                        <div
+                                            class="d-flex align-center justify-center w-100 h-100"
+                                            style="min-height: 400px; background-color: #ffffff"
+                                        >
+                                            <v-progress-circular indeterminate color="primary" size="48" />
+                                        </div>
+                                    </template>
+                                </Suspense>
+                            </transition>
+                        </template>
                     </RouterView>
                 </div>
             </v-container>

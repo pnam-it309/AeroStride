@@ -359,6 +359,24 @@ const statusBarSeries = computed(() => [
     }
 ]);
 
+const donutChartSeries = ref([]);
+
+const donutChartOptions = ref({
+    chart: {
+        type: 'donut',
+        fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
+    },
+    labels: [],
+    colors: ['#4f46e5', '#38bdf8', '#fbbf24', '#f472b6', '#34d399'],
+    dataLabels: {
+        enabled: false
+    },
+    legend: {
+        show: true,
+        position: 'bottom'
+    }
+});
+
 const kpiCards = [
     {
         title: 'Tổng doanh thu',

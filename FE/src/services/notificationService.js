@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+﻿import { ref } from 'vue';
 import { useToastStore } from '@/stores/toastStore';
 
 const notifications = ref([]);
@@ -10,9 +10,9 @@ export const useNotifications = () => {
     // Add to notification list (for the bell icon)
     notifications.value.unshift({
       id: Date.now(),
-      title: notif.title || 'Th�ng b�o h? th?ng',
+      title: notif.title || 'Thông báo hệ thống',
       subtitle: notif.subtitle || '',
-      time: 'V?a xong',
+      time: 'Vừa xong',
       icon: notif.icon || 'CircleCheckIcon',
       color: notif.color || 'success',
       isNew: true
@@ -23,7 +23,7 @@ export const useNotifications = () => {
 
     // Show toast (snackbar) with 5s timeout
     toast.showToast(
-      notif.subtitle || notif.title || 'Th�ng b�o m?i',
+      notif.subtitle || notif.title || 'Thông báo mới',
       displayColor,
       notif.icon || (displayColor === 'error' ? 'mdi-alert-circle' : (displayColor === 'warning' ? 'mdi-alert' : 'mdi-check-circle')),
       notif.timeout || 2000

@@ -55,6 +55,8 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         }
 
 
+        BigDecimal giaTriTrungBinh = tongDonHang > 0 ? tongDoanhThu.divide(BigDecimal.valueOf(tongDonHang), 2, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO;
+
         return AdminThongKeResponse.builder()
                 .tongDoanhThu(tongDoanhThu != null ? tongDoanhThu : BigDecimal.ZERO)
                 .tongDonHang(tongDonHang != null ? tongDonHang : 0L)

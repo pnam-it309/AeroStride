@@ -14,7 +14,8 @@ defineProps({
     exportButtonText: { type: String, default: 'Tải Excel' },
     emptyText: { type: String, default: 'Không có dữ liệu phù hợp để hiển thị' },
     emptyIcon: { type: String, default: 'mdi-package-variant' },
-    selectable: { type: Boolean, default: false }
+    selectable: { type: Boolean, default: false },
+    hideToolbar: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
@@ -53,25 +54,7 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
             <!-- Top Slot Area -->
             <div v-if="$slots.top" class="table-top">
                 <slot name="top"></slot>
-                <div class="d-flex align-center flex-wrap justify-end gap-2">
-                    <slot name="extra-actions"></slot>
-                    <v-btn v-if="showTemplateButton" prepend-icon="mdi-download" variant="flat"
-                        class="admin-btn-secondary" @click="$emit('downloadTemplate')">
-                        Tải mẫu
-                    </v-btn>
-                    <v-btn v-if="showImportButton" prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary"
-                        @click="$emit('import')">
-                        Nhập Excel
-                    </v-btn>
-                    <v-btn v-if="showExportButton" prepend-icon="mdi-microsoft-excel" variant="flat"
-                        class="admin-btn-secondary" @click="$emit('export')">
-                        {{ exportButtonText }}
-                    </v-btn>
-                    <v-btn v-if="showAddButton" prepend-icon="mdi-plus" variant="flat" color="primary"
-                        class="add-btn-primary" @click="$emit('add')">
-                        {{ addButtonText }}
-                    </v-btn>
-                </div>
+
             </div>
 
             <!-- Main Table -->
