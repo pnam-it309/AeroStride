@@ -4,13 +4,51 @@
  * Chức năng: Quản lý giao diện và xử lý logic thanh toán tại quầy (chọn voucher, tính tổng tiền,
  * chọn phương thức thanh toán tiền mặt/VNPAY, tiền thừa).
  */
-import { computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { CashIcon, CreditCardIcon, Receipt2Icon } from 'vue-tabler-icons';
 
 const props = defineProps(['order', 'vouchers', 'checkoutData', 'loading']);
 const emit = defineEmits(['apply-voucher', 'checkout']);
 
-const discount = computed(() => (props.order?.tongTien || 0) - (props.order?.tongTienSauGiam || 0));
+const localVoucherId = ref(props.order?.idPhieuGiamGia || props.order?.suggestedVoucherId || null);
+
+watch(() => props.order?.idPhieuGiamGia, (newVal) => {
+    if (newVal) localVoucherId.value = newVal;
+});
+
+watch(() => props.order?.suggestedVoucherId, (newVal) => {
+    if (!props.order?.idPhieuGiamGia) localVoucherId.value = newVal;
+});
+
+watch(localVoucherId, (newVal) => {
+    if (props.order?.idPhieuGiamGia && String(newVal) !== String(props.order?.idPhieuGiamGia)) {
+        emit('apply-voucher', null);
+    }
+});
+
+const onApplyVoucher = () => {
+    emit('apply-voucher', localVoucherId.value);
+};
+
+const previewDiscount = computed(() => {
+    if (!localVoucherId.value) return 0;
+    const voucher = props.vouchers?.find(x => x.id === localVoucherId.value);
+    if (!voucher) return 0;
+    const total = props.order?.tongTien || 0;
+    const minimum = Number(voucher.donHangToiThieu || 0);
+    if (Number(total) < minimum) return 0;
+
+    const type = String(voucher.loaiPhieu || '').toUpperCase();
+    if (type === 'PHAN_TRAM' || type === 'PERCENT') {
+        const percent = Number(voucher.phanTramGiamGia || 0);
+        const maxDiscount = Number(voucher.giamToiDa || Number.MAX_SAFE_INTEGER);
+        return Math.min((Number(total) * percent) / 100, maxDiscount);
+    }
+
+    return Number(voucher.soTienGiam || 0);
+});
+
+const appliedDiscount = computed(() => (props.order?.tongTien || 0) - (props.order?.tongTienSauGiam || 0));
 const changeAmount = computed(() => Math.max(0, (props.checkoutData.receivedAmount || 0) - (props.order?.tongTienSauGiam || 0)));
 const itemCount = computed(() => (props.order?.listsHoaDonChiTiet || []).reduce((sum, item) => sum + (Number(item.soLuong) || 0), 0));
 
@@ -38,23 +76,37 @@ const handleCheckout = () => {
             </div>
 
             <div class="voucher-section mb-4">
-                <v-select
-                    :model-value="order?.idPhieuGiamGia"
-                    :items="vouchers"
-                    item-title="ten"
-                    item-value="id"
-                    label="Mã giảm giá"
-                    variant="outlined"
-                    density="compact"
-                    hide-details
-                    prepend-inner-icon="mdi-ticket-percent"
-                    @update:model-value="(val) => emit('apply-voucher', val)"
-                ></v-select>
+                <div class="d-flex gap-2 align-center">
+                    <v-select
+                        v-model="localVoucherId"
+                        :items="vouchers"
+                        item-title="ten"
+                        item-value="id"
+                        label="Mã giảm giá"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        prepend-inner-icon="mdi-ticket-percent"
+                        class="flex-grow-1"
+                    ></v-select>
+                    <v-btn 
+                        v-if="order?.idPhieuGiamGia && localVoucherId === order?.idPhieuGiamGia"
+                        color="error" variant="flat" height="40" class="rounded-lg font-weight-bold text-white" 
+                        @click="() => { localVoucherId = order?.suggestedVoucherId || null; emit('apply-voucher', null); }">
+                        Hủy
+                    </v-btn>
+                    <v-btn 
+                        v-else
+                        color="primary" variant="flat" height="40" class="rounded-lg font-weight-bold" 
+                        @click="onApplyVoucher">
+                        Áp dụng
+                    </v-btn>
+                </div>
             </div>
 
             <div class="d-flex justify-space-between mb-3 text-error">
                 <span class="text-subtitle-2">Giảm giá:</span>
-                <span class="font-weight-bold text-subtitle-2">- {{ formatCurrency(discount) }}</span>
+                <span class="font-weight-bold text-subtitle-2">- {{ formatCurrency(previewDiscount) }}</span>
             </div>
 
             <v-divider class="my-4 border-dashed"></v-divider>
@@ -69,20 +121,10 @@ const handleCheckout = () => {
             <p class="text-subtitle-2 font-weight-bold mb-3 d-flex align-center">
                 <Receipt2Icon size="18" class="mr-1" /> Hình thức thanh toán
             </p>
-            <v-btn-toggle v-model="checkoutData.paymentMethod" mandatory color="#2E4E8E" class="d-flex w-100 gap-2 payment-toggle">
-                <v-btn value="CASH" variant="outlined" class="flex-grow-1 h-14 rounded-lg border-2">
-                    <div class="d-flex flex-column align-center">
-                        <CashIcon size="20" class="mb-1" />
-                        <span class="text-caption font-weight-bold">Tiền mặt</span>
-                    </div>
-                </v-btn>
-                <v-btn value="VNPAY" variant="outlined" class="flex-grow-1 h-14 rounded-lg border-2">
-                    <div class="d-flex flex-column align-center">
-                        <CreditCardIcon size="20" class="mb-1" />
-                        <span class="text-caption font-weight-bold">Chuyển khoản / VNPay</span>
-                    </div>
-                </v-btn>
-            </v-btn-toggle>
+            <v-radio-group v-model="checkoutData.paymentMethod" inline hide-details class="mb-2">
+                <v-radio value="CASH" label="Tiền mặt" color="#2E4E8E"></v-radio>
+                <v-radio value="VNPAY" label="Chuyển khoản / VNPay" color="#2E4E8E"></v-radio>
+            </v-radio-group>
         </div>
 
         <div v-if="checkoutData.paymentMethod === 'CASH'" class="cash-input mb-4">

@@ -15,13 +15,6 @@ import AdminTable from '@/components/common/AdminTable.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminFilter from '@/components/common/AdminFilter.vue';
 import ProductVariantModal from './ProductVariantModal.vue';
-import {
-    dichVuMauSac,
-    dichVuChatLieu,
-    dichVuKichThuoc,
-    dichVuDeGiay,
-    dichVuThuongHieu
-} from '@/services/product/dichVuThuocTinh';
 
 const props = defineProps({
     activeOrderId: String,
@@ -42,61 +35,7 @@ const hasSearched = ref(false);
 const page = ref(1);
 const pageSize = ref(10);
 
-const filters = ref({
-    mauSac: 'ALL',
-    chatLieu: 'ALL',
-    kichCo: 'ALL',
-    deGiay: 'ALL',
-    thuongHieu: 'ALL'
-});
 
-const filterOptions = ref({
-    mauSac: [],
-    chatLieu: [],
-    kichCo: [],
-    deGiay: [],
-    thuongHieu: []
-});
-
-// Tải dữ liệu các tùy chọn bộ lọc (danh mục, màu sắc, chất liệu...) từ API
-const loadFilterOptions = async () => {
-    try {
-        const [ms, cl, kc, dg, th] = await Promise.all([
-            dichVuMauSac.layMauSac({ size: 1000 }),
-            dichVuChatLieu.layChatLieu({ size: 1000 }),
-            dichVuKichThuoc.layKichThuoc({ size: 1000 }),
-            dichVuDeGiay.layDeGiay({ size: 1000 }),
-            dichVuThuongHieu.layThuongHieu({ size: 1000 })
-        ]);
-
-        const pick = (res) => res?.content || res || [];
-        filterOptions.value = {
-            mauSac: pick(ms).map((x) => x?.ten).filter(Boolean),
-            chatLieu: pick(cl).map((x) => x?.ten).filter(Boolean),
-            kichCo: pick(kc).map((x) => x?.ten).filter(Boolean),
-            deGiay: pick(dg).map((x) => x?.ten).filter(Boolean),
-            thuongHieu: pick(th).map((x) => x?.ten).filter(Boolean)
-        };
-    } catch (e) {
-        console.error('Load filter options failed:', e);
-    }
-};
-
-let debounceTimer = null;
-watch(keyword, (newVal) => {
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-        onSearch();
-    }, 400);
-});
-
-// Chuyển đổi danh sách thuộc tính thành mảng các lựa chọn { title, value } cho <v-select>
-const mapFilterItems = (options) => {
-    return [
-        { title: 'Tất cả', value: 'ALL' },
-        ...Array.from(new Set(options || [])).map((opt) => ({ title: opt, value: opt }))
-    ];
-};
 
 const getVariantStock = (variant) => Number(variant?.soLuongTon ?? variant?.soLuong ?? 0);
 
@@ -138,7 +77,6 @@ const groupVariantsByProduct = (items) => {
 // Gửi yêu cầu tìm kiếm sản phẩm tới server dựa trên keyword.
 // Dùng endpoint bán hàng để lấy trực tiếp biến thể hợp lệ và tồn kho đã trừ realtime từ DB.
 const onSearch = async () => {
-    if (debounceTimer) clearTimeout(debounceTimer);
     hasSearched.value = true;
     loading.value = true;
     try {
@@ -151,6 +89,14 @@ const onSearch = async () => {
         loading.value = false;
     }
 };
+
+let debounceTimer = null;
+watch(keyword, () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        onSearch();
+    }, 400);
+});
 
 // QR / Barcode Scanner Logic
 const showScanner = ref(false);
@@ -253,7 +199,6 @@ const handleGlobalKeyDown = (e) => {
 
 onMounted(() => {
     window.addEventListener('keydown', handleGlobalKeyDown);
-    loadFilterOptions();
     onSearch(); // Load all products by default
 });
 
@@ -277,27 +222,8 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
 // Tính toán danh sách sản phẩm sau khi áp dụng các bộ lọc ở frontend
 const filteredResults = computed(() => {
     const rs = results.value || [];
-    const f = filters.value;
-    const match = (key, val) => {
-        if (val === 'ALL') return true;
-        return String(key || '') === String(val);
-    };
-    const anyVariantMatch = (variants, key, val) => {
-        if (val === 'ALL') return true;
-        return (variants || []).some((variant) => String(variant?.[key] || '') === String(val));
-    };
-
     return rs.filter((x) => {
-        const active = x.trangThai === undefined || isActiveStatus(x.trangThai);
-        
-        return (
-            active &&
-            match(x.tenChatLieu, f.chatLieu) &&
-            match(x.tenDeGiay, f.deGiay) &&
-            match(x.tenThuongHieu, f.thuongHieu) &&
-            anyVariantMatch(x.variants, 'tenMauSac', f.mauSac) &&
-            anyVariantMatch(x.variants, 'tenKichThuoc', f.kichCo)
-        );
+        return x.trangThai === undefined || isActiveStatus(x.trangThai);
     });
 });
 
@@ -368,60 +294,21 @@ defineExpose({
 <template>
     <div class="product-picker">
         <!-- 1. Bộ lọc đồng bộ -->
-        <AdminFilter title="Tìm kiếm & Lọc sản phẩm" :loading="loading" @refresh="onSearch">
+        <AdminFilter title="Tìm kiếm sản phẩm" :loading="loading" :hideReset="true" @refresh="onSearch">
             <!-- Tìm kiếm -->
-            <v-col cols="12" md="4">
-                <div class="filter-field-label">Tìm kiếm</div>
-                <v-text-field v-model="keyword" placeholder="Nhập tên hoặc mã sản phẩm..." variant="outlined"
-                    density="compact" hide-details bg-color="white" prepend-inner-icon="mdi-magnify"
-                    @keydown.enter="onSearch" class="compact-input">
-                    <template #append-inner>
-                        <v-btn icon color="primary" variant="text" size="small" class="mr-n2" @click="startScanner">
-                            <v-icon>mdi-qrcode-scan</v-icon>
-                        </v-btn>
-                    </template>
-                </v-text-field>
-            </v-col>
-
-
-            <!-- Thương hiệu -->
-            <v-col cols="12" md="2">
-                <div class="filter-field-label">Thương hiệu</div>
-                <v-select v-model="filters.thuongHieu" :items="mapFilterItems(filterOptions.thuongHieu)"
-                    item-title="title" item-value="value" density="compact" hide-details variant="outlined"
-                    class="compact-input"></v-select>
-            </v-col>
-
-            <!-- Màu sắc -->
-            <v-col cols="12" md="2">
-                <div class="filter-field-label">Màu sắc</div>
-                <v-select v-model="filters.mauSac" :items="mapFilterItems(filterOptions.mauSac)" item-title="title"
-                    item-value="value" density="compact" hide-details variant="outlined"
-                    class="compact-input"></v-select>
-            </v-col>
-
-            <!-- Chất liệu -->
-            <v-col cols="12" md="2">
-                <div class="filter-field-label">Chất liệu</div>
-                <v-select v-model="filters.chatLieu" :items="mapFilterItems(filterOptions.chatLieu)" item-title="title"
-                    item-value="value" density="compact" hide-details variant="outlined"
-                    class="compact-input"></v-select>
-            </v-col>
-
-            <!-- Kích cỡ -->
-            <v-col cols="12" md="2">
-                <div class="filter-field-label">Kích cỡ</div>
-                <v-select v-model="filters.kichCo" :items="mapFilterItems(filterOptions.kichCo)" item-title="title"
-                    item-value="value" density="compact" hide-details variant="outlined"
-                    class="compact-input"></v-select>
-            </v-col>
-
-            <!-- Đế giày -->
-            <v-col cols="12" md="2">
-                <div class="filter-field-label">Đế giày</div>
-                <v-select v-model="filters.deGiay" :items="mapFilterItems(filterOptions.deGiay)" item-title="title"
-                    item-value="value" density="compact" hide-details variant="outlined"
-                    class="compact-input"></v-select>
+            <v-col cols="12">
+                <div class="d-flex align-center gap-3">
+                    <v-text-field v-model="keyword" placeholder="Nhập tên hoặc mã sản phẩm..." variant="outlined"
+                        density="compact" hide-details bg-color="white" prepend-inner-icon="mdi-magnify"
+                        @keydown.enter="onSearch" class="compact-input flex-grow-1">
+                    </v-text-field>
+                    <v-btn color="primary" variant="flat" height="40" class="rounded-lg px-4" @click="startScanner">
+                        <v-icon class="mr-2">mdi-qrcode-scan</v-icon> Quét QR
+                    </v-btn>
+                    <v-btn icon color="primary" variant="outlined" height="40" width="40" class="rounded-lg" @click="onSearch">
+                        <v-icon>mdi-refresh</v-icon>
+                    </v-btn>
+                </div>
             </v-col>
         </AdminFilter>
 

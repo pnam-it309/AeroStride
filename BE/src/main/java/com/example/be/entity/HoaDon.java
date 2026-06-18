@@ -56,6 +56,10 @@ public class HoaDon extends AuditEntity implements IsIdentified {
     @Column(name = "loai_don")
     private String loaiDon;
 
+    @Column(name = "order_type")
+    @Enumerated(EnumType.STRING)
+    private com.example.be.infrastructure.constants.OrderType orderType;
+
     @Column(name = "phi_van_chuyen")
     private BigDecimal phiVanChuyen;
 

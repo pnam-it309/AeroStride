@@ -153,7 +153,16 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         chiTietSanPhamRepository.restoreStock(hdct.getChiTietSanPham().getId(), hdct.getSoLuong());
 
         hoaDonChiTietRepository.delete(hdct);
-        updateHoaDonTotals(getHoaDonOrThrow(idHoaDon));
+        
+        HoaDon hd = getHoaDonOrThrow(idHoaDon);
+        List<HoaDonChiTiet> remainingDetails = hoaDonChiTietRepository.findAllByHoaDon(hd);
+        boolean isEmpty = remainingDetails.isEmpty() || (remainingDetails.size() == 1 && remainingDetails.get(0).getId().equals(hdct.getId()));
+        if (isEmpty) {
+            hd.setTrangThai(OrderStatus.DA_HUY);
+            hoaDonRepository.save(hd);
+        } else {
+            updateHoaDonTotals(hd);
+        }
     }
 
     @Override
@@ -197,14 +206,42 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             throw new BusinessException(MessageConstants.HOA_DON_EMPTY);
         }
 
+        // Kiểm tra giá sản phẩm có bị thay đổi không
+        BigDecimal tongTienThucTe = BigDecimal.ZERO;
+        for (HoaDonChiTiet detail : details) {
+            BigDecimal giaHienTai = detail.getChiTietSanPham().getGiaBan();
+            if (giaHienTai == null) giaHienTai = BigDecimal.ZERO;
+            if (detail.getDonGia() != null && detail.getDonGia().compareTo(giaHienTai) != 0) {
+                throw new BusinessException("Giá sản phẩm đã thay đổi. Vui lòng tải lại giỏ hàng.");
+            }
+            tongTienThucTe = tongTienThucTe.add(giaHienTai.multiply(BigDecimal.valueOf(detail.getSoLuong())));
+        }
+
+        // Xử lý Voucher từ FE gửi lên (vì FE tính offline)
+        if (request.getIdPhieuGiamGia() != null && !request.getIdPhieuGiamGia().isEmpty()) {
+            PhieuGiamGia v = phieuGiamGiaRepository.findById(request.getIdPhieuGiamGia())
+                    .orElseThrow(() -> new BusinessException("Voucher không tồn tại."));
+            if (v.getTrangThai() != com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG) {
+                 throw new BusinessException("Voucher đã hết hạn hoặc không còn hiệu lực. Vui lòng tải lại giỏ hàng.");
+            }
+            BigDecimal threshold = v.getDonHangToiThieu() != null ? v.getDonHangToiThieu() : BigDecimal.ZERO;
+            if (tongTienThucTe.compareTo(threshold) < 0) {
+                 throw new BusinessException("Tổng tiền không đủ điều kiện áp dụng Voucher. Vui lòng tải lại giỏ hàng.");
+            }
+            hd.setPhieuGiamGia(v);
+        } else {
+            hd.setPhieuGiamGia(null);
+        }
+
         // Tồn kho đã được trừ lúc thêm vào giỏ hàng, nên không cần trừ lại ở đây nữa.
         // Chỉ cần cập nhật trạng thái hóa đơn.
 
         hd.setTrangThai(OrderStatus.HOAN_THANH);
         hd.setLoaiDon(request.getLoaiDon());
+        hd.setOrderType(com.example.be.infrastructure.constants.OrderType.IN_STORE); // Luôn là IN_STORE cho POS
         hd.setPhiVanChuyen(request.getPhiVanChuyen() != null ? request.getPhiVanChuyen() : BigDecimal.ZERO);
-        hd.setTongTien(request.getTongTien());
-        hd.setTongTienSauGiam(request.getTongTienSauGiam());
+        hd.setTongTien(tongTienThucTe); // Lấy giá trị thực tế thay vì request
+        hd.setTongTienSauGiam(request.getTongTienSauGiam()); // FE đã tính, nhưng có thể tính lại cho an toàn. Tạm dùng FE hoặc gọi hàm tính lại. 
         hd.setGhiChu(request.getGhiChu());
         hd.setNgayCapNhat(System.currentTimeMillis());
         hoaDonRepository.save(hd);
@@ -223,7 +260,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     public List<BanHangSanPhamResponse> searchSanPham(String keyword) {
         // Limit results to avoid loading the whole DB when keyword is empty
         return chiTietSanPhamRepository
-                .searchByKeywordLite(keyword, PageRequest.of(0, 100))
+                .searchByKeywordLite(keyword, PageRequest.of(0, 2000))
                 .getContent()
                 .stream()
                 .map(ct -> BanHangSanPhamResponse.builder()

@@ -3,7 +3,8 @@ defineProps({
     title: { type: String, default: 'Bộ lọc' },
     loading: { type: Boolean, default: false },
     isRefreshing: { type: Boolean, default: false },
-    resetText: { type: String, default: 'Đặt lại' }
+    resetText: { type: String, default: 'Đặt lại' },
+    hideReset: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['refresh', 'search']);
@@ -22,7 +23,7 @@ const emit = defineEmits(['refresh', 'search']);
                 <slot></slot>
 
                 <!-- Nút làm mới - quay lại row -->
-                <v-col cols="auto" class="filter-reset-col ml-auto align-self-end pb-1">
+                <v-col v-if="!hideReset" cols="auto" class="filter-reset-col ml-auto align-self-end pb-1">
                     <v-btn
                         variant="outlined"
                         color="primary"
