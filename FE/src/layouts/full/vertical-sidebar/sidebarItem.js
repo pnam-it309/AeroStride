@@ -103,6 +103,7 @@ const sidebarItem = [
         children: [
             { title: 'Lịch làm việc', icon: CalendarIcon, to: PATH.LICH_LAM_VIEC, BgColor: 'teal' },
             { title: 'Lịch ca làm', icon: ClockIcon, to: PATH.LICH_CA_LAM, BgColor: 'teal' },
+            { title: 'Chấm công', icon: UserCheckIcon, to: PATH.CHAM_CONG, BgColor: 'teal' },
             { title: 'Lịch sử hoạt động', icon: HistoryIcon, to: PATH.LICH_SU_HOAT_DONG, BgColor: 'teal' }
         ]
     }
