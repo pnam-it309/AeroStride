@@ -66,8 +66,8 @@ const {
     search: '',
     trangThai: TAB_ALL,
     loaiDon: null,
-    fromDate: getTodayDate(),
-    toDate: getTodayDate(),
+    fromDate: null,
+    toDate: null,
     sortDirection: 'DESC'
 });
 

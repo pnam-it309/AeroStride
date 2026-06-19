@@ -2,13 +2,58 @@
 import { ref, computed, onMounted } from 'vue';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 import { dichVuThongKe } from '@/services/admin/dichVuThongKe';
+import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import apexchart from 'vue3-apexcharts';
 
 const loading = ref(false);
-const selectedPeriod = ref('month');
-const selectedYear = ref(new Date().getFullYear());
-const selectedMonth = ref(new Date().getMonth() + 1);
-const selectedChartTab = ref('revenue');
+
+const padDatePart = (value) => String(value).padStart(2, '0');
+
+const formatDateTimeInput = (date) => {
+    const y = date.getFullYear();
+    const m = padDatePart(date.getMonth() + 1);
+    const d = padDatePart(date.getDate());
+    const h = padDatePart(date.getHours());
+    const min = padDatePart(date.getMinutes());
+    return `${y}-${m}-${d}T${h}:${min}`;
+};
+
+const getQuickRangeStart = (endDate, days) => {
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - days);
+    return startDate;
+};
+
+const defaultEndDate = new Date();
+const defaultStartDate = new Date(defaultEndDate.getFullYear(), 0, 1, 0, 0);
+const startDate = ref(formatDateTimeInput(defaultStartDate));
+const endDate = ref(formatDateTimeInput(defaultEndDate));
+const selectedQuickRange = ref(null);
+const customQuickRangeTitle = ref('');
+const startDateInput = ref(null);
+const endDateInput = ref(null);
+
+const openDateTimePicker = (inputRef) => {
+    const field = inputRef?.value || inputRef;
+    const input = field?.$el?.querySelector('input') || field?.querySelector?.('input');
+    if (!input) return;
+
+    input.focus();
+
+    try {
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+        }
+    } catch (error) {
+        // Browser may block showPicker outside a direct user gesture.
+    }
+};
+
+const selectedYear = computed(() => {
+    const rangeDate = endDate.value || startDate.value;
+    const year = Number(rangeDate?.slice(0, 4));
+    return year || new Date().getFullYear();
+});
 
 const revenueStats = ref({
     totalRevenue: 0,
@@ -20,10 +65,29 @@ const revenueStats = ref({
     donHangDangGiao: 0,
     donHangDaHuy: 0,
     tongKhachHang: 0,
+    tongSanPham: 0,
+    doanhThuTaiQuay: 0,
+    doanhThuTrucTuyen: 0,
+    donTaiQuay: 0,
+    donTrucTuyen: 0,
     sanPhamSapHet: 0
 });
 
 const topProducts = ref([]);
+const productStats = ref([]);
+const productSearchKeyword = ref('');
+const productSortBy = ref('bestSelling');
+const productPage = ref(1);
+const productPageSize = ref(5);
+const productPageSizeOptions = [
+    { title: '5 dòng', value: 5 },
+    { title: '10 dòng', value: 10 },
+    { title: '20 dòng', value: 20 }
+];
+const productSortOptions = [
+    { title: 'Bán chạy nhất', value: 'bestSelling' },
+    { title: 'Doanh thu cao nhất', value: 'revenueDesc' }
+];
 
 const monthlyRevenue = ref([]);
 
@@ -182,65 +246,110 @@ const statusBarOptions = ref({
     }
 });
 
-const periodOptions = [
-    { title: 'Hôm nay', value: 'today' },
-    { title: 'Tuần này', value: 'week' },
-    { title: 'Tháng này', value: 'month' },
-    { title: 'Quý này', value: 'quarter' },
-    { title: 'Năm này', value: 'year' }
+const quickRangeOptions = [
+    { title: '1 ngày', value: '1' },
+    { title: '7 ngày', value: '7' },
+    { title: '30 ngày', value: '30' },
+    { title: '1 năm', value: '365' }
 ];
 
+const displayedQuickRangeOptions = computed(() => {
+    if (selectedQuickRange.value !== 'custom' || !customQuickRangeTitle.value) {
+        return quickRangeOptions;
+    }
+
+    return [
+        ...quickRangeOptions,
+        { title: customQuickRangeTitle.value, value: 'custom' }
+    ];
+});
+
+const getDateTime = (value) => {
+    if (!value) return null;
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+
+    return date;
+};
+
+const syncQuickRangeFromDates = () => {
+    const fromDate = getDateTime(startDate.value);
+    const toDate = getDateTime(endDate.value);
+
+    if (!fromDate || !toDate) {
+        selectedQuickRange.value = null;
+        customQuickRangeTitle.value = '';
+        return;
+    }
+
+    const [start, end] = fromDate <= toDate ? [fromDate, toDate] : [toDate, fromDate];
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const totalDays = Math.max(1, Math.round((end - start) / oneDayMs));
+    const matchedRange = quickRangeOptions.find((item) => Number(item.value) === totalDays);
+
+    if (matchedRange) {
+        selectedQuickRange.value = matchedRange.value;
+        customQuickRangeTitle.value = '';
+        return;
+    }
+
+    selectedQuickRange.value = 'custom';
+    customQuickRangeTitle.value = `${totalDays} ngày`;
+};
+
+const applyQuickRange = () => {
+    const days = Number(selectedQuickRange.value);
+    if (!days) return;
+
+    const rangeEndDate = new Date();
+    const rangeStartDate = getQuickRangeStart(rangeEndDate, days);
+    startDate.value = formatDateTimeInput(rangeStartDate);
+    endDate.value = formatDateTimeInput(rangeEndDate);
+    customQuickRangeTitle.value = '';
+    loadStatistics();
+};
+
 const getDateRange = () => {
-    const now = new Date();
-    let tuNgay = '';
-    let denNgay = '';
+    let tuNgay = startDate.value ? startDate.value.slice(0, 10) : '';
+    let denNgay = endDate.value ? endDate.value.slice(0, 10) : '';
 
-    const formatLocalDate = (date) => {
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const d = String(date.getDate()).padStart(2, '0');
-        return `${y}-${m}-${d}`;
-    };
-
-    if (selectedPeriod.value === 'today') {
-        const today = new Date();
-        tuNgay = formatLocalDate(today);
-        denNgay = formatLocalDate(today);
-    } else if (selectedPeriod.value === 'week') {
-        const today = new Date();
-        const day = today.getDay(); // 0 is Sunday, 1 is Monday, etc.
-        const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-        const monday = new Date(today.setDate(diff));
-        const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
-
-        tuNgay = formatLocalDate(monday);
-        denNgay = formatLocalDate(sunday);
-    } else if (selectedPeriod.value === 'month') {
-        const year = selectedYear.value;
-        const month = selectedMonth.value;
-        const firstDay = new Date(year, month - 1, 1);
-        const lastDay = new Date(year, month, 0);
-
-        tuNgay = formatLocalDate(firstDay);
-        denNgay = formatLocalDate(lastDay);
-    } else if (selectedPeriod.value === 'quarter') {
-        const currentMonth = now.getMonth();
-        const quarter = Math.floor(currentMonth / 3);
-        const startMonth = quarter * 3;
-        const endMonth = startMonth + 2;
-
-        const firstDay = new Date(selectedYear.value, startMonth, 1);
-        const lastDay = new Date(selectedYear.value, endMonth + 1, 0);
-
-        tuNgay = formatLocalDate(firstDay);
-        denNgay = formatLocalDate(lastDay);
-    } else if (selectedPeriod.value === 'year') {
-        tuNgay = `${selectedYear.value}-01-01`;
-        denNgay = `${selectedYear.value}-12-31`;
+    if (tuNgay && denNgay && tuNgay > denNgay) {
+        [tuNgay, denNgay] = [denNgay, tuNgay];
     }
 
     return { tuNgay, denNgay };
+};
+
+const loadProductStatsTable = async () => {
+    try {
+        const response = await dichVuSanPham.layDanhSachSanPham({
+            page: 0,
+            size: 1000,
+            sortBy: 'ma',
+            sortDirection: 'asc'
+        });
+        const products = Array.isArray(response?.content) ? response.content : [];
+        const salesByCode = new Map(topProducts.value.map((item) => [item.maSanPham, item]));
+        const salesByName = new Map(topProducts.value.map((item) => [item.name, item]));
+
+        productStats.value = products.map((product) => {
+            const salesStats = salesByCode.get(product.maSanPham) || salesByName.get(product.tenSanPham) || {};
+
+            return {
+                maSanPham: product.maSanPham || '',
+                name: product.tenSanPham || 'Không có tên',
+                thuongHieu: product.tenThuongHieu || '',
+                quantity: salesStats.quantity || 0,
+                revenue: salesStats.revenue || 0
+            };
+        });
+        productPage.value = 1;
+    } catch (error) {
+        console.error('Error loading product stats table:', error);
+        productStats.value = topProducts.value;
+        productPage.value = 1;
+    }
 };
 
 const loadStatistics = async () => {
@@ -254,19 +363,26 @@ const loadStatistics = async () => {
             revenueStats.value = {
                 totalRevenue: overview.tongDoanhThu || 0,
                 totalOrders: overview.tongDonHang || 0,
-                averageOrderValue: overview.tongDonHang > 0 ? overview.tongDoanhThu / overview.tongDonHang : 0,
+                averageOrderValue: overview.giaTriTrungBinh || 0,
                 growthRate: 0,
                 donHangHoanThanh: overview.donHangHoanThanh || 0,
                 donHangChoXacNhan: overview.donHangChoXacNhan || 0,
                 donHangDangGiao: overview.donHangDangGiao || 0,
                 donHangDaHuy: overview.donHangDaHuy || 0,
                 tongKhachHang: overview.tongKhachHang || 0,
+                tongSanPham: overview.tongSanPham || 0,
+                doanhThuTaiQuay: overview.doanhThuTaiQuay || 0,
+                doanhThuTrucTuyen: overview.doanhThuTrucTuyen || 0,
+                donTaiQuay: overview.donTaiQuay || 0,
+                donTrucTuyen: overview.donTrucTuyen || 0,
                 sanPhamSapHet: overview.sanPhamSapHet || 0
             };
 
             if (overview.topSanPhamBanChay && overview.topSanPhamBanChay.length > 0) {
                 topProducts.value = overview.topSanPhamBanChay.map((item) => ({
+                    maSanPham: item.maSanPham || '',
                     name: item.name,
+                    thuongHieu: item.thuongHieu || '',
                     revenue: item.revenue || 0,
                     quantity: item.quantity || 0,
                     growth: item.growth || 0
@@ -275,8 +391,24 @@ const loadStatistics = async () => {
                 topProducts.value = [];
             }
 
+            const categoryShares = Array.isArray(overview.tyTrongTheoDanhMuc)
+                ? overview.tyTrongTheoDanhMuc
+                    .map((item) => ({
+                        name: item.name || 'Khác',
+                        revenue: Number(item.revenue || 0)
+                    }))
+                    .filter((item) => Number.isFinite(item.revenue) && item.revenue > 0)
+                : [];
+            donutChartSeries.value = categoryShares.map((item) => item.revenue);
+            donutChartOptions.value = {
+                ...donutChartOptions.value,
+                labels: categoryShares.map((item) => item.name)
+            };
+            donutChartKey.value += 1;
 
         }
+
+        await loadProductStatsTable();
 
         const startOfYear = `${selectedYear.value}-01-01`;
         const endOfYear = `${selectedYear.value}-12-31`;
@@ -360,22 +492,147 @@ const statusBarSeries = computed(() => [
 ]);
 
 const donutChartSeries = ref([]);
+const donutChartKey = ref(0);
+
+const hasValidDonutData = computed(() => {
+    const total = donutChartSeries.value.reduce((sum, value) => sum + Number(value || 0), 0);
+    return donutChartSeries.value.length > 0 && Number.isFinite(total) && total > 0;
+});
+
+const donutTotalRevenue = computed(() => {
+    const total = donutChartSeries.value.reduce((sum, value) => sum + Number(value || 0), 0);
+    return Number.isFinite(total) ? total : 0;
+});
 
 const donutChartOptions = ref({
     chart: {
         type: 'donut',
+        toolbar: {
+            show: false
+        },
+        animations: {
+            enabled: false
+        },
+        redrawOnParentResize: true,
+        redrawOnWindowResize: true,
         fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
     },
     labels: [],
-    colors: ['#4f46e5', '#38bdf8', '#fbbf24', '#f472b6', '#34d399'],
+    colors: ['#4f46e5', '#06b6d4', '#10b981', '#f59e0b', '#ec4899'],
+    stroke: {
+        show: true,
+        width: 2,
+        colors: ['#ffffff']
+    },
     dataLabels: {
         enabled: false
     },
+    plotOptions: {
+        pie: {
+            expandOnClick: false,
+            donut: {
+                size: '58%',
+                labels: {
+                    show: false
+                }
+            }
+        }
+    },
     legend: {
         show: true,
-        position: 'bottom'
+        position: 'bottom',
+        horizontalAlign: 'center',
+        fontSize: '12px',
+        fontWeight: 700,
+        markers: {
+            width: 11,
+            height: 11,
+            radius: 12
+        },
+        itemMargin: {
+            horizontal: 6,
+            vertical: 4
+        }
+    },
+    tooltip: {
+        y: {
+            formatter: (value) => formatCurrency(Number.isFinite(Number(value)) ? Number(value) : 0)
+        }
     }
 });
+
+const productFilteredStats = computed(() => {
+    const keyword = productSearchKeyword.value.trim().toLowerCase();
+    const filtered = keyword
+        ? productStats.value.filter((product) => {
+            const searchable = [
+                product.maSanPham,
+                product.name,
+                product.thuongHieu
+            ].join(' ').toLowerCase();
+
+            return searchable.includes(keyword);
+        })
+        : [...productStats.value];
+
+    return filtered.sort((a, b) => {
+        switch (productSortBy.value) {
+            case 'revenueDesc':
+                return (b.revenue || 0) - (a.revenue || 0);
+            case 'bestSelling':
+            default:
+                return (b.quantity || 0) - (a.quantity || 0);
+        }
+    });
+});
+
+const productTotalPages = computed(() => Math.max(Math.ceil(productFilteredStats.value.length / productPageSize.value), 1));
+
+const productPageNumbers = computed(() => {
+    const total = productTotalPages.value;
+    const current = Math.min(productPage.value, total);
+    const maxVisible = 5;
+    let start = Math.max(1, current - Math.floor(maxVisible / 2));
+    let end = Math.min(total, start + maxVisible - 1);
+
+    start = Math.max(1, end - maxVisible + 1);
+
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+});
+
+const paginatedProductStats = computed(() => {
+    const safePage = Math.min(productPage.value, productTotalPages.value);
+    const start = (safePage - 1) * productPageSize.value;
+    return productFilteredStats.value.slice(start, start + productPageSize.value);
+});
+
+const productShowingFrom = computed(() => {
+    if (!productFilteredStats.value.length) return 0;
+    return (Math.min(productPage.value, productTotalPages.value) - 1) * productPageSize.value + 1;
+});
+
+const productShowingTo = computed(() => {
+    if (!productFilteredStats.value.length) return 0;
+    return Math.min(productShowingFrom.value + productPageSize.value - 1, productFilteredStats.value.length);
+});
+
+const refreshProductFilters = () => {
+    productPage.value = 1;
+};
+
+const resetProductFilters = () => {
+    productSearchKeyword.value = '';
+    productSortBy.value = 'bestSelling';
+    productPage.value = 1;
+};
+
+const changeProductPageSize = () => {
+    productPage.value = 1;
+};
+
+const goToProductPage = (page) => {
+    productPage.value = Math.min(Math.max(page, 1), productTotalPages.value);
+};
 
 const kpiCards = [
     {
@@ -384,8 +641,7 @@ const kpiCards = [
         icon: 'mdi-currency-usd',
         color: 'primary',
         tone: 'blue',
-        formatter: formatCurrency,
-        description: 'Dựa trên đơn giao thành công'
+        formatter: formatCurrency
     },
     {
         title: 'Tổng đơn hàng',
@@ -393,8 +649,15 @@ const kpiCards = [
         icon: 'mdi-shopping-outline',
         color: 'success',
         tone: 'green',
-        formatter: formatNumber,
-        description: 'Trong thời gian này'
+        formatter: formatNumber
+    },
+    {
+        title: 'Tổng sản phẩm',
+        valueKey: 'tongSanPham',
+        icon: 'mdi-package-variant-closed',
+        color: 'secondary',
+        tone: 'purple',
+        formatter: formatNumber
     },
     {
         title: 'Giá trị trung bình',
@@ -402,8 +665,7 @@ const kpiCards = [
         icon: 'mdi-chart-line',
         color: 'info',
         tone: 'cyan',
-        formatter: formatCurrency,
-        description: 'Mỗi đơn hàng thành công'
+        formatter: formatCurrency
     },
     {
         title: 'Tổng khách hàng',
@@ -411,8 +673,24 @@ const kpiCards = [
         icon: 'mdi-account-group',
         color: 'warning',
         tone: 'orange',
-        formatter: formatNumber,
-        description: 'Đăng ký trên hệ thống'
+        formatter: formatNumber
+    }
+];
+
+const salesChannelCards = [
+    {
+        title: 'Bán hàng tại quầy',
+        revenueKey: 'doanhThuTaiQuay',
+        orderKey: 'donTaiQuay',
+        icon: 'mdi-storefront-outline',
+        tone: 'green'
+    },
+    {
+        title: 'Bán hàng trực tuyến',
+        revenueKey: 'doanhThuTrucTuyen',
+        orderKey: 'donTrucTuyen',
+        icon: 'mdi-web',
+        tone: 'blue'
     }
 ];
 
@@ -430,24 +708,29 @@ onMounted(() => {
         <section class="stats-shell mt-4">
             <div class="stats-toolbar">
                 <div class="stats-filters">
-                    <div class="stats-filter-field">
-                        <div class="filter-field-label">Kỳ thống kê</div>
-                        <v-select v-model="selectedPeriod" :items="periodOptions" variant="outlined" density="compact"
-                            hide-details class="stats-filter" @update:model-value="loadStatistics" />
+                    <div class="stats-filter-field stats-filter-field-datetime">
+                        <div class="filter-field-label">Từ ngày</div>
+                        <v-text-field ref="startDateInput" v-model="startDate" type="datetime-local" variant="outlined"
+                            density="compact" hide-details class="stats-filter stats-date-time-input"
+                            placeholder="dd/mm/yyyy"
+                            @mousedown="openDateTimePicker(startDateInput)"
+                            @click="openDateTimePicker(startDateInput)"
+                            @change="syncQuickRangeFromDates" />
                     </div>
-                    <div class="stats-filter-field stats-filter-field-year">
-                        <div class="filter-field-label">Năm</div>
-                        <v-select v-model="selectedYear"
-                            :items="Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i)"
-                            variant="outlined" density="compact" hide-details class="stats-filter stats-filter-year"
-                            @update:model-value="loadStatistics" />
+                    <div class="stats-filter-field stats-filter-field-datetime">
+                        <div class="filter-field-label">Đến ngày</div>
+                        <v-text-field ref="endDateInput" v-model="endDate" type="datetime-local" variant="outlined"
+                            density="compact" hide-details class="stats-filter stats-date-time-input"
+                            placeholder="dd/mm/yyyy"
+                            @mousedown="openDateTimePicker(endDateInput)"
+                            @click="openDateTimePicker(endDateInput)"
+                            @change="syncQuickRangeFromDates" />
                     </div>
-                    <div v-if="selectedPeriod === 'month'" class="stats-filter-field stats-filter-field-year">
-                        <div class="filter-field-label">Tháng</div>
-                        <v-select v-model="selectedMonth"
-                            :items="Array.from({ length: 12 }, (_, i) => ({ title: `Tháng ${i + 1}`, value: i + 1 }))"
+                    <div class="stats-filter-field stats-filter-field-range">
+                        <div class="filter-field-label">Khoảng nhanh</div>
+                        <v-select v-model="selectedQuickRange" :items="displayedQuickRangeOptions"
                             variant="outlined" density="compact" hide-details class="stats-filter stats-filter-year"
-                            @update:model-value="loadStatistics" />
+                            @update:model-value="applyQuickRange" />
                     </div>
                     <v-btn color="primary" variant="flat" class="stats-refresh-btn px-6" height="40" :loading="loading"
                         @click="loadStatistics">
@@ -464,70 +747,72 @@ onMounted(() => {
                     </div>
                     <p>{{ item.title }}</p>
                     <strong>{{ item.formatter(revenueStats[item.valueKey]) }}</strong>
-                    <small>{{ item.description }}</small>
                 </article>
             </div>
 
-            <section class="stats-panel trend-panel">
-                <div class="stats-tabs">
-                    <button type="button" :class="{ active: selectedChartTab === 'revenue' }"
-                        @click="selectedChartTab = 'revenue'">
-                        XU HƯỚNG DOANH THU (NĂM {{ selectedYear }})
-                    </button>
-                    <button type="button" :class="{ active: selectedChartTab === 'status' }"
-                        @click="selectedChartTab = 'status'">
-                        Trạng thái
-                    </button>
-                </div>
-
-                <div v-if="selectedChartTab === 'revenue'" class="tab-panel">
-                    <div v-if="loading" class="panel-loader panel-loader-tall">
-                        <v-progress-circular indeterminate color="primary" />
+            <div class="chart-grid">
+                <section class="stats-panel trend-panel chart-panel-wide">
+                    <div class="chart-card-heading">
+                        <h2>XU HƯỚNG DOANH THU (NĂM {{ selectedYear }})</h2>
                     </div>
-                    <apexchart v-else type="area" height="320" :options="areaChartOptions" :series="areaChartSeries" />
-                </div>
-
-                <div v-else class="tab-panel">
-                    <div v-if="loading" class="panel-loader panel-loader-tall">
-                        <v-progress-circular indeterminate color="primary" />
-                    </div>
-                    <div v-else class="status-chart-wrap">
-                        <div class="status-summary-row">
-                            <article v-for="item in statusChartItems" :key="item.label" class="status-summary-item"
-                                :class="{ active: item.active }">
-                                <span>{{ item.label }}</span>
-                                <strong>{{ formatCurrency(item.amount) }}</strong>
-                                <small>{{ formatNumber(item.count) }} đơn</small>
+                    <div class="tab-panel revenue-tab-panel">
+                        <div class="sales-channel-grid">
+                            <article v-for="item in salesChannelCards" :key="item.title" class="sales-channel-card">
+                                <div class="sales-channel-icon" :class="`sales-channel-icon-${item.tone}`">
+                                    <v-icon size="20">{{ item.icon }}</v-icon>
+                                </div>
+                                <div>
+                                    <span>{{ item.title }}</span>
+                                    <strong>{{ formatCurrency(revenueStats[item.revenueKey]) }}</strong>
+                                    <small>{{ formatNumber(revenueStats[item.orderKey]) }} đơn</small>
+                                </div>
                             </article>
                         </div>
-                        <apexchart type="bar" height="320" :options="statusBarOptions" :series="statusBarSeries" />
+                        <div v-if="loading" class="panel-loader panel-loader-tall">
+                            <v-progress-circular indeterminate color="primary" />
+                        </div>
+                        <apexchart v-else type="area" height="310" :options="areaChartOptions"
+                            :series="areaChartSeries" />
                     </div>
-                </div>
-            </section>
+                </section>
+
+                <section class="stats-panel trend-panel chart-panel-narrow">
+                    <div class="chart-card-heading">
+                        <h2>TRẠNG THÁI</h2>
+                    </div>
+                    <div class="tab-panel">
+                        <div v-if="loading" class="panel-loader panel-loader-tall">
+                            <v-progress-circular indeterminate color="primary" />
+                        </div>
+                        <div v-else class="status-chart-wrap">
+                            <div class="status-summary-row">
+                                <article v-for="item in statusChartItems" :key="item.label" class="status-summary-item"
+                                    :class="{ active: item.active }">
+                                    <span>{{ item.label }}</span>
+                                    <strong>{{ formatCurrency(item.amount) }}</strong>
+                                    <small>{{ formatNumber(item.count) }} đơn</small>
+                                </article>
+                            </div>
+                            <apexchart class="status-bar-chart" type="bar" height="320" :options="statusBarOptions"
+                                :series="statusBarSeries" />
+                        </div>
+                    </div>
+                </section>
+            </div>
 
             <div class="split-grid">
-                <section class="stats-panel top-products-panel">
+                <section class="stats-panel monthly-detail-panel">
                     <div class="simple-card-heading">
-                        <h2>SẢN PHẨM BÁN CHẠY</h2>
-                        <v-icon color="#0f172a" size="22">mdi-crown-outline</v-icon>
+                        <h2>CHI TIẾT DOANH THU THÁNG (NĂM {{ selectedYear }})</h2>
+                        <v-icon color="#0f172a" size="22">mdi-calendar-month</v-icon>
                     </div>
                     <div v-if="loading" class="panel-loader">
                         <v-progress-circular indeterminate color="primary" />
                     </div>
-                    <div v-else-if="topProducts.length === 0" class="empty-state">Không có dữ liệu trong thời gian này
-                    </div>
-                    <div v-else class="top-products">
-                        <div v-for="(product, index) in topProducts" :key="product.name" class="product-row">
-                            <span class="rank">{{ index + 1 }}</span>
-                            <div class="product-info">
-                                <strong>{{ product.name }}</strong>
-                                <small>{{ formatNumber(product.quantity) }} sản phẩm · {{
-                                    formatCurrency(product.revenue) }}</small>
-                            </div>
-                            <v-chip size="x-small" :color="getGrowthColor(product.growth)" variant="tonal">
-                                <v-icon start size="14">{{ getGrowthIcon(product.growth) }}</v-icon>
-                                {{ product.growth >= 0 ? '+' : '' }}{{ product.growth }}%
-                            </v-chip>
+                    <div v-else class="month-grid">
+                        <div v-for="month in monthlyRevenue" :key="month.month" class="month-cell">
+                            <span>{{ month.month }}</span>
+                            <strong>{{ formatCurrency(month.revenue) }}</strong>
                         </div>
                     </div>
                 </section>
@@ -540,26 +825,127 @@ onMounted(() => {
                     <div v-if="loading" class="panel-loader">
                         <v-progress-circular indeterminate color="primary" />
                     </div>
-                    <div v-else-if="donutChartSeries.length === 0" class="empty-state">Không có dữ liệu trong thời gian
+                    <div v-else-if="!hasValidDonutData" class="empty-state">Không có dữ liệu trong thời gian
                         này</div>
                     <div v-else class="category-chart-body">
-                        <apexchart type="donut" height="300" :options="donutChartOptions" :series="donutChartSeries" />
+                        <div class="category-donut-wrap">
+                            <apexchart :key="donutChartKey" type="donut" height="330" :options="donutChartOptions"
+                                :series="donutChartSeries" />
+                            <div class="category-donut-center">
+                                <span>Tổng doanh thu</span>
+                                <strong>{{ formatCurrency(donutTotalRevenue) }}</strong>
+                            </div>
+                        </div>
                     </div>
                 </section>
             </div>
 
-            <section class="stats-panel monthly-detail-panel">
+            <section class="stats-panel product-stats-panel">
                 <div class="simple-card-heading">
-                    <h2>CHI TIẾT DOANH THU THÁNG (NĂM {{ selectedYear }})</h2>
-                    <v-icon color="#0f172a" size="22">mdi-calendar-month</v-icon>
+                    <div class="product-stats-title">
+                        <v-icon color="#e11d48" size="17">mdi-cube-outline</v-icon>
+                        <h2>THỐNG KÊ SẢN PHẨM</h2>
+                    </div>
+                    <span class="product-count-chip">{{ formatNumber(productStats.length) }} sản phẩm</span>
                 </div>
                 <div v-if="loading" class="panel-loader">
                     <v-progress-circular indeterminate color="primary" />
                 </div>
-                <div v-else class="month-grid">
-                    <div v-for="month in monthlyRevenue" :key="month.month" class="month-cell">
-                        <span>{{ month.month }}</span>
-                        <strong>{{ formatCurrency(month.revenue) }}</strong>
+                <div v-else-if="productStats.length === 0" class="empty-state product-empty-state">
+                    Không có dữ liệu trong thời gian này
+                </div>
+                <div v-else class="product-table-section">
+                    <div class="product-table-filters">
+                        <label class="product-filter-group product-search-group">
+                            <span>Tìm kiếm</span>
+                            <div class="product-search-box">
+                                <v-icon size="22" color="#7b8794">mdi-magnify</v-icon>
+                                <input v-model="productSearchKeyword" type="text" placeholder="Mã hoặc tên sản phẩm..."
+                                    @input="refreshProductFilters" />
+                            </div>
+                        </label>
+                        <label class="product-filter-group product-sort-group">
+                            <span>Sắp xếp</span>
+                            <select v-model="productSortBy" class="product-filter-select"
+                                @change="refreshProductFilters">
+                                <option v-for="option in productSortOptions" :key="option.value"
+                                    :value="option.value">
+                                    {{ option.title }}
+                                </option>
+                            </select>
+                        </label>
+                        <button type="button" class="product-reset-btn" @click="resetProductFilters">
+                            <v-icon size="16">mdi-refresh</v-icon>
+                            Reset
+                        </button>
+                    </div>
+                    <div v-if="productFilteredStats.length === 0" class="empty-state product-empty-state">
+                        Không có dữ liệu phù hợp
+                    </div>
+                    <div v-else class="product-table-wrap">
+                        <table class="product-stats-table">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>MÃ SẢN PHẨM</th>
+                                    <th>TÊN SẢN PHẨM</th>
+                                    <th>THƯƠNG HIỆU</th>
+                                    <th>ĐÃ BÁN</th>
+                                    <th>DOANH THU</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(product, index) in paginatedProductStats"
+                                    :key="`${product.maSanPham}-${product.name}`">
+                                    <td>{{ (productPage - 1) * productPageSize + index + 1 }}</td>
+                                    <td>{{ product.maSanPham || '--' }}</td>
+                                    <td>
+                                        <div class="product-name-cell">
+                                            <span>{{ product.name }}</span>
+                                            <small>Tổng dữ liệu</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="brand-pill">{{ product.thuongHieu || '--' }}</span>
+                                    </td>
+                                    <td>{{ formatNumber(product.quantity) }}</td>
+                                    <td>{{ formatCurrency(product.revenue) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div v-if="productFilteredStats.length > 0" class="product-pagination">
+                    <div class="product-page-info">
+                        Đang hiển thị <strong>{{ productShowingFrom }}-{{ productShowingTo }}</strong> trong tổng số
+                        <strong>{{ productFilteredStats.length }}</strong> kết quả
+                    </div>
+                    <div class="product-pagination-actions">
+                        <div class="product-page-size">
+                            <span>Hiển thị</span>
+                            <select v-model.number="productPageSize" class="product-page-size-select"
+                                @change="changeProductPageSize">
+                                <option v-for="option in productPageSizeOptions" :key="option.value"
+                                    :value="option.value">
+                                    {{ option.title }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="product-page-controls">
+                            <button type="button" class="product-page-btn product-page-arrow"
+                                :disabled="productPage <= 1" @click="goToProductPage(productPage - 1)">
+                                &lt;
+                            </button>
+                            <button v-for="page in productPageNumbers" :key="page" type="button"
+                                class="product-page-btn" :class="{ active: page === productPage }"
+                                @click="goToProductPage(page)">
+                                {{ page }}
+                            </button>
+                            <button type="button" class="product-page-btn product-page-arrow"
+                                :disabled="productPage >= productTotalPages" @click="goToProductPage(productPage + 1)">
+                                &gt;
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -634,6 +1020,13 @@ onMounted(() => {
     max-width: 252px;
 }
 
+.stats-filter-field-datetime {
+    flex-basis: 268px;
+    width: 268px;
+    max-width: 268px;
+}
+
+.stats-filter-field-range,
 .stats-filter-field-year {
     flex: 0 0 164px;
     width: 164px;
@@ -651,6 +1044,70 @@ onMounted(() => {
     width: 100%;
 }
 
+.stats-date-time-input :deep(.v-field) {
+    min-height: 40px;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: none;
+}
+
+.stats-date-time-input :deep(.v-field__outline) {
+    color: #cbd5e1;
+    --v-field-border-width: 1px;
+}
+
+.stats-date-time-input :deep(.v-field.v-field--focused .v-field__outline) {
+    color: #2563eb;
+    --v-field-border-width: 1px;
+}
+
+.stats-date-time-input :deep(.v-field__input) {
+    min-height: 40px;
+    padding: 0 8px 0 16px;
+}
+
+.stats-date-time-input :deep(.v-field__append-inner) {
+    padding-inline-end: 8px;
+    align-items: center;
+}
+
+.stats-date-time-input :deep(.v-field__append-inner .v-icon) {
+    color: #c0c7d2;
+    font-size: 17px;
+    opacity: 1;
+}
+
+.stats-date-time-input :deep(.v-field:hover .v-field__append-inner .v-icon),
+.stats-date-time-input :deep(.v-field.v-field--focused .v-field__append-inner .v-icon) {
+    color: #64748b;
+}
+
+.stats-date-time-input :deep(input) {
+    color: #334155;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 40px;
+}
+
+.stats-date-time-input :deep(input::placeholder) {
+    color: #8a94a6;
+    opacity: 1;
+}
+
+.stats-date-time-input :deep(input::-webkit-calendar-picker-indicator) {
+    cursor: pointer;
+    margin-right: 0;
+    opacity: 0.45;
+    width: 18px;
+    height: 18px;
+    transition: opacity 0.15s ease;
+}
+
+.stats-date-time-input :deep(input::-webkit-calendar-picker-indicator:hover) {
+    opacity: 0.8;
+}
+
 .stats-filter-year {
     width: 100%;
 }
@@ -666,7 +1123,7 @@ onMounted(() => {
 
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 14px;
 }
 
@@ -698,6 +1155,10 @@ onMounted(() => {
     background: #e0f7ff;
 }
 
+.kpi-icon-purple {
+    background: #f3e8ff;
+}
+
 .kpi-icon-orange {
     background: #fff3df;
 }
@@ -721,54 +1182,124 @@ onMounted(() => {
     overflow-wrap: anywhere;
 }
 
-.kpi-card small {
-    display: block;
-    margin-top: 8px;
-    color: #111827;
-    font-size: 11px;
-    font-weight: 500;
-    line-height: 1.35;
-}
-
 .stats-panel {
     padding: 16px;
     border-radius: 8px;
 }
 
+.chart-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+    gap: 16px;
+}
+
 .trend-panel {
+    border-radius: 14px;
     padding: 0;
     overflow: hidden;
 }
 
-.stats-tabs {
+.chart-card-heading {
     display: flex;
     align-items: center;
+    min-height: 48px;
+    padding: 0 22px;
     border-bottom: 1px solid #eef2f7;
+    border-radius: 14px 14px 0 0;
     background: #f8fafc;
 }
 
-.stats-tabs button {
-    min-height: 48px;
-    padding: 0 22px;
-    border: 0;
-    border-right: 1px solid #eef2f7;
-    background: transparent;
-    color: #475569;
-    cursor: pointer;
+.chart-card-heading h2 {
+    margin: 0;
+    color: #0f172a;
     font-size: 13px;
     font-weight: 800;
     letter-spacing: 0.02em;
     text-transform: uppercase;
 }
 
-.stats-tabs button.active {
-    background: #ffffff;
-    color: #0f172a;
-    box-shadow: inset 0 -2px 0 #4f46e5;
-}
-
 .tab-panel {
     padding: 16px;
+}
+
+.revenue-tab-panel {
+    padding: 12px 16px 4px;
+}
+
+.revenue-tab-panel :deep(.vue-apexcharts) {
+    min-height: 310px;
+}
+
+.sales-channel-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.sales-channel-card span,
+.sales-channel-card strong,
+.sales-channel-card small,
+.status-summary-item span,
+.status-summary-item strong,
+.status-summary-item small,
+.month-cell span,
+.month-cell strong,
+.product-name-cell span,
+.product-name-cell small {
+    display: block;
+}
+
+.sales-channel-card {
+    display: flex;
+    min-height: 78px;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid #eef2f7;
+    border-radius: 8px;
+    background: #fbfcff;
+}
+
+.sales-channel-icon {
+    display: grid;
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 8px;
+}
+
+.sales-channel-icon-green {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.sales-channel-icon-blue {
+    background: #eef4ff;
+    color: #2563eb;
+}
+
+.sales-channel-card span {
+    margin-bottom: 4px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.sales-channel-card strong {
+    color: #0f172a;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+.sales-channel-card small {
+    margin-top: 4px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 500;
 }
 
 .status-chart-wrap {
@@ -777,45 +1308,46 @@ onMounted(() => {
 
 .status-summary-row {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-    padding: 14px 16px 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 0 0 8px;
     border-bottom: 0;
 }
 
 .status-summary-item {
     position: relative;
-    min-height: 86px;
-    padding: 14px 16px;
+    min-height: 58px;
+    padding: 8px 10px;
     border: 1px solid #eef2f7;
-    border-radius: 12px;
+    border-radius: 8px;
     background: #fbfcff;
-    text-align: right;
+    text-align: left;
 }
 
 .status-summary-item span {
-    display: block;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     color: #64748b;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
 }
 
 .status-summary-item strong {
-    display: block;
     color: #0f172a;
-    font-size: 18px;
+    font-size: 13px;
     font-weight: 800;
     line-height: 1.2;
     overflow-wrap: anywhere;
 }
 
 .status-summary-item small {
-    display: block;
-    margin-top: 6px;
+    margin-top: 3px;
     color: #334155;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 500;
+}
+
+.status-bar-chart {
+    margin-top: 2px;
 }
 
 .panel-heading {
@@ -859,9 +1391,9 @@ onMounted(() => {
     letter-spacing: 0.04em;
 }
 
-.top-products-panel,
 .category-share-panel,
-.monthly-detail-panel {
+.monthly-detail-panel,
+.product-stats-panel {
     padding: 0;
     overflow: hidden;
     border: 1px solid #e2e8f0;
@@ -869,9 +1401,9 @@ onMounted(() => {
     background: #ffffff;
 }
 
-.top-products-panel .simple-card-heading,
 .category-share-panel .simple-card-heading,
-.monthly-detail-panel .simple-card-heading {
+.monthly-detail-panel .simple-card-heading,
+.product-stats-panel .simple-card-heading {
     min-height: 52px;
     margin-bottom: 0;
     padding: 0 22px;
@@ -879,35 +1411,65 @@ onMounted(() => {
     background: #f8fafc;
 }
 
-.top-products-panel .simple-card-heading h2,
 .category-share-panel .simple-card-heading h2,
-.monthly-detail-panel .simple-card-heading h2 {
+.monthly-detail-panel .simple-card-heading h2,
+.product-stats-panel .simple-card-heading h2 {
     font-size: 13px;
     letter-spacing: 0.03em;
 }
 
-.top-products-panel .panel-loader,
-.top-products-panel .empty-state,
-.top-products-panel .top-products,
 .category-share-panel .panel-loader,
 .category-share-panel .empty-state {
     min-height: 310px;
 }
 
-.top-products-panel .empty-state,
 .category-share-panel .empty-state {
     color: #111827;
     font-size: 15px;
     font-weight: 500;
 }
 
-.top-products-panel .top-products {
-    padding: 18px 20px;
+.category-chart-body {
+    display: flex;
+    min-height: 356px;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 14px 12px;
 }
 
-.category-chart-body {
-    min-height: 310px;
-    padding: 18px 16px 0;
+.category-chart-body :deep(.vue-apexcharts) {
+    width: min(100%, 420px);
+}
+
+.category-donut-wrap {
+    position: relative;
+    width: min(100%, 420px);
+}
+
+.category-donut-center {
+    position: absolute;
+    top: 41%;
+    left: 50%;
+    display: grid;
+    width: 150px;
+    transform: translate(-50%, -50%);
+    gap: 10px;
+    pointer-events: none;
+    text-align: center;
+}
+
+.category-donut-center span {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.category-donut-center strong {
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 900;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
 }
 
 .monthly-detail-panel .panel-loader {
@@ -940,59 +1502,9 @@ onMounted(() => {
     text-align: center;
 }
 
-.top-products {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.product-row {
-    display: grid;
-    grid-template-columns: 34px minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    border: 1px solid #eef2f7;
-    border-radius: 8px;
-    background: #fbfcff;
-}
-
-.rank {
-    display: grid;
-    width: 34px;
-    height: 34px;
-    place-items: center;
-    border-radius: 8px;
-    background: #eef2ff;
-    color: #4f46e5;
-    font-weight: 800;
-}
-
-.product-info {
-    min-width: 0;
-}
-
-.product-info strong,
-.product-info small {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.product-info strong {
-    color: #0f172a;
-    font-size: 14px;
-}
-
-.product-info small {
-    color: #64748b;
-    font-size: 12px;
-}
-
 .month-grid {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
     padding: 16px;
 }
@@ -1006,7 +1518,6 @@ onMounted(() => {
 }
 
 .month-cell span {
-    display: block;
     margin-bottom: 8px;
     color: #64748b;
     font-size: 11px;
@@ -1015,11 +1526,288 @@ onMounted(() => {
 }
 
 .month-cell strong {
-    display: block;
     color: #0f172a;
     font-size: 13px;
     font-weight: 800;
     overflow-wrap: anywhere;
+}
+
+.product-stats-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.product-count-chip {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.product-empty-state {
+    min-height: 250px;
+}
+
+.product-table-section {
+    background: #ffffff;
+}
+
+.product-table-filters {
+    display: grid;
+    grid-template-columns: minmax(260px, 380px) minmax(220px, 280px) 86px;
+    align-items: end;
+    gap: 14px;
+    padding: 14px 18px 6px;
+}
+
+.product-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.product-filter-group span {
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 18px;
+}
+
+.product-search-box,
+.product-filter-select,
+.product-reset-btn {
+    height: 40px;
+    border: 1px solid #d7e1ef;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 13px;
+}
+
+.product-search-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+}
+
+.product-search-box input {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+}
+
+.product-search-box input::placeholder {
+    color: #a8b2c1;
+    font-weight: 600;
+}
+
+.product-filter-select {
+    width: 100%;
+    padding: 0 34px 0 12px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.41 0.59L6 5.17L10.59 0.59L12 2L6 8L0 2L1.41 0.59Z' fill='%23334155'/%3E%3C/svg%3E");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 10px 7px;
+    color: #334155;
+    cursor: pointer;
+    font-weight: 700;
+    line-height: 40px;
+    outline: none;
+}
+
+.product-reset-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-color: #e2e8f0;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 800;
+    transition: all 0.15s ease;
+}
+
+.product-reset-btn:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+.product-table-wrap {
+    overflow-x: auto;
+    padding: 8px 18px 18px;
+}
+
+.product-stats-table {
+    width: 100%;
+    min-width: 820px;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+}
+
+.product-stats-table th {
+    padding: 8px 12px;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.product-stats-table td {
+    padding: 12px;
+    border-top: 1px solid #edf2f7;
+    border-bottom: 1px solid #edf2f7;
+    background: #fbfcff;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.product-stats-table td:first-child {
+    border-left: 1px solid #edf2f7;
+    border-radius: 8px 0 0 8px;
+    color: #64748b;
+    width: 56px;
+}
+
+.product-stats-table td:last-child {
+    border-right: 1px solid #edf2f7;
+    border-radius: 0 8px 8px 0;
+    font-weight: 800;
+    text-align: right;
+}
+
+.product-stats-table th:last-child {
+    text-align: right;
+}
+
+.product-name-cell span {
+    font-weight: 700;
+}
+
+.product-name-cell small {
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.brand-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 4px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.product-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 16px;
+    border-top: 1px solid #eef2f7;
+    background: #ffffff;
+}
+
+.product-page-info {
+    color: #475569;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.product-page-info strong {
+    color: #0f172a;
+    font-weight: 800;
+}
+
+.product-pagination-actions,
+.product-page-size,
+.product-page-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.product-pagination-actions {
+    gap: 16px;
+}
+
+.product-page-size span {
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.product-page-size-select {
+    width: 98px;
+    height: 28px;
+    padding: 0 30px 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    appearance: none;
+    background-color: #ffffff;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.41 0.59L6 5.17L10.59 0.59L12 2L6 8L0 2L1.41 0.59Z' fill='%23000000'/%3E%3C/svg%3E");
+    background-position: right 10px center;
+    background-repeat: no-repeat;
+    background-size: 10px 7px;
+    color: #0f172a;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 28px;
+    outline: none;
+}
+
+.product-page-btn {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border: 1px solid #dbe4f0;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
+    transition: all 0.15s ease;
+}
+
+.product-page-btn.active {
+    border-color: #1e3a8a;
+    background: #1e3a8a;
+    color: #ffffff;
+}
+
+.product-page-btn:disabled {
+    border-color: #e5edf7;
+    background: #f8fafc;
+    color: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.product-page-btn:not(:disabled):not(.active):hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
 }
 
 @media (max-width: 1180px) {
@@ -1027,12 +1815,20 @@ onMounted(() => {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .chart-grid {
+        grid-template-columns: 1fr;
+    }
+
     .status-summary-row {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     .month-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .product-table-filters {
+        grid-template-columns: minmax(240px, 1fr) minmax(210px, 260px) 86px;
     }
 }
 
@@ -1053,6 +1849,8 @@ onMounted(() => {
 
     .stats-filters,
     .stats-filter-field,
+    .stats-filter-field-datetime,
+    .stats-filter-field-range,
     .stats-filter-field-year,
     .stats-filter,
     .stats-filter-year,
@@ -1074,27 +1872,26 @@ onMounted(() => {
         grid-template-columns: 1fr;
     }
 
+    .sales-channel-grid {
+        grid-template-columns: 1fr;
+    }
+
     .status-summary-item {
         text-align: left;
     }
 
-    .stats-tabs {
-        overflow-x: auto;
+    .product-table-filters {
+        grid-template-columns: 1fr;
     }
 
-    .stats-tabs button {
-        flex: 0 0 auto;
-        padding: 0 16px;
-        white-space: nowrap;
+    .product-pagination {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
-    .product-row {
-        grid-template-columns: 34px minmax(0, 1fr);
+    .product-pagination-actions {
+        flex-wrap: wrap;
     }
 
-    .product-row .v-chip {
-        grid-column: 2;
-        width: fit-content;
-    }
 }
 </style>

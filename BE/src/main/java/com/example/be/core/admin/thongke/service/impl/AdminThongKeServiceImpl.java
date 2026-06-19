@@ -7,6 +7,7 @@ import com.example.be.core.admin.thongke.service.AdminThongKeService;
 import com.example.be.entity.HoaDon;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.repository.KhachHangRepository;
+import com.example.be.repository.SanPhamRepository;
 import com.example.be.utils.AccountUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -23,7 +24,8 @@ import java.util.List;
 public class AdminThongKeServiceImpl implements AdminThongKeService {
 
     private final AdminThongKeRepository thongKeRepository;
-    private final com.example.be.repository.KhachHangRepository khachHangRepository;
+    private final KhachHangRepository khachHangRepository;
+    private final SanPhamRepository sanPhamRepository;
 
     @Override
     public AdminThongKeResponse getTongQuan(LocalDate tuNgay, LocalDate denNgay) {
@@ -40,22 +42,42 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         Long donDangGiao = overviewRow[4] != null ? Long.parseLong(overviewRow[4].toString()) : 0L;
         Long donDaHuy = overviewRow[5] != null ? Long.parseLong(overviewRow[5].toString()) : 0L;
 
-        Long tongKhachHang = khachHangRepository.count();
+        List<Object[]> orderTypeStats = thongKeRepository.getOrderTypeStats(tuNgayMs, denNgayMs);
+        Object[] orderTypeRow = orderTypeStats != null && !orderTypeStats.isEmpty() ? orderTypeStats.get(0) : new Object[4];
+        BigDecimal doanhThuTaiQuay = orderTypeRow[0] != null ? new BigDecimal(orderTypeRow[0].toString()) : BigDecimal.ZERO;
+        Long donTaiQuay = orderTypeRow[1] != null ? Long.parseLong(orderTypeRow[1].toString()) : 0L;
+        BigDecimal doanhThuTrucTuyen = orderTypeRow[2] != null ? new BigDecimal(orderTypeRow[2].toString()) : BigDecimal.ZERO;
+        Long donTrucTuyen = orderTypeRow[3] != null ? Long.parseLong(orderTypeRow[3].toString()) : 0L;
 
-        // Top 5 sản phẩm bán chạy
-        List<Object[]> topProdRows = thongKeRepository.getTopProductsData(tuNgayMs, denNgayMs, PageRequest.of(0, 5));
+        Long tongKhachHang = khachHangRepository.count();
+        Long tongSanPham = sanPhamRepository.count();
+
+        // Lấy đủ dữ liệu bán sản phẩm để FE ghép chính xác vào bảng thống kê sản phẩm.
+        List<Object[]> topProdRows = thongKeRepository.getTopProductsData(tuNgayMs, denNgayMs, PageRequest.of(0, 1000));
         List<AdminThongKeResponse.SanPhamBanChay> topProducts = new java.util.ArrayList<>();
         for (Object[] row : topProdRows) {
             topProducts.add(AdminThongKeResponse.SanPhamBanChay.builder()
-                    .name(row[0] != null ? row[0].toString() : "")
-                    .revenue(row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO)
-                    .quantity(row[2] != null ? Long.parseLong(row[2].toString()) : 0L)
+                    .maSanPham(row[0] != null ? row[0].toString() : "")
+                    .name(row[1] != null ? row[1].toString() : "")
+                    .thuongHieu(row[2] != null ? row[2].toString() : "")
+                    .revenue(row[3] != null ? new BigDecimal(row[3].toString()) : BigDecimal.ZERO)
+                    .quantity(row[4] != null ? Long.parseLong(row[4].toString()) : 0L)
                     .growth(0.0) // default growth rate
                     .build());
         }
 
+        List<Object[]> categoryRows = thongKeRepository.getCategoryRevenueData(tuNgayMs, denNgayMs);
+        List<AdminThongKeResponse.TyTrongDanhMuc> categoryShares = new java.util.ArrayList<>();
+        for (Object[] row : categoryRows) {
+            categoryShares.add(AdminThongKeResponse.TyTrongDanhMuc.builder()
+                    .name(row[0] != null ? row[0].toString() : "Khác")
+                    .revenue(row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO)
+                    .build());
+        }
 
-        BigDecimal giaTriTrungBinh = tongDonHang > 0 ? tongDoanhThu.divide(BigDecimal.valueOf(tongDonHang), 2, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO;
+        BigDecimal giaTriTrungBinh = donHoanThanh > 0
+                ? tongDoanhThu.divide(BigDecimal.valueOf(donHoanThanh), 2, java.math.RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
 
         return AdminThongKeResponse.builder()
                 .tongDoanhThu(tongDoanhThu != null ? tongDoanhThu : BigDecimal.ZERO)
@@ -65,9 +87,15 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                 .donHangDangGiao(donDangGiao != null ? donDangGiao : 0L)
                 .donHangDaHuy(donDaHuy != null ? donDaHuy : 0L)
                 .tongKhachHang(tongKhachHang)
+                .tongSanPham(tongSanPham)
+                .doanhThuTaiQuay(doanhThuTaiQuay)
+                .doanhThuTrucTuyen(doanhThuTrucTuyen)
+                .donTaiQuay(donTaiQuay)
+                .donTrucTuyen(donTrucTuyen)
                 .giaTriTrungBinh(giaTriTrungBinh)
                 .sanPhamSapHet(0L)
                 .topSanPhamBanChay(topProducts)
+                .tyTrongTheoDanhMuc(categoryShares)
                 .build();
     }
 
