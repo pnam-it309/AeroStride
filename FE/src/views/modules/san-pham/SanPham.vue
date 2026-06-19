@@ -157,8 +157,8 @@ const resetProductFiltersState = () => {
 const buildProductQueryParams = () => ({
     page: 0,
     size: PRODUCT_FETCH_SIZE,
-    sortBy: 'ma',
-    sortDirection: 'asc',
+    sortBy: 'ngayTao',
+    sortDirection: 'desc',
     keyword: filters.search?.trim() || undefined,
     thuongHieuId: filters.thuongHieu || undefined,
     trangThai: filters.trangThai || undefined,

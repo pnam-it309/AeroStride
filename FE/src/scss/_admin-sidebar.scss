@@ -1,0 +1,42 @@
+@use './tokens' as *;
+
+/* ==========================================================================
+   AEROSTRIDE - SIDEBAR STYLING
+   ========================================================================== */
+
+.v-navigation-drawer {
+    box-shadow: 4px 0 24px -4px rgba(0, 0, 0, 0.06) !important;
+    border-right: none !important;
+
+    .v-list-item.sidebar-link {
+        transition: all 0.2s ease !important;
+        margin: 0 12px 4px 12px !important;
+        border-radius: 12px !important;
+        color: $brand-slate !important;
+
+        .v-ripple__container,
+        .v-list-item__overlay {
+            display: none !important;
+        }
+
+        &:hover,
+        &.v-list-item--active {
+            background-color: #f0f1ff !important;
+            color: $brand-navy !important;
+
+            .v-list-item-title,
+            .v-icon {
+                color: $brand-navy !important;
+                opacity: 1 !important;
+            }
+        }
+
+        &.v-list-item--active .v-list-item-title {
+            font-weight: 700 !important;
+        }
+    }
+
+    .v-list-group--active > .v-list-item .v-list-item__append i {
+        transform: rotate(180deg);
+    }
+}

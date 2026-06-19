@@ -1,0 +1,78 @@
+@use './tokens' as *;
+
+/* ==========================================================================
+   AEROSTRIDE - ADMIN TABLE SYSTEM
+   ========================================================================== */
+
+.admin-module-page {
+    background-color: #f1f5f9 !important;
+    height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+.admin-table-container {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    background: white;
+    border-radius: $border-radius-root !important;
+    overflow: hidden;
+    box-shadow: $box-shadow-premium !important;
+    margin: 16px;
+}
+
+.native-admin-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+
+    .header-cell {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #f8fafc;
+        color: #1d2025 !important;
+        padding: 16px 20px !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        border-bottom: 2px solid #e2e8f0;
+        text-align: center;
+    }
+
+    .data-cell {
+        padding: 12px 16px !important;
+        font-size: 13px !important;
+        color: #1d2025 !important;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        background: white;
+        text-align: center;
+        height: 70px !important;
+    }
+
+    .data-row:hover .data-cell {
+        background-color: #f8fafc;
+    }
+}
+
+.pagination-footer {
+    flex: none !important;
+    background: #ffffff;
+    padding: 12px 20px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.filter-card {
+    background: #ffffff;
+    border-radius: $border-radius-root !important;
+    box-shadow: $box-shadow-premium !important;
+    padding: 16px;
+    margin: 16px 16px 0 16px;
+}

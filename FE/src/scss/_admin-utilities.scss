@@ -1,0 +1,101 @@
+@use './tokens' as *;
+
+/* ==========================================================================
+   AEROSTRIDE - SHARED UTILITIES
+   ========================================================================== */
+
+.mono-font {
+    font-family: $mono-font-family !important;
+}
+
+.font-display {
+    font-family: $display-font-family;
+}
+
+.font-body {
+    font-family: $body-font-family !important;
+    font-size: 16px !important;
+}
+
+.text-primary {
+    color: $brand-navy !important;
+}
+
+.gray-bg {
+    background-color: $brand-gray !important;
+}
+
+.bg-slate-50 {
+    background-color: #f8fafc !important;
+}
+
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+    width: 100%;
+}
+
+.leading-relaxed {
+    line-height: 1.625 !important;
+}
+
+.font-bold {
+    font-weight: 700 !important;
+}
+
+.font-black {
+    font-weight: 900 !important;
+}
+
+.italic {
+    font-style: italic !important;
+}
+
+/* Animations */
+.animate-fade-in {
+    animation: premiumFadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes premiumFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Gaps */
+@for $i from 1 through 6 {
+    .gap-#{$i} {
+        gap: #{$i * 4}px !important;
+    }
+}
+
+/* Global Scrollbars */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.3);
+    border-radius: 20px;
+
+    &:hover {
+        background-color: rgba(156, 163, 175, 0.5);
+    }
+}

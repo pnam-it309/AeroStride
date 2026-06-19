@@ -49,6 +49,11 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(item.getIdChiTietSanPham())
                     .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại: " + item.getIdChiTietSanPham()));
 
+            if (item.getGiaDuKien() != null && ctsp.getGiaBan().compareTo(item.getGiaDuKien()) != 0) {
+                String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
+                throw new RuntimeException("Giá của sản phẩm '" + tenSP + "' đã thay đổi từ đợt giảm giá. Vui lòng tải lại giỏ hàng để cập nhật giá mới nhất.");
+            }
+
             if (ctsp.getSoLuong() < item.getSoLuong()) {
                 String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
                 throw new RuntimeException("Sản phẩm '" + tenSP + "' chỉ còn " + ctsp.getSoLuong() + " sản phẩm");
@@ -76,6 +81,10 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                     .orElseThrow(() -> new RuntimeException("Voucher không tồn tại"));
 
             // Validate voucher
+            if (voucher.getTrangThai() != com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG) {
+                throw new RuntimeException("Voucher đã bị ngừng hoạt động");
+            }
+            
             long now = System.currentTimeMillis();
             if (voucher.getNgayBatDau() != null && now < voucher.getNgayBatDau()) {
                 throw new RuntimeException("Voucher chưa đến thời gian sử dụng");

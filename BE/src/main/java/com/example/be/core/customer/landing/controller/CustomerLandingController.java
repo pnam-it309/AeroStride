@@ -29,4 +29,9 @@ public class CustomerLandingController {
         List<CustomerLandingProductResponse> response = landingService.getLandingProducts(size);
         return ResponseEntity.ok(ApiResponse.success(response, "Lay san pham landing thanh cong"));
     }
+
+    @GetMapping("/features")
+    public ResponseEntity<ApiResponse<List<List<com.example.be.core.customer.landing.model.response.CustomerLandingFeatureItemResponse>>>> getLandingFeatures() {
+        return ResponseEntity.ok(ApiResponse.success(landingService.getLandingFeatures(), "Lay danh sach tinh nang landing thanh cong"));
+    }
 }

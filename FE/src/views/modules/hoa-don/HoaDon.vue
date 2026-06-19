@@ -52,6 +52,8 @@ const {
         denNgay: p.toDate || undefined,
         sortDirection: p.sortDirection,
         loaiDon: p.loaiDon || undefined,
+        sortBy: 'ngayTao',
+        sortDirection: 'asc',
         ...(nTrangThai !== null ? { trangThai: nTrangThai } : {})
     };
     const res = await dichVuHoaDon.layHoaDonPhanTrang(params);

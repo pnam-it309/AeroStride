@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, defineEmits } from 'vue';
+import { ref, onMounted } from 'vue';
 
 const emit = defineEmits(['finish']);
 const loadingProgress = ref(0);
@@ -7,15 +7,17 @@ const loadingProgress = ref(0);
 onMounted(() => {
     const interval = setInterval(() => {
         if (loadingProgress.value < 100) {
-            loadingProgress.value += Math.floor(Math.random() * 5) + 2;
+            // Speed up the loading progress simulation
+            loadingProgress.value += Math.floor(Math.random() * 15) + 5;
             if (loadingProgress.value > 100) loadingProgress.value = 100;
         } else {
             clearInterval(interval);
+            // Reduce finish timeout
             setTimeout(() => {
                 emit('finish');
-            }, 800);
+            }, 200);
         }
-    }, 100);
+    }, 50); // Faster check interval
 });
 </script>
 

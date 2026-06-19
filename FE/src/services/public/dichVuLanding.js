@@ -20,10 +20,22 @@ export const dichVuLanding = {
             index,
             title: product.tenSanPham,
             subtitle: product.tenThuongHieu || '',
-            summary: product.moTaNgan || '',
+            category: product.tenThuongHieu || product.tenMucDichChay || 'RUNNING',
+            summary: product.moTaChiTiet || '',
             imageUrl: resolveImageUrl(product.hinhAnh),
             color: '#2962FF',
+            chatLieu: product.tenChatLieu,
+            deGiay: product.tenDeGiay,
+            coGiay: product.tenCoGiay,
+            xuatXu: product.tenXuatXu,
+            mucDichChay: product.tenMucDichChay,
+            giaBanThapNhat: product.giaBanThapNhat,
             raw: product
         }));
+    },
+    
+    async layDanhSachTinhNang() {
+        const response = await api.get('/customer/landing/features');
+        return response.data?.data || [];
     }
 };

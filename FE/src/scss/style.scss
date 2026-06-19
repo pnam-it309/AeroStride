@@ -5,4 +5,13 @@
 @use './layout/container';
 @use './layout/sidebar';
 @use './layout/topbar';
-@use './admin-common';
+
+// Modularized Admin Styles
+@use './admin-utilities';
+@use './admin-sidebar';
+@use './admin-layouts';
+@use './admin-buttons';
+@use './admin-form-fields';
+@use './admin-table';
+@use './admin-chips';
+

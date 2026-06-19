@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, defineAsyncComponent } from 'vue';
 import { PATH } from '@/router/routePaths';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import Preloader from '@/components/common/Preloader.vue';
@@ -10,13 +10,15 @@ import { useSeoMeta } from '@/composables/useSeoMeta';
 
 import MainHeader from '@/components/shared/MainHeader.vue';
 import HeroSection from './sections/HeroSection.vue';
-import ProblemSection from './sections/ProblemSection.vue';
-import FeaturesSection from './sections/FeaturesSection.vue';
-import SocialSection from './sections/SocialSection.vue';
-import HowSection from './sections/HowSection.vue';
-import FaqSection from './sections/FaqSection.vue';
-import CtaSection from './sections/CtaSection.vue';
 import CartDrawer from '@/components/shared/CartDrawer.vue';
+
+// Lazy load sections below the fold
+const ProblemSection = defineAsyncComponent(() => import('./sections/ProblemSection.vue'));
+const FeaturesSection = defineAsyncComponent(() => import('./sections/FeaturesSection.vue'));
+const SocialSection = defineAsyncComponent(() => import('./sections/SocialSection.vue'));
+const HowSection = defineAsyncComponent(() => import('./sections/HowSection.vue'));
+const FaqSection = defineAsyncComponent(() => import('./sections/FaqSection.vue'));
+const CtaSection = defineAsyncComponent(() => import('./sections/CtaSection.vue'));
 
 const {
     activeSection,
@@ -57,7 +59,7 @@ onMounted(() => {
             </div>
         </div>
 
-        <div class="landing-scroll-container" v-if="!isLoading && !isCatalogLoading">
+        <div class="landing-scroll-container" v-if="!isLoading && !isCatalogLoading" @scroll="onScroll">
             <!-- Premium Global Header & Mega Menu -->
             <MainHeader v-if="!isLoading && !isCatalogLoading" />
 

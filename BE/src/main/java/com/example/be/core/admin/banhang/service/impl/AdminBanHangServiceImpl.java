@@ -259,6 +259,42 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 TrangThai.DANG_HOAT_DONG, tongTien);
     }
 
+    @Override
+    public PhieuGiamGia getBestVoucher(String idHoaDon) {
+        HoaDon hd = getHoaDonOrThrow(idHoaDon);
+        BigDecimal total = hd.getTongTien();
+        if (total == null || total.compareTo(BigDecimal.ZERO) <= 0) return null;
+
+        List<PhieuGiamGia> allVouchers = phieuGiamGiaRepository.findAllByTrangThaiAndDonHangToiThieuLessThanEqual(
+                TrangThai.DANG_HOAT_DONG, total);
+
+        PhieuGiamGia bestVoucher = null;
+        BigDecimal maxDiscount = BigDecimal.ZERO;
+
+        for (PhieuGiamGia voucher : allVouchers) {
+            // Kiểm tra voucher cá nhân: nếu là cá nhân thì bỏ qua (hoặc check logic nâng cao)
+            if ("CA_NHAN".equals(voucher.getLoaiPhieu()) || "Cá nhân".equalsIgnoreCase(voucher.getLoaiPhieu())) {
+                continue; // Backend hiện tại không load danh sách khách hàng dễ dàng trong loop này, tạm thời bỏ qua voucher cá nhân hoặc cần Repo KhachHang
+            }
+
+            BigDecimal discount = BigDecimal.ZERO;
+            if ("PHAN_TRAM".equalsIgnoreCase(voucher.getLoaiPhieu()) || "PERCENT".equalsIgnoreCase(voucher.getLoaiPhieu())) {
+                BigDecimal percent = voucher.getPhanTramGiamGia() != null ? BigDecimal.valueOf(voucher.getPhanTramGiamGia()) : BigDecimal.ZERO;
+                discount = total.multiply(percent).divide(BigDecimal.valueOf(100));
+                BigDecimal max = voucher.getGiamToiDa() != null ? voucher.getGiamToiDa() : BigDecimal.valueOf(Long.MAX_VALUE);
+                if (discount.compareTo(max) > 0) discount = max;
+            } else {
+                discount = voucher.getSoTienGiam() != null ? voucher.getSoTienGiam() : BigDecimal.ZERO;
+            }
+
+            if (discount.compareTo(maxDiscount) > 0) {
+                maxDiscount = discount;
+                bestVoucher = voucher;
+            }
+        }
+        return bestVoucher;
+    }
+
     private HoaDon getHoaDonOrThrow(String id) {
         return hoaDonRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_EXIST));
     }

@@ -10,78 +10,98 @@ const CART_STORAGE_KEY = 'aerostride_cart';
 export const useCartStore = defineStore('cart', {
     state: () => ({
         items: JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [],
+        serverTotal: 0,
         isDrawerOpen: false
     }),
 
     getters: {
         cartCount: (state) => state.items.reduce((sum, item) => sum + item.soLuong, 0),
-
-        cartTotal: (state) => state.items.reduce((sum, item) => sum + item.giaBan * item.soLuong, 0),
-
+        cartTotal: (state) => state.serverTotal,
         cartItems: (state) => state.items,
-
         isEmpty: (state) => state.items.length === 0
     },
 
     actions: {
         _persist() {
-            localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(this.items));
+            localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(this.items.map(i => ({
+                idChiTietSanPham: i.idChiTietSanPham,
+                soLuong: i.soLuong
+            }))));
         },
 
-        // Thêm một sản phẩm (kèm số lượng, kích thước, màu sắc) vào giỏ hàng
-        addToCart(product) {
-            // product: { idChiTietSanPham, tenSanPham, hinhAnh, tenMauSac, tenKichThuoc, giaBan, soLuong, soLuongTonKho }
-            const existing = this.items.find((i) => i.idChiTietSanPham === product.idChiTietSanPham);
-
-            if (existing) {
-                const newQty = existing.soLuong + (product.soLuong || 1);
-                if (newQty > (product.soLuongTonKho || 99)) {
-                    return { success: false, message: `Chỉ còn ${product.soLuongTonKho} sản phẩm trong kho` };
+        async syncWithBackend() {
+            try {
+                const { dichVuCart } = await import('@/services/public/dichVuCart');
+                const result = await dichVuCart.syncCart(this.items);
+                if (result) {
+                    this.items = result.items;
+                    this.serverTotal = result.tongTien;
+                    
+                    const failedItems = result.items.filter(i => !i.isAvailable);
+                    if (failedItems.length > 0) {
+                        return { success: false, message: failedItems[0].message };
+                    }
                 }
-                existing.soLuong = newQty;
-            } else {
-                this.items.push({
-                    idChiTietSanPham: product.idChiTietSanPham,
-                    tenSanPham: product.tenSanPham,
-                    hinhAnh: product.hinhAnh || '',
-                    tenMauSac: product.tenMauSac || '',
-                    tenKichThuoc: product.tenKichThuoc || '',
-                    giaBan: product.giaBan,
-                    soLuong: product.soLuong || 1,
-                    soLuongTonKho: product.soLuongTonKho || 99
-                });
-            }
-
-            this._persist();
-            return { success: true, message: 'Đã thêm vào giỏ hàng' };
-        },
-
-        // Xóa hoàn toàn một sản phẩm khỏi giỏ hàng dựa trên ID chi tiết sản phẩm
-        removeFromCart(idChiTietSanPham) {
-            this.items = this.items.filter((i) => i.idChiTietSanPham !== idChiTietSanPham);
-            this._persist();
-        },
-
-        // Cập nhật số lượng của một sản phẩm đã có trong giỏ hàng
-        updateQuantity(idChiTietSanPham, soLuong) {
-            const item = this.items.find((i) => i.idChiTietSanPham === idChiTietSanPham);
-            if (item) {
-                if (soLuong <= 0) {
-                    this.removeFromCart(idChiTietSanPham);
-                    return;
-                }
-                if (soLuong > item.soLuongTonKho) {
-                    return { success: false, message: `Chỉ còn ${item.soLuongTonKho} sản phẩm` };
-                }
-                item.soLuong = soLuong;
-                this._persist();
+            } catch (e) {
+                console.error("Cart sync failed", e);
             }
             return { success: true };
         },
 
-        // Xóa toàn bộ sản phẩm trong giỏ hàng (làm trống giỏ hàng)
+        async addToCart(product) {
+            const existing = this.items.find((i) => i.idChiTietSanPham === product.idChiTietSanPham);
+            if (existing) {
+                existing.soLuong += (product.soLuong || 1);
+            } else {
+                this.items.push({
+                    idChiTietSanPham: product.idChiTietSanPham,
+                    soLuong: product.soLuong || 1
+                });
+            }
+            this._persist();
+            const syncResult = await this.syncWithBackend();
+            if (!syncResult.success) {
+                // If backend rejects (e.g. out of stock), rollback or show error
+                if (existing) {
+                    existing.soLuong -= (product.soLuong || 1);
+                } else {
+                    this.items.pop();
+                }
+                await this.syncWithBackend();
+                return syncResult;
+            }
+            return { success: true, message: 'Đã thêm vào giỏ hàng' };
+        },
+
+        async removeFromCart(idChiTietSanPham) {
+            this.items = this.items.filter((i) => i.idChiTietSanPham !== idChiTietSanPham);
+            this._persist();
+            await this.syncWithBackend();
+        },
+
+        async updateQuantity(idChiTietSanPham, soLuong) {
+            if (soLuong <= 0) {
+                return this.removeFromCart(idChiTietSanPham);
+            }
+            const item = this.items.find((i) => i.idChiTietSanPham === idChiTietSanPham);
+            if (item) {
+                const oldQty = item.soLuong;
+                item.soLuong = soLuong;
+                this._persist();
+                
+                const syncResult = await this.syncWithBackend();
+                if (!syncResult.success) {
+                    item.soLuong = oldQty;
+                    await this.syncWithBackend();
+                    return syncResult;
+                }
+            }
+            return { success: true };
+        },
+
         clearCart() {
             this.items = [];
+            this.serverTotal = 0;
             this._persist();
         },
 

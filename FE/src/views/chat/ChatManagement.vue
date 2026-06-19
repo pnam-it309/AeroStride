@@ -363,14 +363,14 @@ onMounted(() => {
                                 v-for="(m, idx) in displayMessages"
                                 :key="m.id || idx"
                                 class="msg-row"
-                                :class="m.sender === authStore.user?.username ? 'is-mine' : 'is-other'"
+                                :class="(m.sender === authStore.user?.username || m.sender === 'bot' || m.sender === 'SYSTEM') ? 'is-mine' : 'is-other'"
                             >
-                                <div class="msg-bubble" :class="m.sender === authStore.user?.username ? 'bubble-mine' : 'bubble-other'">
+                                <div class="msg-bubble" :class="(m.sender === authStore.user?.username || m.sender === 'bot' || m.sender === 'SYSTEM') ? 'bubble-mine' : 'bubble-other'">
                                     <div class="bubble-text">{{ m.text }}</div>
                                     <div class="bubble-meta">
                                         <span class="bubble-time">{{ m.time }}</span>
                                         <v-icon
-                                            v-if="m.sender === authStore.user?.username"
+                                            v-if="m.sender === authStore.user?.username || m.sender === 'bot' || m.sender === 'SYSTEM'"
                                             size="14"
                                             color="rgba(255,255,255,0.7)"
                                             class="ml-1"

@@ -12,6 +12,7 @@
         "deploy": "gh-pages -d dist"
     },
     "dependencies": {
+        "@google/model-viewer": "^4.3.1",
         "@tiptap/pm": "^2.11.0",
         "@tiptap/starter-kit": "^2.11.0",
         "@tiptap/vue-3": "^2.11.0",
@@ -27,6 +28,7 @@
         "maska": "^3.0.5",
         "pinia": "^2.3.0",
         "qrcode.vue": "^3.4.1",
+        "three": "^0.184.0",
         "vite-plugin-vuetify": "^2.0.4",
         "vue": "^3.5.13",
         "vue-qrcode-reader": "^5.7.3",
@@ -50,9 +52,9 @@
         "jsdom": "^25.0.0",
         "prettier": "^3.4.0",
         "puppeteer": "^25.1.0",
-        "sass": "^1.83.0",
+        "sass": "^1.79.5",
         "sockjs-client": "^1.6.1",
-        "vite": "^8.0.16",
+        "vite": "^6.0.0",
         "vite-plugin-compression": "^0.5.1",
         "vitest": "^4.1.7"
     }

@@ -338,43 +338,6 @@ const onRemoveCustomer = async () => {
     }
 };
 
-// Tính toán số tiền được giảm tương ứng với 1 voucher và tổng giá trị đơn hàng
-const calculateVoucherDiscount = (voucher, total) => {
-    if (!voucher || !total) return 0;
-    const minimum = Number(voucher.donHangToiThieu || 0);
-    if (Number(total) < minimum) return 0;
-
-    const type = String(voucher.loaiPhieu || '').toUpperCase();
-    if (type === 'PHAN_TRAM' || type === 'PERCENT') {
-        const percent = Number(voucher.phanTramGiamGia || 0);
-        const maxDiscount = Number(voucher.giamToiDa || Number.MAX_SAFE_INTEGER);
-        return Math.min((Number(total) * percent) / 100, maxDiscount);
-    }
-
-    return Number(voucher.soTienGiam || 0);
-};
-
-// Kiểm tra voucher có phải loại Cá Nhân hay không
-const isPersonalVoucher = (voucher) => {
-    const value = String(voucher?.hinhThuc ?? '').toUpperCase();
-    return value === 'CA_NHAN' || value === 'CANHAN' || value === 'PERSONAL' || value === 'PRIVATE';
-};
-
-// Kiểm tra voucher có phải loại Công Khai (tất cả mọi người) hay không
-const isPublicVoucher = (voucher) => {
-    const value = String(voucher?.hinhThuc ?? '').toUpperCase();
-    return !value || value === 'CONG_KHAI' || value === 'CONGKHAI' || value === 'PUBLIC' || value === 'ALL';
-};
-
-// Bóc tách mảng voucher từ response API
-const extractVoucherPageContent = (response) => {
-    if (Array.isArray(response?.data?.content)) return response.data.content;
-    if (Array.isArray(response?.content)) return response.content;
-    if (Array.isArray(response?.data)) return response.data;
-    if (Array.isArray(response)) return response;
-    return [];
-};
-
 // Tải danh sách tất cả các voucher thỏa mãn điều kiện áp dụng cho hóa đơn hiện tại
 const loadEligibleVouchers = async (order) => {
     const total = Number(order?.tongTien || 0);
@@ -386,28 +349,12 @@ const loadEligibleVouchers = async (order) => {
         timelineStatus: 'DANG_HOAT_DONG'
     });
 
-    return extractVoucherPageContent(response).filter((voucher) => {
-        if (calculateVoucherDiscount(voucher, total) <= 0) return false;
-        if (isPublicVoucher(voucher)) return true;
-        if (!isPersonalVoucher(voucher) || !customerId) return false;
-
-        const assignedCustomerIds = Array.isArray(voucher.listIdKhachHang) ? voucher.listIdKhachHang : [];
-        return assignedCustomerIds.includes(customerId);
-    });
+    let content = response?.data?.content || response?.content || response?.data || response || [];
+    if (!Array.isArray(content)) content = [];
+    return content;
 };
 
-// Tự động lấy ra voucher có giá trị giảm giá cao nhất
-const pickBestVoucher = (items, total) => {
-    return [...(items || [])]
-        .map((voucher) => ({
-            voucher,
-            discount: calculateVoucherDiscount(voucher, total)
-        }))
-        .filter((entry) => entry.discount > 0)
-        .sort((a, b) => b.discount - a.discount)[0]?.voucher || null;
-};
-
-// Làm mới danh sách voucher và tự động áp dụng mã có lợi nhất
+// Làm mới danh sách voucher và tự động áp dụng mã có lợi nhất thông qua Backend
 let refreshVoucherTimeout = null;
 let pendingVoucherResolve = null;
 const refreshBestVoucher = (orderOverride = selectedOrder.value) => {
@@ -415,7 +362,6 @@ const refreshBestVoucher = (orderOverride = selectedOrder.value) => {
         if (!orderOverride?.id) return resolve();
         if (refreshVoucherTimeout) {
             clearTimeout(refreshVoucherTimeout);
-            // Giải phóng Promise cũ để tránh treo vĩnh viễn
             if (pendingVoucherResolve) {
                 pendingVoucherResolve();
                 pendingVoucherResolve = null;
@@ -433,7 +379,8 @@ const refreshBestVoucher = (orderOverride = selectedOrder.value) => {
                 const availableVouchers = await loadEligibleVouchers(orderOverride);
                 vouchers.value = availableVouchers || [];
 
-                const bestVoucher = pickBestVoucher(vouchers.value, orderOverride.tongTien || 0);
+                // Gọi API backend để lấy voucher tốt nhất
+                const bestVoucher = await dichVuDonHang.getBestVoucher(orderOverride.id);
                 const bestVoucherId = bestVoucher?.id || null;
                 const currentVoucherId = orderOverride.idPhieuGiamGia || null;
                 const isManual = manualVoucherLocks.value[orderOverride.id] === true;
@@ -445,6 +392,7 @@ const refreshBestVoucher = (orderOverride = selectedOrder.value) => {
                 } else {
                     if (currentVoucherId) {
                         const currentVoucher = vouchers.value.find(v => String(v.id) === String(currentVoucherId));
+                        // Basic valid check fallback
                         const isCurrentValid = currentVoucher && Number(orderOverride.tongTien || 0) >= Number(currentVoucher.donHangToiThieu || 0);
                         if (!isCurrentValid) {
                             targetVoucherId = bestVoucherId;
@@ -455,18 +403,20 @@ const refreshBestVoucher = (orderOverride = selectedOrder.value) => {
                     }
                 }
 
-                if (targetVoucherId !== currentVoucherId) {
+                if (String(currentVoucherId) !== String(targetVoucherId)) {
                     const updated = await dichVuDonHang.setVoucher(orderOverride.id, targetVoucherId);
                     updateOrderInList(updated);
                 }
-            } catch (e) {
-                vouchers.value = [];
+            } catch (error) {
+                console.error('Lỗi khi tự động áp dụng voucher:', error);
             } finally {
                 isAutoApplyingVoucher.value = false;
-                pendingVoucherResolve = null;
-                resolve();
+                if (pendingVoucherResolve) {
+                    pendingVoucherResolve();
+                    pendingVoucherResolve = null;
+                }
             }
-        }, 300); // 300ms debounce
+        }, 500);
     });
 };
 

@@ -9,7 +9,7 @@ function optimizeTablerIcons() {
     return {
         name: 'optimize-tabler-icons',
         enforce: 'pre',
-        apply: 'build', // ONLY apply during production build, prevents 10s delay in dev mode
+        apply: 'build', // Only run in build to prevent dev server reloads
         transform(code, id) {
             if (id.includes('node_modules')) return null;
             if (code.includes('vue-tabler-icons')) {
@@ -17,6 +17,7 @@ function optimizeTablerIcons() {
                 return {
                     code: code.replace(regex, (match, imports) => {
                         const iconNames = imports.split(',').map(i => i.trim()).filter(Boolean);
+                        // Redirect to specific files so Vite doesn't load the entire library index
                         return iconNames.map(icon => `import ${icon} from 'vue-tabler-icons/icons/${icon}.js';`).join('\n');
                     }),
                     map: null
@@ -33,24 +34,23 @@ export default defineConfig(({ mode }) => {
     return {
         plugins: [
             optimizeTablerIcons(),
-            vue(),
+            vue({
+                template: {
+                    compilerOptions: {
+                        isCustomElement: (tag) => tag === 'model-viewer'
+                    }
+                }
+            }),
             vuetify({
                 autoImport: true,
                 styles: { configFile: 'src/scss/_variables.scss' }
             }),
             viteCompression({
-                verbose: true,
-                disable: mode === 'development', // Bắt buộc phải tắt lúc dev, nếu không mỗi lần load nó lại ngồi nén file rất lâu
-                threshold: 10240, // Compress files larger than 10KB
+                verbose: false,
+                disable: mode === 'development',
+                threshold: 10240,
                 algorithm: 'gzip',
                 ext: '.gz',
-            }),
-            viteCompression({
-                verbose: true,
-                disable: mode === 'development', // Bắt buộc phải tắt lúc dev
-                threshold: 10240,
-                algorithm: 'brotliCompress',
-                ext: '.br',
             }),
         ],
         base: './',
@@ -61,20 +61,27 @@ export default defineConfig(({ mode }) => {
         },
         css: {
             preprocessorOptions: {
-                scss: {}
+                scss: {
+                    // Tắt sourcemap cho CSS ở bản build để nhẹ hơn, nhưng bật ở dev để debug
+                    sourceMap: mode === 'development',
+                }
             }
         },
         optimizeDeps: {
             exclude: ['vuetify'],
+            // Ép Vite bundle sẵn các thư viện này ngay khi khởi động (Cold Start)
+            // Tránh việc đang dùng thì web bị khựng để "Re-bundling dependencies"
             include: [
-                'axios',
-                'pinia',
                 'vue',
+                'pinia',
                 'vue-router',
-                '@vuelidate/core',
-                '@vuelidate/validators',
+                'axios',
                 'apexcharts',
                 'vue3-apexcharts',
+                'lodash/debounce',
+                'date-fns',
+                '@google/model-viewer',
+                'vue3-perfect-scrollbar',
                 'vue-tabler-icons'
             ]
         },
@@ -84,22 +91,38 @@ export default defineConfig(({ mode }) => {
                 output: {
                     manualChunks(id) {
                         if (id.includes('node_modules')) {
+                            // Core libraries
                             if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
                                 return 'vendor-core';
                             }
+                            // Heavy 3D libraries
+                            if (id.includes('three') || id.includes('@google/model-viewer')) {
+                                return 'vendor-3d';
+                            }
+                            // Charting libraries
+                            if (id.includes('apexcharts')) {
+                                return 'vendor-charts';
+                            }
+                            // Tiptap/Editor libraries
+                            if (id.includes('@tiptap')) {
+                                return 'vendor-editor';
+                            }
+                            // Icons
+                            if (id.includes('vue-tabler-icons')) {
+                                return 'vendor-icons';
+                            }
+                            // Vuetify
                             if (id.includes('vuetify')) {
                                 return 'vendor-vuetify';
                             }
-                            if (id.includes('apexcharts') || id.includes('vue-tabler-icons')) {
-                                return 'vendor-charts-icons';
-                            }
+                            
                             return 'vendor-utils';
                         }
                     }
                 }
             },
             sourcemap: false,
-            chunkSizeWarningLimit: 1500
+            chunkSizeWarningLimit: 2000
         },
         server: {
             allowedHosts: true,

@@ -1,6 +1,25 @@
 // Centralized SCSS tokens for AeroStride
 // These are raw variables only, safe to @use anywhere.
 
+// Core Brand Colors
+$primary-navy: #1e257c !default;
+$brand-navy: $primary-navy;
+$brand-dark: #1e293b !default;
+$brand-slate: #475569 !default;
+$brand-gray: #f5f7fb !default;
+$brand-white: #ffffff !default;
+
+// Semantic Colors (Pastel base)
+$success-bg: #f0fdf4 !default;
+$success-text: #166534 !default;
+$error-bg: #fef2f2 !default;
+$error-text: #991b1b !default;
+$warning-bg: #fff7ed !default;
+$warning-text: #c2410c !default;
+$info-bg: #eff6ff !default;
+$info-text: #1e40af !default;
+
+// UI Constants
 $white: #fff !default;
 $card-title-size: 18px !default;
 $body-font-family: 'Inter', sans-serif !default;
@@ -10,3 +29,5 @@ $border-radius-root: 16px;
 $btn-font-weight: 700 !default;
 $btn-letter-spacing: 0.02em !default;
 $box-shadow: 0 2px 6px rgba(37, 83, 185, 0.1);
+$box-shadow-premium: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+

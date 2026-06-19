@@ -1,0 +1,83 @@
+@use './tokens' as *;
+
+/* ==========================================================================
+   AEROSTRIDE - FORMS & INPUTS
+   ========================================================================== */
+
+/* Vuetify Field Overrides */
+.v-field {
+    border-radius: $border-radius-root !important;
+    background-color: #ffffff !important;
+
+    &.v-field--disabled {
+        background-color: #f1f5f9 !important;
+    }
+}
+
+.v-field__input,
+.v-field__input input,
+.v-textarea textarea,
+.v-select__selection-text {
+    font-family: $body-font-family !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+}
+
+.v-field__input::placeholder {
+    opacity: 0.5 !important;
+}
+
+.v-field__outline {
+    --v-field-border-width: 1px !important;
+    --v-field-border-opacity: 1 !important;
+    color: #cbd5e1 !important;
+    transition: all 0.2s ease !important;
+}
+
+.v-field:hover .v-field__outline {
+    color: $brand-navy !important;
+    --v-field-border-opacity: 0.6 !important;
+}
+
+.v-field--focused .v-field__outline {
+    color: $brand-navy !important;
+}
+
+/* Labels */
+.field-label,
+.field-label-standard,
+.filter-field-label {
+    font-size: 14px !important;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Date Field Specifics */
+.date-field {
+    .v-field__input {
+        min-height: 40px !important;
+        display: flex;
+        align-items: center;
+    }
+
+    input[type='date'] {
+        width: 100%;
+        color: #556071 !important;
+    }
+
+    input::-webkit-calendar-picker-indicator {
+        opacity: 0;
+        width: 0;
+    }
+
+    .v-field__append-inner .v-icon {
+        color: #64748b !important;
+        transition: color 0.2s ease;
+    }
+
+    &:hover .v-field__append-inner .v-icon {
+        color: $brand-navy !important;
+    }
+}
