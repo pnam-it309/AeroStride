@@ -41,7 +41,10 @@ const addForm = ref({
     nhanVien: [],
     ca: [],
     ngay: new Date().toISOString().substr(0, 10),
-    trangThai: 'CHO_XAC_NHAN'
+    trangThai: 'CHO_XAC_NHAN',
+    tangCa: false,
+    gioBatDauTangCa: '',
+    gioKetThucTangCa: ''
 });
 
 // Import Preview State
@@ -134,6 +137,9 @@ const handleAdd = () => {
     addForm.value.nhanVien = [];
     addForm.value.ca = [];
     addForm.value.ngay = new Date().toISOString().substr(0, 10);
+    addForm.value.tangCa = false;
+    addForm.value.gioBatDauTangCa = '';
+    addForm.value.gioKetThucTangCa = '';
     showAddDialog.value = true;
 };
 
@@ -144,6 +150,9 @@ const handleDayClick = (dayObj) => {
         addForm.value.nhanVien = [];
         addForm.value.ca = [];
         addForm.value.ngay = dayObj.date;
+        addForm.value.tangCa = false;
+        addForm.value.gioBatDauTangCa = '';
+        addForm.value.gioKetThucTangCa = '';
         showAddDialog.value = true;
     }
 };
@@ -271,6 +280,16 @@ const getShiftTimeRange = (caName) => {
     return shift ? `${shift.gioBatDau.substring(0, 5)} - ${shift.gioKetThuc.substring(0, 5)}` : caName;
 };
 
+// Helper: CSS class cho chip ca trong matrix table
+const getMatrixShiftClass = (caName) => {
+    if (!caName) return 'shift-default';
+    const name = caName.toLowerCase();
+    if (name.includes('sáng') || name.includes('sang')) return 'shift-morning';
+    if (name.includes('chiều') || name.includes('chieu')) return 'shift-afternoon';
+    if (name.includes('tối') || name.includes('toi') || name.includes('đêm')) return 'shift-night';
+    return 'shift-default';
+};
+
 // Format date from yyyy-MM-dd to dd/MM/yyyy
 const formatDate = (dateStr) => {
     if (!dateStr) return '';
@@ -376,6 +395,9 @@ const handleEditSchedule = (s) => {
     addForm.value.ca = [s.ca];
     addForm.value.ngay = s.ngay;
     addForm.value.trangThai = s.trangThai;
+    addForm.value.tangCa = s.tangCa || false;
+    addForm.value.gioBatDauTangCa = s.gioBatDauTangCa || '';
+    addForm.value.gioKetThucTangCa = s.gioKetThucTangCa || '';
     showAddDialog.value = true;
 };
 
@@ -730,60 +752,83 @@ onMounted(() => {
 
             <!-- Calendar Display Bodies -->
             <div class="pa-4 flex-grow-1 d-flex flex-column overflow-hidden">
-                <!-- 1. WEEK VIEW (Ô dài) -->
-                <div v-if="calendarTab === 'week'" class="calendar-grid-week overflow-y-auto flex-grow-1">
-                    <div 
-                        v-for="dayObj in weekDays" 
-                        :key="dayObj.date" 
-                        class="week-column" 
-                        :class="{ 'today-column': dayObj.isToday }"
-                    >
-                        <div class="week-column-header clickable-day" @click="handleDayClick(dayObj)">
-                            <span class="day-name">{{ dayObj.dayName }}</span>
-                            <span class="day-date">{{ dayObj.dateLabel }}</span>
-                        </div>
-                        <div class="week-column-body">
-                            <div 
-                                v-for="s in dayObj.schedules" 
-                                :key="s.id" 
-                                class="schedule-item-card" 
-                                :class="s.trangThai === 'DA_XAC_NHAN' ? 'status-confirmed' : 'status-pending'"
-                            >
-                                <div class="schedule-card-content">
-                                    <div class="schedule-card-shift d-flex align-center justify-space-between w-100">
-                                        <div class="d-flex align-center">
-                                            <span class="status-dot" :class="s.trangThai === 'DA_XAC_NHAN' ? 'dot-success' : 'dot-warning'"></span>
-                                            <span class="font-weight-black text-primary" style="font-size: 11px;">
-                                                {{ getShiftTimeRange(s.ca) }}
-                                            </span>
+                <!-- 1. WEEK VIEW - Dạng bảng matrix (STT | Mã NV | Tên | T2~CN | Hành động) -->
+                <div v-if="calendarTab === 'week'" class="overflow-x-auto flex-grow-1">
+                    <table class="schedule-matrix-table w-100">
+                        <thead>
+                            <tr>
+                                <th class="matrix-th" style="width:50px">STT</th>
+                                <th class="matrix-th" style="width:110px">Mã NV</th>
+                                <th class="matrix-th" style="width:155px;text-align:left;padding-left:14px">Tên Nhân Viên</th>
+                                <th
+                                    v-for="dayObj in weekDays"
+                                    :key="dayObj.date"
+                                    class="matrix-th day-col-header"
+                                    :class="{ 'today-col-header': dayObj.isToday }"
+                                >
+                                    <div class="day-col-label">{{ dayObj.dayName }}</div>
+                                    <div class="day-col-date">{{ dayObj.dateLabel }}</div>
+                                </th>
+                                <th class="matrix-th" style="width:80px">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-if="tableRows.length === 0">
+                                <td colspan="11" class="text-center py-10 text-slate-400 text-caption">Không có dữ liệu lịch trong tuần này</td>
+                            </tr>
+                            <tr v-for="(row, idx) in tableRows" :key="row.nhanVienId" class="matrix-row">
+                                <td class="matrix-td text-center text-slate-500 text-caption">{{ idx + 1 }}</td>
+                                <td class="matrix-td text-center">
+                                    <span class="matrix-emp-code">{{ row.maNhanVien }}</span>
+                                </td>
+                                <td class="matrix-td" style="padding-left:14px">
+                                    <span class="font-weight-medium text-slate-800" style="font-size:13px">{{ row.nhanVien }}</span>
+                                </td>
+                                <td
+                                    v-for="dayDate in tableWeekDays"
+                                    :key="dayDate"
+                                    class="matrix-td matrix-day-cell"
+                                    :class="{ 'matrix-today-cell': dayDate === new Date().toISOString().substr(0,10) }"
+                                    @click="handleAddForCell(row.nhanVienId, dayDate)"
+                                >
+                                    <div v-if="row.schedules[dayDate] && row.schedules[dayDate].length > 0" class="matrix-shifts">
+                                        <div
+                                            v-for="s in row.schedules[dayDate]"
+                                            :key="s.id"
+                                            class="matrix-shift-chip"
+                                            :class="getMatrixShiftClass(s.ca)"
+                                            @click.stop="handleEditSchedule(s)"
+                                        >
+                                            <div class="d-flex align-center justify-space-between">
+                                                <span class="matrix-shift-name">{{ s.ca }}</span>
+                                                <div class="d-flex gap-1">
+                                                    <v-btn icon variant="text" size="x-small" color="primary" style="width:16px;height:16px" @click.stop="handleEditSchedule(s)">
+                                                        <component :is="ADMIN_ICONS.ACTION.EDIT" size="9" />
+                                                    </v-btn>
+                                                    <v-btn icon variant="text" size="x-small" color="error" style="width:16px;height:16px" @click.stop="handleDeleteSchedule(s)">
+                                                        <component :is="ADMIN_ICONS.ACTION.DELETE" size="9" />
+                                                    </v-btn>
+                                                </div>
+                                            </div>
+                                            <div class="matrix-shift-time">{{ getShiftTimeRange(s.ca) }}</div>
+                                            <div v-if="s.tangCa && s.gioBatDauTangCa" class="matrix-overtime-badge">
+                                                <v-icon size="9" class="mr-1">mdi-clock-plus</v-icon>
+                                                TC: {{ s.gioBatDauTangCa.substring(0,5) }}-{{ s.gioKetThucTangCa ? s.gioKetThucTangCa.substring(0,5) : '' }}
+                                            </div>
+                                            <div class="matrix-shift-status">{{ s.trangThai === 'DA_XAC_NHAN' ? 'Đã duyệt' : 'Chờ duyệt' }}</div>
                                         </div>
-                                        <div class="d-flex gap-1 flex-shrink-0">
-                                            <v-btn icon variant="text" size="x-small" class="pa-0" style="height: 18px; width: 18px;" color="primary" @click.stop="handleEditSchedule(s)">
-                                                <component :is="ADMIN_ICONS.ACTION.EDIT" size="10" />
-                                            </v-btn>
-                                            <v-btn icon variant="text" size="x-small" class="pa-0" style="height: 18px; width: 18px;" color="error" @click.stop="handleDeleteSchedule(s)">
-                                                <component :is="ADMIN_ICONS.ACTION.DELETE" size="10" />
-                                            </v-btn>
-                                        </div>
                                     </div>
-                                    <div class="schedule-card-employee text-truncate font-weight-bold mt-1" style="font-size: 12px; color: #1e293b;">
-                                        {{ s.nhanVien }} ({{ getEmployeeCode(s) }})
-                                    </div>
-                                    <div class="schedule-card-status mt-1">
-                                        <span class="status-text">{{ s.trangThai === 'DA_XAC_NHAN' ? 'Đã duyệt' : 'Chờ duyệt' }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div 
-                                v-if="dayObj.schedules.length === 0" 
-                                class="empty-column-state clickable-day" 
-                                @click="handleDayClick(dayObj)"
-                            >
-                                <v-icon size="14" class="mr-1">mdi-plus</v-icon>
-                                Trống
-                            </div>
-                        </div>
-                    </div>
+                                    <div v-else class="matrix-empty-cell">--</div>
+                                </td>
+                                <td class="matrix-td text-center">
+                                    <v-btn icon variant="text" size="small" color="primary" @click.stop="handleAddForCell(row.nhanVienId, tableWeekDays[0])">
+                                        <v-icon size="16">mdi-plus-circle-outline</v-icon>
+                                        <v-tooltip activator="parent" location="top">Thêm lịch</v-tooltip>
+                                    </v-btn>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 <!-- 2. MONTH VIEW (Chia đều) -->
@@ -943,6 +988,38 @@ onMounted(() => {
                                 density="compact"
                                 hide-details
                             />
+                        </v-col>
+                        <!-- ===== TĂNG CA ===== -->
+                        <v-col cols="12">
+                            <v-divider class="my-1" />
+                            <div class="d-flex align-center justify-space-between py-1">
+                                <div>
+                                    <div class="filter-field-label mb-0" style="font-weight:700">Tăng ca (ngoài ca đăng ký)</div>
+                                    <div class="text-caption text-slate-400">Bật nếu nhân viên làm thêm giờ</div>
+                                </div>
+                                <v-switch v-model="addForm.tangCa" color="primary" hide-details density="compact" inset />
+                            </div>
+                            <div v-if="addForm.tangCa" class="mt-2">
+                                <v-alert type="warning" variant="tonal" density="compact" class="mb-3 rounded-lg text-caption">
+                                    <v-icon size="13" class="mr-1">mdi-clock-alert-outline</v-icon>
+                                    Nhân viên sẽ làm thêm ngoài khung giờ ca đã đăng ký
+                                </v-alert>
+                                <v-row dense>
+                                    <v-col cols="6">
+                                        <div class="filter-field-label">Bắt đầu tăng ca</div>
+                                        <v-text-field v-model="addForm.gioBatDauTangCa" type="time" variant="outlined" density="compact" hide-details />
+                                    </v-col>
+                                    <v-col cols="6">
+                                        <div class="filter-field-label">Kết thúc tăng ca</div>
+                                        <v-text-field v-model="addForm.gioKetThucTangCa" type="time" variant="outlined" density="compact" hide-details />
+                                    </v-col>
+                                    <v-col cols="12" v-if="addForm.gioBatDauTangCa && addForm.gioKetThucTangCa">
+                                        <v-alert type="success" variant="tonal" density="compact" class="rounded-lg text-caption">
+                                            Tổng tăng ca: <strong>{{ ((parseInt(addForm.gioKetThucTangCa.split(':')[0]) * 60 + parseInt(addForm.gioKetThucTangCa.split(':')[1])) - (parseInt(addForm.gioBatDauTangCa.split(':')[0]) * 60 + parseInt(addForm.gioBatDauTangCa.split(':')[1])) > 0 ? (((parseInt(addForm.gioKetThucTangCa.split(':')[0]) * 60 + parseInt(addForm.gioKetThucTangCa.split(':')[1])) - (parseInt(addForm.gioBatDauTangCa.split(':')[0]) * 60 + parseInt(addForm.gioBatDauTangCa.split(':')[1]))) / 60).toFixed(1) : 0) }} giờ</strong>
+                                        </v-alert>
+                                    </v-col>
+                                </v-row>
+                            </div>
                         </v-col>
                     </v-row>
                 </v-card-text>
@@ -1350,8 +1427,83 @@ onMounted(() => {
     text-transform: uppercase;
 }
 
-.preview-table-wrapper {
-    max-height: 400px;
-    overflow-y: auto;
+/* ===== MATRIX WEEK TABLE ===== */
+.schedule-matrix-table {
+    border-collapse: collapse;
+    background: #fff;
+    min-width: 900px;
+}
+.matrix-th {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 10px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    text-align: center;
+    white-space: nowrap;
+}
+.day-col-header { min-width: 120px; }
+.today-col-header { background: #eff6ff !important; }
+.day-col-label { font-size: 12px; font-weight: 700; color: #475569; }
+.today-col-header .day-col-label { color: #1e40af; }
+.day-col-date { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.today-col-header .day-col-date { color: #6366f1; font-weight: 600; }
+.matrix-row:hover { background: #f8fafc; }
+.matrix-td {
+    border: 1px solid #e2e8f0;
+    padding: 8px 6px;
+    vertical-align: middle;
+    font-size: 13px;
+}
+.matrix-emp-code {
+    display: inline-block;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+.matrix-day-cell { cursor: pointer; min-width: 120px; }
+.matrix-day-cell:hover { background: #f0f9ff; }
+.matrix-today-cell { background: #eff6ff !important; }
+.matrix-shifts { display: flex; flex-direction: column; gap: 4px; }
+.matrix-shift-chip {
+    border-radius: 8px;
+    padding: 5px 7px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+}
+.matrix-shift-chip:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+.matrix-shift-name { font-size: 11px; font-weight: 700; }
+.shift-morning  { background: #dcfce7; color: #15803d; border-left-color: #22c55e; }
+.shift-afternoon { background: #fef9c3; color: #a16207; border-left-color: #eab308; }
+.shift-night    { background: #ede9fe; color: #6d28d9; border-left-color: #8b5cf6; }
+.shift-default  { background: #dbeafe; color: #1d4ed8; border-left-color: #3b82f6; }
+.matrix-shift-time { font-size: 10px; font-weight: 500; opacity: 0.75; margin-top: 1px; }
+.matrix-overtime-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 9px;
+    background: rgba(234,88,12,0.15);
+    color: #c2410c;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-top: 2px;
+    font-weight: 600;
+}
+.matrix-shift-status { font-size: 9px; opacity: 0.6; margin-top: 1px; }
+.matrix-empty-cell {
+    text-align: center;
+    color: #cbd5e1;
+    font-size: 16px;
+    font-weight: 300;
+    padding: 4px;
 }
 </style>

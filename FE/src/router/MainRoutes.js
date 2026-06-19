@@ -137,6 +137,11 @@ const MainRoutes = {
             name: 'LichSuHoatDong',
             path: PATH.LICH_SU_HOAT_DONG,
             component: () => import('@/views/modules/lich-lam-viec/LichSuHoatDong.vue')
+        },
+        {
+            name: 'ChamCong',
+            path: PATH.CHAM_CONG,
+            component: () => import('@/views/modules/lich-lam-viec/ChamCong.vue')
         }
     ]
 };

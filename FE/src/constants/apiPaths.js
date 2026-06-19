@@ -66,7 +66,8 @@ export const API_LICH_LAM_VIEC = {
     BASE: `${API_BASE.ADMIN}/lich-lam-viec`,
     SCHEDULES: `${API_BASE.ADMIN}/lich-lam-viec/schedules`,
     SHIFTS: `${API_BASE.ADMIN}/lich-lam-viec/shifts`,
-    ACTIVITIES: `${API_BASE.ADMIN}/lich-lam-viec/activities`
+    ACTIVITIES: `${API_BASE.ADMIN}/lich-lam-viec/activities`,
+    ATTENDANCE: `${API_BASE.ADMIN}/lich-lam-viec/attendance`
 };
 
 export const API_CUSTOMER = {
