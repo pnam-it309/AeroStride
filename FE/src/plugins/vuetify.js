@@ -1,8 +1,13 @@
 import { createVuetify } from 'vuetify';
+import { vi } from 'vuetify/locale';
 import '@mdi/font/css/materialdesignicons.css';
 import { BLUE_THEME } from '@/theme/LightTheme';
 
 export default createVuetify({
+    locale: {
+        locale: 'vi',
+        messages: { vi }
+    },
     theme: {
         defaultTheme: 'BLUE_THEME',
         themes: {

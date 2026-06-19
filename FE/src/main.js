@@ -18,4 +18,9 @@ app.use(router);
 app.use(PerfectScrollbarPlugin);
 app.use(createPinia());
 app.directive('maska', vMaska);
+
+// Đăng ký AppDatePicker global
+import AppDatePicker from '@/components/common/AppDatePicker.vue';
+app.component('AppDatePicker', AppDatePicker);
+
 app.use(vuetify).mount('#app');

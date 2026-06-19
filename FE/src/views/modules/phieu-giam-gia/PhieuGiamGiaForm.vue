@@ -283,7 +283,7 @@ const handleSave = () => {
             addNotification({ title: 'Lỗi', subtitle: 'Phần trăm giảm giá phải là số nguyên', color: 'error' });
             return;
         }
-        
+
         const giamToiDa = Number(form.value.giamToiDa);
         if (giamToiDa < 0) {
             addNotification({ title: 'Lỗi', subtitle: 'Mức giảm tối đa không hợp lệ', color: 'error' });
@@ -400,7 +400,8 @@ onMounted(init);
         <v-row v-if="loading">
             <v-col cols="12" class="text-center py-16">
                 <v-progress-circular indeterminate color="primary" size="64" />
-                <div class="mt-4 text-subtitle-1 font-weight-bold text-slate-500">Đang tải cấu hình phiếu giảm giá...</div>
+                <div class="mt-4 text-subtitle-1 font-weight-bold text-slate-500">Đang tải cấu hình phiếu giảm giá...
+                </div>
             </v-col>
         </v-row>
 
@@ -420,15 +421,13 @@ onMounted(init);
                             </v-col>
                             <v-col cols="12" md="8">
                                 <div class="field-label">Tên giảm giá <span class="text-error">*</span></div>
-                                <v-text-field v-model="form.ten" :readonly="isViewOnly"
-                                    :rules="[
-                                        (v) => !!v || 'Vui lòng nhập tên giảm giá',
-                                        (v) => (v && v.trim() === v) || 'Không được chứa khoảng trắng ở 2 đầu',
-                                        (v) => (v && /^[\p{L}0-9\s]+$/u.test(v)) || 'Không được chứa ký tự đặc biệt',
-                                        (v) => (v && v.length <= 255) || 'Không vượt quá 255 ký tự'
-                                    ]"
-                                    placeholder="Ví dụ: Phiếu giảm giá Mừng Sinh Nhật..." variant="outlined" density="compact"
-                                    hide-details="auto"></v-text-field>
+                                <v-text-field v-model="form.ten" :readonly="isViewOnly" :rules="[
+                                    (v) => !!v || 'Vui lòng nhập tên giảm giá',
+                                    (v) => (v && v.trim() === v) || 'Không được chứa khoảng trắng ở 2 đầu',
+                                    (v) => (v && /^[\p{L}0-9\s]+$/u.test(v)) || 'Không được chứa ký tự đặc biệt',
+                                    (v) => (v && v.length <= 255) || 'Không vượt quá 255 ký tự'
+                                ]" placeholder="Ví dụ: Phiếu giảm giá Mừng Sinh Nhật..." variant="outlined"
+                                    density="compact" hide-details="auto"></v-text-field>
                             </v-col>
 
                             <!-- 2. Hình thức giảm, Giá trị giảm & Giảm tối đa -->
@@ -442,10 +441,11 @@ onMounted(init);
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">
-                                    Giá trị giảm ({{ form.loaiPhieu === 'TIEN_MAT' ? 'VNĐ' : '%' }}) <span class="text-error">*</span></div>
+                                    Giá trị giảm ({{ form.loaiPhieu === 'TIEN_MAT' ? 'VNĐ' : '%' }}) <span
+                                        class="text-error">*</span></div>
                                 <FormattedNumberField v-if="form.loaiPhieu === 'TIEN_MAT'" v-model="form.soTienGiam"
-                                    :readonly="isViewOnly" placeholder="0" variant="outlined"
-                                    density="compact" hide-details></FormattedNumberField>
+                                    :readonly="isViewOnly" placeholder="0" variant="outlined" density="compact"
+                                    hide-details></FormattedNumberField>
                                 <v-text-field v-else v-model.number="form.phanTramGiamGia" :readonly="isViewOnly"
                                     type="number" placeholder="0" variant="outlined" density="compact"
                                     hide-details></v-text-field>
@@ -461,7 +461,8 @@ onMounted(init);
                             <!-- 3. Số lượng sử dụng, Hóa đơn tối thiểu & Loại phiếu -->
                             <v-col cols="12" md="4">
                                 <div class="d-flex align-center justify-space-between mb-2" style="height: 24px;">
-                                    <div class="field-label mb-0">Số lượng sử dụng <span class="text-error">*</span></div>
+                                    <div class="field-label mb-0">Số lượng sử dụng <span class="text-error">*</span>
+                                    </div>
                                     <v-switch v-model="isInfinite"
                                         :readonly="isViewOnly || form.loaiHienThi === 'CA_NHAN'" label="Vô hạn"
                                         color="primary" density="compact" hide-details
@@ -479,7 +480,8 @@ onMounted(init);
                                     style="height: 24px; display: flex; align-items: center; margin-bottom: 8px;">
                                     Hóa đơn tối thiểu (VNĐ) <span class="text-error">*</span></div>
                                 <FormattedNumberField v-model="form.giatriToiThieu" :readonly="isViewOnly"
-                                    placeholder="0" variant="outlined" density="compact" hide-details></FormattedNumberField>
+                                    placeholder="0" variant="outlined" density="compact" hide-details>
+                                </FormattedNumberField>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label"
@@ -502,15 +504,15 @@ onMounted(init);
                             <!-- 4. Ngày bắt đầu & Ngày kết thúc -->
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày bắt đầu <span class="text-error">*</span></div>
-                                <v-text-field v-model="form.ngayBatDau" :readonly="isViewOnly" type="datetime-local"
-                                    variant="outlined" density="compact" append-inner-icon="mdi-calendar-month-outline"
-                                    @click:append-inner="openDatePicker" class="date-field" hide-details></v-text-field>
+                                <AppDatePicker v-model="form.ngayBatDau" :disabled="isViewOnly" enable-time-picker
+                                    placeholder="Chọn ngày bắt đầu"
+                                    :text-field-props="{ error: !!errors.ngayBatDau, 'error-messages': errors.ngayBatDau }" />
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày kết thúc <span class="text-error">*</span></div>
-                                <v-text-field v-model="form.ngayKetThuc" :readonly="isViewOnly" type="datetime-local"
-                                    variant="outlined" density="compact" append-inner-icon="mdi-calendar-month-outline"
-                                    @click:append-inner="openDatePicker" class="date-field" hide-details></v-text-field>
+                                <AppDatePicker v-model="form.ngayKetThuc" :disabled="isViewOnly" enable-time-picker
+                                    placeholder="Chọn ngày kết thúc"
+                                    :text-field-props="{ error: !!errors.ngayKetThuc, 'error-messages': errors.ngayKetThuc }" />
                             </v-col>
 
                             <!-- 5. Mô tả phiếu giảm giá -->
@@ -556,19 +558,15 @@ onMounted(init);
                                 <div class="filter-field-label"
                                     style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Đơn
                                     hàng từ ngày</div>
-                                <v-text-field v-model="filterStartDate" type="date" variant="outlined" density="compact"
-                                    hide-details rounded="xl" class="compact-input date-field"
-                                    append-inner-icon="mdi-calendar-month-outline"
-                                    @click:append-inner="openDatePicker"></v-text-field>
+                                <AppDatePicker v-model="filterStartDate" placeholder="Chọn ngày"
+                                    :text-field-props="{ rounded: 'xl', class: 'compact-input date-field' }" />
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="filter-field-label"
                                     style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px;">Đến
                                     ngày</div>
-                                <v-text-field v-model="filterEndDate" type="date" variant="outlined" density="compact"
-                                    hide-details rounded="xl" class="compact-input date-field"
-                                    append-inner-icon="mdi-calendar-month-outline"
-                                    @click:append-inner="openDatePicker"></v-text-field>
+                                <AppDatePicker v-model="filterEndDate" placeholder="Chọn ngày"
+                                    :text-field-props="{ rounded: 'xl', class: 'compact-input date-field' }" />
                             </v-col>
                         </AdminFilter>
 
@@ -728,7 +726,8 @@ onMounted(init);
     position: sticky;
     top: 0;
     z-index: 2;
-    background-color: #f8fafc; /* match header background */
+    background-color: #f8fafc;
+    /* match header background */
 }
 
 .border-s-dashed {

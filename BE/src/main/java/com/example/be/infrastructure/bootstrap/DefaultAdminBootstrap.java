@@ -68,7 +68,7 @@ public class DefaultAdminBootstrap {
             return;
         }
 
-        PhanQuyen adminRole = phanQuyenRepository.findByMaIgnoreCase("ADMIN")
+        PhanQuyen adminRole = phanQuyenRepository.findFirstByMaIgnoreCase("ADMIN")
                 .orElseGet(this::createAdminRole);
 
         Optional<NhanVien> existingAdminOptional = nhanVienRepository.findByEmail(adminEmail);

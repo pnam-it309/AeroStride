@@ -559,21 +559,22 @@ onMounted(async () => {
 
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
-                                <v-text-field v-model="employeeForm.ngaySinh" :readonly="isDetailView" type="date"
-                                    :rules="[
-                                        (v) => {
-                                            if (!v) return true;
-                                            const dob = new Date(v);
-                                            const today = new Date();
-                                            if (dob > today) return 'Ngày sinh không được ở tương lai';
-                                            let age = today.getFullYear() - dob.getFullYear();
-                                            const m = today.getMonth() - dob.getMonth();
-                                            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-                                            return age >= 18 || 'Nhân viên phải từ 18 tuổi trở lên';
-                                        }
-                                    ]"
-                                    append-inner-icon="mdi-calendar" @click:append-inner="openDatePicker"
-                                    variant="outlined" density="compact" hide-details="auto" clearable></v-text-field>
+                                <AppDatePicker v-model="employeeForm.ngaySinh" :disabled="isDetailView"
+                                    placeholder="Chọn ngày sinh"
+                                    :text-field-props="{
+                                        rules: [
+                                            (v) => {
+                                                if (!v) return true;
+                                                const dob = new Date(v);
+                                                const today = new Date();
+                                                if (dob > today) return 'Ngày sinh không được ở tương lai';
+                                                let age = today.getFullYear() - dob.getFullYear();
+                                                const m = today.getMonth() - dob.getMonth();
+                                                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                                                return age >= 18 || 'Nhân viên phải từ 18 tuổi trở lên';
+                                            }
+                                        ]
+                                    }" />
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Giới tính</div>

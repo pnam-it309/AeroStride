@@ -86,6 +86,7 @@ const handleCheckout = () => {
                         variant="outlined"
                         density="compact"
                         hide-details
+                        no-data-text="Không có mã giảm giá"
                         prepend-inner-icon="mdi-ticket-percent"
                         class="flex-grow-1"
                     ></v-select>

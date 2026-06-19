@@ -160,19 +160,27 @@ const handleExport = async () => {
 
 const getRowNumber = (index) => (pagination.value.page - 1) * pagination.value.size + index + 1;
 
-const openNativeDatePicker = (fieldRef) => {
-    const input = fieldRef?.$el?.querySelector("input[type='date']");
-    if (!input) return;
-    input.focus();
-    if (typeof input.showPicker === 'function') {
-        input.showPicker();
-        return;
-    }
-    input.click();
-};
+const dateRange = ref(null);
 
-const openFromDatePicker = () => openNativeDatePicker(fromDateFieldRef.value);
-const openToDatePicker = () => openNativeDatePicker(toDateFieldRef.value);
+const onDateRangeChange = (val) => {
+    dateRange.value = val;
+    if (val && val.length === 2) {
+        // Handle timezone issues by taking parts directly
+        const formatDateString = (d) => {
+            if (!d) return null;
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        filters.value.fromDate = formatDateString(val[0]);
+        filters.value.toDate = formatDateString(val[1]);
+    } else {
+        filters.value.fromDate = null;
+        filters.value.toDate = null;
+    }
+    handleSearch();
+};
 
 const hasCount = (value) => Number(value) > 0;
 
@@ -257,20 +265,14 @@ onMounted(() => loadOrders());
 
 
 
-                <v-col cols="12" md="2">
-                    <div class="filter-field-label">Từ ngày</div>
-                    <v-text-field ref="fromDateFieldRef" v-model="filters.fromDate" type="date" variant="outlined"
-                        density="compact" class="compact-input date-field"
-                        append-inner-icon="mdi-calendar-month-outline" hide-details
-                        @click:append-inner="openFromDatePicker" @input="handleSearch"></v-text-field>
-                </v-col>
-
-                <v-col cols="12" md="2">
-                    <div class="filter-field-label">Đến ngày</div>
-                    <v-text-field ref="toDateFieldRef" v-model="filters.toDate" type="date" variant="outlined"
-                        density="compact" class="compact-input date-field"
-                        append-inner-icon="mdi-calendar-month-outline" hide-details
-                        @click:append-inner="openToDatePicker" @input="handleSearch"></v-text-field>
+                <v-col cols="12" md="4">
+                    <div class="filter-field-label">Khoảng thời gian</div>
+                    <AppDatePicker
+                        :model-value="dateRange"
+                        @update:model-value="onDateRangeChange"
+                        range
+                        placeholder="Từ ngày - Đến ngày"
+                    />
                 </v-col>
             </AdminFilter>
         </div>
@@ -419,7 +421,7 @@ onMounted(() => loadOrders());
                             </div>
                             <p class="mb-1 text-subtitle-1">
                                 Họ tên: <span class="font-weight-medium">{{ selectedOrder.tenKhachHang || 'Khách lẻ'
-                                    }}</span>
+                                }}</span>
                             </p>
                             <p class="text-subtitle-1">
                                 Số điện thoại: <span class="font-weight-medium">{{ selectedOrder.soDienThoai }}</span>
@@ -430,7 +432,7 @@ onMounted(() => loadOrders());
                             </div>
                             <p class="mb-1 text-subtitle-1">
                                 Ngày mua: <span class="font-weight-medium">{{ formatDate(selectedOrder.ngayTao)
-                                    }}</span>
+                                }}</span>
                             </p>
                             <p class="text-h5 font-weight-medium text-error">Tổng tiền: {{
                                 formatCurrency(selectedOrder.tongTien) }}</p>

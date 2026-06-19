@@ -600,24 +600,24 @@ onMounted(async () => {
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
-                                <v-text-field v-model="customerForm.ngaySinh" :readonly="isDetailView" type="date"
-                                    :rules="[
-                                        (v) => {
-                                            if (!v) return true;
-                                            const bd = new Date(v);
-                                            const now = new Date();
-                                            if (bd.getTime() > now.getTime()) return 'Ngày sinh không thể ở trong tương lai';
-                                            let age = now.getFullYear() - bd.getFullYear();
-                                            const m = now.getMonth() - bd.getMonth();
-                                            if (m < 0 || (m === 0 && now.getDate() < bd.getDate())) {
-                                                age--;
+                                <AppDatePicker v-model="customerForm.ngaySinh" :disabled="isDetailView"
+                                    placeholder="Chọn ngày sinh"
+                                    :text-field-props="{
+                                        rules: [
+                                            (v) => {
+                                                if (!v) return true;
+                                                const bd = new Date(v);
+                                                const now = new Date();
+                                                if (bd.getTime() > now.getTime()) return 'Ngày sinh không thể ở trong tương lai';
+                                                let age = now.getFullYear() - bd.getFullYear();
+                                                const m = now.getMonth() - bd.getMonth();
+                                                if (m < 0 || (m === 0 && now.getDate() < bd.getDate())) {
+                                                    age--;
+                                                }
+                                                return age >= 18 || 'Khách hàng phải từ 18 tuổi trở lên';
                                             }
-                                            return age >= 18 || 'Khách hàng phải từ 18 tuổi trở lên';
-                                        }
-                                    ]"
-                                    append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker"
-                                    variant="outlined" bg-color="white" density="compact" hide-details="auto" clearable
-                                    class="date-field"></v-text-field>
+                                        ]
+                                    }" />
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Giới tính</div>

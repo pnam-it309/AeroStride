@@ -927,8 +927,7 @@ onMounted(() => {
                         </v-col>
                         <v-col cols="12">
                             <div class="filter-field-label">Ngày làm</div>
-                            <v-text-field ref="ngayRef" v-model="addForm.ngay" type="date" variant="outlined" density="compact" hide-details
-                                append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker(ngayRef)" />
+                            <AppDatePicker v-model="addForm.ngay" placeholder="Chọn ngày làm" />
                         </v-col>
                         <v-col cols="12" v-if="isEditSchedule">
                             <div class="filter-field-label">Trạng thái</div>

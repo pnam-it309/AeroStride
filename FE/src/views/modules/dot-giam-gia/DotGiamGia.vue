@@ -152,6 +152,27 @@ const getDiscountValueDisplay = (campaign) => {
     return `${campaign?.soTienGiam}%`;
 };
 
+const dateRange = ref(null);
+
+const onDateRangeChange = (val) => {
+    dateRange.value = val;
+    if (val && val.length === 2) {
+        const formatDateString = (d) => {
+            if (!d) return null;
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        filters.value.startDate = formatDateString(val[0]);
+        filters.value.endDate = formatDateString(val[1]);
+    } else {
+        filters.value.startDate = null;
+        filters.value.endDate = null;
+    }
+    handleSearch();
+};
+
 const openDatePicker = (ref) => {
     const input = ref?.$el?.querySelector('input[type="date"]');
     if (input) {
@@ -197,18 +218,14 @@ onMounted(() => loadCampaigns());
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
 
-                <v-col cols="12" md="2" class="filter-cell">
-                    <div class="filter-field-label">Từ ngày</div>
-                    <v-text-field ref="startDateRef" v-model="filters.startDate" type="date" variant="outlined"
-                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month-outline"
-                        @click:append-inner="openDatePicker(startDateRef)" @change="handleSearch"></v-text-field>
-                </v-col>
-
-                <v-col cols="12" md="2" class="filter-cell">
-                    <div class="filter-field-label">Đến ngày</div>
-                    <v-text-field ref="endDateRef" v-model="filters.endDate" type="date" variant="outlined"
-                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month-outline"
-                        @click:append-inner="openDatePicker(endDateRef)" @change="handleSearch"></v-text-field>
+                <v-col cols="12" md="4" class="filter-cell">
+                    <div class="filter-field-label">Khoảng thời gian</div>
+                    <AppDatePicker
+                        :model-value="dateRange"
+                        @update:model-value="onDateRangeChange"
+                        range
+                        placeholder="Từ ngày - Đến ngày"
+                    />
                 </v-col>
             </AdminFilter>
         </div>

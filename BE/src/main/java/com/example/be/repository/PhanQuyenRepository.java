@@ -9,5 +9,5 @@ import java.util.Optional;
 @Repository
 public interface PhanQuyenRepository extends JpaRepository<PhanQuyen, String> {
 
-    Optional<PhanQuyen> findByMaIgnoreCase(String ma);
+    Optional<PhanQuyen> findFirstByMaIgnoreCase(String ma);
 }

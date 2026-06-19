@@ -222,22 +222,26 @@ const handleLocalFilterChange = () => {
     statsTab.handleFilter();
 };
 
-const fromDateFieldRef = ref(null);
-const toDateFieldRef = ref(null);
+const dateRange = ref(null);
 
-const openNativeDatePicker = (fieldRef) => {
-    const input = fieldRef?.$el?.querySelector("input[type='date']");
-    if (!input) return;
-    input.focus();
-    if (typeof input.showPicker === 'function') {
-        input.showPicker();
-        return;
+const onDateRangeChange = (val) => {
+    dateRange.value = val;
+    if (val && val.length === 2) {
+        const formatDateString = (d) => {
+            if (!d) return null;
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        statsFilters.minNgayDonHang = formatDateString(val[0]);
+        statsFilters.maxNgayDonHang = formatDateString(val[1]);
+    } else {
+        statsFilters.minNgayDonHang = null;
+        statsFilters.maxNgayDonHang = null;
     }
-    input.click();
+    handleLocalFilterChange();
 };
-
-const openFromDatePicker = () => openNativeDatePicker(fromDateFieldRef.value);
-const openToDatePicker = () => openNativeDatePicker(toDateFieldRef.value);
 
 const handleReset = () => {
     listTab.handleReset();
@@ -746,8 +750,8 @@ const formatAddressFull = (addr) => {
                         <v-col cols="12" md="4" class="filter-cell">
                             <div class="filter-field-label">Tìm kiếm</div>
                             <v-text-field v-model="listFilters.search" placeholder="Mã, tên, số điện thoại, email..."
-                                variant="outlined" bg-color="white" density="compact" hide-details
-                                class="compact-input" @input="handleLocalFilterChange" />
+                                variant="outlined" bg-color="white" density="compact" hide-details class="compact-input"
+                                @input="handleLocalFilterChange" />
                         </v-col>
 
                         <!-- Giới tính -->
@@ -777,22 +781,15 @@ const formatAddressFull = (addr) => {
                                 @input="handleLocalFilterChange" />
                         </v-col>
 
-                        <!-- Ngày đặt hàng từ -->
-                        <v-col cols="12" md="3" class="filter-cell">
-                            <div class="filter-field-label">Từ ngày</div>
-                            <v-text-field ref="fromDateFieldRef" v-model="statsFilters.minNgayDonHang" type="date"
-                                variant="outlined" bg-color="white" density="compact" hide-details class="compact-input date-field"
-                                append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openFromDatePicker"
-                                @input="handleLocalFilterChange" />
-                        </v-col>
-
-                        <!-- Ngày đặt hàng đến -->
-                        <v-col cols="12" md="3" class="filter-cell">
-                            <div class="filter-field-label">Đến ngày</div>
-                            <v-text-field ref="toDateFieldRef" v-model="statsFilters.maxNgayDonHang" type="date"
-                                variant="outlined" bg-color="white" density="compact" hide-details class="compact-input date-field"
-                                append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openToDatePicker"
-                                @input="handleLocalFilterChange" />
+                        <!-- Khoảng thời gian mua -->
+                        <v-col cols="12" md="4" class="filter-cell">
+                            <div class="filter-field-label">Khoảng thời gian mua</div>
+                            <AppDatePicker
+                                :model-value="dateRange"
+                                @update:model-value="onDateRangeChange"
+                                range
+                                placeholder="Từ ngày - Đến ngày"
+                            />
                         </v-col>
                     </template>
 
@@ -1000,9 +997,9 @@ const formatAddressFull = (addr) => {
             </div>
 
             <!-- Table Card -->
-            <AdminTable title="Lịch sử hóa đơn" :show-add-button="false" :headers="invoiceHistoryTableHeaders" :items="invoicesTab.items.value"
-                :loading="invoicesTab.loading.value" empty-text="Chưa có hóa đơn nào được tìm thấy cho khách hàng này!"
-                empty-icon="mdi-receipt-text-off">
+            <AdminTable title="Lịch sử hóa đơn" :show-add-button="false" :headers="invoiceHistoryTableHeaders"
+                :items="invoicesTab.items.value" :loading="invoicesTab.loading.value"
+                empty-text="Chưa có hóa đơn nào được tìm thấy cho khách hàng này!" empty-icon="mdi-receipt-text-off">
                 <template #row="{ item, index }">
                     <tr class="data-row">
                         <!-- STT -->
@@ -1154,7 +1151,10 @@ const formatAddressFull = (addr) => {
                                     <!-- Địa chỉ đầy đủ -->
                                     <div class="text-body-2 text-slate-500 mb-4 font-weight-medium line-height-1-6"
                                         style="font-size: 13px !important">
-                                        {{ [addr.diaChiChiTiet, addr.phuongXa, addr.thanhPho, addr.tinh].filter(Boolean).join(', ') }}
+
+                                        {{
+                                            [addr.diaChiChiTiet, addr.phuongXa, addr.thanhPho,
+                                            addr.tinh].filter(Boolean).join(',') }}
                                     </div>
 
                                     <!-- Actions -->
@@ -1186,7 +1186,8 @@ const formatAddressFull = (addr) => {
                                 class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-10">
                                 <span class="text-subtitle-2 font-weight-bold text-slate-800"
                                     style="font-size: 15px !important">
-                                    {{ showAddrForm ? (isEditAddr ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới') : 'Thêm địa chỉ khác' }}
+                                    {{ showAddrForm ?
+                                        (isEditAddr ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới') : 'Thêm địa chỉ khác' }}
                                 </span>
                                 <v-btn v-if="!showAddrForm" variant="text" color="primary"
                                     class="text-none font-weight-bold px-4 rounded-lg text-primary bg-blue-lighten-5"

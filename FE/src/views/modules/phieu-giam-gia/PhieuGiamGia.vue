@@ -49,15 +49,25 @@ const handleRefresh = async () => {
     await executeRefresh(() => handleReset(), 1200);
 };
 
-const openDatePicker = (ref) => {
-    const input = ref?.$el?.querySelector('input[type="date"]');
-    if (input) {
-        if (typeof input.showPicker === 'function') {
-            input.showPicker();
-        } else {
-            input.click();
-        }
+const dateRange = ref(null);
+
+const onDateRangeChange = (val) => {
+    dateRange.value = val;
+    if (val && val.length === 2) {
+        const formatDateString = (d) => {
+            if (!d) return null;
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        filters.value.tuNgay = formatDateString(val[0]);
+        filters.value.denNgay = formatDateString(val[1]);
+    } else {
+        filters.value.tuNgay = null;
+        filters.value.denNgay = null;
     }
+    handleSearch();
 };
 
 const handleExport = async () => {
@@ -245,19 +255,14 @@ onMounted(() => taiDanhSachPhieuGiamGia());
                     ]" variant="outlined" density="compact" hide-details class="compact-input"
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
-                <v-col cols="6" sm="3" md="2" class="filter-cell">
-                    <div class="filter-field-label">Từ ngày</div>
-                    <v-text-field ref="fromDateRef" v-model="filters.tuNgay" type="date" variant="outlined"
-                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month-outline"
-                        @click:append-inner="openDatePicker(fromDateRef)" @change="handleSearch"
-                        @input="handleSearch"></v-text-field>
-                </v-col>
-                <v-col cols="6" sm="3" md="2" class="filter-cell">
-                    <div class="filter-field-label">Đến ngày</div>
-                    <v-text-field ref="toDateRef" v-model="filters.denNgay" type="date" variant="outlined"
-                        density="compact" hide-details class="compact-input date-field" append-inner-icon="mdi-calendar-month-outline"
-                        @click:append-inner="openDatePicker(toDateRef)" @change="handleSearch"
-                        @input="handleSearch"></v-text-field>
+                <v-col cols="12" md="4" class="filter-cell">
+                    <div class="filter-field-label">Khoảng thời gian</div>
+                    <AppDatePicker
+                        :model-value="dateRange"
+                        @update:model-value="onDateRangeChange"
+                        range
+                        placeholder="Từ ngày - Đến ngày"
+                    />
                 </v-col>
             </AdminFilter>
         </div>
@@ -274,8 +279,8 @@ onMounted(() => taiDanhSachPhieuGiamGia());
             { text: 'Thời gian áp dụng', width: '180px' },
             { text: 'Trạng thái', width: '140px' },
             { text: 'Hành động', width: '110px' }
-        ]" :items="danhSachPhieuGiamGia" :total-count="pagination.totalElements" :loading="loading" @add="openCreateDialog"
-            @export="handleExport">
+        ]" :items="danhSachPhieuGiamGia" :total-count="pagination.totalElements" :loading="loading"
+            @add="openCreateDialog" @export="handleExport">
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell text-slate-400">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
@@ -360,7 +365,8 @@ onMounted(() => taiDanhSachPhieuGiamGia());
             <template #pagination>
                 <AdminPagination v-model="pagination.page" :page-size="pagination.size"
                     @update:pageSize="pagination.size = $event" :total-pages="pagination.totalPages"
-                    :total-elements="pagination.totalElements" :current-size="danhSachPhieuGiamGia.length" @change="taiDanhSachPhieuGiamGia" />
+                    :total-elements="pagination.totalElements" :current-size="danhSachPhieuGiamGia.length"
+                    @change="taiDanhSachPhieuGiamGia" />
             </template>
         </AdminTable>
 

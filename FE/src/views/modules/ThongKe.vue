@@ -30,22 +30,19 @@ const startDate = ref(formatDateTimeInput(defaultStartDate));
 const endDate = ref(formatDateTimeInput(defaultEndDate));
 const selectedQuickRange = ref(null);
 const customQuickRangeTitle = ref('');
-const startDateInput = ref(null);
-const endDateInput = ref(null);
 
-const openDateTimePicker = (inputRef) => {
-    const field = inputRef?.value || inputRef;
-    const input = field?.$el?.querySelector('input') || field?.querySelector?.('input');
-    if (!input) return;
+const dateRange = ref([defaultStartDate, defaultEndDate]);
 
-    input.focus();
-
-    try {
-        if (typeof input.showPicker === 'function') {
-            input.showPicker();
-        }
-    } catch (error) {
-        // Browser may block showPicker outside a direct user gesture.
+const onDateRangeChange = (val) => {
+    dateRange.value = val;
+    if (val && val.length === 2) {
+        startDate.value = val[0] ? formatDateTimeInput(val[0]) : null;
+        endDate.value = val[1] ? formatDateTimeInput(val[1]) : null;
+        syncQuickRangeFromDates();
+    } else {
+        startDate.value = null;
+        endDate.value = null;
+        syncQuickRangeFromDates();
     }
 };
 
@@ -298,14 +295,19 @@ const syncQuickRangeFromDates = () => {
     customQuickRangeTitle.value = `${totalDays} ngày`;
 };
 
-const applyQuickRange = () => {
-    const days = Number(selectedQuickRange.value);
-    if (!days) return;
+const applyQuickRange = (days) => {
+    if (days === 'custom') {
+        customQuickRangeTitle.value = 'Tuỳ chỉnh';
+        return;
+    }
 
-    const rangeEndDate = new Date();
-    const rangeStartDate = getQuickRangeStart(rangeEndDate, days);
-    startDate.value = formatDateTimeInput(rangeStartDate);
-    endDate.value = formatDateTimeInput(rangeEndDate);
+    const end = new Date();
+    const start = getQuickRangeStart(end, days);
+
+    startDate.value = formatDateTimeInput(start);
+    endDate.value = formatDateTimeInput(end);
+    dateRange.value = [start, end];
+
     customQuickRangeTitle.value = '';
     loadStatistics();
 };
@@ -708,28 +710,20 @@ onMounted(() => {
         <section class="stats-shell mt-4">
             <div class="stats-toolbar">
                 <div class="stats-filters">
-                    <div class="stats-filter-field stats-filter-field-datetime">
-                        <div class="filter-field-label">Từ ngày</div>
-                        <v-text-field ref="startDateInput" v-model="startDate" type="datetime-local" variant="outlined"
-                            density="compact" hide-details class="stats-filter stats-date-time-input"
-                            placeholder="dd/mm/yyyy"
-                            @mousedown="openDateTimePicker(startDateInput)"
-                            @click="openDateTimePicker(startDateInput)"
-                            @change="syncQuickRangeFromDates" />
-                    </div>
-                    <div class="stats-filter-field stats-filter-field-datetime">
-                        <div class="filter-field-label">Đến ngày</div>
-                        <v-text-field ref="endDateInput" v-model="endDate" type="datetime-local" variant="outlined"
-                            density="compact" hide-details class="stats-filter stats-date-time-input"
-                            placeholder="dd/mm/yyyy"
-                            @mousedown="openDateTimePicker(endDateInput)"
-                            @click="openDateTimePicker(endDateInput)"
-                            @change="syncQuickRangeFromDates" />
+                    <div class="stats-filter-field stats-filter-field-datetime" style="flex: 2; min-width: 300px;">
+                        <div class="filter-field-label">Khoảng thời gian</div>
+                        <AppDatePicker
+                            :model-value="dateRange"
+                            @update:model-value="onDateRangeChange"
+                            range
+                            enable-time-picker
+                            placeholder="Từ ngày - Đến ngày"
+                        />
                     </div>
                     <div class="stats-filter-field stats-filter-field-range">
                         <div class="filter-field-label">Khoảng nhanh</div>
-                        <v-select v-model="selectedQuickRange" :items="displayedQuickRangeOptions"
-                            variant="outlined" density="compact" hide-details class="stats-filter stats-filter-year"
+                        <v-select v-model="selectedQuickRange" :items="displayedQuickRangeOptions" variant="outlined"
+                            density="compact" hide-details class="stats-filter stats-filter-year"
                             @update:model-value="applyQuickRange" />
                     </div>
                     <v-btn color="primary" variant="flat" class="stats-refresh-btn px-6" height="40" :loading="loading"
@@ -868,8 +862,7 @@ onMounted(() => {
                             <span>Sắp xếp</span>
                             <select v-model="productSortBy" class="product-filter-select"
                                 @change="refreshProductFilters">
-                                <option v-for="option in productSortOptions" :key="option.value"
-                                    :value="option.value">
+                                <option v-for="option in productSortOptions" :key="option.value" :value="option.value">
                                     {{ option.title }}
                                 </option>
                             </select>

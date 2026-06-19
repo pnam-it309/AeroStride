@@ -586,16 +586,14 @@ onMounted(init);
 
                             <div class="mb-5">
                                 <div class="field-label">Ngày bắt đầu <span class="text-error">*</span></div>
-                                <v-text-field v-model="form.ngayBatDau" :readonly="isDetailView" type="datetime-local"
-                                    append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker" variant="outlined"
-                                    density="comfortable" hide-details class="date-field"></v-text-field>
+                                <AppDatePicker v-model="form.ngayBatDau" :disabled="isDetailView" enable-time-picker
+                                    placeholder="Chọn ngày bắt đầu" />
                             </div>
 
                             <div class="mb-6">
                                 <div class="field-label">Ngày kết thúc <span class="text-error">*</span></div>
-                                <v-text-field v-model="form.ngayKetThuc" :readonly="isDetailView" type="datetime-local"
-                                    append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker" variant="outlined"
-                                    density="comfortable" hide-details class="date-field"></v-text-field>
+                                <AppDatePicker v-model="form.ngayKetThuc" :disabled="isDetailView" enable-time-picker
+                                    placeholder="Chọn ngày kết thúc" />
                             </div>
                         </div>
                     </v-card-text>
