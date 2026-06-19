@@ -10,12 +10,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.example.be.infrastructure.constants.VaiTro;
 
 @Slf4j
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_DIA_CHI)
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
+@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_STAFF)
 public class AdminDiaChiController {
 
     private final AdminDiaChiService service;

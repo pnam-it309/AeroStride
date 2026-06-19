@@ -15,12 +15,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.example.be.infrastructure.constants.VaiTro;
 
 @Slf4j
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_HOA_DON)
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
+@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_STAFF)
 public class AdminHoaDonController {
 
     private final AdminHoaDonService adminHoaDonService;

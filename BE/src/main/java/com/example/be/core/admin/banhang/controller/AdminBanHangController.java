@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.example.be.infrastructure.constants.VaiTro;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -23,7 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_BAN_HANG)
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
+@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_STAFF)
 /**
  * Module: Bán hàng tại quầy (Admin)
  * Chức năng: Quản lý API phục vụ quá trình bán hàng tại quầy của nhân viên/quản trị viên.

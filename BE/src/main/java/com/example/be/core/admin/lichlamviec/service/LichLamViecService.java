@@ -19,7 +19,7 @@ public interface LichLamViecService {
 
     List<CaLamResponse> getAllShifts();
 
-    Page<LichSuHoatDongResponse> getActivityHistory(String search, Pageable pageable);
+    Page<LichSuHoatDongResponse> getActivityHistory(String search, String ngay, Pageable pageable);
 
     byte[] exportTemplate() throws IOException;
 
@@ -34,6 +34,11 @@ public interface LichLamViecService {
     String confirmImport(List<Map<String, Object>> data);
 
     void deleteSchedule(String id);
+
+    // Attendance
+    String saveAttendance(com.example.be.core.admin.lichlamviec.model.request.AttendanceRequest request);
+
+    String updateAttendance(String id, com.example.be.core.admin.lichlamviec.model.request.AttendanceRequest request);
 
     // Shift (Ca Lam) CRUD
     String createShift(CaLamRequest request);

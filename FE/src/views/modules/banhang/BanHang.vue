@@ -627,8 +627,35 @@ const loadCurrentEmployeeDetails = async () => {
     }
 };
 
+const updateShippingFee = (e) => {
+    shippingFee.value = parseNumberFromDots(e.target.value);
+};
+
+const setShippingFee = (fee) => {
+    shippingFee.value = fee;
+};
+
+const setPaymentMethod = (method) => {
+    checkoutData.value.paymentMethod = method;
+};
+
+const updateReceivedAmount = (e) => {
+    checkoutData.value.receivedAmount = parseNumberFromDots(e.target.value);
+};
+
+const closeCustomerSuggestions = () => {
+    showCustomerSuggestions.value = false;
+};
+
+const setActiveOrderIndex = (idx) => {
+    activeOrderIndex.value = idx;
+};
+
 // Lifecycle
 onMounted(async () => {
+    // Tự động thu gọn sidebar khi vào màn hình Bán hàng
+    uiStore.setSidebarCollapsed(true);
+
     uiStore.setBreadcrumbs([
         { title: 'Bán hàng', disabled: false, href: '/admin/ban-hang' },
         { title: 'Tạo đơn hàng', disabled: true }
@@ -1323,7 +1350,7 @@ const startVnPayFlow = async () => {
         vnpayDialog.value.pollInterval = setInterval(async () => {
             let isClosed = false;
             try {
-                isClosed = !popup || popup.closed;
+                isClosed = !vnpayPopup || vnpayPopup.closed;
             } catch (e) {
                 isClosed = false;
             }
@@ -1336,7 +1363,7 @@ const startVnPayFlow = async () => {
             }
 
             try {
-                const currentUrl = popup.location.href;
+                const currentUrl = vnpayPopup.location.href;
                 if (currentUrl && (currentUrl.includes('/vnpay-callback') || currentUrl.includes('vnp_ResponseCode'))) {
                     clearVnPayPolling();
 
@@ -1349,7 +1376,7 @@ const startVnPayFlow = async () => {
                         params[key] = val;
                     });
 
-                    popup.close();
+                    vnpayPopup.close();
                     vnpayPopup = null;
 
                     try {
@@ -1691,6 +1718,37 @@ const formatDateTime = (dateStr) => {
     const pad = (n) => String(n).padStart(2, '0');
     return `${pad(date.getHours())}:${pad(date.getMinutes())} ${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
 };
+
+const formatVNPayAmount = (amount) => {
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
+};
+
+const openVnPayPopup = () => {
+    vnpayPopup = window.open(vnpayDialog.value.paymentUrl, 'vnpay', 'width=800,height=600');
+};
+
+const closeVnPayChoice = () => {
+    vnpayChoiceDialog.value.show = false;
+};
+
+const onQuickAddPhoneInput = (event) => {
+    quickAddForm.value.sdt = String(event.target.value || '').replace(/[^0-9]/g, '');
+};
+
+const onQuickAddTinhChange = (val) => {
+    quickAddForm.value.thanhPho = null;
+    quickAddForm.value.phuongXa = null;
+    if (val) fetchDistricts(val);
+};
+
+const onQuickAddHuyenChange = (val) => {
+    quickAddForm.value.phuongXa = null;
+    if (val) fetchWards(val);
+};
+
+const closeQuickAdd = () => {
+    showQuickAddDialog.value = false;
+};
 </script>
 
 <template>
@@ -1699,8 +1757,8 @@ const formatDateTime = (dateStr) => {
             <!-- Header section containing title and tabs -->
             <header class="pos-header-row d-flex align-center justify-space-between">
                 <div class="d-flex align-center gap-4">
-                    <OrderTabs :orders="orders" :active-index="activeOrderIndex"
-                        @select="(idx) => (activeOrderIndex = idx)" @create="createNewOrder" @close="closeOrder" />
+                    <OrderTabs :orders="orders" :active-index="activeOrderIndex" @select="setActiveOrderIndex"
+                        @create="createNewOrder" @close="closeOrder" />
                 </div>
             </header>
 
@@ -1926,9 +1984,8 @@ const formatDateTime = (dateStr) => {
                                         <v-menu offset="4">
                                             <template v-slot:activator="{ props }">
                                                 <v-text-field :model-value="formatNumberWithDots(shippingFee)"
-                                                    @input="e => shippingFee = parseNumberFromDots(e.target.value)"
-                                                    v-bind="props" variant="outlined" density="compact" suffix="đ"
-                                                    hide-details
+                                                    @input="updateShippingFee" v-bind="props" variant="outlined"
+                                                    density="compact" suffix="đ" hide-details
                                                     style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
                                                     class="text-right-input custom-value-input"
                                                     :disabled="isFreeShip" />
@@ -1939,7 +1996,7 @@ const formatDateTime = (dateStr) => {
                                                 <div>
                                                     <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
                                                         style="font-size: 11px;">Nội thành:</div>
-                                                    <v-list-item @click="shippingFee = 30000"
+                                                    <v-list-item @click="setShippingFee(30000)"
                                                         class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
                                                         30.000 <span class="text-decoration-underline">đ</span>
                                                     </v-list-item>
@@ -1948,7 +2005,7 @@ const formatDateTime = (dateStr) => {
                                                 <div>
                                                     <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
                                                         style="font-size: 11px;">Ngoại thành:</div>
-                                                    <v-list-item @click="shippingFee = 30000"
+                                                    <v-list-item @click="setShippingFee(30000)"
                                                         class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
                                                         30.000 <span class="text-decoration-underline">đ</span>
                                                     </v-list-item>
@@ -1957,7 +2014,7 @@ const formatDateTime = (dateStr) => {
                                                 <div>
                                                     <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
                                                         style="font-size: 11px;">Ngoại tỉnh:</div>
-                                                    <v-list-item @click="shippingFee = 30000"
+                                                    <v-list-item @click="setShippingFee(30000)"
                                                         class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
                                                         30.000 <span class="text-decoration-underline">đ</span>
                                                     </v-list-item>
@@ -2012,14 +2069,14 @@ const formatDateTime = (dateStr) => {
                                     <span class="text-slate-600" style="font-size: 13px !important">Hình thức thanh
                                         toán</span>
                                     <div class="d-flex gap-2">
-                                        <button type="button" @click="checkoutData.paymentMethod = 'CASH'"
+                                        <button type="button" @click="setPaymentMethod('CASH')"
                                             :class="['px-3 d-flex align-center justify-center transition-all',
                                                 checkoutData.paymentMethod === 'CASH' ? 'cash-active-btn' : 'payment-inactive-btn']"
                                             style="font-size: 13px !important; border: 1px solid; border-radius: 0px !important; height: 32px; min-width: 90px; cursor: pointer;">
                                             <v-icon class="mr-1" size="16">mdi-cash</v-icon>
                                             Tiền mặt
                                         </button>
-                                        <button type="button" @click="checkoutData.paymentMethod = 'VNPAY'"
+                                        <button type="button" @click="setPaymentMethod('VNPAY')"
                                             :class="['px-3 d-flex align-center justify-center transition-all',
                                                 checkoutData.paymentMethod === 'VNPAY' ? 'vnpay-active-btn' : 'payment-inactive-btn']"
                                             style="font-size: 13px !important; border: 1px solid; border-radius: 0px !important; height: 32px; min-width: 90px; cursor: pointer;">
@@ -2032,12 +2089,11 @@ const formatDateTime = (dateStr) => {
                                 <!-- Money Input -->
                                 <div class="d-flex align-center justify-space-between mb-3">
                                     <span class="text-slate-600" style="font-size: 13px !important">
-                                        {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển
-                                        khoản' }}
+                                        {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
                                     </span>
                                     <v-text-field :model-value="formatNumberWithDots(checkoutData.receivedAmount)"
-                                        @input="e => checkoutData.receivedAmount = parseNumberFromDots(e.target.value)"
-                                        variant="outlined" density="compact" suffix="đ" hide-details
+                                        @input="updateReceivedAmount" variant="outlined" density="compact" suffix="đ"
+                                        hide-details
                                         style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
                                         class="text-right-input" />
                                 </div>
@@ -2171,7 +2227,7 @@ const formatDateTime = (dateStr) => {
                                     <!-- Autocomplete Suggestions Dropdown -->
                                     <div v-if="showCustomerSuggestions && customerResults.length > 0"
                                         class="suggestion-popover overflow-y-auto" style="max-height: 200px;"
-                                        v-click-outside="() => showCustomerSuggestions = false">
+                                        v-click-outside="closeCustomerSuggestions">
                                         <div class="pa-1 d-flex flex-column gap-1">
                                             <div v-for="c in customerResults" :key="c.id"
                                                 @click="onSelectSuggestedCustomer(c)"
@@ -2271,703 +2327,685 @@ const formatDateTime = (dateStr) => {
             </div>
         </div>
 
-        <<<<<<< HEAD <!-- VNPay QR Dialog -->
-            <v-dialog v-model="vnpayDialog.show" max-width="450" persistent>
-                <v-card class="rounded-xl overflow-hidden pb-4">
-                    <v-card-text class="pt-6 text-center d-flex flex-column align-center">
-                        <div class="vnpay-logo-wrapper mb-4">
-                            <v-img src="https://vnpay.vn/assets/images/logo-icon/logo-primary.svg" width="60" />
-                        </div>
-
-                        <h3 class="text-h6 font-weight-bold mb-1">Thanh toán VNPay</h3>
-                        <p class="text-subtitle-2 text-grey-darken-1 mb-6">Mã đơn: {{ vnpayDialog.orderId }}</p>
-
-                        <div v-if="vnpayDialog.loading" class="pa-8 d-flex flex-column align-center">
-                            <v-progress-circular indeterminate color="#005BAA" size="48"
-                                class="mb-4"></v-progress-circular>
-                            <div class="text-body-2 font-weight-medium text-grey-darken-2">{{ vnpayDialog.statusText }}
-                            </div>
-                        </div>
-
-                        <div v-else-if="vnpayDialog.verified" class="pa-8 d-flex flex-column align-center">
-                            <v-icon color="success" size="64" class="mb-4">mdi-check-circle</v-icon>
-                            <div class="text-h6 font-weight-bold text-success mb-2">Giao dịch thành công!</div>
-                            <div class="text-body-2 text-grey-darken-1">Đơn hàng đang được hoàn tất...</div>
-                        </div>
-
-                        <div v-else class="w-100 d-flex flex-column align-center">
-                            <template v-if="checkoutData.vnpayMethod === 'QR'">
-                                <div class="pa-2 bg-white rounded-lg elevation-2 mb-4 d-inline-block">
-                                    <v-img :src="vnpayDialog.qrUrl" width="220" height="220" />
-                                </div>
-                                <div class="text-h5 font-weight-bold text-error mb-1">
-                                    {{ new Intl.NumberFormat('vi-VN', {
-                                        style: 'currency', currency: 'VND'
-                                    }).format(vnpayDialog.amount) }}
-                                </div>
-                                <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
-                                    Sử dụng ứng dụng ngân hàng hoặc ví VNPay để quét mã.
-                                </div>
-                            </template>
-                            <template v-else>
-                                <div class="text-h5 font-weight-bold text-error mb-4">
-                                    {{ new Intl.NumberFormat('vi-VN', {
-                                        style: 'currency', currency: 'VND'
-                                    }).format(vnpayDialog.amount) }}
-                                </div>
-                                <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
-                                    Vui lòng hoàn tất thanh toán trên cửa sổ VNPay.
-                                </div>
-                                <v-btn color="#005BAA" class="mb-6 rounded-lg text-white font-weight-bold"
-                                    @click="() => { vnpayPopup = window.open(vnpayDialog.paymentUrl, 'vnpay', 'width=800,height=600'); }">
-                                    Mở lại cổng thanh toán
-                                </v-btn>
-                            </template>
-
-                            <v-btn block color="#005BAA" class="mb-3 rounded-lg text-white font-weight-bold" height="48"
-                                @click="onConfirmVnPayManual">
-                                XÁC NHẬN ĐÃ NHẬN TIỀN
-                            </v-btn>
-
-                            <v-btn v-if="checkoutData.vnpayMethod === 'QR'" block variant="outlined"
-                                color="grey-darken-1" class="rounded-lg font-weight-bold" height="48"
-                                @click="startVnPayFlow">
-                                TẠO LẠI MÃ QR
-                            </v-btn>
-
-                            <v-btn variant="text" color="error" class="mt-4" size="small" @click="cancelVnPayFlow">
-                                Hủy giao dịch
-                            </v-btn>
-                        </div>
-                    </v-card-text>
-                </v-card>
-            </v-dialog>
-
-            <!-- VNPay Choice Dialog -->
-            <v-dialog v-model="vnpayChoiceDialog.show" max-width="400" persistent>
-                <v-card class="rounded-xl pa-5">
-                    <div class="text-center mb-5">
-                        <div class="text-h6 font-weight-bold">Chọn hình thức thanh toán</div>
+        <!-- VNPay QR Dialog -->
+        <v-dialog v-model="vnpayDialog.show" max-width="450" persistent>
+            <v-card class="rounded-xl overflow-hidden pb-4">
+                <v-card-text class="pt-6 text-center d-flex flex-column align-center">
+                    <div class="vnpay-logo-wrapper mb-4">
+                        <v-img src="https://vnpay.vn/assets/images/logo-icon/logo-primary.svg" width="60" />
                     </div>
-                    <v-radio-group v-model="vnpayChoiceDialog.method" column hide-details class="mb-5">
-                        <v-radio value="QR" label="Thanh toán qua quét mã QR" color="#2E4E8E"></v-radio>
-                        <v-radio value="GATEWAY" label="Nhập mã thẻ qua cổng VNPay" color="#2E4E8E"></v-radio>
-                    </v-radio-group>
-                    <div class="d-flex gap-3">
-                        <v-btn class="flex-grow-1 rounded-lg font-weight-bold" variant="outlined" color="grey-darken-1"
-                            height="44" @click="vnpayChoiceDialog.show = false">
-                            Hủy
+
+                    <h3 class="text-h6 font-weight-bold mb-1">Thanh toán VNPay</h3>
+                    <p class="text-subtitle-2 text-grey-darken-1 mb-6">Mã đơn: {{ vnpayDialog.orderId }}</p>
+
+                    <div v-if="vnpayDialog.loading" class="pa-8 d-flex flex-column align-center">
+                        <v-progress-circular indeterminate color="#005BAA" size="48" class="mb-4"></v-progress-circular>
+                        <div class="text-body-2 font-weight-medium text-grey-darken-2">{{ vnpayDialog.statusText }}
+                        </div>
+                    </div>
+
+                    <div v-else-if="vnpayDialog.verified" class="pa-8 d-flex flex-column align-center">
+                        <v-icon color="success" size="64" class="mb-4">mdi-check-circle</v-icon>
+                        <div class="text-h6 font-weight-bold text-success mb-2">Giao dịch thành công!</div>
+                        <div class="text-body-2 text-grey-darken-1">Đơn hàng đang được hoàn tất...</div>
+                    </div>
+
+                    <div v-else class="w-100 d-flex flex-column align-center">
+                        <template v-if="checkoutData.vnpayMethod === 'QR'">
+                            <div class="pa-2 bg-white rounded-lg elevation-2 mb-4 d-inline-block">
+                                <v-img :src="vnpayDialog.qrUrl" width="220" height="220" />
+                            </div>
+                            <div class="text-h5 font-weight-bold text-error mb-1">
+                                {{ formatVNPayAmount(vnpayDialog.amount) }}
+                            </div>
+                            <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
+                                Sử dụng ứng dụng ngân hàng hoặc ví VNPay để quét mã.
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div class="text-h5 font-weight-bold text-error mb-4">
+                                {{ formatVNPayAmount(vnpayDialog.amount) }}
+                            </div>
+                            <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
+                                Vui lòng hoàn tất thanh toán trên cửa sổ VNPay.
+                            </div>
+                            <v-btn color="#005BAA" class="mb-6 rounded-lg text-white font-weight-bold"
+                                @click="openVnPayPopup">
+                                Mở lại cổng thanh toán
+                            </v-btn>
+                        </template>
+
+                        <v-btn block color="#005BAA" class="mb-3 rounded-lg text-white font-weight-bold" height="48"
+                            @click="onConfirmVnPayManual">
+                            XÁC NHẬN ĐÃ NHẬN TIỀN
                         </v-btn>
-                        <v-btn class="flex-grow-1 rounded-lg font-weight-bold text-white" color="#4285F4" height="44"
-                            @click="proceedVnPayChoice">
-                            Tiếp tục
+
+                        <v-btn v-if="checkoutData.vnpayMethod === 'QR'" block variant="outlined" color="grey-darken-1"
+                            class="rounded-lg font-weight-bold" height="48" @click="startVnPayFlow">
+                            TẠO LẠI MÃ QR
+                        </v-btn>
+
+                        <v-btn variant="text" color="error" class="mt-4" size="small" @click="cancelVnPayFlow">
+                            Hủy giao dịch
                         </v-btn>
                     </div>
-                    =======
-                    <!-- Scanner dialog -->
-                    <v-dialog v-model="showScanner" max-width="500" transition="dialog-bottom-transition">
-                        <v-card class="rounded-lg pa-4">
-                            <div class="d-flex justify-space-between align-center mb-4">
-                                <span class="text-h6 font-weight-bold">Quét mã sản phẩm</span>
-                                <v-btn icon variant="text" @click="stopScanner">
-                                    <XIcon />
-                                </v-btn>
+                </v-card-text>
+            </v-card>
+        </v-dialog>
+
+        <!-- VNPay Choice Dialog -->
+        <v-dialog v-model="vnpayChoiceDialog.show" max-width="400" persistent>
+            <v-card class="rounded-xl pa-5">
+                <div class="text-center mb-5">
+                    <div class="text-h6 font-weight-bold">Chọn hình thức thanh toán</div>
+                </div>
+                <v-radio-group v-model="vnpayChoiceDialog.method" column hide-details class="mb-5">
+                    <v-radio value="QR" label="Thanh toán qua quét mã QR" color="#2E4E8E"></v-radio>
+                    <v-radio value="GATEWAY" label="Nhập mã thẻ qua cổng VNPay" color="#2E4E8E"></v-radio>
+                </v-radio-group>
+                <div class="d-flex gap-3">
+                    <v-btn class="flex-grow-1 rounded-lg font-weight-bold" variant="outlined" color="grey-darken-1"
+                        height="44" @click="closeVnPayChoice">
+                        Hủy
+                    </v-btn>
+                    <v-btn class="flex-grow-1 rounded-lg font-weight-bold text-white" color="#4285F4" height="44"
+                        @click="proceedVnPayChoice">
+                        Tiếp tục
+                    </v-btn>
+                </div>
+            </v-card>
+        </v-dialog>
+
+        <!-- Scanner dialog -->
+        <v-dialog v-model="showScanner" max-width="500" transition="dialog-bottom-transition">
+            <v-card class="rounded-lg pa-4">
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <span class="text-h6 font-weight-bold">Quét mã sản phẩm</span>
+                    <v-btn icon variant="text" @click="stopScanner">
+                        <XIcon />
+                    </v-btn>
+                </div>
+                <div id="reader" style="width: 100%"></div>
+                <div class="mt-4 text-center text-caption text-grey">Đưa mã QR hoặc Barcode của sản phẩm vào khung hình
+                </div>
+            </v-card>
+        </v-dialog>
+
+        <!-- Quick Add Customer Dialog -->
+        <v-dialog v-model="showQuickAddDialog" max-width="650" transition="dialog-bottom-transition" persistent>
+            <v-card class="rounded-lg overflow-hidden">
+                <v-card-title
+                    class="text-subtitle-1 font-weight-bold pa-4 border-b bg-slate-50 d-flex justify-space-between align-center">
+                    Thêm nhanh thông tin khách hàng
+                    <v-btn icon size="small" variant="text" @click="closeQuickAdd">
+                        <XIcon size="20" />
+                    </v-btn>
+                </v-card-title>
+                <v-card-text class="pa-5">
+                    <div class="text-body-2 text-medium-emphasis mb-4">
+                        Nếu SĐT đã tồn tại, hệ thống sẽ tự động nhận diện và gán khách hàng vào đơn.
+                    </div>
+
+                    <v-row dense>
+                        <v-col cols="12" md="6">
+                            <v-text-field v-model="quickAddForm.ten" label="Tên khách hàng" placeholder="Nhập tên..."
+                                variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2"
+                                maxlength="100" />
+                        </v-col>
+                        <v-col cols="12" md="6">
+                            <v-text-field v-model="quickAddForm.sdt" label="Số điện thoại"
+                                placeholder="Ví dụ: 0912345678" variant="outlined" density="comfortable"
+                                hide-details="auto" class="mb-3 text-body-2" @input="onQuickAddPhoneInput" />
+                        </v-col>
+                        <v-col cols="12" md="6">
+                            <v-select v-model="quickAddForm.gioiTinh" :items="GIOI_TINH_OPTIONS" label="Giới tính"
+                                variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2" />
+                        </v-col>
+                        <v-col cols="12" md="6">
+                            <v-text-field v-model="quickAddForm.email" label="Email (Không bắt buộc)"
+                                placeholder="Ví dụ: abc@gmail.com" variant="outlined" density="comfortable"
+                                hide-details="auto" class="mb-3 text-body-2" />
+                        </v-col>
+
+                        <v-col cols="12">
+                            <div class="text-subtitle-2 font-weight-bold mt-2 mb-2 text-slate-700">Địa chỉ (Tùy chọn)
                             </div>
-                            <div id="reader" style="width: 100%"></div>
-                            <div class="mt-4 text-center text-caption text-grey">Đưa mã QR hoặc Barcode của sản phẩm vào
-                                khung
-                                hình
-                            </div>
-                        </v-card>
-                    </v-dialog>
+                        </v-col>
+                        <v-col cols="12" md="4">
+                            <v-autocomplete v-model="quickAddForm.tinh" :items="provinces" item-title="name"
+                                item-value="code" placeholder="Tỉnh / Thành phố" variant="outlined" bg-color="white"
+                                density="compact" hide-details :loading="loadingLocations.provinces"
+                                @update:model-value="onQuickAddTinhChange" class="mb-3 text-body-2" />
+                        </v-col>
+                        <v-col cols="12" md="4">
+                            <v-autocomplete v-model="quickAddForm.thanhPho" :items="districts" item-title="name"
+                                item-value="code" placeholder="Quận / Huyện" variant="outlined" bg-color="white"
+                                density="compact" hide-details :loading="loadingLocations.districts"
+                                :disabled="!quickAddForm.tinh" @update:model-value="onQuickAddHuyenChange"
+                                class="mb-3 text-body-2" />
+                        </v-col>
+                        <v-col cols="12" md="4">
+                            <v-autocomplete v-model="quickAddForm.phuongXa" :items="wards" item-title="name"
+                                item-value="code" placeholder="Phường / Xã" variant="outlined" bg-color="white"
+                                density="compact" hide-details :loading="loadingLocations.wards"
+                                :disabled="!quickAddForm.thanhPho" class="mb-3 text-body-2" />
+                        </v-col>
+                        <v-col cols="12">
+                            <v-text-field v-model="quickAddForm.diaChiChiTiet"
+                                placeholder="Địa chỉ cụ thể (Số nhà, đường...)" variant="outlined" density="compact"
+                                hide-details class="text-body-2" />
+                        </v-col>
+                    </v-row>
+                </v-card-text>
+                <v-card-actions class="px-6 pb-5 border-t bg-slate-50">
+                    <v-spacer />
+                    <v-btn variant="tonal" color="slate-500" class="rounded-lg text-none"
+                        @click="closeQuickAdd">Hủy</v-btn>
+                    <v-btn :loading="quickAddLoading" color="primary" variant="flat"
+                        class="px-6 rounded-lg font-weight-bold text-none" @click="submitQuickAdd">
+                        Thêm nhanh
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
-                    <!-- Quick Add Customer Dialog -->
-                    <v-dialog v-model="showQuickAddDialog" max-width="650" transition="dialog-bottom-transition"
-                        persistent>
-                        <v-card class="rounded-lg overflow-hidden">
-                            <v-card-title
-                                class="text-subtitle-1 font-weight-bold pa-4 border-b bg-slate-50 d-flex justify-space-between align-center">
-                                Thêm nhanh thông tin khách hàng
-                                <v-btn icon size="small" variant="text" @click="showQuickAddDialog = false">
-                                    <XIcon size="20" />
-                                </v-btn>
-                            </v-card-title>
-                            <v-card-text class="pa-5">
-                                <div class="text-body-2 text-medium-emphasis mb-4">
-                                    Nếu SĐT đã tồn tại, hệ thống sẽ tự động nhận diện và gán khách hàng vào đơn.
-                                </div>
+        <!-- Confirmation Dialog -->
+        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
+            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
 
-                                <v-row dense>
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="quickAddForm.ten" label="Tên khách hàng"
-                                            placeholder="Nhập tên..." variant="outlined" density="comfortable"
-                                            hide-details="auto" class="mb-3 text-body-2" maxlength="100" />
-                                    </v-col>
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="quickAddForm.sdt" label="Số điện thoại"
-                                            placeholder="Ví dụ: 0912345678" variant="outlined" density="comfortable"
-                                            hide-details="auto" class="mb-3 text-body-2"
-                                            @input="quickAddForm.sdt = String($event.target.value || '').replace(/[^0-9]/g, '')" />
-                                    </v-col>
-                                    <v-col cols="12" md="6">
-                                        <v-select v-model="quickAddForm.gioiTinh" :items="GIOI_TINH_OPTIONS"
-                                            label="Giới tính" variant="outlined" density="comfortable"
-                                            hide-details="auto" class="mb-3 text-body-2" />
-                                    </v-col>
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="quickAddForm.email" label="Email (Không bắt buộc)"
-                                            placeholder="Ví dụ: abc@gmail.com" variant="outlined" density="comfortable"
-                                            hide-details="auto" class="mb-3 text-body-2" />
-                                    </v-col>
-
-                                    <v-col cols="12">
-                                        <div class="text-subtitle-2 font-weight-bold mt-2 mb-2 text-slate-700">Địa chỉ
-                                            (Tùy
-                                            chọn)
-                                        </div>
-                                    </v-col>
-                                    <v-col cols="12" md="4">
-                                        <v-autocomplete v-model="quickAddForm.tinh" :items="provinces" item-title="name"
-                                            item-value="code" placeholder="Tỉnh / Thành phố" variant="outlined"
-                                            bg-color="white" density="compact" hide-details
-                                            :loading="loadingLocations.provinces"
-                                            @update:model-value="(val) => { quickAddForm.thanhPho = null; quickAddForm.phuongXa = null; if (val) fetchDistricts(val); }"
-                                            class="mb-3 text-body-2" />
-                                    </v-col>
-                                    <v-col cols="12" md="4">
-                                        <v-autocomplete v-model="quickAddForm.thanhPho" :items="districts"
-                                            item-title="name" item-value="code" placeholder="Quận / Huyện"
-                                            variant="outlined" bg-color="white" density="compact" hide-details
-                                            :loading="loadingLocations.districts" :disabled="!quickAddForm.tinh"
-                                            @update:model-value="(val) => { quickAddForm.phuongXa = null; if (val) fetchWards(val); }"
-                                            class="mb-3 text-body-2" />
-                                    </v-col>
-                                    <v-col cols="12" md="4">
-                                        <v-autocomplete v-model="quickAddForm.phuongXa" :items="wards" item-title="name"
-                                            item-value="code" placeholder="Phường / Xã" variant="outlined"
-                                            bg-color="white" density="compact" hide-details
-                                            :loading="loadingLocations.wards" :disabled="!quickAddForm.thanhPho"
-                                            class="mb-3 text-body-2" />
-                                    </v-col>
-                                    <v-col cols="12">
-                                        <v-text-field v-model="quickAddForm.diaChiChiTiet"
-                                            placeholder="Địa chỉ cụ thể (Số nhà, đường...)" variant="outlined"
-                                            density="compact" hide-details class="text-body-2" />
-                                    </v-col>
-                                </v-row>
-                            </v-card-text>
-                            <v-card-actions class="px-6 pb-5 border-t bg-slate-50">
-                                <v-spacer />
-                                <v-btn variant="tonal" color="slate-500" class="rounded-lg text-none"
-                                    @click="showQuickAddDialog = false">Hủy</v-btn>
-                                <v-btn :loading="quickAddLoading" color="primary" variant="flat"
-                                    class="px-6 rounded-lg font-weight-bold text-none" @click="submitQuickAdd"> Thêm
-                                    nhanh
-                                </v-btn>
-                            </v-card-actions>
-                            >>>>>>> origin/feat/UI_BanHang
-                        </v-card>
-                    </v-dialog>
-
-                    <!-- Confirmation Dialog -->
-                    <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title"
-                        :message="confirmDialog.message" :color="confirmDialog.color" :loading="confirmDialog.loading"
-                        @confirm="confirmDialog.action" />
-
-                    <!-- Hóa đơn sau thanh toán -->
-                    <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" />
+        <!-- Hóa đơn sau thanh toán -->
+        <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" />
     </v-container>
 </template>
 
-            <style scoped>
-            .pos-wrapper {
-                background: #eef2f6;
-                min-height: calc(100vh - 64px);
-                overflow-y: auto;
-            }
-
-            .pos-wrapper :deep(.v-btn) {
-                text-transform: none;
-                letter-spacing: normal;
-            }
-
-            .pos-shell {
-                display: flex;
-                flex-direction: column;
-                padding: 16px;
-            }
-
-            .pos-header-row {
-                min-height: 48px;
-            }
-
-            .pos-card {
-                background: #ffffff;
-                border: 1px solid #dfe5ee !important;
-                box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
-                border-radius: 8px !important;
-            }
-
-            .compact-select :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 32px !important;
-                font-size: 13px !important;
-            }
-
-            .compact-select :deep(.v-field) {
-                border-radius: 8px !important;
-                --v-input-control-height: 32px !important;
-                font-size: 13px !important;
-                background-color: #ffffff !important;
-            }
-
-            .compact-btn {
-                height: 32px !important;
-                border-radius: 8px !important;
-                font-size: 13px !important;
-                border: 1px solid #dfe5ee !important;
-                background: #ffffff !important;
-                color: #334155 !important;
-            }
-
-            .custom-customer-btn {
-                border-color: #dfe5ee !important;
-                background-color: #ffffff !important;
-            }
-
-            .product-mode-toggle {
-                height: 32px !important;
-            }
-
-            .product-mode-toggle .v-btn {
-                height: 30px !important;
-                font-size: 12px !important;
-                text-transform: none !important;
-                border-radius: 6px !important;
-            }
-
-            .search-input :deep(.v-field) {
-                border-radius: 8px !important;
-                font-size: 13px !important;
-            }
-
-            .scanner-btn {
-                border-radius: 8px !important;
-                height: 40px !important;
-            }
-
-            .hover-autocomplete-item {
-                border-bottom: 1px solid #e2e8f0 !important;
-                transition: background-color 0.2s ease;
-            }
-
-            .hover-autocomplete-item:hover {
-                background-color: #f8fafc !important;
-            }
-
-            .hover-autocomplete-item:last-child {
-                border-bottom: none !important;
-            }
-
-            .cart-container-box {
-                background-color: #ffffff;
-                min-height: 200px;
-                border: 1px solid #cbd5e1 !important;
-                border-radius: 8px !important;
-            }
-
-            .text-right-input :deep(input) {
-                text-align: right !important;
-            }
-
-            .text-right-input :deep(.v-field) {
-                border-radius: 8px !important;
-                font-size: 13px !important;
-            }
-
-            .custom-value-input :deep(.v-field) {
-                background-color: #f1f5f9 !important;
-                border: none !important;
-                box-shadow: none !important;
-            }
-
-            .custom-value-input :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .custom-value-input :deep(input) {
-                color: #334155 !important;
-                font-weight: 400 !important;
-                padding-right: 8px !important;
-            }
-
-            .custom-value-input :deep(.v-text-field__suffix) {
-                font-size: 13px !important;
-                color: #475569 !important;
-                font-weight: 400 !important;
-                opacity: 1 !important;
-            }
-
-            .pos-card :deep(.v-checkbox .v-label) {
-                font-size: 13px !important;
-                font-weight: 400 !important;
-            }
-
-            .bg-emerald-50 {
-                background-color: #ecfdf5 !important;
-                border: 1px solid #a7f3d0 !important;
-            }
-
-            .text-emerald-800 {
-                color: #065f46 !important;
-            }
-
-            .text-emerald-600 {
-                color: #059669 !important;
-            }
-
-            .border-emerald {
-                border: 1px solid #a7f3d0 !important;
-            }
-
-            .bg-red-50 {
-                background-color: #fef2f2 !important;
-                border: 1px solid #fecaca !important;
-            }
-
-            .text-red-800 {
-                color: #991b1b !important;
-            }
-
-            .border-red {
-                border: 1px solid #fecaca !important;
-            }
-
-            .bg-blue-50 {
-                background-color: #eff6ff !important;
-                border: 1px solid #bfdbfe !important;
-            }
-
-            .text-blue-800 {
-                color: #1e40af !important;
-            }
-
-            .border-blue {
-                border: 1px solid #bfdbfe !important;
-            }
-
-            .payment-method-toggle {
-                height: 36px !important;
-            }
-
-            .payment-method-toggle .v-btn {
-                height: 34px !important;
-                font-size: 12px !important;
-                text-transform: none !important;
-            }
-
-            .note-type-toggle {
-                height: 32px !important;
-            }
-
-            .note-type-toggle .v-btn {
-                height: 30px !important;
-                font-size: 12px !important;
-                text-transform: none !important;
-            }
-
-            .note-textarea :deep(.v-field) {
-                border-radius: 8px !important;
-            }
-
-            .btn-checkout {
-                text-transform: none !important;
-                letter-spacing: 0 !important;
-            }
-
-            .empty-orders-state {
-                flex: 1;
-                min-height: 420px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                color: #475569;
-                background: #ffffff;
-                border: 1px dashed #cbd5e1;
-                border-radius: 8px;
-            }
-
-            .gap-2 {
-                gap: 6px;
-            }
-
-            .gap-3 {
-                gap: 8px;
-            }
-
-            .gap-4 {
-                gap: 8px;
-            }
-
-            .pointer {
-                cursor: pointer;
-            }
-
-            .bg-slate-50 {
-                background-color: #f8fafc !important;
-            }
-
-            .product-dropdown-card {
-                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-            }
-
-            /* Right Column Styles */
-            .compact-select-right :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 28px !important;
-                font-size: 13px !important;
-            }
-
-            .compact-select-right :deep(.v-field) {
-                border-radius: 6px !important;
-                --v-input-control-height: 28px !important;
-                font-size: 13px !important;
-                background-color: #ffffff !important;
-                border: 1px solid #cbd5e1 !important;
-            }
-
-            .compact-select-right :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .right-input-field :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 32px !important;
-                font-size: 13px !important;
-            }
-
-            .right-input-field :deep(.v-field) {
-                border-radius: 6px !important;
-                --v-input-control-height: 32px !important;
-                font-size: 13px !important;
-                background-color: #ffffff !important;
-            }
-
-            /* Base font-size rules for inputs, textareas, buttons, placeholders and body text */
-            .pos-wrapper :deep(.v-field),
-            .pos-wrapper :deep(.v-field__input),
-            .pos-wrapper :deep(.v-btn),
-            .pos-wrapper :deep(.text-body-2),
-            .pos-wrapper :deep(input),
-            .pos-wrapper :deep(textarea),
-            .pos-wrapper :deep(input::placeholder),
-            .pos-wrapper :deep(textarea::placeholder),
-            .pos-wrapper :deep(.v-field__placeholder),
-            .pos-wrapper :deep(.v-label),
-            .pos-wrapper :deep(.v-list-item-title),
-            .pos-wrapper :deep(.v-select__selection-text) {
-                font-size: 13px !important;
-            }
-
-            /* Custom Payment Method Buttons */
-            .cash-active-btn {
-                background-color: #fdf2f8 !important;
-                color: #db2777 !important;
-                border-color: #fbcfe8 !important;
-            }
-
-            .vnpay-active-btn {
-                background-color: #eff6ff !important;
-                color: #1d4ed8 !important;
-                border-color: #bfdbfe !important;
-            }
-
-            .payment-inactive-btn {
-                background-color: #f8fafc !important;
-                color: #64748b !important;
-                border-color: #e2e8f0 !important;
-            }
-
-            /* Custom Note Tabs */
-            .custom-note-tabs {
-                background-color: #f1f5f9 !important;
-            }
-
-            .note-tab-active {
-                background-color: #ffffff !important;
-                color: #0c3866 !important;
-                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
-                border: 1px solid #e2e8f0 !important;
-            }
-
-            .note-tab-inactive {
-                background-color: transparent !important;
-                color: #64748b !important;
-                border: 1px solid transparent !important;
-            }
-
-            /* Dim input fields for customer card */
-            .dim-input-field :deep(.v-field) {
-                background-color: #f1f5f9 !important;
-                border-radius: 6px !important;
-                --v-input-control-height: 32px !important;
-                font-size: 13px !important;
-                border: none !important;
-            }
-
-            .dim-input-field :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .dim-input-field :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 32px !important;
-                font-size: 13px !important;
-            }
-
-            .dim-select :deep(.v-field) {
-                background-color: #f1f5f9 !important;
-                border-radius: 6px !important;
-                --v-input-control-height: 28px !important;
-                font-size: 13px !important;
-                border: none !important;
-            }
-
-            .dim-select :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .dim-select :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 28px !important;
-                font-size: 13px !important;
-            }
-
-            /* Suggestion Popover - Right Aligned under SĐT */
-            .suggestion-popover {
-                position: absolute;
-                top: 100%;
-                right: 0;
-                left: auto;
-                width: 170px;
-                z-index: 9999;
-                background-color: #ffffff;
-                border: 1px solid #e2e8f0;
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-                border-radius: 20px !important;
-                margin-top: 4px;
-            }
-
-            .suggestion-item {
-                border-radius: 16px;
-                height: 32px;
-            }
-
-            .suggestion-item:hover {
-                background-color: #f1f5f9;
-            }
-
-            /* Dim select field for delivery card */
-            .dim-select-field :deep(.v-field) {
-                background-color: #f1f5f9 !important;
-                border-radius: 6px !important;
-                --v-input-control-height: 32px !important;
-                font-size: 13px !important;
-                border: none !important;
-            }
-
-            .dim-select-field :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .dim-select-field :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 32px !important;
-                font-size: 13px !important;
-            }
-
-            .date-input-field :deep(input[type="date"]) {
-                position: relative;
-                cursor: pointer;
-            }
-
-            .date-input-field :deep(input[type="date"]::-webkit-calendar-picker-indicator) {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                width: 100%;
-                height: 100%;
-                opacity: 0;
-                cursor: pointer;
-            }
-
-            .product-dropdown-card {
-                width: 100% !important;
-                min-width: 650px !important;
-                left: 0;
-            }
-
-            .sku-badge {
-                background-color: #ffe4e6 !important;
-                color: #9f1239 !important;
-                font-size: 11px !important;
-                font-weight: 700;
-                padding: 1px 6px;
-                border-radius: 4px;
-                display: inline-flex;
-                align-items: center;
-            }
-
-            .sp-badge {
-                background-color: #e0f2fe !important;
-                color: #0369a1 !important;
-                font-size: 11px !important;
-                font-weight: 700;
-                padding: 1px 6px;
-                border-radius: 4px;
-                display: inline-flex;
-                align-items: center;
-            }
-
-            .size-badge {
-                border: 1px solid #cbd5e1 !important;
-                color: #64748b !important;
-                font-size: 11px !important;
-                font-weight: 500;
-                padding: 0px 6px;
-                border-radius: 4px;
-                display: inline-flex;
-                align-items: center;
-            }
-
-            .bullet-details {
-                font-size: 11.5px !important;
-                color: #64748b;
-                line-height: 1.4;
-            }
-
-            .bullet-item {
-                margin-bottom: 1px;
-            }
-
-            .price-text {
-                font-size: 14px !important;
-                font-weight: 700;
-                color: #88c057 !important;
-            }
-
-            .speed-text {
-                font-size: 11px !important;
-                color: #64748b;
-            }
-
-        </style>
+<style scoped>
+.pos-wrapper {
+    background: #eef2f6;
+    min-height: calc(100vh - 64px);
+    overflow-y: auto;
+}
+
+.pos-wrapper :deep(.v-btn) {
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.pos-shell {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+}
+
+.pos-header-row {
+    min-height: 48px;
+}
+
+.pos-card {
+    background: #ffffff;
+    border: 1px solid #dfe5ee !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
+    border-radius: 8px !important;
+}
+
+.compact-select :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
+}
+
+.compact-select :deep(.v-field) {
+    border-radius: 8px !important;
+    --v-input-control-height: 32px !important;
+    font-size: 13px !important;
+    background-color: #ffffff !important;
+}
+
+.compact-btn {
+    height: 32px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    border: 1px solid #dfe5ee !important;
+    background: #ffffff !important;
+    color: #334155 !important;
+}
+
+.custom-customer-btn {
+    border-color: #dfe5ee !important;
+    background-color: #ffffff !important;
+}
+
+.product-mode-toggle {
+    height: 32px !important;
+}
+
+.product-mode-toggle .v-btn {
+    height: 30px !important;
+    font-size: 12px !important;
+    text-transform: none !important;
+    border-radius: 6px !important;
+}
+
+.search-input :deep(.v-field) {
+    border-radius: 8px !important;
+    font-size: 13px !important;
+}
+
+.scanner-btn {
+    border-radius: 8px !important;
+    height: 40px !important;
+}
+
+.hover-autocomplete-item {
+    border-bottom: 1px solid #e2e8f0 !important;
+    transition: background-color 0.2s ease;
+}
+
+.hover-autocomplete-item:hover {
+    background-color: #f8fafc !important;
+}
+
+.hover-autocomplete-item:last-child {
+    border-bottom: none !important;
+}
+
+.cart-container-box {
+    background-color: #ffffff;
+    min-height: 200px;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+}
+
+.text-right-input :deep(input) {
+    text-align: right !important;
+}
+
+.text-right-input :deep(.v-field) {
+    border-radius: 8px !important;
+    font-size: 13px !important;
+}
+
+.custom-value-input :deep(.v-field) {
+    background-color: #f1f5f9 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.custom-value-input :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.custom-value-input :deep(input) {
+    color: #334155 !important;
+    font-weight: 400 !important;
+    padding-right: 8px !important;
+}
+
+.custom-value-input :deep(.v-text-field__suffix) {
+    font-size: 13px !important;
+    color: #475569 !important;
+    font-weight: 400 !important;
+    opacity: 1 !important;
+}
+
+.pos-card :deep(.v-checkbox .v-label) {
+    font-size: 13px !important;
+    font-weight: 400 !important;
+}
+
+.bg-emerald-50 {
+    background-color: #ecfdf5 !important;
+    border: 1px solid #a7f3d0 !important;
+}
+
+.text-emerald-800 {
+    color: #065f46 !important;
+}
+
+.text-emerald-600 {
+    color: #059669 !important;
+}
+
+.border-emerald {
+    border: 1px solid #a7f3d0 !important;
+}
+
+.bg-red-50 {
+    background-color: #fef2f2 !important;
+    border: 1px solid #fecaca !important;
+}
+
+.text-red-800 {
+    color: #991b1b !important;
+}
+
+.border-red {
+    border: 1px solid #fecaca !important;
+}
+
+.bg-blue-50 {
+    background-color: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+}
+
+.text-blue-800 {
+    color: #1e40af !important;
+}
+
+.border-blue {
+    border: 1px solid #bfdbfe !important;
+}
+
+.payment-method-toggle {
+    height: 36px !important;
+}
+
+.payment-method-toggle .v-btn {
+    height: 34px !important;
+    font-size: 12px !important;
+    text-transform: none !important;
+}
+
+.note-type-toggle {
+    height: 32px !important;
+}
+
+.note-type-toggle .v-btn {
+    height: 30px !important;
+    font-size: 12px !important;
+    text-transform: none !important;
+}
+
+.note-textarea :deep(.v-field) {
+    border-radius: 8px !important;
+}
+
+.btn-checkout {
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+}
+
+.empty-orders-state {
+    flex: 1;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+}
+
+.gap-2 {
+    gap: 6px;
+}
+
+.gap-3 {
+    gap: 8px;
+}
+
+.gap-4 {
+    gap: 8px;
+}
+
+.pointer {
+    cursor: pointer;
+}
+
+.bg-slate-50 {
+    background-color: #f8fafc !important;
+}
+
+.product-dropdown-card {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Right Column Styles */
+.compact-select-right :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 28px !important;
+    font-size: 13px !important;
+}
+
+.compact-select-right :deep(.v-field) {
+    border-radius: 6px !important;
+    --v-input-control-height: 28px !important;
+    font-size: 13px !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+.compact-select-right :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.right-input-field :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
+}
+
+.right-input-field :deep(.v-field) {
+    border-radius: 6px !important;
+    --v-input-control-height: 32px !important;
+    font-size: 13px !important;
+    background-color: #ffffff !important;
+}
+
+/* Base font-size rules for inputs, textareas, buttons, placeholders and body text */
+.pos-wrapper :deep(.v-field),
+.pos-wrapper :deep(.v-field__input),
+.pos-wrapper :deep(.v-btn),
+.pos-wrapper :deep(.text-body-2),
+.pos-wrapper :deep(input),
+.pos-wrapper :deep(textarea),
+.pos-wrapper :deep(input::placeholder),
+.pos-wrapper :deep(textarea::placeholder),
+.pos-wrapper :deep(.v-field__placeholder),
+.pos-wrapper :deep(.v-label),
+.pos-wrapper :deep(.v-list-item-title),
+.pos-wrapper :deep(.v-select__selection-text) {
+    font-size: 13px !important;
+}
+
+/* Custom Payment Method Buttons */
+.cash-active-btn {
+    background-color: #fdf2f8 !important;
+    color: #db2777 !important;
+    border-color: #fbcfe8 !important;
+}
+
+.vnpay-active-btn {
+    background-color: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border-color: #bfdbfe !important;
+}
+
+.payment-inactive-btn {
+    background-color: #f8fafc !important;
+    color: #64748b !important;
+    border-color: #e2e8f0 !important;
+}
+
+/* Custom Note Tabs */
+.custom-note-tabs {
+    background-color: #f1f5f9 !important;
+}
+
+.note-tab-active {
+    background-color: #ffffff !important;
+    color: #0c3866 !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.note-tab-inactive {
+    background-color: transparent !important;
+    color: #64748b !important;
+    border: 1px solid transparent !important;
+}
+
+/* Dim input fields for customer card */
+.dim-input-field :deep(.v-field) {
+    background-color: #f1f5f9 !important;
+    border-radius: 6px !important;
+    --v-input-control-height: 32px !important;
+    font-size: 13px !important;
+    border: none !important;
+}
+
+.dim-input-field :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.dim-input-field :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
+}
+
+.dim-select :deep(.v-field) {
+    background-color: #f1f5f9 !important;
+    border-radius: 6px !important;
+    --v-input-control-height: 28px !important;
+    font-size: 13px !important;
+    border: none !important;
+}
+
+.dim-select :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.dim-select :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 28px !important;
+    font-size: 13px !important;
+}
+
+/* Suggestion Popover - Right Aligned under SĐT */
+.suggestion-popover {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: auto;
+    width: 170px;
+    z-index: 9999;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-radius: 20px !important;
+    margin-top: 4px;
+}
+
+.suggestion-item {
+    border-radius: 16px;
+    height: 32px;
+}
+
+.suggestion-item:hover {
+    background-color: #f1f5f9;
+}
+
+/* Dim select field for delivery card */
+.dim-select-field :deep(.v-field) {
+    background-color: #f1f5f9 !important;
+    border-radius: 6px !important;
+    --v-input-control-height: 32px !important;
+    font-size: 13px !important;
+    border: none !important;
+}
+
+.dim-select-field :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.dim-select-field :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
+}
+
+.date-input-field :deep(input[type="date"]) {
+    position: relative;
+    cursor: pointer;
+}
+
+.date-input-field :deep(input[type="date"]::-webkit-calendar-picker-indicator) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.product-dropdown-card {
+    width: 100% !important;
+    min-width: 650px !important;
+    left: 0;
+}
+
+.sku-badge {
+    background-color: #ffe4e6 !important;
+    color: #9f1239 !important;
+    font-size: 11px !important;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.sp-badge {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+    font-size: 11px !important;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.size-badge {
+    border: 1px solid #cbd5e1 !important;
+    color: #64748b !important;
+    font-size: 11px !important;
+    font-weight: 500;
+    padding: 0px 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.bullet-details {
+    font-size: 11.5px !important;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.bullet-item {
+    margin-bottom: 1px;
+}
+
+.price-text {
+    font-size: 14px !important;
+    font-weight: 700;
+    color: #88c057 !important;
+}
+
+.speed-text {
+    font-size: 11px !important;
+    color: #64748b;
+}
+</style>

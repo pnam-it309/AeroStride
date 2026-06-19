@@ -177,10 +177,42 @@
     .scrollnavbar .v-list .v-list-group__items,
     .hide-menu {
         opacity: 0.8;
+        display: none !important; /* Ẩn hẳn text/menu con trong rail mode để tránh lỗi giao diện */
     }
 
     .leftPadding {
         margin-left: 0px;
+    }
+
+    /* Fix căn giữa ô màu (background) của sidebar item khi thu nhỏ */
+    .v-list-item.sidebar-link {
+        margin: 4px auto !important;
+        padding: 0 !important;
+        justify-content: center !important;
+        width: 44px !important;
+        min-height: 44px !important;
+        border-radius: 14px !important;
+        
+        .v-list-item__prepend {
+            margin: 0 !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .v-list-item__append {
+            display: none !important;
+        }
+
+        .icon-box {
+            margin: 0 auto;
+        }
+    }
+    
+    /* Ẩn vạch dọc bên trái nếu có trong chế độ thu nhỏ */
+    .v-list-item::before {
+        display: none !important;
     }
 }
 

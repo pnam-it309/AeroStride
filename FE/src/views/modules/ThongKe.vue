@@ -359,8 +359,14 @@ const loadStatistics = async () => {
     loading.value = true;
     try {
         const { tuNgay, denNgay } = getDateRange();
+        const startOfYear = `${selectedYear.value}-01-01`;
+        const endOfYear = `${selectedYear.value}-12-31`;
 
-        const overview = await dichVuThongKe.layTongQuan(tuNgay, denNgay);
+        // Gọi API song song để giảm thời gian chờ
+        const [overview, dailyData] = await Promise.all([
+            dichVuThongKe.layTongQuan(tuNgay, denNgay),
+            dichVuThongKe.layDoanhThuTheoNgay(startOfYear, endOfYear)
+        ]);
 
         if (overview) {
             revenueStats.value = {
@@ -411,12 +417,6 @@ const loadStatistics = async () => {
 
         }
 
-        await loadProductStatsTable();
-
-        const startOfYear = `${selectedYear.value}-01-01`;
-        const endOfYear = `${selectedYear.value}-12-31`;
-        const dailyData = await dichVuThongKe.layDoanhThuTheoNgay(startOfYear, endOfYear);
-
         const months = Array.from({ length: 12 }, (_, i) => ({
             month: `T${i + 1}`,
             revenue: 0
@@ -442,6 +442,10 @@ const loadStatistics = async () => {
                 data: months.map((m) => m.revenue)
             }
         ];
+
+        // Tải danh sách sản phẩm chạy ngầm, không block màn hình Dashboard
+        loadProductStatsTable();
+
     } catch (error) {
         console.error('Error loading statistics:', error);
     } finally {
@@ -909,13 +913,12 @@ onMounted(() => {
 
                         <template #pagination>
                             <AdminPagination
-                                v-if="productFilteredStats.length > 0"
-                                v-model:page="productPage"
+                                v-model="productPage"
                                 v-model:page-size="productPageSize"
-                                :total-items="productFilteredStats.length"
-                                :page-size-options="productPageSizeOptions"
-                                @update:page="goToProductPage"
-                                @update:page-size="changeProductPageSize"
+                                :total-elements="productFilteredStats.length"
+                                :total-pages="productTotalPages"
+                                :current-size="paginatedProductStats.length"
+                                @change="goToProductPage(productPage)"
                             />
                         </template>
                     </AdminTable>

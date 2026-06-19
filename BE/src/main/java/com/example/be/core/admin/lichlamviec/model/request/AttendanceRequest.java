@@ -5,18 +5,14 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
-import java.util.List;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LichLamViecRequest {
-    private List<String> nhanVien;
-    private List<String> ca;
+public class AttendanceRequest {
+    private String nhanVienId;
     private String ngay;
-    private String trangThai;
-    private Boolean tangCa;
-    private String gioBatDauTangCa;
-    private String gioKetThucTangCa;
+    private String gioVao;
+    private String gioRa;
+    private String ghiChu;
 }

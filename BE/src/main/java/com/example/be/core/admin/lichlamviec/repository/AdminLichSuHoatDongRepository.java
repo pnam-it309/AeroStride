@@ -17,6 +17,11 @@ public interface AdminLichSuHoatDongRepository extends LichSuHoatDongRepository,
            "(:search IS NULL OR :search = '' OR " +
            "LOWER(h.hanhDong) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            "LOWER(h.doiTuong) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "LOWER(h.nguoiTao) LIKE LOWER(CONCAT('%', :search, '%')))")
-    Page<LichSuHoatDong> searchActivities(@Param("search") String search, Pageable pageable);
+           "LOWER(h.nguoiTao) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+           "(:ngayBatDau IS NULL OR :ngayKetThuc IS NULL OR " +
+           "(h.ngayTao >= :ngayBatDau AND h.ngayTao < :ngayKetThuc))")
+    Page<LichSuHoatDong> searchActivities(@Param("search") String search,
+                                          @Param("ngayBatDau") Long ngayBatDau,
+                                          @Param("ngayKetThuc") Long ngayKetThuc,
+                                          Pageable pageable);
 }

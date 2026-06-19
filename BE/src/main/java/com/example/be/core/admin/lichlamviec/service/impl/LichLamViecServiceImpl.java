@@ -59,10 +59,17 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                         .id(l.getId())
                         .nhanVien(l.getNhanVien() != null ? l.getNhanVien().getTen() : "N/A")
                         .nhanVienId(l.getNhanVien() != null ? l.getNhanVien().getId() : null)
+                        .maNhanVien(l.getNhanVien() != null ? l.getNhanVien().getMa() : "N/A")
                         .ca(l.getCaLam() != null ? l.getCaLam().getTenCa() : "N/A")
                         .caId(l.getCaLam() != null ? l.getCaLam().getId() : null)
                         .ngay(l.getNgayLam().format(dateFormatter))
                         .trangThai(l.getTrangThaiLich() != null ? l.getTrangThaiLich().name() : "N/A")
+                        .tangCa(l.getTangCa() != null ? l.getTangCa() : false)
+                        .gioBatDauTangCa(l.getGioBatDauTangCa() != null ? l.getGioBatDauTangCa().format(timeFormatter) : null)
+                        .gioKetThucTangCa(l.getGioKetThucTangCa() != null ? l.getGioKetThucTangCa().format(timeFormatter) : null)
+                        .gioVao(l.getGioVao() != null ? l.getGioVao().format(timeFormatter) : null)
+                        .gioRa(l.getGioRa() != null ? l.getGioRa().format(timeFormatter) : null)
+                        .ghiChu(l.getGhiChu())
                         .build())
                 .collect(Collectors.toList());
     }
@@ -83,8 +90,19 @@ public class LichLamViecServiceImpl implements LichLamViecService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<LichSuHoatDongResponse> getActivityHistory(String search, Pageable pageable) {
-        return lichSuHoatDongRepository.searchActivities(search, pageable)
+    public Page<LichSuHoatDongResponse> getActivityHistory(String search, String ngay, Pageable pageable) {
+        Long ngayBatDau = null;
+        Long ngayKetThuc = null;
+        if (ngay != null && !ngay.isEmpty()) {
+            try {
+                LocalDate date = LocalDate.parse(ngay, dateFormatter);
+                ngayBatDau = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+                ngayKetThuc = date.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            } catch (Exception e) {
+                // Ignore invalid date
+            }
+        }
+        return lichSuHoatDongRepository.searchActivities(search, ngayBatDau, ngayKetThuc, pageable)
                 .map(h -> LichSuHoatDongResponse.builder()
                         .id(h.getId())
                         .nguoiThucHien(h.getNguoiTao())
@@ -147,6 +165,18 @@ public class LichLamViecServiceImpl implements LichLamViecService {
             throw new RuntimeException("Không tìm thấy nhân viên hợp lệ!");
         }
 
+        Boolean tangCa = request.getTangCa() != null && request.getTangCa();
+        LocalTime gioBatDauTangCa = null;
+        LocalTime gioKetThucTangCa = null;
+        if (tangCa && request.getGioBatDauTangCa() != null && request.getGioKetThucTangCa() != null) {
+            try {
+                gioBatDauTangCa = LocalTime.parse(request.getGioBatDauTangCa(), timeFormatter);
+                gioKetThucTangCa = LocalTime.parse(request.getGioKetThucTangCa(), timeFormatter);
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
+
         int scheduleCount = 0;
         for (NhanVien nv : nhanViens) {
             for (CaLam caLam : caLams) {
@@ -155,6 +185,9 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                         .caLam(caLam)
                         .ngayLam(ngayLam)
                         .trangThaiLich(trangThai)
+                        .tangCa(tangCa)
+                        .gioBatDauTangCa(gioBatDauTangCa)
+                        .gioKetThucTangCa(gioKetThucTangCa)
                         .build();
                 lichLamViecRepository.save(schedule);
 
@@ -208,6 +241,21 @@ public class LichLamViecServiceImpl implements LichLamViecService {
             NhanVien nv = nhanVienRepository.findById(firstId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên với ID: " + firstId));
             schedule.setNhanVien(nv);
+        }
+
+        if (request.getTangCa() != null) {
+            schedule.setTangCa(request.getTangCa());
+            if (request.getTangCa() && request.getGioBatDauTangCa() != null && request.getGioKetThucTangCa() != null) {
+                try {
+                    schedule.setGioBatDauTangCa(LocalTime.parse(request.getGioBatDauTangCa(), timeFormatter));
+                    schedule.setGioKetThucTangCa(LocalTime.parse(request.getGioKetThucTangCa(), timeFormatter));
+                } catch (Exception e) {
+                    // Ignore
+                }
+            } else {
+                schedule.setGioBatDauTangCa(null);
+                schedule.setGioKetThucTangCa(null);
+            }
         }
 
         lichLamViecRepository.save(schedule);
@@ -340,6 +388,68 @@ public class LichLamViecServiceImpl implements LichLamViecService {
     @Transactional
     public void deleteSchedule(String id) {
         lichLamViecRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public String saveAttendance(com.example.be.core.admin.lichlamviec.model.request.AttendanceRequest request) {
+        if (request.getNhanVienId() == null || request.getNgay() == null) {
+            throw new RuntimeException("Vui lòng chọn nhân viên và ngày làm!");
+        }
+
+        NhanVien nv = nhanVienRepository.findById(request.getNhanVienId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên!"));
+
+        LocalDate ngayLam = LocalDate.parse(request.getNgay(), dateFormatter);
+
+        LichLamViec schedule = LichLamViec.builder()
+                .nhanVien(nv)
+                .ngayLam(ngayLam)
+                .trangThaiLich(LichLamViec.TrangThaiLichLamViec.CHO_XAC_NHAN)
+                .build();
+
+        if (request.getGioVao() != null && !request.getGioVao().isEmpty()) {
+            schedule.setGioVao(LocalTime.parse(request.getGioVao(), timeFormatter));
+        }
+        if (request.getGioRa() != null && !request.getGioRa().isEmpty()) {
+            schedule.setGioRa(LocalTime.parse(request.getGioRa(), timeFormatter));
+        }
+        schedule.setGhiChu(request.getGhiChu());
+
+        lichLamViecRepository.save(schedule);
+
+        LichSuHoatDong activity = LichSuHoatDong.builder()
+                .hanhDong("Chấm công")
+                .doiTuong("Nhân viên " + nv.getTen() + " (" + nv.getMa() + ") - Ngày " + request.getNgay())
+                .build();
+        lichSuHoatDongRepository.save(activity);
+
+        return "Ghi nhận chấm công thành công!";
+    }
+
+    @Override
+    @Transactional
+    public String updateAttendance(String id, com.example.be.core.admin.lichlamviec.model.request.AttendanceRequest request) {
+        LichLamViec schedule = lichLamViecRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lịch làm việc với ID: " + id));
+
+        if (request.getGioVao() != null && !request.getGioVao().isEmpty()) {
+            schedule.setGioVao(LocalTime.parse(request.getGioVao(), timeFormatter));
+        }
+        if (request.getGioRa() != null && !request.getGioRa().isEmpty()) {
+            schedule.setGioRa(LocalTime.parse(request.getGioRa(), timeFormatter));
+        }
+        schedule.setGhiChu(request.getGhiChu());
+
+        lichLamViecRepository.save(schedule);
+
+        LichSuHoatDong activity = LichSuHoatDong.builder()
+                .hanhDong("Cập nhật chấm công")
+                .doiTuong("Nhân viên " + schedule.getNhanVien().getTen() + " - Ngày " + schedule.getNgayLam())
+                .build();
+        lichSuHoatDongRepository.save(activity);
+
+        return "Cập nhật chấm công thành công!";
     }
 
     // Shift (Ca Lam) CRUD implementations

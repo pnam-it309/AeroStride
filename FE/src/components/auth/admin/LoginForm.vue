@@ -31,7 +31,12 @@ const handleLogin = async () => {
             loginType: 'ADMIN'
         });
 
-        router.push(PATH.DASHBOARD);
+        const user = dichVuXacThuc.layUserHienTai();
+        if (user && user.role === 'ROLE_NHAN_VIEN') {
+            router.push(PATH.BAN_HANG);
+        } else {
+            router.push(PATH.DASHBOARD);
+        }
     } catch (error) {
         errorMessage.value = error.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
     } finally {

@@ -10,6 +10,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.example.be.infrastructure.constants.VaiTro;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_THONG_KE)
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
+@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
 public class AdminThongKeController {
 
     private final AdminThongKeService adminThongKeService;

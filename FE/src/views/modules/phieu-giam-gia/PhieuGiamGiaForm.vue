@@ -44,6 +44,7 @@ const toLocalDatetimeString = (timestamp) => {
 
 const loading = ref(false);
 const saving = ref(false);
+const errors = ref({});
 const isDetailMode = computed(() => !!route.params.id && route.path.includes('/detail'));
 const isEditMode = computed(() => !!route.params.id && !route.path.includes('/detail'));
 const submitButtonText = computed(() => (isEditMode.value ? 'Cập nhật phiếu giảm giá' : 'Thêm phiếu giảm giá'));

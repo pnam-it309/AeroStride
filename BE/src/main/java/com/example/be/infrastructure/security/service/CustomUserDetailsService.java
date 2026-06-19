@@ -50,7 +50,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         final String realIdentifier = tempRealIdentifier;
 
         // Luồng đăng nhập cho ADMIN/STAFF
-        if (loginType == null || "ADMIN".equals(loginType)) {
+        if (loginType == null || "ADMIN".equals(loginType) || "STAFF".equals(loginType)) {
             NhanVien nhanVien = nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(realIdentifier, realIdentifier, realIdentifier, realIdentifier)
                     .orElse(null);
 
@@ -62,9 +62,9 @@ public class CustomUserDetailsService implements UserDetailsService {
                 return buildUserDetails(nhanVien.getTenTaiKhoan(), nhanVien.getMatKhau(), role);
             }
             
-            // Nếu yêu cầu đích danh ADMIN mà không thấy thì throw luôn
-            if ("ADMIN".equals(loginType)) {
-                throw new UsernameNotFoundException("Không tìm thấy tài khoản quản trị: " + realIdentifier);
+            // Nếu yêu cầu đích danh ADMIN/STAFF mà không thấy thì throw luôn
+            if ("ADMIN".equals(loginType) || "STAFF".equals(loginType)) {
+                throw new UsernameNotFoundException("Không tìm thấy tài khoản quản trị/nhân viên: " + realIdentifier);
             }
         }
 

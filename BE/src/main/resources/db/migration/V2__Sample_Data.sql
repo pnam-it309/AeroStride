@@ -1,4 +1,4 @@
-﻿-- 1. Bảng Phân Quyền (phan_quyen)
+-- 1. Bảng Phân Quyền (phan_quyen)
 INSERT IGNORE INTO phan_quyen (id, ma_phan_quyen, ten_phan_quyen, quyen_han, mo_ta, trang_thai, ngay_tao) VALUES
 ('pq1', 'ADMIN', 'Quản trị viên', 'FULL_ACCESS', 'Quyền cao nhất hệ thống', 0, 1711814400000),
 ('pq2', 'STAFF', 'Nhân viên', 'STAFF_ACCESS', 'Quyền nhân viên bán hàng', 0, 1711814400000),
@@ -206,11 +206,27 @@ INSERT IGNORE INTO giao_dich_thanh_toan (id, id_hoa_don, id_phuong_thuc_thanh_to
 ('gd5', 'hd5', 'pt1', 'GD005', 1500000.00, 'PAYMENT', NULL, 'REF005', NULL, NULL, NULL, NULL, 1711880000000, 1, 'Khách lẻ trả tiền mặt');
 
 
--- INSERT IGNORE INTO ca_lam (id, ten_ca, gio_bat_dau, gio_ket_thuc, mo_ta, ngay_tao) VALUES
--- (UUID(), 'Ca Sáng', '08:00:00', '12:00:00', 'Ca làm việc buổi sáng', NOW()),
--- (UUID(), 'Ca Chiều', '13:00:00', '17:00:00', 'Ca làm việc buổi chiều', NOW()),
--- (UUID(), 'Ca Tối', '18:00:00', '22:00:00', 'Ca làm việc buổi tối', NOW());
---
+-- 24. Bảng Ca Làm (ca_lam)
+INSERT IGNORE INTO ca_lam (id, ten_ca, gio_bat_dau, gio_ket_thuc, mo_ta, xoa_mem, ngay_tao) VALUES
+('clam1', 'Ca Sáng', '08:00:00', '12:00:00', 'Ca làm việc buổi sáng', 0, 1711814400000),
+('clam2', 'Ca Chiều', '13:00:00', '17:00:00', 'Ca làm việc buổi chiều', 0, 1711814400000),
+('clam3', 'Ca Tối', '18:00:00', '22:00:00', 'Ca làm việc buổi tối', 0, 1711814400000);
+
+-- 25. Bảng Lịch Làm Việc (lich_lam_viec)
+INSERT IGNORE INTO lich_lam_viec (id, id_nhan_vien, id_ca_lam, ngay_lam, trang_thai_lich, gio_vao, gio_ra, ghi_chu, tang_ca, ngay_tao) VALUES
+('llv1', 'nv1', 'clam1', CURDATE(), 'DA_XAC_NHAN', '07:55:00', '12:05:00', 'Đi làm đúng giờ', 0, 1711814400000),
+('llv2', 'nv2', 'clam2', CURDATE(), 'DA_XAC_NHAN', '12:55:00', '17:05:00', 'Ca chiều', 0, 1711814400000),
+('llv3', 'nv3', 'clam3', CURDATE(), 'CHO_XAC_NHAN', NULL, NULL, 'Ca tối (chưa làm)', 0, 1711814400000),
+('llv4', 'nv1', 'clam1', DATE_ADD(CURDATE(), INTERVAL 1 DAY), 'CHO_XAC_NHAN', NULL, NULL, 'Lịch ngày mai', 0, 1711814400000),
+('llv5', 'nv2', 'clam2', DATE_ADD(CURDATE(), INTERVAL 1 DAY), 'CHO_XAC_NHAN', NULL, NULL, 'Lịch ngày mai', 0, 1711814400000);
+-- Bảng Lịch Sử Hoạt Động (lich_su_hoat_dong)
+INSERT IGNORE INTO lich_su_hoat_dong (id, hanh_dong, doi_tuong, nguoi_tao, ngay_tao) VALUES
+('lshd1', 'Thêm lịch làm việc', 'Lịch làm việc của NV001', 'Admin Hệ Thống', 1711814400000),
+('lshd2', 'Cập nhật lịch làm việc', 'Lịch làm việc của NV002', 'Admin Hệ Thống', 1711815000000),
+('lshd3', 'Xóa lịch làm việc', 'Lịch làm việc của NV003', 'Admin Hệ Thống', 1711816000000),
+('lshd4', 'Thêm ca làm', 'Ca Sáng', 'Admin Hệ Thống', 1711814400000),
+('lshd5', 'Điểm danh', 'Lịch làm việc của NV001', 'Admin Hệ Thống', 1711817000000);
+
 
 -- update id_dia_chi
 -- UPDATE dia_chi SET id_khach_hang = 'kh1' WHERE id = 'dc1';
@@ -218,3 +234,4 @@ INSERT IGNORE INTO giao_dich_thanh_toan (id, id_hoa_don, id_phuong_thuc_thanh_to
 -- UPDATE dia_chi SET id_khach_hang = 'kh3' WHERE id = 'dc3';
 -- UPDATE dia_chi SET id_khach_hang = 'kh4' WHERE id = 'dc4';
 -- UPDATE dia_chi SET id_khach_hang = 'kh5' WHERE id = 'dc5';
+

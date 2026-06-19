@@ -17,6 +17,14 @@ export function requireAuth(to, from, next) {
             } else {
                 next();
             }
+        } else if (to.path.startsWith('/admin') && user && user.role === APP_ROLES.STAFF) {
+            // Chặn nhân viên truy cập các trang chỉ dành cho admin
+            const adminOnlyPaths = ['/admin/thong-ke', '/admin/nhan-vien', '/admin/phieu-giam-gia', '/admin/dot-giam-gia', '/admin/thuoc-tinh'];
+            if (adminOnlyPaths.some((p) => to.path.startsWith(p))) {
+                next(PATH.BAN_HANG); // Chuyển hướng về trang bán hàng
+            } else {
+                next();
+            }
         } else {
             next();
         }
@@ -44,7 +52,8 @@ export function requireGuest(to, from, next) {
         if (user.role === APP_ROLES.CUSTOMER) {
             next('/'); // Đã đăng nhập với tư cách khách hàng thì đưa về trang chủ
         } else if (user.role === APP_ROLES.ADMIN || user.role === APP_ROLES.STAFF) {
-            next(PATH.DASHBOARD); // Đã đăng nhập với tư cách admin/staff thì đưa về trang dashboard quản trị
+            next(user.role === APP_ROLES.STAFF ? PATH.BAN_HANG : PATH.DASHBOARD); // Đã đăng nhập với tư cách admin/staff thì đưa về trang phù hợp
+
         } else {
             next('/');
         }

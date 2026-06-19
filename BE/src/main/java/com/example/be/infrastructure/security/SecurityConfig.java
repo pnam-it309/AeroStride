@@ -2,6 +2,7 @@ package com.example.be.infrastructure.security;
 
 import com.example.be.infrastructure.constants.RoutesConstant;
 import com.example.be.infrastructure.constants.SecurityConstants;
+import com.example.be.infrastructure.constants.VaiTro;
 import com.example.be.infrastructure.security.exception.CustomAccessDeniedHandler;
 import com.example.be.infrastructure.security.exception.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
@@ -118,9 +119,9 @@ public class SecurityConfig {
                 .requestMatchers(SecurityConstants.PUBLIC_URLS).permitAll()
                 
                 // Modular route configurations (ordered before general authenticated prefix)
-                .requestMatchers(RoutesConstant.STAFF + "/**").hasAnyRole("NHAN_VIEN", "QUAN_TRI_VIEN")
-                .requestMatchers(RoutesConstant.ADMIN + "/**").hasRole("QUAN_TRI_VIEN")
-                .requestMatchers(RoutesConstant.CUSTOMER + "/**").hasRole("KHACH_HANG")
+                .requestMatchers(RoutesConstant.STAFF + "/**").hasAnyRole(VaiTro.STAFF, VaiTro.ADMIN)
+                .requestMatchers(RoutesConstant.ADMIN + "/**").hasAnyRole(VaiTro.STAFF, VaiTro.ADMIN)
+                .requestMatchers(RoutesConstant.CUSTOMER + "/**").hasRole(VaiTro.CUSTOMER)
                 
                 // General authenticated prefix
                 .requestMatchers(RoutesConstant.API_PREFIX + "/**").authenticated()

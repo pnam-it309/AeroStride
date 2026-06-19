@@ -105,12 +105,27 @@ const COLOR_DICTIONARY = {
     'maroon': '#800000'
 };
 
+// Hàm bỏ dấu tiếng việt
+const removeAccents = (str) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : '';
+
+const getColorHexFallback = (colorItem) => {
+    if (colorItem?.maMauHex) return colorItem.maMauHex;
+    if (!colorItem?.ten) return '#e2e8f0';
+    
+    const normalizedName = colorItem.ten.trim().toLowerCase();
+    const normalizedNoAccent = removeAccents(normalizedName);
+    
+    for (const [key, hex] of Object.entries(COLOR_DICTIONARY)) {
+        if (normalizedName === key || normalizedNoAccent === removeAccents(key)) {
+            return hex;
+        }
+    }
+    return '#e2e8f0'; // Default fallback
+};
+
 watch(customColorName, (newName) => {
     if (!newName) return;
     const normalizedName = newName.trim().toLowerCase();
-
-    // Hàm bỏ dấu tiếng việt
-    const removeAccents = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const normalizedNoAccent = removeAccents(normalizedName);
 
     // Tìm kiếm trong từ điển
@@ -548,6 +563,11 @@ const getBackendErrorMessage = (error, fallbackMessage) => (
     || fallbackMessage
 );
 
+const getVariantColorHex = (idMauSac) => {
+    const color = colors.value.find(c => String(c.id) === String(idMauSac));
+    return color ? getColorHexFallback(color) : '#ffffff';
+};
+
 const normalizeSearchText = (value) => String(value ?? '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -569,10 +589,7 @@ const comboboxProps = {
     autoSelectFirst: false
 };
 
-const getVariantColorHex = (colorId) => {
-    const color = colors.value.find(c => c.id === colorId);
-    return color?.maMauHex || '#ffffff';
-};
+
 
 const removeDraftVariantByObject = (variant) => {
     variantItems.value = variantItems.value.filter(item => item !== variant);
@@ -2247,7 +2264,7 @@ const handleSave = async () => {
                                 <div v-for="c in colors.filter(x => selectedColors.includes(x.id))" :key="c.id"
                                     class="text-center cursor-pointer" @click="toggleColor(c.id)">
                                     <div class="color-circle mx-auto"
-                                        :style="{ backgroundColor: c.maMauHex || '#e2e8f0' }"
+                                        :style="{ backgroundColor: getColorHexFallback(c) }"
                                         :class="{ 'selected': selectedColors.includes(c.id) }">
                                         <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18"
                                             class="check-icon">mdi-check</v-icon>
@@ -2281,7 +2298,7 @@ const handleSave = async () => {
                                             <div v-for="c in filteredColors" :key="c.id"
                                                 class="text-center cursor-pointer" @click="toggleColor(c.id)">
                                                 <div class="color-circle mx-auto mb-1"
-                                                    :style="{ backgroundColor: c.maMauHex || '#e2e8f0' }"
+                                                    :style="{ backgroundColor: getColorHexFallback(c) }"
                                                     :class="{ 'selected': selectedColors.includes(c.id) }">
                                                     <v-icon v-if="selectedColors.includes(c.id)" color="white" size="18"
                                                         class="check-icon">mdi-check</v-icon>

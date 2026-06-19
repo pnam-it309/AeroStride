@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.example.be.infrastructure.constants.VaiTro;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -24,7 +25,7 @@ import java.util.Map;
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_LICH_LAM_VIEC)
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
+@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_STAFF)
 public class LichLamViecController {
 
     private final LichLamViecService lichLamViecService;
@@ -42,10 +43,11 @@ public class LichLamViecController {
     @GetMapping(RoutesConstant.ACTIVITIES)
     public ResponseEntity<ApiResponse<?>> getActivities(
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String ngay,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.getActivityHistory(search, pageable)));
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.getActivityHistory(search, ngay, pageable)));
     }
 
     @GetMapping(RoutesConstant.EXPORT_TEMPLATE)
@@ -86,6 +88,16 @@ public class LichLamViecController {
     public ResponseEntity<ApiResponse<?>> deleteSchedule(@PathVariable String id) {
         lichLamViecService.deleteSchedule(id);
         return ResponseEntity.ok(ApiResponse.success("Đã xóa lịch làm việc thành công!"));
+    }
+
+    @PostMapping("/attendance")
+    public ResponseEntity<ApiResponse<?>> saveAttendance(@RequestBody com.example.be.core.admin.lichlamviec.model.request.AttendanceRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.saveAttendance(request)));
+    }
+
+    @PutMapping("/attendance/{id}")
+    public ResponseEntity<ApiResponse<?>> updateAttendance(@PathVariable String id, @RequestBody com.example.be.core.admin.lichlamviec.model.request.AttendanceRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.updateAttendance(id, request)));
     }
 
     // Shift CRUD Controller Endpoints

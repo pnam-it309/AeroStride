@@ -68,12 +68,12 @@ const {
     loaiDon: null,
     fromDate: getTodayDate(),
     toDate: getTodayDate(),
-    sortDirection: 'DESC'
+    sortDirection: 'ASC'
 });
 
 const sortOptions = [
-    { title: 'Mới nhất', value: 'DESC' },
-    { title: 'Cũ nhất', value: 'ASC' }
+    { title: 'Cũ nhất', value: 'ASC' },
+    { title: 'Mới nhất', value: 'DESC' }
 ];
 
 const isRefreshing = ref(false);

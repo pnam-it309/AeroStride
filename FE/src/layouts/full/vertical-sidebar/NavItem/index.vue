@@ -41,6 +41,7 @@ const isActive = computed(() => {
                     </span>
                 </div>
             </template>
+            <v-tooltip v-if="hideTitle" activator="parent" location="right">{{ item.title }}</v-tooltip>
             <v-list-item-title v-if="!hideTitle" class="sidebar-item-title font-weight-medium">{{ item.title
                 }}</v-list-item-title>
             <!---If Caption-->

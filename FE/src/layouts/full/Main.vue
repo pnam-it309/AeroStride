@@ -14,6 +14,7 @@ import ProfileDD from './vertical-header/ProfileDD.vue';
 import { Menu2Icon } from 'vue-tabler-icons';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { computed, onMounted } from 'vue';
+import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 
 const uiStore = useUIStore();
 const notificationStore = useNotificationStore();
@@ -22,17 +23,27 @@ const { unreadChatCount } = storeToRefs(notificationStore);
 const { toggleSidebar } = uiStore;
 
 const sidebarMenu = computed(() => {
-    return sidebarItems.map((item) => {
-        if (item.title === 'Quản lý tin nhắn' && unreadChatCount.value > 0) {
-            return {
-                ...item,
-                chip: unreadChatCount.value.toString(),
-                chipColor: 'error',
-                chipVariant: 'flat'
-            };
-        }
-        return item;
-    });
+    const userRole = dichVuXacThuc.layUserHienTai()?.role;
+
+    return sidebarItems
+        .filter(item => !item.roles || item.roles.includes(userRole))
+        .map((item) => {
+            let filteredItem = { ...item };
+            
+            if (filteredItem.children) {
+                filteredItem.children = filteredItem.children.filter(child => !child.roles || child.roles.includes(userRole));
+            }
+
+            if (filteredItem.title === 'Quản lý tin nhắn' && unreadChatCount.value > 0) {
+                return {
+                    ...filteredItem,
+                    chip: unreadChatCount.value.toString(),
+                    chipColor: 'error',
+                    chipVariant: 'flat'
+                };
+            }
+            return filteredItem;
+        });
 });
 
 onMounted(() => {
@@ -63,7 +74,7 @@ onMounted(() => {
             <Logo />
         </div>
         <div class="sidebar-logo-wrap d-flex justify-center border-b" v-else style="min-height: 64px; padding: 16px 0">
-            <img src="@/assets/images/logos/logo.jpg" alt="logo" style="width: 32px; height: 32px; object-fit: contain" />
+            <img src="@/assets/images/logos/logo.jpg" alt="logo" style="width: 44px; height: 44px; object-fit: contain" />
         </div>
 
         <perfect-scrollbar class="scrollnavbar bg-containerBg" :style="{ height: 'calc(100vh - 136px)' }">

@@ -6,6 +6,7 @@ import com.example.be.core.admin.chat.model.SendMessageRequest;
 import com.example.be.core.admin.chat.service.AdminChatService;
 import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.infrastructure.constants.RoutesConstant;
+import com.example.be.infrastructure.constants.VaiTro;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_CHAT)
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('QUAN_TRI_VIEN', 'NHAN_VIEN')")
+@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_STAFF)
 public class AdminChatController {
 
     private final AdminChatService chatService;

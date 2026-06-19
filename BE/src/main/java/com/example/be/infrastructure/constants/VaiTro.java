@@ -9,5 +9,14 @@ package com.example.be.infrastructure.constants;
 public enum VaiTro {
     KHACH_HANG,
     NHAN_VIEN,
-    QUAN_TRI_VIEN
+    QUAN_TRI_VIEN;
+
+    // String representations of the roles for method parameters
+    public static final String ADMIN = "QUAN_TRI_VIEN";
+    public static final String STAFF = "NHAN_VIEN";
+    public static final String CUSTOMER = "KHACH_HANG";
+
+    // SpEL expressions for @PreAuthorize annotations
+    public static final String PRE_AUTH_ADMIN_ONLY = "hasRole('" + ADMIN + "')";
+    public static final String PRE_AUTH_ADMIN_STAFF = "hasAnyRole('" + ADMIN + "', '" + STAFF + "')";
 }
