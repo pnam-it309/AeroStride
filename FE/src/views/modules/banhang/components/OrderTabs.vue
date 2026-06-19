@@ -5,67 +5,48 @@
  * Chức năng: Hiển thị thanh tabs các hóa đơn đang chờ thanh toán (tối đa 5 hóa đơn),
  *            cho phép tạo thêm hoặc chuyển đổi giữa các hóa đơn.
  */
-import { computed } from 'vue';
-import { PlusIcon, ReceiptIcon, XIcon } from 'vue-tabler-icons';
+import { PlusIcon, XIcon } from 'vue-tabler-icons';
 
 const MAX_WAITING_ORDERS = 5;
 
-const props = defineProps(['orders', 'activeIndex']);
+defineProps(['orders', 'activeIndex']);
 const emit = defineEmits(['select', 'create', 'close']);
-
-// Format tổng tiền hiển thị trên mỗi tab (không lấy số thập phân)
-const formatCurrency = (value) =>
-    new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-        maximumFractionDigits: 0
-    }).format(value || 0);
-
-const orderSummaries = computed(() =>
-    (props.orders || []).map((order) => {
-        const items = order?.listsHoaDonChiTiet || [];
-        const totalQuantity = items.reduce((sum, item) => sum + (Number(item.soLuong) || 0), 0);
-
-        return {
-            quantity: totalQuantity,
-            total: order?.tongTienSauGiam ?? order?.tongTien ?? 0
-        };
-    })
-);
 </script>
 
 <template>
-    <div class="order-tabs d-flex align-center gap-2 overflow-x-auto pb-2">
-        <v-btn
+    <div class="order-tabs d-flex align-center gap-2 pb-1">
+        <div
             v-for="(order, idx) in orders"
             :key="order.id"
-            :variant="activeIndex === idx ? 'flat' : 'tonal'"
-            :color="activeIndex === idx ? '#2E4E8E' : 'grey-lighten-3'"
-            height="56"
-            class="order-tab rounded-lg text-none px-4 transition-all"
+            class="order-tab d-flex align-center cursor-pointer px-4 transition-all"
+            :class="activeIndex === idx ? 'order-tab-active' : 'order-tab-inactive'"
             @click="emit('select', idx)"
         >
-            <ReceiptIcon size="18" class="mr-2 opacity-70 flex-shrink-0" />
-            <span class="tab-copy">
-                <span class="font-weight-bold">Đơn {{ idx + 1 }}</span>
-                <span class="tab-summary">
-                    {{ orderSummaries[idx]?.quantity || 0 }} SP - {{ formatCurrency(orderSummaries[idx]?.total) }}
-                </span>
+            <span class="font-weight-bold text-body-2 text-truncate flex-grow-1">
+                Đơn hàng #{{ order.maHoaDon || idx + 1 }}
             </span>
             <v-btn
                 v-if="orders.length > 1"
                 icon
                 size="x-small"
                 variant="text"
-                class="ml-2 hover-close"
+                class="ml-2 hover-close-btn"
                 @click.stop="emit('close', order.id, idx)"
             >
                 <XIcon size="14" />
             </v-btn>
-        </v-btn>
+        </div>
 
-        <v-btn v-if="orders.length < MAX_WAITING_ORDERS" icon color="primary" variant="tonal" size="48" class="rounded-lg flex-shrink-0" @click="emit('create')">
-            <PlusIcon size="24" />
+        <v-btn 
+            v-if="orders.length < MAX_WAITING_ORDERS" 
+            icon 
+            color="#2E4E8E" 
+            variant="flat" 
+            size="40" 
+            class="rounded-lg flex-shrink-0 plus-tab-btn" 
+            @click="emit('create')"
+        >
+            <PlusIcon size="20" />
         </v-btn>
     </div>
 </template>
@@ -78,29 +59,51 @@ const orderSummaries = computed(() =>
     transition: all 0.2s ease;
 }
 .order-tab {
-    min-width: 164px;
-    justify-content: flex-start;
-}
-.tab-copy {
+    min-width: 170px;
+    height: 40px;
+    border-radius: 8px;
+    user-select: none;
+    box-sizing: border-box;
     display: inline-flex;
-    flex-direction: column;
-    align-items: flex-start;
-    line-height: 1.15;
-    min-width: 0;
+    align-items: center;
 }
-.tab-summary {
-    display: block;
-    max-width: 112px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 11px;
-    font-weight: 600;
-    opacity: 0.82;
-    margin-top: 3px;
+
+.order-tab-active {
+    background: #ffffff !important;
+    color: #2e4e8e !important;
+    border-left: 4px solid #2e4e8e !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
+    border-top: 1px solid #dfe5ee;
+    border-right: 1px solid #dfe5ee;
+    border-bottom: 1px solid #dfe5ee;
 }
-.hover-close:hover {
-    color: rgb(var(--v-theme-error)) !important;
-    background: rgba(var(--v-theme-error), 0.1);
+
+.order-tab-inactive {
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.order-tab-inactive:hover {
+    background: #e2e8f0 !important;
+}
+
+.hover-close-btn {
+    width: 20px !important;
+    height: 20px !important;
+    color: #94a3b8;
+}
+
+.hover-close-btn:hover {
+    color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.plus-tab-btn {
+    background-color: #e0f2fe !important;
+    color: #0284c7 !important;
+    border: 1px solid #bae6fd !important;
+    min-width: 40px !important;
+    height: 40px !important;
 }
 </style>
