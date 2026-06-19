@@ -991,7 +991,6 @@ const pickBestVoucher = (items, total) => {
         .sort((a, b) => b.discount - a.discount)[0]?.voucher || null;
 };
 
-<<<<<<< HEAD
 // Làm mới danh sách voucher và tự động áp dụng mã có lợi nhất (Offline)
 const refreshBestVoucher = (orderOverride = selectedOrder.value) => {
     if (!orderOverride?.id) return;
@@ -1030,81 +1029,6 @@ const onApplyVoucher = (voucherId) => {
     const appliedVoucher = vouchers.value.find(v => String(v.id) === String(voucherId));
     const discount = calculateVoucherDiscount(appliedVoucher, selectedOrder.value.tongTien || 0);
     selectedOrder.value.tongTienSauGiam = Math.max(0, (selectedOrder.value.tongTien || 0) - discount);
-=======
-let refreshVoucherTimeout = null;
-let pendingVoucherResolve = null;
-const refreshBestVoucher = (orderOverride = selectedOrder.value) => {
-    return new Promise((resolve) => {
-        if (!orderOverride?.id) return resolve();
-        if (refreshVoucherTimeout) {
-            clearTimeout(refreshVoucherTimeout);
-            if (pendingVoucherResolve) {
-                pendingVoucherResolve();
-                pendingVoucherResolve = null;
-            }
-        }
-        pendingVoucherResolve = resolve;
-
-        refreshVoucherTimeout = setTimeout(async () => {
-            if (isAutoApplyingVoucher.value) {
-                pendingVoucherResolve = null;
-                return resolve();
-            }
-            isAutoApplyingVoucher.value = true;
-            try {
-                const availableVouchers = await loadEligibleVouchers(orderOverride);
-                vouchers.value = (availableVouchers || []).map(v => ({
-                    ...v,
-                    customTitle: v.ma ? `${v.ma} - ${v.ten}` : v.ten
-                }));
-
-                const bestVoucher = pickBestVoucher(vouchers.value, orderOverride.tongTien || 0);
-                const bestVoucherId = bestVoucher?.id || null;
-                const currentVoucherId = orderOverride.idPhieuGiamGia || null;
-                const isManual = manualVoucherLocks.value[orderOverride.id] === true;
-
-                let targetVoucherId = currentVoucherId;
-
-                if (!isManual) {
-                    targetVoucherId = bestVoucherId;
-                } else {
-                    if (currentVoucherId) {
-                        const currentVoucher = vouchers.value.find(v => String(v.id) === String(currentVoucherId));
-                        const isCurrentValid = currentVoucher && Number(orderOverride.tongTien || 0) >= Number(currentVoucher.donHangToiThieu || 0);
-                        if (!isCurrentValid) {
-                            targetVoucherId = bestVoucherId;
-                            manualVoucherLocks.value[orderOverride.id] = false;
-                        }
-                    } else {
-                        targetVoucherId = null;
-                    }
-                }
-
-                if (targetVoucherId !== currentVoucherId) {
-                    const updated = await dichVuDonHang.setVoucher(orderOverride.id, targetVoucherId);
-                    updateOrderInList(updated);
-                }
-            } catch (e) {
-                vouchers.value = [];
-            } finally {
-                isAutoApplyingVoucher.value = false;
-                pendingVoucherResolve = null;
-                resolve();
-            }
-        }, 300);
-    });
-};
-
-const onApplyVoucher = async (voucherId) => {
-    try {
-        manualVoucherLocks.value[selectedOrder.value.id] = true;
-        const updated = await dichVuDonHang.setVoucher(selectedOrder.value.id, voucherId);
-        updateOrderInList(updated);
-        addNotification({ title: 'Thành công', subtitle: 'Đã áp dụng mã giảm giá.', color: 'success' });
-    } catch (e) {
-        addNotification({ title: 'Lỗi', subtitle: 'Không thể áp dụng mã giảm giá.', color: 'error' });
-    }
->>>>>>> origin/feat/UI_BanHang
 };
 
 // Logic: Thanh toán VNPay
@@ -1287,7 +1211,6 @@ const submitCheckout = async ({ order = selectedOrder.value, payload, successMes
         await dichVuDonHang.checkout(order.id, requestPayload);
         addNotification({ title: 'Thành công', subtitle: successMessage, color: 'success' });
 
-<<<<<<< HEAD
         // Xóa order khỏi danh sách
         await completePaidOrder(order.id);
 
@@ -1323,12 +1246,6 @@ const submitCheckout = async ({ order = selectedOrder.value, payload, successMes
         } else {
             throw e;
         }
-=======
-    await completePaidOrder(order.id);
-
-    if (showReceiptAfter) {
-        showReceipt(orderSnapshot, pmMethod, pmReceived, pmNote);
->>>>>>> origin/feat/UI_BanHang
     }
 };
 
@@ -1375,7 +1292,6 @@ const startVnPayFlow = async () => {
         sessionStorage.setItem(VNPAY_PENDING_KEY, JSON.stringify({
             orderId: selectedOrder.value.id,
             maHoaDon: selectedOrder.value.maHoaDon,
-<<<<<<< HEAD
             amount: selectedOrder.value.tongTienSauGiam,
             transactionId: orderId
         }));
@@ -1393,16 +1309,6 @@ const startVnPayFlow = async () => {
             }, 1000);
             return;
         }
-=======
-            amount: finalCollectAmount.value,
-            createdAt: Date.now()
-        }));
-
-        const popup = window.open(data.paymentUrl, '_blank', 'width=900,height=750,location=yes,status=yes,scrollbars=yes');
-        vnpayPopup = popup;
-
-        confirmDialog.value.show = false;
->>>>>>> origin/feat/UI_BanHang
 
         vnpayDialog.value = {
             show: true,
@@ -1410,15 +1316,6 @@ const startVnPayFlow = async () => {
             verified: false,
             statusText: 'Đang chờ khách hàng quét mã và thanh toán...',
             orderId: orderId,
-<<<<<<< HEAD
-            amount: selectedOrder.value.tongTienSauGiam,
-            paymentUrl: data.paymentUrl,
-            qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.paymentUrl)}`,
-            pollInterval: null
-        };
-
-        confirmDialog.value.show = false;
-=======
             amount: finalCollectAmount.value,
             pollInterval: null
         };
@@ -1475,7 +1372,6 @@ const startVnPayFlow = async () => {
             }
         }, 1000);
 
->>>>>>> origin/feat/UI_BanHang
     } catch (error) {
         console.error('VNPay flow error:', error);
         addNotification({ title: 'Lỗi VNPay', subtitle: getErrorMessage(error, 'Không thể khởi tạo giao dịch VNPay'), color: 'error' });
@@ -1484,7 +1380,6 @@ const startVnPayFlow = async () => {
     }
 };
 
-<<<<<<< HEAD
 const onConfirmVnPayManual = async () => {
     vnpayDialog.value.loading = true;
     vnpayDialog.value.statusText = 'Đang xác nhận hóa đơn...';
@@ -1498,8 +1393,6 @@ const onConfirmVnPayManual = async () => {
 };
 
 // Logic: Thanh toán
-=======
->>>>>>> origin/feat/UI_BanHang
 // Handler chính cho nút "Thanh toán"
 const onCheckout = async () => {
     if (!selectedOrder.value?.listsHoaDonChiTiet?.length) {
@@ -1524,9 +1417,6 @@ const onCheckout = async () => {
     isProcessing.value = false;
 
     if (checkoutData.value.paymentMethod === 'VNPAY') {
-<<<<<<< HEAD
-        vnpayChoiceDialog.value.show = true;
-=======
         confirmDialog.value = {
             show: true,
             title: 'Xác nhận thanh toán VNPay',
@@ -1535,7 +1425,6 @@ const onCheckout = async () => {
             action: startVnPayFlow,
             loading: false
         };
->>>>>>> origin/feat/UI_BanHang
         return;
     }
 
@@ -1586,13 +1475,9 @@ const onCheckout = async () => {
                 checkoutData.value.note = '';
                 confirmDialog.value.show = false;
             } catch (e) {
-<<<<<<< HEAD
                 if (e.message !== 'RELOAD_REQUIRED') {
                     addNotification({ title: 'Thanh toán thất bại', subtitle: getErrorMessage(e, MESSAGES.ERROR.PAYMENT_FAILED), color: 'error' });
                 }
-=======
-                addNotification({ title: 'Thanh toán thất bại', subtitle: getErrorMessage(e, MESSAGES.ERROR.PAYMENT_FAILED), color: 'error' });
->>>>>>> origin/feat/UI_BanHang
             } finally {
                 isProcessing.value = false;
                 confirmDialog.value.loading = false;
@@ -1886,7 +1771,7 @@ const formatDateTime = (dateStr) => {
                                                             <span class="text-slate-300"
                                                                 style="margin-left: 15px; margin-right: 15px; font-size: 11px;">|</span>
                                                             <span class="sku-badge">{{ variant.maChiTietSanPham
-                                                            }}</span>
+                                                                }}</span>
                                                         </div>
 
                                                         <!-- màu sắc --- size --- số lượng -->
@@ -2166,7 +2051,7 @@ const formatDateTime = (dateStr) => {
                                     </div>
                                     <span class="font-weight-bold" style="font-size: 13px !important;">{{
                                         formatCurrency(remainingBalance)
-                                    }}</span>
+                                        }}</span>
                                 </div>
                                 <div v-else-if="changeAmount > 0"
                                     class="d-flex align-center justify-space-between pa-3 rounded-lg bg-blue-50 text-blue-800 border-blue">
@@ -2210,7 +2095,7 @@ const formatDateTime = (dateStr) => {
                                     style="min-width: 170px; justify-content: space-between">
                                     <span class="font-weight-bold text-slate-800 text-caption">{{
                                         formatDateTime(selectedOrder?.ngayTao)
-                                    }}</span>
+                                        }}</span>
                                 </div>
                             </div>
 
@@ -3084,4 +2969,5 @@ const formatDateTime = (dateStr) => {
                 font-size: 11px !important;
                 color: #64748b;
             }
+
         </style>
