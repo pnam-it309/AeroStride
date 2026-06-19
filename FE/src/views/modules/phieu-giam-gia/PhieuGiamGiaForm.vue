@@ -370,6 +370,14 @@ const handleSave = () => {
     };
 };
 
+const goBack = () => {
+    router.back();
+};
+
+const getTienMatClass = () => {
+    return form.value.loaiPhieu === 'TIEN_MAT' ? 'bg-slate-50' : '';
+};
+
 onMounted(init);
 </script>
 
@@ -384,7 +392,7 @@ onMounted(init);
         <!-- Action Header -->
         <div class="d-flex align-center justify-space-between mb-8 mt-4">
             <div class="d-flex align-center gap-4">
-                <v-btn icon variant="flat" @click="router.back()" class="btn-back-header">
+                <v-btn icon variant="flat" @click="goBack" class="btn-back-header">
                     <v-icon>mdi-arrow-left</v-icon>
                 </v-btn>
             </div>
@@ -455,7 +463,7 @@ onMounted(init);
                                 <FormattedNumberField v-model="form.giamToiDa"
                                     :readonly="isViewOnly || form.loaiPhieu === 'TIEN_MAT'" placeholder="Không giới hạn"
                                     variant="outlined" density="compact" hide-details
-                                    :class="form.loaiPhieu === 'TIEN_MAT' ? 'bg-slate-50' : ''"></FormattedNumberField>
+                                    :class="getTienMatClass()"></FormattedNumberField>
                             </v-col>
 
                             <!-- 3. Số lượng sử dụng, Hóa đơn tối thiểu & Loại phiếu -->

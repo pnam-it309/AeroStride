@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { AdminFilter, AdminTable, AdminPagination, AdminBreadcrumbs } from '@/components/common';
+import AppDatePicker from '@/components/common/AppDatePicker.vue';
 import apiService from '@/services/apiService';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
@@ -41,7 +42,8 @@ const loadData = async () => {
             params: {
                 page: pagination.value.page - 1,
                 size: pagination.value.size,
-                search: filters.value.search
+                search: filters.value.search,
+                ngay: filters.value.ngay
             }
         });
         if (response.data.success) {
@@ -80,7 +82,7 @@ onMounted(() => {
 
         <div class="filter-top invoice-filter-shell">
             <AdminFilter title="Bộ lọc lịch sử" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-                <v-col cols="12" md="6" class="filter-cell">
+                <v-col cols="12" md="5" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm hoạt động</div>
                     <v-text-field
                         v-model="filters.search"
@@ -90,6 +92,15 @@ onMounted(() => {
                         hide-details
                         prepend-inner-icon="mdi-magnify"
                         @input="handleFilter"
+                    />
+                </v-col>
+                <v-col cols="12" md="4" class="filter-cell">
+                    <div class="filter-field-label">Lọc theo ngày</div>
+                    <AppDatePicker
+                        :model-value="filters.ngay"
+                        @update:model-value="val => { filters.ngay = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : null; handleFilter(); }"
+                        placeholder="Chọn ngày"
+                        clearable
                     />
                 </v-col>
             </AdminFilter>

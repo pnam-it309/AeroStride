@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { AdminFilter, AdminTable, AdminBreadcrumbs, AdminPagination } from '@/components/common';
+import AppDatePicker from '@/components/common/AppDatePicker.vue';
 import apiService from '@/services/apiService';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
 
@@ -249,11 +250,10 @@ onMounted(loadData);
                 </v-col>
                 <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Lọc theo ngày</div>
-                    <v-text-field
-                        v-model="filters.ngay"
-                        type="date" variant="outlined" density="compact" hide-details
-                        class="compact-input"
-                        @change="handleFilter"
+                    <AppDatePicker
+                        :model-value="filters.ngay"
+                        @update:model-value="val => { filters.ngay = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : null; handleFilter(); }"
+                        placeholder="Chọn ngày"
                     />
                 </v-col>
             </AdminFilter>
@@ -418,7 +418,11 @@ onMounted(loadData);
                         </v-col>
                         <v-col cols="12">
                             <div class="filter-field-label">Ngày làm</div>
-                            <v-text-field v-model="form.ngay" type="date" variant="outlined" density="compact" hide-details />
+                            <AppDatePicker 
+                                :model-value="form.ngay" 
+                                @update:model-value="val => form.ngay = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : null" 
+                                placeholder="Chọn ngày" 
+                            />
                         </v-col>
                         <v-col cols="6">
                             <div class="filter-field-label">Giờ vào</div>

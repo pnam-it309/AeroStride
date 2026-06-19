@@ -513,6 +513,52 @@ onMounted(async () => {
         }
     }
 });
+const goBack = () => {
+    router.push(PATH.KHACH_HANG);
+};
+
+const handleNameBlur = () => {
+    customerForm.value.ten = customerForm.value.ten ? customerForm.value.ten.replace(/\s+/g, ' ').trim() : '';
+};
+
+const handleEmailBlur = () => {
+    customerForm.value.email = customerForm.value.email ? customerForm.value.email.replace(/\s+/g, '') : '';
+};
+
+const handlePhoneInput = () => {
+    customerForm.value.sdt = customerForm.value.sdt ? customerForm.value.sdt.replace(/[^\d+]/g, '') : '';
+};
+
+const nameRules = [
+    (v) => !!v || 'Vui lòng nhập họ và tên',
+    (v) => /^[\p{L}0-9\s]+$/u.test(v) || 'Họ và tên không được chứa ký tự đặc biệt',
+    (v) => (v && v.trim() === v) || 'Không được chứa khoảng trắng ở 2 đầu'
+];
+
+const emailRules = [
+    (v) => !!v || 'Vui lòng nhập email',
+    (v) => /.+@.+\..+/.test(v) || 'Email không hợp lệ'
+];
+
+const phoneRules = [
+    (v) => !!v || 'Vui lòng nhập số điện thoại',
+    (v) => /^(0|\+84)[0-9]{9}$/.test(v) || 'Số điện thoại phải hợp lệ (VD: 09xx hoặc +849xx)'
+];
+
+const dobRules = [
+    (v) => {
+        if (!v) return true;
+        const bd = new Date(v);
+        const now = new Date();
+        if (bd.getTime() > now.getTime()) return 'Ngày sinh không thể ở trong tương lai';
+        let age = now.getFullYear() - bd.getFullYear();
+        const m = now.getMonth() - bd.getMonth();
+        if (m < 0 || (m === 0 && now.getDate() < bd.getDate())) {
+            age--;
+        }
+        return age >= 18 || 'Khách hàng phải từ 18 tuổi trở lên';
+    }
+];
 </script>
 
 <template>
@@ -528,7 +574,7 @@ onMounted(async () => {
         <!-- Action Header -->
         <div class="d-flex align-center justify-space-between mb-8 mt-4">
             <div class="d-flex align-center gap-4">
-                <v-btn icon variant="flat" @click="router.push(PATH.KHACH_HANG)" class="btn-back-header">
+                <v-btn icon variant="flat" @click="goBack" class="btn-back-header">
                     <ArrowLeftIcon size="20" />
                 </v-btn>
             </div>
@@ -567,34 +613,24 @@ onMounted(async () => {
                             <v-col cols="12" md="8">
                                 <div class="field-label">Họ và tên <span class="text-error">*</span></div>
                                 <v-text-field v-model="customerForm.ten" :readonly="isDetailView"
-                                    @blur="customerForm.ten = customerForm.ten ? customerForm.ten.replace(/\s+/g, ' ').trim() : ''"
-                                    :rules="[
-                                        (v) => !!v || 'Vui lòng nhập họ và tên',
-                                        (v) => /^[\p{L}0-9\s]+$/u.test(v) || 'Họ và tên không được chứa ký tự đặc biệt',
-                                        (v) => (v && v.trim() === v) || 'Không được chứa khoảng trắng ở 2 đầu'
-                                    ]"
+                                    @blur="handleNameBlur"
+                                    :rules="nameRules"
                                     placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" bg-color="white"
                                     density="compact" hide-details="auto"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Email <span class="text-error">*</span></div>
                                 <v-text-field v-model="customerForm.email" :readonly="isDetailView"
-                                    @blur="customerForm.email = customerForm.email ? customerForm.email.replace(/\s+/g, '') : ''"
-                                    :rules="[
-                                        (v) => !!v || 'Vui lòng nhập email',
-                                        (v) => /.+@.+\..+/.test(v) || 'Email không hợp lệ'
-                                    ]"
+                                    @blur="handleEmailBlur"
+                                    :rules="emailRules"
                                     placeholder="khachhang@gmail.com" variant="outlined" bg-color="white"
                                     density="compact" hide-details="auto"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Số điện thoại <span class="text-error">*</span></div>
                                 <v-text-field v-model="customerForm.sdt" :readonly="isDetailView"
-                                    @input="customerForm.sdt = customerForm.sdt ? customerForm.sdt.replace(/[^\d+]/g, '') : ''"
-                                    :rules="[
-                                        (v) => !!v || 'Vui lòng nhập số điện thoại',
-                                        (v) => /^(0|\+84)[0-9]{9}$/.test(v) || 'Số điện thoại phải hợp lệ (VD: 09xx hoặc +849xx)'
-                                    ]"
+                                    @input="handlePhoneInput"
+                                    :rules="phoneRules"
                                     placeholder="09xx.xxx.xxx" variant="outlined" bg-color="white" density="compact"
                                     hide-details="auto"></v-text-field>
                             </v-col>
@@ -602,22 +638,7 @@ onMounted(async () => {
                                 <div class="field-label">Ngày sinh</div>
                                 <AppDatePicker v-model="customerForm.ngaySinh" :disabled="isDetailView"
                                     placeholder="Chọn ngày sinh"
-                                    :text-field-props="{
-                                        rules: [
-                                            (v) => {
-                                                if (!v) return true;
-                                                const bd = new Date(v);
-                                                const now = new Date();
-                                                if (bd.getTime() > now.getTime()) return 'Ngày sinh không thể ở trong tương lai';
-                                                let age = now.getFullYear() - bd.getFullYear();
-                                                const m = now.getMonth() - bd.getMonth();
-                                                if (m < 0 || (m === 0 && now.getDate() < bd.getDate())) {
-                                                    age--;
-                                                }
-                                                return age >= 18 || 'Khách hàng phải từ 18 tuổi trở lên';
-                                            }
-                                        ]
-                                    }" />
+                                    :text-field-props="{ rules: dobRules }" />
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Giới tính</div>
@@ -702,26 +723,14 @@ onMounted(async () => {
                                     <div class="field-label">Tỉnh / Thành phố</div>
                                     <v-autocomplete v-model="customerForm.tinh" :items="provinces" item-title="name"
                                         item-value="code" placeholder="Chọn Tỉnh / Thành phố" variant="outlined"
-                                        bg-color="white" density="compact" @update:model-value="
-                                            (val) => {
-                                                customerForm.thanhPho = null;
-                                                customerForm.phuongXa = null;
-                                                if (val) fetchDistricts(val);
-                                            }
-                                        " />
+                                        bg-color="white" density="compact" />
                                 </v-col>
 
                                 <v-col cols="12" md="4">
                                     <div class="field-label">Quận / Huyện</div>
                                     <v-autocomplete v-model="customerForm.thanhPho" :items="districts" item-title="name"
                                         item-value="code" placeholder="Chọn Quận / Huyện" variant="outlined"
-                                        bg-color="white" density="compact" :disabled="!customerForm.tinh"
-                                        @update:model-value="
-                                            (val) => {
-                                                customerForm.phuongXa = null;
-                                                if (val) fetchWards(val);
-                                            }
-                                        " />
+                                        bg-color="white" density="compact" :disabled="!customerForm.tinh" />
                                 </v-col>
 
                                 <v-col cols="12" md="4">

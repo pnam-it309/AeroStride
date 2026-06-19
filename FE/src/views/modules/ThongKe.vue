@@ -1,11 +1,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
+import { AdminBreadcrumbs, AdminFilter, AdminTable, AdminPagination } from '@/components/common';
+import AppDatePicker from '@/components/common/AppDatePicker.vue';
 import { dichVuThongKe } from '@/services/admin/dichVuThongKe';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import apexchart from 'vue3-apexcharts';
 
-const loading = ref(false);
+const loading = ref(true);
 
 const padDatePart = (value) => String(value).padStart(2, '0');
 
@@ -25,10 +26,10 @@ const getQuickRangeStart = (endDate, days) => {
 };
 
 const defaultEndDate = new Date();
-const defaultStartDate = new Date(defaultEndDate.getFullYear(), 0, 1, 0, 0);
+const defaultStartDate = getQuickRangeStart(defaultEndDate, 365);
 const startDate = ref(formatDateTimeInput(defaultStartDate));
 const endDate = ref(formatDateTimeInput(defaultEndDate));
-const selectedQuickRange = ref(null);
+const selectedQuickRange = ref('365');
 const customQuickRangeTitle = ref('');
 
 const dateRange = ref([defaultStartDate, defaultEndDate]);
@@ -710,15 +711,10 @@ onMounted(() => {
         <section class="stats-shell mt-4">
             <div class="stats-toolbar">
                 <div class="stats-filters">
-                    <div class="stats-filter-field stats-filter-field-datetime" style="flex: 2; min-width: 300px;">
+                    <div class="stats-filter-field stats-filter-field-datetime" style="flex: 2; min-width: 400px;">
                         <div class="filter-field-label">Khoảng thời gian</div>
-                        <AppDatePicker
-                            :model-value="dateRange"
-                            @update:model-value="onDateRangeChange"
-                            range
-                            enable-time-picker
-                            placeholder="Từ ngày - Đến ngày"
-                        />
+                        <AppDatePicker :model-value="dateRange" @update:model-value="onDateRangeChange" range
+                            enable-time-picker placeholder="Từ ngày - Đến ngày" />
                     </div>
                     <div class="stats-filter-field stats-filter-field-range">
                         <div class="filter-field-label">Khoảng nhanh</div>
@@ -849,97 +845,80 @@ onMounted(() => {
                     Không có dữ liệu trong thời gian này
                 </div>
                 <div v-else class="product-table-section">
-                    <div class="product-table-filters">
-                        <label class="product-filter-group product-search-group">
-                            <span>Tìm kiếm</span>
-                            <div class="product-search-box">
-                                <v-icon size="22" color="#7b8794">mdi-magnify</v-icon>
-                                <input v-model="productSearchKeyword" type="text" placeholder="Mã hoặc tên sản phẩm..."
-                                    @input="refreshProductFilters" />
-                            </div>
-                        </label>
-                        <label class="product-filter-group product-sort-group">
-                            <span>Sắp xếp</span>
-                            <select v-model="productSortBy" class="product-filter-select"
-                                @change="refreshProductFilters">
-                                <option v-for="option in productSortOptions" :key="option.value" :value="option.value">
-                                    {{ option.title }}
-                                </option>
-                            </select>
-                        </label>
-                        <button type="button" class="product-reset-btn" @click="resetProductFilters">
-                            <v-icon size="16">mdi-refresh</v-icon>
-                            Reset
-                        </button>
-                    </div>
-                    <div v-if="productFilteredStats.length === 0" class="empty-state product-empty-state">
-                        Không có dữ liệu phù hợp
-                    </div>
-                    <div v-else class="product-table-wrap">
-                        <table class="product-stats-table">
-                            <thead>
-                                <tr>
-                                    <th>STT</th>
-                                    <th>MÃ SẢN PHẨM</th>
-                                    <th>TÊN SẢN PHẨM</th>
-                                    <th>THƯƠNG HIỆU</th>
-                                    <th>ĐÃ BÁN</th>
-                                    <th>DOANH THU</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(product, index) in paginatedProductStats"
-                                    :key="`${product.maSanPham}-${product.name}`">
-                                    <td>{{ (productPage - 1) * productPageSize + index + 1 }}</td>
-                                    <td>{{ product.maSanPham || '--' }}</td>
-                                    <td>
-                                        <div class="product-name-cell">
-                                            <span>{{ product.name }}</span>
-                                            <small>Tổng dữ liệu</small>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="brand-pill">{{ product.thuongHieu || '--' }}</span>
-                                    </td>
-                                    <td>{{ formatNumber(product.quantity) }}</td>
-                                    <td>{{ formatCurrency(product.revenue) }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div v-if="productFilteredStats.length > 0" class="product-pagination">
-                    <div class="product-page-info">
-                        Đang hiển thị <strong>{{ productShowingFrom }}-{{ productShowingTo }}</strong> trong tổng số
-                        <strong>{{ productFilteredStats.length }}</strong> kết quả
-                    </div>
-                    <div class="product-pagination-actions">
-                        <div class="product-page-size">
-                            <span>Hiển thị</span>
-                            <select v-model.number="productPageSize" class="product-page-size-select"
-                                @change="changeProductPageSize">
-                                <option v-for="option in productPageSizeOptions" :key="option.value"
-                                    :value="option.value">
-                                    {{ option.title }}
-                                </option>
-                            </select>
-                        </div>
-                        <div class="product-page-controls">
-                            <button type="button" class="product-page-btn product-page-arrow"
-                                :disabled="productPage <= 1" @click="goToProductPage(productPage - 1)">
-                                &lt;
-                            </button>
-                            <button v-for="page in productPageNumbers" :key="page" type="button"
-                                class="product-page-btn" :class="{ active: page === productPage }"
-                                @click="goToProductPage(page)">
-                                {{ page }}
-                            </button>
-                            <button type="button" class="product-page-btn product-page-arrow"
-                                :disabled="productPage >= productTotalPages" @click="goToProductPage(productPage + 1)">
-                                &gt;
-                            </button>
-                        </div>
-                    </div>
+                    <AdminFilter title="" @refresh="resetProductFilters">
+                        <v-col cols="12" sm="6" md="4" class="pb-1">
+                            <div class="filter-field-label">Tìm kiếm</div>
+                            <v-text-field
+                                v-model="productSearchKeyword"
+                                placeholder="Mã hoặc tên sản phẩm..."
+                                density="comfortable"
+                                variant="outlined"
+                                hide-details
+                                clearable
+                                prepend-inner-icon="mdi-magnify"
+                                bg-color="white"
+                                @input="refreshProductFilters"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col cols="12" sm="6" md="4" class="pb-1">
+                            <div class="filter-field-label">Sắp xếp</div>
+                            <v-select
+                                v-model="productSortBy"
+                                :items="productSortOptions"
+                                item-title="title"
+                                item-value="value"
+                                density="comfortable"
+                                variant="outlined"
+                                hide-details
+                                bg-color="white"
+                                @update:model-value="refreshProductFilters"
+                            ></v-select>
+                        </v-col>
+                    </AdminFilter>
+                    <AdminTable
+                        hide-toolbar
+                        :headers="[
+                            { text: 'STT', align: 'center', width: '80px' },
+                            { text: 'MÃ SẢN PHẨM', align: 'center' },
+                            { text: 'TÊN SẢN PHẨM', align: 'start' },
+                            { text: 'THƯƠNG HIỆU', align: 'center' },
+                            { text: 'ĐÃ BÁN', align: 'center' },
+                            { text: 'DOANH THU', align: 'center' }
+                        ]"
+                        :items="paginatedProductStats"
+                    >
+                        <template #row="{ item, index }">
+                            <tr class="data-row" :key="`${item.maSanPham}-${item.name}`">
+                                <td class="data-cell">{{ (productPage - 1) * productPageSize + index + 1 }}</td>
+                                <td class="data-cell">{{ item.maSanPham || '--' }}</td>
+                                <td class="data-cell text-left">
+                                    <div class="product-name-cell" style="justify-content: flex-start; text-align: left;">
+                                        <span class="font-weight-medium" style="color: #1e293b">{{ item.name }}</span>
+                                        <small style="color: #64748b; font-size: 11px">Tổng dữ liệu</small>
+                                    </div>
+                                </td>
+                                <td class="data-cell">
+                                    <span class="brand-pill" style="display: inline-flex; padding: 4px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; font-weight: 600; color: #475569;">
+                                        {{ item.thuongHieu || '--' }}
+                                    </span>
+                                </td>
+                                <td class="data-cell font-weight-medium" style="color: #1e293b">{{ formatNumber(item.quantity) }}</td>
+                                <td class="data-cell font-weight-bold" style="color: #e11d48">{{ formatCurrency(item.revenue) }}</td>
+                            </tr>
+                        </template>
+
+                        <template #pagination>
+                            <AdminPagination
+                                v-if="productFilteredStats.length > 0"
+                                v-model:page="productPage"
+                                v-model:page-size="productPageSize"
+                                :total-items="productFilteredStats.length"
+                                :page-size-options="productPageSizeOptions"
+                                @update:page="goToProductPage"
+                                @update:page-size="changeProductPageSize"
+                            />
+                        </template>
+                    </AdminTable>
                 </div>
             </section>
         </section>
@@ -1014,9 +993,9 @@ onMounted(() => {
 }
 
 .stats-filter-field-datetime {
-    flex-basis: 268px;
-    width: 268px;
-    max-width: 268px;
+    flex-basis: 330px;
+    width: 330px;
+    max-width: 330px;
 }
 
 .stats-filter-field-range,

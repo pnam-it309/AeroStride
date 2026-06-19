@@ -214,6 +214,25 @@ const getPhieuGiamGiaTimelineStatus = (item) => {
     };
 };
 
+const getIndex = (index) => {
+    return (pagination.value.page - 1) * pagination.value.size + index + 1;
+};
+
+const goToEdit = (id) => {
+    router.push({ name: 'PhieuGiamGiaForm', params: { id } });
+};
+
+const handleToggleStatus = (item) => {
+    const status = getPhieuGiamGiaTimelineStatus(item);
+    if (!status.switchDisabled) {
+        confirmToggleStatus(item);
+    }
+};
+
+const getHinhThucChipClass = (item) => {
+    return getHinhThucLabel(getHinhThucValue(item)) === 'Cá nhân' ? 'status-chip-private' : 'status-chip-public';
+};
+
 onMounted(() => taiDanhSachPhieuGiamGia());
 </script>
 
@@ -283,7 +302,7 @@ onMounted(() => taiDanhSachPhieuGiamGia());
             @add="openCreateDialog" @export="handleExport">
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-slate-400">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
+                    <td class="data-cell text-slate-400">{{ getIndex(index) }}</td>
                     <td class="data-cell text-center text-primary">
                         <div class="text-truncate" :title="item.ma || item.id">{{ item.ma || item.id || '--' }}</div>
                     </td>
@@ -292,10 +311,7 @@ onMounted(() => taiDanhSachPhieuGiamGia());
                     </td>
 
                     <td class="data-cell">
-                        <v-chip variant="flat" :class="[
-                            'status-chip',
-                            getHinhThucLabel(getHinhThucValue(item)) === 'Cá nhân' ? 'status-chip-private' : 'status-chip-public'
-                        ]">
+                        <v-chip variant="flat" :class="['status-chip', getHinhThucChipClass(item)]">
                             {{ getHinhThucLabel(getHinhThucValue(item)) }}
                         </v-chip>
                     </td>
@@ -344,7 +360,7 @@ onMounted(() => taiDanhSachPhieuGiamGia());
                             </span>
                             <v-btn v-else icon variant="text" :ripple="false" size="28" color="slate-700"
                                 class="action-icon-btn"
-                                @click.stop="router.push({ name: 'PhieuGiamGiaForm', params: { id: item.id } })">
+                                @click.stop="goToEdit(item.id)">
                                 <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
@@ -353,7 +369,7 @@ onMounted(() => taiDanhSachPhieuGiamGia());
                                     :disabled="getPhieuGiamGiaTimelineStatus(item).switchDisabled" color="primary"
                                     hide-details density="compact" class="tight-switch action-switch"
                                     :class="{ 'opacity-50': getPhieuGiamGiaTimelineStatus(item).switchDisabled }"
-                                    @click.prevent.stop="!getPhieuGiamGiaTimelineStatus(item).switchDisabled && confirmToggleStatus(item)" />
+                                    @click.prevent.stop="handleToggleStatus(item)" />
                                 <v-tooltip activator="parent" location="top">
                                     {{ getPhieuGiamGiaTimelineStatus(item).switchTooltip }}
                                 </v-tooltip>

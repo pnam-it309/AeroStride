@@ -731,6 +731,51 @@ const submitAddrBtnText = computed(() => {
 const formatAddressFull = (addr) => {
     return [addr.diaChiChiTiet, addr.phuongXa, addr.thanhPho, addr.tinh].filter(Boolean).join(', ');
 };
+
+const getIndex = (index) => {
+    return (pagination.value.page - 1) * pagination.value.size + index + 1;
+};
+
+const getInvoiceIndex = (index) => {
+    return (invoicesTab.pagination.value.page - 1) * invoicesTab.pagination.value.size + index + 1;
+};
+
+const getGenderChipClass = (gioiTinh) => {
+    return ['gender-chip', gioiTinh ? 'gender-chip-male' : 'gender-chip-female'];
+};
+
+const getGenderLabel = (gioiTinh) => {
+    return gioiTinh === true ? 'Nam' : gioiTinh === false ? 'Nữ' : '-';
+};
+
+const getStatusChipClass = (trangThai) => {
+    return ['status-chip', isActiveStatus(trangThai) ? 'status-chip-active' : 'status-chip-inactive'];
+};
+
+const goToAdd = () => {
+    router.push({ name: 'KhachHangForm' });
+};
+
+const goToEdit = (id) => {
+    router.push({ name: 'KhachHangForm', params: { id } });
+};
+
+const getTotalQuantity = (details) => {
+    return (details || []).reduce((s, d) => s + (d.soLuong || 0), 0);
+};
+
+const formatInvoiceDate = (item) => {
+    const date = item.ngayTao || item.ngayDatHang || item.createdAt;
+    return date ? formatDateTime(date) : '-';
+};
+
+const updatePaginationSize = (size) => {
+    pagination.value.size = size;
+};
+
+const updateInvoicePaginationSize = (size) => {
+    invoicesTab.pagination.value.size = size;
+};
 </script>
 
 <template>
@@ -814,7 +859,7 @@ const formatAddressFull = (addr) => {
 
             <AdminTable title="Khách hàng" addButtonText="Tạo mới" show-export-button
                 :headers="activeTab === 'danh-sach' ? tableHeaders : statsTableHeaders" :items="allCustomers"
-                :total-count="pagination.totalElements" :loading="loading" @add="router.push({ name: 'KhachHangForm' })"
+                :total-count="pagination.totalElements" :loading="loading" @add="goToAdd"
                 @export="handleExport">
                 <template #top>
                     <!-- Tabs navigation inside the table, no transition animation -->
@@ -835,7 +880,7 @@ const formatAddressFull = (addr) => {
                     <!-- Row for Tab 1: Danh sách chi tiết -->
                     <tr v-if="activeTab === 'danh-sach'" class="data-row">
                         <td class="data-cell text-center text-black font-weight-medium">
-                            {{ (pagination.page - 1) * pagination.size + index + 1 }}
+                            {{ getIndex(index) }}
                         </td>
                         <td class="data-cell text-center">
                             <div class="customer-square-box">
@@ -849,9 +894,8 @@ const formatAddressFull = (addr) => {
                             <div class="text-truncate" :title="item.ten">{{ item.ten || '-' }}</div>
                         </td>
                         <td class="data-cell text-center">
-                            <v-chip variant="flat"
-                                :class="['gender-chip', item.gioiTinh ? 'gender-chip-male' : 'gender-chip-female']">
-                                {{ item.gioiTinh === true ? 'Nam' : item.gioiTinh === false ? 'Nữ' : '-' }}
+                            <v-chip variant="flat" :class="getGenderChipClass(item.gioiTinh)">
+                                {{ getGenderLabel(item.gioiTinh) }}
                             </v-chip>
                         </td>
                         <td class="data-cell text-left px-4">
@@ -873,8 +917,7 @@ const formatAddressFull = (addr) => {
                             </div>
                         </td>
                         <td class="data-cell text-center">
-                            <v-chip variant="flat"
-                                :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
+                            <v-chip variant="flat" :class="getStatusChipClass(item.trangThai)">
                                 {{ getStatusLabel(item.trangThai) }}
                             </v-chip>
                         </td>
@@ -885,9 +928,7 @@ const formatAddressFull = (addr) => {
                                     <component :is="ADMIN_ICONS.ACTION.MAP" size="15" />
                                     <v-tooltip activator="parent" location="top">Quản lý địa chỉ</v-tooltip>
                                 </v-btn>
-                                <!-- Chỉnh sửa -->
-                                <v-btn variant="text" class="action-icon-btn"
-                                    @click.stop="router.push({ name: 'KhachHangForm', params: { id: item.id } })">
+                                <v-btn variant="text" class="action-icon-btn" @click.stop="goToEdit(item.id)">
                                     <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                     <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                                 </v-btn>
@@ -905,7 +946,7 @@ const formatAddressFull = (addr) => {
                     <!-- Row for Tab 2: Thống kê mua hàng -->
                     <tr v-else class="data-row">
                         <td class="data-cell text-center text-black font-weight-medium">
-                            {{ (pagination.page - 1) * pagination.size + index + 1 }}
+                            {{ getIndex(index) }}
                         </td>
                         <td class="data-cell text-center">
                             <div class="customer-square-box">
@@ -947,7 +988,7 @@ const formatAddressFull = (addr) => {
 
                 <template #pagination>
                     <AdminPagination v-model="pagination.page" :page-size="pagination.size"
-                        @update:page-size="pagination.size = $event" :total-pages="pagination.totalPages"
+                        @update:page-size="updatePaginationSize" :total-pages="pagination.totalPages"
                         :total-elements="pagination.totalElements" :current-size="allCustomers.length"
                         @change="loadCustomers" />
                 </template>
@@ -1004,8 +1045,7 @@ const formatAddressFull = (addr) => {
                     <tr class="data-row">
                         <!-- STT -->
                         <td class="data-cell text-center text-black font-weight-medium" style="font-size: 13px">
-                            {{ (invoicesTab.pagination.value.page - 1) * invoicesTab.pagination.value.size + index + 1
-                            }}
+                            {{ getInvoiceIndex(index) }}
                         </td>
 
                         <!-- Mã hóa đơn (click to open detail) -->
@@ -1018,16 +1058,12 @@ const formatAddressFull = (addr) => {
 
                         <!-- Ngày mua -->
                         <td class="data-cell text-center" style="font-size: 13px">
-                            {{
-                                item.ngayTao || item.ngayDatHang || item.createdAt
-                                    ? formatDateTime(item.ngayTao || item.ngayDatHang || item.createdAt)
-                                    : '-'
-                            }}
+                            {{ formatInvoiceDate(item) }}
                         </td>
 
                         <!-- Tổng số lượng -->
                         <td class="data-cell text-center" style="font-size: 13px">
-                            {{(item.details || []).reduce((s, d) => s + (d.soLuong || 0), 0)}}
+                            {{ getTotalQuantity(item.details) }}
                         </td>
 
                         <!-- Loại hóa đơn -->
@@ -1059,7 +1095,7 @@ const formatAddressFull = (addr) => {
                 <template #pagination>
                     <AdminPagination v-model="invoicesTab.pagination.value.page"
                         :page-size="invoicesTab.pagination.value.size"
-                        @update:page-size="invoicesTab.pagination.value.size = $event"
+                        @update:page-size="updateInvoicePaginationSize"
                         :total-pages="invoicesTab.pagination.value.totalPages"
                         :total-elements="invoicesTab.pagination.value.totalElements"
                         :current-size="invoicesTab.items.value.length" @change="invoicesTab.loadData" />

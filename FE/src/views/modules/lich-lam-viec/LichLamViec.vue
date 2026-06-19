@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { AdminFilter, AdminTable, AdminBreadcrumbs, AdminPagination, TableEmptyState } from '@/components/common';
+import AppDatePicker from '@/components/common/AppDatePicker.vue';
 import { CalendarIcon } from 'vue-tabler-icons';
 import apiService from '@/services/apiService';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
@@ -80,7 +81,10 @@ const filteredItems = computed(() => {
             filters.value.ca === 'Tất cả' || 
             item.ca === filters.value.ca;
             
-        return matchSearch && matchShift;
+        // Date filter
+        const matchDate = !filters.value.ngay || item.ngay === filters.value.ngay;
+            
+        return matchSearch && matchShift && matchDate;
     });
 });
 
@@ -568,11 +572,11 @@ onMounted(() => {
 
         <div class="filter-shell mb-4">
             <AdminFilter title="Bộ lọc lịch làm việc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-                <v-col cols="12" md="6" class="filter-cell">
+                <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm nhân viên</div>
                     <v-text-field
                         v-model="filters.search"
-                        placeholder="Tên hoặc mã nhân viên..."
+                        placeholder="Tên, mã nhân viên..."
                         variant="outlined"
                         density="compact"
                         hide-details
@@ -581,7 +585,7 @@ onMounted(() => {
                         @input="handleFilter"
                     />
                 </v-col>
-                <v-col cols="12" md="6" class="filter-cell">
+                <v-col cols="12" md="4" class="filter-cell">
                     <div class="filter-field-label">Ca làm việc</div>
                     <v-select
                         v-model="filters.ca"
@@ -591,6 +595,15 @@ onMounted(() => {
                         hide-details
                         class="compact-input"
                         @update:model-value="handleFilter"
+                    />
+                </v-col>
+                <v-col cols="12" md="4" class="filter-cell">
+                    <div class="filter-field-label">Lọc theo ngày</div>
+                    <AppDatePicker
+                        :model-value="filters.ngay"
+                        @update:model-value="val => { filters.ngay = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : null; handleFilter(); }"
+                        placeholder="Chọn ngày"
+                        clearable
                     />
                 </v-col>
             </AdminFilter>
@@ -686,6 +699,12 @@ onMounted(() => {
                     <h3 class="text-h6 font-weight-medium" style="color: #1e293b;">Lịch làm việc</h3>
                 </div>
                 <div class="d-flex align-center flex-wrap justify-end gap-2">
+                    <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-secondary" @click="handleDownloadTemplate">
+                        Tải mẫu
+                    </v-btn>
+                    <v-btn prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary" @click="handleImport">
+                        Nhập Excel
+                    </v-btn>
                     <!-- Tab Bảng / Lịch -->
                     <div class="main-view-tabs">
                         <button
@@ -705,13 +724,7 @@ onMounted(() => {
                             Lịch
                         </button>
                     </div>
-                    <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-secondary" @click="handleDownloadTemplate">
-                        Tải mẫu
-                    </v-btn>
-                    <v-btn prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary" @click="handleImport">
-                        Nhập Excel
-                    </v-btn>
-                    <v-btn prepend-icon="mdi-plus" variant="flat" color="primary" class="rounded-lg px-4" @click="handleAdd">
+                    <v-btn prepend-icon="mdi-plus" variant="flat" color="primary" class="add-btn-primary" @click="handleAdd">
                         Tạo mới
                     </v-btn>
                 </div>
@@ -972,7 +985,11 @@ onMounted(() => {
                         </v-col>
                         <v-col cols="12">
                             <div class="filter-field-label">Ngày làm</div>
-                            <AppDatePicker v-model="addForm.ngay" placeholder="Chọn ngày làm" />
+                            <AppDatePicker 
+                                :model-value="addForm.ngay" 
+                                @update:model-value="val => addForm.ngay = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : null" 
+                                placeholder="Chọn ngày làm" 
+                            />
                         </v-col>
                         <v-col cols="12" v-if="isEditSchedule">
                             <div class="filter-field-label">Trạng thái</div>
@@ -1100,21 +1117,24 @@ onMounted(() => {
     display: flex;
     align-items: center;
     background: #ffffff;
-    border: 1.5px solid #e2e8f0;
-    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
     padding: 3px;
     gap: 2px;
+    height: 44px;
 }
 
 .view-tab-btn {
     display: inline-flex;
     align-items: center;
-    padding: 6px 14px;
-    border-radius: 7px;
+    justify-content: center;
+    height: 100%;
+    padding: 0 16px;
+    border-radius: 6px;
     border: none;
     background: transparent;
     color: #64748b;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.18s ease;

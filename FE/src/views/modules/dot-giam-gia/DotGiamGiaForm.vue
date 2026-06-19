@@ -510,6 +510,23 @@ const handleSave = () => {
     };
 };
 
+const goBack = () => {
+    router.back();
+};
+
+const handleRefreshSearch = () => {
+    searchQuery.value = '';
+    selectionPage.value = 1;
+};
+
+const getExpandIcon = (id) => {
+    return expandedProductIds.value.includes(id) ? 'mdi-minus' : 'mdi-plus';
+};
+
+const updateSelectionPageSize = (size) => {
+    selectionPageSize.value = size;
+};
+
 onMounted(init);
 </script>
 
@@ -525,7 +542,7 @@ onMounted(init);
         <!-- Action Header -->
         <div class="d-flex align-center justify-space-between mb-8 mt-4">
             <div class="d-flex align-center gap-4">
-                <v-btn icon variant="flat" @click="router.back()" class="btn-back-header">
+                <v-btn icon variant="flat" @click="goBack" class="btn-back-header">
                     <v-icon>mdi-arrow-left</v-icon>
                 </v-btn>
             </div>
@@ -611,10 +628,7 @@ onMounted(init);
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách sản phẩm</span>
                         </div>
 
-                        <AdminFilter title="Tìm kiếm sản phẩm" @refresh="
-                            searchQuery = '';
-                        selectionPage = 1;
-                        ">
+                        <AdminFilter title="Tìm kiếm sản phẩm" @refresh="handleRefreshSearch">
                             <v-col cols="12" sm="4">
                                 <div class="field-label-small mb-1">Tìm kiếm sản phẩm</div>
                                 <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
@@ -644,8 +658,7 @@ onMounted(init);
                                                 <div class="d-flex align-center justify-center" style="height: 32px">
                                                     <v-btn icon variant="text" size="small" density="compact"
                                                         @click="toggleExpand(item.id)">
-                                                        <v-icon>{{ expandedProductIds.includes(item.id) ? 'mdi-minus' :
-                                                            'mdi-plus' }}</v-icon>
+                                                        <v-icon>{{ getExpandIcon(item.id) }}</v-icon>
                                                     </v-btn>
                                                 </div>
                                             </td>
@@ -694,7 +707,7 @@ onMounted(init);
                         </div>
 
                         <AdminPagination v-model="selectionPage" :page-size="selectionPageSize"
-                            @update:pageSize="selectionPageSize = $event" :total-pages="totalSelectionPages"
+                            @update:pageSize="updateSelectionPageSize" :total-pages="totalSelectionPages"
                             :total-elements="filteredProductsToSelect.length"
                             :current-size="paginatedProductsToSelect.length" class="mt-4" />
                     </v-card-text>

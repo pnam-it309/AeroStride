@@ -66,8 +66,8 @@ const {
     search: '',
     trangThai: TAB_ALL,
     loaiDon: null,
-    fromDate: null,
-    toDate: null,
+    fromDate: getTodayDate(),
+    toDate: getTodayDate(),
     sortDirection: 'DESC'
 });
 
@@ -160,7 +160,7 @@ const handleExport = async () => {
 
 const getRowNumber = (index) => (pagination.value.page - 1) * pagination.value.size + index + 1;
 
-const dateRange = ref(null);
+const dateRange = ref([new Date(), new Date()]);
 
 const onDateRangeChange = (val) => {
     dateRange.value = val;

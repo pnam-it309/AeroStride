@@ -407,6 +407,43 @@ const openDatePicker = (event) => {
     }
 };
 
+const goBack = () => {
+    router.push(PATH.NHAN_VIEN);
+};
+
+const handlePhoneUpdate = (val) => {
+    employeeForm.value.sdt = val.replace(/\D/g, '');
+};
+
+const nameRules = [
+    (v) => !!v || 'Vui lòng nhập họ và tên',
+    (v) => (v && v.trim() === v) || 'Không được chứa khoảng trắng ở 2 đầu',
+    (v) => (v && /^[\p{L}0-9\s]+$/u.test(v)) || 'Không được chứa ký tự đặc biệt'
+];
+
+const emailRules = [
+    (v) => !!v || 'Vui lòng nhập Email',
+    (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Email không hợp lệ'
+];
+
+const phoneRules = [
+    (v) => !!v || 'Vui lòng nhập số điện thoại',
+    (v) => /^0[0-9]{9}$/.test(v) || 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0'
+];
+
+const dobRules = [
+    (v) => {
+        if (!v) return true;
+        const dob = new Date(v);
+        const today = new Date();
+        if (dob > today) return 'Ngày sinh không được ở tương lai';
+        let age = today.getFullYear() - dob.getFullYear();
+        const m = today.getMonth() - dob.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+        return age >= 18 || 'Nhân viên phải từ 18 tuổi trở lên';
+    }
+];
+
 onMounted(async () => {
     loading.value = true;
     fetchProvinces();
@@ -453,7 +490,7 @@ onMounted(async () => {
         <!-- Action Header -->
         <div class="d-flex align-center justify-space-between mb-8 mt-4">
             <div class="d-flex align-center gap-4">
-                <v-btn icon variant="flat" @click="router.push(PATH.NHAN_VIEN)" class="btn-back-header">
+                <v-btn icon variant="flat" @click="goBack" class="btn-back-header">
                     <ArrowLeftIcon size="20" />
                 </v-btn>
             </div>
@@ -521,32 +558,22 @@ onMounted(async () => {
                             <v-col cols="12" md="6">
                                 <div class="field-label">Họ và tên <span class="text-error">*</span></div>
                                 <v-text-field v-model="employeeForm.ten" :readonly="isDetailView"
-                                    :rules="[
-                                        (v) => !!v || 'Vui lòng nhập họ và tên',
-                                        (v) => (v && v.trim() === v) || 'Không được chứa khoảng trắng ở 2 đầu',
-                                        (v) => (v && /^[\p{L}0-9\s]+$/u.test(v)) || 'Không được chứa ký tự đặc biệt'
-                                    ]"
+                                    :rules="nameRules"
                                     placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" density="compact"
                                     hide-details="auto"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Email / Tài khoản <span class="text-error">*</span></div>
                                 <v-text-field v-model="employeeForm.email" :readonly="isDetailView"
-                                    :rules="[
-                                        (v) => !!v || 'Vui lòng nhập Email',
-                                        (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Email không hợp lệ'
-                                    ]"
+                                    :rules="emailRules"
                                     placeholder="name@company.com" variant="outlined" density="compact"
                                     hide-details="auto"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Số điện thoại <span class="text-error">*</span></div>
-                                <v-text-field :model-value="employeeForm.sdt" @update:model-value="val => employeeForm.sdt = val.replace(/\D/g, '')" 
+                                <v-text-field :model-value="employeeForm.sdt" @update:model-value="handlePhoneUpdate" 
                                     :readonly="isDetailView"
-                                    :rules="[
-                                        (v) => !!v || 'Vui lòng nhập số điện thoại',
-                                        (v) => /^0[0-9]{9}$/.test(v) || 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0'
-                                    ]"
+                                    :rules="phoneRules"
                                     placeholder="09xx.xxx.xxx" variant="outlined" density="compact"
                                     hide-details="auto" maxlength="10"></v-text-field>
                             </v-col>
@@ -561,20 +588,7 @@ onMounted(async () => {
                                 <div class="field-label">Ngày sinh</div>
                                 <AppDatePicker v-model="employeeForm.ngaySinh" :disabled="isDetailView"
                                     placeholder="Chọn ngày sinh"
-                                    :text-field-props="{
-                                        rules: [
-                                            (v) => {
-                                                if (!v) return true;
-                                                const dob = new Date(v);
-                                                const today = new Date();
-                                                if (dob > today) return 'Ngày sinh không được ở tương lai';
-                                                let age = today.getFullYear() - dob.getFullYear();
-                                                const m = today.getMonth() - dob.getMonth();
-                                                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-                                                return age >= 18 || 'Nhân viên phải từ 18 tuổi trở lên';
-                                            }
-                                        ]
-                                    }" />
+                                    :text-field-props="{ rules: dobRules }" />
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Giới tính</div>

@@ -184,6 +184,21 @@ const openDatePicker = (ref) => {
     }
 };
 
+const getIndex = (index) => {
+    return (pagination.value.page - 1) * pagination.value.size + index + 1;
+};
+
+const goToEdit = (id) => {
+    router.push(`${PATH.DOT_GIAM_GIA_FORM}/${id}`);
+};
+
+const handleToggleStatus = (item) => {
+    const status = getCampaignTimelineStatus(item);
+    if (!status.switchDisabled) {
+        confirmToggleStatus(item);
+    }
+};
+
 onMounted(() => loadCampaigns());
 </script>
 
@@ -245,7 +260,7 @@ onMounted(() => loadCampaigns());
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell text-slate-400">
-                        {{ (pagination.page - 1) * pagination.size + index + 1 }}
+                        {{ getIndex(index) }}
                     </td>
                     <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.ma">{{ item.ma }}</div>
@@ -282,7 +297,7 @@ onMounted(() => loadCampaigns());
                                     thúc</v-tooltip>
                             </span>
                             <v-btn v-else variant="text" class="action-icon-btn"
-                                @click.stop="router.push(`${PATH.DOT_GIAM_GIA_FORM}/${item.id}`)">
+                                @click.stop="goToEdit(item.id)">
                                 <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
@@ -291,7 +306,7 @@ onMounted(() => loadCampaigns());
                                     :disabled="getCampaignTimelineStatus(item).switchDisabled" color="primary"
                                     hide-details density="compact" class="tight-switch action-switch"
                                     :class="{ 'opacity-50': getCampaignTimelineStatus(item).switchDisabled }"
-                                    @click.prevent.stop="!getCampaignTimelineStatus(item).switchDisabled && confirmToggleStatus(item)" />
+                                    @click.prevent.stop="handleToggleStatus(item)" />
                                 <v-tooltip activator="parent" location="top">
                                     {{ getCampaignTimelineStatus(item).switchTooltip }}
                                 </v-tooltip>

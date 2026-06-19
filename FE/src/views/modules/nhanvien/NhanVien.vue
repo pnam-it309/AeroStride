@@ -105,6 +105,34 @@ const getAddressSummary = (item) => {
     return parts.length > 0 ? parts.join(', ') : 'Chưa cập nhật';
 };
 
+const getIndex = (index) => {
+    return (pagination.value.page - 1) * pagination.value.size + index + 1;
+};
+
+const getGenderChipClass = (gioiTinh) => {
+    return ['gender-chip', gioiTinh ? 'gender-chip-male' : 'gender-chip-female'];
+};
+
+const getGenderLabel = (gioiTinh) => {
+    return gioiTinh === true ? 'Nam' : gioiTinh === false ? 'Nữ' : '-';
+};
+
+const getStatusChipClass = (trangThai) => {
+    return isActiveStatus(trangThai) ? 'status-chip-active' : 'status-chip-inactive';
+};
+
+const goToAdd = () => {
+    router.push(PATH.NHAN_VIEN_FORM);
+};
+
+const goToEdit = (id) => {
+    router.push(`${PATH.NHAN_VIEN_FORM}/${id}`);
+};
+
+const updatePaginationSize = (size) => {
+    pagination.value.size = size;
+};
+
 onMounted(() => {
     loadEmployees();
 });
@@ -145,11 +173,11 @@ onMounted(() => {
 
         <AdminTable title="Danh sách nhân viên" addButtonText="Tạo mới" show-export-button :headers="tableHeaders"
             :items="employees" :total-count="pagination.totalElements" :loading="loading"
-            @add="router.push(PATH.NHAN_VIEN_FORM)" @export="handleExport">
+            @add="goToAdd" @export="handleExport">
 
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell text-center">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
+                    <td class="data-cell text-center">{{ getIndex(index) }}</td>
                     <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.ma">{{ item.ma || '-' }}</div>
                     </td>
@@ -163,9 +191,8 @@ onMounted(() => {
                         }}</div>
                     </td>
                     <td class="data-cell">
-                        <v-chip variant="flat" class="justify-center"
-                            :class="['gender-chip', item.gioiTinh ? 'gender-chip-male' : 'gender-chip-female']">
-                            {{ item.gioiTinh === true ? 'Nam' : item.gioiTinh === false ? 'Nữ' : '-' }}
+                        <v-chip variant="flat" class="justify-center" :class="getGenderChipClass(item.gioiTinh)">
+                            {{ getGenderLabel(item.gioiTinh) }}
                         </v-chip>
                     </td>
                     <td class="data-cell px-4">
@@ -176,22 +203,8 @@ onMounted(() => {
                     </td>
                     <td class="data-cell text-left px-4" style="min-width: 200px;">
                         <div class="text-slate-700" style="font-size: 13px; line-height: 1.4;">
-                            <!-- Thử cả 2 bộ tên trường do xung đột DB -->
-                            <span v-if="item.diaChiChiTiet || item.dia_chi_chi_tiet">
-                                {{ item.diaChiChiTiet || item.dia_chi_chi_tiet }},
-                            </span>
-                            <span v-if="item.phuongXa || item.phuong_xa">
-                                {{ item.phuongXa || item.phuong_xa }},
-                            </span>
-                            <span v-if="item.thanhPho || item.thanh_pho">
-                                {{ item.thanhPho || item.thanh_pho }},
-                            </span>
-                            <span v-if="item.tinh">{{ item.tinh }}</span>
-
-                            <span
-                                v-if="!(item.diaChiChiTiet || item.dia_chi_chi_tiet) && !(item.phuongXa || item.phuong_xa) && !(item.thanhPho || item.thanh_pho) && !item.tinh"
-                                class="text-slate-400">
-                                Chưa cập nhật
+                            <span :class="{ 'text-slate-400': getAddressSummary(item) === 'Chưa cập nhật' }">
+                                {{ getAddressSummary(item) }}
                             </span>
                         </div>
                     </td>
@@ -202,8 +215,7 @@ onMounted(() => {
                         </div>
                     </td>
                     <td class="data-cell text-center">
-                        <v-chip variant="flat" class="justify-center"
-                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
+                        <v-chip variant="flat" class="justify-center" :class="['status-chip', getStatusChipClass(item.trangThai)]">
                             {{ getStatusLabel(item.trangThai) }}
                         </v-chip>
                     </td>
@@ -212,7 +224,7 @@ onMounted(() => {
                         <div class="d-flex align-center justify-center action-controls">
 
                             <v-btn variant="text" class="action-icon-btn"
-                                @click.stop="router.push(`${PATH.NHAN_VIEN_FORM}/${item.id}`)">
+                                @click.stop="goToEdit(item.id)">
                                 <EditIcon size="15" />
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
@@ -228,7 +240,7 @@ onMounted(() => {
             </template>
             <template #pagination>
                 <AdminPagination v-model="pagination.page" :page-size="pagination.size"
-                    @update:page-size="pagination.size = $event" :total-pages="pagination.totalPages"
+                    @update:page-size="updatePaginationSize" :total-pages="pagination.totalPages"
                     :total-elements="pagination.totalElements" :current-size="employees.length"
                     @change="loadEmployees" />
             </template>
