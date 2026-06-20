@@ -27,7 +27,7 @@ const handleDirectInput = (item, event) => {
 
 <template>
     <v-card class="cart-card shadow-none overflow-hidden h-full d-flex flex-column">
-        <v-table class="pos-table flex-grow-1" fixed-header style="max-height: 310px !important; overflow-y: auto;">
+        <v-table class="pos-table flex-grow-1" fixed-header height="100%">
             <thead>
                 <tr>
                     <th class="text-left py-2">Sản phẩm</th>
@@ -55,19 +55,19 @@ const handleDirectInput = (item, event) => {
                                 <BoxIcon v-else size="18" class="text-grey" />
                             </v-avatar>
                             <div>
-                                <div class="font-weight-bold text-body-2">{{ item.tenSanPham }}</div>
+                                <div class="text-slate-700 text-body-2" style="font-size: 13.5px !important; line-height: 1.3;">{{ item.tenSanPham }}</div>
                                 
                                 <!-- mã sp | mã sku (với nhãn vuông pastel nhé) -->
                                 <div class="d-flex align-center mt-1 flex-wrap">
                                     <span class="sp-badge">Mã Sản phẩm: {{ item.maSanPham || 'SP0001' }}</span>
-                                    <span class="text-slate-300" style="margin-left: 15px; margin-right: 15px; font-size: 11px;">|</span>
+                                    <span style="margin-left: 15px; margin-right: 15px; font-size: 11px; color: #cbd5e1; opacity: 0.4;">|</span>
                                     <span class="sku-badge">{{ item.maChiTietSanPham || 'N/A' }}</span>
                                 </div>
                                 
                                 <!-- màu sắc | size -->
                                 <div class="d-flex align-center mt-1 text-slate-500 font-weight-medium" style="font-size: 11.5px; flex-wrap: wrap;">
                                     <span>Màu sắc: <span class="text-slate-700">{{ item.tenMauSac || 'Không màu' }}</span></span>
-                                    <span class="text-slate-300" style="margin-left: 15px; margin-right: 15px;">|</span>
+                                    <span style="margin-left: 15px; margin-right: 15px; font-size: 11px; color: #cbd5e1; opacity: 0.4;">|</span>
                                     <span>Size: <span class="text-slate-700">{{ item.tenKichThuoc || 'N/A' }}</span></span>
                                 </div>
                             </div>
@@ -80,7 +80,7 @@ const handleDirectInput = (item, event) => {
                             </v-btn>
                             <input 
                                 type="number" 
-                                class="qty-input-table text-center font-weight-bold" 
+                                class="qty-input-table text-center font-weight-medium" 
                                 :value="item.soLuong" 
                                 @change="(e) => handleDirectInput(item, e)"
                                 min="0"
@@ -90,8 +90,8 @@ const handleDirectInput = (item, event) => {
                             </v-btn>
                         </div>
                     </td>
-                    <td class="text-right text-caption">{{ formatCurrency(item.donGia) }}</td>
-                    <td class="text-right font-weight-bold text-primary text-body-2">{{ formatCurrency(item.thanhTien) }}</td>
+                    <td class="text-right text-caption" style="font-weight: 500 !important;">{{ formatCurrency(item.donGia) }}</td>
+                    <td class="text-right text-primary text-body-2" style="font-weight: 500 !important;">{{ formatCurrency(item.thanhTien) }}</td>
                     <td class="text-center">
                         <v-btn icon variant="text" color="error" size="small" @click="emit('remove', item)">
                             <TrashIcon size="16" />
@@ -204,7 +204,7 @@ const handleDirectInput = (item, event) => {
     background-color: #ffe4e6 !important;
     color: #9f1239 !important;
     font-size: 11px !important;
-    font-weight: 700;
+    font-weight: 500;
     padding: 1px 6px;
     border-radius: 4px;
     display: inline-flex;
@@ -214,7 +214,7 @@ const handleDirectInput = (item, event) => {
     background-color: #e0f2fe !important;
     color: #0369a1 !important;
     font-size: 11px !important;
-    font-weight: 700;
+    font-weight: 500;
     padding: 1px 6px;
     border-radius: 4px;
     display: inline-flex;

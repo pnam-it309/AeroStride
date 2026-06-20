@@ -273,6 +273,17 @@ watch(orderChannel, (channel) => {
     onlyChargeIfReturned.value = channel === 'Tại quầy';
 });
 
+// Automatically sync received amount with total payable amount when VNPay is selected
+watch(
+    () => [checkoutData.value.paymentMethod, finalCollectAmount.value],
+    ([method, amount]) => {
+        if (method === 'VNPAY') {
+            checkoutData.value.receivedAmount = Number(amount);
+        }
+    },
+    { immediate: true }
+);
+
 // Search Products Autocomplete
 const searchProducts = async () => {
     const kw = productSearchKeyword.value?.trim() || '';
@@ -1711,21 +1722,6 @@ const formatDateTime = (dateStr) => {
                     <!-- Sản phẩm Card -->
                     <v-card class="pos-card pa-4 rounded-lg border"
                         style="overflow: visible !important; z-index: 15 !important;">
-                        <div class="d-flex align-center gap-2 mb-2 border-b pb-2">
-                            <!-- Title -->
-                            <div class="font-weight-bold text-slate-800"
-                                style="font-size: 14px !important; width: 100px; flex-shrink: 0;">Sản phẩm</div>
-
-                            <!-- Center Column: Channel Select (Aligned with Search Input) -->
-                            <div class="flex-grow-1">
-                                <v-select v-model="orderChannel" :items="['Trực tuyến', 'Tại quầy']" density="compact"
-                                    variant="outlined" hide-details class="compact-select channel-select"
-                                    style="width: 140px" />
-                            </div>
-
-                            <!-- Spacer matching the F9 button + grey background padding -->
-                            <div style="width: 88px; flex-shrink: 0;"></div>
-                        </div>
 
                         <!-- Search and Scan Inner Row -->
                         <div class="d-flex align-center gap-2 mb-3 bg-slate-50 pa-1.5 rounded-lg flex-wrap">
@@ -1739,7 +1735,8 @@ const formatDateTime = (dateStr) => {
                                     placeholder="Nhập mã, tên sản phẩm hoặc Barcode" variant="outlined"
                                     density="compact" hide-details prepend-inner-icon="mdi-magnify"
                                     @focus="onProductSearchFocus" @click="onProductSearchFocus"
-                                    @blur="onProductSearchBlur" bg-color="white" class="search-input" />
+                                    @blur="onProductSearchBlur" bg-color="white" class="search-input"
+                                    autocomplete="off" />
 
                                 <!-- Search dropdown overlay -->
                                 <v-card v-if="showProductAutocomplete && filteredProductSearchResults.length > 0"
@@ -1757,35 +1754,30 @@ const formatDateTime = (dateStr) => {
                                                         <v-img v-if="variant.hinhAnh" :src="variant.hinhAnh" cover />
                                                         <BoxIcon v-else size="20" class="text-grey" />
                                                     </v-avatar>
-                                                    <div class="d-flex flex-column gap-1">
+                                                    <div class="d-flex flex-column" style="gap: 8px !important;">
                                                         <!-- Product Name (Tên biến thể) -->
-                                                        <div class="font-weight-bold text-slate-800"
+                                                        <div class="text-slate-700"
                                                             style="font-size: 13.5px !important; line-height: 1.3;">
                                                             {{ variant.tenSanPham }}
                                                         </div>
 
                                                         <!-- mã sp --- mã sku (với nhãn vuông pastel nhé) -->
                                                         <div class="d-flex align-center gap-1.5 mt-0.5 flex-wrap">
-                                                            <span class="sp-badge">Mã Sản phẩm: {{ variant.maSanPham ||
-                                                                'SP0001' }}</span>
-                                                            <span class="text-slate-300"
-                                                                style="margin-left: 15px; margin-right: 15px; font-size: 11px;">|</span>
-                                                            <span class="sku-badge">{{ variant.maChiTietSanPham
-                                                                }}</span>
+                                                            <span class="sp-badge">Mã Sản phẩm: {{ variant.maSanPham || 'SP0001' }}</span>
+                                                            <span style="margin-left: 15px; margin-right: 15px; font-size: 11px; color: #cbd5e1; opacity: 0.4;">|</span>
+                                                            <span class="sku-badge">{{ variant.maChiTietSanPham }}</span>
                                                         </div>
 
                                                         <!-- màu sắc --- size --- số lượng -->
-                                                        <div class="d-flex align-center mt-0.5 text-slate-500 font-weight-medium"
+                                                        <div class="d-flex align-center mt-0.5 text-slate-600"
                                                             style="font-size: 12px; flex-wrap: wrap;">
-                                                            <span>Màu sắc: <span class="text-slate-700">{{
+                                                            <span>Màu sắc: <span class="text-slate-500">{{
                                                                 variant.tenMauSac || 'Không màu' }}</span></span>
-                                                            <span class="text-slate-300"
-                                                                style="margin-left: 15px; margin-right: 15px;">|</span>
-                                                            <span>Size: <span class="text-slate-700">{{
+                                                            <span style="margin-left: 15px; margin-right: 15px; color: #cbd5e1; opacity: 0.4;">|</span>
+                                                            <span>Size: <span class="text-slate-500">{{
                                                                 variant.tenKichThuoc || 'N/A' }}</span></span>
-                                                            <span class="text-slate-300"
-                                                                style="margin-left: 15px; margin-right: 15px;">|</span>
-                                                            <span>Tồn: <span class="font-weight-bold text-slate-700">{{
+                                                            <span style="margin-left: 15px; margin-right: 15px; color: #cbd5e1; opacity: 0.4;">|</span>
+                                                            <span>Tồn: <span class="text-slate-500">{{
                                                                 variant.soLuongTon || 0 }}</span></span>
                                                         </div>
                                                     </div>
@@ -1814,17 +1806,13 @@ const formatDateTime = (dateStr) => {
 
                         <!-- Filters Row -->
                         <div class="d-flex align-center gap-2 mb-3 bg-slate-50 pa-1.5 rounded-lg flex-wrap">
-                            <span class="font-weight-bold text-slate-800 px-2"
-                                style="font-size: 14px !important; width: 94px; display: inline-block; flex-shrink: 0; box-sizing: border-box;">Bộ
-                                lọc</span>
 
                             <div class="flex-grow-1"
                                 style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: center;">
                                 <!-- Thương hiệu -->
-                                <div class="d-flex align-center gap-1.5">
+                                <div class="d-flex align-center gap-2">
                                     <span class="text-slate-600 text-caption font-weight-medium flex-shrink-0"
-                                        style="font-size: 12px !important; width: 75px; display: inline-block;">Thương
-                                        hiệu</span>
+                                        style="font-size: 12px !important; white-space: nowrap;">Thương hiệu</span>
                                     <v-select v-model="filterThuongHieu" :items="filterBrands" item-title="title"
                                         item-value="value" density="compact" hide-details variant="outlined"
                                         bg-color="white" class="compact-select flex-grow-1"
@@ -1832,10 +1820,9 @@ const formatDateTime = (dateStr) => {
                                 </div>
 
                                 <!-- Xuất xứ -->
-                                <div class="d-flex align-center gap-1.5">
+                                <div class="d-flex align-center gap-2">
                                     <span class="text-slate-600 text-caption font-weight-medium flex-shrink-0"
-                                        style="font-size: 12px !important; width: 75px; display: inline-block;">Xuất
-                                        xứ</span>
+                                        style="font-size: 12px !important; white-space: nowrap;">Xuất xứ</span>
                                     <v-select v-model="filterXuatXu" :items="filterOrigins" item-title="title"
                                         item-value="value" density="compact" hide-details variant="outlined"
                                         bg-color="white" class="compact-select flex-grow-1"
@@ -1843,10 +1830,9 @@ const formatDateTime = (dateStr) => {
                                 </div>
 
                                 <!-- Mục đích chạy -->
-                                <div class="d-flex align-center gap-1.5">
+                                <div class="d-flex align-center gap-2">
                                     <span class="text-slate-600 text-caption font-weight-medium flex-shrink-0"
-                                        style="font-size: 12px !important; width: 75px; display: inline-block;">Mục
-                                        đích</span>
+                                        style="font-size: 12px !important; white-space: nowrap;">Mục đích</span>
                                     <v-select v-model="filterMucDich" :items="filterPurposes" item-title="title"
                                         item-value="value" density="compact" hide-details variant="outlined"
                                         bg-color="white" class="compact-select flex-grow-1"
@@ -1854,10 +1840,9 @@ const formatDateTime = (dateStr) => {
                                 </div>
 
                                 <!-- Chất liệu -->
-                                <div class="d-flex align-center gap-1.5">
+                                <div class="d-flex align-center gap-2">
                                     <span class="text-slate-600 text-caption font-weight-medium flex-shrink-0"
-                                        style="font-size: 12px !important; width: 75px; display: inline-block;">Chất
-                                        liệu</span>
+                                        style="font-size: 12px !important; white-space: nowrap;">Chất liệu</span>
                                     <v-select v-model="filterChatLieu" :items="filterMaterials" item-title="title"
                                         item-value="value" density="compact" hide-details variant="outlined"
                                         bg-color="white" class="compact-select flex-grow-1"
@@ -1866,15 +1851,17 @@ const formatDateTime = (dateStr) => {
                             </div>
                         </div>
 
+
+
                         <!-- Cart list rendering -->
                         <div class="cart-container-box border rounded-lg overflow-hidden"
-                            style="min-height: 180px; background-color: #f8fafc !important;">
+                            style="height: 250px; background-color: #ffffff !important;">
                             <CartTable v-if="selectedOrder?.listsHoaDonChiTiet?.length"
                                 :items="selectedOrder.listsHoaDonChiTiet" @update-qty="onUpdateQty"
                                 @remove="onRemoveItem" />
 
                             <!-- Empty Cart State -->
-                            <div v-else class="d-flex flex-column align-center justify-center py-6"
+                            <div v-else class="d-flex flex-column align-center justify-center h-100"
                                 style="background-color: #ffffff;">
                                 <div class="mb-2">
                                     <v-icon size="40" style="color: #cbd5e1 !important;">mdi-inbox-outline</v-icon>
@@ -2032,8 +2019,7 @@ const formatDateTime = (dateStr) => {
                                 <!-- Money Input -->
                                 <div class="d-flex align-center justify-space-between mb-3">
                                     <span class="text-slate-600" style="font-size: 13px !important">
-                                        {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển
-                                        khoản' }}
+                                        {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
                                     </span>
                                     <v-text-field :model-value="formatNumberWithDots(checkoutData.receivedAmount)"
                                         @input="e => checkoutData.receivedAmount = parseNumberFromDots(e.target.value)"
@@ -2271,7 +2257,7 @@ const formatDateTime = (dateStr) => {
             </div>
         </div>
 
-        <<<<<<< HEAD <!-- VNPay QR Dialog -->
+        <!-- VNPay QR Dialog -->
             <v-dialog v-model="vnpayDialog.show" max-width="450" persistent>
                 <v-card class="rounded-xl overflow-hidden pb-4">
                     <v-card-text class="pt-6 text-center d-flex flex-column align-center">
@@ -2316,11 +2302,11 @@ const formatDateTime = (dateStr) => {
                                     }).format(vnpayDialog.amount) }}
                                 </div>
                                 <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
-                                    Vui lòng hoàn tất thanh toán trên cửa sổ VNPay.
+                                    Vui lòng hoàn tất thanh toán trên VNPay.
                                 </div>
                                 <v-btn color="#005BAA" class="mb-6 rounded-lg text-white font-weight-bold"
                                     @click="() => { vnpayPopup = window.open(vnpayDialog.paymentUrl, 'vnpay', 'width=800,height=600'); }">
-                                    Mở lại cổng thanh toán
+                                    Mở lại thanh toán
                                 </v-btn>
                             </template>
 
@@ -2363,9 +2349,11 @@ const formatDateTime = (dateStr) => {
                             Tiếp tục
                         </v-btn>
                     </div>
-                    =======
-                    <!-- Scanner dialog -->
-                    <v-dialog v-model="showScanner" max-width="500" transition="dialog-bottom-transition">
+                </v-card>
+            </v-dialog>
+
+            <!-- Scanner dialog -->
+            <v-dialog v-model="showScanner" max-width="500" transition="dialog-bottom-transition">
                         <v-card class="rounded-lg pa-4">
                             <div class="d-flex justify-space-between align-center mb-4">
                                 <span class="text-h6 font-weight-bold">Quét mã sản phẩm</span>
@@ -2465,7 +2453,6 @@ const formatDateTime = (dateStr) => {
                                     nhanh
                                 </v-btn>
                             </v-card-actions>
-                            >>>>>>> origin/feat/UI_BanHang
                         </v-card>
                     </v-dialog>
 
@@ -2474,7 +2461,7 @@ const formatDateTime = (dateStr) => {
                         :message="confirmDialog.message" :color="confirmDialog.color" :loading="confirmDialog.loading"
                         @confirm="confirmDialog.action" />
 
-                    <!-- Hóa đơn sau thanh toán -->
+                     <!-- Hóa đơn sau thanh toán -->
                     <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" />
     </v-container>
 </template>
@@ -2520,6 +2507,17 @@ const formatDateTime = (dateStr) => {
                 --v-input-control-height: 32px !important;
                 font-size: 13px !important;
                 background-color: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .compact-select :deep(.v-field--focused) {
+                border-color: #4285F4 !important;
+                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+            }
+
+            .compact-select :deep(.v-field__outline) {
+                display: none !important;
             }
 
             .compact-btn {
@@ -2550,6 +2548,18 @@ const formatDateTime = (dateStr) => {
             .search-input :deep(.v-field) {
                 border-radius: 8px !important;
                 font-size: 13px !important;
+                border: 1px solid #cbd5e1 !important;
+                background-color: #ffffff !important;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .search-input :deep(.v-field--focused) {
+                border-color: #4285F4 !important;
+                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+            }
+
+            .search-input :deep(.v-field__outline) {
+                display: none !important;
             }
 
             .scanner-btn {
@@ -2584,12 +2594,31 @@ const formatDateTime = (dateStr) => {
             .text-right-input :deep(.v-field) {
                 border-radius: 8px !important;
                 font-size: 13px !important;
+                border: 1px solid #cbd5e1 !important;
+                background-color: #ffffff !important;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .text-right-input :deep(.v-field--focused) {
+                border-color: #4285F4 !important;
+                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+            }
+
+            .text-right-input :deep(.v-field__outline) {
+                display: none !important;
             }
 
             .custom-value-input :deep(.v-field) {
-                background-color: #f1f5f9 !important;
-                border: none !important;
+                background-color: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
                 box-shadow: none !important;
+                border-radius: 8px !important;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .custom-value-input :deep(.v-field--focused) {
+                border-color: #4285F4 !important;
+                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
             }
 
             .custom-value-input :deep(.v-field__outline) {
@@ -2679,6 +2708,18 @@ const formatDateTime = (dateStr) => {
 
             .note-textarea :deep(.v-field) {
                 border-radius: 8px !important;
+                border: 1px solid #cbd5e1 !important;
+                background-color: #ffffff !important;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .note-textarea :deep(.v-field--focused) {
+                border-color: #4285F4 !important;
+                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+            }
+
+            .note-textarea :deep(.v-field__outline) {
+                display: none !important;
             }
 
             .btn-checkout {
@@ -2732,11 +2773,17 @@ const formatDateTime = (dateStr) => {
             }
 
             .compact-select-right :deep(.v-field) {
-                border-radius: 6px !important;
+                border-radius: 8px !important;
                 --v-input-control-height: 28px !important;
                 font-size: 13px !important;
                 background-color: #ffffff !important;
                 border: 1px solid #cbd5e1 !important;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .compact-select-right :deep(.v-field--focused) {
+                border-color: #4285F4 !important;
+                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
             }
 
             .compact-select-right :deep(.v-field__outline) {
@@ -2751,10 +2798,21 @@ const formatDateTime = (dateStr) => {
             }
 
             .right-input-field :deep(.v-field) {
-                border-radius: 6px !important;
+                border-radius: 8px !important;
                 --v-input-control-height: 32px !important;
                 font-size: 13px !important;
                 background-color: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .right-input-field :deep(.v-field--focused) {
+                border-color: #4285F4 !important;
+                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+            }
+
+            .right-input-field :deep(.v-field__outline) {
+                display: none !important;
             }
 
             /* Base font-size rules for inputs, textareas, buttons, placeholders and body text */
@@ -2810,13 +2868,19 @@ const formatDateTime = (dateStr) => {
                 border: 1px solid transparent !important;
             }
 
-            /* Dim input fields for customer card */
+            /* Styled input fields for customer card */
             .dim-input-field :deep(.v-field) {
-                background-color: #f1f5f9 !important;
-                border-radius: 6px !important;
+                background-color: #ffffff !important;
+                border-radius: 8px !important;
                 --v-input-control-height: 32px !important;
                 font-size: 13px !important;
-                border: none !important;
+                border: 1px solid #cbd5e1 !important;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .dim-input-field :deep(.v-field--focused) {
+                border-color: #4285F4 !important;
+                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
             }
 
             .dim-input-field :deep(.v-field__outline) {
@@ -2831,11 +2895,17 @@ const formatDateTime = (dateStr) => {
             }
 
             .dim-select :deep(.v-field) {
-                background-color: #f1f5f9 !important;
-                border-radius: 6px !important;
+                background-color: #ffffff !important;
+                border-radius: 8px !important;
                 --v-input-control-height: 28px !important;
                 font-size: 13px !important;
-                border: none !important;
+                border: 1px solid #cbd5e1 !important;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .dim-select :deep(.v-field--focused) {
+                border-color: #4285F4 !important;
+                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
             }
 
             .dim-select :deep(.v-field__outline) {
@@ -2873,13 +2943,19 @@ const formatDateTime = (dateStr) => {
                 background-color: #f1f5f9;
             }
 
-            /* Dim select field for delivery card */
+            /* Styled select field for delivery card */
             .dim-select-field :deep(.v-field) {
-                background-color: #f1f5f9 !important;
-                border-radius: 6px !important;
+                background-color: #ffffff !important;
+                border-radius: 8px !important;
                 --v-input-control-height: 32px !important;
                 font-size: 13px !important;
-                border: none !important;
+                border: 1px solid #cbd5e1 !important;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+
+            .dim-select-field :deep(.v-field--focused) {
+                border-color: #4285F4 !important;
+                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
             }
 
             .dim-select-field :deep(.v-field__outline) {
@@ -2920,7 +2996,7 @@ const formatDateTime = (dateStr) => {
                 background-color: #ffe4e6 !important;
                 color: #9f1239 !important;
                 font-size: 11px !important;
-                font-weight: 700;
+                font-weight: 500;
                 padding: 1px 6px;
                 border-radius: 4px;
                 display: inline-flex;
@@ -2931,7 +3007,7 @@ const formatDateTime = (dateStr) => {
                 background-color: #e0f2fe !important;
                 color: #0369a1 !important;
                 font-size: 11px !important;
-                font-weight: 700;
+                font-weight: 500;
                 padding: 1px 6px;
                 border-radius: 4px;
                 display: inline-flex;
@@ -2961,7 +3037,7 @@ const formatDateTime = (dateStr) => {
 
             .price-text {
                 font-size: 14px !important;
-                font-weight: 700;
+                font-weight: 500;
                 color: #88c057 !important;
             }
 
