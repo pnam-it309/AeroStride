@@ -25,5 +25,29 @@ export const dichVuLanding = {
             color: '#2962FF',
             raw: product
         }));
+    },
+
+    async layBienTheNoiBat(size = 12) {
+        const response = await api.get('/customer/landing/featured-variants', {
+            params: { size }
+        });
+
+        return (response.data?.data || []).map((variant) => ({
+            id: variant.id,
+            idSanPham: variant.idSanPham,
+            maSanPham: variant.maSanPham,
+            tenSanPham: variant.tenSanPham,
+            tenThuongHieu: variant.tenThuongHieu,
+            maChiTietSanPham: variant.maChiTietSanPham,
+            tenMauSac: variant.tenMauSac,
+            maMauHex: variant.maMauHex,
+            tenKichThuoc: variant.tenKichThuoc,
+            giaTriKichThuoc: variant.giaTriKichThuoc,
+            soLuong: variant.soLuong,
+            giaBan: variant.giaBan,
+            phanTramGiam: variant.phanTramGiam,
+            hinhAnh: resolveImageUrl(variant.hinhAnh),
+            images: (variant.images || []).map(resolveImageUrl)
+        }));
     }
 };

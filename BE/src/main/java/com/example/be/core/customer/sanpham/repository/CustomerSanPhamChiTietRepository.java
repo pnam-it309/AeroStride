@@ -2,7 +2,9 @@ package com.example.be.core.customer.sanpham.repository;
 
 import com.example.be.core.customer.sanpham.model.response.CustomerProductVariantStats;
 import com.example.be.entity.ChiTietSanPham;
+import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.repository.ChiTietSanPhamRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +19,9 @@ public interface CustomerSanPhamChiTietRepository extends ChiTietSanPhamReposito
 
     @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc"})
     Optional<ChiTietSanPham> findByIdAndXoaMemFalse(String id);
+
+    @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "mauSac", "kichThuoc"})
+    List<ChiTietSanPham> findByXoaMemFalseAndTrangThai(TrangThai trangThai, Pageable pageable);
 
     @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc"})
     List<ChiTietSanPham> findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(String sanPhamId);

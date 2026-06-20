@@ -12,6 +12,7 @@ import MainHeader from '@/components/shared/MainHeader.vue';
 import HeroSection from './sections/HeroSection.vue';
 import ProblemSection from './sections/ProblemSection.vue';
 import FeaturesSection from './sections/FeaturesSection.vue';
+import FeaturedProductsSection from './sections/FeaturedProductsSection.vue';
 import SocialSection from './sections/SocialSection.vue';
 import HowSection from './sections/HowSection.vue';
 import FaqSection from './sections/FaqSection.vue';
@@ -31,7 +32,7 @@ const {
     onScroll
 } = useLandingPage();
 
-const { heroProduct, isCatalogLoading, howProducts, problemProducts } = useLandingCatalog();
+const { featuredVariants, heroProduct, isCatalogLoading, howProducts, problemProducts } = useLandingCatalog();
 
 // SEO
 const { setSeoMeta } = useSeoMeta();
@@ -65,10 +66,11 @@ onMounted(() => {
             <HeroSection :active="activeSection === 0" :mouseX="mouseX" :mouseY="mouseY" :product="heroProduct" />
             <ProblemSection :active="activeSection === 1" :warm="isSectionWarm(1)" :products="problemProducts" />
             <FeaturesSection :active="activeSection === 2" :warm="isSectionWarm(2)" />
-            <SocialSection :active="activeSection === 3" :warm="isSectionWarm(3)" />
-            <HowSection :active="activeSection === 4" :warm="isSectionWarm(4)" :products="howProducts" />
-            <FaqSection :active="activeSection === 5" />
-            <CtaSection :active="activeSection === 6" />
+            <FeaturedProductsSection :active="activeSection === 3" :warm="isSectionWarm(3)" :variants="featuredVariants" />
+            <SocialSection :active="activeSection === 4" :warm="isSectionWarm(4)" />
+            <HowSection :active="activeSection === 5" :warm="isSectionWarm(5)" :products="howProducts" />
+            <FaqSection :active="activeSection === 6" />
+            <CtaSection :active="activeSection === 7" />
 
             <footer class="footer-landing py-10 text-center text-grey-darken-1 bg-white border-t">
                 <LogoClient class="mb-4 d-inline-block" style="max-width: 150px" />

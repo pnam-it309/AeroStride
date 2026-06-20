@@ -2,6 +2,7 @@ package com.example.be.core.customer.landing.controller;
 
 import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.core.customer.landing.model.response.CustomerLandingProductResponse;
+import com.example.be.core.customer.landing.model.response.CustomerLandingVariantResponse;
 import com.example.be.core.customer.landing.service.CustomerLandingService;
 import com.example.be.infrastructure.config.ratelimit.RateLimit;
 import com.example.be.infrastructure.constants.RoutesConstant;
@@ -28,5 +29,14 @@ public class CustomerLandingController {
     ) {
         List<CustomerLandingProductResponse> response = landingService.getLandingProducts(size);
         return ResponseEntity.ok(ApiResponse.success(response, "Lay san pham landing thanh cong"));
+    }
+
+    @GetMapping("/featured-variants")
+    @RateLimit(limit = 60, windowSeconds = 60)
+    public ResponseEntity<ApiResponse<List<CustomerLandingVariantResponse>>> getFeaturedVariants(
+            @RequestParam(defaultValue = "12") Integer size
+    ) {
+        List<CustomerLandingVariantResponse> response = landingService.getFeaturedVariants(size);
+        return ResponseEntity.ok(ApiResponse.success(response, "Lay bien the noi bat thanh cong"));
     }
 }

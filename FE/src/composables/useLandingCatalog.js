@@ -3,15 +3,22 @@ import { dichVuLanding } from '@/services/public/dichVuLanding';
 
 export function useLandingCatalog() {
     const landingProducts = ref([]);
+    const featuredVariants = ref([]);
     const isCatalogLoading = ref(true);
 
     const loadLandingCatalog = async () => {
         isCatalogLoading.value = true;
 
         try {
-            landingProducts.value = await dichVuLanding.laySanPhamNoiBat(6);
+            const [products, variants] = await Promise.all([
+                dichVuLanding.laySanPhamNoiBat(6),
+                dichVuLanding.layBienTheNoiBat(12)
+            ]);
+            landingProducts.value = products;
+            featuredVariants.value = variants;
         } catch (error) {
             landingProducts.value = [];
+            featuredVariants.value = [];
             if (import.meta.env.DEV) {
                 console.warn('Failed to load landing catalog:', error);
             }
@@ -27,6 +34,7 @@ export function useLandingCatalog() {
     const howProducts = computed(() => landingProducts.value.slice(0, 3));
 
     return {
+        featuredVariants,
         heroProduct,
         howProducts,
         isCatalogLoading,
