@@ -1,3 +1,10 @@
+## [1.25.2](https://github.com/pnam-it309/AeroStride/compare/v1.25.1...v1.25.2) (2026-06-20)
+
+
+### Bug Fixes
+
+* **fe:** fix voucher display format, auto-apply best voucher on cart changes, clear shipping address on customer remove, reset receivedAmount on order switch, and auto-save shipping address as default for newly created customers ([f4db965](https://github.com/pnam-it309/AeroStride/commit/f4db965f5734422f294197f32beff5b330a30932))
+
 ## [1.25.1](https://github.com/pnam-it309/AeroStride/compare/v1.25.0...v1.25.1) (2026-06-17)
 
 
