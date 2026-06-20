@@ -273,6 +273,17 @@ watch(orderChannel, (channel) => {
     onlyChargeIfReturned.value = channel === 'Tại quầy';
 });
 
+// Automatically sync received amount with total payable amount when VNPay is selected
+watch(
+    () => [checkoutData.value.paymentMethod, finalCollectAmount.value],
+    ([method, amount]) => {
+        if (method === 'VNPAY') {
+            checkoutData.value.receivedAmount = Number(amount);
+        }
+    },
+    { immediate: true }
+);
+
 // Search Products Autocomplete
 const searchProducts = async () => {
     const kw = productSearchKeyword.value?.trim() || '';
@@ -1769,21 +1780,6 @@ const closeQuickAdd = () => {
                     <!-- Sản phẩm Card -->
                     <v-card class="pos-card pa-4 rounded-lg border"
                         style="overflow: visible !important; z-index: 15 !important;">
-                        <div class="d-flex align-center gap-2 mb-2 border-b pb-2">
-                            <!-- Title -->
-                            <div class="font-weight-bold text-slate-800"
-                                style="font-size: 14px !important; width: 100px; flex-shrink: 0;">Sản phẩm</div>
-
-                            <!-- Center Column: Channel Select (Aligned with Search Input) -->
-                            <div class="flex-grow-1">
-                                <v-select v-model="orderChannel" :items="['Trực tuyến', 'Tại quầy']" density="compact"
-                                    variant="outlined" hide-details class="compact-select channel-select"
-                                    style="width: 140px" />
-                            </div>
-
-                            <!-- Spacer matching the F9 button + grey background padding -->
-                            <div style="width: 88px; flex-shrink: 0;"></div>
-                        </div>
 
                         <!-- Search and Scan Inner Row -->
                         <div class="d-flex align-center gap-2 mb-3 bg-slate-50 pa-1.5 rounded-lg flex-wrap">
@@ -1797,7 +1793,8 @@ const closeQuickAdd = () => {
                                     placeholder="Nhập mã, tên sản phẩm hoặc Barcode" variant="outlined"
                                     density="compact" hide-details prepend-inner-icon="mdi-magnify"
                                     @focus="onProductSearchFocus" @click="onProductSearchFocus"
-                                    @blur="onProductSearchBlur" bg-color="white" class="search-input" />
+                                    @blur="onProductSearchBlur" bg-color="white" class="search-input"
+                                    autocomplete="off" />
 
                                 <!-- Search dropdown overlay -->
                                 <v-card v-if="showProductAutocomplete && filteredProductSearchResults.length > 0"
@@ -1815,9 +1812,9 @@ const closeQuickAdd = () => {
                                                         <v-img v-if="variant.hinhAnh" :src="variant.hinhAnh" cover />
                                                         <BoxIcon v-else size="20" class="text-grey" />
                                                     </v-avatar>
-                                                    <div class="d-flex flex-column gap-1">
+                                                    <div class="d-flex flex-column" style="gap: 8px !important;">
                                                         <!-- Product Name (Tên biến thể) -->
-                                                        <div class="font-weight-bold text-slate-800"
+                                                        <div class="text-slate-700"
                                                             style="font-size: 13.5px !important; line-height: 1.3;">
                                                             {{ variant.tenSanPham }}
                                                         </div>
@@ -1826,24 +1823,24 @@ const closeQuickAdd = () => {
                                                         <div class="d-flex align-center gap-1.5 mt-0.5 flex-wrap">
                                                             <span class="sp-badge">Mã Sản phẩm: {{ variant.maSanPham ||
                                                                 'SP0001' }}</span>
-                                                            <span class="text-slate-300"
-                                                                style="margin-left: 15px; margin-right: 15px; font-size: 11px;">|</span>
+                                                            <span
+                                                                style="margin-left: 15px; margin-right: 15px; font-size: 11px; color: #cbd5e1; opacity: 0.4;">|</span>
                                                             <span class="sku-badge">{{ variant.maChiTietSanPham
                                                                 }}</span>
                                                         </div>
 
                                                         <!-- màu sắc --- size --- số lượng -->
-                                                        <div class="d-flex align-center mt-0.5 text-slate-500 font-weight-medium"
+                                                        <div class="d-flex align-center mt-0.5 text-slate-600"
                                                             style="font-size: 12px; flex-wrap: wrap;">
-                                                            <span>Màu sắc: <span class="text-slate-700">{{
+                                                            <span>Màu sắc: <span class="text-slate-500">{{
                                                                 variant.tenMauSac || 'Không màu' }}</span></span>
-                                                            <span class="text-slate-300"
-                                                                style="margin-left: 15px; margin-right: 15px;">|</span>
-                                                            <span>Size: <span class="text-slate-700">{{
+                                                            <span
+                                                                style="margin-left: 15px; margin-right: 15px; color: #cbd5e1; opacity: 0.4;">|</span>
+                                                            <span>Size: <span class="text-slate-500">{{
                                                                 variant.tenKichThuoc || 'N/A' }}</span></span>
-                                                            <span class="text-slate-300"
-                                                                style="margin-left: 15px; margin-right: 15px;">|</span>
-                                                            <span>Tồn: <span class="font-weight-bold text-slate-700">{{
+                                                            <span
+                                                                style="margin-left: 15px; margin-right: 15px; color: #cbd5e1; opacity: 0.4;">|</span>
+                                                            <span>Tồn: <span class="text-slate-500">{{
                                                                 variant.soLuongTon || 0 }}</span></span>
                                                         </div>
                                                     </div>
@@ -1872,17 +1869,13 @@ const closeQuickAdd = () => {
 
                         <!-- Filters Row -->
                         <div class="d-flex align-center gap-2 mb-3 bg-slate-50 pa-1.5 rounded-lg flex-wrap">
-                            <span class="font-weight-bold text-slate-800 px-2"
-                                style="font-size: 14px !important; width: 94px; display: inline-block; flex-shrink: 0; box-sizing: border-box;">Bộ
-                                lọc</span>
 
                             <div class="flex-grow-1"
                                 style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: center;">
                                 <!-- Thương hiệu -->
-                                <div class="d-flex align-center gap-1.5">
+                                <div class="d-flex align-center gap-2">
                                     <span class="text-slate-600 text-caption font-weight-medium flex-shrink-0"
-                                        style="font-size: 12px !important; width: 75px; display: inline-block;">Thương
-                                        hiệu</span>
+                                        style="font-size: 12px !important; white-space: nowrap;">Thương hiệu</span>
                                     <v-select v-model="filterThuongHieu" :items="filterBrands" item-title="title"
                                         item-value="value" density="compact" hide-details variant="outlined"
                                         bg-color="white" class="compact-select flex-grow-1"
@@ -1890,10 +1883,9 @@ const closeQuickAdd = () => {
                                 </div>
 
                                 <!-- Xuất xứ -->
-                                <div class="d-flex align-center gap-1.5">
+                                <div class="d-flex align-center gap-2">
                                     <span class="text-slate-600 text-caption font-weight-medium flex-shrink-0"
-                                        style="font-size: 12px !important; width: 75px; display: inline-block;">Xuất
-                                        xứ</span>
+                                        style="font-size: 12px !important; white-space: nowrap;">Xuất xứ</span>
                                     <v-select v-model="filterXuatXu" :items="filterOrigins" item-title="title"
                                         item-value="value" density="compact" hide-details variant="outlined"
                                         bg-color="white" class="compact-select flex-grow-1"
@@ -1901,10 +1893,9 @@ const closeQuickAdd = () => {
                                 </div>
 
                                 <!-- Mục đích chạy -->
-                                <div class="d-flex align-center gap-1.5">
+                                <div class="d-flex align-center gap-2">
                                     <span class="text-slate-600 text-caption font-weight-medium flex-shrink-0"
-                                        style="font-size: 12px !important; width: 75px; display: inline-block;">Mục
-                                        đích</span>
+                                        style="font-size: 12px !important; white-space: nowrap;">Mục đích</span>
                                     <v-select v-model="filterMucDich" :items="filterPurposes" item-title="title"
                                         item-value="value" density="compact" hide-details variant="outlined"
                                         bg-color="white" class="compact-select flex-grow-1"
@@ -1912,10 +1903,9 @@ const closeQuickAdd = () => {
                                 </div>
 
                                 <!-- Chất liệu -->
-                                <div class="d-flex align-center gap-1.5">
+                                <div class="d-flex align-center gap-2">
                                     <span class="text-slate-600 text-caption font-weight-medium flex-shrink-0"
-                                        style="font-size: 12px !important; width: 75px; display: inline-block;">Chất
-                                        liệu</span>
+                                        style="font-size: 12px !important; white-space: nowrap;">Chất liệu</span>
                                     <v-select v-model="filterChatLieu" :items="filterMaterials" item-title="title"
                                         item-value="value" density="compact" hide-details variant="outlined"
                                         bg-color="white" class="compact-select flex-grow-1"
@@ -1924,15 +1914,17 @@ const closeQuickAdd = () => {
                             </div>
                         </div>
 
+
+
                         <!-- Cart list rendering -->
                         <div class="cart-container-box border rounded-lg overflow-hidden"
-                            style="min-height: 180px; background-color: #f8fafc !important;">
+                            style="height: 250px; background-color: #ffffff !important;">
                             <CartTable v-if="selectedOrder?.listsHoaDonChiTiet?.length"
                                 :items="selectedOrder.listsHoaDonChiTiet" @update-qty="onUpdateQty"
                                 @remove="onRemoveItem" />
 
                             <!-- Empty Cart State -->
-                            <div v-else class="d-flex flex-column align-center justify-center py-6"
+                            <div v-else class="d-flex flex-column align-center justify-center h-100"
                                 style="background-color: #ffffff;">
                                 <div class="mb-2">
                                     <v-icon size="40" style="color: #cbd5e1 !important;">mdi-inbox-outline</v-icon>
@@ -2107,7 +2099,7 @@ const closeQuickAdd = () => {
                                     </div>
                                     <span class="font-weight-bold" style="font-size: 13px !important;">{{
                                         formatCurrency(remainingBalance)
-                                        }}</span>
+                                    }}</span>
                                 </div>
                                 <div v-else-if="changeAmount > 0"
                                     class="d-flex align-center justify-space-between pa-3 rounded-lg bg-blue-50 text-blue-800 border-blue">
@@ -2151,7 +2143,7 @@ const closeQuickAdd = () => {
                                     style="min-width: 170px; justify-content: space-between">
                                     <span class="font-weight-bold text-slate-800 text-caption">{{
                                         formatDateTime(selectedOrder?.ngayTao)
-                                        }}</span>
+                                    }}</span>
                                 </div>
                             </div>
 
@@ -2356,7 +2348,9 @@ const closeQuickAdd = () => {
                                 <v-img :src="vnpayDialog.qrUrl" width="220" height="220" />
                             </div>
                             <div class="text-h5 font-weight-bold text-error mb-1">
-                                {{ formatVNPayAmount(vnpayDialog.amount) }}
+                                {{ new Intl.NumberFormat('vi-VN', {
+                                    style: 'currency', currency: 'VND'
+                                }).format(vnpayDialog.amount) }}
                             </div>
                             <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
                                 Sử dụng ứng dụng ngân hàng hoặc ví VNPay để quét mã.
@@ -2364,14 +2358,16 @@ const closeQuickAdd = () => {
                         </template>
                         <template v-else>
                             <div class="text-h5 font-weight-bold text-error mb-4">
-                                {{ formatVNPayAmount(vnpayDialog.amount) }}
+                                {{ new Intl.NumberFormat('vi-VN', {
+                                    style: 'currency', currency: 'VND'
+                                }).format(vnpayDialog.amount) }}
                             </div>
                             <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
-                                Vui lòng hoàn tất thanh toán trên cửa sổ VNPay.
+                                Vui lòng hoàn tất thanh toán trên VNPay.
                             </div>
                             <v-btn color="#005BAA" class="mb-6 rounded-lg text-white font-weight-bold"
-                                @click="openVnPayPopup">
-                                Mở lại cổng thanh toán
+                                @click="() => { vnpayPopup = window.open(vnpayDialog.paymentUrl, 'vnpay', 'width=800,height=600'); }">
+                                Mở lại thanh toán
                             </v-btn>
                         </template>
 
@@ -2399,18 +2395,59 @@ const closeQuickAdd = () => {
                 <div class="text-center mb-5">
                     <div class="text-h6 font-weight-bold">Chọn hình thức thanh toán</div>
                 </div>
-                <v-radio-group v-model="vnpayChoiceDialog.method" column hide-details class="mb-5">
-                    <v-radio value="QR" label="Thanh toán qua quét mã QR" color="#2E4E8E"></v-radio>
-                    <v-radio value="GATEWAY" label="Nhập mã thẻ qua cổng VNPay" color="#2E4E8E"></v-radio>
-                </v-radio-group>
-                <div class="d-flex gap-3">
-                    <v-btn class="flex-grow-1 rounded-lg font-weight-bold" variant="outlined" color="grey-darken-1"
-                        height="44" @click="closeVnPayChoice">
-                        Hủy
+
+                <h3 class="text-h6 font-weight-bold mb-1">Thanh toán VNPay</h3>
+                <p class="text-subtitle-2 text-grey-darken-1 mb-6">Mã đơn: {{ vnpayDialog.orderId }}</p>
+
+                <div v-if="vnpayDialog.loading" class="pa-8 d-flex flex-column align-center">
+                    <v-progress-circular indeterminate color="#005BAA" size="48" class="mb-4"></v-progress-circular>
+                    <div class="text-body-2 font-weight-medium text-grey-darken-2">{{ vnpayDialog.statusText }}
+                    </div>
+                </div>
+
+                <div v-else-if="vnpayDialog.verified" class="pa-8 d-flex flex-column align-center">
+                    <v-icon color="success" size="64" class="mb-4">mdi-check-circle</v-icon>
+                    <div class="text-h6 font-weight-bold text-success mb-2">Giao dịch thành công!</div>
+                    <div class="text-body-2 text-grey-darken-1">Đơn hàng đang được hoàn tất...</div>
+                </div>
+
+                <div v-else class="w-100 d-flex flex-column align-center">
+                    <template v-if="checkoutData.vnpayMethod === 'QR'">
+                        <div class="pa-2 bg-white rounded-lg elevation-2 mb-4 d-inline-block">
+                            <v-img :src="vnpayDialog.qrUrl" width="220" height="220" />
+                        </div>
+                        <div class="text-h5 font-weight-bold text-error mb-1">
+                            {{ formatVNPayAmount(vnpayDialog.amount) }}
+                        </div>
+                        <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
+                            Sử dụng ứng dụng ngân hàng hoặc ví VNPay để quét mã.
+                        </div>
+                    </template>
+                    <template v-else>
+                        <div class="text-h5 font-weight-bold text-error mb-4">
+                            {{ formatVNPayAmount(vnpayDialog.amount) }}
+                        </div>
+                        <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
+                            Vui lòng hoàn tất thanh toán trên cửa sổ VNPay.
+                        </div>
+                        <v-btn color="#005BAA" class="mb-6 rounded-lg text-white font-weight-bold"
+                            @click="openVnPayPopup">
+                            Mở lại cổng thanh toán
+                        </v-btn>
+                    </template>
+
+                    <v-btn block color="#005BAA" class="mb-3 rounded-lg text-white font-weight-bold" height="48"
+                        @click="onConfirmVnPayManual">
+                        XÁC NHẬN ĐÃ NHẬN TIỀN
                     </v-btn>
-                    <v-btn class="flex-grow-1 rounded-lg font-weight-bold text-white" color="#4285F4" height="44"
-                        @click="proceedVnPayChoice">
-                        Tiếp tục
+
+                    <v-btn v-if="checkoutData.vnpayMethod === 'QR'" block variant="outlined" color="grey-darken-1"
+                        class="rounded-lg font-weight-bold" height="48" @click="startVnPayFlow">
+                        TẠO LẠI MÃ QR
+                    </v-btn>
+
+                    <v-btn variant="text" color="error" class="mt-4" size="small" @click="cancelVnPayFlow">
+                        Hủy giao dịch
                     </v-btn>
                 </div>
             </v-card>
@@ -2425,88 +2462,86 @@ const closeQuickAdd = () => {
                         <XIcon />
                     </v-btn>
                 </div>
-                <div id="reader" style="width: 100%"></div>
-                <div class="mt-4 text-center text-caption text-grey">Đưa mã QR hoặc Barcode của sản phẩm vào khung hình
-                </div>
+                <div id="reader" width="100%"></div>
             </v-card>
         </v-dialog>
 
-        <!-- Quick Add Customer Dialog -->
-        <v-dialog v-model="showQuickAddDialog" max-width="650" transition="dialog-bottom-transition" persistent>
-            <v-card class="rounded-lg overflow-hidden">
-                <v-card-title
-                    class="text-subtitle-1 font-weight-bold pa-4 border-b bg-slate-50 d-flex justify-space-between align-center">
-                    Thêm nhanh thông tin khách hàng
-                    <v-btn icon size="small" variant="text" @click="closeQuickAdd">
-                        <XIcon size="20" />
+        <!-- Confirmation Dialog -->
+        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
+            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
+
+        <!-- Thêm khách hàng nhanh Dialog -->
+        <v-dialog v-model="showQuickAddDialog" max-width="800" transition="dialog-bottom-transition">
+            <v-card class="rounded-lg border">
+                <v-card-title class="d-flex justify-space-between align-center px-6 py-4 border-b">
+                    <span class="text-h6 font-weight-bold text-slate-800">Thêm khách hàng</span>
+                    <v-btn icon variant="text" size="small" @click="closeQuickAdd">
+                        <XIcon />
                     </v-btn>
                 </v-card-title>
-                <v-card-text class="pa-5">
-                    <div class="text-body-2 text-medium-emphasis mb-4">
-                        Nếu SĐT đã tồn tại, hệ thống sẽ tự động nhận diện và gán khách hàng vào đơn.
-                    </div>
-
+                <v-card-text class="pa-6">
                     <v-row dense>
                         <v-col cols="12" md="6">
-                            <v-text-field v-model="quickAddForm.ten" label="Tên khách hàng" placeholder="Nhập tên..."
-                                variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2"
-                                maxlength="100" />
-                        </v-col>
-                        <v-col cols="12" md="6">
-                            <v-text-field v-model="quickAddForm.sdt" label="Số điện thoại"
-                                placeholder="Ví dụ: 0912345678" variant="outlined" density="comfortable"
-                                hide-details="auto" class="mb-3 text-body-2" @input="onQuickAddPhoneInput" />
-                        </v-col>
-                        <v-col cols="12" md="6">
-                            <v-select v-model="quickAddForm.gioiTinh" :items="GIOI_TINH_OPTIONS" label="Giới tính"
-                                variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2" />
-                        </v-col>
-                        <v-col cols="12" md="6">
-                            <v-text-field v-model="quickAddForm.email" label="Email (Không bắt buộc)"
-                                placeholder="Ví dụ: abc@gmail.com" variant="outlined" density="comfortable"
-                                hide-details="auto" class="mb-3 text-body-2" />
-                        </v-col>
+                <v-text-field v-model="quickAddForm.ten" label="Tên khách hàng" placeholder="Nhập tên..."
+                    variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2"
+                    maxlength="100" />
+            </v-col>
+            <v-col cols="12" md="6">
+                <v-text-field v-model="quickAddForm.sdt" label="Số điện thoại" placeholder="Ví dụ: 0912345678"
+                    variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2"
+                    @input="quickAddForm.sdt = String($event.target.value || '').replace(/[^0-9]/g, '')" />
+            </v-col>
+            <v-col cols="12" md="6">
+                <v-select v-model="quickAddForm.gioiTinh" :items="GIOI_TINH_OPTIONS" label="Giới tính"
+                    variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2" />
+            </v-col>
+            <v-col cols="12" md="6">
+                <v-text-field v-model="quickAddForm.email" label="Email (Không bắt buộc)"
+                    placeholder="Ví dụ: abc@gmail.com" variant="outlined" density="comfortable" hide-details="auto"
+                    class="mb-3 text-body-2" />
+            </v-col>
 
-                        <v-col cols="12">
-                            <div class="text-subtitle-2 font-weight-bold mt-2 mb-2 text-slate-700">Địa chỉ (Tùy chọn)
-                            </div>
-                        </v-col>
-                        <v-col cols="12" md="4">
-                            <v-autocomplete v-model="quickAddForm.tinh" :items="provinces" item-title="name"
-                                item-value="code" placeholder="Tỉnh / Thành phố" variant="outlined" bg-color="white"
-                                density="compact" hide-details :loading="loadingLocations.provinces"
-                                @update:model-value="onQuickAddTinhChange" class="mb-3 text-body-2" />
-                        </v-col>
-                        <v-col cols="12" md="4">
-                            <v-autocomplete v-model="quickAddForm.thanhPho" :items="districts" item-title="name"
-                                item-value="code" placeholder="Quận / Huyện" variant="outlined" bg-color="white"
-                                density="compact" hide-details :loading="loadingLocations.districts"
-                                :disabled="!quickAddForm.tinh" @update:model-value="onQuickAddHuyenChange"
-                                class="mb-3 text-body-2" />
-                        </v-col>
-                        <v-col cols="12" md="4">
-                            <v-autocomplete v-model="quickAddForm.phuongXa" :items="wards" item-title="name"
-                                item-value="code" placeholder="Phường / Xã" variant="outlined" bg-color="white"
-                                density="compact" hide-details :loading="loadingLocations.wards"
-                                :disabled="!quickAddForm.thanhPho" class="mb-3 text-body-2" />
-                        </v-col>
-                        <v-col cols="12">
-                            <v-text-field v-model="quickAddForm.diaChiChiTiet"
-                                placeholder="Địa chỉ cụ thể (Số nhà, đường...)" variant="outlined" density="compact"
-                                hide-details class="text-body-2" />
-                        </v-col>
-                    </v-row>
-                </v-card-text>
-                <v-card-actions class="px-6 pb-5 border-t bg-slate-50">
-                    <v-spacer />
-                    <v-btn variant="tonal" color="slate-500" class="rounded-lg text-none"
-                        @click="closeQuickAdd">Hủy</v-btn>
-                    <v-btn :loading="quickAddLoading" color="primary" variant="flat"
-                        class="px-6 rounded-lg font-weight-bold text-none" @click="submitQuickAdd">
-                        Thêm nhanh
-                    </v-btn>
-                </v-card-actions>
-            </v-card>
+            <v-col cols="12">
+                <div class="text-subtitle-2 font-weight-bold mt-2 mb-2 text-slate-700">Địa chỉ
+                    (Tùy
+                    chọn)
+                </div>
+            </v-col>
+            <v-col cols="12" md="4">
+                <v-autocomplete v-model="quickAddForm.tinh" :items="provinces" item-title="name" item-value="code"
+                    placeholder="Tỉnh / Thành phố" variant="outlined" bg-color="white" density="compact" hide-details
+                    :loading="loadingLocations.provinces"
+                    @update:model-value="(val) => { quickAddForm.thanhPho = null; quickAddForm.phuongXa = null; if (val) fetchDistricts(val); }"
+                    class="mb-3 text-body-2" />
+            </v-col>
+            <v-col cols="12" md="4">
+                <v-autocomplete v-model="quickAddForm.thanhPho" :items="districts" item-title="name" item-value="code"
+                    placeholder="Quận / Huyện" variant="outlined" bg-color="white" density="compact" hide-details
+                    :loading="loadingLocations.districts" :disabled="!quickAddForm.tinh"
+                    @update:model-value="(val) => { quickAddForm.phuongXa = null; if (val) fetchWards(val); }"
+                    class="mb-3 text-body-2" />
+            </v-col>
+            <v-col cols="12" md="4">
+                <v-autocomplete v-model="quickAddForm.phuongXa" :items="wards" item-title="name" item-value="code"
+                    placeholder="Phường / Xã" variant="outlined" bg-color="white" density="compact" hide-details
+                    :loading="loadingLocations.wards" :disabled="!quickAddForm.thanhPho" class="mb-3 text-body-2" />
+            </v-col>
+            <v-col cols="12">
+                <v-text-field v-model="quickAddForm.diaChiChiTiet" placeholder="Địa chỉ cụ thể (Số nhà, đường...)"
+                    variant="outlined" density="compact" hide-details class="text-body-2" />
+            </v-col>
+        </v-row>
+        </v-card-text>
+        <v-card-actions class="px-6 pb-5 border-t bg-slate-50">
+            <v-spacer />
+            <v-btn variant="tonal" color="slate-500" class="rounded-lg text-none"
+                @click="showQuickAddDialog = false">Hủy</v-btn>
+            <v-btn :loading="quickAddLoading" color="primary" variant="flat"
+                class="px-6 rounded-lg font-weight-bold text-none" @click="submitQuickAdd"> Thêm
+                nhanh
+            </v-btn>
+        </v-card-actions>
+        </v-card>
         </v-dialog>
 
         <!-- Confirmation Dialog -->
@@ -2559,6 +2594,17 @@ const closeQuickAdd = () => {
     --v-input-control-height: 32px !important;
     font-size: 13px !important;
     background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.compact-select :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.compact-select :deep(.v-field__outline) {
+    display: none !important;
 }
 
 .compact-btn {
@@ -2589,6 +2635,18 @@ const closeQuickAdd = () => {
 .search-input :deep(.v-field) {
     border-radius: 8px !important;
     font-size: 13px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.search-input :deep(.v-field__outline) {
+    display: none !important;
 }
 
 .scanner-btn {
@@ -2623,12 +2681,31 @@ const closeQuickAdd = () => {
 .text-right-input :deep(.v-field) {
     border-radius: 8px !important;
     font-size: 13px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.text-right-input :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.text-right-input :deep(.v-field__outline) {
+    display: none !important;
 }
 
 .custom-value-input :deep(.v-field) {
-    background-color: #f1f5f9 !important;
-    border: none !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
     box-shadow: none !important;
+    border-radius: 8px !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.custom-value-input :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
 .custom-value-input :deep(.v-field__outline) {
@@ -2718,6 +2795,18 @@ const closeQuickAdd = () => {
 
 .note-textarea :deep(.v-field) {
     border-radius: 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.note-textarea :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.note-textarea :deep(.v-field__outline) {
+    display: none !important;
 }
 
 .btn-checkout {
@@ -2771,11 +2860,17 @@ const closeQuickAdd = () => {
 }
 
 .compact-select-right :deep(.v-field) {
-    border-radius: 6px !important;
+    border-radius: 8px !important;
     --v-input-control-height: 28px !important;
     font-size: 13px !important;
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.compact-select-right :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
 .compact-select-right :deep(.v-field__outline) {
@@ -2790,10 +2885,21 @@ const closeQuickAdd = () => {
 }
 
 .right-input-field :deep(.v-field) {
-    border-radius: 6px !important;
+    border-radius: 8px !important;
     --v-input-control-height: 32px !important;
     font-size: 13px !important;
     background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.right-input-field :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.right-input-field :deep(.v-field__outline) {
+    display: none !important;
 }
 
 /* Base font-size rules for inputs, textareas, buttons, placeholders and body text */
@@ -2849,13 +2955,19 @@ const closeQuickAdd = () => {
     border: 1px solid transparent !important;
 }
 
-/* Dim input fields for customer card */
+/* Styled input fields for customer card */
 .dim-input-field :deep(.v-field) {
-    background-color: #f1f5f9 !important;
-    border-radius: 6px !important;
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
     --v-input-control-height: 32px !important;
     font-size: 13px !important;
-    border: none !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dim-input-field :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
 .dim-input-field :deep(.v-field__outline) {
@@ -2870,11 +2982,17 @@ const closeQuickAdd = () => {
 }
 
 .dim-select :deep(.v-field) {
-    background-color: #f1f5f9 !important;
-    border-radius: 6px !important;
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
     --v-input-control-height: 28px !important;
     font-size: 13px !important;
-    border: none !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dim-select :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
 .dim-select :deep(.v-field__outline) {
@@ -2912,13 +3030,19 @@ const closeQuickAdd = () => {
     background-color: #f1f5f9;
 }
 
-/* Dim select field for delivery card */
+/* Styled select field for delivery card */
 .dim-select-field :deep(.v-field) {
-    background-color: #f1f5f9 !important;
-    border-radius: 6px !important;
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
     --v-input-control-height: 32px !important;
     font-size: 13px !important;
-    border: none !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dim-select-field :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
 .dim-select-field :deep(.v-field__outline) {
@@ -2959,7 +3083,7 @@ const closeQuickAdd = () => {
     background-color: #ffe4e6 !important;
     color: #9f1239 !important;
     font-size: 11px !important;
-    font-weight: 700;
+    font-weight: 500;
     padding: 1px 6px;
     border-radius: 4px;
     display: inline-flex;
@@ -2970,7 +3094,7 @@ const closeQuickAdd = () => {
     background-color: #e0f2fe !important;
     color: #0369a1 !important;
     font-size: 11px !important;
-    font-weight: 700;
+    font-weight: 500;
     padding: 1px 6px;
     border-radius: 4px;
     display: inline-flex;
@@ -3000,7 +3124,7 @@ const closeQuickAdd = () => {
 
 .price-text {
     font-size: 14px !important;
-    font-weight: 700;
+    font-weight: 500;
     color: #88c057 !important;
 }
 
