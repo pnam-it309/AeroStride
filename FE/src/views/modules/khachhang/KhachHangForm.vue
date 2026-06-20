@@ -271,7 +271,23 @@ const handleSave = async () => {
 
                     addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật thông tin khách hàng', color: 'success' });
                 } else {
-                    await dichVuKhachHang.taoKhachHang(payload);
+                    const created = await dichVuKhachHang.taoKhachHang(payload);
+                    if (created?.id && payload.tinh && payload.thanhPho && payload.phuongXa && payload.diaChiChiTiet) {
+                        try {
+                            await dichVuKhachHang.taoDiaChi({
+                                idKhachHang: created.id,
+                                tinh: payload.tinh,
+                                thanhPho: payload.thanhPho,
+                                phuongXa: payload.phuongXa,
+                                diaChiChiTiet: payload.diaChiChiTiet,
+                                tenNguoiNhan: payload.ten || customerForm.value.ten,
+                                sdtNguoiNhan: payload.sdt || customerForm.value.sdt,
+                                laMacDinh: true
+                            });
+                        } catch (e) {
+                            console.error('Lỗi tự động tạo địa chỉ cho khách hàng mới:', e);
+                        }
+                    }
                     addNotification({ title: 'Thành công', subtitle: 'Đã thêm khách hàng mới', color: 'success' });
                 }
                 router.push(PATH.KHACH_HANG);

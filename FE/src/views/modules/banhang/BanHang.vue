@@ -127,7 +127,7 @@ const receiptDialog = ref({
     show: false,
     order: null,
     paymentMethod: 'CASH',
-    receivedAmount: 0,
+    receivedAmount: null,
     note: '',
     paidAt: null
 });
@@ -135,7 +135,7 @@ const receiptDialog = ref({
 const checkoutData = ref({
     paymentMethod: 'CASH',
     vnpayMethod: 'QR',
-    receivedAmount: 0,
+    receivedAmount: null,
     note: ''
 });
 
@@ -222,6 +222,7 @@ watch(() => selectedOrder.value?.id, (id) => {
     productSearchKeyword.value = '';
     showProductAutocomplete.value = false;
     checkoutData.value.note = selectedOrder.value?.ghiChu || '';
+    checkoutData.value.receivedAmount = null;
 
     if (id) {
         if (selectedOrder.value.phiVanChuyen !== undefined && selectedOrder.value.phiVanChuyen !== null) {
@@ -279,9 +280,12 @@ watch(
     ([method, amount]) => {
         if (method === 'VNPAY') {
             checkoutData.value.receivedAmount = Number(amount);
+        } else if (method === 'CASH') {
+            if (checkoutData.value.receivedAmount === Number(amount)) {
+                checkoutData.value.receivedAmount = null;
+            }
         }
-    },
-    { immediate: true }
+    }
 );
 
 // Search Products Autocomplete
@@ -341,6 +345,24 @@ const filteredProductSearchResults = computed(() => {
     return list;
 });
 
+const groupedProducts = computed(() => {
+    const list = filteredProductSearchResults.value || [];
+    const grouped = {};
+    for (const v of list) {
+        if (!grouped[v.maSanPham]) {
+            grouped[v.maSanPham] = {
+                maSanPham: v.maSanPham,
+                tenSanPham: v.tenSanPham,
+                hinhAnh: v.hinhAnh || (v.bienTheSanPhams && v.bienTheSanPhams[0]?.anh) || '',
+                thuongHieu: v.tenThuongHieu,
+                variants: []
+            };
+        }
+        grouped[v.maSanPham].variants.push(v);
+    }
+    return Object.values(grouped);
+});
+
 const onFilterChange = () => {
     showProductAutocomplete.value = true;
 };
@@ -372,6 +394,128 @@ const selectProductFromSearch = (variant) => {
     onAddProduct(variant);
     productSearchKeyword.value = '';
     showProductAutocomplete.value = false;
+};
+
+const isAddingProduct = ref(false);
+
+const variantModal = ref({
+    show: false,
+    product: null,
+    variants: [],
+    selectedColor: null,
+    selectedSize: null,
+    quantity: 1
+});
+
+const uniqueColors = computed(() => {
+    if (!variantModal.value.variants) return [];
+    const colorMap = new Map();
+    variantModal.value.variants.forEach(v => {
+        const colorName = v.tenMauSac || 'Không màu';
+        if (!colorMap.has(colorName)) {
+            colorMap.set(colorName, v.hinhAnh || (v.bienTheSanPhams && v.bienTheSanPhams[0]?.anh) || variantModal.value.product?.hinhAnh);
+        }
+    });
+    return Array.from(colorMap.entries()).map(([name, image]) => ({ name, image }));
+});
+
+const availableSizes = computed(() => {
+    if (!variantModal.value.variants || !variantModal.value.selectedColor) return [];
+    return variantModal.value.variants
+        .filter(v => (v.tenMauSac || 'Không màu') === variantModal.value.selectedColor)
+        .map(v => ({
+            name: v.tenKichThuoc || 'Free size',
+            soLuongTon: v.soLuongTon,
+            variant: v
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+});
+
+const currentSelectedVariant = computed(() => {
+    if (!variantModal.value.selectedSize) return null;
+    const sizeObj = availableSizes.value.find(s => s.name === variantModal.value.selectedSize);
+    return sizeObj ? sizeObj.variant : null;
+});
+
+const selectColor = (colorName) => {
+    variantModal.value.selectedColor = colorName;
+    variantModal.value.selectedSize = null;
+    variantModal.value.quantity = 1;
+};
+
+const selectSize = (sizeName, soLuongTon) => {
+    if (soLuongTon === 0) return;
+    variantModal.value.selectedSize = sizeName;
+    variantModal.value.quantity = 1;
+};
+
+const validateQuantityInput = (e) => {
+    let val = parseInt(e.target.value);
+    if (isNaN(val) || val < 1) val = 1;
+    const max = currentSelectedVariant.value?.soLuongTon || 1;
+    if (val > max) val = max;
+    variantModal.value.quantity = val;
+};
+
+const openVariantModal = (product) => {
+    variantModal.value = {
+        show: true,
+        product: product,
+        variants: product.variants,
+        selectedColor: null,
+        selectedSize: null,
+        quantity: 1
+    };
+    
+    if (uniqueColors.value.length > 0) {
+        selectColor(uniqueColors.value[0].name);
+    }
+    
+    productSearchKeyword.value = '';
+    showProductAutocomplete.value = false;
+};
+
+const closeVariantModal = () => {
+    variantModal.value.show = false;
+};
+
+const confirmAddVariants = async () => {
+    const orderId = selectedOrder.value?.id;
+    if (!orderId) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng chọn hoặc tạo hóa đơn trước.', color: 'error' });
+        return;
+    }
+    
+    const variant = currentSelectedVariant.value;
+    if (!variant) {
+        addNotification({ title: 'Chưa chọn', subtitle: 'Vui lòng chọn màu sắc và kích cỡ.', color: 'warning' });
+        return;
+    }
+    
+    const qty = variantModal.value.quantity;
+    if (qty <= 0 || qty > variant.soLuongTon) {
+        addNotification({ title: 'Lỗi', subtitle: `Số lượng không hợp lệ.`, color: 'error' });
+        return;
+    }
+    
+    isAddingProduct.value = true;
+    try {
+        const payload = {
+            idChiTietSanPham: variant.id,
+            soLuong: qty
+        };
+        const updated = await dichVuDonHang.addSanPham(orderId, payload);
+        updateOrderInList(updated);
+        
+        addNotification({ title: 'Thành công', subtitle: `Đã thêm sản phẩm vào hóa đơn.`, color: 'success' });
+        refreshBestVoucher(selectedOrder.value);
+        closeVariantModal();
+    } catch (e) {
+        console.error(e);
+        addNotification({ title: 'Lỗi', subtitle: getErrorMessage(e, 'Thêm sản phẩm thất bại.'), color: 'error' });
+    } finally {
+        isAddingProduct.value = false;
+    }
 };
 
 // Search Customer Dropdown
@@ -430,9 +574,10 @@ const openDatePicker = (event) => {
     const input = el ? el.querySelector('input[type="date"]') : null;
     if (input && typeof input.showPicker === 'function') {
         try {
+            input.focus();
             input.showPicker();
         } catch (e) {
-            console.error(e);
+            // Silently ignore browser restrictions on showPicker without direct gesture
         }
     }
 };
@@ -465,13 +610,30 @@ const ensureCustomerAndGetId = async () => {
     const newCustomerPayload = {
         ten,
         sdt,
-        email,
-        gioiTinh: gt,
+        email: email || `${sdt}@khachhang.com`,
+        gioiTinh: gt !== null ? gt : true,
         ngaySinh: ns
     };
 
     const created = await dichVuKhachHang.taoKhachHang(newCustomerPayload);
     if (created?.id) {
+        if (recipientProvince.value && recipientDistrict.value && recipientWard.value && recipientAddressDetail.value) {
+            try {
+                const p = provincesShip.value.find(x => x.code === recipientProvince.value);
+                const d = districtsShip.value.find(x => x.code === recipientDistrict.value);
+                const w = wardsShip.value.find(x => x.code === recipientWard.value);
+                await dichVuKhachHang.taoDiaChi({
+                    idKhachHang: created.id,
+                    tinh: p ? p.name : '',
+                    thanhPho: d ? d.name : '',
+                    phuongXa: w ? w.name : '',
+                    diaChiChiTiet: recipientAddressDetail.value,
+                    loaiDiaChi: 'DEFAULT'
+                });
+            } catch (e) {
+                console.error('Không thể tự động lưu địa chỉ cho khách hàng mới', e);
+            }
+        }
         await selectCustomer(created);
         return created.id;
     }
@@ -706,8 +868,8 @@ watch(
                         tongDonHang: customer.tongDonHang || 0
                     };
 
-                    if (!recipientName.value) recipientName.value = customer.ten || '';
-                    if (!recipientPhone.value) recipientPhone.value = customer.sdt || '';
+                    recipientName.value = customer.ten || '';
+                    recipientPhone.value = customer.sdt || '';
 
                     // Auto-fill default address
                     try {
@@ -936,6 +1098,13 @@ const onRemoveCustomer = async () => {
         const updated = await dichVuDonHang.setKhachHang(selectedOrder.value.id, null);
         updateOrderInList(updated);
         refreshBestVoucher(updated);
+        customerForm.value = { ten: '', sdt: '', email: '', gioiTinh: true, tinh: null, thanhPho: null, phuongXa: null, diaChiChiTiet: '' };
+        recipientName.value = '';
+        recipientPhone.value = '';
+        recipientProvince.value = null;
+        recipientDistrict.value = null;
+        recipientWard.value = null;
+        recipientAddressDetail.value = '';
         addNotification({ title: 'Thêm khách hàng thành công.', subtitle: 'Đã gỡ khách hàng khỏi hóa đơn.', color: 'success' });
     } catch (e) {
         addNotification({ title: 'Không thêm được khách hàng.', subtitle: getErrorMessage(e, 'Không thể gỡ khách hàng khỏi hóa đơn.'), color: 'error' });
@@ -989,6 +1158,14 @@ const loadEligibleVouchers = (order) => {
 
         const assignedCustomerIds = Array.isArray(voucher.listIdKhachHang) ? voucher.listIdKhachHang : [];
         return assignedCustomerIds.includes(customerId);
+    }).map(v => {
+        const type = String(v.loaiPhieu || '').toUpperCase();
+        const isPercent = type === 'PHAN_TRAM' || type === 'PERCENT';
+        const valStr = isPercent ? `${v.phanTramGiamGia}%` : formatCurrency(v.soTienGiam || 0);
+        return {
+            ...v,
+            customTitle: `Giảm ${valStr} - ${v.ten} (${v.ma})`
+        };
     });
 };
 
@@ -1012,18 +1189,11 @@ const refreshBestVoucher = (orderOverride = selectedOrder.value) => {
     const bestVoucher = pickBestVoucher(vouchers.value, orderOverride.tongTien || 0);
     const bestVoucherId = bestVoucher?.id || null;
 
-    // Gợi ý mã tốt nhất vào state để UI hiển thị nhưng KHÔNG tự động apply vào idPhieuGiamGia
+    // Gợi ý mã tốt nhất vào state để UI hiển thị
     orderOverride.suggestedVoucherId = bestVoucherId;
 
-    // NẾU người dùng đã tự apply mã (có idPhieuGiamGia), kiểm tra xem nó còn hợp lệ không
-    if (orderOverride.idPhieuGiamGia) {
-        const currentVoucher = vouchers.value.find(v => String(v.id) === String(orderOverride.idPhieuGiamGia));
-        const isCurrentValid = currentVoucher && Number(orderOverride.tongTien || 0) >= Number(currentVoucher.donHangToiThieu || 0);
-        if (!isCurrentValid) {
-            orderOverride.idPhieuGiamGia = null;
-            manualVoucherLocks.value[orderOverride.id] = false;
-        }
-    }
+    // Luôn tự động áp dụng mã tốt nhất mỗi khi giỏ hàng thay đổi (real-time)
+    orderOverride.idPhieuGiamGia = bestVoucherId;
 
     // Tính lại tổng tiền sau giảm giá để UI hiển thị ngay lập tức
     const appliedVoucher = vouchers.value.find(v => String(v.id) === String(orderOverride.idPhieuGiamGia));
@@ -1162,7 +1332,7 @@ const completePaidOrder = async (orderId) => {
         await createNewOrder({ force: true, silent: true });
     }
     clampActiveOrderIndex();
-    checkoutData.value.receivedAmount = 0;
+    checkoutData.value.receivedAmount = null;
     checkoutData.value.note = '';
 };
 
@@ -1328,6 +1498,8 @@ const startVnPayFlow = async () => {
             statusText: 'Đang chờ khách hàng quét mã và thanh toán...',
             orderId: orderId,
             amount: finalCollectAmount.value,
+            qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.paymentUrl)}`,
+            paymentUrl: data.paymentUrl,
             pollInterval: null
         };
 
@@ -1428,14 +1600,7 @@ const onCheckout = async () => {
     isProcessing.value = false;
 
     if (checkoutData.value.paymentMethod === 'VNPAY') {
-        confirmDialog.value = {
-            show: true,
-            title: 'Xác nhận thanh toán VNPay',
-            message: `Hệ thống sẽ mở cổng thanh toán VNPay với số tiền [${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(finalCollectAmount.value)}]. Bạn có muốn tiếp tục không?`,
-            color: 'primary',
-            action: startVnPayFlow,
-            loading: false
-        };
+        startVnPayFlow();
         return;
     }
 
@@ -1482,7 +1647,7 @@ const onCheckout = async () => {
                 };
                 await submitCheckout({ payload });
 
-                checkoutData.value.receivedAmount = 0;
+                checkoutData.value.receivedAmount = null;
                 checkoutData.value.note = '';
                 confirmDialog.value.show = false;
             } catch (e) {
@@ -1638,8 +1803,8 @@ const submitQuickAdd = async () => {
         const newCustomerPayload = {
             ten: name,
             sdt: phone,
-            email: email,
-            gioiTinh: quickAddForm.value.gioiTinh,
+            email: email || `${phone}@khachhang.com`,
+            gioiTinh: quickAddForm.value.gioiTinh !== null ? quickAddForm.value.gioiTinh : true,
             tenTaiKhoan: '',
             matKhau: '',
             trangThai: 'DANG_HOAT_DONG',
@@ -1690,9 +1855,9 @@ const formatNumberWithDots = (val) => {
 };
 
 const parseNumberFromDots = (val) => {
-    if (!val) return 0;
+    if (!val && val !== 0) return null;
     const clean = String(val).replace(/\D/g, '');
-    return clean ? Number(clean) : 0;
+    return clean ? Number(clean) : null;
 };
 
 const formatDateTime = (dateStr) => {
@@ -1739,53 +1904,36 @@ const formatDateTime = (dateStr) => {
                                     autocomplete="off" />
 
                                 <!-- Search dropdown overlay -->
-                                <v-card v-if="showProductAutocomplete && filteredProductSearchResults.length > 0"
+                                <v-card v-if="showProductAutocomplete && groupedProducts.length > 0"
                                     class="position-absolute mt-1 shadow-lg border rounded-lg overflow-y-auto product-dropdown-card"
                                     style="max-height: 495px !important; z-index: 1000">
                                     <v-list class="pa-0">
-                                        <v-list-item v-for="variant in filteredProductSearchResults" :key="variant.id"
-                                            @mousedown="selectProductFromSearch(variant)"
+                                        <v-list-item v-for="product in groupedProducts" :key="product.maSanPham"
+                                            @mousedown="openVariantModal(product)"
                                             class="border-b py-3 hover-autocomplete-item pointer">
                                             <div class="d-flex justify-space-between w-100 align-start">
-                                                <!-- Left info block -->
                                                 <div class="d-flex align-start flex-grow-1">
                                                     <v-avatar rounded="lg" size="48"
                                                         class="mr-3 bg-grey-lighten-4 border flex-shrink-0">
-                                                        <v-img v-if="variant.hinhAnh" :src="variant.hinhAnh" cover />
+                                                        <v-img v-if="product.hinhAnh" :src="product.hinhAnh" cover />
                                                         <BoxIcon v-else size="20" class="text-grey" />
                                                     </v-avatar>
                                                     <div class="d-flex flex-column" style="gap: 8px !important;">
-                                                        <!-- Product Name (Tên biến thể) -->
                                                         <div class="text-slate-700"
                                                             style="font-size: 13.5px !important; line-height: 1.3;">
-                                                            {{ variant.tenSanPham }}
+                                                            {{ product.tenSanPham }}
                                                         </div>
-
-                                                        <!-- mã sp --- mã sku (với nhãn vuông pastel nhé) -->
                                                         <div class="d-flex align-center gap-1.5 mt-0.5 flex-wrap">
-                                                            <span class="sp-badge">Mã Sản phẩm: {{ variant.maSanPham || 'SP0001' }}</span>
+                                                            <span class="sp-badge">Mã Sản phẩm: {{ product.maSanPham || 'SP0001' }}</span>
                                                             <span style="margin-left: 15px; margin-right: 15px; font-size: 11px; color: #cbd5e1; opacity: 0.4;">|</span>
-                                                            <span class="sku-badge">{{ variant.maChiTietSanPham }}</span>
-                                                        </div>
-
-                                                        <!-- màu sắc --- size --- số lượng -->
-                                                        <div class="d-flex align-center mt-0.5 text-slate-600"
-                                                            style="font-size: 12px; flex-wrap: wrap;">
-                                                            <span>Màu sắc: <span class="text-slate-500">{{
-                                                                variant.tenMauSac || 'Không màu' }}</span></span>
-                                                            <span style="margin-left: 15px; margin-right: 15px; color: #cbd5e1; opacity: 0.4;">|</span>
-                                                            <span>Size: <span class="text-slate-500">{{
-                                                                variant.tenKichThuoc || 'N/A' }}</span></span>
-                                                            <span style="margin-left: 15px; margin-right: 15px; color: #cbd5e1; opacity: 0.4;">|</span>
-                                                            <span>Tồn: <span class="text-slate-500">{{
-                                                                variant.soLuongTon || 0 }}</span></span>
+                                                            <span class="sku-badge">{{ product.variants.length }} biến thể</span>
                                                         </div>
                                                     </div>
                                                 </div>
-
-                                                <!-- Right info block -->
                                                 <div class="text-right flex-shrink-0 pl-3">
-                                                    <div class="price-text">{{ formatCurrency(variant.giaBan) }}</div>
+                                                    <div class="price-text text-success font-weight-bold" style="font-size: 13.5px;">
+                                                        {{ product.variants.length > 0 ? formatCurrency(product.variants[0].giaBan) : '' }}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </v-list-item>
@@ -1881,16 +2029,20 @@ const formatDateTime = (dateStr) => {
                                         Tổng đơn hàng</h3>
                                 </div>
 
-                                <v-row no-gutters class="mb-4 border-b pb-3">
-                                    <v-col cols="6">
-                                        <v-checkbox v-model="isFreeShip" label="Miễn phí giao hàng" hide-details
-                                            density="compact" class="text-slate-700" />
-                                    </v-col>
-                                    <v-col cols="6">
-                                        <v-checkbox v-model="onlyChargeIfReturned" label="Mua hàng tại quầy"
-                                            hide-details density="compact" class="text-slate-700" />
-                                    </v-col>
-                                </v-row>
+                                <div class="d-flex align-center gap-6 mb-4 border-b pb-3">
+                                    <div class="d-flex align-center cursor-pointer" @click="isGiaoHang = false">
+                                        <v-icon :color="!isGiaoHang ? 'primary' : 'grey-lighten-1'" class="mr-2" size="20">
+                                            {{ !isGiaoHang ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank' }}
+                                        </v-icon>
+                                        <span :class="!isGiaoHang ? 'font-weight-bold text-slate-800' : 'text-slate-600'" style="font-size: 13px !important">Mua hàng tại quầy</span>
+                                    </div>
+                                    <div class="d-flex align-center cursor-pointer" @click="isGiaoHang = true">
+                                        <v-icon :color="isGiaoHang ? 'primary' : 'grey-lighten-1'" class="mr-2" size="20">
+                                            {{ isGiaoHang ? 'mdi-radiobox-marked' : 'mdi-radiobox-blank' }}
+                                        </v-icon>
+                                        <span :class="isGiaoHang ? 'font-weight-bold text-slate-800' : 'text-slate-600'" style="font-size: 13px !important">Giao hàng</span>
+                                    </div>
+                                </div>
 
                                 <div class="flex-grow-1 d-flex flex-column" style="gap: 20px;">
                                     <!-- Voucher Selection -->
@@ -1907,13 +2059,16 @@ const formatDateTime = (dateStr) => {
                                     </div>
 
                                     <!-- Shipping Fee -->
-                                    <div class="d-flex align-center justify-space-between">
-                                        <span class="text-slate-600" style="font-size: 13px !important">Phí vận
-                                            chuyển</span>
+                                    <div v-if="isGiaoHang" class="d-flex align-center justify-space-between">
+                                        <div class="d-flex flex-column">
+                                            <span class="text-slate-600" style="font-size: 13px !important">Phí vận chuyển</span>
+                                            <v-checkbox v-model="isFreeShip" label="Miễn phí vận chuyển" hide-details density="compact" color="primary" class="text-caption font-weight-medium" style="margin-top: -6px; transform: scale(0.9); transform-origin: left top" />
+                                        </div>
                                         <v-menu offset="4">
                                             <template v-slot:activator="{ props }">
                                                 <v-text-field :model-value="formatNumberWithDots(shippingFee)"
-                                                    @input="e => shippingFee = parseNumberFromDots(e.target.value)"
+                                                    @input="e => { shippingFee = parseNumberFromDots(e.target.value); e.target.value = formatNumberWithDots(shippingFee); }"
+                                                    @keypress="e => { if (!/^[0-9]$/.test(e.key)) e.preventDefault() }"
                                                     v-bind="props" variant="outlined" density="compact" suffix="đ"
                                                     hide-details
                                                     style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
@@ -2022,10 +2177,12 @@ const formatDateTime = (dateStr) => {
                                         {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
                                     </span>
                                     <v-text-field :model-value="formatNumberWithDots(checkoutData.receivedAmount)"
-                                        @input="e => checkoutData.receivedAmount = parseNumberFromDots(e.target.value)"
+                                        @input="e => { checkoutData.receivedAmount = parseNumberFromDots(e.target.value); e.target.value = formatNumberWithDots(checkoutData.receivedAmount); }"
+                                        @keypress="e => { if (!/^[0-9]$/.test(e.key)) e.preventDefault() }"
                                         variant="outlined" density="compact" suffix="đ" hide-details
+                                        :disabled="checkoutData.paymentMethod === 'VNPAY'"
                                         style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
-                                        class="text-right-input" />
+                                        :class="{'bg-slate-50 opacity-80': checkoutData.paymentMethod === 'VNPAY', 'text-right-input': true}" />
                                 </div>
 
                                 <!-- Unpaid / Refund Message Alert -->
@@ -2155,18 +2312,16 @@ const formatDateTime = (dateStr) => {
                                         @focus="showCustomerSuggestions = true" />
 
                                     <!-- Autocomplete Suggestions Dropdown -->
-                                    <div v-if="showCustomerSuggestions && customerResults.length > 0"
-                                        class="suggestion-popover overflow-y-auto" style="max-height: 200px;"
-                                        v-click-outside="() => showCustomerSuggestions = false">
-                                        <div class="pa-1 d-flex flex-column gap-1">
+                                    <v-menu v-model="showCustomerSuggestions" activator="parent" location="bottom start" max-height="200" :close-on-content-click="false">
+                                        <v-list v-if="customerResults.length > 0" class="pa-1 d-flex flex-column gap-1">
                                             <div v-for="c in customerResults" :key="c.id"
-                                                @click="onSelectSuggestedCustomer(c)"
+                                                @click="onSelectSuggestedCustomer(c); showCustomerSuggestions = false;"
                                                 class="suggestion-item d-flex justify-end align-center px-3 py-1 cursor-pointer transition-all"
                                                 style="font-size: 13px; font-weight: 500;">
                                                 <span class="text-slate-800 font-mono">{{ c.sdt }}</span>
                                             </div>
-                                        </div>
-                                    </div>
+                                        </v-list>
+                                    </v-menu>
                                 </div>
                             </div>
 
@@ -2186,7 +2341,7 @@ const formatDateTime = (dateStr) => {
                     </v-card>
 
                     <!-- Nhận hàng Card -->
-                    <v-card class="pos-card pa-4 rounded-lg border">
+                    <v-card v-if="isGiaoHang" class="pos-card pa-4 rounded-lg border">
                         <div class="font-weight-bold text-slate-800 mb-3" style="font-size: 14px !important">Thông tin
                             nhận hàng</div>
                         <div class="d-flex flex-column gap-1">
@@ -2258,7 +2413,7 @@ const formatDateTime = (dateStr) => {
         </div>
 
         <!-- VNPay QR Dialog -->
-            <v-dialog v-model="vnpayDialog.show" max-width="450" persistent>
+            <v-dialog v-model="vnpayDialog.show" max-width="450" @update:model-value="(val) => { if (!val) cancelVnPayFlow() }">
                 <v-card class="rounded-xl overflow-hidden pb-4">
                     <v-card-text class="pt-6 text-center d-flex flex-column align-center">
                         <div class="vnpay-logo-wrapper mb-4">
@@ -2461,12 +2616,99 @@ const formatDateTime = (dateStr) => {
                         :message="confirmDialog.message" :color="confirmDialog.color" :loading="confirmDialog.loading"
                         @confirm="confirmDialog.action" />
 
+                    <!-- Variant Selection Modal (Shopee style) -->
+                    <v-dialog v-model="variantModal.show" max-width="500">
+                        <v-card class="rounded-xl overflow-hidden shadow-lg">
+                            <!-- Product Summary Header -->
+                            <v-card-title class="pa-5 bg-white border-b position-sticky top-0 z-10 d-flex align-start justify-space-between">
+                                <div class="d-flex align-start gap-4">
+                                    <v-avatar rounded="lg" size="80" class="border bg-grey-lighten-4 flex-shrink-0">
+                                        <v-img :src="currentSelectedVariant?.hinhAnh || variantModal.product?.hinhAnh" cover />
+                                    </v-avatar>
+                                    <div class="pt-1">
+                                        <h3 class="text-subtitle-1 font-weight-bold text-slate-800 mb-1" style="line-height: 1.3; font-size: 15px !important;">{{ variantModal.product?.tenSanPham }}</h3>
+                                        <div class="text-primary font-weight-bold mb-1" style="font-size: 18px;">
+                                            {{ currentSelectedVariant ? formatCurrency(currentSelectedVariant.giaBan) : formatCurrency(variantModal.product?.variants[0]?.giaBan || 0) }}
+                                        </div>
+                                        <div class="text-body-2 text-slate-500">Kho: {{ currentSelectedVariant ? currentSelectedVariant.soLuongTon : variantModal.product?.variants.reduce((sum, v) => sum + (v.soLuongTon||0), 0) }}</div>
+                                    </div>
+                                </div>
+                                <v-btn icon="mdi-close" variant="text" size="small" color="slate-400" @click="closeVariantModal" class="ml-2" />
+                            </v-card-title>
+
+                            <v-card-text class="pa-5 bg-white" style="max-height: 60vh; overflow-y: auto;">
+                                <!-- Colors -->
+                                <div class="mb-6">
+                                    <div class="text-subtitle-2 font-weight-bold text-slate-800 mb-3">Màu sắc</div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <div v-for="color in uniqueColors" :key="color.name"
+                                             class="cursor-pointer border rounded-lg px-3 py-1.5 d-flex align-center gap-2 transition-all"
+                                             :class="variantModal.selectedColor === color.name ? 'border-primary bg-primary-lighten-5 text-primary font-weight-bold' : 'border-slate-300 text-slate-700 hover-bg-slate-50'"
+                                             @click="selectColor(color.name)">
+                                             <v-avatar size="24" rounded="sm" v-if="color.image"><v-img :src="color.image" cover/></v-avatar>
+                                             <span style="font-size: 14px;">{{ color.name }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Sizes -->
+                                <div class="mb-6" v-if="variantModal.selectedColor">
+                                    <div class="text-subtitle-2 font-weight-bold text-slate-800 mb-3 d-flex justify-space-between align-center">
+                                        <span>Kích cỡ</span>
+                                        <span class="text-caption text-primary font-weight-medium cursor-pointer"><v-icon size="14" left>mdi-ruler</v-icon> Hướng dẫn chọn size</span>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <div v-for="size in availableSizes" :key="size.name"
+                                             class="cursor-pointer border rounded-lg px-5 py-2 transition-all text-center"
+                                             style="min-width: 60px;"
+                                             :class="[
+                                                 size.soLuongTon === 0 ? 'bg-slate-50 border-slate-200 text-slate-400 opacity-60' : 
+                                                 variantModal.selectedSize === size.name ? 'border-primary bg-primary text-white font-weight-bold shadow-sm' : 'border-slate-300 text-slate-700 hover-bg-slate-50'
+                                             ]"
+                                             @click="selectSize(size.name, size.soLuongTon)">
+                                             <div style="font-size: 14px;">{{ size.name }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Quantity -->
+                                <div class="d-flex align-center justify-space-between mt-6 pt-5 border-t" v-if="variantModal.selectedSize">
+                                    <div class="text-subtitle-2 font-weight-bold text-slate-800">Số lượng</div>
+                                    <div class="d-flex align-center border border-slate-300 rounded-lg overflow-hidden" style="height: 36px; width: 120px;">
+                                        <v-btn icon="mdi-minus" size="small" variant="text" color="slate-600" class="rounded-0 h-100 flex-shrink-0" style="width: 36px; min-width: 36px;" 
+                                               :disabled="variantModal.quantity <= 1" @click="variantModal.quantity--"></v-btn>
+                                        <input type="number" v-model.number="variantModal.quantity" @blur="validateQuantityInput" 
+                                               class="text-center font-weight-bold outline-none flex-grow-1 bg-white h-100 hide-arrows" style="width: 100%; font-size: 15px;" />
+                                        <v-btn icon="mdi-plus" size="small" variant="text" color="slate-600" class="rounded-0 h-100 flex-shrink-0" style="width: 36px; min-width: 36px;" 
+                                               :disabled="variantModal.quantity >= (currentSelectedVariant?.soLuongTon || 1)" @click="variantModal.quantity++"></v-btn>
+                                    </div>
+                                </div>
+                            </v-card-text>
+
+                            <v-card-actions class="pa-4 bg-white border-t">
+                                <v-btn color="primary" variant="flat" block size="x-large" class="rounded-xl text-none font-weight-bold shadow-sm" style="font-size: 16px;" 
+                                       :disabled="!currentSelectedVariant" :loading="isAddingProduct" @click="confirmAddVariants">
+                                    <v-icon left class="mr-2">mdi-cart-plus</v-icon>
+                                    Thêm vào giỏ hàng
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+
                      <!-- Hóa đơn sau thanh toán -->
                     <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" />
     </v-container>
 </template>
 
             <style scoped>
+            .hide-arrows::-webkit-outer-spin-button,
+            .hide-arrows::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+            .hide-arrows {
+                -moz-appearance: textfield;
+            }
             .pos-wrapper {
                 background: #eef2f6;
                 min-height: calc(100vh - 64px);
