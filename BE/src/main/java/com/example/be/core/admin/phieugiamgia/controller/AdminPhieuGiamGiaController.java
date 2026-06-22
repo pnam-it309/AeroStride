@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_PHIEU_GIAM_GIA)
 @RequiredArgsConstructor
-@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
+@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_STAFF)
 public class AdminPhieuGiamGiaController {
 
     private final AdminPhieuGiamGiaService service;

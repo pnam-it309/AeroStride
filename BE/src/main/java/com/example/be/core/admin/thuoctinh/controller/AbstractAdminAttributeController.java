@@ -12,7 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.example.be.infrastructure.constants.VaiTro;
 
-@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
+@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_STAFF)
 public abstract class AbstractAdminAttributeController {
 
     private final AdminAttributeManagementService service;

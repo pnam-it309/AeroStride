@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_THONG_KE)
 @RequiredArgsConstructor
-@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
+@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_STAFF)
 public class AdminThongKeController {
 
     private final AdminThongKeService adminThongKeService;

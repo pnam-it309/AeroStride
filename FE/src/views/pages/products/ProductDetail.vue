@@ -156,7 +156,7 @@ const addToCart = () => {
         return;
     }
 
-    const variant = getSelectedVariant();
+    const variant = selectedVariant.value;
     if (!variant) {
         toastStore.showToast('Phiên bản này hiện không có sẵn', 'warning');
         return;

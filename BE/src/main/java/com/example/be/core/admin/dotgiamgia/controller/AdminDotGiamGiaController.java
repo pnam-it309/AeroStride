@@ -21,7 +21,7 @@ import com.example.be.infrastructure.constants.VaiTro;
 @RestController
 @RequestMapping(RoutesConstant.ADMIN_DOT_GIAM_GIA)
 @RequiredArgsConstructor
-@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_ONLY)
+@PreAuthorize(VaiTro.PRE_AUTH_ADMIN_STAFF)
 public class AdminDotGiamGiaController {
 
     private final AdminDotGiamGiaService service;

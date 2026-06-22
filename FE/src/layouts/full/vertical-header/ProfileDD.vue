@@ -12,11 +12,6 @@ const profileDD = [
         title: 'Tài khoản của tôi',
         subtitle: 'Tin nhắn & Email'
     },
-    {
-        avatar: 'mdi-format-list-bulleted',
-        title: 'Nhiệm vụ của tôi',
-        subtitle: 'Việc cần làm'
-    }
 ];
 
 const handleLogout = async () => {
@@ -36,7 +31,8 @@ const handleLogout = async () => {
         </template>
         <v-sheet rounded="md" width="200" elevation="10" class="mt-2">
             <v-list class="py-0" lines="one" density="compact">
-                <v-list-item v-for="(item, i) in profileDD" :key="i" :value="item" color="primary" class="py-2 px-4 shadow-none">
+                <v-list-item v-for="(item, i) in profileDD" :key="i" :value="item" color="primary"
+                    class="py-2 px-4 shadow-none">
                     <template v-slot:prepend>
                         <v-icon :icon="item.avatar" size="20" class="mr-3"></v-icon>
                     </template>
@@ -44,9 +40,9 @@ const handleLogout = async () => {
                 </v-list-item>
             </v-list>
             <div class="pt-4 pb-4 px-5 text-center">
-                <v-btn color="primary" variant="outlined" block @click="handleLogout" class="rounded-pill font-weight-bold"
-                    >Đăng xuất</v-btn
-                >
+                <v-btn color="primary" variant="outlined" block @click="handleLogout"
+                    class="rounded-pill font-weight-bold">Đăng
+                    xuất</v-btn>
             </div>
         </v-sheet>
     </v-menu>

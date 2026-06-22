@@ -10,41 +10,25 @@ const loading = ref(true);
 
 const padDatePart = (value) => String(value).padStart(2, '0');
 
-const formatDateTimeInput = (date) => {
+const formatDateInput = (date) => {
     const y = date.getFullYear();
     const m = padDatePart(date.getMonth() + 1);
     const d = padDatePart(date.getDate());
-    const h = padDatePart(date.getHours());
-    const min = padDatePart(date.getMinutes());
-    return `${y}-${m}-${d}T${h}:${min}`;
-};
-
-const getQuickRangeStart = (endDate, days) => {
-    const startDate = new Date(endDate);
-    startDate.setDate(startDate.getDate() - days);
-    return startDate;
+    return `${y}-${m}-${d}`;
 };
 
 const defaultEndDate = new Date();
-const defaultStartDate = getQuickRangeStart(defaultEndDate, 365);
-const startDate = ref(formatDateTimeInput(defaultStartDate));
-const endDate = ref(formatDateTimeInput(defaultEndDate));
-const selectedQuickRange = ref('365');
-const customQuickRangeTitle = ref('');
+const defaultStartDate = new Date(defaultEndDate);
+defaultStartDate.setDate(defaultStartDate.getDate() - 365);
+const startDate = ref(formatDateInput(defaultStartDate));
+const endDate = ref(formatDateInput(defaultEndDate));
 
-const dateRange = ref([defaultStartDate, defaultEndDate]);
+const onStartDateChange = (val) => {
+    startDate.value = val ? formatDateInput(new Date(val)) : null;
+};
 
-const onDateRangeChange = (val) => {
-    dateRange.value = val;
-    if (val && val.length === 2) {
-        startDate.value = val[0] ? formatDateTimeInput(val[0]) : null;
-        endDate.value = val[1] ? formatDateTimeInput(val[1]) : null;
-        syncQuickRangeFromDates();
-    } else {
-        startDate.value = null;
-        endDate.value = null;
-        syncQuickRangeFromDates();
-    }
+const onEndDateChange = (val) => {
+    endDate.value = val ? formatDateInput(new Date(val)) : null;
 };
 
 const selectedYear = computed(() => {
@@ -64,6 +48,7 @@ const revenueStats = ref({
     donHangDaHuy: 0,
     tongKhachHang: 0,
     tongSanPham: 0,
+    sanPhamDaBan: 0,
     doanhThuTaiQuay: 0,
     doanhThuTrucTuyen: 0,
     donTaiQuay: 0,
@@ -244,75 +229,6 @@ const statusBarOptions = ref({
     }
 });
 
-const quickRangeOptions = [
-    { title: '1 ngày', value: '1' },
-    { title: '7 ngày', value: '7' },
-    { title: '30 ngày', value: '30' },
-    { title: '1 năm', value: '365' }
-];
-
-const displayedQuickRangeOptions = computed(() => {
-    if (selectedQuickRange.value !== 'custom' || !customQuickRangeTitle.value) {
-        return quickRangeOptions;
-    }
-
-    return [
-        ...quickRangeOptions,
-        { title: customQuickRangeTitle.value, value: 'custom' }
-    ];
-});
-
-const getDateTime = (value) => {
-    if (!value) return null;
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return null;
-
-    return date;
-};
-
-const syncQuickRangeFromDates = () => {
-    const fromDate = getDateTime(startDate.value);
-    const toDate = getDateTime(endDate.value);
-
-    if (!fromDate || !toDate) {
-        selectedQuickRange.value = null;
-        customQuickRangeTitle.value = '';
-        return;
-    }
-
-    const [start, end] = fromDate <= toDate ? [fromDate, toDate] : [toDate, fromDate];
-    const oneDayMs = 24 * 60 * 60 * 1000;
-    const totalDays = Math.max(1, Math.round((end - start) / oneDayMs));
-    const matchedRange = quickRangeOptions.find((item) => Number(item.value) === totalDays);
-
-    if (matchedRange) {
-        selectedQuickRange.value = matchedRange.value;
-        customQuickRangeTitle.value = '';
-        return;
-    }
-
-    selectedQuickRange.value = 'custom';
-    customQuickRangeTitle.value = `${totalDays} ngày`;
-};
-
-const applyQuickRange = (days) => {
-    if (days === 'custom') {
-        customQuickRangeTitle.value = 'Tuỳ chỉnh';
-        return;
-    }
-
-    const end = new Date();
-    const start = getQuickRangeStart(end, days);
-
-    startDate.value = formatDateTimeInput(start);
-    endDate.value = formatDateTimeInput(end);
-    dateRange.value = [start, end];
-
-    customQuickRangeTitle.value = '';
-    loadStatistics();
-};
-
 const getDateRange = () => {
     let tuNgay = startDate.value ? startDate.value.slice(0, 10) : '';
     let denNgay = endDate.value ? endDate.value.slice(0, 10) : '';
@@ -369,10 +285,19 @@ const loadStatistics = async () => {
         ]);
 
         if (overview) {
+            const soldProductQuantity = Array.isArray(overview.topSanPhamBanChay)
+                ? overview.topSanPhamBanChay.reduce((sum, item) => sum + Number(item.quantity || 0), 0)
+                : 0;
+            const completedOrderCount = Number(overview.donHangHoanThanh || 0);
+            const totalRevenue = Number(overview.tongDoanhThu || 0);
+            const averageOrderValue = overview.giaTriTrungBinh != null
+                ? Number(overview.giaTriTrungBinh)
+                : (completedOrderCount > 0 ? totalRevenue / completedOrderCount : 0);
+
             revenueStats.value = {
-                totalRevenue: overview.tongDoanhThu || 0,
+                totalRevenue,
                 totalOrders: overview.tongDonHang || 0,
-                averageOrderValue: overview.giaTriTrungBinh || 0,
+                averageOrderValue,
                 growthRate: 0,
                 donHangHoanThanh: overview.donHangHoanThanh || 0,
                 donHangChoXacNhan: overview.donHangChoXacNhan || 0,
@@ -380,6 +305,7 @@ const loadStatistics = async () => {
                 donHangDaHuy: overview.donHangDaHuy || 0,
                 tongKhachHang: overview.tongKhachHang || 0,
                 tongSanPham: overview.tongSanPham || 0,
+                sanPhamDaBan: soldProductQuantity,
                 doanhThuTaiQuay: overview.doanhThuTaiQuay || 0,
                 doanhThuTrucTuyen: overview.doanhThuTrucTuyen || 0,
                 donTaiQuay: overview.donTaiQuay || 0,
@@ -659,15 +585,15 @@ const kpiCards = [
         formatter: formatNumber
     },
     {
-        title: 'Tổng sản phẩm',
-        valueKey: 'tongSanPham',
+        title: 'Sản phẩm đã bán',
+        valueKey: 'sanPhamDaBan',
         icon: 'mdi-package-variant-closed',
         color: 'secondary',
         tone: 'purple',
         formatter: formatNumber
     },
     {
-        title: 'Giá trị trung bình',
+        title: 'Giá trị trung bình đơn',
         valueKey: 'averageOrderValue',
         icon: 'mdi-chart-line',
         color: 'info',
@@ -715,16 +641,15 @@ onMounted(() => {
         <section class="stats-shell mt-4">
             <div class="stats-toolbar">
                 <div class="stats-filters">
-                    <div class="stats-filter-field stats-filter-field-datetime" style="flex: 2; min-width: 400px;">
-                        <div class="filter-field-label">Khoảng thời gian</div>
-                        <AppDatePicker :model-value="dateRange" @update:model-value="onDateRangeChange" range
-                            enable-time-picker placeholder="Từ ngày - Đến ngày" />
+                    <div class="stats-filter-field stats-filter-field-date">
+                        <div class="filter-field-label">Từ ngày</div>
+                        <AppDatePicker :model-value="startDate" @update:model-value="onStartDateChange"
+                            :max-date="endDate" placeholder="dd/mm/yyyy" />
                     </div>
-                    <div class="stats-filter-field stats-filter-field-range">
-                        <div class="filter-field-label">Khoảng nhanh</div>
-                        <v-select v-model="selectedQuickRange" :items="displayedQuickRangeOptions" variant="outlined"
-                            density="compact" hide-details class="stats-filter stats-filter-year"
-                            @update:model-value="applyQuickRange" />
+                    <div class="stats-filter-field stats-filter-field-date">
+                        <div class="filter-field-label">Đến ngày</div>
+                        <AppDatePicker :model-value="endDate" @update:model-value="onEndDateChange"
+                            :min-date="startDate" placeholder="dd/mm/yyyy" />
                     </div>
                     <v-btn color="primary" variant="flat" class="stats-refresh-btn px-6" height="40" :loading="loading"
                         @click="loadStatistics">
@@ -995,17 +920,10 @@ onMounted(() => {
     max-width: 252px;
 }
 
-.stats-filter-field-datetime {
-    flex-basis: 330px;
-    width: 330px;
-    max-width: 330px;
-}
-
-.stats-filter-field-range,
-.stats-filter-field-year {
-    flex: 0 0 164px;
-    width: 164px;
-    max-width: 164px;
+.stats-filter-field-date {
+    flex: 0 0 240px;
+    width: 240px;
+    max-width: 240px;
 }
 
 .filter-field-label {
@@ -1081,10 +999,6 @@ onMounted(() => {
 
 .stats-date-time-input :deep(input::-webkit-calendar-picker-indicator:hover) {
     opacity: 0.8;
-}
-
-.stats-filter-year {
-    width: 100%;
 }
 
 .stats-refresh-btn {
@@ -1824,11 +1738,8 @@ onMounted(() => {
 
     .stats-filters,
     .stats-filter-field,
-    .stats-filter-field-datetime,
-    .stats-filter-field-range,
-    .stats-filter-field-year,
+    .stats-filter-field-date,
     .stats-filter,
-    .stats-filter-year,
     .stats-refresh-btn {
         width: 100%;
     }

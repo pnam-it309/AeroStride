@@ -77,8 +77,6 @@ watch([filterStartDate, filterEndDate], () => {
     pagination.value.page = 1;
 });
 
-const errors = ref({});
-
 const form = ref({
     ma: '',
     ten: '',
