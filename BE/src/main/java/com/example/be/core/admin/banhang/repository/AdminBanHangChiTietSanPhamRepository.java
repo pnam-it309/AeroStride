@@ -32,7 +32,11 @@ public interface AdminBanHangChiTietSanPhamRepository extends ChiTietSanPhamRepo
     @Query("UPDATE ChiTietSanPham c SET c.soLuong = c.soLuong + :qty WHERE c.id = :id")
     int restoreStock(@Param("id") String id, @Param("qty") int qty);
 
-    @Query("SELECT ct FROM ChiTietSanPham ct WHERE ct.sanPham.ten LIKE %:keyword% OR ct.maChiTietSanPham LIKE %:keyword%")
+    @Query("""
+        SELECT ct FROM ChiTietSanPham ct
+        WHERE LOWER(ct.sanPham.ten) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR LOWER(ct.maChiTietSanPham) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        """)
     List<ChiTietSanPham> searchByKeyword(@Param("keyword") String keyword);
 
     @Query("""
@@ -45,9 +49,9 @@ public interface AdminBanHangChiTietSanPhamRepository extends ChiTietSanPhamRepo
         LEFT JOIN FETCH ct.kichThuoc
         WHERE (ct.xoaMem IS NULL OR ct.xoaMem = false)
         AND (
-            ct.maChiTietSanPham LIKE %:keyword%
-            OR sp.ten LIKE %:keyword%
-            OR sp.ma LIKE %:keyword%
+            LOWER(ct.maChiTietSanPham) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(sp.ten) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(sp.ma) LIKE LOWER(CONCAT('%', :keyword, '%'))
         )
         """)
     Page<ChiTietSanPham> searchByKeywordLite(@Param("keyword") String keyword, Pageable pageable);

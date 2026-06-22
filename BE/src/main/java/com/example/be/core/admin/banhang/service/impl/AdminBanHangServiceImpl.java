@@ -14,6 +14,7 @@ import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.exceptions.BusinessException;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
+import com.example.be.repository.DiaChiRepository;
 import com.example.be.utils.HelperUtils;
 import com.example.be.utils.CodeUtils;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     private final AdminBanHangPhieuGiamGiaRepository phieuGiamGiaRepository;
     private final AdminBanHangGiaoDichThanhToanRepository giaoDichThanhToanRepository;
     private final AdminBanHangPhuongThucThanhToanRepository phuongThucThanhToanRepository;
+    private final DiaChiRepository diaChiRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -236,15 +238,20 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         // Tồn kho đã được trừ lúc thêm vào giỏ hàng, nên không cần trừ lại ở đây nữa.
         // Chỉ cần cập nhật trạng thái hóa đơn.
 
+        hd.setKhachHang(resolveCheckoutCustomer(hd, request));
         hd.setTrangThai(OrderStatus.HOAN_THANH);
         hd.setLoaiDon(request.getLoaiDon());
         hd.setOrderType(com.example.be.infrastructure.constants.OrderType.IN_STORE); // Luôn là IN_STORE cho POS
         hd.setPhiVanChuyen(request.getPhiVanChuyen() != null ? request.getPhiVanChuyen() : BigDecimal.ZERO);
+        hd.setDiaChiNguoiNhan(normalizeBlank(request.getDiaChiNguoiNhan()));
+        hd.setSoDienThoaiNguoiNhan(normalizeBlank(request.getSdtNguoiNhan()));
         hd.setTongTien(tongTienThucTe); // Lấy giá trị thực tế thay vì request
         hd.setTongTienSauGiam(request.getTongTienSauGiam()); // FE đã tính, nhưng có thể tính lại cho an toàn. Tạm dùng FE hoặc gọi hàm tính lại. 
         hd.setGhiChu(request.getGhiChu());
         hd.setNgayCapNhat(System.currentTimeMillis());
         hoaDonRepository.save(hd);
+
+        saveDefaultShippingAddressIfNeeded(hd, request);
 
         if (request.getTienMat() != null && request.getTienMat().compareTo(BigDecimal.ZERO) > 0) {
             createGiaoDich(hd, "TIEN_MAT", request.getTienMat(), null);
@@ -252,6 +259,98 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         if (request.getTienChuyenKhoan() != null && request.getTienChuyenKhoan().compareTo(BigDecimal.ZERO) > 0) {
             createGiaoDich(hd, "CHUYEN_KHOAN", request.getTienChuyenKhoan(), request.getMaGiaoDich());
         }
+    }
+
+    private KhachHang resolveCheckoutCustomer(HoaDon hd, AdminBanHangCheckoutRequest request) {
+        String customerId = normalizeBlank(request.getIdKhachHang());
+        if (customerId != null) {
+            return khachHangRepository.findById(customerId)
+                    .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KHACH_HANG_NOT_EXIST));
+        }
+
+        String ten = normalizeBlank(request.getTenKhachHang());
+        String sdt = normalizeBlank(request.getSdtKhachHang());
+        String email = normalizeBlank(request.getEmailKhachHang());
+
+        if (ten == null && sdt == null && email == null) {
+            return hd.getKhachHang();
+        }
+
+        if (ten == null || sdt == null) {
+            throw new BusinessException("Vui lòng nhập đầy đủ tên khách hàng và số điện thoại để thêm khách hàng mới.");
+        }
+
+        KhachHang existedByPhone = khachHangRepository.findFirstBySdt(sdt).orElse(null);
+        if (existedByPhone != null) {
+            return existedByPhone;
+        }
+
+        if (email != null) {
+            KhachHang existedByEmail = khachHangRepository.findFirstByEmail(email).orElse(null);
+            if (existedByEmail != null) {
+                return existedByEmail;
+            }
+        }
+
+        KhachHang khachHang = new KhachHang();
+        khachHang.setMa(CodeUtils.generateRandom(KhachHang.class, khachHangRepository::existsByMa));
+        khachHang.setTen(ten);
+        khachHang.setSdt(sdt);
+        khachHang.setEmail(email);
+        khachHang.setGioiTinh(request.getGioiTinhKhachHang());
+        khachHang.setNgaySinh(request.getNgaySinhKhachHang());
+        khachHang.setGhiChu("Khách tạo từ bán hàng tại quầy");
+        khachHang.setTrangThai(TrangThai.DANG_HOAT_DONG);
+        khachHang.setXoaMem(false);
+        khachHang.setNgayTao(System.currentTimeMillis());
+        return khachHangRepository.save(khachHang);
+    }
+
+    private void saveDefaultShippingAddressIfNeeded(HoaDon hd, AdminBanHangCheckoutRequest request) {
+        if (!Boolean.TRUE.equals(request.getLuuDiaChiMacDinh()) || hd.getKhachHang() == null) {
+            return;
+        }
+
+        String detail = normalizeBlank(request.getDiaChiChiTiet());
+        String tinh = normalizeBlank(request.getTinh());
+        String thanhPho = normalizeBlank(request.getThanhPho());
+        String phuongXa = normalizeBlank(request.getPhuongXa());
+        String tenNguoiNhan = normalizeBlank(request.getTenNguoiNhan());
+        String sdtNguoiNhan = normalizeBlank(request.getSdtNguoiNhan());
+
+        if (detail == null || tinh == null || thanhPho == null || phuongXa == null || tenNguoiNhan == null || sdtNguoiNhan == null) {
+            return;
+        }
+
+        diaChiRepository.findByKhachHangId(hd.getKhachHang().getId()).forEach(address -> {
+            address.setLaMacDinh(false);
+            diaChiRepository.save(address);
+        });
+
+        DiaChi diaChi = DiaChi.builder()
+                .khachHang(hd.getKhachHang())
+                .tenNguoiNhan(tenNguoiNhan)
+                .sdtNguoiNhan(sdtNguoiNhan)
+                .diaChiChiTiet(detail)
+                .tinh(tinh)
+                .thanhPho(thanhPho)
+                .phuongXa(phuongXa)
+                .laMacDinh(true)
+                .build();
+        diaChi.setTrangThai(TrangThai.DANG_HOAT_DONG);
+        diaChi.setNgayTao(System.currentTimeMillis());
+        diaChi = diaChiRepository.save(diaChi);
+
+        KhachHang khachHang = hd.getKhachHang();
+        khachHang.setDiaChi(diaChi);
+        khachHangRepository.save(khachHang);
+    }
+
+    private String normalizeBlank(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        return value.trim();
     }
 
 

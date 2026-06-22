@@ -218,11 +218,19 @@ const getStatusTimestampMap = computed(() => {
 const orderStatusLabel = computed(() => getStatusLabel(order.value.trangThai));
 const orderStatusTone = computed(() => getStatusTone(order.value.trangThai));
 const showStatusChip = computed(() => loaded.value && getOrderStatusMeta(order.value.trangThai));
+const SHIPPING_ORDER_TYPES = ['GIAO_HANG', 'ONLINE', 'DELIVERY'];
+const normalizedOrderType = computed(() => String(order.value?.loaiDon || '').toUpperCase());
+const isShippingOrder = computed(() => SHIPPING_ORDER_TYPES.includes(normalizedOrderType.value));
 const canUpdateStatus = computed(() => order.value && getOrderStatus() !== null && getOrderStatus() < ORDER_STATUS_ORDINALS.HOAN_THANH);
-const isOrderEditable = computed(() => order.value.trangThai === 'CHO_XAC_NHAN' || getOrderStatus() < ORDER_STATUS_ORDINALS.CHO_GIAO);
+const isOrderEditable = computed(() => {
+    if (order.value.trangThai === 'CHO_XAC_NHAN') return true;
+    return isShippingOrder.value
+        ? getOrderStatus() < ORDER_STATUS_ORDINALS.CHO_GIAO
+        : getOrderStatus() < ORDER_STATUS_ORDINALS.HOAN_THANH;
+});
 
 const customerName = computed(() => order.value.tenKhachHang || 'Khách lẻ');
-const orderTypeLabel = computed(() => (order.value.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi'));
+const orderTypeLabel = computed(() => (isShippingOrder.value ? 'Giao hàng tận nơi' : 'Nhận tại quầy'));
 
 const displayAddress = computed(() => {
     let addr = order.value.diaChiNguoiNhan;
@@ -288,6 +296,7 @@ const sortedHistoryLogs = computed(() => {
 
 const allowedStatuses = computed(() => {
     const current = order.value.trangThai;
+    const deliveryStatusValues = ['CHO_GIAO', 'DANG_GIAO'];
     const allItems = [
         { title: 'Chờ xác nhận', value: 'CHO_XAC_NHAN' },
         { title: 'Đã xác nhận', value: 'XAC_NHAN' },
@@ -296,7 +305,11 @@ const allowedStatuses = computed(() => {
         { title: 'Hoàn thành', value: 'HOAN_THANH' },
         { title: 'Đã hủy', value: 'DA_HUY' },
         { title: 'Hoàn đơn', value: 'HOAN_DON' }
-    ];
+    ].filter((item) => isShippingOrder.value || !deliveryStatusValues.includes(item.value));
+
+    if (!isShippingOrder.value && current && deliveryStatusValues.includes(current)) {
+        allItems.push({ title: getStatusLabel(current), value: current });
+    }
 
     if (!current) return allItems;
 
@@ -307,7 +320,9 @@ const allowedStatuses = computed(() => {
             case 'CHO_XAC_NHAN':
                 return item.value === 'XAC_NHAN' || item.value === 'DA_HUY';
             case 'XAC_NHAN':
-                return item.value === 'CHO_GIAO' || item.value === 'DA_HUY';
+                return isShippingOrder.value
+                    ? item.value === 'CHO_GIAO' || item.value === 'DA_HUY'
+                    : item.value === 'HOAN_THANH' || item.value === 'DA_HUY';
             case 'CHO_GIAO':
                 return item.value === 'DANG_GIAO' || item.value === 'DA_HUY';
             case 'DANG_GIAO':
@@ -409,15 +424,22 @@ const getPaymentStatusText = (pay) => {
 
 const timelineSteps = computed(() => {
     const status = getOrderStatus();
+    const displayStatus = !isShippingOrder.value && (status === 2 || status === 3) ? 1 : status;
 
     // Core flow steps
-    const coreSteps = [
+    const shippingSteps = [
         { key: 0, label: 'Chờ xác nhận', icon: CalendarIcon, note: 'Đơn hàng mới tạo' },
         { key: 1, label: 'Đã xác nhận', icon: CircleCheckIcon, note: 'Đơn hàng đã được xác nhận' },
         { key: 2, label: 'Chờ giao', icon: PackageIcon, note: 'Đơn hàng chờ giao' },
         { key: 3, label: 'Đang giao', icon: TruckIcon, note: 'Đơn hàng đang được giao' },
         { key: 4, label: 'Hoàn thành', icon: CheckIcon, note: 'Đơn hàng đã hoàn thành' }
     ];
+    const counterSteps = [
+        { key: 0, label: 'Chờ xác nhận', icon: CalendarIcon, note: 'Đơn hàng mới tạo' },
+        { key: 1, label: 'Đã xác nhận', icon: CircleCheckIcon, note: 'Đơn hàng đã được xác nhận' },
+        { key: 4, label: 'Hoàn thành', icon: CheckIcon, note: 'Khách nhận tại quầy' }
+    ];
+    const coreSteps = isShippingOrder.value ? shippingSteps : counterSteps;
 
     // Exception steps
     const exceptionSteps = [
@@ -427,17 +449,16 @@ const timelineSteps = computed(() => {
 
     let steps = [...coreSteps];
     const tsMap = getStatusTimestampMap.value;
-    const statusOrdinal = status === null ? -1 : status;
 
     // Nếu trạng thái hiện tại là Hủy hoặc Hoàn đơn, chúng ta sẽ hiển thị nó là bước cuối cùng hoặc thay thế bước tương ứng
     if (status === 5 || status === 6) {
         const exc = exceptionSteps.find((s) => s.key === status);
         if (exc) {
-            steps = [...coreSteps.slice(0, 4), exc]; // Giữ 4 bước đầu, bước 5 là trạng thái đặc biệt
+            steps = [...coreSteps.slice(0, -1), exc]; // Giữ các bước xử lý chính, bước cuối là trạng thái đặc biệt
         }
     }
 
-    const currentActiveIndex = steps.findIndex((s) => s.key === status);
+    const currentActiveIndex = steps.findIndex((s) => s.key === displayStatus);
 
     return steps
         .filter((_, index) => index <= currentActiveIndex)
@@ -771,7 +792,7 @@ onMounted(() => {
                 </v-card>
 
                 <!-- 2. Shipping Info -->
-                <v-card elevation="0" class="premium-card mb-0 bg-white flex-grow-1">
+                <v-card v-if="isShippingOrder" elevation="0" class="premium-card mb-0 bg-white flex-grow-1">
                     <div class="card-title pa-3 border-b d-flex align-center justify-space-between bg-slate-50">
                         <div class="d-flex align-center">
                             <TruckIcon size="20" class="mr-3 text-primary" />
@@ -880,7 +901,7 @@ onMounted(() => {
                                 <span class="font-weight-medium">Giảm giá:</span>
                                 <span class="text-body-2 font-weight-bold">- {{ formatCurrency(Math.abs(orderDiscountAmount)) }}</span>
                             </div>
-                            <div class="summary-row mb-4">
+                            <div v-if="isShippingOrder" class="summary-row mb-4">
                                 <span class="text-slate-500 d-flex align-center">
                                     <span>Phí vận chuyển:</span>
                                     <svg width="45" height="15" viewBox="0 0 45 15" fill="none"
@@ -1228,7 +1249,7 @@ onMounted(() => {
                         <v-icon start size="18" class="mr-2">mdi-list-status</v-icon>
                         Trạng thái đơn
                     </v-tab>
-                    <v-tab :value="1" class="text-none font-weight-bold">
+                    <v-tab v-if="isShippingOrder" :value="1" class="text-none font-weight-bold">
                         <v-icon start size="18" class="mr-2">mdi-truck-delivery-outline</v-icon>
                         Thông tin giao nhận
                     </v-tab>
@@ -1262,7 +1283,7 @@ onMounted(() => {
                         </v-window-item>
 
                         <!-- TAB 2: Shipping/Delivery Information -->
-                        <v-window-item :value="1">
+                        <v-window-item v-if="isShippingOrder" :value="1">
                             <v-row class="ga-3" dense>
                                 <!-- Phone Field -->
                                 <v-col cols="12" class="mb-2">

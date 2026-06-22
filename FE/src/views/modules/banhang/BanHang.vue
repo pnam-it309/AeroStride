@@ -164,14 +164,16 @@ const selectedOrderItemCount = computed(() =>
     (selectedOrder.value?.listsHoaDonChiTiet || []).reduce((sum, item) => sum + (Number(item.soLuong) || 0), 0)
 );
 
+const isShippingLoaiDon = (loaiDon) => loaiDon === 'GIAO_HANG' || loaiDon === 'ONLINE';
+
 const orderChannel = computed({
     get() {
         if (!selectedOrder.value) return 'Tại quầy';
-        return selectedOrder.value.loaiDon === 'ONLINE' ? 'Trực tuyến' : 'Tại quầy';
+        return isShippingLoaiDon(selectedOrder.value.loaiDon) ? 'Giao hàng' : 'Tại quầy';
     },
     set(newVal) {
         if (selectedOrder.value) {
-            selectedOrder.value.loaiDon = newVal === 'Trực tuyến' ? 'ONLINE' : 'TAI_QUAY';
+            selectedOrder.value.loaiDon = newVal === 'Giao hàng' ? 'GIAO_HANG' : 'TAI_QUAY';
         }
     }
 });
@@ -179,11 +181,11 @@ const orderChannel = computed({
 const isGiaoHang = computed({
     get() {
         if (!selectedOrder.value) return false;
-        return selectedOrder.value.loaiDon === 'ONLINE';
+        return isShippingLoaiDon(selectedOrder.value.loaiDon);
     },
     set(val) {
         if (selectedOrder.value) {
-            selectedOrder.value.loaiDon = val ? 'ONLINE' : 'TAI_QUAY';
+            selectedOrder.value.loaiDon = val ? 'GIAO_HANG' : 'TAI_QUAY';
         }
     }
 });
@@ -227,14 +229,14 @@ watch(() => selectedOrder.value?.id, (id) => {
     if (id) {
         if (selectedOrder.value.phiVanChuyen !== undefined && selectedOrder.value.phiVanChuyen !== null) {
             shippingFee.value = Number(selectedOrder.value.phiVanChuyen);
-            isFreeShip.value = Number(selectedOrder.value.phiVanChuyen) === 0 && selectedOrder.value.loaiDon === 'ONLINE';
+            isFreeShip.value = Number(selectedOrder.value.phiVanChuyen) === 0 && isShippingLoaiDon(selectedOrder.value.loaiDon);
         } else {
-            const channel = selectedOrder.value.loaiDon === 'ONLINE' ? 'Trực tuyến' : 'Tại quầy';
-            shippingFee.value = channel === 'Trực tuyến' ? 30000 : 0;
+            const channel = isShippingLoaiDon(selectedOrder.value.loaiDon) ? 'Giao hàng' : 'Tại quầy';
+            shippingFee.value = channel === 'Giao hàng' ? 30000 : 0;
             isFreeShip.value = false;
         }
 
-        const channel = selectedOrder.value.loaiDon === 'ONLINE' ? 'Trực tuyến' : 'Tại quầy';
+        const channel = isShippingLoaiDon(selectedOrder.value.loaiDon) ? 'Giao hàng' : 'Tại quầy';
         onlyChargeIfReturned.value = channel === 'Tại quầy';
     }
 });
@@ -255,9 +257,9 @@ watch([orderChannel, isFreeShip], ([channel, freeShip], oldVal) => {
         shippingFee.value = 0;
     } else {
         if (oldFreeShip === true && !freeShip) {
-            shippingFee.value = channel === 'Trực tuyến' ? 30000 : 0;
+            shippingFee.value = channel === 'Giao hàng' ? 30000 : 0;
         } else if (channel !== oldChannel && oldChannel !== undefined) {
-            shippingFee.value = channel === 'Trực tuyến' ? 30000 : 0;
+            shippingFee.value = channel === 'Giao hàng' ? 30000 : 0;
         }
     }
 }, { immediate: true });
@@ -628,7 +630,9 @@ const ensureCustomerAndGetId = async () => {
                     thanhPho: d ? d.name : '',
                     phuongXa: w ? w.name : '',
                     diaChiChiTiet: recipientAddressDetail.value,
-                    loaiDiaChi: 'DEFAULT'
+                    tenNguoiNhan: recipientName.value || ten,
+                    sdtNguoiNhan: recipientPhone.value || sdt,
+                    laMacDinh: true
                 });
             } catch (e) {
                 console.error('Không thể tự động lưu địa chỉ cho khách hàng mới', e);
@@ -678,23 +682,78 @@ const setOrders = (payload, { preferOrderId = null } = {}) => {
 // QR / Barcode Scanner Logic
 const showScanner = ref(false);
 let html5QrcodeScanner = null;
+let scannerStartAttempts = 0;
+const SCANNER_ELEMENT_ID = 'pos-qr-reader';
 
 const startScanner = () => {
     showScanner.value = true;
-    setTimeout(() => {
-        const el = document.getElementById('reader');
-        if (!el || el.clientWidth === 0) {
-            startScanner();
+    scannerStartAttempts = 0;
+    setTimeout(initScanner, 150);
+};
+
+const initScanner = () => {
+    if (!showScanner.value) return;
+
+    const el = document.getElementById(SCANNER_ELEMENT_ID);
+    if (!el || el.clientWidth === 0) {
+        scannerStartAttempts += 1;
+        if (scannerStartAttempts > 20) {
+            addNotification({ title: 'Không thể mở camera', subtitle: 'Không tìm thấy khung quét QR. Vui lòng thử lại.', color: 'error' });
+            stopScanner();
             return;
         }
+        setTimeout(initScanner, 150);
+        return;
+    }
 
-        if (html5QrcodeScanner) {
-            html5QrcodeScanner.clear().catch(e => console.error(e));
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear().catch(e => console.error(e));
+    }
+
+    html5QrcodeScanner = new Html5QrcodeScanner(SCANNER_ELEMENT_ID, { fps: 10, qrbox: { width: 250, height: 250 } }, false);
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+};
+
+const normalizeScannedCode = (rawValue) => {
+    const raw = String(rawValue || '').trim();
+    if (!raw) return '';
+
+    try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') {
+            const value = parsed.maChiTietSanPham || parsed.sku || parsed.code || parsed.ma || parsed.barcode;
+            if (value) return String(value).trim();
+        }
+    } catch (e) {
+        // Not JSON, continue with URL/plain text parsing.
+    }
+
+    try {
+        const url = new URL(raw);
+        const paramKeys = ['maChiTietSanPham', 'sku', 'code', 'ma', 'barcode', 'q'];
+        for (const key of paramKeys) {
+            const value = url.searchParams.get(key);
+            if (value) return value.trim();
         }
 
-        html5QrcodeScanner = new Html5QrcodeScanner('reader', { fps: 10, qrbox: { width: 250, height: 250 } }, false);
-        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-    }, 150);
+        const lastSegment = decodeURIComponent(url.pathname.split('/').filter(Boolean).pop() || '');
+        if (lastSegment) return lastSegment.trim();
+    } catch (e) {
+        // Not a URL, keep parsing as plain text.
+    }
+
+    const labeled = raw.match(/(?:maChiTietSanPham|sku|code|barcode|ma)\s*[:=]\s*([A-Za-z0-9_-]+)/i);
+    if (labeled?.[1]) return labeled[1].trim();
+
+    return raw;
+};
+
+const findExactScannedVariant = (variants, keyword) => {
+    const normalizedKeyword = String(keyword || '').trim().toUpperCase();
+    return variants.find((variant) => {
+        const variantCode = String(variant.maChiTietSanPham || '').trim().toUpperCase();
+        return variantCode === normalizedKeyword;
+    }) || null;
 };
 
 const stopScanner = () => {
@@ -707,7 +766,7 @@ const stopScanner = () => {
 
 const onScanSuccess = async (decodedText) => {
     stopScanner();
-    const keyword = decodedText?.trim();
+    const keyword = normalizeScannedCode(decodedText);
     if (!keyword) return;
     if (!selectedOrder.value) {
         addNotification({ title: 'Chưa có hóa đơn', subtitle: 'Vui lòng tạo hoặc chọn hóa đơn trước khi quét mã.', color: 'warning' });
@@ -717,7 +776,7 @@ const onScanSuccess = async (decodedText) => {
     try {
         const variants = await dichVuDonHang.searchSanPham(keyword);
         if (variants && variants.length > 0) {
-            const exactMatch = variants.find((v) => v.maChiTietSanPham === keyword) || variants[0];
+            const exactMatch = findExactScannedVariant(variants, keyword) || variants[0];
 
             if (exactMatch) {
                 if (exactMatch.trangThai !== undefined && !isActiveStatus(exactMatch.trangThai)) {
@@ -864,6 +923,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
     window.removeEventListener('keydown', handleGlobalKeyDown);
+    stopScanner();
 });
 
 // Watchers for vouchers
@@ -1251,6 +1311,7 @@ const vnpayDialog = ref({
 });
 
 let vnpayPopup = null;
+let suppressVnPayCloseCancel = false;
 
 const clearVnPayPolling = () => {
     if (vnpayDialog.value.pollInterval) {
@@ -1268,16 +1329,30 @@ const closeVnPayFlow = () => {
     } catch (e) {
         console.warn('Cannot check/close VNPay popup due to SecurityError:', e);
     }
+    suppressVnPayCloseCancel = true;
     vnpayDialog.value.show = false;
     vnpayDialog.value.loading = false;
     vnpayDialog.value.verified = false;
     vnpayPopup = null;
+    setTimeout(() => {
+        suppressVnPayCloseCancel = false;
+    }, 0);
 };
 
 const cancelVnPayFlow = () => {
+    if (suppressVnPayCloseCancel) return;
     sessionStorage.removeItem(VNPAY_PENDING_KEY);
     closeVnPayFlow();
     addNotification({ title: 'Hủy thanh toán', subtitle: 'Giao dịch VNPay đã được hủy bỏ', color: 'info' });
+};
+
+const onVnPayDialogVisibilityChange = (visible) => {
+    if (visible || suppressVnPayCloseCancel) return;
+    if (vnpayDialog.value.loading || vnpayDialog.value.verified) {
+        closeVnPayFlow();
+        return;
+    }
+    cancelVnPayFlow();
 };
 
 const handleVnPayCanceled = (subtitle = 'Cửa sổ VNPay đã đóng trước khi hệ thống nhận được kết quả thanh toán thành công.') => {
@@ -1296,20 +1371,82 @@ const isVnPayCallbackSuccess = (params = {}) =>
 const isVnPayVerifySuccess = (verifyResult, params = {}) =>
     Boolean(verifyResult?.success) && Number(verifyResult?.status || 200) === 200 && isVnPayCallbackSuccess(params);
 
+const getShippingAddressPayload = () => {
+    const province = provincesShip.value.find(x => x.code === recipientProvince.value);
+    const district = districtsShip.value.find(x => x.code === recipientDistrict.value);
+    const ward = wardsShip.value.find(x => x.code === recipientWard.value);
+    const tenNguoiNhan = (recipientName.value || customerForm.value.ten || '').trim();
+    const sdtNguoiNhan = (recipientPhone.value || customerForm.value.sdt || '').trim();
+    const diaChiChiTiet = (recipientAddressDetail.value || '').trim();
+    const tinh = province ? province.name : '';
+    const thanhPho = district ? district.name : '';
+    const phuongXa = ward ? ward.name : '';
+    const diaChiNguoiNhan = [diaChiChiTiet, phuongXa, thanhPho, tinh].filter(Boolean).join(', ');
+
+    return {
+        tenNguoiNhan,
+        sdtNguoiNhan,
+        diaChiChiTiet,
+        tinh,
+        thanhPho,
+        phuongXa,
+        diaChiNguoiNhan
+    };
+};
+
+const hasCompleteShippingAddress = () => {
+    const shipping = getShippingAddressPayload();
+    return Boolean(shipping.tenNguoiNhan && shipping.sdtNguoiNhan && shipping.diaChiChiTiet && shipping.tinh && shipping.thanhPho && shipping.phuongXa);
+};
+
+const getPendingCustomerPayload = () => {
+    if (selectedOrder.value?.idKhachHang) {
+        return {};
+    }
+
+    const ten = customerForm.value.ten?.trim() || null;
+    const sdt = customerForm.value.sdt?.trim() || null;
+    const email = customerForm.value.email?.trim() || null;
+    const ngaySinh = customerForm.value.ngaySinh?.trim() || null;
+    const gioiTinh = customerForm.value.gioiTinh === 'Nam'
+        ? true
+        : customerForm.value.gioiTinh === 'Nữ'
+            ? false
+            : null;
+
+    return {
+        tenKhachHang: ten,
+        sdtKhachHang: sdt,
+        emailKhachHang: email,
+        gioiTinhKhachHang: gioiTinh,
+        ngaySinhKhachHang: ngaySinh
+    };
+};
+
+const hasPendingCustomerInput = () => {
+    const customer = getPendingCustomerPayload();
+    return Boolean(customer.tenKhachHang || customer.sdtKhachHang || customer.emailKhachHang || customer.ngaySinhKhachHang || customer.gioiTinhKhachHang !== null);
+};
+
+const validatePendingCustomer = () => {
+    if (selectedOrder.value?.idKhachHang || !hasPendingCustomerInput()) {
+        return;
+    }
+
+    const customer = getPendingCustomerPayload();
+    if (!customer.tenKhachHang || !customer.sdtKhachHang) {
+        throw new Error('Vui lòng nhập đầy đủ Tên khách hàng và SĐT để thêm khách hàng mới khi thanh toán.');
+    }
+};
+
 const buildCheckoutPayload = (order, overrides = {}) => {
     let compiledNote = checkoutData.value.note || '';
-    if (orderChannel.value === 'Trực tuyến') {
-        const p = provincesShip.value.find(x => x.code === recipientProvince.value);
-        const d = districtsShip.value.find(x => x.code === recipientDistrict.value);
-        const w = wardsShip.value.find(x => x.code === recipientWard.value);
-
+    const shipping = getShippingAddressPayload();
+    if (isGiaoHang.value) {
         const shippingDetails = [
-            `Người nhận: ${recipientName.value || ''}`,
-            `SĐT: ${recipientPhone.value || ''}`,
-            `Địa chỉ: ${recipientAddressDetail.value || ''}`,
-            w ? w.name : '',
-            d ? d.name : '',
-            p ? p.name : ''
+            `Người nhận: ${shipping.tenNguoiNhan}`,
+            `SĐT: ${shipping.sdtNguoiNhan}`,
+            `Địa chỉ: ${shipping.diaChiNguoiNhan}`
         ].filter(Boolean).join(', ');
 
         compiledNote = compiledNote
@@ -1319,11 +1456,20 @@ const buildCheckoutPayload = (order, overrides = {}) => {
 
     return {
         idKhachHang: order?.idKhachHang || null,
+        ...getPendingCustomerPayload(),
         idPhieuGiamGia: order?.idPhieuGiamGia || null,
         tongTien: order?.tongTien || 0,
         phiVanChuyen: shippingFee.value,
         tongTienSauGiam: finalCollectAmount.value,
-        loaiDon: orderChannel.value === 'Trực tuyến' ? 'ONLINE' : 'TAI_QUAY',
+        loaiDon: isGiaoHang.value ? 'GIAO_HANG' : 'TAI_QUAY',
+        tenNguoiNhan: isGiaoHang.value ? shipping.tenNguoiNhan : null,
+        sdtNguoiNhan: isGiaoHang.value ? shipping.sdtNguoiNhan : null,
+        diaChiNguoiNhan: isGiaoHang.value ? shipping.diaChiNguoiNhan : null,
+        tinh: isGiaoHang.value ? shipping.tinh : null,
+        thanhPho: isGiaoHang.value ? shipping.thanhPho : null,
+        phuongXa: isGiaoHang.value ? shipping.phuongXa : null,
+        diaChiChiTiet: isGiaoHang.value ? shipping.diaChiChiTiet : null,
+        luuDiaChiMacDinh: isGiaoHang.value && hasCompleteShippingAddress(),
         ghiChu: compiledNote,
         tienMat: 0,
         tienChuyenKhoan: 0,
@@ -1410,6 +1556,12 @@ const submitCheckout = async ({ order = selectedOrder.value, payload, successMes
 
     const orderSnapshot = JSON.parse(JSON.stringify(order));
     orderSnapshot.tongTienSauGiam = finalCollectAmount.value;
+    const pendingCustomer = getPendingCustomerPayload();
+    if (!orderSnapshot.idKhachHang && pendingCustomer.tenKhachHang) {
+        orderSnapshot.tenKhachHang = pendingCustomer.tenKhachHang;
+        orderSnapshot.sdtKhachHang = pendingCustomer.sdtKhachHang || '';
+        orderSnapshot.emailKhachHang = pendingCustomer.emailKhachHang || '';
+    }
 
     const pmMethod = checkoutData.value.paymentMethod;
     const pmReceived = checkoutData.value.receivedAmount;
@@ -1500,8 +1652,11 @@ const startVnPayFlow = async () => {
         sessionStorage.setItem(VNPAY_PENDING_KEY, JSON.stringify({
             orderId: selectedOrder.value.id,
             maHoaDon: selectedOrder.value.maHoaDon,
-            amount: selectedOrder.value.tongTienSauGiam,
-            transactionId: orderId
+            amount: finalCollectAmount.value,
+            transactionId: orderId,
+            checkoutPayload: buildCheckoutPayload(selectedOrder.value, {
+                tienChuyenKhoan: finalCollectAmount.value
+            })
         }));
 
         if (checkoutData.value.vnpayMethod === 'GATEWAY') {
@@ -1529,6 +1684,10 @@ const startVnPayFlow = async () => {
             paymentUrl: data.paymentUrl,
             pollInterval: null
         };
+
+        if (checkoutData.value.vnpayMethod === 'QR') {
+            return;
+        }
 
         vnpayDialog.value.pollInterval = setInterval(async () => {
             let isClosed = false;
@@ -1615,12 +1774,14 @@ const onCheckout = async () => {
         return;
     }
 
-    // Ensure customer is saved/resolved first if they typed new name/phone
     isProcessing.value = true;
     try {
-        await ensureCustomerAndGetId();
+        validatePendingCustomer();
+        if (isGiaoHang.value && !hasCompleteShippingAddress()) {
+            throw new Error('Vui lòng nhập đầy đủ tên, SĐT và địa chỉ nhận hàng.');
+        }
     } catch (e) {
-        addNotification({ title: 'Cảnh báo', subtitle: e.message || 'Không thể tạo hoặc tìm khách hàng.', color: 'warning' });
+        addNotification({ title: 'Cảnh báo', subtitle: e.message || 'Thông tin khách hàng chưa hợp lệ.', color: 'warning' });
         isProcessing.value = false;
         return;
     }
@@ -1641,37 +1802,10 @@ const onCheckout = async () => {
             isProcessing.value = true;
             try {
                 const isCash = checkoutData.value.paymentMethod === 'CASH';
-                let compiledNote = checkoutData.value.note || '';
-                if (orderChannel.value === 'Trực tuyến') {
-                    const p = provincesShip.value.find(x => x.code === recipientProvince.value);
-                    const d = districtsShip.value.find(x => x.code === recipientDistrict.value);
-                    const w = wardsShip.value.find(x => x.code === recipientWard.value);
-
-                    const shippingDetails = [
-                        `Người nhận: ${recipientName.value || ''}`,
-                        `SĐT: ${recipientPhone.value || ''}`,
-                        `Địa chỉ: ${recipientAddressDetail.value || ''}`,
-                        w ? w.name : '',
-                        d ? d.name : '',
-                        p ? p.name : ''
-                    ].filter(Boolean).join(', ');
-
-                    compiledNote = compiledNote
-                        ? `${compiledNote} | Ship: ${shippingDetails}`
-                        : `Ship: ${shippingDetails}`;
-                }
-
-                const payload = {
-                    idKhachHang: selectedOrder.value.idKhachHang,
-                    idPhieuGiamGia: selectedOrder.value.idPhieuGiamGia,
-                    tongTien: selectedOrder.value.tongTien,
-                    tongTienSauGiam: finalCollectAmount.value,
-                    loaiDon: orderChannel.value === 'Trực tuyến' ? 'ONLINE' : 'TAI_QUAY',
-                    ghiChu: compiledNote,
+                const payload = buildCheckoutPayload(selectedOrder.value, {
                     tienMat: isCash ? finalCollectAmount.value : 0,
-                    tienChuyenKhoan: isCash ? 0 : finalCollectAmount.value,
-                    phiVanChuyen: shippingFee.value
-                };
+                    tienChuyenKhoan: isCash ? 0 : finalCollectAmount.value
+                });
                 await submitCheckout({ payload });
 
                 checkoutData.value.receivedAmount = null;
@@ -1700,14 +1834,19 @@ const getErrorMessage = (error, fallback) => {
     return error?.response?.data?.message || error?.response?.data?.error || error?.message || fallback;
 };
 
-const getStoredVnPayOrder = () => {
+const getStoredVnPayPending = () => {
     try {
         const pending = JSON.parse(sessionStorage.getItem(VNPAY_PENDING_KEY) || '{}');
-        if (!pending?.orderId) return null;
-        return orders.value.find((order) => order.id === pending.orderId) || null;
+        return pending?.orderId ? pending : null;
     } catch (e) {
         return null;
     }
+};
+
+const getStoredVnPayOrder = () => {
+    const pending = getStoredVnPayPending();
+    if (!pending?.orderId) return null;
+    return orders.value.find((order) => order.id === pending.orderId) || null;
 };
 
 const handleVnPayCallbackFromUrl = async () => {
@@ -1719,6 +1858,7 @@ const handleVnPayCallbackFromUrl = async () => {
         callbackParams[key] = value;
     });
 
+    const pending = getStoredVnPayPending();
     const pendingOrder = getStoredVnPayOrder();
     if (!pendingOrder) {
         addNotification({
@@ -1736,12 +1876,19 @@ const handleVnPayCallbackFromUrl = async () => {
         }
 
         const transactionNo = callbackParams.vnp_TransactionNo || `VNP_${Date.now()}`;
-        await submitCheckout({
-            order: pendingOrder,
-            payload: buildCheckoutPayload(pendingOrder, {
+        const checkoutPayload = pending?.checkoutPayload
+            ? {
+                ...pending.checkoutPayload,
+                tienChuyenKhoan: pending.checkoutPayload.tienChuyenKhoan || pending.amount || pendingOrder.tongTienSauGiam,
+                maGiaoDich: transactionNo
+            }
+            : buildCheckoutPayload(pendingOrder, {
                 tienChuyenKhoan: pendingOrder.tongTienSauGiam,
                 maGiaoDich: transactionNo
-            })
+            });
+        await submitCheckout({
+            order: pendingOrder,
+            payload: checkoutPayload
         });
         sessionStorage.removeItem(VNPAY_PENDING_KEY);
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -2246,8 +2393,7 @@ const closeQuickAdd = () => {
                                 <!-- Money Input -->
                                 <div class="d-flex align-center justify-space-between mb-3">
                                     <span class="text-slate-600" style="font-size: 13px !important">
-                                        {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển
-                                        khoản' }}
+                                        {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
                                     </span>
                                     <v-text-field :model-value="formatNumberWithDots(checkoutData.receivedAmount)"
                                         @input="e => { checkoutData.receivedAmount = parseNumberFromDots(e.target.value); e.target.value = formatNumberWithDots(checkoutData.receivedAmount); }"
@@ -2435,17 +2581,21 @@ const closeQuickAdd = () => {
                                 class="dim-input-field w-100 mb-1" />
 
                             <div class="d-flex gap-1">
-                                <v-select v-model="recipientProvince" :items="provincesShip" item-title="name"
+                                <v-autocomplete v-model="recipientProvince" :items="provincesShip" item-title="name"
                                     item-value="code" placeholder="Tỉnh/Thành phố" density="compact" variant="outlined"
-                                    hide-details class="dim-select-field flex-grow-1" style="width: 33.33%;" />
-                                <v-select v-model="recipientDistrict" :items="districtsShip" item-title="name"
+                                    hide-details clearable auto-select-first menu-icon="mdi-chevron-down"
+                                    no-data-text="Không tìm thấy tỉnh/thành phố"
+                                    class="dim-select-field flex-grow-1" style="width: 33.33%;" />
+                                <v-autocomplete v-model="recipientDistrict" :items="districtsShip" item-title="name"
                                     item-value="code" placeholder="Quận/Huyện" density="compact" variant="outlined"
-                                    hide-details :disabled="!recipientProvince" class="dim-select-field flex-grow-1"
-                                    style="width: 33.33%;" />
-                                <v-select v-model="recipientWard" :items="wardsShip" item-title="name" item-value="code"
-                                    placeholder="Phường/Xã" density="compact" variant="outlined" hide-details
-                                    :disabled="!recipientDistrict" class="dim-select-field flex-grow-1"
-                                    style="width: 33.33%;" />
+                                    hide-details clearable auto-select-first menu-icon="mdi-chevron-down"
+                                    no-data-text="Không tìm thấy quận/huyện" :disabled="!recipientProvince"
+                                    class="dim-select-field flex-grow-1" style="width: 33.33%;" />
+                                <v-autocomplete v-model="recipientWard" :items="wardsShip" item-title="name"
+                                    item-value="code" placeholder="Phường/Xã" density="compact" variant="outlined"
+                                    hide-details clearable auto-select-first menu-icon="mdi-chevron-down"
+                                    no-data-text="Không tìm thấy phường/xã" :disabled="!recipientDistrict"
+                                    class="dim-select-field flex-grow-1" style="width: 33.33%;" />
                             </div>
                         </div>
                     </v-card>
@@ -2486,9 +2636,30 @@ const closeQuickAdd = () => {
             </div>
         </div>
 
+        <!-- Product QR / Barcode Scanner Dialog -->
+        <v-dialog v-model="showScanner" max-width="520" @update:model-value="val => { if (!val) stopScanner(); }">
+            <v-card class="rounded-xl overflow-hidden">
+                <v-card-title class="d-flex align-center justify-space-between bg-slate-50 border-b px-5 py-4">
+                    <div class="d-flex align-center font-weight-bold text-slate-800">
+                        <v-icon size="22" class="mr-2" color="primary">mdi-barcode-scan</v-icon>
+                        Quét mã sản phẩm
+                    </div>
+                    <v-btn icon variant="text" size="small" @click="stopScanner">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </v-card-title>
+                <v-card-text class="pa-5">
+                    <div :id="SCANNER_ELEMENT_ID" class="scanner-reader"></div>
+                    <div class="text-caption text-grey-darken-1 text-center mt-3">
+                        Đưa mã QR hoặc Barcode của biến thể sản phẩm vào khung hình.
+                    </div>
+                </v-card-text>
+            </v-card>
+        </v-dialog>
+
         <!-- VNPay QR Dialog -->
         <v-dialog v-model="vnpayDialog.show" max-width="450"
-            @update:model-value="(val) => { if (!val) cancelVnPayFlow() }">
+            @update:model-value="onVnPayDialogVisibilityChange">
             <v-card class="rounded-xl overflow-hidden pb-4">
                 <v-card-text class="pt-6 text-center d-flex flex-column align-center">
                     <div class="vnpay-logo-wrapper mb-4">
@@ -2622,58 +2793,10 @@ const closeQuickAdd = () => {
                         Hủy giao dịch
                     </v-btn>
                 </div>
-                </v-card-text>
             </v-card>
         </v-dialog>
 
-        <!-- VNPay Choice Dialog -->
-        <v-dialog v-model="vnpayChoiceDialog.show" max-width="400" persistent>
-            <v-card class="rounded-xl pa-5">
-                <div class="text-center mb-5">
-                    <div class="text-h6 font-weight-bold">Chọn hình thức thanh toán</div>
-                </div>
-
-                <h3 class="text-h6 font-weight-bold mb-1">Thanh toán VNPay</h3>
-                <p class="text-subtitle-2 text-grey-darken-1 mb-6">Mã đơn: {{ vnpayDialog.orderId }}</p>
-
-                <div v-if="vnpayDialog.loading" class="pa-8 d-flex flex-column align-center">
-                    <v-progress-circular indeterminate color="#005BAA" size="48" class="mb-4"></v-progress-circular>
-                    <div class="text-body-2 font-weight-medium text-grey-darken-2">{{ vnpayDialog.statusText }}
-                    </div>
-                </div>
-
-                <div v-else-if="vnpayDialog.verified" class="pa-8 d-flex flex-column align-center">
-                    <v-icon color="success" size="64" class="mb-4">mdi-check-circle</v-icon>
-                    <div class="text-h6 font-weight-bold text-success mb-2">Giao dịch thành công!</div>
-                    <div class="text-body-2 text-grey-darken-1">Đơn hàng đang được hoàn tất...</div>
-                </div>
-
-                <div v-else class="w-100 d-flex flex-column align-center">
-                    <template v-if="checkoutData.vnpayMethod === 'QR'">
-                        <div class="pa-2 bg-white rounded-lg elevation-2 mb-4 d-inline-block">
-                            <v-img :src="vnpayDialog.qrUrl" width="220" height="220" />
-                        </div>
-                        <div class="text-h5 font-weight-bold text-error mb-1">
-                            {{ formatVNPayAmount(vnpayDialog.amount) }}
-                        </div>
-                        <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
-                            Sử dụng ứng dụng ngân hàng hoặc ví VNPay để quét mã.
-                        </div>
-                    </template>
-                    <template v-else>
-                        <div class="text-h5 font-weight-bold text-error mb-4">
-                            {{ formatVNPayAmount(vnpayDialog.amount) }}
-                        </div>
-                        <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
-                            Vui lòng hoàn tất thanh toán trên cửa sổ VNPay.
-                        </div>
-                        <v-btn color="#005BAA" class="mb-6 rounded-lg text-white font-weight-bold"
-                            @click="openVnPayPopup">
-                            Mở lại cổng thanh toán
-                        </v-btn>
-                    </template>
-
-                    <!-- Variant Selection Modal (Shopee style) -->
+        <!-- Variant Selection Modal (Shopee style) -->
                     <v-dialog v-model="variantModal.show" max-width="500">
                         <v-card class="rounded-xl overflow-hidden shadow-lg">
                             <!-- Product Summary Header -->
@@ -2694,8 +2817,7 @@ const closeQuickAdd = () => {
                                         </div>
                                         <div class="text-body-2 text-slate-500">Kho: {{currentSelectedVariant ?
                                             currentSelectedVariant.soLuongTon :
-                                            variantModal.product?.variants.reduce((sum, v)
-                                            => sum + (v.soLuongTon||0), 0) }}</div>
+                                            variantModal.product?.variants.reduce((sum, v) => sum + (v.soLuongTon||0), 0) }}</div>
                                     </div>
                                 </div>
                                 <v-btn icon="mdi-close" variant="text" size="small" color="slate-400"
@@ -2775,6 +2897,9 @@ const closeQuickAdd = () => {
 
                     <!-- Hóa đơn sau thanh toán -->
                     <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" />
+
+        <!-- Confirm Dialog -->
+        <AdminConfirm v-model:show="confirmDialog.show" v-bind="confirmDialog" @confirm="confirmDialog.action" />
     </v-container>
 </template>
 
@@ -2888,6 +3013,19 @@ const closeQuickAdd = () => {
             .scanner-btn {
                 border-radius: 8px !important;
                 height: 40px !important;
+            }
+
+            .scanner-reader {
+                width: 100%;
+                min-height: 320px;
+                overflow: hidden;
+                border: 1px solid #dbe3ef;
+                border-radius: 12px;
+                background: #ffffff;
+            }
+
+            .scanner-reader :deep(video) {
+                border-radius: 10px;
             }
 
             .hover-autocomplete-item {

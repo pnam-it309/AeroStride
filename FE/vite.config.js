@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => {
             vue(),
             vuetify({
                 autoImport: true,
-                styles: { configFile: 'src/scss/_variables.scss' }
+                styles: true
             }),
             viteCompression({
                 verbose: true,
