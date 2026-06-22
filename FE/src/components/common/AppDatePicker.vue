@@ -170,6 +170,14 @@ const props = defineProps({
   clearable: {
     type: Boolean,
     default: true
+  },
+  minDate: {
+    type: [Date, String, Number],
+    default: null
+  },
+  maxDate: {
+    type: [Date, String, Number],
+    default: null
   }
 });
 
@@ -242,6 +250,25 @@ const isSameDay = (a, b) => {
     a.getDate() === b.getDate();
 };
 
+const toDateStart = (value) => {
+  if (!value) return null;
+  const date = value instanceof Date ? new Date(value) : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const isDateDisabled = (date) => {
+  if (!date) return true;
+  const current = toDateStart(date);
+  const min = toDateStart(props.minDate);
+  const max = toDateStart(props.maxDate);
+
+  if (min && current < min) return true;
+  if (max && current > max) return true;
+  return false;
+};
+
 const isInRange = (day) => {
   if (!day || !tempStart.value) return false;
   if (!tempEnd.value) return isSameDay(day.date, tempStart.value);
@@ -254,6 +281,7 @@ const isInRange = (day) => {
 const dayClass = (day) => {
   if (!day) return 'disabled';
   const d = day.date;
+  const disabled = isDateDisabled(d);
   const today = new Date();
   const isToday = isSameDay(d, today);
   const isStart = tempStart.value && isSameDay(d, tempStart.value);
@@ -261,6 +289,7 @@ const dayClass = (day) => {
   const inRange = isInRange(day);
   const isSelected = (!props.range && tempSingle.value && isSameDay(d, tempSingle.value)) || isStart || isEnd;
   return {
+    'disabled': disabled,
     'today': isToday,
     'selected': !!isSelected,
     'in-range': inRange && !isStart && !isEnd,
@@ -358,7 +387,7 @@ const onInputBlur = () => {
     }
   } else {
     const d = parseDateString(val);
-    if (d) {
+    if (d && !isDateDisabled(d)) {
       emit('update:modelValue', d);
       return;
     }
@@ -383,6 +412,7 @@ const nextMonth = () => {
 const selectDay = (day) => {
   if (!day) return;
   const d = day.date;
+  if (isDateDisabled(d)) return;
 
   if (props.range) {
     if (!tempStart.value || (tempStart.value && tempEnd.value)) {
@@ -518,6 +548,8 @@ watch(open, (val) => {
 
 .calendar-day.disabled {
   cursor: default;
+  color: #cbd5e1;
+  pointer-events: none;
 }
 
 .calendar-day.today {
@@ -558,6 +590,14 @@ watch(open, (val) => {
   background: #1e257c !important;
   color: #fff !important;
   border-radius: 0 8px 8px 0;
+}
+
+.calendar-day.disabled,
+.calendar-day.disabled.today,
+.calendar-day.disabled.selected {
+  background: transparent !important;
+  color: #cbd5e1 !important;
+  box-shadow: none;
 }
 
 .time-picker-section {

@@ -2032,8 +2032,7 @@ const formatDateTime = (dateStr) => {
                                 <!-- Money Input -->
                                 <div class="d-flex align-center justify-space-between mb-3">
                                     <span class="text-slate-600" style="font-size: 13px !important">
-                                        {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển
-                                        khoản' }}
+                                        {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
                                     </span>
                                     <v-text-field :model-value="formatNumberWithDots(checkoutData.receivedAmount)"
                                         @input="e => checkoutData.receivedAmount = parseNumberFromDots(e.target.value)"
@@ -2271,7 +2270,7 @@ const formatDateTime = (dateStr) => {
             </div>
         </div>
 
-        <<<<<<< HEAD <!-- VNPay QR Dialog -->
+        <!-- <<<<<<< HEAD VNPay QR Dialog -->
             <v-dialog v-model="vnpayDialog.show" max-width="450" persistent>
                 <v-card class="rounded-xl overflow-hidden pb-4">
                     <v-card-text class="pt-6 text-center d-flex flex-column align-center">
@@ -2363,7 +2362,9 @@ const formatDateTime = (dateStr) => {
                             Tiếp tục
                         </v-btn>
                     </div>
-                    =======
+                     </v-card>
+                    </v-dialog>
+                    <!-- ======= -->
                     <!-- Scanner dialog -->
                     <v-dialog v-model="showScanner" max-width="500" transition="dialog-bottom-transition">
                         <v-card class="rounded-lg pa-4">
