@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
-@RequestMapping(RoutesConstant.CUSTOMER + "/sitemap")
+@RequestMapping(RoutesConstant.CUSTOMER_SITEMAP)
 @RequiredArgsConstructor
 public class CustomerSitemapController {
 

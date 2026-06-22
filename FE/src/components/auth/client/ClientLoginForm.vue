@@ -2,10 +2,11 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUIStore } from '@/stores/ui';
-import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
+import { useAuthStore } from '@/stores/authStore';
 import { PATH } from '@/router/routePaths';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const uiStore = useUIStore();
 const checkbox = ref(false);
 const loading = ref(false);
@@ -27,8 +28,7 @@ const handleLogin = async () => {
 
     try {
         uiStore.showLoading('Đang đăng nhập...');
-        // We reuse the same dichVuXacThuc for now, assuming user and admin share the auth endpoint.
-        const response = await dichVuXacThuc.dangNhap({
+        const response = await authStore.login({
             ...loginForm.value,
             loginType: 'CLIENT'
         });

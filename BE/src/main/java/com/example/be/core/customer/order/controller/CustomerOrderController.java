@@ -19,7 +19,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping(RoutesConstant.CUSTOMER + "/order")
+@RequestMapping(RoutesConstant.CUSTOMER_ORDER)
 @RequiredArgsConstructor
 /**
  * Module: Đặt hàng (Customer)

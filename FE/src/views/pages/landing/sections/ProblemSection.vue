@@ -1,5 +1,6 @@
 <script setup>
-import { computed, defineProps, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import '@google/model-viewer';
 
 const props = defineProps({
     active: Boolean,
@@ -10,32 +11,7 @@ const props = defineProps({
     }
 });
 
-const shoes = [
-    {
-        title: 'NEON VELOCITY',
-        tag: 'PERFORMANCE',
-        color: '#2962FF',
-        bgType: 'rain',
-        rotation: 'rotate(-22deg) translateY(-8px)',
-        features: ['AIR-UNIT', 'RESPONSIVE', 'LIGHTWEIGHT']
-    },
-    {
-        title: 'PULSE CORE',
-        tag: 'DYNAMICS',
-        color: '#D50000',
-        bgType: 'cubes',
-        rotation: 'rotate(12deg) translateX(10px)',
-        features: ['GRIP-SOLE', 'DURABLE', 'ENERGY']
-    },
-    {
-        title: 'ZENITH AIR',
-        tag: 'LIFESTYLE',
-        color: '#6200EA',
-        bgType: 'orbits',
-        rotation: 'rotate(0deg) scale(1.05)',
-        features: ['3D-MESH', 'STYLISH', 'ZEN-COMFORT']
-    }
-];
+
 
 const activeCard = ref(0);
 const hudValues = ref([10, 25, 88]);
@@ -44,33 +20,24 @@ let hudInterval;
 let progressInterval;
 
 const decoratedShoes = computed(() => {
-    if (!props.products || props.products.length === 0) {
-        return [
-            {
-                title: 'NEON VELOCITY',
-                tag: 'PERFORMANCE',
-                color: '#2962FF',
-                bgType: 'rain',
-                rotation: 'rotate(-22deg) translateY(-8px)',
-                features: ['AIR-UNIT', 'RESPONSIVE', 'LIGHTWEIGHT'],
-                image: ''
-            }
-        ];
-    }
     return props.products.map((p, index) => ({
-        title: p.tenSanPham || 'AEROSTRIDE',
-        tag: p.tenThuongHieu || 'PREMIUM',
+        title: p.title || 'AEROSTRIDE',
+        tag: p.category || p.subtitle || 'PREMIUM',
         color: index === 0 ? '#2962FF' : index === 1 ? '#D50000' : '#6200EA',
         bgType: index === 0 ? 'rain' : index === 1 ? 'cubes' : 'orbits',
         rotation:
             index === 0 ? 'rotate(-22deg) translateY(-8px)' : index === 1 ? 'rotate(12deg) translateX(10px)' : 'rotate(0deg) scale(1.05)',
-        features: ['BỀN BỈ', 'ÊM ÁI', 'TỐI ƯU'],
-        image: p.hinhAnh || '',
+        features: [
+            p.chatLieu ? `VẬT LIỆU: ${p.chatLieu.toUpperCase()}` : 'BỀN BỈ',
+            p.deGiay ? `ĐẾ GIÀY: ${p.deGiay.toUpperCase()}` : 'ÊM ÁI',
+            p.mucDichChay ? `MỤC ĐÍCH: ${p.mucDichChay.toUpperCase()}` : 'TỐI ƯU'
+        ],
+        image: p.imageUrl || '',
         id: p.id
     }));
 });
 
-const currentShoe = computed(() => decoratedShoes.value[activeCard.value] || decoratedShoes.value[0]);
+const currentShoe = computed(() => decoratedShoes.value[activeCard.value] || decoratedShoes.value[0] || {});
 
 const rainParticles = Array.from({ length: 12 }, (_, index) => ({
     id: index,
@@ -91,12 +58,12 @@ const orbitRings = Array.from({ length: 4 }, (_, index) => ({
 }));
 
 const nextCard = () => {
-    activeCard.value = (activeCard.value + 1) % shoes.length;
+    activeCard.value = (activeCard.value + 1) % decoratedShoes.value.length;
     autoPlayProgress.value = 0;
 };
 
 const prevCard = () => {
-    activeCard.value = (activeCard.value - 1 + shoes.length) % shoes.length;
+    activeCard.value = (activeCard.value - 1 + decoratedShoes.value.length) % decoratedShoes.value.length;
     autoPlayProgress.value = 0;
 };
 
@@ -266,13 +233,12 @@ watch(
                                         </div>
                                     </div>
 
-                                    <v-img
-                                        v-if="currentShoe.image"
+                                    <img
+                                        :alt="currentShoe.title"
                                         :src="currentShoe.image"
-                                        class="the-shoe"
-                                        :style="{ transform: currentShoe.rotation }"
-                                        loading="lazy"
-                                    ></v-img>
+                                        class="the-shoe object-contain"
+                                        :style="{ transform: currentShoe.rotation, width: '100%', maxWidth: '500px', height: 'auto', zIndex: 10, position: 'relative' }"
+                                    />
                                     <div
                                         class="shadow-floor"
                                         :style="{
@@ -311,372 +277,5 @@ watch(
 </template>
 
 <style scoped lang="scss">
-.snap-section {
-    height: 100vh;
-    width: 100%;
-    position: relative;
-    background: #ffffff;
-    perspective: 1000px;
-}
-.digital-bg {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    overflow: hidden;
-}
-.bg-scene {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.ripple-ring {
-    position: absolute;
-    border: 2px solid;
-    border-radius: 50%;
-    opacity: 0;
-    animation: ripple-out 6s linear infinite;
-}
-@keyframes ripple-out {
-    0% {
-        width: 0;
-        height: 0;
-        opacity: 0;
-    }
-    10% {
-        opacity: 0.3;
-    }
-    80% {
-        opacity: 0.1;
-    }
-    100% {
-        width: 1000px;
-        height: 1000px;
-        opacity: 0;
-    }
-}
-.grid-layer {
-    position: absolute;
-    width: 200%;
-    height: 200%;
-    top: -50%;
-    left: -50%;
-    background-image:
-        linear-gradient(rgba(41, 98, 255, 0.04) 2px, transparent 2px), linear-gradient(90deg, rgba(41, 98, 255, 0.04) 2px, transparent 2px);
-    background-size: 80px 80px;
-    transform: perspective(1000px) rotateX(65deg);
-    animation: grid-move 15s linear infinite;
-}
-@keyframes grid-move {
-    0% {
-        transform: perspective(1000px) rotateX(65deg) translateY(0);
-    }
-    100% {
-        transform: perspective(1000px) rotateX(65deg) translateY(80px);
-    }
-}
-.particle-rain {
-    position: absolute;
-    width: 2px;
-    height: 60px;
-    opacity: 0.15;
-    animation: rain-drop 4s linear infinite;
-}
-@keyframes rain-drop {
-    0% {
-        transform: translateY(-100vh);
-        opacity: 0;
-    }
-    50% {
-        opacity: 0.3;
-    }
-    100% {
-        transform: translateY(100vh);
-        opacity: 0;
-    }
-}
-.floating-cube {
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    border: 2px solid;
-    opacity: 0.1;
-    animation: cube-float 15s linear infinite;
-}
-@keyframes cube-float {
-    0% {
-        transform: rotate(0deg) translate(0, 0);
-    }
-    50% {
-        transform: rotate(180deg) translate(40px, -40px);
-    }
-    100% {
-        transform: rotate(360deg) translate(0, 0);
-    }
-}
-.shoe-focus-container {
-    height: 80vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    perspective: 1500px;
-}
-.shoe-item {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.shoe-visual-wrapper-center {
-    position: relative;
-    transform-style: preserve-3d;
-}
-.the-shoe {
-    width: 500px;
-    filter: drop-shadow(0 40px 80px rgba(0, 0, 0, 0.12));
-    animation: shoe-hover 6s ease-in-out infinite;
-    z-index: 5;
-}
-@keyframes shoe-hover {
-    0%,
-    100% {
-        transform: translateY(0) rotate(-15deg);
-    }
-    50% {
-        transform: translateY(-20px) rotate(-10deg);
-    }
-}
-.micro-details {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 10;
-}
-.feature-node {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    animation: node-float 4s ease-in-out infinite;
-}
-.node-line {
-    width: 100px;
-}
-.node-text {
-    padding: 6px 18px;
-    font-size: 0.8rem;
-    font-weight: 950;
-    border: 3px solid;
-    border-radius: 8px;
-    background: white;
-    color: #1e293b;
-    letter-spacing: 2px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
-}
-.node-hud {
-    font-size: 0.65rem;
-    font-family: monospace;
-    margin-top: 6px;
-    letter-spacing: 1px;
-}
-@keyframes node-float {
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-15px);
-    }
-}
-.shadow-floor {
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%) rotateX(75deg);
-    width: 80%;
-    height: 40px;
-    filter: blur(30px);
-    z-index: 0;
-}
-.shoe-aura {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 70%;
-    height: 70%;
-    border-radius: 50%;
-    z-index: 1;
-}
-.shoe-meta-fixed {
-    position: absolute;
-    top: 12%;
-    left: 8%;
-    text-align: left;
-    z-index: 20;
-}
-.tech-specs-fixed {
-    position: absolute;
-    top: 12%;
-    right: 8%;
-    z-index: 20;
-}
-.shoe-name {
-    font-size: 5rem;
-    font-weight: 950;
-    letter-spacing: -2px;
-    color: #1e293b;
-    line-height: 1;
-    margin-top: 10px;
-}
-.shoe-tag {
-    font-size: 0.85rem;
-    font-weight: 900;
-    letter-spacing: 6px;
-}
-.explore-btn {
-    border-width: 2px;
-    letter-spacing: 2px;
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
-    &:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    }
-}
-.spec-group {
-    display: flex;
-    gap: 30px;
-    background: white;
-    padding: 12px 35px;
-    border-radius: 100px;
-    border: 3px solid rgba(0, 0, 0, 0.06);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-}
-.spec-item {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    .label {
-        font-size: 0.65rem;
-        color: #94a3b8;
-        font-weight: 900;
-        letter-spacing: 2px;
-    }
-    .val {
-        font-size: 0.9rem;
-        font-weight: 950;
-    }
-}
-.spec-divider {
-    width: 2px;
-    height: 30px;
-    background: rgba(0, 0, 0, 0.08);
-    align-self: center;
-}
-.auto-progress-bar {
-    width: 80px;
-    height: 5px;
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-top: 5px;
-}
-.progress-fill {
-    height: 100%;
-    transition: width 0.08s linear;
-}
-.controls-overlay {
-    position: absolute;
-    bottom: 50px;
-    left: 0;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 100px;
-    z-index: 30;
-}
-.nav-btn {
-    transition:
-        transform 0.2s ease,
-        opacity 0.2s ease;
-    opacity: 0.6;
-    &:hover {
-        opacity: 1;
-        transform: scale(1.08);
-    }
-}
-.step-line {
-    display: inline-block;
-    width: 40px;
-    height: 5px;
-    background: rgba(0, 0, 0, 0.05);
-    margin: 0 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    &.active {
-        background: #2962ff;
-        width: 65px;
-    }
-}
-
-/* Reveal Animation System */
-.reveal-item {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
-    will-change: transform, opacity;
-}
-
-.active .reveal-item {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.delay-1 {
-    transition-delay: 0.1s;
-}
-.delay-2 {
-    transition-delay: 0.2s;
-}
-.delay-3 {
-    transition-delay: 0.3s;
-}
-.delay-4 {
-    transition-delay: 0.4s;
-}
-
-@media (max-width: 960px) {
-    .shoe-meta-fixed,
-    .tech-specs-fixed,
-    .controls-overlay {
-        position: static;
-    }
-    .shoe-focus-container {
-        height: auto;
-        min-height: 70vh;
-    }
-    .shoe-name {
-        font-size: 3rem;
-    }
-    .the-shoe {
-        width: 100%;
-        max-width: 420px;
-    }
-    .shoe-item {
-        position: relative;
-        flex-direction: column;
-    }
-    .controls-overlay {
-        padding: 24px;
-        justify-content: center;
-        gap: 24px;
-    }
-}
+@import '@/scss/pages/landing/_problem-section.scss';
 </style>

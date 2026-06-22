@@ -21,7 +21,7 @@ import java.time.Duration;
 import java.util.Set;
 
 @RestController
-@RequestMapping(RoutesConstant.API_PREFIX + "/storage")
+@RequestMapping(RoutesConstant.STORAGE)
 @RequiredArgsConstructor
 public class FileController {
 

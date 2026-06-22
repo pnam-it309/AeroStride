@@ -49,4 +49,43 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
                 .trangThai(v.getTrangThai().name())
                 .build();
     }
+
+    @Override
+    public CustomerVoucherResponse getBestVoucherSuggestion(java.math.BigDecimal orderValue) {
+        if (orderValue == null || orderValue.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            return null;
+        }
+
+        long now = System.currentTimeMillis();
+        List<PhieuGiamGia> validVouchers = voucherRepository.findAll().stream()
+                .filter(v -> "CONG_KHAI".equals(v.getHinhThuc())
+                        && v.getTrangThai() == TrangThai.DANG_HOAT_DONG
+                        && v.getNgayBatDau() <= now
+                        && v.getNgayKetThuc() >= now
+                        && (v.getSoLuong() == null || v.getSoLuong() > 0)
+                        && (v.getDonHangToiThieu() == null || orderValue.compareTo(v.getDonHangToiThieu()) >= 0))
+                .collect(Collectors.toList());
+
+        PhieuGiamGia bestVoucher = null;
+        java.math.BigDecimal maxDiscount = java.math.BigDecimal.ZERO;
+
+        for (PhieuGiamGia v : validVouchers) {
+            java.math.BigDecimal discount = java.math.BigDecimal.ZERO;
+            if ("PHAN_TRAM".equals(v.getLoaiPhieu()) && v.getPhanTramGiamGia() != null) {
+                discount = orderValue.multiply(new java.math.BigDecimal(v.getPhanTramGiamGia())).divide(new java.math.BigDecimal(100));
+                if (v.getGiamToiDa() != null && discount.compareTo(v.getGiamToiDa()) > 0) {
+                    discount = v.getGiamToiDa();
+                }
+            } else if ("TIEN_MAT".equals(v.getLoaiPhieu()) && v.getSoTienGiam() != null) {
+                discount = v.getSoTienGiam();
+            }
+
+            if (discount.compareTo(maxDiscount) > 0) {
+                maxDiscount = discount;
+                bestVoucher = v;
+            }
+        }
+
+        return bestVoucher != null ? convertToResponse(bestVoucher) : null;
+    }
 }

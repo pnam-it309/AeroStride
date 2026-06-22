@@ -174,7 +174,8 @@ const handleCheckout = async () => {
         const checkoutData = {
             items: cartStore.cartItems.map((item) => ({
                 idChiTietSanPham: item.idChiTietSanPham,
-                soLuong: item.soLuong
+                soLuong: item.soLuong,
+                giaDuKien: item.giaBan || 0
             })),
             tenNguoiNhan: shippingInfo.value.tenNguoiNhan,
             soDienThoai: shippingInfo.value.soDienThoai,

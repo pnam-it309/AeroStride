@@ -122,7 +122,7 @@ const closeMegaMenu = () => {
 </script>
 
 <template>
-    <div class="header-hover-zone" @mouseenter="handleMouseEnter"></div>
+    <div class="header-hover-zone" v-if="isHidden" @mouseenter="handleMouseEnter"></div>
     <header class="main-header-system" :class="{ scrolled: isScrolled, 'mega-active': isMenuOpen, 'header-hidden': isHidden }" @mouseenter="handleMouseEnter">
         <!-- Top Utility Bar -->
         <div class="top-utility-bar">

@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
  * và các bộ lọc tìm kiếm cho khách hàng trên cửa hàng trực tuyến.
  */
 @RestController
-@RequestMapping(RoutesConstant.CUSTOMER + "/san-pham")
+@RequestMapping(RoutesConstant.CUSTOMER_SAN_PHAM)
 @RequiredArgsConstructor
 public class CustomerSanPhamController {
 

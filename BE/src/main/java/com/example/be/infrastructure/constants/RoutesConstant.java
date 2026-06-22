@@ -38,7 +38,17 @@ public final class RoutesConstant {
     // Customer routes (Mobile/Web)
     public static final String CUSTOMER = API_PREFIX + "/customer";
     public static final String CUSTOMER_CHAT = CUSTOMER + "/chat";
+    public static final String CUSTOMER_CART = CUSTOMER + "/cart";
+    public static final String CUSTOMER_LANDING = CUSTOMER + "/landing";
     public static final String CUSTOMER_ORDER = CUSTOMER + "/order";
+    public static final String CUSTOMER_PROFILE = CUSTOMER + "/profile";
+    public static final String CUSTOMER_SAN_PHAM = CUSTOMER + "/san-pham";
+    public static final String CUSTOMER_SITEMAP = CUSTOMER + "/sitemap";
+    public static final String CUSTOMER_PHIEU_GIAM_GIA = CUSTOMER + "/phieu-giam-gia";
+    
+    // Other API routes
+    public static final String PAYMENT = API_PREFIX + "/payment";
+    public static final String STORAGE = API_PREFIX + "/storage";
 
     // Common Sub-paths (Compatibility)
     public static final String HIEN_THI = "/hien-thi";

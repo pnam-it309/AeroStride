@@ -1,5 +1,6 @@
 <script setup>
-import { computed, defineProps, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import '@google/model-viewer';
 
 const props = defineProps({
     active: Boolean,
@@ -10,41 +11,7 @@ const props = defineProps({
     }
 });
 
-const products = [
-    {
-        code: 'AERO-X1-INFINITE',
-        category: 'HYPER-PERFORMANCE',
-        desc: 'Hệ thống giày thông minh AeroStride X1 tối ưu hóa hiệu suất chạy bộ trong thời gian thực.',
-        specs: [
-            { label: 'MASS', value: '220.45g' },
-            { label: 'AIR-FLOW', value: '98.2%' },
-            { label: 'ENERGY-RETURN', value: '84.5%' },
-            { label: 'TRACTION', value: 'MAX' }
-        ]
-    },
-    {
-        code: 'AERO-STRIKE-V3',
-        category: 'SPEED-ENGINEERED',
-        desc: 'Thiết kế cho vận động viên nước rút, V3 tạo lực bật tốt và phản hồi nhanh.',
-        specs: [
-            { label: 'MASS', value: '195.12g' },
-            { label: 'RESPONSE', value: '0.01s' },
-            { label: 'CARBON-STIFF', value: 'ULTRA' },
-            { label: 'AERO-DRAG', value: '-12%' }
-        ]
-    },
-    {
-        code: 'GLIDE-PRO-2.0',
-        category: 'ENDURANCE-TECH',
-        desc: 'Glide Pro tập trung vào độ êm tối đa cho các chặng đua dài hơi.',
-        specs: [
-            { label: 'CUSHION', value: '99.9%' },
-            { label: 'DROP', value: '8mm' },
-            { label: 'STABILITY', value: 'PRO+' },
-            { label: 'BREATH', value: 'HIGH' }
-        ]
-    }
-];
+
 
 const currentIndex = ref(0);
 const rotationY = ref(0);
@@ -54,45 +21,29 @@ let animationFrame = 0;
 let lastTick = 0;
 
 const decoratedProducts = computed(() => {
-    if (!props.products || props.products.length === 0) {
-        return [
-            {
-                code: 'AERO-X1-INFINITE',
-                category: 'HYPER-PERFORMANCE',
-                desc: 'Hệ thống giày thông minh AeroStride X1 tối ưu hóa hiệu suất chạy bộ trong thời gian thực.',
-                specs: [
-                    { label: 'KHỐI LƯỢNG', value: '220.45g' },
-                    { label: 'THÔNG KHÍ', value: '98.2%' },
-                    { label: 'HOÀN NĂNG', value: '84.5%' },
-                    { label: 'LỰC KÉO', value: 'MAX' }
-                ],
-                image: ''
-            }
-        ];
-    }
     return props.products.map((p, index) => ({
         id: p.id,
-        code: p.tenSanPham || 'AeroStride Prime',
-        category: p.tenThuongHieu || 'PERFORMANCE',
-        desc: 'Trải nghiệm đỉnh cao công nghệ giày thể thao.',
+        code: p.title || 'AeroStride Prime',
+        category: p.category || p.subtitle || 'PERFORMANCE',
+        desc: p.summary || 'Trải nghiệm đỉnh cao công nghệ giày thể thao.',
         specs: [
-            { label: 'KHỐI LƯỢNG', value: '210g' },
-            { label: 'THÔNG KHÍ', value: '95%' },
-            { label: 'HOÀN NĂNG', value: '82%' },
-            { label: 'LỰC KÉO', value: 'PRO' }
+            { label: 'CHẤT LIỆU', value: p.chatLieu || 'CAO CẤP' },
+            { label: 'ĐẾ GIÀY', value: p.deGiay || 'ÊM ÁI' },
+            { label: 'XUẤT XỨ', value: p.xuatXu || 'VIỆT NAM' },
+            { label: 'GIÁ CHỈ TỪ', value: p.giaBanThapNhat ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.giaBanThapNhat) : '1.000.000 ₫' }
         ],
-        image: p.hinhAnh || ''
+        image: p.imageUrl || ''
     }));
 });
 
 const activeProduct = computed(() => decoratedProducts.value[currentIndex.value] || decoratedProducts.value[0]);
 
 const nextProduct = () => {
-    currentIndex.value = (currentIndex.value + 1) % products.length;
+    currentIndex.value = (currentIndex.value + 1) % decoratedProducts.value.length;
 };
 
 const prevProduct = () => {
-    currentIndex.value = (currentIndex.value - 1 + products.length) % products.length;
+    currentIndex.value = (currentIndex.value - 1 + decoratedProducts.value.length) % decoratedProducts.value.length;
 };
 
 const stopAnimation = () => {
@@ -206,13 +157,12 @@ onUnmounted(() => {
                                 :style="{ transform: `rotateX(${rotationX}deg) rotateY(${rotationY}deg) rotateZ(${rotationZ}deg)` }"
                             >
                                 <div class="shoe-wrapper">
-                                    <v-img
-                                        v-if="activeProduct.image"
+                                    <img
+                                        :alt="activeProduct.code"
                                         :src="activeProduct.image"
-                                        class="shoe-img"
-                                        contain
-                                        loading="lazy"
-                                    ></v-img>
+                                        class="shoe-img object-contain"
+                                        :style="{ width: '100%', maxWidth: '450px', height: 'auto', zIndex: 10, position: 'relative' }"
+                                    />
                                     <div class="shoe-glow"></div>
                                 </div>
 
@@ -243,7 +193,7 @@ onUnmounted(() => {
                             <div class="nav-controls mt-10">
                                 <div class="page-num">
                                     <span class="current">{{ currentIndex + 1 }}</span
-                                    ><span class="total"> / {{ products.length }}</span>
+                                    ><span class="total"> / {{ decoratedProducts.length }}</span>
                                 </div>
                                 <div class="nav-btns">
                                     <v-btn
@@ -254,6 +204,11 @@ onUnmounted(() => {
                                         @click="prevProduct"
                                     ></v-btn>
                                     <v-btn icon="mdi-chevron-right" variant="flat" color="black" rounded="lg" @click="nextProduct"></v-btn>
+                                </div>
+                                <div class="mt-4" style="width: 100%;">
+                                    <v-btn block color="blue-darken-4" size="large" rounded="lg" class="mt-4" :to="`/product/${activeProduct.id}`">
+                                        MUA NGAY
+                                    </v-btn>
                                 </div>
                             </div>
                         </div>
@@ -273,344 +228,5 @@ onUnmounted(() => {
 </template>
 
 <style scoped lang="scss">
-.showcase-360-section {
-    height: 100vh;
-    width: 100%;
-    background: #fdfdfd;
-    position: relative;
-    font-family: 'Inter', sans-serif;
-}
-
-.relative {
-    position: relative;
-}
-.z-10 {
-    z-index: 10;
-}
-
-.hud-background {
-    position: absolute;
-    inset: 0;
-
-    .grid-line {
-        position: absolute;
-        top: 50%;
-        left: 0;
-        width: 100%;
-        height: 1px;
-        background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.05), transparent);
-    }
-
-    .circles {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        .circle {
-            border-radius: 50%;
-            border: 1px dashed rgba(0, 0, 0, 0.05);
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-        .c1 {
-            width: 400px;
-            height: 400px;
-        }
-        .c2 {
-            width: 600px;
-            height: 600px;
-            animation: rotate 30s linear infinite;
-        }
-        .c3 {
-            width: 800px;
-            height: 800px;
-            animation: rotate 50s linear infinite reverse;
-        }
-    }
-}
-
-.stage-3d {
-    width: 600px;
-    height: 600px;
-    perspective: 1500px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.shoe-container-3d {
-    width: 500px;
-    height: 350px;
-    transform-style: preserve-3d;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.shoe-wrapper {
-    position: relative;
-    transform-style: preserve-3d;
-    filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.15));
-}
-
-.shoe-img {
-    width: 450px;
-    height: auto;
-    transform: translateZ(50px);
-}
-
-.hud-3d-rings {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    transform-style: preserve-3d;
-    .h-ring {
-        position: absolute;
-        border: 1px solid rgba(41, 98, 255, 0.2);
-        border-radius: 50%;
-        top: 50%;
-        left: 50%;
-    }
-    .r1 {
-        width: 500px;
-        height: 500px;
-        transform: translate(-50%, -50%) rotateX(90deg);
-    }
-    .r2 {
-        width: 550px;
-        height: 550px;
-        transform: translate(-50%, -50%) rotateY(90deg);
-        border-style: dashed;
-    }
-}
-
-.ground-shadow {
-    position: absolute;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 300px;
-    height: 60px;
-    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.1) 0%, transparent 70%);
-    filter: blur(10px);
-}
-
-.hud-box {
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    padding: 20px;
-    border-radius: 4px;
-    opacity: 0;
-    transform: translateX(-30px);
-    transition: all 0.8s ease;
-    &.active {
-        opacity: 1;
-        transform: translateX(0);
-    }
-    .box-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.75rem;
-        font-weight: 900;
-        color: #666;
-        margin-bottom: 18px;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        padding-bottom: 10px;
-        text-transform: uppercase;
-    }
-}
-.spec-row {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-    font-size: 0.85rem;
-    .label {
-        color: #999;
-        font-weight: 700;
-    }
-    .dots {
-        border-bottom: 1px dotted rgba(0, 0, 0, 0.1);
-        margin: 0 10px;
-        height: 12px;
-    }
-    .value {
-        font-weight: 900;
-        color: #000;
-        font-family: monospace;
-    }
-}
-
-.main-hud-ring {
-    position: absolute;
-    width: 550px;
-    height: 550px;
-    .ring {
-        position: absolute;
-        border-radius: 50%;
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
-    .outer {
-        width: 100%;
-        height: 100%;
-        border-style: double;
-        border-width: 4px;
-    }
-    .inner {
-        width: 85%;
-        height: 85%;
-        border-style: dashed;
-    }
-    .compass {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        .tick {
-            position: absolute;
-            width: 2px;
-            height: 15px;
-            background: rgba(0, 0, 0, 0.1);
-            left: 50%;
-            transform-origin: 0 275px;
-        }
-    }
-}
-
-.interaction-hint {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    .text {
-        font-size: 0.65rem;
-        font-weight: 900;
-        color: #999;
-        letter-spacing: 3px;
-    }
-    .pulse-dot {
-        width: 8px;
-        height: 8px;
-        background: #2962ff;
-        border-radius: 50%;
-        animation: pulse 1.5s infinite;
-    }
-}
-
-.lore-content {
-    .lore-container {
-        opacity: 0;
-        transform: translateX(30px);
-        transition: all 0.8s ease;
-        &.active {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-    .category {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.75rem;
-        font-weight: 900;
-        color: #666;
-        letter-spacing: 2px;
-        margin-bottom: 20px;
-        .dot {
-            width: 4px;
-            height: 4px;
-            background: #000;
-        }
-    }
-    .title {
-        font-size: 3.2rem;
-        font-weight: 950;
-        color: #000;
-        line-height: 1;
-        margin-bottom: 24px;
-        letter-spacing: -2px;
-    }
-    .description {
-        font-size: 1rem;
-        color: #444;
-        line-height: 1.8;
-        font-weight: 500;
-        min-height: 100px;
-    }
-}
-
-.nav-controls {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
-    padding-top: 30px;
-    .page-num {
-        font-size: 1.2rem;
-        font-weight: 900;
-        .current {
-            color: #000;
-        }
-        .total {
-            color: #ccc;
-        }
-    }
-}
-
-.bottom-hud-bar {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: #000;
-    color: #fff;
-    display: flex;
-    padding: 10px 40px;
-    font-size: 0.65rem;
-    letter-spacing: 1px;
-    z-index: 20;
-    .bar-item {
-        margin-right: 30px;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        opacity: 0.6;
-    }
-}
-
-@keyframes rotate {
-    from {
-        transform: translate(-50%, -50%) rotate(0deg);
-    }
-    to {
-        transform: translate(-50%, -50%) rotate(360deg);
-    }
-}
-@keyframes pulse {
-    0% {
-        transform: scale(1);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(2.5);
-        opacity: 0;
-    }
-}
-
-@media (max-width: 960px) {
-    .tech-hud {
-        display: none;
-    }
-    .stage-3d {
-        width: 100%;
-    }
-}
+@import '@/scss/pages/landing/_how-section.scss';
 </style>

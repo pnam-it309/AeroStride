@@ -239,12 +239,11 @@
     &.mobile_popup {
         .v-overlay__content {
             width: 100%;
+            max-width: 92% !important;
 
             @media screen and (min-width: 767px) {
                 max-width: 96% !important;
             }
-
-            max-width: 92% !important;
         }
 
         .v-btn.search {

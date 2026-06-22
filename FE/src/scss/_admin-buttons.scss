@@ -1,0 +1,135 @@
+@use './tokens' as *;
+
+/* ==========================================================================
+   AEROSTRIDE - BUTTONS & ACTIONS
+   ========================================================================== */
+
+.action-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 4px;
+}
+
+.action-cell {
+    text-align: center !important;
+}
+
+.action-icon-btn {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-width: 28px !important;
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    border-radius: 10px !important;
+    color: $brand-slate !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+    .v-btn__overlay,
+    .v-btn__underlay,
+    .v-ripple__container {
+        display: none !important;
+    }
+
+    .v-icon, svg {
+        font-size: 16px !important;
+        width: 16px !important;
+        height: 16px !important;
+        stroke-width: 2;
+    }
+
+    &:hover {
+        background-color: #f1f5f9 !important;
+        color: #000 !important;
+        transform: scale(1.1) translateY(-1px);
+    }
+
+    &:active {
+        transform: scale(0.9);
+        background-color: #e2e8f0 !important;
+    }
+}
+
+.btn-back-header {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease, background-color 0.3s ease !important;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.04) !important;
+        transform: translateX(-4px);
+    }
+}
+
+.add-btn-primary {
+    height: 44px !important;
+    padding: 0 24px !important;
+    border-radius: 18px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    background: $brand-navy !important;
+    color: #fff !important;
+    box-shadow: 0 4px 14px rgba(30, 37, 124, 0.3) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+    &:hover {
+        box-shadow: 0 6px 20px rgba(30, 37, 124, 0.45) !important;
+        filter: brightness(1.1);
+    }
+}
+
+.admin-btn-secondary {
+    height: 44px !important;
+    padding: 0 20px !important;
+    border-radius: 18px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    border: 1px solid #e2e8f0 !important;
+    transition: all 0.2s ease !important;
+
+    &:hover {
+        background: #e2e8f0 !important;
+    }
+}
+
+.admin-btn-export {
+    @extend .add-btn-primary;
+    background: #107c41 !important; // Excel Green
+    box-shadow: 0 4px 14px rgba(16, 124, 65, 0.3) !important;
+
+    &:hover {
+        box-shadow: 0 6px 20px rgba(16, 124, 65, 0.45) !important;
+    }
+}
+
+.reset-btn {
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    border-radius: 12px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #ffffff !important;
+    color: #1e293b !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+        background: #f8fafc !important;
+        border-color: #0f172a !important;
+        color: #0f172a !important;
+        .v-icon { transform: rotate(360deg); }
+    }
+}

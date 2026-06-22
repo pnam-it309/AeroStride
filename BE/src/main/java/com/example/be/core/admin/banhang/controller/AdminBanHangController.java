@@ -136,4 +136,11 @@ public class AdminBanHangController {
         log.info("Fetching applicable vouchers for amount: {}", tongTien);
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.getVouchers(tongTien)));
     }
+
+    // Tự động tìm voucher tốt nhất cho hóa đơn
+    @GetMapping("/{id}/best-voucher")
+    public ResponseEntity<ApiResponse<PhieuGiamGia>> getBestVoucher(@PathVariable String id) {
+        log.info("Fetching best voucher for order: {}", id);
+        return ResponseEntity.ok(ApiResponse.success(adminBanHangService.getBestVoucher(id)));
+    }
 }

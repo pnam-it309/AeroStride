@@ -24,4 +24,5 @@ public interface AdminBanHangService {
     List<BanHangSanPhamResponse> searchSanPham(String keyword);
     List<AdminBanHangKhachHangResponse> searchKhachHang(String keyword);
     List<PhieuGiamGia> getVouchers(BigDecimal tongTien);
+    PhieuGiamGia getBestVoucher(String idHoaDon);
 }

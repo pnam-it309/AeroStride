@@ -79,5 +79,11 @@ export const dichVuDonHang = {
     async checkout(idHoaDon, checkoutData) {
         const response = await api.post(`${API_ADMIN.BAN_HANG}/${idHoaDon}/checkout`, checkoutData);
         return response.data;
+    },
+
+    // Lấy voucher tốt nhất
+    async getBestVoucher(idHoaDon) {
+        const response = await api.get(`${API_ADMIN.BAN_HANG}/${idHoaDon}/best-voucher`);
+        return response.data.data;
     }
 };

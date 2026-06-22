@@ -31,6 +31,11 @@ public class CustomerLandingController {
         return ResponseEntity.ok(ApiResponse.success(response, "Lay san pham landing thanh cong"));
     }
 
+    @GetMapping("/features")
+    public ResponseEntity<ApiResponse<List<List<com.example.be.core.customer.landing.model.response.CustomerLandingFeatureItemResponse>>>> getLandingFeatures() {
+        return ResponseEntity.ok(ApiResponse.success(landingService.getLandingFeatures(), "Lay danh sach tinh nang landing thanh cong"));
+    }
+
     @GetMapping("/featured-variants")
     @RateLimit(limit = 60, windowSeconds = 60)
     public ResponseEntity<ApiResponse<List<CustomerLandingVariantResponse>>> getFeaturedVariants(

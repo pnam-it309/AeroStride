@@ -47,5 +47,8 @@ public class CustomerOrderCheckoutRequest {
 
         @Min(value = 1, message = "Số lượng phải lớn hơn 0")
         private Integer soLuong;
+
+        @jakarta.validation.constraints.NotNull(message = "Giá dự kiến không được để trống")
+        private BigDecimal giaDuKien;
     }
 }

@@ -49,5 +49,10 @@ export const dichVuLanding = {
             hinhAnh: resolveImageUrl(variant.hinhAnh),
             images: (variant.images || []).map(resolveImageUrl)
         }));
+    },
+
+    async layDanhSachTinhNang() {
+        const response = await api.get('/customer/landing/features');
+        return response.data?.data || [];
     }
 };

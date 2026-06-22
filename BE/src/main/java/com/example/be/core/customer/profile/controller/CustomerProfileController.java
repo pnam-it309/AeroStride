@@ -23,7 +23,7 @@ import java.util.Optional;
 
 @Slf4j
 @RestController
-@RequestMapping(RoutesConstant.CUSTOMER + "/profile")
+@RequestMapping(RoutesConstant.CUSTOMER_PROFILE)
 @RequiredArgsConstructor
 public class CustomerProfileController {
 

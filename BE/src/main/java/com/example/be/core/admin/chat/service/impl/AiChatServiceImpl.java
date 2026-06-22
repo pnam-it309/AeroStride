@@ -612,6 +612,7 @@ public class AiChatServiceImpl implements AiChatService {
         if (variants.isEmpty()) return "Hiện tại không có sản phẩm nào khả dụng.\n";
 
         java.util.Map<String, List<ProductVariantResponse>> groupedProducts = variants.stream()
+                .filter(v -> v.getTenSanPham() != null)
                 .collect(Collectors.groupingBy(ProductVariantResponse::getTenSanPham));
 
         StringBuilder sb = new StringBuilder();
@@ -620,10 +621,17 @@ public class AiChatServiceImpl implements AiChatService {
         groupedProducts.forEach((tenSp, vars) -> {
             if (sb.length() > 15000) return;
 
-            sb.append(String.format("- %s (Thương hiệu: %s)\n", tenSp, vars.get(0).getTenThuongHieu()));
-            String sizes = vars.stream().map(ProductVariantResponse::getGiaTriKichThuoc).distinct().sorted().collect(Collectors.joining(", "));
-            String colors = vars.stream().map(ProductVariantResponse::getTenMauSac).distinct().collect(Collectors.joining(", "));
-            java.math.BigDecimal minPrice = vars.stream().map(ProductVariantResponse::getGiaBan).min(java.math.BigDecimal::compareTo).orElse(java.math.BigDecimal.ZERO);
+            String brand = vars.get(0).getTenThuongHieu() != null ? vars.get(0).getTenThuongHieu() : "AeroStride";
+            sb.append(String.format("- %s (Thương hiệu: %s)\n", tenSp, brand));
+            String sizes = vars.stream()
+                    .map(v -> v.getGiaTriKichThuoc() != null ? String.valueOf(v.getGiaTriKichThuoc()) : "N/A")
+                    .distinct().sorted().collect(Collectors.joining(", "));
+            String colors = vars.stream()
+                    .map(v -> v.getTenMauSac() != null ? v.getTenMauSac() : "N/A")
+                    .distinct().collect(Collectors.joining(", "));
+            java.math.BigDecimal minPrice = vars.stream()
+                    .map(v -> v.getGiaBan() != null ? v.getGiaBan() : java.math.BigDecimal.ZERO)
+                    .min(java.math.BigDecimal::compareTo).orElse(java.math.BigDecimal.ZERO);
 
             sb.append(String.format("  + Size: %s | Màu: %s | Giá từ: %s VNĐ\n", sizes, colors, minPrice));
 

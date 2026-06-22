@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping(RoutesConstant.API_PREFIX + "/payment")
+@RequestMapping(RoutesConstant.PAYMENT)
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentController {

@@ -38,8 +38,8 @@ export function useLandingPage() {
         }
     };
 
-    const onScroll = () => {
-        latestScrollTop = window.scrollY;
+    const onScroll = (e) => {
+        latestScrollTop = e.target ? e.target.scrollTop : window.scrollY;
 
         if (scrollFrame) {
             return;
