@@ -191,7 +191,7 @@ const handleCheckout = async () => {
         const response = await dichVuDatHang.datHang(checkoutData);
         if (response.success) {
             cartStore.clearCart();
-            router.push(`/order-success/${response.data.id}`);
+            router.push(`${PATH.ORDER_SUCCESS}/${response.data.id}`);
         }
     } catch (error) {
         console.error('Checkout error:', error);
@@ -206,6 +206,7 @@ onMounted(async () => {
         router.push(PATH.SHOES);
         return;
     }
+    await cartStore.syncWithBackend();
     fetchProvinces();
     await fetchUserProfile();
     fetchVouchers();

@@ -13,6 +13,8 @@ import HeroSection from './sections/HeroSection.vue';
 import CartDrawer from '@/components/shared/CartDrawer.vue';
 
 // Lazy load sections below the fold
+const PromoBannerSection = defineAsyncComponent(() => import('./sections/PromoBannerSection.vue'));
+const MonthlyProductsSection = defineAsyncComponent(() => import('./sections/MonthlyProductsSection.vue'));
 const ProblemSection = defineAsyncComponent(() => import('./sections/ProblemSection.vue'));
 const FeaturesSection = defineAsyncComponent(() => import('./sections/FeaturesSection.vue'));
 const SocialSection = defineAsyncComponent(() => import('./sections/SocialSection.vue'));
@@ -33,7 +35,7 @@ const {
     onScroll
 } = useLandingPage();
 
-const { heroProduct, isCatalogLoading, howProducts, problemProducts } = useLandingCatalog();
+const { heroProduct, isCatalogLoading, howProducts, topVariantsByQty, problemProducts, landingProducts } = useLandingCatalog();
 
 // SEO
 const { setSeoMeta } = useSeoMeta();
@@ -48,29 +50,37 @@ onMounted(() => {
 <template>
     <div class="app-container">
         <transition name="preloader-fade">
-            <Preloader v-if="isLoading || isCatalogLoading" @finish="handlePreloaderFinish" />
+            <Preloader v-if="isLoading" @finish="handlePreloaderFinish" />
         </transition>
 
         <!-- Section Dots Indicator -->
-        <div class="section-nav" v-if="!isLoading && !isCatalogLoading">
+        <div class="section-nav" v-if="!isLoading">
             <div v-for="(s, i) in LANDING_SECTIONS" :key="i" class="dot" :class="{ active: activeSection === i }"
                 @click="activeSection = i">
                 <span class="tooltip">{{ s.toUpperCase() }}</span>
             </div>
         </div>
 
-        <div class="landing-scroll-container" v-if="!isLoading && !isCatalogLoading" @scroll="onScroll">
+        <div class="landing-scroll-container" v-if="!isLoading" @scroll="onScroll">
             <!-- Premium Global Header & Mega Menu -->
-            <MainHeader v-if="!isLoading && !isCatalogLoading" />
+            <MainHeader v-if="!isLoading" />
 
             <!-- Modular Sections -->
-            <HeroSection :active="activeSection === 0" :mouseX="mouseX" :mouseY="mouseY" :product="heroProduct" />
-            <ProblemSection :active="activeSection === 1" :warm="isSectionWarm(1)" :products="problemProducts" />
-            <FeaturesSection :active="activeSection === 2" :warm="isSectionWarm(2)" />
-            <SocialSection :active="activeSection === 3" :warm="isSectionWarm(3)" />
-            <HowSection :active="activeSection === 4" :warm="isSectionWarm(4)" :products="howProducts" />
-            <FaqSection :active="activeSection === 5" />
-            <CtaSection :active="activeSection === 6" />
+            <HeroSection :active="activeSection === 0" :warm="isSectionWarm(0)" :mouseX="mouseX" :mouseY="mouseY" :product="heroProduct" />
+            <PromoBannerSection :active="activeSection === 1" :warm="isSectionWarm(1)" :products="landingProducts" />
+            <MonthlyProductsSection
+                :active="activeSection === 2"
+                :warm="isSectionWarm(2)"
+                :variants="topVariantsByQty"
+                title="SẢN PHẨM NỔI BẬT"
+                subtitle="Được yêu thích nhất tháng này"
+            />
+            <ProblemSection :active="activeSection === 3" :warm="isSectionWarm(3)" :products="problemProducts" />
+            <FeaturesSection :active="activeSection === 4" :warm="isSectionWarm(4)" />
+            <SocialSection :active="activeSection === 5" :warm="isSectionWarm(5)" />
+            <HowSection :active="activeSection === 6" :warm="isSectionWarm(6)" :products="howProducts" />
+            <FaqSection :active="activeSection === 7" :warm="isSectionWarm(7)" />
+            <CtaSection :active="activeSection === 8" :warm="isSectionWarm(8)" />
 
             <footer class="footer-landing py-10 text-center text-grey-darken-1 bg-white border-t">
                 <LogoClient class="mb-4 d-inline-block" style="max-width: 150px" />
@@ -79,10 +89,10 @@ onMounted(() => {
         </div>
 
         <!-- Cart Drawer -->
-        <CartDrawer v-if="!isLoading && !isCatalogLoading" />
+        <CartDrawer v-if="!isLoading" />
 
         <!-- Global Chat System -->
-        <CustomerChat v-if="!isLoading && !isCatalogLoading" />
+        <CustomerChat v-if="!isLoading" />
     </div>
 </template>
 

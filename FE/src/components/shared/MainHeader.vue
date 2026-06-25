@@ -1,102 +1,124 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import { PATH } from '@/router/routePaths';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
 import { useToastStore } from '@/stores/toastStore';
 import { useRouter } from 'vue-router';
+import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
+import { dichVuFile } from '@/services/core/dichVuFile';
 
 const authStore = useAuthStore();
 const cartStore = useCartStore();
 const toastStore = useToastStore();
 const router = useRouter();
 
+// ─── Favorites ───────────────────────────────────────────────────────────────
 const favoriteCount = ref(0);
-
 const updateFavoriteCount = () => {
-    let favorites = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
+    const favorites = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
     favoriteCount.value = favorites.length;
 };
-
 const handleFavoriteClick = () => {
-    if (favoriteCount.value > 0) {
-        router.push(PATH.FAVORITES);
-    } else {
-        toastStore.showToast('Bạn chưa có sản phẩm yêu thích nào!', 'info');
-        router.push(PATH.FAVORITES); // Vẫn cho phép vào xem trang rỗng
-    }
+    router.push(PATH.FAVORITES);
 };
 
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 const handleLogout = async () => {
     await authStore.logout();
     router.push('/');
 };
 
-const isMenuOpen = ref(false);
-const activeMenu = ref(null);
-const isSearchOpen = ref(false);
+// ─── Scroll hide/show ─────────────────────────────────────────────────────────
 const isScrolled = ref(false);
-
-const searchQuery = ref('');
-
-const handleSearch = () => {
-    if (searchQuery.value.trim()) {
-        router.push({ path: PATH.SHOES, query: { keyword: searchQuery.value.trim() } });
-    }
-};
-
-const navLinks = [
-    {
-        name: 'Sản phẩm mới',
-        id: 'new',
-        sub: [
-            { label: 'Nổi bật', items: ['Sản phẩm mới nhất', 'Bán chạy nhất', 'Dành riêng cho thành viên', 'Bộ sưu tập giới hạn'] },
-            { label: 'Loại giày', items: ['Lifestyle', 'Chạy bộ', 'Bóng rổ', 'Tập luyện', 'Bóng đá'] },
-            { label: 'Theo bộ sưu tập', items: ['AeroStride X1', 'Strike V3', 'Glide Pro', 'Air Max'] }
-        ]
-    },
-    {
-        name: 'Nam',
-        id: 'men',
-        sub: [
-            { label: 'Loại giày', items: ['Tất cả giày nam', 'Lifestyle', 'Chạy bộ', 'Bóng rổ', 'Bóng đá', 'Tập luyện'] },
-            { label: 'Nổi bật', items: ['Hàng mới về', 'Sale 50%', 'Được yêu thích nhất'] }
-        ]
-    },
-    {
-        name: 'Nữ',
-        id: 'women',
-        sub: [
-            { label: 'Loại giày', items: ['Tất cả giày nữ', 'Lifestyle', 'Chạy bộ', 'Tập luyện', 'Yoga', 'Tennis'] },
-            { label: 'Nổi bật', items: ['Hàng mới về', 'Ưu đãi đặc biệt', 'Phối màu mới'] }
-        ]
-    },
-    { name: 'Mã giảm giá', id: 'vouchers', path: PATH.VOUCHERS, color: '#FF1744' }
-];
-
 const isHidden = ref(false);
 let lastScrollY = 0;
-
 const handleScroll = () => {
-    const currentScrollY = window.scrollY;
-    isScrolled.value = currentScrollY > 50;
-
-    if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // Cuộn xuống -> Ẩn
+    const y = window.scrollY;
+    isScrolled.value = y > 50;
+    if (y > lastScrollY && y > 100) {
         isHidden.value = true;
-        closeMegaMenu();
-    } else if (currentScrollY < lastScrollY) {
-        // Cuộn lên -> Hiện
+        closeSearch();
+    } else if (y < lastScrollY) {
         isHidden.value = false;
     }
-    lastScrollY = currentScrollY;
+    lastScrollY = y;
+};
+const handleMouseEnter = () => { isHidden.value = false; };
+
+// ─── Nav links ────────────────────────────────────────────────────────────────
+const navLinks = [
+    { label: 'TRANG CHỦ', path: PATH.LANDING },
+    { label: 'SẢN PHẨM', path: PATH.SHOES },
+    { label: 'GIỚI THIỆU', path: '/gioi-thieu' },
+    { label: 'TIN TỨC', path: '/tin-tuc' },
+    { label: 'LIÊN HỆ', path: '/lien-he' },
+    { label: 'TRA CỨU', path: PATH.ORDERS },
+];
+
+// ─── Live search ──────────────────────────────────────────────────────────────
+const searchQuery = ref('');
+const searchResults = ref([]);
+const isSearchLoading = ref(false);
+const isSearchOpen = ref(false);
+let searchTimer = null;
+
+const resolveImg = (v) => {
+    if (!v) return '';
+    if (/^(https?:)?\/\//i.test(v) || v?.startsWith('data:') || v?.startsWith('blob:')) return v;
+    return dichVuFile.layUrlFile(v.replace(/^\/+/, ''));
 };
 
-const handleMouseEnter = () => {
-    isHidden.value = false;
+const doSearch = async (q) => {
+    if (!q || q.trim().length < 2) {
+        searchResults.value = [];
+        return;
+    }
+    isSearchLoading.value = true;
+    try {
+        searchResults.value = await dichVuSanPhamPublic.timKiemNhanh(q.trim(), 6);
+    } catch {
+        searchResults.value = [];
+    } finally {
+        isSearchLoading.value = false;
+    }
 };
 
+watch(searchQuery, (val) => {
+    clearTimeout(searchTimer);
+    if (!val || val.trim().length < 2) {
+        searchResults.value = [];
+        return;
+    }
+    searchTimer = setTimeout(() => doSearch(val), 320);
+});
+
+const openSearch = () => { isSearchOpen.value = true; };
+const closeSearch = () => {
+    isSearchOpen.value = false;
+    searchResults.value = [];
+};
+
+const handleSearchSubmit = () => {
+    if (searchQuery.value.trim()) {
+        router.push({ path: PATH.SHOES, query: { keyword: searchQuery.value.trim() } });
+        closeSearch();
+    }
+};
+
+const handleResultClick = (product) => {
+    router.push(`/product/${product.id}`);
+    searchQuery.value = '';
+    closeSearch();
+};
+
+const formatPrice = (v) => {
+    if (!v && v !== 0) return '';
+    return new Intl.NumberFormat('vi-VN').format(v) + ' đ';
+};
+
+// ─── Lifecycle ────────────────────────────────────────────────────────────────
 onMounted(() => {
     window.addEventListener('scroll', handleScroll);
     updateFavoriteCount();
@@ -108,44 +130,39 @@ onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll);
     window.removeEventListener('storage', updateFavoriteCount);
     window.removeEventListener('favorites-updated', updateFavoriteCount);
+    clearTimeout(searchTimer);
 });
-
-const openMegaMenu = (id) => {
-    activeMenu.value = id;
-    isMenuOpen.value = true;
-};
-
-const closeMegaMenu = () => {
-    isMenuOpen.value = false;
-    activeMenu.value = null;
-};
 </script>
 
 <template>
     <div class="header-hover-zone" v-if="isHidden" @mouseenter="handleMouseEnter"></div>
-    <header class="main-header-system" :class="{ scrolled: isScrolled, 'mega-active': isMenuOpen, 'header-hidden': isHidden }" @mouseenter="handleMouseEnter">
+    <header
+        class="main-header-system"
+        :class="{ scrolled: isScrolled, 'header-hidden': isHidden }"
+        @mouseenter="handleMouseEnter"
+    >
         <!-- Top Utility Bar -->
         <div class="top-utility-bar">
-            <div class="container-custom d-flex justify-end gap-6 px-12 w-100">
-                <a href="#" class="u-link">Hệ thống cửa hàng</a>
-                <span class="divider">|</span>
-                <a href="#" class="u-link">Trợ giúp</a>
-                <span class="divider">|</span>
-                <a href="#" class="u-link">Tham gia cùng chúng tôi</a>
-                <span class="divider">|</span>
-                <router-link v-if="!authStore.isLoggedIn" :to="PATH.LOGIN" class="u-link d-flex align-center" title="Đăng nhập">
-                    <v-icon size="20" color="black" class="mr-1">mdi-account-circle-outline</v-icon>
-                </router-link>
-                <div v-else class="d-flex align-center cursor-pointer" style="height: 100%">
-                    <v-menu location="bottom end" offset="4" transition="slide-y-transition">
-                        <template v-slot:activator="{ props }">
-                            <div v-bind="props" class="d-flex align-center gap-1">
-                                <v-icon size="18" color="black">mdi-account-circle-outline</v-icon>
-                                <span class="u-link">{{ authStore.user?.hoTen || authStore.user?.username || 'Thành viên' }}</span>
+            <div class="container-custom d-flex align-center justify-space-between px-12 w-100">
+                <span class="u-text">📞 Hotline: 1900 6789</span>
+                <div class="d-flex align-center gap-4">
+                    <a href="#" class="u-link">Hệ thống cửa hàng</a>
+                    <span class="divider">|</span>
+                    <a href="#" class="u-link">Trợ giúp</a>
+                    <span class="divider">|</span>
+                    <router-link v-if="!authStore.isLoggedIn" :to="PATH.LOGIN" class="u-link d-flex align-center gap-1">
+                        <v-icon size="16">mdi-account-circle-outline</v-icon>
+                        Đăng nhập
+                    </router-link>
+                    <v-menu v-else location="bottom end" offset="4" transition="slide-y-transition">
+                        <template v-slot:activator="{ props: menuProps }">
+                            <div v-bind="menuProps" class="d-flex align-center gap-1 u-link cursor-pointer">
+                                <v-icon size="16">mdi-account-circle-outline</v-icon>
+                                {{ authStore.user?.hoTen || authStore.user?.username || 'Thành viên' }}
                             </div>
                         </template>
                         <v-list density="compact" width="180" class="rounded-lg mt-2 border shadow-sm">
-                            <v-list-item prepend-icon="mdi-account-outline" title="Tài khoản của tôi" :to="PATH.PROFILE"></v-list-item>
+                            <v-list-item prepend-icon="mdi-account-outline" title="Tài khoản" :to="PATH.PROFILE"></v-list-item>
                             <v-list-item prepend-icon="mdi-package-variant-closed" title="Đơn mua" :to="PATH.ORDERS"></v-list-item>
                             <v-divider class="my-1"></v-divider>
                             <v-list-item prepend-icon="mdi-logout" title="Đăng xuất" @click="handleLogout" color="error"></v-list-item>
@@ -155,8 +172,8 @@ const closeMegaMenu = () => {
             </div>
         </div>
 
-        <!-- Main Navigation Bar -->
-        <nav class="main-navbar px-12 py-2" @mouseleave="closeMegaMenu">
+        <!-- Main Nav -->
+        <nav class="main-navbar px-12 py-2">
             <div class="container-custom d-flex align-center justify-space-between w-100">
                 <!-- Logo -->
                 <router-link to="/" class="logo-wrap">
@@ -164,66 +181,87 @@ const closeMegaMenu = () => {
                 </router-link>
 
                 <!-- Nav Links -->
-                <div class="nav-links-center d-flex align-center">
-                    <div v-for="link in navLinks" :key="link.id" class="nav-item-wrap" @mouseenter="openMegaMenu(link.id)">
-                        <router-link :to="link.path || PATH.SHOES" class="nav-link" :style="{ color: link.color || 'inherit' }">{{
-                            link.name
-                        }}</router-link>
-                        <div class="active-indicator"></div>
-                    </div>
-                </div>
+                <nav class="nav-links">
+                    <router-link
+                        v-for="link in navLinks"
+                        :key="link.path"
+                        :to="link.path"
+                        class="nav-link"
+                        :class="{ active: $route.path === link.path || ($route.path.startsWith(link.path) && link.path !== '/') }"
+                    >
+                        {{ link.label }}
+                    </router-link>
+                </nav>
 
-                <!-- Actions -->
-                <div class="nav-actions d-flex align-center gap-6">
-                    <div class="search-bar-wrap" :class="{ expanded: isSearchOpen }">
-                        <v-icon size="22" class="search-icon" @click="handleSearch">mdi-magnify</v-icon>
-                        <input type="text" placeholder="Tìm kiếm" class="search-input" v-model="searchQuery" @keyup.enter="handleSearch" />
+                <!-- Actions: search + favorites + cart -->
+                <div class="nav-actions d-flex align-center gap-4">
+                    <!-- Search -->
+                    <div class="search-wrap" :class="{ expanded: isSearchOpen }">
+                        <v-icon size="20" class="search-icon" @click="isSearchOpen ? handleSearchSubmit() : openSearch()">
+                            mdi-magnify
+                        </v-icon>
+                        <input
+                            v-if="isSearchOpen"
+                            ref="searchInputRef"
+                            type="text"
+                            placeholder="Tìm kiếm sản phẩm..."
+                            class="search-input"
+                            v-model="searchQuery"
+                            @keyup.enter="handleSearchSubmit"
+                            @blur="() => { window.setTimeout(closeSearch, 200) }"
+                            autofocus
+                        />
+                        <!-- Dropdown results -->
+                        <div v-if="isSearchOpen && (searchResults.length > 0 || isSearchLoading)" class="search-dropdown">
+                            <div v-if="isSearchLoading" class="search-loading">
+                                <v-progress-circular size="18" width="2" indeterminate color="blue-darken-3"></v-progress-circular>
+                                <span>Đang tìm...</span>
+                            </div>
+                            <div
+                                v-for="item in searchResults"
+                                :key="item.id"
+                                class="search-result-item"
+                                @mousedown.prevent="handleResultClick(item)"
+                            >
+                                <div class="result-img-wrap">
+                                    <img v-if="item.hinhAnh" :src="item.hinhAnh" :alt="item.tenSanPham" class="result-img" />
+                                    <v-icon v-else size="24" color="grey-lighten-1">mdi-shoe-sneaker</v-icon>
+                                </div>
+                                <div class="result-info">
+                                    <div class="result-name">{{ item.tenSanPham }}</div>
+                                    <div class="result-meta">
+                                        <span class="result-brand">{{ item.tenThuongHieu }}</span>
+                                        <span class="result-price" v-if="item.giaBanThapNhat">
+                                            {{ formatPrice(item.giaBanThapNhat) }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="search-footer" v-if="searchResults.length > 0" @mousedown.prevent="handleSearchSubmit">
+                                Xem tất cả kết quả cho "{{ searchQuery }}"
+                                <v-icon size="14">mdi-arrow-right</v-icon>
+                            </div>
+                        </div>
                     </div>
-                    <div class="cursor-pointer" style="display: flex; align-items: center;" @click="handleFavoriteClick">
+
+                    <!-- Favorites -->
+                    <div class="cursor-pointer d-flex align-center" @click="handleFavoriteClick">
                         <v-badge :content="favoriteCount" color="error" v-if="favoriteCount > 0" offset-x="2" offset-y="2">
-                            <v-icon size="24" class="action-icon">mdi-heart-outline</v-icon>
+                            <v-icon size="22" class="action-icon">mdi-heart-outline</v-icon>
                         </v-badge>
-                        <v-icon v-else size="24" class="action-icon">mdi-heart-outline</v-icon>
+                        <v-icon v-else size="22" class="action-icon">mdi-heart-outline</v-icon>
                     </div>
-                    <div class="cursor-pointer" style="display: flex; align-items: center;" @click="cartStore.openDrawer()">
+
+                    <!-- Cart -->
+                    <div class="cursor-pointer d-flex align-center" @click="cartStore.openDrawer()">
                         <v-badge :content="cartStore.cartCount" color="error" v-if="cartStore.cartCount > 0" offset-x="2" offset-y="2">
-                            <v-icon size="24" class="action-icon">mdi-shopping-outline</v-icon>
+                            <v-icon size="22" class="action-icon">mdi-shopping-outline</v-icon>
                         </v-badge>
-                        <v-icon v-else size="24" class="action-icon">mdi-shopping-outline</v-icon>
+                        <v-icon v-else size="22" class="action-icon">mdi-shopping-outline</v-icon>
                     </div>
                 </div>
             </div>
-
-            <!-- Mega Menu Overlay -->
-            <transition name="mega-fade">
-                <div v-if="isMenuOpen && navLinks.find((l) => l.id === activeMenu)?.sub" class="mega-menu-content">
-                    <v-container class="py-12">
-                        <v-row>
-                            <v-col v-for="(col, i) in navLinks.find((l) => l.id === activeMenu).sub" :key="i" cols="12" md="3">
-                                <h4 class="menu-label mb-6">{{ col.label }}</h4>
-                                <ul class="menu-list">
-                                    <li v-for="item in col.items" :key="item" class="menu-item" @click="closeMegaMenu">
-                                        <router-link :to="PATH.SHOES">{{ item }}</router-link>
-                                    </li>
-                                </ul>
-                            </v-col>
-                            <v-col cols="12" md="3">
-                                <div class="featured-promo p-6 rounded-lg bg-grey-lighten-4">
-                                    <h4 class="menu-label mb-4" style="text-transform: none; font-weight: normal;">Dành riêng cho thành viên</h4>
-                                    <p class="text-caption mb-4" style="font-weight: normal;">Sở hữu những mẫu giày mới nhất ngay hôm nay. Đăng ký thành viên hoàn toàn miễn phí.</p>
-                                    <v-btn block color="black" rounded="pill" size="small" :to="PATH.SHOES" @click="closeMegaMenu" style="text-transform: none; font-weight: normal;"
-                                        >Mua ngay</v-btn
-                                    >
-                                </div>
-                            </v-col>
-                        </v-row>
-                    </v-container>
-                </div>
-            </transition>
         </nav>
-
-        <!-- Backdrop for Mega Menu -->
-        <div v-if="isMenuOpen" class="mega-backdrop" @mouseenter="closeMegaMenu"></div>
     </header>
 </template>
 
@@ -234,20 +272,15 @@ const closeMegaMenu = () => {
     left: 0;
     width: 100%;
     z-index: 1000;
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
         background: #ffffff;
         backdrop-filter: none;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    }
-
-    &.mega-active {
-        background: #ffffff !important;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
     }
 
     &.header-hidden {
@@ -260,173 +293,232 @@ const closeMegaMenu = () => {
     top: 0;
     left: 0;
     width: 100%;
-    height: 25px;
-    z-index: 1001; /* Above header so it triggers even when header is hidden */
+    height: 20px;
+    z-index: 1001;
 }
 
+/* Top Bar */
 .top-utility-bar {
-    height: 36px;
+    height: 34px;
     background: #f5f5f5;
+    border-bottom: 1px solid #ebebeb;
     display: flex;
     align-items: center;
+
+    .u-text {
+        font-size: 0.78rem;
+        color: #555;
+    }
+
     .u-link {
-        font-size: 0.8rem;
-        font-weight: normal;
-        color: #111;
+        font-size: 0.78rem;
+        color: #333;
         text-decoration: none;
-        &:hover {
-            opacity: 0.7;
-        }
+        font-weight: 500;
+        cursor: pointer;
+        &:hover { color: #000; }
     }
+
     .divider {
-        font-size: 0.7rem;
         color: #ccc;
-        margin: 0 10px;
+        font-size: 0.7rem;
     }
 }
 
+/* Main Nav */
 .main-navbar {
-    position: relative;
     background: #fff;
-    border-bottom: 1px solid transparent;
-    transition: all 0.3s ease;
-}
-
-.nav-links-center {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    gap: 30px;
-}
-
-.nav-item-wrap {
     position: relative;
-    padding: 15px 0;
-    .nav-link {
-        font-size: 0.95rem;
-        font-weight: normal;
-        color: #111;
-        text-decoration: none;
-    }
-    .active-indicator {
+}
+
+/* Nav Links */
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.nav-link {
+    position: relative;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: #333;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.2s ease;
+
+    &::after {
+        content: '';
         position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 0;
+        bottom: 2px;
+        left: 14px;
+        right: 14px;
         height: 2px;
-        background: #000;
-        transition: width 0.3s ease;
+        background: #111;
+        transform: scaleX(0);
+        transition: transform 0.25s ease;
+        transform-origin: center;
     }
-    &:hover .active-indicator {
-        width: 100%;
+
+    &:hover {
+        color: #111;
+        &::after { transform: scaleX(1); }
+    }
+
+    &.active {
+        color: #111;
+        font-weight: 900;
+        &::after { transform: scaleX(1); }
     }
 }
 
-/* Actions & Search */
+/* Actions */
 .nav-actions {
     .action-icon {
         cursor: pointer;
         color: #111;
-        &:hover {
-            opacity: 0.7;
-        }
+        &:hover { opacity: 0.7; }
     }
 }
 
-.search-bar-wrap {
-    background: #f5f5f5;
-    border-radius: 100px;
+/* Search */
+.search-wrap {
+    position: relative;
     display: flex;
     align-items: center;
+    background: #f5f5f5;
+    border-radius: 100px;
     padding: 6px 12px;
-    width: 180px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 36px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.expanded {
+        width: 260px;
+        background: #ebebeb;
+    }
+
     .search-icon {
         color: #666;
-        margin-right: 8px;
+        cursor: pointer;
+        flex-shrink: 0;
     }
+
     .search-input {
         border: none;
         background: transparent;
         outline: none;
-        font-size: 0.9rem;
-        font-weight: 600;
+        font-size: 0.88rem;
+        font-weight: 500;
         width: 100%;
         color: #111;
-    }
-    &:hover,
-    &.expanded {
-        background: #e5e5e5;
-        width: 250px;
+        margin-left: 8px;
     }
 }
 
-/* Mega Menu */
-.mega-menu-content {
+.search-dropdown {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 8px);
+    right: 0;
     left: 0;
-    width: 100%;
-    background: #ffffff;
-    border-top: 1px solid #f0f0f0;
-    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
+    width: 340px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+    border: 1px solid #f0f0f0;
     overflow: hidden;
+    z-index: 2000;
 }
 
-.menu-label {
-    font-size: 0.9rem;
-    font-weight: 900;
-    color: #111;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.menu-list {
-    list-style: none;
-    padding: 0;
-    .menu-item {
-        margin-bottom: 8px;
-        cursor: pointer;
-        a {
-            font-size: 0.9rem;
-            color: #757575;
-            text-decoration: none;
-            font-weight: 600;
-            &:hover {
-                color: #000;
-            }
-        }
-    }
+.search-loading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    font-size: 0.85rem;
+    color: #888;
 }
 
-.mega-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.3);
-    z-index: -1;
-    backdrop-filter: blur(4px);
+.search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover { background: #f8fafc; }
 }
 
-/* Transitions */
-.mega-fade-enter-active,
-.mega-fade-leave-active {
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+.result-img-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: #f5f5f5;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.mega-fade-enter-from,
-.mega-fade-leave-to {
-    opacity: 0;
-    transform: translateY(-10px);
+
+.result-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 4px;
+}
+
+.result-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.result-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.result-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2px;
+}
+
+.result-brand {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.result-price {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #d32f2f;
+}
+
+.search-footer {
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #2962ff;
+    cursor: pointer;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    &:hover { background: #f0f4ff; }
 }
 
 @media (max-width: 1200px) {
-    .nav-links-center {
-        display: none;
-    }
-    .top-utility-bar {
-        display: none;
-    }
+    .top-utility-bar { display: none; }
+    .brand-tabs { display: none; }
 }
 </style>

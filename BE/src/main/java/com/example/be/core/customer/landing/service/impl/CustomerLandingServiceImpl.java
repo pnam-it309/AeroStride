@@ -149,6 +149,73 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
     }
 
     @Override
+    public List<CustomerLandingVariantResponse> getTopVariantsByQuantity(Integer size) {
+        Pageable pageable = PageRequest.of(0, size, Sort.by("soLuong").descending());
+        List<ChiTietSanPham> variants = chiTietSanPhamRepository
+                .findByXoaMemFalseAndTrangThai(TrangThai.DANG_HOAT_DONG, pageable);
+
+        if (variants.isEmpty()) return Collections.emptyList();
+
+        List<String> ids = variants.stream().map(ChiTietSanPham::getId).toList();
+
+        List<AnhChiTietSanPham> images = anhChiTietSanPhamRepository
+                .findAllByChiTietSanPhamIdInAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(ids);
+
+        Map<String, List<AnhChiTietSanPham>> imageMap = images.stream()
+                .filter(img -> img.getChiTietSanPham() != null)
+                .collect(Collectors.groupingBy(img -> img.getChiTietSanPham().getId()));
+
+        List<ChiTietDotGiamGia> relations = chiTietDotGiamGiaRepository.findAllByChiTietSanPhamIdIn(ids);
+        Map<String, List<ChiTietDotGiamGia>> relationMap = relations.stream()
+                .filter(rel -> rel.getChiTietSanPham() != null)
+                .collect(Collectors.groupingBy(rel -> rel.getChiTietSanPham().getId()));
+
+        long now = System.currentTimeMillis();
+
+        return variants.stream().map(v -> {
+            List<AnhChiTietSanPham> imgs = imageMap.getOrDefault(v.getId(), Collections.emptyList());
+            List<String> imgUrls = imgs.stream().map(AnhChiTietSanPham::getDuongDanAnh).toList();
+            String primaryImage = imgs.stream()
+                    .filter(AnhChiTietSanPham::getHinhAnhDaiDien)
+                    .findFirst()
+                    .map(AnhChiTietSanPham::getDuongDanAnh)
+                    .orElse(imgUrls.isEmpty() ? null : imgUrls.get(0));
+
+            BigDecimal activeDiscount = BigDecimal.ZERO;
+            List<ChiTietDotGiamGia> rels = relationMap.getOrDefault(v.getId(), Collections.emptyList());
+            for (ChiTietDotGiamGia ct : rels) {
+                DotGiamGia d = ct.getDotGiamGia();
+                if (d != null && d.getTrangThai() == TrangThai.DANG_HOAT_DONG
+                        && d.getNgayBatDau() != null && d.getNgayKetThuc() != null
+                        && d.getNgayBatDau() <= now && now <= d.getNgayKetThuc()
+                        && d.getSoTienGiam() != null
+                        && d.getSoTienGiam().compareTo(activeDiscount) > 0) {
+                    activeDiscount = d.getSoTienGiam();
+                }
+            }
+
+            return CustomerLandingVariantResponse.builder()
+                    .id(v.getId())
+                    .idSanPham(v.getSanPham() != null ? v.getSanPham().getId() : null)
+                    .maSanPham(v.getSanPham() != null ? v.getSanPham().getMa() : null)
+                    .tenSanPham(v.getSanPham() != null ? v.getSanPham().getTen() : null)
+                    .tenThuongHieu(v.getSanPham() != null && v.getSanPham().getThuongHieu() != null
+                            ? v.getSanPham().getThuongHieu().getTen() : null)
+                    .maChiTietSanPham(v.getMaChiTietSanPham())
+                    .tenMauSac(v.getMauSac() != null ? v.getMauSac().getTen() : null)
+                    .maMauHex(v.getMauSac() != null ? v.getMauSac().getMaMauHex() : null)
+                    .tenKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getTen() : null)
+                    .giaTriKichThuoc(v.getKichThuoc() != null ? v.getKichThuoc().getGiaTriKichThuoc() : null)
+                    .soLuong(v.getSoLuong())
+                    .giaBan(v.getGiaBan())
+                    .phanTramGiam(activeDiscount)
+                    .hinhAnh(primaryImage)
+                    .images(imgUrls)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    @Override
     public List<List<CustomerLandingFeatureItemResponse>> getLandingFeatures() {
         CustomerProductFormOptionsResponse filters = sanPhamService.getFormOptions();
         List<CustomerLandingFeatureItemResponse> combined = new ArrayList<>();

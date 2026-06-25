@@ -143,7 +143,7 @@ watch(maxQuantity, (newMax) => {
 });
 
 // Thêm vào giỏ hàng
-const addToCart = () => {
+const addToCart = async () => {
     if (!product.value) return;
 
     if (!selectedColor.value) {
@@ -168,37 +168,29 @@ const addToCart = () => {
     }
 
     addingToCart.value = true;
-
-    // Simulate API call
-    setTimeout(() => {
-        addingToCart.value = false;
-        
-        const firstImage = variant.images?.length
-            ? variant.images[0].duongDanAnh
-            : allImages.value.length
-            ? allImages.value[0].duongDanAnh
-            : '';
-
-        const cartItem = {
-            id: variant.id,
-            productId: product.value.id,
-            maSanPham: product.value.maSanPham,
-            name: product.value.tenSanPham,
-            color: selectedColor.value,
-            size: selectedSize.value,
-            price: variant.giaBan,
-            quantity: selectedQuantity.value,
-            image: firstImage,
-            maxQuantity: variant.soLuong
-        };
-
-        const result = cartStore.addItem(cartItem);
-        if (result.success) {
-            toastStore.showToast(result.message, 'success');
+    try {
+        const result = await cartStore.addToCart({
+            idChiTietSanPham: variant.id,
+            soLuong: selectedQuantity.value,
+            // Truyền metadata để drawer hiển thị ngay (không cần chờ sync)
+            tenSanPham: product.value?.ten || product.value?.tenSanPham || '',
+            hinhAnh: variant.images?.[0]?.duongDanAnh || product.value?.hinhAnh || '',
+            tenMauSac: variant.tenMauSac || selectedColor.value || '',
+            tenKichThuoc: variant.tenKichThuoc || selectedSize.value || '',
+            giaBan: variant.giaBan || displayPrice.value || 0,
+            soLuongTonKho: variant.soLuong || 0
+        });
+        if (result?.success) {
+            toastStore.showToast('Đã thêm vào giỏ hàng', 'success');
+            cartStore.openDrawer();
         } else {
-            toastStore.showToast(result.message, 'warning');
+            toastStore.showToast(result?.message || 'Không thể thêm vào giỏ hàng', 'warning');
         }
-    }, 300);
+    } catch (e) {
+        toastStore.showToast('Có lỗi xảy ra, vui lòng thử lại', 'error');
+    } finally {
+        addingToCart.value = false;
+    }
 };
 
 const toggleFavorite = () => {

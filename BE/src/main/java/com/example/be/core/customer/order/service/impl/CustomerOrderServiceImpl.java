@@ -6,6 +6,7 @@ import com.example.be.core.customer.order.service.CustomerOrderService;
 import com.example.be.core.customer.order.repository.*;
 import com.example.be.entity.*;
 import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.utils.CodeUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -131,6 +132,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         );
 
         HoaDon hoaDon = HoaDon.builder()
+                .maHoaDon(CodeUtils.generateRandom(HoaDon.class))
                 .trangThai(OrderStatus.CHO_XAC_NHAN)
                 .khachHang(khachHang)
                 .loaiDon("ONLINE")

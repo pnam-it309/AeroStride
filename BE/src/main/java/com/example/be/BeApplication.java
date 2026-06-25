@@ -18,8 +18,6 @@ public class BeApplication {
         String[] locations = {"env", "BE/env", "docker/env", "../docker/env", ".", ".."};
         String[] filenames = {".env.dev", ".env"};
 
-        System.err.println("[AeroStride] INFO: Starting environment variable loading process...");
-
         for (String path : locations) {
             for (String filename : filenames) {
                 try {
@@ -27,7 +25,6 @@ public class BeApplication {
                             .directory(path)
                             .filename(filename)
                             .load();
-                    System.err.println("[AeroStride] SUCCESS: Loaded environment from " + path + "/" + filename + " (" + dotenv.entries().size() + " entries)");
                     break;
                 } catch (Exception e) {
                     // Log silently for non-existent files during search
@@ -47,9 +44,6 @@ public class BeApplication {
                 boolean isCritical = key.startsWith("SPRING_") || key.startsWith("JWT_");
                 
                 if (System.getProperty(key) == null || isCritical) {
-                    if (isCritical && System.getProperty(key) != null) {
-                        System.err.println("[AeroStride] DEBUG: Overriding critical property " + key + " with value from .env");
-                    }
                     System.setProperty(key, value);
                 }
             }

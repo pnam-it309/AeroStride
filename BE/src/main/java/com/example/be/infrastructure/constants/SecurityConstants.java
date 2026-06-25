@@ -10,6 +10,7 @@ public final class SecurityConstants {
         RoutesConstant.AUTH + "/**",
         RoutesConstant.CUSTOMER + "/landing/**",
         RoutesConstant.CUSTOMER + "/san-pham/**",
+        RoutesConstant.CUSTOMER + "/cart/**",
         RoutesConstant.API_PREFIX + "/storage/proxy",
         "/uploads/**",
         "/swagger-ui/**",

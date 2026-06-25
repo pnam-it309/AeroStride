@@ -1,13 +1,24 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
+import { dichVuFile } from '@/services/core/dichVuFile';
 import { PATH } from '@/router/routePaths';
 
 const router = useRouter();
 const cartStore = useCartStore();
 const authStore = useAuthStore();
+
+onMounted(() => {
+    cartStore.syncWithBackend();
+});
+
+const resolveImg = (v) => {
+    if (!v) return '';
+    if (/^(https?:)?\/\//i.test(v) || v?.startsWith('data:') || v?.startsWith('blob:')) return v;
+    return dichVuFile.layUrlFile(v.replace(/^\/+/, ''));
+};
 
 const FREE_SHIP_THRESHOLD = 5000000;
 const SHIPPING_FEE = 30000;
@@ -84,12 +95,25 @@ const handleCheckout = () => {
 
             <!-- Cart Items -->
             <div class="cart-items-container flex-grow-1" v-if="!cartStore.isEmpty">
-                <TransitionGroup name="cart-item" tag="div">
+                <!-- Loading skeleton when syncing with backend -->
+                <div v-if="cartStore.isSyncing && !cartStore.cartItems[0]?.tenSanPham" class="px-4 py-2">
+                    <div v-for="n in cartStore.cartCount" :key="n" class="cart-item px-4 py-4 mb-1">
+                        <div class="d-flex gap-4">
+                            <v-skeleton-loader type="image" width="90" height="90" class="rounded-xl"></v-skeleton-loader>
+                            <div class="flex-grow-1">
+                                <v-skeleton-loader type="text" class="mb-2"></v-skeleton-loader>
+                                <v-skeleton-loader type="text" width="60%" class="mb-2"></v-skeleton-loader>
+                                <v-skeleton-loader type="text" width="40%"></v-skeleton-loader>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <TransitionGroup v-else name="cart-item" tag="div">
                     <div v-for="item in cartStore.cartItems" :key="item.idChiTietSanPham" class="cart-item px-6 py-4">
                         <div class="d-flex gap-4">
                             <!-- Product Image -->
                             <div class="cart-item-image position-relative">
-                                <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover class="rounded-xl" width="90" height="90" lazy-src="https://via.placeholder.com/90?text=..."></v-img>
+                                <v-img v-if="item.hinhAnh" :src="resolveImg(item.hinhAnh)" cover class="rounded-xl" width="90" height="90" lazy-src="https://via.placeholder.com/90?text=..."></v-img>
                                 <div v-else class="image-placeholder rounded-xl">
                                     <v-icon size="36" color="grey-lighten-2">mdi-shoe-sneaker</v-icon>
                                 </div>

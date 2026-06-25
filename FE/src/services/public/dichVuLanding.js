@@ -51,6 +51,29 @@ export const dichVuLanding = {
         }));
     },
 
+    async layTopBienTheTheoSoLuong(size = 5) {
+        const response = await api.get('/customer/landing/top-variants', {
+            params: { size }
+        });
+
+        return (response.data?.data || []).map((variant) => ({
+            id: variant.id,
+            idSanPham: variant.idSanPham,
+            maSanPham: variant.maSanPham,
+            tenSanPham: variant.tenSanPham,
+            tenThuongHieu: variant.tenThuongHieu,
+            maChiTietSanPham: variant.maChiTietSanPham,
+            tenMauSac: variant.tenMauSac,
+            maMauHex: variant.maMauHex,
+            tenKichThuoc: variant.tenKichThuoc,
+            soLuong: variant.soLuong,
+            giaBan: variant.giaBan,
+            phanTramGiam: variant.phanTramGiam,
+            hinhAnh: resolveImageUrl(variant.hinhAnh),
+            images: (variant.images || []).map(resolveImageUrl)
+        }));
+    },
+
     async layDanhSachTinhNang() {
         const response = await api.get('/customer/landing/features');
         return response.data?.data || [];

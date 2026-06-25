@@ -20,17 +20,11 @@ const pageSize = ref(12);
 
 const searchParams = ref({
     keyword: route.query.keyword || '',
-    idThuongHieu: route.query.idThuongHieu || null,
-    idMauSac: route.query.idMauSac || null,
-    idKichThuoc: route.query.idKichThuoc || null,
-    idChatLieu: route.query.idChatLieu || null,
-    idDeGiay: route.query.idDeGiay || null,
-    idCoGiay: route.query.idCoGiay || null,
-    idXuatXu: route.query.idXuatXu || null,
-    idMucDichChay: route.query.idMucDichChay || null,
+    thuongHieuId: route.query.thuongHieuId || null,
+    chatLieuId: route.query.chatLieuId || null,
+    xuatXuId: route.query.xuatXuId || null,
+    mucDichChayId: route.query.mucDichChayId || null,
     gioiTinhKhachHang: route.query.gioiTinhKhachHang || null,
-    minPrice: route.query.minPrice || null,
-    maxPrice: route.query.maxPrice || null,
     sortBy: route.query.sortBy || 'newest'
 });
 
@@ -45,10 +39,11 @@ const fetchFilters = async () => {
     try {
         const data = await dichVuSanPhamPublic.layBoLoc();
         filters.value = [
-            { title: 'Thương hiệu', key: 'idThuongHieu', items: data.thuongHieus },
-            { title: 'Màu sắc', key: 'idMauSac', items: data.mauSacs },
-            { title: 'Kích thước', key: 'idKichThuoc', items: data.kichThuocs },
-            { title: 'Giới tính', key: 'gioiTinhKhachHang', items: data.gioiTinhKhachHangs.map((g) => ({ id: g, ten: g })) }
+            { title: 'Thương hiệu', key: 'thuongHieuId', items: data.thuongHieus },
+            { title: 'Chất liệu', key: 'chatLieuId', items: data.chatLieus },
+            { title: 'Xuất xứ', key: 'xuatXuId', items: data.xuatXus },
+            { title: 'Mục đích', key: 'mucDichChayId', items: data.mucDichChays },
+            { title: 'Giới tính', key: 'gioiTinhKhachHang', items: (data.gioiTinhKhachHangs || []).map((g) => ({ id: g, ten: g })) }
         ];
     } catch (error) {
         console.error('Error fetching filters:', error);

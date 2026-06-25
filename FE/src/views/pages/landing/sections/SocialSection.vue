@@ -92,13 +92,14 @@ const currentPromo = computed(() => promotions[activeIndex.value]);
 
 <template>
     <section class="snap-section promo-timeline-section bg-white overflow-hidden">
-        <!-- Background HUD -->
-        <div class="hud-bg-system">
-            <div class="grid-lines"></div>
-            <div class="parallax-title" :style="{ transform: `translateX(${-activeIndex * 50}px)` }">
-                STRATEGIC ROADMAP 2026 // ASSET ANALYSIS
+        <template v-if="props.active || props.warm">
+            <!-- Background HUD -->
+            <div class="hud-bg-system">
+                <div class="grid-lines"></div>
+                <div class="parallax-title" :style="{ transform: `translateX(${-activeIndex * 50}px)` }">
+                    STRATEGIC ROADMAP 2026 // ASSET ANALYSIS
+                </div>
             </div>
-        </div>
 
         <v-container fluid class="fill-height relative z-10 px-0 py-0 d-flex flex-column">
             <!-- Interactive Milestone Navigation (Bấm được) -->
@@ -223,6 +224,7 @@ const currentPromo = computed(() => promotions[activeIndex.value]);
             <div class="spacer"></div>
             <div class="item font-weight-black">AEROSTRIDE TECHNOLOGY CORP.</div>
         </div>
+        </template>
     </section>
 </template>
 

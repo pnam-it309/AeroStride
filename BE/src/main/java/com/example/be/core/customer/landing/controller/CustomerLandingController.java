@@ -44,4 +44,13 @@ public class CustomerLandingController {
         List<CustomerLandingVariantResponse> response = landingService.getFeaturedVariants(size);
         return ResponseEntity.ok(ApiResponse.success(response, "Lay bien the noi bat thanh cong"));
     }
+
+    @GetMapping("/top-variants")
+    @RateLimit(limit = 60, windowSeconds = 60)
+    public ResponseEntity<ApiResponse<List<CustomerLandingVariantResponse>>> getTopVariantsByQuantity(
+            @RequestParam(defaultValue = "5") Integer size
+    ) {
+        List<CustomerLandingVariantResponse> response = landingService.getTopVariantsByQuantity(size);
+        return ResponseEntity.ok(ApiResponse.success(response, "Lay bien the nhieu hang thanh cong"));
+    }
 }

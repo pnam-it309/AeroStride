@@ -8,11 +8,13 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class CustomerCartItemResponse {
     private String idChiTietSanPham;
+    private String maChiTietSanPham;
     private String tenSanPham;
     private String hinhAnh;
     private String tenMauSac;
     private String tenKichThuoc;
     private BigDecimal giaBan;
+    private BigDecimal giaGoc;
     private Integer soLuong;
     private Integer soLuongTonKho;
     private Boolean isAvailable;
