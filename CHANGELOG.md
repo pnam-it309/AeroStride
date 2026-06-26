@@ -1,3 +1,10 @@
+## [1.25.3](https://github.com/pnam-it309/AeroStride/compare/v1.25.2...v1.25.3) (2026-06-26)
+
+
+### Bug Fixes
+
+* cap nhat luong ban hang tai quay ngay 2026-06-26 ([4740bee](https://github.com/pnam-it309/AeroStride/commit/4740bee4b1939feb6a3b35a632cdf05d535dd471))
+
 ## [1.25.2](https://github.com/pnam-it309/AeroStride/compare/v1.25.1...v1.25.2) (2026-06-20)
 
 
