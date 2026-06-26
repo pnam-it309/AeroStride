@@ -160,10 +160,10 @@
                 <div style="text-align: right;">
                     <div>Mẫu số: <strong>01GTKT3/001</strong></div>
                     <div>Ký hiệu: <strong>AS/24P</strong></div>
-                    <div>Số: <strong style="color: #ef4444;" th:text="${hd.maHoaDon}">HD001</strong></div>
+                    <div>Số: <strong style="color: #ef4444;" th:text="${hd.maHoaDon != null ? hd.maHoaDon : hd.id}">HD001</strong></div>
                 </div>
                 <div>
-                    <img th:src="@{'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' + ${hd.maHoaDon}}" alt="QR Code" width="70" height="70" style="border: 1px solid #cbd5e1; padding: 2px; border-radius: 4px;" />
+                    <img th:src="@{'https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=' + ${hd.maHoaDon != null ? hd.maHoaDon : hd.id}}" alt="QR Code" width="70" height="70" style="border: 1px solid #cbd5e1; padding: 2px; border-radius: 4px;" />
                 </div>
             </div>
         </div>
@@ -184,15 +184,15 @@
                 </div>
                 <div class="info-row">
                     <span class="info-label">Số điện thoại:</span>
-                    <span class="info-value" th:text="${hd.soDienThoaiNguoiNhan != null ? hd.soDienThoaiNguoiNhan : (hd.soDienThoai != null ? hd.soDienThoai : 'N/A')}">0987xxx</span>
+                    <span class="info-value" th:text="${hd.soDienThoaiNguoiNhan != null ? hd.soDienThoaiNguoiNhan : (hd.khachHang != null and hd.khachHang.sdt != null ? hd.khachHang.sdt : 'N/A')}">0987xxx</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Địa chỉ:</span>
-                    <span class="info-value" th:text="${hd.diaChiNguoiNhan != null ? hd.diaChiNguoiNhan : (hd.diaChi != null ? hd.diaChi : 'Nhận tại quầy')}">Địa chỉ</span>
+                    <span class="info-value" th:text="${hd.diaChiNguoiNhan != null ? hd.diaChiNguoiNhan : 'Nhận tại quầy'}">Địa chỉ</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Hình thức thanh toán:</span>
-                    <span class="info-value">Tiền mặt / Chuyển khoản</span>
+                    <span class="info-value" th:text="${paymentMethodLabel}">Tiền mặt</span>
                 </div>
             </div>
         </div>
@@ -213,13 +213,15 @@
                 <tr th:each="item, stat : ${details}">
                     <td style="text-align: center;" th:text="${stat.count}">1</td>
                     <td>
-                        <div style="font-weight: 600;" th:text="${item.chiTietSanPham.sanPham.ten}">Tên sản phẩm</div>
-                        <div style="font-size: 12px; color: #64748b;" th:text="${'Màu: ' + item.chiTietSanPham.mauSac.ten + ' • Size: ' + item.chiTietSanPham.kichThuoc.ten}">Variant</div>
+                        <div style="font-weight: 600;" th:text="${item.chiTietSanPham != null and item.chiTietSanPham.sanPham != null ? item.chiTietSanPham.sanPham.ten : 'Sản phẩm'}">Tên sản phẩm</div>
+                        <div style="font-size: 12px; color: #64748b;"
+                             th:text="${'Màu: ' + (item.chiTietSanPham != null and item.chiTietSanPham.mauSac != null ? item.chiTietSanPham.mauSac.ten : 'N/A') + ' • Size: ' + (item.chiTietSanPham != null and item.chiTietSanPham.kichThuoc != null ? item.chiTietSanPham.kichThuoc.ten : 'N/A')}">Variant</div>
                     </td>
                     <td style="text-align: center;">Đôi</td>
-                    <td style="text-align: center;" th:text="${item.soLuong}">1</td>
-                    <td style="text-align: right;" th:text="${#numbers.formatDecimal(item.donGia, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500,000</td>
-                    <td style="text-align: right; font-weight: 600;" th:text="${#numbers.formatDecimal(item.donGia * item.soLuong, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500,000</td>
+                    <td style="text-align: center;" th:text="${item.soLuong != null ? item.soLuong : 0}">1</td>
+                    <td style="text-align: right;" th:text="${#numbers.formatDecimal(item.donGia != null ? item.donGia : 0, 0, 'COMMA', 0, 'POINT') + ' ₫'}">500,000</td>
+                    <td style="text-align: right; font-weight: 600;"
+                        th:text="${#numbers.formatDecimal((item.donGia != null ? item.donGia : 0) * (item.soLuong != null ? item.soLuong : 0), 0, 'COMMA', 0, 'POINT') + ' ₫'}">500,000</td>
                 </tr>
             </tbody>
         </table>
@@ -239,19 +241,19 @@
                 <table class="summary-table">
                     <tr>
                         <td>Cộng tiền hàng:</td>
-                        <td style="text-align: right;" th:text="${#numbers.formatDecimal(hd.tongTien, 0, 'COMMA', 0, 'POINT') + ' ₫'}">1,000,000</td>
+                        <td style="text-align: right;" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT') + ' ₫'}">1,000,000</td>
                     </tr>
-                    <tr th:if="${hd.phiVanChuyen != null and hd.phiVanChuyen.doubleValue() > 0}">
+                    <tr th:if="${shippingFee.doubleValue() > 0}">
                         <td>Phí vận chuyển:</td>
-                        <td style="text-align: right;" th:text="${'+ ' + #numbers.formatDecimal(hd.phiVanChuyen, 0, 'COMMA', 0, 'POINT') + ' ₫'}">30,000</td>
+                        <td style="text-align: right;" th:text="${'+ ' + #numbers.formatDecimal(shippingFee, 0, 'COMMA', 0, 'POINT') + ' ₫'}">30,000</td>
                     </tr>
-                    <tr th:if="${hd.tongTienSauGiam != null and hd.tongTien.compareTo(hd.tongTienSauGiam) > 0}">
+                    <tr th:if="${hd.tongTienSauGiam != null and subtotal.compareTo(hd.tongTienSauGiam) > 0}">
                         <td>Giảm giá:</td>
-                        <td style="text-align: right; color: #ef4444;" th:text="${'- ' + #numbers.formatDecimal(hd.tongTien.subtract(hd.tongTienSauGiam), 0, 'COMMA', 0, 'POINT') + ' ₫'}">-100,000</td>
+                        <td style="text-align: right; color: #ef4444;" th:text="${'- ' + #numbers.formatDecimal(subtotal.subtract(hd.tongTienSauGiam), 0, 'COMMA', 0, 'POINT') + ' ₫'}">-100,000</td>
                     </tr>
                     <tr class="total-row">
                         <td>TỔNG CỘNG:</td>
-                        <td style="text-align: right;" th:text="${#numbers.formatDecimal(hd.tongTienSauGiam != null ? hd.tongTienSauGiam : hd.tongTien.add(hd.phiVanChuyen != null ? hd.phiVanChuyen : 0), 0, 'COMMA', 0, 'POINT') + ' ₫'}">930,000</td>
+                        <td style="text-align: right;" th:text="${#numbers.formatDecimal(payableTotal, 0, 'COMMA', 0, 'POINT') + ' ₫'}">930,000</td>
                     </tr>
                 </table>
             </div>

@@ -1,5 +1,10 @@
 <script setup>
 /**
+ * Component: VariantFormModal
+ * Y nghia: form them/sua mot bien the san pham, gom mau, size, SKU, ton kho,
+ * gia nhap, gia ban goc va anh dai dien gui ve ProductVariantRequest.
+ */
+/**
  * Module: Biến thể sản phẩm (Admin)
  * Component: VariantFormModal
  * Chức năng: Form chỉnh sửa chi tiết của 1 biến thể (ảnh, kích cỡ, màu sắc, giá nhập, giá bán, số lượng).
@@ -356,7 +361,7 @@ const populateEditFormData = () => {
         idKichThuoc: resolveOptionId(props.options.kichThuocs, getVariantSizeId(props.variant), getVariantSizeLabel(props.variant)),
         soLuong: Number(props.variant.soLuong ?? 0),
         giaNhap: Number(props.variant.giaNhap ?? 0),
-        giaBan: Number(props.variant.giaBan ?? 0),
+        giaBan: Number(props.variant.giaGoc ?? props.variant.giaBan ?? 0),
         trangThai: props.variant.trangThai || 'DANG_HOAT_DONG',
         urlAnh: getVariantImageUrl(props.variant)
     };

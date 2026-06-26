@@ -17,7 +17,9 @@ import java.util.List;
 @AllArgsConstructor
 public class ProductVariantResponse {
 
+    /** Id bien the san pham. */
     private String id;
+    /** Id san pham cha cua bien the. */
     private String idSanPham;
     private String maSanPham;
     private String tenSanPham;
@@ -32,9 +34,15 @@ public class ProductVariantResponse {
     private String idKichThuoc;
     private String tenKichThuoc;
     private String giaTriKichThuoc;
+    /** Ton kho hien tai cua bien the. */
     private Integer soLuong;
+    /** Gia nhap noi bo. */
     private BigDecimal giaNhap;
+    /** Gia ban goc luu tren bien the. */
+    private BigDecimal giaGoc;
+    /** Gia ban hien thi sau khi tinh dot giam gia dang hoat dong. */
     private BigDecimal giaBan;
+    /** Phan tram giam dang ap dung, null/0 neu khong co dot giam gia. */
     private BigDecimal phanTramGiam;
     private TrangThai trangThai;
     private Long ngayTao;

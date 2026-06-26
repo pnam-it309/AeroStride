@@ -8,6 +8,7 @@ import com.example.be.core.admin.banhang.model.response.AdminBanHangKhachHangRes
 import com.example.be.core.admin.banhang.model.response.BanHangSanPhamResponse;
 import com.example.be.core.admin.banhang.repository.*;
 import com.example.be.core.admin.banhang.service.AdminBanHangService;
+import com.example.be.core.admin.dotgiamgia.repository.AdminChiTietDotGiamGiaRepository;
 import com.example.be.entity.*;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.constants.TrangThai;
@@ -15,6 +16,7 @@ import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.exceptions.BusinessException;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.repository.DiaChiRepository;
+import com.example.be.utils.DiscountPriceUtils;
 import com.example.be.utils.HelperUtils;
 import com.example.be.utils.CodeUtils;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +26,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Xu ly luong ban hang tai quay: hoa don cho, gio hang, voucher, khach hang,
+ * thanh toan va gia bien the sau dot giam gia.
+ */
 @Service
 @RequiredArgsConstructor
 public class AdminBanHangServiceImpl implements AdminBanHangService {
@@ -37,10 +44,12 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     private final AdminBanHangPhieuGiamGiaRepository phieuGiamGiaRepository;
     private final AdminBanHangGiaoDichThanhToanRepository giaoDichThanhToanRepository;
     private final AdminBanHangPhuongThucThanhToanRepository phuongThucThanhToanRepository;
+    private final AdminChiTietDotGiamGiaRepository chiTietDotGiamGiaRepository;
     private final DiaChiRepository diaChiRepository;
 
     @Override
     @Transactional(readOnly = true)
+    /** Lay danh sach hoa don POS dang cho xu ly de FE hien thi tab don hang. */
     public List<AdminBanHangHoaDonResponse> getHoaDonCho() {
         return hoaDonRepository.findAllByTrangThaiAndLoaiDon(OrderStatus.CHO_XAC_NHAN, "TAI_QUAY")
                 .stream().map(this::mapToHoaDonResponse).collect(Collectors.toList());
@@ -48,6 +57,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     @Transactional
+    /** Tao hoa don tai quay moi, gioi han so don cho de tranh mo qua nhieu tab. */
     public AdminBanHangHoaDonResponse createHoaDon() {
         if (hoaDonRepository.countByTrangThaiAndLoaiDon(OrderStatus.CHO_XAC_NHAN, "TAI_QUAY") >= 5) {
             throw new BusinessException(MessageConstants.HOA_DON_WAITING_LIMIT);
@@ -80,6 +90,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     @Transactional
+    /** Them bien the vao gio POS va tru ton kho ngay tai thoi diem them. */
     public AdminBanHangHoaDonResponse addSanPham(String idHoaDon, AdminBanHangHoaDonChiTietRequest request) {
         if (request == null || request.getIdChiTietSanPham() == null || request.getIdChiTietSanPham().isBlank()) {
             throw new BusinessException("Thiếu thông tin biến thể sản phẩm.");
@@ -99,6 +110,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
 
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findByHoaDonAndChiTietSanPham(hoaDon, ctsp);
+        // Don gia luu vao hoa don chi tiet la gia sau dot giam gia tai thoi diem them vao gio.
+        BigDecimal effectivePrice = getEffectiveVariantPrice(ctsp);
         if (hdct != null) {
             hdct.setSoLuong(hdct.getSoLuong() + request.getSoLuong());
         } else {
@@ -106,7 +119,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                     .hoaDon(hoaDon)
                     .chiTietSanPham(ctsp)
                     .soLuong(request.getSoLuong())
-                    .donGia(ctsp.getGiaBan())
+                    .donGia(effectivePrice)
                     .build();
             hdct.setTrangThai(TrangThai.DANG_HOAT_DONG);
             hdct.setNgayTao(System.currentTimeMillis());
@@ -195,6 +208,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     @Transactional
+    /** Chot thanh toan POS: gan khach hang, loai don, dia chi, tong tien va lich su thanh toan. */
     public void checkout(String idHoaDon, AdminBanHangCheckoutRequest request) {
         HoaDon hd = getHoaDonOrThrow(idHoaDon);
 
@@ -211,8 +225,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         // Kiểm tra giá sản phẩm có bị thay đổi không
         BigDecimal tongTienThucTe = BigDecimal.ZERO;
         for (HoaDonChiTiet detail : details) {
-            BigDecimal giaHienTai = detail.getChiTietSanPham().getGiaBan();
-            if (giaHienTai == null) giaHienTai = BigDecimal.ZERO;
+            BigDecimal giaHienTai = getEffectiveVariantPrice(detail.getChiTietSanPham());
             if (detail.getDonGia() != null && detail.getDonGia().compareTo(giaHienTai) != 0) {
                 throw new BusinessException("Giá sản phẩm đã thay đổi. Vui lòng tải lại giỏ hàng.");
             }
@@ -356,11 +369,15 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     @Transactional(readOnly = true)
+    /** Tim bien the cho man ban hang, kem gia goc/gia sau giam/badge phan tram. */
     public List<BanHangSanPhamResponse> searchSanPham(String keyword) {
-        // Limit results to avoid loading the whole DB when keyword is empty
-        return chiTietSanPhamRepository
+        // Gioi han ket qua de khong load toan bo bien the khi o tim kiem dang rong.
+        List<ChiTietSanPham> variants = chiTietSanPhamRepository
                 .searchByKeywordLite(keyword, PageRequest.of(0, 2000))
-                .getContent()
+                .getContent();
+        Map<String, List<ChiTietDotGiamGia>> discountMap = getDiscountRelationMap(variants);
+
+        return variants
                 .stream()
                 .map(ct -> BanHangSanPhamResponse.builder()
                         .id(ct.getId())
@@ -373,7 +390,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                         .tenMauSac(ct.getMauSac() != null ? ct.getMauSac().getTen() : null)
                         .tenKichThuoc(ct.getKichThuoc() != null ? ct.getKichThuoc().getTen() : null)
                         .soLuongTon(ct.getSoLuong())
-                        .giaBan(ct.getGiaBan())
+                        .giaGoc(getActiveDiscountPercent(ct, discountMap).compareTo(BigDecimal.ZERO) > 0 ? ct.getGiaBan() : null)
+                        .giaBan(getEffectiveVariantPrice(ct, discountMap))
+                        .phanTramGiam(getActiveDiscountPercent(ct, discountMap))
                         .hinhAnh(getHinhAnhVariant(ct))
                         .build())
                 .collect(Collectors.toList());
@@ -431,10 +450,47 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         return bestVoucher;
     }
 
+    /** Tinh gia POS hien tai cua mot bien the bang cach doc dot giam gia tu DB. */
+    private BigDecimal getEffectiveVariantPrice(ChiTietSanPham variant) {
+        if (variant == null) {
+            return BigDecimal.ZERO;
+        }
+        List<ChiTietDotGiamGia> relations = chiTietDotGiamGiaRepository.findAllByChiTietSanPhamIdIn(List.of(variant.getId()));
+        return DiscountPriceUtils.calculateDiscountedPrice(variant.getGiaBan(), relations);
+    }
+
+    /** Tinh gia POS khi da co map dot giam gia de tranh query lap trong danh sach tim kiem. */
+    private BigDecimal getEffectiveVariantPrice(ChiTietSanPham variant, Map<String, List<ChiTietDotGiamGia>> relationMap) {
+        if (variant == null) {
+            return BigDecimal.ZERO;
+        }
+        return DiscountPriceUtils.calculateDiscountedPrice(variant.getGiaBan(), relationMap.getOrDefault(variant.getId(), List.of()));
+    }
+
+    private BigDecimal getActiveDiscountPercent(ChiTietSanPham variant, Map<String, List<ChiTietDotGiamGia>> relationMap) {
+        if (variant == null) {
+            return BigDecimal.ZERO;
+        }
+        return DiscountPriceUtils.getActiveDiscountPercent(relationMap.getOrDefault(variant.getId(), List.of()));
+    }
+
+    /** Gom dot giam gia theo id bien the de FE hien thi dung gia va badge giam gia. */
+    private Map<String, List<ChiTietDotGiamGia>> getDiscountRelationMap(List<ChiTietSanPham> variants) {
+        if (variants == null || variants.isEmpty()) {
+            return Map.of();
+        }
+        List<String> ids = variants.stream().map(ChiTietSanPham::getId).toList();
+        List<ChiTietDotGiamGia> relations = chiTietDotGiamGiaRepository.findAllByChiTietSanPhamIdIn(ids);
+        return relations.stream()
+                .filter(rel -> rel.getChiTietSanPham() != null)
+                .collect(Collectors.groupingBy(rel -> rel.getChiTietSanPham().getId()));
+    }
+
     private HoaDon getHoaDonOrThrow(String id) {
         return hoaDonRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_EXIST));
     }
 
+    /** Cap nhat tong tien hoa don moi khi gio hang/voucher thay doi. */
     private void updateHoaDonTotals(HoaDon hd) {
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
         BigDecimal total = details.stream()

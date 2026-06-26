@@ -8,13 +8,16 @@ import com.example.be.core.admin.sanpham.repository.ProductVariantStatisticsProj
 import com.example.be.entity.AnhChiTietSanPham;
 import com.example.be.entity.ChiTietSanPham;
 import com.example.be.entity.SanPham;
+import com.example.be.utils.DiscountPriceUtils;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Component
 public class AdminSanPhamMapper {
 
+    /** Map san pham cha cho man danh sach, kem thong ke tong bien the/ton kho/gia. */
     public ProductResponse toProductResponse(SanPham sanPham, ProductVariantStatisticsProjection statistics) {
         return ProductResponse.builder()
                 .id(sanPham.getId())
@@ -45,6 +48,7 @@ public class AdminSanPhamMapper {
                 .build();
     }
 
+    /** Map chi tiet san pham cha va danh sach bien the cho man them/sua san pham. */
     public ProductDetailResponse toProductDetailResponse(SanPham sanPham, List<ProductVariantResponse> variants) {
         return ProductDetailResponse.builder()
                 .id(sanPham.getId())
@@ -75,42 +79,11 @@ public class AdminSanPhamMapper {
                 .build();
     }
 
+    /** Map bien the: giaGoc la gia luu DB, giaBan la gia sau dot giam gia dang hieu luc. */
     public ProductVariantResponse toVariantResponse(ChiTietSanPham variant, List<ProductVariantImageResponse> images) {
-        java.math.BigDecimal activeDiscount = java.math.BigDecimal.ZERO;
-        long now = System.currentTimeMillis();
-        if (variant.getChiTietDotGiamGias() != null) {
-            java.util.List<com.example.be.entity.DotGiamGia> validCampaigns = new java.util.ArrayList<>();
-            for (com.example.be.entity.ChiTietDotGiamGia ct : variant.getChiTietDotGiamGias()) {
-                com.example.be.entity.DotGiamGia d = ct.getDotGiamGia();
-                if (d != null && d.getTrangThai() == com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG) {
-                    if (d.getNgayBatDau() != null && d.getNgayKetThuc() != null
-                            && d.getNgayBatDau() <= now && now <= d.getNgayKetThuc()) {
-                        if (d.getSoTienGiam() != null) {
-                            validCampaigns.add(d);
-                        }
-                    }
-                }
-            }
-            if (!validCampaigns.isEmpty()) {
-                validCampaigns.sort((c1, c2) -> c2.getSoTienGiam().compareTo(c1.getSoTienGiam()));
-                if (validCampaigns.size() == 1) {
-                    activeDiscount = validCampaigns.get(0).getSoTienGiam();
-                } else {
-                    com.example.be.entity.DotGiamGia d1 = validCampaigns.get(0);
-                    com.example.be.entity.DotGiamGia d2 = validCampaigns.get(1);
-                    java.math.BigDecimal m1 = d1.getSoTienGiam();
-                    java.math.BigDecimal m2 = d2.getSoTienGiam();
-                    long overlapStart = Math.max(d1.getNgayBatDau(), d2.getNgayBatDau());
-                    long overlapEnd = Math.min(d1.getNgayKetThuc(), d2.getNgayKetThuc());
-                    long overlapDays = (overlapEnd - overlapStart) / (1000L * 60 * 60 * 24);
-                    if (overlapDays < 3) {
-                        activeDiscount = m1;
-                    } else {
-                        activeDiscount = m1.add(m2).divide(new java.math.BigDecimal("2"), 0, java.math.RoundingMode.HALF_UP);
-                    }
-                }
-            }
-        }
+        BigDecimal originalPrice = variant.getGiaBan() != null ? variant.getGiaBan() : BigDecimal.ZERO;
+        BigDecimal discountedPrice = DiscountPriceUtils.calculateDiscountedPrice(originalPrice, variant.getChiTietDotGiamGias());
+        BigDecimal activeDiscountPercent = DiscountPriceUtils.getActiveDiscountPercent(variant.getChiTietDotGiamGias());
 
         return ProductVariantResponse.builder()
                 .id(variant.getId())
@@ -135,8 +108,9 @@ public class AdminSanPhamMapper {
                 .giaTriKichThuoc(variant.getKichThuoc() != null ? variant.getKichThuoc().getGiaTriKichThuoc() : null)
                 .soLuong(variant.getSoLuong())
                 .giaNhap(variant.getGiaNhap())
-                .giaBan(variant.getGiaBan())
-                .phanTramGiam(activeDiscount)
+                .giaGoc(activeDiscountPercent.compareTo(BigDecimal.ZERO) > 0 ? originalPrice : null)
+                .giaBan(discountedPrice)
+                .phanTramGiam(activeDiscountPercent)
                 .trangThai(variant.getTrangThai())
                 .ngayTao(variant.getNgayTao())
                 .ngayCapNhat(variant.getNgayCapNhat())

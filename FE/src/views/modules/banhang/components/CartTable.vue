@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * Component: CartTable
+ * Y nghia: bang gio hang POS, hien bien the da chon, don gia sau giam,
+ * so luong va phat emit cap nhat/xoa dong ve BanHang.vue.
+ */
 import { ShoppingCartIcon, TrashIcon, MinusIcon, PlusIcon, BoxIcon } from 'vue-tabler-icons';
 
 const props = defineProps(['items']);
