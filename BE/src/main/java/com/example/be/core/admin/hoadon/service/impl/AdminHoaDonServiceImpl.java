@@ -28,6 +28,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
@@ -290,12 +291,31 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     @Transactional(readOnly = true)
     public String generateInvoiceHtml(String id) {
         HoaDon hd = repository.findForPrintById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
+        BigDecimal subtotal = hd.getTongTien() != null ? hd.getTongTien() : BigDecimal.ZERO;
+        BigDecimal shippingFee = hd.getPhiVanChuyen() != null ? hd.getPhiVanChuyen() : BigDecimal.ZERO;
+        BigDecimal payableTotal = hd.getTongTienSauGiam() != null ? hd.getTongTienSauGiam() : subtotal.add(shippingFee);
         
         Context context = new Context();
         context.setVariable("hd", hd);
         context.setVariable("details", hd.getListsHoaDonChiTiet());
+        context.setVariable("subtotal", subtotal);
+        context.setVariable("shippingFee", shippingFee);
+        context.setVariable("payableTotal", payableTotal);
+        context.setVariable("paymentMethodLabel", resolvePaymentMethodLabel(hd));
         context.setVariable("ngayIn", new Date());
 
         return templateEngine.process("email/invoice-print", context);
+    }
+
+    private String resolvePaymentMethodLabel(HoaDon hd) {
+        if (hd.getListsGiaoDichThanhToan() == null || hd.getListsGiaoDichThanhToan().isEmpty()) {
+            return "Chưa thanh toán";
+        }
+        return hd.getListsGiaoDichThanhToan().stream()
+                .filter(gd -> gd.getSoTien() != null && gd.getSoTien().compareTo(BigDecimal.ZERO) > 0)
+                .map(gd -> gd.getPhuongThucThanhToan() != null ? gd.getPhuongThucThanhToan().getTen() : null)
+                .filter(name -> name != null && !name.isBlank())
+                .findFirst()
+                .orElse("Chưa thanh toán");
     }
 }

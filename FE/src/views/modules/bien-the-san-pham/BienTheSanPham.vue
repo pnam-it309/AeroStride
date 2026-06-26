@@ -603,7 +603,7 @@ const buildVariantStatusPayload = (variant, nextStatus) => ({
     idKichThuoc: variant.idKichThuoc,
     soLuong: Number(variant.soLuong ?? 0),
     giaNhap: Number(variant.giaNhap ?? 0),
-    giaBan: Number(variant.giaBan ?? 0),
+    giaBan: Number(variant.giaGoc ?? variant.giaBan ?? 0),
     trangThai: nextStatus
 });
 

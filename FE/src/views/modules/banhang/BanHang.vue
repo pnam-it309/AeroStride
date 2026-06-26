@@ -1,5 +1,10 @@
 <script setup>
 /**
+ * Module: Ban hang tai quay (Admin/POS)
+ * Y nghia: man hinh xu ly hoa don cho, gio hang, khach hang, giao hang,
+ * voucher, thanh toan tien mat/VNPay, quet QR/barcode va in hoa don.
+ */
+/**
  * Module: Bán hàng tại quầy (Admin/POS)
  * View: BanHang
  * Chức năng: Màn hình chính xử lý tạo hóa đơn, thêm sản phẩm, cập nhật số lượng,
@@ -11,6 +16,7 @@ import { BoxIcon, XIcon } from 'vue-tabler-icons';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { dichVuVnPay } from './dichVuVnPay';
+import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
 import { dichVuPhieuGiamGia } from '@/services/admin/dichVuPhieuGiamGia';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
@@ -33,7 +39,6 @@ import { isActiveStatus } from '@/utils/statusUtils';
 import OrderTabs from './components/OrderTabs.vue';
 import CartTable from './components/CartTable.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
-import InvoiceReceiptDialog from './components/InvoiceReceiptDialog.vue';
 
 const { addNotification } = useNotifications();
 const uiStore = useUIStore();
@@ -42,11 +47,11 @@ const MAX_WAITING_ORDERS = 5;
 const VNPAY_PENDING_KEY = 'aerostride_pos_vnpay_pending';
 const BYPASS_PAYMENT_RECORD_INSERT = false;
 
-// Address and Quick Add
+// Dia chi cho form them nhanh khach hang.
 const { provinces, districts, wards, loadingLocations, fetchProvinces, fetchDistricts, fetchWards, cleanName } = useLocation();
 const { mapCodesToNames } = useAddressMapping();
 
-// Separate instance for shipping to prevent quick-add conflicts
+// Bo dia chi rieng cho thong tin nhan hang, tach khoi form them nhanh khach hang.
 const {
     provinces: provincesShip,
     districts: districtsShip,
@@ -56,7 +61,7 @@ const {
     fetchWards: fetchWardsShip
 } = useLocation();
 
-// State
+// Trang thai chung cua man POS va danh sach hoa don cho.
 const loading = ref(false);
 const orders = ref([]);
 const activeOrderIndex = ref(0);
@@ -65,7 +70,7 @@ const isProcessing = ref(false);
 const isAutoApplyingVoucher = ref(false);
 const manualVoucherLocks = ref({});
 
-// Redesigned Page Custom State
+// Trang thai tim kiem san pham/bien the trong gio hang.
 const orderWarehouse = ref('KHO ANSHA BIGSIZE');
 const productMode = ref('SP'); // 'SP' or 'COMBO'
 const productSearchKeyword = ref('');
@@ -74,7 +79,7 @@ const productSearchLoading = ref(false);
 const showProductAutocomplete = ref(false);
 const onlyInStock = ref(false);
 
-// Dynamic Filter States for POS Products
+// Bo loc san pham POS theo thuoc tinh san pham.
 const filterThuongHieu = ref('ALL');
 const filterXuatXu = ref('ALL');
 const filterMucDich = ref('ALL');
@@ -90,12 +95,14 @@ const customerResults = ref([]);
 const customerLoading = ref(false);
 const showQuickAddDialog = ref(false);
 const quickAddLoading = ref(false);
+// Form them nhanh khach hang; chi luu vao he thong khi checkout thanh cong.
 const quickAddForm = ref({ ten: '', sdt: '', email: '', gioiTinh: true, tinh: null, thanhPho: null, phuongXa: null, diaChiChiTiet: '' });
 
-// Right Column Fields
+// Thong tin nhan vien ban hang hien thi cot phai.
 const currentEmployeeDetail = ref(null);
 
 
+// Thong tin khach hang dang gan cho hoa don POS.
 const customerForm = ref({
     ten: '',
     sdt: '',
@@ -107,6 +114,7 @@ const customerForm = ref({
 
 const shippingAddressSelect = ref('Chọn địa chỉ');
 const expectedDeliveryDate = ref('');
+// Thong tin nhan hang chi bat buoc khi loai don la GIAO_HANG.
 const recipientName = ref('');
 const recipientPhone = ref('');
 const recipientAddressDetail = ref('');
@@ -114,7 +122,7 @@ const recipientProvince = ref(null);
 const recipientDistrict = ref(null);
 const recipientWard = ref(null);
 
-// Order Value Adjustments
+// Cac gia tri phu anh huong tong tien don hang.
 const shippingFee = ref(30000);
 const surcharge = ref(0);
 const isFreeShip = ref(false);
@@ -122,16 +130,7 @@ const onlyChargeIfReturned = ref(false);
 const chargeTax = ref(false);
 const noteType = ref('NOI_BO');
 
-// State hiển thị hóa đơn sau thanh toán
-const receiptDialog = ref({
-    show: false,
-    order: null,
-    paymentMethod: 'CASH',
-    receivedAmount: null,
-    note: '',
-    paidAt: null
-});
-
+// Du lieu thanh toan: method, so tien thu va ghi chu noi bo cua giao dich.
 const checkoutData = ref({
     paymentMethod: 'CASH',
     vnpayMethod: 'QR',
@@ -400,6 +399,7 @@ const selectProductFromSearch = (variant) => {
 
 const isAddingProduct = ref(false);
 
+// Modal chon bien the khi mot san pham co nhieu mau/size.
 const variantModal = ref({
     show: false,
     product: null,
@@ -409,6 +409,7 @@ const variantModal = ref({
     quantity: 1
 });
 
+// Danh sach mau duy nhat de FE hien chip mau trong modal bien the.
 const uniqueColors = computed(() => {
     if (!variantModal.value.variants) return [];
     const colorMap = new Map();
@@ -421,6 +422,7 @@ const uniqueColors = computed(() => {
     return Array.from(colorMap.entries()).map(([name, image]) => ({ name, image }));
 });
 
+// Danh sach size theo mau dang chon, kem ton kho de khoa size het hang.
 const availableSizes = computed(() => {
     if (!variantModal.value.variants || !variantModal.value.selectedColor) return [];
     return variantModal.value.variants
@@ -433,10 +435,26 @@ const availableSizes = computed(() => {
         .sort((a, b) => a.name.localeCompare(b.name));
 });
 
+// Bien the chinh xac sau khi chon mau + size.
 const currentSelectedVariant = computed(() => {
     if (!variantModal.value.selectedSize) return null;
     const sizeObj = availableSizes.value.find(s => s.name === variantModal.value.selectedSize);
     return sizeObj ? sizeObj.variant : null;
+});
+
+// Bien the dung de hien anh/gia trong modal, ke ca khi chua chon du mau size.
+const modalDisplayVariant = computed(() => {
+    if (currentSelectedVariant.value) return currentSelectedVariant.value;
+    if (!variantModal.value.variants?.length) return null;
+    if (!variantModal.value.selectedColor) return variantModal.value.variants[0];
+    return variantModal.value.variants.find(v => (v.tenMauSac || 'KhÃ´ng mÃ u') === variantModal.value.selectedColor)
+        || variantModal.value.variants[0];
+});
+
+// Phan tram giam hien badge tren modal bien the neu co dot giam gia.
+const modalDisplayDiscountPercent = computed(() => {
+    const percent = Number(modalDisplayVariant.value?.phanTramGiam || 0);
+    return Number.isFinite(percent) && percent > 0 ? Math.round(percent) : 0;
 });
 
 const selectColor = (colorName) => {
@@ -679,7 +697,7 @@ const setOrders = (payload, { preferOrderId = null } = {}) => {
     clampActiveOrderIndex();
 };
 
-// QR / Barcode Scanner Logic
+// QR / Barcode Scanner Logic: doc ma SKU/ma vach de them nhanh bien the vao gio.
 const showScanner = ref(false);
 let html5QrcodeScanner = null;
 let scannerStartAttempts = 0;
@@ -714,6 +732,7 @@ const initScanner = () => {
     html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 };
 
+// Chuan hoa QR/barcode tu JSON, URL hoac text thuong ve ma bien the.
 const normalizeScannedCode = (rawValue) => {
     const raw = String(rawValue || '').trim();
     if (!raw) return '';
@@ -748,6 +767,7 @@ const normalizeScannedCode = (rawValue) => {
     return raw;
 };
 
+// Uu tien bien the khop chinh xac SKU de tranh them nham khi API tra nhieu ket qua.
 const findExactScannedVariant = (variants, keyword) => {
     const normalizedKeyword = String(keyword || '').trim().toUpperCase();
     return variants.find((variant) => {
@@ -764,6 +784,7 @@ const stopScanner = () => {
     showScanner.value = false;
 };
 
+// Xu ly sau khi quet thanh cong: tim bien the, check trang thai/ton kho, roi them vao gio.
 const onScanSuccess = async (decodedText) => {
     stopScanner();
     const keyword = normalizeScannedCode(decodedText);
@@ -803,7 +824,7 @@ const onScanFailure = (error) => {
     // Console error ignored
 };
 
-// Global keydown handler for F9, F10 and barcode scanners
+// Phim tat POS: F9 mo QR, F10 thanh toan, may quet barcode go phim roi Enter.
 let barcodeBuffer = '';
 let lastKeyTime = 0;
 
@@ -1509,39 +1530,59 @@ const completePaidOrder = async (orderId) => {
     checkoutData.value.note = '';
 };
 
-const showReceipt = (order, paymentMethod, receivedAmount, note) => {
-    receiptDialog.value = {
-        show: true,
-        order: JSON.parse(JSON.stringify(order)),
-        paymentMethod,
-        receivedAmount: Number(receivedAmount || 0),
-        note: note || '',
-        paidAt: Date.now()
-    };
+// Dung chung API in hoa don cua man Hoa don de POS co mau in/thong tin thong nhat.
+const printInvoiceFromHoaDon = async (orderId, options = {}) => {
+    if (!orderId) return false;
+    const shouldNotifyPreparing = options.notifyPreparing !== false;
+    let printWindow = options.printWindow || null;
+
+    try {
+        if (shouldNotifyPreparing) {
+            addNotification({ title: 'Đang chuẩn bị', subtitle: 'Đang tạo bản in hóa đơn...', color: 'info' });
+        }
+
+        if (!printWindow) {
+            printWindow = window.open('', '_blank', 'width=900,height=1000');
+        }
+
+        if (!printWindow) {
+            addNotification({
+                title: 'Không thể mở bản in',
+                subtitle: 'Trình duyệt đã chặn cửa sổ bật lên. Vui lòng cho phép popup để in hóa đơn.',
+                color: 'warning'
+            });
+            return false;
+        }
+
+        printWindow.document.write('<!doctype html><html><head><title>Đang tạo hóa đơn...</title></head><body style="font-family:Arial,sans-serif;padding:24px">Đang tạo bản in hóa đơn...</body></html>');
+        printWindow.document.close();
+
+        const html = await dichVuHoaDon.inHoaDon(orderId);
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.onload = () => {
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
+        };
+        return true;
+    } catch (error) {
+        console.error('Print invoice error:', error);
+        if (options.printWindow && !options.printWindow.closed) {
+            options.printWindow.close();
+        }
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể tải bản in hóa đơn từ máy chủ.', color: 'error' });
+        return false;
+    }
 };
 
-const onCloseReceipt = async () => {
-    receiptDialog.value.show = false;
+const onPrintInvoice = async () => {
+    if (!selectedOrder.value?.id) return;
+    await printInvoiceFromHoaDon(selectedOrder.value.id);
 };
 
-const onPrintInvoice = () => {
-    if (!selectedOrder.value) return;
-
-    const printOrder = JSON.parse(JSON.stringify(selectedOrder.value));
-    printOrder.tenKhachHang = customerForm.value.ten || 'Khách lẻ';
-    printOrder.sdtKhachHang = customerForm.value.sdt || '';
-
-    printOrder.tongTien = selectedOrder.value.tongTien || 0;
-    printOrder.tongTienSauGiam = finalCollectAmount.value;
-
-    showReceipt(
-        printOrder,
-        checkoutData.value.paymentMethod || 'CASH',
-        checkoutData.value.receivedAmount || finalCollectAmount.value,
-        checkoutData.value.note || ''
-    );
-};
-
+// Ham chot thanh toan dung chung cho tien mat va VNPay, co tuy chon in sau thanh toan.
 const submitCheckout = async ({ order = selectedOrder.value, payload, successMessage = MESSAGES.SUCCESS.PAYMENT, showReceiptAfter = true }) => {
     if (!order?.id) {
         throw new Error('Không tìm thấy hóa đơn đang thanh toán.');
@@ -1553,32 +1594,27 @@ const submitCheckout = async ({ order = selectedOrder.value, payload, successMes
     const requestPayload = BYPASS_PAYMENT_RECORD_INSERT && hasPaymentAmount(payload)
         ? buildCheckoutPayloadWithoutPaymentRecord(payload)
         : payload;
-
-    const orderSnapshot = JSON.parse(JSON.stringify(order));
-    orderSnapshot.tongTienSauGiam = finalCollectAmount.value;
-    const pendingCustomer = getPendingCustomerPayload();
-    if (!orderSnapshot.idKhachHang && pendingCustomer.tenKhachHang) {
-        orderSnapshot.tenKhachHang = pendingCustomer.tenKhachHang;
-        orderSnapshot.sdtKhachHang = pendingCustomer.sdtKhachHang || '';
-        orderSnapshot.emailKhachHang = pendingCustomer.emailKhachHang || '';
-    }
-
-    const pmMethod = checkoutData.value.paymentMethod;
-    const pmReceived = checkoutData.value.receivedAmount;
-    const pmNote = checkoutData.value.note;
+    const postCheckoutPrintWindow = showReceiptAfter
+        ? window.open('', '_blank', 'width=900,height=1000')
+        : null;
 
     try {
         await dichVuDonHang.checkout(order.id, requestPayload);
         addNotification({ title: 'Thành công', subtitle: successMessage, color: 'success' });
 
+        if (showReceiptAfter) {
+            await printInvoiceFromHoaDon(order.id, {
+                printWindow: postCheckoutPrintWindow,
+                notifyPreparing: false
+            });
+        }
+
         // Xóa order khỏi danh sách
         await completePaidOrder(order.id);
-
-        // Hiển thị hóa đơn sau khi thanh toán
-        if (showReceiptAfter) {
-            showReceipt(orderSnapshot, pmMethod, pmReceived, pmNote);
-        }
     } catch (e) {
+        if (postCheckoutPrintWindow && !postCheckoutPrintWindow.closed) {
+            postCheckoutPrintWindow.close();
+        }
         const errorMsg = getErrorMessage(e, MESSAGES.ERROR.PAYMENT_FAILED);
         if (errorMsg.includes('Vui lòng tải lại giỏ hàng')) {
             confirmDialog.value = {
@@ -1609,6 +1645,7 @@ const submitCheckout = async ({ order = selectedOrder.value, payload, successMes
     }
 };
 
+// Hoan tat VNPay sau khi xac nhan giao dich va ghi ma doi soat vao hoa don.
 const finalizeVnPayCheckout = async (tienChuyenKhoan, maGiaoDich, order = selectedOrder.value) => {
     vnpayDialog.value.loading = true;
     vnpayDialog.value.statusText = 'Đang xác nhận hóa đơn và cập nhật tồn kho...';
@@ -2803,17 +2840,26 @@ const closeQuickAdd = () => {
                             <v-card-title
                                 class="pa-5 bg-white border-b position-sticky top-0 z-10 d-flex align-start justify-space-between">
                                 <div class="d-flex align-start gap-4">
-                                    <v-avatar rounded="lg" size="80" class="border bg-grey-lighten-4 flex-shrink-0">
-                                        <v-img :src="currentSelectedVariant?.hinhAnh || variantModal.product?.hinhAnh"
-                                            cover />
-                                    </v-avatar>
+                                    <div class="variant-modal-image-wrap">
+                                        <v-avatar rounded="lg" size="80" class="border bg-grey-lighten-4 flex-shrink-0">
+                                            <v-img :src="modalDisplayVariant?.hinhAnh || variantModal.product?.hinhAnh"
+                                                cover />
+                                        </v-avatar>
+                                        <div v-if="modalDisplayDiscountPercent > 0" class="variant-modal-discount-badge">
+                                            -{{ modalDisplayDiscountPercent }}%
+                                        </div>
+                                    </div>
                                     <div class="pt-1">
                                         <h3 class="text-subtitle-1 font-weight-bold text-slate-800 mb-1"
                                             style="line-height: 1.3; font-size: 15px !important;">{{
                                             variantModal.product?.tenSanPham }}</h3>
                                         <div class="text-primary font-weight-bold mb-1" style="font-size: 18px;">
-                                            {{ currentSelectedVariant ? formatCurrency(currentSelectedVariant.giaBan) :
+                                            {{ modalDisplayVariant ? formatCurrency(modalDisplayVariant.giaBan) :
                                                 formatCurrency(variantModal.product?.variants[0]?.giaBan || 0) }}
+                                        </div>
+                                        <div v-if="modalDisplayVariant?.giaGoc && Number(modalDisplayVariant.giaGoc) > Number(modalDisplayVariant.giaBan)"
+                                            class="text-caption text-slate-400 text-decoration-line-through mb-1">
+                                            {{ formatCurrency(modalDisplayVariant.giaGoc) }}
                                         </div>
                                         <div class="text-body-2 text-slate-500">Kho: {{currentSelectedVariant ?
                                             currentSelectedVariant.soLuongTon :
@@ -2895,15 +2941,11 @@ const closeQuickAdd = () => {
                         </v-card>
                     </v-dialog>
 
-                    <!-- Hóa đơn sau thanh toán -->
-                    <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" />
-
         <!-- Confirm Dialog -->
         <AdminConfirm v-model:show="confirmDialog.show" v-bind="confirmDialog" @confirm="confirmDialog.action" />
     </v-container>
 </template>
-
-            <style scoped>
+<style scoped>
 
             .hide-arrows::-webkit-outer-spin-button,
             .hide-arrows::-webkit-inner-spin-button {
@@ -3505,6 +3547,32 @@ const closeQuickAdd = () => {
             .speed-text {
                 font-size: 11px !important;
                 color: #64748b;
+            }
+
+            .variant-modal-image-wrap {
+                position: relative;
+                flex-shrink: 0;
+                width: 80px;
+                height: 80px;
+            }
+
+            .variant-modal-discount-badge {
+                position: absolute;
+                top: -6px;
+                right: -8px;
+                min-width: 38px;
+                height: 22px;
+                padding: 0 7px;
+                border-radius: 999px;
+                background: #ef4444;
+                color: #ffffff;
+                font-size: 11px;
+                font-weight: 800;
+                line-height: 22px;
+                text-align: center;
+                box-shadow: 0 6px 14px rgba(239, 68, 68, 0.28);
+                border: 2px solid #ffffff;
+                z-index: 2;
             }
 
 

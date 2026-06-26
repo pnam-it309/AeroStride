@@ -39,7 +39,9 @@ public interface AdminHoaDonRepository extends HoaDonRepository, JpaSpecificatio
         "listsHoaDonChiTiet.chiTietSanPham",
         "listsHoaDonChiTiet.chiTietSanPham.sanPham",
         "listsHoaDonChiTiet.chiTietSanPham.mauSac",
-        "listsHoaDonChiTiet.chiTietSanPham.kichThuoc"
+        "listsHoaDonChiTiet.chiTietSanPham.kichThuoc",
+        "listsGiaoDichThanhToan",
+        "listsGiaoDichThanhToan.phuongThucThanhToan"
     })
     Optional<HoaDon> findForPrintById(@Param("id") String id);
 }

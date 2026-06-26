@@ -1,5 +1,10 @@
 <script setup>
 /**
+ * Component: VariantManagementDrawer
+ * Y nghia: drawer quan ly nhanh mot bien the da co, gom trang thai, ton kho,
+ * gia goc va danh sach anh cua bien the.
+ */
+/**
  * Module: Quản lý Hình ảnh Biến thể Sản phẩm (Variant Management Drawer)
  * Chức năng: Component dạng Drawer (ngăn kéo) cho phép người dùng xem, thêm, xóa và
  * đặt ảnh chính (ảnh đại diện) cho một biến thể sản phẩm cụ thể.
@@ -42,7 +47,7 @@ watch(
         if (v) {
             formData.trangThai = v.trangThai;
             formData.soLuong = v.soLuong;
-            formData.giaBan = v.giaBan;
+            formData.giaBan = v.giaGoc ?? v.giaBan;
             formData.giaNhap = v.giaNhap;
             images.value = v.images || [];
         }

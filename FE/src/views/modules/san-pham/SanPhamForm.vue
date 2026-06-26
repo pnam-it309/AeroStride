@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * Module: Form san pham
+ * Y nghia: tao/cap nhat san pham cha, chon thuoc tinh, sinh bien the theo mau/size,
+ * quan ly ton kho-gia-SKU-QR va dong bo payload bien the ve BE.
+ */
 import { ref, onMounted, computed, watch, reactive, nextTick } from 'vue';
 import debounce from 'lodash/debounce';
 import { PATH } from '@/router/routePaths';
@@ -59,7 +64,7 @@ const isEditMode = computed(() => !!route.params.id);
 const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm');
 const defaultVariantStatus = 'DANG_HOAT_DONG';
 
-// DATA OPTIONS
+// Danh muc thuoc tinh dung de tao san pham va sinh bien the.
 const brands = ref([]);
 
 const materials = ref([]);
@@ -72,10 +77,12 @@ const sizes = ref([]);
 const existingProductNames = ref([]);
 
 // Tìm kiếm nhanh cho Chip Group
+// Tu khoa tim nhanh trong menu chon mau/size.
 const colorSearch = ref('');
 const sizeSearch = ref('');
 
 // UI Refs cho Biến thể
+// Trang thai UI khi them nhanh mau sac/kich thuoc.
 const showColorMenu = ref(false);
 const showSizeMenu = ref(false);
 const customColorName = ref('');
@@ -83,6 +90,7 @@ const customColorHex = ref('#FF5733');
 const customSizeName = ref('');
 
 // Bảng màu phổ biến (Việt - Anh) mapping sang HEX
+// Tu dien mau pho bien de tu dien ma HEX khi nguoi dung nhap ten mau.
 const COLOR_DICTIONARY = {
     // Tiếng Việt
     'đỏ': '#FF0000', 'xanh dương': '#0000FF', 'xanh lá': '#00FF00',
@@ -205,6 +213,27 @@ const formatSizeDisplay = (name) => {
     return norm ? `Size ${norm}` : (name || '');
 };
 
+// Chi cho nhap so nguyen 2 chu so cho size, validate them o buoc luu 35-60.
+const normalizeSizeInput = (value) => String(value || '').replace(/\D/g, '').slice(0, 2);
+
+const updateCustomSizeName = (value) => {
+    customSizeName.value = normalizeSizeInput(value);
+};
+
+const blockNonNumericSizeInput = (event) => {
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) return;
+    if (!/^\d$/.test(event.key)) {
+        event.preventDefault();
+    }
+};
+
+const handleSizePaste = (event) => {
+    event.preventDefault();
+    customSizeName.value = normalizeSizeInput(event.clipboardData?.getData('text'));
+};
+
+// Them/chon size moi tu popover: trung thi chon lai, chua co thi tao thuoc tinh kich thuoc.
 const handleAddCustomSize = async () => {
     const rawInput = customSizeName.value;
 
@@ -229,7 +258,9 @@ const handleAddCustomSize = async () => {
     }
 
     // 2. Range 40 đến 70
-    if (sizeNumber < 40 || sizeNumber > 70) {
+    if (sizeNumber < 35 || sizeNumber > 60) {
+        addNotification({ title: 'Loi', subtitle: 'Kich thuoc phai tu 35 den 60', color: 'error' });
+        return;
         addNotification({ title: 'Lỗi', subtitle: 'Kích thước phải từ 40 đến 70', color: 'error' });
         return;
     }
@@ -349,17 +380,21 @@ const displaySoles = computed(() => getDisplayItems(soles.value, searchQueries.i
 const displayCollars = computed(() => getDisplayItems(collars.value, searchQueries.idCoGiay, 'idCoGiay'));
 const displayPurposes = computed(() => getDisplayItems(purposes.value, searchQueries.idMucDichChay, 'idMucDichChay'));
 
+// Mau/size duoc chon de sinh ma tran bien the san pham.
 const selectedColors = ref([]);
 const selectedSizes = ref([]);
+// Danh sach bien the dang thao tac tren FE truoc khi gui payload ve BE.
 const variantItems = ref([]);
 const colorImageState = ref({});
 const colorFileInputRefs = ref({});
+// Gia/ton kho ap dung nhanh cho tat ca bien the hoac theo tung nhom mau.
 const bulkAllForm = ref({
     soLuong: '',
     giaNhap: '',
     giaBan: ''
 });
 const bulkByColorForms = ref({});
+// Modal them/sua mot bien the rieng le.
 const variantModal = ref({
     open: false,
     mode: 'create',
@@ -369,6 +404,7 @@ const variantModal = ref({
 const selectedVariantKeys = ref([]);
 const qrExportItems = ref([]);
 const qrExportContainer = ref(null);
+// Bo loc bang bien the khi sua san pham da co trong he thong.
 const variantTableFilters = reactive({
     keyword: '',
     mauSacId: '',
@@ -381,6 +417,7 @@ const variantPriceBounds = ref({
     max: DEFAULT_MAX_VARIANT_PRICE
 });
 
+// Options truyen sang modal bien the gom mau, size va trang thai hop le.
 const variantOptions = computed(() => ({
     mauSacs: colors.value,
     kichThuocs: sizes.value,
@@ -405,6 +442,7 @@ const variantFilterProductLabel = computed(() => (
 const variantPriceStep = computed(() => (
     variantPriceBounds.value.max > 1000000 ? 50000 : 1000
 ));
+// Danh sach bien the sau khi ap dung tim kiem, mau, size, trang thai va khoang gia.
 const filteredVariantItems = computed(() => variantItems.value.filter((item) => {
     const keyword = variantTableFilters.keyword.trim().toLowerCase();
     const colorLabel = getVariantColorLabel(item.idMauSac).toLowerCase();
@@ -441,6 +479,7 @@ const totalVariantStock = computed(() => variantItems.value.reduce(
     0
 ));
 
+// Gom bien the theo mau de hien tab/chinh sua nhanh theo tung mau.
 const variantsByColor = computed(() => {
     const groups = {};
     variantItems.value.forEach(item => {
@@ -454,6 +493,7 @@ const variantsByColor = computed(() => {
 
 const activeColorTab = ref('ALL');
 
+// Form ap dung nhanh gia ban/gia nhap/ton kho cho nhom bien the dang hien.
 const quickApplyValues = reactive({
     giaBan: '',
     giaNhap: '',
@@ -907,6 +947,7 @@ const getVariantColorLabel = (colorId) => getOptionLabel(colors, colorId);
 const getVariantSizeLabel = (sizeId) => getOptionLabel(sizes, sizeId);
 const getVariantDescriptor = () => variantContextSummary.value.join(' • ');
 
+// Chuyen response bien the tu BE ve state FE thong nhat cho form/bang/modal.
 const mapVariantToFormState = (variant = {}) => ({
     id: variant.id || null,
     clientKey: variant.clientKey || createDraftKey(),
@@ -922,6 +963,7 @@ const mapVariantToFormState = (variant = {}) => ({
     urlAnh: getVariantThumbnail(variant) === logoPlaceholder ? '' : getVariantThumbnail(variant)
 });
 
+// Tao bien the nhap lieu tu cap mau-size; giu lai gia/ton kho neu da co ban nhap cu.
 const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackImageUrl = '') => mapVariantToFormState({
     ...existingVariant,
     clientKey: existingVariant.clientKey || createDraftKey(),
@@ -935,6 +977,7 @@ const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackI
     urlAnh: normalizeUploadedFileUrl(existingVariant.urlAnh || fallbackImageUrl || '')
 });
 
+// Dong goi bien the theo schema ProductVariantRequest cua BE.
 const buildVariantPayload = (variant, includeImages = true) => {
     const imageUrl = normalizeUploadedFileUrl(variant.urlAnh);
     const payload = {
@@ -1385,6 +1428,7 @@ const executeGenerateVariants = () => {
     });
 };
 
+// Sinh/cap nhat danh sach bien the tu tat ca cap mau-size da chon.
 const generateVariants = () => {
     if (selectedColors.value.length === 0 || selectedSizes.value.length === 0) {
         addNotification({
@@ -2369,10 +2413,12 @@ const handleSave = async () => {
                                         </div>
                                         <div class="d-flex gap-2 mb-4">
                                             <v-text-field :model-value="customSizeName"
-                                                @update:model-value="customSizeName = String($event || '').replace(/[^0-9]/g, '')"
+                                                @update:model-value="updateCustomSizeName"
+                                                @keydown="blockNonNumericSizeInput"
+                                                @paste="handleSizePaste"
                                                 prepend-inner-icon="mdi-magnify" placeholder="Nhập kích thước"
                                                 variant="outlined" density="compact" hide-details class="bg-slate-50"
-                                                maxlength="250" type="number" min="0"></v-text-field>
+                                                maxlength="2" type="text" inputmode="numeric" pattern="[0-9]*"></v-text-field>
                                             <v-btn color="primary" class="rounded-lg text-none font-weight-medium"
                                                 height="40" @click="handleAddCustomSize">
                                                 <v-icon start size="18">mdi-plus</v-icon> Thêm
