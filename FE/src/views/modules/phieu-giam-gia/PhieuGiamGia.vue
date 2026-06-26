@@ -392,5 +392,3 @@ onMounted(() => taiDanhSachPhieuGiamGia());
             @cancel="handleConfirm(false)" />
     </v-container>
 </template>
-
-<style scoped></style>

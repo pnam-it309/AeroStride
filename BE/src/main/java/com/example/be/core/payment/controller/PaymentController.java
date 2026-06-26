@@ -2,6 +2,7 @@ package com.example.be.core.payment.controller;
 
 import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.core.payment.PaymentService;
+import com.example.be.core.payment.PaymentOrderFinalizer;
 import com.example.be.core.payment.dto.PaymentRequest;
 import com.example.be.core.payment.dto.PaymentResponse;
 import com.example.be.infrastructure.constants.RoutesConstant;
@@ -19,6 +20,7 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final PaymentOrderFinalizer paymentOrderFinalizer;
 
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<PaymentResponse>> createPayment(@RequestBody PaymentRequest request) {
@@ -57,7 +59,12 @@ public class PaymentController {
             return ResponseEntity.ok(ApiResponse.error(400, "Payment validation failed: " + e.getMessage()));
         }
         
-        // Payment successful - update order status in DB
+        // Payment successful - persist payment status into DB
+        try {
+            paymentOrderFinalizer.markPaid(params.get("vnp_TxnRef"), params);
+        } catch (Exception e) {
+            log.error("Failed to persist VNPay payment for order {}: {}", params.get("vnp_TxnRef"), e.getMessage());
+        }
         return ResponseEntity.ok(ApiResponse.success("Payment Successful"));
     }
     

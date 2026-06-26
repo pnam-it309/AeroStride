@@ -86,6 +86,7 @@ public final class RoutesConstant {
     public static final String INFO = "/{id}/info";
     public static final String PRODUCTS = "/{id}/products";
     public static final String PRODUCTS_DETAIL = "/{id}/products/{idHdct}";
+    public static final String REFUND_CONFIRM = "/{id}/refund-confirm";
     public static final String COUNTS = "/counts";
     public static final String SET_DEFAULT = "/set-default/{id}";
     public static final String KHACH_HANG_DETAIL = "/khach-hang/{khId}";

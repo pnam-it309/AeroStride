@@ -23,37 +23,67 @@
 .gender-chip { @include admin-chip-base; min-width: 80px !important; }
 .order-type-chip { @include admin-chip-base; min-width: 90px !important; }
 
-/* Semantic Statuses */
-.status-active, .status-success, .status-completed, .status-chip-active {
-    background-color: #4caf50 !important;
+/* Hóa đơn Status - Màu xanh đậm brand-navy */
+.status-success, .status-completed, .status-chip-completed,
+.status-pending, .status-warning, .status-waiting, .status-chip-pending, .status-chip-waiting-delivery,
+.status-info, .status-confirmed, .status-delivering, .status-chip-confirmed, .status-chip-delivering,
+.status-refunded, .status-returned, .status-chip-refunded,
+.status-cancelled {
+    background-color: #1e257c !important;
     color: #ffffff !important;
     .v-chip__content { color: #ffffff !important; }
 }
 
-.status-inactive, .status-error, .status-cancelled, .status-expired, .status-chip-inactive {
-    background-color: #f44336 !important;
+/* Ngừng hoạt động - Màu đỏ */
+.status-inactive, .status-error, .status-expired, .status-chip-inactive,
+.status-chip-expired {
+    background-color: #ef4444 !important;
     color: #ffffff !important;
     .v-chip__content { color: #ffffff !important; }
 }
 
-.status-pending, .status-warning, .status-waiting, .status-chip-pending {
-    background-color: #fb8c00 !important;
-    color: #ffffff !important;
-    .v-chip__content { color: #ffffff !important; }
-}
-
-.status-info, .status-confirmed, .status-delivering, .status-chip-confirmed {
-    background-color: #2196f3 !important;
+/* Đang hoạt động - Màu xanh lá */
+.status-active, .status-chip-active {
+    background-color: #10b981 !important;
     color: #ffffff !important;
     .v-chip__content { color: #ffffff !important; }
 }
 
 /* Specialized Chips */
 .gender-male, .gender-chip-male { @extend .status-info; }
-.gender-female, .gender-chip-female { @extend .status-inactive; }
+.gender-female, .gender-chip-female {
+    background: linear-gradient(135deg, #ec4899 0%, #db2777 100%) !important;
+    color: #ffffff !important;
+}
 
-.order-offline, .order-type-offline { @extend .status-pending; }
-.order-online, .order-type-online { @extend .status-success; }
+.order-offline, .order-type-offline {
+    background: #fdf2f8 !important;
+    color: #be185d !important;
+    border: 1px solid #fce7f3 !important;
+}
+
+.order-online, .order-type-online {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #dbeafe !important;
+}
+
+/* Phiếu giảm giá - Hình thức */
+.status-chip-public {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+    color: #ffffff !important;
+}
+
+.status-chip-private {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    color: #ffffff !important;
+}
+
+/* Phiếu giảm giá - Timeline Status */
+.status-chip-upcoming {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+    color: #ffffff !important;
+}
 
 /* Tab Count Badge */
 .tab-count-avatar {

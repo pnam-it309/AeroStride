@@ -19,12 +19,17 @@ public class AdminHoaDonDetailResponse {
     private BigDecimal tongTien;
     private BigDecimal tongTienSauGiam;
     private BigDecimal tienNguoiMua;
+    private String tenNguoiNhan;
     private String diaChiNguoiNhan;
     private String soDienThoaiNguoiNhan;
     private Long ngayDuKienNhan;
     private String ghiChu;
     private Long ngayTao;
     private Long ngayCapNhat;
+
+    // Hoàn phí
+    private Boolean daHoanPhi;     // đã xác nhận hoàn tiền cho khách chưa
+    private Boolean canHoanPhi;    // đơn có cần/được xác nhận hoàn phí không (trả trước & đã hủy & chưa hoàn)
 
     private String maPhieuGiamGia;
     private String tenPhieuGiamGia;

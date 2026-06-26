@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/ui';
 import { PATH } from '@/router/routePaths';
+import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 
 const router = useRouter();
 const authStore = useAuthStore();

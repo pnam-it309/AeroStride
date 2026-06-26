@@ -2603,10 +2603,10 @@ const closeQuickAdd = () => {
                     <!-- Checkout / Print Action Buttons at Bottom Right -->
                     <div class="d-flex gap-3 mt-2 w-100">
                         <v-btn color="#88c057" height="60"
-                            class="font-weight-bold rounded-lg shadow-md text-white px-4 flex-grow-1"
-                            style="font-size: 17px !important;" :disabled="!selectedOrder?.listsHoaDonChiTiet?.length"
+                            class="font-weight-bold rounded-lg shadow-md px-4 flex-grow-1"
+                            style="font-size: 17px !important; color: #ffffff !important;" :disabled="!selectedOrder?.listsHoaDonChiTiet?.length"
                             @click="onPrintInvoice" elevation="0">
-                            <v-icon class="mr-1">mdi-printer</v-icon>
+                            <v-icon class="mr-1" style="color: #ffffff !important;">mdi-printer</v-icon>
                             IN HÓA ĐƠN
                         </v-btn>
 

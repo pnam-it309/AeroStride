@@ -45,32 +45,35 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="success-page">
+    <div class="success-page bg-white min-vh-100">
         <MainHeader />
         <div style="height: 104px"></div>
 
         <div class="success-wrapper">
             <div v-if="loading" class="text-center py-16">
-                <v-progress-circular indeterminate color="#0d47a1" size="48" width="4"></v-progress-circular>
+                <v-progress-circular indeterminate color="#1e257c" size="48" width="4"></v-progress-circular>
                 <p class="text-body-2 text-grey mt-4">Đang tải thông tin đơn hàng...</p>
             </div>
 
-            <div v-else-if="order" class="success-card">
+            <div v-else-if="order" class="success-block">
                 <div class="check-circle">
                     <v-icon size="40" color="white">mdi-check</v-icon>
                 </div>
 
-                <h1 class="success-title">Thanh toán đã ghi nhận!</h1>
+                <h1 class="success-title">Đặt hàng thành công!</h1>
 
                 <p class="order-code"><strong>Mã đơn hàng: #{{ order.maHoaDon }}</strong></p>
                 <p class="order-status">Trạng thái: {{ order.trangThaiDisplay }}</p>
                 <p class="order-total">Tổng thanh toán: {{ formatPrice(order.tongTienSauGiam) }}</p>
 
                 <p class="order-desc">
-                    Thanh toán của bạn đã được ghi nhận. Chúng tôi sẽ xác nhận đơn hàng của bạn trong thời gian sớm nhất.
+                    Đơn hàng của bạn đã được ghi nhận. Chúng tôi sẽ xác nhận và giao hàng trong thời gian sớm nhất.
                 </p>
 
-                <button class="home-btn" @click="router.push('/')">Quay về trang chủ</button>
+                <v-btn style="background: #1e257c; color: white;" rounded="pill" size="large"
+                    class="font-weight-bold text-none px-8" @click="router.push('/')">
+                    Quay về trang chủ
+                </v-btn>
             </div>
         </div>
 
@@ -80,11 +83,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.success-page {
-    min-height: 100vh;
-    background: #f5f5f5;
-}
-
 .success-wrapper {
     display: flex;
     justify-content: center;
@@ -92,32 +90,30 @@ onMounted(async () => {
     padding: 48px 16px 80px;
 }
 
-.success-card {
+.success-block {
+    border: 1px solid #e0e0e0;
     background: #fff;
-    border-radius: 16px;
     padding: 48px 40px;
     max-width: 480px;
     width: 100%;
     text-align: center;
-    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
 }
 
 .check-circle {
     width: 72px;
     height: 72px;
-    background: #0d47a1;
+    background: #1e257c;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 24px;
-    box-shadow: 0 8px 24px rgba(13, 71, 161, 0.3);
 }
 
 .success-title {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #0d47a1;
+    color: #1e257c;
     margin-bottom: 20px;
 }
 
@@ -135,7 +131,7 @@ onMounted(async () => {
 
 .order-total {
     font-size: 1rem;
-    color: #0d47a1;
+    color: #1e257c;
     font-weight: 600;
     margin-bottom: 20px;
 }
@@ -145,22 +141,5 @@ onMounted(async () => {
     color: #666;
     line-height: 1.6;
     margin-bottom: 32px;
-}
-
-.home-btn {
-    display: inline-block;
-    background: #0d47a1;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 14px 40px;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.home-btn:hover {
-    background: #093170;
 }
 </style>

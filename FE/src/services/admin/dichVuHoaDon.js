@@ -39,6 +39,12 @@ export const dichVuHoaDon = {
         return response.data.data;
     },
 
+    // Xác nhận đã hoàn phí cho khách (đơn trả trước bị hủy)
+    async xacNhanHoanPhi(id) {
+        const response = await api.patch(`${API_ADMIN.HOA_DON}/${id}/refund-confirm`);
+        return response.data.data;
+    },
+
     // Lấy số lượng theo trạng thái
     async laySoLuongHoaDon(params) {
         const response = await api.get(`${API_ADMIN.HOA_DON}/counts`, { params });

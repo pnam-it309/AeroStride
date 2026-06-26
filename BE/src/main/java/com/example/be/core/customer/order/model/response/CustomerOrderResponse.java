@@ -30,6 +30,17 @@ public class CustomerOrderResponse {
     private Long ngayCapNhat;
     private Long ngayDuKienNhan;
 
+    // Phương thức thanh toán có phải tiền mặt (COD) hay không
+    private boolean laTienMat;
+    // Khách có được phép sửa thông tin nhận hàng (sđt, địa chỉ) không
+    private boolean choPhepSuaThongTin;
+    // Khách có được phép sửa số lượng sản phẩm không
+    private boolean choPhepSuaSanPham;
+    // Khách có được phép hủy đơn không
+    private boolean choPhepHuy;
+    // Đơn chuyển khoản chưa thanh toán -> cho phép thanh toán lại qua VNPay
+    private boolean choPhepThanhToanLai;
+
     // Voucher info
     private String tenVoucher;
     private String maVoucher;
@@ -44,11 +55,13 @@ public class CustomerOrderResponse {
     @Builder
     public static class OrderItemResponse {
         private String id;
+        private String idChiTietSanPham;
         private String tenSanPham;
         private String hinhAnh;
         private String tenMauSac;
         private String tenKichThuoc;
-        private BigDecimal donGia;
+        private BigDecimal donGia;       // đơn giá đã chốt trên đơn
+        private BigDecimal giaHienTai;   // giá bán hiện tại (để phát hiện đổi giá)
         private Integer soLuong;
         private BigDecimal thanhTien;
     }

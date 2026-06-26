@@ -82,22 +82,22 @@ const goToDetail = (id) => {
 </script>
 
 <template>
-    <div class="my-orders-page bg-grey-lighten-4 min-vh-100">
+    <div class="my-orders-page bg-white min-vh-100">
         <MainHeader />
         <div class="header-spacing" style="height: 104px"></div>
 
-        <!-- Hero Banner -->
-        <div class="orders-hero">
+        <!-- Header -->
+        <div class="orders-header">
             <v-container style="max-width: 1000px">
-                <div class="hero-content pa-8">
+                <div class="pa-8">
                     <div class="d-flex align-center justify-space-between flex-wrap gap-4">
                         <div class="d-flex align-center">
-                            <div class="hero-icon mr-4">
+                            <div class="header-icon mr-4">
                                 <v-icon size="28" color="white">mdi-package-variant-closed</v-icon>
                             </div>
                             <div>
                                 <h1 class="text-h4 font-weight-bold text-white mb-1">Đơn hàng của tôi</h1>
-                                <p class="text-body-2 text-blue-lighten-4 mb-0">Theo dõi và quản lý tất cả đơn hàng của bạn</p>
+                                <p class="text-body-2 mb-0" style="color: rgba(255,255,255,0.75);">Theo dõi và quản lý tất cả đơn hàng của bạn</p>
                             </div>
                         </div>
                         <v-btn variant="outlined" color="white" rounded="pill" class="font-weight-bold text-none"
@@ -114,28 +114,28 @@ const goToDetail = (id) => {
         <v-container style="max-width: 1000px" class="mt-n8 position-relative">
             <v-row class="stats-row">
                 <v-col cols="3" class="pa-2">
-                    <v-card class="stats-card rounded-xl pa-4 text-center" elevation="0">
-                        <p class="text-h5 font-weight-black text-blue-darken-4 mb-0">{{ stats.total }}</p>
+                    <div class="stats-block text-center pa-4">
+                        <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c;">{{ stats.total }}</p>
                         <p class="text-caption text-grey mb-0">Tổng đơn</p>
-                    </v-card>
+                    </div>
                 </v-col>
                 <v-col cols="3" class="pa-2">
-                    <v-card class="stats-card rounded-xl pa-4 text-center" elevation="0">
-                        <p class="text-h5 font-weight-black text-green mb-0">{{ stats.completed }}</p>
+                    <div class="stats-block text-center pa-4">
+                        <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c;">{{ stats.completed }}</p>
                         <p class="text-caption text-grey mb-0">Hoàn thành</p>
-                    </v-card>
+                    </div>
                 </v-col>
                 <v-col cols="3" class="pa-2">
-                    <v-card class="stats-card rounded-xl pa-4 text-center" elevation="0">
-                        <p class="text-h5 font-weight-black text-indigo mb-0">{{ stats.delivering }}</p>
+                    <div class="stats-block text-center pa-4">
+                        <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c;">{{ stats.delivering }}</p>
                         <p class="text-caption text-grey mb-0">Đang giao</p>
-                    </v-card>
+                    </div>
                 </v-col>
                 <v-col cols="3" class="pa-2">
-                    <v-card class="stats-card rounded-xl pa-4 text-center" elevation="0">
-                        <p class="text-h5 font-weight-black text-red mb-0">{{ stats.cancelled }}</p>
+                    <div class="stats-block text-center pa-4">
+                        <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c;">{{ stats.cancelled }}</p>
                         <p class="text-caption text-grey mb-0">Đã hủy</p>
-                    </v-card>
+                    </div>
                 </v-col>
             </v-row>
         </v-container>
@@ -143,106 +143,97 @@ const goToDetail = (id) => {
         <!-- Main Content -->
         <v-container class="py-6" style="max-width: 1000px">
             <!-- Status Tabs -->
-            <v-card class="rounded-xl mb-6" elevation="0">
-                <div class="pa-4">
-                    <div class="order-tabs">
-                        <v-chip-group v-model="activeTab" mandatory selected-class="active-tab" show-arrows>
-                            <v-chip
-                                v-for="tab in tabs"
-                                :key="tab.value"
-                                :value="tab.value"
-                                variant="outlined"
-                                class="tab-chip font-weight-bold text-none"
-                                rounded="pill"
-                                filter
-                            >
-                                <v-icon size="16" class="mr-1">{{ tab.icon }}</v-icon>
-                                {{ tab.label }}
-                            </v-chip>
-                        </v-chip-group>
-                    </div>
+            <div class="mb-6 pb-4" style="border-bottom: 1px solid #e0e0e0;">
+                <div class="order-tabs">
+                    <v-chip-group v-model="activeTab" mandatory selected-class="active-tab" show-arrows>
+                        <v-chip
+                            v-for="tab in tabs"
+                            :key="tab.value"
+                            :value="tab.value"
+                            variant="outlined"
+                            class="tab-chip font-weight-bold text-none"
+                            rounded="pill"
+                            filter
+                        >
+                            <v-icon size="16" class="mr-1">{{ tab.icon }}</v-icon>
+                            {{ tab.label }}
+                        </v-chip>
+                    </v-chip-group>
                 </div>
-            </v-card>
+            </div>
 
             <!-- Loading -->
             <div v-if="loading" class="text-center py-16">
-                <v-progress-circular indeterminate color="blue-darken-4" size="48" width="4"></v-progress-circular>
+                <v-progress-circular indeterminate color="#1e257c" size="48" width="4"></v-progress-circular>
                 <p class="text-body-2 text-grey mt-4">Đang tải đơn hàng...</p>
             </div>
 
             <!-- Orders List -->
             <div v-else-if="orders.length > 0" class="orders-list">
-                <TransitionGroup name="order-card">
-                    <v-card
-                        v-for="order in orders"
-                        :key="order.id"
-                        class="order-card rounded-xl mb-4"
-                        elevation="0"
-                        @click="goToDetail(order.id)"
-                    >
-                        <div class="pa-5">
-                            <!-- Header -->
-                            <div class="d-flex align-center justify-space-between mb-4">
-                                <div class="d-flex align-center">
-                                    <div class="order-status-dot mr-3" :style="{ background: statusColor(order.trangThai) }"></div>
-                                    <div>
-                                        <div class="d-flex align-center gap-2 mb-1">
-                                            <span class="text-body-2 font-weight-bold">{{ order.maHoaDon || 'Đang tạo...' }}</span>
-                                            <v-chip
-                                                :color="statusColor(order.trangThai)"
-                                                variant="tonal"
-                                                size="x-small"
-                                                class="font-weight-bold"
-                                            >
-                                                <v-icon size="12" class="mr-1">{{ statusIcon(order.trangThai) }}</v-icon>
-                                                {{ statusLabel(order.trangThai) }}
-                                            </v-chip>
-                                        </div>
-                                        <div class="d-flex align-center text-caption text-grey">
-                                            <v-icon size="12" class="mr-1">mdi-calendar-outline</v-icon>
-                                            {{ formatDateShort(order.ngayTao) }}
-                                            <span class="mx-1">•</span>
-                                            <v-icon size="12" class="mr-1">mdi-shopping-outline</v-icon>
-                                            {{ order.items?.length || 0 }} sản phẩm
-                                        </div>
-                                    </div>
+                <div v-for="order in orders"
+                    :key="order.id"
+                    class="order-row pa-5 mb-4"
+                    @click="goToDetail(order.id)">
+                    <!-- Header -->
+                    <div class="d-flex align-center justify-space-between mb-4">
+                        <div class="d-flex align-center">
+                            <div class="order-status-dot mr-3" :style="{ background: statusColor(order.trangThai) }"></div>
+                            <div>
+                                <div class="d-flex align-center gap-2 mb-1">
+                                    <span class="text-body-2 font-weight-bold">{{ order.maHoaDon || 'Đang tạo...' }}</span>
+                                    <v-chip
+                                        :color="statusColor(order.trangThai)"
+                                        variant="tonal"
+                                        size="x-small"
+                                        class="font-weight-bold"
+                                    >
+                                        <v-icon size="12" class="mr-1">{{ statusIcon(order.trangThai) }}</v-icon>
+                                        {{ statusLabel(order.trangThai) }}
+                                    </v-chip>
                                 </div>
-                                <v-icon size="20" color="grey-lighten-1" class="flex-shrink-0">mdi-chevron-right</v-icon>
-                            </div>
-
-                            <!-- Products Preview -->
-                            <div class="product-preview d-flex gap-3 mb-3">
-                                <div v-for="(item, i) in (order.items || []).slice(0, 3)" :key="i" class="preview-thumb-wrapper">
-                                    <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover width="52" height="52" class="rounded-lg"></v-img>
-                                    <div v-else class="thumb-placeholder rounded-lg">
-                                        <v-icon size="18" color="grey-lighten-2">mdi-shoe-sneaker</v-icon>
-                                    </div>
-                                    <span class="preview-overlay" v-if="i === 2 && order.items.length > 3">+{{ order.items.length - 3 }}</span>
+                                <div class="d-flex align-center text-caption text-grey">
+                                    <v-icon size="12" class="mr-1">mdi-calendar-outline</v-icon>
+                                    {{ formatDateShort(order.ngayTao) }}
+                                    <span class="mx-1">•</span>
+                                    <v-icon size="12" class="mr-1">mdi-shopping-outline</v-icon>
+                                    {{ order.items?.length || 0 }} sản phẩm
                                 </div>
-                                <div v-if="order.items?.length === 1" class="preview-info d-flex flex-column justify-center">
-                                    <p class="text-body-2 font-weight-bold mb-0 text-truncate" style="max-width: 200px">{{ order.items[0].tenSanPham }}</p>
-                                    <p class="text-caption text-grey mb-0">{{ order.items[0].tenMauSac }} / {{ order.items[0].tenKichThuoc }} · x{{ order.items[0].soLuong }}</p>
-                                </div>
-                            </div>
-
-                            <v-divider class="mb-3" />
-
-                            <!-- Footer -->
-                            <div class="d-flex align-center justify-space-between">
-                                <div class="d-flex align-center">
-                                    <v-icon size="14" color="grey" class="mr-1">mdi-currency-usd</v-icon>
-                                    <span class="text-body-2 text-grey-darken-1">Tổng:</span>
-                                </div>
-                                <span class="text-body-1 font-weight-black">{{ formatPrice(order.tongTienSauGiam) }}</span>
                             </div>
                         </div>
-                    </v-card>
-                </TransitionGroup>
+                        <v-icon size="20" color="grey-lighten-1" class="flex-shrink-0">mdi-chevron-right</v-icon>
+                    </div>
+
+                    <!-- Products Preview -->
+                    <div class="product-preview d-flex gap-3 mb-3">
+                        <div v-for="(item, i) in (order.items || []).slice(0, 3)" :key="i" class="preview-thumb-wrapper">
+                            <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover width="52" height="52" class="rounded-lg"></v-img>
+                            <div v-else class="thumb-placeholder rounded-lg">
+                                <v-icon size="18" color="grey-lighten-2">mdi-shoe-sneaker</v-icon>
+                            </div>
+                            <span class="preview-overlay" v-if="i === 2 && order.items.length > 3">+{{ order.items.length - 3 }}</span>
+                        </div>
+                        <div v-if="order.items?.length === 1" class="preview-info d-flex flex-column justify-center">
+                            <p class="text-body-2 font-weight-bold mb-0 text-truncate" style="max-width: 200px">{{ order.items[0].tenSanPham }}</p>
+                            <p class="text-caption text-grey mb-0">{{ order.items[0].tenMauSac }} / {{ order.items[0].tenKichThuoc }} · x{{ order.items[0].soLuong }}</p>
+                        </div>
+                    </div>
+
+                    <hr style="border: none; border-top: 1px solid #f0f0f0; margin: 12px 0;" />
+
+                    <!-- Footer -->
+                    <div class="d-flex align-center justify-space-between">
+                        <div class="d-flex align-center">
+                            <v-icon size="14" color="grey" class="mr-1">mdi-currency-usd</v-icon>
+                            <span class="text-body-2 text-grey-darken-1">Tổng:</span>
+                        </div>
+                        <span class="text-body-1 font-weight-bold" style="color: #1e257c;">{{ formatPrice(order.tongTienSauGiam) }}</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Empty State -->
-            <div v-else class="empty-state text-center py-16">
-                <v-card class="rounded-xl pa-12" elevation="0">
+            <div v-else class="text-center py-16">
+                <div class="pa-12">
                     <div class="empty-icon-large mx-auto mb-6">
                         <v-icon size="64" color="grey-lighten-3">mdi-package-variant-closed</v-icon>
                     </div>
@@ -252,12 +243,12 @@ const goToDetail = (id) => {
                     <p class="text-body-2 text-grey mb-6">
                         {{ activeTab ? 'Không tìm thấy đơn hàng nào ở trạng thái này.' : 'Hãy bắt đầu mua sắm để tạo đơn hàng đầu tiên!' }}
                     </p>
-                    <v-btn color="black" rounded="pill" size="large" class="font-weight-bold text-none px-8"
+                    <v-btn style="background: #1e257c; color: white;" rounded="pill" size="large" class="font-weight-bold text-none px-8"
                         @click="router.push('/shoes')">
                         <v-icon class="mr-2">mdi-cart-outline</v-icon>
                         Khám phá sản phẩm
                     </v-btn>
-                </v-card>
+                </div>
             </div>
         </v-container>
 
@@ -266,47 +257,17 @@ const goToDetail = (id) => {
     </div>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .my-orders-page {
     padding-top: 64px;
     min-height: 100vh;
 }
 
-/* Hero Banner */
-.orders-hero {
-    background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1976d2 100%);
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -20%;
-        width: 500px;
-        height: 500px;
-        background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
-        border-radius: 50%;
-    }
-
-    &::after {
-        content: '';
-        position: absolute;
-        bottom: -30%;
-        left: -10%;
-        width: 300px;
-        height: 300px;
-        background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-        border-radius: 50%;
-    }
+.orders-header {
+    background: #1e257c;
 }
 
-.hero-content {
-    position: relative;
-    z-index: 1;
-}
-
-.hero-icon {
+.header-icon {
     width: 52px;
     height: 52px;
     background: rgba(255, 255, 255, 0.15);
@@ -314,55 +275,39 @@ const goToDetail = (id) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(4px);
+    flex-shrink: 0;
 }
 
-/* Stats */
-.stats-row {
-    .stats-card {
-        border: 1px solid #f0f0f0;
-        transition: all 0.3s;
-        &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.06) !important;
-        }
-    }
+.stats-row .stats-block {
+    border: 1px solid #e0e0e0;
+    background: #fff;
 }
 
-/* Tabs */
-.order-tabs {
-    .tab-chip {
-        border-color: #e0e0e0;
-        font-size: 0.85rem;
-        transition: all 0.25s;
-        padding: 0 16px;
-
-        &:hover {
-            border-color: #999;
-            background: #f5f5f5;
-        }
-    }
+.order-tabs .tab-chip {
+    border-color: #e0e0e0;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    padding: 0 16px;
+}
+.order-tabs .tab-chip:hover {
+    border-color: #1e257c;
+    background: #f5f7ff;
 }
 
 :deep(.active-tab) {
-    background: #111 !important;
+    background: #1e257c !important;
     color: #fff !important;
-    border-color: #111 !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-color: #1e257c !important;
 }
 
-/* Order Card */
-.order-card {
-    border: 1px solid #f0f0f0;
+.order-row {
+    border: 1px solid #e0e0e0;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     background: #fff;
-
-    &:hover {
-        border-color: #ddd;
-        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
-        transform: translateY(-2px);
-    }
+}
+.order-row:hover {
+    border-color: #1e257c;
 }
 
 .order-status-dot {
@@ -370,25 +315,22 @@ const goToDetail = (id) => {
     height: 10px;
     border-radius: 50%;
     flex-shrink: 0;
-    box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
 }
 
-.product-preview {
-    .preview-thumb-wrapper {
-        position: relative;
-        .preview-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            color: white;
-            font-size: 0.75rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-        }
-    }
+.product-preview .preview-thumb-wrapper {
+    position: relative;
+}
+.product-preview .preview-thumb-wrapper .preview-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
 }
 
 .thumb-placeholder {
@@ -405,7 +347,6 @@ const goToDetail = (id) => {
     min-width: 0;
 }
 
-/* Empty State */
 .empty-icon-large {
     width: 100px;
     height: 100px;
@@ -416,10 +357,4 @@ const goToDetail = (id) => {
     justify-content: center;
     border: 2px dashed #e0e0e0;
 }
-
-/* Transitions */
-.order-card-enter-active { transition: all 0.3s ease-out; }
-.order-card-leave-active { transition: all 0.3s ease-in; }
-.order-card-enter-from { opacity: 0; transform: translateY(20px); }
-.order-card-leave-to { opacity: 0; transform: translateY(-20px); }
 </style>

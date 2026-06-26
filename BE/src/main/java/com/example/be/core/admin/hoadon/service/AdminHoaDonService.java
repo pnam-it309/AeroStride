@@ -20,6 +20,8 @@ public interface AdminHoaDonService {
 
     AdminHoaDonDetailResponse removeHdct(String id, String idHdct);
 
+    AdminHoaDonDetailResponse confirmRefund(String id);
+
     java.util.Map<String, Long> getCounts(AdminHoaDonRequest request);
 
     byte[] exportExcel(AdminHoaDonRequest request);

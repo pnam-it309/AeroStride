@@ -34,6 +34,38 @@ export const dichVuDatHang = {
         return response.data;
     },
 
+    // Khách cập nhật thông tin nhận hàng (sđt, địa chỉ, ghi chú) khi đơn chờ xác nhận
+    async capNhatThongTinNhanHang(id, payload) {
+        const response = await api.put(`${API_CUSTOMER.ORDER}/${id}/shipping`, payload, {
+            bigOp: true,
+            loadingMessage: 'Đang cập nhật thông tin nhận hàng...'
+        });
+        return response.data;
+    },
+
+    // Khách cập nhật số lượng sản phẩm (chỉ đơn tiền mặt, đang chờ xác nhận)
+    async capNhatSanPham(id, items) {
+        const response = await api.put(`${API_CUSTOMER.ORDER}/${id}/items`, { items }, {
+            bigOp: true,
+            loadingMessage: 'Đang cập nhật sản phẩm...'
+        });
+        return response.data;
+    },
+
+    // Xác nhận kết quả VNPay với backend (verify chữ ký + lưu trạng thái đã thanh toán)
+    async xacNhanThanhToanVnPay(params) {
+        const response = await api.get('/payment/vnpay-callback', { params });
+        return response.data;
+    },
+
+    // Tạo lại URL thanh toán VNPay cho đơn chuyển khoản chưa thanh toán
+    async taoUrlThanhToanLai(id, returnUrl) {
+        const response = await api.post(`${API_CUSTOMER.ORDER}/${id}/vnpay-url`, null, {
+            params: { returnUrl }
+        });
+        return response.data.data;
+    },
+
     // Lấy voucher khả dụng
     async layVoucherKhaDung(tongTien = 0) {
         const response = await api.get(API_CUSTOMER.VOUCHERS, {

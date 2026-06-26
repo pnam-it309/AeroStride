@@ -30,6 +30,7 @@ const editOrderDialogOpen = ref(false);
 const activeTab = ref(0);
 const editForm = ref({
     trangThai: "",
+    tenNguoiNhan: "",
     soDienThoaiNguoiNhan: "",
     diaChiNguoiNhan: "",
     ghiChu: "",
@@ -138,6 +139,143 @@ const confirmDialog = ref({
     loading: false
 });
 
+// --- Xác nhận hoàn phí (đơn trả trước bị hủy) ---
+const confirmHoanPhi = () => {
+    confirmDialog.value = {
+        show: true,
+        title: 'Xác nhận hoàn phí',
+        message: `Xác nhận đã hoàn trả tiền cho khách hàng của đơn #${order.value.maHoaDon}?`,
+        color: 'primary',
+        showInput: false,
+        inputLabel: '',
+        inputRequired: false,
+        action: async () => {
+            confirmDialog.value.loading = true;
+            try {
+                await dichVuHoaDon.xacNhanHoanPhi(order.value.id);
+                addNotification({ title: 'Thành công', subtitle: 'Đã xác nhận hoàn phí cho khách hàng', color: 'success' });
+                await loadOrderDetail();
+                confirmDialog.value.show = false;
+            } catch (error) {
+                addNotification({ title: 'Lỗi', subtitle: error?.response?.data?.message || 'Xác nhận hoàn phí thất bại', color: 'error' });
+            } finally {
+                confirmDialog.value.loading = false;
+            }
+        }
+    };
+};
+
+// --- Chỉnh sửa số lượng sản phẩm trong hóa đơn ---
+const editingProducts = ref(false);
+const savingProducts = ref(false);
+const editQtyMap = ref({}); // { [idHdct]: soLuong }
+
+const startEditProducts = () => {
+    const map = {};
+    (order.value.listsHoaDonChiTiet || []).forEach((it) => {
+        map[it.id] = it.soLuong;
+    });
+    editQtyMap.value = map;
+    editingProducts.value = true;
+};
+
+const cancelEditProducts = () => {
+    editingProducts.value = false;
+    editQtyMap.value = {};
+};
+
+const changeProductQty = (item, delta) => {
+    const current = editQtyMap.value[item.id] || 1;
+    const next = current + delta;
+    if (next < 1) return; // tối thiểu 1
+    editQtyMap.value[item.id] = next;
+};
+
+const saveProducts = async () => {
+    const items = order.value.listsHoaDonChiTiet || [];
+    const changed = items.filter((it) => (editQtyMap.value[it.id] ?? it.soLuong) !== it.soLuong);
+    if (!changed.length) {
+        editingProducts.value = false;
+        return;
+    }
+    savingProducts.value = true;
+    try {
+        for (const it of changed) {
+            await dichVuHoaDon.capNhatSanPhamHoaDon(order.value.id, {
+                idChiTietSanPham: it.idCtsp,
+                soLuong: editQtyMap.value[it.id]
+            });
+        }
+        addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật số lượng sản phẩm', color: 'success' });
+        editingProducts.value = false;
+        await loadOrderDetail();
+    } catch (error) {
+        addNotification({ title: 'Lỗi', subtitle: error?.response?.data?.message || 'Cập nhật sản phẩm thất bại', color: 'error' });
+    } finally {
+        savingProducts.value = false;
+    }
+};
+
+const removeProduct = (item) => {
+    if ((order.value.listsHoaDonChiTiet || []).length <= 1) {
+        addNotification({ title: 'Không thể xóa', subtitle: 'Đơn hàng phải còn ít nhất 1 sản phẩm', color: 'warning' });
+        return;
+    }
+    confirmDialog.value = {
+        show: true,
+        title: 'Xóa sản phẩm',
+        message: `Xóa "${item.tenSanPham}" khỏi đơn hàng?`,
+        color: 'error',
+        showInput: false,
+        inputLabel: '',
+        inputRequired: false,
+        action: async () => {
+            confirmDialog.value.loading = true;
+            try {
+                await dichVuHoaDon.xoaSanPhamHoaDon(order.value.id, item.id);
+                addNotification({ title: 'Thành công', subtitle: 'Đã xóa sản phẩm khỏi đơn hàng', color: 'success' });
+                await loadOrderDetail();
+                confirmDialog.value.show = false;
+            } catch (error) {
+                addNotification({ title: 'Lỗi', subtitle: error?.response?.data?.message || 'Xóa sản phẩm thất bại', color: 'error' });
+            } finally {
+                confirmDialog.value.loading = false;
+            }
+        }
+    };
+};
+
+// --- Đổi giá sản phẩm: phát hiện & áp giá mới ---
+const isPriceChanged = (item) => item.giaHienTai != null && Number(item.giaHienTai) !== Number(item.donGia);
+
+const applyNewPrice = (item) => {
+    confirmDialog.value = {
+        show: true,
+        title: 'Áp dụng giá mới',
+        message: `Cập nhật đơn giá "${item.tenSanPham}" từ ${formatCurrency(item.donGia)} thành ${formatCurrency(item.giaHienTai)}?`,
+        color: 'warning',
+        showInput: false,
+        inputLabel: '',
+        inputRequired: false,
+        action: async () => {
+            confirmDialog.value.loading = true;
+            try {
+                await dichVuHoaDon.capNhatSanPhamHoaDon(order.value.id, {
+                    idChiTietSanPham: item.idCtsp,
+                    soLuong: item.soLuong
+                });
+                addNotification({ title: 'Thành công', subtitle: 'Đã áp dụng giá mới cho sản phẩm', color: 'success' });
+                await loadOrderDetail();
+                confirmDialog.value.show = false;
+            } catch (error) {
+                addNotification({ title: 'Lỗi', subtitle: error?.response?.data?.message || 'Cập nhật giá thất bại', color: 'error' });
+            } finally {
+                confirmDialog.value.loading = false;
+            }
+        }
+    };
+};
+
 
 
 // Configuration logic moved up
@@ -218,19 +356,11 @@ const getStatusTimestampMap = computed(() => {
 const orderStatusLabel = computed(() => getStatusLabel(order.value.trangThai));
 const orderStatusTone = computed(() => getStatusTone(order.value.trangThai));
 const showStatusChip = computed(() => loaded.value && getOrderStatusMeta(order.value.trangThai));
-const SHIPPING_ORDER_TYPES = ['GIAO_HANG', 'ONLINE', 'DELIVERY'];
-const normalizedOrderType = computed(() => String(order.value?.loaiDon || '').toUpperCase());
-const isShippingOrder = computed(() => SHIPPING_ORDER_TYPES.includes(normalizedOrderType.value));
 const canUpdateStatus = computed(() => order.value && getOrderStatus() !== null && getOrderStatus() < ORDER_STATUS_ORDINALS.HOAN_THANH);
-const isOrderEditable = computed(() => {
-    if (order.value.trangThai === 'CHO_XAC_NHAN') return true;
-    return isShippingOrder.value
-        ? getOrderStatus() < ORDER_STATUS_ORDINALS.CHO_GIAO
-        : getOrderStatus() < ORDER_STATUS_ORDINALS.HOAN_THANH;
-});
+const isOrderEditable = computed(() => order.value.trangThai === 'CHO_XAC_NHAN' || getOrderStatus() < ORDER_STATUS_ORDINALS.CHO_GIAO);
 
 const customerName = computed(() => order.value.tenKhachHang || 'Khách lẻ');
-const orderTypeLabel = computed(() => (isShippingOrder.value ? 'Giao hàng tận nơi' : 'Nhận tại quầy'));
+const orderTypeLabel = computed(() => (order.value.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi'));
 
 const displayAddress = computed(() => {
     let addr = order.value.diaChiNguoiNhan;
@@ -296,7 +426,6 @@ const sortedHistoryLogs = computed(() => {
 
 const allowedStatuses = computed(() => {
     const current = order.value.trangThai;
-    const deliveryStatusValues = ['CHO_GIAO', 'DANG_GIAO'];
     const allItems = [
         { title: 'Chờ xác nhận', value: 'CHO_XAC_NHAN' },
         { title: 'Đã xác nhận', value: 'XAC_NHAN' },
@@ -305,11 +434,7 @@ const allowedStatuses = computed(() => {
         { title: 'Hoàn thành', value: 'HOAN_THANH' },
         { title: 'Đã hủy', value: 'DA_HUY' },
         { title: 'Hoàn đơn', value: 'HOAN_DON' }
-    ].filter((item) => isShippingOrder.value || !deliveryStatusValues.includes(item.value));
-
-    if (!isShippingOrder.value && current && deliveryStatusValues.includes(current)) {
-        allItems.push({ title: getStatusLabel(current), value: current });
-    }
+    ];
 
     if (!current) return allItems;
 
@@ -320,9 +445,7 @@ const allowedStatuses = computed(() => {
             case 'CHO_XAC_NHAN':
                 return item.value === 'XAC_NHAN' || item.value === 'DA_HUY';
             case 'XAC_NHAN':
-                return isShippingOrder.value
-                    ? item.value === 'CHO_GIAO' || item.value === 'DA_HUY'
-                    : item.value === 'HOAN_THANH' || item.value === 'DA_HUY';
+                return item.value === 'CHO_GIAO' || item.value === 'DA_HUY';
             case 'CHO_GIAO':
                 return item.value === 'DANG_GIAO' || item.value === 'DA_HUY';
             case 'DANG_GIAO':
@@ -424,22 +547,15 @@ const getPaymentStatusText = (pay) => {
 
 const timelineSteps = computed(() => {
     const status = getOrderStatus();
-    const displayStatus = !isShippingOrder.value && (status === 2 || status === 3) ? 1 : status;
 
     // Core flow steps
-    const shippingSteps = [
+    const coreSteps = [
         { key: 0, label: 'Chờ xác nhận', icon: CalendarIcon, note: 'Đơn hàng mới tạo' },
         { key: 1, label: 'Đã xác nhận', icon: CircleCheckIcon, note: 'Đơn hàng đã được xác nhận' },
         { key: 2, label: 'Chờ giao', icon: PackageIcon, note: 'Đơn hàng chờ giao' },
         { key: 3, label: 'Đang giao', icon: TruckIcon, note: 'Đơn hàng đang được giao' },
         { key: 4, label: 'Hoàn thành', icon: CheckIcon, note: 'Đơn hàng đã hoàn thành' }
     ];
-    const counterSteps = [
-        { key: 0, label: 'Chờ xác nhận', icon: CalendarIcon, note: 'Đơn hàng mới tạo' },
-        { key: 1, label: 'Đã xác nhận', icon: CircleCheckIcon, note: 'Đơn hàng đã được xác nhận' },
-        { key: 4, label: 'Hoàn thành', icon: CheckIcon, note: 'Khách nhận tại quầy' }
-    ];
-    const coreSteps = isShippingOrder.value ? shippingSteps : counterSteps;
 
     // Exception steps
     const exceptionSteps = [
@@ -449,16 +565,17 @@ const timelineSteps = computed(() => {
 
     let steps = [...coreSteps];
     const tsMap = getStatusTimestampMap.value;
+    const statusOrdinal = status === null ? -1 : status;
 
     // Nếu trạng thái hiện tại là Hủy hoặc Hoàn đơn, chúng ta sẽ hiển thị nó là bước cuối cùng hoặc thay thế bước tương ứng
     if (status === 5 || status === 6) {
         const exc = exceptionSteps.find((s) => s.key === status);
         if (exc) {
-            steps = [...coreSteps.slice(0, -1), exc]; // Giữ các bước xử lý chính, bước cuối là trạng thái đặc biệt
+            steps = [...coreSteps.slice(0, 4), exc]; // Giữ 4 bước đầu, bước 5 là trạng thái đặc biệt
         }
     }
 
-    const currentActiveIndex = steps.findIndex((s) => s.key === displayStatus);
+    const currentActiveIndex = steps.findIndex((s) => s.key === status);
 
     return steps
         .filter((_, index) => index <= currentActiveIndex)
@@ -530,6 +647,7 @@ const openEditModal = () => {
     activeTab.value = 0;
     editForm.value = {
         trangThai: order.value.trangThai,
+        tenNguoiNhan: order.value.tenNguoiNhan || "",
         soDienThoaiNguoiNhan: order.value.soDienThoaiNguoiNhan || "",
         diaChiNguoiNhan: order.value.diaChiNguoiNhan || "",
         ghiChu: order.value.ghiChu || "",
@@ -543,6 +661,7 @@ const submitEditOrder = async () => {
     try {
         // 1. Update Info (Recipient details, note)
         await dichVuHoaDon.capNhatThongTinHoaDon(order.value.id, {
+            tenNguoiNhan: editForm.value.tenNguoiNhan,
             soDienThoaiNguoiNhan: editForm.value.soDienThoaiNguoiNhan,
             diaChiNguoiNhan: editForm.value.diaChiNguoiNhan,
             ghiChu: editForm.value.ghiChu
@@ -792,7 +911,7 @@ onMounted(() => {
                 </v-card>
 
                 <!-- 2. Shipping Info -->
-                <v-card v-if="isShippingOrder" elevation="0" class="premium-card mb-0 bg-white flex-grow-1">
+                <v-card elevation="0" class="premium-card mb-0 bg-white flex-grow-1">
                     <div class="card-title pa-3 border-b d-flex align-center justify-space-between bg-slate-50">
                         <div class="d-flex align-center">
                             <TruckIcon size="20" class="mr-3 text-primary" />
@@ -901,7 +1020,7 @@ onMounted(() => {
                                 <span class="font-weight-medium">Giảm giá:</span>
                                 <span class="text-body-2 font-weight-bold">- {{ formatCurrency(Math.abs(orderDiscountAmount)) }}</span>
                             </div>
-                            <div v-if="isShippingOrder" class="summary-row mb-4">
+                            <div class="summary-row mb-4">
                                 <span class="text-slate-500 d-flex align-center">
                                     <span>Phí vận chuyển:</span>
                                     <svg width="45" height="15" viewBox="0 0 45 15" fill="none"
@@ -1015,6 +1134,17 @@ onMounted(() => {
                     class="premium-card mb-0 pa-4 bg-white d-flex flex-column justify-center ga-3 flex-grow-0"
                     style="border: 1px dashed rgba(30, 37, 124, 0.3) !important; background: rgba(30, 37, 124, 0.02) !important;">
                     <div class="text-body-2 text-slate-600 font-weight-bold text-center mb-1">Thao tác đơn hàng</div>
+                    <v-btn v-if="order.canHoanPhi" variant="flat" color="deep-purple" class="rounded-lg px-6" height="44"
+                        @click="confirmHoanPhi">
+                        <template v-slot:prepend>
+                            <v-icon size="18" class="mr-1">mdi-cash-refund</v-icon>
+                        </template>
+                        Xác nhận hoàn phí
+                    </v-btn>
+                    <div v-else-if="order.daHoanPhi" class="d-flex align-center justify-center ga-2 py-1">
+                        <v-icon size="18" color="success">mdi-check-decagram</v-icon>
+                        <span class="text-success font-weight-bold">Đã hoàn phí cho khách</span>
+                    </div>
                     <v-btn variant="flat" color="primary" class="rounded-lg px-6" height="44" @click="printInvoice">
                         <template v-slot:prepend>
                             <PrinterIcon size="18" class="mr-1" />
@@ -1036,6 +1166,20 @@ onMounted(() => {
                 <div class="d-flex align-center">
                     <LayoutGridIcon size="20" class="mr-3 text-primary" />
                     <span class="text-slate-800">Sản phẩm đã đặt</span>
+                </div>
+                <div v-if="isOrderEditable" class="d-flex align-center ga-2">
+                    <v-btn v-if="!editingProducts" variant="tonal" color="primary" size="small" class="rounded-lg"
+                        @click="startEditProducts">
+                        <EditIcon size="16" class="mr-1" /> Sửa số lượng
+                    </v-btn>
+                    <template v-else>
+                        <v-btn variant="text" color="slate-500" size="small" class="rounded-lg" :disabled="savingProducts"
+                            @click="cancelEditProducts">Hủy</v-btn>
+                        <v-btn variant="flat" color="primary" size="small" class="rounded-lg" :loading="savingProducts"
+                            @click="saveProducts">
+                            <CheckIcon size="16" class="mr-1" /> Lưu
+                        </v-btn>
+                    </template>
                 </div>
             </div>
 
@@ -1082,7 +1226,7 @@ onMounted(() => {
             <AdminTable :headers="productColumns" :items="paginatedProducts" :showAddButton="false" hideToolbar
                 class="all-center-table full-width-admin-table">
                 <template #row="{ item }">
-                    <tr class="hover-row">
+                    <tr class="hover-row" :class="{ 'price-changed-cell': isPriceChanged(item) }">
                         <td class="py-4">
                             <v-avatar size="80" class="rounded-lg border bg-slate-50 shadow-sm">
                                 <v-img :src="item.hinhAnh ||
@@ -1108,13 +1252,49 @@ onMounted(() => {
                             </span>
                         </td>
                         <td class="py-4">
-                            <span class="text-body-2 text-slate-800">{{ item.soLuong }}</span>
+                            <div v-if="editingProducts" class="d-flex align-center justify-center ga-1">
+                                <v-btn icon size="x-small" variant="tonal" color="primary"
+                                    :disabled="(editQtyMap[item.id] || 1) <= 1" @click="changeProductQty(item, -1)">
+                                    <v-icon size="16">mdi-minus</v-icon>
+                                </v-btn>
+                                <span class="text-body-2 text-slate-800 mx-1" style="min-width: 24px; display: inline-block; text-align: center;">{{ editQtyMap[item.id] }}</span>
+                                <v-btn icon size="x-small" variant="tonal" color="primary"
+                                    @click="changeProductQty(item, 1)">
+                                    <v-icon size="16">mdi-plus</v-icon>
+                                </v-btn>
+                            </div>
+                            <span v-else class="text-body-2 text-slate-800">{{ item.soLuong }}</span>
                         </td>
                         <td class="py-4 text-slate-700">
-                            {{ formatCurrency(item.donGia) }}
+                            <template v-if="isPriceChanged(item)">
+                                <span class="text-decoration-line-through text-slate-400 mr-1">{{ formatCurrency(item.donGia) }}</span>
+                                <span class="text-warning font-weight-bold">{{ formatCurrency(item.giaHienTai) }}</span>
+                            </template>
+                            <template v-else>{{ formatCurrency(item.donGia) }}</template>
                         </td>
                         <td class="py-4 text-primary text-body-2">
-                            {{ formatCurrency(Number(item.soLuong) * Number(item.donGia)) }}
+                            <div class="d-flex align-center justify-center ga-2">
+                                <span>{{ formatCurrency(Number(editingProducts ? (editQtyMap[item.id] || item.soLuong) : item.soLuong) * Number(item.donGia)) }}</span>
+                                <v-btn v-if="editingProducts" icon size="x-small" variant="text" color="error"
+                                    @click="removeProduct(item)">
+                                    <TrashIcon size="16" />
+                                </v-btn>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- Dòng vàng: cảnh báo đổi giá -->
+                    <tr v-if="isPriceChanged(item)" class="price-warning-row">
+                        <td :colspan="productColumns.length" class="py-2 px-4">
+                            <div class="d-flex align-center justify-space-between flex-wrap ga-2">
+                                <div class="d-flex align-center ga-2 text-amber-darken-4">
+                                    <v-icon size="18" color="amber-darken-3">mdi-alert-outline</v-icon>
+                                    <span>Giá sản phẩm đã thay đổi: từ <b>{{ formatCurrency(item.donGia) }}</b> thành <b>{{ formatCurrency(item.giaHienTai) }}</b></span>
+                                </div>
+                                <v-btn v-if="isOrderEditable" size="x-small" variant="flat" color="amber-darken-2"
+                                    class="rounded-lg text-none font-weight-bold" @click="applyNewPrice(item)">
+                                    Áp dụng giá mới
+                                </v-btn>
+                            </div>
                         </td>
                     </tr>
                 </template>
@@ -1249,7 +1429,7 @@ onMounted(() => {
                         <v-icon start size="18" class="mr-2">mdi-list-status</v-icon>
                         Trạng thái đơn
                     </v-tab>
-                    <v-tab v-if="isShippingOrder" :value="1" class="text-none font-weight-bold">
+                    <v-tab :value="1" class="text-none font-weight-bold">
                         <v-icon start size="18" class="mr-2">mdi-truck-delivery-outline</v-icon>
                         Thông tin giao nhận
                     </v-tab>
@@ -1283,8 +1463,17 @@ onMounted(() => {
                         </v-window-item>
 
                         <!-- TAB 2: Shipping/Delivery Information -->
-                        <v-window-item v-if="isShippingOrder" :value="1">
+                        <v-window-item :value="1">
                             <v-row class="ga-3" dense>
+                                <!-- Recipient Name Field -->
+                                <v-col cols="12" class="mb-2">
+                                    <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Tên người
+                                        nhận</span>
+                                    <v-text-field v-model="editForm.tenNguoiNhan"
+                                        placeholder="Nhập tên người nhận..." variant="outlined" rounded="lg"
+                                        density="comfortable" hide-details
+                                        prepend-inner-icon="mdi-account"></v-text-field>
+                                </v-col>
                                 <!-- Phone Field -->
                                 <v-col cols="12" class="mb-2">
                                     <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Số điện thoại
@@ -1360,6 +1549,16 @@ onMounted(() => {
 .hover-row:hover {
     background-color: #f8fafc;
     cursor: pointer;
+}
+
+/* Đổi giá: dòng cảnh báo màu vàng */
+.price-warning-row td {
+    background-color: #fffbeb !important;
+    border-bottom: 1px solid #fde68a !important;
+}
+
+.price-changed-cell td {
+    background-color: #fffdf5 !important;
 }
 
 .customer-main-col,

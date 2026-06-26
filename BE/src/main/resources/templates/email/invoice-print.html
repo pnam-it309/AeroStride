@@ -180,7 +180,7 @@
             <div class="customer-info-grid">
                 <div class="info-row">
                     <span class="info-label">Họ tên người mua hàng:</span>
-                    <span class="info-value" th:text="${hd.khachHang != null ? hd.khachHang.ten : (hd.tenKhachHang != null ? hd.tenKhachHang : 'Khách lẻ')}">Khách hàng</span>
+                    <span class="info-value" th:text="${hd.khachHang != null ? hd.khachHang.ten : 'Khách lẻ'}">Khách hàng</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Số điện thoại:</span>

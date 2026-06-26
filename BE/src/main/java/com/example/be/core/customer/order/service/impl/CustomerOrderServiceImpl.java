@@ -1,6 +1,8 @@
 package com.example.be.core.customer.order.service.impl;
 
 import com.example.be.core.customer.order.model.request.CustomerOrderCheckoutRequest;
+import com.example.be.core.customer.order.model.request.CustomerUpdateItemsRequest;
+import com.example.be.core.customer.order.model.request.CustomerUpdateShippingRequest;
 import com.example.be.core.customer.order.model.response.CustomerOrderResponse;
 import com.example.be.core.customer.order.service.CustomerOrderService;
 import com.example.be.core.customer.order.repository.*;
@@ -30,6 +32,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     private final CustomerOrderLichSuTrangThaiHoaDonRepository lichSuRepository;
     private final CustomerOrderGiaoDichThanhToanRepository giaoDichRepository;
     private final CustomerOrderPhuongThucThanhToanRepository phuongThucRepository;
+    private final com.example.be.core.payment.PaymentService paymentService;
 
     private static final BigDecimal PHI_VAN_CHUYEN = new BigDecimal("30000");
     private static final BigDecimal FREE_SHIP_THRESHOLD = new BigDecimal("5000000");
@@ -139,6 +142,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .tongTien(tongTien)
                 .phiVanChuyen(phiVanChuyen)
                 .tongTienSauGiam(tongTienSauGiam)
+                .tenNguoiNhan(request.getTenNguoiNhan())
                 .diaChiNguoiNhan(diaChiFull)
                 .soDienThoaiNguoiNhan(request.getSoDienThoai())
                 .ghiChu(request.getGhiChu())
@@ -290,6 +294,144 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         log.info("Hủy đơn hàng thành công: hoaDon={}, khachHang={}", id, username);
     }
 
+    // Khách cập nhật thông tin nhận hàng (sđt, địa chỉ, ghi chú) khi đơn đang chờ xác nhận.
+    // Việc đổi địa chỉ KHÔNG làm thay đổi phí vận chuyển đã chốt của đơn.
+    @Override
+    @Transactional
+    public CustomerOrderResponse updateShippingInfo(String id, CustomerUpdateShippingRequest request, String username) {
+        HoaDon hoaDon = findOwnedOrder(id, username);
+
+        if (hoaDon.getTrangThai() != OrderStatus.CHO_XAC_NHAN) {
+            throw new RuntimeException("Chỉ có thể sửa thông tin khi đơn hàng đang ở trạng thái 'Chờ xác nhận'");
+        }
+
+        hoaDon.setTenNguoiNhan(request.getTenNguoiNhan());
+        hoaDon.setSoDienThoaiNguoiNhan(request.getSoDienThoaiNguoiNhan());
+        hoaDon.setDiaChiNguoiNhan(request.getDiaChiNguoiNhan());
+        hoaDon.setGhiChu(request.getGhiChu());
+        hoaDon.setNgayCapNhat(System.currentTimeMillis());
+        hoaDonRepository.save(hoaDon);
+
+        // Ghi lịch sử: ai làm gì
+        LichSuTrangThaiHoaDon lichSu = LichSuTrangThaiHoaDon.builder()
+                .hoaDon(hoaDon)
+                .trangThaiCu(hoaDon.getTrangThai().ordinal())
+                .trangThaiMoi(hoaDon.getTrangThai().ordinal())
+                .ghiChu("Khách hàng cập nhật thông tin nhận hàng")
+                .nguoiThucHien(username)
+                .build();
+        lichSuRepository.save(lichSu);
+
+        log.info("Khách cập nhật thông tin nhận hàng: hoaDon={}, khachHang={}", id, username);
+        return mapToResponse(hoaDon, null);
+    }
+
+    // Khách cập nhật số lượng sản phẩm trong đơn. Chỉ cho đơn tiền mặt (COD) đang chờ xác nhận.
+    // Không được để đơn rỗng; tự động cộng/trừ tồn kho và tính lại tổng tiền (kèm voucher).
+    @Override
+    @Transactional
+    public CustomerOrderResponse updateItems(String id, CustomerUpdateItemsRequest request, String username) {
+        HoaDon hoaDon = findOwnedOrder(id, username);
+
+        if (hoaDon.getTrangThai() != OrderStatus.CHO_XAC_NHAN) {
+            throw new RuntimeException("Chỉ có thể sửa sản phẩm khi đơn hàng đang ở trạng thái 'Chờ xác nhận'");
+        }
+        if (!isCashOrder(hoaDon)) {
+            throw new RuntimeException("Đơn thanh toán chuyển khoản không được phép thay đổi sản phẩm");
+        }
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new RuntimeException("Đơn hàng phải còn ít nhất 1 sản phẩm");
+        }
+
+        List<HoaDonChiTiet> currentItems = hoaDonChiTietRepository.findAllByHoaDon(hoaDon);
+        Map<String, HoaDonChiTiet> hdctByVariant = new HashMap<>();
+        for (HoaDonChiTiet hdct : currentItems) {
+            if (hdct.getChiTietSanPham() != null) {
+                hdctByVariant.put(hdct.getChiTietSanPham().getId(), hdct);
+            }
+        }
+
+        // Chỉ cho phép chỉnh số lượng các biến thể đã có sẵn trong đơn (không thêm SP mới)
+        StringBuilder doiGiaNote = new StringBuilder();
+        for (CustomerUpdateItemsRequest.Item item : request.getItems()) {
+            HoaDonChiTiet hdct = hdctByVariant.get(item.getIdChiTietSanPham());
+            if (hdct == null) {
+                throw new RuntimeException("Sản phẩm không thuộc đơn hàng này");
+            }
+            if (item.getSoLuong() == null || item.getSoLuong() < 1) {
+                throw new RuntimeException("Số lượng mỗi sản phẩm phải tối thiểu là 1");
+            }
+
+            ChiTietSanPham ctsp = hdct.getChiTietSanPham();
+            int delta = item.getSoLuong() - hdct.getSoLuong(); // >0: cần thêm tồn, <0: hoàn tồn
+            if (delta > 0 && ctsp.getSoLuong() < delta) {
+                String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
+                throw new RuntimeException("Sản phẩm '" + tenSP + "' chỉ còn " + ctsp.getSoLuong() + " sản phẩm");
+            }
+
+            ctsp.setSoLuong(ctsp.getSoLuong() - delta);
+            chiTietSanPhamRepository.save(ctsp);
+
+            // Phát hiện & áp dụng đổi giá (giống bán hàng tại quầy): tạo bản ghi với đơn giá hiện hành
+            BigDecimal giaCu = hdct.getDonGia();
+            BigDecimal giaMoi = ctsp.getGiaBan();
+            if (giaCu != null && giaMoi != null && giaCu.compareTo(giaMoi) != 0) {
+                String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
+                doiGiaNote.append(String.format("Giá '%s' đổi từ %sđ thành %sđ. ",
+                        tenSP, giaCu.toBigInteger(), giaMoi.toBigInteger()));
+                hdct.setDonGia(giaMoi);
+            }
+
+            hdct.setSoLuong(item.getSoLuong());
+            hoaDonChiTietRepository.save(hdct);
+        }
+
+        recalculateTotals(hoaDon);
+
+        // Ghi lịch sử: ai làm gì (kèm thông tin đổi giá nếu có)
+        String note = "Khách hàng cập nhật số lượng sản phẩm";
+        if (doiGiaNote.length() > 0) {
+            note = note + ". " + doiGiaNote.toString().trim();
+        }
+        LichSuTrangThaiHoaDon lichSu = LichSuTrangThaiHoaDon.builder()
+                .hoaDon(hoaDon)
+                .trangThaiCu(hoaDon.getTrangThai().ordinal())
+                .trangThaiMoi(hoaDon.getTrangThai().ordinal())
+                .ghiChu(note)
+                .nguoiThucHien(username)
+                .build();
+        lichSuRepository.save(lichSu);
+
+        log.info("Khách cập nhật sản phẩm: hoaDon={}, khachHang={}", id, username);
+        return mapToResponse(hoaDon, null);
+    }
+
+    // Tạo lại URL thanh toán VNPay cho đơn chuyển khoản chưa thanh toán (cho phép thanh toán lại khi đã tắt/hủy cổng)
+    @Override
+    @Transactional(readOnly = true)
+    public String createVnPayUrl(String id, String returnUrl, String username) {
+        HoaDon hoaDon = findOwnedOrder(id, username);
+
+        if (isCashOrder(hoaDon)) {
+            throw new RuntimeException("Đơn thanh toán khi nhận hàng (COD) không cần thanh toán online");
+        }
+        if (hoaDon.getTrangThai() != OrderStatus.CHO_XAC_NHAN) {
+            throw new RuntimeException("Chỉ có thể thanh toán lại khi đơn đang ở trạng thái 'Chờ xác nhận'");
+        }
+
+        BigDecimal amount = hoaDon.getTongTienSauGiam() != null ? hoaDon.getTongTienSauGiam() : hoaDon.getTongTien();
+        com.example.be.core.payment.dto.PaymentRequest payReq = com.example.be.core.payment.dto.PaymentRequest.builder()
+                .amount(amount)
+                .orderId(hoaDon.getId())
+                .orderInfo("Thanh toan don hang " + hoaDon.getMaHoaDon())
+                .returnUrl(returnUrl)
+                .build();
+
+        String url = paymentService.createPaymentUrl(payReq);
+        log.info("Tạo lại URL VNPay: hoaDon={}, khachHang={}", id, username);
+        return url;
+    }
+
     // Lấy danh sách phiếu giảm giá công khai hợp lệ dựa theo tổng tiền giỏ hàng hiện hành
     @Override
     public List<PhieuGiamGia> getAvailableVouchers(BigDecimal tongTien) {
@@ -304,6 +446,80 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     }
 
     // ===== PRIVATE HELPERS =====
+
+    // Tìm đơn hàng và xác thực quyền sở hữu của khách hàng đang đăng nhập
+    private HoaDon findOwnedOrder(String id, String username) {
+        HoaDon hoaDon = hoaDonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+        KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin khách hàng"));
+
+        if (hoaDon.getKhachHang() == null || !hoaDon.getKhachHang().getId().equals(khachHang.getId())) {
+            throw new RuntimeException("Bạn không có quyền thao tác đơn hàng này");
+        }
+        return hoaDon;
+    }
+
+    // Xác định đơn có phải thanh toán tiền mặt (COD) hay không.
+    // COD = tiền mặt; còn lại (VNPAY/chuyển khoản/ONLINE) = không phải tiền mặt.
+    private boolean isCashOrder(HoaDon hoaDon) {
+        if (hoaDon.getListsGiaoDichThanhToan() != null) {
+            for (GiaoDichThanhToan gd : hoaDon.getListsGiaoDichThanhToan()) {
+                String loai = gd.getLoaiGiaoDich();
+                if (loai != null && loai.equalsIgnoreCase("COD")) {
+                    return true;
+                }
+                if (gd.getPhuongThucThanhToan() != null && gd.getPhuongThucThanhToan().getTen() != null) {
+                    String ten = gd.getPhuongThucThanhToan().getTen().toUpperCase();
+                    if (ten.contains("COD") || ten.contains("TIEN_MAT")) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    // Tính lại tổng tiền của đơn dựa trên các dòng sản phẩm hiện tại.
+    // Giữ nguyên phí vận chuyển; áp dụng lại voucher nếu vẫn còn đủ điều kiện tối thiểu.
+    private void recalculateTotals(HoaDon hoaDon) {
+        List<HoaDonChiTiet> items = hoaDonChiTietRepository.findAllByHoaDon(hoaDon);
+        BigDecimal tongTien = items.stream()
+                .map(d -> d.getDonGia().multiply(BigDecimal.valueOf(d.getSoLuong())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal phiVanChuyen = hoaDon.getPhiVanChuyen() != null ? hoaDon.getPhiVanChuyen() : BigDecimal.ZERO;
+
+        // Tính lại tiền giảm từ voucher đang gắn (nếu còn đủ điều kiện)
+        BigDecimal tienGiam = BigDecimal.ZERO;
+        PhieuGiamGia voucher = hoaDon.getPhieuGiamGia();
+        if (voucher != null) {
+            boolean duDieuKien = voucher.getDonHangToiThieu() == null
+                    || tongTien.compareTo(voucher.getDonHangToiThieu()) >= 0;
+            if (duDieuKien) {
+                if ("PHAN_TRAM".equals(voucher.getLoaiPhieu()) && voucher.getPhanTramGiamGia() != null) {
+                    tienGiam = tongTien.multiply(BigDecimal.valueOf(voucher.getPhanTramGiamGia()))
+                            .divide(BigDecimal.valueOf(100), 0, RoundingMode.FLOOR);
+                    if (voucher.getGiamToiDa() != null && tienGiam.compareTo(voucher.getGiamToiDa()) > 0) {
+                        tienGiam = voucher.getGiamToiDa();
+                    }
+                } else if (voucher.getSoTienGiam() != null) {
+                    tienGiam = voucher.getSoTienGiam();
+                }
+            }
+        }
+
+        BigDecimal tongTienSauGiam = tongTien.add(phiVanChuyen).subtract(tienGiam);
+        if (tongTienSauGiam.compareTo(BigDecimal.ZERO) < 0) {
+            tongTienSauGiam = BigDecimal.ZERO;
+        }
+
+        hoaDon.setTongTien(tongTien);
+        hoaDon.setTongTienSauGiam(tongTienSauGiam);
+        hoaDon.setNgayCapNhat(System.currentTimeMillis());
+        hoaDonRepository.save(hoaDon);
+    }
 
     // Mapper chuyển đổi từ entity HoaDon sang DTO CustomerOrderResponse để trả về frontend
     private CustomerOrderResponse mapToResponse(HoaDon hoaDon, String payMethod) {
@@ -327,6 +543,8 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
             return CustomerOrderResponse.OrderItemResponse.builder()
                     .id(hdct.getId())
+                    .idChiTietSanPham(ctsp != null ? ctsp.getId() : null)
+                    .giaHienTai(ctsp != null ? ctsp.getGiaBan() : null)
                     .tenSanPham(tenSanPham)
                     .hinhAnh(hinhAnh)
                     .tenMauSac(tenMauSac)
@@ -357,9 +575,9 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             if (tienGiam.compareTo(BigDecimal.ZERO) < 0) tienGiam = BigDecimal.ZERO;
         }
 
-        // Tên người nhận: lấy từ địa chỉ hoặc khách hàng
-        String tenNguoiNhan = "";
-        if (hoaDon.getKhachHang() != null) {
+        // Tên người nhận: ưu tiên giá trị đã lưu trên đơn, nếu trống thì lấy từ khách hàng
+        String tenNguoiNhan = hoaDon.getTenNguoiNhan();
+        if ((tenNguoiNhan == null || tenNguoiNhan.isBlank()) && hoaDon.getKhachHang() != null) {
             tenNguoiNhan = hoaDon.getKhachHang().getTen();
         }
 
@@ -374,9 +592,26 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             }
         }
 
+        // Phân quyền thao tác theo trạng thái + phương thức thanh toán
+        boolean choXacNhan = hoaDon.getTrangThai() == OrderStatus.CHO_XAC_NHAN;
+        boolean laTienMat = isCashOrder(hoaDon);
+        // Sửa thông tin nhận hàng: cho phép khi đang chờ xác nhận (cả tiền mặt & chuyển khoản),
+        // riêng chuyển khoản đổi địa chỉ không làm đổi phí ship.
+        boolean choPhepSuaThongTin = choXacNhan;
+        // Sửa số lượng sản phẩm: chỉ đơn tiền mặt (COD) và đang chờ xác nhận.
+        boolean choPhepSuaSanPham = choXacNhan && laTienMat;
+        boolean choPhepHuy = choXacNhan;
+        // Đơn chuyển khoản (không phải tiền mặt) còn chờ xác nhận -> cho thanh toán lại
+        boolean choPhepThanhToanLai = choXacNhan && !laTienMat;
+
         return CustomerOrderResponse.builder()
                 .id(hoaDon.getId())
                 .maHoaDon(hoaDon.getMaHoaDon())
+                .laTienMat(laTienMat)
+                .choPhepSuaThongTin(choPhepSuaThongTin)
+                .choPhepSuaSanPham(choPhepSuaSanPham)
+                .choPhepHuy(choPhepHuy)
+                .choPhepThanhToanLai(choPhepThanhToanLai)
                 .trangThai(hoaDon.getTrangThai() != null ? hoaDon.getTrangThai().name() : "")
                 .trangThaiDisplay(hoaDon.getTrangThai() != null ? CustomerOrderResponse.mapTrangThaiDisplay(hoaDon.getTrangThai().name()) : "")
                 .tongTien(hoaDon.getTongTien())

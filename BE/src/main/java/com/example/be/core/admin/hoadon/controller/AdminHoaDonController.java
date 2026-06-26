@@ -60,6 +60,12 @@ public class AdminHoaDonController {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.removeHdct(id, idHdct)));
     }
 
+    // Xác nhận đã hoàn phí cho khách hàng (đơn trả trước bị hủy)
+    @PatchMapping(RoutesConstant.REFUND_CONFIRM)
+    public ResponseEntity<ApiResponse<?>> confirmRefund(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.confirmRefund(id), "Đã xác nhận hoàn phí"));
+    }
+
     @GetMapping(RoutesConstant.COUNTS)
     public ResponseEntity<ApiResponse<?>> getCounts(AdminHoaDonRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminHoaDonService.getCounts(request)));

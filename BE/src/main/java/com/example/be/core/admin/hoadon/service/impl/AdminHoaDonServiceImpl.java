@@ -149,6 +149,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     public AdminHoaDonDetailResponse updateInfo(String id, AdminUpdateHoaDonRequest request) {
         HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
 
+        if (request.getTenNguoiNhan() != null) hd.setTenNguoiNhan(request.getTenNguoiNhan());
         hd.setSoDienThoaiNguoiNhan(request.getSoDienThoaiNguoiNhan());
         hd.setDiaChiNguoiNhan(request.getDiaChiNguoiNhan());
         hd.setGhiChu(request.getGhiChu());
@@ -184,14 +185,21 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             throw new BusinessException(MessageConstants.PRODUCT_OUT_OF_STOCK + " (Còn lại: " + ctsp.getSoLuong() + ")");
         }
 
+        // Phát hiện đổi giá: giá hiện tại của SP khác giá đã chốt trên dòng hóa đơn
+        java.math.BigDecimal giaCu = (hdct != null) ? hdct.getDonGia() : null;
+        java.math.BigDecimal giaMoi = ctsp.getGiaBan();
+        boolean giaThayDoi = giaCu != null && giaMoi != null && giaCu.compareTo(giaMoi) != 0;
+
         if (hdct != null) {
             hdct.setSoLuong(request.getSoLuong());
+            // Áp giá mới (trở thành bản ghi mới với đơn giá hiện hành)
+            hdct.setDonGia(giaMoi);
         } else {
             hdct = HoaDonChiTiet.builder()
                     .hoaDon(hd)
                     .chiTietSanPham(ctsp)
                     .soLuong(request.getSoLuong())
-                    .donGia(ctsp.getGiaBan())
+                    .donGia(giaMoi)
                     .build();
             hdct.setMaHoaDonChiTiet(CodeUtils.generateRandom(HoaDonChiTiet.class));
             hdct.setNgayTao(System.currentTimeMillis());
@@ -200,7 +208,13 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         ctsp.setSoLuong(ctsp.getSoLuong() - delta);
         chiTietSanPhamRepository.save(ctsp);
         hoaDonChiTietRepository.save(hdct);
-        logHistory(hd, "Thay đổi sản phẩm: " + ctsp.getSanPham().getTen() + " (SL: " + request.getSoLuong() + ")");
+
+        if (giaThayDoi) {
+            logHistory(hd, "Giá sản phẩm '" + ctsp.getSanPham().getTen() + "' đổi từ "
+                    + formatTien(giaCu) + " thành " + formatTien(giaMoi));
+        } else {
+            logHistory(hd, "Thay đổi sản phẩm: " + ctsp.getSanPham().getTen() + " (SL: " + request.getSoLuong() + ")");
+        }
 
         recalculateTotal(hd);
         return detail(id);
@@ -223,6 +237,32 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         logHistory(hd, "Xóa sản phẩm khỏi hóa đơn");
         recalculateTotal(hd);
         return detail(id);
+    }
+
+    @Override
+    @Transactional
+    public AdminHoaDonDetailResponse confirmRefund(String id) {
+        HoaDon hd = repository.findDetailById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_FOUND));
+
+        if (hd.getTrangThai() != OrderStatus.DA_HUY) {
+            throw new BusinessException("Chỉ xác nhận hoàn phí cho đơn hàng đã hủy");
+        }
+        if (Boolean.TRUE.equals(hd.getDaHoanPhi())) {
+            throw new BusinessException("Đơn hàng này đã được xác nhận hoàn phí");
+        }
+
+        hd.setDaHoanPhi(true);
+        hd.setNgayCapNhat(System.currentTimeMillis());
+        repository.save(hd);
+
+        logHistory(hd, "Xác nhận đã hoàn phí cho khách hàng");
+        return detail(id);
+    }
+
+    // Định dạng tiền VND cho ghi chú lịch sử (vd: 1.250.000đ)
+    private String formatTien(java.math.BigDecimal value) {
+        if (value == null) return "0đ";
+        return String.format("%,dđ", value.longValue()).replace(',', '.');
     }
 
     private void logHistory(HoaDon hd, String note) {

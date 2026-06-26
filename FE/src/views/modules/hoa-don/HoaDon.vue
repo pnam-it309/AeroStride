@@ -480,16 +480,3 @@ onMounted(() => loadOrders());
     </v-container>
 </template>
 
-<style scoped>
-:deep(.order-type-online) {
-    background: #eff6ff !important;
-    color: #1d4ed8 !important;
-    border: 1px solid #dbeafe !important;
-}
-
-:deep(.order-type-offline) {
-    background: #fdf2f8 !important;
-    color: #be185d !important;
-    border: 1px solid #fce7f3 !important;
-}
-</style>

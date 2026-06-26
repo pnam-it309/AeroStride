@@ -1,6 +1,8 @@
 package com.example.be.core.customer.order.service;
 
 import com.example.be.core.customer.order.model.request.CustomerOrderCheckoutRequest;
+import com.example.be.core.customer.order.model.request.CustomerUpdateItemsRequest;
+import com.example.be.core.customer.order.model.request.CustomerUpdateShippingRequest;
 import com.example.be.core.customer.order.model.response.CustomerOrderResponse;
 import com.example.be.entity.PhieuGiamGia;
 
@@ -16,6 +18,12 @@ public interface CustomerOrderService {
     CustomerOrderResponse getOrderDetail(String id, String username);
 
     void cancelOrder(String id, String username);
+
+    CustomerOrderResponse updateShippingInfo(String id, CustomerUpdateShippingRequest request, String username);
+
+    CustomerOrderResponse updateItems(String id, CustomerUpdateItemsRequest request, String username);
+
+    String createVnPayUrl(String id, String returnUrl, String username);
 
     List<PhieuGiamGia> getAvailableVouchers(BigDecimal tongTien);
 }

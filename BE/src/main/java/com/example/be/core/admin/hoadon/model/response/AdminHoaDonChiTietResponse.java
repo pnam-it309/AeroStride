@@ -17,6 +17,7 @@ public class AdminHoaDonChiTietResponse {
     private String mauSac;
     private String kichThuoc;
     private Integer soLuong;
-    private BigDecimal donGia;
+    private BigDecimal donGia;       // đơn giá đã chốt trên hóa đơn
+    private BigDecimal giaHienTai;   // giá bán hiện tại của sản phẩm (để phát hiện đổi giá)
     private String hinhAnh;
 }

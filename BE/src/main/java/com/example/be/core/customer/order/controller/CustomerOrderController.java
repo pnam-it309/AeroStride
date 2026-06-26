@@ -2,6 +2,8 @@ package com.example.be.core.customer.order.controller;
 
 import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.core.customer.order.model.request.CustomerOrderCheckoutRequest;
+import com.example.be.core.customer.order.model.request.CustomerUpdateItemsRequest;
+import com.example.be.core.customer.order.model.request.CustomerUpdateShippingRequest;
 import com.example.be.core.customer.order.model.response.CustomerOrderResponse;
 import com.example.be.core.customer.order.service.CustomerOrderService;
 import com.example.be.entity.PhieuGiamGia;
@@ -76,6 +78,45 @@ public class CustomerOrderController {
         log.info("Cancelling order: id={}, user={}", id, authentication.getName());
         customerOrderService.cancelOrder(id, authentication.getName());
         return ResponseEntity.ok(ApiResponse.success(null, "Hủy đơn hàng thành công"));
+    }
+
+    // Khách cập nhật thông tin nhận hàng (sđt, địa chỉ, ghi chú) khi đơn đang chờ xác nhận
+    @PutMapping("/{id}/shipping")
+    @PreAuthorize("hasRole('KHACH_HANG')")
+    public ResponseEntity<ApiResponse<CustomerOrderResponse>> updateShipping(
+            @PathVariable String id,
+            @Valid @RequestBody CustomerUpdateShippingRequest request,
+            Authentication authentication
+    ) {
+        log.info("Customer update shipping: id={}, user={}", id, authentication.getName());
+        CustomerOrderResponse response = customerOrderService.updateShippingInfo(id, request, authentication.getName());
+        return ResponseEntity.ok(ApiResponse.success(response, "Cập nhật thông tin nhận hàng thành công"));
+    }
+
+    // Khách cập nhật số lượng sản phẩm (chỉ đơn tiền mặt, đang chờ xác nhận)
+    @PutMapping("/{id}/items")
+    @PreAuthorize("hasRole('KHACH_HANG')")
+    public ResponseEntity<ApiResponse<CustomerOrderResponse>> updateItems(
+            @PathVariable String id,
+            @Valid @RequestBody CustomerUpdateItemsRequest request,
+            Authentication authentication
+    ) {
+        log.info("Customer update items: id={}, user={}", id, authentication.getName());
+        CustomerOrderResponse response = customerOrderService.updateItems(id, request, authentication.getName());
+        return ResponseEntity.ok(ApiResponse.success(response, "Cập nhật sản phẩm thành công"));
+    }
+
+    // Tạo lại URL thanh toán VNPay cho đơn chuyển khoản chưa thanh toán (thanh toán lại)
+    @PostMapping("/{id}/vnpay-url")
+    @PreAuthorize("hasRole('KHACH_HANG')")
+    public ResponseEntity<ApiResponse<String>> createVnPayUrl(
+            @PathVariable String id,
+            @RequestParam String returnUrl,
+            Authentication authentication
+    ) {
+        log.info("Customer re-pay VNPay: id={}, user={}", id, authentication.getName());
+        String url = customerOrderService.createVnPayUrl(id, returnUrl, authentication.getName());
+        return ResponseEntity.ok(ApiResponse.success(url, "Tạo URL thanh toán thành công"));
     }
 
     // Lấy danh sách các mã giảm giá (voucher) có thể áp dụng cho tổng tiền giỏ hàng hiện tại

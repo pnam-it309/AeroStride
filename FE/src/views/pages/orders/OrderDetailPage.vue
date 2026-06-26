@@ -14,6 +14,14 @@ const loading = ref(true);
 const cancelLoading = ref(false);
 const showCancelDialog = ref(false);
 
+const showEditDialog = ref(false);
+const editLoading = ref(false);
+const editForm = ref({ tenNguoiNhan: '', soDienThoaiNguoiNhan: '', diaChiNguoiNhan: '', ghiChu: '' });
+
+const editingItems = ref(false);
+const itemsLoading = ref(false);
+const editQuantities = ref({});
+
 const statusColor = (status) => ORDER_STATUS_COLORS[status] || '#757575';
 const statusIcon = (status) => ORDER_STATUS_ICONS[status] || 'mdi-help-circle-outline';
 const statusLabel = (status) => ORDER_STATUS_LABELS[status] || status;
@@ -43,6 +51,49 @@ const canCancel = computed(() => {
     return order.value?.trangThai === 'CHO_XAC_NHAN';
 });
 
+const isPriceChanged = (item) => item.giaHienTai != null && Number(item.giaHienTai) !== Number(item.donGia);
+
+const repayLoading = ref(false);
+
+const handleRepay = async () => {
+    repayLoading.value = true;
+    try {
+        const returnUrl = `${window.location.origin}/my-orders/${route.params.id}`;
+        const url = await dichVuDatHang.taoUrlThanhToanLai(route.params.id, returnUrl);
+        if (url) {
+            window.location.href = url;
+        } else {
+            alert('Không lấy được URL thanh toán. Vui lòng thử lại.');
+        }
+    } catch (error) {
+        console.error('Error creating VNPay URL:', error);
+        alert(error.response?.data?.message || 'Tạo thanh toán thất bại');
+    } finally {
+        repayLoading.value = false;
+    }
+};
+
+const handleVnPayReturn = async () => {
+    const params = route.query || {};
+    if (!params.vnp_ResponseCode) return;
+    try {
+        // Gửi callback về backend để verify chữ ký và lưu trạng thái đã thanh toán
+        const res = await dichVuDatHang.xacNhanThanhToanVnPay(params);
+        if (res?.success) {
+            alert('Thanh toán VNPay thành công! Đơn hàng của bạn đã được ghi nhận thanh toán.');
+            await fetchOrder();
+        } else {
+            alert(res?.message || 'Thanh toán VNPay chưa hoàn tất. Bạn có thể thử thanh toán lại.');
+        }
+    } catch (error) {
+        console.error('VNPay verify error:', error);
+        alert('Không xác nhận được kết quả thanh toán. Vui lòng kiểm tra lại đơn hàng.');
+    } finally {
+        // Dọn query params khỏi URL
+        router.replace({ path: `/my-orders/${route.params.id}` });
+    }
+};
+
 const fetchOrder = async () => {
     loading.value = true;
     try {
@@ -51,6 +102,77 @@ const fetchOrder = async () => {
         console.error('Error fetching order:', error);
     } finally {
         loading.value = false;
+    }
+};
+
+const openEditDialog = () => {
+    editForm.value = {
+        tenNguoiNhan: order.value.tenNguoiNhan || '',
+        soDienThoaiNguoiNhan: order.value.soDienThoaiNguoiNhan || '',
+        diaChiNguoiNhan: order.value.diaChiNguoiNhan || '',
+        ghiChu: order.value.ghiChu || ''
+    };
+    showEditDialog.value = true;
+};
+
+const handleSaveShipping = async () => {
+    if (!editForm.value.tenNguoiNhan?.trim() || !editForm.value.soDienThoaiNguoiNhan?.trim() || !editForm.value.diaChiNguoiNhan?.trim()) {
+        alert('Vui lòng nhập đầy đủ tên, số điện thoại và địa chỉ nhận hàng');
+        return;
+    }
+    editLoading.value = true;
+    try {
+        await dichVuDatHang.capNhatThongTinNhanHang(route.params.id, editForm.value);
+        showEditDialog.value = false;
+        await fetchOrder();
+    } catch (error) {
+        console.error('Error updating shipping info:', error);
+        alert(error.response?.data?.message || 'Cập nhật thông tin thất bại');
+    } finally {
+        editLoading.value = false;
+    }
+};
+
+const startEditItems = () => {
+    const map = {};
+    (order.value.items || []).forEach((it) => {
+        map[it.idChiTietSanPham] = it.soLuong;
+    });
+    editQuantities.value = map;
+    editingItems.value = true;
+};
+
+const cancelEditItems = () => {
+    editingItems.value = false;
+    editQuantities.value = {};
+};
+
+const changeQty = (idChiTietSanPham, delta) => {
+    const current = editQuantities.value[idChiTietSanPham] || 1;
+    const next = current + delta;
+    if (next < 1) return;
+    editQuantities.value[idChiTietSanPham] = next;
+};
+
+const handleSaveItems = async () => {
+    const items = Object.entries(editQuantities.value).map(([idChiTietSanPham, soLuong]) => ({
+        idChiTietSanPham,
+        soLuong
+    }));
+    if (!items.length || items.some((i) => !i.soLuong || i.soLuong < 1)) {
+        alert('Đơn hàng phải còn ít nhất 1 sản phẩm với số lượng tối thiểu là 1');
+        return;
+    }
+    itemsLoading.value = true;
+    try {
+        await dichVuDatHang.capNhatSanPham(route.params.id, items);
+        editingItems.value = false;
+        await fetchOrder();
+    } catch (error) {
+        console.error('Error updating items:', error);
+        alert(error.response?.data?.message || 'Cập nhật sản phẩm thất bại');
+    } finally {
+        itemsLoading.value = false;
     }
 };
 
@@ -68,254 +190,357 @@ const handleCancel = async () => {
     }
 };
 
-onMounted(() => fetchOrder());
+onMounted(async () => {
+    await fetchOrder();
+    await handleVnPayReturn();
+});
 </script>
 
 <template>
-    <div class="order-detail-page bg-grey-lighten-4 min-vh-100 pb-12">
+    <div class="order-detail-page min-vh-100 pb-12 bg-white">
         <MainHeader />
         <div class="header-spacing" style="height: 104px"></div>
 
         <v-container class="py-8" style="max-width: 1100px">
             <!-- Back -->
-            <v-btn variant="text" class="font-weight-bold text-none mb-6 back-btn" @click="router.push('/my-orders')">
-                <v-icon class="mr-2" size="18">mdi-arrow-left</v-icon>
+            <v-btn variant="text" class="font-weight-bold text-none mb-6 back-btn" 
+                style="color: #1e257c;" @click="router.push('/my-orders')">
+                <v-icon class="mr-2" size="18" style="color: #1e257c;">mdi-arrow-left</v-icon>
                 Quay lại danh sách đơn hàng
             </v-btn>
 
             <div v-if="loading" class="text-center py-16">
-                <v-progress-circular indeterminate color="blue-darken-4" size="48" width="4"></v-progress-circular>
+                <v-progress-circular indeterminate color="#1e257c" size="48" width="4"></v-progress-circular>
                 <p class="text-body-2 text-grey mt-4">Đang tải thông tin đơn hàng...</p>
             </div>
 
             <div v-else-if="order">
                 <!-- Order Header -->
-                <v-card class="order-hero-card rounded-xl mb-8" elevation="0">
-                    <div class="hero-gradient pa-8">
-                        <div class="d-flex align-center justify-space-between flex-wrap gap-4">
-                            <div>
-                                <p class="text-overline text-blue-lighten-4 mb-1 font-weight-bold tracking-wide">MÃ ĐƠN HÀNG</p>
-                                <h1 class="text-h4 font-weight-bold text-white mb-2">{{ order.maHoaDon || 'Đang tạo...' }}</h1>
-                                <div class="d-flex align-center flex-wrap gap-4">
-                                    <div class="d-flex align-center">
-                                        <v-icon size="16" color="blue-lighten-3" class="mr-2">mdi-calendar-clock</v-icon>
-                                        <span class="text-body-2 text-blue-lighten-4">Đặt lúc {{ formatDateFull(order.ngayTao) }}</span>
-                                    </div>
-                                    <div v-if="order.ngayDuKienNhan" class="d-flex align-center">
-                                        <v-icon size="16" color="blue-lighten-3" class="mr-2">mdi-truck-fast-outline</v-icon>
-                                        <span class="text-body-2 text-blue-lighten-4">Dự kiến nhận: {{ formatDate(order.ngayDuKienNhan) }}</span>
-                                    </div>
+                <div class="order-header mb-8 pb-6" style="border-bottom: 2px solid #1e257c;">
+                    <div class="d-flex align-center justify-space-between flex-wrap gap-4">
+                        <div>
+                            <p class="text-overline mb-1 font-weight-bold" style="color: #1e257c;">MÃ ĐƠN HÀNG</p>
+                            <h1 class="text-h4 font-weight-bold mb-2" style="color: #1e257c;">{{ order.maHoaDon || 'Đang tạo...' }}</h1>
+                            <div class="d-flex align-center flex-wrap gap-4">
+                                <div class="d-flex align-center">
+                                    <v-icon size="16" class="mr-2" style="color: #1e257c;">mdi-calendar-clock</v-icon>
+                                    <span class="text-body-2">Đặt lúc {{ formatDateFull(order.ngayTao) }}</span>
+                                </div>
+                                <div v-if="order.ngayDuKienNhan" class="d-flex align-center">
+                                    <v-icon size="16" class="mr-2" style="color: #1e257c;">mdi-truck-fast-outline</v-icon>
+                                    <span class="text-body-2">Dự kiến nhận: {{ formatDate(order.ngayDuKienNhan) }}</span>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <v-chip
-                                    :color="statusColor(order.trangThai)"
-                                    variant="flat"
-                                    size="large"
-                                    class="font-weight-bold status-chip px-4"
-                                >
-                                    <v-icon :icon="statusIcon(order.trangThai)" class="mr-2" size="22"></v-icon>
-                                    {{ statusLabel(order.trangThai) }}
-                                </v-chip>
-                            </div>
+                        </div>
+                        <div class="text-right">
+                            <v-chip
+                                style="background: #1e257c; color: white;"
+                                variant="flat"
+                                size="large"
+                                class="font-weight-bold px-4"
+                            >
+                                <v-icon :icon="statusIcon(order.trangThai)" class="mr-2" size="22"></v-icon>
+                                {{ statusLabel(order.trangThai) }}
+                            </v-chip>
                         </div>
                     </div>
-                </v-card>
+                </div>
 
                 <v-row class="content-grid">
                     <!-- Left Column -->
                     <v-col cols="12" lg="8" md="7" class="d-flex flex-column gap-6">
                         <!-- Products -->
-                        <v-card class="detail-card rounded-xl" elevation="0">
-                            <div class="pa-7">
-                                <div class="d-flex align-center mb-6">
-                                    <div class="card-icon bg-blue-lighten-5 mr-4">
-                                        <v-icon color="blue-darken-3" size="22">mdi-package-variant</v-icon>
+                        <div class="section-block pa-6">
+                            <div class="d-flex align-center justify-space-between mb-6">
+                                <div class="d-flex align-center">
+                                    <div class="card-icon mr-4" style="background: #f0f4ff;">
+                                        <v-icon style="color: #1e257c;" size="22">mdi-package-variant</v-icon>
                                     </div>
                                     <div>
-                                        <h3 class="text-subtitle-1 font-weight-bold mb-0">Sản phẩm đã đặt</h3>
-                                        <p class="text-caption text-grey mb-0">{{ order.items?.length || 0 }} sản phẩm</p>
+                                        <h3 class="text-subtitle-1 font-weight-bold mb-0" style="color: #1e257c;">Sản phẩm đã đặt</h3>
+                                        <p class="text-caption mb-0">{{ order.items?.length || 0 }} sản phẩm</p>
                                     </div>
                                 </div>
-                                <div v-for="(item, i) in order.items" :key="i"
-                                    class="detail-product d-flex align-center gap-4 py-4"
-                                    :class="{ 'border-top': i > 0 }">
-                                    <div class="detail-thumb-wrapper">
-                                        <v-img :src="item.hinhAnh || 'https://via.placeholder.com/150?text=Sản+Phẩm'"
-                                            cover width="76" height="76" class="rounded-xl"></v-img>
-                                    </div>
-                                    <div class="flex-grow-1 min-w-0">
-                                        <p class="text-body-1 font-weight-bold mb-1 text-truncate">{{ item.tenSanPham }}</p>
-                                        <div class="d-flex align-center flex-wrap gap-3">
-                                            <v-chip size="x-small" variant="tonal" color="grey" class="font-weight-medium">
-                                                <v-icon size="12" class="mr-1">mdi-palette</v-icon>{{ item.tenMauSac }}
-                                            </v-chip>
-                                            <v-chip size="x-small" variant="tonal" color="grey" class="font-weight-medium">
-                                                <v-icon size="12" class="mr-1">mdi-ruler</v-icon>{{ item.tenKichThuoc }}
-                                            </v-chip>
-                                            <span class="text-caption text-grey">x{{ item.soLuong }}</span>
-                                        </div>
-                                        <p class="text-caption text-grey mt-1">{{ formatPrice(item.donGia) }} / sản phẩm</p>
-                                    </div>
-                                    <span class="text-body-1 font-weight-black text-right flex-shrink-0">{{ formatPrice(item.thanhTien) }}</span>
+                                <div v-if="order.choPhepSuaSanPham">
+                                    <v-btn v-if="!editingItems" variant="tonal" size="small"
+                                        rounded="pill" class="text-none font-weight-bold" 
+                                        style="color: #1e257c; background: #f0f4ff;" @click="startEditItems">
+                                        <v-icon size="16" class="mr-1">mdi-pencil</v-icon>Sửa số lượng
+                                    </v-btn>
+                                    <template v-else>
+                                        <v-btn variant="text" size="small" rounded="pill"
+                                            class="text-none font-weight-bold mr-1" :disabled="itemsLoading"
+                                            style="color: #1e257c;"
+                                            @click="cancelEditItems">Hủy</v-btn>
+                                        <v-btn variant="flat" size="small" rounded="pill"
+                                            class="text-none font-weight-bold" :loading="itemsLoading"
+                                            style="background: #1e257c; color: white;"
+                                            @click="handleSaveItems">
+                                            <v-icon size="16" class="mr-1">mdi-content-save</v-icon>Lưu
+                                        </v-btn>
+                                    </template>
                                 </div>
                             </div>
-                        </v-card>
+                            <div v-for="(item, i) in order.items" :key="i"
+                                class="detail-product d-flex align-center gap-4 py-4"
+                                :class="{ 'border-top': i > 0 }">
+                                <div class="detail-thumb-wrapper">
+                                    <v-img :src="item.hinhAnh || 'https://via.placeholder.com/150?text=Sản+Phẩm'"
+                                        cover width="76" height="76" class="rounded-xl"></v-img>
+                                </div>
+                                <div class="flex-grow-1 min-w-0">
+                                    <p class="text-body-1 font-weight-bold mb-1 text-truncate">{{ item.tenSanPham }}</p>
+                                    <div class="d-flex align-center flex-wrap gap-3">
+                                        <v-chip size="x-small" variant="tonal" class="font-weight-medium"
+                                            style="color: #1e257c; background: #f0f4ff;">
+                                            <v-icon size="12" class="mr-1">mdi-palette</v-icon>{{ item.tenMauSac }}
+                                        </v-chip>
+                                        <v-chip size="x-small" variant="tonal" class="font-weight-medium"
+                                            style="color: #1e257c; background: #f0f4ff;">
+                                            <v-icon size="12" class="mr-1">mdi-ruler</v-icon>{{ item.tenKichThuoc }}
+                                        </v-chip>
+                                        <div v-if="editingItems" class="qty-stepper d-flex align-center">
+                                            <v-btn icon size="x-small" variant="tonal"
+                                                :disabled="(editQuantities[item.idChiTietSanPham] || 1) <= 1"
+                                                style="color: #1e257c; background: #f0f4ff;"
+                                                @click="changeQty(item.idChiTietSanPham, -1)">
+                                                <v-icon size="16">mdi-minus</v-icon>
+                                            </v-btn>
+                                            <span class="qty-value font-weight-bold mx-2">{{ editQuantities[item.idChiTietSanPham] }}</span>
+                                            <v-btn icon size="x-small" variant="tonal"
+                                                style="color: #1e257c; background: #f0f4ff;"
+                                                @click="changeQty(item.idChiTietSanPham, 1)">
+                                                <v-icon size="16">mdi-plus</v-icon>
+                                            </v-btn>
+                                        </div>
+                                        <span v-else class="text-caption text-grey">x{{ item.soLuong }}</span>
+                                    </div>
+                                    <p class="text-caption text-grey mt-1">{{ formatPrice(item.donGia) }} / sản phẩm</p>
+                                    <div v-if="isPriceChanged(item)"
+                                        class="price-change-note d-flex align-center gap-2 mt-1 pa-2 rounded-lg"
+                                        style="background: #f5f7ff; border: 1px dashed #1e257c;">
+                                        <v-icon size="14" style="color: #1e257c;">mdi-alert-outline</v-icon>
+                                        <span class="text-caption" style="color: #1e257c;">
+                                            Giá đã đổi: <s>{{ formatPrice(item.donGia) }}</s> → <b>{{ formatPrice(item.giaHienTai) }}</b>
+                                        </span>
+                                    </div>
+                                </div>
+                                <span class="text-body-1 font-weight-bold text-right flex-shrink-0">{{ formatPrice(item.thanhTien) }}</span>
+                            </div>
+                        </div>
 
                         <!-- Status Timeline -->
-                        <v-card v-if="order.lichSuTrangThai?.length" class="detail-card rounded-xl" elevation="0">
-                            <div class="pa-7">
-                                <div class="d-flex align-center mb-6">
-                                    <div class="card-icon bg-indigo-lighten-5 mr-4">
-                                        <v-icon color="indigo-darken-3" size="22">mdi-timeline-clock-outline</v-icon>
-                                    </div>
-                                    <div>
-                                        <h3 class="text-subtitle-1 font-weight-bold mb-0">Lịch sử đơn hàng</h3>
-                                        <p class="text-caption text-grey mb-0">Các cập nhật mới nhất về đơn hàng</p>
-                                    </div>
+                        <div v-if="order.lichSuTrangThai?.length" class="section-block pa-6">
+                            <div class="d-flex align-center mb-6">
+                                <div class="card-icon mr-4" style="background: #f0f4ff;">
+                                    <v-icon style="color: #1e257c;" size="22">mdi-timeline-clock-outline</v-icon>
                                 </div>
-                                <v-timeline density="compact" side="end" class="timeline-modern">
-                                    <v-timeline-item
-                                        v-for="(ls, i) in order.lichSuTrangThai"
-                                        :key="i"
-                                        size="small"
-                                        class="timeline-item-custom"
-                                    >
-                                        <template v-slot:icon>
-                                            <div class="timeline-dot" :style="{ background: statusColor(ls.trangThai) }">
-                                                <v-icon size="14" color="white">{{ statusIcon(ls.trangThai) }}</v-icon>
-                                            </div>
-                                        </template>
-                                        <div>
-                                            <p class="text-body-2 font-weight-bold mb-0">{{ statusLabel(ls.trangThai) }}</p>
-                                            <p class="text-caption text-grey mb-1 d-flex align-center">
-                                                <v-icon size="12" class="mr-1">mdi-clock-outline</v-icon>
-                                                {{ formatDateFull(ls.thoiGian) }}
-                                            </p>
-                                            <p v-if="ls.ghiChu" class="text-caption text-grey-darken-1 mb-0 bg-grey-lighten-4 pa-3 rounded-lg mt-1">
-                                                <v-icon size="12" class="mr-1">mdi-comment-text-outline</v-icon>
-                                                {{ ls.ghiChu }}
-                                            </p>
-                                        </div>
-                                    </v-timeline-item>
-                                </v-timeline>
+                                <div>
+                                    <h3 class="text-subtitle-1 font-weight-bold mb-0" style="color: #1e257c;">Lịch sử đơn hàng</h3>
+                                    <p class="text-caption mb-0">Các cập nhật mới nhất về đơn hàng</p>
+                                </div>
                             </div>
-                        </v-card>
+                            <v-timeline density="compact" side="end" class="timeline-modern">
+                                <v-timeline-item
+                                    v-for="(ls, i) in order.lichSuTrangThai"
+                                    :key="i"
+                                    size="small"
+                                    class="timeline-item-custom"
+                                >
+                                    <template v-slot:icon>
+                                        <div class="timeline-dot" style="background: #1e257c;">
+                                            <v-icon size="14" color="white">{{ statusIcon(ls.trangThai) }}</v-icon>
+                                        </div>
+                                    </template>
+                                    <div>
+                                        <p class="text-body-2 font-weight-bold mb-0">{{ statusLabel(ls.trangThai) }}</p>
+                                        <p class="text-caption text-grey mb-1 d-flex align-center">
+                                            <v-icon size="12" class="mr-1">mdi-clock-outline</v-icon>
+                                            {{ formatDateFull(ls.thoiGian) }}
+                                        </p>
+                                        <p v-if="ls.ghiChu" class="text-caption text-grey-darken-1 mb-0 pa-3 rounded-lg mt-1" style="background: #f5f7ff;">
+                                            <v-icon size="12" class="mr-1">mdi-comment-text-outline</v-icon>
+                                            {{ ls.ghiChu }}
+                                        </p>
+                                    </div>
+                                </v-timeline-item>
+                            </v-timeline>
+                        </div>
                     </v-col>
 
                     <!-- Right Column -->
                     <v-col cols="12" lg="4" md="5" class="d-flex flex-column gap-6">
                         <!-- Shipping Info -->
-                        <v-card class="detail-card rounded-xl" elevation="0">
-                            <div class="pa-7">
-                                <div class="d-flex align-center mb-6">
-                                    <div class="card-icon bg-teal-lighten-5 mr-4">
-                                        <v-icon color="teal-darken-3" size="22">mdi-truck-outline</v-icon>
+                        <div class="section-block pa-6">
+                            <div class="d-flex align-center justify-space-between mb-6">
+                                <div class="d-flex align-center">
+                                    <div class="card-icon mr-4" style="background: #f0f4ff;">
+                                        <v-icon style="color: #1e257c;" size="22">mdi-truck-outline</v-icon>
                                     </div>
-                                    <h3 class="text-subtitle-1 font-weight-bold mb-0">Thông tin giao hàng</h3>
+                                    <h3 class="text-subtitle-1 font-weight-bold mb-0" style="color: #1e257c;">Thông tin giao hàng</h3>
                                 </div>
-                                <div class="shipping-details">
-                                    <div class="shipping-row">
-                                        <div class="shipping-label text-caption text-grey mb-1">
-                                            <v-icon size="14" class="mr-1">mdi-account-outline</v-icon>Người nhận
-                                        </div>
-                                        <p class="text-body-2 font-weight-bold mb-0">{{ order.tenNguoiNhan }}</p>
-                                    </div>
-                                    <div class="shipping-row">
-                                        <div class="shipping-label text-caption text-grey mb-1">
-                                            <v-icon size="14" class="mr-1">mdi-phone-outline</v-icon>Điện thoại
-                                        </div>
-                                        <p class="text-body-2 font-weight-bold mb-0">{{ order.soDienThoaiNguoiNhan }}</p>
-                                    </div>
-                                    <div class="shipping-row">
-                                        <div class="shipping-label text-caption text-grey mb-1">
-                                            <v-icon size="14" class="mr-1">mdi-map-marker-outline</v-icon>Địa chỉ
-                                        </div>
-                                        <p class="text-body-2 font-weight-medium mb-0">{{ order.diaChiNguoiNhan }}</p>
-                                    </div>
-                                    <div v-if="order.ngayDuKienNhan" class="shipping-row">
-                                        <div class="shipping-label text-caption text-grey mb-1">
-                                            <v-icon size="14" class="mr-1">mdi-calendar-check-outline</v-icon>Dự kiến nhận
-                                        </div>
-                                        <p class="text-body-2 font-weight-bold text-green mb-0">{{ formatDateFull(order.ngayDuKienNhan) }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </v-card>
-
-                        <!-- Payment Summary -->
-                        <v-card class="detail-card rounded-xl" elevation="0">
-                            <div class="pa-7">
-                                <div class="d-flex align-center mb-6">
-                                    <div class="card-icon bg-orange-lighten-5 mr-4">
-                                        <v-icon color="orange-darken-3" size="22">mdi-receipt-text-outline</v-icon>
-                                    </div>
-                                    <h3 class="text-subtitle-1 font-weight-bold mb-0">Chi tiết thanh toán</h3>
-                                </div>
-                                <div class="payment-details">
-                                    <div class="d-flex justify-space-between mb-3">
-                                        <span class="text-body-2 text-grey-darken-1">Tạm tính</span>
-                                        <span class="text-body-2 font-weight-medium">{{ formatPrice(order.tongTien) }}</span>
-                                    </div>
-                                    <div class="d-flex justify-space-between mb-3">
-                                        <span class="text-body-2 text-grey-darken-1">Phí vận chuyển</span>
-                                        <span class="text-body-2 font-weight-medium" :class="!order.phiVanChuyen || order.phiVanChuyen == 0 ? 'text-green' : ''">
-                                            <v-icon v-if="!order.phiVanChuyen || order.phiVanChuyen == 0" size="14" color="green" class="mr-1">mdi-check-circle</v-icon>
-                                            {{ !order.phiVanChuyen || order.phiVanChuyen == 0 ? 'Miễn phí' : formatPrice(order.phiVanChuyen) }}
-                                        </span>
-                                    </div>
-                                    <div v-if="order.tienGiam > 0" class="d-flex justify-space-between mb-3">
-                                        <span class="text-body-2 text-green-darken-2">
-                                            <v-icon size="14" color="green-darken-2" class="mr-1">mdi-ticket-percent</v-icon>Giảm giá
-                                        </span>
-                                        <span class="text-body-2 font-weight-medium text-green-darken-2">-{{ formatPrice(order.tienGiam) }}</span>
-                                    </div>
-                                    <v-divider class="my-3" />
-                                    <div class="d-flex justify-space-between align-center mb-2">
-                                        <span class="text-body-1 font-weight-bold">Tổng cộng</span>
-                                        <span class="text-h6 font-weight-black text-blue-darken-4">{{ formatPrice(order.tongTienSauGiam) }}</span>
-                                    </div>
-                                    <div class="d-flex align-center mt-3">
-                                        <v-chip variant="tonal" size="small" class="font-weight-bold payment-chip">
-                                            <v-icon size="14" class="mr-1">mdi-credit-card-outline</v-icon>
-                                            {{ order.phuongThucThanhToan === 'COD' ? 'Thanh toán khi nhận hàng' : order.phuongThucThanhToan }}
-                                        </v-chip>
-                                        <v-chip v-if="order.maVoucher" variant="tonal" size="small" color="orange" class="font-weight-bold ml-2">
-                                            <v-icon size="14" class="mr-1">mdi-ticket-percent</v-icon>
-                                            {{ order.maVoucher }}
-                                        </v-chip>
-                                    </div>
-                                </div>
-                            </div>
-                        </v-card>
-
-                        <!-- Cancel Button -->
-                        <v-card v-if="canCancel" class="detail-card rounded-xl" elevation="0">
-                            <div class="pa-7 text-center">
-                                <div class="cancel-icon-wrapper mx-auto mb-4">
-                                    <v-icon size="32" color="red-lighten-1">mdi-alert-circle-outline</v-icon>
-                                </div>
-                                <h4 class="text-body-1 font-weight-bold mb-2">Cần hủy đơn hàng?</h4>
-                                <p class="text-caption text-grey mb-4">Đơn hàng của bạn đang chờ xác nhận, bạn có thể hủy nếu cần.</p>
-                                <v-btn color="red" variant="outlined" rounded="pill"
-                                    class="font-weight-bold text-none" block
-                                    @click="showCancelDialog = true">
-                                    <v-icon class="mr-2" size="18">mdi-close-circle-outline</v-icon>
-                                    Hủy đơn hàng
+                                <v-btn v-if="order.choPhepSuaThongTin" variant="tonal" size="small"
+                                    rounded="pill" class="text-none font-weight-bold" 
+                                    style="color: #1e257c; background: #f0f4ff;" @click="openEditDialog">
+                                    <v-icon size="16" class="mr-1">mdi-pencil</v-icon>Sửa
                                 </v-btn>
                             </div>
-                        </v-card>
+                            <div class="shipping-details">
+                                <div class="shipping-row">
+                                    <div class="shipping-label text-caption text-grey mb-1">
+                                        <v-icon size="14" class="mr-1">mdi-account-outline</v-icon>Người nhận
+                                    </div>
+                                    <p class="text-body-2 font-weight-bold mb-0">{{ order.tenNguoiNhan }}</p>
+                                </div>
+                                <div class="shipping-row">
+                                    <div class="shipping-label text-caption text-grey mb-1">
+                                        <v-icon size="14" class="mr-1">mdi-phone-outline</v-icon>Điện thoại
+                                    </div>
+                                    <p class="text-body-2 font-weight-bold mb-0">{{ order.soDienThoaiNguoiNhan }}</p>
+                                </div>
+                                <div class="shipping-row">
+                                    <div class="shipping-label text-caption text-grey mb-1">
+                                        <v-icon size="14" class="mr-1">mdi-map-marker-outline</v-icon>Địa chỉ
+                                    </div>
+                                    <p class="text-body-2 font-weight-medium mb-0">{{ order.diaChiNguoiNhan }}</p>
+                                </div>
+                                <div v-if="order.ngayDuKienNhan" class="shipping-row">
+                                    <div class="shipping-label text-caption text-grey mb-1">
+                                        <v-icon size="14" class="mr-1">mdi-calendar-check-outline</v-icon>Dự kiến nhận
+                                    </div>
+                                    <p class="text-body-2 font-weight-bold mb-0" style="color: #1e257c;">{{ formatDateFull(order.ngayDuKienNhan) }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Summary -->
+                        <div class="section-block pa-6">
+                            <div class="d-flex align-center mb-6">
+                                <div class="card-icon mr-4" style="background: #f0f4ff;">
+                                    <v-icon style="color: #1e257c;" size="22">mdi-receipt-text-outline</v-icon>
+                                </div>
+                                <h3 class="text-subtitle-1 font-weight-bold mb-0" style="color: #1e257c;">Chi tiết thanh toán</h3>
+                            </div>
+                            <div class="payment-details pa-4" style="background: #f8f9fa;">
+                                <div class="d-flex justify-space-between mb-3">
+                                    <span class="text-body-2 text-grey-darken-1">Tạm tính</span>
+                                    <span class="text-body-2 font-weight-medium">{{ formatPrice(order.tongTien) }}</span>
+                                </div>
+                                <div class="d-flex justify-space-between mb-3">
+                                    <span class="text-body-2 text-grey-darken-1">Phí vận chuyển</span>
+                                    <span class="text-body-2 font-weight-medium" :class="!order.phiVanChuyen || order.phiVanChuyen == 0 ? 'text-blue-darken-4' : ''">
+                                        <v-icon v-if="!order.phiVanChuyen || order.phiVanChuyen == 0" size="14" color="#1e257c" class="mr-1">mdi-check-circle</v-icon>
+                                        {{ !order.phiVanChuyen || order.phiVanChuyen == 0 ? 'Miễn phí' : formatPrice(order.phiVanChuyen) }}
+                                    </span>
+                                </div>
+                                <div v-if="order.tienGiam > 0" class="d-flex justify-space-between mb-3">
+                                    <span class="text-body-2" style="color: #1e257c;">
+                                        <v-icon size="14" class="mr-1" style="color: #1e257c;">mdi-ticket-percent</v-icon>Giảm giá
+                                    </span>
+                                    <span class="text-body-2 font-weight-medium" style="color: #1e257c;">-{{ formatPrice(order.tienGiam) }}</span>
+                                </div>
+                                <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 12px 0;" />
+                                <div class="d-flex justify-space-between align-center mb-2">
+                                    <span class="text-body-1 font-weight-bold">Tổng cộng</span>
+                                    <span class="text-h6 font-weight-bold" style="color: #1e257c;">{{ formatPrice(order.tongTienSauGiam) }}</span>
+                                </div>
+                                <div class="d-flex align-center mt-3">
+                                    <v-chip variant="tonal" size="small" class="font-weight-bold"
+                                        style="color: #1e257c; background: #f0f4ff;">
+                                        <v-icon size="14" class="mr-1">mdi-credit-card-outline</v-icon>
+                                        {{ order.phuongThucThanhToan === 'COD' ? 'Thanh toán khi nhận hàng' : order.phuongThucThanhToan }}
+                                    </v-chip>
+                                    <v-chip v-if="order.maVoucher" variant="tonal" size="small" class="font-weight-bold ml-2"
+                                        style="color: #1e257c; background: #f0f4ff;">
+                                        <v-icon size="14" class="mr-1">mdi-ticket-percent</v-icon>
+                                        {{ order.maVoucher }}
+                                    </v-chip>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Repay VNPay Button -->
+                        <div v-if="order.choPhepThanhToanLai" class="section-block pa-6 text-center">
+                            <div class="repay-icon-wrapper mx-auto mb-4">
+                                <v-icon size="32" style="color: #1e257c;">mdi-credit-card-sync-outline</v-icon>
+                            </div>
+                            <h4 class="text-body-1 font-weight-bold mb-2" style="color: #1e257c;">Hoàn tất thanh toán</h4>
+                            <p class="text-caption mb-4">Đơn hàng chuyển khoản chưa được thanh toán. Bạn có thể thanh toán lại qua VNPay.</p>
+                            <v-btn style="background: #1e257c; color: white;" variant="flat" rounded="pill"
+                                class="font-weight-bold text-none" block :loading="repayLoading"
+                                @click="handleRepay">
+                                <v-icon class="mr-2" size="18">mdi-qrcode-scan</v-icon>
+                                Thanh toán lại bằng VNPay
+                            </v-btn>
+                        </div>
+
+                        <!-- Cancel Button -->
+                        <div v-if="canCancel" class="section-block pa-6 text-center">
+                            <div class="cancel-icon-wrapper mx-auto mb-4">
+                                <v-icon size="32" style="color: #1e257c;">mdi-alert-circle-outline</v-icon>
+                            </div>
+                            <h4 class="text-body-1 font-weight-bold mb-2" style="color: #1e257c;">Cần hủy đơn hàng?</h4>
+                            <p class="text-caption mb-4">Đơn hàng của bạn đang chờ xác nhận, bạn có thể hủy nếu cần.</p>
+                            <v-btn style="color: #1e257c; border-color: #1e257c;" variant="outlined" rounded="pill"
+                                class="font-weight-bold text-none" block
+                                @click="showCancelDialog = true">
+                                <v-icon class="mr-2" size="18">mdi-close-circle-outline</v-icon>
+                                Hủy đơn hàng
+                            </v-btn>
+                        </div>
                     </v-col>
                 </v-row>
             </div>
         </v-container>
 
+        <!-- Edit Shipping Info Dialog -->
+        <v-dialog v-model="showEditDialog" max-width="520">
+            <div class="dialog-content pa-6 bg-white">
+                <div class="d-flex align-center mb-5">
+                    <div class="card-icon mr-3" style="background: #f0f4ff;">
+                        <v-icon style="color: #1e257c;" size="22">mdi-truck-outline</v-icon>
+                    </div>
+                    <h3 class="text-h6 font-weight-bold mb-0" style="color: #1e257c;">Sửa thông tin nhận hàng</h3>
+                </div>
+
+                <v-text-field v-model="editForm.tenNguoiNhan" label="Tên người nhận"
+                    variant="outlined" density="comfortable" class="mb-3" hide-details="auto"
+                    prepend-inner-icon="mdi-account-outline" />
+                <v-text-field v-model="editForm.soDienThoaiNguoiNhan" label="Số điện thoại người nhận"
+                    variant="outlined" density="comfortable" class="mb-3" hide-details="auto"
+                    prepend-inner-icon="mdi-phone-outline" />
+                <v-textarea v-model="editForm.diaChiNguoiNhan" label="Địa chỉ nhận hàng" variant="outlined"
+                    density="comfortable" rows="2" auto-grow class="mb-3" hide-details="auto"
+                    prepend-inner-icon="mdi-map-marker-outline" />
+                <v-textarea v-model="editForm.ghiChu" label="Ghi chú (tùy chọn)" variant="outlined"
+                    density="comfortable" rows="2" auto-grow class="mb-2" hide-details="auto"
+                    prepend-inner-icon="mdi-note-text-outline" />
+
+                <v-alert v-if="!order?.laTienMat" type="info" variant="tonal" density="compact"
+                    class="mb-4 text-caption" icon="mdi-information-outline">
+                    Đổi địa chỉ không làm thay đổi phí vận chuyển đã chốt của đơn.
+                </v-alert>
+
+                <div class="d-flex gap-3 mt-2">
+                    <v-btn variant="outlined" rounded="pill" class="font-weight-bold text-none flex-grow-1"
+                        :disabled="editLoading" @click="showEditDialog = false">
+                        Hủy
+                    </v-btn>
+                    <v-btn rounded="pill" class="font-weight-bold text-none flex-grow-1 text-white"
+                        style="background: #1e257c;"
+                        :loading="editLoading" @click="handleSaveShipping">
+                        Lưu thay đổi
+                    </v-btn>
+                </div>
+            </div>
+        </v-dialog>
+
         <!-- Cancel Dialog -->
         <v-dialog v-model="showCancelDialog" max-width="440">
-            <v-card class="rounded-xl pa-6">
+            <div class="dialog-content pa-6 bg-white">
                 <div class="text-center mb-6">
                     <div class="cancel-dialog-icon mx-auto mb-4">
-                        <v-icon size="40" color="red">mdi-alert-circle-outline</v-icon>
+                        <v-icon size="40" style="color: #1e257c;">mdi-alert-circle-outline</v-icon>
                     </div>
                     <h3 class="text-h6 font-weight-bold mb-2">Xác nhận hủy đơn hàng</h3>
                     <p class="text-body-2 text-grey">
@@ -329,12 +554,13 @@ onMounted(() => fetchOrder());
                         @click="showCancelDialog = false">
                         Giữ lại đơn hàng
                     </v-btn>
-                    <v-btn color="red" rounded="pill" class="font-weight-bold text-none flex-grow-1 text-white"
+                    <v-btn rounded="pill" class="font-weight-bold text-none flex-grow-1 text-white"
+                        style="background: #1e257c;"
                         :loading="cancelLoading" @click="handleCancel">
                         Xác nhận hủy
                     </v-btn>
                 </div>
-            </v-card>
+            </div>
         </v-dialog>
 
         <CartDrawer />
@@ -342,72 +568,21 @@ onMounted(() => fetchOrder());
     </div>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .order-detail-page {
     padding-top: 64px;
 }
 
 .back-btn {
     transition: all 0.2s;
-    &:hover {
-        background: #f0f0f0;
-    }
+}
+.back-btn:hover {
+    background: #f0f0f0;
 }
 
-/* Hero Card */
-.order-hero-card {
-    overflow: hidden;
-}
-
-.hero-gradient {
-    background: linear-gradient(135deg, #0d47a1 0%, #1565c0 50%, #1976d2 100%);
-    position: relative;
-
-    &::before {
-        content: '';
-        position: absolute;
-        top: -30%;
-        right: -10%;
-        width: 400px;
-        height: 400px;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-
-    &::after {
-        content: '';
-        position: absolute;
-        bottom: -20%;
-        left: -5%;
-        width: 250px;
-        height: 250px;
-        background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
-        border-radius: 50%;
-        pointer-events: none;
-    }
-}
-
-.tracking-wide {
-    letter-spacing: 1.5px;
-}
-
-.status-chip {
-    backdrop-filter: blur(4px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-/* Detail Card */
-.detail-card {
-    border: 1px solid #eee;
+.section-block {
+    border: 1px solid #e0e0e0;
     background: #fff;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.02) !important;
-    transition: box-shadow 0.3s;
-    height: fit-content;
-
-    &:hover {
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
-    }
 }
 
 .card-icon {
@@ -420,19 +595,16 @@ onMounted(() => fetchOrder());
     flex-shrink: 0;
 }
 
-/* Products */
 .detail-product {
     transition: all 0.2s;
     border-radius: 12px;
     padding: 12px;
-
-    &:hover {
-        background: #f8fbff;
-    }
-
-    &.border-top {
-        border-top: 1px solid #f0f0f0;
-    }
+}
+.detail-product:hover {
+    background: #f8fbff;
+}
+.detail-product.border-top {
+    border-top: 1px solid #f0f0f0;
 }
 
 .detail-thumb-wrapper {
@@ -441,14 +613,10 @@ onMounted(() => fetchOrder());
     border-radius: 12px;
     overflow: hidden;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-/* Timeline */
-.timeline-modern {
-    :deep(.v-timeline-item__body) {
-        padding-top: 4px;
-    }
+.timeline-modern :deep(.v-timeline-item__body) {
+    padding-top: 4px;
 }
 
 .timeline-dot {
@@ -458,59 +626,54 @@ onMounted(() => fetchOrder());
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9), 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Shipping */
-.shipping-details {
-    .shipping-row {
-        padding: 10px 12px;
-        border-radius: 10px;
-        transition: background 0.2s;
-        margin-bottom: 4px;
-
-        &:hover {
-            background: #f8fbff;
-        }
-
-        .shipping-label {
-            display: flex;
-            align-items: center;
-        }
-    }
+.shipping-details .shipping-row {
+    padding: 10px 12px;
+    border-radius: 10px;
+    transition: background 0.2s;
+    margin-bottom: 4px;
+}
+.shipping-details .shipping-row:hover {
+    background: #f8fbff;
+}
+.shipping-details .shipping-row .shipping-label {
+    display: flex;
+    align-items: center;
 }
 
-/* Payment */
-.payment-details {
-    background: #f8f9fa;
-    padding: 16px;
-    border-radius: 12px;
-}
-
-.payment-chip {
-    background: #e3f2fd !important;
-}
-
-/* Cancel section */
 .cancel-icon-wrapper {
     width: 56px;
     height: 56px;
-    background: #fff5f5;
+    background: #f5f7ff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-/* Cancel Dialog */
-.cancel-dialog-icon {
-    width: 64px;
-    height: 64px;
-    background: #fff5f5;
+.repay-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    background: #f5f7ff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.cancel-dialog-icon {
+    width: 64px;
+    height: 64px;
+    background: #f5f7ff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dialog-content {
+    border: 1px solid #e0e0e0;
 }
 
 .content-grid {
@@ -519,5 +682,18 @@ onMounted(() => fetchOrder());
 
 .gap-6 {
     gap: 24px;
+}
+
+.qty-stepper {
+    background: #f8fbff;
+    border: 1px solid #e0e0e0;
+    border-radius: 999px;
+    padding: 2px 6px;
+}
+
+.qty-value {
+    min-width: 24px;
+    text-align: center;
+    font-size: 0.9rem;
 }
 </style>

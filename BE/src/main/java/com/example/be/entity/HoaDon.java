@@ -72,6 +72,9 @@ public class HoaDon extends AuditEntity implements IsIdentified {
     @Column(name = "tien_nguoi_mua")
     private BigDecimal tienNguoiMua;
 
+    @Column(name = "ten_nguoi_nhan")
+    private String tenNguoiNhan;
+
     @Column(name = "dia_chi_nguoi_nhan")
     private String diaChiNguoiNhan;
 
@@ -83,6 +86,9 @@ public class HoaDon extends AuditEntity implements IsIdentified {
 
     @Column(name = "ghi_chu")
     private String ghiChu;
+
+    @Column(name = "da_hoan_phi")
+    private Boolean daHoanPhi;
 
     @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("hoaDon")
