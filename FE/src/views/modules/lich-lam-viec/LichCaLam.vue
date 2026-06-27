@@ -4,6 +4,12 @@ import { AdminFilter, AdminTable, AdminPagination, AdminBreadcrumbs } from '@/co
 import apiService from '@/services/apiService';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
+import { useNotifications } from '@/services/notificationService';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import AdminConfirm from '@/components/common/AdminConfirm.vue';
+
+const { addNotification } = useNotifications();
+const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 
 const loading = ref(false);
 const isRefreshing = ref(false);
@@ -45,8 +51,8 @@ const tableHeaders = [
     { text: 'Hành động', width: '100px' }
 ];
 
-const loadData = async () => {
-    loading.value = true;
+const loadData = async (showLoading = true) => {
+    if (showLoading) loading.value = true;
     try {
         const response = await apiService.get(API_LICH_LAM_VIEC.SHIFTS);
         if (response.data.success) {
@@ -57,7 +63,7 @@ const loadData = async () => {
     } catch (error) {
         console.error('Error fetching shifts:', error);
     } finally {
-        loading.value = false;
+        if (showLoading) loading.value = false;
     }
 };
 
@@ -67,6 +73,11 @@ const filteredItems = computed(() => {
             item.tenCa.toLowerCase().includes(filters.value.search.toLowerCase()) ||
             (item.moTa && item.moTa.toLowerCase().includes(filters.value.search.toLowerCase()));
     });
+});
+
+const paginatedItems = computed(() => {
+    const start = (pagination.value.page - 1) * pagination.value.size;
+    return filteredItems.value.slice(start, start + pagination.value.size);
 });
 
 const handleRefresh = async () => {
@@ -104,13 +115,24 @@ const openEditDialog = (item) => {
     showDialog.value = true;
 };
 
-const saveShift = async () => {
+const confirmSaveShift = () => {
     if (!form.value.tenCa || !form.value.gioBatDau || !form.value.gioKetThuc) {
-        alert('Vui lòng nhập đầy đủ thông tin ca làm!');
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập đầy đủ thông tin ca làm!', color: 'error' });
         return;
     }
-    
-    loading.value = true;
+
+    const modeText = isEdit.value ? 'cập nhật' : 'tạo mới';
+    setConfirm({
+        title: `Xác nhận ${modeText} ca làm`,
+        message: `Bạn có chắc chắn muốn ${modeText} ca làm này?`,
+        color: 'success',
+        action: async () => {
+            await saveShift();
+        }
+    });
+};
+
+const saveShift = async () => {
     try {
         let res;
         if (isEdit.value) {
@@ -120,36 +142,39 @@ const saveShift = async () => {
         }
         
         if (res.data.success) {
-            alert(isEdit.value ? 'Cập nhật ca làm thành công!' : 'Tạo ca làm thành công!');
+            addNotification({
+                title: 'Thành công',
+                subtitle: isEdit.value ? 'Cập nhật ca làm thành công!' : 'Tạo ca làm thành công!',
+                icon: 'CircleCheckIcon',
+                color: 'success'
+            });
             showDialog.value = false;
-            loadData();
+            loadData(false);
         }
     } catch (error) {
         console.error('Error saving shift:', error);
-        alert(error.response?.data?.message || 'Có lỗi xảy ra khi lưu ca làm!');
-    } finally {
-        loading.value = false;
+        addNotification({ title: 'Lỗi', subtitle: error.response?.data?.message || 'Có lỗi xảy ra khi lưu ca làm!', color: 'error' });
     }
 };
 
-const handleDelete = async (item) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa ca làm "${item.tenCa}" không?`)) {
-        return;
-    }
-    
-    loading.value = true;
-    try {
-        const res = await apiService.delete(`${API_LICH_LAM_VIEC.SHIFTS}/${item.id}`);
-        if (res.data.success) {
-            alert('Xóa ca làm thành công!');
-            loadData();
+const handleDelete = (item) => {
+    setConfirm({
+        title: 'Xác nhận xóa',
+        message: `Bạn có chắc chắn muốn xóa ca làm "${item.tenCa}" không?`,
+        color: 'error',
+        action: async () => {
+            try {
+                const res = await apiService.delete(`${API_LICH_LAM_VIEC.SHIFTS}/${item.id}`);
+                if (res.data.success) {
+                    addNotification({ title: 'Thành công', subtitle: 'Xóa ca làm thành công!', icon: 'CircleCheckIcon', color: 'success' });
+                    loadData(false);
+                }
+            } catch (error) {
+                console.error('Error deleting shift:', error);
+                addNotification({ title: 'Lỗi', subtitle: error.response?.data?.message || 'Có lỗi xảy ra khi xóa ca làm!', color: 'error' });
+            }
         }
-    } catch (error) {
-        console.error('Error deleting shift:', error);
-        alert(error.response?.data?.message || 'Có lỗi xảy ra khi xóa ca làm!');
-    } finally {
-        loading.value = false;
-    }
+    });
 };
 
 onMounted(() => {
@@ -184,7 +209,7 @@ onMounted(() => {
         <AdminTable
             title="Danh mục các ca làm việc"
             :headers="tableHeaders"
-            :items="filteredItems"
+            :items="paginatedItems"
             :loading="loading"
             :show-add-button="true"
             addButtonText="Tạo mới"
@@ -193,7 +218,7 @@ onMounted(() => {
         >
             <template #row="{ item, index }">
                 <tr class="data-row">
-                    <td class="data-cell">{{ index + 1 }}</td>
+                    <td class="data-cell">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
                     <td class="data-cell font-weight-bold">{{ item.tenCa }}</td>
                     <td class="data-cell">{{ item.gioBatDau }}</td>
                     <td class="data-cell">{{ item.gioKetThuc }}</td>
@@ -216,10 +241,11 @@ onMounted(() => {
             <template #pagination>
                 <AdminPagination
                     v-model="pagination.page"
-                    :page-size="pagination.size"
-                    :total-pages="pagination.totalPages"
-                    :total-elements="pagination.totalElements"
-                    @change="loadData"
+                    v-model:page-size="pagination.size"
+                    :total-pages="Math.ceil(filteredItems.length / pagination.size) || 1"
+                    :total-elements="filteredItems.length"
+                    :current-size="paginatedItems.length"
+                    @change="handleFilter"
                 />
             </template>
         </AdminTable>
@@ -267,10 +293,20 @@ onMounted(() => {
                 <v-card-actions class="pa-4">
                     <v-spacer></v-spacer>
                     <v-btn variant="text" color="grey" @click="showDialog = false">Hủy</v-btn>
-                    <v-btn color="primary" variant="flat" @click="saveShift" class="px-6 rounded-lg">Lưu lại</v-btn>
+                    <v-btn color="primary" variant="flat" @click="confirmSaveShift" class="px-6 rounded-lg">Lưu lại</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
+        <!-- SHARED CONFIRM -->
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)"
+        />
     </v-container>
 </template>
 

@@ -108,7 +108,7 @@ public class LichLamViecServiceImpl implements LichLamViecService {
                         .nguoiThucHien(h.getNguoiTao())
                         .hanhDong(h.getHanhDong())
                         .doiTuong(h.getDoiTuong())
-                        .ngay(h.getNgayTao() != null ? 
+                        .ngay(h.getNgayTao() != null ?
                                 Instant.ofEpochMilli(h.getNgayTao()).atZone(ZoneId.systemDefault()).format(dateTimeFormatter) : "N/A")
                         .build());
     }
