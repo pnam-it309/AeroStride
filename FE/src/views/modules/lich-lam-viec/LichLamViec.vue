@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { AdminFilter, AdminTable, AdminBreadcrumbs, AdminPagination, TableEmptyState } from '@/components/common';
 import { CalendarIcon } from 'vue-tabler-icons';
 import apiService from '@/services/apiService';
@@ -41,10 +41,7 @@ const addForm = ref({
     nhanVien: [],
     ca: [],
     ngay: new Date().toISOString().substr(0, 10),
-    trangThai: 'CHO_XAC_NHAN',
-    tangCa: false,
-    gioBatDauTangCa: '',
-    gioKetThucTangCa: ''
+    trangThai: 'CHO_XAC_NHAN'
 });
 
 // Import Preview State
@@ -137,9 +134,6 @@ const handleAdd = () => {
     addForm.value.nhanVien = [];
     addForm.value.ca = [];
     addForm.value.ngay = new Date().toISOString().substr(0, 10);
-    addForm.value.tangCa = false;
-    addForm.value.gioBatDauTangCa = '';
-    addForm.value.gioKetThucTangCa = '';
     showAddDialog.value = true;
 };
 
@@ -395,9 +389,6 @@ const handleEditSchedule = (s) => {
     addForm.value.ca = [s.ca];
     addForm.value.ngay = s.ngay;
     addForm.value.trangThai = s.trangThai;
-    addForm.value.tangCa = s.tangCa || false;
-    addForm.value.gioBatDauTangCa = s.gioBatDauTangCa || '';
-    addForm.value.gioKetThucTangCa = s.gioKetThucTangCa || '';
     showAddDialog.value = true;
 };
 
@@ -448,11 +439,6 @@ const periodLabel = computed(() => {
         
         const formatD = (d) => `${d.getDate()}/${d.getMonth() + 1}`;
         return `Tuần: ${formatD(startOfWeek)} - ${formatD(endOfWeek)} / ${year}`;
-    } else if (calendarTab.value === 'day') {
-        const d = currentMonth.value;
-        const dayOfWeek = d.getDay();
-        const days = ['Chủ Nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
-        return `${days[dayOfWeek]}, ${d.getDate()}/${d.getMonth() + 1}/${year}`;
     }
     return '';
 });
@@ -464,8 +450,6 @@ const prevPeriod = () => {
         d.setMonth(d.getMonth() - 1);
     } else if (calendarTab.value === 'week') {
         d.setDate(d.getDate() - 7);
-    } else if (calendarTab.value === 'day') {
-        d.setDate(d.getDate() - 1);
     }
     currentMonth.value = d;
 };
@@ -477,8 +461,6 @@ const nextPeriod = () => {
         d.setMonth(d.getMonth() + 1);
     } else if (calendarTab.value === 'week') {
         d.setDate(d.getDate() + 7);
-    } else if (calendarTab.value === 'day') {
-        d.setDate(d.getDate() + 1);
     }
     currentMonth.value = d;
 };
@@ -547,13 +529,6 @@ const monthDays = computed(() => {
     return result;
 });
 
-// Day schedules computed
-const daySchedules = computed(() => {
-    const d = currentMonth.value;
-    const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-    return filteredItems.value.filter((s) => s.ngay === dateStr);
-});
-
 onMounted(() => {
     loadData();
 });
@@ -596,150 +571,120 @@ onMounted(() => {
             </AdminFilter>
         </div>
 
-        <!-- Table View Mode -->
-        <div v-if="mainTab === 'table'" class="flex-grow-1 overflow-hidden d-flex flex-column bg-white rounded-xl border">
-            <AdminTable
-                title="Bảng phân lịch làm việc"
-                :headers="tableHeaders"
-                :items="filteredItems"
-                :loading="loading"
-                :show-add-button="true"
-                addButtonText="Tạo mới"
-                showTemplateButton
-                showImportButton
-                @add="handleAdd"
-                @downloadTemplate="handleDownloadTemplate"
-                @import="handleImport"
-            >
-                <template #extra-actions>
-                    <!-- Tab Bảng / Lịch -->
-                    <div class="main-view-tabs">
-                        <button
-                            class="view-tab-btn" 
-                            :class="{ 'view-tab-btn--active': mainTab === 'table' }"
-                            @click="mainTab = 'table'"
-                        >
-                            <v-icon size="15" class="mr-1">mdi-table-large</v-icon>
-                            Bảng
-                        </button>
-                        <button
-                            class="view-tab-btn"
-                            :class="{ 'view-tab-btn--active': mainTab === 'calendar' }"
-                            @click="mainTab = 'calendar'"
-                        >
-                            <v-icon size="15" class="mr-1">mdi-calendar</v-icon>
-                            Lịch
-                        </button>
-                    </div>
-                </template>
-
-                <template #row="{ item, index }">
-                    <tr class="data-row">
-                        <!-- STT -->
-                        <td class="data-cell text-center">{{ index + 1 }}</td>
-                        <!-- Mã nhân viên -->
-                        <td class="data-cell text-center">
-                            <div class="text-truncate" :title="item.maNhanVien || getEmployeeCode(item)">{{ item.maNhanVien || getEmployeeCode(item) }}</div>
-                        </td>
-                        <!-- Nhân viên -->
-                        <td class="data-cell text-left px-4">
-                            <div class="text-slate-800 text-truncate" :title="item.nhanVien">{{ item.nhanVien }}</div>
-                        </td>
-                        <!-- Ca làm -->
-                        <td class="data-cell text-center">
-                            <v-chip size="small" color="info" variant="flat" class="font-weight-medium">
-                                {{ item.ca }}
-                            </v-chip>
-                        </td>
-                        <!-- Thời gian -->
-                        <td class="data-cell text-center">
-                            <span class="font-weight-medium text-slate-800">{{ getShiftTimeRange(item.ca) }}</span>
-                        </td>
-                        <!-- Ngày làm -->
-                        <td class="data-cell text-center">
-                            <span class="text-slate-600">{{ formatDate(item.ngay) }}</span>
-                        </td>
-                        <!-- Thao tác -->
-                        <td class="data-cell action-cell">
-                            <div class="action-controls">
-                                <v-btn variant="text" color="primary" class="action-icon-btn" size="small" @click="handleEditSchedule(item)">
-                                    <v-icon size="18">mdi-eye-outline</v-icon>
-                                    <v-tooltip activator="parent" location="top">Xem / Sửa</v-tooltip>
-                                </v-btn>
-                                <v-btn variant="text" color="error" class="action-icon-btn" size="small" @click="handleDeleteSchedule(item)">
-                                    <component :is="ADMIN_ICONS.ACTION.DELETE" size="16" />
-                                    <v-tooltip activator="parent" location="top">Xóa</v-tooltip>
-                                </v-btn>
-                            </div>
-                        </td>
-                    </tr>
-                </template>
-            </AdminTable>
-        </div>
-
-        <!-- Calendar View Mode (Tuần / Tháng / Năm) -->
-        <div v-else class="flex-grow-1 overflow-hidden d-flex flex-column bg-white rounded-xl border">
-            <!-- Calendar Toolbar: Title + action buttons -->
+        <!-- Shared Wrapper for View Mode -->
+        <div class="flex-grow-1 overflow-hidden d-flex flex-column bg-white rounded-xl border">
+            <!-- Shared Toolbar -->
             <div class="table-toolbar d-flex align-center justify-space-between pa-3 border-b flex-wrap gap-2">
                 <div class="d-flex align-center">
-                    <v-icon color="primary" class="mr-3">mdi-calendar-range</v-icon>
-                    <h3 class="text-h6 font-weight-medium" style="color: #1e293b;">Lịch làm việc</h3>
+                    <v-icon color="primary" class="mr-3">{{ mainTab === 'table' ? 'mdi-table-large' : 'mdi-calendar-range' }}</v-icon>
+                    <h3 class="text-h6 font-weight-bold text-black tracking-tight">{{ mainTab === 'table' ? 'Bảng phân lịch làm việc' : 'Lịch làm việc' }}</h3>
                 </div>
-                <div class="d-flex align-center flex-wrap justify-end gap-2">
-                    <!-- Tab Bảng / Lịch -->
-                    <div class="main-view-tabs">
-                        <button
-                            class="view-tab-btn"
-                            :class="{ 'view-tab-btn--active': mainTab === 'table' }"
-                            @click="mainTab = 'table'"
-                        >
-                            <v-icon size="15" class="mr-1">mdi-table-large</v-icon>
-                            Bảng
-                        </button>
-                        <button
-                            class="view-tab-btn view-tab-btn--active"
-                            :class="{ 'view-tab-btn--active': mainTab === 'calendar' }"
-                            @click="mainTab = 'calendar'"
-                        >
-                            <v-icon size="15" class="mr-1">mdi-calendar</v-icon>
-                            Lịch
-                        </button>
-                    </div>
+                <div class="d-flex align-center flex-wrap justify-end gap-2 admin-toolbar-actions">
                     <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-secondary" @click="handleDownloadTemplate">
                         Tải mẫu
                     </v-btn>
                     <v-btn prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary" @click="handleImport">
                         Nhập Excel
                     </v-btn>
-                    <v-btn prepend-icon="mdi-plus" variant="flat" color="primary" class="rounded-lg px-4" @click="handleAdd">
+                    <!-- Tab Bảng / Lịch -->
+                    <div class="main-view-tabs">
+                        <button
+                            class="view-tab-btn"
+                            :class="{ 'view-tab-btn--active': mainTab === 'table' }"
+                            @click="mainTab = 'table'"
+                        >
+                            <v-icon size="15" class="mr-1">mdi-table-large</v-icon>
+                            Bảng
+                        </button>
+                        <button
+                            class="view-tab-btn"
+                            :class="{ 'view-tab-btn--active': mainTab === 'calendar' }"
+                            @click="mainTab = 'calendar'"
+                        >
+                            <v-icon size="15" class="mr-1">mdi-calendar</v-icon>
+                            Lịch
+                        </button>
+                    </div>
+                    <v-btn prepend-icon="mdi-plus" variant="flat" color="primary" class="add-btn-primary px-4" @click="handleAdd">
                         Tạo mới
                     </v-btn>
                 </div>
             </div>
 
-            <!-- Calendar Sub-tab: Tuần / Tháng / Năm + Period Navigation -->
-            <div class="d-flex align-center justify-space-between pa-3 border-b" style="background: #f8fafc; flex-wrap: wrap; gap: 8px;">
-                <v-btn-toggle
-                    v-model="calendarTab"
-                    mandatory
-                    color="primary"
-                    variant="flat"
-                    class="rounded-xl border sub-tab-toggle"
-                    style="background: #f1f5f9; padding: 4px; border-radius: 12px !important;"
+            <!-- Table View Mode Content -->
+            <div v-if="mainTab === 'table'" class="flex-grow-1 overflow-hidden d-flex flex-column">
+                <AdminTable
+                    :hideToolbar="true"
+                    :headers="tableHeaders"
+                    :items="filteredItems"
+                    :loading="loading"
                 >
-                    <v-btn value="day" class="px-4 rounded-lg sub-tab-btn" :ripple="false">
-                        <v-icon start size="16" class="mr-1">mdi-calendar-today</v-icon>
-                        Ngày
-                    </v-btn>
-                    <v-btn value="week" class="px-4 rounded-lg sub-tab-btn" :ripple="false">
-                        <v-icon start size="16" class="mr-1">mdi-calendar-week</v-icon>
+                    <template #row="{ item, index }">
+                        <tr class="data-row">
+                            <!-- STT -->
+                            <td class="data-cell text-center">{{ index + 1 }}</td>
+                            <!-- Mã nhân viên -->
+                            <td class="data-cell text-center">
+                                <div class="text-truncate" :title="item.maNhanVien || getEmployeeCode(item)">{{ item.maNhanVien || getEmployeeCode(item) }}</div>
+                            </td>
+                            <!-- Nhân viên -->
+                            <td class="data-cell text-left px-4">
+                                <div class="text-slate-800 text-truncate" :title="item.nhanVien">{{ item.nhanVien }}</div>
+                            </td>
+                            <!-- Ca làm -->
+                            <td class="data-cell text-center">
+                                <v-chip size="small" color="info" variant="flat" class="font-weight-medium">
+                                    {{ item.ca }}
+                                </v-chip>
+                            </td>
+                            <!-- Thời gian -->
+                            <td class="data-cell text-center">
+                                <span class="font-weight-medium text-slate-800">{{ getShiftTimeRange(item.ca) }}</span>
+                            </td>
+                            <!-- Ngày làm -->
+                            <td class="data-cell text-center">
+                                <span class="text-slate-600">{{ formatDate(item.ngay) }}</span>
+                            </td>
+                            <!-- Thao tác -->
+                            <td class="data-cell action-cell">
+                                <div class="action-controls">
+                                    <v-btn variant="text" color="primary" class="action-icon-btn" size="small" @click="handleEditSchedule(item)">
+                                        <v-icon size="18">mdi-eye-outline</v-icon>
+                                        <v-tooltip activator="parent" location="top">Xem / Sửa</v-tooltip>
+                                    </v-btn>
+                                    <v-btn variant="text" color="error" class="action-icon-btn" size="small" @click="handleDeleteSchedule(item)">
+                                        <component :is="ADMIN_ICONS.ACTION.DELETE" size="16" />
+                                        <v-tooltip activator="parent" location="top">Xóa</v-tooltip>
+                                    </v-btn>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </AdminTable>
+            </div>
+
+            <!-- Calendar View Mode Content -->
+            <div v-else class="flex-grow-1 overflow-hidden d-flex flex-column" style="background-color: #ffffff !important;">
+                <!-- Calendar Sub-tab: Tuần / Tháng / Năm + Period Navigation -->
+                <div class="d-flex align-center justify-space-between pa-3 border-b" style="background-color: #ffffff !important; flex-wrap: wrap; gap: 8px;">
+                <div class="main-view-tabs">
+                    <button
+                        class="view-tab-btn"
+                        :class="{ 'view-tab-btn--active': calendarTab === 'week' }"
+                        @click="calendarTab = 'week'"
+                    >
+                        <v-icon size="15" class="mr-1">mdi-calendar-week</v-icon>
                         Tuần
-                    </v-btn>
-                    <v-btn value="month" class="px-4 rounded-lg sub-tab-btn" :ripple="false">
-                        <v-icon start size="16" class="mr-1">mdi-calendar-month</v-icon>
+                    </button>
+                    <button
+                        class="view-tab-btn"
+                        :class="{ 'view-tab-btn--active': calendarTab === 'month' }"
+                        @click="calendarTab = 'month'"
+                    >
+                        <v-icon size="15" class="mr-1">mdi-calendar-month</v-icon>
                         Tháng
-                    </v-btn>
-                </v-btn-toggle>
+                    </button>
+                </div>
 
                 <div class="d-flex align-center gap-2 bg-white px-3 py-1 rounded-xl border">
                     <v-btn icon="mdi-chevron-left" variant="text" size="small" color="primary" @click="prevPeriod"></v-btn>
@@ -751,10 +696,11 @@ onMounted(() => {
             </div>
 
             <!-- Calendar Display Bodies -->
-            <div class="pa-4 flex-grow-1 d-flex flex-column overflow-hidden">
+            <div class="flex-grow-1 d-flex flex-column overflow-hidden">
                 <!-- 1. WEEK VIEW - Dạng bảng matrix (STT | Mã NV | Tên | T2~CN | Hành động) -->
-                <div v-if="calendarTab === 'week'" class="overflow-x-auto flex-grow-1">
-                    <table class="schedule-matrix-table w-100">
+                <div v-if="calendarTab === 'week'" class="d-flex flex-column flex-grow-1 overflow-hidden" style="background-color: #ffffff !important;">
+                    <div class="overflow-x-auto flex-grow-1" style="background-color: #ffffff !important;">
+                        <table class="schedule-matrix-table w-100">
                         <thead>
                             <tr>
                                 <th class="matrix-th" style="width:50px">STT</th>
@@ -811,11 +757,6 @@ onMounted(() => {
                                                 </div>
                                             </div>
                                             <div class="matrix-shift-time">{{ getShiftTimeRange(s.ca) }}</div>
-                                            <div v-if="s.tangCa && s.gioBatDauTangCa" class="matrix-overtime-badge">
-                                                <v-icon size="9" class="mr-1">mdi-clock-plus</v-icon>
-                                                TC: {{ s.gioBatDauTangCa.substring(0,5) }}-{{ s.gioKetThucTangCa ? s.gioKetThucTangCa.substring(0,5) : '' }}
-                                            </div>
-                                            <div class="matrix-shift-status">{{ s.trangThai === 'DA_XAC_NHAN' ? 'Đã duyệt' : 'Chờ duyệt' }}</div>
                                         </div>
                                     </div>
                                     <div v-else class="matrix-empty-cell">--</div>
@@ -830,9 +771,10 @@ onMounted(() => {
                         </tbody>
                     </table>
                 </div>
+            </div>
 
-                <!-- 2. MONTH VIEW (Chia đều) -->
-                <div v-else-if="calendarTab === 'month'" class="calendar-container flex-grow-1 overflow-y-auto">
+            <!-- 2. MONTH VIEW (Chia đều) -->
+            <div v-else-if="calendarTab === 'month'" class="calendar-container flex-grow-1 overflow-y-auto pa-4 bg-white">
                     <div class="calendar-header-row mb-2">
                         <div v-for="day in ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật']" :key="day" class="day-header">
                             {{ day }}
@@ -856,7 +798,6 @@ onMounted(() => {
                                     :key="s.id" 
                                     class="schedule-item-card py-1 px-2" 
                                     style="font-size: 11px; padding: 4px 6px !important;"
-                                    :class="s.trangThai === 'DA_XAC_NHAN' ? 'status-confirmed' : 'status-pending'"
                                     @click.stop="handleEditSchedule(s)"
                                 >
                                     <div class="d-flex align-center justify-space-between w-100 text-truncate" style="gap: 4px;">
@@ -864,7 +805,6 @@ onMounted(() => {
                                             {{ getShiftTimeRange(s.ca) }}
                                         </span>
                                         <span class="text-truncate font-weight-black text-slate-800" style="flex: 1;">{{ s.nhanVien }}</span>
-                                        <span class="status-dot flex-shrink-0" :class="s.trangThai === 'DA_XAC_NHAN' ? 'dot-success' : 'dot-warning'"></span>
                                     </div>
                                 </div>
                             </div>
@@ -872,57 +812,8 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <!-- 3. DAY VIEW (Danh sách ca trong 1 ngày) -->
-                <div v-else-if="calendarTab === 'day'" class="calendar-container flex-grow-1 overflow-y-auto">
-                    <div class="calendar-grid-day px-2 py-4 max-w-4xl mx-auto">
-                        <div v-if="daySchedules.length === 0" class="empty-state py-12 text-center rounded-xl bg-slate-50 border border-dashed">
-                            <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-calendar-blank</v-icon>
-                            <div class="text-subtitle-1 text-slate-500">Không có lịch làm việc trong ngày này</div>
-                            <v-btn variant="outlined" color="primary" class="mt-4 rounded-lg" @click="handleDayClick({date: currentMonth.toISOString().substr(0, 10)})">
-                                <v-icon start>mdi-plus</v-icon>
-                                Phân lịch ngay
-                            </v-btn>
-                        </div>
-                        <div v-else class="day-schedule-list d-flex flex-column gap-3">
-                            <div 
-                                v-for="s in daySchedules" 
-                                :key="s.id" 
-                                class="schedule-item-card px-4 py-3 d-flex align-center justify-space-between" 
-                                :class="s.trangThai === 'DA_XAC_NHAN' ? 'status-confirmed' : 'status-pending'"
-                            >
-                                <div class="d-flex align-center gap-4">
-                                    <div class="time-block d-flex flex-column justify-center align-center py-2 px-3 rounded-lg" style="background: rgba(255,255,255,0.7); min-width: 110px;">
-                                        <span class="status-dot mb-1" :class="s.trangThai === 'DA_XAC_NHAN' ? 'dot-success' : 'dot-warning'"></span>
-                                        <span class="font-weight-black text-primary" style="font-size: 13px;">
-                                            {{ getShiftTimeRange(s.ca) }}
-                                        </span>
-                                    </div>
-                                    <div class="employee-info d-flex flex-column">
-                                        <div class="d-flex align-center mb-1">
-                                            <span class="font-weight-bold text-slate-800" style="font-size: 15px;">{{ s.nhanVien }}</span>
-                                            <v-chip size="x-small" color="slate" variant="tonal" class="ml-2 px-2 font-weight-medium">{{ getEmployeeCode(s) }}</v-chip>
-                                        </div>
-                                        <div class="d-flex align-center gap-2">
-                                            <v-chip size="small" :color="s.trangThai === 'DA_XAC_NHAN' ? 'success' : 'warning'" variant="flat" class="font-weight-medium text-caption px-2">
-                                                {{ s.trangThai === 'DA_XAC_NHAN' ? 'Đã duyệt' : 'Chờ duyệt' }}
-                                            </v-chip>
-                                            <span class="text-caption text-slate-500"><v-icon size="12" class="mr-1">mdi-briefcase-outline</v-icon>{{ s.ca }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="action-buttons d-flex gap-2">
-                                    <v-btn variant="tonal" color="primary" class="rounded-lg" size="small" @click.stop="handleEditSchedule(s)">
-                                        <v-icon start size="14">mdi-pencil</v-icon> Sửa
-                                    </v-btn>
-                                    <v-btn variant="tonal" color="error" class="rounded-lg" size="small" @click.stop="handleDeleteSchedule(s)">
-                                        <v-icon start size="14">mdi-delete</v-icon> Xóa
-                                    </v-btn>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
+        </div>
         </div>
 
         <!-- Add/Edit Dialog -->
@@ -974,53 +865,6 @@ onMounted(() => {
                             <div class="filter-field-label">Ngày làm</div>
                             <v-text-field ref="ngayRef" v-model="addForm.ngay" type="date" variant="outlined" density="compact" hide-details
                                 append-inner-icon="mdi-calendar-month-outline" @click:append-inner="openDatePicker(ngayRef)" />
-                        </v-col>
-                        <v-col cols="12" v-if="isEditSchedule">
-                            <div class="filter-field-label">Trạng thái</div>
-                            <v-select
-                                v-model="addForm.trangThai"
-                                :items="[
-                                    { title: 'Chờ xác nhận', value: 'CHO_XAC_NHAN' },
-                                    { title: 'Đã xác nhận', value: 'DA_XAC_NHAN' }
-                                ]"
-                                item-title="title"
-                                item-value="value"
-                                variant="outlined"
-                                density="compact"
-                                hide-details
-                            />
-                        </v-col>
-                        <!-- ===== TĂNG CA ===== -->
-                        <v-col cols="12">
-                            <v-divider class="my-1" />
-                            <div class="d-flex align-center justify-space-between py-1">
-                                <div>
-                                    <div class="filter-field-label mb-0" style="font-weight:700">Tăng ca (ngoài ca đăng ký)</div>
-                                    <div class="text-caption text-slate-400">Bật nếu nhân viên làm thêm giờ</div>
-                                </div>
-                                <v-switch v-model="addForm.tangCa" color="primary" hide-details density="compact" inset />
-                            </div>
-                            <div v-if="addForm.tangCa" class="mt-2">
-                                <v-alert type="warning" variant="tonal" density="compact" class="mb-3 rounded-lg text-caption">
-                                    <v-icon size="13" class="mr-1">mdi-clock-alert-outline</v-icon>
-                                    Nhân viên sẽ làm thêm ngoài khung giờ ca đã đăng ký
-                                </v-alert>
-                                <v-row dense>
-                                    <v-col cols="6">
-                                        <div class="filter-field-label">Bắt đầu tăng ca</div>
-                                        <v-text-field v-model="addForm.gioBatDauTangCa" type="time" variant="outlined" density="compact" hide-details />
-                                    </v-col>
-                                    <v-col cols="6">
-                                        <div class="filter-field-label">Kết thúc tăng ca</div>
-                                        <v-text-field v-model="addForm.gioKetThucTangCa" type="time" variant="outlined" density="compact" hide-details />
-                                    </v-col>
-                                    <v-col cols="12" v-if="addForm.gioBatDauTangCa && addForm.gioKetThucTangCa">
-                                        <v-alert type="success" variant="tonal" density="compact" class="rounded-lg text-caption">
-                                            Tổng tăng ca: <strong>{{ ((parseInt(addForm.gioKetThucTangCa.split(':')[0]) * 60 + parseInt(addForm.gioKetThucTangCa.split(':')[1])) - (parseInt(addForm.gioBatDauTangCa.split(':')[0]) * 60 + parseInt(addForm.gioBatDauTangCa.split(':')[1])) > 0 ? (((parseInt(addForm.gioKetThucTangCa.split(':')[0]) * 60 + parseInt(addForm.gioKetThucTangCa.split(':')[1])) - (parseInt(addForm.gioBatDauTangCa.split(':')[0]) * 60 + parseInt(addForm.gioBatDauTangCa.split(':')[1]))) / 60).toFixed(1) : 0) }} giờ</strong>
-                                        </v-alert>
-                                    </v-col>
-                                </v-row>
-                            </div>
                         </v-col>
                     </v-row>
                 </v-card-text>
@@ -1230,7 +1074,7 @@ onMounted(() => {
 .schedule-item-card {
     position: relative;
     border: 1px solid #e2e8f0;
-    background: #f8fafc;
+    background: #ffffff;
     border-radius: 8px;
     padding: 8px 10px 8px 12px;
     transition: all 0.2s ease;
@@ -1241,14 +1085,6 @@ onMounted(() => {
 .schedule-item-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
-}
-
-.schedule-item-card.status-confirmed {
-    border-left: 4px solid #22c55e;
-}
-
-.schedule-item-card.status-pending {
-    border-left: 4px solid #eab308;
 }
 
 .schedule-card-content {
@@ -1266,45 +1102,10 @@ onMounted(() => {
     gap: 4px;
 }
 
-.schedule-item-card.status-confirmed .schedule-card-shift {
-    color: #166534;
-}
-
-.schedule-item-card.status-pending .schedule-card-shift {
-    color: #854d0e;
-}
-
 .schedule-card-employee {
     font-size: 13px;
     font-weight: 600;
     color: #1e293b;
-}
-
-.schedule-card-status {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 10px;
-    margin-top: 2px;
-}
-
-.status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-}
-
-.dot-success {
-    background-color: #22c55e;
-}
-
-.dot-warning {
-    background-color: #eab308;
-}
-
-.status-text {
-    font-weight: 500;
-    color: #64748b;
 }
 
 .empty-column-state {
@@ -1363,7 +1164,7 @@ onMounted(() => {
 }
 
 .month-day-cell.empty-cell {
-    background: #f8fafc;
+    background: #ffffff;
     border-style: dashed;
     opacity: 0.4;
     cursor: default;
@@ -1399,15 +1200,6 @@ onMounted(() => {
     max-height: 75px;
 }
 
-/* Day View Grid */
-.calendar-grid-day {
-    width: 100%;
-}
-.day-schedule-list {
-    display: flex;
-    flex-direction: column;
-}
-
 .calendar-container {
     display: flex;
     flex-direction: column;
@@ -1423,7 +1215,7 @@ onMounted(() => {
     text-align: center;
     font-size: 12px;
     font-weight: 700;
-    color: #94a3b8;
+    color: #1e257c;
     padding: 8px;
     text-transform: uppercase;
 }
@@ -1433,33 +1225,44 @@ onMounted(() => {
     border-collapse: collapse;
     background: #fff;
     min-width: 900px;
+    border: none;
 }
 .matrix-th {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    padding: 10px 8px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #64748b;
+    background: #ffffff !important;
+    border: none !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    border-right: 1px solid #f1f5f9 !important;
+    padding: 14px 8px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #1e257c !important;
     text-align: center;
     white-space: nowrap;
 }
+.matrix-th:last-child {
+    border-right: none !important;
+}
 .day-col-header { min-width: 120px; }
-.today-col-header { background: #eff6ff !important; }
-.day-col-label { font-size: 12px; font-weight: 700; color: #475569; }
-.today-col-header .day-col-label { color: #1e40af; }
-.day-col-date { font-size: 11px; color: #94a3b8; margin-top: 2px; }
-.today-col-header .day-col-date { color: #6366f1; font-weight: 600; }
+.today-col-header { background: #f8fafc !important; }
+.day-col-label { font-size: 12px !important; font-weight: 700 !important; color: #1e257c !important; }
+.today-col-header .day-col-label { color: #1e257c !important; }
+.day-col-date { font-size: 11px; color: #64748b; margin-top: 2px; }
+.today-col-header .day-col-date { color: #1e257c !important; font-weight: 600; }
 .matrix-row:hover { background: #f8fafc; }
 .matrix-td {
-    border: 1px solid #e2e8f0;
+    border: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    border-right: 1px solid #f1f5f9 !important;
     padding: 8px 6px;
     vertical-align: middle;
     font-size: 13px;
 }
+.matrix-td:last-child {
+    border-right: none !important;
+}
 .matrix-emp-code {
     display: inline-block;
-    background: #f1f5f9;
+    background: #ffffff;
     color: #475569;
     font-size: 11px;
     font-weight: 700;
@@ -1487,24 +1290,14 @@ onMounted(() => {
 .shift-night    { background: #ede9fe; color: #6d28d9; border-left-color: #8b5cf6; }
 .shift-default  { background: #dbeafe; color: #1d4ed8; border-left-color: #3b82f6; }
 .matrix-shift-time { font-size: 10px; font-weight: 500; opacity: 0.75; margin-top: 1px; }
-.matrix-overtime-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    font-size: 9px;
-    background: rgba(234,88,12,0.15);
-    color: #c2410c;
-    padding: 1px 5px;
-    border-radius: 4px;
-    margin-top: 2px;
-    font-weight: 600;
-}
-.matrix-shift-status { font-size: 9px; opacity: 0.6; margin-top: 1px; }
 .matrix-empty-cell {
     text-align: center;
     color: #cbd5e1;
     font-size: 16px;
     font-weight: 300;
     padding: 4px;
+}
+.pagination-footer {
+    background: #ffffff !important;
 }
 </style>

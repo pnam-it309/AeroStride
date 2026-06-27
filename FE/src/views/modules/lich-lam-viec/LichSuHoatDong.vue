@@ -118,9 +118,10 @@ onMounted(() => {
             <template #pagination>
                 <AdminPagination
                     v-model="pagination.page"
-                    :page-size="pagination.size"
+                    v-model:page-size="pagination.size"
                     :total-pages="pagination.totalPages"
                     :total-elements="pagination.totalElements"
+                    :current-size="items.length"
                     @change="loadData"
                 />
             </template>

@@ -3,6 +3,12 @@ import { ref, onMounted, computed } from 'vue';
 import { AdminFilter, AdminTable, AdminBreadcrumbs, AdminPagination } from '@/components/common';
 import apiService from '@/services/apiService';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
+import { useNotifications } from '@/services/notificationService';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import AdminConfirm from '@/components/common/AdminConfirm.vue';
+
+const { addNotification } = useNotifications();
+const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 
 const loading = ref(false);
 const isRefreshing = ref(false);
@@ -19,6 +25,7 @@ const form = ref({
     ngay: new Date().toISOString().substr(0, 10),
     gioVao: '',
     gioRa: '',
+    tangCa: 0,
     ghiChu: ''
 });
 
@@ -28,7 +35,7 @@ const filters = ref({
     nhanVienId: null
 });
 
-const pagination = ref({ page: 1, size: 15, totalElements: 0, totalPages: 0 });
+const pagination = ref({ page: 1, size: 5, totalElements: 0, totalPages: 0 });
 
 const breadcrumbs = [
     { title: 'Quản lý lịch', disabled: false, href: '#' },
@@ -57,28 +64,23 @@ const toMinutes = (timeStr) => {
     return h * 60 + m;
 };
 
-// Tính số giờ thực tế (clamp theo ca đăng ký)
+// Tính số giờ thực tế (tối đa 8 tiếng/ngày)
 const calcActualHours = (row) => {
     if (!row.gioVao || !row.gioRa) return 0;
     const actualMins = toMinutes(row.gioRa) - toMinutes(row.gioVao);
     if (actualMins <= 0) return 0;
-    // Lấy giới hạn ca đăng ký
-    const shift = rawShifts.value.find(s => s.tenCa === row.ca);
-    if (!shift) return parseFloat((actualMins / 60).toFixed(2));
-    const shiftMins = toMinutes(shift.gioKetThuc) - toMinutes(shift.gioBatDau);
-    return parseFloat((Math.min(actualMins, shiftMins) / 60).toFixed(2));
+    const hours = actualMins / 60;
+    return parseFloat(Math.min(hours, 8).toFixed(2));
 };
 
-// Tính giờ tăng ca (vượt quá ca đăng ký)
+// Tăng ca tự điền
 const calcOvertimeHours = (row) => {
-    if (!row.gioVao || !row.gioRa) return 0;
-    const actualMins = toMinutes(row.gioRa) - toMinutes(row.gioVao);
-    if (actualMins <= 0) return 0;
-    const shift = rawShifts.value.find(s => s.tenCa === row.ca);
-    if (!shift) return 0;
-    const shiftMins = toMinutes(shift.gioKetThuc) - toMinutes(shift.gioBatDau);
-    const overtime = actualMins - shiftMins;
-    return overtime > 0 ? parseFloat((overtime / 60).toFixed(2)) : 0;
+    return parseFloat(row.tangCa || 0);
+};
+
+// Tổng giờ
+const calcTotalHours = (row) => {
+    return parseFloat((calcActualHours(row) + calcOvertimeHours(row)).toFixed(2));
 };
 
 // Xác định tên ca dựa vào giờ vào
@@ -96,16 +98,23 @@ const detectShiftName = (gioVao) => {
     return '--';
 };
 
+const getEmployeeCode = (s) => {
+    if (s.maNhanVien) return s.maNhanVien;
+    const emp = employeeOptions.value.find(e => e.id === s.nhanVienId);
+    return emp ? emp.ma : 'N/A';
+};
+
 // Build danh sách chấm công từ schedules (mock từ dữ liệu lịch làm việc)
 const buildAttendanceRows = (schedules) => {
     return schedules.map(s => ({
         id: s.id,
-        maNhanVien: s.maNhanVien || 'N/A',
+        maNhanVien: getEmployeeCode(s),
         nhanVien: s.nhanVien,
         nhanVienId: s.nhanVienId,
         ngay: s.ngay,
         gioVao: s.gioVao || '',
         gioRa: s.gioRa || '',
+        tangCa: s.tangCa || 0,
         ca: s.ca || '--',
         trangThai: s.trangThai
     }));
@@ -131,6 +140,15 @@ const paginatedRows = computed(() => {
     return attendanceRows.value.slice(start, start + pagination.value.size);
 });
 
+import { watch } from 'vue';
+watch(attendanceRows, (newVal) => {
+    pagination.value.totalElements = newVal.length;
+    pagination.value.totalPages = Math.ceil(newVal.length / pagination.value.size);
+    if (pagination.value.page > pagination.value.totalPages) {
+        pagination.value.page = Math.max(1, pagination.value.totalPages);
+    }
+}, { immediate: true });
+
 const shiftColorMap = {
     'Ca Sáng': 'success',
     'Ca Chiều': 'warning',
@@ -144,8 +162,8 @@ const formatDate = (d) => {
     return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
 };
 
-const loadData = async () => {
-    loading.value = true;
+const loadData = async (showLoading = true) => {
+    if (showLoading) loading.value = true;
     try {
         const [schedRes, shiftRes, empRes] = await Promise.all([
             apiService.get(API_LICH_LAM_VIEC.SCHEDULES),
@@ -163,7 +181,7 @@ const loadData = async () => {
     } catch (e) {
         console.error(e);
     } finally {
-        loading.value = false;
+        if (showLoading) loading.value = false;
     }
 };
 
@@ -183,7 +201,7 @@ const handleFilter = () => {
 const openAddDialog = () => {
     isEdit.value = false;
     editId.value = null;
-    form.value = { nhanVienId: null, ngay: new Date().toISOString().substr(0, 10), gioVao: '', gioRa: '', ghiChu: '' };
+    form.value = { nhanVienId: null, ngay: new Date().toISOString().substr(0, 10), gioVao: '', gioRa: '', tangCa: 0, ghiChu: '' };
     showDialog.value = true;
 };
 
@@ -195,17 +213,29 @@ const openEditDialog = (row) => {
         ngay: row.ngay,
         gioVao: row.gioVao || '',
         gioRa: row.gioRa || '',
+        tangCa: row.tangCa || 0,
         ghiChu: row.ghiChu || ''
     };
     showDialog.value = true;
 };
 
-const saveChamCong = async () => {
+const confirmSaveChamCong = () => {
     if (!form.value.nhanVienId || !form.value.ngay || !form.value.gioVao) {
-        alert('Vui lòng nhập đầy đủ thông tin!');
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập đầy đủ thông tin!', color: 'error' });
         return;
     }
-    loading.value = true;
+    const modeText = isEdit.value ? 'cập nhật' : 'thêm';
+    setConfirm({
+        title: `Xác nhận ${modeText} chấm công`,
+        message: `Bạn có chắc chắn muốn ${modeText} thông tin chấm công này?`,
+        color: 'success',
+        action: async () => {
+            await saveChamCong();
+        }
+    });
+};
+
+const saveChamCong = async () => {
     try {
         let res;
         if (isEdit.value) {
@@ -214,14 +244,18 @@ const saveChamCong = async () => {
             res = await apiService.post(`${API_LICH_LAM_VIEC.BASE}/attendance`, form.value);
         }
         if (res.data.success) {
+            addNotification({
+                title: 'Thành công',
+                subtitle: isEdit.value ? 'Cập nhật chấm công thành công!' : 'Thêm chấm công thành công!',
+                icon: 'CircleCheckIcon',
+                color: 'success'
+            });
             showDialog.value = false;
-            loadData();
+            loadData(false);
         }
     } catch (e) {
         console.error(e);
-        alert('Có lỗi xảy ra!');
-    } finally {
-        loading.value = false;
+        addNotification({ title: 'Lỗi', subtitle: 'Có lỗi xảy ra!', color: 'error' });
     }
 };
 
@@ -327,8 +361,8 @@ onMounted(loadData);
                         </td>
                         <!-- Tổng số giờ -->
                         <td class="data-cell text-center">
-                            <span v-if="calcActualHours(item) > 0" class="hours-badge total">
-                                {{ (calcActualHours(item) + calcOvertimeHours(item)).toFixed(2) }}h
+                            <span v-if="calcTotalHours(item) > 0" class="hours-badge total">
+                                {{ calcTotalHours(item) }}h
                             </span>
                             <span v-else class="text-slate-400 text-caption">--</span>
                         </td>
@@ -347,54 +381,16 @@ onMounted(loadData);
                 <template #pagination>
                     <AdminPagination
                         v-model="pagination.page"
-                        :page-size="pagination.size"
+                        v-model:page-size="pagination.size"
                         :total-pages="pagination.totalPages"
                         :total-elements="pagination.totalElements"
+                        :current-size="paginatedRows.length"
                         @change="handleFilter"
                     />
                 </template>
             </AdminTable>
         </div>
 
-        <!-- Summary Cards -->
-        <v-row class="mt-4" v-if="attendanceRows.length > 0">
-            <v-col cols="6" md="3">
-                <div class="summary-card summary-total">
-                    <div class="summary-icon"><v-icon color="primary">mdi-account-group</v-icon></div>
-                    <div class="summary-info">
-                        <div class="summary-value">{{ attendanceRows.length }}</div>
-                        <div class="summary-label">Tổng bản ghi</div>
-                    </div>
-                </div>
-            </v-col>
-            <v-col cols="6" md="3">
-                <div class="summary-card summary-present">
-                    <div class="summary-icon"><v-icon color="success">mdi-check-circle</v-icon></div>
-                    <div class="summary-info">
-                        <div class="summary-value">{{ attendanceRows.filter(r => r.gioVao).length }}</div>
-                        <div class="summary-label">Đã chấm công</div>
-                    </div>
-                </div>
-            </v-col>
-            <v-col cols="6" md="3">
-                <div class="summary-card summary-overtime">
-                    <div class="summary-icon"><v-icon color="orange">mdi-clock-plus</v-icon></div>
-                    <div class="summary-info">
-                        <div class="summary-value">{{ attendanceRows.filter(r => calcOvertimeHours(r) > 0).length }}</div>
-                        <div class="summary-label">Có tăng ca</div>
-                    </div>
-                </div>
-            </v-col>
-            <v-col cols="6" md="3">
-                <div class="summary-card summary-missing">
-                    <div class="summary-icon"><v-icon color="error">mdi-account-off</v-icon></div>
-                    <div class="summary-info">
-                        <div class="summary-value">{{ attendanceRows.filter(r => !r.gioVao).length }}</div>
-                        <div class="summary-label">Chưa chấm</div>
-                    </div>
-                </div>
-            </v-col>
-        </v-row>
 
         <!-- Dialog ghi nhận giờ -->
         <v-dialog v-model="showDialog" max-width="480">
@@ -428,10 +424,9 @@ onMounted(loadData);
                             <div class="filter-field-label">Giờ ra</div>
                             <v-text-field v-model="form.gioRa" type="time" variant="outlined" density="compact" hide-details />
                         </v-col>
-                        <v-col cols="12" v-if="form.gioVao && form.gioRa">
-                            <v-alert type="info" variant="tonal" density="compact" class="rounded-lg text-caption">
-                                <strong>Ca nhận diện:</strong> {{ detectShiftName(form.gioVao) }}
-                            </v-alert>
+                        <v-col cols="12">
+                            <div class="filter-field-label">Giờ tăng ca</div>
+                            <v-text-field v-model.number="form.tangCa" type="number" step="0.5" min="0" variant="outlined" density="compact" hide-details />
                         </v-col>
                         <v-col cols="12">
                             <div class="filter-field-label">Ghi chú</div>
@@ -442,10 +437,20 @@ onMounted(loadData);
                 <v-card-actions class="pa-4">
                     <v-spacer />
                     <v-btn variant="text" color="grey" @click="showDialog = false">Hủy</v-btn>
-                    <v-btn color="primary" variant="flat" class="px-6 rounded-lg" @click="saveChamCong">Lưu lại</v-btn>
+                    <v-btn color="primary" variant="flat" class="px-6 rounded-lg" @click="confirmSaveChamCong">Lưu lại</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
+        <!-- SHARED CONFIRM -->
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)"
+        />
     </v-container>
 </template>
 
