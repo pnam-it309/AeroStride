@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/pnam-it309/AeroStride/compare/v1.25.3...v1.26.0) (2026-06-27)
+
+
+### Features
+
+* fix lỗi lịch ([8913830](https://github.com/pnam-it309/AeroStride/commit/891383031d23f669048a5cca3a4468e711299d72))
+
 ## [1.25.3](https://github.com/pnam-it309/AeroStride/compare/v1.25.2...v1.25.3) (2026-06-26)
 
 
