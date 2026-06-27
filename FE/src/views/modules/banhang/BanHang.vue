@@ -1392,6 +1392,14 @@ const isVnPayCallbackSuccess = (params = {}) =>
 const isVnPayVerifySuccess = (verifyResult, params = {}) =>
     Boolean(verifyResult?.success) && Number(verifyResult?.status || 200) === 200 && isVnPayCallbackSuccess(params);
 
+const paymentMethodLabel = computed(() => {
+    return checkoutData.value.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản';
+});
+
+const getCustomerDisplayName = (customer) => {
+    return customer?.tenKhachHang || 'Chưa có tên';
+};
+
 const getShippingAddressPayload = () => {
     const province = provincesShip.value.find(x => x.code === recipientProvince.value);
     const district = districtsShip.value.find(x => x.code === recipientDistrict.value);
@@ -2179,7 +2187,7 @@ const closeQuickAdd = () => {
                                                     <div class="price-text text-success font-weight-bold"
                                                         style="font-size: 13.5px;">
                                                         {{ product.variants.length > 0 ?
-                                                        formatCurrency(product.variants[0].giaBan) : '' }}
+                                                            formatCurrency(product.variants[0].giaBan) : '' }}
                                                     </div>
                                                 </div>
                                             </div>
@@ -2430,7 +2438,7 @@ const closeQuickAdd = () => {
                                 <!-- Money Input -->
                                 <div class="d-flex align-center justify-space-between mb-3">
                                     <span class="text-slate-600" style="font-size: 13px !important">
-                                        {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
+                                        {{ paymentMethodLabel }}
                                     </span>
                                     <v-text-field :model-value="formatNumberWithDots(checkoutData.receivedAmount)"
                                         @input="e => { checkoutData.receivedAmount = parseNumberFromDots(e.target.value); e.target.value = formatNumberWithDots(checkoutData.receivedAmount); }"
@@ -2484,7 +2492,6 @@ const closeQuickAdd = () => {
                         <div class="d-flex justify-space-between align-center border-b pb-2 mb-3">
                             <span class="font-weight-bold text-slate-800" style="font-size: 14px !important">Thông
                                 tin</span>
-                            <v-icon size="16">mdi-chevron-up</v-icon>
                         </div>
 
                         <div class="d-flex flex-column gap-2">
@@ -2556,29 +2563,43 @@ const closeQuickAdd = () => {
                         </div>
 
                         <div class="d-flex flex-column gap-1">
+                            <!-- Dòng input tìm kiếm riêng -->
+                            <div v-if="!selectedOrder?.idKhachHang" class="position-relative mb-2">
+                                <v-text-field v-model="customerSearch"
+                                    placeholder="Nhập số điện thoại để tìm khách hàng..." variant="outlined"
+                                    density="compact" hide-details prepend-inner-icon="mdi-magnify"
+                                    class="dim-input-field" autocomplete="off" @focus="showCustomerSuggestions = true"
+                                    bg-color="#f8fafc" />
+                                <v-menu v-model="showCustomerSuggestions" activator="parent" location="bottom start"
+                                    max-height="250" :close-on-content-click="false">
+                                    <v-list v-if="customerResults.length > 0" class="pa-1 d-flex flex-column gap-1">
+                                        <div v-for="c in customerResults" :key="c.id"
+                                            @click="onSelectSuggestedCustomer(c); showCustomerSuggestions = false;"
+                                            class="suggestion-item d-flex justify-space-between align-center px-3 py-2 cursor-pointer transition-all border-b"
+                                            style="font-size: 13px;">
+                                            <span class="text-slate-800 font-weight-bold">{{ getCustomerDisplayName(c)
+                                                }}</span>
+                                            <span class="text-primary font-mono ml-3 font-weight-bold">{{ c.sdt
+                                                }}</span>
+                                        </div>
+                                    </v-list>
+                                    <v-list v-else-if="customerSearch?.length > 1 && !customerLoading"
+                                        class="pa-3 text-center text-slate-500" style="font-size: 13px">
+                                        Không tìm thấy khách hàng.
+                                    </v-list>
+                                </v-menu>
+                            </div>
+
                             <div class="d-flex gap-1 mb-1">
                                 <v-text-field v-model="customerForm.ten" placeholder="Tên khách hàng" variant="outlined"
                                     density="compact" hide-details autocomplete="off"
                                     class="dim-input-field flex-grow-1" @input="onCustomerInput"
                                     @focus="showCustomerSuggestions = true" />
-                                <div class="position-relative" style="width: 170px; flex: none;">
+                                <div style="width: 170px; flex: none;">
                                     <v-text-field v-model="customerForm.sdt" placeholder="Số điện thoại"
                                         variant="outlined" density="compact" hide-details autocomplete="off"
                                         class="dim-input-field" @input="onCustomerInput"
                                         @focus="showCustomerSuggestions = true" />
-
-                                    <!-- Autocomplete Suggestions Dropdown -->
-                                    <v-menu v-model="showCustomerSuggestions" activator="parent" location="bottom start"
-                                        max-height="200" :close-on-content-click="false">
-                                        <v-list v-if="customerResults.length > 0" class="pa-1 d-flex flex-column gap-1">
-                                            <div v-for="c in customerResults" :key="c.id"
-                                                @click="onSelectSuggestedCustomer(c); showCustomerSuggestions = false;"
-                                                class="suggestion-item d-flex justify-end align-center px-3 py-1 cursor-pointer transition-all"
-                                                style="font-size: 13px; font-weight: 500;">
-                                                <span class="text-slate-800 font-mono">{{ c.sdt }}</span>
-                                            </div>
-                                        </v-list>
-                                    </v-menu>
                                 </div>
                             </div>
 
@@ -2621,8 +2642,8 @@ const closeQuickAdd = () => {
                                 <v-autocomplete v-model="recipientProvince" :items="provincesShip" item-title="name"
                                     item-value="code" placeholder="Tỉnh/Thành phố" density="compact" variant="outlined"
                                     hide-details clearable auto-select-first menu-icon="mdi-chevron-down"
-                                    no-data-text="Không tìm thấy tỉnh/thành phố"
-                                    class="dim-select-field flex-grow-1" style="width: 33.33%;" />
+                                    no-data-text="Không tìm thấy tỉnh/thành phố" class="dim-select-field flex-grow-1"
+                                    style="width: 33.33%;" />
                                 <v-autocomplete v-model="recipientDistrict" :items="districtsShip" item-title="name"
                                     item-value="code" placeholder="Quận/Huyện" density="compact" variant="outlined"
                                     hide-details clearable auto-select-first menu-icon="mdi-chevron-down"
@@ -2641,8 +2662,9 @@ const closeQuickAdd = () => {
                     <div class="d-flex gap-3 mt-2 w-100">
                         <v-btn color="#88c057" height="60"
                             class="font-weight-bold rounded-lg shadow-md px-4 flex-grow-1"
-                            style="font-size: 17px !important; color: #ffffff !important;" :disabled="!selectedOrder?.listsHoaDonChiTiet?.length"
-                            @click="onPrintInvoice" elevation="0">
+                            style="font-size: 17px !important; color: #ffffff !important;"
+                            :disabled="!selectedOrder?.listsHoaDonChiTiet?.length" @click="onPrintInvoice"
+                            elevation="0">
                             <v-icon class="mr-1" style="color: #ffffff !important;">mdi-printer</v-icon>
                             IN HÓA ĐƠN
                         </v-btn>
@@ -2695,8 +2717,7 @@ const closeQuickAdd = () => {
         </v-dialog>
 
         <!-- VNPay QR Dialog -->
-        <v-dialog v-model="vnpayDialog.show" max-width="450"
-            @update:model-value="onVnPayDialogVisibilityChange">
+        <v-dialog v-model="vnpayDialog.show" max-width="450" @update:model-value="onVnPayDialogVisibilityChange">
             <v-card class="rounded-xl overflow-hidden pb-4">
                 <v-card-text class="pt-6 text-center d-flex flex-column align-center">
                     <div class="vnpay-logo-wrapper mb-4">
@@ -2834,746 +2855,747 @@ const closeQuickAdd = () => {
         </v-dialog>
 
         <!-- Variant Selection Modal (Shopee style) -->
-                    <v-dialog v-model="variantModal.show" max-width="500">
-                        <v-card class="rounded-xl overflow-hidden shadow-lg">
-                            <!-- Product Summary Header -->
-                            <v-card-title
-                                class="pa-5 bg-white border-b position-sticky top-0 z-10 d-flex align-start justify-space-between">
-                                <div class="d-flex align-start gap-4">
-                                    <div class="variant-modal-image-wrap">
-                                        <v-avatar rounded="lg" size="80" class="border bg-grey-lighten-4 flex-shrink-0">
-                                            <v-img :src="modalDisplayVariant?.hinhAnh || variantModal.product?.hinhAnh"
-                                                cover />
-                                        </v-avatar>
-                                        <div v-if="modalDisplayDiscountPercent > 0" class="variant-modal-discount-badge">
-                                            -{{ modalDisplayDiscountPercent }}%
-                                        </div>
-                                    </div>
-                                    <div class="pt-1">
-                                        <h3 class="text-subtitle-1 font-weight-bold text-slate-800 mb-1"
-                                            style="line-height: 1.3; font-size: 15px !important;">{{
-                                            variantModal.product?.tenSanPham }}</h3>
-                                        <div class="text-primary font-weight-bold mb-1" style="font-size: 18px;">
-                                            {{ modalDisplayVariant ? formatCurrency(modalDisplayVariant.giaBan) :
-                                                formatCurrency(variantModal.product?.variants[0]?.giaBan || 0) }}
-                                        </div>
-                                        <div v-if="modalDisplayVariant?.giaGoc && Number(modalDisplayVariant.giaGoc) > Number(modalDisplayVariant.giaBan)"
-                                            class="text-caption text-slate-400 text-decoration-line-through mb-1">
-                                            {{ formatCurrency(modalDisplayVariant.giaGoc) }}
-                                        </div>
-                                        <div class="text-body-2 text-slate-500">Kho: {{currentSelectedVariant ?
-                                            currentSelectedVariant.soLuongTon :
-                                            variantModal.product?.variants.reduce((sum, v) => sum + (v.soLuongTon||0), 0) }}</div>
-                                    </div>
-                                </div>
-                                <v-btn icon="mdi-close" variant="text" size="small" color="slate-400"
-                                    @click="closeVariantModal" class="ml-2" />
-                            </v-card-title>
+        <v-dialog v-model="variantModal.show" max-width="500">
+            <v-card class="rounded-xl overflow-hidden shadow-lg">
+                <!-- Product Summary Header -->
+                <v-card-title
+                    class="pa-5 bg-white border-b position-sticky top-0 z-10 d-flex align-start justify-space-between">
+                    <div class="d-flex align-start gap-4">
+                        <div class="variant-modal-image-wrap">
+                            <v-avatar rounded="lg" size="80" class="border bg-grey-lighten-4 flex-shrink-0">
+                                <v-img :src="modalDisplayVariant?.hinhAnh || variantModal.product?.hinhAnh" cover />
+                            </v-avatar>
+                            <div v-if="modalDisplayDiscountPercent > 0" class="variant-modal-discount-badge">
+                                -{{ modalDisplayDiscountPercent }}%
+                            </div>
+                        </div>
+                        <div class="pt-1">
+                            <h3 class="text-subtitle-1 font-weight-bold text-slate-800 mb-1"
+                                style="line-height: 1.3; font-size: 15px !important;">{{
+                                    variantModal.product?.tenSanPham }}</h3>
+                            <div class="text-primary font-weight-bold mb-1" style="font-size: 18px;">
+                                {{ modalDisplayVariant ? formatCurrency(modalDisplayVariant.giaBan) :
+                                    formatCurrency(variantModal.product?.variants[0]?.giaBan || 0) }}
+                            </div>
+                            <div v-if="modalDisplayVariant?.giaGoc && Number(modalDisplayVariant.giaGoc) > Number(modalDisplayVariant.giaBan)"
+                                class="text-caption text-slate-400 text-decoration-line-through mb-1">
+                                {{ formatCurrency(modalDisplayVariant.giaGoc) }}
+                            </div>
+                            <div class="text-body-2 text-slate-500">Kho: {{currentSelectedVariant ?
+                                currentSelectedVariant.soLuongTon :
+                                variantModal.product?.variants.reduce((sum, v) => sum + (v.soLuongTon || 0), 0)}}</div>
+                        </div>
+                    </div>
+                    <v-btn icon="mdi-close" variant="text" size="small" color="slate-400" @click="closeVariantModal"
+                        class="ml-2" />
+                </v-card-title>
 
-                            <v-card-text class="pa-5 bg-white" style="max-height: 60vh; overflow-y: auto;">
-                                <!-- Colors -->
-                                <div class="mb-6">
-                                    <div class="text-subtitle-2 font-weight-bold text-slate-800 mb-3">Màu sắc</div>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <div v-for="color in uniqueColors" :key="color.name"
-                                            class="cursor-pointer border rounded-lg px-3 py-1.5 d-flex align-center gap-2 transition-all"
-                                            :class="variantModal.selectedColor === color.name ? 'border-primary bg-primary-lighten-5 text-primary font-weight-bold' : 'border-slate-300 text-slate-700 hover-bg-slate-50'"
-                                            @click="selectColor(color.name)">
-                                            <v-avatar size="24" rounded="sm" v-if="color.image"><v-img
-                                                    :src="color.image" cover /></v-avatar>
-                                            <span style="font-size: 14px;">{{ color.name }}</span>
-                                        </div>
-                                    </div>
-                                </div>
+                <v-card-text class="pa-5 bg-white" style="max-height: 60vh; overflow-y: auto;">
+                    <!-- Colors -->
+                    <div class="mb-6">
+                        <div class="text-subtitle-2 font-weight-bold text-slate-800 mb-3">Màu sắc</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <div v-for="color in uniqueColors" :key="color.name"
+                                class="cursor-pointer border rounded-lg px-3 py-1.5 d-flex align-center gap-2 transition-all"
+                                :class="variantModal.selectedColor === color.name ? 'border-primary bg-primary-lighten-5 text-primary font-weight-bold' : 'border-slate-300 text-slate-700 hover-bg-slate-50'"
+                                @click="selectColor(color.name)">
+                                <v-avatar size="24" rounded="sm" v-if="color.image"><v-img :src="color.image"
+                                        cover /></v-avatar>
+                                <span style="font-size: 14px;">{{ color.name }}</span>
+                            </div>
+                        </div>
+                    </div>
 
-                                <!-- Sizes -->
-                                <div class="mb-6" v-if="variantModal.selectedColor">
-                                    <div
-                                        class="text-subtitle-2 font-weight-bold text-slate-800 mb-3 d-flex justify-space-between align-center">
-                                        <span>Kích cỡ</span>
-                                        <span
-                                            class="text-caption text-primary font-weight-medium cursor-pointer"><v-icon
-                                                size="14" left>mdi-ruler</v-icon> Hướng dẫn chọn size</span>
-                                    </div>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <div v-for="size in availableSizes" :key="size.name"
-                                            class="cursor-pointer border rounded-lg px-5 py-2 transition-all text-center"
-                                            style="min-width: 60px;" :class="[
-                                                size.soLuongTon === 0 ? 'bg-slate-50 border-slate-200 text-slate-400 opacity-60' :
-                                                    variantModal.selectedSize === size.name ? 'border-primary bg-primary text-white font-weight-bold shadow-sm' : 'border-slate-300 text-slate-700 hover-bg-slate-50'
-                                            ]" @click="selectSize(size.name, size.soLuongTon)">
-                                            <div style="font-size: 14px;">{{ size.name }}</div>
-                                        </div>
-                                    </div>
-                                </div>
+                    <!-- Sizes -->
+                    <div class="mb-6" v-if="variantModal.selectedColor">
+                        <div
+                            class="text-subtitle-2 font-weight-bold text-slate-800 mb-3 d-flex justify-space-between align-center">
+                            <span>Kích cỡ</span>
+                            <span class="text-caption text-primary font-weight-medium cursor-pointer"><v-icon size="14"
+                                    left>mdi-ruler</v-icon> Hướng dẫn chọn size</span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <div v-for="size in availableSizes" :key="size.name"
+                                class="cursor-pointer border rounded-lg px-5 py-2 transition-all text-center"
+                                style="min-width: 60px;" :class="[
+                                    size.soLuongTon === 0 ? 'bg-slate-50 border-slate-200 text-slate-400 opacity-60' :
+                                        variantModal.selectedSize === size.name ? 'border-primary bg-primary text-white font-weight-bold shadow-sm' : 'border-slate-300 text-slate-700 hover-bg-slate-50'
+                                ]" @click="selectSize(size.name, size.soLuongTon)">
+                                <div style="font-size: 14px;">{{ size.name }}</div>
+                            </div>
+                        </div>
+                    </div>
 
-                                <!-- Quantity -->
-                                <div class="d-flex align-center justify-space-between mt-6 pt-5 border-t"
-                                    v-if="variantModal.selectedSize">
-                                    <div class="text-subtitle-2 font-weight-bold text-slate-800">Số lượng</div>
-                                    <div class="d-flex align-center border border-slate-300 rounded-lg overflow-hidden"
-                                        style="height: 36px; width: 120px;">
-                                        <v-btn icon="mdi-minus" size="small" variant="text" color="slate-600"
-                                            class="rounded-0 h-100 flex-shrink-0" style="width: 36px; min-width: 36px;"
-                                            :disabled="variantModal.quantity <= 1"
-                                            @click="variantModal.quantity--"></v-btn>
-                                        <input type="number" v-model.number="variantModal.quantity"
-                                            @blur="validateQuantityInput"
-                                            class="text-center font-weight-bold outline-none flex-grow-1 bg-white h-100 hide-arrows"
-                                            style="width: 100%; font-size: 15px;" />
-                                        <v-btn icon="mdi-plus" size="small" variant="text" color="slate-600"
-                                            class="rounded-0 h-100 flex-shrink-0" style="width: 36px; min-width: 36px;"
-                                            :disabled="variantModal.quantity >= (currentSelectedVariant?.soLuongTon || 1)"
-                                            @click="variantModal.quantity++"></v-btn>
-                                    </div>
-                                </div>
-                            </v-card-text>
+                    <!-- Quantity -->
+                    <div class="d-flex align-center justify-space-between mt-6 pt-5 border-t"
+                        v-if="variantModal.selectedSize">
+                        <div class="text-subtitle-2 font-weight-bold text-slate-800">Số lượng</div>
+                        <div class="d-flex align-center border border-slate-300 rounded-lg overflow-hidden"
+                            style="height: 36px; width: 120px;">
+                            <v-btn icon="mdi-minus" size="small" variant="text" color="slate-600"
+                                class="rounded-0 h-100 flex-shrink-0" style="width: 36px; min-width: 36px;"
+                                :disabled="variantModal.quantity <= 1" @click="variantModal.quantity--"></v-btn>
+                            <input type="number" v-model.number="variantModal.quantity" @blur="validateQuantityInput"
+                                class="text-center font-weight-bold outline-none flex-grow-1 bg-white h-100 hide-arrows"
+                                style="width: 100%; font-size: 15px;" />
+                            <v-btn icon="mdi-plus" size="small" variant="text" color="slate-600"
+                                class="rounded-0 h-100 flex-shrink-0" style="width: 36px; min-width: 36px;"
+                                :disabled="variantModal.quantity >= (currentSelectedVariant?.soLuongTon || 1)"
+                                @click="variantModal.quantity++"></v-btn>
+                        </div>
+                    </div>
+                </v-card-text>
 
-                            <v-card-actions class="pa-4 bg-white border-t">
-                                <v-btn color="primary" variant="flat" block size="x-large"
-                                    class="rounded-xl text-none font-weight-bold shadow-sm" style="font-size: 16px;"
-                                    :disabled="!currentSelectedVariant" :loading="isAddingProduct"
-                                    @click="confirmAddVariants">
-                                    <v-icon left class="mr-2">mdi-cart-plus</v-icon>
-                                    Thêm vào giỏ hàng
-                                </v-btn>
-                            </v-card-actions>
-                        </v-card>
-                    </v-dialog>
+                <v-card-actions class="pa-4 bg-white border-t">
+                    <v-btn color="primary" variant="flat" block size="x-large"
+                        class="rounded-xl text-none font-weight-bold shadow-sm" style="font-size: 16px;"
+                        :disabled="!currentSelectedVariant" :loading="isAddingProduct" @click="confirmAddVariants">
+                        <v-icon left class="mr-2">mdi-cart-plus</v-icon>
+                        Thêm vào giỏ hàng
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
         <!-- Confirm Dialog -->
         <AdminConfirm v-model:show="confirmDialog.show" v-bind="confirmDialog" @confirm="confirmDialog.action" />
     </v-container>
 </template>
 <style scoped>
-
-            .hide-arrows::-webkit-outer-spin-button,
-            .hide-arrows::-webkit-inner-spin-button {
-                -webkit-appearance: none;
-                margin: 0;
-            }
-
-            .hide-arrows {
-                -moz-appearance: textfield;
-            }
-
-            .pos-wrapper {
-                background: #eef2f6;
-                min-height: calc(100vh - 64px);
-                overflow-y: auto;
-            }
-
-            .pos-wrapper :deep(.v-btn) {
-                text-transform: none;
-                letter-spacing: normal;
-            }
-
-            .pos-shell {
-                display: flex;
-                flex-direction: column;
-                padding: 16px;
-            }
-
-            .pos-header-row {
-                min-height: 48px;
-            }
-
-            .pos-card {
-                background: #ffffff;
-                border: 1px solid #dfe5ee !important;
-                box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
-                border-radius: 8px !important;
-            }
-
-            .compact-select :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 32px !important;
-                font-size: 13px !important;
-            }
-
-            .compact-select :deep(.v-field) {
-                border-radius: 8px !important;
-                --v-input-control-height: 32px !important;
-                font-size: 13px !important;
-                background-color: #ffffff !important;
-                border: 1px solid #cbd5e1 !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .compact-select :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .compact-select :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .compact-btn {
-                height: 32px !important;
-                border-radius: 8px !important;
-                font-size: 13px !important;
-                border: 1px solid #dfe5ee !important;
-                background: #ffffff !important;
-                color: #334155 !important;
-            }
-
-            .custom-customer-btn {
-                border-color: #dfe5ee !important;
-                background-color: #ffffff !important;
-            }
-
-            .product-mode-toggle {
-                height: 32px !important;
-            }
-
-            .product-mode-toggle .v-btn {
-                height: 30px !important;
-                font-size: 12px !important;
-                text-transform: none !important;
-                border-radius: 6px !important;
-            }
-
-            .search-input :deep(.v-field) {
-                border-radius: 8px !important;
-                font-size: 13px !important;
-                border: 1px solid #cbd5e1 !important;
-                background-color: #ffffff !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .search-input :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .search-input :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .scanner-btn {
-                border-radius: 8px !important;
-                height: 40px !important;
-            }
-
-            .scanner-reader {
-                width: 100%;
-                min-height: 320px;
-                overflow: hidden;
-                border: 1px solid #dbe3ef;
-                border-radius: 12px;
-                background: #ffffff;
-            }
-
-            .scanner-reader :deep(video) {
-                border-radius: 10px;
-            }
-
-            .hover-autocomplete-item {
-                border-bottom: 1px solid #e2e8f0 !important;
-                transition: background-color 0.2s ease;
-            }
-
-            .hover-autocomplete-item:hover {
-                background-color: #f8fafc !important;
-            }
-
-            .hover-autocomplete-item:last-child {
-                border-bottom: none !important;
-            }
-
-            .cart-container-box {
-                background-color: #ffffff;
-                min-height: 200px;
-                border: 1px solid #cbd5e1 !important;
-                border-radius: 8px !important;
-            }
-
-            .text-right-input :deep(input) {
-                text-align: right !important;
-            }
-
-            .text-right-input :deep(.v-field) {
-                border-radius: 8px !important;
-                font-size: 13px !important;
-                border: 1px solid #cbd5e1 !important;
-                background-color: #ffffff !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .text-right-input :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .text-right-input :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .custom-value-input :deep(.v-field) {
-                background-color: #ffffff !important;
-                border: 1px solid #cbd5e1 !important;
-                box-shadow: none !important;
-                border-radius: 8px !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .custom-value-input :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .custom-value-input :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .custom-value-input :deep(input) {
-                color: #334155 !important;
-                font-weight: 400 !important;
-                padding-right: 8px !important;
-            }
-
-            .custom-value-input :deep(.v-text-field__suffix) {
-                font-size: 13px !important;
-                color: #475569 !important;
-                font-weight: 400 !important;
-                opacity: 1 !important;
-            }
-
-            .pos-card :deep(.v-checkbox .v-label) {
-                font-size: 13px !important;
-                font-weight: 400 !important;
-            }
-
-            .bg-emerald-50 {
-                background-color: #ecfdf5 !important;
-                border: 1px solid #a7f3d0 !important;
-            }
-
-            .text-emerald-800 {
-                color: #065f46 !important;
-            }
-
-            .text-emerald-600 {
-                color: #059669 !important;
-            }
-
-            .border-emerald {
-                border: 1px solid #a7f3d0 !important;
-            }
-
-            .bg-red-50 {
-                background-color: #fef2f2 !important;
-                border: 1px solid #fecaca !important;
-            }
-
-            .text-red-800 {
-                color: #991b1b !important;
-            }
-
-            .border-red {
-                border: 1px solid #fecaca !important;
-            }
-
-            .bg-blue-50 {
-                background-color: #eff6ff !important;
-                border: 1px solid #bfdbfe !important;
-            }
-
-            .text-blue-800 {
-                color: #1e40af !important;
-            }
-
-            .border-blue {
-                border: 1px solid #bfdbfe !important;
-            }
-
-            .payment-method-toggle {
-                height: 36px !important;
-            }
-
-            .payment-method-toggle .v-btn {
-                height: 34px !important;
-                font-size: 12px !important;
-                text-transform: none !important;
-            }
-
-            .note-type-toggle {
-                height: 32px !important;
-            }
-
-            .note-type-toggle .v-btn {
-                height: 30px !important;
-                font-size: 12px !important;
-                text-transform: none !important;
-            }
-
-            .note-textarea :deep(.v-field) {
-                border-radius: 8px !important;
-                border: 1px solid #cbd5e1 !important;
-                background-color: #ffffff !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .note-textarea :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .note-textarea :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .btn-checkout {
-                text-transform: none !important;
-                letter-spacing: 0 !important;
-            }
-
-            .empty-orders-state {
-                flex: 1;
-                min-height: 420px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                color: #475569;
-                background: #ffffff;
-                border: 1px dashed #cbd5e1;
-                border-radius: 8px;
-            }
-
-            .gap-2 {
-                gap: 6px;
-            }
-
-            .gap-3 {
-                gap: 8px;
-            }
-
-            .gap-4 {
-                gap: 8px;
-            }
-
-            .pointer {
-                cursor: pointer;
-            }
-
-            .bg-slate-50 {
-                background-color: #f8fafc !important;
-            }
-
-            .product-dropdown-card {
-                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-            }
-
-            /* Right Column Styles */
-            .compact-select-right :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 28px !important;
-                font-size: 13px !important;
-            }
-
-            .compact-select-right :deep(.v-field) {
-                border-radius: 8px !important;
-                --v-input-control-height: 28px !important;
-                font-size: 13px !important;
-                background-color: #ffffff !important;
-                border: 1px solid #cbd5e1 !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .compact-select-right :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .compact-select-right :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .right-input-field :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 32px !important;
-                font-size: 13px !important;
-            }
-
-            .right-input-field :deep(.v-field) {
-                border-radius: 8px !important;
-                --v-input-control-height: 32px !important;
-                font-size: 13px !important;
-                background-color: #ffffff !important;
-                border: 1px solid #cbd5e1 !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .right-input-field :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .right-input-field :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            /* Base font-size rules for inputs, textareas, buttons, placeholders and body text */
-            .pos-wrapper :deep(.v-field),
-            .pos-wrapper :deep(.v-field__input),
-            .pos-wrapper :deep(.v-btn),
-            .pos-wrapper :deep(.text-body-2),
-            .pos-wrapper :deep(input),
-            .pos-wrapper :deep(textarea),
-            .pos-wrapper :deep(input::placeholder),
-            .pos-wrapper :deep(textarea::placeholder),
-            .pos-wrapper :deep(.v-field__placeholder),
-            .pos-wrapper :deep(.v-label),
-            .pos-wrapper :deep(.v-list-item-title),
-            .pos-wrapper :deep(.v-select__selection-text) {
-                font-size: 13px !important;
-            }
-
-            /* Custom Payment Method Buttons */
-            .cash-active-btn {
-                background-color: #fdf2f8 !important;
-                color: #db2777 !important;
-                border-color: #fbcfe8 !important;
-            }
-
-            .vnpay-active-btn {
-                background-color: #eff6ff !important;
-                color: #1d4ed8 !important;
-                border-color: #bfdbfe !important;
-            }
-
-            .payment-inactive-btn {
-                background-color: #f8fafc !important;
-                color: #64748b !important;
-                border-color: #e2e8f0 !important;
-            }
-
-            /* Custom Note Tabs */
-            .custom-note-tabs {
-                background-color: #f1f5f9 !important;
-            }
-
-            .note-tab-active {
-                background-color: #ffffff !important;
-                color: #0c3866 !important;
-                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
-                border: 1px solid #e2e8f0 !important;
-            }
-
-            .note-tab-inactive {
-                background-color: transparent !important;
-                color: #64748b !important;
-                border: 1px solid transparent !important;
-            }
-
-            /* Styled input fields for customer card */
-            .dim-input-field :deep(.v-field) {
-                background-color: #ffffff !important;
-                border-radius: 8px !important;
-                --v-input-control-height: 32px !important;
-                font-size: 13px !important;
-                border: 1px solid #cbd5e1 !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .dim-input-field :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .dim-input-field :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .dim-input-field :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 32px !important;
-                font-size: 13px !important;
-            }
-
-            .dim-select :deep(.v-field) {
-                background-color: #ffffff !important;
-                border-radius: 8px !important;
-                --v-input-control-height: 28px !important;
-                font-size: 13px !important;
-                border: 1px solid #cbd5e1 !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .dim-select :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .dim-select :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .dim-select :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 28px !important;
-                font-size: 13px !important;
-            }
-
-            /* Suggestion Popover - Right Aligned under SĐT */
-            .suggestion-popover {
-                position: absolute;
-                top: 100%;
-                right: 0;
-                left: auto;
-                width: 170px;
-                z-index: 9999;
-                background-color: #ffffff;
-                border: 1px solid #e2e8f0;
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-                border-radius: 20px !important;
-                margin-top: 4px;
-            }
-
-            .suggestion-item {
-                border-radius: 16px;
-                height: 32px;
-            }
-
-            .suggestion-item:hover {
-                background-color: #f1f5f9;
-            }
-
-            /* Styled select field for delivery card */
-            .dim-select-field :deep(.v-field) {
-                background-color: #ffffff !important;
-                border-radius: 8px !important;
-                --v-input-control-height: 32px !important;
-                font-size: 13px !important;
-                border: 1px solid #cbd5e1 !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .dim-select-field :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .dim-select-field :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .dim-select-field :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 32px !important;
-                font-size: 13px !important;
-            }
-
-            .date-input-field :deep(input[type="date"]) {
-                position: relative;
-                cursor: pointer;
-            }
-
-            .date-input-field :deep(input[type="date"]::-webkit-calendar-picker-indicator) {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                width: 100%;
-                height: 100%;
-                opacity: 0;
-                cursor: pointer;
-            }
-
-            .product-dropdown-card {
-                width: 100% !important;
-                min-width: 650px !important;
-                left: 0;
-            }
-
-            .sku-badge {
-                background-color: #ffe4e6 !important;
-                color: #9f1239 !important;
-                font-size: 11px !important;
-                font-weight: 500;
-                padding: 1px 6px;
-                border-radius: 4px;
-                display: inline-flex;
-                align-items: center;
-            }
-
-            .sp-badge {
-                background-color: #e0f2fe !important;
-                color: #0369a1 !important;
-                font-size: 11px !important;
-                font-weight: 500;
-                padding: 1px 6px;
-                border-radius: 4px;
-                display: inline-flex;
-                align-items: center;
-            }
-
-            .size-badge {
-                border: 1px solid #cbd5e1 !important;
-                color: #64748b !important;
-                font-size: 11px !important;
-                font-weight: 500;
-                padding: 0px 6px;
-                border-radius: 4px;
-                display: inline-flex;
-                align-items: center;
-            }
-
-            .bullet-details {
-                font-size: 11.5px !important;
-                color: #64748b;
-                line-height: 1.4;
-            }
-
-            .bullet-item {
-                margin-bottom: 1px;
-            }
-
-            .price-text {
-                font-size: 14px !important;
-                font-weight: 500;
-                color: #88c057 !important;
-            }
-
-            .speed-text {
-                font-size: 11px !important;
-                color: #64748b;
-            }
-
-            .variant-modal-image-wrap {
-                position: relative;
-                flex-shrink: 0;
-                width: 80px;
-                height: 80px;
-            }
-
-            .variant-modal-discount-badge {
-                position: absolute;
-                top: -6px;
-                right: -8px;
-                min-width: 38px;
-                height: 22px;
-                padding: 0 7px;
-                border-radius: 999px;
-                background: #ef4444;
-                color: #ffffff;
-                font-size: 11px;
-                font-weight: 800;
-                line-height: 22px;
-                text-align: center;
-                box-shadow: 0 6px 14px rgba(239, 68, 68, 0.28);
-                border: 2px solid #ffffff;
-                z-index: 2;
-            }
-
-
-        </style>
+.hide-arrows::-webkit-outer-spin-button,
+.hide-arrows::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.hide-arrows {
+    -moz-appearance: textfield;
+}
+
+.pos-wrapper {
+    background: #eef2f6;
+    min-height: calc(100vh - 64px);
+    overflow-y: auto;
+}
+
+.pos-wrapper :deep(.v-btn) {
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.pos-shell {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+}
+
+.pos-header-row {
+    min-height: 48px;
+}
+
+.pos-card {
+    background: #ffffff;
+    border: 1px solid #dfe5ee !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
+    border-radius: 8px !important;
+}
+
+.compact-select :deep(.v-field__input) {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.compact-select :deep(.v-field) {
+    border-radius: 8px !important;
+    --v-input-control-height: 32px !important;
+    font-size: 13px !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.compact-select :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.compact-select :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.compact-btn {
+    height: 32px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    border: 1px solid #dfe5ee !important;
+    background: #ffffff !important;
+    color: #334155 !important;
+}
+
+.custom-customer-btn {
+    border-color: #dfe5ee !important;
+    background-color: #ffffff !important;
+}
+
+.product-mode-toggle {
+    height: 32px !important;
+}
+
+.product-mode-toggle .v-btn {
+    height: 30px !important;
+    font-size: 12px !important;
+    text-transform: none !important;
+    border-radius: 6px !important;
+}
+
+.search-input :deep(.v-field) {
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.search-input :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.scanner-btn {
+    border-radius: 8px !important;
+    height: 40px !important;
+}
+
+.scanner-reader {
+    width: 100%;
+    min-height: 320px;
+    overflow: hidden;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.scanner-reader :deep(video) {
+    border-radius: 10px;
+}
+
+.hover-autocomplete-item {
+    border-bottom: 1px solid #e2e8f0 !important;
+    transition: background-color 0.2s ease;
+}
+
+.hover-autocomplete-item:hover {
+    background-color: #f8fafc !important;
+}
+
+.hover-autocomplete-item:last-child {
+    border-bottom: none !important;
+}
+
+.cart-container-box {
+    background-color: #ffffff;
+    min-height: 200px;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+}
+
+.text-right-input :deep(input) {
+    text-align: right !important;
+}
+
+.text-right-input :deep(.v-field) {
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.text-right-input :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.text-right-input :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.custom-value-input :deep(.v-field) {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    border-radius: 8px !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.custom-value-input :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.custom-value-input :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.custom-value-input :deep(input) {
+    color: #334155 !important;
+    font-weight: 400 !important;
+    padding-right: 8px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.custom-value-input :deep(.v-select__selection-text) {
+    color: #334155 !important;
+    font-weight: 400 !important;
+}
+
+.custom-value-input :deep(.v-text-field__suffix) {
+    font-size: 13px !important;
+    color: #475569 !important;
+    font-weight: 400 !important;
+    opacity: 1 !important;
+}
+
+.pos-card :deep(.v-checkbox .v-label) {
+    font-size: 13px !important;
+    font-weight: 400 !important;
+}
+
+.bg-emerald-50 {
+    background-color: #ecfdf5 !important;
+    border: 1px solid #a7f3d0 !important;
+}
+
+.text-emerald-800 {
+    color: #065f46 !important;
+}
+
+.text-emerald-600 {
+    color: #059669 !important;
+}
+
+.border-emerald {
+    border: 1px solid #a7f3d0 !important;
+}
+
+.bg-red-50 {
+    background-color: #fef2f2 !important;
+    border: 1px solid #fecaca !important;
+}
+
+.text-red-800 {
+    color: #991b1b !important;
+}
+
+.border-red {
+    border: 1px solid #fecaca !important;
+}
+
+.bg-blue-50 {
+    background-color: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+}
+
+.text-blue-800 {
+    color: #1e40af !important;
+}
+
+.border-blue {
+    border: 1px solid #bfdbfe !important;
+}
+
+.payment-method-toggle {
+    height: 36px !important;
+}
+
+.payment-method-toggle .v-btn {
+    height: 34px !important;
+    font-size: 12px !important;
+    text-transform: none !important;
+}
+
+.note-type-toggle {
+    height: 32px !important;
+}
+
+.note-type-toggle .v-btn {
+    height: 30px !important;
+    font-size: 12px !important;
+    text-transform: none !important;
+}
+
+.note-textarea :deep(.v-field) {
+    border-radius: 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.note-textarea :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.note-textarea :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.btn-checkout {
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+}
+
+.empty-orders-state {
+    flex: 1;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+}
+
+.gap-2 {
+    gap: 6px;
+}
+
+.gap-3 {
+    gap: 8px;
+}
+
+.gap-4 {
+    gap: 8px;
+}
+
+.pointer {
+    cursor: pointer;
+}
+
+.bg-slate-50 {
+    background-color: #f8fafc !important;
+}
+
+.product-dropdown-card {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Right Column Styles */
+.compact-select-right :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 28px !important;
+    font-size: 13px !important;
+}
+
+.compact-select-right :deep(.v-field) {
+    border-radius: 8px !important;
+    --v-input-control-height: 28px !important;
+    font-size: 13px !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.compact-select-right :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.compact-select-right :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.right-input-field :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
+}
+
+.right-input-field :deep(.v-field) {
+    border-radius: 8px !important;
+    --v-input-control-height: 32px !important;
+    font-size: 13px !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.right-input-field :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.right-input-field :deep(.v-field__outline) {
+    display: none !important;
+}
+
+/* Base font-size rules for inputs, textareas, buttons, placeholders and body text */
+.pos-wrapper :deep(.v-field),
+.pos-wrapper :deep(.v-field__input),
+.pos-wrapper :deep(.v-btn),
+.pos-wrapper :deep(.text-body-2),
+.pos-wrapper :deep(input),
+.pos-wrapper :deep(textarea),
+.pos-wrapper :deep(input::placeholder),
+.pos-wrapper :deep(textarea::placeholder),
+.pos-wrapper :deep(.v-field__placeholder),
+.pos-wrapper :deep(.v-label),
+.pos-wrapper :deep(.v-list-item-title),
+.pos-wrapper :deep(.v-select__selection-text) {
+    font-size: 13px !important;
+}
+
+/* Custom Payment Method Buttons */
+.cash-active-btn {
+    background-color: #fdf2f8 !important;
+    color: #db2777 !important;
+    border-color: #fbcfe8 !important;
+}
+
+.vnpay-active-btn {
+    background-color: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border-color: #bfdbfe !important;
+}
+
+.payment-inactive-btn {
+    background-color: #f8fafc !important;
+    color: #64748b !important;
+    border-color: #e2e8f0 !important;
+}
+
+/* Custom Note Tabs */
+.custom-note-tabs {
+    background-color: #f1f5f9 !important;
+}
+
+.note-tab-active {
+    background-color: #ffffff !important;
+    color: #0c3866 !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.note-tab-inactive {
+    background-color: transparent !important;
+    color: #64748b !important;
+    border: 1px solid transparent !important;
+}
+
+/* Styled input fields for customer card */
+.dim-input-field :deep(.v-field) {
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    --v-input-control-height: 32px !important;
+    font-size: 13px !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dim-input-field :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.dim-input-field :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.dim-input-field :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
+}
+
+.dim-select :deep(.v-field) {
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    --v-input-control-height: 28px !important;
+    font-size: 13px !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dim-select :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.dim-select :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.dim-select :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 28px !important;
+    font-size: 13px !important;
+}
+
+/* Suggestion Popover - Right Aligned under SĐT */
+.suggestion-popover {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: auto;
+    width: 170px;
+    z-index: 9999;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-radius: 20px !important;
+    margin-top: 4px;
+}
+
+.suggestion-item {
+    border-radius: 16px;
+    height: 32px;
+}
+
+.suggestion-item:hover {
+    background-color: #f1f5f9;
+}
+
+/* Styled select field for delivery card */
+.dim-select-field :deep(.v-field) {
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    --v-input-control-height: 32px !important;
+    font-size: 13px !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dim-select-field :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.dim-select-field :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.dim-select-field :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
+}
+
+.date-input-field :deep(input[type="date"]) {
+    position: relative;
+    cursor: pointer;
+}
+
+.date-input-field :deep(input[type="date"]::-webkit-calendar-picker-indicator) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.product-dropdown-card {
+    width: 100% !important;
+    min-width: 650px !important;
+    left: 0;
+}
+
+.sku-badge {
+    background-color: #ffe4e6 !important;
+    color: #9f1239 !important;
+    font-size: 11px !important;
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.sp-badge {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+    font-size: 11px !important;
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.size-badge {
+    border: 1px solid #cbd5e1 !important;
+    color: #64748b !important;
+    font-size: 11px !important;
+    font-weight: 500;
+    padding: 0px 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.bullet-details {
+    font-size: 11.5px !important;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.bullet-item {
+    margin-bottom: 1px;
+}
+
+.price-text {
+    font-size: 14px !important;
+    font-weight: 500;
+    color: #88c057 !important;
+}
+
+.speed-text {
+    font-size: 11px !important;
+    color: #64748b;
+}
+
+.variant-modal-image-wrap {
+    position: relative;
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+}
+
+.variant-modal-discount-badge {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    min-width: 38px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 22px;
+    text-align: center;
+    box-shadow: 0 6px 14px rgba(239, 68, 68, 0.28);
+    border: 2px solid #ffffff;
+    z-index: 2;
+}
+</style>

@@ -16,7 +16,7 @@ import MainView from './Main.vue';
                     <RouterView v-slot="{ Component, route }">
                         <template v-if="Component">
                             <transition name="route-shell" mode="out-in">
-                                <Suspense :timeout="0">
+                                <Suspense>
                                     <template #default>
                                         <component :is="Component" :key="route.path" />
                                     </template>

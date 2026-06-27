@@ -38,16 +38,16 @@ const { isRefreshing, handleRefresh: refreshData } = useRefreshHandler();
 const { addNotification } = useNotifications();
 
 const tableHeaders = [
-    { text: 'STT', width: '60px', align: 'center' },
-    { text: 'Mã nhân viên', width: '100px', align: 'center' },
-    { text: 'Tên nhân viên', width: '130px', align: 'center' },
-    { text: 'Tên tài khoản', width: '160px', align: 'center' },
-    { text: 'Giới tính', width: '120px', align: 'center' },
-    { text: 'Số điện thoại', width: '100px', align: 'center' },
-    { text: 'Địa chỉ', width: '200px', align: 'start' },
-    { text: 'Chức vụ', width: '120px', align: 'center' },
-    { text: 'Trạng thái', width: '130px', align: 'center' },
-    { text: 'Hành động', width: '130px', align: 'center' }
+    { text: 'STT', width: '60px', align: 'center', class: 'text-no-wrap' },
+    { text: 'Mã nhân viên', width: '130px', align: 'center', class: 'text-no-wrap' },
+    { text: 'Tên nhân viên', width: '160px', align: 'center', class: 'text-no-wrap' },
+    { text: 'Tên tài khoản', width: '180px', align: 'center', class: 'text-no-wrap' },
+    { text: 'Giới tính', width: '100px', align: 'center', class: 'text-no-wrap' },
+    { text: 'Số điện thoại', width: '130px', align: 'center', class: 'text-no-wrap' },
+    { text: 'Địa chỉ', width: '250px', align: 'start', class: 'text-no-wrap' },
+    { text: 'Chức vụ', width: '130px', align: 'center', class: 'text-no-wrap' },
+    { text: 'Trạng thái', width: '140px', align: 'center', class: 'text-no-wrap' },
+    { text: 'Hành động', width: '120px', align: 'center', class: 'text-no-wrap' }
 ];
 
 const handleRefresh = async () => {

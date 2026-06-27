@@ -608,237 +608,237 @@ const dobRules = [
         <v-form ref="formRef">
             <v-row class="mb-6 d-flex align-stretch">
                 <v-col cols="12" lg="8" class="d-flex">
-                <!-- Basic Info -->
-                <v-card class="filter-card elevation-0 border border-slate-200 w-100 d-flex flex-column mb-0">
-                    <v-card-text class="pa-8 flex-grow-1">
-                        <div class="section-header d-flex align-center mb-6">
-                            <div class="icon-blob bg-blue-lighten-5 mr-3">
-                                <UserIcon class="text-primary" size="20" />
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin cá nhân</span>
-                        </div>
-
-                        <v-row>
-                            <v-col cols="12" md="4">
-                                <div class="field-label">Mã khách hàng</div>
-                                <v-text-field v-model="customerForm.ma" readonly
-                                    :placeholder="isEditMode ? 'KH-XXXX' : 'Hệ thống tự sinh khi lưu'"
-                                    variant="outlined" bg-color="white" density="compact"
-                                    class="font-weight-medium mono-font" hide-details></v-text-field>
-                            </v-col>
-                            <v-col cols="12" md="8">
-                                <div class="field-label">Họ và tên <span class="text-error">*</span></div>
-                                <v-text-field v-model="customerForm.ten" :readonly="isDetailView"
-                                    @blur="handleNameBlur"
-                                    :rules="nameRules"
-                                    placeholder="Ví dụ: Nguyễn Văn A" variant="outlined" bg-color="white"
-                                    density="compact" hide-details="auto"></v-text-field>
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="field-label">Email <span class="text-error">*</span></div>
-                                <v-text-field v-model="customerForm.email" :readonly="isDetailView"
-                                    @blur="handleEmailBlur"
-                                    :rules="emailRules"
-                                    placeholder="khachhang@gmail.com" variant="outlined" bg-color="white"
-                                    density="compact" hide-details="auto"></v-text-field>
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="field-label">Số điện thoại <span class="text-error">*</span></div>
-                                <v-text-field v-model="customerForm.sdt" :readonly="isDetailView"
-                                    @input="handlePhoneInput"
-                                    :rules="phoneRules"
-                                    placeholder="09xx.xxx.xxx" variant="outlined" bg-color="white" density="compact"
-                                    hide-details="auto"></v-text-field>
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="field-label">Ngày sinh</div>
-                                <AppDatePicker v-model="customerForm.ngaySinh" :disabled="isDetailView"
-                                    placeholder="Chọn ngày sinh"
-                                    :text-field-props="{ rules: dobRules }" />
-                            </v-col>
-                            <v-col cols="12" md="6">
-                                <div class="field-label">Giới tính</div>
-                                <v-select v-model="customerForm.gioiTinh" :readonly="isDetailView"
-                                    :items="GIOI_TINH_OPTIONS" variant="outlined" bg-color="white" density="compact"
-                                    hide-details></v-select>
-                            </v-col>
-                        </v-row>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-
-            <v-col cols="12" lg="4" class="d-flex">
-                <v-card class="filter-card elevation-0 border border-slate-200 w-100 d-flex flex-column mb-0">
-                    <v-card-text class="pa-8 text-center flex-grow-1">
-                        <div class="section-header d-flex align-center mb-6 text-left">
-                            <div class="icon-blob bg-blue-lighten-5 mr-3">
-                                <v-icon color="primary" size="18">mdi-camera</v-icon>
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Ảnh chân dung</span>
-                        </div>
-
-                        <div class="position-relative d-inline-block mx-auto mb-6">
-                            <v-avatar size="160" color="blue-lighten-5"
-                                class="border-xl border-white elevation-6 cursor-pointer avatar-hover transition-all overflow-hidden"
-                                @click="handleFileClick">
-                                <v-img :src="resolvedAvatarUrl" cover>
-                                    <template v-slot:placeholder>
-                                        <v-row class="fill-height ma-0" align="center" justify="center">
-                                            <v-progress-circular indeterminate color="primary"></v-progress-circular>
-                                        </v-row>
-                                    </template>
-                                </v-img>
-                                <div v-if="uploading" class="upload-overlay d-flex align-center justify-center">
-                                    <v-progress-circular indeterminate size="40" color="white"
-                                        width="5"></v-progress-circular>
+                    <!-- Basic Info -->
+                    <v-card class="filter-card elevation-0 border border-slate-200 w-100 d-flex flex-column mb-0">
+                        <v-card-text class="pa-8 flex-grow-1">
+                            <div class="section-header d-flex align-center mb-6">
+                                <div class="icon-blob bg-blue-lighten-5 mr-3">
+                                    <UserIcon class="text-primary" size="20" />
                                 </div>
-                            </v-avatar>
-                            <div v-if="!isDetailView" class="camera-icon-bubble" @click="handleFileClick">
-                                <v-icon color="white" size="20">mdi-camera-plus</v-icon>
+                                <span class="text-subtitle-1 font-weight-bold text-slate-800">Thông tin cá nhân</span>
                             </div>
-                        </div>
-                        <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="onFileChange" />
 
-                        <div v-if="!isDetailView" class="text-left">
-                            <div class="field-label">Liên kết ảnh (URL)</div>
-                            <v-text-field v-if="!isDetailView" v-model="customerForm.hinhAnh"
-                                placeholder="Dán URL ảnh hoặc nhấn vào vòng tròn phía trên" variant="outlined"
-                                bg-color="white" density="compact" hide-details
-                                class="font-weight-medium bg-slate-50"></v-text-field>
-                            <p class="text-caption font-weight-medium text-slate-400 mt-2 px-1">
-                                Gợi ý: Sử dụng ảnh .jpg hoặc .png chất lượng cao.
-                            </p>
-                        </div>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-        </v-row>
-
-        <!-- Row 2: Address Book & (Notes + Security) -->
-        <v-row class="pb-16 d-flex align-stretch">
-            <v-col cols="12" lg="8" class="d-flex">
-                <!-- Address Info Card -->
-                <v-card class="filter-card elevation-0 border border-slate-200 w-100 d-flex flex-column mb-0">
-                    <v-card-text class="pa-8 flex-grow-1">
-                        <div class="section-header d-flex align-center mb-6">
-                            <div class="icon-blob bg-amber-lighten-5 mr-3">
-                                <MapPinIcon class="text-amber-darken-3" size="20" />
-                            </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Số địa chỉ</span>
-                            <v-spacer></v-spacer>
-                            <v-btn v-if="isEditMode" variant="flat" color="primary" size="small"
-                                class="add-btn-primary text-none" @click="openAddrDialog()">
-                                <PlusIcon size="18" class="mr-2" />
-                                Thêm địa chỉ mới
-                            </v-btn>
-                        </div>
-
-                        <div v-if="(!isEditMode || listDiaChi.length === 0) && !isDetailView" class="mb-4">
                             <v-row>
                                 <v-col cols="12" md="4">
-                                    <div class="field-label">Tỉnh / Thành phố</div>
-                                    <v-autocomplete v-model="customerForm.tinh" :items="provinces" item-title="name"
-                                        item-value="code" placeholder="Chọn Tỉnh / Thành phố" variant="outlined"
-                                        bg-color="white" density="compact" />
+                                    <div class="field-label">Mã khách hàng</div>
+                                    <v-text-field v-model="customerForm.ma" readonly
+                                        :placeholder="isEditMode ? 'KH-XXXX' : 'Hệ thống tự sinh khi lưu'"
+                                        variant="outlined" bg-color="white" density="compact"
+                                        class="font-weight-medium mono-font" hide-details></v-text-field>
                                 </v-col>
-
-                                <v-col cols="12" md="4">
-                                    <div class="field-label">Quận / Huyện</div>
-                                    <v-autocomplete v-model="customerForm.thanhPho" :items="districts" item-title="name"
-                                        item-value="code" placeholder="Chọn Quận / Huyện" variant="outlined"
-                                        bg-color="white" density="compact" :disabled="!customerForm.tinh" />
+                                <v-col cols="12" md="8">
+                                    <div class="field-label">Họ và tên <span class="text-error">*</span></div>
+                                    <v-text-field v-model="customerForm.ten" :readonly="isDetailView"
+                                        @blur="handleNameBlur" :rules="nameRules" placeholder="Ví dụ: Nguyễn Văn A"
+                                        variant="outlined" bg-color="white" density="compact"
+                                        hide-details="auto"></v-text-field>
                                 </v-col>
-
-                                <v-col cols="12" md="4">
-                                    <div class="field-label">Phường / Xã</div>
-                                    <v-autocomplete v-model="customerForm.phuongXa" :items="wards" item-title="name"
-                                        item-value="code" placeholder="Chọn Phường / Xã" variant="outlined"
-                                        bg-color="white" density="compact" :disabled="!customerForm.thanhPho" />
+                                <v-col cols="12" md="6">
+                                    <div class="field-label">Email <span class="text-error">*</span></div>
+                                    <v-text-field v-model="customerForm.email" :readonly="isDetailView"
+                                        @blur="handleEmailBlur" :rules="emailRules" placeholder="khachhang@gmail.com"
+                                        variant="outlined" bg-color="white" density="compact"
+                                        hide-details="auto"></v-text-field>
                                 </v-col>
-
-                                <v-col cols="12">
-                                    <div class="field-label">Địa chỉ cụ thể (Số nhà, đường...)</div>
-                                    <v-textarea v-model="customerForm.diaChiChiTiet" placeholder="Nhập địa chỉ cụ thể"
-                                        variant="outlined" bg-color="white" rows="2" hide-details />
+                                <v-col cols="12" md="6">
+                                    <div class="field-label">Số điện thoại <span class="text-error">*</span></div>
+                                    <v-text-field v-model="customerForm.sdt" :readonly="isDetailView"
+                                        @input="handlePhoneInput" :rules="phoneRules" placeholder="09xx.xxx.xxx"
+                                        variant="outlined" bg-color="white" density="compact"
+                                        hide-details="auto"></v-text-field>
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="field-label">Ngày sinh</div>
+                                    <AppDatePicker v-model="customerForm.ngaySinh" :disabled="isDetailView"
+                                        placeholder="Chọn ngày sinh" :text-field-props="{ rules: dobRules }" />
+                                </v-col>
+                                <v-col cols="12" md="6">
+                                    <div class="field-label">Giới tính</div>
+                                    <v-select v-model="customerForm.gioiTinh" :readonly="isDetailView"
+                                        :items="GIOI_TINH_OPTIONS" variant="outlined" bg-color="white" density="compact"
+                                        hide-details></v-select>
                                 </v-col>
                             </v-row>
-                        </div>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
 
-                        <div v-else-if="listDiaChi.length > 0" class="address-list-scrollable custom-scrollbar pt-1"
-                            style="max-height: 400px; overflow-y: auto; padding-right: 8px; margin-right: -8px;">
-                            <div v-for="addr in listDiaChi" :key="addr.id"
-                                class="mb-4 pa-5 border rounded-xl d-flex align-center gap-4 bg-white shadow-sm hover-addr-card transition-all">
-                                <v-avatar color="primary" class="mr-2 elevation-2" size="36">
-                                    <v-icon color="white" size="18">mdi-map-marker</v-icon>
+                <v-col cols="12" lg="4" class="d-flex">
+                    <v-card class="filter-card elevation-0 border border-slate-200 w-100 d-flex flex-column mb-0">
+                        <v-card-text class="pa-8 text-center flex-grow-1">
+                            <div class="section-header d-flex align-center mb-6 text-left">
+                                <div class="icon-blob bg-blue-lighten-5 mr-3">
+                                    <v-icon color="primary" size="18">mdi-camera</v-icon>
+                                </div>
+                                <span class="text-subtitle-1 font-weight-bold text-slate-800">Ảnh chân dung</span>
+                            </div>
+
+                            <div class="position-relative d-inline-block mx-auto mb-6">
+                                <v-avatar size="160" color="blue-lighten-5"
+                                    class="cursor-pointer avatar-hover transition-all overflow-hidden"
+                                    @click="handleFileClick">
+                                    <v-img :src="resolvedAvatarUrl" cover>
+                                        <template v-slot:placeholder>
+                                            <v-row class="fill-height ma-0" align="center" justify="center">
+                                                <v-progress-circular indeterminate
+                                                    color="primary"></v-progress-circular>
+                                            </v-row>
+                                        </template>
+                                    </v-img>
+                                    <div v-if="uploading" class="upload-overlay d-flex align-center justify-center">
+                                        <v-progress-circular indeterminate size="40" color="white"
+                                            width="5"></v-progress-circular>
+                                    </div>
                                 </v-avatar>
-                                <div class="flex-grow-1">
-                                    <div class="d-flex align-center gap-2 mb-1">
-                                        <span class="font-weight-black text-slate-800">{{ addr.tenNguoiNhan }}</span>
-                                        <span class="text-caption font-weight-bold text-slate-400 px-2 border-l ml-1">
-                                            {{ addr.sdtNguoiNhan }}</span>
-                                        <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="flat"
-                                            class="ml-2 font-weight-black px-3">MẶC ĐỊNH</v-chip>
+                            </div>
+                            <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="onFileChange" />
+
+                            <div v-if="!isDetailView" class="text-left">
+                                <div class="field-label">Liên kết ảnh (URL)</div>
+                                <v-text-field v-if="!isDetailView" v-model="customerForm.hinhAnh"
+                                    placeholder="Dán URL ảnh hoặc nhấn vào vòng tròn phía trên" variant="outlined"
+                                    bg-color="white" density="compact" hide-details
+                                    class="font-weight-medium bg-slate-50"></v-text-field>
+                                <p class="text-caption font-weight-medium text-slate-400 mt-2 px-1">
+                                    Gợi ý: Sử dụng ảnh .jpg hoặc .png chất lượng cao.
+                                </p>
+                            </div>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+            </v-row>
+
+            <!-- Row 2: Address Book & (Notes + Security) -->
+            <v-row class="pb-16 d-flex align-stretch">
+                <v-col cols="12" lg="8" class="d-flex">
+                    <!-- Address Info Card -->
+                    <v-card class="filter-card elevation-0 border border-slate-200 w-100 d-flex flex-column mb-0">
+                        <v-card-text class="pa-8 flex-grow-1">
+                            <div class="section-header d-flex align-center mb-6">
+                                <div class="icon-blob bg-amber-lighten-5 mr-3">
+                                    <MapPinIcon class="text-amber-darken-3" size="20" />
+                                </div>
+                                <span class="text-subtitle-1 font-weight-bold text-slate-800">Số địa chỉ</span>
+                                <v-spacer></v-spacer>
+                                <v-btn v-if="isEditMode" variant="flat" color="primary" size="small"
+                                    class="add-btn-primary text-none" @click="openAddrDialog()">
+                                    <PlusIcon size="18" class="mr-2" />
+                                    Thêm địa chỉ mới
+                                </v-btn>
+                            </div>
+
+                            <div v-if="(!isEditMode || listDiaChi.length === 0) && !isDetailView" class="mb-4">
+                                <v-row>
+                                    <v-col cols="12" md="4">
+                                        <div class="field-label">Tỉnh / Thành phố</div>
+                                        <v-autocomplete v-model="customerForm.tinh" :items="provinces" item-title="name"
+                                            item-value="code" placeholder="Chọn Tỉnh / Thành phố" variant="outlined"
+                                            bg-color="white" density="compact" />
+                                    </v-col>
+
+                                    <v-col cols="12" md="4">
+                                        <div class="field-label">Quận / Huyện</div>
+                                        <v-autocomplete v-model="customerForm.thanhPho" :items="districts"
+                                            item-title="name" item-value="code" placeholder="Chọn Quận / Huyện"
+                                            variant="outlined" bg-color="white" density="compact"
+                                            :disabled="!customerForm.tinh" />
+                                    </v-col>
+
+                                    <v-col cols="12" md="4">
+                                        <div class="field-label">Phường / Xã</div>
+                                        <v-autocomplete v-model="customerForm.phuongXa" :items="wards" item-title="name"
+                                            item-value="code" placeholder="Chọn Phường / Xã" variant="outlined"
+                                            bg-color="white" density="compact" :disabled="!customerForm.thanhPho" />
+                                    </v-col>
+
+                                    <v-col cols="12">
+                                        <div class="field-label">Địa chỉ cụ thể (Số nhà, đường...)</div>
+                                        <v-textarea v-model="customerForm.diaChiChiTiet"
+                                            placeholder="Nhập địa chỉ cụ thể" variant="outlined" bg-color="white"
+                                            rows="2" hide-details />
+                                    </v-col>
+                                </v-row>
+                            </div>
+
+                            <div v-else-if="listDiaChi.length > 0" class="address-list-scrollable custom-scrollbar pt-1"
+                                style="max-height: 400px; overflow-y: auto; padding-right: 8px; margin-right: -8px;">
+                                <div v-for="addr in listDiaChi" :key="addr.id"
+                                    class="mb-4 pa-5 border rounded-xl d-flex align-center gap-4 bg-white shadow-sm hover-addr-card transition-all">
+                                    <v-avatar color="primary" class="mr-2 elevation-2" size="36">
+                                        <v-icon color="white" size="18">mdi-map-marker</v-icon>
+                                    </v-avatar>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-center gap-2 mb-1">
+                                            <span class="font-weight-black text-slate-800">{{ addr.tenNguoiNhan
+                                                }}</span>
+                                            <span
+                                                class="text-caption font-weight-bold text-slate-400 px-2 border-l ml-1">
+                                                {{ addr.sdtNguoiNhan }}</span>
+                                            <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="flat"
+                                                class="ml-2 font-weight-black px-3" style="color: white !important">Mặc
+                                                định</v-chip>
+                                        </div>
+                                        <div class="text-body-2 font-weight-bold text-slate-500">
+                                            {{ addr.diaChiChiTiet }}, {{ addr.phuongXa }}, {{ addr.thanhPho }}, {{
+                                                addr.tinh
+                                            }}
+                                        </div>
                                     </div>
-                                    <div class="text-body-2 font-weight-bold text-slate-500">
-                                        {{ addr.diaChiChiTiet }}, {{ addr.phuongXa }}, {{ addr.thanhPho }}, {{ addr.tinh
-                                        }}
+                                    <div class="d-flex align-center gap-1" v-if="!isDetailView">
+                                        <v-btn icon variant="text" size="small" color="primary"
+                                            @click="openAddrDialog(addr)" class="action-icon-btn">
+                                            <EditIcon size="18" />
+                                            <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
+                                        </v-btn>
+                                        <v-btn v-if="!addr.laMacDinh" icon variant="text" size="small" color="success"
+                                            @click="handleSetDefault(addr.id)" class="action-icon-btn">
+                                            <StarIcon size="18" />
+                                            <v-tooltip activator="parent" location="top">Đặt mặc định</v-tooltip>
+                                        </v-btn>
+                                        <v-btn v-if="!addr.laMacDinh" icon variant="text" size="small" color="error"
+                                            @click="handleDeleteAddr(addr.id)" class="action-icon-btn">
+                                            <TrashIcon size="18" />
+                                            <v-tooltip activator="parent" location="top">Xóa địa chỉ</v-tooltip>
+                                        </v-btn>
                                     </div>
                                 </div>
-                                <div class="d-flex align-center gap-1" v-if="!isDetailView">
-                                    <v-btn icon variant="text" size="small" color="primary"
-                                        @click="openAddrDialog(addr)" class="action-icon-btn">
-                                        <EditIcon size="18" />
-                                        <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
-                                    </v-btn>
-                                    <v-btn v-if="!addr.laMacDinh" icon variant="text" size="small" color="success"
-                                        @click="handleSetDefault(addr.id)" class="action-icon-btn">
-                                        <StarIcon size="18" />
-                                        <v-tooltip activator="parent" location="top">Đặt mặc định</v-tooltip>
-                                    </v-btn>
-                                    <v-btn v-if="!addr.laMacDinh" icon variant="text" size="small" color="error"
-                                        @click="handleDeleteAddr(addr.id)" class="action-icon-btn">
-                                        <TrashIcon size="18" />
-                                        <v-tooltip activator="parent" location="top">Xóa địa chỉ</v-tooltip>
-                                    </v-btn>
+                            </div>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+
+                <v-col cols="12" lg="4" class="d-flex flex-column" style="gap: 24px">
+                    <!-- Notes -->
+                    <v-card class="filter-card elevation-0 border border-slate-200 mb-0">
+                        <v-card-text class="pa-8">
+                            <div class="section-header d-flex align-center mb-6">
+                                <div class="icon-blob bg-slate-100 mr-3">
+                                    <NoteIcon class="text-slate-600" size="20" />
                                 </div>
+                                <span class="text-subtitle-1 font-weight-bold text-slate-800">Ghi chú & Thông tin
+                                    thêm</span>
                             </div>
-                        </div>
-                    </v-card-text>
-                </v-card>
-            </v-col>
+                            <v-textarea v-model="customerForm.ghiChu"
+                                placeholder="Ghi chú về khách hàng (Sở thích, lưu ý giao hàng...)" variant="outlined"
+                                bg-color="white" rows="3" hide-details></v-textarea>
+                        </v-card-text>
+                    </v-card>
 
-            <v-col cols="12" lg="4" class="d-flex flex-column" style="gap: 24px">
-                <!-- Notes -->
-                <v-card class="filter-card elevation-0 border border-slate-200 mb-0">
-                    <v-card-text class="pa-8">
-                        <div class="section-header d-flex align-center mb-6">
-                            <div class="icon-blob bg-slate-100 mr-3">
-                                <NoteIcon class="text-slate-600" size="20" />
+                    <!-- Security -->
+                    <v-card
+                        class="filter-card elevation-0 bg-primary-lighten-5 border-primary-lighten-4 flex-grow-1 d-flex flex-column justify-center mb-0">
+                        <v-card-text class="pa-8">
+                            <div class="d-flex align-center mb-4">
+                                <v-icon color="primary" size="24" class="mr-3">mdi-shield-check</v-icon>
+                                <span class="text-subtitle-1 font-weight-bold text-primary">Bảo mật tài khoản</span>
                             </div>
-                            <span class="text-subtitle-1 font-weight-bold text-slate-800">Ghi chú & Thông tin
-                                thêm</span>
-                        </div>
-                        <v-textarea v-model="customerForm.ghiChu"
-                            placeholder="Ghi chú về khách hàng (Sở thích, lưu ý giao hàng...)" variant="outlined"
-                            bg-color="white" rows="3" hide-details></v-textarea>
-                    </v-card-text>
-                </v-card>
-
-                <!-- Security -->
-                <v-card
-                    class="filter-card elevation-0 bg-primary-lighten-5 border-primary-lighten-4 flex-grow-1 d-flex flex-column justify-center mb-0">
-                    <v-card-text class="pa-8">
-                        <div class="d-flex align-center mb-4">
-                            <v-icon color="primary" size="24" class="mr-3">mdi-shield-check</v-icon>
-                            <span class="text-subtitle-1 font-weight-bold text-primary">Bảo mật tài khoản</span>
-                        </div>
-                        <p class="text-body-2 text-slate-600 mb-0">
-                            Hệ thống sẽ tự động khởi tạo các thông số bảo mật khi hồ sơ được tạo thành công.
-                        </p>
-                    </v-card-text>
-                </v-card>
-            </v-col>
-        </v-row>
+                            <p class="text-body-2 text-slate-600 mb-0">
+                                Hệ thống sẽ tự động khởi tạo các thông số bảo mật khi hồ sơ được tạo thành công.
+                            </p>
+                        </v-card-text>
+                    </v-card>
+                </v-col>
+            </v-row>
         </v-form>
 
         <!-- SHARED CONFIRM -->
@@ -884,7 +884,7 @@ const dobRules = [
                                         <td class="data-cell text-center">
                                             <span class="mono-font text-slate-500">{{ item.maSanPham || item.maSP ||
                                                 'N/A'
-                                            }}</span>
+                                                }}</span>
                                         </td>
                                         <td class="data-cell text-center">
                                             <span class="text-slate-800">{{ item.tenSanPham }}</span>
@@ -892,11 +892,11 @@ const dobRules = [
                                         <td class="data-cell text-center">
                                             <span class="mono-font text-slate-500">{{ item.maBienThe || item.maCTSP ||
                                                 'N/A'
-                                            }}</span>
+                                                }}</span>
                                         </td>
                                         <td class="data-cell text-center">
                                             <span class="text-slate-600">{{ item.tenMauSac }} / {{ item.tenKichThuoc
-                                            }}</span>
+                                                }}</span>
                                         </td>
                                         <td class="data-cell text-center">
                                             <span class="text-slate-600">{{ item.soLuong }}</span>
@@ -953,71 +953,75 @@ const dobRules = [
                     {{ isEditAddr ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới' }}</v-card-title>
                 <v-card-text class="pa-6">
                     <v-form ref="addrFormRef">
-                    <v-row>
-                        <v-col cols="12" md="6">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tên người nhận <span class="text-error">*</span></div>
-                            <v-text-field v-model="addrForm.tenNguoiNhan" placeholder="Nhập tên" variant="outlined"
-                                :rules="[(v) => !!v || 'Vui lòng nhập tên người nhận']"
-                                bg-color="white" density="compact" class="font-weight-medium"
-                                hide-details="auto"></v-text-field>
-                        </v-col>
-                        <v-col cols="12" md="6">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Số điện thoại <span class="text-error">*</span></div>
-                            <v-text-field v-model="addrForm.sdtNguoiNhan" placeholder="09xx..." variant="outlined"
-                                :rules="[
-                                    (v) => !!v || 'Vui lòng nhập số điện thoại',
-                                    (v) => /^[0-9]{10}$/.test(v) || 'Số điện thoại không hợp lệ'
-                                ]"
-                                bg-color="white" density="compact" class="font-weight-medium"
-                                hide-details="auto"></v-text-field>
-                        </v-col>
-                        <v-col cols="12" md="4">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tỉnh / Thành phố <span class="text-error">*</span></div>
-                            <v-autocomplete v-model="addrForm.tinh" :items="provinces" item-title="name"
-                                :rules="[(v) => !!v || 'Vui lòng chọn tỉnh/thành phố']"
-                                item-value="code" placeholder="Chọn" variant="outlined" bg-color="white"
-                                density="compact" hide-details="auto" :loading="loadingLocations.provinces"
-                                @update:model-value="
-                                    (val) => {
-                                        addrForm.thanhPho = null;
-                                        addrForm.phuongXa = null;
-                                        if (val) fetchDistricts(val);
-                                    }
-                                "></v-autocomplete>
-                        </v-col>
-                        <v-col cols="12" md="4">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Quận / Huyện <span class="text-error">*</span></div>
-                            <v-autocomplete v-model="addrForm.thanhPho" :items="districts" item-title="name"
-                                :rules="[(v) => !!v || 'Vui lòng chọn quận/huyện']"
-                                item-value="code" placeholder="Chọn" variant="outlined" bg-color="white"
-                                density="compact" hide-details="auto" :loading="loadingLocations.districts"
-                                :disabled="!addrForm.tinh" @update:model-value="
-                                    (val) => {
-                                        addrForm.phuongXa = null;
-                                        if (val) fetchWards(val);
-                                    }
-                                "></v-autocomplete>
-                        </v-col>
-                        <v-col cols="12" md="4">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Phường / Xã <span class="text-error">*</span></div>
-                            <v-autocomplete v-model="addrForm.phuongXa" :items="wards" item-title="name"
-                                :rules="[(v) => !!v || 'Vui lòng chọn phường/xã']"
-                                item-value="code" placeholder="Chọn" variant="outlined" bg-color="white"
-                                density="compact" hide-details="auto" :loading="loadingLocations.wards"
-                                :disabled="!addrForm.thanhPho"></v-autocomplete>
-                        </v-col>
-                        <v-col cols="12">
-                            <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Địa chỉ cụ thể <span class="text-error">*</span></div>
-                            <v-textarea v-model="addrForm.diaChiChiTiet" placeholder="Số nhà, đường..."
-                                :rules="[(v) => !!v || 'Vui lòng nhập địa chỉ cụ thể']"
-                                variant="outlined" bg-color="white" rows="2" class="font-weight-medium"
-                                hide-details="auto"></v-textarea>
-                        </v-col>
-                        <v-col cols="12" v-if="listDiaChi.length > 0">
-                            <v-checkbox v-model="addrForm.laMacDinh" label="Đặt làm địa chỉ mặc định" color="primary"
-                                hide-details density="compact"></v-checkbox>
-                        </v-col>
-                    </v-row>
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tên người nhận <span
+                                        class="text-error">*</span></div>
+                                <v-text-field v-model="addrForm.tenNguoiNhan" placeholder="Nhập tên" variant="outlined"
+                                    :rules="[(v) => !!v || 'Vui lòng nhập tên người nhận']" :readonly="true"
+                                    bg-color="white" density="compact" class="font-weight-medium bg-slate-50"
+                                    hide-details="auto"></v-text-field>
+                            </v-col>
+                            <v-col cols="12" md="6">
+                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Số điện thoại <span
+                                        class="text-error">*</span></div>
+                                <v-text-field v-model="addrForm.sdtNguoiNhan" placeholder="09xx..." variant="outlined"
+                                    :rules="[
+                                        (v) => !!v || 'Vui lòng nhập số điện thoại',
+                                        (v) => /^[0-9]{10}$/.test(v) || 'Số điện thoại không hợp lệ'
+                                    ]" :readonly="true" bg-color="white" density="compact"
+                                    class="font-weight-medium bg-slate-50" hide-details="auto"></v-text-field>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Tỉnh / Thành phố <span
+                                        class="text-error">*</span></div>
+                                <v-autocomplete v-model="addrForm.tinh" :items="provinces" item-title="name"
+                                    :rules="[(v) => !!v || 'Vui lòng chọn tỉnh/thành phố']" item-value="code"
+                                    placeholder="Chọn" variant="outlined" bg-color="white" density="compact"
+                                    hide-details="auto" :loading="loadingLocations.provinces" @update:model-value="
+                                        (val) => {
+                                            addrForm.thanhPho = null;
+                                            addrForm.phuongXa = null;
+                                            if (val) fetchDistricts(val);
+                                        }
+                                    "></v-autocomplete>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Quận / Huyện <span
+                                        class="text-error">*</span></div>
+                                <v-autocomplete v-model="addrForm.thanhPho" :items="districts" item-title="name"
+                                    :rules="[(v) => !!v || 'Vui lòng chọn quận/huyện']" item-value="code"
+                                    placeholder="Chọn" variant="outlined" bg-color="white" density="compact"
+                                    hide-details="auto" :loading="loadingLocations.districts" :disabled="!addrForm.tinh"
+                                    @update:model-value="
+                                        (val) => {
+                                            addrForm.phuongXa = null;
+                                            if (val) fetchWards(val);
+                                        }
+                                    "></v-autocomplete>
+                            </v-col>
+                            <v-col cols="12" md="4">
+                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Phường / Xã <span
+                                        class="text-error">*</span></div>
+                                <v-autocomplete v-model="addrForm.phuongXa" :items="wards" item-title="name"
+                                    :rules="[(v) => !!v || 'Vui lòng chọn phường/xã']" item-value="code"
+                                    placeholder="Chọn" variant="outlined" bg-color="white" density="compact"
+                                    hide-details="auto" :loading="loadingLocations.wards"
+                                    :disabled="!addrForm.thanhPho"></v-autocomplete>
+                            </v-col>
+                            <v-col cols="12">
+                                <div class="text-subtitle-2 font-weight-bold mb-1 ml-1 text-dark">Địa chỉ cụ thể <span
+                                        class="text-error">*</span></div>
+                                <v-textarea v-model="addrForm.diaChiChiTiet" placeholder="Số nhà, đường..."
+                                    :rules="[(v) => !!v || 'Vui lòng nhập địa chỉ cụ thể']" variant="outlined"
+                                    bg-color="white" rows="2" class="font-weight-medium"
+                                    hide-details="auto"></v-textarea>
+                            </v-col>
+                            <v-col cols="12" v-if="listDiaChi.length > 0">
+                                <v-checkbox v-model="addrForm.laMacDinh" label="Đặt làm địa chỉ mặc định"
+                                    color="primary" hide-details density="compact"></v-checkbox>
+                            </v-col>
+                        </v-row>
                     </v-form>
                 </v-card-text>
                 <v-divider></v-divider>
@@ -1185,10 +1189,12 @@ const dobRules = [
 
 /* Ép màu đỏ tươi cho các cảnh báo lỗi */
 #khach-hang-form-container :deep(.v-messages__message) {
-    color: #ef4444 !important; /* Đỏ tươi */
+    color: #ef4444 !important;
+    /* Đỏ tươi */
     font-weight: 500 !important;
     font-size: 11px !important;
 }
+
 #khach-hang-form-container :deep(.v-field--error) {
     --v-field-border-color: #ef4444 !important;
 }

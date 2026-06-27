@@ -152,24 +152,8 @@ const getDiscountValueDisplay = (campaign) => {
     return `${campaign?.soTienGiam}%`;
 };
 
-const dateRange = ref(null);
-
 const onDateRangeChange = (val) => {
-    dateRange.value = val;
-    if (val && val.length === 2) {
-        const formatDateString = (d) => {
-            if (!d) return null;
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        };
-        filters.value.startDate = formatDateString(val[0]);
-        filters.value.endDate = formatDateString(val[1]);
-    } else {
-        filters.value.startDate = null;
-        filters.value.endDate = null;
-    }
+    // Legacy function - kept to avoid breaking changes if used elsewhere
     handleSearch();
 };
 
@@ -233,13 +217,22 @@ onMounted(() => loadCampaigns());
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
 
-                <v-col cols="12" md="4" class="filter-cell">
-                    <div class="filter-field-label">Khoảng thời gian</div>
+                <v-col cols="12" md="2" class="filter-cell">
+                    <div class="filter-field-label">Từ ngày</div>
                     <AppDatePicker
-                        :model-value="dateRange"
-                        @update:model-value="onDateRangeChange"
-                        range
-                        placeholder="Từ ngày - Đến ngày"
+                        v-model="filters.startDate"
+                        @update:model-value="handleSearch"
+                        placeholder="Từ ngày"
+                        :text-field-props="{ class: 'compact-input date-field' }"
+                    />
+                </v-col>
+                <v-col cols="12" md="2" class="filter-cell">
+                    <div class="filter-field-label">Đến ngày</div>
+                    <AppDatePicker
+                        v-model="filters.endDate"
+                        @update:model-value="handleSearch"
+                        placeholder="Đến ngày"
+                        :text-field-props="{ class: 'compact-input date-field' }"
                     />
                 </v-col>
             </AdminFilter>

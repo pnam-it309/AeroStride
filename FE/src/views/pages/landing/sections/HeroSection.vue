@@ -40,12 +40,18 @@ const props = defineProps({
                     </v-col>
                     <v-col cols="12" lg="6" class="text-center reveal-container" :class="{ active: props.active }">
                         <div class="hero-shoe-wrapper reveal-item delay-4">
-                            <img
-                                :src="props.product?.imageUrl || '/assets/images/products/1.jpg'"
-                                alt="AeroStride Shoe"
+                            <model-viewer
+                                :src="props.product?.modelUrl || 'https://modelviewer.dev/shared-assets/models/Shoe.glb'"
+                                :poster="props.product?.imageUrl || '/assets/images/products/1.jpg'"
+                                alt="AeroStride 3D Shoe"
+                                camera-controls
+                                auto-rotate
+                                rotation-per-second="30deg"
+                                shadow-intensity="1"
+                                environment-image="neutral"
                                 class="the-shoe mx-auto hero-shoe-main"
-                                style="width: 100%; max-width: 600px; height: auto; object-fit: contain;"
-                            />
+                                style="width: 100%; max-width: 600px; height: 400px; display: block; outline: none;"
+                            ></model-viewer>
                         </div>
                     </v-col>
                 </v-row>

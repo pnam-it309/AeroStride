@@ -9,7 +9,7 @@ import { downloadFile } from '@/utils/fileUtils';
 import { formatDateTime, formatCurrency } from '@/utils/formatters';
 import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
 import { SYSTEM_STATUS, STATUS_OPTIONS } from '@/constants/statusConstants';
-import { PlusIcon, PencilIcon, StarIcon, TrashIcon, MapPinIcon } from 'vue-tabler-icons';
+import { PlusIcon, PencilIcon, StarIcon, TrashIcon, MapPinIcon, EyeIcon } from 'vue-tabler-icons';
 import axios from 'axios';
 
 import { useAdminTable } from '@/composables/useAdminTable';
@@ -58,7 +58,8 @@ const invoiceHistoryTableHeaders = [
     { text: 'Tổng số lượng', width: '110px', align: 'center' },
     { text: 'Loại hóa đơn', width: '130px', align: 'center' },
     { text: 'Giá trị đơn hàng', width: '140px', align: 'center' },
-    { text: 'Trạng thái', width: '120px', align: 'center' }
+    { text: 'Trạng thái', width: '120px', align: 'center' },
+    { text: 'Hành động', width: '100px', align: 'center' }
 ];
 
 const getInvoiceTypeLabel = (value) => {
@@ -222,24 +223,7 @@ const handleLocalFilterChange = () => {
     statsTab.handleFilter();
 };
 
-const dateRange = ref(null);
-
 const onDateRangeChange = (val) => {
-    dateRange.value = val;
-    if (val && val.length === 2) {
-        const formatDateString = (d) => {
-            if (!d) return null;
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        };
-        statsFilters.minNgayDonHang = formatDateString(val[0]);
-        statsFilters.maxNgayDonHang = formatDateString(val[1]);
-    } else {
-        statsFilters.minNgayDonHang = null;
-        statsFilters.maxNgayDonHang = null;
-    }
     handleLocalFilterChange();
 };
 
@@ -518,7 +502,7 @@ const doSaveAddress = async () => {
             // Nếu là thêm mới hoặc là địa chỉ giả lập -> gọi API Add
             delete payload.id; // Xóa ID giả trước khi Add
             await dichVuKhachHang.taoDiaChi(payload);
-            addNotification({ title: 'Thành công', subtitle: 'Đã thêm địa chỉ mới', color: 'success' });
+            addNotification({ title: 'Thành công', subtitle: isEditAddr.value ? 'Đã cập nhật địa chỉ' : 'Đã thêm địa chỉ mới', color: 'success' });
         }
 
         showAddrForm.value = false;
@@ -538,10 +522,9 @@ const doSaveAddress = async () => {
 const saveAddress = () => {
     if (!selectedKH.value) return;
 
-    const isEditing = isEditAddr.value && addrForm.value.id && !String(addrForm.value.id).startsWith('root-');
     setConfirm({
-        title: isEditing ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ',
-        message: isEditing ? 'Bạn có chắc muốn cập nhật địa chỉ này không?' : 'Bạn có chắc muốn thêm địa chỉ mới cho khách hàng này không?',
+        title: isEditAddr.value ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ',
+        message: isEditAddr.value ? 'Bạn có chắc muốn cập nhật địa chỉ này không?' : 'Bạn có chắc muốn thêm địa chỉ mới cho khách hàng này không?',
         color: 'primary',
         action: async () => {
             await doSaveAddress();
@@ -827,13 +810,22 @@ const updateInvoicePaginationSize = (size) => {
                         </v-col>
 
                         <!-- Khoảng thời gian mua -->
-                        <v-col cols="12" md="4" class="filter-cell">
-                            <div class="filter-field-label">Khoảng thời gian mua</div>
+                        <v-col cols="12" md="3" class="filter-cell">
+                            <div class="filter-field-label">Từ ngày</div>
                             <AppDatePicker
-                                :model-value="dateRange"
-                                @update:model-value="onDateRangeChange"
-                                range
-                                placeholder="Từ ngày - Đến ngày"
+                                v-model="statsFilters.minNgayDonHang"
+                                @update:model-value="handleLocalFilterChange"
+                                placeholder="Từ ngày"
+                                :text-field-props="{ class: 'compact-input date-field' }"
+                            />
+                        </v-col>
+                        <v-col cols="12" md="3" class="filter-cell">
+                            <div class="filter-field-label">Đến ngày</div>
+                            <AppDatePicker
+                                v-model="statsFilters.maxNgayDonHang"
+                                @update:model-value="handleLocalFilterChange"
+                                placeholder="Đến ngày"
+                                :text-field-props="{ class: 'compact-input date-field' }"
                             />
                         </v-col>
                     </template>
@@ -979,7 +971,7 @@ const updateInvoicePaginationSize = (size) => {
                                 <!-- Chi tiết -->
                                 <v-btn variant="text" class="action-icon-btn" @click.stop="openInvoicesDialog(item)">
                                     <component :is="ADMIN_ICONS.ACTION.VIEW" size="15" />
-                                    <v-tooltip activator="parent" location="top">Chi tiết hóa đơn</v-tooltip>
+                                    <v-tooltip activator="parent" location="top">Lịch sử mua hàng</v-tooltip>
                                 </v-btn>
                             </div>
                         </td>
@@ -1089,6 +1081,16 @@ const updateInvoicePaginationSize = (size) => {
                                 </v-chip>
                             </template>
                         </td>
+
+                        <!-- Hành động -->
+                        <td class="data-cell text-center" style="font-size: 13px">
+                            <v-btn icon variant="text" size="small" color="primary" 
+                                class="action-icon-btn" 
+                                @click.stop="openInvoiceDetail(item)">
+                                <EyeIcon size="18" />
+                                <v-tooltip activator="parent" location="top">Chi tiết hóa đơn</v-tooltip>
+                            </v-btn>
+                        </td>
                     </tr>
                 </template>
 
@@ -1169,8 +1171,8 @@ const updateInvoicePaginationSize = (size) => {
                                             style="font-size: 13px !important">
                                             {{ addr.tenNguoiNhan }}
                                         </span>
-                                        <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="tonal"
-                                            class="font-weight-medium px-2" style="font-size: 11px !important">Mặc
+                                        <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="flat"
+                                            class="font-weight-medium px-2" style="font-size: 11px !important; color: white !important">Mặc
                                             định</v-chip>
                                     </div>
 
@@ -1265,11 +1267,13 @@ const updateInvoicePaginationSize = (size) => {
                                     <v-col cols="12" md="6">
                                         <div class="field-label">Tên người nhận</div>
                                         <v-text-field v-model="addrForm.tenNguoiNhan" placeholder="Ví dụ: Nguyễn Văn A"
+                                            :readonly="true" class="bg-slate-50"
                                             variant="outlined" density="compact" hide-details />
                                     </v-col>
                                     <v-col cols="12" md="6">
                                         <div class="field-label">Số điện thoại</div>
                                         <v-text-field v-model="addrForm.sdtNguoiNhan" placeholder="09xx.xxx.xxx"
+                                            :readonly="true" class="bg-slate-50"
                                             variant="outlined" density="compact" hide-details />
                                     </v-col>
                                     <v-col cols="12">

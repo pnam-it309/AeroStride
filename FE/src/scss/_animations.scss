@@ -82,9 +82,9 @@
 .route-shell-enter-active,
 .route-shell-leave-active {
     transition:
-        opacity 0.34s cubic-bezier(0.2, 0.8, 0.2, 1),
-        transform 0.34s cubic-bezier(0.2, 0.8, 0.2, 1),
-        filter 0.34s cubic-bezier(0.2, 0.8, 0.2, 1);
+        opacity 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),
+        filter 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .route-shell-enter-from {

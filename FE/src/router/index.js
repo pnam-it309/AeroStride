@@ -6,6 +6,13 @@ import { PATH } from './routePaths';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 export const router = createRouter({
     history: createWebHistory(),
+    scrollBehavior(to, from, savedPosition) {
+        if (savedPosition) {
+            return savedPosition;
+        } else {
+            return { top: 0 };
+        }
+    },
     routes: [
         {
             path: PATH.LANDING,

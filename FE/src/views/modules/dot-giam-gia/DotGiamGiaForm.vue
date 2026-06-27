@@ -596,7 +596,9 @@ onMounted(init);
 
                             <div class="mb-5">
                                 <div class="field-label">Mức giảm giá (%) <span class="text-error">*</span></div>
-                                <v-text-field v-model.number="form.soTienGiam" :readonly="isDetailView" type="number"
+                                <v-text-field :model-value="form.soTienGiam" 
+                                    @update:model-value="val => { let v = Number(val); form.soTienGiam = isNaN(v) ? null : (v < 0 ? 0 : (v > 100 ? 100 : v)) }" 
+                                    :readonly="isDetailView" type="number"
                                     suffix="%" placeholder="0" variant="outlined" density="comfortable"
                                     hide-details></v-text-field>
                             </div>
@@ -628,7 +630,7 @@ onMounted(init);
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách sản phẩm</span>
                         </div>
 
-                        <AdminFilter title="Tìm kiếm sản phẩm" @refresh="handleRefreshSearch">
+                        <AdminFilter title="Tìm kiếm sản phẩm" class="mx-n4 bg-transparent" @refresh="handleRefreshSearch">
                             <v-col cols="12" sm="4">
                                 <div class="field-label-small mb-1">Tìm kiếm sản phẩm</div>
                                 <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
@@ -641,14 +643,16 @@ onMounted(init);
                             <table class="native-admin-table">
                                 <thead>
                                     <tr>
-                                        <th class="header-cell text-center" style="width: 40px"></th>
-                                        <th class="header-cell text-center" style="width: 60px">
-                                            <v-checkbox-btn density="compact" color="primary" hide-details
-                                                :model-value="isAllProductsSelected"
-                                                @change="toggleAllProductsSelection"></v-checkbox-btn>
+                                        <th class="header-cell text-center text-no-wrap" style="width: 40px"></th>
+                                        <th class="header-cell text-center text-no-wrap" style="width: 60px">
+                                            <div class="d-flex justify-center align-center">
+                                                <v-checkbox-btn density="compact" color="primary" hide-details
+                                                    :model-value="isAllProductsSelected"
+                                                    @change="toggleAllProductsSelection"></v-checkbox-btn>
+                                            </div>
                                         </th>
-                                        <th class="header-cell text-center">Mã sản phẩm</th>
-                                        <th class="header-cell text-center">Tên sản phẩm</th>
+                                        <th class="header-cell text-center text-no-wrap">Mã sản phẩm</th>
+                                        <th class="header-cell text-center text-no-wrap">Tên sản phẩm</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -739,7 +743,7 @@ onMounted(init);
                         </div>
 
                         <!-- Bộ lọc sản phẩm chi tiết sử dụng AdminFilter chuẩn -->
-                        <AdminFilter title="Bộ lọc sản phẩm" @refresh="resetDetailFilters">
+                        <AdminFilter title="Bộ lọc chi tiết" class="mx-n4 bg-transparent" @refresh="handleRefreshDetailSearch">
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Tìm kiếm sản phẩm</div>
                                 <v-text-field v-model="detailFilters.timKiem" prepend-inner-icon="mdi-magnify"
@@ -795,29 +799,33 @@ onMounted(init);
                             <table class="native-admin-table">
                                 <thead>
                                     <tr>
-                                        <th class="header-cell text-center" style="width: 50px">
-                                            <v-checkbox-btn density="compact" color="primary" hide-details :model-value="filteredSelectedDetails.length > 0 &&
-                                                filteredSelectedDetails.every((p) => bottomTableSelection.includes(p.id))
-                                                " @change="toggleAllBottomSelection"></v-checkbox-btn>
+                                        <th class="header-cell text-center text-no-wrap" style="width: 50px">
+                                            <div class="d-flex justify-center align-center">
+                                                <v-checkbox-btn density="compact" color="primary" hide-details :model-value="filteredSelectedDetails.length > 0 &&
+                                                    filteredSelectedDetails.every((p) => bottomTableSelection.includes(p.id))
+                                                    " @change="toggleAllBottomSelection"></v-checkbox-btn>
+                                            </div>
                                         </th>
-                                        <th class="header-cell text-center" style="width: 50px">STT</th>
-                                        <th class="header-cell text-center" style="width: 80px">Ảnh</th>
-                                        <th class="header-cell text-center">Mã biến thể</th>
-                                        <th class="header-cell text-center">Tên sản phẩm</th>
-                                        <th class="header-cell text-center">Giá bán</th>
-                                        <th class="header-cell text-center">Thương hiệu</th>
-                                        <th class="header-cell text-center">Chất liệu</th>
-                                        <th class="header-cell text-center">Kích cỡ</th>
-                                        <th class="header-cell text-center">Màu sắc</th>
+                                        <th class="header-cell text-center text-no-wrap" style="width: 50px">STT</th>
+                                        <th class="header-cell text-center text-no-wrap" style="width: 80px">Ảnh</th>
+                                        <th class="header-cell text-center text-no-wrap">Mã biến thể</th>
+                                        <th class="header-cell text-center text-no-wrap">Tên sản phẩm</th>
+                                        <th class="header-cell text-center text-no-wrap">Giá bán</th>
+                                        <th class="header-cell text-center text-no-wrap">Thương hiệu</th>
+                                        <th class="header-cell text-center text-no-wrap">Chất liệu</th>
+                                        <th class="header-cell text-center text-no-wrap">Kích cỡ</th>
+                                        <th class="header-cell text-center text-no-wrap">Màu sắc</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr v-for="(item, index) in paginatedSelectedDetails"
                                         :key="item.id + '-' + item.ma + '-' + index" class="data-row">
                                         <td class="data-cell text-center">
-                                            <v-checkbox-btn color="primary" hide-details density="compact"
-                                                :model-value="isVariantSelected(item.id)"
-                                                @update:model-value="toggleVariantSelection(item.id)"></v-checkbox-btn>
+                                            <div class="d-flex align-center justify-center" style="height: 32px">
+                                                <v-checkbox-btn color="primary" hide-details density="compact"
+                                                    :model-value="isVariantSelected(item.id)"
+                                                    @update:model-value="toggleVariantSelection(item.id)"></v-checkbox-btn>
+                                            </div>
                                         </td>
                                         <td class="data-cell text-center text-slate-500 font-weight-medium">
                                             {{ (bottomPage - 1) * bottomPageSize + index + 1 }}

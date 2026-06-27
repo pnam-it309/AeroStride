@@ -33,6 +33,7 @@ const decoratedShoes = computed(() => {
             p.mucDichChay ? `MỤC ĐÍCH: ${p.mucDichChay.toUpperCase()}` : 'TỐI ƯU'
         ],
         image: p.imageUrl || '',
+        modelUrl: p.modelUrl || '',
         id: p.id
     }));
 });
@@ -233,12 +234,18 @@ watch(
                                         </div>
                                     </div>
 
-                                    <img
+                                    <model-viewer
+                                        :src="currentShoe.modelUrl || 'https://modelviewer.dev/shared-assets/models/Shoe.glb'"
+                                        :poster="currentShoe.image || '/assets/images/products/1.jpg'"
                                         :alt="currentShoe.title"
-                                        :src="currentShoe.image"
+                                        camera-controls
+                                        auto-rotate
+                                        rotation-per-second="30deg"
+                                        shadow-intensity="1"
+                                        environment-image="neutral"
                                         class="the-shoe object-contain"
-                                        :style="{ transform: currentShoe.rotation, width: '100%', maxWidth: '500px', height: 'auto', zIndex: 10, position: 'relative' }"
-                                    />
+                                        :style="{ transform: currentShoe.rotation, width: '100%', maxWidth: '500px', height: '400px', zIndex: 10, position: 'relative', outline: 'none' }"
+                                    ></model-viewer>
                                     <div
                                         class="shadow-floor"
                                         :style="{

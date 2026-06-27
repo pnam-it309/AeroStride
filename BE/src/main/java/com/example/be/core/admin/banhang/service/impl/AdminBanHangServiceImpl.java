@@ -400,7 +400,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     public List<AdminBanHangKhachHangResponse> searchKhachHang(String keyword) {
-        return khachHangRepository.searchByKeyword(keyword).stream().map(kh -> AdminBanHangKhachHangResponse.builder()
+        return khachHangRepository.searchByKeyword(keyword, org.springframework.data.domain.PageRequest.of(0, 5)).stream().map(kh -> AdminBanHangKhachHangResponse.builder()
                 .id(kh.getId())
                 .tenKhachHang(kh.getTen())
                 .sdt(kh.getSdt())

@@ -552,7 +552,7 @@ onMounted(init);
                             </span>
                         </div>
 
-                        <AdminFilter title="Tìm kiếm khách hàng"
+                        <AdminFilter title="Tìm kiếm khách hàng" class="mx-n4 bg-transparent"
                             @refresh="() => { searchGlobal = ''; filterStartDate = null; filterEndDate = null; }">
                             <v-col cols="12" md="3">
                                 <div class="filter-field-label"
@@ -583,27 +583,31 @@ onMounted(init);
                             <table class="native-admin-table">
                                 <thead>
                                     <tr>
-                                        <th class="header-cell text-center" style="width: 50px">
-                                            <v-checkbox-btn v-model="isSelectAll" :readonly="isViewOnly" color="primary"
-                                                density="compact" hide-details class="d-inline-flex"></v-checkbox-btn>
+                                        <th class="header-cell text-center text-no-wrap" style="width: 50px">
+                                            <div class="d-flex justify-center align-center">
+                                                <v-checkbox-btn v-model="isSelectAll" :readonly="isViewOnly" color="primary"
+                                                    density="compact" hide-details class="d-inline-flex"></v-checkbox-btn>
+                                            </div>
                                         </th>
-                                        <th class="header-cell text-center" style="width: 60px">STT</th>
-                                        <th class="header-cell text-center" style="width: 130px">Mã KH</th>
-                                        <th class="header-cell text-center">Tên khách hàng</th>
-                                        <th class="header-cell text-center">Số điện thoại</th>
-                                        <th class="header-cell text-center">Email</th>
-                                        <th class="header-cell text-center" style="width: 120px">Ngày sinh</th>
-                                        <th class="header-cell text-center" style="width: 150px">Tổng chi tiêu</th>
-                                        <th class="header-cell text-center" style="width: 130px">Tổng đơn hàng</th>
-                                        <th class="header-cell text-center" style="width: 160px">Đơn hàng gần nhất</th>
+                                        <th class="header-cell text-center text-no-wrap" style="width: 60px">STT</th>
+                                        <th class="header-cell text-center text-no-wrap" style="width: 130px">Mã KH</th>
+                                        <th class="header-cell text-center text-no-wrap">Tên khách hàng</th>
+                                        <th class="header-cell text-center text-no-wrap">Số điện thoại</th>
+                                        <th class="header-cell text-center text-no-wrap">Email</th>
+                                        <th class="header-cell text-center text-no-wrap" style="width: 120px">Ngày sinh</th>
+                                        <th class="header-cell text-center text-no-wrap" style="width: 150px">Tổng chi tiêu</th>
+                                        <th class="header-cell text-center text-no-wrap" style="width: 130px">Tổng đơn hàng</th>
+                                        <th class="header-cell text-center text-no-wrap" style="width: 160px">Đơn hàng gần nhất</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr v-for="(item, index) in paginatedCustomers" :key="item.id" class="data-row">
                                         <td class="data-cell text-center">
-                                            <v-checkbox-btn v-model="selectedCustomerIds" :value="item.id"
-                                                :readonly="isViewOnly" color="primary" density="compact" hide-details
-                                                class="d-inline-flex"></v-checkbox-btn>
+                                            <div class="d-flex justify-center align-center">
+                                                <v-checkbox-btn v-model="selectedCustomerIds" :value="item.id"
+                                                    :readonly="isViewOnly" color="primary" density="compact" hide-details
+                                                    class="d-inline-flex"></v-checkbox-btn>
+                                            </div>
                                         </td>
                                         <td class="data-cell text-center">
                                             {{ (pagination.page - 1) * pagination.size + index + 1 }}

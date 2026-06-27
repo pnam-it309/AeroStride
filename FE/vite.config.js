@@ -91,10 +91,6 @@ export default defineConfig(({ mode }) => {
                 output: {
                     manualChunks(id) {
                         if (id.includes('node_modules')) {
-                            // Core libraries
-                            if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
-                                return 'vendor-core';
-                            }
                             // Heavy 3D libraries
                             if (id.includes('three') || id.includes('@google/model-viewer')) {
                                 return 'vendor-3d';
@@ -114,6 +110,10 @@ export default defineConfig(({ mode }) => {
                             // Vuetify
                             if (id.includes('vuetify')) {
                                 return 'vendor-vuetify';
+                            }
+                            // Core libraries
+                            if (id.includes('/node_modules/vue/') || id.includes('/node_modules/@vue/') || id.includes('/node_modules/pinia/') || id.includes('/node_modules/vue-router/')) {
+                                return 'vendor-core';
                             }
                             
                             // return 'vendor-utils';
@@ -155,12 +155,24 @@ export default defineConfig(({ mode }) => {
                     changeOrigin: true,
                     secure: false,
                     ws: true,
+                    configure: (proxy) => {
+                        proxy.on('error', (err) => {
+                            if (err.code === 'ECONNRESET') return;
+                            console.error('ws proxy error:', err);
+                        });
+                    }
                 },
                 '/ws-chat': {
                     target: `http://${env.BACKEND_HOST}:${env.BACKEND_PORT}`,
                     changeOrigin: true,
                     secure: false,
                     ws: true,
+                    configure: (proxy) => {
+                        proxy.on('error', (err) => {
+                            if (err.code === 'ECONNRESET') return;
+                            console.error('ws-chat proxy error:', err);
+                        });
+                    }
                 },
             }
         }

@@ -12,7 +12,7 @@ import java.util.Optional;
 @Repository
 public interface AdminBanHangKhachHangRepository extends KhachHangRepository {
     @Query("SELECT k FROM KhachHang k WHERE k.ten LIKE %:keyword% OR k.sdt LIKE %:keyword% OR k.email LIKE %:keyword%")
-    List<KhachHang> searchByKeyword(@Param("keyword") String keyword);
+    List<KhachHang> searchByKeyword(@Param("keyword") String keyword, org.springframework.data.domain.Pageable pageable);
 
     Optional<KhachHang> findFirstBySdt(String sdt);
 

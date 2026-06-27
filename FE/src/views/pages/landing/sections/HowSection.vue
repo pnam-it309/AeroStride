@@ -32,7 +32,8 @@ const decoratedProducts = computed(() => {
             { label: 'XUẤT XỨ', value: p.xuatXu || 'VIỆT NAM' },
             { label: 'GIÁ CHỈ TỪ', value: p.giaBanThapNhat ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.giaBanThapNhat) : '1.000.000 ₫' }
         ],
-        image: p.imageUrl || ''
+        image: p.imageUrl || '',
+        modelUrl: p.modelUrl || ''
     }));
 });
 
@@ -157,12 +158,18 @@ onUnmounted(() => {
                                 :style="{ transform: `rotateX(${rotationX}deg) rotateY(${rotationY}deg) rotateZ(${rotationZ}deg)` }"
                             >
                                 <div class="shoe-wrapper">
-                                    <img
+                                    <model-viewer
+                                        :src="activeProduct.modelUrl || 'https://modelviewer.dev/shared-assets/models/Shoe.glb'"
+                                        :poster="activeProduct.image || '/assets/images/products/1.jpg'"
                                         :alt="activeProduct.code"
-                                        :src="activeProduct.image"
+                                        camera-controls
+                                        auto-rotate
+                                        rotation-per-second="30deg"
+                                        shadow-intensity="1"
+                                        environment-image="neutral"
                                         class="shoe-img object-contain"
-                                        :style="{ width: '100%', maxWidth: '450px', height: 'auto', zIndex: 10, position: 'relative' }"
-                                    />
+                                        :style="{ width: '100%', maxWidth: '450px', height: '350px', zIndex: 10, position: 'relative', outline: 'none' }"
+                                    ></model-viewer>
                                     <div class="shoe-glow"></div>
                                 </div>
 
