@@ -1,3 +1,10 @@
+## [1.26.1](https://github.com/pnam-it309/AeroStride/compare/v1.26.0...v1.26.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* **BE:** resolve POS checkout status issue, list sorting, and missing customer code ([0aa4c8a](https://github.com/pnam-it309/AeroStride/commit/0aa4c8a6aaa99761f8412cb89a904e5531066949))
+
 # [1.26.0](https://github.com/pnam-it309/AeroStride/compare/v1.25.3...v1.26.0) (2026-06-27)
 
 
