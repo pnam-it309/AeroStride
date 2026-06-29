@@ -9,6 +9,7 @@ const KEYS = {
   REFRESH_TOKEN: '@aerostride_refresh_token',
   USER: '@aerostride_user',
   CART: '@aerostride_cart',
+  CHAT_SESSION: '@aerostride_chat_session',
 } as const;
 
 export const storage = {
@@ -47,6 +48,15 @@ export const storage = {
 
   async setCart(items: any[]): Promise<void> {
     await AsyncStorage.setItem(KEYS.CART, JSON.stringify(items));
+  },
+
+  // Chat session (persisted so guest conversations survive app restarts)
+  async getChatSessionId(): Promise<string | null> {
+    return AsyncStorage.getItem(KEYS.CHAT_SESSION);
+  },
+
+  async setChatSessionId(sessionId: string): Promise<void> {
+    await AsyncStorage.setItem(KEYS.CHAT_SESSION, sessionId);
   },
 
   // Clear all auth data

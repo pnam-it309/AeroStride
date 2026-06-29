@@ -33,9 +33,23 @@ export default function RootLayout() {
               animation: 'slide_from_bottom',
             }}
           />
+          <Stack.Screen
+            name="register"
+            options={{
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
+            }}
+          />
           <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
           <Stack.Screen name="orders/index" options={{ headerShown: false }} />
           <Stack.Screen name="orders/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="profile/index" options={{ headerShown: false }} />
+          <Stack.Screen name="profile/change-password" options={{ headerShown: false }} />
+          <Stack.Screen name="vouchers" options={{ headerShown: false }} />
+          <Stack.Screen name="about" options={{ headerShown: false }} />
+          <Stack.Screen name="help" options={{ headerShown: false }} />
+          <Stack.Screen name="notifications" options={{ headerShown: false }} />
+          <Stack.Screen name="chat" options={{ headerShown: false }} />
           <Stack.Screen
             name="checkout"
             options={{

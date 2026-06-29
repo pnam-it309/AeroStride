@@ -89,6 +89,13 @@ export default function AccountScreen() {
             <Text style={styles.role}>
               {user.role === 'ROLE_KHACH_HANG' ? 'Khách hàng' : user.role}
             </Text>
+            <Pressable
+              style={({ pressed }) => [styles.editProfileBtn, { opacity: pressed ? 0.8 : 1 }]}
+              onPress={() => router.push('/profile' as any)}
+            >
+              <Ionicons name="create-outline" size={14} color="#FFFFFF" />
+              <Text style={styles.editProfileText}>Chỉnh sửa hồ sơ</Text>
+            </Pressable>
           </>
         ) : (
           <>
@@ -131,7 +138,7 @@ export default function AccountScreen() {
           icon="pricetag-outline"
           label="Voucher"
           subtitle="Xem voucher khả dụng"
-          onPress={() => {}}
+          onPress={() => router.push('/vouchers' as any)}
           color={Brand.accent}
         />
       </View>
@@ -139,24 +146,31 @@ export default function AccountScreen() {
       <View style={styles.menuSection}>
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Cài đặt</Text>
         <MenuItem
+          icon="chatbubbles-outline"
+          label="Chat hỗ trợ"
+          subtitle="Trò chuyện với chúng tôi"
+          onPress={() => router.push('/chat' as any)}
+          color={Brand.primary}
+        />
+        <MenuItem
           icon="notifications-outline"
           label="Thông báo"
           subtitle="Quản lý thông báo"
-          onPress={() => {}}
+          onPress={() => router.push('/notifications' as any)}
           color={Brand.info}
         />
         <MenuItem
           icon="help-circle-outline"
           label="Trợ giúp"
           subtitle="Trung tâm hỗ trợ"
-          onPress={() => {}}
+          onPress={() => router.push('/help' as any)}
           color={Brand.success}
         />
         <MenuItem
           icon="information-circle-outline"
           label="Về AeroStride"
           subtitle="Phiên bản 1.0.0"
-          onPress={() => {}}
+          onPress={() => router.push('/about' as any)}
           color={Brand.warning}
         />
       </View>
@@ -209,6 +223,21 @@ const styles = StyleSheet.create({
   role: {
     color: '#94A3B8',
     fontSize: FontSizes.sm,
+  },
+  editProfileBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one + 2,
+    borderRadius: BorderRadius.full,
+    marginTop: Spacing.one,
+  },
+  editProfileText: {
+    color: '#FFFFFF',
+    fontSize: FontSizes.xs,
+    fontWeight: FontWeights.semibold,
   },
   loginButton: {
     backgroundColor: Brand.primary,

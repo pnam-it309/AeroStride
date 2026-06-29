@@ -152,7 +152,7 @@ export default function OrderDetailScreen() {
                     contentFit="cover"
                   />
                 ) : (
-                  <Ionicons name="shoe-prints-outline" size={20} color={theme.textTertiary} />
+                  <Ionicons name="footsteps-outline" size={20} color={theme.textTertiary} />
                 )}
               </View>
               <View style={styles.itemInfo}>

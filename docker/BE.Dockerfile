@@ -5,9 +5,7 @@ WORKDIR /app
 # Set Gradle User Home to a location that can be persisted via volumes/cache
 ENV GRADLE_USER_HOME=/app/.gradle
 
-# Install curl for healthchecks
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
+# (Removed curl installation as it's unnecessary and increases build time)
 # Copy only the dependency files first to leverage Docker layer caching
 COPY BE/gradle/ gradle/
 COPY BE/gradlew BE/build.gradle BE/settings.gradle BE/gradle.properties* ./
@@ -30,8 +28,7 @@ EXPOSE ${BE_PORT}
 ENV GRADLE_OPTS=${GRADLE_OPTS}
 
 # Development Entrypoint:
-# Runs compilation quietly in background (for DevTools hot-reload) and starts the app
-ENTRYPOINT ["sh", "-c", "(while true; do ./gradlew classes -q --no-daemon --no-configuration-cache; sleep 5; done) & ./gradlew bootRun --no-configuration-cache"]
+ENTRYPOINT ["sh", "-c", "./gradlew bootRun --no-daemon"]
 
 # Stage 2: Builder stage (Production)
 FROM build AS builder

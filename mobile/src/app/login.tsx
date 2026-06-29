@@ -43,7 +43,7 @@ export default function LoginScreen() {
       await login({
         username: username.trim(),
         password: password.trim(),
-        loginType: 'KHACH_HANG',
+        loginType: 'CLIENT',
       });
       router.back();
     } catch (error: any) {
@@ -151,6 +151,14 @@ export default function LoginScreen() {
             </Pressable>
           </Animated.View>
 
+          {/* Register link */}
+          <Animated.View entering={FadeInDown.delay(300).duration(500)} style={styles.registerRow}>
+            <Text style={styles.registerHint}>Chưa có tài khoản?</Text>
+            <Pressable onPress={() => router.push('/register' as any)} hitSlop={8}>
+              <Text style={styles.registerLink}>Đăng ký ngay</Text>
+            </Pressable>
+          </Animated.View>
+
           {/* Skip */}
           <Animated.View entering={FadeInDown.delay(400).duration(500)}>
             <Pressable
@@ -248,9 +256,25 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.md,
     fontWeight: FontWeights.bold,
   },
+  registerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.one + 2,
+    marginTop: Spacing.four,
+  },
+  registerHint: {
+    color: '#64748B',
+    fontSize: FontSizes.sm,
+  },
+  registerLink: {
+    color: Brand.primaryLight,
+    fontSize: FontSizes.sm,
+    fontWeight: FontWeights.bold,
+  },
   skipButton: {
     alignItems: 'center',
-    paddingVertical: Spacing.four,
+    paddingVertical: Spacing.three,
   },
   skipText: {
     color: '#64748B',

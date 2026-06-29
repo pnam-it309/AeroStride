@@ -1,5 +1,5 @@
 # Stage 1: Base/Build stage
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 
 # Copy package files first to leverage Docker layer caching
@@ -7,16 +7,6 @@ COPY FE/package*.json ./
 
 # Use BuildKit cache mount for npm cache to speed up installations
 # This avoids re-downloading packages even when package.json changes slightly
-RUN apk add --no-cache \
-      chromium \
-      nss \
-      freetype \
-      harfbuzz \
-      ca-certificates \
-      ttf-freefont
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-
 RUN --mount=type=cache,target=/root/.npm \
     npm install --legacy-peer-deps
 

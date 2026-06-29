@@ -52,7 +52,7 @@ export function ProductCard({ product }: ProductCardProps) {
           />
         ) : (
           <View style={styles.placeholderImage}>
-            <Ionicons name="shoe-prints-outline" size={40} color={theme.textTertiary} />
+            <Ionicons name="footsteps-outline" size={40} color={theme.textTertiary} />
           </View>
         )}
 

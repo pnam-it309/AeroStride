@@ -1,13 +1,16 @@
 package com.example.be.infrastructure.security.controller;
 
+import com.example.be.entity.KhachHang;
 import com.example.be.entity.RefreshToken;
 import com.example.be.infrastructure.constants.RoutesConstant;
 import com.example.be.infrastructure.security.JwtTokenProvider;
 import com.example.be.infrastructure.security.dto.AuthResponse;
 import com.example.be.infrastructure.security.dto.LoginRequest;
+import com.example.be.infrastructure.security.dto.RegisterRequest;
 import com.example.be.infrastructure.security.dto.TokenRefreshRequest;
 import com.example.be.infrastructure.security.service.RefreshTokenService;
 import com.example.be.infrastructure.config.ratelimit.RateLimit;
+import com.example.be.repository.KhachHangRepository;
 import com.example.be.core.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -29,6 +33,8 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
+    private final KhachHangRepository khachHangRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
     @RateLimit(limit = 5, windowSeconds = 60)
@@ -58,6 +64,48 @@ public class AuthController {
                 .build();
 
         return ResponseEntity.ok(ApiResponse.success(authResponse, "Đăng nhập thành công"));
+    }
+
+    @PostMapping("/register")
+    @RateLimit(limit = 5, windowSeconds = 60)
+    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
+        log.info("REGISTER ATTEMPT: account [{}], email [{}]", request.getTenTaiKhoan(), request.getEmail());
+
+        if (khachHangRepository.findByTenTaiKhoan(request.getTenTaiKhoan()).isPresent()) {
+            throw new RuntimeException("Tên tài khoản đã được sử dụng");
+        }
+        if (khachHangRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email đã được sử dụng");
+        }
+
+        KhachHang khachHang = KhachHang.builder()
+                .tenTaiKhoan(request.getTenTaiKhoan())
+                .email(request.getEmail())
+                .sdt(request.getSdt())
+                .matKhau(passwordEncoder.encode(request.getMatKhau()))
+                .xoaMem(false)
+                .build();
+        khachHang.setTen(request.getTen());
+        khachHangRepository.save(khachHang);
+
+        // Tự động đăng nhập sau khi đăng ký thành công (luồng CLIENT)
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken("CLIENT|" + request.getTenTaiKhoan(), request.getMatKhau()));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String role = userDetails.getAuthorities().iterator().next().getAuthority();
+        String jwt = jwtTokenProvider.generateToken(authentication);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getUsername(), role);
+
+        AuthResponse authResponse = AuthResponse.builder()
+                .accessToken(jwt)
+                .refreshToken(refreshToken.getToken())
+                .username(userDetails.getUsername())
+                .role(role)
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(authResponse, "Đăng ký thành công"));
     }
 
     @PostMapping("/refresh-token")

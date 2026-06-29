@@ -19,6 +19,23 @@ export interface LoginRequest {
   loginType?: string;
 }
 
+export interface RegisterRequest {
+  ten: string;
+  tenTaiKhoan: string;
+  email: string;
+  sdt: string;
+  matKhau: string;
+}
+
+const persistAuth = async (authData: AuthResponse) => {
+  await storage.setAccessToken(authData.accessToken);
+  await storage.setRefreshToken(authData.refreshToken);
+  await storage.setUser({
+    username: authData.username,
+    role: authData.role,
+  });
+};
+
 export const authService = {
   async login(data: LoginRequest): Promise<AuthResponse> {
     const response = await apiClient.post<ApiResponse<AuthResponse>>(
@@ -26,15 +43,17 @@ export const authService = {
       data
     );
     const authData = response.data.data;
+    await persistAuth(authData);
+    return authData;
+  },
 
-    // Store tokens and user info
-    await storage.setAccessToken(authData.accessToken);
-    await storage.setRefreshToken(authData.refreshToken);
-    await storage.setUser({
-      username: authData.username,
-      role: authData.role,
-    });
-
+  async register(data: RegisterRequest): Promise<AuthResponse> {
+    const response = await apiClient.post<ApiResponse<AuthResponse>>(
+      API_PATHS.AUTH.REGISTER,
+      data
+    );
+    const authData = response.data.data;
+    await persistAuth(authData);
     return authData;
   },
 

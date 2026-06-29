@@ -28,7 +28,7 @@ export function CartItemCard({ item }: CartItemCardProps) {
           <Image source={imageSource} style={styles.image} contentFit="cover" transition={200} />
         ) : (
           <View style={styles.placeholder}>
-            <Ionicons name="shoe-prints-outline" size={28} color={theme.textTertiary} />
+            <Ionicons name="footsteps-outline" size={28} color={theme.textTertiary} />
           </View>
         )}
       </View>

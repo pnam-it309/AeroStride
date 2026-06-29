@@ -1,10 +1,16 @@
+x-common: &common
+  restart: always
+  networks:
+    - aerostride-net
+
+x-java-env: &java-env
+  TZ: UTC
+
 services:
   redis:
     image: ${REDIS_IMAGE}
     container_name: aerostride-redis
-    restart: always
-    networks:
-      - aerostride-net
+    <<: *common
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -17,10 +23,31 @@ services:
         reservations:
           memory: 64M
 
+  mongo:
+    image: ${MONGO_IMAGE}
+    container_name: aerostride-mongo
+    <<: *common
+    ports:
+      - "${MONGO_PORT_HOST}:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+
   mysql:
     image: ${MYSQL_IMAGE}
     container_name: aerostride-mysql
-    restart: always
+    <<: *common
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
@@ -30,13 +57,12 @@ services:
       - "${MYSQL_PORT_HOST}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-    networks:
-      - aerostride-net
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
     deploy:
       resources:
         limits:
@@ -53,10 +79,11 @@ services:
       args:
         - BE_PORT=${BE_INTERNAL_PORT}
     container_name: aerostride-be
-    restart: always
+    <<: *common
     env_file:
       - .env
     environment:
+      <<: *java-env
       SERVER_PORT: ${SERVER_PORT}
       WATCHPACK_POLLING: "true"
     depends_on:
@@ -64,24 +91,26 @@ services:
         condition: service_healthy
       mysql:
         condition: service_healthy
-    links:
-      - mysql:mysql
+      mongo:
+        condition: service_healthy
     ports:
       - "${BACKEND_PORT}:${BE_INTERNAL_PORT}"
     volumes:
       - ${DOCKER_BE_VOL_APP}
       - be-build:/app/build
       - be-gradle:/app/.gradle
-    networks:
-      - aerostride-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${SERVER_PORT}/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
     deploy:
       resources:
         limits:
-          cpus: '2.0'
           memory: 2G
         reservations:
-          cpus: '0.5'
-          memory: 1G
+          memory: 512M
 
   frontend:
     image: ${FRONTEND_IMAGE}
@@ -98,7 +127,7 @@ services:
         - FE_DEV_PORT=${FE_DEV_PORT}
         - NGINX_PORT=${NGINX_PORT}
     container_name: aerostride-fe
-    restart: always
+    <<: *common
     environment:
       - BACKEND_HOST=aerostride-be
       - BACKEND_PORT=${BACKEND_PORT}
@@ -117,9 +146,7 @@ services:
       - .env
     depends_on:
       backend:
-        condition: service_started
-    networks:
-      - aerostride-net
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -134,13 +161,11 @@ services:
       context: ../mcp-server
       dockerfile: Dockerfile
     container_name: aerostride-mcp-server
-    restart: always
+    <<: *common
     env_file:
       - .env
     ports:
       - "3000:3000"
-    networks:
-      - aerostride-net
     deploy:
       resources:
         limits:
@@ -151,15 +176,13 @@ services:
   phpmyadmin:
     image: ${PHPMYADMIN_IMAGE}
     container_name: aerostride-phpmyadmin
-    restart: always
+    <<: *common
     environment:
       PMA_HOST: ${MYSQL_HOST}
       PMA_PORT: ${MYSQL_PORT}
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "${PHPMYADMIN_PORT_HOST}:${PHPMYADMIN_PORT_INTERNAL}"
-    networks:
-      - aerostride-net
     depends_on:
       mysql:
         condition: service_healthy
@@ -173,7 +196,7 @@ services:
   nginx-proxy:
     image: ${NGINX_IMAGE}
     container_name: aerostride-nginx
-    restart: always
+    <<: *common
     ports:
       - "${HTTP_PORT_HOST}:${NGINX_PORT}"
     volumes:
@@ -185,11 +208,12 @@ services:
       - FE_INTERNAL_PORT=${FE_INTERNAL_PORT}
       - BACKEND_HOST=${BACKEND_HOST}
       - NGINX_ROOT=${NGINX_ROOT_PROXY}
-    networks:
-      - aerostride-net
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_healthy
+
 networks:
   aerostride-net:
     driver: bridge
@@ -199,3 +223,4 @@ volumes:
   be-gradle:
   fe-node-modules:
   mysql-data:
+  mongo-data:

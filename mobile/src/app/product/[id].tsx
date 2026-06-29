@@ -203,7 +203,7 @@ export default function ProductDetailScreen() {
             </ScrollView>
           ) : (
             <View style={styles.placeholderImage}>
-              <Ionicons name="shoe-prints-outline" size={80} color={theme.textTertiary} />
+              <Ionicons name="footsteps-outline" size={80} color={theme.textTertiary} />
             </View>
           )}
 

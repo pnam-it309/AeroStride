@@ -211,7 +211,7 @@ export default function HomeScreen() {
                         transition={300}
                       />
                     ) : (
-                      <Ionicons name="shoe-prints-outline" size={40} color="#CBD5E1" />
+                      <Ionicons name="footsteps-outline" size={40} color="#CBD5E1" />
                     )}
                     <Pressable style={[styles.favoriteBtn, { backgroundColor: theme.surfaceElevated, borderColor: theme.border, borderWidth: 1 }]}>
                       <Ionicons name="heart-outline" size={18} color="#94A3B8" />
@@ -260,7 +260,7 @@ export default function HomeScreen() {
                         transition={300}
                       />
                     ) : (
-                      <Ionicons name="shoe-prints-outline" size={36} color="#CBD5E1" />
+                      <Ionicons name="footsteps-outline" size={36} color="#CBD5E1" />
                     )}
                     <Pressable style={[styles.favoriteBtn, { backgroundColor: theme.surfaceElevated, borderColor: theme.border, borderWidth: 1 }]}>
                       <Ionicons name="heart-outline" size={16} color="#94A3B8" />

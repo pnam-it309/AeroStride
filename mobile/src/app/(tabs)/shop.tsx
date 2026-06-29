@@ -121,7 +121,7 @@ export default function ShopScreen() {
           {imageSource ? (
             <Image source={imageSource} style={styles.image} contentFit="cover" transition={300} />
           ) : (
-            <Ionicons name="shoe-prints-outline" size={36} color={theme.textTertiary} />
+            <Ionicons name="footsteps-outline" size={36} color={theme.textTertiary} />
           )}
         </View>
         <View style={styles.info}>

@@ -19,6 +19,10 @@ const rawShifts = ref([]);
 const mainTab = ref('table'); // 'table', 'calendar'
 const calendarTab = ref('week'); // 'day', 'week', 'month'
 
+const toolbarIcon = computed(() => mainTab.value === 'table' ? 'mdi-table-large' : 'mdi-calendar-range');
+const toolbarTitle = computed(() => mainTab.value === 'table' ? 'Bảng phân lịch làm việc' : 'Lịch làm việc');
+
+
 const filters = ref({
     search: '',
     ca: null,
@@ -573,10 +577,8 @@ onMounted(() => {
             <!-- Shared Toolbar -->
             <div class="table-toolbar d-flex align-center justify-space-between pa-3 border-b flex-wrap gap-2">
                 <div class="d-flex align-center">
-                    <v-icon color="primary" class="mr-3">{{ mainTab === 'table' ? 'mdi-table-large' :
-                        'mdi-calendar-range' }}</v-icon>
-                    <h3 class="text-h6 font-weight-bold text-black tracking-tight">{{ mainTab === 'table' ? 'Bảng phân
-                        lịch làm việc' : 'Lịch làm việc' }}</h3>
+                    <v-icon color="primary" class="mr-3">{{ toolbarIcon }}</v-icon>
+                    <h3 class="text-h6 font-weight-bold text-black tracking-tight">{{ toolbarTitle }}</h3>
                 </div>
                 <div class="d-flex align-center flex-wrap justify-end gap-2 admin-toolbar-actions">
                     <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-secondary"
@@ -797,7 +799,7 @@ onMounted(() => {
                                             </span>
                                             <span class="text-truncate font-weight-black text-slate-800"
                                                 style="flex: 1;">{{
-                                                s.nhanVien }}</span>
+                                                    s.nhanVien }}</span>
                                         </div>
                                     </div>
                                 </div>

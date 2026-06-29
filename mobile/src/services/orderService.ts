@@ -55,6 +55,7 @@ export interface CheckoutRequest {
   items: {
     idChiTietSanPham: string;
     soLuong: number;
+    giaDuKien: number;
   }[];
   tenNguoiNhan: string;
   soDienThoai: string;
@@ -115,6 +116,16 @@ export const orderService = {
     const response = await apiClient.get<ApiResponse<Voucher[]>>(
       API_PATHS.ORDER.VOUCHERS,
       { params: tongTien ? { tongTien } : {} }
+    );
+    return response.data.data;
+  },
+
+  // Tạo URL thanh toán VNPay cho đơn đã tạo (BE returns the URL string)
+  async createVnPayUrl(id: string, returnUrl: string): Promise<string> {
+    const response = await apiClient.post<ApiResponse<string>>(
+      API_PATHS.ORDER.VNPAY_URL(id),
+      null,
+      { params: { returnUrl } }
     );
     return response.data.data;
   },
