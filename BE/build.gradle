@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.4.6'
+    id 'org.springframework.boot' version '4.1.0'
     id 'jacoco'
 }
 
@@ -30,7 +30,7 @@ ext {
 
 
 dependencies {
-    def springBootBom = platform("org.springframework.boot:spring-boot-dependencies:3.4.6")
+    def springBootBom = platform("org.springframework.boot:spring-boot-dependencies:4.1.0")
     def springAiBom = platform("org.springframework.ai:spring-ai-bom:${springAiVersion}")
     
     implementation springBootBom
