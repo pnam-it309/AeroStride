@@ -16,9 +16,12 @@ import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.exceptions.BusinessException;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.repository.DiaChiRepository;
+import com.example.be.repository.NhanVienRepository;
+import com.example.be.repository.LichSuTrangThaiHoaDonRepository;
 import com.example.be.utils.DiscountPriceUtils;
 import com.example.be.utils.HelperUtils;
 import com.example.be.utils.CodeUtils;
+import com.example.be.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -46,6 +49,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     private final AdminBanHangPhuongThucThanhToanRepository phuongThucThanhToanRepository;
     private final AdminChiTietDotGiamGiaRepository chiTietDotGiamGiaRepository;
     private final DiaChiRepository diaChiRepository;
+    private final NhanVienRepository nhanVienRepository;
+    private final LichSuTrangThaiHoaDonRepository lichSuTrangThaiHoaDonRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -248,6 +253,11 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             hd.setPhieuGiamGia(null);
         }
 
+        // Set nhanVien based on currently authenticated user
+        SecurityUtils.getCurrentUserEmail().ifPresent(username -> {
+            nhanVienRepository.findByTenTaiKhoan(username).ifPresent(hd::setNhanVien);
+        });
+
         // Tồn kho đã được trừ lúc thêm vào giỏ hàng, nên không cần trừ lại ở đây nữa.
         // Chỉ cần cập nhật trạng thái hóa đơn.
 
@@ -272,6 +282,17 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         if (request.getTienChuyenKhoan() != null && request.getTienChuyenKhoan().compareTo(BigDecimal.ZERO) > 0) {
             createGiaoDich(hd, "CHUYEN_KHOAN", request.getTienChuyenKhoan(), request.getMaGiaoDich());
         }
+
+        // Add history record for timeline
+        LichSuTrangThaiHoaDon history = LichSuTrangThaiHoaDon.builder()
+                .hoaDon(hd)
+                .trangThaiCu(OrderStatus.CHO_XAC_NHAN.ordinal())
+                .trangThaiMoi(OrderStatus.HOAN_THANH.ordinal())
+                .ghiChu("Thanh toán tại quầy thành công")
+                .nguoiThucHien(SecurityUtils.getCurrentUserEmail().orElse("ADMIN"))
+                .build();
+        history.setNgayTao(System.currentTimeMillis());
+        lichSuTrangThaiHoaDonRepository.save(history);
     }
 
     private KhachHang resolveCheckoutCustomer(HoaDon hd, AdminBanHangCheckoutRequest request) {

@@ -12,6 +12,7 @@ import java.util.List;
 public interface AdminHoaDonMapper {
 
     @Mapping(target = "tenKhachHang", source = "khachHang.ten")
+    @Mapping(target = "maKhachHang", source = "khachHang.ma")
     @Mapping(target = "soDienThoaiKhachHang", source = "khachHang.sdt")
     @Mapping(target = "emailKhachHang", source = "khachHang.email")
     @Mapping(target = "tenNhanVien", source = "nhanVien.ten")

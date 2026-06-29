@@ -35,6 +35,7 @@ public class AdminHoaDonDetailResponse {
     private String tenPhieuGiamGia;
 
     private String tenKhachHang;
+    private String maKhachHang;
     private String soDienThoaiKhachHang;
     private String emailKhachHang;
 
