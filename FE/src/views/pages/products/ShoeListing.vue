@@ -43,7 +43,13 @@ const fetchFilters = async () => {
             { title: 'Chất liệu', key: 'chatLieuId', items: data.chatLieus },
             { title: 'Xuất xứ', key: 'xuatXuId', items: data.xuatXus },
             { title: 'Mục đích', key: 'mucDichChayId', items: data.mucDichChays },
-            { title: 'Giới tính', key: 'gioiTinhKhachHang', items: (data.gioiTinhKhachHangs || []).map((g) => ({ id: g, ten: g })) }
+            { 
+                title: 'Giới tính', 
+                key: 'gioiTinhKhachHang', 
+                items: (data.gioiTinhKhachHangs || [])
+                    .filter(g => g !== 'TRE_EM')
+                    .map((g) => ({ id: g, ten: translateGender(g) })) 
+            }
         ];
     } catch (error) {
         console.error('Error fetching filters:', error);
@@ -121,7 +127,7 @@ const translateGender = (gender) => {
         <MainHeader />
 
         <!-- Separate Promotion Bar -->
-        <div class="header-spacing" style="height: 104px"></div>
+        <div class="header-spacing" style="height: 94px"></div>
         <PromotionBar />
 
         <!-- Sub-header (Title & Global Filters) -->
@@ -174,14 +180,14 @@ const translateGender = (gender) => {
                         <div class="filter-group mb-8">
                             <h3 class="filter-main-label mb-4">Giày</h3>
                         </div>
-                        <v-expansion-panels flat variant="accordion">
-                            <v-expansion-panel v-for="filter in filters" :key="filter.title" :title="filter.title" class="filter-panel">
+                        <v-expansion-panels flat variant="accordion" bg-color="transparent">
+                            <v-expansion-panel v-for="filter in filters" :key="filter.title" :title="filter.title" class="filter-panel bg-transparent">
                                 <v-expansion-panel-text>
                                     <v-radio-group v-model="searchParams[filter.key]" @change="handleFilterChange">
                                         <v-radio
                                             v-for="item in filter.items"
                                             :key="item.id || item"
-                                            :label="item.ten || translateGender(item)"
+                                            :label="item.ten"
                                             :value="item.id || item"
                                             color="black"
                                             density="compact"
@@ -213,8 +219,6 @@ const translateGender = (gender) => {
                                 <div class="image-box-placeholder mb-4">
                                     <v-img v-if="p.hinhAnh" :src="p.hinhAnh" cover class="fill-height"></v-img>
                                     <v-icon v-else size="64" color="grey-lighten-2">mdi-image-outline</v-icon>
-                                    <div class="corner-border tl"></div>
-                                    <div class="corner-border br"></div>
                                 </div>
 
                                 <!-- Content -->
@@ -251,7 +255,7 @@ const translateGender = (gender) => {
 
 <style scoped lang="scss">
 .shoe-listing-page {
-    padding-top: 64px;
+    background: #fff;
 }
 
 .listing-subheader {
@@ -273,8 +277,8 @@ const translateGender = (gender) => {
 
 .filter-main-label {
     font-size: 1.1rem;
-    font-weight: 900;
-    color: #000;
+    font-weight: 800;
+    color: #1e293b;
 }
 .filter-panel {
     border-top: 1px solid #f0f0f0 !important;
@@ -300,7 +304,7 @@ const translateGender = (gender) => {
     transition: transform 0.3s ease;
     &:hover {
         .image-box-placeholder {
-            background: #eeeeee;
+            transform: scale(1.02);
         }
         .product-name {
             color: #2962ff;
@@ -311,46 +315,28 @@ const translateGender = (gender) => {
 .image-box-placeholder {
     width: 100%;
     aspect-ratio: 1;
-    background: #f6f6f6;
+    background: transparent;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     overflow: hidden;
-    transition: background 0.3s ease;
-
-    .corner-border {
-        position: absolute;
-        width: 20px;
-        height: 20px;
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        &.tl {
-            top: 10px;
-            left: 10px;
-            border-right: none;
-            border-bottom: none;
-        }
-        &.br {
-            bottom: 10px;
-            right: 10px;
-            border-left: none;
-            border-top: none;
-        }
-    }
+    transition: transform 0.3s ease;
 }
 
 .product-info {
     .promo-label {
         color: #ff3d00;
         font-size: 0.85rem;
-        font-weight: 900;
+        font-weight: 800;
         display: block;
         margin-bottom: 4px;
     }
     .product-name {
         font-size: 1rem;
-        font-weight: 900;
-        color: #000;
+        font-weight: 700;
+        color: #1e293b;
         margin-bottom: 2px;
     }
     .product-category {
@@ -360,7 +346,7 @@ const translateGender = (gender) => {
         margin-bottom: 4px;
     }
     .product-price {
-        font-size: 1rem;
+        font-size: 1.05rem;
         font-weight: 800;
         color: #111;
     }

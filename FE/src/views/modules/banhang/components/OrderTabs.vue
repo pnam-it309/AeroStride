@@ -31,7 +31,6 @@ const emit = defineEmits(['select', 'create', 'close']);
                 Đơn hàng #{{ order.maHoaDon || idx + 1 }}
             </span>
             <v-btn
-                v-if="orders.length > 1"
                 icon
                 size="x-small"
                 variant="text"

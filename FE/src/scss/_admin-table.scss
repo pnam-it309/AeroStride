@@ -12,6 +12,15 @@
     overflow: hidden !important;
 }
 
+/* Root của AdminTable: nối chuỗi flex để table chiếm hết chiều cao còn lại
+   trong .admin-module-page (100vh). Trang không dùng wrapper này sẽ giữ nguyên hành vi cũ. */
+.admin-table-main-root {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
 .admin-table-container {
     display: flex !important;
     flex-direction: column !important;
@@ -22,6 +31,15 @@
     overflow: hidden;
     box-shadow: $box-shadow-premium !important;
     margin: 16px;
+}
+
+/* Vùng cuộn của bảng: chỉ thân bảng cuộn dọc, header dính ở trên (.header-cell đã sticky),
+   footer phân trang luôn hiển thị. Nhờ vậy đặt 100 dòng/trang không làm dài cả trang. */
+.table-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: auto;
 }
 
 .native-admin-table {

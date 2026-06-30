@@ -1,0 +1,10 @@
+# Static Gradle config mounted INTO the backend container over /app/gradle.properties.
+# This shields the container from BE/gradle.properties on the host (which may contain
+# ${ENV} placeholders that Gradle cannot parse). Override org.gradle.* via GRADLE_OPTS
+# (-Dorg.gradle.workers.max=N ...) from docker/.env if you need per-environment values.
+org.gradle.daemon=true
+org.gradle.parallel=true
+org.gradle.workers.max=2
+org.gradle.configuration-cache=true
+org.gradle.vfs.watch=false
+org.gradle.jvmargs=-Xms128m -Xmx384m -XX:+UseG1GC -XX:TieredStopAtLevel=1 -XX:CICompilerCount=2 -Dfile.encoding=UTF-8

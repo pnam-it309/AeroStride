@@ -2,9 +2,9 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 
 const messages = [
-    { text: 'Free Standard Delivery & 30-Day Free Returns', linkText: 'Join Now', link: '#' },
-    { text: 'Extra 20% Off Select Sale Styles', linkText: 'Shop All', link: '#' },
-    { text: 'New AeroStride X1 "Sensor" Is Here', linkText: 'Explore', link: '#' }
+    { text: 'Miễn phí Giao hàng & Đổi trả trong 30 ngày', linkText: 'Tham gia ngay', link: '#' },
+    { text: 'Giảm thêm 20% cho sản phẩm Sale', linkText: 'Mua ngay', link: '#' },
+    { text: 'Siêu phẩm AeroStride X1 "Sensor" đã ra mắt', linkText: 'Khám phá', link: '#' }
 ];
 
 const currentIndex = ref(0);
@@ -27,7 +27,7 @@ onUnmounted(() => {
             <div :key="currentIndex" class="promo-content py-2 text-center">
                 <span class="promo-text">{{ messages[currentIndex].text }}</span>
                 <a :href="messages[currentIndex].link" class="promo-link ml-2">{{ messages[currentIndex].linkText }}</a>
-                <a href="#" class="promo-details ml-4">View Details</a>
+                <a href="#" class="promo-details ml-4">Xem chi tiết</a>
             </div>
         </transition>
     </div>

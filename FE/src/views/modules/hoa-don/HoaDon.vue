@@ -50,10 +50,9 @@ const {
         search: p.search || undefined,
         tuNgay: p.fromDate || undefined,
         denNgay: p.toDate || undefined,
-        sortDirection: p.sortDirection,
         loaiDon: p.loaiDon || undefined,
         sortBy: 'ngayTao',
-        sortDirection: 'asc',
+        sortDirection: p.sortDirection,
         ...(nTrangThai !== null ? { trangThai: nTrangThai } : {})
     };
     const res = await dichVuHoaDon.layHoaDonPhanTrang(params);
@@ -70,7 +69,7 @@ const {
     loaiDon: null,
     fromDate: getTodayDate(),
     toDate: getTodayDate(),
-    sortDirection: 'ASC'
+    sortDirection: 'DESC'
 });
 
 const sortOptions = [
@@ -162,27 +161,51 @@ const handleExport = async () => {
 
 const getRowNumber = (index) => (pagination.value.page - 1) * pagination.value.size + index + 1;
 
-const dateRange = ref([new Date(), new Date()]);
+// Tách "Khoảng thời gian" thành 2 ô riêng: Từ ngày / Đến ngày (cải thiện UI/UX)
+const fromDateModel = ref(new Date());
+const toDateModel = ref(new Date());
 
-const onDateRangeChange = (val) => {
-    dateRange.value = val;
-    if (val && val.length === 2) {
-        // Handle timezone issues by taking parts directly
-        const formatDateString = (d) => {
-            if (!d) return null;
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        };
-        filters.value.fromDate = formatDateString(val[0]);
-        filters.value.toDate = formatDateString(val[1]);
-    } else {
-        filters.value.fromDate = null;
-        filters.value.toDate = null;
-    }
-    handleSearch();
+// Chuyển Date -> chuỗi 'YYYY-MM-DD' (tránh lệch timezone bằng cách lấy từng phần)
+const formatDateString = (d) => {
+    if (!d) return null;
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 };
+
+// Cập nhật filters khi đổi "Từ ngày". Watcher (filters.fromDate) tự gọi lại handleSearch.
+const onFromDateChange = (val) => {
+    fromDateModel.value = val || null;
+    filters.value.fromDate = formatDateString(val);
+    // Nếu "Từ ngày" vượt quá "Đến ngày" thì kéo "Đến ngày" theo cho hợp lệ
+    if (val && toDateModel.value && val > toDateModel.value) {
+        toDateModel.value = val;
+        filters.value.toDate = formatDateString(val);
+    }
+};
+
+// Cập nhật filters khi đổi "Đến ngày".
+const onToDateChange = (val) => {
+    toDateModel.value = val || null;
+    filters.value.toDate = formatDateString(val);
+    // Nếu "Đến ngày" nhỏ hơn "Từ ngày" thì kéo "Từ ngày" theo cho hợp lệ
+    if (val && fromDateModel.value && val < fromDateModel.value) {
+        fromDateModel.value = val;
+        filters.value.fromDate = formatDateString(val);
+    }
+};
+
+// Đồng bộ 2 ô picker khi filters đổi từ bên ngoài (vd nút "Làm mới" reset về hôm nay).
+// Có guard so sánh chuỗi để không tạo vòng lặp với 2 handler ở trên.
+watch(() => [filters.value.fromDate, filters.value.toDate], ([from, to]) => {
+    if (from !== formatDateString(fromDateModel.value)) {
+        fromDateModel.value = from ? new Date(`${from}T00:00:00`) : null;
+    }
+    if (to !== formatDateString(toDateModel.value)) {
+        toDateModel.value = to ? new Date(`${to}T00:00:00`) : null;
+    }
+});
 
 const hasCount = (value) => Number(value) > 0;
 
@@ -267,13 +290,23 @@ onMounted(() => loadOrders());
 
 
 
-                <v-col cols="12" md="4">
-                    <div class="filter-field-label">Khoảng thời gian</div>
+                <v-col cols="12" md="2">
+                    <div class="filter-field-label">Từ ngày</div>
                     <AppDatePicker
-                        :model-value="dateRange"
-                        @update:model-value="onDateRangeChange"
-                        range
-                        placeholder="Từ ngày - Đến ngày"
+                        :model-value="fromDateModel"
+                        @update:model-value="onFromDateChange"
+                        :max-date="toDateModel"
+                        placeholder="Từ ngày"
+                    />
+                </v-col>
+
+                <v-col cols="12" md="2">
+                    <div class="filter-field-label">Đến ngày</div>
+                    <AppDatePicker
+                        :model-value="toDateModel"
+                        @update:model-value="onToDateChange"
+                        :min-date="fromDateModel"
+                        placeholder="Đến ngày"
                     />
                 </v-col>
             </AdminFilter>

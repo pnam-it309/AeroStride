@@ -117,6 +117,36 @@ export const router = createRouter({
             component: () => import('@/views/error/ErrorOffline.vue')
         },
         {
+            path: '/gioi-thieu',
+            name: 'GioiThieu',
+            component: () => import('@/views/pages/public/AboutPage.vue'),
+            meta: { seoTitle: 'Giới Thiệu' }
+        },
+        {
+            path: '/tin-tuc',
+            name: 'TinTuc',
+            component: () => import('@/views/pages/public/NewsPage.vue'),
+            meta: { seoTitle: 'Tin Tức' }
+        },
+        {
+            path: '/lien-he',
+            name: 'LienHe',
+            component: () => import('@/views/pages/public/ContactPage.vue'),
+            meta: { seoTitle: 'Liên Hệ' }
+        },
+        {
+            path: '/he-thong-cua-hang',
+            name: 'HeThongCuaHang',
+            component: () => import('@/views/pages/public/StoreLocatorPage.vue'),
+            meta: { seoTitle: 'Hệ Thống Cửa Hàng' }
+        },
+        {
+            path: '/tro-giup',
+            name: 'TroGiup',
+            component: () => import('@/views/pages/public/HelpPage.vue'),
+            meta: { seoTitle: 'Trợ Giúp' }
+        },
+        {
             ...MainRoutes,
             beforeEnter: requireAuth
         },

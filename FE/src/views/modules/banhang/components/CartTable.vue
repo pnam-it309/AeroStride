@@ -55,11 +55,17 @@ const handleDirectInput = (item, event) => {
                 <tr v-for="item in items" :key="item.id" class="item-row">
                     <td>
                         <div class="d-flex align-center py-1.5">
-                            <v-avatar color="grey-lighten-4" rounded="lg" size="38" class="mr-3 border">
+                            <v-avatar color="grey-lighten-4" rounded="lg" size="38" class="mr-3 border position-relative overflow-visible">
                                 <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover />
                                 <BoxIcon v-else size="18" class="text-grey" />
+                                <div v-if="item.phanTramGiam > 0" class="cart-discount-badge-small d-flex align-center justify-center">
+                                    <v-icon color="white" size="10">mdi-flash</v-icon>
+                                </div>
                             </v-avatar>
                             <div>
+                                <div v-if="item.phanTramGiam > 0" class="text-error text-caption font-weight-medium mb-1" style="font-size: 11px !important; line-height: 1;">
+                                    Đợt giảm giá: -{{ item.phanTramGiam }}%
+                                </div>
                                 <div class="text-slate-700 text-body-2" style="font-size: 13.5px !important; line-height: 1.3;">{{ item.tenSanPham }}</div>
                                 
                                 <!-- mã sp | mã sku (với nhãn vuông pastel nhé) -->
@@ -132,6 +138,22 @@ const handleDirectInput = (item, event) => {
 
 .pos-table :deep(.v-table__wrapper) {
     background: transparent !important;
+}
+
+.pos-table :deep(.v-btn--icon) {
+    border-radius: 6px !important;
+}
+
+.cart-discount-badge-small {
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    background: #ef4444;
+    color: #ffffff;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    z-index: 2;
 }
 
 .pos-table :deep(table) {

@@ -41,7 +41,7 @@ const props = defineProps({
                     <v-col cols="12" lg="6" class="text-center reveal-container" :class="{ active: props.active }">
                         <div class="hero-shoe-wrapper reveal-item delay-4">
                             <model-viewer
-                                :src="props.product?.modelUrl || 'https://modelviewer.dev/shared-assets/models/Shoe.glb'"
+                                :src="props.product?.modelUrl || '/models/Shoe.glb'"
                                 :poster="props.product?.imageUrl || '/assets/images/products/1.jpg'"
                                 alt="AeroStride 3D Shoe"
                                 camera-controls

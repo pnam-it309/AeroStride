@@ -331,6 +331,22 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     }
 
     private void syncVariantImages(ChiTietSanPham variant, List<ProductVariantImageRequest> imageRequests) {
+        if (imageRequests == null || imageRequests.isEmpty()) {
+            return;
+        }
+
+        // 1. Ảnh đầu tiên (index 0) sẽ được lưu làm ảnh đại diện cho Sản Phẩm gốc
+        SanPham sanPham = variant.getSanPham();
+        ProductVariantImageRequest firstImage = imageRequests.get(0);
+        sanPham.setHinhAnh(firstImage.getDuongDanAnh());
+        adminSanPhamRepository.save(sanPham);
+
+        // 2. Từ ảnh thứ 2 trở đi sẽ được lưu vào danh sách ảnh của Biến thể (Chi Tiết Sản Phẩm)
+        List<ProductVariantImageRequest> variantImageRequests = new ArrayList<>();
+        if (imageRequests.size() > 1) {
+            variantImageRequests = imageRequests.subList(1, imageRequests.size());
+        }
+
         List<AnhChiTietSanPham> existingImages = adminAnhChiTietSanPhamRepository
                 .findByChiTietSanPhamIdAndXoaMemFalseOrderByHinhAnhDaiDienDescNgayTaoAsc(variant.getId());
 
@@ -343,7 +359,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
                         LinkedHashMap::new
                 ));
 
-        boolean hasIncomingMainImage = imageRequests.stream()
+        boolean hasIncomingMainImage = variantImageRequests.stream()
                 .anyMatch(imageRequest -> Boolean.TRUE.equals(imageRequest.getHinhAnhDaiDien()));
 
         if (hasIncomingMainImage) {
@@ -351,7 +367,8 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             adminAnhChiTietSanPhamRepository.saveAll(existingImages);
         }
 
-        imageRequests.forEach(imageRequest -> {
+        // Lưu các ảnh của biến thể
+        variantImageRequests.forEach(imageRequest -> {
             AnhChiTietSanPham image = existingImagesByUrl.getOrDefault(imageRequest.getDuongDanAnh(), new AnhChiTietSanPham());
             image.setChiTietSanPham(variant);
             image.setDuongDanAnh(imageRequest.getDuongDanAnh());

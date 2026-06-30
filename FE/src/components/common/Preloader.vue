@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 
 const emit = defineEmits(['finish']);
 const loadingProgress = ref(0);
+const isFinished = ref(false);
 
 onMounted(() => {
     const interval = setInterval(() => {
@@ -12,10 +13,13 @@ onMounted(() => {
             if (loadingProgress.value > 100) loadingProgress.value = 100;
         } else {
             clearInterval(interval);
-            // Reduce finish timeout
+            // Kích hoạt hiệu ứng lan sang phải
+            isFinished.value = true;
+            
+            // Đợi hiệu ứng CSS chạy xong (khoảng 800ms) rồi mới báo kết thúc
             setTimeout(() => {
                 emit('finish');
-            }, 200);
+            }, 800);
         }
     }, 50); // Faster check interval
 });
@@ -28,8 +32,8 @@ onMounted(() => {
             <div class="blue-gradient-bg"></div>
             <div class="topo-pattern"></div>
 
-            <!-- Vertical Progress Bar (Blue & White Theme) -->
-            <div class="progress-container">
+            <!-- Vertical Progress Bar (Full height left, wipes right on finish) -->
+            <div class="progress-container" :class="{ 'wipe-right': isFinished }">
                 <div class="progress-bar-vertical">
                     <div class="progress-fill" :style="{ height: loadingProgress + '%' }"></div>
                 </div>
@@ -39,9 +43,9 @@ onMounted(() => {
             <div class="content-box">
                 <div class="logo-wrapper">
                     <h1 class="brand-name">AEROSTRIDE</h1>
-                    <div class="version">ELITE INTERFACE</div>
+                    <div class="version">GIAO DIỆN CAO CẤP</div>
                 </div>
-                <div class="status-text"><span class="pulse">●</span> LOADING ASSETS...</div>
+                <div class="status-text"><span class="pulse">●</span> ĐANG TẢI DỮ LIỆU...</div>
             </div>
 
             <!-- Bottom Percentage -->
@@ -50,7 +54,7 @@ onMounted(() => {
                     <span class="num">{{ loadingProgress }}</span>
                     <span class="unit">%</span>
                 </div>
-                <div class="meta-info">SYSTEMS OPERATIONAL / BLUECORE ACTIVE</div>
+                <div class="meta-info">HỆ THỐNG HOẠT ĐỘNG / SẴN SÀNG</div>
             </div>
         </div>
     </div>
@@ -102,25 +106,33 @@ onMounted(() => {
 
 .progress-container {
     position: absolute;
-    left: 40px;
-    top: 10%;
-    height: 80%;
-    width: 2px;
-    background: rgba(41, 98, 255, 0.1);
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 8px; /* Độ rộng ban đầu của thanh bên trái */
+    background: transparent;
+    z-index: 50; /* Nổi lên trên cùng */
+    transition: width 0.8s cubic-bezier(0.8, 0, 0.2, 1);
+}
+
+/* Khi tải xong 100%, class wipe-right kích hoạt làm thanh lan đầy màn hình */
+.progress-container.wipe-right {
+    width: 100vw;
 }
 
 .progress-bar-vertical {
     position: relative;
     width: 100%;
     height: 100%;
+    background: rgba(41, 98, 255, 0.05); /* Màu nền mờ của track */
 }
 
 .progress-fill {
     position: absolute;
     bottom: 0;
-    width: 6px;
-    left: -2px;
-    background: #2962ff; /* Primary Blue */
+    left: 0;
+    width: 100%; /* Luôn lấy đầy chiều rộng của container */
+    background: #2962ff; /* Màu xanh chủ đạo */
     box-shadow: 0 0 15px rgba(41, 98, 255, 0.5);
     transition: height 0.1s ease;
 }
@@ -174,6 +186,7 @@ onMounted(() => {
     bottom: 60px;
     right: 60px;
     text-align: right;
+    z-index: 10;
 }
 
 .percent-container {

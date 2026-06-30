@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
+import CartDrawer from '@/components/shared/CartDrawer.vue';
 import { PATH } from '@/router/routePaths';
 import { useAuthStore } from '@/stores/authStore';
 import { useCartStore } from '@/stores/cartStore';
@@ -146,9 +147,9 @@ onUnmounted(() => {
             <div class="container-custom d-flex align-center justify-space-between px-12 w-100">
                 <span class="u-text">📞 Hotline: 1900 6789</span>
                 <div class="d-flex align-center gap-4">
-                    <a href="#" class="u-link">Hệ thống cửa hàng</a>
+                    <router-link to="/he-thong-cua-hang" class="u-link">Hệ thống cửa hàng</router-link>
                     <span class="divider">|</span>
-                    <a href="#" class="u-link">Trợ giúp</a>
+                    <router-link to="/tro-giup" class="u-link">Trợ giúp</router-link>
                     <span class="divider">|</span>
                     <router-link v-if="!authStore.isLoggedIn" :to="PATH.LOGIN" class="u-link d-flex align-center gap-1">
                         <v-icon size="16">mdi-account-circle-outline</v-icon>
@@ -262,6 +263,8 @@ onUnmounted(() => {
                 </div>
             </div>
         </nav>
+        <!-- Include Cart Drawer globally -->
+        <CartDrawer />
     </header>
 </template>
 

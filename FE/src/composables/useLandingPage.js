@@ -2,9 +2,11 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 import { LANDING_MOUSE_OFFSET, LANDING_SECTIONS } from '@/constants/landingPage';
 
+let hasLoadedBefore = false;
+
 export function useLandingPage() {
     const isLoggedIn = ref(false);
-    const isLoading = ref(true);
+    const isLoading = ref(!hasLoadedBefore);
     const activeSection = ref(0);
     const mouseX = ref(0);
     const mouseY = ref(0);
@@ -74,6 +76,7 @@ export function useLandingPage() {
 
     const handlePreloaderFinish = () => {
         isLoading.value = false;
+        hasLoadedBefore = true;
     };
 
     const isSectionWarm = (index) => Math.abs(activeSection.value - index) <= 1;

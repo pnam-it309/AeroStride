@@ -150,12 +150,13 @@ watch(attendanceRows, (newVal) => {
     }
 }, { immediate: true });
 
-const shiftColorMap = {
-    'Ca Sáng': 'success',
-    'Ca Chiều': 'warning',
-    'Ca Tối': 'deep-purple',
+// Map ca -> class chip chung (nền nhạt + chữ màu), thay cho màu Vuetify chữ trắng
+const shiftChipMap = {
+    'Ca Sáng': 'shift-chip-morning',
+    'Ca Chiều': 'shift-chip-afternoon',
+    'Ca Tối': 'shift-chip-night',
 };
-const getShiftColor = (ca) => shiftColorMap[ca] || 'info';
+const getShiftChipClass = (ca) => shiftChipMap[ca] || 'shift-chip-default';
 
 const formatDate = (d) => {
     if (!d) return '';
@@ -339,9 +340,8 @@ onMounted(loadData);
                             <v-chip
                                 v-if="item.ca && item.ca !== '--'"
                                 size="small"
-                                :color="getShiftColor(item.ca)"
                                 variant="flat"
-                                class="font-weight-medium"
+                                :class="['shift-chip', getShiftChipClass(item.ca)]"
                             >{{ item.ca }}</v-chip>
                             <span v-else class="text-slate-400 text-caption">--</span>
                         </td>

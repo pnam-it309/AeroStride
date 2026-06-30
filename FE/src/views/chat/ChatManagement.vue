@@ -6,9 +6,12 @@ import { chatSocket } from '@/services/chatSocket';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { useAuthStore } from '@/stores/authStore';
 import { CHAT_TYPES, CHAT_SENDER_TYPE, CHAT_STATUS, CHAT_TOPICS } from '@/constants/appConstants';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import { AdminConfirm } from '@/components/common';
 
 const notificationStore = useNotificationStore();
 const authStore = useAuthStore();
+const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 const customers = ref([]);
 const activeChat = ref(null);
 const chatMessages = ref([]);
@@ -108,6 +111,8 @@ const fetchMessages = async (conversationId) => {
 
 const sendMessage = async () => {
     if (!newMessage.value.trim() || !activeChat.value) return;
+    // Phiên đã đóng thì khóa chat, không cho gửi
+    if (activeChat.value.status === 'CLOSED') return;
 
     const messageData = {
         conversationId: activeChat.value.id,
@@ -161,6 +166,29 @@ const closeChat = async () => {
     }
 };
 
+// Xóa lịch sử đoạn chat (xóa hẳn cuộc hội thoại + toàn bộ tin nhắn)
+const confirmDeleteChat = () => {
+    if (!activeChat.value) return;
+    const target = activeChat.value;
+    setConfirm({
+        title: 'Xóa lịch sử đoạn chat',
+        message: `Xóa toàn bộ lịch sử trò chuyện với "${target.name}"? Hành động này không thể hoàn tác.`,
+        action: async () => {
+            try {
+                await api.delete(API_CHAT.DELETE(target.id));
+                // Bỏ chọn nếu đang mở đúng cuộc vừa xóa
+                if (activeChat.value && activeChat.value.id === target.id) {
+                    activeChat.value = null;
+                    chatMessages.value = [];
+                }
+                fetchConversations(true);
+            } catch (error) {
+                console.error('Lỗi khi xóa lịch sử đoạn chat:', error);
+            }
+        }
+    });
+};
+
 onMounted(() => {
     fetchConversations();
     notificationStore.resetUnreadChat();
@@ -193,7 +221,7 @@ onMounted(() => {
                 chatMessages.value.push(data);
                 scrollToBottom();
             } else {
-                notificationStore.incrementUnreadChat();
+                notificationStore.incrementUnreadChat(data.conversationId);
             }
             fetchConversations(true);
         });
@@ -349,7 +377,19 @@ onMounted(() => {
                                 style="letter-spacing: 0"
                                 >Đóng phiên</v-btn
                             >
-                            <v-btn icon="mdi-dots-vertical" variant="text" color="grey-darken-1"></v-btn>
+                            <v-menu location="bottom end">
+                                <template #activator="{ props }">
+                                    <v-btn icon="mdi-dots-vertical" variant="text" color="grey-darken-1" v-bind="props"></v-btn>
+                                </template>
+                                <v-list density="compact" min-width="220">
+                                    <v-list-item @click="confirmDeleteChat" base-color="error">
+                                        <template #prepend>
+                                            <v-icon size="20">mdi-delete-outline</v-icon>
+                                        </template>
+                                        <v-list-item-title class="text-none">Xóa lịch sử đoạn chat</v-list-item-title>
+                                    </v-list-item>
+                                </v-list>
+                            </v-menu>
                         </div>
                     </div>
 
@@ -390,7 +430,13 @@ onMounted(() => {
                             <div class="lock-sub">Bạn cần tiếp nhận để bắt đầu gửi tin nhắn</div>
                         </div>
 
-                        <v-row no-gutters align="center" :class="{ 'input-blur': activeChat.status === 'PENDING' }">
+                        <div v-else-if="activeChat.status === 'CLOSED'" class="lock-overlay">
+                            <v-icon color="#94a3b8" size="32" class="mb-2">mdi-lock-outline</v-icon>
+                            <div class="lock-title">Phiên trò chuyện đã đóng</div>
+                            <div class="lock-sub">Cuộc trò chuyện đã kết thúc, không thể gửi tin nhắn</div>
+                        </div>
+
+                        <v-row no-gutters align="center" :class="{ 'input-blur': activeChat.status === 'PENDING' || activeChat.status === 'CLOSED' }">
                             <v-col>
                                 <v-textarea
                                     v-model="newMessage"
@@ -430,6 +476,17 @@ onMounted(() => {
                 </div>
             </v-col>
         </v-row>
+
+        <!-- Xác nhận xóa lịch sử đoạn chat -->
+        <AdminConfirm
+            v-model:show="confirmDialog.show"
+            :title="confirmDialog.title"
+            :message="confirmDialog.message"
+            :color="confirmDialog.color"
+            :loading="confirmDialog.loading"
+            @confirm="handleConfirm(true)"
+            @cancel="handleConfirm(false)"
+        />
     </v-container>
 </template>
 

@@ -1,3 +1,13 @@
-export const LANDING_SECTIONS = ['hero', 'banner', 'noibat', 'problem', 'features', 'featured', 'proof', 'how', 'faq', 'cta'];
+export const LANDING_SECTIONS = [
+    'Trang chủ', 
+    'Khuyến mãi', 
+    'Nổi bật', 
+    'Vấn đề', 
+    'Công nghệ', 
+    'Cộng đồng', 
+    'Trải nghiệm', 
+    'Hỏi đáp', 
+    'Mua ngay'
+];
 
 export const LANDING_MOUSE_OFFSET = 30;

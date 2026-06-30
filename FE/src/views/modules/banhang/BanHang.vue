@@ -385,6 +385,19 @@ const onProductSearchFocus = () => {
     searchProducts();
 };
 
+const closeSearch = (e) => {
+    if (e && typeof e.stopPropagation === 'function') {
+        e.stopPropagation();
+        e.preventDefault();
+    }
+    productSearchKeyword.value = '';
+    showProductAutocomplete.value = false;
+    if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+    }
+    setTimeout(() => { showProductAutocomplete.value = false; }, 100);
+};
+
 const onProductSearchBlur = () => {
     setTimeout(() => {
         showProductAutocomplete.value = false;
@@ -1090,7 +1103,7 @@ const closeOrder = (orderId, index) => {
         show: true,
         title: 'Xác nhận xóa hóa đơn',
         message: 'Bạn có chắc chắn muốn xóa hóa đơn chờ này không? Dữ liệu giỏ hàng sẽ bị mất.',
-        color: 'error',
+        color: 'primary',
         action: async () => {
             confirmDialog.value.loading = true;
             try {
@@ -2149,6 +2162,8 @@ const closeQuickAdd = () => {
                                 <v-text-field v-model="productSearchKeyword"
                                     placeholder="Nhập mã, tên sản phẩm hoặc Barcode" variant="outlined"
                                     density="compact" hide-details prepend-inner-icon="mdi-magnify"
+                                    :append-inner-icon="showProductAutocomplete ? 'mdi-close' : ''"
+                                    @click:append-inner="closeSearch"
                                     @focus="onProductSearchFocus" @click="onProductSearchFocus"
                                     @blur="onProductSearchBlur" bg-color="white" class="search-input"
                                     autocomplete="off" />
@@ -2312,10 +2327,14 @@ const closeQuickAdd = () => {
                                         <v-select :model-value="selectedOrder?.idPhieuGiamGia" :items="vouchers"
                                             item-title="customTitle" item-value="id" variant="outlined"
                                             density="compact" hide-details @update:model-value="onApplyVoucher"
-                                            class="compact-select custom-value-input"
+                                            class="compact-select custom-value-input centered-input"
                                             style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
                                             clearable placeholder="Nhập phiếu giảm giá" persistent-placeholder
-                                            no-data-text="Chưa có phiếu giảm giá" />
+                                            no-data-text="Chưa có phiếu giảm giá">
+                                            <template v-slot:selection="{ item }">
+                                                <span style="font-size: 13px">{{ item.raw.ma }}</span>
+                                            </template>
+                                        </v-select>
                                     </div>
 
                                     <!-- Shipping Fee -->
@@ -2865,14 +2884,17 @@ const closeQuickAdd = () => {
                             <v-avatar rounded="lg" size="80" class="border bg-grey-lighten-4 flex-shrink-0">
                                 <v-img :src="modalDisplayVariant?.hinhAnh || variantModal.product?.hinhAnh" cover />
                             </v-avatar>
-                            <div v-if="modalDisplayDiscountPercent > 0" class="variant-modal-discount-badge">
-                                -{{ modalDisplayDiscountPercent }}%
+                            <div v-if="modalDisplayDiscountPercent > 0" class="variant-modal-discount-badge d-flex align-center justify-center">
+                                <v-icon color="white" size="14">mdi-flash</v-icon>
                             </div>
                         </div>
                         <div class="pt-1">
                             <h3 class="text-subtitle-1 font-weight-bold text-slate-800 mb-1"
                                 style="line-height: 1.3; font-size: 15px !important;">{{
                                     variantModal.product?.tenSanPham }}</h3>
+                            <div v-if="modalDisplayDiscountPercent > 0" class="text-error text-caption mb-1 font-weight-medium">
+                                Đợt giảm giá: -{{ modalDisplayDiscountPercent }}%
+                            </div>
                             <div class="text-primary font-weight-bold mb-1" style="font-size: 18px;">
                                 {{ modalDisplayVariant ? formatCurrency(modalDisplayVariant.giaBan) :
                                     formatCurrency(variantModal.product?.variants[0]?.giaBan || 0) }}
@@ -3597,5 +3619,25 @@ const closeQuickAdd = () => {
     box-shadow: 0 6px 14px rgba(239, 68, 68, 0.28);
     border: 2px solid #ffffff;
     z-index: 2;
+}
+
+.centered-input :deep(.v-field__input) {
+    display: flex !important;
+    align-items: center !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: 32px !important;
+}
+
+.centered-input :deep(.v-field__input > input) {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    align-self: center !important;
+}
+
+.centered-input :deep(.v-select__selection) {
+    margin-top: 0 !important;
+    align-self: center !important;
 }
 </style>

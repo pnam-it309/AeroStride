@@ -10,7 +10,7 @@ import { useSeoMeta } from '@/composables/useSeoMeta';
 
 import MainHeader from '@/components/shared/MainHeader.vue';
 import HeroSection from './sections/HeroSection.vue';
-import CartDrawer from '@/components/shared/CartDrawer.vue';
+
 
 // Lazy load sections below the fold
 const PromoBannerSection = defineAsyncComponent(() => import('./sections/PromoBannerSection.vue'));
@@ -35,7 +35,7 @@ const {
     onScroll
 } = useLandingPage();
 
-const { heroProduct, isCatalogLoading, howProducts, topVariantsByQty, problemProducts, landingProducts } = useLandingCatalog();
+const { heroProduct, isCatalogLoading, howProducts, topVariantsByQty, problemProducts, landingProducts } = useLandingCatalog(activeSection);
 
 // SEO
 const { setSeoMeta } = useSeoMeta();
@@ -45,6 +45,17 @@ onMounted(() => {
         description: 'AeroStride - Cửa hàng giày thể thao chính hãng hàng đầu Việt Nam. Mua sắm giày Nike, Adidas, Puma với giá tốt nhất, giao hàng nhanh toàn quốc, đổi trả miễn phí 30 ngày.'
     });
 });
+
+const scrollToSection = (index) => {
+    activeSection.value = index;
+    const container = document.querySelector('.landing-scroll-container');
+    if (container) {
+        container.scrollTo({
+            top: index * window.innerHeight,
+            behavior: 'smooth'
+        });
+    }
+};
 </script>
 
 <template>
@@ -56,8 +67,8 @@ onMounted(() => {
         <!-- Section Dots Indicator -->
         <div class="section-nav" v-if="!isLoading">
             <div v-for="(s, i) in LANDING_SECTIONS" :key="i" class="dot" :class="{ active: activeSection === i }"
-                @click="activeSection = i">
-                <span class="tooltip">{{ s.toUpperCase() }}</span>
+                @click="scrollToSection(i)">
+                <span class="tooltip">{{ s }}</span>
             </div>
         </div>
 
@@ -89,7 +100,7 @@ onMounted(() => {
         </div>
 
         <!-- Cart Drawer -->
-        <CartDrawer v-if="!isLoading" />
+        
 
         <!-- Global Chat System -->
         <CustomerChat v-if="!isLoading" />

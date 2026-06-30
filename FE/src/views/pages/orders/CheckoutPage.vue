@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
-import CartDrawer from '@/components/shared/CartDrawer.vue';
+
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
 import { dichVuDatHang } from '@/services/public/dichVuDatHang';
@@ -269,7 +269,7 @@ onMounted(async () => {
             <!-- Page Title -->
             <div class="d-flex align-center mb-8">
                 <div class="section-icon mr-3">
-                    <v-icon size="18" color="white">mdi-credit-card-check-outline</v-icon>
+                    <v-icon size="18" style="color: #ffffff !important;">mdi-credit-card-check-outline</v-icon>
                 </div>
                 <div>
                     <h1 class="text-h4 font-weight-black mb-1">Thanh toán đơn hàng</h1>
@@ -284,7 +284,9 @@ onMounted(async () => {
                     <div class="section-block mb-6">
                         <div class="pa-8">
                             <div class="d-flex align-center mb-6">
-                                <div class="step-number mr-4 font-weight-bold">1</div>
+                                <div class="step-number mr-4 font-weight-bold">
+                                    <v-icon color="white">mdi-map-marker-outline</v-icon>
+                                </div>
                                 <div>
                                     <h2 class="text-h5 font-weight-bold mb-1">Thông tin giao hàng</h2>
                                     <p class="text-caption text-grey mb-0">Nhập địa chỉ nơi bạn muốn nhận hàng</p>
@@ -344,7 +346,9 @@ onMounted(async () => {
                     <div class="section-block mb-6">
                         <div class="pa-8">
                             <div class="d-flex align-center mb-6">
-                                <div class="step-number mr-4 font-weight-bold">2</div>
+                                <div class="step-number mr-4 font-weight-bold">
+                                    <v-icon color="white">mdi-credit-card-outline</v-icon>
+                                </div>
                                 <div>
                                     <h2 class="text-h5 font-weight-bold mb-1">Phương thức thanh toán</h2>
                                     <p class="text-caption text-grey mb-0">Chọn cách bạn muốn thanh toán cho đơn hàng</p>
@@ -383,7 +387,9 @@ onMounted(async () => {
                     <div class="section-block">
                         <div class="pa-8">
                             <div class="d-flex align-center mb-4">
-                                <div class="step-number mr-4 font-weight-bold">3</div>
+                                <div class="step-number mr-4 font-weight-bold">
+                                    <v-icon color="white">mdi-truck-fast-outline</v-icon>
+                                </div>
                                 <div>
                                     <h2 class="text-h5 font-weight-bold mb-1">Thông tin giao hàng dự kiến</h2>
                                 </div>
@@ -414,7 +420,7 @@ onMounted(async () => {
                             <div class="pa-6">
                                 <div class="d-flex align-center mb-6">
                                     <div class="summary-icon mr-3">
-                                        <v-icon size="20" color="white">mdi-receipt-text-outline</v-icon>
+                                        <v-icon size="20" style="color: #ffffff !important;">mdi-receipt-text-outline</v-icon>
                                     </div>
                                     <h3 class="text-h6 font-weight-bold mb-0">Tóm tắt đơn hàng</h3>
                                 </div>
@@ -427,15 +433,21 @@ onMounted(async () => {
                                             <v-img :src="item.hinhAnh || 'https://via.placeholder.com/150?text=Sản+Phẩm'" cover width="72" height="72"
                                                 class="bg-grey-lighten-4"></v-img>
                                             <span class="product-qty-badge">{{ item.soLuong }}</span>
+                                            <div v-if="item.phanTramGiam > 0" class="cart-discount-badge d-flex align-center justify-center">
+                                                <v-icon color="white" size="12">mdi-flash</v-icon>
+                                            </div>
                                         </div>
                                         <div class="flex-grow-1 d-flex flex-column">
                                             <p class="text-body-2 font-weight-bold mb-1">{{ item.tenSanPham }}</p>
                                             <p class="text-caption text-grey-darken-1 mb-1">
                                                 {{ item.tenMauSac }} / {{ item.tenKichThuoc }}
                                             </p>
-                                            <div class="mt-auto d-flex justify-space-between align-center">
-                                                <span class="text-caption text-grey">Đơn giá: {{ formatPrice(item.giaBan) }}</span>
-                                                <span class="text-body-2 font-weight-bold">{{ formatPrice(item.giaBan * item.soLuong) }}</span>
+                                            <div class="mt-auto d-flex flex-column gap-1">
+                                                <div v-if="item.phanTramGiam > 0" class="text-caption text-error font-weight-medium mb-1">Đợt giảm giá: -{{ item.phanTramGiam }}%</div>
+                                                <div class="d-flex justify-space-between align-center">
+                                                    <span class="text-caption text-grey">Đơn giá: {{ formatPrice(item.giaBan) }}</span>
+                                                    <span class="text-body-2 font-weight-bold">{{ formatPrice(item.giaBan * item.soLuong) }}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -560,10 +572,10 @@ onMounted(async () => {
                 <div class="pa-6" style="background: #1e257c;">
                     <div class="d-flex align-center justify-space-between">
                         <div class="d-flex align-center">
-                            <v-icon size="24" color="white" class="mr-3">mdi-ticket-percent</v-icon>
-                            <h3 class="text-h6 font-weight-bold text-white mb-0">Chọn mã giảm giá</h3>
+                            <v-icon size="24" class="mr-3" style="color: #ffffff !important;">mdi-ticket-percent</v-icon>
+                            <h3 class="text-h6 font-weight-bold mb-0" style="color: #e0f7fa !important;">Chọn mã giảm giá</h3>
                         </div>
-                        <v-btn icon variant="text" size="small" color="white" @click="showVoucherDialog = false">
+                        <v-btn icon variant="text" size="small" @click="showVoucherDialog = false" style="color: #ffffff !important;">
                             <v-icon>mdi-close</v-icon>
                         </v-btn>
                     </div>
@@ -609,7 +621,7 @@ onMounted(async () => {
             </div>
         </v-dialog>
 
-        <CartDrawer />
+        
         <CustomerChat />
     </div>
 </template>
@@ -731,6 +743,18 @@ onMounted(async () => {
     width: 72px;
     height: 72px;
 }
+.product-list .product-img-wrapper .cart-discount-badge {
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    background: #ef4444;
+    color: #ffffff;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    z-index: 2;
+}
+
 .product-list .product-img-wrapper .product-qty-badge {
     position: absolute;
     top: -6px;

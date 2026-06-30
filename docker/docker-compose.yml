@@ -1,10 +1,10 @@
 x-common: &common
-  restart: always
+  restart: ${DOCKER_RESTART_POLICY}
   networks:
-    - aerostride-net
+    - ${DOCKER_NETWORK}
 
 x-java-env: &java-env
-  TZ: UTC
+  TZ: ${APP_TZ}
 
 services:
   redis:
@@ -19,9 +19,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: ${REDIS_MEMORY_LIMIT}
         reservations:
-          memory: 64M
+          memory: ${REDIS_MEMORY_RESERVATION}
 
   mongo:
     image: ${MONGO_IMAGE}
@@ -37,12 +37,14 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+    profiles:
+      - full
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: ${MONGO_MEMORY_LIMIT}
         reservations:
-          memory: 128M
+          memory: ${MONGO_MEMORY_RESERVATION}
 
   mysql:
     image: ${MYSQL_IMAGE}
@@ -66,9 +68,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: ${MYSQL_MEMORY_LIMIT}
         reservations:
-          memory: 256M
+          memory: ${MYSQL_MEMORY_RESERVATION}
 
   backend:
     image: ${BACKEND_IMAGE}
@@ -85,13 +87,10 @@ services:
     environment:
       <<: *java-env
       SERVER_PORT: ${SERVER_PORT}
-      WATCHPACK_POLLING: "true"
     depends_on:
       redis:
         condition: service_healthy
       mysql:
-        condition: service_healthy
-      mongo:
         condition: service_healthy
     ports:
       - "${BACKEND_PORT}:${BE_INTERNAL_PORT}"
@@ -99,18 +98,20 @@ services:
       - ${DOCKER_BE_VOL_APP}
       - be-build:/app/build
       - be-gradle:/app/.gradle
+      # Shield container from host BE/gradle.properties (may contain ${ENV} placeholders)
+      - ${DOCKER_BE_GRADLE_PROPS}
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${SERVER_PORT}/actuator/health || exit 1"]
-      interval: 30s
+      interval: 15s
       timeout: 10s
       retries: 3
-      start_period: 300s
+      start_period: 120s
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: ${BACKEND_MEMORY_LIMIT}
         reservations:
-          memory: 512M
+          memory: ${BACKEND_MEMORY_RESERVATION}
 
   frontend:
     image: ${FRONTEND_IMAGE}
@@ -135,8 +136,8 @@ services:
       - SERVER_NAME=${SERVER_NAME}
       - NGINX_ROOT=${NGINX_ROOT_FE}
       - FE_DEV_PORT=${FE_DEV_PORT}
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=false
+      - WATCHPACK_POLLING=false
     ports:
       - "${FE_PORTExternal}:${FE_INTERNAL_PORT}"
     volumes:
@@ -150,11 +151,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2.0'
-          memory: 4G
+          cpus: ${FRONTEND_CPU_LIMIT}
+          memory: ${FRONTEND_MEMORY_LIMIT}
         reservations:
-          cpus: '0.5'
-          memory: 1G
+          cpus: ${FRONTEND_CPU_RESERVATION}
+          memory: ${FRONTEND_MEMORY_RESERVATION}
 
   mcp-server:
     build:
@@ -166,12 +167,14 @@ services:
       - .env
     ports:
       - "3000:3000"
+    profiles:
+      - full
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: ${MCP_SERVER_MEMORY_LIMIT}
         reservations:
-          memory: 64M
+          memory: ${MCP_SERVER_MEMORY_RESERVATION}
 
   phpmyadmin:
     image: ${PHPMYADMIN_IMAGE}
@@ -186,12 +189,14 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    profiles:
+      - full
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: ${PHPMYADMIN_MEMORY_LIMIT}
         reservations:
-          memory: 128M
+          memory: ${PHPMYADMIN_MEMORY_RESERVATION}
 
   nginx-proxy:
     image: ${NGINX_IMAGE}
@@ -213,6 +218,8 @@ services:
         condition: service_started
       backend:
         condition: service_healthy
+    profiles:
+      - full
 
 networks:
   aerostride-net:

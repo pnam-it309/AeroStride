@@ -8,7 +8,7 @@ const props = defineProps({ active: Boolean, warm: Boolean });
             <div class="cta-bg"></div>
             <v-container class="z-index-10" :class="{ 'animate-in-up': props.active }">
                 <h2 class="text-h1 font-weight-black text-blue-darken-4 mb-8">Ready to Stride?</h2>
-                <v-btn size="x-large" color="blue-accent-4" rounded="xl" class="px-16 py-8 text-h4 elevation-20 font-weight-bold" to="/shoes">
+                <v-btn size="x-large" color="#2962ff" rounded="xl" variant="flat" height="72" class="px-16 text-h5 text-white font-weight-bold" to="/shoes">
                     KHÁM PHÁ CÁC MẪU GIÀY
                 </v-btn>
                 <p class="mt-8 text-h6 opacity-60">Ghé thăm showroom hoặc săn voucher giảm giá ngay hôm nay!</p>
@@ -25,12 +25,13 @@ const props = defineProps({ active: Boolean, warm: Boolean });
     align-items: center;
     position: relative;
     overflow: hidden;
+    background: #ffffff !important;
 }
 .cta-bg {
     position: absolute;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(41, 98, 255, 0.1) 0%, transparent 60%);
+    width: 100%;
+    height: 100%;
+    background: transparent;
     z-index: 0;
 }
 .z-index-10 {

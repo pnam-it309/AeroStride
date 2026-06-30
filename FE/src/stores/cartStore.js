@@ -57,6 +57,8 @@ export const useCartStore = defineStore('cart', {
                 tenMauSac: i.tenMauSac || null,
                 tenKichThuoc: i.tenKichThuoc || null,
                 giaBan: i.giaBan || null,
+                giaGoc: i.giaGoc || null,
+                phanTramGiam: i.phanTramGiam || null,
                 soLuongTonKho: i.soLuongTonKho || null
             }))));
         },
@@ -114,6 +116,8 @@ export const useCartStore = defineStore('cart', {
                     tenMauSac: product.tenMauSac || null,
                     tenKichThuoc: product.tenKichThuoc || null,
                     giaBan: product.giaBan || null,
+                    giaGoc: product.giaGoc || null,
+                    phanTramGiam: product.phanTramGiam || null,
                     soLuongTonKho: product.soLuongTonKho || null
                 });
             }

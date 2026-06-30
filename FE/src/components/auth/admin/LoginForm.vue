@@ -58,11 +58,11 @@ const handleLogin = async () => {
             <v-row class="mb-3">
                 <v-col cols="12">
                     <div class="input-group">
-                        <v-label class="font-weight-black mb-2 text-uppercase text-caption tracking-wider">Tên đăng
-                            nhập</v-label>
+                        <v-label class="font-weight-black mb-2 text-uppercase text-caption tracking-wider">Tài
+                            khoản</v-label>
                         <v-text-field v-model="loginForm.username" variant="outlined" class="premium-input" hide-details
-                            color="primary" placeholder="Nhập username" prepend-inner-icon="mdi-account-circle-outline"
-                            :disabled="loading"></v-text-field>
+                            color="primary" placeholder="Nhập số điện thoại"
+                            prepend-inner-icon="mdi-account-circle-outline" :disabled="loading"></v-text-field>
                     </div>
                 </v-col>
                 <v-col cols="12">

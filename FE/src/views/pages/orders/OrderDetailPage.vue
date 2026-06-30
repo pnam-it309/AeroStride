@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
-import CartDrawer from '@/components/shared/CartDrawer.vue';
+
 import { dichVuDatHang } from '@/services/public/dichVuDatHang';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, ORDER_STATUS_ICONS } from '@/constants/hoaDonConstants';
 
@@ -563,7 +563,7 @@ onMounted(async () => {
             </div>
         </v-dialog>
 
-        <CartDrawer />
+        
         <CustomerChat />
     </div>
 </template>

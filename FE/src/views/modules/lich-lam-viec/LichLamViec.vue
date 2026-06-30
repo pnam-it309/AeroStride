@@ -292,6 +292,16 @@ const getMatrixShiftClass = (caName) => {
     return 'shift-default';
 };
 
+// Helper: class chip ca dạng tròn (nền nhạt + chữ màu) dùng cho bảng thường
+const getShiftChipClass = (caName) => {
+    if (!caName) return 'shift-chip-default';
+    const name = caName.toLowerCase();
+    if (name.includes('sáng') || name.includes('sang')) return 'shift-chip-morning';
+    if (name.includes('chiều') || name.includes('chieu')) return 'shift-chip-afternoon';
+    if (name.includes('tối') || name.includes('toi') || name.includes('đêm')) return 'shift-chip-night';
+    return 'shift-chip-default';
+};
+
 // Format date from yyyy-MM-dd to dd/MM/yyyy
 const formatDate = (dateStr) => {
     if (!dateStr) return '';
@@ -627,7 +637,7 @@ onMounted(() => {
                             </td>
                             <!-- Ca làm -->
                             <td class="data-cell text-center">
-                                <v-chip size="small" color="info" variant="flat" class="font-weight-medium">
+                                <v-chip size="small" variant="flat" :class="['shift-chip', getShiftChipClass(item.ca)]">
                                     {{ item.ca }}
                                 </v-chip>
                             </td>
@@ -890,8 +900,8 @@ onMounted(() => {
                                     </td>
                                     <td class="data-cell">{{ row.ngay }}</td>
                                     <td class="data-cell">
-                                        <v-chip size="x-small" :color="row.status === 'VALID' ? 'success' : 'error'"
-                                            variant="flat">
+                                        <v-chip size="x-small" variant="flat"
+                                            :class="row.status === 'VALID' ? 'status-success' : 'status-error'">
                                             {{ row.status === 'VALID' ? 'Hợp lệ' : 'Lỗi' }}
                                         </v-chip>
                                     </td>
@@ -1313,48 +1323,11 @@ onMounted(() => {
     gap: 4px;
 }
 
-.matrix-shift-chip {
-    border-radius: 8px;
-    padding: 5px 7px;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.15s;
-    border-left: 3px solid transparent;
-}
-
-.matrix-shift-chip:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
+/* .matrix-shift-chip + .shift-morning/afternoon/night/default đã chuyển vào
+   file chung src/scss/_admin-chips.scss để quản lý tập trung. */
 .matrix-shift-name {
     font-size: 11px;
     font-weight: 700;
-}
-
-.shift-morning {
-    background: #dcfce7;
-    color: #15803d;
-    border-left-color: #22c55e;
-}
-
-.shift-afternoon {
-    background: #fef9c3;
-    color: #a16207;
-    border-left-color: #eab308;
-}
-
-.shift-night {
-    background: #ede9fe;
-    color: #6d28d9;
-    border-left-color: #8b5cf6;
-}
-
-.shift-default {
-    background: #dbeafe;
-    color: #1d4ed8;
-    border-left-color: #3b82f6;
 }
 
 .matrix-shift-time {

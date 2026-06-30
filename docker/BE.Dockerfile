@@ -24,16 +24,18 @@ FROM build AS development
 ARG BE_PORT
 EXPOSE ${BE_PORT}
 
-# Performance tweaks for Gradle in Docker (injected from env, not hardcoded)
+# Gradle JVM/runtime tuning is injected via GRADLE_OPTS from docker env.
+# gradle.properties holds static defaults; GRADLE_OPTS can override org.gradle.*
+# settings at runtime using -Dorg.gradle.* system properties (env-driven).
 ENV GRADLE_OPTS=${GRADLE_OPTS}
 
-# Development Entrypoint:
-ENTRYPOINT ["sh", "-c", "./gradlew bootRun --no-daemon"]
+# Development Entrypoint: Keep Gradle daemon running for faster hot reload
+ENTRYPOINT ["sh", "-c", "./gradlew bootRun"]
 
 # Stage 2: Builder stage (Production)
 FROM build AS builder
 # Use cache mount for the actual build process as well
-RUN --mount=type=cache,target=/app/.gradle ./gradlew bootJar --no-daemon && \
+RUN --mount=type=cache,target=/app/.gradle ./gradlew bootJar && \
     cp build/libs/*.jar /app/app.jar
 
 # Stage 3: Runtime stage (Production)

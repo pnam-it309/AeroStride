@@ -2,8 +2,24 @@
 
 /* ==========================================================================
    AEROSTRIDE - CHIPS & STATUS SYSTEM
-   "Single Source of Truth" for all status badges.
+   "Single Source of Truth" cho mọi status badge của trang quản trị.
+   - Tất cả chip dùng kiểu NỀN NHẠT + CHỮ MÀU + VIỀN NHẠT (không dùng chữ trắng).
+   - Muốn đổi màu: chỉ sửa biến CSS trong :root bên dưới (quản lý tập trung).
    ========================================================================== */
+
+:root {
+    /* Mỗi tông màu gồm: nền (-bg), chữ (-fg), viền (-bd) */
+    --chip-green-bg: #dcfce7;   --chip-green-fg: #15803d;   --chip-green-bd: #bbf7d0;
+    --chip-amber-bg: #fef9c3;   --chip-amber-fg: #a16207;   --chip-amber-bd: #fde68a;
+    --chip-blue-bg: #eff6ff;    --chip-blue-fg: #1d4ed8;    --chip-blue-bd: #dbeafe;
+    --chip-cyan-bg: #ecfeff;    --chip-cyan-fg: #0e7490;    --chip-cyan-bd: #cffafe;
+    --chip-red-bg: #fef2f2;     --chip-red-fg: #dc2626;     --chip-red-bd: #fecaca;
+    --chip-purple-bg: #ede9fe;  --chip-purple-fg: #6d28d9;  --chip-purple-bd: #ddd6fe;
+    --chip-pink-bg: #fdf2f8;    --chip-pink-fg: #be185d;    --chip-pink-bd: #fce7f3;
+    --chip-orange-bg: #fff7ed;  --chip-orange-fg: #c2410c;  --chip-orange-bd: #fed7aa;
+    --chip-navy-bg: #eef2ff;    --chip-navy-fg: #1e257c;    --chip-navy-bd: #e0e7ff;
+    --chip-slate-bg: #f1f5f9;   --chip-slate-fg: #475569;   --chip-slate-bd: #e2e8f0;
+}
 
 @mixin admin-chip-base {
     border-radius: 16px !important;
@@ -15,77 +31,89 @@
     align-items: center !important;
     justify-content: center !important;
     text-transform: none !important;
-    border: none !important;
+    border: 1px solid transparent !important;
 }
 
-/* Base Classes */
+/* Tô màu mềm theo tông. Dùng được cho cả <v-chip variant="flat"> (override nội dung + icon). */
+@mixin chip-tone($tone) {
+    background-color: var(--chip-#{$tone}-bg) !important;
+    color: var(--chip-#{$tone}-fg) !important;
+    border: 1px solid var(--chip-#{$tone}-bd) !important;
+    .v-chip__content { color: var(--chip-#{$tone}-fg) !important; }
+    .v-icon { color: var(--chip-#{$tone}-fg) !important; }
+}
+
+/* ---- Base Classes ---- */
 .status-chip { @include admin-chip-base; min-width: 120px !important; }
 .gender-chip { @include admin-chip-base; min-width: 80px !important; }
 .order-type-chip { @include admin-chip-base; min-width: 90px !important; }
 
-/* Hóa đơn Status - Màu xanh đậm brand-navy */
+/* ========== MAPPING TRẠNG THÁI -> TÔNG MÀU ========== */
+
+/* Xanh lá: hoàn thành / đang hoạt động */
 .status-success, .status-completed, .status-chip-completed,
-.status-pending, .status-warning, .status-waiting, .status-chip-pending, .status-chip-waiting-delivery,
-.status-info, .status-confirmed, .status-delivering, .status-chip-confirmed, .status-chip-delivering,
-.status-refunded, .status-returned, .status-chip-refunded,
-.status-cancelled {
-    background-color: #1e257c !important;
-    color: #ffffff !important;
-    .v-chip__content { color: #ffffff !important; }
+.status-active, .status-chip-active { @include chip-tone(green); }
+
+/* Hổ phách: chờ / cảnh báo / chờ giao */
+.status-pending, .status-warning, .status-waiting,
+.status-chip-pending, .status-chip-waiting-delivery { @include chip-tone(amber); }
+
+/* Xanh dương: thông tin / đã xác nhận */
+.status-info, .status-confirmed, .status-chip-confirmed { @include chip-tone(blue); }
+
+/* Xanh ngọc: đang giao / sắp diễn ra */
+.status-delivering, .status-chip-delivering, .status-chip-upcoming { @include chip-tone(cyan); }
+
+/* Tím: hoàn đơn / trả hàng / công khai */
+.status-refunded, .status-returned, .status-chip-refunded, .status-chip-public { @include chip-tone(purple); }
+
+/* Đỏ: hủy / ngừng hoạt động / hết hạn / lỗi */
+.status-cancelled, .status-chip-cancelled,
+.status-inactive, .status-error, .status-expired,
+.status-chip-inactive, .status-chip-expired { @include chip-tone(red); }
+
+/* Cam: riêng tư */
+.status-chip-private { @include chip-tone(orange); }
+
+/* Slate: không xác định / mặc định */
+.status-chip-unknown, .status-default, .status-chip-default { @include chip-tone(slate); }
+
+/* ---- Giới tính ---- */
+.gender-male, .gender-chip-male { @include chip-tone(blue); }
+.gender-female, .gender-chip-female { @include chip-tone(pink); }
+
+/* ---- Loại hóa đơn (thiết kế tham chiếu) ---- */
+.order-online, .order-type-online { @include chip-tone(blue); }
+.order-offline, .order-type-offline { @include chip-tone(pink); }
+
+/* ========== CA LÀM VIỆC (Lịch làm việc / Chấm công) - gộp từ file riêng ========== */
+.matrix-shift-chip {
+    border-radius: 8px;
+    padding: 5px 7px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+}
+.matrix-shift-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Ngừng hoạt động - Màu đỏ */
-.status-inactive, .status-error, .status-expired, .status-chip-inactive,
-.status-chip-expired {
-    background-color: #ef4444 !important;
-    color: #ffffff !important;
-    .v-chip__content { color: #ffffff !important; }
-}
+.shift-morning   { background: var(--chip-green-bg);  color: var(--chip-green-fg);  border-left-color: #22c55e; }
+.shift-afternoon { background: var(--chip-amber-bg);  color: var(--chip-amber-fg);  border-left-color: #eab308; }
+.shift-night     { background: var(--chip-purple-bg); color: var(--chip-purple-fg); border-left-color: #8b5cf6; }
+.shift-default   { background: var(--chip-blue-bg);   color: var(--chip-blue-fg);   border-left-color: #3b82f6; }
 
-/* Đang hoạt động - Màu xanh lá */
-.status-active, .status-chip-active {
-    background-color: #10b981 !important;
-    color: #ffffff !important;
-    .v-chip__content { color: #ffffff !important; }
-}
+/* Chip ca dạng tròn (Chấm công) – nền nhạt + chữ màu theo tông ca */
+.shift-chip { @include admin-chip-base; min-width: 70px !important; }
+.shift-chip-morning   { @include chip-tone(green); }
+.shift-chip-afternoon { @include chip-tone(amber); }
+.shift-chip-night     { @include chip-tone(purple); }
+.shift-chip-default   { @include chip-tone(blue); }
 
-/* Specialized Chips */
-.gender-male, .gender-chip-male { @extend .status-info; }
-.gender-female, .gender-chip-female {
-    background: linear-gradient(135deg, #ec4899 0%, #db2777 100%) !important;
-    color: #ffffff !important;
-}
-
-.order-offline, .order-type-offline {
-    background: #fdf2f8 !important;
-    color: #be185d !important;
-    border: 1px solid #fce7f3 !important;
-}
-
-.order-online, .order-type-online {
-    background: #eff6ff !important;
-    color: #1d4ed8 !important;
-    border: 1px solid #dbeafe !important;
-}
-
-/* Phiếu giảm giá - Hình thức */
-.status-chip-public {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
-    color: #ffffff !important;
-}
-
-.status-chip-private {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-    color: #ffffff !important;
-}
-
-/* Phiếu giảm giá - Timeline Status */
-.status-chip-upcoming {
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
-    color: #ffffff !important;
-}
-
-/* Tab Count Badge */
+/* ---- Tab Count Badge ---- */
 .tab-count-avatar {
     background-color: $brand-navy !important;
     color: #fff !important;

@@ -291,10 +291,31 @@ public class AdminChatServiceImpl implements AdminChatService {
             notification.put("content", "CLOSED_CONVERSATION_" + id);
             notification.put("timestamp", Instant.now().toString());
             publishNotification(notification);
-            
+
             return true;
         }
         return false;
+    }
+
+    @Override
+    @Transactional
+    public boolean deleteConversation(String id) {
+        CuocHoiThoai conversation = conversationRepository.findById(id).orElse(null);
+        if (conversation == null) {
+            return false;
+        }
+
+        // Xóa toàn bộ tin nhắn trước rồi xóa cuộc hội thoại (xóa hẳn lịch sử)
+        messageRepository.deleteByConversationIdIn(List.of(id));
+        conversationRepository.deleteById(id);
+
+        // Báo cho các client khác refresh lại danh sách
+        Map<String, String> notification = new HashMap<>();
+        notification.put("content", "DELETED_CONVERSATION_" + id);
+        notification.put("timestamp", Instant.now().toString());
+        publishNotification(notification);
+
+        return true;
     }
 
     @Override

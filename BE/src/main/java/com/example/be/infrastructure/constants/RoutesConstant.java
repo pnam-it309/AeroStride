@@ -108,6 +108,7 @@ public final class RoutesConstant {
     public static final String CONVERSATION_MESSAGES = "/conversations/{id}/messages";
     public static final String CONVERSATION_ACCEPT = "/conversations/{id}/accept";
     public static final String CONVERSATION_CLOSE = "/conversations/{id}/close";
+    public static final String CONVERSATION_DELETE = "/conversations/{id}";
     public static final String SEND = "/send";
 
     // Lich Lam Viec specific

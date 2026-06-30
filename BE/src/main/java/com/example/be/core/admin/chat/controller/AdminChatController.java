@@ -57,6 +57,15 @@ public class AdminChatController {
         return ResponseEntity.badRequest().body(ApiResponse.error(400, "Không thể đóng cuộc hội thoại"));
     }
 
+    @DeleteMapping(RoutesConstant.CONVERSATION_DELETE)
+    public ResponseEntity<ApiResponse<Void>> deleteConversation(@PathVariable String id) {
+        boolean success = chatService.deleteConversation(id);
+        if (success) {
+            return ResponseEntity.ok(ApiResponse.success(null));
+        }
+        return ResponseEntity.badRequest().body(ApiResponse.error(400, "Không thể xóa cuộc hội thoại"));
+    }
+
     @PostMapping(RoutesConstant.SEND)
     public ResponseEntity<ApiResponse<Void>> sendMessage(@Valid @RequestBody SendMessageRequest request) {
         chatService.sendMessage(request.getConversationId(), request.getText(), request.getSender(), null);

@@ -60,6 +60,16 @@ const goNext = async () => {
 const goToPage = async (p) => {
     if (p >= 1 && p <= props.totalPages) page.value = p;
 };
+
+const handleJump = (e) => {
+    const val = e.target.value;
+    if (!val) return;
+    const p = parseInt(val);
+    if (!isNaN(p)) {
+        goToPage(p);
+    }
+    e.target.value = '';
+};
 </script>
 
 <template>
@@ -80,7 +90,7 @@ const goToPage = async (p) => {
                 <button type="button" class="pager-btn" :disabled="!hasPrev" @click="goPrev">&lt;</button>
                 <template v-if="visiblePages[0] > 1">
                     <button type="button" class="pager-btn" @click="goToPage(1)">1</button>
-                    <span v-if="visiblePages[0] > 2" class="pager-ellipsis">...</span>
+                    <input v-if="visiblePages[0] > 2" type="text" inputmode="numeric" class="pager-ellipsis pager-jump-input" placeholder="..." @keyup.enter="handleJump" @blur="handleJump" title="Nhập trang và ấn Enter" />
                 </template>
                 <button
                     v-for="p in visiblePages"
@@ -92,7 +102,7 @@ const goToPage = async (p) => {
                     {{ p }}
                 </button>
                 <template v-if="visiblePages[visiblePages.length - 1] < totalPages">
-                    <span v-if="visiblePages[visiblePages.length - 1] < totalPages - 1" class="pager-ellipsis">...</span>
+                    <input v-if="visiblePages[visiblePages.length - 1] < totalPages - 1" type="text" inputmode="numeric" class="pager-ellipsis pager-jump-input" placeholder="..." @keyup.enter="handleJump" @blur="handleJump" title="Nhập trang và ấn Enter" />
                     <button type="button" class="pager-btn" @click="goToPage(totalPages)">{{ totalPages }}</button>
                 </template>
                 <button type="button" class="pager-btn" :disabled="!hasNext" @click="goNext">&gt;</button>
@@ -164,6 +174,27 @@ const goToPage = async (p) => {
 .pager-ellipsis {
     color: #94a3b8;
     font-size: 13px;
-    padding: 0 2px;
+    padding: 0;
+}
+.pager-jump-input {
+    width: 32px;
+    height: 32px;
+    text-align: center;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: text;
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+.pager-jump-input:focus, .pager-jump-input:hover {
+    border: 1px solid #dbe4ef;
+    background: #ffffff;
+    color: #000;
+}
+.pager-jump-input::placeholder {
+    color: #94a3b8;
+    text-align: center;
+    letter-spacing: 2px;
 }
 </style>

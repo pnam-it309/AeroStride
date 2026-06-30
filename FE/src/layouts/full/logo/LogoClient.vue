@@ -21,5 +21,6 @@ import logo from '@/assets/images/logos/logoclient.jpg';
     height: auto;
     object-fit: contain;
     display: block;
+    mix-blend-mode: multiply;
 }
 </style>

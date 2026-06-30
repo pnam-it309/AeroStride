@@ -5,7 +5,7 @@ import MainHeader from '@/components/shared/MainHeader.vue';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import PromotionBar from '@/components/shared/PromotionBar.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
-import CartDrawer from '@/components/shared/CartDrawer.vue';
+
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 import { useCartStore } from '@/stores/cartStore';
 import { useToastStore } from '@/stores/toastStore';
@@ -86,17 +86,25 @@ watch(selectedColor, () => {
 });
 
 const allImages = computed(() => {
-    if (!product.value?.variants) return [];
     const images = [];
-    product.value.variants.forEach((v) => {
-        if (v.images) {
-            v.images.forEach((img) => {
-                if (!images.find((i) => i.duongDanAnh === img.duongDanAnh)) {
-                    images.push(img);
-                }
-            });
-        }
-    });
+    
+    // Thêm ảnh đại diện của sản phẩm
+    if (product.value?.hinhAnh) {
+        images.push({ duongDanAnh: product.value.hinhAnh });
+    }
+    
+    // Thêm ảnh của các biến thể
+    if (product.value?.variants) {
+        product.value.variants.forEach((v) => {
+            if (v.images) {
+                v.images.forEach((img) => {
+                    if (!images.find((i) => i.duongDanAnh === img.duongDanAnh)) {
+                        images.push({ duongDanAnh: img.duongDanAnh });
+                    }
+                });
+            }
+        });
+    }
     return images;
 });
 
@@ -243,12 +251,18 @@ const toggleFavorite = () => {
 
                         <!-- Thumbnail Strip -->
                         <v-row class="g-2">
-                            <v-col v-for="(img, i) in allImages" :key="i" cols="3" sm="2" class="mb-2">
+                            <v-col v-for="(img, i) in allImages" :key="'img-'+i" cols="3" sm="2" class="mb-2">
                                 <v-card class="rounded-lg bg-grey-lighten-4 overflow-hidden"
                                     :elevation="activeSlide === i ? 4 : 0"
                                     :style="activeSlide === i ? 'border: 2px solid #e53935;' : 'border: 1px solid #eee; cursor: pointer;'"
                                     @click="activeSlide = i">
                                     <v-img :src="img.duongDanAnh" cover class="aspect-square"></v-img>
+                                </v-card>
+                            </v-col>
+                            <v-col v-for="i in Math.max(0, 4 - allImages.length)" :key="'empty-'+i" cols="3" sm="2" class="mb-2">
+                                <v-card class="rounded-lg bg-grey-lighten-4 overflow-hidden d-flex align-center justify-center aspect-square"
+                                    style="border: 1px dashed #ccc; opacity: 0.6">
+                                    <v-icon color="grey-lighten-1" size="24">mdi-image-outline</v-icon>
                                 </v-card>
                             </v-col>
                         </v-row>
@@ -396,7 +410,7 @@ const toggleFavorite = () => {
         </footer>
 
         <!-- Cart Drawer -->
-        <CartDrawer />
+        
         <!-- Global Chat System -->
         <CustomerChat />
     </div>

@@ -4,13 +4,19 @@ import webSocketService from '@/services/auth/websocketService';
 export const useNotificationStore = defineStore('notification', {
     state: () => ({
         notifications: [],
-        unreadChatCount: 0,
+        // Danh sách id các cuộc hội thoại có tin nhắn chưa đọc (đếm theo CUỘC, không theo từng tin nhắn)
+        // -> badge khớp với số cuộc hội thoại ở các tab (Hoạt động/Chờ/Đóng).
+        unreadChatConvIds: [],
         isConnected: false
     }),
 
     getters: {
         unreadCount: (state) => state.notifications.filter((n) => !n.read).length,
-        totalUnread: (state) => state.notifications.filter((n) => !n.read).length + state.unreadChatCount
+        // Số cuộc hội thoại chưa đọc (distinct), dùng cho badge "Quản lý tin nhắn"
+        unreadChatCount: (state) => state.unreadChatConvIds.length,
+        totalUnread() {
+            return this.unreadCount + this.unreadChatCount;
+        }
     },
 
     actions: {
@@ -46,9 +52,9 @@ export const useNotificationStore = defineStore('notification', {
                     return;
                 }
 
-                // If not on chat page, increment unread chat count
+                // Nếu không ở trang chat thì đánh dấu CUỘC hội thoại này là chưa đọc (không cộng dồn từng tin)
                 if (!window.location.pathname.includes('/quan-ly-chat')) {
-                    this.unreadChatCount++;
+                    this.markChatUnread(message.conversationId);
                 }
                 return;
             }
@@ -84,16 +90,20 @@ export const useNotificationStore = defineStore('notification', {
             this.notifications = [];
         },
 
-        incrementUnreadChat() {
-            this.unreadChatCount++;
+        // Đánh dấu 1 cuộc hội thoại là chưa đọc (chỉ thêm 1 lần dù có nhiều tin nhắn)
+        markChatUnread(conversationId) {
+            if (conversationId && !this.unreadChatConvIds.includes(conversationId)) {
+                this.unreadChatConvIds.push(conversationId);
+            }
         },
 
-        setUnreadChatCount(count) {
-            this.unreadChatCount = count;
+        // Giữ tên cũ để tương thích nơi gọi; giờ nhận conversationId
+        incrementUnreadChat(conversationId) {
+            this.markChatUnread(conversationId);
         },
 
         resetUnreadChat() {
-            this.unreadChatCount = 0;
+            this.unreadChatConvIds = [];
         },
 
         disconnect() {
