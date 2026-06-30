@@ -1,0 +1,1 @@
+import{d as n}from"./vendor-core-D6bvKh4r.js";function l(){const e=n(!1);return{isRefreshing:e,handleRefresh:async(r,s=1200)=>{if(!e.value){e.value=!0;try{r(),await new Promise(a=>setTimeout(a,s))}finally{e.value=!1}}}}}export{l as u};

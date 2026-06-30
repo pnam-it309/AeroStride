@@ -1,0 +1,1 @@
+import{a as r}from"./index-XDHEDUCR.js";import"./vendor-core-D6bvKh4r.js";import"./vendor-vuetify-Bx7H1MBa.js";import"./vendor-charts-BPolstzy.js";const c={async syncCart(o){var a;const s={items:o.map(t=>({idChiTietSanPham:t.idChiTietSanPham,soLuong:t.soLuong}))};return(a=(await r.post("/customer/cart/sync",s)).data)==null?void 0:a.data}};export{c as dichVuCart};

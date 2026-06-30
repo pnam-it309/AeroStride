@@ -1,0 +1,1 @@
+import{p as a,q as I,D as s,r as n,F as c,s as e,H as E,d as r,L as t,t as D,u as R,v as T,w as A,x as i,y as o,k as O,g as S,z as N}from"./vendor-icons-DmdY0KfQ.js";const C={ACTION:{EDIT:N,DELETE:S,VIEW:o,ADD:O,DETAILS:o,MORE:i,MAP:A},COMMON:{SEARCH:T,REFRESH:R,FILTER:D,GRID:t,CALENDAR:r,HISTORY:E,SETTINGS:e,EXPORT:c,IMPORT:n,DOWNLOAD:s},NAV:{PREV:I,NEXT:a}};export{C as A};

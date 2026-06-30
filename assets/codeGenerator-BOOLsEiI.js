@@ -1,0 +1,1 @@
+import{a as r,j as a}from"./index-XDHEDUCR.js";const s=async t=>{try{return(await r.get(`${a.CODE_GENERATE}?type=${t}`,{silent:!0})).data}catch(e){return console.error("Lỗi khi tạo mã từ BE",e),""}};export{s as g};
