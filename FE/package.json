@@ -31,14 +31,14 @@
         "qrcode.vue": "^3.4.1",
         "three": "^0.184.0",
         "vite-plugin-vuetify": "^2.0.4",
-        "vue": "^3.5.13",
+        "vue": "^3.5.39",
         "vue-qrcode-reader": "^5.7.3",
-        "vue-router": "^4.5.0",
+        "vue-router": "^5.1.0",
         "vue-scrollto": "^2.20.0",
         "vue-tabler-icons": "^2.21.0",
         "vue3-apexcharts": "^1.7.0",
         "vue3-perfect-scrollbar": "^2.0.0",
-        "vuetify": "^3.7.0",
+        "vuetify": "^4.1.2",
         "yup": "^1.6.0"
     },
     "devDependencies": {
@@ -46,7 +46,7 @@
         "@stomp/stompjs": "^7.3.0",
         "@vitejs/plugin-vue": "^5.2.0",
         "@vue/eslint-config-prettier": "^10.2.0",
-        "@vue/test-utils": "^2.4.0",
+        "@vue/test-utils": "^2.4.11",
         "eslint": "^9.17.0",
         "eslint-plugin-vue": "^9.32.0",
         "gh-pages": "^6.2.0",
@@ -55,8 +55,8 @@
         "puppeteer": "^25.1.0",
         "sass": "^1.79.5",
         "sockjs-client": "^1.6.1",
-        "vite": "^6.0.0",
+        "vite": "^8.1.2",
         "vite-plugin-compression": "^0.5.1",
-        "vitest": "^4.1.7"
+        "vitest": "^4.1.9"
     }
 }
