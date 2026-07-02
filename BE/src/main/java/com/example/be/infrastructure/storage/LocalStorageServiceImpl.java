@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,9 +19,13 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
+/**
+ * StorageService mặc định (đã bỏ Cloudinary). Lưu file multipart xuống đĩa cục bộ và
+ * phục vụ qua /uploads/**. Ảnh sản phẩm/avatar chính đã chuyển sang lưu base64 trong DB;
+ * bean này chỉ còn phục vụ các luồng upload multipart còn lại.
+ */
 @Service
 @Primary
-@Profile("local")
 @RequiredArgsConstructor
 @Slf4j
 public class LocalStorageServiceImpl implements StorageService {

@@ -85,7 +85,7 @@ public class DefaultAdminBootstrap {
         admin.setPhanQuyen(adminRole);
         admin.setEmail(adminEmail.trim());
         admin.setTen(normalizeText(adminName, "Admin He Thong"));
-        admin.setSdt(normalizeText(adminPhone, null));
+        admin.setSdt(normalizeText(adminPhone, "0988888888"));
         admin.setNgaySinh(parseBirthDate(adminBirthDate));
         admin.setGioiTinh(adminGender);
         admin.setXoaMem(Boolean.FALSE);

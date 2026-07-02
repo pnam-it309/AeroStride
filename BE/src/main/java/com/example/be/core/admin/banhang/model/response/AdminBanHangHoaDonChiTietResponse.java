@@ -18,6 +18,8 @@ public class AdminBanHangHoaDonChiTietResponse {
     private String tenKichThuoc;
     private Integer soLuong;
     private BigDecimal donGia;
+    private BigDecimal giaGoc;
+    private Integer phanTramGiam;
     private BigDecimal thanhTien;
     private Integer soLuongTon;
     private String hinhAnh;

@@ -122,10 +122,14 @@ public class CustomerOrderController {
     // Lấy danh sách các mã giảm giá (voucher) có thể áp dụng cho tổng tiền giỏ hàng hiện tại
     @GetMapping("/vouchers")
     public ResponseEntity<ApiResponse<List<PhieuGiamGia>>> getAvailableVouchers(
-            @RequestParam(required = false) BigDecimal tongTien
+            @RequestParam(required = false) BigDecimal tongTien,
+            Authentication authentication
     ) {
-        log.info("Fetching available vouchers for amount: {}", tongTien);
-        List<PhieuGiamGia> vouchers = customerOrderService.getAvailableVouchers(tongTien);
+        // Khách vãng lai (chưa đăng nhập) -> username null -> chỉ nhận phiếu công khai
+        String username = (authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getName())) ? authentication.getName() : null;
+        log.info("Fetching available vouchers for amount: {}, user: {}", tongTien, username);
+        List<PhieuGiamGia> vouchers = customerOrderService.getAvailableVouchers(tongTien, username);
         return ResponseEntity.ok(ApiResponse.success(vouchers));
     }
 }

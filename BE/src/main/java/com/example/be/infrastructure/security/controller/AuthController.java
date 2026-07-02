@@ -1,16 +1,21 @@
 package com.example.be.infrastructure.security.controller;
 
 import com.example.be.entity.KhachHang;
+import com.example.be.entity.NhanVien;
 import com.example.be.entity.RefreshToken;
 import com.example.be.infrastructure.constants.RoutesConstant;
 import com.example.be.infrastructure.security.JwtTokenProvider;
 import com.example.be.infrastructure.security.dto.AuthResponse;
+import com.example.be.infrastructure.security.dto.ChangePasswordRequest;
+import com.example.be.infrastructure.security.dto.CurrentUserResponse;
 import com.example.be.infrastructure.security.dto.LoginRequest;
 import com.example.be.infrastructure.security.dto.RegisterRequest;
 import com.example.be.infrastructure.security.dto.TokenRefreshRequest;
 import com.example.be.infrastructure.security.service.RefreshTokenService;
 import com.example.be.infrastructure.config.ratelimit.RateLimit;
+import com.example.be.infrastructure.exceptions.BusinessException;
 import com.example.be.repository.KhachHangRepository;
+import com.example.be.repository.NhanVienRepository;
 import com.example.be.core.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +39,7 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
     private final KhachHangRepository khachHangRepository;
+    private final NhanVienRepository nhanVienRepository;
     private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
@@ -132,5 +138,63 @@ public class AuthController {
         }
         SecurityContextHolder.clearContext();
         return ResponseEntity.noContent().build();
+    }
+
+    /** Thông tin nhân viên đang đăng nhập (cho header admin & trang hồ sơ). */
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<CurrentUserResponse>> getCurrentUser(Authentication authentication) {
+        NhanVien nv = requireCurrentNhanVien(authentication);
+
+        String role = authentication.getAuthorities().isEmpty()
+                ? null
+                : authentication.getAuthorities().iterator().next().getAuthority();
+
+        CurrentUserResponse response = CurrentUserResponse.builder()
+                .id(nv.getId())
+                .tenTaiKhoan(nv.getTenTaiKhoan())
+                .ten(nv.getTen())
+                .chucVu(nv.getPhanQuyen() != null ? nv.getPhanQuyen().getTen() : null)
+                .role(role)
+                .ma(nv.getMa())
+                .email(nv.getEmail())
+                .sdt(nv.getSdt())
+                .hinhAnh(nv.getHinhAnh())
+                .gioiTinh(nv.getGioiTinh())
+                .ngaySinh(nv.getNgaySinh() != null ? nv.getNgaySinh().toString() : null)
+                .diaChiChiTiet(nv.getDiaChiChiTiet())
+                .phuongXa(nv.getPhuongXa())
+                .thanhPho(nv.getThanhPho())
+                .tinh(nv.getTinh())
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /** Đổi mật khẩu của nhân viên đang đăng nhập. */
+    @PutMapping("/change-password")
+    public ResponseEntity<ApiResponse<String>> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request, Authentication authentication) {
+        NhanVien nv = requireCurrentNhanVien(authentication);
+
+        if (!passwordEncoder.matches(request.getMatKhauCu(), nv.getMatKhau())) {
+            throw new BusinessException("Mật khẩu cũ không chính xác");
+        }
+        if (!request.getMatKhauMoi().equals(request.getXacNhanMatKhau())) {
+            throw new BusinessException("Mật khẩu mới và xác nhận mật khẩu không khớp");
+        }
+
+        nv.setMatKhau(passwordEncoder.encode(request.getMatKhauMoi()));
+        nhanVienRepository.save(nv);
+        return ResponseEntity.ok(ApiResponse.success("Đổi mật khẩu thành công"));
+    }
+
+    /** Lấy nhân viên hiện tại từ SecurityContext hoặc ném lỗi nếu chưa đăng nhập / không phải nhân viên. */
+    private NhanVien requireCurrentNhanVien(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new BusinessException("Bạn chưa đăng nhập");
+        }
+        return nhanVienRepository.findByTenTaiKhoan(authentication.getName())
+                .orElseThrow(() -> new BusinessException("Không tìm thấy thông tin nhân viên"));
     }
 }

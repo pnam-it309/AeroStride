@@ -26,7 +26,9 @@ export const API_AUTH = {
     BASE: API_BASE.AUTH,
     LOGIN: `${API_BASE.AUTH}/login`,
     LOGOUT: `${API_BASE.AUTH}/logout`,
-    REFRESH: `${API_BASE.AUTH}/refresh-token`
+    REFRESH: `${API_BASE.AUTH}/refresh-token`,
+    ME: `${API_BASE.AUTH}/me`,
+    CHANGE_PASSWORD: `${API_BASE.AUTH}/change-password`
 };
 
 export const API_PRODUCT = {

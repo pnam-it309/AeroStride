@@ -2,7 +2,7 @@ import api from '../apiService';
 import { API_COMMON, API_DEFAULTS } from '@/constants/apiPaths';
 
 export const dichVuFile = {
-    // Hàm nén ảnh trước khi upload (giúp tối ưu Cloudinary load nhanh gấp 10 lần)
+    // Hàm nén ảnh trước khi lưu (giảm dung lượng base64 lưu vào DB)
     async nenAnh(file, maxWidth = 1600, maxHeight = 1600, quality = 0.8) {
         if (!file.type.startsWith('image/')) return file;
 
@@ -47,20 +47,21 @@ export const dichVuFile = {
         });
     },
 
-    // Tải lên file
+    // Tải ảnh: nén rồi chuyển thành base64 data URL để lưu thẳng vào DB (đã bỏ Cloudinary).
+    // Trả về chuỗi "data:image/...;base64,..." — dùng trực tiếp làm src ảnh và lưu vào cột ảnh.
     async taiLenFile(file) {
-        // Nén ảnh trước khi gửi (giảm dung lượng từ MB xuống vài chục KB)
         const compressedFile = await this.nenAnh(file);
+        return await this.fileToDataUrl(compressedFile);
+    },
 
-        const formData = new FormData();
-        formData.append('file', compressedFile);
-
-        const response = await api.post(`${API_COMMON.STORAGE}/upload`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
+    // Chuyển File/Blob thành chuỗi base64 data URL
+    fileToDataUrl(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(new Error('Không đọc được tệp'));
+            reader.readAsDataURL(file);
         });
-        return response.data.data;
     },
 
     // Lấy danh sách file

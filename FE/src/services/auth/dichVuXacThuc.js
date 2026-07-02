@@ -54,6 +54,18 @@ export const dichVuXacThuc = {
         return userStr ? JSON.parse(userStr) : null;
     },
 
+    // Lấy hồ sơ nhân viên đang đăng nhập (tên, chức vụ, email...) từ backend
+    async layThongTinCaNhan() {
+        const response = await api.get(API_AUTH.ME);
+        return response.data.data;
+    },
+
+    // Đổi mật khẩu nhân viên đang đăng nhập
+    async doiMatKhau(payload) {
+        const response = await api.put(API_AUTH.CHANGE_PASSWORD, payload);
+        return response.data;
+    },
+
     // Lấy access token
     layAccessToken() {
         return sessionStorage.getItem('accessToken');

@@ -17,8 +17,10 @@ import { useAdminTable } from '@/composables/useAdminTable';
 import { formatCurrency, formatDate, formatDateTime } from '@/utils/formatters';
 import { getOrderStatusMeta } from '@/utils/orderStatus';
 import { ORDER_TYPES, ORDER_TYPE_OPTIONS } from '@/constants/appConstants';
+import { useAuthStore } from '@/stores/authStore';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const TAB_ALL = 'ALL';
 
 const getTodayDate = () => {
@@ -379,13 +381,13 @@ onMounted(() => loadOrders());
 
                     <td class="data-cell text-center">
                         <div class="text-truncate"
-                            :title="item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống'">
-                            {{ item.maNhanVien || item.maNV || item.tenNhanVien || 'Hệ thống' }}
+                            :title="item.maNhanVien || item.maNV || item.tenNhanVien || (authStore.user?.username ? authStore.user.username.toUpperCase() : 'ADMIN')">
+                            {{ item.maNhanVien || item.maNV || item.tenNhanVien || (authStore.user?.username ? authStore.user.username.toUpperCase() : 'ADMIN') }}
                         </div>
                     </td>
 
                     <td class="data-cell text-center">
-                        <div class="text-truncate" :title="item.soDienThoai || 'N/A'">{{ item.soDienThoai || 'N/A' }}
+                        <div class="text-truncate" :title="item.soDienThoai || '0988888888'">{{ item.soDienThoai || '0988888888' }}
                         </div>
                     </td>
 

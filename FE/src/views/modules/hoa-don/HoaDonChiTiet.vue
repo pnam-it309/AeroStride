@@ -405,6 +405,20 @@ const orderDiscountAmount = computed(() => {
 
 const orderTotalAmount = computed(() => order.value.tongTienSauGiam || order.value.tongTien || 0);
 
+// Tổng tiền theo GIÁ GỐC (trước đợt giảm giá) — giaHienTai đóng vai trò giá gốc như POS.
+const originalTotalAmount = computed(() => {
+    const items = order.value?.listsHoaDonChiTiet || [];
+    return items.reduce((sum, it) => sum + (Number(it.giaHienTai || it.donGia || 0) * Number(it.soLuong || 0)), 0);
+});
+
+// Số tiền đã giảm từ ĐỢT GIẢM GIÁ = chênh lệch giá gốc và giá đã chốt (donGia đã là giá sau đợt).
+const campaignDiscountAmount = computed(() => Math.max(0, originalTotalAmount.value - Number(order.value?.tongTien || 0)));
+
+const campaignDiscountPercent = computed(() => {
+    if (originalTotalAmount.value === 0) return 0;
+    return Math.round((campaignDiscountAmount.value / originalTotalAmount.value) * 100);
+});
+
 const initialHistoryLog = computed(() => {
     let performer = order.value.maNhanVien || null;
     if (order.value.loaiDon === 'ONLINE' && order.value.tenKhachHang) {
@@ -862,7 +876,7 @@ onMounted(() => {
                                                 <div class="text-body-2 text-slate-800 d-flex align-center">
                                                     <v-icon color="primary" class="mr-2"
                                                         size="18">mdi-card-account-details-outline</v-icon>
-                                                    <span>{{ order.khachHang?.maKhachHang || 'GUEST' }}</span>
+                                                    <span>{{ order.maKhachHang || 'GUEST' }}</span>
                                                 </div>
                                             </div>
                                             <div class="info-item">
@@ -997,6 +1011,10 @@ onMounted(() => {
                             <div class="summary-row mb-5">
                                 <span class="text-slate-500">Tổng tiền hàng:</span>
                                 <span class="text-body-2 text-primary" style="font-weight: 700 !important;">{{ formatCurrency(order.tongTien) }}</span>
+                            </div>
+                            <div v-if="campaignDiscountAmount > 0" class="summary-row mb-3">
+                                <span class="text-slate-500">Đợt giảm giá:</span>
+                                <span class="text-body-2 font-weight-bold" style="color: #dc2626 !important;">-{{ campaignDiscountPercent }}%</span>
                             </div>
                             <div class="summary-row mb-3">
                                 <span class="text-slate-500">Mã giảm giá:</span>

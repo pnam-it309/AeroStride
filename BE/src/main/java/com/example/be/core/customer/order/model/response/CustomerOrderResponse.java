@@ -60,8 +60,9 @@ public class CustomerOrderResponse {
         private String hinhAnh;
         private String tenMauSac;
         private String tenKichThuoc;
-        private BigDecimal donGia;       // đơn giá đã chốt trên đơn
-        private BigDecimal giaHienTai;   // giá bán hiện tại (để phát hiện đổi giá)
+        private BigDecimal donGia;       // Đơn giá đã chốt trên đơn
+        private BigDecimal giaHienTai;   // Giá bán hiện tại (để phát hiện đổi giá)
+        private Integer phanTramGiam;
         private Integer soLuong;
         private BigDecimal thanhTien;
     }

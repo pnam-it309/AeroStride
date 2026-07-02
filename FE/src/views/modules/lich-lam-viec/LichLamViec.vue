@@ -591,11 +591,11 @@ onMounted(() => {
                     <h3 class="text-h6 font-weight-bold text-black tracking-tight">{{ toolbarTitle }}</h3>
                 </div>
                 <div class="d-flex align-center flex-wrap justify-end gap-2 admin-toolbar-actions">
-                    <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-secondary"
+                    <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-export"
                         @click="handleDownloadTemplate">
                         Tải mẫu
                     </v-btn>
-                    <v-btn prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary" @click="handleImport">
+                    <v-btn prepend-icon="mdi-upload" variant="flat" class="admin-btn-export" @click="handleImport">
                         Nhập Excel
                     </v-btn>
                     <!-- Tab Bảng / Lịch -->

@@ -263,9 +263,9 @@ onUnmounted(() => {
                 </div>
             </div>
         </nav>
-        <!-- Include Cart Drawer globally -->
-        <CartDrawer />
     </header>
+    <!-- Include Cart Drawer globally, outside of header to avoid backdrop-filter containing block issues -->
+    <CartDrawer />
 </template>
 
 <style scoped lang="scss">

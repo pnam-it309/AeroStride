@@ -14,6 +14,7 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { BoxIcon, XIcon } from 'vue-tabler-icons';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import apiService from '@/services/apiService';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { dichVuVnPay } from './dichVuVnPay';
 import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
@@ -69,6 +70,7 @@ const vouchers = ref([]);
 const isProcessing = ref(false);
 const isAutoApplyingVoucher = ref(false);
 const manualVoucherLocks = ref({});
+const loadingVouchers = ref(false);
 
 // Trang thai tim kiem san pham/bien the trong gio hang.
 const orderWarehouse = ref('KHO ANSHA BIGSIZE');
@@ -93,7 +95,29 @@ const filterMaterials = ref([]);
 const customerSearch = ref('');
 const customerResults = ref([]);
 const customerLoading = ref(false);
-const showQuickAddDialog = ref(false);
+
+const BASE_SHIPPING_FEE = ref(30000);
+const shippingOptions = ref([]);
+const FREE_SHIP_THRESHOLD = ref(500000);
+
+const fetchShippingConfig = async () => {
+    try {
+        const response = await apiService.get('/config/shipping');
+        if (response.data?.success) {
+            FREE_SHIP_THRESHOLD.value = response.data.data.freeShipThreshold;
+            BASE_SHIPPING_FEE.value = response.data.data.baseFee;
+            shippingOptions.value = response.data.data.shippingOptions || [];
+        }
+    } catch (e) {
+        console.error('Lỗi khi lấy cấu hình phí vận chuyển', e);
+    }
+};
+
+const showPaymentInfo = ref(false);
+const printDialog = ref(false);
+const printData = ref(null);
+const currentOrderIdForPrint = ref(null);
+
 const quickAddLoading = ref(false);
 // Form them nhanh khach hang; chi luu vao he thong khi checkout thanh cong.
 const quickAddForm = ref({ ten: '', sdt: '', email: '', gioiTinh: true, tinh: null, thanhPho: null, phuongXa: null, diaChiChiTiet: '' });
@@ -123,7 +147,19 @@ const recipientDistrict = ref(null);
 const recipientWard = ref(null);
 
 // Cac gia tri phu anh huong tong tien don hang.
-const shippingFee = ref(30000);
+const shippingDistance = ref(0);
+const shippingFee = ref(BASE_SHIPPING_FEE.value);
+
+const calculateDynamicShippingFee = async (distance) => {
+    try {
+        const response = await apiService.get('/config/shipping/calculate', { params: { distance } });
+        if (response.data?.success) {
+            shippingFee.value = response.data.data.fee;
+        }
+    } catch (e) {
+        console.error('Error calculating shipping fee', e);
+    }
+};
 const surcharge = ref(0);
 const isFreeShip = ref(false);
 const onlyChargeIfReturned = ref(false);
@@ -195,6 +231,10 @@ const totalRawAmount = computed(() => {
     return subtotal + Number(shippingFee.value || 0) + Number(surcharge.value || 0);
 });
 
+const originalTotalAmount = computed(() => {
+    return selectedOrder.value?.listsHoaDonChiTiet?.reduce((sum, item) => sum + ((item.giaGoc || item.donGia) * item.soLuong), 0) || 0;
+});
+
 const discountAmount = computed(() => {
     const raw = Number(selectedOrder.value?.tongTien || 0);
     const after = Number(selectedOrder.value?.tongTienSauGiam || 0);
@@ -203,6 +243,23 @@ const discountAmount = computed(() => {
 
 const finalCollectAmount = computed(() => {
     return Math.max(0, totalRawAmount.value - discountAmount.value);
+});
+
+// Số tiền đã giảm từ ĐỢT GIẢM GIÁ (chênh lệch giữa giá gốc và giá đã áp đợt).
+// donGia lưu trong hóa đơn đã là giá sau đợt, nên tongTien = tổng giá đã giảm.
+const campaignDiscountAmount = computed(() => {
+    const discounted = Number(selectedOrder.value?.tongTien || 0);
+    return Math.max(0, originalTotalAmount.value - discounted);
+});
+
+const campaignDiscountPercent = computed(() => {
+    if (originalTotalAmount.value === 0) return 0;
+    return Math.round((campaignDiscountAmount.value / originalTotalAmount.value) * 100);
+});
+
+// Tổng tiền theo GIÁ GỐC (trước đợt giảm giá) + phí ship + phụ thu — để hiển thị minh bạch.
+const grossTotalAmount = computed(() => {
+    return originalTotalAmount.value + Number(shippingFee.value || 0) + Number(surcharge.value || 0);
 });
 
 const remainingBalance = computed(() => {
@@ -231,7 +288,7 @@ watch(() => selectedOrder.value?.id, (id) => {
             isFreeShip.value = Number(selectedOrder.value.phiVanChuyen) === 0 && isShippingLoaiDon(selectedOrder.value.loaiDon);
         } else {
             const channel = isShippingLoaiDon(selectedOrder.value.loaiDon) ? 'Giao hàng' : 'Tại quầy';
-            shippingFee.value = channel === 'Giao hàng' ? 30000 : 0;
+            shippingFee.value = channel === 'Giao hàng' ? BASE_SHIPPING_FEE.value : 0;
             isFreeShip.value = false;
         }
 
@@ -256,12 +313,18 @@ watch([orderChannel, isFreeShip], ([channel, freeShip], oldVal) => {
         shippingFee.value = 0;
     } else {
         if (oldFreeShip === true && !freeShip) {
-            shippingFee.value = channel === 'Giao hàng' ? 30000 : 0;
+            shippingFee.value = channel === 'Giao hàng' ? BASE_SHIPPING_FEE.value : 0;
         } else if (channel !== oldChannel && oldChannel !== undefined) {
-            shippingFee.value = channel === 'Giao hàng' ? 30000 : 0;
+            shippingFee.value = channel === 'Giao hàng' ? BASE_SHIPPING_FEE.value : 0;
         }
     }
 }, { immediate: true });
+
+watch(shippingDistance, (newVal) => {
+    if (newVal >= 0 && orderChannel.value === 'Giao hàng') {
+        calculateDynamicShippingFee(newVal);
+    }
+});
 
 // Automatically uncheck Free Ship if a non-zero shipping fee is typed/selected
 watch(shippingFee, (newVal) => {
@@ -919,6 +982,7 @@ const setActiveOrderIndex = (idx) => {
 
 // Lifecycle
 onMounted(async () => {
+    fetchShippingConfig();
     // Tự động thu gọn sidebar khi vào màn hình Bán hàng
     uiStore.setSidebarCollapsed(true);
 
@@ -929,6 +993,15 @@ onMounted(async () => {
     window.addEventListener('keydown', handleGlobalKeyDown);
     loading.value = true;
     try {
+        loadingVouchers.value = true;
+        try {
+            const response = await dichVuDonHang.getVouchers(originalTotalAmount.value || totalRawAmount.value || 0);
+            allActiveVouchers.value = extractVoucherPageContent(response);
+        } catch (error) {
+            console.error("Lỗi khi tải danh sách phiếu giảm giá:", error);
+        } finally {
+            loadingVouchers.value = false;
+        }
         fetchProvincesShip();
         await loadCurrentEmployeeDetails();
         await loadFilterOptions();
@@ -1195,7 +1268,7 @@ const onRemoveItem = (item) => {
         show: true,
         title: 'Xác nhận xóa sản phẩm',
         message: `Bạn có chắc chắn muốn xóa [${item.tenSanPham}] khỏi giỏ hàng?`,
-        color: 'warning',
+        color: 'primary',
         action: async () => {
             confirmDialog.value.loading = true;
             try {
@@ -1270,7 +1343,7 @@ const allActiveVouchers = ref([]);
 
 // Tải danh sách tất cả các voucher thỏa mãn điều kiện áp dụng cho hóa đơn hiện tại
 const loadEligibleVouchers = (order) => {
-    const total = Number(order?.tongTien || 0);
+    const total = originalTotalAmount.value || Number(order?.tongTien || 0);
     const customerId = order?.idKhachHang || null;
     return allActiveVouchers.value.filter((voucher) => {
         if (calculateVoucherDiscount(voucher, total) <= 0) return false;
@@ -1283,9 +1356,10 @@ const loadEligibleVouchers = (order) => {
         const type = String(v.loaiPhieu || '').toUpperCase();
         const isPercent = type === 'PHAN_TRAM' || type === 'PERCENT';
         const valStr = isPercent ? `${v.phanTramGiamGia}%` : formatCurrency(v.soTienGiam || 0);
+        console.log("VOUCHER_OBJ:", v);
         return {
             ...v,
-            customTitle: `Giảm ${valStr} - ${v.ten} (${v.ma})`
+            customTitle: v.ma || v.maPhieu || v.maPhieuGiamGia || 'VOUCHER_NO_CODE'
         };
     });
 };
@@ -2337,6 +2411,12 @@ const closeQuickAdd = () => {
                                         </v-select>
                                     </div>
 
+                                    <div v-if="isGiaoHang" class="d-flex align-center justify-space-between text-body-2 py-1 mb-2">
+                                        <span class="text-slate-600">Khoảng cách (km)</span>
+                                        <v-text-field v-model="shippingDistance" type="number" min="0" variant="outlined" density="compact" hide-details
+                                            style="width: 170px !important; max-width: 170px !important; min-width: 170px !important; flex: none !important;"
+                                            class="text-right-input" />
+                                    </div>
                                     <!-- Shipping Fee -->
                                     <div v-if="isGiaoHang" class="d-flex align-center justify-space-between">
                                         <div class="d-flex flex-column">
@@ -2347,48 +2427,16 @@ const closeQuickAdd = () => {
                                                 class="text-caption font-weight-medium"
                                                 style="margin-top: -6px; transform: scale(0.9); transform-origin: left top" />
                                         </div>
-                                        <v-menu offset="4">
-                                            <template v-slot:activator="{ props }">
+                                        
                                                 <v-text-field :model-value="formatNumberWithDots(shippingFee)"
                                                     @input="e => { shippingFee = parseNumberFromDots(e.target.value); e.target.value = formatNumberWithDots(shippingFee); }"
                                                     @keypress="e => { if (!/^[0-9]$/.test(e.key)) e.preventDefault() }"
-                                                    v-bind="props" variant="outlined" density="compact" suffix="đ"
+                                                     variant="outlined" density="compact" suffix="đ"
                                                     hide-details
                                                     style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
                                                     class="text-right-input custom-value-input"
                                                     :disabled="isFreeShip" />
-                                            </template>
-                                            <v-list class="pa-0 border rounded-lg elevation-2 bg-white"
-                                                style="min-width: 170px;">
-                                                <!-- Nội thành -->
-                                                <div>
-                                                    <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
-                                                        style="font-size: 11px;">Nội thành:</div>
-                                                    <v-list-item @click="setShippingFee(30000)"
-                                                        class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
-                                                        30.000 <span class="text-decoration-underline">đ</span>
-                                                    </v-list-item>
-                                                </div>
-                                                <!-- Ngoại thành -->
-                                                <div>
-                                                    <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
-                                                        style="font-size: 11px;">Ngoại thành:</div>
-                                                    <v-list-item @click="setShippingFee(30000)"
-                                                        class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
-                                                        30.000 <span class="text-decoration-underline">đ</span>
-                                                    </v-list-item>
-                                                </div>
-                                                <!-- Ngoại tỉnh -->
-                                                <div>
-                                                    <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
-                                                        style="font-size: 11px;">Ngoại tỉnh:</div>
-                                                    <v-list-item @click="setShippingFee(30000)"
-                                                        class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
-                                                        30.000 <span class="text-decoration-underline">đ</span>
-                                                    </v-list-item>
-                                                </div>
-                                            </v-list>
-                                        </v-menu>
+                                            
                                     </div>
 
 
@@ -2398,16 +2446,22 @@ const closeQuickAdd = () => {
                                             tiền</span>
                                         <span class="font-weight-bold"
                                             style="font-size: 13px !important; color: #0c3866;">{{
-                                                formatCurrency(totalRawAmount)
+                                                formatCurrency(grossTotalAmount)
                                             }}</span>
                                     </div>
 
-                                    <!-- Discount amount applied -->
-                                    <div class="d-flex align-center justify-space-between">
+                                    <!-- Đợt giảm giá (số tiền đã trừ từ giá gốc) -->
+                                    <div class="d-flex align-center justify-space-between mt-1" v-if="campaignDiscountAmount > 0">
+                                        <span class="text-slate-600" style="font-size: 13px !important">Đợt giảm giá</span>
+                                        <span class="font-weight-bold" style="font-size: 13px !important; color: #dc2626;">-{{ campaignDiscountPercent }}%</span>
+                                    </div>
+
+                                    <!-- Giảm giá từ phiếu (voucher) -->
+                                    <div class="d-flex align-center justify-space-between" v-if="discountAmount > 0">
                                         <span class="text-slate-600" style="font-size: 13px !important">Giảm giá</span>
                                         <span class="font-weight-bold"
                                             style="font-size: 13px !important; color: #dc2626;">
-                                            {{ discountAmount > 0 ? '-' : '' }}{{ formatCurrency(discountAmount) }}
+                                            -{{ formatCurrency(discountAmount) }}
                                         </span>
                                     </div>
 
@@ -2885,16 +2939,13 @@ const closeQuickAdd = () => {
                                 <v-img :src="modalDisplayVariant?.hinhAnh || variantModal.product?.hinhAnh" cover />
                             </v-avatar>
                             <div v-if="modalDisplayDiscountPercent > 0" class="variant-modal-discount-badge d-flex align-center justify-center">
-                                <v-icon color="white" size="14">mdi-flash</v-icon>
+                                <span class="text-white font-weight-bold" style="font-size: 11px !important;">-{{ modalDisplayDiscountPercent }}%</span>
                             </div>
                         </div>
                         <div class="pt-1">
                             <h3 class="text-subtitle-1 font-weight-bold text-slate-800 mb-1"
                                 style="line-height: 1.3; font-size: 15px !important;">{{
                                     variantModal.product?.tenSanPham }}</h3>
-                            <div v-if="modalDisplayDiscountPercent > 0" class="text-error text-caption mb-1 font-weight-medium">
-                                Đợt giảm giá: -{{ modalDisplayDiscountPercent }}%
-                            </div>
                             <div class="text-primary font-weight-bold mb-1" style="font-size: 18px;">
                                 {{ modalDisplayVariant ? formatCurrency(modalDisplayVariant.giaBan) :
                                     formatCurrency(variantModal.product?.variants[0]?.giaBan || 0) }}
@@ -3641,3 +3692,4 @@ const closeQuickAdd = () => {
     align-self: center !important;
 }
 </style>
+

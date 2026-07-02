@@ -59,13 +59,10 @@ const handleDirectInput = (item, event) => {
                                 <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover />
                                 <BoxIcon v-else size="18" class="text-grey" />
                                 <div v-if="item.phanTramGiam > 0" class="cart-discount-badge-small d-flex align-center justify-center">
-                                    <v-icon color="white" size="10">mdi-flash</v-icon>
+                                    <span class="text-white font-weight-bold" style="font-size: 9px !important;">-{{ item.phanTramGiam }}%</span>
                                 </div>
                             </v-avatar>
                             <div>
-                                <div v-if="item.phanTramGiam > 0" class="text-error text-caption font-weight-medium mb-1" style="font-size: 11px !important; line-height: 1;">
-                                    Đợt giảm giá: -{{ item.phanTramGiam }}%
-                                </div>
                                 <div class="text-slate-700 text-body-2" style="font-size: 13.5px !important; line-height: 1.3;">{{ item.tenSanPham }}</div>
                                 
                                 <!-- mã sp | mã sku (với nhãn vuông pastel nhé) -->

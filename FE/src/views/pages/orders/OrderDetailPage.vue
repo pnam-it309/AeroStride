@@ -5,7 +5,7 @@ import MainHeader from '@/components/shared/MainHeader.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 
 import { dichVuDatHang } from '@/services/public/dichVuDatHang';
-import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, ORDER_STATUS_ICONS } from '@/constants/hoaDonConstants';
+import { ORDER_STATUS, ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, ORDER_STATUS_ICONS } from '@/constants/hoaDonConstants';
 
 const route = useRoute();
 const router = useRouter();
@@ -50,6 +50,23 @@ const formatDateFull = (timestamp) => {
 const canCancel = computed(() => {
     return order.value?.trangThai === 'CHO_XAC_NHAN';
 });
+
+// Các bước tiến trình đơn hàng (luồng bình thường, bỏ qua Đã hủy / Hoàn đơn)
+const timelineSteps = [
+    ORDER_STATUS.CHO_XAC_NHAN,
+    ORDER_STATUS.XAC_NHAN,
+    ORDER_STATUS.CHO_GIAO,
+    ORDER_STATUS.DANG_GIAO,
+    ORDER_STATUS.HOAN_THANH
+];
+
+// Đơn ở trạng thái bất thường -> không hiển thị thanh ngang mà báo riêng
+const isCancelled = computed(() =>
+    order.value?.trangThai === ORDER_STATUS.DA_HUY || order.value?.trangThai === ORDER_STATUS.HOAN_DON
+);
+
+// Vị trí bước hiện tại trong luồng (-1 nếu không thuộc luồng bình thường)
+const currentStepIndex = computed(() => timelineSteps.indexOf(order.value?.trangThai));
 
 const isPriceChanged = (item) => item.giaHienTai != null && Number(item.giaHienTai) !== Number(item.donGia);
 
@@ -244,6 +261,26 @@ onMounted(async () => {
                             </v-chip>
                         </div>
                     </div>
+                </div>
+
+                <!-- Horizontal Progress Stepper -->
+                <div v-if="!isCancelled && currentStepIndex >= 0" class="progress-stepper section-block mb-8">
+                    <div class="stepper-track">
+                        <template v-for="(step, i) in timelineSteps" :key="step">
+                            <div class="stepper-step" :class="{ 'is-done': i <= currentStepIndex, 'is-current': i === currentStepIndex }">
+                                <div class="stepper-circle">
+                                    <v-icon size="18" :color="i <= currentStepIndex ? 'white' : '#b0b5e0'">{{ statusIcon(step) }}</v-icon>
+                                </div>
+                                <span class="stepper-label">{{ statusLabel(step) }}</span>
+                            </div>
+                            <div v-if="i < timelineSteps.length - 1" class="stepper-line" :class="{ 'is-done': i < currentStepIndex }"></div>
+                        </template>
+                    </div>
+                </div>
+                <!-- Trạng thái bất thường -->
+                <div v-else-if="isCancelled" class="cancelled-banner section-block mb-8">
+                    <v-icon size="22" class="mr-3" color="#991b1b">{{ statusIcon(order.trangThai) }}</v-icon>
+                    <span>Đơn hàng đã {{ statusLabel(order.trangThai).toLowerCase() }}</span>
                 </div>
 
                 <v-row class="content-grid">
@@ -613,6 +650,73 @@ onMounted(async () => {
     border-radius: 12px;
     overflow: hidden;
     flex-shrink: 0;
+}
+
+/* Horizontal progress stepper */
+.progress-stepper {
+    padding: 28px 24px 22px;
+    overflow-x: auto;
+}
+.stepper-track {
+    display: flex;
+    align-items: flex-start;
+    min-width: 520px;
+}
+.stepper-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 auto;
+    width: 96px;
+}
+.stepper-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 2px solid #d8daf0;
+    transition: all 0.3s ease;
+}
+.stepper-step.is-done .stepper-circle {
+    background: #1e257c;
+    border-color: #1e257c;
+}
+.stepper-step.is-current .stepper-circle {
+    box-shadow: 0 0 0 4px rgba(30, 37, 124, 0.15);
+}
+.stepper-label {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #9aa0c0;
+    text-align: center;
+    line-height: 1.2;
+}
+.stepper-step.is-done .stepper-label {
+    color: #1e257c;
+}
+.stepper-line {
+    flex: 1 1 auto;
+    height: 3px;
+    background: #d8daf0;
+    margin-top: 23px;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+.stepper-line.is-done {
+    background: #1e257c;
+}
+.cancelled-banner {
+    display: flex;
+    align-items: center;
+    padding: 18px 24px;
+    font-weight: 700;
+    color: #991b1b;
+    background: #fef2f2;
+    border-color: #fecaca !important;
 }
 
 .timeline-modern :deep(.v-timeline-item__body) {

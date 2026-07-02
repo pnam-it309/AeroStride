@@ -34,6 +34,13 @@ const estimatedDelivery = computed(() => {
 
 onMounted(async () => {
     try {
+        if (route.query && route.query.vnp_ResponseCode) {
+            try {
+                await dichVuDatHang.xacNhanThanhToanVnPay(route.query);
+            } catch (err) {
+                console.warn('VNPay verification warning:', err);
+            }
+        }
         order.value = await dichVuDatHang.layChiTietDonHang(route.params.id);
     } catch (error) {
         console.error('Error fetching order:', error);

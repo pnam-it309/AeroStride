@@ -142,6 +142,8 @@ const paginatedRows = computed(() => {
 });
 
 import { watch } from 'vue';
+import { useAuthStore } from '@/stores/authStore';
+
 watch(attendanceRows, (newVal) => {
     pagination.value.totalElements = newVal.length;
     pagination.value.totalPages = Math.ceil(newVal.length / pagination.value.size);
@@ -201,9 +203,69 @@ const handleFilter = () => {
 
 // Ghi nhận giờ vào/ra thủ công
 const openAddDialog = () => {
-    isEdit.value = false;
-    editId.value = null;
-    form.value = { nhanVienId: null, ngay: new Date().toISOString().substr(0, 10), gioVao: '', gioRa: '', tangCa: 0, ghiChu: '' };
+    const authStore = useAuthStore();
+    const currentUser = authStore.user?.username;
+    let defaultNhanVienId = null;
+    
+    if (currentUser) {
+        const emp = employeeOptions.value.find(e => e.sdt === currentUser || e.ma === currentUser || e.username === currentUser);
+        if (emp) defaultNhanVienId = emp.id;
+    }
+
+    const now = new Date();
+    const currentTime = now.toTimeString().substring(0, 5);
+    const today = now.toISOString().substr(0, 10);
+
+    // Kiểm tra xem nhân viên này đã có ca chưa checkout trong ngày hôm nay chưa
+    const activeShift = attendanceRows.value.find(r => r.nhanVienId === defaultNhanVienId && r.ngay === today && r.gioVao && !r.gioRa);
+
+    if (activeShift) {
+        // Mở dialog dưới dạng cập nhật giờ ra (checkout)
+        isEdit.value = true;
+        editId.value = activeShift.id;
+        form.value = {
+            nhanVienId: activeShift.nhanVienId,
+            ngay: activeShift.ngay,
+            gioVao: activeShift.gioVao,
+            gioRa: currentTime,
+            tangCa: activeShift.tangCa || 0,
+            ghiChu: activeShift.ghiChu || ''
+        };
+    } else {
+        // Validation checkin: Chỉ cho phép chấm công trước 10 phút và trễ 15 phút so với giờ bắt đầu ca
+        const currentMins = toMinutes(currentTime);
+        const myShiftsToday = attendanceRows.value.filter(r => r.nhanVienId === defaultNhanVienId && r.ngay === today && !r.gioVao);
+        
+        let canCheckIn = false;
+        let errorMessage = 'Hiện tại không có ca làm việc nào phù hợp để chấm công.';
+        
+        const shiftsToCheck = myShiftsToday.length > 0 
+            ? myShiftsToday.map(sched => rawShifts.value.find(s => s.tenCa === sched.ca)).filter(Boolean)
+            : rawShifts.value; // Nếu không có lịch, xét toàn bộ các ca có trong hệ thống
+
+        for (const shiftObj of shiftsToCheck) {
+            const startMins = toMinutes(shiftObj.gioBatDau);
+            if (currentMins >= startMins - 10 && currentMins <= startMins + 15) {
+                canCheckIn = true;
+                break;
+            } else if (currentMins < startMins - 10) {
+                errorMessage = `Chưa đến giờ chấm công ca ${shiftObj.tenCa} (chỉ được sớm tối đa 10 phút trước ${shiftObj.gioBatDau}).`;
+            } else if (currentMins > startMins + 15) {
+                errorMessage = `Đã quá thời gian chấm công ca ${shiftObj.tenCa} (chỉ được trễ tối đa 15 phút sau ${shiftObj.gioBatDau}).`;
+            }
+        }
+
+        if (!canCheckIn) {
+            addNotification({ title: 'Lỗi chấm công', subtitle: errorMessage, color: 'error' });
+            return;
+        }
+
+        // Mở dialog dưới dạng thêm mới (checkin)
+        isEdit.value = false;
+        editId.value = null;
+        form.value = { nhanVienId: defaultNhanVienId, ngay: today, gioVao: currentTime, gioRa: '', tangCa: 0, ghiChu: '' };
+    }
+    
     showDialog.value = true;
 };
 

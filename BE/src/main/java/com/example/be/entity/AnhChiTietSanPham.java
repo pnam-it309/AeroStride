@@ -21,6 +21,7 @@ public class AnhChiTietSanPham extends PrimaryEntity {
     @JsonBackReference(value = "ctsp-anh")
     private ChiTietSanPham chiTietSanPham;
 
+    @Lob
     @Column(name = "duong_dan_anh")
     private String duongDanAnh;
 

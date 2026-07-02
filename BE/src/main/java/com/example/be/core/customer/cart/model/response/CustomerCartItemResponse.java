@@ -15,6 +15,7 @@ public class CustomerCartItemResponse {
     private String tenKichThuoc;
     private BigDecimal giaBan;
     private BigDecimal giaGoc;
+    private Integer phanTramGiam;
     private Integer soLuong;
     private Integer soLuongTonKho;
     private Boolean isAvailable;

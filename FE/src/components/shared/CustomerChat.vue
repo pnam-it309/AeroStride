@@ -248,6 +248,13 @@ const parseSuggestionsJson = (text) => {
     const match = text.match(/\[\[SUGGESTIONS:([\s\S]*?)\]\]/);
     if (!match) return null;
     let jsonStr = match[1].trim();
+
+    // Self-healing: marker kết thúc bằng ]]] nên regex non-greedy cắt mất dấu ] đóng mảng.
+    // Bù lại dấu ] để JSON.parse không lỗi (giống parseProductJson).
+    if (jsonStr.startsWith('[') && !jsonStr.endsWith(']')) {
+        jsonStr += ']';
+    }
+
     try {
         return JSON.parse(jsonStr);
     } catch (e) {
@@ -275,14 +282,14 @@ const fetchHistory = async () => {
                     }
                 }
 
-                // Thử parse gợi ý từ AI
+                // Thử parse gợi ý từ AI — luôn xóa marker khỏi text hiển thị (kể cả khi parse lỗi)
                 if (msg.text && msg.text.includes('[[SUGGESTIONS:')) {
                     const suggs = parseSuggestionsJson(msg.text);
                     if (suggs) {
                         parsed.suggestions = suggs;
-                        const currentText = parsed.text || msg.text;
-                        parsed.text = currentText.replace(/\[\[SUGGESTIONS:[\s\S]*?\]\]/, '');
                     }
+                    const currentText = parsed.text || msg.text;
+                    parsed.text = currentText.replace(/\[\[SUGGESTIONS:[\s\S]*?\]\]\]?/, '').trim();
                 }
                 return parsed;
             });
@@ -334,14 +341,14 @@ onMounted(() => {
                 }
             }
 
-            // Parse gợi ý từ AI cho tin nhắn mới
+            // Parse gợi ý từ AI cho tin nhắn mới — luôn xóa marker khỏi text hiển thị
             if (data.text && data.text.includes('[[SUGGESTIONS:')) {
                 const suggs = parseSuggestionsJson(data.text);
                 if (suggs) {
                     parsed.suggestions = suggs;
-                    const currentText = parsed.text || data.text;
-                    parsed.text = currentText.replace(/\[\[SUGGESTIONS:[\s\S]*?\]\]/, '');
                 }
+                const currentText = parsed.text || data.text;
+                parsed.text = currentText.replace(/\[\[SUGGESTIONS:[\s\S]*?\]\]\]?/, '').trim();
             }
 
             // Xóa tin nhắn tạm thời nếu trùng nội dung (giảm giật lag)

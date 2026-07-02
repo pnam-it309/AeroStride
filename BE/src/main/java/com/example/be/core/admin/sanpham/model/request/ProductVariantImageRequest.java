@@ -10,8 +10,8 @@ import lombok.Setter;
 @Setter
 public class ProductVariantImageRequest {
 
+    // Ảnh được lưu trực tiếp vào DB dưới dạng base64 data URL nên không giới hạn độ dài.
     @NotBlank(message = "duongDanAnh khong duoc de trong")
-    @Size(max = 1000, message = "duongDanAnh khong duoc vuot qua 1000 ky tu")
     private String duongDanAnh;
 
     @Size(max = 1000, message = "moTa khong duoc vuot qua 1000 ky tu")

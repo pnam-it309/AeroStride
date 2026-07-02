@@ -81,6 +81,9 @@ public class HoaDon extends AuditEntity implements IsIdentified {
     @Column(name = "so_dien_thoai_nguoi_nhan")
     private String soDienThoaiNguoiNhan;
 
+    @Column(name = "email_nguoi_nhan")
+    private String emailNguoiNhan;
+
     @Column(name = "ngay_du_kien_nhan")
     private Long ngayDuKienNhan;
 

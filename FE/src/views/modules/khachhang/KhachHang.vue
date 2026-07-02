@@ -204,6 +204,43 @@ watch(activeTab, (newTab) => {
     }
 });
 
+const maxChiTieu = ref(50000000);
+
+const fetchMaxChiTieu = async () => {
+    try {
+        const rawCust = await dichVuKhachHang.layTatCaKhachHang();
+        let allCust = [];
+        if (Array.isArray(rawCust)) allCust = rawCust;
+        else if (Array.isArray(rawCust?.content)) allCust = rawCust.content;
+        else if (Array.isArray(rawCust?.data)) allCust = rawCust.data;
+        else if (Array.isArray(rawCust?.data?.content)) allCust = rawCust.data.content;
+
+        let max = 0;
+        allCust.forEach(c => {
+            const chiTieu = Number(c?.tongChiTieu || c?.tongTienDaChi || 0);
+            if (chiTieu > max) {
+                max = chiTieu;
+            }
+        });
+
+        if (max > 0) {
+            // Làm tròn lên hàng trăm nghìn
+            const roundedMax = Math.ceil(max / 100000) * 100000;
+            maxChiTieu.value = roundedMax;
+            statsTab.filters.value.khoangChiTieu = [0, roundedMax];
+            if (activeTab.value === 'thong-ke') {
+                statsTab.loadData();
+            }
+        }
+    } catch (error) {
+        console.error('Không thể lấy danh sách khách hàng để tính chi tiêu lớn nhất:', error);
+    }
+};
+
+onMounted(() => {
+    fetchMaxChiTieu();
+});
+
 const allCustomers = computed(() => (activeTab.value === 'danh-sach' ? listTab.items.value : statsTab.items.value));
 const loading = computed(() => (activeTab.value === 'danh-sach' ? listTab.loading.value : statsTab.loading.value));
 const pagination = computed(() => (activeTab.value === 'danh-sach' ? listTab.pagination.value : statsTab.pagination.value));
@@ -230,6 +267,10 @@ const onDateRangeChange = (val) => {
 const handleReset = () => {
     listTab.handleReset();
     statsTab.handleReset();
+    if (statsTab.filters.value.khoangChiTieu) {
+        statsTab.filters.value.khoangChiTieu = [0, maxChiTieu.value];
+    }
+    statsTab.handleFilter();
 };
 
 const handleRefresh = async () => {
@@ -840,7 +881,7 @@ const updateInvoicePaginationSize = (size) => {
                                         {{ formatCurrency(statsFilters.khoangChiTieu[1]) }}
                                     </span>
                                 </div>
-                                <v-range-slider v-model="statsFilters.khoangChiTieu" :max="50000000" :min="0"
+                                <v-range-slider v-model="statsFilters.khoangChiTieu" :max="maxChiTieu" :min="0"
                                     :step="100000" hide-details color="primary" track-color="#e2e8f0" track-size="2"
                                     thumb-size="12" class="blue-range-slider" @end="handleLocalFilterChange" />
                             </v-col>

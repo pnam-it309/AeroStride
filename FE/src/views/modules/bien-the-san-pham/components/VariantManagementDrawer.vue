@@ -110,7 +110,7 @@ const handleFileChange = async (event) => {
 
     uploading.value = true;
     try {
-        // 1. Upload to Cloudinary
+        // 1. Nén ảnh + tạo base64 (lưu thẳng vào DB)
         const uploadResult = await dichVuFile.taiLenFile(file);
         
         // Trích xuất URL an toàn (hỗ trợ cả object và string)

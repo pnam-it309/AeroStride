@@ -131,6 +131,20 @@ const displayPrice = computed(() => {
     return 0;
 });
 
+const stockAlertModal = ref({
+    show: false,
+    title: '',
+    message: ''
+});
+
+const showStockAlert = (title, message) => {
+    stockAlertModal.value = {
+        show: true,
+        title,
+        message
+    };
+};
+
 const maxQuantity = computed(() => {
     if (selectedVariant.value) return selectedVariant.value.soLuong || 0;
     if (product.value?.variants?.length > 0) {
@@ -145,10 +159,38 @@ const maxQuantity = computed(() => {
 });
 
 watch(maxQuantity, (newMax) => {
-    if (selectedQuantity.value > newMax) {
-        selectedQuantity.value = newMax > 0 ? newMax : 1;
+    if (selectedQuantity.value > newMax && newMax > 0) {
+        selectedQuantity.value = newMax;
     }
 });
+
+const handleQuantityInput = (val) => {
+    let num = parseInt(val, 10);
+    if (isNaN(num) || num <= 0) {
+        selectedQuantity.value = 1;
+        return;
+    }
+    if (maxQuantity.value > 0 && num > maxQuantity.value) {
+        showStockAlert(
+            'Vượt quá số lượng tồn kho',
+            `Sản phẩm này hiện chỉ còn tối đa ${maxQuantity.value} sản phẩm trong kho. Bạn không thể chọn số lượng lớn hơn.`
+        );
+        selectedQuantity.value = maxQuantity.value;
+        return;
+    }
+    selectedQuantity.value = num;
+};
+
+const handleIncrement = () => {
+    if (maxQuantity.value > 0 && selectedQuantity.value >= maxQuantity.value) {
+        showStockAlert(
+            'Vượt quá số lượng tồn kho',
+            `Sản phẩm này hiện chỉ còn tối đa ${maxQuantity.value} sản phẩm trong kho.`
+        );
+        return;
+    }
+    selectedQuantity.value++;
+};
 
 // Thêm vào giỏ hàng
 const addToCart = async () => {
@@ -165,13 +207,14 @@ const addToCart = async () => {
     }
 
     const variant = selectedVariant.value;
-    if (!variant) {
-        toastStore.showToast('Phiên bản này hiện không có sẵn', 'warning');
+    if (!variant || variant.soLuong <= 0) {
+        showStockAlert('Sản phẩm đã hết hàng', 'Phiên bản màu sắc và kích thước này hiện đã hết hàng trong kho. Vui lòng chọn phiên bản khác.');
         return;
     }
 
     if (selectedQuantity.value > variant.soLuong) {
-        toastStore.showToast(`Chỉ còn ${variant.soLuong} sản phẩm trong kho`, 'warning');
+        showStockAlert('Vượt quá số lượng tồn kho', `Phiên bản này hiện chỉ còn tối đa ${variant.soLuong} sản phẩm trong kho.`);
+        selectedQuantity.value = variant.soLuong;
         return;
     }
 
@@ -340,12 +383,17 @@ const toggleFavorite = () => {
                                     Còn lại: {{ maxQuantity }}
                                 </span>
                             </div>
-                            <div class="d-flex align-center border rounded-lg py-2 px-4" style="width: 140px;">
+                            <div class="d-flex align-center border rounded-lg py-1 px-3" style="width: 150px;">
                                 <v-btn icon="mdi-minus" variant="plain" density="compact"
                                     :disabled="selectedQuantity <= 1" @click="selectedQuantity--"></v-btn>
-                                <span class="font-weight-bold flex-grow-1 text-center">{{ selectedQuantity }}</span>
+                                <input type="number"
+                                    class="quantity-input flex-grow-1 text-center font-weight-bold text-body-1"
+                                    :value="selectedQuantity"
+                                    @change="handleQuantityInput($event.target.value)"
+                                    @blur="handleQuantityInput($event.target.value)"
+                                />
                                 <v-btn icon="mdi-plus" variant="plain" density="compact"
-                                    :disabled="selectedQuantity >= maxQuantity" @click="selectedQuantity++"></v-btn>
+                                    @click="handleIncrement"></v-btn>
                             </div>
                         </div>
 
@@ -413,6 +461,27 @@ const toggleFavorite = () => {
         
         <!-- Global Chat System -->
         <CustomerChat />
+
+        <!-- Stock Alert Modal -->
+        <v-dialog v-model="stockAlertModal.show" max-width="450">
+            <v-card class="rounded-2xl pa-4 text-center">
+                <div class="d-flex justify-center mt-2 mb-3">
+                    <v-avatar color="amber-lighten-4" size="64">
+                        <v-icon color="amber-darken-3" size="36">mdi-alert-circle-outline</v-icon>
+                    </v-avatar>
+                </div>
+                <v-card-title class="text-h6 font-weight-black pt-0 pb-2">{{ stockAlertModal.title }}</v-card-title>
+                <v-card-text class="text-body-2 text-grey-darken-2 px-4 pb-4">
+                    {{ stockAlertModal.message }}
+                </v-card-text>
+                <v-card-actions class="justify-center pb-2">
+                    <v-btn color="black" variant="flat" rounded="pill" class="px-8 font-weight-bold text-none"
+                        @click="stockAlertModal.show = false">
+                        Đã hiểu
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
@@ -530,5 +599,19 @@ const toggleFavorite = () => {
         padding: 0;
         margin-top: 40px;
     }
+}
+
+.quantity-input {
+    width: 60px;
+    border: none;
+    outline: none;
+    background: transparent;
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 </style>

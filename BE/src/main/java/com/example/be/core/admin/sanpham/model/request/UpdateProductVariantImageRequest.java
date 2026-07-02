@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 public class UpdateProductVariantImageRequest {
 
-    @Size(max = 1000, message = "duongDanAnh khong duoc vuot qua 1000 ky tu")
+    // Ảnh lưu base64 data URL trực tiếp trong DB nên không giới hạn độ dài.
     private String duongDanAnh;
 
     @Size(max = 1000, message = "moTa khong duoc vuot qua 1000 ky tu")

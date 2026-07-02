@@ -35,6 +35,9 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
     @PersistenceContext
     private EntityManager entityManager;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.example.be.repository.NhanVienRepository nhanVienRepository;
+
     private JPAQueryFactory queryFactory;
 
     @PostConstruct
@@ -46,6 +49,11 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
         QHoaDon hd = QHoaDon.hoaDon;
         QKhachHang kh = QKhachHang.khachHang;
         BooleanBuilder builder = new BooleanBuilder();
+
+        // Loại bỏ hóa đơn đang chờ tại quầy (chưa thanh toán) khỏi Quản lý hóa đơn
+        builder.and(hd.loaiDon.isNull()
+                .or(hd.loaiDon.ne("TAI_QUAY"))
+                .or(hd.trangThai.ne(OrderStatus.CHO_XAC_NHAN)));
 
         if (req.getSearch() != null && !req.getSearch().trim().isEmpty()) {
             String search = req.getSearch().toLowerCase().trim();
@@ -122,12 +130,37 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                 .limit(pageable.getPageSize())
                 .fetch();
 
+        com.example.be.entity.NhanVien loggedInNv = null;
+        try {
+            java.util.Optional<String> currentUser = com.example.be.utils.SecurityUtils.getCurrentUserEmail();
+            if (currentUser.isPresent() && nhanVienRepository != null) {
+                loggedInNv = nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(
+                        currentUser.get(), currentUser.get(), currentUser.get(), currentUser.get()
+                ).orElse(null);
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        final com.example.be.entity.NhanVien currentNv = loggedInNv;
+        final String fallbackMaNv = (currentNv != null && currentNv.getMa() != null) ? currentNv.getMa() : 
+                                    (com.example.be.utils.SecurityUtils.getCurrentUserEmail().orElse("ADMIN")).toUpperCase();
+        final String fallbackTenNv = (currentNv != null && currentNv.getTen() != null) ? currentNv.getTen() : "Quản trị viên";
+        final String fallbackSdtNv = (currentNv != null && currentNv.getSdt() != null && !currentNv.getSdt().trim().isEmpty()) ? currentNv.getSdt() : "0988888888";
+
         List<AdminHoaDonResponse> content = tuples.stream().map(t -> {
             OrderStatus status = t.get(hd.trangThai);
             
             String sdtKh = t.get(kh.sdt);
             String sdtNhan = t.get(hd.soDienThoaiNguoiNhan);
-            String finalSdt = (sdtNhan != null && !sdtNhan.trim().isEmpty()) ? sdtNhan : sdtKh;
+            String sdtNv = t.get(nv.sdt);
+            String finalSdt = (sdtNhan != null && !sdtNhan.trim().isEmpty()) ? sdtNhan : 
+                              (sdtKh != null && !sdtKh.trim().isEmpty()) ? sdtKh : 
+                              (sdtNv != null && !sdtNv.trim().isEmpty()) ? sdtNv : fallbackSdtNv;
+
+            String maNv = t.get(nv.ma);
+            String tenNv = t.get(nv.ten);
+            String finalMaNv = (maNv != null && !maNv.trim().isEmpty() && !"Hệ thống".equalsIgnoreCase(maNv)) ? maNv : fallbackMaNv;
+            String finalTenNv = (tenNv != null && !tenNv.trim().isEmpty() && !"Hệ thống".equalsIgnoreCase(tenNv)) ? tenNv : fallbackTenNv;
 
             String dcNhan = t.get(hd.diaChiNguoiNhan);
             String finalDiaChi;
@@ -163,8 +196,8 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                     .tenKhachHang(t.get(kh.ten))
                     .soDienThoai(finalSdt)
                     .diaChiNguoiNhan(finalDiaChi)
-                    .maNhanVien(t.get(nv.ma))
-                    .tenNhanVien(t.get(nv.ten))
+                    .maNhanVien(finalMaNv)
+                    .tenNhanVien(finalTenNv)
                     .loaiDon(t.get(hd.loaiDon))
                     .phiVanChuyen(t.get(hd.phiVanChuyen))
                     .tongTien(t.get(hd.tongTien))

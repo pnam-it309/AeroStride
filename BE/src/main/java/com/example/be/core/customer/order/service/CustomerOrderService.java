@@ -25,5 +25,5 @@ public interface CustomerOrderService {
 
     String createVnPayUrl(String id, String returnUrl, String username);
 
-    List<PhieuGiamGia> getAvailableVouchers(BigDecimal tongTien);
+    List<PhieuGiamGia> getAvailableVouchers(BigDecimal tongTien, String username);
 }

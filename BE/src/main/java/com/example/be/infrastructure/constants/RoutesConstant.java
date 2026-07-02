@@ -31,7 +31,7 @@ public final class RoutesConstant {
     public static final String ADMIN_CHAT = ADMIN + "/chat";
     public static final String ADMIN_LICH_LAM_VIEC = ADMIN + "/lich-lam-viec";
     public static final String ADMIN_THONG_KE = ADMIN + "/thong-ke";
-    
+
     // Staff routes
     public static final String STAFF = API_PREFIX + "/staff";
     
@@ -49,6 +49,10 @@ public final class RoutesConstant {
     // Other API routes
     public static final String PAYMENT = API_PREFIX + "/payment";
     public static final String STORAGE = API_PREFIX + "/storage";
+    public static final String CONFIG = API_PREFIX + "/config";
+    public static final String CONFIG_SHIPPING = CONFIG + "/shipping";
+    public static final String COMMON = API_PREFIX + "/common";
+    public static final String COMMON_CCCD = COMMON + "/cccd";
 
     // Common Sub-paths (Compatibility)
     public static final String HIEN_THI = "/hien-thi";

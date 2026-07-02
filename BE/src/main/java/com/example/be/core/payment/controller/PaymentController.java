@@ -67,6 +67,16 @@ public class PaymentController {
         }
         return ResponseEntity.ok(ApiResponse.success("Payment Successful"));
     }
+
+    @PostMapping("/confirm-order/{orderId}")
+    public ResponseEntity<ApiResponse<String>> confirmOrderPayment(@PathVariable String orderId) {
+        log.info("Manual/QR confirmation for online VNPay order: {}", orderId);
+        Map<String, String> dummyParams = new java.util.HashMap<>();
+        dummyParams.put("vnp_TransactionNo", "QR_CONFIRM_" + System.currentTimeMillis());
+        dummyParams.put("vnp_TxnRef", orderId);
+        paymentOrderFinalizer.markPaid(orderId, dummyParams);
+        return ResponseEntity.ok(ApiResponse.success("Order confirmed successfully"));
+    }
     
     /**
      * Validates callback details to ensure payment matches the expected order

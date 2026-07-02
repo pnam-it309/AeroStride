@@ -9,8 +9,7 @@ import com.example.be.core.customer.cart.repository.CustomerCartChiTietSanPhamRe
 import com.example.be.core.customer.sanpham.repository.CustomerSanPhamChiTietDotGiamGiaRepository;
 import com.example.be.entity.ChiTietDotGiamGia;
 import com.example.be.entity.ChiTietSanPham;
-import com.example.be.entity.DotGiamGia;
-import com.example.be.infrastructure.constants.TrangThai;
+import com.example.be.utils.DiscountPriceUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,21 +43,12 @@ public class CustomerCartServiceImpl implements CustomerCartService {
         Map<String, ChiTietSanPham> dbMap = dbItems.stream()
                 .collect(Collectors.toMap(ChiTietSanPham::getId, Function.identity()));
 
-        // Lấy thông tin đợt giảm giá đang active
+        // Lấy đợt giảm giá đang áp dụng, gom theo biến thể. Dùng logic chung DiscountPriceUtils
+        // để xử lý đúng cả đợt giảm giá theo % lẫn theo số tiền, và giá trị giảm riêng từng biến thể.
         List<ChiTietDotGiamGia> relations = chiTietDotGiamGiaRepository.findAllByChiTietSanPhamIdIn(ids);
-        long now = System.currentTimeMillis();
-        Map<String, BigDecimal> discountMap = new java.util.HashMap<>();
-        for (ChiTietDotGiamGia rel : relations) {
-            if (rel.getChiTietSanPham() == null) continue;
-            DotGiamGia d = rel.getDotGiamGia();
-            if (d != null && d.getTrangThai() == TrangThai.DANG_HOAT_DONG
-                    && d.getNgayBatDau() != null && d.getNgayKetThuc() != null
-                    && d.getNgayBatDau() <= now && now <= d.getNgayKetThuc()
-                    && d.getSoTienGiam() != null) {
-                String variantId = rel.getChiTietSanPham().getId();
-                discountMap.merge(variantId, d.getSoTienGiam(), (a, b) -> a.compareTo(b) >= 0 ? a : b);
-            }
-        }
+        Map<String, List<ChiTietDotGiamGia>> relationMap = relations.stream()
+                .filter(rel -> rel.getChiTietSanPham() != null)
+                .collect(Collectors.groupingBy(rel -> rel.getChiTietSanPham().getId()));
 
         List<CustomerCartItemResponse> responses = new ArrayList<>();
         BigDecimal tongTien = BigDecimal.ZERO;
@@ -91,9 +81,15 @@ public class CustomerCartServiceImpl implements CustomerCartService {
             }
 
             BigDecimal giaGoc = ctsp.getGiaBan() != null ? ctsp.getGiaBan() : BigDecimal.ZERO;
-            BigDecimal discount = discountMap.getOrDefault(ctsp.getId(), BigDecimal.ZERO);
-            BigDecimal giaBan = giaGoc.subtract(discount).max(BigDecimal.ZERO);
+            BigDecimal giaBan = DiscountPriceUtils.calculateDiscountedPrice(giaGoc, relationMap.get(ctsp.getId()));
+            BigDecimal discount = giaGoc.subtract(giaBan).max(BigDecimal.ZERO);
             tongTien = tongTien.add(giaBan.multiply(BigDecimal.valueOf(finalQty)));
+
+            Integer phanTramGiam = 0;
+            if (giaGoc.compareTo(BigDecimal.ZERO) > 0 && discount.compareTo(BigDecimal.ZERO) > 0) {
+                phanTramGiam = discount.multiply(BigDecimal.valueOf(100))
+                        .divide(giaGoc, java.math.RoundingMode.HALF_UP).intValue();
+            }
 
             responses.add(CustomerCartItemResponse.builder()
                     .idChiTietSanPham(ctsp.getId())
@@ -104,6 +100,7 @@ public class CustomerCartServiceImpl implements CustomerCartService {
                     .tenKichThuoc(ctsp.getKichThuoc() != null ? ctsp.getKichThuoc().getTen() : "")
                     .giaBan(giaBan)
                     .giaGoc(discount.compareTo(BigDecimal.ZERO) > 0 ? giaGoc : null)
+                    .phanTramGiam(phanTramGiam > 0 ? phanTramGiam : null)
                     .soLuong(finalQty)
                     .soLuongTonKho(stock)
                     .isAvailable(isAvailable)

@@ -47,6 +47,7 @@ public class NhanVien extends BaseCodeNameEntity {
     @Column(name = "mat_khau")
     private String matKhau;
 
+    @Lob
     @Column(name = "hinh_anh")
     private String hinhAnh;
 

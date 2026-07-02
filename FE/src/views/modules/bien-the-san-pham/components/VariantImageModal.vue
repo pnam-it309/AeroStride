@@ -83,7 +83,7 @@ const handleFileChange = async (event) => {
         formData.value.duongDanAnh = fileUrl;
         addNotification({ title: 'Thành công', subtitle: 'Tải ảnh lên thành công', color: 'success' });
     } catch (error) {
-        addNotification({ title: 'Lỗi', subtitle: 'Không thể tải ảnh lên Cloudinary', color: 'error' });
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể xử lý ảnh', color: 'error' });
     } finally {
         uploading.value = false;
         // Reset file input
@@ -132,7 +132,7 @@ const handleSubmit = () => {
                     <div v-else class="text-center group-hover:scale-110 transition-transform duration-300">
                         <UploadIcon class="h-12 w-12 text-slate-300 mx-auto mb-3" />
                         <span class="text-sm text-slate-500 font-bold block mb-1">Nhấn để tải ảnh lên</span>
-                        <span class="text-xs text-slate-400 italic">Hỗ trợ JPG, PNG, WEBP (Cloudinary)</span>
+                        <span class="text-xs text-slate-400 italic">Hỗ trợ JPG, PNG, WEBP</span>
                     </div>
 
                     <div
@@ -162,7 +162,7 @@ const handleSubmit = () => {
                                 <PhotoIcon size="18" class="text-slate-400 mr-2" />
                             </template>
                         </v-text-field>
-                        <p class="text-[10px] text-slate-400 mt-1 italic pl-1">URL tự động cập nhật sau khi tải ảnh lên Cloudinary</p>
+                        <p class="text-[10px] text-slate-400 mt-1 italic pl-1">Ảnh được lưu trực tiếp sau khi chọn tệp</p>
                     </div>
 
                     <div>

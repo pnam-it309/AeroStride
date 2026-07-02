@@ -58,6 +58,12 @@ export const dichVuDatHang = {
         return response.data;
     },
 
+    // Xác nhận thanh toán QR online
+    async xacNhanDonHangQr(orderId) {
+        const response = await api.post(`/payment/confirm-order/${orderId}`);
+        return response.data;
+    },
+
     // Tạo lại URL thanh toán VNPay cho đơn chuyển khoản chưa thanh toán
     async taoUrlThanhToanLai(id, returnUrl) {
         const response = await api.post(`${API_CUSTOMER.ORDER}/${id}/vnpay-url`, null, {

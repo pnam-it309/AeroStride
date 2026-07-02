@@ -9,6 +9,7 @@ import com.example.be.core.customer.order.repository.*;
 import com.example.be.entity.*;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.utils.CodeUtils;
+import com.example.be.utils.DiscountPriceUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,13 +30,16 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     private final CustomerOrderChiTietSanPhamRepository chiTietSanPhamRepository;
     private final CustomerOrderKhachHangRepository khachHangRepository;
     private final CustomerOrderPhieuGiamGiaRepository phieuGiamGiaRepository;
+    private final CustomerOrderPhieuGiamGiaCaNhanRepository phieuGiamGiaCaNhanRepository;
+    private final com.example.be.core.customer.sanpham.repository.CustomerSanPhamChiTietDotGiamGiaRepository chiTietDotGiamGiaRepository;
     private final CustomerOrderLichSuTrangThaiHoaDonRepository lichSuRepository;
     private final CustomerOrderGiaoDichThanhToanRepository giaoDichRepository;
     private final CustomerOrderPhuongThucThanhToanRepository phuongThucRepository;
     private final com.example.be.core.payment.PaymentService paymentService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     private static final BigDecimal PHI_VAN_CHUYEN = new BigDecimal("30000");
-    private static final BigDecimal FREE_SHIP_THRESHOLD = new BigDecimal("5000000");
+    private static final BigDecimal FREE_SHIP_THRESHOLD = new BigDecimal("500000");
 
     // Xử lý logic đặt hàng trực tuyến (checkout), tính toán tổng tiền, áp dụng voucher, tạo hóa đơn và cập nhật tồn kho
     @Override
@@ -49,11 +53,26 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         List<ChiTietSanPham> variants = new ArrayList<>();
         Map<String, Integer> quantityMap = new HashMap<>();
 
+        // Lấy đợt giảm giá đang áp dụng cho các biến thể để tính giá thực tế (đồng bộ trang sản phẩm/giỏ hàng)
+        List<String> variantIds = request.getItems().stream()
+                .map(CustomerOrderCheckoutRequest.CartItem::getIdChiTietSanPham)
+                .collect(Collectors.toList());
+        Map<String, List<ChiTietDotGiamGia>> relationMap = chiTietDotGiamGiaRepository
+                .findAllByChiTietSanPhamIdIn(variantIds).stream()
+                .filter(rel -> rel.getChiTietSanPham() != null)
+                .collect(Collectors.groupingBy(rel -> rel.getChiTietSanPham().getId()));
+        Map<String, BigDecimal> giaMap = new HashMap<>();
+
         for (CustomerOrderCheckoutRequest.CartItem item : request.getItems()) {
             ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(item.getIdChiTietSanPham())
                     .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại: " + item.getIdChiTietSanPham()));
 
-            if (item.getGiaDuKien() != null && ctsp.getGiaBan().compareTo(item.getGiaDuKien()) != 0) {
+            // Giá thực tế sau đợt giảm giá của biến thể
+            BigDecimal giaHienThoi = DiscountPriceUtils.calculateDiscountedPrice(
+                    ctsp.getGiaBan(), relationMap.get(ctsp.getId()));
+            giaMap.put(ctsp.getId(), giaHienThoi);
+
+            if (item.getGiaDuKien() != null && giaHienThoi.compareTo(item.getGiaDuKien()) != 0) {
                 String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
                 throw new RuntimeException("Giá của sản phẩm '" + tenSP + "' đã thay đổi từ đợt giảm giá. Vui lòng tải lại giỏ hàng để cập nhật giá mới nhất.");
             }
@@ -67,11 +86,11 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             quantityMap.put(item.getIdChiTietSanPham(), item.getSoLuong());
         }
 
-        // 3. Tính tổng tiền
+        // 3. Tính tổng tiền (theo giá đã áp đợt giảm giá)
         BigDecimal tongTien = BigDecimal.ZERO;
         for (ChiTietSanPham ctsp : variants) {
             int soLuong = quantityMap.get(ctsp.getId());
-            tongTien = tongTien.add(ctsp.getGiaBan().multiply(BigDecimal.valueOf(soLuong)));
+            tongTien = tongTien.add(giaMap.get(ctsp.getId()).multiply(BigDecimal.valueOf(soLuong)));
         }
 
         // 4. Tính phí vận chuyển
@@ -134,6 +153,10 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 request.getTinhThanh() != null ? request.getTinhThanh() : ""
         );
 
+        String recipientEmail = (request.getEmail() != null && !request.getEmail().isBlank())
+                ? request.getEmail().trim()
+                : (khachHang != null && khachHang.getEmail() != null ? khachHang.getEmail().trim() : null);
+
         HoaDon hoaDon = HoaDon.builder()
                 .maHoaDon(CodeUtils.generateRandom(HoaDon.class))
                 .trangThai(OrderStatus.CHO_XAC_NHAN)
@@ -145,6 +168,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .tenNguoiNhan(request.getTenNguoiNhan())
                 .diaChiNguoiNhan(diaChiFull)
                 .soDienThoaiNguoiNhan(request.getSoDienThoai())
+                .emailNguoiNhan(recipientEmail)
                 .ghiChu(request.getGhiChu())
                 .phieuGiamGia(voucher)
                 .ngayDuKienNhan(System.currentTimeMillis() + 3L * 24 * 60 * 60 * 1000) // +3 ngày
@@ -153,6 +177,9 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         hoaDon = hoaDonRepository.save(hoaDon);
 
         // 7. Tạo chi tiết hóa đơn và trừ tồn kho
+        // Đơn VNPay: CHƯA trừ kho lúc đặt hàng, sẽ trừ khi thanh toán thành công (PaymentOrderFinalizer.markPaid).
+        // Đơn COD: trừ kho ngay vì không có bước thanh toán online.
+        boolean laVnPay = "VNPAY".equalsIgnoreCase(request.getPhuongThucThanhToan());
         for (ChiTietSanPham ctsp : variants) {
             int soLuong = quantityMap.get(ctsp.getId());
 
@@ -160,13 +187,15 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                     .hoaDon(hoaDon)
                     .chiTietSanPham(ctsp)
                     .soLuong(soLuong)
-                    .donGia(ctsp.getGiaBan())
+                    .donGia(giaMap.get(ctsp.getId()))
                     .build();
             hoaDonChiTietRepository.save(hdct);
 
-            // Trừ tồn kho
-            ctsp.setSoLuong(ctsp.getSoLuong() - soLuong);
-            chiTietSanPhamRepository.save(ctsp);
+            // Trừ tồn kho (chỉ với COD)
+            if (!laVnPay) {
+                ctsp.setSoLuong(ctsp.getSoLuong() - soLuong);
+                chiTietSanPhamRepository.save(ctsp);
+            }
         }
 
         // 8. Tạo lịch sử trạng thái
@@ -198,6 +227,12 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .ghiChu("Thanh toán đơn hàng online - " + payMethod)
                 .build();
         giaoDichRepository.save(giaoDich);
+
+        if (!"VNPAY".equalsIgnoreCase(payMethod) && recipientEmail != null && !recipientEmail.isBlank()) {
+            eventPublisher.publishEvent(new com.example.be.core.common.events.OrderPlacedEvent(
+                    this, hoaDon.getId(), recipientEmail, tongTienSauGiam));
+            log.info("Published OrderPlacedEvent for order {} to email {}", hoaDon.getId(), recipientEmail);
+        }
 
         log.info("Checkout thành công: hoaDon={}, khachHang={}, tongTien={}", hoaDon.getId(), username, tongTienSauGiam);
 
@@ -259,12 +294,16 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             throw new RuntimeException("Chỉ có thể hủy đơn hàng ở trạng thái 'Chờ xác nhận'");
         }
 
-        // Hoàn tồn kho
-        List<HoaDonChiTiet> items = hoaDonChiTietRepository.findAllByHoaDon(hoaDon);
-        for (HoaDonChiTiet hdct : items) {
-            ChiTietSanPham ctsp = hdct.getChiTietSanPham();
-            ctsp.setSoLuong(ctsp.getSoLuong() + hdct.getSoLuong());
-            chiTietSanPhamRepository.save(ctsp);
+        // Hoàn tồn kho — chỉ hoàn nếu kho đã thực sự bị trừ.
+        // COD: trừ kho ngay lúc đặt -> cần hoàn.
+        // VNPay chưa thanh toán (vẫn ở 'Chờ xác nhận'): kho CHƯA bị trừ -> KHÔNG hoàn (tránh cộng ảo).
+        if (isCashOrder(hoaDon)) {
+            List<HoaDonChiTiet> items = hoaDonChiTietRepository.findAllByHoaDon(hoaDon);
+            for (HoaDonChiTiet hdct : items) {
+                ChiTietSanPham ctsp = hdct.getChiTietSanPham();
+                ctsp.setSoLuong(ctsp.getSoLuong() + hdct.getSoLuong());
+                chiTietSanPhamRepository.save(ctsp);
+            }
         }
 
         // Hoàn voucher
@@ -432,17 +471,46 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         return url;
     }
 
-    // Lấy danh sách phiếu giảm giá công khai hợp lệ dựa theo tổng tiền giỏ hàng hiện hành
+    // Lấy danh sách phiếu giảm giá hợp lệ theo tổng tiền giỏ hàng: gồm phiếu CÔNG KHAI và
+    // phiếu CÁ NHÂN đã phát riêng cho khách hàng đang đăng nhập (username có thể null nếu là khách vãng lai).
     @Override
-    public List<PhieuGiamGia> getAvailableVouchers(BigDecimal tongTien) {
+    @Transactional(readOnly = true)
+    public List<PhieuGiamGia> getAvailableVouchers(BigDecimal tongTien, String username) {
         long now = System.currentTimeMillis();
-        return phieuGiamGiaRepository.findAll().stream()
+
+        java.util.function.Predicate<PhieuGiamGia> hopLeCaNhan = v ->
+                (v.getNgayBatDau() == null || now >= v.getNgayBatDau())
+                && (v.getNgayKetThuc() == null || now <= v.getNgayKetThuc())
+                && (v.getDonHangToiThieu() == null || tongTien == null || tongTien.compareTo(v.getDonHangToiThieu()) >= 0)
+                && v.getTrangThai() == com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG;
+
+        java.util.function.Predicate<PhieuGiamGia> hopLeCongKhai = v ->
+                (v.getSoLuong() == null || v.getSoLuong() > 0)
+                && hopLeCaNhan.test(v);
+
+        // LinkedHashMap: loại trùng theo id, giữ thứ tự (công khai trước, cá nhân sau)
+        Map<String, PhieuGiamGia> result = new LinkedHashMap<>();
+
+        // 1. Phiếu công khai
+        phieuGiamGiaRepository.findAll().stream()
                 .filter(v -> "CONG_KHAI".equals(v.getHinhThuc()))
-                .filter(v -> v.getSoLuong() == null || v.getSoLuong() > 0)
-                .filter(v -> v.getNgayBatDau() == null || now >= v.getNgayBatDau())
-                .filter(v -> v.getNgayKetThuc() == null || now <= v.getNgayKetThuc())
-                .filter(v -> v.getDonHangToiThieu() == null || tongTien == null || tongTien.compareTo(v.getDonHangToiThieu()) >= 0)
-                .collect(Collectors.toList());
+                .filter(hopLeCongKhai)
+                .forEach(v -> result.put(v.getId(), v));
+
+        // 2. Phiếu cá nhân đã phát cho khách hàng đang đăng nhập (chưa dùng, chưa xóa mềm)
+        if (username != null && !username.isBlank()) {
+            khachHangRepository.findByTenTaiKhoan(username).ifPresent(kh ->
+                    phieuGiamGiaCaNhanRepository.findByKhachHangId(kh.getId()).stream()
+                            .filter(pgn -> !Boolean.TRUE.equals(pgn.getXoaMem()))
+                            .filter(pgn -> !Boolean.TRUE.equals(pgn.getDaSuDung()))
+                            .map(PhieuGiamGiaCaNhan::getPhieuGiamGia)
+                            .filter(Objects::nonNull)
+                            .filter(hopLeCaNhan)
+                            .forEach(v -> result.put(v.getId(), v))
+            );
+        }
+
+        return new ArrayList<>(result.values());
     }
 
     // ===== PRIVATE HELPERS =====
@@ -541,6 +609,15 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 tenKichThuoc = ctsp.getKichThuoc() != null ? ctsp.getKichThuoc().getTen() : "";
             }
 
+            Integer phanTramGiam = null;
+            if (ctsp != null && ctsp.getGiaBan() != null && hdct.getDonGia() != null && ctsp.getGiaBan().compareTo(hdct.getDonGia()) > 0) {
+                BigDecimal giaGoc = ctsp.getGiaBan();
+                BigDecimal giaBan = hdct.getDonGia();
+                BigDecimal discount = giaGoc.subtract(giaBan);
+                phanTramGiam = discount.multiply(BigDecimal.valueOf(100))
+                        .divide(giaGoc, java.math.RoundingMode.HALF_UP).intValue();
+            }
+
             return CustomerOrderResponse.OrderItemResponse.builder()
                     .id(hdct.getId())
                     .idChiTietSanPham(ctsp != null ? ctsp.getId() : null)
@@ -550,6 +627,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                     .tenMauSac(tenMauSac)
                     .tenKichThuoc(tenKichThuoc)
                     .donGia(hdct.getDonGia())
+                    .phanTramGiam(phanTramGiam)
                     .soLuong(hdct.getSoLuong())
                     .thanhTien(hdct.getDonGia().multiply(BigDecimal.valueOf(hdct.getSoLuong())))
                     .build();

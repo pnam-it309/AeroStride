@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -41,10 +41,55 @@ const remainingForFreeShip = computed(() => {
     return Math.max(0, FREE_SHIP_THRESHOLD - cartStore.cartTotal);
 });
 
-const handleQuantityChange = (id, delta) => {
+const stockAlertModal = ref({
+    show: false,
+    title: '',
+    message: ''
+});
+
+const showStockAlert = (title, message) => {
+    stockAlertModal.value = {
+        show: true,
+        title,
+        message
+    };
+};
+
+const handleQuantityChange = async (id, delta) => {
     const item = cartStore.items.find((i) => i.idChiTietSanPham === id);
     if (item) {
-        cartStore.updateQuantity(id, item.soLuong + delta);
+        const newQty = item.soLuong + delta;
+        if (delta > 0 && item.soLuongTonKho && newQty > item.soLuongTonKho) {
+            showStockAlert(
+                'Vượt quá số lượng tồn kho',
+                `Sản phẩm "${item.tenSanPham || 'giày'}" hiện chỉ còn tối đa ${item.soLuongTonKho} sản phẩm trong kho.`
+            );
+            return;
+        }
+        const res = await cartStore.updateQuantity(id, newQty);
+        if (res && !res.success) {
+            showStockAlert('Không thể cập nhật số lượng', res.message || 'Số lượng vượt quá tồn kho hiện có.');
+        }
+    }
+};
+
+const handleQuantityInput = async (item, eventTargetValue) => {
+    let num = parseInt(eventTargetValue, 10);
+    if (isNaN(num) || num <= 0) {
+        await cartStore.updateQuantity(item.idChiTietSanPham, 1);
+        return;
+    }
+    if (item.soLuongTonKho && num > item.soLuongTonKho) {
+        showStockAlert(
+            'Vượt quá số lượng tồn kho',
+            `Sản phẩm "${item.tenSanPham || 'giày'}" hiện chỉ còn tối đa ${item.soLuongTonKho} sản phẩm trong kho.`
+        );
+        await cartStore.updateQuantity(item.idChiTietSanPham, item.soLuongTonKho);
+        return;
+    }
+    const res = await cartStore.updateQuantity(item.idChiTietSanPham, num);
+    if (res && !res.success) {
+        showStockAlert('Không thể cập nhật số lượng', res.message || 'Số lượng vượt quá tồn kho hiện có.');
     }
 };
 
@@ -144,12 +189,17 @@ const handleCheckout = () => {
                                             >
                                                 <v-icon size="14">mdi-minus</v-icon>
                                             </v-btn>
-                                            <span class="quantity-value mx-3 text-body-2 font-weight-bold">{{ item.soLuong }}</span>
+                                            <input
+                                                type="number"
+                                                class="quantity-input text-center font-weight-bold text-body-2 mx-2"
+                                                :value="item.soLuong"
+                                                @change="handleQuantityInput(item, $event.target.value)"
+                                                @blur="handleQuantityInput(item, $event.target.value)"
+                                            />
                                             <v-btn
                                                 icon
                                                 variant="outlined"
                                                 size="x-small"
-                                                :disabled="item.soLuong >= item.soLuongTonKho"
                                                 @click="handleQuantityChange(item.idChiTietSanPham, 1)"
                                                 class="qty-btn"
                                             >
@@ -241,6 +291,27 @@ const handleCheckout = () => {
                 </div>
             </template>
         </div>
+
+        <!-- Stock Alert Modal -->
+        <v-dialog v-model="stockAlertModal.show" max-width="450">
+            <v-card class="rounded-2xl pa-4 text-center">
+                <div class="d-flex justify-center mt-2 mb-3">
+                    <v-avatar color="amber-lighten-4" size="64">
+                        <v-icon color="amber-darken-3" size="36">mdi-alert-circle-outline</v-icon>
+                    </v-avatar>
+                </div>
+                <v-card-title class="text-h6 font-weight-black pt-0 pb-2">{{ stockAlertModal.title }}</v-card-title>
+                <v-card-text class="text-body-2 text-grey-darken-2 px-4 pb-4">
+                    {{ stockAlertModal.message }}
+                </v-card-text>
+                <v-card-actions class="justify-center pb-2">
+                    <v-btn color="black" variant="flat" rounded="pill" class="px-8 font-weight-bold text-none"
+                        @click="stockAlertModal.show = false">
+                        Đã hiểu
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-navigation-drawer>
 </template>
 
@@ -351,9 +422,24 @@ const handleCheckout = () => {
     }
 }
 
-.quantity-value {
-    min-width: 24px;
-    text-align: center;
+.quantity-input {
+    width: 44px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    outline: none;
+    background: transparent;
+    appearance: textfield;
+    -moz-appearance: textfield;
+    transition: all 0.2s ease;
+    &:focus {
+        border-color: #000;
+        background: #f8f8f8;
+    }
+}
+.quantity-input::-webkit-outer-spin-button,
+.quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .delete-btn {

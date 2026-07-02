@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping(RoutesConstant.API_PREFIX + "/common/cccd")
+@RequestMapping(RoutesConstant.COMMON_CCCD)
 @RequiredArgsConstructor
 public class CccdController {
 

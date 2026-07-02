@@ -6,8 +6,10 @@ import CustomerChat from '@/components/shared/CustomerChat.vue';
 
 import { useCartStore } from '@/stores/cartStore';
 import { useAuthStore } from '@/stores/authStore';
+import apiService from '@/services/apiService';
 import { dichVuDatHang } from '@/services/public/dichVuDatHang';
 import { dichVuKhachHang } from '@/services/public/dichVuKhachHang';
+import { dichVuVnPay } from '@/views/modules/banhang/dichVuVnPay';
 import { PATH } from '@/router/routePaths';
 import { useLocation } from '@/composables/useLocation';
 
@@ -22,6 +24,7 @@ const voucherLoading = ref(false);
 const shippingInfo = ref({
     tenNguoiNhan: '',
     soDienThoai: '',
+    email: '',
     tinhThanh: null,
     quanHuyen: null,
     phuongXa: null,
@@ -31,6 +34,59 @@ const shippingInfo = ref({
 
 const paymentMethod = ref('COD');
 const ghiChu = ref('');
+
+const vnpayDialog = ref({
+    show: false,
+    loading: false,
+    checking: false,
+    orderId: '',
+    orderCode: '',
+    amount: 0,
+    qrUrl: '',
+    paymentUrl: '',
+    pollInterval: null
+});
+
+const closeVnPayDialog = () => {
+    if (vnpayDialog.value.pollInterval) {
+        clearInterval(vnpayDialog.value.pollInterval);
+        vnpayDialog.value.pollInterval = null;
+    }
+    vnpayDialog.value.show = false;
+};
+
+const checkOnlineOrderStatus = async (orderId) => {
+    try {
+        const order = await dichVuDatHang.layChiTietDonHang(orderId);
+        if (order && (order.trangThai === 'XAC_NHAN' || order.trangThaiDisplay === 'Đã xác nhận')) {
+            closeVnPayDialog();
+            cartStore.clearCart();
+            router.push(`${PATH.ORDER_SUCCESS}/${orderId}`);
+        }
+    } catch (e) {
+        console.error('Poll order status error:', e);
+    }
+};
+
+const onConfirmPaidOnline = async () => {
+    vnpayDialog.value.checking = true;
+    try {
+        await dichVuDatHang.xacNhanDonHangQr(vnpayDialog.value.orderId);
+        closeVnPayDialog();
+        cartStore.clearCart();
+        router.push(`${PATH.ORDER_SUCCESS}/${vnpayDialog.value.orderId}`);
+    } catch (error) {
+        alert('Xác nhận thanh toán thất bại hoặc chưa nhận được tiền.');
+    } finally {
+        vnpayDialog.value.checking = false;
+    }
+};
+
+const openVnPayGateway = () => {
+    if (vnpayDialog.value.paymentUrl) {
+        window.open(vnpayDialog.value.paymentUrl, '_blank', 'width=800,height=600');
+    }
+};
 
 const availableVouchers = ref([]);
 const selectedVoucher = ref(null);
@@ -64,11 +120,60 @@ const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
 
-const FREE_SHIP_THRESHOLD = 5000000;
-const SHIPPING_FEE = 30000;
+const FREE_SHIP_THRESHOLD = ref(500000);
+const baseShippingFee = ref(30000);
+const calculatedShippingFee = ref(30000);
+
+const fetchShippingConfig = async () => {
+    try {
+        const response = await apiService.get('/config/shipping');
+        if (response.data?.success) {
+            FREE_SHIP_THRESHOLD.value = response.data.data.freeShipThreshold;
+            baseShippingFee.value = response.data.data.baseFee;
+            calculatedShippingFee.value = response.data.data.baseFee;
+        }
+    } catch (e) {
+        console.error('Lỗi khi lấy cấu hình phí vận chuyển', e);
+    }
+};
+
+const calculateDistanceFee = async () => {
+    // Mock distance based on province selection since no map API is used
+    let distance = 5; // Default < 5km (Nội thành Hà Nội)
+    if (shippingInfo.value.tinhThanh) {
+        const p = provinces.value.find(x => x.code === shippingInfo.value.tinhThanh);
+        if (p && !p.name.includes('Hà Nội')) {
+            distance = 25; // Mock Ngoại tỉnh
+        }
+    }
+    try {
+        const response = await apiService.get('/config/shipping/calculate', { params: { distance } });
+        if (response.data?.success) {
+            calculatedShippingFee.value = response.data.data.fee;
+        }
+    } catch (e) {
+        console.error('Lỗi khi tính phí vận chuyển theo khoảng cách', e);
+    }
+};
+
+watch(() => shippingInfo.value.tinhThanh, () => {
+    calculateDistanceFee();
+});
 
 const shippingFee = computed(() => {
-    return cartStore.cartTotal >= FREE_SHIP_THRESHOLD ? 0 : SHIPPING_FEE;
+    return cartStore.cartTotal >= FREE_SHIP_THRESHOLD.value ? 0 : calculatedShippingFee.value;
+});
+
+// cartStore.cartTotal đã là tổng SAU đợt giảm giá (server trả về giaBan đã giảm).
+// Tính tổng theo GIÁ GỐC và số tiền đợt giảm giá để hiển thị minh bạch trên phần tạm tính.
+const originalSubtotal = computed(() =>
+    cartStore.cartItems.reduce((sum, item) => sum + ((item.giaGoc || item.giaBan || 0) * item.soLuong), 0)
+);
+const campaignDiscount = computed(() => Math.max(0, originalSubtotal.value - cartStore.cartTotal));
+
+const campaignDiscountPercent = computed(() => {
+    if (originalSubtotal.value === 0) return 0;
+    return Math.round((campaignDiscount.value / originalSubtotal.value) * 100);
 });
 
 const calcVoucherDiscount = (v) => {
@@ -112,6 +217,7 @@ const isShippingValid = computed(() => {
     return (
         shippingInfo.value.tenNguoiNhan && shippingInfo.value.tenNguoiNhan.trim() &&
         shippingInfo.value.soDienThoai && shippingInfo.value.soDienThoai.trim() &&
+        shippingInfo.value.email && shippingInfo.value.email.trim() && /.+@.+\..+/.test(shippingInfo.value.email.trim()) &&
         shippingInfo.value.tinhThanh &&
         shippingInfo.value.quanHuyen &&
         shippingInfo.value.phuongXa &&
@@ -136,6 +242,7 @@ const fetchUserProfile = async () => {
                 const profile = res.data;
                 shippingInfo.value.tenNguoiNhan = profile.ten || profile.tenTaiKhoan || '';
                 shippingInfo.value.soDienThoai = profile.sdt || '';
+                shippingInfo.value.email = profile.email || '';
                 if (profile.diaChiChiTiet) shippingInfo.value.diaChi = profile.diaChiChiTiet;
 
                 if (profile.tinhThanh) {
@@ -217,6 +324,7 @@ const handleCheckout = async () => {
             })),
             tenNguoiNhan: shippingInfo.value.tenNguoiNhan,
             soDienThoai: shippingInfo.value.soDienThoai,
+            email: shippingInfo.value.email,
             tinhThanh: p ? p.name : shippingInfo.value.tinhThanh,
             quanHuyen: d ? d.name : shippingInfo.value.quanHuyen || '',
             phuongXa: w ? w.name : shippingInfo.value.phuongXa || '',
@@ -228,8 +336,37 @@ const handleCheckout = async () => {
 
         const response = await dichVuDatHang.datHang(checkoutData);
         if (response.success) {
+            const createdOrder = response.data;
+            if (paymentMethod.value === 'VNPAY') {
+                try {
+                    const payload = {
+                        amount: finalTotal.value,
+                        orderId: createdOrder.id,
+                        orderInfo: 'Thanh toan hoa don ' + (createdOrder.maHoaDon || createdOrder.id),
+                        returnUrl: `${window.location.origin}/order-success/${createdOrder.id}`
+                    };
+                    const vnpData = await dichVuVnPay.createPaymentUrl(payload);
+                    if (vnpData && vnpData.paymentUrl) {
+                        vnpayDialog.value = {
+                            show: true,
+                            loading: false,
+                            checking: false,
+                            orderId: createdOrder.id,
+                            orderCode: createdOrder.maHoaDon || createdOrder.id,
+                            amount: finalTotal.value,
+                            qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(vnpData.paymentUrl)}`,
+                            paymentUrl: vnpData.paymentUrl,
+                            pollInterval: setInterval(() => checkOnlineOrderStatus(createdOrder.id), 3000)
+                        };
+                        loading.value = false;
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Lỗi tạo mã QR VNPay:', e);
+                }
+            }
             cartStore.clearCart();
-            router.push(`${PATH.ORDER_SUCCESS}/${response.data.id}`);
+            router.push(`${PATH.ORDER_SUCCESS}/${createdOrder.id}`);
         }
     } catch (error) {
         console.error('Checkout error:', error);
@@ -246,6 +383,7 @@ onMounted(async () => {
     }
     await cartStore.syncWithBackend();
     fetchProvinces();
+    fetchShippingConfig();
     await fetchUserProfile();
     fetchVouchers();
 });
@@ -305,6 +443,16 @@ onMounted(async () => {
                                         variant="outlined" hide-details="auto"
                                         prepend-inner-icon="mdi-phone-outline"
                                         :rules="[(v) => !!v || 'Vui lòng nhập SĐT']"></v-text-field>
+                                </v-col>
+                                <v-col cols="12">
+                                    <v-text-field v-model="shippingInfo.email" label="Email nhận thông báo đơn hàng"
+                                        variant="outlined" hide-details="auto"
+                                        prepend-inner-icon="mdi-email-outline"
+                                        placeholder="Ví dụ: emailcuaban@gmail.com"
+                                        :rules="[
+                                            (v) => !!v || 'Vui lòng nhập Email',
+                                            (v) => /.+@.+\..+/.test(v) || 'Email không hợp lệ'
+                                        ]"></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="4">
                                     <v-select v-model="shippingInfo.tinhThanh" :items="provinces" item-title="name" item-value="code" label="Tỉnh/Thành phố"
@@ -433,8 +581,8 @@ onMounted(async () => {
                                             <v-img :src="item.hinhAnh || 'https://via.placeholder.com/150?text=Sản+Phẩm'" cover width="72" height="72"
                                                 class="bg-grey-lighten-4"></v-img>
                                             <span class="product-qty-badge">{{ item.soLuong }}</span>
-                                            <div v-if="item.phanTramGiam > 0" class="cart-discount-badge d-flex align-center justify-center">
-                                                <v-icon color="white" size="12">mdi-flash</v-icon>
+                                            <div v-if="item.phanTramGiam > 0" class="cart-discount-badge">
+                                                -{{ item.phanTramGiam }}%
                                             </div>
                                         </div>
                                         <div class="flex-grow-1 d-flex flex-column">
@@ -464,7 +612,7 @@ onMounted(async () => {
                                                 <v-icon size="20" color="white">mdi-ticket-percent</v-icon>
                                             </div>
                                             <div>
-                                                <span class="text-body-2 font-weight-bold d-block" style="color: #1e257c;">{{ selectedVoucher.ten || selectedVoucher.ma }}</span>
+                                                <span class="text-body-2 font-weight-bold d-block" style="color: #1e257c;">{{ selectedVoucher.ten || selectedVoucher.ma || selectedVoucher.maPhieu || selectedVoucher.maPhieuGiamGia || 'Mã Voucher' }}</span>
                                                 <span class="text-caption" style="color: #1e257c;">Giảm {{ formatPrice(voucherDiscount) }}</span>
                                             </div>
                                         </div>
@@ -504,7 +652,11 @@ onMounted(async () => {
                                 <div class="price-breakdown pa-4 mb-4">
                                     <div class="d-flex justify-space-between mb-3">
                                         <span class="text-body-2 text-grey-darken-1">Tạm tính ({{ cartStore.cartCount }} sản phẩm)</span>
-                                        <span class="text-body-2 font-weight-bold">{{ formatPrice(cartStore.cartTotal) }}</span>
+                                        <span class="text-body-2 font-weight-bold">{{ formatPrice(originalSubtotal) }}</span>
+                                    </div>
+                                    <div v-if="campaignDiscount > 0" class="d-flex justify-space-between mb-3">
+                                        <span class="text-body-2 text-error">Đợt giảm giá</span>
+                                        <span class="text-body-2 font-weight-bold text-error">-{{ campaignDiscountPercent }}%</span>
                                     </div>
                                     <div class="d-flex justify-space-between mb-3">
                                         <span class="text-body-2 text-grey-darken-1 d-flex align-center">
@@ -597,17 +749,20 @@ onMounted(async () => {
                             class="voucher-item d-flex pa-4 mb-3"
                             :class="{ selected: selectedVoucher?.id === v.id }"
                             @click="selectVoucher(v)">
-                            <div class="voucher-badge mr-4">
-                                <span class="voucher-badge-text">{{ v.loaiPhieu === 'PHAN_TRAM' ? v.phanTramGiamGia + '%' : 'Giảm' }}</span>
+                            <div class="voucher-badge mr-4 px-2">
+                                <span class="voucher-badge-text text-center" style="font-size: 0.75rem; white-space: nowrap;">{{ v.ma || v.maPhieu || v.maPhieuGiamGia || 'Mã' }}</span>
                             </div>
                             <div class="flex-grow-1">
                                 <div class="d-flex align-center justify-space-between mb-1">
-                                    <h4 class="text-body-2 font-weight-bold">{{ v.ten || v.ma }}</h4>
+                                    <h4 class="text-body-2 font-weight-bold">{{ v.ten || v.ma || v.maPhieu || v.maPhieuGiamGia || 'Mã Voucher' }}</h4>
                                     <v-icon v-if="selectedVoucher?.id === v.id" style="color: #1e257c;" size="22">mdi-check-circle</v-icon>
                                     <div v-else class="unselected-radio"></div>
                                 </div>
                                 <p class="text-caption text-grey-darken-1 mb-1">
-                                    <span v-if="v.loaiPhieu === 'PHAN_TRAM'">Giảm {{ v.phanTramGiamGia }}%{{ v.giamToiDa ? ` (Tối đa ${formatPrice(v.giamToiDa)})` : '' }}</span>
+                                    <span v-if="v.loaiPhieu === 'PHAN_TRAM'">
+                                        Giảm {{ v.phanTramGiamGia }}%
+                                        <span v-if="v.giamToiDa" class="font-weight-medium" style="color: #ef4444;">(Tối đa {{ formatPrice(v.giamToiDa) }})</span>
+                                    </span>
                                     <span v-else>Giảm {{ formatPrice(v.soTienGiam) }} trực tiếp</span>
                                 </p>
                                 <p v-if="v.donHangToiThieu" class="text-caption font-weight-bold mb-0" style="color: #1e257c;">
@@ -621,7 +776,49 @@ onMounted(async () => {
             </div>
         </v-dialog>
 
-        
+        <!-- VNPay QR Dialog for Online Checkout -->
+        <v-dialog v-model="vnpayDialog.show" max-width="450" persistent>
+            <v-card class="rounded-xl overflow-hidden pb-4">
+                <v-card-text class="pt-6 text-center d-flex flex-column align-center">
+                    <div class="vnpay-logo-wrapper mb-4">
+                        <v-img src="https://vnpay.vn/assets/images/logo-icon/logo-primary.svg" width="60" />
+                    </div>
+
+                    <h3 class="text-h6 font-weight-bold mb-1">Thanh toán VNPay</h3>
+                    <p class="text-subtitle-2 text-grey-darken-1 mb-6">Mã đơn: {{ vnpayDialog.orderCode }}</p>
+
+                    <div class="pa-2 bg-white rounded-lg elevation-2 mb-4 d-inline-block">
+                        <v-img :src="vnpayDialog.qrUrl" width="220" height="220" />
+                    </div>
+                    <div class="text-h5 font-weight-bold text-error mb-1">
+                        {{ new Intl.NumberFormat('vi-VN', {
+                            style: 'currency', currency: 'VND'
+                        }).format(vnpayDialog.amount) }}
+                    </div>
+                    <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
+                        Sử dụng ứng dụng ngân hàng hoặc ví VNPay để quét mã.
+                    </div>
+
+                    <div class="w-100 px-2">
+                        <v-btn variant="outlined" color="#005BAA" block class="mb-3 rounded-lg font-weight-bold" height="44"
+                            @click="openVnPayGateway">
+                            Mở cổng thanh toán VNPay
+                        </v-btn>
+
+                        <v-btn block color="#005BAA" class="mb-3 rounded-lg text-white font-weight-bold" height="48"
+                            :loading="vnpayDialog.checking" @click="onConfirmPaidOnline">
+                            XÁC NHẬN ĐÃ THANH TOÁN
+                        </v-btn>
+
+                        <v-btn variant="text" color="grey-darken-1" block class="rounded-lg font-weight-medium" height="40"
+                            @click="closeVnPayDialog">
+                            Đóng và thanh toán sau
+                        </v-btn>
+                    </div>
+                </v-card-text>
+            </v-card>
+        </v-dialog>
+
         <CustomerChat />
     </div>
 </template>
@@ -749,9 +946,15 @@ onMounted(async () => {
     left: -6px;
     background: #ef4444;
     color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 32px;
     height: 20px;
-    width: 20px;
-    border-radius: 50%;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
     z-index: 2;
 }
 
@@ -867,7 +1070,7 @@ onMounted(async () => {
 }
 
 .voucher-badge {
-    width: 56px;
+    min-width: 90px;
     height: 56px;
     background: #1e257c;
     border-radius: 12px;

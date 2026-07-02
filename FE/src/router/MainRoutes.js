@@ -18,6 +18,11 @@ const MainRoutes = {
             component: () => import('@/views/modules/banhang/BanHang.vue')
         },
         {
+            name: 'HoSoCaNhan',
+            path: PATH.HO_SO,
+            component: () => import('@/views/modules/hoso/HoSoCaNhan.vue')
+        },
+        {
             name: 'SanPham',
             path: PATH.SAN_PHAM,
             component: () => import('@/views/modules/san-pham/SanPham.vue')

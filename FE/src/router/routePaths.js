@@ -12,6 +12,7 @@ export const PATH = {
     NHAN_VIEN: '/admin/nhan-vien',
     NHAN_VIEN_FORM: '/admin/nhan-vien/form',
     NHAN_VIEN_DETAIL: '/admin/nhan-vien/detail',
+    HO_SO: '/admin/ho-so',
     DOT_GIAM_GIA: '/admin/dot-giam-gia',
     DOT_GIAM_GIA_FORM: '/admin/dot-giam-gia/form',
     PHIEU_GIAM_GIA: '/admin/phieu-giam-gia',

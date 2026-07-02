@@ -12,5 +12,5 @@ import java.util.List;
 
 @Repository
 public interface AdminBanHangPhieuGiamGiaRepository extends PhieuGiamGiaRepository {
-    List<PhieuGiamGia> findAllByTrangThaiAndDonHangToiThieuLessThanEqual(TrangThai status, BigDecimal tongTien);
+    List<PhieuGiamGia> findAllByTrangThai(TrangThai status);
 }

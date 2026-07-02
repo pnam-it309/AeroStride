@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{email/base-template :: layout(~{::#main-content})}">
+<head>
+    <title>Xác nhận đơn hàng</title>
+</head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+
+<div id="main-content">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding: 10px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:white;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">
+          <tr>
+            <td style="background:#1e257c;padding:28px;text-align:center;">
+              <h1 style="color:white;margin:0;font-size:24px;letter-spacing:1px;">⚡ AeroStride</h1>
+              <p style="color:#93c5fd;margin:6px 0 0;font-size:14px;">
+                Xác nhận đặt hàng thành công
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 36px;">
+              <p style="font-size:16px;color:#1e293b;margin:0 0 12px;">
+                Xin chào <strong th:text="${tenNguoiNhan ?: 'Quý khách'}">Quý khách</strong>,
+              </p>
+              <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 24px;">
+                Cảm ơn bạn đã đặt hàng tại <strong>AeroStride</strong>! Đơn hàng <strong style="color:#1e257c;" th:text="${'#' + (orderCode ?: orderId)}">#HD123456</strong> của bạn đã được tiếp nhận và đang trong quá trình xử lý.
+              </p>
+
+              <!-- Thông tin đơn hàng -->
+              <table width="100%" cellpadding="0" cellspacing="0"
+                     style="background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <h3 style="margin:0 0 14px;font-size:15px;color:#1e293b;border-bottom:1px solid #e2e8f0;padding-bottom:8px;">
+                      📦 THÔNG TIN GIAO HÀNG
+                    </h3>
+                    <p style="margin:0 0 8px;font-size:13px;color:#475569;">
+                      <strong>Người nhận:</strong> <span th:text="${tenNguoiNhan}">Nguyễn Văn A</span>
+                    </p>
+                    <p style="margin:0 0 8px;font-size:13px;color:#475569;">
+                      <strong>Số điện thoại:</strong> <span th:text="${soDienThoai}">0123456789</span>
+                    </p>
+                    <p style="margin:0 0 8px;font-size:13px;color:#475569;">
+                      <strong>Địa chỉ giao hàng:</strong> <span th:text="${diaChi}">Hà Nội</span>
+                    </p>
+                    <p style="margin:0;font-size:13px;color:#475569;" th:if="${phuongThuc != null}">
+                      <strong>Phương thức thanh toán:</strong> <span th:text="${phuongThuc}">COD</span>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Chi tiết sản phẩm -->
+              <h3 style="margin:0 0 12px;font-size:15px;color:#1e293b;">🛒 CHI TIẾT ĐƠN HÀNG</h3>
+              <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:24px;">
+                <thead>
+                  <tr style="background:#f1f5f9;border-bottom:2px solid #cbd5e1;">
+                    <th align="left" style="padding:10px 12px;font-size:13px;color:#334155;">Sản phẩm</th>
+                    <th align="center" style="padding:10px 12px;font-size:13px;color:#334155;">SL</th>
+                    <th align="right" style="padding:10px 12px;font-size:13px;color:#334155;">Thành tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="item : ${items}" style="border-bottom:1px solid #e2e8f0;">
+                    <td style="padding:12px;font-size:13px;color:#1e293b;">
+                      <strong th:text="${item.tenSanPham}">Tên sản phẩm</strong><br/>
+                      <span style="font-size:12px;color:#64748b;" th:text="${item.phanLoai}">Màu / Size</span>
+                    </td>
+                    <td align="center" style="padding:12px;font-size:13px;color:#475569;" th:text="${item.soLuong}">1</td>
+                    <td align="right" style="padding:12px;font-size:13px;font-weight:bold;color:#1e293b;"
+                        th:text="${#numbers.formatDecimal(item.thanhTien ?: 0, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Tổng thanh toán -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border-radius:10px;padding:16px 20px;border:1px solid #e2e8f0;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:4px 0;font-size:13px;color:#64748b;">Tạm tính:</td>
+                  <td align="right" style="padding:4px 0;font-size:13px;color:#1e293b;font-weight:bold;"
+                      th:text="${#numbers.formatDecimal(tamtinh ?: 0, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 0;font-size:13px;color:#64748b;">Phí vận chuyển:</td>
+                  <td align="right" style="padding:4px 0;font-size:13px;color:#1e293b;font-weight:bold;"
+                      th:text="${#numbers.formatDecimal(phiVanChuyen ?: 0, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</td>
+                </tr>
+                <tr th:if="${tienGiam != null and tienGiam > 0}">
+                  <td style="padding:4px 0;font-size:13px;color:#059669;">Voucher giảm giá:</td>
+                  <td align="right" style="padding:4px 0;font-size:13px;color:#059669;font-weight:bold;"
+                      th:text="${'-' + #numbers.formatDecimal(tienGiam ?: 0, 0, 'COMMA', 0, 'POINT') + ' ₫'}">-0 ₫</td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="border-top:1px dashed #cbd5e1;padding-top:10px;margin-top:6px;"></td>
+                </tr>
+                <tr>
+                  <td style="font-size:15px;color:#1e293b;font-weight:bold;">TỔNG THANH TOÁN:</td>
+                  <td align="right" style="font-size:18px;color:#dc2626;font-weight:bold;"
+                      th:text="${#numbers.formatDecimal(tongTienSauGiam ?: totalAmount ?: 0, 0, 'COMMA', 0, 'POINT') + ' ₫'}">0 ₫</td>
+                </tr>
+              </table>
+
+              <div style="text-align:center;">
+                <p style="font-size:13px;color:#64748b;margin-bottom:18px;">
+                  Bạn có thể xem chi tiết trạng thái đơn hàng trong mục Lịch sử đơn hàng trên website.
+                </p>
+                <a href="http://localhost:5173/orders"
+                   style="display:inline-block;padding:12px 28px;background:#1e257c;color:#ffffff;text-decoration:none;border-radius:9999px;font-size:14px;font-weight:bold;">
+                  Theo dõi đơn hàng
+                </a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>
+
+</body>
+</html>

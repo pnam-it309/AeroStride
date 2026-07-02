@@ -74,6 +74,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         hoaDon.setNgayTao(System.currentTimeMillis());
         hoaDon.setTongTien(BigDecimal.ZERO);
         hoaDon.setTongTienSauGiam(BigDecimal.ZERO);
+        SecurityUtils.getCurrentUserEmail().ifPresent(identifier -> {
+            nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(identifier, identifier, identifier, identifier)
+                    .ifPresent(hoaDon::setNhanVien);
+        });
         hoaDonRepository.save(hoaDon);
         return mapToHoaDonResponse(hoaDon);
     }
@@ -255,7 +259,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
         // Set nhanVien based on currently authenticated user
         SecurityUtils.getCurrentUserEmail().ifPresent(username -> {
-            nhanVienRepository.findByTenTaiKhoan(username).ifPresent(hd::setNhanVien);
+            nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(username, username, username, username).ifPresent(hd::setNhanVien);
         });
 
         // Tồn kho đã được trừ lúc thêm vào giỏ hàng, nên không cần trừ lại ở đây nữa.
@@ -431,8 +435,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     public List<PhieuGiamGia> getVouchers(BigDecimal tongTien) {
-        return phieuGiamGiaRepository.findAllByTrangThaiAndDonHangToiThieuLessThanEqual(
-                TrangThai.DANG_HOAT_DONG, tongTien);
+        return phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG);
     }
 
     @Override
@@ -441,8 +444,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         BigDecimal total = hd.getTongTien();
         if (total == null || total.compareTo(BigDecimal.ZERO) <= 0) return null;
 
-        List<PhieuGiamGia> allVouchers = phieuGiamGiaRepository.findAllByTrangThaiAndDonHangToiThieuLessThanEqual(
-                TrangThai.DANG_HOAT_DONG, total);
+        List<PhieuGiamGia> allVouchers = phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG).stream()
+                .filter(v -> v.getDonHangToiThieu() == null || total.compareTo(v.getDonHangToiThieu()) >= 0)
+                .collect(Collectors.toList());
 
         PhieuGiamGia bestVoucher = null;
         BigDecimal maxDiscount = BigDecimal.ZERO;
@@ -565,6 +569,15 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         List<AdminBanHangHoaDonChiTietResponse> detailDTOs = hoaDonChiTietRepository.findAllByHoaDon(hd).stream()
                 .map(d -> {
                     ChiTietSanPham ct = d.getChiTietSanPham();
+                    Integer phanTramGiam = null;
+                    if (ct.getGiaBan() != null && d.getDonGia() != null && ct.getGiaBan().compareTo(d.getDonGia()) > 0) {
+                        BigDecimal giaGoc = ct.getGiaBan();
+                        BigDecimal giaBan = d.getDonGia();
+                        BigDecimal discount = giaGoc.subtract(giaBan);
+                        phanTramGiam = discount.multiply(BigDecimal.valueOf(100))
+                                .divide(giaGoc, java.math.RoundingMode.HALF_UP).intValue();
+                    }
+
                     return AdminBanHangHoaDonChiTietResponse.builder()
                         .id(d.getId())
                         .idChiTietSanPham(ct.getId())
@@ -574,6 +587,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                         .tenKichThuoc(ct.getKichThuoc() != null ? ct.getKichThuoc().getTen() : "")
                         .soLuong(d.getSoLuong())
                         .donGia(d.getDonGia())
+                        .giaGoc(ct.getGiaBan())
+                        .phanTramGiam(phanTramGiam)
                         .thanhTien(d.getDonGia().multiply(BigDecimal.valueOf(d.getSoLuong())))
                         .soLuongTon(ct.getSoLuong())
                         .hinhAnh(getHinhAnhVariant(ct))

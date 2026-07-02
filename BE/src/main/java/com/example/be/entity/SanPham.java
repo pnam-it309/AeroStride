@@ -55,6 +55,7 @@ public class SanPham extends BaseCodeNameEntity {
     @Enumerated(EnumType.STRING)
     private GioiTinhKhachHang gioiTinhKhachHang;
 
+    @Lob
     @Column(name = "hinh_anh")
     private String hinhAnh;
 
