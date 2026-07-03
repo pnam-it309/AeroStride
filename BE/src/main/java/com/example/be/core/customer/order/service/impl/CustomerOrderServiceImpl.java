@@ -193,8 +193,11 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
             // Trừ tồn kho (chỉ với COD)
             if (!laVnPay) {
-                ctsp.setSoLuong(ctsp.getSoLuong() - soLuong);
-                chiTietSanPhamRepository.save(ctsp);
+                int affected = chiTietSanPhamRepository.deductStock(ctsp.getId(), soLuong);
+                if (affected == 0) {
+                    String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
+                    throw new RuntimeException("Sản phẩm '" + tenSP + "' không đủ tồn kho. Vui lòng tải lại giỏ hàng.");
+                }
             }
         }
 

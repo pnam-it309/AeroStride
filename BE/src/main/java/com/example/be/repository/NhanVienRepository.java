@@ -2,6 +2,8 @@ package com.example.be.repository;
 
 import com.example.be.entity.NhanVien;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -10,6 +12,16 @@ import java.util.Optional;
 public interface NhanVienRepository extends JpaRepository<NhanVien, String> {
 
     Optional<NhanVien> findByTenTaiKhoan(String tenTaiKhoan);
+
+    @Query("""
+            SELECT nv FROM NhanVien nv
+            LEFT JOIN FETCH nv.phanQuyen
+            WHERE nv.tenTaiKhoan = :identifier
+               OR nv.email = :identifier
+               OR nv.sdt = :identifier
+               OR nv.ma = :identifier
+            """)
+    Optional<NhanVien> findCurrentProfileByIdentifier(@Param("identifier") String identifier);
 
     Optional<NhanVien> findByEmail(String email);
 

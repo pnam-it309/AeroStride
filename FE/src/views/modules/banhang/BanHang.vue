@@ -370,6 +370,14 @@ const searchProducts = async () => {
     }
 };
 
+const refreshProductSearchResults = async () => {
+    try {
+        await searchProducts();
+    } catch (e) {
+        console.error('Khong the lam moi ton kho san pham', e);
+    }
+};
+
 const loadFilterOptions = async () => {
     try {
         const [th, xx, md, cl] = await Promise.allSettled([
@@ -604,6 +612,7 @@ const confirmAddVariants = async () => {
         updateOrderInList(updated);
 
         addNotification({ title: 'Thành công', subtitle: `Đã thêm sản phẩm vào hóa đơn.`, color: 'success' });
+        await refreshProductSearchResults();
         refreshBestVoucher(selectedOrder.value);
         closeVariantModal();
     } catch (e) {
@@ -1184,6 +1193,7 @@ const closeOrder = (orderId, index) => {
                 orders.value.splice(index, 1);
                 clampActiveOrderIndex();
                 if (orders.value.length === 0) await createNewOrder();
+                await refreshProductSearchResults();
                 confirmDialog.value.show = false;
             } catch (e) {
                 addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.DELETE_DATA, color: 'error' });
@@ -1209,6 +1219,7 @@ const onAddProduct = async (product) => {
         });
         updateOrderInList(updated);
         addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm vào giỏ hàng', color: 'success' });
+        await refreshProductSearchResults();
         refreshBestVoucher(updated);
     } catch (e) {
         addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK, color: 'error' });
@@ -1225,6 +1236,7 @@ const onUpdateQty = async (item, delta, inputEventTarget = null) => {
             await dichVuDonHang.removeSanPham(selectedOrder.value.id, item.id);
             const data = await dichVuDonHang.layDonHangCho();
             setOrders(data, { preferOrderId: selectedOrder.value.id });
+            await refreshProductSearchResults();
             refreshBestVoucher();
         } catch (e) {
             addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.DELETE_DATA, color: 'error' });
@@ -1253,6 +1265,7 @@ const onUpdateQty = async (item, delta, inputEventTarget = null) => {
     try {
         const updated = await dichVuDonHang.updateSoLuong(selectedOrder.value.id, item.id, newQty);
         updateOrderInList(updated);
+        await refreshProductSearchResults();
         refreshBestVoucher(updated);
     } catch (e) {
         if (inputEventTarget) {
@@ -1276,6 +1289,7 @@ const onRemoveItem = (item) => {
                 await dichVuDonHang.removeSanPham(currentOrderId, item.id);
                 const data = await dichVuDonHang.layDonHangCho();
                 setOrders(data, { preferOrderId: currentOrderId });
+                await refreshProductSearchResults();
                 refreshBestVoucher();
                 confirmDialog.value.show = false;
             } catch (e) {
