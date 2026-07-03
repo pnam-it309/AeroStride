@@ -1,3 +1,10 @@
+## [1.26.3](https://github.com/pnam-it309/AeroStride/compare/v1.26.2...v1.26.3) (2026-07-03)
+
+
+### Bug Fixes
+
+* update stock using Modifying native query and fix UI voucher alignment ([3649374](https://github.com/pnam-it309/AeroStride/commit/3649374ae0de2c58fa80a51f1e714b71d067d0bc))
+
 ## [1.26.2](https://github.com/pnam-it309/AeroStride/compare/v1.26.1...v1.26.2) (2026-07-03)
 
 
