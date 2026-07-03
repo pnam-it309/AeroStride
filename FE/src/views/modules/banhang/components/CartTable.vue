@@ -244,4 +244,5 @@ const handleDirectInput = (item, event) => {
     display: inline-flex;
     align-items: center;
 }
+
 </style>

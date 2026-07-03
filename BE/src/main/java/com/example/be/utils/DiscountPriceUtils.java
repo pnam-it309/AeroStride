@@ -31,6 +31,15 @@ public final class DiscountPriceUtils {
         return value != null ? value : BigDecimal.ZERO;
     }
 
+    /** Lay ten dot giam gia dang hoat dong tot nhat de hien thi tren giao dien. */
+    public static String getActiveDiscountName(Collection<ChiTietDotGiamGia> relations) {
+        ChiTietDotGiamGia activeRelation = getBestActiveRelation(relations);
+        if (activeRelation == null || activeRelation.getDotGiamGia() == null) {
+            return null;
+        }
+        return activeRelation.getDotGiamGia().getTen();
+    }
+
     /** Lay phan tram giam neu dot giam gia la dang phan tram. */
     public static BigDecimal getActiveDiscountPercent(Collection<ChiTietDotGiamGia> relations) {
         ChiTietDotGiamGia activeRelation = getBestActiveRelation(relations);

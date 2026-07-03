@@ -9,6 +9,7 @@ const props = defineProps({
     confirmText: { type: String, default: 'Đồng ý' },
     cancelText: { type: String, default: 'Hủy bỏ' },
     color: { type: String, default: 'primary' },
+    confirmColor: { type: String, default: null },
     loading: { type: Boolean, default: false },
     showInput: { type: Boolean, default: false },
     inputLabel: { type: String, default: 'Ghi chú' },
@@ -75,7 +76,7 @@ const handleCancel = () => {
                 <v-btn variant="text" class="confirm-btn-cancel px-6" :disabled="loading" @click="handleCancel">
                     {{ cancelText }}
                 </v-btn>
-                <v-btn variant="flat" :color="color || 'primary'" class="confirm-btn-submit px-8" :loading="loading"
+                <v-btn variant="flat" :color="confirmColor || color || 'primary'" class="confirm-btn-submit px-8" :loading="loading"
                     :disabled="inputRequired && !inputValue" @click="handleConfirm">
                     {{ confirmText }}
                 </v-btn>

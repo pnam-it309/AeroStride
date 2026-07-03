@@ -26,10 +26,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -84,6 +87,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products", allEntries = true),
+        @CacheEvict(value = "productDetail", allEntries = true)
+    })
     public void deleteHoaDon(String id) {
         HoaDon hd = hoaDonRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_EXIST));
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
@@ -99,6 +106,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products", allEntries = true),
+        @CacheEvict(value = "productDetail", allEntries = true)
+    })
     /** Them bien the vao gio POS va tru ton kho ngay tai thoi diem them. */
     public AdminBanHangHoaDonResponse addSanPham(String idHoaDon, AdminBanHangHoaDonChiTietRequest request) {
         if (request == null || request.getIdChiTietSanPham() == null || request.getIdChiTietSanPham().isBlank()) {
@@ -135,6 +146,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products", allEntries = true),
+        @CacheEvict(value = "productDetail", allEntries = true)
+    })
     public AdminBanHangHoaDonResponse updateSoLuong(String idHoaDon, String idHoaDonChiTiet, Integer soLuong) {
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHoaDonChiTiet)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_IN_HOA_DON));
@@ -507,24 +522,20 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     }
 
     private ChiTietSanPham deductStock(String variantId, int qty, String errorMessage) {
-        ChiTietSanPham variant = chiTietSanPhamRepository.findByIdWithPessimisticLock(variantId)
-                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
-        int stock = variant.getSoLuong() != null ? variant.getSoLuong() : 0;
-        if (stock < qty) {
+        int updated = chiTietSanPhamRepository.deductStock(variantId, qty);
+        if (updated == 0) {
             throw new BusinessException(errorMessage);
         }
-        variant.setSoLuong(stock - qty);
-        variant.setNgayCapNhat(System.currentTimeMillis());
-        return chiTietSanPhamRepository.saveAndFlush(variant);
+        return chiTietSanPhamRepository.findById(variantId)
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
     }
 
     private ChiTietSanPham restoreStock(String variantId, int qty) {
-        ChiTietSanPham variant = chiTietSanPhamRepository.findByIdWithPessimisticLock(variantId)
-                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
-        int stock = variant.getSoLuong() != null ? variant.getSoLuong() : 0;
-        variant.setSoLuong(stock + qty);
-        variant.setNgayCapNhat(System.currentTimeMillis());
-        return chiTietSanPhamRepository.saveAndFlush(variant);
+        int updated = chiTietSanPhamRepository.restoreStock(variantId, qty);
+        if (updated == 0) {
+            throw new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND);
+        }
+        return chiTietSanPhamRepository.findById(variantId).orElseThrow();
     }
 
     /** Cap nhat tong tien hoa don moi khi gio hang/voucher thay doi. */
@@ -578,7 +589,14 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     }
 
     private AdminBanHangHoaDonResponse mapToHoaDonResponse(HoaDon hd) {
-        List<AdminBanHangHoaDonChiTietResponse> detailDTOs = hoaDonChiTietRepository.findAllByHoaDon(hd).stream()
+        List<HoaDonChiTiet> chiTietList = hoaDonChiTietRepository.findAllByHoaDon(hd);
+        List<ChiTietSanPham> variants = chiTietList.stream()
+                .map(HoaDonChiTiet::getChiTietSanPham)
+                .filter(Objects::nonNull)
+                .toList();
+        Map<String, List<ChiTietDotGiamGia>> discountMap = getDiscountRelationMap(variants);
+
+        List<AdminBanHangHoaDonChiTietResponse> detailDTOs = chiTietList.stream()
                 .map(d -> {
                     ChiTietSanPham ct = d.getChiTietSanPham();
                     Integer phanTramGiam = null;
@@ -589,6 +607,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                         phanTramGiam = discount.multiply(BigDecimal.valueOf(100))
                                 .divide(giaGoc, java.math.RoundingMode.HALF_UP).intValue();
                     }
+                    String tenDotGiamGia = (phanTramGiam != null && phanTramGiam > 0)
+                            ? DiscountPriceUtils.getActiveDiscountName(discountMap.getOrDefault(ct.getId(), List.of()))
+                            : null;
 
                     return AdminBanHangHoaDonChiTietResponse.builder()
                         .id(d.getId())
@@ -601,6 +622,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                         .donGia(d.getDonGia())
                         .giaGoc(ct.getGiaBan())
                         .phanTramGiam(phanTramGiam)
+                        .tenDotGiamGia(tenDotGiamGia)
                         .thanhTien(d.getDonGia().multiply(BigDecimal.valueOf(d.getSoLuong())))
                         .soLuongTon(ct.getSoLuong())
                         .hinhAnh(getHinhAnhVariant(ct))

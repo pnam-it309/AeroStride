@@ -192,30 +192,30 @@ const resetFilters = () => {
 
 // Tải các option bộ lọc (màu sắc, kích thước, trạng thái) từ API
 const fetchFormOptions = async () => {
-  try {
-    const response = await dichVuSanPham.layOptionsForm().catch(() => null)
-    if (response) {
-      formOptions.value = {
-        mauSacs: response.mauSacs || [],
-        kichThuocs: response.kichThuocs || [],
-        trangThais: response.trangThais || [],
-      }
-      return
-    }
+    try {
+        const response = await dichVuSanPham.layOptionsForm().catch(() => null)
+        if (response) {
+            formOptions.value = {
+                mauSacs: response.mauSacs || [],
+                kichThuocs: response.kichThuocs || [],
+                trangThais: response.trangThais || [],
+            }
+            return
+        }
 
-    const [mauSacResponse, kichThuocResponse] = await Promise.all([
-      dichVuMauSac.layMauSac({ size: 1000 }),
-      dichVuKichThuoc.layKichThuoc({ size: 1000 })
-    ])
+        const [mauSacResponse, kichThuocResponse] = await Promise.all([
+            dichVuMauSac.layMauSac({ size: 1000 }),
+            dichVuKichThuoc.layKichThuoc({ size: 1000 })
+        ])
 
-    formOptions.value = {
-      mauSacs: mauSacResponse.content || mauSacResponse || [],
-      kichThuocs: kichThuocResponse.content || kichThuocResponse || [],
-      trangThais: ['DANG_HOAT_DONG', 'NGUNG_HOAT_DONG']
+        formOptions.value = {
+            mauSacs: mauSacResponse.content || mauSacResponse || [],
+            kichThuocs: kichThuocResponse.content || kichThuocResponse || [],
+            trangThais: ['DANG_HOAT_DONG', 'NGUNG_HOAT_DONG']
+        }
+    } catch (error) {
+        console.error('Lỗi khi tải options:', error)
     }
-  } catch (error) {
-    console.error('Lỗi khi tải options:', error)
-  }
 }
 
 // Tải danh sách tên sản phẩm để hiển thị trong select box bộ lọc
@@ -745,13 +745,14 @@ onMounted(async () => {
 
         <div class="d-flex align-center justify-space-between mb-4 mt-2">
             <div class="d-flex align-center gap-4">
-                <v-btn icon variant="flat" @click="router.push(PATH.SAN_PHAM)" style="background-color: transparent !important; box-shadow: none !important;">
+                <v-btn icon variant="flat" @click="router.push(PATH.SAN_PHAM)"
+                    style="background-color: transparent !important; box-shadow: none !important;">
                     <ArrowLeftIcon size="20" />
                     <v-tooltip activator="parent" location="top" text="Quay lại danh sách sản phẩm" />
                 </v-btn>
                 <div class="text-h6 font-weight-bold text-slate-800">{{ selectedProductSummary.title }}</div>
             </div>
-            
+
             <div class="d-flex gap-3">
                 <v-btn color="primary" variant="flat" class="text-none rounded-lg px-4 font-weight-bold shadow"
                     @click="openCreateVariantModal" v-if="selectedProductId !== 'ALL'">
@@ -798,41 +799,42 @@ onMounted(async () => {
                     ]" variant="outlined" density="compact" hide-details class="compact-input" />
                 </v-col>
 
-        <template #after>
-          <v-col cols="12" class="mt-4 pa-0">
-            <div class="d-flex align-center justify-space-between mb-2">
-              <div class="d-flex align-center gap-2">
-                <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
-                <span class="filter-range-label">Khoảng giá</span>
-              </div>
-              <span class="filter-range-value">
-                {{ formatCurrency(filters.khoangGia[0]) }} – {{ formatCurrency(filters.khoangGia[1]) }}
-              </span>
-            </div>
-            <v-range-slider :key="`${MIN_VARIANT_PRICE}-${dynamicMaxPrice}`" v-model="filters.khoangGia" :max="dynamicMaxPrice" :min="MIN_VARIANT_PRICE"
-              :step="VARIANT_PRICE_STEP" hide-details color="primary" track-color="#e2e8f0" track-size="3"
-              thumb-size="14" class="blue-range-slider" />
-          </v-col>
-        </template>
-      </AdminFilter>
-    </div>
+                <template #after>
+                    <v-col cols="12" class="mt-4 pa-0">
+                        <div class="d-flex align-center justify-space-between mb-2">
+                            <div class="d-flex align-center gap-2">
+                                <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
+                                <span class="filter-range-label">Khoảng giá</span>
+                            </div>
+                            <span class="filter-range-value">
+                                {{ formatCurrency(filters.khoangGia[0]) }} – {{ formatCurrency(filters.khoangGia[1]) }}
+                            </span>
+                        </div>
+                        <v-range-slider :key="`${MIN_VARIANT_PRICE}-${dynamicMaxPrice}`" v-model="filters.khoangGia"
+                            :max="dynamicMaxPrice" :min="MIN_VARIANT_PRICE" :step="VARIANT_PRICE_STEP" hide-details
+                            color="primary" track-color="#e2e8f0" track-size="3" thumb-size="14"
+                            class="blue-range-slider" />
+                    </v-col>
+                </template>
+            </AdminFilter>
+        </div>
 
-    <div class="flex-grow-1 min-h-0">
-      <AdminTable title="Danh mục biến thể" :headers="[
-        { text: 'Chọn', width: '40px' },
-        { text: 'STT', width: '40px' },
-        { text: 'Mã sản phẩm', width: '90px' },
-        { text: 'Hình ảnh', width: '70px' },
-        { text: 'Mã SKU', width: '90px' },
-        { text: 'Màu sắc', width: '90px' },
-        { text: 'Kích thước', width: '90px' },
-        { text: 'Số lượng', width: '80px' },
-        { text: 'Giá bán niêm yết', width: '120px' },
-        { text: 'Trạng thái', width: '120px' },
-        { text: 'Hành động', width: '160px' }
-      ]" :items="paginatedVariants" :loading="loading"
-        :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'" addButtonText="Tạo mới"
-        @add="openCreateVariantModal" class="h-100 all-center-table">
+        <div class="flex-grow-1 min-h-0">
+            <AdminTable title="Danh mục biến thể" :headers="[
+                { text: 'Chọn', width: '40px' },
+                { text: 'STT', width: '50px' },
+                { text: 'Mã sản phẩm', width: '90px' },
+                { text: 'Hình ảnh', width: '70px' },
+                { text: 'Mã SKU', width: '90px' },
+                { text: 'Màu sắc', width: '90px' },
+                { text: 'Kích thước', width: '90px' },
+                { text: 'Số lượng', width: '80px' },
+                { text: 'Giá bán niêm yết', width: '120px' },
+                { text: 'Trạng thái', width: '120px' },
+                { text: 'Hành động', width: '160px' }
+            ]" :items="paginatedVariants" :loading="loading"
+                :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'" addButtonText="Tạo mới"
+                @add="openCreateVariantModal" class="h-100 all-center-table">
 
                 <template #extra-actions>
                     <v-btn prepend-icon="mdi-qrcode" variant="flat" class="admin-btn-secondary"
@@ -840,15 +842,15 @@ onMounted(async () => {
                         Tải mã QR
                         <v-tooltip activator="parent" location="top" text="Tải mã QR" />
                     </v-btn>
-                    
+
                 </template>
 
                 <template #headers>
                     <tr>
                         <th class="header-cell px-0" style="width: 50px; text-align: center;">
-                            <v-checkbox-btn :model-value="allVariantsSelected"
-                                :indeterminate="someVariantsSelected" color="primary" hide-details
-                                density="compact" style="margin: auto; display: inline-flex; width: auto;"
+                            <v-checkbox-btn :model-value="allVariantsSelected" :indeterminate="someVariantsSelected"
+                                color="primary" hide-details density="compact"
+                                style="margin: auto; display: inline-flex; width: auto;"
                                 @update:model-value="toggleSelectAllVariants" />
                         </th>
                         <th class="header-cell" style="width: 40px;">STT</th>
@@ -865,7 +867,8 @@ onMounted(async () => {
                 </template>
 
                 <template #top>
-                    <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
+                    <div
+                        class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
                         <div class="d-flex align-center flex-wrap gap-2">
                             <span class="text-caption font-weight-medium text-slate-500">
                                 Đã chọn {{ selectedVariantIds.length }} biến thể
@@ -874,239 +877,243 @@ onMounted(async () => {
                     </div>
                 </template>
 
-        <template #row="{ item, index }">
-          <tr class="data-row">
-            <td class="data-cell">
-              <v-checkbox-btn :model-value="selectedVariantIds.includes(item.id)" color="primary" hide-details
-                density="compact" @update:model-value="toggleVariantSelection(item.id, $event)" />
-            </td>
-            <td class="data-cell text-center">
-              {{ (pagination.page - 1) * pagination.size + index + 1 }}
-            </td>
-            <td class="data-cell text-center">
-              <div class="text-truncate" :title="getVariantProductCode(item)">{{ getVariantProductCode(item) }}</div>
-            </td>
-            <td class="data-cell text-center">
-              <div class="product-image-container d-inline-block position-relative">
-                <v-avatar rounded="lg" size="44" class="border bg-slate-50 shadow-sm avatar-hover">
-                  <SafeProductImage :src="getVariantThumbnail(item)" :fallback-src="logoPlaceholder"
-                    :alt="item.maChiTietSanPham || 'variant-image'" />
-                </v-avatar>
-                <div v-if="item.phanTramGiam > 0" class="discount-badge">
-                  -{{ Math.round(item.phanTramGiam) }}%
-                </div>
-              </div>
-            </td>
-            <td class="data-cell text-center">
-              <div class="text-truncate" :title="item.maChiTietSanPham">
-                <span class="text-truncate">{{ item.maChiTietSanPham ? item.maChiTietSanPham.split('-')[0] : '--' }}</span>
-              </div>
-            </td>
-            <td class="data-cell text-center">
-              <div class="text-truncate" :title="item.tenMauSac">
-                <span class="text-truncate">{{ item.tenMauSac }}</span>
-              </div>
-            </td>
-            <td class="data-cell text-center">
-              <div class="text-truncate" :title="item.tenKichThuoc">
-                <span class="text-truncate">{{ item.tenKichThuoc }}</span>
-              </div>
-            </td>
-            <td class="data-cell text-center">
-              <div class="text-truncate" :title="formatNumber(item.soLuong)">
-                <span class="text-truncate font-weight-medium">{{ formatNumber(item.soLuong) }}</span>
-              </div>
-            </td>
-            <td class="data-cell text-center">
-              <div class="text-primary text-truncate" :title="formatCurrency(item.giaBan)">{{
-                formatCurrency(item.giaBan) }}</div>
-            </td>
-            <td class="data-cell">
-              <v-chip variant="flat"
-                :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
-                {{ getStatusLabel(item.trangThai) }}
-              </v-chip>
-            </td>
-            <td class="data-cell">
-              <div class="d-flex align-center justify-center action-controls">
-                <v-btn variant="text" class="action-icon-btn action-icon-btn--edit" @click="openEditVariantModal(item)">
-                  <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
-                  <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
-                </v-btn>
-                <v-btn variant="text" class="action-icon-btn" @click="openImageModal(item)">
-                  <component :is="ADMIN_ICONS.ACTION.VIEW" size="15" />
-                  <v-tooltip activator="parent" location="top">Thư viện ảnh</v-tooltip>
-                </v-btn>
-                <v-btn variant="text" color="primary" class="action-icon-btn qr-action-btn" @click="openQrDialog(item)">
-                  <QrcodeIcon />
-                  <v-tooltip activator="parent" location="top">QR code</v-tooltip>
-                </v-btn>
-                <div class="switch-wrapper">
-                  <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details density="compact"
-                    class="tight-switch action-switch" @click.prevent.stop="handleToggleVariantStatus(item)" />
-                  <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái" />
-                </div>
-              </div>
-            </td>
-          </tr>
-        </template>
-
-        <template #pagination>
-          <AdminPagination v-model="pagination.page" :page-size="pagination.size"
-            @update:pageSize="pagination.size = $event" :total-pages="totalPages" :total-elements="totalElements"
-            :current-size="paginatedVariants.length" />
-        </template>
-      </AdminTable>
-    </div>
-
-    <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
-      :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
-
-    <VariantFormModal :key="`${variantModal.mode}-${variantModal.variant?.id || 'new'}`" :open="variantModal.open"
-      :mode="variantModal.mode" :variant="variantModal.variant" :options="formOptions"
-      :submitting="variantModal.submitting" :productCode="selectedProductSummary.maSanPham" @close="closeVariantModal"
-      @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
-    <VariantManagementDrawer v-model:show="variantDrawer.open" :variant="variantDrawer.variant"
-      :initialTab="variantDrawer.initialTab" @saved="fetchSelectedProduct(selectedProductId)" />
-    <QrScanner v-model:show="showQrScanner" @scan="handleQrScan" />
-
-                <v-dialog v-model="qrDialog.open" max-width="420" transition="variant-modal-transition">
-                    <v-card class="rounded-xl shadow-lg border-0 overflow-hidden">
-                        <div class="px-6 pt-6 pb-4 d-flex justify-space-between align-start">
-                            <div>
-                                <div class="text-caption font-weight-bold text-slate-500 mb-1"
-                                    style="text-transform: none; letter-spacing: 0.5px">
-                                    Mã QR biến thể
-                                </div>
-                                <h3 class="text-h6 font-weight-bold text-slate-900 mb-1">{{
-                                    qrDialog.variant?.maChiTietSanPham
-                                    || '--' }}</h3>
-                                <p class="text-body-2 text-slate-600 mb-0 text-truncate" style="max-width: 280px">
-                                    {{ qrDialog.variant?.tenSanPham || selectedProduct.value?.tenSanPham || 'Sản phẩm'
-                                    }}
-                                </p>
-                            </div>
-                            <v-btn icon variant="tonal" size="small" color="slate-400" class="rounded-lg"
-                                @click="qrDialog.open = false">
-                                <v-icon size="18">mdi-close</v-icon>
-                            </v-btn>
-                        </div>
-
-                        <div class="px-6 pb-6 bg-slate-50">
-                            <div class="pt-6">
-                                <div ref="qrCodeWrapper"
-                                    class="d-flex flex-column align-center pa-6 rounded-xl bg-white border shadow-sm">
-                                    <QrcodeVue :value="qrDialog.value" :size="240" level="H" render-as="canvas"
-                                        class="qr-canvas-display" />
-
-                                    <div
-                                        class="mt-5 px-4 py-2 rounded-lg bg-slate-100 border text-slate-800 font-weight-bold text-body-2 tracking-wide monospace">
-                                        {{ qrDialog.value }}
-                                    </div>
+                <template #row="{ item, index }">
+                    <tr class="data-row">
+                        <td class="data-cell">
+                            <v-checkbox-btn :model-value="selectedVariantIds.includes(item.id)" color="primary"
+                                hide-details density="compact"
+                                @update:model-value="toggleVariantSelection(item.id, $event)" />
+                        </td>
+                        <td class="data-cell text-center">
+                            {{ (pagination.page - 1) * pagination.size + index + 1 }}
+                        </td>
+                        <td class="data-cell text-center">
+                            <div class="text-truncate" :title="getVariantProductCode(item)">{{
+                                getVariantProductCode(item) }}</div>
+                        </td>
+                        <td class="data-cell text-center">
+                            <div class="product-image-container d-inline-block position-relative">
+                                <v-avatar rounded="lg" size="44" class="border bg-slate-50 shadow-sm avatar-hover">
+                                    <SafeProductImage :src="getVariantThumbnail(item)" :fallback-src="logoPlaceholder"
+                                        :alt="item.maChiTietSanPham || 'variant-image'" />
+                                </v-avatar>
+                                <div v-if="item.phanTramGiam > 0" class="discount-badge">
+                                    -{{ Math.round(item.phanTramGiam) }}%
                                 </div>
                             </div>
+                        </td>
+                        <td class="data-cell text-center">
+                            <div class="text-truncate" :title="item.maChiTietSanPham">
+                                <span class="text-truncate">{{ item.maChiTietSanPham ?
+                                    item.maChiTietSanPham.split('-')[0] : '--' }}</span>
+                            </div>
+                        </td>
+                        <td class="data-cell text-center">
+                            <div class="text-truncate" :title="item.tenMauSac">
+                                <span class="text-truncate">{{ item.tenMauSac }}</span>
+                            </div>
+                        </td>
+                        <td class="data-cell text-center">
+                            <div class="text-truncate" :title="item.tenKichThuoc">
+                                <span class="text-truncate">{{ item.tenKichThuoc }}</span>
+                            </div>
+                        </td>
+                        <td class="data-cell text-center">
+                            <div class="text-truncate" :title="formatNumber(item.soLuong)">
+                                <span class="text-truncate font-weight-medium">{{ formatNumber(item.soLuong) }}</span>
+                            </div>
+                        </td>
+                        <td class="data-cell text-center">
+                            <div class="text-primary text-truncate" :title="formatCurrency(item.giaBan)">{{
+                                formatCurrency(item.giaBan) }}</div>
+                        </td>
+                        <td class="data-cell">
+                            <v-chip variant="flat"
+                                :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
+                                {{ getStatusLabel(item.trangThai) }}
+                            </v-chip>
+                        </td>
+                        <td class="data-cell">
+                            <div class="d-flex align-center justify-center action-controls">
+                                <v-btn variant="text" class="action-icon-btn action-icon-btn--edit"
+                                    @click="openEditVariantModal(item)">
+                                    <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
+                                    <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
+                                </v-btn>
+                                <v-btn variant="text" class="action-icon-btn" @click="openImageModal(item)">
+                                    <component :is="ADMIN_ICONS.ACTION.VIEW" size="15" />
+                                    <v-tooltip activator="parent" location="top">Thư viện ảnh</v-tooltip>
+                                </v-btn>
+                                <v-btn variant="text" color="primary" class="action-icon-btn qr-action-btn"
+                                    @click="openQrDialog(item)">
+                                    <QrcodeIcon />
+                                    <v-tooltip activator="parent" location="top">QR code</v-tooltip>
+                                </v-btn>
+                                <div class="switch-wrapper">
+                                    <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details
+                                        density="compact" class="tight-switch action-switch"
+                                        @click.prevent.stop="handleToggleVariantStatus(item)" />
+                                    <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái" />
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </template>
 
-                            <div class="d-flex gap-3 mt-6">
-                                <v-btn variant="flat" color="white"
-                                    class="text-none rounded-lg px-4 font-weight-bold border flex-grow-1"
-                                    @click="qrDialog.open = false">
-                                    Đóng
-                                </v-btn>
-                                <v-btn color="primary" variant="flat"
-                                    class="text-none rounded-lg px-4 font-weight-bold shadow flex-grow-1"
-                                    @click="downloadCurrentQrCode">
-                                    <v-icon size="18" class="mr-2">mdi-download</v-icon>
-                                    Tải mã QR
-                                </v-btn>
+                <template #pagination>
+                    <AdminPagination v-model="pagination.page" :page-size="pagination.size"
+                        @update:pageSize="pagination.size = $event" :total-pages="totalPages"
+                        :total-elements="totalElements" :current-size="paginatedVariants.length" />
+                </template>
+            </AdminTable>
+        </div>
+
+        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
+            :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
+
+        <VariantFormModal :key="`${variantModal.mode}-${variantModal.variant?.id || 'new'}`" :open="variantModal.open"
+            :mode="variantModal.mode" :variant="variantModal.variant" :options="formOptions"
+            :submitting="variantModal.submitting" :productCode="selectedProductSummary.maSanPham"
+            @close="closeVariantModal" @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
+        <VariantManagementDrawer v-model:show="variantDrawer.open" :variant="variantDrawer.variant"
+            :initialTab="variantDrawer.initialTab" @saved="fetchSelectedProduct(selectedProductId)" />
+        <QrScanner v-model:show="showQrScanner" @scan="handleQrScan" />
+
+        <v-dialog v-model="qrDialog.open" max-width="420" transition="variant-modal-transition">
+            <v-card class="rounded-xl shadow-lg border-0 overflow-hidden">
+                <div class="px-6 pt-6 pb-4 d-flex justify-space-between align-start">
+                    <div>
+                        <div class="text-caption font-weight-bold text-slate-500 mb-1"
+                            style="text-transform: none; letter-spacing: 0.5px">
+                            Mã QR biến thể
+                        </div>
+                        <h3 class="text-h6 font-weight-bold text-slate-900 mb-1">{{
+                            qrDialog.variant?.maChiTietSanPham
+                            || '--' }}</h3>
+                        <p class="text-body-2 text-slate-600 mb-0 text-truncate" style="max-width: 280px">
+                            {{ qrDialog.variant?.tenSanPham || selectedProduct.value?.tenSanPham || 'Sản phẩm'
+                            }}
+                        </p>
+                    </div>
+                    <v-btn icon variant="tonal" size="small" color="slate-400" class="rounded-lg"
+                        @click="qrDialog.open = false">
+                        <v-icon size="18">mdi-close</v-icon>
+                    </v-btn>
+                </div>
+
+                <div class="px-6 pb-6 bg-slate-50">
+                    <div class="pt-6">
+                        <div ref="qrCodeWrapper"
+                            class="d-flex flex-column align-center pa-6 rounded-xl bg-white border shadow-sm">
+                            <QrcodeVue :value="qrDialog.value" :size="240" level="H" render-as="canvas"
+                                class="qr-canvas-display" />
+
+                            <div
+                                class="mt-5 px-4 py-2 rounded-lg bg-slate-100 border text-slate-800 font-weight-bold text-body-2 tracking-wide monospace">
+                                {{ qrDialog.value }}
                             </div>
                         </div>
-                    </v-card>
-                </v-dialog>
+                    </div>
 
-                <div ref="qrExportContainer" class="qr-export-staging" aria-hidden="true">
-                    <div v-for="item in qrExportItems" :key="item.id" class="qr-export-item">
-                        <QrcodeVue :value="item.value" :size="120" level="H" render-as="canvas" />
+                    <div class="d-flex gap-3 mt-6">
+                        <v-btn variant="flat" color="white"
+                            class="text-none rounded-lg px-4 font-weight-bold border flex-grow-1"
+                            @click="qrDialog.open = false">
+                            Đóng
+                        </v-btn>
+                        <v-btn color="primary" variant="flat"
+                            class="text-none rounded-lg px-4 font-weight-bold shadow flex-grow-1"
+                            @click="downloadCurrentQrCode">
+                            <v-icon size="18" class="mr-2">mdi-download</v-icon>
+                            Tải mã QR
+                        </v-btn>
                     </div>
                 </div>
+            </v-card>
+        </v-dialog>
+
+        <div ref="qrExportContainer" class="qr-export-staging" aria-hidden="true">
+            <div v-for="item in qrExportItems" :key="item.id" class="qr-export-item">
+                <QrcodeVue :value="item.value" :size="120" level="H" render-as="canvas" />
+            </div>
+        </div>
     </v-container>
 </template>
 
-        <style scoped>
-        .flex-none {
-            flex: none;
-        }
+<style scoped>
+.flex-none {
+    flex: none;
+}
 
-        .flex-grow-1 {
-            flex: 1;
-        }
+.flex-grow-1 {
+    flex: 1;
+}
 
-        .min-h-0 {
-            min-height: 0;
-        }
+.min-h-0 {
+    min-height: 0;
+}
 
-        .qr-action-btn {
-            border-radius: 10px;
-        }
+.qr-action-btn {
+    border-radius: 10px;
+}
 
-        .qr-action-btn:hover {
-            background: rgba(var(--v-theme-primary), 0.08);
-        }
+.qr-action-btn:hover {
+    background: rgba(var(--v-theme-primary), 0.08);
+}
 
-        .qr-export-staging {
-            position: fixed;
-            left: -9999px;
-            top: -9999px;
-            opacity: 0;
-            pointer-events: none;
-        }
+.qr-export-staging {
+    position: fixed;
+    left: -9999px;
+    top: -9999px;
+    opacity: 0;
+    pointer-events: none;
+}
 
-        .qr-export-item {
-            display: inline-block;
-            padding: 8px;
-            background: #ffffff;
-        }
+.qr-export-item {
+    display: inline-block;
+    padding: 8px;
+    background: #ffffff;
+}
 
-        :deep(.v-slider-track__background) {
-            height: 2px !important;
-        }
+:deep(.v-slider-track__background) {
+    height: 2px !important;
+}
 
-        :deep(.v-slider-track__fill) {
-            height: 2px !important;
-        }
+:deep(.v-slider-track__fill) {
+    height: 2px !important;
+}
 
-        :deep(.v-slider-thumb__surface) {
-            width: 12px !important;
-            height: 12px !important;
-        }
+:deep(.v-slider-thumb__surface) {
+    width: 12px !important;
+    height: 12px !important;
+}
 
-        :deep(.v-slider-thumb__ripple) {
-            width: 24px !important;
-            height: 24px !important;
-        }
+:deep(.v-slider-thumb__ripple) {
+    width: 24px !important;
+    height: 24px !important;
+}
 
-        .product-image-container {
-            position: relative;
-            padding: 2px;
-        }
+.product-image-container {
+    position: relative;
+    padding: 2px;
+}
 
-        .discount-badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #ef4444;
-            color: white;
-            font-size: 10px;
-            font-weight: 700;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-            z-index: 2;
-            white-space: nowrap;
-        }
-
-
-    </style>
+.discount-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    z-index: 2;
+    white-space: nowrap;
+}
+</style>

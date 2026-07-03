@@ -20,6 +20,7 @@ public class AdminBanHangHoaDonChiTietResponse {
     private BigDecimal donGia;
     private BigDecimal giaGoc;
     private Integer phanTramGiam;
+    private String tenDotGiamGia;
     private BigDecimal thanhTien;
     private Integer soLuongTon;
     private String hinhAnh;
