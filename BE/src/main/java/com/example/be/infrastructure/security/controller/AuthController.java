@@ -14,6 +14,7 @@ import com.example.be.infrastructure.security.dto.TokenRefreshRequest;
 import com.example.be.infrastructure.security.service.RefreshTokenService;
 import com.example.be.infrastructure.config.ratelimit.RateLimit;
 import com.example.be.infrastructure.exceptions.BusinessException;
+import com.example.be.infrastructure.exceptions.UnauthorizedException;
 import com.example.be.repository.KhachHangRepository;
 import com.example.be.repository.NhanVienRepository;
 import com.example.be.core.common.dto.ApiResponse;
@@ -189,12 +190,24 @@ public class AuthController {
     }
 
     /** Lấy nhân viên hiện tại từ SecurityContext hoặc ném lỗi nếu chưa đăng nhập / không phải nhân viên. */
+    private String normalizeAuthenticationName(String authenticationName) {
+        if (authenticationName == null) {
+            return "";
+        }
+        int separatorIndex = authenticationName.indexOf('|');
+        if (separatorIndex >= 0 && separatorIndex + 1 < authenticationName.length()) {
+            return authenticationName.substring(separatorIndex + 1);
+        }
+        return authenticationName;
+    }
+
     private NhanVien requireCurrentNhanVien(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()
                 || "anonymousUser".equals(authentication.getPrincipal())) {
-            throw new BusinessException("Bạn chưa đăng nhập");
+            throw new UnauthorizedException("Bạn chưa đăng nhập");
         }
-        return nhanVienRepository.findByTenTaiKhoan(authentication.getName())
-                .orElseThrow(() -> new BusinessException("Không tìm thấy thông tin nhân viên"));
+        String identifier = normalizeAuthenticationName(authentication.getName());
+        return nhanVienRepository.findCurrentProfileByIdentifier(identifier)
+                .orElseThrow(() -> new UnauthorizedException("Không tìm thấy thông tin nhân viên"));
     }
 }

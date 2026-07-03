@@ -19,7 +19,6 @@ import com.example.be.utils.CodeUtils;
 import com.example.be.utils.SearchUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -120,7 +119,6 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
     // Lấy danh sách sản phẩm (có phân trang và tìm kiếm theo điều kiện) kết hợp thông tin tồn kho
     @Override
-    @Cacheable(value = "products", key = "#request.toString()", unless = "#result == null")
     public PageResponse<ProductResponse> getProducts(SearchProductRequest request) {
         Specification<SanPham> spec = Specification.where(AdminSanPhamSpecification.notDeleted())
                 .and(AdminSanPhamSpecification.hasKeyword(request.getKeyword()))
@@ -139,7 +137,6 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
 
     // Lấy thông tin chi tiết một sản phẩm (bao gồm các biến thể)
     @Override
-    @Cacheable(value = "productDetail", key = "#id", unless = "#result == null")
     public ProductDetailResponse getProductDetail(String id) {
         return buildProductDetailResponse(id);
     }

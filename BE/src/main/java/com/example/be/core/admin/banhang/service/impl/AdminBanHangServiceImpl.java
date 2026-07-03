@@ -88,9 +88,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         HoaDon hd = hoaDonRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_EXIST));
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
 
-        // Hoàn trả tồn kho bằng atomic UPDATE
+        // Hoan tra ton kho bang lock + saveAndFlush de DB cap nhat ngay.
         for (HoaDonChiTiet d : details) {
-            chiTietSanPhamRepository.restoreStock(d.getChiTietSanPham().getId(), d.getSoLuong());
+            restoreStock(d.getChiTietSanPham().getId(), d.getSoLuong());
         }
 
         hoaDonChiTietRepository.deleteAll(details);
@@ -108,15 +108,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             throw new BusinessException("Số lượng thêm vào giỏ phải lớn hơn 0.");
         }
 
-        // Bước 1: Trừ tồn kho bằng atomic UPDATE
-        int affected = chiTietSanPhamRepository.deductStock(request.getIdChiTietSanPham(), request.getSoLuong());
-        if (affected == 0) {
-            throw new BusinessException(MessageConstants.PRODUCT_OUT_OF_STOCK);
-        }
-
+        // Tru ton kho bang lock + saveAndFlush truoc khi ghi dong gio hang.
         HoaDon hoaDon = getHoaDonOrThrow(idHoaDon);
-        ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(request.getIdChiTietSanPham())
-                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
+        ChiTietSanPham ctsp = deductStock(request.getIdChiTietSanPham(), request.getSoLuong(), MessageConstants.PRODUCT_OUT_OF_STOCK);
 
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findByHoaDonAndChiTietSanPham(hoaDon, ctsp);
         // Don gia luu vao hoa don chi tiet la gia sau dot giam gia tai thoi diem them vao gio.
@@ -149,17 +143,14 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         int oldQty = hdct.getSoLuong();
 
         if (soLuong <= 0) {
-            chiTietSanPhamRepository.restoreStock(ctspId, oldQty);
+            restoreStock(ctspId, oldQty);
             hoaDonChiTietRepository.delete(hdct);
         } else {
             int delta = soLuong - oldQty;
             if (delta > 0) {
-                int affected = chiTietSanPhamRepository.deductStock(ctspId, delta);
-                if (affected == 0) {
-                    throw new BusinessException(MessageConstants.PRODUCT_INSUFFICIENT_QTY);
-                }
+                deductStock(ctspId, delta, MessageConstants.PRODUCT_INSUFFICIENT_QTY);
             } else if (delta < 0) {
-                chiTietSanPhamRepository.restoreStock(ctspId, Math.abs(delta));
+                restoreStock(ctspId, Math.abs(delta));
             }
             hdct.setSoLuong(soLuong);
             hoaDonChiTietRepository.save(hdct);
@@ -174,10 +165,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHoaDonChiTiet)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PRODUCT_DETAIL_NOT_FOUND));
 
-        chiTietSanPhamRepository.restoreStock(hdct.getChiTietSanPham().getId(), hdct.getSoLuong());
+        restoreStock(hdct.getChiTietSanPham().getId(), hdct.getSoLuong());
 
         hoaDonChiTietRepository.delete(hdct);
-        
+
         HoaDon hd = getHoaDonOrThrow(idHoaDon);
         List<HoaDonChiTiet> remainingDetails = hoaDonChiTietRepository.findAllByHoaDon(hd);
         boolean isEmpty = remainingDetails.isEmpty() || (remainingDetails.size() == 1 && remainingDetails.get(0).getId().equals(hdct.getId()));
@@ -273,7 +264,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         hd.setDiaChiNguoiNhan(normalizeBlank(request.getDiaChiNguoiNhan()));
         hd.setSoDienThoaiNguoiNhan(normalizeBlank(request.getSdtNguoiNhan()));
         hd.setTongTien(tongTienThucTe); // Lấy giá trị thực tế thay vì request
-        hd.setTongTienSauGiam(request.getTongTienSauGiam()); // FE đã tính, nhưng có thể tính lại cho an toàn. Tạm dùng FE hoặc gọi hàm tính lại. 
+        hd.setTongTienSauGiam(request.getTongTienSauGiam()); // FE đã tính, nhưng có thể tính lại cho an toàn. Tạm dùng FE hoặc gọi hàm tính lại.
         hd.setGhiChu(request.getGhiChu());
         hd.setNgayCapNhat(System.currentTimeMillis());
         hoaDonRepository.save(hd);
@@ -513,6 +504,27 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     private HoaDon getHoaDonOrThrow(String id) {
         return hoaDonRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.HOA_DON_NOT_EXIST));
+    }
+
+    private ChiTietSanPham deductStock(String variantId, int qty, String errorMessage) {
+        ChiTietSanPham variant = chiTietSanPhamRepository.findByIdWithPessimisticLock(variantId)
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
+        int stock = variant.getSoLuong() != null ? variant.getSoLuong() : 0;
+        if (stock < qty) {
+            throw new BusinessException(errorMessage);
+        }
+        variant.setSoLuong(stock - qty);
+        variant.setNgayCapNhat(System.currentTimeMillis());
+        return chiTietSanPhamRepository.saveAndFlush(variant);
+    }
+
+    private ChiTietSanPham restoreStock(String variantId, int qty) {
+        ChiTietSanPham variant = chiTietSanPhamRepository.findByIdWithPessimisticLock(variantId)
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
+        int stock = variant.getSoLuong() != null ? variant.getSoLuong() : 0;
+        variant.setSoLuong(stock + qty);
+        variant.setNgayCapNhat(System.currentTimeMillis());
+        return chiTietSanPhamRepository.saveAndFlush(variant);
     }
 
     /** Cap nhat tong tien hoa don moi khi gio hang/voucher thay doi. */

@@ -260,10 +260,15 @@ const fetchSelectedProduct = async (productId) => {
                 variants: allVariants || []
             };
         } else {
-            const data = await dichVuSanPham.layChiTietSanPham(productId);
+            const productOption = productOptions.value.find((item) => item.id === productId) || {};
+            const variants = await dichVuBienThe.layBienTheTheoSanPham(productId);
+            const firstVariant = variants?.[0] || {};
             selectedProduct.value = {
-                ...data,
-                maSanPham: data.maSanPham || data.ma || ''
+                ...productOption,
+                id: productId,
+                tenSanPham: productOption.tenSanPham || productOption.ten || firstVariant.tenSanPham || '',
+                maSanPham: productOption.maSanPham || productOption.ma || firstVariant.maSanPham || '',
+                variants: variants || []
             };
         }
 
@@ -666,6 +671,10 @@ const toggleSelectVisibleVariants = (checked) => {
     selectedVariantIds.value = selectedVariantIds.value.filter((id) => !visibleIdSet.has(id));
 };
 
+const toggleSelectAllVariants = (checked) => {
+    toggleSelectVisibleVariants(checked);
+};
+
 // Lưu ảnh QR đang hiển thị trên Modal to xuống máy
 const downloadCurrentQrCode = () => {
     const canvas = qrCodeWrapper.value?.querySelector('canvas');
@@ -817,6 +826,7 @@ onMounted(async () => {
         { text: 'Mã SKU', width: '90px' },
         { text: 'Màu sắc', width: '90px' },
         { text: 'Kích thước', width: '90px' },
+        { text: 'Số lượng', width: '80px' },
         { text: 'Giá bán niêm yết', width: '120px' },
         { text: 'Trạng thái', width: '120px' },
         { text: 'Hành động', width: '160px' }
@@ -847,6 +857,7 @@ onMounted(async () => {
                         <th class="header-cell" style="width: 90px;">Mã SKU</th>
                         <th class="header-cell" style="width: 90px;">Màu sắc</th>
                         <th class="header-cell" style="width: 90px;">Kích thước</th>
+                        <th class="header-cell" style="width: 80px;">Số lượng</th>
                         <th class="header-cell" style="width: 120px;">Giá bán niêm yết</th>
                         <th class="header-cell" style="width: 120px;">Trạng thái</th>
                         <th class="header-cell" style="width: 120px;">Hành động</th>
@@ -899,6 +910,11 @@ onMounted(async () => {
             <td class="data-cell text-center">
               <div class="text-truncate" :title="item.tenKichThuoc">
                 <span class="text-truncate">{{ item.tenKichThuoc }}</span>
+              </div>
+            </td>
+            <td class="data-cell text-center">
+              <div class="text-truncate" :title="formatNumber(item.soLuong)">
+                <span class="text-truncate font-weight-medium">{{ formatNumber(item.soLuong) }}</span>
               </div>
             </td>
             <td class="data-cell text-center">

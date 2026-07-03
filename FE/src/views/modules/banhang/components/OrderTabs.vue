@@ -16,6 +16,9 @@ const MAX_WAITING_ORDERS = 5;
 
 defineProps(['orders', 'activeIndex']);
 const emit = defineEmits(['select', 'create', 'close']);
+
+const getOrderItemCount = (order) =>
+    (order?.listsHoaDonChiTiet || []).reduce((sum, item) => sum + (Number(item.soLuong) || 0), 0);
 </script>
 
 <template>
@@ -27,8 +30,11 @@ const emit = defineEmits(['select', 'create', 'close']);
             :class="activeIndex === idx ? 'order-tab-active' : 'order-tab-inactive'"
             @click="emit('select', idx)"
         >
-            <span class="font-weight-bold text-body-2 text-truncate flex-grow-1">
+            <span class="order-tab-label font-weight-bold text-body-2 text-truncate">
                 Đơn hàng #{{ order.maHoaDon || idx + 1 }}
+            </span>
+            <span class="order-item-count" :title="`Tổng số lượng sản phẩm trong giỏ: ${getOrderItemCount(order)}`">
+                {{ getOrderItemCount(order) }} SP
             </span>
             <v-btn
                 icon
@@ -63,13 +69,39 @@ const emit = defineEmits(['select', 'create', 'close']);
     transition: all 0.2s ease;
 }
 .order-tab {
-    min-width: 170px;
+    min-width: 206px;
+    max-width: 260px;
     height: 40px;
     border-radius: 8px;
     user-select: none;
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
+}
+
+.order-tab-label {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.order-item-count {
+    flex: 0 0 auto;
+    margin-left: 8px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+    font-size: 11px;
+    line-height: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.order-tab-inactive .order-item-count {
+    background: #ffffff;
+    color: #475569;
+    border-color: #e2e8f0;
 }
 
 .order-tab-active {

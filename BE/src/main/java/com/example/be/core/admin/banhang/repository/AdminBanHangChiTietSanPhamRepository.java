@@ -23,12 +23,12 @@ public interface AdminBanHangChiTietSanPhamRepository extends ChiTietSanPhamRepo
 
     // Trừ tồn kho trực tiếp bằng SQL UPDATE (atomic, tránh JPA cache issue)
     // Trả về số dòng bị ảnh hưởng: 1 = thành công, 0 = không đủ hàng
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE ChiTietSanPham c SET c.soLuong = c.soLuong - :qty WHERE c.id = :id AND c.soLuong >= :qty")
     int deductStock(@Param("id") String id, @Param("qty") int qty);
 
     // Cộng trả lại tồn kho trực tiếp bằng SQL UPDATE (atomic)
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE ChiTietSanPham c SET c.soLuong = c.soLuong + :qty WHERE c.id = :id")
     int restoreStock(@Param("id") String id, @Param("qty") int qty);
 
