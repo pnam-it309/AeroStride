@@ -1,3 +1,10 @@
+## [1.26.2](https://github.com/pnam-it309/AeroStride/compare/v1.26.1...v1.26.2) (2026-07-03)
+
+
+### Bug Fixes
+
+* logic san pham, ban hang va them cot so luong ([60b8ace](https://github.com/pnam-it309/AeroStride/commit/60b8ace80c2ce84311a920cc15b3349c3e45e6a1))
+
 ## [1.26.1](https://github.com/pnam-it309/AeroStride/compare/v1.26.0...v1.26.1) (2026-06-29)
 
 
