@@ -2237,10 +2237,9 @@ const closeQuickAdd = () => {
                                     placeholder="Nhập mã, tên sản phẩm hoặc Barcode" variant="outlined"
                                     density="compact" hide-details prepend-inner-icon="mdi-magnify"
                                     :append-inner-icon="showProductAutocomplete ? 'mdi-close' : ''"
-                                    @click:append-inner="closeSearch"
-                                    @focus="onProductSearchFocus" @click="onProductSearchFocus"
-                                    @blur="onProductSearchBlur" bg-color="white" class="search-input"
-                                    autocomplete="off" />
+                                    @click:append-inner="closeSearch" @focus="onProductSearchFocus"
+                                    @click="onProductSearchFocus" @blur="onProductSearchBlur" bg-color="white"
+                                    class="search-input" autocomplete="off" />
 
                                 <!-- Search dropdown overlay -->
                                 <v-card v-if="showProductAutocomplete && groupedProducts.length > 0"
@@ -2411,9 +2410,11 @@ const closeQuickAdd = () => {
                                         </v-select>
                                     </div>
 
-                                    <div v-if="isGiaoHang" class="d-flex align-center justify-space-between text-body-2 py-1 mb-2">
+                                    <div v-if="isGiaoHang"
+                                        class="d-flex align-center justify-space-between text-body-2 py-1 mb-2">
                                         <span class="text-slate-600">Khoảng cách (km)</span>
-                                        <v-text-field v-model="shippingDistance" type="number" min="0" variant="outlined" density="compact" hide-details
+                                        <v-text-field v-model="shippingDistance" type="number" min="0"
+                                            variant="outlined" density="compact" hide-details
                                             style="width: 170px !important; max-width: 170px !important; min-width: 170px !important; flex: none !important;"
                                             class="text-right-input" />
                                     </div>
@@ -2427,16 +2428,14 @@ const closeQuickAdd = () => {
                                                 class="text-caption font-weight-medium"
                                                 style="margin-top: -6px; transform: scale(0.9); transform-origin: left top" />
                                         </div>
-                                        
-                                                <v-text-field :model-value="formatNumberWithDots(shippingFee)"
-                                                    @input="e => { shippingFee = parseNumberFromDots(e.target.value); e.target.value = formatNumberWithDots(shippingFee); }"
-                                                    @keypress="e => { if (!/^[0-9]$/.test(e.key)) e.preventDefault() }"
-                                                     variant="outlined" density="compact" suffix="đ"
-                                                    hide-details
-                                                    style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
-                                                    class="text-right-input custom-value-input"
-                                                    :disabled="isFreeShip" />
-                                            
+
+                                        <v-text-field :model-value="formatNumberWithDots(shippingFee)"
+                                            @input="e => { shippingFee = parseNumberFromDots(e.target.value); e.target.value = formatNumberWithDots(shippingFee); }"
+                                            @keypress="e => { if (!/^[0-9]$/.test(e.key)) e.preventDefault() }"
+                                            variant="outlined" density="compact" suffix="đ" hide-details
+                                            style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
+                                            class="text-right-input custom-value-input" :disabled="isFreeShip" />
+
                                     </div>
 
 
@@ -2451,9 +2450,14 @@ const closeQuickAdd = () => {
                                     </div>
 
                                     <!-- Đợt giảm giá (số tiền đã trừ từ giá gốc) -->
-                                    <div class="d-flex align-center justify-space-between mt-1" v-if="campaignDiscountAmount > 0">
-                                        <span class="text-slate-600" style="font-size: 13px !important">Đợt giảm giá</span>
-                                        <span class="font-weight-bold" style="font-size: 13px !important; color: #dc2626;">-{{ campaignDiscountPercent }}%</span>
+                                    <div class="d-flex align-center justify-space-between mt-1"
+                                        v-if="campaignDiscountAmount > 0">
+                                        <span class="text-slate-600" style="font-size: 13px !important">Đợt giảm
+                                            giá</span>
+                                        <span class="font-weight-bold"
+                                            style="font-size: 13px !important; color: #dc2626;">-{{
+                                            campaignDiscountPercent
+                                            }}%</span>
                                     </div>
 
                                     <!-- Giảm giá từ phiếu (voucher) -->
@@ -2531,7 +2535,7 @@ const closeQuickAdd = () => {
                                     </div>
                                     <span class="font-weight-bold" style="font-size: 13px !important;">{{
                                         formatCurrency(remainingBalance)
-                                        }}</span>
+                                    }}</span>
                                 </div>
                                 <div v-else-if="changeAmount > 0"
                                     class="d-flex align-center justify-space-between pa-3 rounded-lg bg-blue-50 text-blue-800 border-blue">
@@ -2574,7 +2578,7 @@ const closeQuickAdd = () => {
                                     style="min-width: 170px; justify-content: space-between">
                                     <span class="font-weight-bold text-slate-800 text-caption">{{
                                         formatDateTime(selectedOrder?.ngayTao)
-                                        }}</span>
+                                    }}</span>
                                 </div>
                             </div>
 
@@ -2651,9 +2655,9 @@ const closeQuickAdd = () => {
                                             class="suggestion-item d-flex justify-space-between align-center px-3 py-2 cursor-pointer transition-all border-b"
                                             style="font-size: 13px;">
                                             <span class="text-slate-800 font-weight-bold">{{ getCustomerDisplayName(c)
-                                                }}</span>
+                                            }}</span>
                                             <span class="text-primary font-mono ml-3 font-weight-bold">{{ c.sdt
-                                                }}</span>
+                                            }}</span>
                                         </div>
                                     </v-list>
                                     <v-list v-else-if="customerSearch?.length > 1 && !customerLoading"
@@ -2938,8 +2942,10 @@ const closeQuickAdd = () => {
                             <v-avatar rounded="lg" size="80" class="border bg-grey-lighten-4 flex-shrink-0">
                                 <v-img :src="modalDisplayVariant?.hinhAnh || variantModal.product?.hinhAnh" cover />
                             </v-avatar>
-                            <div v-if="modalDisplayDiscountPercent > 0" class="variant-modal-discount-badge d-flex align-center justify-center">
-                                <span class="text-white font-weight-bold" style="font-size: 11px !important;">-{{ modalDisplayDiscountPercent }}%</span>
+                            <div v-if="modalDisplayDiscountPercent > 0"
+                                class="variant-modal-discount-badge d-flex align-center justify-center">
+                                <span class="text-white font-weight-bold" style="font-size: 11px !important;">-{{
+                                    modalDisplayDiscountPercent }}%</span>
                             </div>
                         </div>
                         <div class="pt-1">
@@ -3692,4 +3698,3 @@ const closeQuickAdd = () => {
     align-self: center !important;
 }
 </style>
-
