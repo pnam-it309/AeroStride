@@ -35,16 +35,19 @@ const handleDirectInput = (item, event) => {
         <v-table class="pos-table flex-grow-1" fixed-header height="100%">
             <thead>
                 <tr>
-                    <th class="text-left py-2">Sản phẩm</th>
-                    <th class="text-center py-2" style="width: 130px">Số lượng</th>
-                    <th class="text-right py-2" style="width: 130px">Đơn giá</th>
-                    <th class="text-right py-2" style="width: 130px">Thành tiền</th>
-                    <th class="text-center py-2" style="width: 40px"></th>
+                    <th class="text-center py-2" style="width: 60px; white-space: nowrap !important;">STT</th>
+                    <th class="text-left py-2" style="width: 130px; white-space: nowrap !important;">Mã sản phẩm</th>
+                    <th class="text-left py-2">Tên sản phẩm</th>
+                    <th class="text-left py-2" style="width: 100px; white-space: nowrap !important;">Màu sắc</th>
+                    <th class="text-left py-2" style="width: 90px; white-space: nowrap !important;">Kích cỡ</th>
+                    <th class="text-center py-2" style="width: 130px; white-space: nowrap !important;">Số lượng</th>
+                    <th class="text-right py-2" style="width: 140px; white-space: nowrap !important;">Đơn giá</th>
+                    <th class="text-center py-2" style="width: 90px; white-space: nowrap !important;">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
                 <tr v-if="!items?.length">
-                    <td colspan="5" class="text-center py-16">
+                    <td colspan="8" class="text-center py-16">
                         <div class="opacity-20 mb-4">
                             <ShoppingCartIcon size="64" />
                         </div>
@@ -52,7 +55,13 @@ const handleDirectInput = (item, event) => {
                         <p class="text-body-2 text-grey">Tìm mã hoặc tên sản phẩm để thêm vào đơn</p>
                     </td>
                 </tr>
-                <tr v-for="item in items" :key="item.id" class="item-row">
+                <tr v-for="(item, idx) in items" :key="item.id" class="item-row">
+                    <td class="text-center font-weight-medium text-slate-500" style="font-size: 13px; white-space: nowrap !important;">
+                        {{ idx + 1 }}
+                    </td>
+                    <td class="text-left font-weight-medium text-slate-700" style="font-size: 13px; white-space: nowrap !important;">
+                        {{ item.maChiTietSanPham || item.maSanPham || 'N/A' }}
+                    </td>
                     <td>
                         <div class="d-flex align-center py-1.5">
                             <v-avatar color="grey-lighten-4" rounded="lg" size="38" class="mr-3 border position-relative overflow-visible">
@@ -62,26 +71,18 @@ const handleDirectInput = (item, event) => {
                                     <span class="text-white font-weight-bold" style="font-size: 9px !important;">-{{ item.phanTramGiam }}%</span>
                                 </div>
                             </v-avatar>
-                            <div>
-                                <div class="text-slate-700 text-body-2" style="font-size: 13.5px !important; line-height: 1.3;">{{ item.tenSanPham }}</div>
-                                
-                                <!-- mã sp | mã sku (với nhãn vuông pastel nhé) -->
-                                <div class="d-flex align-center mt-1 flex-wrap">
-                                    <span class="sp-badge">Mã Sản phẩm: {{ item.maSanPham || 'SP0001' }}</span>
-                                    <span style="margin-left: 15px; margin-right: 15px; font-size: 11px; color: #cbd5e1; opacity: 0.4;">|</span>
-                                    <span class="sku-badge">{{ item.maChiTietSanPham || 'N/A' }}</span>
-                                </div>
-                                
-                                <!-- màu sắc | size -->
-                                <div class="d-flex align-center mt-1 text-slate-500 font-weight-medium" style="font-size: 11.5px; flex-wrap: wrap;">
-                                    <span>Màu sắc: <span class="text-slate-700">{{ item.tenMauSac || 'Không màu' }}</span></span>
-                                    <span style="margin-left: 15px; margin-right: 15px; font-size: 11px; color: #cbd5e1; opacity: 0.4;">|</span>
-                                    <span>Size: <span class="text-slate-700">{{ item.tenKichThuoc || 'N/A' }}</span></span>
-                                </div>
-                            </div>
+                            <span class="text-slate-700 text-body-2 font-weight-medium" style="font-size: 13px !important; line-height: 1.3;">
+                                {{ item.tenSanPham }}
+                            </span>
                         </div>
                     </td>
-                    <td class="text-center">
+                    <td class="text-left text-slate-600" style="font-size: 13px; white-space: nowrap !important;">
+                        {{ item.tenMauSac || 'Không màu' }}
+                    </td>
+                    <td class="text-left text-slate-600" style="font-size: 13px; white-space: nowrap !important;">
+                        {{ item.tenKichThuoc || 'N/A' }}
+                    </td>
+                    <td class="text-center" style="white-space: nowrap !important;">
                         <div class="qty-control">
                             <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, -1)">
                                 <MinusIcon size="12" />
@@ -98,9 +99,20 @@ const handleDirectInput = (item, event) => {
                             </v-btn>
                         </div>
                     </td>
-                    <td class="text-right text-caption" style="font-weight: 500 !important;">{{ formatCurrency(item.donGia) }}</td>
-                    <td class="text-right text-primary text-body-2" style="font-weight: 500 !important;">{{ formatCurrency(item.thanhTien) }}</td>
-                    <td class="text-center">
+                    <td class="text-right text-slate-700 font-weight-bold" style="font-size: 13px !important; white-space: nowrap !important;">
+                        <template v-if="item.phanTramGiam > 0">
+                            <span class="d-block text-slate-700 font-weight-bold" >
+                                {{ formatCurrency(item.donGia) }}
+                            </span>
+                            <span class="font-weight-bold" style="text-decoration: line-through; text-decoration-color: #94a3b8; -webkit-text-decoration-color: #94a3b8; color: #c92c04 !important; font-size: 11px !important; font-weight: normal; display: block; margin-top: 2px;">
+                                {{ formatCurrency(item.donGia / (1 - item.phanTramGiam / 100)) }}
+                            </span>
+                        </template>
+                        <template v-else>
+                            {{ formatCurrency(item.donGia) }}
+                        </template>
+                    </td>
+                    <td class="text-center" style="white-space: nowrap !important;">
                         <v-btn icon variant="text" color="error" size="small" @click="emit('remove', item)">
                             <TrashIcon size="16" />
                         </v-btn>
@@ -122,6 +134,7 @@ const handleDirectInput = (item, event) => {
 }
 
 .cart-card {
+    height: 100% !important;
     flex: 1;
     min-height: 0;
     border-radius: 8px !important;
@@ -135,6 +148,22 @@ const handleDirectInput = (item, event) => {
 
 .pos-table :deep(.v-table__wrapper) {
     background: transparent !important;
+    overflow-y: auto !important;
+}
+
+.pos-table :deep(.v-table__wrapper)::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.pos-table :deep(.v-table__wrapper)::-webkit-scrollbar-track {
+    background: transparent;
+}
+.pos-table :deep(.v-table__wrapper)::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+.pos-table :deep(.v-table__wrapper)::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .pos-table :deep(.v-btn--icon) {
@@ -155,18 +184,28 @@ const handleDirectInput = (item, event) => {
 
 .pos-table :deep(table) {
     border-collapse: separate !important;
-    border-spacing: 0 10px !important;
+    border-spacing: 0 12px !important;
     background: transparent !important;
     padding: 0 6px;
 }
 
 .pos-table :deep(thead th) {
-    background-color: #f8fafc !important;
-    color: #475569 !important;
-    font-size: 12px !important;
+    background-color: #f1f5f9 !important;
+    color: #334155 !important;
+    font-size: 13px !important;
     font-weight: 600 !important;
     border-bottom: none !important;
-    height: 38px !important;
+    height: 40px !important;
+}
+
+.pos-table :deep(thead th:first-child) {
+    border-top-left-radius: 8px !important;
+    border-bottom-left-radius: 8px !important;
+}
+
+.pos-table :deep(thead th:last-child) {
+    border-top-right-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
 }
 
 .pos-table :deep(tbody tr.item-row) {
@@ -187,8 +226,8 @@ const handleDirectInput = (item, event) => {
 .pos-table :deep(tbody td) {
     border-top: 1px solid #e2e8f0 !important;
     border-bottom: 1px solid #e2e8f0 !important;
-    padding-top: 8px !important;
-    padding-bottom: 8px !important;
+    padding-top: 20px !important;
+    padding-bottom: 20px !important;
     background-color: #ffffff !important;
     transition: background-color 0.2s ease;
 }
