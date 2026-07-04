@@ -8,7 +8,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -43,4 +45,11 @@ public class CustomerProductDetailResponse {
     private Long ngayCapNhat;
     private String nguoiCapNhat;
     private List<CustomerProductVariantResponse> variants;
+    
+    private BigDecimal minPrice;
+    private BigDecimal maxPrice;
+    private List<String> availableColors;
+    private Map<String, List<String>> availableSizesByColor;
+    private Integer totalStock;
+    private Map<String, Integer> stockByColor;
 }

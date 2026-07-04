@@ -4,10 +4,12 @@ import com.example.be.core.admin.chat.model.AdminChatResponse;
 import com.example.be.core.admin.chat.model.TinNhanResponse;
 
 import java.util.List;
+import java.util.Map;
 
 public interface AdminChatService {
 
-    List<AdminChatResponse> getAllConversations();
+    List<AdminChatResponse> getAllConversations(String type, String status, String keyword);
+    Map<String, Long> getConversationStats();
 
     List<TinNhanResponse> getMessagesByConversation(String id);
 

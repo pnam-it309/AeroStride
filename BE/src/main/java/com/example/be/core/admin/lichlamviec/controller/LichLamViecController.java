@@ -31,8 +31,11 @@ public class LichLamViecController {
     private final LichLamViecService lichLamViecService;
 
     @GetMapping(RoutesConstant.SCHEDULES)
-    public ResponseEntity<ApiResponse<?>> getSchedules() {
-        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.getAllSchedules()));
+    public ResponseEntity<ApiResponse<?>> getSchedules(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String ca,
+            @RequestParam(required = false) String ngay) {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.getAllSchedules(search, ca, ngay)));
     }
 
     @GetMapping(RoutesConstant.SHIFTS)

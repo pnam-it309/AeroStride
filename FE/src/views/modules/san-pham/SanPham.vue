@@ -5,7 +5,7 @@
  * Chức năng: Màn hình danh sách sản phẩm. Cho phép lọc, tìm kiếm, xem khoảng giá, 
  *            đổi trạng thái (đơn lẻ hoặc hàng loạt), xuất/nhập Excel, và quét mã QR.
  */
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
 import { SYSTEM_STATUS, STATUS_OPTIONS } from '@/constants/statusConstants';
@@ -19,19 +19,38 @@ import { downloadFile } from '@/utils/fileUtils';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
 import { useRefreshHandler } from '@/composables/useRefreshHandler';
+import { useServerPagination } from '@/composables/useServerPagination';
 
 const MIN_PRICE = 0;
 const DEFAULT_MAX_PRICE = 6500000;
 const PRICE_STEP = 500000;
-const PRODUCT_FETCH_SIZE = 1000;
 
 const { addNotification } = useNotifications();
 const router = useRouter();
 const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 const { isRefreshing, handleRefresh: refreshData } = useRefreshHandler();
 
-const loading = ref(false);
-const products = ref([]);
+// Phân trang + tải dữ liệu server-side (composable dùng chung)
+const {
+    items: products,
+    loading,
+    pagination,
+    totalElements,
+    totalPages,
+    load: loadProducts,
+    reload: reloadProducts
+} = useServerPagination(
+    (pageable) => dichVuSanPham.layDanhSachSanPham({ ...pageable, ...buildProductFilterParams() }),
+    {
+        pageSize: 5,
+        onLoaded: () => syncProductSelection(),
+        onError: () => {
+            clearProductSelection();
+            addNotification({ title: 'Lỗi', subtitle: 'Không thể tải danh sách sản phẩm', color: 'error' });
+        }
+    }
+);
+
 const filterOptions = ref({
     thuongHieus: [],
     xuatXus: [],
@@ -50,11 +69,6 @@ const showQrScanner = ref(false);
 const importing = ref(false);
 const priceFilterDirty = ref(false);
 
-const pagination = reactive({
-    page: 1,
-    size: 5
-});
-
 const filters = reactive({
     search: '',
     khoangGia: [MIN_PRICE, DEFAULT_MAX_PRICE],
@@ -72,49 +86,9 @@ const toNumber = (value, fallback = 0) => {
     return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-// Trích xuất tất cả các mức giá bán khả dụng (của bản thân sản phẩm và tất cả biến thể)
-const getProductPriceCandidates = (item) => {
-    const nestedVariantCollections = [item?.variants, item?.chiTietSanPhams, item?.bienThes, item?.danhSachBienThe].filter(Array.isArray);
-
-    const nestedPrices = nestedVariantCollections.flatMap((variants) =>
-        variants.map((variant) => Number(variant?.giaBan)).filter((price) => Number.isFinite(price))
-    );
-
-    return [item?.giaBanThapNhat, item?.giaBanCaoNhat, item?.giaBan, ...nestedPrices]
-        .map((value) => Number(value))
-        .filter((value) => Number.isFinite(value));
-};
-
-// Lấy giá bán thấp nhất của sản phẩm
-const getProductLowestPrice = (item) => {
-    const priceCandidates = getProductPriceCandidates(item);
-    return priceCandidates.length ? Math.min(...priceCandidates) : 0;
-};
-
-// Lấy giá bán cao nhất của sản phẩm
-const getProductHighestPrice = (item) => {
-    const priceCandidates = getProductPriceCandidates(item);
-    return priceCandidates.length ? Math.max(...priceCandidates) : getProductLowestPrice(item);
-};
-
-// Kiểm tra xem sản phẩm có mức giá nằm trong khoảng giá đang lọc hay không
-const productPriceMatches = (item) => {
-    const selectedMin = filters.khoangGia[0];
-    const selectedMax = filters.khoangGia[1];
-    const productMin = getProductLowestPrice(item);
-    const productMax = getProductHighestPrice(item);
-    return productMax >= selectedMin && productMin <= selectedMax;
-};
-
-const filteredProducts = computed(() => products.value.filter(productPriceMatches));
-const totalElements = computed(() => filteredProducts.value.length);
-const totalPages = computed(() => Math.max(Math.ceil(totalElements.value / pagination.size), 1));
-const paginatedProducts = computed(() => {
-    const start = (pagination.page - 1) * pagination.size;
-    return filteredProducts.value.slice(start, start + pagination.size);
-});
-const filteredProductIds = computed(() => filteredProducts.value.map((item) => item.id));
-const selectedProducts = computed(() => filteredProducts.value.filter((item) => selectedProductIds.value.includes(item.id)));
+// Danh sách sản phẩm hiển thị là dữ liệu của đúng trang hiện tại do BE trả về.
+const filteredProductIds = computed(() => products.value.map((item) => item.id));
+const selectedProducts = computed(() => products.value.filter((item) => selectedProductIds.value.includes(item.id)));
 const allProductsSelected = computed(
     () => filteredProductIds.value.length > 0 && filteredProductIds.value.every((id) => selectedProductIds.value.includes(id))
 );
@@ -136,7 +110,7 @@ const clearProductSelection = () => {
 
 // Đồng bộ lại danh sách chọn sau khi lọc/đổi trang, loại bỏ những sản phẩm không còn hiển thị
 const syncProductSelection = () => {
-    const validIds = new Set(filteredProducts.value.map((item) => item.id));
+    const validIds = new Set(products.value.map((item) => item.id));
     selectedProductIds.value = selectedProductIds.value.filter((id) => validIds.has(id));
 };
 
@@ -153,64 +127,18 @@ const resetProductFiltersState = () => {
     clearProductSelection();
 };
 
-// Build object tham số gửi lên API tìm kiếm sản phẩm
-const buildProductQueryParams = () => ({
-    page: 0,
-    size: PRODUCT_FETCH_SIZE,
+// Build phần params LỌC gửi lên API (page/size do composable useServerPagination tự thêm)
+const buildProductFilterParams = () => ({
     sortBy: 'ngayTao',
     sortDirection: 'desc',
     keyword: filters.search?.trim() || undefined,
     thuongHieuId: filters.thuongHieu || undefined,
     trangThai: filters.trangThai || undefined,
     gioiTinhKhachHang: filters.gioiTinh || undefined,
-    chatLieuId: filters.chatLieu || undefined
+    chatLieuId: filters.chatLieu || undefined,
+    minGia: priceFilterDirty.value ? filters.khoangGia[0] : undefined,
+    maxGia: priceFilterDirty.value ? filters.khoangGia[1] : undefined
 });
-
-// Cập nhật lại giới hạn cực đại, cực tiểu cho thanh trượt khoảng giá dựa theo dữ liệu hiện tại
-const updateProductPriceBounds = (items) => {
-    const detectedMaxPrice = items.reduce(
-        (maxValue, item) => Math.max(maxValue, getProductLowestPrice(item), getProductHighestPrice(item)),
-        MIN_PRICE
-    );
-    const safeMaxPrice = Math.max(detectedMaxPrice, PRICE_STEP);
-    productPriceBounds.value = {
-        min: MIN_PRICE,
-        max: safeMaxPrice
-    };
-
-    if (!priceFilterDirty.value) {
-        filters.khoangGia = [MIN_PRICE, safeMaxPrice];
-        return;
-    }
-
-    filters.khoangGia = sanitizePriceRange(filters.khoangGia, safeMaxPrice);
-};
-
-// Gọi API lấy danh sách sản phẩm và cập nhật state
-const loadProducts = async () => {
-    if (loading.value) return;
-
-    loading.value = true;
-    try {
-        const response = await dichVuSanPham.layDanhSachSanPham(buildProductQueryParams());
-        const result = response?.data || response;
-        const fetchedProducts = Array.isArray(result?.content) ? result.content : [];
-        products.value = fetchedProducts;
-        updateProductPriceBounds(fetchedProducts);
-        syncProductSelection();
-    } catch (error) {
-        console.error('Error loading products:', error);
-        products.value = [];
-        clearProductSelection();
-        addNotification({
-            title: 'Lỗi',
-            subtitle: 'Không thể tải danh sách sản phẩm',
-            color: 'error'
-        });
-    } finally {
-        loading.value = false;
-    }
-};
 
 // Gọi API lấy mức giá lớn nhất có trong database để làm max cho thanh trượt
 const loadMaxPrice = async () => {
@@ -250,9 +178,8 @@ const loadFilterOptions = async () => {
 
 // Xử lý sự kiện submit tìm kiếm (khi nhấn Enter/Click nút)
 const handleSearch = async () => {
-    pagination.page = 1;
     clearProductSelection();
-    await loadProducts();
+    await reloadProducts();
 };
 
 // Xử lý sự kiện làm mới dữ liệu
@@ -263,7 +190,7 @@ const handleRefresh = async () => {
     });
 };
 
-// Debounce việc lọc giá khi kéo thanh trượt
+// Debounce việc lọc giá khi kéo thanh trượt (gọi lại API với minGia/maxGia)
 const schedulePriceSearch = () => {
     priceFilterDirty.value = true;
     if (priceSearchTimer) {
@@ -271,9 +198,9 @@ const schedulePriceSearch = () => {
     }
 
     priceSearchTimer = window.setTimeout(() => {
-        pagination.page = 1;
-        syncProductSelection();
-    }, 120);
+        clearProductSelection();
+        reloadProducts();
+    }, 300);
 };
 
 // <- chỗ này viêt commet để biết mik làm gì đoạn này >
@@ -539,20 +466,6 @@ const handleQrScan = async (decodedText) => {
     router.push({ name: 'BienTheSanPham', query: { keyword: decodedText } });
 };
 
-watch(filteredProducts, () => {
-    syncProductSelection();
-    if (pagination.page > totalPages.value) {
-        pagination.page = totalPages.value;
-    }
-});
-
-watch(
-    () => pagination.size,
-    () => {
-        pagination.page = 1;
-    }
-);
-
 onMounted(async () => {
     await Promise.all([loadMaxPrice(), loadProducts(), loadFilterOptions()]);
 });
@@ -627,7 +540,7 @@ onBeforeUnmount(() => {
             { text: 'Khoảng giá', width: '150px' },
             { text: 'Trạng thái', width: '110px' },
             { text: 'Hành động', width: '140px' }
-        ]" :items="paginatedProducts" :loading="loading" :showExportButton="true"
+        ]" :items="products" :loading="loading" :showExportButton="true"
             :exportButtonText="productExportButtonText" selectable @add="router.push({ name: 'SanPhamForm' })"
             @export="handleExportProducts">
 
@@ -718,8 +631,8 @@ onBeforeUnmount(() => {
             <template #pagination>
                 <AdminPagination v-model="pagination.page" :page-size="pagination.size"
                     @update:pageSize="pagination.size = $event" @update:page-size="pagination.size = $event"
-                    :total-pages="totalPages" :total-elements="totalElements"
-                    :current-size="paginatedProducts.length" />
+                    @change="loadProducts" :total-pages="totalPages" :total-elements="totalElements"
+                    :current-size="products.length" />
             </template>
         </AdminTable>
 

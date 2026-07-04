@@ -80,26 +80,19 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
                             <slot name="row" :item="item" :index="index"></slot>
                         </template>
                     </tbody>
-                    <tbody v-else>
-                        <tr>
-                            <td :colspan="headers.length || 20" class="empty-state py-16 text-center">
-                                <div v-if="loading" class="d-flex flex-column align-center">
-                                    <v-progress-circular indeterminate color="primary" size="48" width="6"
-                                        class="mb-4" />
-                                    <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">Đang tải dữ liệu...</span>
-                                </div>
-                                <div v-else
-                                    class="d-flex flex-column align-center py-12 bg-slate-50/30 rounded-lg mx-4 my-2">
-                                    <v-icon :icon="emptyIcon" size="48"
-                                        style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
-                                    <span class="text-slate-500"
-                                        style="font-size: 14px !important; font-weight: 400 !important;">{{
-                                            emptyText }}</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
                 </table>
+                
+                <!-- Render empty state outside the table to avoid table-layout: fixed colspan bugs -->
+                <div v-if="loading || items.length === 0" class="empty-state-wrapper py-10 w-100 d-flex flex-column align-center justify-center border-t">
+                    <div v-if="loading" class="d-flex flex-column align-center justify-center w-100">
+                        <v-progress-circular indeterminate color="primary" size="48" width="6" class="mb-4" />
+                        <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">Đang tải dữ liệu...</span>
+                    </div>
+                    <div v-else class="d-flex flex-column align-center justify-center py-8 w-100">
+                        <v-icon :icon="emptyIcon" size="48" style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
+                        <span class="text-slate-500 text-center" style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block;">{{ emptyText }}</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Pagination Area -->

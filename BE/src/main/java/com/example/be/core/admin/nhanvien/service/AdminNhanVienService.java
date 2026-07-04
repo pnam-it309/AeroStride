@@ -34,4 +34,7 @@ public interface AdminNhanVienService {
     List<com.example.be.entity.PhanQuyen> getAllPhanQuyen();
 
     String uploadAvatar(org.springframework.web.multipart.MultipartFile file);
+
+    /** Lấy thông tin nhân viên đang đăng nhập (dựa trên Security context). */
+    AdminNhanVienResponse getMe();
 }

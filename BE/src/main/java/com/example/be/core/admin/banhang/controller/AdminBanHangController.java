@@ -118,9 +118,14 @@ public class AdminBanHangController {
 
     // Tìm kiếm nhanh sản phẩm để thêm vào hóa đơn
     @GetMapping(RoutesConstant.SEARCH_SAN_PHAM)
-    public ResponseEntity<ApiResponse<List<BanHangSanPhamResponse>>> searchSanPham(@RequestParam(defaultValue = "") String keyword) {
-        log.info("Searching products for counter sales with keyword: {}", keyword);
-        return ResponseEntity.ok(ApiResponse.success(adminBanHangService.searchSanPham(keyword)));
+    public ResponseEntity<ApiResponse<List<BanHangSanPhamResponse>>> searchSanPham(
+            @RequestParam(defaultValue = "") String keyword,
+            @RequestParam(required = false) String thuongHieu,
+            @RequestParam(required = false) String chatLieu,
+            @RequestParam(required = false) String xuatXu,
+            @RequestParam(required = false) String mucDich) {
+        log.info("Searching products for counter sales with keyword: {}, thuongHieu: {}, chatLieu: {}, xuatXu: {}, mucDich: {}", keyword, thuongHieu, chatLieu, xuatXu, mucDich);
+        return ResponseEntity.ok(ApiResponse.success(adminBanHangService.searchSanPham(keyword, thuongHieu, chatLieu, xuatXu, mucDich)));
     }
 
     // Tìm kiếm khách hàng theo từ khóa (tên, sđt)
@@ -142,5 +147,12 @@ public class AdminBanHangController {
     public ResponseEntity<ApiResponse<PhieuGiamGia>> getBestVoucher(@PathVariable String id) {
         log.info("Fetching best voucher for order: {}", id);
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.getBestVoucher(id)));
+    }
+
+    // Lấy gợi ý sản phẩm để mua thêm cho giảm giá tốt hơn
+    @GetMapping("/{id}/product-suggestions")
+    public ResponseEntity<ApiResponse<List<com.example.be.core.admin.banhang.model.response.ProductSuggestionResponse>>> getProductSuggestions(@PathVariable String id) {
+        log.info("Fetching product suggestions for order: {}", id);
+        return ResponseEntity.ok(ApiResponse.success(adminBanHangService.getProductSuggestions(id)));
     }
 }

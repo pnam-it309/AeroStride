@@ -124,6 +124,51 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
         List<ChiTietSanPham> variants = customerSanPhamChiTietRepository.findBySanPhamIdAndXoaMemFalseOrderByNgayTaoDesc(id);
         List<CustomerProductVariantResponse> variantResponses = mapVariants(variants);
 
+        java.math.BigDecimal minPrice = null;
+        java.math.BigDecimal maxPrice = null;
+        List<String> availableColors = new java.util.ArrayList<>();
+        java.util.Map<String, List<String>> availableSizesByColor = new java.util.LinkedHashMap<>();
+        Integer totalStock = 0;
+        java.util.Map<String, Integer> stockByColor = new java.util.HashMap<>();
+
+        for (CustomerProductVariantResponse v : variantResponses) {
+            java.math.BigDecimal price = v.getGiaBan();
+            if (price != null && price.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                if (minPrice == null || price.compareTo(minPrice) < 0) minPrice = price;
+                if (maxPrice == null || price.compareTo(maxPrice) > 0) maxPrice = price;
+            }
+            
+            String color = v.getTenMauSac();
+            String size = v.getTenKichThuoc();
+            Integer qty = v.getSoLuong() != null ? v.getSoLuong() : 0;
+            totalStock += qty;
+
+            if (color != null && !color.trim().isEmpty()) {
+                if (!availableColors.contains(color)) {
+                    availableColors.add(color);
+                }
+                
+                stockByColor.put(color, stockByColor.getOrDefault(color, 0) + qty);
+
+                if (size != null && !size.trim().isEmpty()) {
+                    availableSizesByColor.computeIfAbsent(color, k -> new java.util.ArrayList<>())
+                                         .add(size);
+                }
+            }
+        }
+        
+        availableSizesByColor.replaceAll((c, list) -> {
+            return list.stream().distinct()
+                       .sorted((a, b) -> {
+                           try {
+                               return Double.compare(Double.parseDouble(a), Double.parseDouble(b));
+                           } catch (Exception e) {
+                               return a.compareTo(b);
+                           }
+                       })
+                       .collect(java.util.stream.Collectors.toList());
+        });
+
         return CustomerProductDetailResponse.builder()
                 .id(sp.getId())
                 .maSanPham(sp.getMa())
@@ -150,6 +195,12 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 .ngayCapNhat(sp.getNgayCapNhat())
                 .nguoiCapNhat(sp.getNguoiCapNhat())
                 .variants(variantResponses)
+                .minPrice(minPrice)
+                .maxPrice(maxPrice)
+                .availableColors(availableColors)
+                .availableSizesByColor(availableSizesByColor)
+                .totalStock(totalStock)
+                .stockByColor(stockByColor)
                 .build();
     }
 

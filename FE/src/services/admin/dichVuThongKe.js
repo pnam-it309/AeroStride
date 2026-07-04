@@ -20,5 +20,11 @@ export const dichVuThongKe = {
 
         const response = await api.get(`${API_ADMIN.THONG_KE}/doanh-thu-theo-ngay`, { params });
         return response.data.data;
+    },
+
+    // Lấy thống kê sản phẩm có phân trang, tìm kiếm, sắp xếp
+    async layThongKeSanPham(params) {
+        const response = await api.get(`${API_ADMIN.THONG_KE}/san-pham`, { params });
+        return response.data.data;
     }
 };

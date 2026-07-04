@@ -1,8 +1,10 @@
 package com.example.be.core.admin.khachhang.controller;
 
 import com.example.be.core.admin.khachhang.model.request.AdminKhachHangRequest;
+import com.example.be.core.admin.khachhang.model.response.AdminKhachHangResponse;
 import com.example.be.core.admin.khachhang.service.AdminKhachHangService;
 import com.example.be.core.common.dto.ApiResponse;
+import com.example.be.core.common.dto.PageResponse;
 import com.example.be.core.common.dto.UpdateStatusRequest;
 import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.RoutesConstant;
@@ -26,12 +28,13 @@ public class AdminKhachHangController {
     private final AdminKhachHangService adminKhachHangService;
 
     @GetMapping({RoutesConstant.HIEN_THI, RoutesConstant.PHAN_TRANG, RoutesConstant.TIM_KIEM}) // Aliases for FE compatibility
-    public ResponseEntity<ApiResponse<?>> search(AdminKhachHangRequest request) {
-        return ResponseEntity.ok(ApiResponse.success(adminKhachHangService.search(request)));
+    public ResponseEntity<ApiResponse<PageResponse<AdminKhachHangResponse>>> search(AdminKhachHangRequest request) {
+        // Trả PageResponse chuẩn (giống các module khác) thay vì Spring Page thô, để FE chỉ đọc 1 shape.
+        return ResponseEntity.ok(ApiResponse.success(PageResponse.from(adminKhachHangService.search(request))));
     }
 
     @GetMapping(RoutesConstant.DETAIL) // Compatibility Alias
-    public ResponseEntity<ApiResponse<?>> detail(@PathVariable String id) {
+    public ResponseEntity<ApiResponse<AdminKhachHangResponse>> detail(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success(adminKhachHangService.detail(id)));
     }
 

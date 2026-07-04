@@ -231,4 +231,15 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     private static String SECURE_RANDOM_SUFFIX() {
         return String.valueOf((int) (Math.random() * 1000));
     }
+
+    @Override
+    public AdminNhanVienResponse getMe() {
+        String username = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication().getName();
+        AdminNhanVienResponse response = adminNhanVienRepository.detailByTenTaiKhoan(username);
+        if (response == null) {
+            throw new ResourceNotFoundException("Không tìm thấy thông tin nhân viên đang đăng nhập");
+        }
+        return response;
+    }
 }

@@ -119,23 +119,6 @@ const formatPrice = (v) => {
     background: #f8fafc;
 }
 
-.section-header {
-    .section-tag {
-        font-size: 0.75rem;
-        font-weight: 900;
-        color: #2962ff;
-        letter-spacing: 4px;
-        display: block;
-        margin-bottom: 4px;
-    }
-    .section-title {
-        font-size: 2rem;
-        font-weight: 950;
-        color: #1e293b;
-        letter-spacing: -0.5px;
-        margin: 0;
-    }
-}
 
 .see-all-btn {
     font-weight: 700;
@@ -253,17 +236,7 @@ const formatPrice = (v) => {
     pointer-events: none;
 }
 
-.reveal-item {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.7s cubic-bezier(0.2, 1, 0.3, 1);
-}
-.active .reveal-item {
-    opacity: 1;
-    transform: translateY(0);
-}
-.delay-1 { transition-delay: 0.1s; }
-.delay-2 { transition-delay: 0.2s; }
+
 
 @media (max-width: 960px) {
     .banner-card { min-height: 220px; padding: 20px 16px; }

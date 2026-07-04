@@ -114,7 +114,7 @@ public class AdminChatServiceImpl implements AdminChatService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdminChatResponse> getAllConversations() {
+    public List<AdminChatResponse> getAllConversations(String type, String status, String keyword) {
         String currentUsername = getCurrentUsername();
         
         List<AdminChatResponse> allConvs = conversationRepository.findAll().stream()
@@ -170,7 +170,30 @@ public class AdminChatServiceImpl implements AdminChatService {
                 .collect(Collectors.toList());
         
         allConvs.addAll(allStaff);
-        return allConvs;
+
+        // Apply filters
+        return allConvs.stream()
+                .filter(c -> type == null || type.isEmpty() || type.equals(c.getLoaiHoiThoai()))
+                .filter(c -> status == null || status.isEmpty() || status.equals(c.getTrangThaiHoiThoai()))
+                .filter(c -> keyword == null || keyword.isEmpty() || c.getTen().toLowerCase().contains(keyword.toLowerCase()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Long> getConversationStats() {
+        // Pass nulls to get all visible conversations without filtering
+        List<AdminChatResponse> allConvs = getAllConversations(null, null, null);
+        
+        long activeCount = allConvs.stream().filter(c -> CuocHoiThoai.TrangThaiHoiThoai.ACTIVE.name().equals(c.getTrangThaiHoiThoai())).count();
+        long pendingCount = allConvs.stream().filter(c -> CuocHoiThoai.TrangThaiHoiThoai.PENDING.name().equals(c.getTrangThaiHoiThoai())).count();
+        long closedCount = allConvs.stream().filter(c -> CuocHoiThoai.TrangThaiHoiThoai.CLOSED.name().equals(c.getTrangThaiHoiThoai())).count();
+        
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("ACTIVE", activeCount);
+        stats.put("PENDING", pendingCount);
+        stats.put("CLOSED", closedCount);
+        return stats;
     }
 
     @Override

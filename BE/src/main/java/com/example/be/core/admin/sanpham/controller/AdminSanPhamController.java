@@ -108,6 +108,13 @@ public class AdminSanPhamController {
         return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getAllVariants(), MessageConstants.VARIANT_LIST_SUCCESS));
     }
 
+    // Lấy danh sách biến thể có phân trang + lọc (server-side)
+    @GetMapping(RoutesConstant.VARIANTS_SEARCH)
+    public ResponseEntity<ApiResponse<com.example.be.core.common.dto.PageResponse<ProductVariantResponse>>> searchVariants(
+            com.example.be.core.admin.sanpham.model.request.SearchVariantRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(adminSanPhamService.getVariantsPaged(request), MessageConstants.VARIANT_LIST_SUCCESS));
+    }
+
     // Thêm mới một biến thể (chi tiết sản phẩm) cho sản phẩm hiện tại
     @PostMapping(RoutesConstant.VARIANTS_SUB)
     public ResponseEntity<ApiResponse<ProductVariantResponse>> addVariant(

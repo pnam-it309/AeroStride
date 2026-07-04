@@ -50,6 +50,10 @@ public class HoaDon extends AuditEntity implements IsIdentified {
     @JoinColumn(name = "id_nhan_vien")
     private NhanVien nhanVien;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_giao_ca")
+    private GiaoCa giaoCa;
+
     @Column(name = "ma_hoa_don", unique = true)
     private String maHoaDon;
 

@@ -3,6 +3,7 @@ package com.example.be.core.admin.sanpham.repository;
 import com.example.be.entity.ChiTietSanPham;
 import com.example.be.repository.ChiTietSanPhamRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AdminChiTietSanPhamRepository extends ChiTietSanPhamRepository, AdminChiTietSanPhamRepositoryCustom {
+public interface AdminChiTietSanPhamRepository extends ChiTietSanPhamRepository, AdminChiTietSanPhamRepositoryCustom, JpaSpecificationExecutor<ChiTietSanPham> {
 
     @EntityGraph(attributePaths = {"sanPham", "sanPham.thuongHieu", "sanPham.chatLieu", "mauSac", "kichThuoc"})
     Optional<ChiTietSanPham> findByIdAndXoaMemFalse(String id);

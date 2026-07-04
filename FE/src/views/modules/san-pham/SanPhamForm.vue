@@ -34,6 +34,12 @@ import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
 import { exportQrImageZip } from '@/utils/qrExcelWorkbook';
 import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
 import { generateRandomCode } from '@/utils/codeGenerator';
+import {
+    cleanSizeString, formatSizeDisplay,
+    normalizeSizeInput, blockNonNumericSizeInput, getDisplayItems,
+    getNestedValue, createDraftKey, normalizeUploadedFileUrl
+} from '@/utils/productFormHelpers';
+import { useVariantTable } from '@/composables/useVariantTable';
 
 const route = useRoute();
 const router = useRouter();
@@ -119,10 +125,10 @@ const removeAccents = (str) => str ? str.normalize('NFD').replace(/[\u0300-\u036
 const getColorHexFallback = (colorItem) => {
     if (colorItem?.maMauHex) return colorItem.maMauHex;
     if (!colorItem?.ten) return '#e2e8f0';
-    
+
     const normalizedName = colorItem.ten.trim().toLowerCase();
     const normalizedNoAccent = removeAccents(normalizedName);
-    
+
     for (const [key, hex] of Object.entries(COLOR_DICTIONARY)) {
         if (normalizedName === key || normalizedNoAccent === removeAccents(key)) {
             return hex;
@@ -190,42 +196,8 @@ const handleAddCustomColor = async () => {
     }
 };
 
-const cleanSizeString = (str) => {
-    let s = (str || '').toString();
-    // 5. Bảo mật: Loại bỏ HTML tags để chống XSS
-    s = s.replace(/<[^>]*>?/gm, '');
-
-    // 3. Định dạng: Chỉ giữ lại chữ cái, số, khoảng trắng và dấu .,- (Loại bỏ @, #, $, %...)
-    s = s.replace(/[^a-zA-Z0-9.,\-\s]/g, '');
-
-    // 1. Chuẩn hóa: Loại bỏ các từ khóa thừa "Kích thước", "size", "sz"
-    s = s.replace(/(?:^|\s)(?:kích thước|size|sz)\s*/gi, '');
-
-    // Loại bỏ chữ "s" nếu nó đứng ngay trước một con số (để biến s43, s 43 thành 43)
-    s = s.replace(/(?:^|\s)s\s*(?=\d)/gi, '');
-
-    // 1. Loại bỏ khoảng trắng thừa ở giữa và 2 đầu
-    return s.replace(/\s+/g, ' ').trim();
-};
-
-const formatSizeDisplay = (name) => {
-    const norm = cleanSizeString(name).toUpperCase();
-    return norm ? `Size ${norm}` : (name || '');
-};
-
-// Chi cho nhap so nguyen 2 chu so cho size, validate them o buoc luu 35-60.
-const normalizeSizeInput = (value) => String(value || '').replace(/\D/g, '').slice(0, 2);
-
 const updateCustomSizeName = (value) => {
     customSizeName.value = normalizeSizeInput(value);
-};
-
-const blockNonNumericSizeInput = (event) => {
-    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
-    if (allowedKeys.includes(event.key) || event.ctrlKey || event.metaKey) return;
-    if (!/^\d$/.test(event.key)) {
-        event.preventDefault();
-    }
 };
 
 const handleSizePaste = (event) => {
@@ -343,35 +315,6 @@ const searchQueries = reactive({
     idMucDichChay: ''
 });
 
-// Hàm tạo danh sách hiển thị với mục thêm nhanh ở đầu
-const getDisplayItems = (originalItems, query) => {
-    const trimmedQuery = query?.trim();
-    const normalizedQuery = normalizeSearchText(trimmedQuery);
-
-    // Lọc danh sách gốc trước
-    let filtered = originalItems;
-    if (normalizedQuery) {
-        filtered = originalItems.filter(item =>
-            normalizeSearchText(item.ten).includes(normalizedQuery)
-        );
-    }
-
-    if (!trimmedQuery) return filtered;
-
-    // Kiểm tra xem đã có item nào trùng hoàn toàn chưa
-    const existsExact = originalItems.some(item =>
-        normalizeSearchText(item.ten) === normalizedQuery
-    );
-
-    if (existsExact) return filtered;
-
-    // Chèn mục mới vào đầu danh sách đã lọc với ID đặc biệt để nhận biết click trực tiếp
-    return [
-        { id: `__new__${trimmedQuery}`, ten: trimmedQuery, isNew: true },
-        ...filtered
-    ];
-};
-
 const displayBrands = computed(() => getDisplayItems(brands.value, searchQueries.idThuongHieu, 'idThuongHieu'));
 const displayOrigins = computed(() => getDisplayItems(origins.value, searchQueries.idXuatXu, 'idXuatXu'));
 
@@ -401,20 +344,40 @@ const variantModal = ref({
     submitting: false,
     variant: null
 });
-const selectedVariantKeys = ref([]);
 const qrExportItems = ref([]);
 const qrExportContainer = ref(null);
-// Bo loc bang bien the khi sua san pham da co trong he thong.
-const variantTableFilters = reactive({
-    keyword: '',
-    mauSacId: '',
-    kichThuocId: '',
-    trangThai: '',
-    khoangGia: [MIN_VARIANT_PRICE, DEFAULT_MAX_VARIANT_PRICE]
-});
-const variantPriceBounds = ref({
-    min: MIN_VARIANT_PRICE,
-    max: DEFAULT_MAX_VARIANT_PRICE
+
+// Bảng biến thể (lọc/khoảng giá/phân trang/chọn) — tách sang composable useVariantTable.
+const {
+    variantTableFilters,
+    variantPriceBounds,
+    variantPage,
+    variantPageSize,
+    selectedVariantKeys,
+    variantPriceStep,
+    filteredVariantItems,
+    totalVariantElements,
+    totalVariantPages,
+    paginatedVariantItems,
+    visibleVariantKeys,
+    selectedVariants,
+    allVisibleVariantsSelected,
+    someVisibleVariantsSelected,
+    updateVariantPriceBounds,
+    sanitizeVariantPriceRange,
+    updateVariantPriceBoundary,
+    handleVariantSliderPriceChange,
+    clearVariantSelection,
+    syncVariantSelection,
+    toggleVariantSelection,
+    toggleSelectVisibleVariants,
+    resetVariantTableFilters
+} = useVariantTable(variantItems, {
+    getVariantColorLabel: (id) => getVariantColorLabel(id),
+    getVariantSizeLabel: (id) => getVariantSizeLabel(id),
+    getVariantKey: (variant) => getVariantKey(variant),
+    minPrice: MIN_VARIANT_PRICE,
+    maxPrice: DEFAULT_MAX_VARIANT_PRICE
 });
 
 // Options truyen sang modal bien the gom mau, size va trang thai hop le.
@@ -434,45 +397,9 @@ const variantTableHeaders = [
     { text: 'Trạng thái', width: '160px' },
     { text: 'Thao tác', width: '120px' }
 ];
-const variantPage = ref(1);
-const variantPageSize = ref(5);
 const variantFilterProductLabel = computed(() => (
     [product.value.maSanPham, product.value.tenSanPham].filter(Boolean).join(' • ') || 'Sản phẩm hiện tại'
 ));
-const variantPriceStep = computed(() => (
-    variantPriceBounds.value.max > 1000000 ? 50000 : 1000
-));
-// Danh sach bien the sau khi ap dung tim kiem, mau, size, trang thai va khoang gia.
-const filteredVariantItems = computed(() => variantItems.value.filter((item) => {
-    const keyword = variantTableFilters.keyword.trim().toLowerCase();
-    const colorLabel = getVariantColorLabel(item.idMauSac).toLowerCase();
-    const sizeLabel = getVariantSizeLabel(item.idKichThuoc).toLowerCase();
-    const matchesKeyword = !keyword
-        || String(item.maChiTietSanPham || '').toLowerCase().includes(keyword)
-        || colorLabel.includes(keyword)
-        || sizeLabel.includes(keyword);
-    const variantPrice = Number(item.giaBan ?? 0);
-    const matchesPrice = variantPrice >= variantTableFilters.khoangGia[0]
-        && variantPrice <= variantTableFilters.khoangGia[1];
-
-    return matchesKeyword
-        && (!variantTableFilters.mauSacId || item.idMauSac === variantTableFilters.mauSacId)
-        && (!variantTableFilters.kichThuocId || item.idKichThuoc === variantTableFilters.kichThuocId)
-        && (!variantTableFilters.trangThai || item.trangThai === variantTableFilters.trangThai)
-        && matchesPrice;
-}));
-const totalVariantElements = computed(() => filteredVariantItems.value.length);
-const totalVariantPages = computed(() => Math.max(Math.ceil(totalVariantElements.value / variantPageSize.value), 1));
-const paginatedVariantItems = computed(() => {
-    const start = (variantPage.value - 1) * variantPageSize.value;
-    return filteredVariantItems.value.slice(start, start + variantPageSize.value);
-});
-const visibleVariantKeys = computed(() => paginatedVariantItems.value.map((item) => getVariantKey(item)));
-const selectedVariants = computed(() => filteredVariantItems.value.filter((item) => selectedVariantKeys.value.includes(getVariantKey(item))));
-const allVisibleVariantsSelected = computed(() => visibleVariantKeys.value.length > 0
-    && visibleVariantKeys.value.every((key) => selectedVariantKeys.value.includes(key)));
-const someVisibleVariantsSelected = computed(() => visibleVariantKeys.value.some((key) => selectedVariantKeys.value.includes(key))
-    && !allVisibleVariantsSelected.value);
 
 const totalVariantStock = computed(() => variantItems.value.reduce(
     (sum, item) => sum + Number(item.soLuong || 0),
@@ -828,7 +755,6 @@ const onKeyUpEnter = async (event, field) => {
     }
 };
 
-const createDraftKey = () => `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 const formatCurrency = (value) => {
     if (value === null || value === undefined || value === '') return '--';
@@ -846,20 +772,6 @@ const formatNumber = (value) => {
 
 // getStatusLabel is now imported from @/utils/statusUtils
 
-const normalizeUploadedFileUrl = (value) => {
-    if (!value) return '';
-    if (typeof value === 'string') return value;
-    return value.fileUrl
-        || value.url
-        || value.secure_url
-        || value.duongDanAnh
-        || value.duongDan
-        || value.path
-        || value.data
-        || value.hinhAnh
-        || value.anh
-        || '';
-};
 
 const normalizeOptionList = (listLike) => {
     if (Array.isArray(listLike)) return listLike;
@@ -873,15 +785,6 @@ const getVariantSkuLabel = (variant) => {
     const sku = variant.maChiTietSanPham;
     if (!sku) return 'Tự sinh sau khi lưu sản phẩm';
     return sku;
-};
-const getNestedValue = (source, keys) => {
-    for (const key of keys) {
-        const value = source?.[key];
-        if (value !== null && value !== undefined && value !== '') {
-            return value;
-        }
-    }
-    return '';
 };
 const getVariantSkuValue = (variant = {}) => (
     variant.maChiTietSanPham
@@ -999,24 +902,6 @@ const buildVariantPayload = (variant, includeImages = true) => {
     return payload;
 };
 
-const updateVariantPriceBounds = () => {
-    const maxPrice = variantItems.value.reduce((maxValue, item) => Math.max(maxValue, Number(item.giaBan ?? 0)), MIN_VARIANT_PRICE);
-    const safeMax = Math.max(maxPrice, variantPriceStep.value);
-    variantPriceBounds.value = {
-        min: MIN_VARIANT_PRICE,
-        max: safeMax
-    };
-
-    variantTableFilters.khoangGia = [
-        Math.min(variantTableFilters.khoangGia[0], safeMax),
-        Math.min(variantTableFilters.khoangGia[1], safeMax)
-    ];
-
-    if (variantTableFilters.khoangGia[0] > variantTableFilters.khoangGia[1]) {
-        variantTableFilters.khoangGia = [MIN_VARIANT_PRICE, safeMax];
-    }
-};
-
 const handleAttributeChange = async (field, value) => {
     // Chỉ tự động tạo nếu người dùng chọn mục "Thêm nhanh" (có prefix __new__)
     // Hoặc nếu họ nhấn Enter (được xử lý ở onKeyUpEnter)
@@ -1035,30 +920,6 @@ const handleAttributeChange = async (field, value) => {
             });
         }
     }
-};
-
-const sanitizeVariantPriceRange = (range, maxPrice = variantPriceBounds.value.max) => {
-    const safeMaxPrice = Math.max(MIN_VARIANT_PRICE, Number(maxPrice || DEFAULT_MAX_VARIANT_PRICE));
-    const rawMin = Math.max(MIN_VARIANT_PRICE, Number(range?.[0] ?? MIN_VARIANT_PRICE));
-    const rawMax = Math.max(MIN_VARIANT_PRICE, Number(range?.[1] ?? safeMaxPrice));
-    const nextMin = Math.min(rawMin, safeMaxPrice);
-    const nextMax = Math.min(Math.max(rawMax, nextMin), safeMaxPrice);
-    return [nextMin, nextMax];
-};
-
-const updateVariantPriceBoundary = (boundary, value) => {
-    const nextRange = [...variantTableFilters.khoangGia];
-    if (boundary === 'min') {
-        nextRange[0] = value === '' ? MIN_VARIANT_PRICE : value;
-    } else {
-        nextRange[1] = value === '' ? variantPriceBounds.value.max : value;
-    }
-
-    variantTableFilters.khoangGia = sanitizeVariantPriceRange(nextRange);
-};
-
-const handleVariantSliderPriceChange = (value) => {
-    variantTableFilters.khoangGia = sanitizeVariantPriceRange(value);
 };
 
 const renderVariantQrCanvases = async (variants) => {
@@ -1120,47 +981,6 @@ const handleExportVariantQrZip = async () => {
             color: 'error'
         });
     }
-};
-
-const resetVariantTableFilters = () => {
-    variantTableFilters.keyword = '';
-    variantTableFilters.mauSacId = '';
-    variantTableFilters.kichThuocId = '';
-    variantTableFilters.trangThai = '';
-    variantTableFilters.khoangGia = [MIN_VARIANT_PRICE, variantPriceBounds.value.max];
-    variantPage.value = 1;
-    clearVariantSelection();
-};
-
-const clearVariantSelection = () => {
-    selectedVariantKeys.value = [];
-};
-
-const syncVariantSelection = () => {
-    const validKeys = new Set(filteredVariantItems.value.map((item) => getVariantKey(item)));
-    selectedVariantKeys.value = selectedVariantKeys.value.filter((key) => validKeys.has(key));
-};
-
-const toggleVariantSelection = (variantKey, checked) => {
-    if (checked) {
-        if (!selectedVariantKeys.value.includes(variantKey)) {
-            selectedVariantKeys.value = [...selectedVariantKeys.value, variantKey];
-        }
-        return;
-    }
-
-    selectedVariantKeys.value = selectedVariantKeys.value.filter((key) => key !== variantKey);
-};
-
-const toggleSelectVisibleVariants = (checked) => {
-    if (checked) {
-        const mergedKeys = new Set([...selectedVariantKeys.value, ...visibleVariantKeys.value]);
-        selectedVariantKeys.value = Array.from(mergedKeys);
-        return;
-    }
-
-    const visibleKeySet = new Set(visibleVariantKeys.value);
-    selectedVariantKeys.value = selectedVariantKeys.value.filter((key) => !visibleKeySet.has(key));
 };
 
 const updateVariantStatusLocally = (variantKey, nextStatus) => {
@@ -1602,32 +1422,7 @@ const loadProduct = async (id) => {
     syncColorImageStateFromVariants();
 };
 
-watch(variantItems, () => {
-    updateVariantPriceBounds();
-    syncVariantSelection();
-    if (variantPage.value > totalVariantPages.value) {
-        variantPage.value = totalVariantPages.value;
-    }
-}, { deep: true });
-
-watch(variantPageSize, () => {
-    variantPage.value = 1;
-});
-
-watch(
-    () => [
-        variantTableFilters.keyword,
-        variantTableFilters.mauSacId,
-        variantTableFilters.kichThuocId,
-        variantTableFilters.trangThai,
-        variantTableFilters.khoangGia[0],
-        variantTableFilters.khoangGia[1]
-    ],
-    () => {
-        variantPage.value = 1;
-        syncVariantSelection();
-    }
-);
+// Các watcher đồng bộ giá/phân trang/lựa chọn của bảng biến thể đã nằm trong useVariantTable.
 
 const loadInitData = async () => {
     loading.value = true;
@@ -2414,11 +2209,11 @@ const handleSave = async () => {
                                         <div class="d-flex gap-2 mb-4">
                                             <v-text-field :model-value="customSizeName"
                                                 @update:model-value="updateCustomSizeName"
-                                                @keydown="blockNonNumericSizeInput"
-                                                @paste="handleSizePaste"
+                                                @keydown="blockNonNumericSizeInput" @paste="handleSizePaste"
                                                 prepend-inner-icon="mdi-magnify" placeholder="Nhập kích thước"
                                                 variant="outlined" density="compact" hide-details class="bg-slate-50"
-                                                maxlength="2" type="text" inputmode="numeric" pattern="[0-9]*"></v-text-field>
+                                                maxlength="2" type="text" inputmode="numeric"
+                                                pattern="[0-9]*"></v-text-field>
                                             <v-btn color="primary" class="rounded-lg text-none font-weight-medium"
                                                 height="40" @click="handleAddCustomSize">
                                                 <v-icon start size="18">mdi-plus</v-icon> Thêm

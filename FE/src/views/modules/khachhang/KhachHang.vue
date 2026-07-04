@@ -1468,29 +1468,6 @@ const updateInvoicePaginationSize = (size) => {
     font-weight: 600;
 }
 
-.khach-hang-dialog-card .data-cell,
-.khach-hang-dialog-card .header-cell {
-    font-size: 13px !important;
-    font-family: 'Inter', sans-serif !important;
-}
-
-/* Dialog styling: use Inter and 13px font */
-.khach-hang-dialog-card {
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-}
-
-.khach-hang-dialog-card .native-admin-table th,
-.khach-hang-dialog-card .native-admin-table td {
-    font-size: 13px !important;
-    font-family: 'Inter', sans-serif !important;
-    padding: 12px 10px !important;
-}
-
-.khach-hang-dialog-card .mono-font {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Helvetica Neue', monospace;
-}
-
 .khach-hang-dialog-card .header-cell {
     font-weight: 700;
     color: #374151;
@@ -1498,31 +1475,6 @@ const updateInvoicePaginationSize = (size) => {
 
 .khach-hang-dialog-card .data-row td[data-label] {
     vertical-align: middle;
-}
-
-/* Address dialog styling */
-.addr-dialog-card {
-    font-family: 'Inter', sans-serif !important;
-}
-
-/* All inputs/autocompletes/textareas in the address dialog */
-.addr-dialog-card :deep(.v-field),
-.addr-dialog-card :deep(.v-field__input),
-.addr-dialog-card :deep(.v-select__selection-text),
-.addr-dialog-card :deep(input),
-.addr-dialog-card :deep(textarea) {
-    font-size: 13px !important;
-    font-family: 'Inter', sans-serif !important;
-}
-
-/* Field labels in address form */
-.addr-dialog-card .field-label {
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    color: #475569 !important;
-    /* slate-600 */
-    margin-bottom: 6px !important;
-    font-family: 'Inter', sans-serif !important;
 }
 
 /* Đồng bộ kích thước icon lịch cho ô lọc ngày */

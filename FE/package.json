@@ -23,6 +23,7 @@
         "apexcharts": "^3.54.0",
         "axios": "^1.14.0",
         "date-fns": "^3.6.0",
+        "dayjs": "^1.11.21",
         "html5-qrcode": "^2.3.8",
         "lodash": "^4.17.21",
         "marked": "^18.0.3",

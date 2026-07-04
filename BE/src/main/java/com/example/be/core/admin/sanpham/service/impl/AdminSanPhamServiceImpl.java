@@ -79,6 +79,32 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         return mapVariants(adminChiTietSanPhamRepository.findAllByXoaMemFalse());
     }
 
+    // Lấy danh sách biến thể có phân trang + lọc (server-side) cho màn quản lý biến thể.
+    // Không truyền sanPhamId (hoặc "ALL") => lấy toàn bộ; có sanPhamId => giới hạn theo 1 sản phẩm.
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<ProductVariantResponse> getVariantsPaged(SearchVariantRequest request) {
+        Specification<ChiTietSanPham> spec = Specification.where(AdminChiTietSanPhamSpecification.notDeleted())
+                .and(AdminChiTietSanPhamSpecification.hasKeyword(request.getKeyword()))
+                .and(AdminChiTietSanPhamSpecification.hasSanPham(request.getSanPhamId()))
+                .and(AdminChiTietSanPhamSpecification.hasMauSac(request.getMauSacId()))
+                .and(AdminChiTietSanPhamSpecification.hasKichThuoc(request.getKichThuocId()))
+                .and(AdminChiTietSanPhamSpecification.hasTrangThai(request.getTrangThai()))
+                .and(AdminChiTietSanPhamSpecification.hasGiaBanInRange(request.getMinGia(), request.getMaxGia()));
+
+        Page<ChiTietSanPham> page = SearchUtils.execute(request, pageable -> adminChiTietSanPhamRepository.findAll(spec, pageable));
+        List<ProductVariantResponse> content = mapVariants(page.getContent());
+
+        return PageResponse.<ProductVariantResponse>builder()
+                .content(content)
+                .pageNumber(page.getNumber())
+                .pageSize(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
+    }
+
     // Lấy danh sách các tùy chọn cho form (danh mục, thương hiệu, chất liệu, đế giày...)
     @Override
     public ProductFormOptionsResponse getFormOptions() {
@@ -122,8 +148,14 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     public PageResponse<ProductResponse> getProducts(SearchProductRequest request) {
         Specification<SanPham> spec = Specification.where(AdminSanPhamSpecification.notDeleted())
                 .and(AdminSanPhamSpecification.hasKeyword(request.getKeyword()))
-                .and(AdminSanPhamSpecification.hasTrangThai(request.getTrangThai()));
-        
+                .and(AdminSanPhamSpecification.hasTrangThai(request.getTrangThai()))
+                .and(AdminSanPhamSpecification.hasThuongHieu(request.getThuongHieuId()))
+                .and(AdminSanPhamSpecification.hasXuatXu(request.getXuatXuId()))
+                .and(AdminSanPhamSpecification.hasMucDichChay(request.getMucDichChayId()))
+                .and(AdminSanPhamSpecification.hasChatLieu(request.getChatLieuId()))
+                .and(AdminSanPhamSpecification.hasGioiTinhKhachHang(request.getGioiTinhKhachHang()))
+                .and(AdminSanPhamSpecification.hasGiaBanInRange(request.getMinGia(), request.getMaxGia()));
+
         Page<SanPham> page = SearchUtils.execute(request, pageable -> adminSanPhamRepository.findAll(spec, pageable));
         
         // Load statistics for better UI info

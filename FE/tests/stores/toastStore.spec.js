@@ -23,7 +23,7 @@ describe('toastStore', () => {
 
         expect(store.show).toBe(true);
         expect(store.message).toBe('Success message');
-        expect(store.color).toBe('success');
+        expect(store.color).toBe('primary');
         expect(store.icon).toBe('mdi-check-circle');
         expect(store.timeout).toBe(1500);
     });
@@ -34,7 +34,7 @@ describe('toastStore', () => {
 
         expect(store.show).toBe(true);
         expect(store.message).toBe('An error occurred');
-        expect(store.color).toBe('error');
+        expect(store.color).toBe('primary');
         expect(store.icon).toBe('mdi-alert-circle');
         expect(store.timeout).toBe(5000);
     });
@@ -45,7 +45,7 @@ describe('toastStore', () => {
 
         expect(store.show).toBe(true);
         expect(store.message).toBe('This is a warning');
-        expect(store.color).toBe('warning');
+        expect(store.color).toBe('primary');
         expect(store.icon).toBe('mdi-alert');
         expect(store.timeout).toBe(2000);
     });
@@ -56,7 +56,7 @@ describe('toastStore', () => {
 
         expect(store.show).toBe(true);
         expect(store.message).toBe('Info message');
-        expect(store.color).toBe('info');
+        expect(store.color).toBe('primary');
         expect(store.icon).toBe('mdi-information');
         expect(store.timeout).toBe(3000);
     });

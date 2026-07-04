@@ -40,27 +40,11 @@ const scrollToBottom = () => {
     }, 100);
 };
 
-// Computed list based on filters
-const filteredConversations = computed(() => {
-    return customers.value.filter((c) => {
-        const matchesType = c.type === chatType.value;
-        const matchesStatus = c.status === chatStatus.value;
-        const matchesSearch = c.name.toLowerCase().includes(searchQuery.value.toLowerCase());
-        return matchesType && matchesStatus && matchesSearch;
-    });
-});
+const stats = ref({ ACTIVE: 0, PENDING: 0, CLOSED: 0 });
 
-const activeCount = computed(() => {
-    return customers.value.filter((c) => c.type === chatType.value && c.status === 'ACTIVE').length;
-});
-
-const pendingCount = computed(() => {
-    return customers.value.filter((c) => c.type === chatType.value && c.status === 'PENDING').length;
-});
-
-const closedCount = computed(() => {
-    return customers.value.filter((c) => c.type === chatType.value && c.status === 'CLOSED').length;
-});
+const activeCount = computed(() => stats.value.ACTIVE || 0);
+const pendingCount = computed(() => stats.value.PENDING || 0);
+const closedCount = computed(() => stats.value.CLOSED || 0);
 
 // Lấy danh sách hội thoại từ Backend
 const fetchConversations = async (quiet = false) => {
@@ -68,8 +52,19 @@ const fetchConversations = async (quiet = false) => {
         isLoading.value = true;
     }
     try {
-        const response = await api.get(API_CHAT.CONVERSATIONS);
-        customers.value = response.data?.data || [];
+        const [convRes, statsRes] = await Promise.all([
+            api.get(API_CHAT.CONVERSATIONS, {
+                params: {
+                    type: chatType.value,
+                    status: chatStatus.value,
+                    search: searchQuery.value
+                }
+            }),
+            api.get(API_CHAT.CONVERSATIONS + '/stats')
+        ]);
+        
+        customers.value = convRes.data?.data || [];
+        stats.value = statsRes.data?.data || { ACTIVE: 0, PENDING: 0, CLOSED: 0 };
 
         if (activeChat.value) {
             const updatedChat = customers.value.find((c) => c.id === activeChat.value.id);
@@ -94,6 +89,10 @@ const fetchConversations = async (quiet = false) => {
         isLoading.value = false;
     }
 };
+
+watch([chatType, chatStatus, searchQuery], () => {
+    fetchConversations();
+});
 
 // Lấy lịch sử tin nhắn của hội thoại đang chọn
 const fetchMessages = async (conversationId) => {
@@ -288,7 +287,7 @@ onMounted(() => {
 
                 <v-list v-else class="flex-grow-1 overflow-y-auto pa-0 conv-list" bg-color="transparent">
                     <v-list-item
-                        v-for="c in filteredConversations"
+                        v-for="c in customers"
                         :key="c.id"
                         :active="activeChat?.id === c.id"
                         class="conv-item"
@@ -316,7 +315,7 @@ onMounted(() => {
                         </template>
                     </v-list-item>
 
-                    <div v-if="filteredConversations.length === 0" class="text-center py-16 px-4">
+                    <div v-if="customers.length === 0" class="text-center py-16 px-4">
                         <v-icon size="48" color="grey-lighten-1">mdi-message-off-outline</v-icon>
                         <div class="mt-3" style="color: #64748b">Không có cuộc trò chuyện nào</div>
                         <div class="text-caption" style="color: #94a3b8">Hãy thử thay đổi bộ lọc</div>

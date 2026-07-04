@@ -169,16 +169,6 @@ const addToCart = (e, product) => {
 </template>
 
 <style scoped lang="scss">
-.snap-section {
-    height: 100vh;
-    width: 100%;
-    position: relative;
-    overflow-y: auto;
-    display: flex;
-    align-items: center;
-    background: #ffffff;
-}
-
 .header-bar {
     width: 4px;
     height: 36px;
@@ -206,9 +196,6 @@ const addToCart = (e, product) => {
     font-weight: 700;
     font-size: 0.85rem;
 }
-
-.product-grid { max-width: 1400px; margin: 0 auto; }
-.product-col { padding: 8px !important; }
 
 .product-card {
     background: #ffffff;
@@ -349,28 +336,7 @@ const addToCart = (e, product) => {
     }
 }
 
-.size-list {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-    margin-bottom: 8px;
-}
 
-.size-chip {
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
-    padding: 1px 7px;
-    border-radius: 6px;
-    background: #f8fafc;
-}
-
-.color-chip {
-    color: #7b1fa2;
-    border-color: #e1bee7;
-    background: #f3e5f5;
-}
 
 .product-name {
     font-size: 0.85rem;
@@ -382,15 +348,6 @@ const addToCart = (e, product) => {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-
-.reveal-item {
-    opacity: 0;
-    transform: translateY(16px);
-    transition: all 0.7s cubic-bezier(0.2, 1, 0.3, 1);
-}
-.active .reveal-item { opacity: 1; transform: translateY(0); }
-.delay-1 { transition-delay: 0.1s; }
-.delay-2 { transition-delay: 0.2s; }
 
 @media (max-width: 960px) {
     .section-title { font-size: 1rem; }

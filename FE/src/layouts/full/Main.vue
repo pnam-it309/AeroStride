@@ -11,6 +11,8 @@ import NavCollapse from './vertical-sidebar/NavCollapse/index.vue';
 import Logo from './logo/Logo.vue';
 import NotificationDD from './vertical-header/NotificationDD.vue';
 import ProfileDD from './vertical-header/ProfileDD.vue';
+import GiaoCaModal from '@/components/common/GiaoCaModal.vue';
+import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 import { Menu2Icon } from 'vue-tabler-icons';
 import { useNotificationStore } from '@/stores/notificationStore';
 import { computed, onMounted } from 'vue';
@@ -21,6 +23,30 @@ const notificationStore = useNotificationStore();
 const { sidebarCollapsed, breadcrumbs } = storeToRefs(uiStore);
 const { unreadChatCount } = storeToRefs(notificationStore);
 const { toggleSidebar } = uiStore;
+
+// Giao Ca
+const showGiaoCaModal = ref(false);
+const giaoCaMode = ref('open');
+const currentShift = ref(null);
+
+const handleGiaoCaClick = async () => {
+    try {
+        const res = await dichVuGiaoCa.getCaHienTai();
+        const data = res?.data || res;
+        if (data && data.id) {
+            currentShift.value = data;
+            giaoCaMode.value = 'close';
+        } else {
+            currentShift.value = null;
+            giaoCaMode.value = 'open';
+        }
+    } catch (e) {
+        currentShift.value = null;
+        giaoCaMode.value = 'open';
+    } finally {
+        showGiaoCaModal.value = true;
+    }
+};
 
 const sidebarMenu = computed(() => {
     const userRole = dichVuXacThuc.layUserHienTai()?.role;
@@ -111,12 +137,24 @@ onMounted(() => {
                     </v-breadcrumbs>
                 </div>
                 <div class="d-flex align-center">
+                    <!-- <v-btn
+                        variant="tonal"
+                        color="primary"
+                        class="mr-2 rounded-pill font-weight-bold px-4"
+                        prepend-icon="mdi-store-clock"
+                        @click="handleGiaoCaClick"
+                        height="40"
+                    >
+                        Giao Ca
+                    </v-btn> -->
                     <NotificationDD />
                     <ProfileDD />
                 </div>
             </div>
         </div>
     </v-app-bar>
+
+    <!-- <GiaoCaModal v-model="showGiaoCaModal" :mode="giaoCaMode" :current-shift="currentShift" /> -->
 </template>
 
 <style scoped>

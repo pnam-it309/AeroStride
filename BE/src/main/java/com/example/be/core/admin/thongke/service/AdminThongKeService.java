@@ -9,4 +9,6 @@ public interface AdminThongKeService {
     AdminThongKeResponse getTongQuan(LocalDate tuNgay, LocalDate denNgay);
     List<AdminThongKeResponse.DoanhThuNgay> getDoanhThuTheoNgay(LocalDate tuNgay, LocalDate denNgay);
     List<AdminThongKeResponse.DonHangGanDay> getDonHangGanDay(int limit);
+    com.example.be.core.common.dto.PageResponse<AdminThongKeResponse.SanPhamBanChay> getProductStatistics(
+            LocalDate tuNgay, LocalDate denNgay, String keyword, int page, int size, String sortBy);
 }

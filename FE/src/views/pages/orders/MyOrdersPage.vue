@@ -54,13 +54,7 @@ const statusIcon = (status) => ORDER_STATUS_ICONS[status] || 'mdi-help-circle-ou
 const statusColor = (status) => ORDER_STATUS_COLORS[status] || '#757575';
 const statusLabel = (status) => ORDER_STATUS_LABELS[status] || status;
 
-const stats = computed(() => {
-    const total = orders.value.length;
-    const completed = orders.value.filter(o => o.trangThai === 'HOAN_THANH').length;
-    const cancelled = orders.value.filter(o => o.trangThai === 'DA_HUY').length;
-    const delivering = orders.value.filter(o => o.trangThai === 'DANG_GIAO').length;
-    return { total, completed, cancelled, delivering };
-});
+const stats = ref({ total: 0, completed: 0, cancelled: 0, delivering: 0 });
 
 const fetchOrders = async () => {
     loading.value = true;
@@ -73,8 +67,19 @@ const fetchOrders = async () => {
     }
 };
 
+const fetchStats = async () => {
+    try {
+        stats.value = await dichVuDatHang.layThongKeDonHang();
+    } catch (error) {
+        console.error('Error fetching stats:', error);
+    }
+};
+
 watch(activeTab, () => fetchOrders());
-onMounted(() => fetchOrders());
+onMounted(() => {
+    fetchOrders();
+    fetchStats();
+});
 
 const goToDetail = (id) => {
     router.push(`/my-orders/${id}`);

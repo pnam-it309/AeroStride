@@ -700,66 +700,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-/* ==========================================================================
-   ĐỒNG BỘ HỆ THỐNG TYPOGRAPHY CHUẨN 13PX CHO MÀN HÌNH FORM NHÂN VIÊN
-   ========================================================================== */
 
-/* Ép mọi thẻ nội dung thông thường về 13px và khử in đậm */
-:deep(div:not(.v-icon):not(.section-header):not(.text-subtitle-1)),
-:deep(span:not(.v-icon):not(.section-header):not(.text-subtitle-1)),
-:deep(td),
-:deep(th),
-:deep(p),
-:deep(input),
-:deep(textarea),
-:deep(.v-field__input),
-:deep(.v-field__input input),
-:deep(.v-label),
-:deep(.v-field-label),
-:deep(input::placeholder),
-:deep(textarea::placeholder),
-:deep(.v-field__input::placeholder),
-:deep(.v-field__input input::placeholder) {
-    font-size: 13px !important;
-    font-weight: 400 !important;
-    text-transform: none !important;
-    /* Bỏ in hoa */
-}
-
-/* Khử viết hoa toàn bộ cho các phần tử con */
-:deep(*) {
-    text-transform: none !important;
-}
-
-/* Đồng bộ nhãn trường dữ liệu: 13px + Chữ đậm 600 */
-.field-label,
-:deep(.field-label),
-:deep(.field-label *) {
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    color: #475569;
-    margin-bottom: 6px;
-    margin-left: 2px;
-}
-
-/* THAY ĐỔI: Giữ các nút bấm phụ (bên trong trang) ở cỡ 13px, chữ đậm 600 */
-:deep(.v-btn:not(.add-btn-primary)),
-:deep(.v-btn:not(.add-btn-primary) span),
-:deep(.v-btn:not(.add-btn-primary) *),
-:deep(.v-btn:not(.add-btn-primary) .v-btn__content) {
-    font-size: 13px !important;
-    font-weight: 600 !important;
-}
-
-/* Ngoại lệ: Giữ cỡ chữ 16px CHO CÁC TIÊU ĐỀ PHẦN */
-:deep(.section-header),
-:deep(.section-header *),
-:deep(h3),
-:deep(.v-card-title),
-:deep(.text-subtitle-1) {
-    font-size: 16px !important;
-    font-weight: 600 !important;
-}
 
 .gap-2 {
     gap: 8px;
@@ -824,3 +765,5 @@ onMounted(async () => {
     --v-field-border-color: #ef4444 !important;
 }
 </style>
+
+
