@@ -148,7 +148,7 @@ const handleCheckout = () => {
 
         <v-btn
             block
-            color="#4285F4"
+            color="primary"
             height="52"
             class="text-h6 font-weight-bold rounded-lg btn-checkout shadow-md text-white"
             :loading="loading"
@@ -169,7 +169,7 @@ const handleCheckout = () => {
     background: transparent !important;
 }
 .btn-checkout {
-    background: #4285F4 !important;
+    background: rgb(var(--v-theme-primary)) !important;
     text-transform: none;
     letter-spacing: 0;
 }

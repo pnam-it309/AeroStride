@@ -14,6 +14,12 @@ export const dichVuBienThe = {
         return response.data.data;
     },
 
+    // Lấy danh sách biến thể có phân trang + lọc (server-side). Trả về PageResponse { content, totalElements, totalPages, ... }
+    async layBienThePhanTrang(params) {
+        const response = await api.get(`${API_PRODUCT.BIEN_THE}/search`, { params });
+        return response.data.data;
+    },
+
     // Tạo biến thể mới
     async taoBienThe(productId, variantData) {
         const response = await api.post(`${API_PRODUCT.SAN_PHAM}/${productId}/variants`, variantData);

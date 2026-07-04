@@ -15,7 +15,7 @@ import java.util.Map;
 
 public interface LichLamViecService {
 
-    List<LichLamViecResponse> getAllSchedules();
+    List<LichLamViecResponse> getAllSchedules(String search, String ca, String ngay);
 
     List<CaLamResponse> getAllShifts();
 

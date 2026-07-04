@@ -14,6 +14,7 @@ import AdminTable from '@/components/common/AdminTable.vue';
 import AdminPagination from '@/components/common/AdminPagination.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
+import { useServerPagination } from '@/composables/useServerPagination';
 import { PATH } from '@/router/routePaths';
 import { useNotifications } from '@/services/notificationService';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
@@ -26,6 +27,8 @@ import QrScanner from './components/QrScanner.vue';
 import SafeProductImage from '../san-pham/components/SafeProductImage.vue';
 import QrcodeVue from 'qrcode.vue';
 import { exportQrImageZip } from '@/utils/qrExcelWorkbook';
+import { formatCurrency, formatNumber, toNumber } from '@/utils/formatters';
+import { isActiveStatus, getStatusLabel } from '@/utils/statusUtils';
 
 const MIN_VARIANT_PRICE = 0;
 const MAX_VARIANT_PRICE = 6500000;
@@ -43,7 +46,6 @@ const formOptions = ref({
 });
 const selectedProductId = ref('');
 const selectedProduct = ref(null);
-const loading = ref(false);
 const selectedVariantIds = ref([]);
 const qrExportItems = ref([]);
 const qrExportContainer = ref(null);
@@ -57,10 +59,26 @@ const filters = reactive({
     khoangGia: [MIN_VARIANT_PRICE, MAX_VARIANT_PRICE]
 });
 
-const pagination = reactive({
-    page: 1,
-    size: 5
-});
+// Phân trang + tải dữ liệu server-side (composable dùng chung với SanPham)
+const {
+    items: variants,
+    loading,
+    pagination,
+    totalElements,
+    totalPages,
+    load: fetchSelectedProduct,
+    reload: reloadVariants
+} = useServerPagination(
+    (pageable) => dichVuBienThe.layBienThePhanTrang({ ...pageable, ...buildVariantFilterParams() }),
+    {
+        pageSize: 5,
+        onLoaded: () => updateSelectedProductMeta(),
+        onError: () => {
+            clearVariantSelection();
+            addNotification({ title: 'Lỗi', subtitle: 'Không thể tải danh sách biến thể', color: 'error' });
+        }
+    }
+);
 
 const variantModal = reactive({ open: false, mode: 'create', submitting: false, variant: null });
 const variantDrawer = reactive({ open: false, variant: null, initialTab: 0 });
@@ -77,46 +95,15 @@ const confirmDialog = ref({
     loading: false
 });
 
-const numberFormatter = new Intl.NumberFormat('vi-VN');
-
 // Trích xuất nội dung lỗi từ backend để hiển thị thông báo
 const getBackendErrorMessage = (error, fallbackMessage) =>
     error?.response?.data?.message || error?.response?.data?.errors?.[0]?.defaultMessage || error?.message || fallbackMessage;
-
-// Chuyển đổi một giá trị sang số hợp lệ, nếu lỗi trả về giá trị mặc định
-const toNumber = (value, fallback = 0) => {
-    const parsedValue = Number(value);
-    return Number.isFinite(parsedValue) ? parsedValue : fallback;
-};
-
-// Format tiền tệ VNĐ
-const formatCurrency = (value) => {
-    if (value === null || value === undefined) return '--';
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-        maximumFractionDigits: 0
-    }).format(Number(value));
-};
-
-const formatNumber = (value) => {
-    if (value === null || value === undefined) return '--';
-    return numberFormatter.format(Number(value));
-};
-
-const getStatusLabel = (status) => {
-    if (status === 'DANG_HOAT_DONG') return 'Đang hoạt động';
-    if (status === 'NGUNG_HOAT_DONG') return 'Ngừng hoạt động';
-    return status || 'Không xác định';
-};
-
-const isActiveStatus = (status) => status === 'DANG_HOAT_DONG';
 
 const selectedProductSummary = computed(() => {
     if (!selectedProductId.value || selectedProductId.value === 'ALL') {
         return {
             title: 'Tất cả sản phẩm',
-            subtitle: `Tổng số ${formatNumber(selectedProduct.value?.variants?.length || 0)} biến thể`,
+            subtitle: `Tổng số ${formatNumber(totalElements.value)} biến thể`,
             maSanPham: ''
         };
     }
@@ -129,38 +116,14 @@ const selectedProductSummary = computed(() => {
 
     return {
         title: selectedProduct.value.tenSanPham,
-        subtitle: `${maSP} • ${formatNumber(selectedProduct.value.variants?.length || 0)} biến thể`,
+        subtitle: `${maSP} • ${formatNumber(totalElements.value)} biến thể`,
         maSanPham: maSP
     };
 });
 
-const currentVariants = computed(() => selectedProduct.value?.variants || []);
-const filteredVariants = computed(() =>
-    currentVariants.value.filter((variant) => {
-        const keyword = filters.keyword.trim().toLowerCase();
-        const matchesKeyword =
-            !keyword || variant.maChiTietSanPham?.toLowerCase().includes(keyword) || variant.tenSanPham?.toLowerCase().includes(keyword);
-        const variantPrice = toNumber(variant.giaBan, 0);
-        const matchesPrice = variantPrice >= filters.khoangGia[0] && variantPrice <= filters.khoangGia[1];
-        return (
-            matchesKeyword &&
-            (!filters.mauSacId || variant.idMauSac === filters.mauSacId) &&
-            (!filters.kichThuocId || variant.idKichThuoc === filters.kichThuocId) &&
-            (!filters.trangThai || variant.trangThai === filters.trangThai) &&
-            matchesPrice
-        );
-    })
-);
-
-const totalElements = computed(() => filteredVariants.value.length);
-const totalPages = computed(() => Math.max(Math.ceil(totalElements.value / pagination.size), 1));
-const paginatedVariants = computed(() => {
-    const start = (pagination.page - 1) * pagination.size;
-    return filteredVariants.value.slice(start, start + pagination.size);
-});
-
-const filteredVariantIds = computed(() => filteredVariants.value.map((item) => item.id));
-const selectedVariants = computed(() => filteredVariants.value.filter((item) => selectedVariantIds.value.includes(item.id)));
+// variants / totalElements / totalPages / pagination / loading do useServerPagination cung cấp (khai báo phía trên).
+const filteredVariantIds = computed(() => variants.value.map((item) => item.id));
+const selectedVariants = computed(() => variants.value.filter((item) => selectedVariantIds.value.includes(item.id)));
 const allVariantsSelected = computed(
     () => filteredVariantIds.value.length > 0 && filteredVariantIds.value.every((id) => selectedVariantIds.value.includes(id))
 );
@@ -171,12 +134,6 @@ const someVariantsSelected = computed(
 // Bỏ chọn tất cả các biến thể
 const clearVariantSelection = () => {
     selectedVariantIds.value = [];
-};
-
-// Đồng bộ lại danh sách chọn sau khi lọc/đổi trang, loại bỏ những biến thể không còn hiển thị
-const syncVariantSelection = () => {
-    const validIds = new Set(filteredVariants.value.map((item) => item.id));
-    selectedVariantIds.value = selectedVariantIds.value.filter((id) => validIds.has(id));
 };
 
 // Đưa các form filter về trạng thái ban đầu
@@ -208,9 +165,10 @@ const fetchFormOptions = async () => {
             dichVuKichThuoc.layKichThuoc({ size: 1000 })
         ])
 
+        // layMauSac/layKichThuoc luôn trả PageResponse ({ content: [...] })
         formOptions.value = {
-            mauSacs: mauSacResponse.content || mauSacResponse || [],
-            kichThuocs: kichThuocResponse.content || kichThuocResponse || [],
+            mauSacs: mauSacResponse.content || [],
+            kichThuocs: kichThuocResponse.content || [],
             trangThais: ['DANG_HOAT_DONG', 'NGUNG_HOAT_DONG']
         }
     } catch (error) {
@@ -249,41 +207,42 @@ const loadMaxPrice = async () => {
     }
 };
 
-// Gọi API lấy danh sách biến thể theo ID Sản phẩm (Hoặc tất cả nếu chọn ALL)
-const fetchSelectedProduct = async (productId) => {
-    loading.value = true;
-    try {
-        if (!productId || productId === 'ALL') {
-            const allVariants = await dichVuBienThe.layTatCaBienThe();
-            selectedProduct.value = {
-                tenSanPham: 'Tất cả sản phẩm',
-                variants: allVariants || []
-            };
-        } else {
-            const productOption = productOptions.value.find((item) => item.id === productId) || {};
-            const variants = await dichVuBienThe.layBienTheTheoSanPham(productId);
-            const firstVariant = variants?.[0] || {};
-            selectedProduct.value = {
-                ...productOption,
-                id: productId,
-                tenSanPham: productOption.tenSanPham || productOption.ten || firstVariant.tenSanPham || '',
-                maSanPham: productOption.maSanPham || productOption.ma || firstVariant.maSanPham || '',
-                variants: variants || []
-            };
-        }
+// Build tham số gửi lên API tìm kiếm biến thể (phân trang + lọc do BE xử lý).
+// Không có sanPhamId hoặc 'ALL' => lấy toàn bộ; có => giới hạn theo 1 sản phẩm.
+// page/size do composable useServerPagination tự thêm; hàm này chỉ dựng phần LỌC.
+const buildVariantFilterParams = () => ({
+    sortBy: 'ngayTao',
+    sortDirection: 'desc',
+    sanPhamId: selectedProductId.value && selectedProductId.value !== 'ALL' ? selectedProductId.value : undefined,
+    keyword: filters.keyword?.trim() || undefined,
+    mauSacId: filters.mauSacId || undefined,
+    kichThuocId: filters.kichThuocId || undefined,
+    trangThai: filters.trangThai || undefined,
+    minGia: Number(filters.khoangGia[0]) > MIN_VARIANT_PRICE ? filters.khoangGia[0] : undefined,
+    maxGia: Number(filters.khoangGia[1]) < dynamicMaxPrice.value ? filters.khoangGia[1] : undefined
+});
 
-        syncVariantSelection();
-    } catch (error) {
-        selectedProduct.value = null;
-        clearVariantSelection();
-        addNotification({
-            title: 'Lỗi',
-            subtitle: 'Không thể tải danh sách biến thể',
-            color: 'error'
-        });
-    } finally {
-        loading.value = false;
+// Cập nhật thông tin hiển thị (tên/mã) cho sản phẩm đang chọn ở header
+const updateSelectedProductMeta = () => {
+    if (!selectedProductId.value || selectedProductId.value === 'ALL') {
+        selectedProduct.value = { tenSanPham: 'Tất cả sản phẩm' };
+        return;
     }
+    const productOption = productOptions.value.find((item) => item.id === selectedProductId.value) || {};
+    const firstVariant = variants.value[0] || {};
+    selectedProduct.value = {
+        ...productOption,
+        id: selectedProductId.value,
+        tenSanPham: productOption.tenSanPham || productOption.ten || firstVariant.tenSanPham || '',
+        maSanPham: productOption.maSanPham || productOption.ma || firstVariant.maSanPham || ''
+    };
+};
+
+// Lấy toàn bộ biến thể khớp bộ lọc hiện tại (mọi trang) — phục vụ "chọn tất cả" và xuất QR toàn bộ
+const fetchAllFilteredVariants = async () => {
+    const params = { ...buildVariantFilterParams(), page: 0, size: Math.max(totalElements.value, 1) };
+    const result = await dichVuBienThe.layBienThePhanTrang(params);
+    return Array.isArray(result?.content) ? result.content : [];
 };
 
 // Lấy Tên option (ví dụ tên màu sắc) thông qua ID option
@@ -396,7 +355,7 @@ const handleVariantSubmit = (payload) => {
 
                 closeVariantModal();
                 confirmDialog.value.show = false;
-                await Promise.all([fetchSelectedProduct(selectedProductId.value), loadMaxPrice()]);
+                await Promise.all([fetchSelectedProduct(), loadMaxPrice()]);
             } catch (error) {
                 console.error(error);
                 addNotification({
@@ -525,13 +484,24 @@ const renderVariantQrCanvases = async (variants) => {
 
 // Gom các QR code của biến thể đang chọn thành 1 file ZIP và kích hoạt tải về
 const handleExportVariantQrZip = async () => {
-    const targetVariants = selectedVariants.value;
-    if (!targetVariants.length) {
+    if (!selectedVariantIds.value.length) {
         addNotification({
             title: 'Thông báo',
             subtitle: 'Chọn ít nhất 1 biến thể để xuất ZIP QR',
             color: 'warning'
         });
+        return;
+    }
+
+    // Lấy đầy đủ object của các biến thể đã chọn (có thể nằm ở nhiều trang khác nhau)
+    const selectedIdSet = new Set(selectedVariantIds.value);
+    let targetVariants = variants.value.filter((item) => selectedIdSet.has(item.id));
+    if (targetVariants.length !== selectedVariantIds.value.length) {
+        const all = await fetchAllFilteredVariants();
+        targetVariants = all.filter((item) => selectedIdSet.has(item.id));
+    }
+    if (!targetVariants.length) {
+        addNotification({ title: 'Thông báo', subtitle: 'Không tìm thấy biến thể đã chọn để xuất.', color: 'warning' });
         return;
     }
 
@@ -659,20 +629,19 @@ const toggleVariantSelection = (variantId, checked) => {
     selectedVariantIds.value = selectedVariantIds.value.filter((id) => id !== variantId);
 };
 
-// Chọn tất cả / Bỏ chọn tất cả các dòng biến thể đang có trên màn hình
-const toggleSelectVisibleVariants = (checked) => {
-    if (checked) {
-        const mergedIds = new Set([...selectedVariantIds.value, ...visibleVariantIds.value]);
-        selectedVariantIds.value = Array.from(mergedIds);
+// Chọn tất cả biến thể khớp bộ lọc (mọi trang, không chỉ trang hiện tại) để hỗ trợ xuất QR toàn bộ.
+const toggleSelectAllVariants = async (checked) => {
+    if (!checked) {
+        selectedVariantIds.value = [];
         return;
     }
-
-    const visibleIdSet = new Set(visibleVariantIds.value);
-    selectedVariantIds.value = selectedVariantIds.value.filter((id) => !visibleIdSet.has(id));
-};
-
-const toggleSelectAllVariants = (checked) => {
-    toggleSelectVisibleVariants(checked);
+    try {
+        const all = await fetchAllFilteredVariants();
+        selectedVariantIds.value = all.map((item) => item.id);
+    } catch (error) {
+        // Nếu không tải được toàn bộ, tối thiểu chọn các biến thể ở trang hiện tại
+        selectedVariantIds.value = filteredVariantIds.value.slice();
+    }
 };
 
 // Lưu ảnh QR đang hiển thị trên Modal to xuống máy
@@ -692,34 +661,26 @@ const downloadCurrentQrCode = () => {
     addNotification({ title: 'Thành công', subtitle: 'Đã tải mã QR của biến thể', color: 'success' });
 };
 
-watch(filteredVariants, () => {
-    syncVariantSelection();
-    if (pagination.page > totalPages.value) {
-        pagination.page = totalPages.value;
-    }
-});
-
-watch(
-    () => pagination.size,
-    () => {
-        pagination.page = 1;
-    }
-);
+// Debounce reload khi đổi bộ lọc (gọi lại API server-side, về trang 1, bỏ chọn)
+let variantSearchTimer = null;
+const scheduleVariantReload = () => {
+    if (variantSearchTimer) window.clearTimeout(variantSearchTimer);
+    variantSearchTimer = window.setTimeout(() => {
+        clearVariantSelection();
+        reloadVariants();
+    }, 300);
+};
 
 watch(
     () => [filters.keyword, filters.mauSacId, filters.kichThuocId, filters.trangThai, filters.khoangGia[0], filters.khoangGia[1]],
-    () => {
-        pagination.page = 1;
-        syncVariantSelection();
-    }
+    scheduleVariantReload
 );
 
 watch(
     () => selectedProductId.value,
-    async (value) => {
+    async () => {
         clearVariantSelection();
-        pagination.page = 1;
-        await fetchSelectedProduct(value);
+        await reloadVariants();
     }
 );
 
@@ -832,7 +793,7 @@ onMounted(async () => {
                 { text: 'Giá bán niêm yết', width: '120px' },
                 { text: 'Trạng thái', width: '120px' },
                 { text: 'Hành động', width: '160px' }
-            ]" :items="paginatedVariants" :loading="loading"
+            ]" :items="variants" :loading="loading"
                 :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'" addButtonText="Tạo mới"
                 @add="openCreateVariantModal" class="h-100 all-center-table">
 
@@ -962,8 +923,8 @@ onMounted(async () => {
 
                 <template #pagination>
                     <AdminPagination v-model="pagination.page" :page-size="pagination.size"
-                        @update:pageSize="pagination.size = $event" :total-pages="totalPages"
-                        :total-elements="totalElements" :current-size="paginatedVariants.length" />
+                        @update:pageSize="pagination.size = $event" @change="fetchSelectedProduct"
+                        :total-pages="totalPages" :total-elements="totalElements" :current-size="variants.length" />
                 </template>
             </AdminTable>
         </div>
@@ -976,7 +937,7 @@ onMounted(async () => {
             :submitting="variantModal.submitting" :productCode="selectedProductSummary.maSanPham"
             @close="closeVariantModal" @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
         <VariantManagementDrawer v-model:show="variantDrawer.open" :variant="variantDrawer.variant"
-            :initialTab="variantDrawer.initialTab" @saved="fetchSelectedProduct(selectedProductId)" />
+            :initialTab="variantDrawer.initialTab" @saved="fetchSelectedProduct" />
         <QrScanner v-model:show="showQrScanner" @scan="handleQrScan" />
 
         <v-dialog v-model="qrDialog.open" max-width="420" transition="variant-modal-transition">
@@ -1041,17 +1002,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.flex-none {
-    flex: none;
-}
-
-.flex-grow-1 {
-    flex: 1;
-}
-
-.min-h-0 {
-    min-height: 0;
-}
+/* Vuetify cung cấp sẵn .flex-0-0, .flex-grow-1, .min-h-0 — đã loại bỏ các class thừa */
 
 .qr-action-btn {
     border-radius: 10px;

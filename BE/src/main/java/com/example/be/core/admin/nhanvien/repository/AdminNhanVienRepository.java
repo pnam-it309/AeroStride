@@ -122,4 +122,17 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
         @Param("trangThai") TrangThai trangThai,
         @Param("gioiTinh") Boolean gioiTinh,
         Pageable pageable);
+
+    @Query("""
+        SELECT new com.example.be.core.admin.nhanvien.model.response.AdminNhanVienResponse(
+            nv.id, nv.ma, nv.ten, nv.email, nv.tenTaiKhoan,
+            nv.gioiTinh, nv.sdt, nv.ngaySinh, nv.hinhAnh,
+            nv.tinh, nv.thanhPho, nv.phuongXa, nv.diaChiChiTiet,
+            nv.trangThai, nv.ngayTao, nv.ngayCapNhat,
+            pq.id, pq.ma, pq.ten, pq.quyenHan)
+        FROM NhanVien nv
+        LEFT JOIN nv.phanQuyen pq
+        WHERE nv.tenTaiKhoan = :tenTaiKhoan
+        """)
+    AdminNhanVienResponse detailByTenTaiKhoan(@Param("tenTaiKhoan") String tenTaiKhoan);
 }

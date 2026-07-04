@@ -19,6 +19,11 @@ export const dichVuDatHang = {
         return response.data.data;
     },
 
+    async layThongKeDonHang() {
+        const response = await api.get('/customer/order/stats');
+        return response.data.data;
+    },
+
     // Lấy chi tiết đơn hàng
     async layChiTietDonHang(id) {
         const response = await api.get(`${API_CUSTOMER.ORDER}/${id}`);

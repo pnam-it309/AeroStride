@@ -20,4 +20,6 @@ public class AdminBanHangHoaDonResponse {
     private BigDecimal tongTien;
     private BigDecimal tongTienSauGiam;
     private List<AdminBanHangHoaDonChiTietResponse> listsHoaDonChiTiet;
+    private Boolean priceChanged;
+    private String priceChangeMessage;
 }

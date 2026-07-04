@@ -54,6 +54,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     private final DiaChiRepository diaChiRepository;
     private final NhanVienRepository nhanVienRepository;
     private final LichSuTrangThaiHoaDonRepository lichSuTrangThaiHoaDonRepository;
+    private final com.example.be.core.admin.giaoca.repository.AdminGiaoCaRepository giaoCaRepository;
+    private final com.example.be.repository.PhieuGiamGiaCaNhanRepository phieuGiamGiaCaNhanRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -68,7 +70,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     /** Tao hoa don tai quay moi, gioi han so don cho de tranh mo qua nhieu tab. */
     public AdminBanHangHoaDonResponse createHoaDon() {
         if (hoaDonRepository.countByTrangThaiAndLoaiDon(OrderStatus.CHO_XAC_NHAN, "TAI_QUAY") >= 5) {
-            throw new BusinessException(MessageConstants.HOA_DON_WAITING_LIMIT);
+            throw new BusinessException("Chỉ được tạo tối đa 5 hóa đơn chờ");
         }
         HoaDon hoaDon = new HoaDon();
         hoaDon.setMaHoaDon(CodeUtils.generateRandom(HoaDon.class));
@@ -77,10 +79,18 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         hoaDon.setNgayTao(System.currentTimeMillis());
         hoaDon.setTongTien(BigDecimal.ZERO);
         hoaDon.setTongTienSauGiam(BigDecimal.ZERO);
-        SecurityUtils.getCurrentUserEmail().ifPresent(identifier -> {
-            nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(identifier, identifier, identifier, identifier)
-                    .ifPresent(hoaDon::setNhanVien);
-        });
+
+        NhanVien nv = SecurityUtils.getCurrentUserEmail()
+                .flatMap(identifier -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(identifier, identifier, identifier, identifier))
+                .orElse(null);
+        if (nv != null) {
+            hoaDon.setNhanVien(nv);
+            // Link to active GiaoCa (tạm thời comment theo yêu cầu không cần giao ca)
+            // com.example.be.entity.GiaoCa activeGiaoCa = giaoCaRepository.findGiaoCaHienTai(nv.getId())
+            //         .orElseThrow(() -> new BusinessException("Bạn phải Mở Ca làm việc trước khi tạo hóa đơn!"));
+            // hoaDon.setGiaoCa(activeGiaoCa);
+        }
+
         hoaDonRepository.save(hoaDon);
         return mapToHoaDonResponse(hoaDon);
     }
@@ -126,9 +136,35 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findByHoaDonAndChiTietSanPham(hoaDon, ctsp);
         // Don gia luu vao hoa don chi tiet la gia sau dot giam gia tai thoi diem them vao gio.
         BigDecimal effectivePrice = getEffectiveVariantPrice(ctsp);
+        
+        boolean priceChanged = false;
+        String priceChangeMessage = null;
+        
         if (hdct != null) {
-            hdct.setSoLuong(hdct.getSoLuong() + request.getSoLuong());
+            // Kiểm tra nếu giá thay đổi thì tạo bản ghi mới thay vì cập nhật số lượng
+            if (hdct.getDonGia().compareTo(effectivePrice) != 0) {
+                // Giá thay đổi: tạo bản ghi mới với giá mới
+                priceChanged = true;
+                priceChangeMessage = String.format("Giá sản phẩm %s đã thay đổi từ %sđ thành %sđ", 
+                    ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham(),
+                    hdct.getDonGia(), effectivePrice);
+                
+                HoaDonChiTiet newHdct = HoaDonChiTiet.builder()
+                        .hoaDon(hoaDon)
+                        .chiTietSanPham(ctsp)
+                        .soLuong(request.getSoLuong())
+                        .donGia(effectivePrice)
+                        .build();
+                newHdct.setTrangThai(TrangThai.DANG_HOAT_DONG);
+                newHdct.setNgayTao(System.currentTimeMillis());
+                hoaDonChiTietRepository.save(newHdct);
+            } else {
+                // Giá không đổi: chỉ cập nhật số lượng
+                hdct.setSoLuong(hdct.getSoLuong() + request.getSoLuong());
+                hoaDonChiTietRepository.save(hdct);
+            }
         } else {
+            // Sản phẩm chưa có trong giỏ: tạo mới
             hdct = HoaDonChiTiet.builder()
                     .hoaDon(hoaDon)
                     .chiTietSanPham(ctsp)
@@ -137,11 +173,14 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                     .build();
             hdct.setTrangThai(TrangThai.DANG_HOAT_DONG);
             hdct.setNgayTao(System.currentTimeMillis());
+            hoaDonChiTietRepository.save(hdct);
         }
-        hoaDonChiTietRepository.save(hdct);
 
         updateHoaDonTotals(hoaDon);
-        return mapToHoaDonResponse(hoaDon);
+        AdminBanHangHoaDonResponse response = mapToHoaDonResponse(hoaDon);
+        response.setPriceChanged(priceChanged);
+        response.setPriceChangeMessage(priceChangeMessage);
+        return response;
     }
 
     @Override
@@ -401,10 +440,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Override
     @Transactional(readOnly = true)
     /** Tim bien the cho man ban hang, kem gia goc/gia sau giam/badge phan tram. */
-    public List<BanHangSanPhamResponse> searchSanPham(String keyword) {
+    public List<BanHangSanPhamResponse> searchSanPham(String keyword, String thuongHieu, String chatLieu, String xuatXu, String mucDich) {
         // Gioi han ket qua de khong load toan bo bien the khi o tim kiem dang rong.
         List<ChiTietSanPham> variants = chiTietSanPhamRepository
-                .searchByKeywordLite(keyword, PageRequest.of(0, 2000))
+                .searchByKeywordLite(keyword, thuongHieu, chatLieu, xuatXu, mucDich, PageRequest.of(0, 2000))
                 .getContent();
         Map<String, List<ChiTietDotGiamGia>> discountMap = getDiscountRelationMap(variants);
 
@@ -450,30 +489,59 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         BigDecimal total = hd.getTongTien();
         if (total == null || total.compareTo(BigDecimal.ZERO) <= 0) return null;
 
-        List<PhieuGiamGia> allVouchers = phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG).stream()
-                .filter(v -> v.getDonHangToiThieu() == null || total.compareTo(v.getDonHangToiThieu()) >= 0)
-                .collect(Collectors.toList());
+        // Lấy tất cả voucher đang hoạt động
+        List<PhieuGiamGia> allVouchers = phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG);
 
         PhieuGiamGia bestVoucher = null;
         BigDecimal maxDiscount = BigDecimal.ZERO;
+        Integer maxPercent = 0;
 
         for (PhieuGiamGia voucher : allVouchers) {
-            // Kiểm tra voucher cá nhân: nếu là cá nhân thì bỏ qua (hoặc check logic nâng cao)
-            if ("CA_NHAN".equals(voucher.getLoaiPhieu()) || "Cá nhân".equalsIgnoreCase(voucher.getLoaiPhieu())) {
-                continue; // Backend hiện tại không load danh sách khách hàng dễ dàng trong loop này, tạm thời bỏ qua voucher cá nhân hoặc cần Repo KhachHang
+            // Kiểm tra loại phiếu: công khai hoặc cá nhân
+            String hinhThuc = voucher.getHinhThuc();
+            
+            // Nếu là phiếu cá nhân, chỉ áp dụng khi khách hàng có phiếu này
+            if ("CA_NHAN".equals(hinhThuc) || "Cá nhân".equalsIgnoreCase(hinhThuc)) {
+                if (hd.getKhachHang() == null) {
+                    continue; // Không có khách hàng, bỏ qua phiếu cá nhân
+                }
+                
+                // Kiểm tra khách hàng có phiếu này không
+                List<com.example.be.entity.PhieuGiamGiaCaNhan> personalVouchers = 
+                    phieuGiamGiaCaNhanRepository.findByKhachHangId(hd.getKhachHang().getId());
+                
+                boolean customerHasVoucher = personalVouchers.stream()
+                    .anyMatch(pv -> pv.getPhieuGiamGia() != null 
+                        && pv.getPhieuGiamGia().getId().equals(voucher.getId())
+                        && Boolean.FALSE.equals(pv.getDaSuDung()));
+                
+                if (!customerHasVoucher) {
+                    continue; // Khách hàng không có phiếu này hoặc đã dùng
+                }
             }
 
+            // Ưu tiên voucher có % giảm giá cao hơn
+            Integer currentPercent = 0;
             BigDecimal discount = BigDecimal.ZERO;
+            
             if ("PHAN_TRAM".equalsIgnoreCase(voucher.getLoaiPhieu()) || "PERCENT".equalsIgnoreCase(voucher.getLoaiPhieu())) {
-                BigDecimal percent = voucher.getPhanTramGiamGia() != null ? BigDecimal.valueOf(voucher.getPhanTramGiamGia()) : BigDecimal.ZERO;
-                discount = total.multiply(percent).divide(BigDecimal.valueOf(100));
+                currentPercent = voucher.getPhanTramGiamGia() != null ? voucher.getPhanTramGiamGia() : 0;
+                discount = total.multiply(BigDecimal.valueOf(currentPercent)).divide(BigDecimal.valueOf(100));
                 BigDecimal max = voucher.getGiamToiDa() != null ? voucher.getGiamToiDa() : BigDecimal.valueOf(Long.MAX_VALUE);
                 if (discount.compareTo(max) > 0) discount = max;
             } else {
-                discount = voucher.getSoTienGiam() != null ? voucher.getSoTienGiam() : BigDecimal.ZERO;
+                // Voucher cố định: tính % tương đương để so sánh
+                if (total.compareTo(BigDecimal.ZERO) > 0) {
+                    discount = voucher.getSoTienGiam() != null ? voucher.getSoTienGiam() : BigDecimal.ZERO;
+                    currentPercent = discount.multiply(BigDecimal.valueOf(100))
+                            .divide(total, 0, java.math.RoundingMode.HALF_UP).intValue();
+                }
             }
 
-            if (discount.compareTo(maxDiscount) > 0) {
+            // Ưu tiên theo % giảm giá trước Sau đó mới xét số tiền giảm tuyệt đối
+            if (currentPercent > maxPercent || 
+                (currentPercent == maxPercent && discount.compareTo(maxDiscount) > 0)) {
+                maxPercent = currentPercent;
                 maxDiscount = discount;
                 bestVoucher = voucher;
             }
@@ -541,6 +609,45 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     /** Cap nhat tong tien hoa don moi khi gio hang/voucher thay doi. */
     private void updateHoaDonTotals(HoaDon hd) {
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
+        
+        // Kiểm tra và cập nhật giá nếu đợt giảm giá thay đổi
+        boolean priceUpdated = false;
+        for (HoaDonChiTiet detail : details) {
+            ChiTietSanPham ctsp = detail.getChiTietSanPham();
+            BigDecimal currentEffectivePrice = getEffectiveVariantPrice(ctsp);
+            
+            if (detail.getDonGia().compareTo(currentEffectivePrice) != 0) {
+                detail.setDonGia(currentEffectivePrice);
+                hoaDonChiTietRepository.save(detail);
+                priceUpdated = true;
+            }
+        }
+        
+        // Nếu có giá thay đổi, reload lại danh sách để tính tổng đúng
+        if (priceUpdated) {
+            details = hoaDonChiTietRepository.findAllByHoaDon(hd);
+        }
+        
+        // Kiểm tra phiếu giảm giá có còn hiệu lực không
+        if (hd.getPhieuGiamGia() != null) {
+            PhieuGiamGia voucher = phieuGiamGiaRepository.findById(hd.getPhieuGiamGia().getId()).orElse(null);
+            if (voucher == null || !TrangThai.DANG_HOAT_DONG.equals(voucher.getTrangThai())) {
+                // Phiếu đã bị hủy kích hoạt hoặc không tồn tại, gỡ bỏ
+                hd.setPhieuGiamGia(null);
+                hoaDonRepository.save(hd);
+            } else {
+                // Kiểm tra thời gian hiệu lực
+                long currentTime = System.currentTimeMillis();
+                Long start = voucher.getNgayBatDau();
+                Long end = voucher.getNgayKetThuc();
+                if ((start != null && currentTime < start) || (end != null && currentTime > end)) {
+                    // Phiếu hết hạn, gỡ bỏ
+                    hd.setPhieuGiamGia(null);
+                    hoaDonRepository.save(hd);
+                }
+            }
+        }
+        
         BigDecimal total = details.stream()
                 .map(d -> d.getDonGia().multiply(BigDecimal.valueOf(d.getSoLuong())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -656,5 +763,79 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             }
         }
         return ct.getSanPham() != null ? ct.getSanPham().getHinhAnh() : null;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<com.example.be.core.admin.banhang.model.response.ProductSuggestionResponse> getProductSuggestions(String idHoaDon) {
+        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn"));
+        
+        BigDecimal currentTotal = hoaDon.getTongTien() != null ? hoaDon.getTongTien() : BigDecimal.ZERO;
+        
+        // Logic gợi ý sản phẩm: Tìm sản phẩm có đợt giảm giá đang hoạt động
+        // mà nếu thêm vào sẽ đạt điều kiện giảm giá tốt hơn
+        List<com.example.be.core.admin.banhang.model.response.ProductSuggestionResponse> suggestions = java.util.Collections.emptyList();
+        
+        // Lấy danh sách sản phẩm có đợt giảm giá đang hoạt động
+        // Sử dụng repository method có sẵn
+        List<ChiTietDotGiamGia> allDiscounts = chiTietDotGiamGiaRepository.findAll();
+        
+        long currentTime = System.currentTimeMillis();
+        
+        // Filter active discounts based on time and status
+        List<ChiTietDotGiamGia> activeDiscounts = allDiscounts.stream()
+                .filter(d -> {
+                    DotGiamGia dot = d.getDotGiamGia();
+                    if (dot == null) return false;
+                    // Check time range
+                    Long start = dot.getNgayBatDau();
+                    Long end = dot.getNgayKetThuc();
+                    if (start != null && currentTime < start) return false;
+                    if (end != null && currentTime > end) return false;
+                    return true;
+                })
+                .collect(Collectors.toList());
+        
+        if (activeDiscounts.isEmpty() || currentTotal.compareTo(BigDecimal.ZERO) == 0) {
+            return suggestions;
+        }
+        
+        // Tìm sản phẩm phù hợp để gợi ý (đơn giản hóa: lấy sản phẩm đầu tiên có giảm giá)
+        for (ChiTietDotGiamGia discount : activeDiscounts) {
+            ChiTietSanPham variant = discount.getChiTietSanPham();
+            if (variant != null && variant.getSanPham() != null 
+                    && Boolean.TRUE.equals(variant.getSanPham().getTrangThai())) {
+                
+                BigDecimal giaBan = variant.getGiaBan();
+                DotGiamGia dotGiamGia = discount.getDotGiamGia();
+                
+                if (giaBan != null && dotGiamGia != null) {
+                    BigDecimal soTienGiam = dotGiamGia.getSoTienGiam();
+                    Integer phanTramGiam = 0;
+                    
+                    // Tính % giảm giá dựa trên số tiền giảm
+                    if (soTienGiam != null && giaBan.compareTo(BigDecimal.ZERO) > 0) {
+                        phanTramGiam = soTienGiam.multiply(BigDecimal.valueOf(100))
+                                .divide(giaBan, 0, java.math.RoundingMode.HALF_UP).intValue();
+                    }
+                    
+                    if (soTienGiam != null && soTienGiam.compareTo(BigDecimal.ZERO) > 0) {
+                        suggestions = java.util.Collections.singletonList(
+                            com.example.be.core.admin.banhang.model.response.ProductSuggestionResponse.builder()
+                                .maSanPham(variant.getMaChiTietSanPham())
+                                .tenSanPham(variant.getSanPham().getTen())
+                                .soTienCanThem(giaBan)
+                                .soTienGiam(soTienGiam)
+                                .phanTramGiam(phanTramGiam)
+                                .build()
+                        );
+                        break; // Chỉ gợi ý 1 sản phẩm
+                    }
+                }
+            }
+        }
+        
+        return suggestions;
     }
 }

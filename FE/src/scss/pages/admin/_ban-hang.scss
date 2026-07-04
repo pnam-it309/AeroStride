@@ -1,0 +1,682 @@
+// ===================================================================
+// Styles cho module Ban hang tai quay (POS) - BanHang.vue
+// Tach ra tu <style scoped> theo mau _san-pham-form.scss.
+// ===================================================================
+.pos-wrapper {
+    background: #eef2f6;
+    min-height: calc(100vh - 64px);
+    overflow-y: auto;
+}
+
+.pos-wrapper :deep(.v-btn) {
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.pos-shell {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+}
+
+.pos-header-row {
+    min-height: 48px;
+}
+
+.pos-card {
+    background: #ffffff;
+    border: 1px solid #dfe5ee !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
+    border-radius: 8px !important;
+}
+
+.compact-select :deep(.v-field__input) {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
+}
+.compact-select :deep(input::placeholder) {
+    line-height: normal !important;
+}
+
+.compact-select :deep(.v-field) {
+    border-radius: 8px !important;
+    --v-input-control-height: 32px !important;
+    font-size: 13px !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.compact-select :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.compact-select :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.compact-btn {
+    height: 32px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    border: 1px solid #dfe5ee !important;
+    background: #ffffff !important;
+    color: #334155 !important;
+}
+
+.custom-customer-btn {
+    border-color: #dfe5ee !important;
+    background-color: #ffffff !important;
+}
+
+.product-mode-toggle {
+    height: 32px !important;
+}
+
+.product-mode-toggle .v-btn {
+    height: 30px !important;
+    font-size: 12px !important;
+    text-transform: none !important;
+    border-radius: 6px !important;
+}
+
+.search-input :deep(.v-field) {
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.search-input :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.scanner-btn {
+    border-radius: 8px !important;
+    height: 40px !important;
+}
+
+.hover-autocomplete-item {
+    border-bottom: 1px solid #e2e8f0 !important;
+    transition: background-color 0.2s ease;
+}
+
+.hover-autocomplete-item:hover {
+    background-color: #f8fafc !important;
+}
+
+.hover-autocomplete-item:last-child {
+    border-bottom: none !important;
+}
+
+.cart-container-box {
+    background-color: #ffffff;
+    min-height: 200px;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+}
+
+.text-right-input :deep(input) {
+    text-align: right !important;
+}
+
+.text-right-input :deep(.v-field) {
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.text-right-input :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.text-right-input :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.custom-value-input :deep(.v-field) {
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    border-radius: 8px !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.custom-value-input :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.custom-value-input :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.custom-value-input :deep(input) {
+    color: #334155 !important;
+    font-weight: 400 !important;
+    padding-right: 8px !important;
+}
+
+.custom-value-input :deep(.v-text-field__suffix) {
+    font-size: 13px !important;
+    color: #475569 !important;
+    font-weight: 400 !important;
+    opacity: 1 !important;
+}
+
+.pos-card :deep(.v-checkbox .v-label) {
+    font-size: 13px !important;
+    font-weight: 400 !important;
+}
+
+.bg-emerald-50 {
+    background-color: #ecfdf5 !important;
+    border: 1px solid #a7f3d0 !important;
+}
+
+.text-emerald-800 {
+    color: #065f46 !important;
+}
+
+.text-emerald-600 {
+    color: #059669 !important;
+}
+
+.border-emerald {
+    border: 1px solid #a7f3d0 !important;
+}
+
+.bg-red-50 {
+    background-color: #fef2f2 !important;
+    border: 1px solid #fecaca !important;
+}
+
+.text-red-800 {
+    color: #991b1b !important;
+}
+
+.border-red {
+    border: 1px solid #fecaca !important;
+}
+
+.bg-blue-50 {
+    background-color: #eff6ff !important;
+    border: 1px solid #bfdbfe !important;
+}
+
+.text-blue-800 {
+    color: #1e40af !important;
+}
+
+.border-blue {
+    border: 1px solid #bfdbfe !important;
+}
+
+.payment-method-toggle {
+    height: 36px !important;
+}
+
+.payment-method-toggle .v-btn {
+    height: 34px !important;
+    font-size: 12px !important;
+    text-transform: none !important;
+}
+
+.note-type-toggle {
+    height: 32px !important;
+}
+
+.note-type-toggle .v-btn {
+    height: 30px !important;
+    font-size: 12px !important;
+    text-transform: none !important;
+}
+
+.note-textarea :deep(.v-field) {
+    border-radius: 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.note-textarea :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.note-textarea :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.btn-checkout {
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+}
+
+.empty-orders-state {
+    flex: 1;
+    min-height: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+}
+
+.gap-2 {
+    gap: 6px;
+}
+
+.gap-3 {
+    gap: 8px;
+}
+
+.gap-4 {
+    gap: 8px;
+}
+
+.pointer {
+    cursor: pointer;
+}
+
+.bg-slate-50 {
+    background-color: #f8fafc !important;
+}
+
+.product-dropdown-card {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Right Column Styles */
+.compact-select-right :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 28px !important;
+    font-size: 13px !important;
+}
+
+.compact-select-right :deep(.v-field) {
+    border-radius: 8px !important;
+    --v-input-control-height: 28px !important;
+    font-size: 13px !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.compact-select-right :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.compact-select-right :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.right-input-field :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
+}
+
+.right-input-field :deep(.v-field) {
+    border-radius: 8px !important;
+    --v-input-control-height: 32px !important;
+    font-size: 13px !important;
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.right-input-field :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.right-input-field :deep(.v-field__outline) {
+    display: none !important;
+}
+
+/* Base font-size rules for inputs, textareas, buttons, placeholders and body text */
+.pos-wrapper :deep(.v-field),
+.pos-wrapper :deep(.v-field__input),
+.pos-wrapper :deep(.v-btn),
+.pos-wrapper :deep(.text-body-2),
+.pos-wrapper :deep(input),
+.pos-wrapper :deep(textarea),
+.pos-wrapper :deep(input::placeholder),
+.pos-wrapper :deep(textarea::placeholder),
+.pos-wrapper :deep(.v-field__placeholder),
+.pos-wrapper :deep(.v-label),
+.pos-wrapper :deep(.v-list-item-title),
+.pos-wrapper :deep(.v-select__selection-text) {
+    font-size: 13px !important;
+}
+
+/* Custom Payment Method Buttons */
+.cash-active-btn {
+    background-color: #fdf2f8 !important;
+    color: #db2777 !important;
+    border-color: #fbcfe8 !important;
+}
+
+.vnpay-active-btn {
+    background-color: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border-color: #bfdbfe !important;
+}
+
+.payment-inactive-btn {
+    background-color: #f8fafc !important;
+    color: #64748b !important;
+    border-color: #e2e8f0 !important;
+}
+
+/* Custom Note Tabs */
+.custom-note-tabs {
+    background-color: #f1f5f9 !important;
+}
+
+.note-tab-active {
+    background-color: #ffffff !important;
+    color: #0c3866 !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+.note-tab-inactive {
+    background-color: transparent !important;
+    color: #64748b !important;
+    border: 1px solid transparent !important;
+}
+
+/* Styled input fields for customer card */
+.dim-input-field :deep(.v-field) {
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    --v-input-control-height: 32px !important;
+    font-size: 13px !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dim-input-field :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.dim-input-field :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.dim-input-field :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
+}
+
+.dim-select :deep(.v-field) {
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    --v-input-control-height: 28px !important;
+    font-size: 13px !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dim-select :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.dim-select :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.dim-select :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 28px !important;
+    font-size: 13px !important;
+}
+
+/* Suggestion Popover - Right Aligned under SĐT */
+.suggestion-popover {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: auto;
+    width: 170px;
+    z-index: 9999;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-radius: 20px !important;
+    margin-top: 4px;
+}
+
+.suggestion-item {
+    border-radius: 16px;
+    height: 32px;
+}
+
+.suggestion-item:hover {
+    background-color: #f1f5f9;
+}
+
+/* Styled select field for delivery card */
+.dim-select-field :deep(.v-field) {
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    --v-input-control-height: 32px !important;
+    font-size: 13px !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dim-select-field :deep(.v-field--focused) {
+    border-color: #4285F4 !important;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
+}
+
+.dim-select-field :deep(.v-field__outline) {
+    display: none !important;
+}
+
+.dim-select-field :deep(.v-field__input) {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
+}
+
+.date-input-field :deep(input[type="date"]) {
+    position: relative;
+    cursor: pointer;
+}
+
+.date-input-field :deep(input[type="date"]::-webkit-calendar-picker-indicator) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.product-dropdown-card {
+    width: 100% !important;
+    min-width: 650px !important;
+    left: 0;
+}
+
+.sku-badge {
+    background-color: #ffe4e6 !important;
+    color: #9f1239 !important;
+    font-size: 11px !important;
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.sp-badge {
+    background-color: #e0f2fe !important;
+    color: #0369a1 !important;
+    font-size: 11px !important;
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.size-badge {
+    border: 1px solid #cbd5e1 !important;
+    color: #64748b !important;
+    font-size: 11px !important;
+    font-weight: 500;
+    padding: 0px 6px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.dot-giam-gia-badge {
+    background-color: #fef2f2 !important;
+    color: #dc2626 !important;
+    font-size: 11px !important;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #fecaca;
+    line-height: 1.5;
+}
+
+.bullet-details {
+    font-size: 11.5px !important;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.bullet-item {
+    margin-bottom: 1px;
+}
+
+.price-text {
+    font-size: 14px !important;
+    font-weight: 500;
+    color: #88c057 !important;
+}
+
+.speed-text {
+    font-size: 11px !important;
+    color: #64748b;
+}
+
+/* Expand & Fade Transition for shipping card */
+.expand-fade-enter-active,
+.expand-fade-leave-active {
+    transition: max-height 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+                margin-bottom 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+                padding 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+                border-width 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 220px;
+    opacity: 1;
+    overflow: hidden;
+}
+.expand-fade-enter-from,
+.expand-fade-leave-to {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: -16px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-width: 0 !important;
+}
+
+.custom-switch-label-active {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: rgb(var(--v-theme-primary)) !important;
+    transition: color 0.3s ease;
+}
+
+.custom-switch-label-inactive {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    transition: color 0.3s ease;
+}
+
+.custom-switch-giao-hang :deep(.v-switch__track) {
+    height: 14px !important;
+    width: 34px !important;
+    min-width: 34px !important;
+    border-radius: 7px !important;
+    background-color: #cbd5e1 !important;
+    opacity: 0.6 !important;
+    transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+
+.custom-switch-giao-hang.is-active :deep(.v-switch__track) {
+    background-color: rgb(var(--v-theme-primary)) !important;
+    opacity: 0.5 !important;
+}
+
+.custom-switch-giao-hang :deep(.v-switch__thumb) {
+    height: 20px !important;
+    width: 20px !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.custom-switch-giao-hang.is-active :deep(.v-switch__thumb) {
+    background-color: rgb(var(--v-theme-primary)) !important;
+}
+
+@media (min-width: 960px) {
+    .border-s-dashed-md {
+        border-inline-start: 1px dashed #cbd5e1 !important;
+    }
+}
+
+.custom-voucher-badge {
+    background-color: #e8f5e9 !important;
+    color: #107c41 !important;
+    padding: 1px 6px !important;
+    border-radius: 4px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px solid rgba(16, 124, 65, 0.2) !important;
+}

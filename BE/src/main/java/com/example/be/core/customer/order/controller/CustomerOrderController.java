@@ -56,6 +56,17 @@ public class CustomerOrderController {
         return ResponseEntity.ok(ApiResponse.success(orders));
     }
 
+    // Lấy thống kê đơn hàng cá nhân
+    @GetMapping("/stats")
+    @PreAuthorize("hasRole('KHACH_HANG')")
+    public ResponseEntity<ApiResponse<com.example.be.core.customer.order.model.response.CustomerOrderStatsResponse>> getMyOrderStats(
+            Authentication authentication
+    ) {
+        log.info("Fetching order stats for customer: user={}", authentication.getName());
+        com.example.be.core.customer.order.model.response.CustomerOrderStatsResponse stats = customerOrderService.getMyOrderStats(authentication.getName());
+        return ResponseEntity.ok(ApiResponse.success(stats));
+    }
+
     // Xem chi tiết một đơn hàng cụ thể của khách hàng
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('KHACH_HANG')")

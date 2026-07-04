@@ -4,6 +4,7 @@ import com.example.be.core.admin.sanpham.model.request.CreateProductRequest;
 import com.example.be.core.admin.sanpham.model.request.ProductVariantImageRequest;
 import com.example.be.core.admin.sanpham.model.request.ProductVariantRequest;
 import com.example.be.core.admin.sanpham.model.request.SearchProductRequest;
+import com.example.be.core.admin.sanpham.model.request.SearchVariantRequest;
 import com.example.be.core.admin.sanpham.model.request.UpdateProductRequest;
 import com.example.be.core.admin.sanpham.model.request.UpdateProductVariantImageRequest;
 import com.example.be.core.admin.sanpham.model.response.ProductDetailResponse;
@@ -20,6 +21,7 @@ public interface AdminSanPhamService {
 
     List<ProductVariantResponse> getVariantsByProductId(String productId);
     List<ProductVariantResponse> getAllVariants();
+    PageResponse<ProductVariantResponse> getVariantsPaged(SearchVariantRequest request);
 
     ProductFormOptionsResponse getFormOptions();
 

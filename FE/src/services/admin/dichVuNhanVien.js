@@ -78,5 +78,11 @@ export const dichVuNhanVien = {
     async layDanhSachPhanQuyen() {
         const response = await api.get(`${API_ADMIN.NHAN_VIEN}/phan-quyen`);
         return response.data.data;
+    },
+
+    // Lấy thông tin cá nhân
+    async layThongTinCaNhan() {
+        const response = await api.get(`${API_ADMIN.NHAN_VIEN}/me`);
+        return response.data.data;
     }
 };

@@ -610,76 +610,6 @@ onMounted(async () => {
     padding-top: 64px;
 }
 
-.back-btn {
-    transition: all 0.2s;
-}
-.back-btn:hover {
-    background: #f0f0f0;
-}
-
-.section-block {
-    border: 1px solid #e0e0e0;
-    background: #fff;
-}
-
-.card-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.detail-product {
-    transition: all 0.2s;
-    border-radius: 12px;
-    padding: 12px;
-}
-.detail-product:hover {
-    background: #f8fbff;
-}
-.detail-product.border-top {
-    border-top: 1px solid #f0f0f0;
-}
-
-.detail-thumb-wrapper {
-    width: 76px;
-    height: 76px;
-    border-radius: 12px;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-/* Horizontal progress stepper */
-.progress-stepper {
-    padding: 28px 24px 22px;
-    overflow-x: auto;
-}
-.stepper-track {
-    display: flex;
-    align-items: flex-start;
-    min-width: 520px;
-}
-.stepper-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex: 0 0 auto;
-    width: 96px;
-}
-.stepper-circle {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff;
-    border: 2px solid #d8daf0;
-    transition: all 0.3s ease;
-}
 .stepper-step.is-done .stepper-circle {
     background: #1e257c;
     border-color: #1e257c;
@@ -687,24 +617,8 @@ onMounted(async () => {
 .stepper-step.is-current .stepper-circle {
     box-shadow: 0 0 0 4px rgba(30, 37, 124, 0.15);
 }
-.stepper-label {
-    margin-top: 10px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #9aa0c0;
-    text-align: center;
-    line-height: 1.2;
-}
 .stepper-step.is-done .stepper-label {
     color: #1e257c;
-}
-.stepper-line {
-    flex: 1 1 auto;
-    height: 3px;
-    background: #d8daf0;
-    margin-top: 23px;
-    border-radius: 2px;
-    transition: all 0.3s ease;
 }
 .stepper-line.is-done {
     background: #1e257c;

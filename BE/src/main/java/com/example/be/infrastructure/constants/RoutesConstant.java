@@ -101,6 +101,7 @@ public final class RoutesConstant {
     public static final String FORM_OPTIONS = "/form-options";
     public static final String VARIANTS_SUB = "/{id}/variants";
     public static final String VARIANTS = "/variants";
+    public static final String VARIANTS_SEARCH = "/variants/search";
     public static final String VARIANT_ID = "/variants/{variantId}";
     public static final String VARIANT_IMAGES = "/variants/{variantId}/images";
     public static final String VARIANT_IMAGE_ID = "/variant-images/{imageId}";

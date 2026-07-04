@@ -46,4 +46,16 @@ public class AdminThongKeController {
         log.info("Fetching recent orders with limit: {}", limit);
         return ResponseEntity.ok(ApiResponse.success(adminThongKeService.getDonHangGanDay(limit)));
     }
+
+    @GetMapping("/san-pham")
+    public ResponseEntity<ApiResponse<com.example.be.core.common.dto.PageResponse<AdminThongKeResponse.SanPhamBanChay>>> getProductStatistics(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "bestSelling") String sortBy) {
+        log.info("Fetching product statistics from {} to {}, keyword: {}, page: {}, size: {}, sortBy: {}", tuNgay, denNgay, keyword, page, size, sortBy);
+        return ResponseEntity.ok(ApiResponse.success(adminThongKeService.getProductStatistics(tuNgay, denNgay, keyword, page, size, sortBy)));
+    }
 }

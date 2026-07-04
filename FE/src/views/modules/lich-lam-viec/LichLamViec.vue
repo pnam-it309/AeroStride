@@ -70,30 +70,20 @@ const tableHeaders = [
 
 // Computed property for filtering schedules
 const filteredItems = computed(() => {
-    return items.value.filter((item) => {
-        // Search filter: matching employee name or employee code
-        const empCode = getEmployeeCode(item);
-        const matchSearch = !filters.value.search ||
-            (item.nhanVien && item.nhanVien.toLowerCase().includes(filters.value.search.toLowerCase())) ||
-            (empCode && empCode.toLowerCase().includes(filters.value.search.toLowerCase()));
-
-        // Shift filter: matching shift TenCa
-        const matchShift = !filters.value.ca ||
-            filters.value.ca === 'Tất cả' ||
-            item.ca === filters.value.ca;
-
-        // Date filter
-        const matchDate = !filters.value.ngay || item.ngay === filters.value.ngay;
-
-        return matchSearch && matchShift && matchDate;
-    });
+    return items.value;
 });
 
 const loadData = async () => {
     loading.value = true;
     try {
         const [scheduleRes, shiftRes, empRes] = await Promise.all([
-            apiService.get(API_LICH_LAM_VIEC.SCHEDULES),
+            apiService.get(API_LICH_LAM_VIEC.SCHEDULES, {
+                params: {
+                    search: filters.value.search,
+                    ca: filters.value.ca,
+                    ngay: filters.value.ngay
+                }
+            }),
             apiService.get(API_LICH_LAM_VIEC.SHIFTS),
             apiService.get('/admin/nhan-vien/hien-thi')
         ]);
@@ -199,7 +189,7 @@ const handleRefresh = async () => {
 };
 
 const handleFilter = () => {
-    console.log('Filtering...', filters.value);
+    loadData();
 };
 
 const handleDownloadTemplate = async () => {
@@ -269,10 +259,7 @@ const editScheduleId = ref(null);
 // Lookup helper: Find employee code by name or ID
 const getEmployeeCode = (item) => {
     if (!item) return '';
-    const empName = typeof item === 'object' ? (item.nhanVien || item.ten) : item;
-    const empId = typeof item === 'object' ? item.nhanVienId : null;
-    const emp = employeeOptions.value.find(e => e.id === empId || e.ten === empName);
-    return emp ? emp.ma : 'N/A';
+    return item.maNhanVien || 'N/A';
 };
 
 // Lookup helper: Find shift time range (e.g., 08:00 - 12:00) by shift name

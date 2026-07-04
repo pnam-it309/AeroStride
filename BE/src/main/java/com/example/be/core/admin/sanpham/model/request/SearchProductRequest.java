@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @ToString(callSuper = true)
@@ -18,6 +20,8 @@ public class SearchProductRequest extends PageRequest {
     private String xuatXuId;
     private String mucDichChayId;
     private String chatLieuId;
+    private BigDecimal minGia;
+    private BigDecimal maxGia;
 
     public SearchProductRequest() {
         setPage(1);

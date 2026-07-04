@@ -36,7 +36,19 @@ const paymentMethod = computed(() => props.receipt?.paymentMethod || 'CASH');
 const receivedAmount = computed(() => Number(props.receipt?.receivedAmount || 0));
 const tongTienSauGiam = computed(() => Number(order.value?.tongTienSauGiam || 0));
 const tienThua = computed(() => Math.max(0, receivedAmount.value - tongTienSauGiam.value));
-const discount = computed(() => Number(order.value?.tongTien || 0) - tongTienSauGiam.value);
+const originalTotalAmount = computed(() => {
+    return items.value.reduce((sum, item) => {
+        const qty = Number(item.soLuong || 0);
+        const price = Number(item.donGia || 0);
+        const percent = Number(item.phanTramGiam || 0);
+        if (percent > 0 && percent < 100) {
+            const originalPrice = price / (1 - percent / 100);
+            return sum + (originalPrice * qty);
+        }
+        return sum + (price * qty);
+    }, 0);
+});
+const discount = computed(() => Math.max(0, originalTotalAmount.value - tongTienSauGiam.value));
 const paidAt = computed(() => fmtDate(props.receipt?.paidAt));
 
 const paymentLabel = computed(() => {
@@ -146,7 +158,7 @@ const handlePrint = () => {
                 <div class="receipt-totals mb-3">
                     <div class="total-row">
                         <span>Tạm tính</span>
-                        <span>{{ fmt(order.tongTien) }}</span>
+                        <span>{{ fmt(originalTotalAmount) }}</span>
                     </div>
                     <div class="total-row text-success" v-if="discount > 0">
                         <span>Giảm giá</span>

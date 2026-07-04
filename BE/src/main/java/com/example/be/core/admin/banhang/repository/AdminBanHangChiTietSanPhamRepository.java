@@ -48,11 +48,21 @@ public interface AdminBanHangChiTietSanPhamRepository extends ChiTietSanPhamRepo
         LEFT JOIN FETCH ct.mauSac
         LEFT JOIN FETCH ct.kichThuoc
         WHERE (ct.xoaMem IS NULL OR ct.xoaMem = false)
+        AND (:thuongHieu IS NULL OR sp.thuongHieu.ten = :thuongHieu)
+        AND (:chatLieu IS NULL OR sp.chatLieu.ten = :chatLieu)
+        AND (:xuatXu IS NULL OR sp.xuatXu.ten = :xuatXu)
+        AND (:mucDich IS NULL OR sp.mucDichChay.ten = :mucDich)
         AND (
             LOWER(ct.maChiTietSanPham) LIKE LOWER(CONCAT('%', :keyword, '%'))
             OR LOWER(sp.ten) LIKE LOWER(CONCAT('%', :keyword, '%'))
             OR LOWER(sp.ma) LIKE LOWER(CONCAT('%', :keyword, '%'))
         )
         """)
-    Page<ChiTietSanPham> searchByKeywordLite(@Param("keyword") String keyword, Pageable pageable);
+    Page<ChiTietSanPham> searchByKeywordLite(
+        @Param("keyword") String keyword, 
+        @Param("thuongHieu") String thuongHieu,
+        @Param("chatLieu") String chatLieu,
+        @Param("xuatXu") String xuatXu,
+        @Param("mucDich") String mucDich,
+        Pageable pageable);
 }

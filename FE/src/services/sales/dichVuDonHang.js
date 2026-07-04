@@ -21,8 +21,16 @@ export const dichVuDonHang = {
     },
 
     // Tìm kiếm sản phẩm
-    async searchSanPham(keyword = '') {
-        const response = await api.get(`${API_ADMIN.BAN_HANG}/search-san-pham`, { params: { keyword } });
+    async searchSanPham(params = {}) {
+        // params: { keyword, thuongHieu, chatLieu, xuatXu, mucDich }
+        // Clean params (remove 'ALL' or empty strings)
+        const cleanParams = Object.keys(params).reduce((acc, key) => {
+            if (params[key] && params[key] !== 'ALL') {
+                acc[key] = params[key];
+            }
+            return acc;
+        }, {});
+        const response = await api.get(`${API_ADMIN.BAN_HANG}/search-san-pham`, { params: cleanParams });
         return response.data.data;
     },
 
@@ -84,6 +92,12 @@ export const dichVuDonHang = {
     // Lấy voucher tốt nhất
     async getBestVoucher(idHoaDon) {
         const response = await api.get(`${API_ADMIN.BAN_HANG}/${idHoaDon}/best-voucher`);
+        return response.data.data;
+    },
+
+    // Lấy gợi ý sản phẩm để mua thêm
+    async getProductSuggestions(idHoaDon) {
+        const response = await api.get(`${API_ADMIN.BAN_HANG}/${idHoaDon}/product-suggestions`);
         return response.data.data;
     }
 };

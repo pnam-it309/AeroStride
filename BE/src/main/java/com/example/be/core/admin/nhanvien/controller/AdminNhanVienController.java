@@ -26,6 +26,11 @@ public class AdminNhanVienController {
 
     private final AdminNhanVienService adminNhanVienService;
 
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<?>> getMe() {
+        return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.getMe()));
+    }
+
     @GetMapping({RoutesConstant.HIEN_THI, RoutesConstant.PHAN_TRANG, RoutesConstant.TIM_KIEM}) // Aliases for FE compatibility
     public ResponseEntity<ApiResponse<?>> search(AdminNhanVienRequest request) {
         return ResponseEntity.ok(ApiResponse.success(adminNhanVienService.search(request)));

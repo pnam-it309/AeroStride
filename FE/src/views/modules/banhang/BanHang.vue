@@ -11,7 +11,6 @@ import { BoxIcon, XIcon } from 'vue-tabler-icons';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { dichVuVnPay } from './dichVuVnPay';
-import { dichVuPhieuGiamGia } from '@/services/admin/dichVuPhieuGiamGia';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import {
@@ -34,6 +33,8 @@ import OrderTabs from './components/OrderTabs.vue';
 import CartTable from './components/CartTable.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import InvoiceReceiptDialog from './components/InvoiceReceiptDialog.vue';
+import GiaoCaModal from '@/components/common/GiaoCaModal.vue';
+import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 
 const { addNotification } = useNotifications();
 const uiStore = useUIStore();
@@ -41,6 +42,30 @@ const authStore = useAuthStore();
 const MAX_WAITING_ORDERS = 5;
 const VNPAY_PENDING_KEY = 'aerostride_pos_vnpay_pending';
 const BYPASS_PAYMENT_RECORD_INSERT = false;
+
+// Giao Ca State
+const showGiaoCaModal = ref(false);
+const currentGiaoCa = ref(null);
+
+const checkGiaoCa = async () => {
+    try {
+        const res = await dichVuGiaoCa.getCaHienTai();
+        const data = res?.data || res;
+        if (!data || !data.id) {
+            // Tạm thời comment Giao ca theo yêu cầu
+            // showGiaoCaModal.value = true;
+        } else {
+            currentGiaoCa.value = data;
+        }
+    } catch (e) {
+        // Tạm thời comment Giao ca
+        // showGiaoCaModal.value = true;
+    }
+};
+
+const handleGiaoCaSuccess = () => {
+    checkGiaoCa();
+};
 
 // Address and Quick Add
 const { provinces, districts, wards, loadingLocations, fetchProvinces, fetchDistricts, fetchWards, cleanName } = useLocation();
@@ -62,12 +87,10 @@ const orders = ref([]);
 const activeOrderIndex = ref(0);
 const vouchers = ref([]);
 const isProcessing = ref(false);
-const isAutoApplyingVoucher = ref(false);
-const manualVoucherLocks = ref({});
 
 // Redesigned Page Custom State
 const orderWarehouse = ref('KHO ANSHA BIGSIZE');
-const productMode = ref('SP'); // 'SP' or 'COMBO'
+
 const productSearchKeyword = ref('');
 const productSearchResults = ref([]);
 const productSearchLoading = ref(false);
@@ -153,6 +176,68 @@ const vnpayChoiceDialog = ref({
     method: 'QR'
 });
 
+// Product Suggestion State
+const productSuggestions = ref([]);
+const showProductSuggestions = ref(false);
+const suggestionLoading = ref(false);
+
+// Computed property for suggestion calculations
+const suggestionData = computed(() => {
+    if (!productSuggestions.value.length || !selectedOrder.value) return null;
+    
+    const suggestion = productSuggestions.value[0];
+    const currentTotal = selectedOrder.value.tongTien || 0;
+    const additionalAmount = suggestion.soTienCanThem || 0;
+    const discountAmount = suggestion.soTienGiam || 0;
+    const newTotal = currentTotal + additionalAmount - discountAmount;
+    
+    return {
+        productCode: suggestion.maSanPham || 'VCHSXLBAP',
+        productName: suggestion.tenSanPham || 'Sản phẩm gợi ý',
+        discountPercent: suggestion.phanTramGiam || 70,
+        needToBuy: additionalAmount,
+        willReduce: discountAmount,
+        newTotal: newTotal
+    };
+});
+
+// Function to fetch product suggestions from database
+const fetchProductSuggestions = async () => {
+    if (!selectedOrder.value?.id) return;
+    
+    suggestionLoading.value = true;
+    try {
+        const res = await dichVuDonHang.getProductSuggestions(selectedOrder.value.id);
+        productSuggestions.value = res || [];
+        showProductSuggestions.value = productSuggestions.value.length > 0;
+    } catch (e) {
+        console.error('Lỗi khi tải gợi ý sản phẩm:', e);
+        productSuggestions.value = [];
+        showProductSuggestions.value = false;
+    } finally {
+        suggestionLoading.value = false;
+    }
+};
+
+// Add suggested product to cart
+const onAddSuggestedProduct = async () => {
+    if (!suggestionData.value) return;
+    
+    try {
+        const keyword = suggestionData.value.productCode;
+        const variants = await dichVuDonHang.searchSanPham(keyword);
+        if (variants && variants.length > 0) {
+            const exactMatch = variants.find((v) => v.maChiTietSanPham === keyword) || variants[0];
+            if (exactMatch) {
+                await onAddProduct({ ...exactMatch, _soLuongMuonThem: 1 });
+                showProductSuggestions.value = false;
+            }
+        }
+    } catch (e) {
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể thêm sản phẩm gợi ý', color: 'error' });
+    }
+};
+
 const proceedVnPayChoice = () => {
     vnpayChoiceDialog.value.show = false;
     checkoutData.value.vnpayMethod = vnpayChoiceDialog.value.method;
@@ -189,14 +274,23 @@ const isGiaoHang = computed({
 });
 
 // Order Value Calculations
-const totalRawAmount = computed(() => {
-    const subtotal = Number(selectedOrder.value?.tongTien || 0);
-    return subtotal + Number(shippingFee.value || 0) + Number(surcharge.value || 0);
+const originalTotalAmount = computed(() => {
+    const items = selectedOrder.value?.listsHoaDonChiTiet || [];
+    return items.reduce((sum, item) => {
+        const qty = Number(item.soLuong || 0);
+        const price = Number(item.donGia || 0);
+        const percent = Number(item.phanTramGiam || 0);
+        if (percent > 0 && percent < 100) {
+            const originalPrice = price / (1 - percent / 100);
+            return sum + (originalPrice * qty);
+        }
+        return sum + (price * qty);
+    }, 0);
 });
 
 const discountAmount = computed(() => {
-    const raw = Number(selectedOrder.value?.tongTien || 0);
-    const after = Number(selectedOrder.value?.tongTienSauGiam || 0);
+    const raw = originalTotalAmount.value;
+    const after = Number(selectedOrder.value?.tongTienSauGiam || selectedOrder.value?.tongTien || 0);
     return Math.max(0, raw - after);
 });
 
@@ -210,7 +304,9 @@ const appliedDiscountPercents = computed(() => {
 });
 
 const finalCollectAmount = computed(() => {
-    return Math.max(0, totalRawAmount.value - discountAmount.value);
+    const after = Number(selectedOrder.value?.tongTienSauGiam || selectedOrder.value?.tongTien || 0);
+    const ship = selectedOrder.value?.loaiDon === 'ONLINE' ? Number(shippingFee.value || 0) : 0;
+    return Math.max(0, after + ship + Number(surcharge.value || 0));
 });
 
 const remainingBalance = computed(() => {
@@ -282,6 +378,13 @@ watch(orderChannel, (channel) => {
     onlyChargeIfReturned.value = channel === 'Tại quầy';
 });
 
+// Sync loaiDon when onlyChargeIfReturned changes manually
+watch(onlyChargeIfReturned, (val) => {
+    if (selectedOrder.value) {
+        selectedOrder.value.loaiDon = val ? 'TAI_QUAY' : 'ONLINE';
+    }
+});
+
 // Automatically sync received amount with total payable amount when VNPay is selected
 watch(
     () => [checkoutData.value.paymentMethod, finalCollectAmount.value],
@@ -293,19 +396,42 @@ watch(
     { immediate: true }
 );
 
-// Search Products Autocomplete
-const searchProducts = async () => {
-    const kw = productSearchKeyword.value?.trim() || '';
+const getVoucherDiscountLabel = (voucher) => {
+    if (!voucher) return '';
+    const isPercent = String(voucher.loaiPhieu || '').toUpperCase() === 'PHAN_TRAM' || String(voucher.loaiPhieu || '').toUpperCase() === 'PERCENT';
+    if (isPercent) {
+        return `${voucher.phanTramGiamGia || 0}%`;
+    } else {
+        const cash = Number(voucher.soTienGiam || 0);
+        if (cash >= 1000) {
+            return `${Math.round(cash / 1000)}k`;
+        }
+        return `${cash}đ`;
+    }
+};
+
+const suggestedVoucher = computed(() => {
+    if (!vouchers.value?.length || !selectedOrder.value?.suggestedVoucherId) {
+        return null;
+    }
+    return vouchers.value.find(v => String(v.id) === String(selectedOrder.value.suggestedVoucherId)) || null;
+});
+
+const fetchProductSearchResults = async (keyword) => {
     productSearchLoading.value = true;
     try {
-        const response = await dichVuDonHang.searchSanPham(kw);
-        let items = Array.isArray(response) ? response : [];
-        if (onlyInStock.value) {
-            items = items.filter(v => (v.soLuongTon ?? v.soLuong ?? 0) > 0);
-        }
-        productSearchResults.value = items;
+        const params = {
+            keyword: keyword || '',
+            thuongHieu: filterThuongHieu.value,
+            xuatXu: filterXuatXu.value,
+            mucDich: filterMucDich.value,
+            chatLieu: filterChatLieu.value,
+            onlyInStock: onlyInStock.value
+        };
+        const res = await dichVuDonHang.searchSanPham(params);
+        productSearchResults.value = res || [];
     } catch (e) {
-        console.error(e);
+        console.error('Lỗi khi tải sản phẩm:', e);
     } finally {
         productSearchLoading.value = false;
     }
@@ -320,7 +446,8 @@ const loadFilterOptions = async () => {
             dichVuChatLieu.layChatLieu({ size: 1000 })
         ]);
 
-        const pick = (res) => (res.status === 'fulfilled' ? (res.value?.content || res.value || []) : []);
+        // Các endpoint thuộc tính luôn trả PageResponse ({ content: [...] }), chỉ cần đọc .content
+        const pick = (res) => (res.status === 'fulfilled' ? (res.value?.content || []) : []);
 
         filterBrands.value = [{ title: 'Tất cả thương hiệu', value: 'ALL' }, ...pick(th).map(x => ({ title: x.ten, value: x.ten }))];
         filterOrigins.value = [{ title: 'Tất cả xuất xứ', value: 'ALL' }, ...pick(xx).map(x => ({ title: x.ten, value: x.ten }))];
@@ -332,22 +459,7 @@ const loadFilterOptions = async () => {
 };
 
 const filteredProductSearchResults = computed(() => {
-    let list = productSearchResults.value || [];
-
-    if (filterThuongHieu.value && filterThuongHieu.value !== 'ALL') {
-        list = list.filter(v => v.tenThuongHieu === filterThuongHieu.value);
-    }
-    if (filterXuatXu.value && filterXuatXu.value !== 'ALL') {
-        list = list.filter(v => v.tenXuatXu === filterXuatXu.value);
-    }
-    if (filterMucDich.value && filterMucDich.value !== 'ALL') {
-        list = list.filter(v => v.tenMucDichChay === filterMucDich.value);
-    }
-    if (filterChatLieu.value && filterChatLieu.value !== 'ALL') {
-        list = list.filter(v => v.tenChatLieu === filterChatLieu.value);
-    }
-
-    return list;
+    return productSearchResults.value || [];
 });
 
 const onFilterChange = () => {
@@ -355,20 +467,18 @@ const onFilterChange = () => {
 };
 
 let searchDebounce = null;
-watch(productSearchKeyword, () => {
+watch([productSearchKeyword, filterThuongHieu, filterXuatXu, filterMucDich, filterChatLieu, onlyInStock], () => {
     if (searchDebounce) clearTimeout(searchDebounce);
     searchDebounce = setTimeout(() => {
-        searchProducts();
+        fetchProductSearchResults(productSearchKeyword.value);
     }, 300);
 });
 
-watch(onlyInStock, () => {
-    searchProducts();
-});
+
 
 const onProductSearchFocus = () => {
     showProductAutocomplete.value = true;
-    searchProducts();
+    fetchProductSearchResults(productSearchKeyword.value);
 };
 
 const onProductSearchBlur = () => {
@@ -626,20 +736,9 @@ const handleGlobalKeyDown = (e) => {
 const loadCurrentEmployeeDetails = async () => {
     try {
         if (authStore.user?.username) {
-            const res = await dichVuNhanVien.layTatCaNhanVien();
-            let list = [];
-            if (res && res.data) {
-                if (Array.isArray(res.data.content)) {
-                    list = res.data.content;
-                } else if (Array.isArray(res.data)) {
-                    list = res.data;
-                }
-            } else if (res && Array.isArray(res)) {
-                list = res;
-            }
-            const matched = list.find(e => e.tenTaiKhoan?.toLowerCase() === authStore.user.username?.toLowerCase());
-            if (matched) {
-                currentEmployeeDetail.value = matched;
+            const res = await dichVuNhanVien.layThongTinCaNhan();
+            if (res) {
+                currentEmployeeDetail.value = res;
             }
         }
     } catch (e) {
@@ -656,28 +755,20 @@ onMounted(async () => {
     window.addEventListener('keydown', handleGlobalKeyDown);
     loading.value = true;
     try {
+        await checkGiaoCa();
         fetchProvincesShip();
         await loadCurrentEmployeeDetails();
         await loadFilterOptions();
         const data = await dichVuDonHang.layDonHangCho();
         setOrders(data);
 
-        // Load offline vouchers
+        // Tải danh sách phiếu giảm giá cho dropdown (BE là nguồn dữ liệu)
         try {
-            const voucherResp = await dichVuPhieuGiamGia.layPhieuGiamGiaPhanTrang({
-                page: 0,
-                size: 1000,
-                trangThai: 'DANG_HOAT_DONG'
-            });
-            const fetchedVouchers = extractVoucherPageContent(voucherResp);
-            if (fetchedVouchers && fetchedVouchers.length > 0) {
-                allActiveVouchers.value = fetchedVouchers;
-                // Phiếu được load sau setOrders() nên watcher refreshBestVoucher đã chạy
-                // khi allActiveVouchers còn rỗng -> refresh lại để populate dropdown
-                refreshBestVoucher();
-            }
+            const list = await dichVuDonHang.getVouchers(selectedOrder.value?.tongTien || 0);
+            vouchers.value = (list || []).map(decorateVoucher);
+            await refreshBestVoucher();
         } catch (e) {
-            console.error("Lỗi khi load phiếu giảm giá offline", e);
+            console.error('Lỗi khi tải phiếu giảm giá', e);
         }
 
         if (orders.value.length === 0) {
@@ -695,17 +786,20 @@ onUnmounted(() => {
     window.removeEventListener('keydown', handleGlobalKeyDown);
 });
 
-// Watchers for vouchers
+// Khi chuyển tab hóa đơn, hỏi BE lại phiếu giảm giá tốt nhất để gợi ý
 watch(() => selectedOrder.value?.id, (id) => {
     if (id) refreshBestVoucher();
 });
 
-watch(
-    () => [selectedOrder.value?.id, selectedOrder.value?.idKhachHang, selectedOrder.value?.tongTien],
-    () => {
-        if (selectedOrder.value?.id) refreshBestVoucher();
+// Watch for order changes to fetch product suggestions
+watch(() => [selectedOrder.value?.id, selectedOrder.value?.tongTien], ([id, total]) => {
+    if (id && total > 0) {
+        fetchProductSuggestions();
+    } else {
+        productSuggestions.value = [];
+        showProductSuggestions.value = false;
     }
-);
+});
 
 // Watch selected customer id and fetch full details to populate the right column form
 watch(
@@ -909,7 +1003,13 @@ const onAddProduct = async (product) => {
             soLuong: product._soLuongMuonThem || 1
         });
         updateOrderInList(updated);
-        addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm vào giỏ hàng', color: 'success' });
+        
+        if (updated.priceChanged) {
+            addNotification({ title: 'Giá sản phẩm thay đổi', subtitle: updated.priceChangeMessage, color: 'warning' });
+        } else {
+            addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm vào giỏ hàng', color: 'success' });
+        }
+        
         refreshBestVoucher(updated);
     } catch (e) {
         addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK, color: 'error' });
@@ -969,7 +1069,7 @@ const onRemoveItem = (item) => {
         show: true,
         title: 'Xác nhận xóa sản phẩm',
         message: `Bạn có chắc chắn muốn xóa [${item.tenSanPham}] khỏi giỏ hàng?`,
-        color: 'warning',
+        color: 'primary',
         confirmColor: 'primary',
         action: async () => {
             confirmDialog.value.loading = true;
@@ -1001,115 +1101,62 @@ const onRemoveCustomer = async () => {
 };
 
 // Logic: Voucher
-const calculateVoucherDiscount = (voucher, total) => {
-    if (!voucher || !total) return 0;
-    const minimum = Number(voucher.donHangToiThieu || 0);
-    if (Number(total) < minimum) return 0;
+// Gắn nhãn hiển thị (customTitle) cho phiếu giảm giá trên dropdown. Chỉ phục vụ hiển thị,
+// mọi tính toán giảm giá đều do BE thực hiện.
+const decorateVoucher = (v) => {
+    let text = v.tenPhieu || v.ten || 'Phiếu giảm giá';
+    const code = v.ma || v.maPhieu;
+    if (code) text = `${code} - ${text}`;
+    const type = String(v.loaiPhieu || '').toUpperCase();
+    const discount = (type === 'PHAN_TRAM' || type === 'PERCENT')
+        ? `(Giảm ${v.phanTramGiamGia || 0}%)`
+        : `(Giảm ${new Intl.NumberFormat('vi-VN').format(v.soTienGiam || 0)}đ)`;
+    return { ...v, customTitle: `${text} ${discount}` };
+};
 
-    const type = String(voucher.loaiPhieu || '').toUpperCase();
-    if (type === 'PHAN_TRAM' || type === 'PERCENT') {
-        const percent = Number(voucher.phanTramGiamGia || 0);
-        const maxDiscount = Number(voucher.giamToiDa || Number.MAX_SAFE_INTEGER);
-        return Math.min((Number(total) * percent) / 100, maxDiscount);
+// Hỏi BE phiếu giảm giá tốt nhất để gợi ý (BE tự lọc điều kiện & tính giảm giá).
+// Tự động áp phiếu tốt nhất nếu đủ điều kiện, ngược lại thì chỉ gợi ý.
+const refreshBestVoucher = async (order = selectedOrder.value) => {
+    if (!order?.id) return;
+    if (order.idPhieuGiamGia) {
+        order.suggestedVoucherId = null;
+        return;
     }
-
-    return Number(voucher.soTienGiam || 0);
-};
-
-const isPersonalVoucher = (voucher) => {
-    const value = String(voucher?.hinhThuc ?? voucher?.hinh_thuc ?? voucher?.loaiHienThi ?? voucher?.phanLoai ?? '').toUpperCase();
-    return value === 'CA_NHAN' || value === 'CANHAN' || value === 'PERSONAL' || value === 'PRIVATE';
-};
-
-const isPublicVoucher = (voucher) => {
-    const value = String(voucher?.hinhThuc ?? voucher?.hinh_thuc ?? voucher?.loaiHienThi ?? voucher?.phanLoai ?? '').toUpperCase();
-    return !value || value === 'CONG_KHAI' || value === 'CONGKHAI' || value === 'PUBLIC' || value === 'ALL';
-};
-
-const extractVoucherPageContent = (response) => {
-    let arr = [];
-    if (Array.isArray(response?.data?.content)) arr = response.data.content;
-    else if (Array.isArray(response?.content)) arr = response.content;
-    else if (Array.isArray(response?.data)) arr = response.data;
-    else if (Array.isArray(response)) arr = response;
-    
-    return arr.map(v => {
-        let text = v.tenPhieu || v.ten || 'Phiếu giảm giá';
-        if (v.ma || v.maPhieu) {
-            text = `${v.ma || v.maPhieu} - ${text}`;
-        }
-        let discount = '';
-        if (String(v.loaiPhieu || '').toUpperCase() === 'PHAN_TRAM' || String(v.loaiPhieu || '').toUpperCase() === 'PERCENT') {
-            discount = `(Giảm ${v.phanTramGiamGia || 0}%)`;
+    try {
+        const best = await dichVuDonHang.getBestVoucher(order.id);
+        if (best?.id) {
+            // Kiểm tra điều kiện đơn hàng tối thiểu
+            const currentTotal = order.tongTien || 0;
+            const minOrderAmount = best.donHangToiThieu || 0;
+            
+            if (currentTotal >= minOrderAmount) {
+                // Đủ điều kiện: tự động áp
+                await onApplyVoucher(best.id);
+            } else {
+                // Chưa đủ điều kiện: chỉ gợi ý
+                order.suggestedVoucherId = best.id;
+            }
         } else {
-            discount = `(Giảm ${new Intl.NumberFormat('vi-VN').format(v.soTienGiam || 0)}đ)`;
+            order.suggestedVoucherId = null;
         }
-        return {
-            ...v,
-            customTitle: `${text} ${discount}`
-        };
-    });
-};
-
-const allActiveVouchers = ref([]);
-
-// Tải danh sách tất cả các voucher thỏa mãn điều kiện áp dụng cho hóa đơn hiện tại
-const loadEligibleVouchers = (order) => {
-    // Tạm thời return toàn bộ danh sách để chắc chắn voucher được hiển thị
-    return allActiveVouchers.value;
-};
-
-const pickBestVoucher = (items, total) => {
-    return [...(items || [])]
-        .map((voucher) => ({
-            voucher,
-            discount: calculateVoucherDiscount(voucher, total)
-        }))
-        .filter((entry) => entry.discount > 0)
-        .sort((a, b) => b.discount - a.discount)[0]?.voucher || null;
-};
-
-// Làm mới danh sách voucher và tự động áp dụng mã có lợi nhất (Offline)
-const refreshBestVoucher = (orderOverride = selectedOrder.value) => {
-    if (!orderOverride?.id) return;
-
-    const availableVouchers = loadEligibleVouchers(orderOverride);
-    vouchers.value = availableVouchers || [];
-
-    const bestVoucher = pickBestVoucher(vouchers.value, orderOverride.tongTien || 0);
-    const bestVoucherId = bestVoucher?.id || null;
-
-    // Gợi ý mã tốt nhất và tự động apply nếu người dùng chưa tự chọn
-    orderOverride.suggestedVoucherId = bestVoucherId;
-    if (!manualVoucherLocks.value[orderOverride.id] && bestVoucherId) {
-        orderOverride.idPhieuGiamGia = bestVoucherId;
+    } catch (e) {
+        order.suggestedVoucherId = null;
     }
-
-    // NẾU người dùng đã tự apply mã (có idPhieuGiamGia), kiểm tra xem nó còn hợp lệ không
-    if (orderOverride.idPhieuGiamGia) {
-        const currentVoucher = vouchers.value.find(v => String(v.id) === String(orderOverride.idPhieuGiamGia));
-        const isCurrentValid = currentVoucher && Number(orderOverride.tongTien || 0) >= Number(currentVoucher.donHangToiThieu || 0);
-        if (!isCurrentValid) {
-            orderOverride.idPhieuGiamGia = null;
-            manualVoucherLocks.value[orderOverride.id] = false;
-        }
-    }
-
-    // Tính lại tổng tiền sau giảm giá để UI hiển thị ngay lập tức
-    const appliedVoucher = vouchers.value.find(v => String(v.id) === String(orderOverride.idPhieuGiamGia));
-    const discount = calculateVoucherDiscount(appliedVoucher, orderOverride.tongTien || 0);
-    orderOverride.tongTienSauGiam = Math.max(0, (orderOverride.tongTien || 0) - discount);
 };
 
 // Cố định 1 voucher do người dùng tự chọn trên giao diện
-const onApplyVoucher = (voucherId) => {
-    manualVoucherLocks.value[selectedOrder.value.id] = true;
-    selectedOrder.value.idPhieuGiamGia = voucherId;
-
-    // Tính lại ngay lập tức
-    const appliedVoucher = vouchers.value.find(v => String(v.id) === String(voucherId));
-    const discount = calculateVoucherDiscount(appliedVoucher, selectedOrder.value.tongTien || 0);
-    selectedOrder.value.tongTienSauGiam = Math.max(0, (selectedOrder.value.tongTien || 0) - discount);
+// Áp dụng / gỡ phiếu giảm giá: BE lưu, tính lại tổng tiền sau giảm và trả về hóa đơn đã cập nhật.
+const onApplyVoucher = async (voucherId) => {
+    const order = selectedOrder.value;
+    if (!order?.id) return;
+    try {
+        const updated = await dichVuDonHang.setVoucher(order.id, voucherId || null);
+        updateOrderInList(updated);
+        // Áp mã thì ẩn gợi ý; gỡ mã thì hỏi lại gợi ý từ BE.
+        await refreshBestVoucher();
+    } catch (e) {
+        addNotification({ title: 'Lỗi phiếu giảm giá', subtitle: getErrorMessage(e, 'Không thể áp dụng phiếu giảm giá.'), color: 'error' });
+    }
 };
 
 // Logic: Thanh toán VNPay
@@ -1671,7 +1718,8 @@ const findExistingCustomerByContact = async (phone, email) => {
         }
     }
     const allCustomers = await dichVuKhachHang.layTatCaKhachHang();
-    const content = allCustomers?.content || allCustomers?.data?.content || allCustomers?.data || allCustomers || [];
+    // BE trả PageResponse chuẩn ({ content: [...] }) nên chỉ cần đọc .content
+    const content = allCustomers?.content || [];
     return findExactCustomer(content, phone, email) || null;
 };
 
@@ -1833,9 +1881,12 @@ const formatDateTime = (dateStr) => {
 
                                                         <!-- mã sp --- mã sku (với nhãn vuông pastel nhé) -->
                                                         <div class="d-flex align-center gap-1.5 mt-0.5 flex-wrap">
-                                                            <span class="sp-badge">Mã Sản phẩm: {{ variant.maSanPham || 'SP0001' }}</span>
-                                                            <span style="margin-left: 15px; margin-right: 15px; font-size: 11px; color: #cbd5e1; opacity: 0.4;">|</span>
-                                                            <span class="sku-badge">{{ variant.maChiTietSanPham }}</span>
+                                                            <span class="sp-badge">Mã Sản phẩm: {{ variant.maSanPham ||
+                                                                'SP0001' }}</span>
+                                                            <span
+                                                                style="margin-left: 15px; margin-right: 15px; font-size: 11px; color: #cbd5e1; opacity: 0.4;">|</span>
+                                                            <span class="sku-badge">{{ variant.maChiTietSanPham
+                                                            }}</span>
                                                         </div>
 
                                                         <!-- màu sắc --- size --- số lượng -->
@@ -1843,10 +1894,12 @@ const formatDateTime = (dateStr) => {
                                                             style="font-size: 12px; flex-wrap: wrap;">
                                                             <span>Màu sắc: <span class="text-slate-500">{{
                                                                 variant.tenMauSac || 'Không màu' }}</span></span>
-                                                            <span style="margin-left: 15px; margin-right: 15px; color: #cbd5e1; opacity: 0.4;">|</span>
+                                                            <span
+                                                                style="margin-left: 15px; margin-right: 15px; color: #cbd5e1; opacity: 0.4;">|</span>
                                                             <span>Size: <span class="text-slate-500">{{
                                                                 variant.tenKichThuoc || 'N/A' }}</span></span>
-                                                            <span style="margin-left: 15px; margin-right: 15px; color: #cbd5e1; opacity: 0.4;">|</span>
+                                                            <span
+                                                                style="margin-left: 15px; margin-right: 15px; color: #cbd5e1; opacity: 0.4;">|</span>
                                                             <span>Tồn: <span class="text-slate-500">{{
                                                                 variant.soLuongTon || 0 }}</span></span>
                                                         </div>
@@ -1855,7 +1908,19 @@ const formatDateTime = (dateStr) => {
 
                                                 <!-- Right info block -->
                                                 <div class="text-right flex-shrink-0 pl-3">
-                                                    <div class="price-text">{{ formatCurrency(variant.giaBan) }}</div>
+                                                    <template v-if="variant.phanTramGiam > 0">
+                                                        <div class="price-text">{{ formatCurrency(variant.giaBan) }}
+                                                        </div>
+                                                        <span
+                                                            style="text-decoration: line-through; text-decoration-color: #94a3b8; -webkit-text-decoration-color: #94a3b8; color: #c92c04 !important; font-size: 11px !important; font-weight: normal; display: block; margin-top: 2px;">
+                                                            {{ formatCurrency(variant.giaBan / (1 - variant.phanTramGiam
+                                                                / 100)) }}
+                                                        </span>
+                                                    </template>
+                                                    <template v-else>
+                                                        <div class="price-text">{{ formatCurrency(variant.giaBan) }}
+                                                        </div>
+                                                    </template>
                                                 </div>
                                             </div>
                                         </v-list-item>
@@ -1925,7 +1990,7 @@ const formatDateTime = (dateStr) => {
 
                         <!-- Cart list rendering -->
                         <div class="cart-container-box border rounded-lg overflow-hidden"
-                            style="height: 250px; background-color: #ffffff !important;">
+                            style="height: 420px; background-color: #ffffff !important;">
                             <CartTable v-if="selectedOrder?.listsHoaDonChiTiet?.length"
                                 :items="selectedOrder.listsHoaDonChiTiet" @update-qty="onUpdateQty"
                                 @remove="onRemoveItem" />
@@ -1937,209 +2002,271 @@ const formatDateTime = (dateStr) => {
                                     <v-icon size="40" style="color: #cbd5e1 !important;">mdi-inbox-outline</v-icon>
                                 </div>
                                 <div class="font-weight-medium"
-                                    style="font-size: 13px !important; color: #94a3b8 !important;">Giỏ hàng trống</div>
+                                    style="font-size: 13px !important; color: #94a3b8 !important;">Giỏ hàng trống
+                                </div>
                             </div>
                         </div>
                     </v-card>
-                    <!-- Row of Price & Payment cards -->
+                    <!-- Row of Price Details -->
                     <v-row no-gutters>
                         <!-- Left Block: Pricing Details -->
-                        <v-col cols="12" md="6" class="pr-md-3 pr-0 mb-4 mb-md-0">
-                            <v-card class="pos-card pa-4 rounded-lg border h-100 d-flex flex-column">
-                                <div class="d-flex justify-space-between align-center mb-3">
+                        <v-col cols="12" class="mb-2">
+                            <v-card class="pos-card pa-3 rounded-lg border d-flex flex-column">
+                                <div class="d-flex justify-space-between align-center mb-4 border-b">
                                     <h3 class="font-weight-bold text-slate-800 m-0" style="font-size: 14px !important">
                                         Tổng đơn hàng</h3>
+                                    <div class="d-flex align-center">
+                                        <span
+                                            :class="['mr-2', isGiaoHang ? 'custom-switch-label-active' : 'custom-switch-label-inactive']">Giao
+                                            hàng</span>
+                                        <v-switch v-model="isGiaoHang" color="primary" hide-details density="compact"
+                                            :class="['custom-switch-giao-hang', { 'is-active': isGiaoHang }]" />
+                                    </div>
                                 </div>
 
-                                <v-row no-gutters class="mb-4 border-b pb-3">
-                                    <v-col cols="6">
-                                        <v-checkbox v-model="isFreeShip" label="Miễn phí giao hàng" hide-details
-                                            density="compact" class="text-slate-700" />
+                                <v-row class="flex-grow-1">
+                                    <!-- Left Column: Total Raw + Voucher Selection + Discount Periods -->
+                                    <v-col cols="12" md="6" class="d-flex flex-column justify-start pr-md-4"
+                                        style="gap: 15px;">
+                                        <!-- Total Amount Raw -->
+                                        <div class="d-flex align-center justify-space-between">
+                                            <span class="text-slate-600" style="font-size: 13px !important">Tổng tiền
+                                                hàng</span>
+                                            <span class="font-weight-semibold"
+                                                style="font-size: 14px !important; color: #0c3866;">
+                                                {{ formatCurrency(originalTotalAmount) }}
+                                            </span>
+                                        </div>
+
+                                        <!-- Voucher Selection -->
+                                        <div class="d-flex flex-column"
+                                            style="min-height: 58px; justify-content: flex-start; gap: 4px;">
+                                            <div class="d-flex align-center justify-space-between">
+                                                <span class="text-slate-600 flex-shrink-0"
+                                                    style="font-size: 13px !important">Phiếu giảm
+                                                    giá đang áp dụng tốt nhất</span>
+                                                <v-select :model-value="selectedOrder?.idPhieuGiamGia" :items="vouchers"
+                                                    item-title="customTitle" item-value="id" variant="outlined"
+                                                    density="compact" hide-details @update:model-value="onApplyVoucher"
+                                                    class="compact-select custom-value-input"
+                                                    style="width: 210px !important; max-width: 210px !important; min-width: 210px !important; flex: none !important;"
+                                                    clearable placeholder="Nhập phiếu giảm giá"
+                                                    no-data-text="Chưa có phiếu giảm giá">
+                                                    <template v-slot:selection="{ item }">
+                                                        <div class="d-flex align-center gap-1">
+                                                            <span class="custom-voucher-badge">
+                                                                {{ getVoucherDiscountLabel(item.raw) }}
+                                                            </span>
+                                                            <span class="font-weight-bold text-slate-800"
+                                                                style="font-size: 12px !important; letter-spacing: -0.2px;">
+                                                                {{ item.raw.ma || item.raw.maPhieu || 'Mã' }}
+                                                            </span>
+                                                        </div>
+                                                    </template>
+                                                    <template v-slot:item="{ props, item }">
+                                                        <v-list-item v-bind="props" class="px-3 py-1">
+                                                            <template v-slot:title>
+                                                                <div class="d-flex align-center gap-2">
+                                                                    <span class="custom-voucher-badge">
+                                                                        {{ getVoucherDiscountLabel(item.raw) }}
+                                                                    </span>
+                                                                    <span class="font-weight-bold text-slate-800"
+                                                                        style="font-size: 12px !important;">
+                                                                        {{ item.raw.ma || item.raw.maPhieu }}
+                                                                    </span>
+                                                                    <span class="text-slate-300"
+                                                                        style="font-size: 11px;">|</span>
+                                                                    <span class="text-slate-600 text-truncate"
+                                                                        style="font-size: 11px !important; max-width: 140px; display: inline-block;">
+                                                                        {{ item.raw.tenPhieu || item.raw.ten || 'Ưu đãi'
+                                                                        }}
+                                                                    </span>
+                                                                </div>
+                                                            </template>
+                                                        </v-list-item>
+                                                    </template>
+                                                </v-select>
+                                            </div>
+                                            <div v-if="suggestedVoucher && !selectedOrder?.idPhieuGiamGia"
+                                                class="d-flex justify-end pr-1">
+                                                <span class="font-weight-medium"
+                                                    style="font-size: 11px !important; color: #b57a00 !important; font-style: italic !important;">Đề
+                                                    xuất phiếu giảm giá:</span>
+                                                <v-hover v-slot="{ isHovering, props }">
+                                                    <span v-bind="props" @click="onApplyVoucher(suggestedVoucher.id)"
+                                                        :class="['ml-1 font-weight-bold cursor-pointer text-primary', { 'text-decoration-underline': isHovering }]"
+                                                        style="font-size: 11px !important; transition: all 0.2s;">
+                                                        -{{ getVoucherDiscountLabel(suggestedVoucher) }} ({{
+                                                            suggestedVoucher.ma ||
+                                                            suggestedVoucher.maPhieu }})
+                                                    </span>
+                                                </v-hover>
+                                            </div>
+                                        </div>
+
+                                        <!-- Đợt giảm giá áp dụng cho sản phẩm trong đơn -->
+                                        <div class="d-flex align-start justify-space-between"
+                                            style="margin-top: 8px; padding-top: 13px;">
+                                            <span class="text-slate-600 flex-shrink-0"
+                                                style="font-size: 13px !important">Đợt giảm
+                                                giá</span>
+                                            <div class="d-flex flex-wrap justify-end"
+                                                style="gap: 4px; max-width: 180px;">
+                                                <template v-if="appliedDiscountPercents.length">
+                                                    <span v-for="percent in appliedDiscountPercents" :key="percent"
+                                                        class="dot-giam-gia-badge">-{{ percent }}%</span>
+                                                </template>
+                                                <span v-else class="text-slate-400 font-weight-medium"
+                                                    style="font-size: 13px !important">
+                                                    Không có
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Gợi ý mua thêm - Classic Style -->
+                                        <div v-if="showProductSuggestions && suggestionData" 
+                                            class="suggestion-box mt-3 pa-3 rounded-lg border"
+                                            style="border-color: #e2e8f0; background-color: transparent; border-style: solid; border-width: 1px;">
+                                            <div class="d-flex justify-space-between align-center mb-2">
+                                                <span class="font-weight-bold text-slate-800" 
+                                                    style="font-size: 13px !important;">
+                                                    Gợi ý mua thêm
+                                                </span>
+                                                <span class="text-caption font-weight-medium" 
+                                                    style="color: #b57a00; font-size: 11px !important;">
+                                                    1 đề xuất
+                                                </span>
+                                            </div>
+                                            <div class="d-flex flex-column" style="gap: 8px;">
+                                                <div class="d-flex justify-space-between align-center">
+                                                    <span class="text-slate-600" style="font-size: 12px !important;">
+                                                        Mã sản phẩm:
+                                                    </span>
+                                                    <span class="font-weight-bold text-slate-800" 
+                                                        style="font-size: 12px !important;">
+                                                        {{ suggestionData.productCode }}
+                                                    </span>
+                                                </div>
+                                                <div class="d-flex justify-space-between align-center">
+                                                    <span class="text-slate-600" style="font-size: 12px !important;">
+                                                        Giảm giá:
+                                                    </span>
+                                                    <span class="font-weight-bold text-error" 
+                                                        style="font-size: 12px !important;">
+                                                        {{ suggestionData.discountPercent }}%
+                                                    </span>
+                                                </div>
+                                                <div class="d-flex justify-space-between align-center">
+                                                    <span class="text-slate-600" style="font-size: 12px !important;">
+                                                        Cần mua thêm:
+                                                    </span>
+                                                    <span class="font-weight-semibold text-slate-800" 
+                                                        style="font-size: 12px !important;">
+                                                        {{ formatCurrency(suggestionData.needToBuy) }}
+                                                    </span>
+                                                </div>
+                                                <div class="d-flex justify-space-between align-center">
+                                                    <span class="text-slate-600" style="font-size: 12px !important;">
+                                                        Sẽ được giảm:
+                                                    </span>
+                                                    <span class="font-weight-semibold text-success" 
+                                                        style="font-size: 12px !important;">
+                                                        {{ formatCurrency(suggestionData.willReduce) }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </v-col>
-                                    <v-col cols="6">
-                                        <v-checkbox v-model="onlyChargeIfReturned" label="Mua hàng tại quầy"
-                                            hide-details density="compact" class="text-slate-700" />
+
+                                    <!-- Right Column: Shipping Fee + Final Collected Amount -->
+                                    <v-col cols="12" md="6"
+                                        class="d-flex flex-column justify-start pl-md-6 border-s-dashed-md"
+                                        style="gap: 15px;">
+                                        <!-- Total Discount Amount -->
+                                        <div class="d-flex align-center justify-space-between">
+                                            <span class="text-slate-600" style="font-size: 13px !important">Tổng tiền
+                                                giảm</span>
+                                            <span class="font-weight-semibold"
+                                                style="font-size: 14px !important; color: #991b1b !important;">
+                                                {{ discountAmount > 0 ? '-' : '' }}{{ formatCurrency(discountAmount) }}
+                                            </span>
+                                        </div>
+
+                                        <!-- Shipping Fee -->
+                                        <div class="d-flex flex-column"
+                                            style="min-height: 58px; justify-content: flex-start;">
+                                            <div class="d-flex align-center justify-space-between">
+                                                <span class="text-slate-600 d-flex align-center"
+                                                    style="font-size: 13px !important">
+                                                    <span>Phí vận chuyển</span>
+                                                    <svg width="45" height="15" viewBox="0 0 45 15" fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        style="display: inline-block; vertical-align: middle; margin-left: 6px;">
+                                                        <path
+                                                            d="M1 2.5 L7 2.5 L4.5 6.5 L7 6.5 L3.5 10.5 L1 10.5 L3.5 6.5 L1 6.5 Z"
+                                                            fill="#0C2A46" />
+                                                        <path
+                                                            d="M5.5 2.5 L11.5 2.5 L9 6.5 L11.5 6.5 L8 10.5 L5.5 10.5 L8 6.5 L5.5 6.5 Z"
+                                                            fill="#FA6400" />
+                                                        <text x="13.5" y="11" fill="#FA6400"
+                                                            font-family="'Inter', sans-serif" font-weight="900"
+                                                            font-style="italic" font-size="10.5"
+                                                            letter-spacing="-0.5px">GHN</text>
+                                                    </svg>
+                                                </span>
+                                                <v-menu offset="4">
+                                                    <template v-slot:activator="{ props }">
+                                                        <v-text-field :model-value="formatNumberWithDots(shippingFee)"
+                                                            @input="e => shippingFee = parseNumberFromDots(e.target.value)"
+                                                            v-bind="props" variant="outlined" density="compact"
+                                                            suffix="đ" hide-details
+                                                            style="width: 210px !important; max-width: 210px !important; min-width: 210px !important; flex: none !important;"
+                                                            class="text-right-input custom-value-input"
+                                                            :disabled="isFreeShip || !isGiaoHang" />
+                                                    </template>
+                                                    <v-list class="pa-0 border rounded-lg elevation-2 bg-white"
+                                                        style="min-width: 170px;">
+                                                        <div>
+                                                            <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
+                                                                style="font-size: 11px;">Nội thành:</div>
+                                                            <v-list-item @click="shippingFee = 30000"
+                                                                class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
+                                                                30.000 <span class="text-decoration-underline">đ</span>
+                                                            </v-list-item>
+                                                        </div>
+                                                        <div>
+                                                            <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
+                                                                style="font-size: 11px;">Ngoại thành:</div>
+                                                            <v-list-item @click="shippingFee = 30000"
+                                                                class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
+                                                                30.000 <span class="text-decoration-underline">đ</span>
+                                                            </v-list-item>
+                                                        </div>
+                                                        <div>
+                                                            <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
+                                                                style="font-size: 11px;">Ngoại tỉnh:</div>
+                                                            <v-list-item @click="shippingFee = 30000"
+                                                                class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
+                                                                30.000 <span class="text-decoration-underline">đ</span>
+                                                            </v-list-item>
+                                                        </div>
+                                                    </v-list>
+                                                </v-menu>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex align-center justify-space-between"
+                                            style="border-top: 1px dashed #cbd5e1; margin-top: 8px; padding-top: 12px;">
+                                            <span class="text-slate-700 font-weight-bold"
+                                                style="font-size: 14px !important">Tổng tiền cần
+                                                thanh toán</span>
+                                            <span class="font-weight-semibold"
+                                                style="font-size: 16px !important; color: #0c3866;">
+                                                {{ formatCurrency(finalCollectAmount) }}
+                                            </span>
+                                        </div>
                                     </v-col>
                                 </v-row>
-
-                                <div class="flex-grow-1 d-flex flex-column" style="gap: 20px;">
-                                    <!-- Voucher Selection -->
-                                    <div class="d-flex align-center justify-space-between">
-                                        <span class="text-slate-600" style="font-size: 13px !important">Phiếu giảm
-                                            giá</span>
-                                        <v-select :model-value="selectedOrder?.idPhieuGiamGia" :items="vouchers"
-                                            item-title="customTitle" item-value="id" variant="outlined"
-                                            density="compact" hide-details @update:model-value="onApplyVoucher"
-                                            class="compact-select custom-value-input"
-                                            style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
-                                            clearable placeholder="Nhập phiếu giảm giá" persistent-placeholder
-                                            no-data-text="Chưa có phiếu giảm giá" />
-                                    </div>
-
-                                    <!-- Shipping Fee -->
-                                    <div class="d-flex align-center justify-space-between">
-                                        <span class="text-slate-600" style="font-size: 13px !important">Phí vận
-                                            chuyển</span>
-                                        <v-menu offset="4">
-                                            <template v-slot:activator="{ props }">
-                                                <v-text-field :model-value="formatNumberWithDots(shippingFee)"
-                                                    @input="e => shippingFee = parseNumberFromDots(e.target.value)"
-                                                    v-bind="props" variant="outlined" density="compact" suffix="đ"
-                                                    hide-details
-                                                    style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
-                                                    class="text-right-input custom-value-input"
-                                                    :disabled="isFreeShip" />
-                                            </template>
-                                            <v-list class="pa-0 border rounded-lg elevation-2 bg-white"
-                                                style="min-width: 170px;">
-                                                <!-- Nội thành -->
-                                                <div>
-                                                    <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
-                                                        style="font-size: 11px;">Nội thành:</div>
-                                                    <v-list-item @click="shippingFee = 30000"
-                                                        class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
-                                                        30.000 <span class="text-decoration-underline">đ</span>
-                                                    </v-list-item>
-                                                </div>
-                                                <!-- Ngoại thành -->
-                                                <div>
-                                                    <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
-                                                        style="font-size: 11px;">Ngoại thành:</div>
-                                                    <v-list-item @click="shippingFee = 30000"
-                                                        class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
-                                                        30.000 <span class="text-decoration-underline">đ</span>
-                                                    </v-list-item>
-                                                </div>
-                                                <!-- Ngoại tỉnh -->
-                                                <div>
-                                                    <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
-                                                        style="font-size: 11px;">Ngoại tỉnh:</div>
-                                                    <v-list-item @click="shippingFee = 30000"
-                                                        class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
-                                                        30.000 <span class="text-decoration-underline">đ</span>
-                                                    </v-list-item>
-                                                </div>
-                                            </v-list>
-                                        </v-menu>
-                                    </div>
-
-
-                                    <!-- Total Amount Raw -->
-                                    <div class="d-flex align-center justify-space-between">
-                                        <span class="text-slate-600" style="font-size: 13px !important">Tổng số
-                                            tiền</span>
-                                        <span class="font-weight-bold"
-                                            style="font-size: 13px !important; color: #0c3866;">{{
-                                                formatCurrency(totalRawAmount)
-                                            }}</span>
-                                    </div>
-
-                                    <!-- Đợt giảm giá áp dụng cho sản phẩm trong đơn -->
-                                    <div v-if="appliedDiscountPercents.length"
-                                        class="d-flex align-start justify-space-between">
-                                        <span class="text-slate-600 flex-shrink-0"
-                                            style="font-size: 13px !important">Đợt giảm giá</span>
-                                        <div class="d-flex flex-wrap justify-end" style="gap: 4px; max-width: 220px;">
-                                            <span v-for="percent in appliedDiscountPercents" :key="percent"
-                                                class="dot-giam-gia-badge">-{{ percent }}%</span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Discount amount applied -->
-                                    <div class="d-flex align-center justify-space-between">
-                                        <span class="text-slate-600" style="font-size: 13px !important">Giảm giá</span>
-                                        <span class="font-weight-bold"
-                                            style="font-size: 13px !important; color: #dc2626;">
-                                            {{ discountAmount > 0 ? '-' : '' }}{{ formatCurrency(discountAmount) }}
-                                        </span>
-                                    </div>
-
-                                    <!-- Final net collected amount -->
-                                    <div style="border-top: 1px dashed #cbd5e1; margin: 4px 0;"></div>
-
-                                    <div class="d-flex align-center justify-space-between">
-                                        <span class="text-slate-600" style="font-size: 13px !important">Tiền cần
-                                            thu</span>
-                                        <span class="font-weight-bold"
-                                            style="font-size: 13px !important; color: #0c3866;">{{
-                                                formatCurrency(finalCollectAmount) }}</span>
-                                    </div>
-                                </div>
-                            </v-card>
-                        </v-col>
-
-                        <!-- Right Block: Payment & Notes -->
-                        <v-col cols="12" md="6" class="pl-md-3 pl-0 d-flex flex-column gap-3">
-                            <!-- Payment Card -->
-                            <v-card class="pos-card pa-4 rounded-lg border">
-                                <div class="d-flex justify-space-between align-center mb-3">
-                                    <h3 class="text-slate-800 m-0" style="font-size: 13px !important">Thanh toán</h3>
-                                </div>
-
-                                <div class="d-flex align-center justify-space-between mb-4">
-                                    <span class="text-slate-600" style="font-size: 13px !important">Hình thức thanh
-                                        toán</span>
-                                    <div class="d-flex gap-2">
-                                        <button type="button" @click="checkoutData.paymentMethod = 'CASH'"
-                                            :class="['px-3 d-flex align-center justify-center transition-all',
-                                                checkoutData.paymentMethod === 'CASH' ? 'cash-active-btn' : 'payment-inactive-btn']"
-                                            style="font-size: 13px !important; border: 1px solid; border-radius: 0px !important; height: 32px; min-width: 90px; cursor: pointer;">
-                                            <v-icon class="mr-1" size="16">mdi-cash</v-icon>
-                                            Tiền mặt
-                                        </button>
-                                        <button type="button" @click="checkoutData.paymentMethod = 'VNPAY'"
-                                            :class="['px-3 d-flex align-center justify-center transition-all',
-                                                checkoutData.paymentMethod === 'VNPAY' ? 'vnpay-active-btn' : 'payment-inactive-btn']"
-                                            style="font-size: 13px !important; border: 1px solid; border-radius: 0px !important; height: 32px; min-width: 90px; cursor: pointer;">
-                                            <v-icon class="mr-1" size="16">mdi-credit-card-outline</v-icon>
-                                            VNPay
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Money Input -->
-                                <div class="d-flex align-center justify-space-between mb-3">
-                                    <span class="text-slate-600" style="font-size: 13px !important">
-                                        {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
-                                    </span>
-                                    <v-text-field :model-value="formatNumberWithDots(checkoutData.receivedAmount)"
-                                        @input="e => checkoutData.receivedAmount = parseNumberFromDots(e.target.value)"
-                                        variant="outlined" density="compact" suffix="đ" hide-details
-                                        style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
-                                        class="text-right-input" />
-                                </div>
-
-                                <!-- Unpaid / Refund Message Alert -->
-                                <div v-if="remainingBalance > 0"
-                                    class="d-flex align-center justify-space-between pa-3 rounded-lg bg-red-50 text-red-800 border-red">
-                                    <div class="d-flex align-center gap-2">
-                                        <v-icon color="error" size="18">mdi-alert-circle-outline</v-icon>
-                                        <span class="text-slate-600" style="font-size: 13px !important">Còn thiếu</span>
-                                    </div>
-                                    <span class="font-weight-bold" style="font-size: 13px !important;">{{
-                                        formatCurrency(remainingBalance)
-                                        }}</span>
-                                </div>
-                                <div v-else-if="changeAmount > 0"
-                                    class="d-flex align-center justify-space-between pa-3 rounded-lg bg-blue-50 text-blue-800 border-blue">
-                                    <div class="d-flex align-center gap-2">
-                                        <v-icon color="primary" size="18">mdi-cash-refund</v-icon>
-                                        <span class="text-slate-600" style="font-size: 13px !important">Tiền thừa trả
-                                            khách</span>
-                                    </div>
-                                    <span class="font-weight-bold" style="font-size: 13px !important;">{{
-                                        formatCurrency(changeAmount) }}</span>
-                                </div>
-                            </v-card>
-
-                            <!-- Notes Card -->
-                            <v-card class="pos-card pa-4 rounded-lg border flex-grow-1 d-flex flex-column"
-                                style="min-height: 140px">
-                                <div class="text-slate-800 mb-2" style="font-size: 13px !important">Ghi chú</div>
-
-                                <v-textarea v-model="checkoutData.note"
-                                    placeholder="Viết ghi chú hoặc /shortcut để ghi chú nhanh" variant="outlined"
-                                    rows="2" hide-details class="flex-grow-1 note-textarea text-body-2" />
                             </v-card>
                         </v-col>
                     </v-row>
@@ -2147,49 +2274,6 @@ const formatDateTime = (dateStr) => {
 
                 <!-- Right Column (4 cols out of 12) -->
                 <v-col cols="12" lg="4" class="d-flex flex-column gap-4 pl-lg-2 mt-4 mt-lg-0">
-                    <!-- Thông tin Card -->
-                    <v-card class="pos-card pa-4 rounded-lg border">
-                        <div class="d-flex justify-space-between align-center border-b pb-2 mb-3">
-                            <span class="font-weight-bold text-slate-800" style="font-size: 14px !important">Thông
-                                tin</span>
-                            <v-icon size="16">mdi-chevron-up</v-icon>
-                        </div>
-
-                        <div class="d-flex flex-column gap-2">
-                            <div class="d-flex align-center justify-space-between text-body-2 py-1">
-                                <span class="text-slate-600 font-weight-medium">Tạo lúc</span>
-                                <div class="d-flex align-center border rounded px-2 py-1 bg-slate-50"
-                                    style="min-width: 170px; justify-content: space-between">
-                                    <span class="font-weight-bold text-slate-800 text-caption">{{
-                                        formatDateTime(selectedOrder?.ngayTao)
-                                        }}</span>
-                                </div>
-                            </div>
-
-                            <div class="d-flex align-center justify-space-between text-body-2 py-1">
-                                <span class="text-slate-600 font-weight-medium">Mã nhân viên</span>
-                                <div class="d-flex align-center border rounded px-2 py-1 bg-slate-50"
-                                    style="min-width: 170px; justify-content: space-between">
-                                    <span class="font-weight-bold text-slate-800 text-caption">
-                                        {{ currentEmployeeDetail?.ma || authStore.user?.username || 'admin1' }}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="d-flex align-center justify-space-between text-body-2 py-1">
-                                <span class="text-slate-600 font-weight-medium">Tên nhân viên</span>
-                                <div class="d-flex align-center border rounded px-2 py-1 bg-slate-50"
-                                    style="min-width: 170px; justify-content: space-between">
-                                    <span class="font-weight-bold text-slate-800 text-caption">
-                                        {{ currentEmployeeDetail?.ten || authStore.user?.hoTen ||
-                                            (authStore.user?.username === 'admin'
-                                                ? 'Quản trị viên' : (authStore.user?.username || 'Tường San')) }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </v-card>
-
                     <!-- Khách hàng Card -->
                     <v-card class="pos-card pa-4 rounded-lg border">
                         <div class="d-flex justify-space-between align-center border-b pb-2 mb-3">
@@ -2223,15 +2307,18 @@ const formatDateTime = (dateStr) => {
                             </div>
                         </div>
 
-                        <div class="d-flex flex-column gap-1">
+                        <div class="d-flex flex-column gap-4">
                             <!-- Input tìm kiếm khách hàng -->
-                            <div class="mb-2 position-relative">
-                                <v-text-field v-model="customerSearch" placeholder="Tìm kiếm khách hàng (SĐT, Tên, Email)"
-                                    variant="outlined" density="compact" hide-details prepend-inner-icon="mdi-magnify"
-                                    class="dim-input-field bg-slate-50" @focus="showCustomerSuggestions = true" autocomplete="off" />
-                                
+                            <div class="position-relative">
+                                <v-text-field v-model="customerSearch"
+                                    placeholder="Tìm kiếm khách hàng (SĐT, Tên, Email)" variant="outlined"
+                                    density="compact" hide-details prepend-inner-icon="mdi-magnify"
+                                    class="dim-input-field bg-slate-50" @focus="showCustomerSuggestions = true"
+                                    autocomplete="off" />
+
                                 <div v-if="showCustomerSuggestions && customerSearch.length > 0"
-                                    class="suggestion-popover overflow-y-auto w-100" style="max-height: 250px; z-index: 100; top: calc(100% + 4px);"
+                                    class="suggestion-popover overflow-y-auto w-100"
+                                    style="max-height: 250px; z-index: 100; top: calc(100% + 4px);"
                                     v-click-outside="() => showCustomerSuggestions = false">
                                     <div v-if="customerResults.length > 0" class="pa-1 d-flex flex-column gap-1">
                                         <div v-for="c in customerResults" :key="c.id"
@@ -2239,10 +2326,12 @@ const formatDateTime = (dateStr) => {
                                             class="suggestion-item d-flex flex-column px-3 py-2 cursor-pointer transition-all border-b"
                                             style="font-size: 13px;">
                                             <div class="d-flex w-100 justify-space-between mb-1">
-                                                <span class="font-weight-bold text-slate-800">{{ c.hoTen || c.ten }}</span>
+                                                <span class="font-weight-bold text-slate-800">{{ c.hoTen || c.ten
+                                                }}</span>
                                                 <span class="text-blue-darken-3 font-weight-medium">{{ c.sdt }}</span>
                                             </div>
-                                            <span class="text-slate-500 text-caption">{{ c.email || 'Không có email' }}</span>
+                                            <span class="text-slate-500 text-caption">{{ c.email || 'Không có email'
+                                            }}</span>
                                         </div>
                                     </div>
                                     <div v-else class="pa-3 text-center text-slate-500">
@@ -2251,7 +2340,7 @@ const formatDateTime = (dateStr) => {
                                 </div>
                             </div>
 
-                            <div class="d-flex gap-1 mb-1">
+                            <div class="d-flex gap-3">
                                 <v-text-field v-model="customerForm.ten" placeholder="Tên khách hàng" variant="outlined"
                                     density="compact" hide-details autocomplete="off"
                                     class="dim-input-field flex-grow-1" />
@@ -2262,7 +2351,7 @@ const formatDateTime = (dateStr) => {
                                 </div>
                             </div>
 
-                            <div class="d-flex gap-1">
+                            <div class="d-flex gap-3">
                                 <v-text-field v-model="customerForm.email" placeholder="Địa chỉ email"
                                     variant="outlined" density="compact" hide-details autocomplete="off"
                                     class="dim-input-field flex-grow-1" />
@@ -2278,44 +2367,110 @@ const formatDateTime = (dateStr) => {
                     </v-card>
 
                     <!-- Nhận hàng Card -->
-                    <v-card class="pos-card pa-4 rounded-lg border">
-                        <div class="font-weight-bold text-slate-800 mb-3" style="font-size: 14px !important">Thông tin
-                            nhận hàng</div>
-                        <div class="d-flex flex-column gap-1">
-                            <div class="d-flex gap-1 mb-1">
-                                <v-text-field v-model="recipientName" placeholder="Tên người nhận" variant="outlined"
-                                    density="compact" hide-details autocomplete="off"
-                                    class="dim-input-field flex-grow-1" />
-                                <div style="width: 170px; flex: none;">
-                                    <v-text-field v-model="recipientPhone" placeholder="Số điện thoại"
+                    <transition name="expand-fade">
+                        <v-card v-if="isGiaoHang" class="pos-card pa-4 rounded-lg border">
+                            <div class="font-weight-bold text-slate-800 mb-3" style="font-size: 14px !important">Thông
+                                tin
+                                nhận hàng</div>
+                            <div class="d-flex flex-column gap-4">
+                                <div class="d-flex gap-3">
+                                    <v-text-field v-model="recipientName" placeholder="Tên người nhận"
                                         variant="outlined" density="compact" hide-details autocomplete="off"
-                                        class="dim-input-field" />
+                                        class="dim-input-field flex-grow-1" />
+                                    <div style="width: 170px; flex: none;">
+                                        <v-text-field v-model="recipientPhone" placeholder="Số điện thoại"
+                                            variant="outlined" density="compact" hide-details autocomplete="off"
+                                            class="dim-input-field" />
+                                    </div>
+                                </div>
+
+                                <v-text-field v-model="recipientAddressDetail" placeholder="Địa chỉ chi tiết"
+                                    variant="outlined" density="compact" hide-details autocomplete="off"
+                                    class="dim-input-field w-100" />
+
+                                <div class="d-flex gap-3">
+                                    <v-select v-model="recipientProvince" :items="provincesShip" item-title="name"
+                                        item-value="code" placeholder="Tỉnh/Thành phố" density="compact"
+                                        variant="outlined" hide-details class="dim-select-field flex-grow-1"
+                                        style="width: 33.33%;" />
+                                    <v-select v-model="recipientDistrict" :items="districtsShip" item-title="name"
+                                        item-value="code" placeholder="Quận/Huyện" density="compact" variant="outlined"
+                                        hide-details :disabled="!recipientProvince" class="dim-select-field flex-grow-1"
+                                        style="width: 33.33%;" />
+                                    <v-select v-model="recipientWard" :items="wardsShip" item-title="name"
+                                        item-value="code" placeholder="Phường/Xã" density="compact" variant="outlined"
+                                        hide-details :disabled="!recipientDistrict" class="dim-select-field flex-grow-1"
+                                        style="width: 33.33%;" />
                                 </div>
                             </div>
+                        </v-card>
+                    </transition>
 
-                            <v-text-field v-model="recipientAddressDetail" placeholder="Địa chỉ chi tiết"
-                                variant="outlined" density="compact" hide-details autocomplete="off"
-                                class="dim-input-field w-100 mb-1" />
+                    <!-- Payment Card -->
+                    <v-card class="pos-card pa-4 rounded-lg border">
+                        <div class="d-flex justify-space-between align-center mb-3">
+                            <h3 class="text-slate-800 m-0" style="font-size: 13px !important">Thanh toán</h3>
+                        </div>
 
-                            <div class="d-flex gap-1">
-                                <v-select v-model="recipientProvince" :items="provincesShip" item-title="name"
-                                    item-value="code" placeholder="Tỉnh/Thành phố" density="compact" variant="outlined"
-                                    hide-details class="dim-select-field flex-grow-1" style="width: 33.33%;" />
-                                <v-select v-model="recipientDistrict" :items="districtsShip" item-title="name"
-                                    item-value="code" placeholder="Quận/Huyện" density="compact" variant="outlined"
-                                    hide-details :disabled="!recipientProvince" class="dim-select-field flex-grow-1"
-                                    style="width: 33.33%;" />
-                                <v-select v-model="recipientWard" :items="wardsShip" item-title="name" item-value="code"
-                                    placeholder="Phường/Xã" density="compact" variant="outlined" hide-details
-                                    :disabled="!recipientDistrict" class="dim-select-field flex-grow-1"
-                                    style="width: 33.33%;" />
+                        <div class="d-flex align-center justify-space-between mb-4">
+                            <span class="text-slate-600" style="font-size: 13px !important">Hình thức thanh
+                                toán</span>
+                            <div class="d-flex gap-2">
+                                <button type="button" @click="checkoutData.paymentMethod = 'CASH'"
+                                    :class="['px-3 d-flex align-center justify-center transition-all',
+                                        checkoutData.paymentMethod === 'CASH' ? 'cash-active-btn' : 'payment-inactive-btn']"
+                                    style="font-size: 13px !important; border: 1px solid; border-radius: 0px !important; height: 32px; min-width: 90px; cursor: pointer;">
+                                    <v-icon class="mr-1" size="16">mdi-cash</v-icon>
+                                    Tiền mặt
+                                </button>
+                                <button type="button" @click="checkoutData.paymentMethod = 'VNPAY'"
+                                    :class="['px-3 d-flex align-center justify-center transition-all',
+                                        checkoutData.paymentMethod === 'VNPAY' ? 'vnpay-active-btn' : 'payment-inactive-btn']"
+                                    style="font-size: 13px !important; border: 1px solid; border-radius: 0px !important; height: 32px; min-width: 90px; cursor: pointer;">
+                                    <v-icon class="mr-1" size="16">mdi-credit-card-outline</v-icon>
+                                    VNPay
+                                </button>
                             </div>
+                        </div>
+
+                        <!-- Money Input -->
+                        <div class="d-flex align-center justify-space-between mb-3">
+                            <span class="text-slate-600" style="font-size: 13px !important">
+                                {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
+                            </span>
+                            <v-text-field :model-value="formatNumberWithDots(checkoutData.receivedAmount)"
+                                @input="e => checkoutData.receivedAmount = parseNumberFromDots(e.target.value)"
+                                variant="outlined" density="compact" suffix="đ" hide-details
+                                style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
+                                class="text-right-input" />
+                        </div>
+
+                        <!-- Unpaid / Refund Message Alert -->
+                        <div v-if="remainingBalance > 0"
+                            class="d-flex align-center justify-space-between pa-3 rounded-lg bg-red-50 text-red-800 border-red">
+                            <div class="d-flex align-center gap-2">
+                                <v-icon color="error" size="18">mdi-alert-circle-outline</v-icon>
+                                <span class="text-slate-600" style="font-size: 13px !important">Còn thiếu</span>
+                            </div>
+                            <span class="font-weight-bold" style="font-size: 13px !important;">{{
+                                formatCurrency(remainingBalance)
+                                }}</span>
+                        </div>
+                        <div v-else-if="changeAmount > 0"
+                            class="d-flex align-center justify-space-between pa-3 rounded-lg bg-blue-50 text-blue-800 border-blue">
+                            <div class="d-flex align-center gap-2">
+                                <v-icon color="primary" size="18">mdi-cash-refund</v-icon>
+                                <span class="text-slate-600" style="font-size: 13px !important">Tiền thừa trả
+                                    khách</span>
+                            </div>
+                            <span class="font-weight-bold" style="font-size: 13px !important;">{{
+                                formatCurrency(changeAmount) }}</span>
                         </div>
                     </v-card>
 
                     <!-- Checkout / Print Action Buttons at Bottom Right -->
                     <div class="d-flex gap-3 mt-2 w-100">
-                        <v-btn color="#88c057" height="60"
+                        <v-btn color="#107c41" height="60"
                             class="font-weight-bold rounded-lg shadow-md text-white px-4 flex-grow-1"
                             style="font-size: 17px !important;" :disabled="!selectedOrder?.listsHoaDonChiTiet?.length"
                             @click="onPrintInvoice" elevation="0">
@@ -2323,7 +2478,7 @@ const formatDateTime = (dateStr) => {
                             IN HÓA ĐƠN
                         </v-btn>
 
-                        <v-btn color="#4285F4" height="60"
+                        <v-btn color="primary" height="60"
                             class="font-weight-bold rounded-lg btn-checkout shadow-md text-white px-4 flex-grow-1"
                             style="font-size: 17px !important;" :loading="isProcessing"
                             :disabled="!selectedOrder?.listsHoaDonChiTiet?.length" @click="onCheckout" elevation="0">
@@ -2350,809 +2505,212 @@ const formatDateTime = (dateStr) => {
         </div>
 
         <!-- VNPay QR Dialog -->
-            <v-dialog v-model="vnpayDialog.show" max-width="450" persistent>
-                <v-card class="rounded-xl overflow-hidden pb-4">
-                    <v-card-text class="pt-6 text-center d-flex flex-column align-center">
-                        <div class="vnpay-logo-wrapper mb-4">
-                            <v-img src="https://vnpay.vn/assets/images/logo-icon/logo-primary.svg" width="60" />
-                        </div>
-
-                        <h3 class="text-h6 font-weight-bold mb-1">Thanh toán VNPay</h3>
-                        <p class="text-subtitle-2 text-grey-darken-1 mb-6">Mã đơn: {{ vnpayDialog.orderId }}</p>
-
-                        <div v-if="vnpayDialog.loading" class="pa-8 d-flex flex-column align-center">
-                            <v-progress-circular indeterminate color="#005BAA" size="48"
-                                class="mb-4"></v-progress-circular>
-                            <div class="text-body-2 font-weight-medium text-grey-darken-2">{{ vnpayDialog.statusText }}
-                            </div>
-                        </div>
-
-                        <div v-else-if="vnpayDialog.verified" class="pa-8 d-flex flex-column align-center">
-                            <v-icon color="success" size="64" class="mb-4">mdi-check-circle</v-icon>
-                            <div class="text-h6 font-weight-bold text-success mb-2">Giao dịch thành công!</div>
-                            <div class="text-body-2 text-grey-darken-1">Đơn hàng đang được hoàn tất...</div>
-                        </div>
-
-                        <div v-else class="w-100 d-flex flex-column align-center">
-                            <template v-if="checkoutData.vnpayMethod === 'QR'">
-                                <div class="pa-2 bg-white rounded-lg elevation-2 mb-4 d-inline-block">
-                                    <v-img :src="vnpayDialog.qrUrl" width="220" height="220" />
-                                </div>
-                                <div class="text-h5 font-weight-bold text-error mb-1">
-                                    {{ new Intl.NumberFormat('vi-VN', {
-                                        style: 'currency', currency: 'VND'
-                                    }).format(vnpayDialog.amount) }}
-                                </div>
-                                <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
-                                    Sử dụng ứng dụng ngân hàng hoặc ví VNPay để quét mã.
-                                </div>
-                            </template>
-                            <template v-else>
-                                <div class="text-h5 font-weight-bold text-error mb-4">
-                                    {{ new Intl.NumberFormat('vi-VN', {
-                                        style: 'currency', currency: 'VND'
-                                    }).format(vnpayDialog.amount) }}
-                                </div>
-                                <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
-                                    Vui lòng hoàn tất thanh toán trên VNPay.
-                                </div>
-                                <v-btn color="#005BAA" class="mb-6 rounded-lg text-white font-weight-bold"
-                                    @click="() => { vnpayPopup = window.open(vnpayDialog.paymentUrl, 'vnpay', 'width=800,height=600'); }">
-                                    Mở lại thanh toán
-                                </v-btn>
-                            </template>
-
-                            <v-btn block color="#005BAA" class="mb-3 rounded-lg text-white font-weight-bold" height="48"
-                                @click="onConfirmVnPayManual">
-                                XÁC NHẬN ĐÃ NHẬN TIỀN
-                            </v-btn>
-
-                            <v-btn v-if="checkoutData.vnpayMethod === 'QR'" block variant="outlined"
-                                color="grey-darken-1" class="rounded-lg font-weight-bold" height="48"
-                                @click="startVnPayFlow">
-                                TẠO LẠI MÃ QR
-                            </v-btn>
-
-                            <v-btn variant="text" color="error" class="mt-4" size="small" @click="cancelVnPayFlow">
-                                Hủy giao dịch
-                            </v-btn>
-                        </div>
-                    </v-card-text>
-                </v-card>
-            </v-dialog>
-
-            <!-- VNPay Choice Dialog -->
-            <v-dialog v-model="vnpayChoiceDialog.show" max-width="400" persistent>
-                <v-card class="rounded-xl pa-5">
-                    <div class="text-center mb-5">
-                        <div class="text-h6 font-weight-bold">Chọn hình thức thanh toán</div>
+        <v-dialog v-model="vnpayDialog.show" max-width="450" persistent>
+            <v-card class="rounded-xl overflow-hidden pb-4">
+                <v-card-text class="pt-6 text-center d-flex flex-column align-center">
+                    <div class="vnpay-logo-wrapper mb-4">
+                        <v-img src="https://vnpay.vn/assets/images/logo-icon/logo-primary.svg" width="60" />
                     </div>
-                    <v-radio-group v-model="vnpayChoiceDialog.method" column hide-details class="mb-5">
-                        <v-radio value="QR" label="Thanh toán qua quét mã QR" color="#2E4E8E"></v-radio>
-                        <v-radio value="GATEWAY" label="Nhập mã thẻ qua cổng VNPay" color="#2E4E8E"></v-radio>
-                    </v-radio-group>
-                    <div class="d-flex gap-3">
-                        <v-btn class="flex-grow-1 rounded-lg font-weight-bold" variant="outlined" color="grey-darken-1"
-                            height="44" @click="vnpayChoiceDialog.show = false">
-                            Hủy
+
+                    <h3 class="text-h6 font-weight-bold mb-1">Thanh toán VNPay</h3>
+                    <p class="text-subtitle-2 text-grey-darken-1 mb-6">Mã đơn: {{ vnpayDialog.orderId }}</p>
+
+                    <div v-if="vnpayDialog.loading" class="pa-8 d-flex flex-column align-center">
+                        <v-progress-circular indeterminate color="#005BAA" size="48" class="mb-4"></v-progress-circular>
+                        <div class="text-body-2 font-weight-medium text-grey-darken-2">{{ vnpayDialog.statusText }}
+                        </div>
+                    </div>
+
+                    <div v-else-if="vnpayDialog.verified" class="pa-8 d-flex flex-column align-center">
+                        <v-icon color="success" size="64" class="mb-4">mdi-check-circle</v-icon>
+                        <div class="text-h6 font-weight-bold text-success mb-2">Giao dịch thành công!</div>
+                        <div class="text-body-2 text-grey-darken-1">Đơn hàng đang được hoàn tất...</div>
+                    </div>
+
+                    <div v-else class="w-100 d-flex flex-column align-center">
+                        <template v-if="checkoutData.vnpayMethod === 'QR'">
+                            <div class="pa-2 bg-white rounded-lg elevation-2 mb-4 d-inline-block">
+                                <v-img :src="vnpayDialog.qrUrl" width="220" height="220" />
+                            </div>
+                            <div class="text-h5 font-weight-bold text-error mb-1">
+                                {{ new Intl.NumberFormat('vi-VN', {
+                                    style: 'currency', currency: 'VND'
+                                }).format(vnpayDialog.amount) }}
+                            </div>
+                            <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
+                                Sử dụng ứng dụng ngân hàng hoặc ví VNPay để quét mã.
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div class="text-h5 font-weight-bold text-error mb-4">
+                                {{ new Intl.NumberFormat('vi-VN', {
+                                    style: 'currency', currency: 'VND'
+                                }).format(vnpayDialog.amount) }}
+                            </div>
+                            <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
+                                Vui lòng hoàn tất thanh toán trên VNPay.
+                            </div>
+                            <v-btn color="#005BAA" class="mb-6 rounded-lg text-white font-weight-bold"
+                                @click="() => { vnpayPopup = window.open(vnpayDialog.paymentUrl, 'vnpay', 'width=800,height=600'); }">
+                                Mở lại thanh toán
+                            </v-btn>
+                        </template>
+
+                        <v-btn block color="#005BAA" class="mb-3 rounded-lg text-white font-weight-bold" height="48"
+                            @click="onConfirmVnPayManual">
+                            XÁC NHẬN ĐÃ NHẬN TIỀN
                         </v-btn>
-                        <v-btn class="flex-grow-1 rounded-lg font-weight-bold text-white" color="#4285F4" height="44"
-                            @click="proceedVnPayChoice">
-                            Tiếp tục
+
+                        <v-btn v-if="checkoutData.vnpayMethod === 'QR'" block variant="outlined" color="grey-darken-1"
+                            class="rounded-lg font-weight-bold" height="48" @click="startVnPayFlow">
+                            TẠO LẠI MÃ QR
+                        </v-btn>
+
+                        <v-btn variant="text" color="error" class="mt-4" size="small" @click="cancelVnPayFlow">
+                            Hủy giao dịch
                         </v-btn>
                     </div>
-                </v-card>
-            </v-dialog>
+                </v-card-text>
+            </v-card>
+        </v-dialog>
 
-            <!-- Scanner dialog -->
-            <v-dialog v-model="showScanner" max-width="500" transition="dialog-bottom-transition">
-                        <v-card class="rounded-lg pa-4">
-                            <div class="d-flex justify-space-between align-center mb-4">
-                                <span class="text-h6 font-weight-bold">Quét mã sản phẩm</span>
-                                <v-btn icon variant="text" @click="stopScanner">
-                                    <XIcon />
-                                </v-btn>
+        <!-- VNPay Choice Dialog -->
+        <v-dialog v-model="vnpayChoiceDialog.show" max-width="400" persistent>
+            <v-card class="rounded-xl pa-5">
+                <div class="text-center mb-5">
+                    <div class="text-h6 font-weight-bold">Chọn hình thức thanh toán</div>
+                </div>
+                <v-radio-group v-model="vnpayChoiceDialog.method" column hide-details class="mb-5">
+                    <v-radio value="QR" label="Thanh toán qua quét mã QR" color="#2E4E8E"></v-radio>
+                    <v-radio value="GATEWAY" label="Nhập mã thẻ qua cổng VNPay" color="#2E4E8E"></v-radio>
+                </v-radio-group>
+                <div class="d-flex gap-3">
+                    <v-btn class="flex-grow-1 rounded-lg font-weight-bold" variant="outlined" color="grey-darken-1"
+                        height="44" @click="vnpayChoiceDialog.show = false">
+                        Hủy
+                    </v-btn>
+                    <v-btn class="flex-grow-1 rounded-lg font-weight-bold text-white" color="#4285F4" height="44"
+                        @click="proceedVnPayChoice">
+                        Tiếp tục
+                    </v-btn>
+                </div>
+            </v-card>
+        </v-dialog>
+
+        <!-- Scanner dialog -->
+        <v-dialog v-model="showScanner" max-width="500" transition="dialog-bottom-transition">
+            <v-card class="rounded-lg pa-4">
+                <div class="d-flex justify-space-between align-center mb-4">
+                    <span class="text-h6 font-weight-bold">Quét mã sản phẩm</span>
+                    <v-btn icon variant="text" @click="stopScanner">
+                        <XIcon />
+                    </v-btn>
+                </div>
+                <div id="reader" style="width: 100%"></div>
+                <div class="mt-4 text-center text-caption text-grey">Đưa mã QR hoặc Barcode của sản phẩm vào
+                    khung
+                    hình
+                </div>
+            </v-card>
+        </v-dialog>
+
+        <!-- Quick Add Customer Dialog -->
+        <v-dialog v-model="showQuickAddDialog" max-width="650" transition="dialog-bottom-transition" persistent>
+            <v-card class="rounded-lg overflow-hidden">
+                <v-card-title
+                    class="text-subtitle-1 font-weight-bold pa-4 border-b bg-slate-50 d-flex justify-space-between align-center">
+                    Thêm nhanh thông tin khách hàng
+                    <v-btn icon size="small" variant="text" @click="showQuickAddDialog = false">
+                        <XIcon size="20" />
+                    </v-btn>
+                </v-card-title>
+                <v-card-text class="pa-5">
+                    <div class="text-body-2 text-medium-emphasis mb-4">
+                        Nếu SĐT đã tồn tại, hệ thống sẽ tự động nhận diện và gán khách hàng vào đơn.
+                    </div>
+
+                    <v-row dense>
+                        <v-col cols="12" md="6">
+                            <v-text-field v-model="quickAddForm.ten" label="Tên khách hàng" placeholder="Nhập tên..."
+                                variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2"
+                                maxlength="100" />
+                        </v-col>
+                        <v-col cols="12" md="6">
+                            <v-text-field v-model="quickAddForm.sdt" label="Số điện thoại"
+                                placeholder="Ví dụ: 0912345678" variant="outlined" density="comfortable"
+                                hide-details="auto" class="mb-3 text-body-2"
+                                @input="quickAddForm.sdt = String($event.target.value || '').replace(/[^0-9]/g, '')" />
+                        </v-col>
+                        <v-col cols="12" md="6">
+                            <v-select v-model="quickAddForm.gioiTinh" :items="GIOI_TINH_OPTIONS" label="Giới tính"
+                                variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2" />
+                        </v-col>
+                        <v-col cols="12" md="6">
+                            <v-text-field v-model="quickAddForm.email" label="Email (Không bắt buộc)"
+                                placeholder="Ví dụ: abc@gmail.com" variant="outlined" density="comfortable"
+                                hide-details="auto" class="mb-3 text-body-2" />
+                        </v-col>
+
+                        <v-col cols="12">
+                            <div class="text-subtitle-2 font-weight-bold mt-2 mb-2 text-slate-700">Địa chỉ
+                                (Tùy
+                                chọn)
                             </div>
-                            <div id="reader" style="width: 100%"></div>
-                            <div class="mt-4 text-center text-caption text-grey">Đưa mã QR hoặc Barcode của sản phẩm vào
-                                khung
-                                hình
-                            </div>
-                        </v-card>
-                    </v-dialog>
+                        </v-col>
+                        <v-col cols="12" md="4">
+                            <v-autocomplete v-model="quickAddForm.tinh" :items="provinces" item-title="name"
+                                item-value="code" placeholder="Tỉnh / Thành phố" variant="outlined" bg-color="white"
+                                density="compact" hide-details :loading="loadingLocations.provinces"
+                                @update:model-value="(val) => { quickAddForm.thanhPho = null; quickAddForm.phuongXa = null; if (val) fetchDistricts(val); }"
+                                class="mb-3 text-body-2" />
+                        </v-col>
+                        <v-col cols="12" md="4">
+                            <v-autocomplete v-model="quickAddForm.thanhPho" :items="districts" item-title="name"
+                                item-value="code" placeholder="Quận / Huyện" variant="outlined" bg-color="white"
+                                density="compact" hide-details :loading="loadingLocations.districts"
+                                :disabled="!quickAddForm.tinh"
+                                @update:model-value="(val) => { quickAddForm.phuongXa = null; if (val) fetchWards(val); }"
+                                class="mb-3 text-body-2" />
+                        </v-col>
+                        <v-col cols="12" md="4">
+                            <v-autocomplete v-model="quickAddForm.phuongXa" :items="wards" item-title="name"
+                                item-value="code" placeholder="Phường / Xã" variant="outlined" bg-color="white"
+                                density="compact" hide-details :loading="loadingLocations.wards"
+                                :disabled="!quickAddForm.thanhPho" class="mb-3 text-body-2" />
+                        </v-col>
+                        <v-col cols="12">
+                            <v-text-field v-model="quickAddForm.diaChiChiTiet"
+                                placeholder="Địa chỉ cụ thể (Số nhà, đường...)" variant="outlined" density="compact"
+                                hide-details class="text-body-2" />
+                        </v-col>
+                    </v-row>
+                </v-card-text>
+                <v-card-actions class="px-6 pb-5 border-t bg-slate-50">
+                    <v-spacer />
+                    <v-btn variant="tonal" color="slate-500" class="rounded-lg text-none"
+                        @click="showQuickAddDialog = false">Hủy</v-btn>
+                    <v-btn :loading="quickAddLoading" color="primary" variant="flat"
+                        class="px-6 rounded-lg font-weight-bold text-none" @click="submitQuickAdd"> Thêm
+                        nhanh
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
 
-                    <!-- Quick Add Customer Dialog -->
-                    <v-dialog v-model="showQuickAddDialog" max-width="650" transition="dialog-bottom-transition"
-                        persistent>
-                        <v-card class="rounded-lg overflow-hidden">
-                            <v-card-title
-                                class="text-subtitle-1 font-weight-bold pa-4 border-b bg-slate-50 d-flex justify-space-between align-center">
-                                Thêm nhanh thông tin khách hàng
-                                <v-btn icon size="small" variant="text" @click="showQuickAddDialog = false">
-                                    <XIcon size="20" />
-                                </v-btn>
-                            </v-card-title>
-                            <v-card-text class="pa-5">
-                                <div class="text-body-2 text-medium-emphasis mb-4">
-                                    Nếu SĐT đã tồn tại, hệ thống sẽ tự động nhận diện và gán khách hàng vào đơn.
-                                </div>
+        <!-- Confirmation Dialog -->
+        <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
+            :color="confirmDialog.color" :confirm-color="confirmDialog.confirmColor" :loading="confirmDialog.loading"
+            @confirm="confirmDialog.action" />
 
-                                <v-row dense>
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="quickAddForm.ten" label="Tên khách hàng"
-                                            placeholder="Nhập tên..." variant="outlined" density="comfortable"
-                                            hide-details="auto" class="mb-3 text-body-2" maxlength="100" />
-                                    </v-col>
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="quickAddForm.sdt" label="Số điện thoại"
-                                            placeholder="Ví dụ: 0912345678" variant="outlined" density="comfortable"
-                                            hide-details="auto" class="mb-3 text-body-2"
-                                            @input="quickAddForm.sdt = String($event.target.value || '').replace(/[^0-9]/g, '')" />
-                                    </v-col>
-                                    <v-col cols="12" md="6">
-                                        <v-select v-model="quickAddForm.gioiTinh" :items="GIOI_TINH_OPTIONS"
-                                            label="Giới tính" variant="outlined" density="comfortable"
-                                            hide-details="auto" class="mb-3 text-body-2" />
-                                    </v-col>
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="quickAddForm.email" label="Email (Không bắt buộc)"
-                                            placeholder="Ví dụ: abc@gmail.com" variant="outlined" density="comfortable"
-                                            hide-details="auto" class="mb-3 text-body-2" />
-                                    </v-col>
+        <!-- Hóa đơn sau thanh toán -->
+        <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" />
 
-                                    <v-col cols="12">
-                                        <div class="text-subtitle-2 font-weight-bold mt-2 mb-2 text-slate-700">Địa chỉ
-                                            (Tùy
-                                            chọn)
-                                        </div>
-                                    </v-col>
-                                    <v-col cols="12" md="4">
-                                        <v-autocomplete v-model="quickAddForm.tinh" :items="provinces" item-title="name"
-                                            item-value="code" placeholder="Tỉnh / Thành phố" variant="outlined"
-                                            bg-color="white" density="compact" hide-details
-                                            :loading="loadingLocations.provinces"
-                                            @update:model-value="(val) => { quickAddForm.thanhPho = null; quickAddForm.phuongXa = null; if (val) fetchDistricts(val); }"
-                                            class="mb-3 text-body-2" />
-                                    </v-col>
-                                    <v-col cols="12" md="4">
-                                        <v-autocomplete v-model="quickAddForm.thanhPho" :items="districts"
-                                            item-title="name" item-value="code" placeholder="Quận / Huyện"
-                                            variant="outlined" bg-color="white" density="compact" hide-details
-                                            :loading="loadingLocations.districts" :disabled="!quickAddForm.tinh"
-                                            @update:model-value="(val) => { quickAddForm.phuongXa = null; if (val) fetchWards(val); }"
-                                            class="mb-3 text-body-2" />
-                                    </v-col>
-                                    <v-col cols="12" md="4">
-                                        <v-autocomplete v-model="quickAddForm.phuongXa" :items="wards" item-title="name"
-                                            item-value="code" placeholder="Phường / Xã" variant="outlined"
-                                            bg-color="white" density="compact" hide-details
-                                            :loading="loadingLocations.wards" :disabled="!quickAddForm.thanhPho"
-                                            class="mb-3 text-body-2" />
-                                    </v-col>
-                                    <v-col cols="12">
-                                        <v-text-field v-model="quickAddForm.diaChiChiTiet"
-                                            placeholder="Địa chỉ cụ thể (Số nhà, đường...)" variant="outlined"
-                                            density="compact" hide-details class="text-body-2" />
-                                    </v-col>
-                                </v-row>
-                            </v-card-text>
-                            <v-card-actions class="px-6 pb-5 border-t bg-slate-50">
-                                <v-spacer />
-                                <v-btn variant="tonal" color="slate-500" class="rounded-lg text-none"
-                                    @click="showQuickAddDialog = false">Hủy</v-btn>
-                                <v-btn :loading="quickAddLoading" color="primary" variant="flat"
-                                    class="px-6 rounded-lg font-weight-bold text-none" @click="submitQuickAdd"> Thêm
-                                    nhanh
-                                </v-btn>
-                            </v-card-actions>
-                        </v-card>
-                    </v-dialog>
-
-                    <!-- Confirmation Dialog -->
-                    <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title"
-                        :message="confirmDialog.message" :color="confirmDialog.color"
-                        :confirm-color="confirmDialog.confirmColor" :loading="confirmDialog.loading"
-                        @confirm="confirmDialog.action" />
-
-                     <!-- Hóa đơn sau thanh toán -->
-                    <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" />
+        <!-- Giao Ca Modal -->        <!-- Tạm thời ẩn chức năng giao ca
+        <GiaoCaModal v-model="showGiaoCaModal" mode="open" @success="handleGiaoCaSuccess" /> 
+        -->
     </v-container>
 </template>
 
-            <style scoped>
-            .pos-wrapper {
-                background: #eef2f6;
-                min-height: calc(100vh - 64px);
-                overflow-y: auto;
-            }
-
-            .pos-wrapper :deep(.v-btn) {
-                text-transform: none;
-                letter-spacing: normal;
-            }
-
-            .pos-shell {
-                display: flex;
-                flex-direction: column;
-                padding: 16px;
-            }
-
-            .pos-header-row {
-                min-height: 48px;
-            }
-
-            .pos-card {
-                background: #ffffff;
-                border: 1px solid #dfe5ee !important;
-                box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
-                border-radius: 8px !important;
-            }
-
-            .compact-select :deep(.v-field__input) {
-                padding-top: 6px !important;
-                padding-bottom: 6px !important;
-                min-height: 32px !important;
-                font-size: 13px !important;
-            }
-            .compact-select :deep(input::placeholder) {
-                line-height: normal !important;
-            }
-
-            .compact-select :deep(.v-field) {
-                border-radius: 8px !important;
-                --v-input-control-height: 32px !important;
-                font-size: 13px !important;
-                background-color: #ffffff !important;
-                border: 1px solid #cbd5e1 !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .compact-select :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .compact-select :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .compact-btn {
-                height: 32px !important;
-                border-radius: 8px !important;
-                font-size: 13px !important;
-                border: 1px solid #dfe5ee !important;
-                background: #ffffff !important;
-                color: #334155 !important;
-            }
-
-            .custom-customer-btn {
-                border-color: #dfe5ee !important;
-                background-color: #ffffff !important;
-            }
-
-            .product-mode-toggle {
-                height: 32px !important;
-            }
-
-            .product-mode-toggle .v-btn {
-                height: 30px !important;
-                font-size: 12px !important;
-                text-transform: none !important;
-                border-radius: 6px !important;
-            }
-
-            .search-input :deep(.v-field) {
-                border-radius: 8px !important;
-                font-size: 13px !important;
-                border: 1px solid #cbd5e1 !important;
-                background-color: #ffffff !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .search-input :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .search-input :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .scanner-btn {
-                border-radius: 8px !important;
-                height: 40px !important;
-            }
-
-            .hover-autocomplete-item {
-                border-bottom: 1px solid #e2e8f0 !important;
-                transition: background-color 0.2s ease;
-            }
-
-            .hover-autocomplete-item:hover {
-                background-color: #f8fafc !important;
-            }
-
-            .hover-autocomplete-item:last-child {
-                border-bottom: none !important;
-            }
-
-            .cart-container-box {
-                background-color: #ffffff;
-                min-height: 200px;
-                border: 1px solid #cbd5e1 !important;
-                border-radius: 8px !important;
-            }
-
-            .text-right-input :deep(input) {
-                text-align: right !important;
-            }
-
-            .text-right-input :deep(.v-field) {
-                border-radius: 8px !important;
-                font-size: 13px !important;
-                border: 1px solid #cbd5e1 !important;
-                background-color: #ffffff !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .text-right-input :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .text-right-input :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .custom-value-input :deep(.v-field) {
-                background-color: #ffffff !important;
-                border: 1px solid #cbd5e1 !important;
-                box-shadow: none !important;
-                border-radius: 8px !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .custom-value-input :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .custom-value-input :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .custom-value-input :deep(input) {
-                color: #334155 !important;
-                font-weight: 400 !important;
-                padding-right: 8px !important;
-            }
-
-            .custom-value-input :deep(.v-text-field__suffix) {
-                font-size: 13px !important;
-                color: #475569 !important;
-                font-weight: 400 !important;
-                opacity: 1 !important;
-            }
-
-            .pos-card :deep(.v-checkbox .v-label) {
-                font-size: 13px !important;
-                font-weight: 400 !important;
-            }
-
-            .bg-emerald-50 {
-                background-color: #ecfdf5 !important;
-                border: 1px solid #a7f3d0 !important;
-            }
-
-            .text-emerald-800 {
-                color: #065f46 !important;
-            }
-
-            .text-emerald-600 {
-                color: #059669 !important;
-            }
-
-            .border-emerald {
-                border: 1px solid #a7f3d0 !important;
-            }
-
-            .bg-red-50 {
-                background-color: #fef2f2 !important;
-                border: 1px solid #fecaca !important;
-            }
-
-            .text-red-800 {
-                color: #991b1b !important;
-            }
-
-            .border-red {
-                border: 1px solid #fecaca !important;
-            }
-
-            .bg-blue-50 {
-                background-color: #eff6ff !important;
-                border: 1px solid #bfdbfe !important;
-            }
-
-            .text-blue-800 {
-                color: #1e40af !important;
-            }
-
-            .border-blue {
-                border: 1px solid #bfdbfe !important;
-            }
-
-            .payment-method-toggle {
-                height: 36px !important;
-            }
-
-            .payment-method-toggle .v-btn {
-                height: 34px !important;
-                font-size: 12px !important;
-                text-transform: none !important;
-            }
-
-            .note-type-toggle {
-                height: 32px !important;
-            }
-
-            .note-type-toggle .v-btn {
-                height: 30px !important;
-                font-size: 12px !important;
-                text-transform: none !important;
-            }
-
-            .note-textarea :deep(.v-field) {
-                border-radius: 8px !important;
-                border: 1px solid #cbd5e1 !important;
-                background-color: #ffffff !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .note-textarea :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .note-textarea :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .btn-checkout {
-                text-transform: none !important;
-                letter-spacing: 0 !important;
-            }
-
-            .empty-orders-state {
-                flex: 1;
-                min-height: 420px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                color: #475569;
-                background: #ffffff;
-                border: 1px dashed #cbd5e1;
-                border-radius: 8px;
-            }
-
-            .gap-2 {
-                gap: 6px;
-            }
-
-            .gap-3 {
-                gap: 8px;
-            }
-
-            .gap-4 {
-                gap: 8px;
-            }
-
-            .pointer {
-                cursor: pointer;
-            }
-
-            .bg-slate-50 {
-                background-color: #f8fafc !important;
-            }
-
-            .product-dropdown-card {
-                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-            }
-
-            /* Right Column Styles */
-            .compact-select-right :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 28px !important;
-                font-size: 13px !important;
-            }
-
-            .compact-select-right :deep(.v-field) {
-                border-radius: 8px !important;
-                --v-input-control-height: 28px !important;
-                font-size: 13px !important;
-                background-color: #ffffff !important;
-                border: 1px solid #cbd5e1 !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .compact-select-right :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .compact-select-right :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .right-input-field :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 32px !important;
-                font-size: 13px !important;
-            }
-
-            .right-input-field :deep(.v-field) {
-                border-radius: 8px !important;
-                --v-input-control-height: 32px !important;
-                font-size: 13px !important;
-                background-color: #ffffff !important;
-                border: 1px solid #cbd5e1 !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .right-input-field :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .right-input-field :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            /* Base font-size rules for inputs, textareas, buttons, placeholders and body text */
-            .pos-wrapper :deep(.v-field),
-            .pos-wrapper :deep(.v-field__input),
-            .pos-wrapper :deep(.v-btn),
-            .pos-wrapper :deep(.text-body-2),
-            .pos-wrapper :deep(input),
-            .pos-wrapper :deep(textarea),
-            .pos-wrapper :deep(input::placeholder),
-            .pos-wrapper :deep(textarea::placeholder),
-            .pos-wrapper :deep(.v-field__placeholder),
-            .pos-wrapper :deep(.v-label),
-            .pos-wrapper :deep(.v-list-item-title),
-            .pos-wrapper :deep(.v-select__selection-text) {
-                font-size: 13px !important;
-            }
-
-            /* Custom Payment Method Buttons */
-            .cash-active-btn {
-                background-color: #fdf2f8 !important;
-                color: #db2777 !important;
-                border-color: #fbcfe8 !important;
-            }
-
-            .vnpay-active-btn {
-                background-color: #eff6ff !important;
-                color: #1d4ed8 !important;
-                border-color: #bfdbfe !important;
-            }
-
-            .payment-inactive-btn {
-                background-color: #f8fafc !important;
-                color: #64748b !important;
-                border-color: #e2e8f0 !important;
-            }
-
-            /* Custom Note Tabs */
-            .custom-note-tabs {
-                background-color: #f1f5f9 !important;
-            }
-
-            .note-tab-active {
-                background-color: #ffffff !important;
-                color: #0c3866 !important;
-                box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
-                border: 1px solid #e2e8f0 !important;
-            }
-
-            .note-tab-inactive {
-                background-color: transparent !important;
-                color: #64748b !important;
-                border: 1px solid transparent !important;
-            }
-
-            /* Styled input fields for customer card */
-            .dim-input-field :deep(.v-field) {
-                background-color: #ffffff !important;
-                border-radius: 8px !important;
-                --v-input-control-height: 32px !important;
-                font-size: 13px !important;
-                border: 1px solid #cbd5e1 !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .dim-input-field :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .dim-input-field :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .dim-input-field :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 32px !important;
-                font-size: 13px !important;
-            }
-
-            .dim-select :deep(.v-field) {
-                background-color: #ffffff !important;
-                border-radius: 8px !important;
-                --v-input-control-height: 28px !important;
-                font-size: 13px !important;
-                border: 1px solid #cbd5e1 !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .dim-select :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .dim-select :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .dim-select :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 28px !important;
-                font-size: 13px !important;
-            }
-
-            /* Suggestion Popover - Right Aligned under SĐT */
-            .suggestion-popover {
-                position: absolute;
-                top: 100%;
-                right: 0;
-                left: auto;
-                width: 170px;
-                z-index: 9999;
-                background-color: #ffffff;
-                border: 1px solid #e2e8f0;
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-                border-radius: 20px !important;
-                margin-top: 4px;
-            }
-
-            .suggestion-item {
-                border-radius: 16px;
-                height: 32px;
-            }
-
-            .suggestion-item:hover {
-                background-color: #f1f5f9;
-            }
-
-            /* Styled select field for delivery card */
-            .dim-select-field :deep(.v-field) {
-                background-color: #ffffff !important;
-                border-radius: 8px !important;
-                --v-input-control-height: 32px !important;
-                font-size: 13px !important;
-                border: 1px solid #cbd5e1 !important;
-                transition: border-color 0.2s ease, box-shadow 0.2s ease;
-            }
-
-            .dim-select-field :deep(.v-field--focused) {
-                border-color: #4285F4 !important;
-                box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
-            }
-
-            .dim-select-field :deep(.v-field__outline) {
-                display: none !important;
-            }
-
-            .dim-select-field :deep(.v-field__input) {
-                padding-top: 2px !important;
-                padding-bottom: 2px !important;
-                min-height: 32px !important;
-                font-size: 13px !important;
-            }
-
-            .date-input-field :deep(input[type="date"]) {
-                position: relative;
-                cursor: pointer;
-            }
-
-            .date-input-field :deep(input[type="date"]::-webkit-calendar-picker-indicator) {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                width: 100%;
-                height: 100%;
-                opacity: 0;
-                cursor: pointer;
-            }
-
-            .product-dropdown-card {
-                width: 100% !important;
-                min-width: 650px !important;
-                left: 0;
-            }
-
-            .sku-badge {
-                background-color: #ffe4e6 !important;
-                color: #9f1239 !important;
-                font-size: 11px !important;
-                font-weight: 500;
-                padding: 1px 6px;
-                border-radius: 4px;
-                display: inline-flex;
-                align-items: center;
-            }
-
-            .sp-badge {
-                background-color: #e0f2fe !important;
-                color: #0369a1 !important;
-                font-size: 11px !important;
-                font-weight: 500;
-                padding: 1px 6px;
-                border-radius: 4px;
-                display: inline-flex;
-                align-items: center;
-            }
-
-            .size-badge {
-                border: 1px solid #cbd5e1 !important;
-                color: #64748b !important;
-                font-size: 11px !important;
-                font-weight: 500;
-                padding: 0px 6px;
-                border-radius: 4px;
-                display: inline-flex;
-                align-items: center;
-            }
-
-            .dot-giam-gia-badge {
-                background-color: #fef2f2 !important;
-                color: #dc2626 !important;
-                font-size: 11px !important;
-                font-weight: 600;
-                padding: 1px 8px;
-                border-radius: 4px;
-                display: inline-flex;
-                align-items: center;
-                border: 1px solid #fecaca;
-                line-height: 1.5;
-            }
-
-            .bullet-details {
-                font-size: 11.5px !important;
-                color: #64748b;
-                line-height: 1.4;
-            }
-
-            .bullet-item {
-                margin-bottom: 1px;
-            }
-
-            .price-text {
-                font-size: 14px !important;
-                font-weight: 500;
-                color: #88c057 !important;
-            }
-
-            .speed-text {
-                font-size: 11px !important;
-                color: #64748b;
-            }
-
-        </style>
+<style scoped lang="scss">
+@import '@/scss/pages/admin/_ban-hang.scss';
+</style>

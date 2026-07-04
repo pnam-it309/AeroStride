@@ -53,8 +53,20 @@ public class LichLamViecServiceImpl implements LichLamViecService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<LichLamViecResponse> getAllSchedules() {
+    public List<LichLamViecResponse> getAllSchedules(String search, String ca, String ngay) {
         return lichLamViecRepository.findAll().stream()
+                .filter(l -> {
+                    boolean matchSearch = search == null || search.isEmpty() ||
+                            (l.getNhanVien() != null && (
+                                l.getNhanVien().getTen().toLowerCase().contains(search.toLowerCase()) ||
+                                l.getNhanVien().getMa().toLowerCase().contains(search.toLowerCase())
+                            ));
+                    boolean matchCa = ca == null || ca.isEmpty() || ca.equals("Tất cả") ||
+                            (l.getCaLam() != null && l.getCaLam().getTenCa().equals(ca));
+                    boolean matchNgay = ngay == null || ngay.isEmpty() ||
+                            l.getNgayLam().format(dateFormatter).equals(ngay);
+                    return matchSearch && matchCa && matchNgay;
+                })
                 .map(l -> LichLamViecResponse.builder()
                         .id(l.getId())
                         .nhanVien(l.getNhanVien() != null ? l.getNhanVien().getTen() : "N/A")

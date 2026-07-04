@@ -66,19 +66,11 @@ const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
 
-const colors = computed(() => {
-    if (!product.value?.variants) return [];
-    return [...new Set(product.value.variants.map((v) => v.tenMauSac))].filter(Boolean);
-});
+const colors = computed(() => product.value?.availableColors || []);
 
 const sizes = computed(() => {
-    if (!product.value?.variants) return [];
-    let filteredVariants = product.value.variants;
-    if (selectedColor.value) {
-        filteredVariants = filteredVariants.filter((v) => v.tenMauSac === selectedColor.value);
-    }
-    const uniqueSizes = [...new Set(filteredVariants.map((v) => v.tenKichThuoc))].filter(Boolean);
-    return uniqueSizes.sort((a, b) => parseFloat(a) - parseFloat(b));
+    if (!product.value?.availableSizesByColor || !selectedColor.value) return [];
+    return product.value.availableSizesByColor[selectedColor.value] || [];
 });
 
 watch(selectedColor, () => {
@@ -122,13 +114,20 @@ const selectedVariant = computed(() => {
 
 const displayPrice = computed(() => {
     if (selectedVariant.value && selectedVariant.value.giaBan) return selectedVariant.value.giaBan;
-    if (product.value?.giaBanThapNhat) return product.value.giaBanThapNhat;
-    // Fallback if giaBanThapNhat is missing, find min price from variants
-    if (product.value?.variants?.length > 0) {
-        const prices = product.value.variants.map(v => v.giaBan).filter(p => p > 0);
-        if (prices.length > 0) return Math.min(...prices);
+    return product.value?.minPrice || 0;
+});
+
+const formattedDisplayPrice = computed(() => {
+    if (selectedVariant.value && selectedVariant.value.giaBan) {
+        return formatPrice(selectedVariant.value.giaBan);
     }
-    return 0;
+    if (product.value?.minPrice && product.value?.maxPrice) {
+        if (product.value.minPrice === product.value.maxPrice) {
+            return formatPrice(product.value.minPrice);
+        }
+        return `${formatPrice(product.value.minPrice)} - ${formatPrice(product.value.maxPrice)}`;
+    }
+    return '0 ₫';
 });
 
 const stockAlertModal = ref({
@@ -147,15 +146,10 @@ const showStockAlert = (title, message) => {
 
 const maxQuantity = computed(() => {
     if (selectedVariant.value) return selectedVariant.value.soLuong || 0;
-    if (product.value?.variants?.length > 0) {
-        if (selectedColor.value) {
-            return product.value.variants
-                .filter(v => v.tenMauSac === selectedColor.value)
-                .reduce((sum, v) => sum + (v.soLuong || 0), 0);
-        }
-        return product.value.variants.reduce((sum, v) => sum + (v.soLuong || 0), 0);
+    if (selectedColor.value && product.value?.stockByColor) {
+        return product.value.stockByColor[selectedColor.value] || 0;
     }
-    return 0;
+    return product.value?.totalStock || 0;
 });
 
 watch(maxQuantity, (newMax) => {
@@ -323,8 +317,7 @@ const toggleFavorite = () => {
                             <p class="product-cat text-subtitle-1 font-weight-bold grey--text">
                                 {{ product.tenThuongHieu }}
                             </p>
-                            <div class="product-price mt-4 text-h5 font-weight-black text-blue-darken-4">{{
-                                formatPrice(displayPrice) }}</div>
+                            <div class="product-price mt-4 text-h5 font-weight-black text-blue-darken-4">{{ formattedDisplayPrice }}</div>
                         </div>
 
                         <!-- Description Info moved to top -->

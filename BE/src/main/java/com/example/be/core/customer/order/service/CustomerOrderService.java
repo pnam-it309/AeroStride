@@ -9,9 +9,13 @@ import com.example.be.entity.PhieuGiamGia;
 import java.math.BigDecimal;
 import java.util.List;
 
+import com.example.be.core.customer.order.model.response.CustomerOrderStatsResponse;
+
 public interface CustomerOrderService {
 
     CustomerOrderResponse checkout(CustomerOrderCheckoutRequest request, String username);
+
+    CustomerOrderStatsResponse getMyOrderStats(String username);
 
     List<CustomerOrderResponse> getMyOrders(String username, String trangThai);
 

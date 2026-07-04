@@ -22,8 +22,12 @@ public class FlywayConfig {
     // Chạy Flyway sau khi toàn bộ ứng dụng (bao gồm Hibernate tạo bảng) đã khởi động xong
     @org.springframework.context.event.EventListener(org.springframework.boot.context.event.ApplicationReadyEvent.class)
     public void runFlyway(org.springframework.boot.context.event.ApplicationReadyEvent event) {
-        org.flywaydb.core.Flyway flyway = event.getApplicationContext().getBean(org.flywaydb.core.Flyway.class);
-        flyway.repair();
-        flyway.migrate();
+        try {
+            org.flywaydb.core.Flyway flyway = event.getApplicationContext().getBean(org.flywaydb.core.Flyway.class);
+            flyway.repair();
+            flyway.migrate();
+        } catch (org.springframework.beans.factory.NoSuchBeanDefinitionException e) {
+            // Flyway is disabled, skip migration
+        }
     }
 }

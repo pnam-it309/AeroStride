@@ -12,9 +12,12 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     include: ['tests/**/*.{test,spec}.js'],
-    deps: {
-      inline: ['vuetify'],
+    server: {
+      deps: {
+        inline: ['vuetify'],
+      },
     },
+    css: false,
   },
   resolve: {
     alias: {

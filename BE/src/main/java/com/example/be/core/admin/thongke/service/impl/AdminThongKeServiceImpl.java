@@ -133,4 +133,45 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         }
         return result;
     }
+
+    @Override
+    public com.example.be.core.common.dto.PageResponse<AdminThongKeResponse.SanPhamBanChay> getProductStatistics(
+            LocalDate tuNgay, LocalDate denNgay, String keyword, int page, int size, String sortBy) {
+
+        Long tuNgayMs = AccountUtils.parseDateToLong(tuNgay != null ? tuNgay.toString() : null, false);
+        Long denNgayMs = AccountUtils.parseDateToLong(denNgay != null ? denNgay.toString() : null, true);
+        String kw = (keyword == null || keyword.trim().isEmpty()) ? null : keyword.trim();
+
+        // Sort parsing
+        org.springframework.data.domain.Sort sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "soLuongBan");
+        if ("revenueDesc".equals(sortBy)) {
+            sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "doanhThu");
+        } else if ("bestSelling".equals(sortBy)) {
+            sort = org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "soLuongBan");
+        }
+        
+        org.springframework.data.domain.Pageable pageable = PageRequest.of(page, size, sort);
+        org.springframework.data.domain.Page<Object[]> pageData = thongKeRepository.getProductStatistics(tuNgayMs, denNgayMs, kw, pageable);
+
+        List<AdminThongKeResponse.SanPhamBanChay> dtos = new ArrayList<>();
+        for (Object[] row : pageData.getContent()) {
+            dtos.add(AdminThongKeResponse.SanPhamBanChay.builder()
+                    .maSanPham(row[0] != null ? row[0].toString() : "")
+                    .name(row[1] != null ? row[1].toString() : "")
+                    .thuongHieu(row[2] != null ? row[2].toString() : "")
+                    .revenue(row[3] != null ? new BigDecimal(row[3].toString()) : BigDecimal.ZERO)
+                    .quantity(row[4] != null ? Long.parseLong(row[4].toString()) : 0L)
+                    .growth(0.0)
+                    .build());
+        }
+
+        return com.example.be.core.common.dto.PageResponse.<AdminThongKeResponse.SanPhamBanChay>builder()
+                .content(dtos)
+                .pageNumber(pageData.getNumber())
+                .pageSize(pageData.getSize())
+                .totalElements(pageData.getTotalElements())
+                .totalPages(pageData.getTotalPages())
+                .last(pageData.isLast())
+                .build();
+    }
 }

@@ -28,8 +28,16 @@ public class AdminChatController {
     private final AdminChatService chatService;
 
     @GetMapping(RoutesConstant.CONVERSATIONS)
-    public ResponseEntity<ApiResponse<List<AdminChatResponse>>> getConversations() {
-        return ResponseEntity.ok(ApiResponse.success(chatService.getAllConversations()));
+    public ResponseEntity<ApiResponse<List<AdminChatResponse>>> getConversations(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search) {
+        return ResponseEntity.ok(ApiResponse.success(chatService.getAllConversations(type, status, search)));
+    }
+
+    @GetMapping(RoutesConstant.CONVERSATIONS + "/stats")
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getConversationStats() {
+        return ResponseEntity.ok(ApiResponse.success(chatService.getConversationStats()));
     }
 
     @GetMapping(RoutesConstant.CONVERSATION_MESSAGES)

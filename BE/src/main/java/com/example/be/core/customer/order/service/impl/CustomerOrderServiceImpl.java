@@ -714,4 +714,24 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .lichSuTrangThai(lichSuList)
                 .build();
     }
+
+    @Override
+    public com.example.be.core.customer.order.model.response.CustomerOrderStatsResponse getMyOrderStats(String username) {
+        KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng"));
+
+        List<HoaDon> allOrders = hoaDonRepository.findByKhachHangId(khachHang.getId());
+
+        long total = allOrders.size();
+        long completed = allOrders.stream().filter(o -> o.getTrangThai() != null && o.getTrangThai() == OrderStatus.HOAN_THANH).count();
+        long cancelled = allOrders.stream().filter(o -> o.getTrangThai() != null && o.getTrangThai() == OrderStatus.DA_HUY).count();
+        long delivering = allOrders.stream().filter(o -> o.getTrangThai() != null && o.getTrangThai() == OrderStatus.DANG_GIAO).count();
+
+        return com.example.be.core.customer.order.model.response.CustomerOrderStatsResponse.builder()
+                .total(total)
+                .completed(completed)
+                .cancelled(cancelled)
+                .delivering(delivering)
+                .build();
+    }
 }

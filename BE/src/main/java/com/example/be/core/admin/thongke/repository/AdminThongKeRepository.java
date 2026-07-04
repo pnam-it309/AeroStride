@@ -89,4 +89,30 @@ public interface AdminThongKeRepository extends HoaDonRepository,
     List<Object[]> getCategoryRevenueData(
             @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
+    @Query("""
+           SELECT sp.ma as ma,
+                  sp.ten as ten,
+                  th.ten as thuongHieu,
+                  COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 4
+                               AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
+                               AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
+                               THEN hdct.soLuong * hdct.donGia ELSE 0 END), 0) as doanhThu,
+                  COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 4
+                               AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
+                               AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
+                               THEN hdct.soLuong ELSE 0 END), 0) as soLuongBan
+           FROM SanPham sp
+           LEFT JOIN sp.thuongHieu th
+           LEFT JOIN sp.chiTietSanPhams ctsp
+           LEFT JOIN HoaDonChiTiet hdct ON hdct.chiTietSanPham = ctsp
+           LEFT JOIN hdct.hoaDon hd
+           WHERE (:keyword IS NULL OR LOWER(sp.ma) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten) LIKE LOWER(CONCAT('%', :keyword, '%')))
+           GROUP BY sp.id, sp.ma, sp.ten, th.ten
+           """)
+    org.springframework.data.domain.Page<Object[]> getProductStatistics(
+            @Param("tuNgay") Long tuNgay,
+            @Param("denNgay") Long denNgay,
+            @Param("keyword") String keyword,
+            org.springframework.data.domain.Pageable pageable);
+
 }

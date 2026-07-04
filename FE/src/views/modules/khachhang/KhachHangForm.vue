@@ -1048,37 +1048,6 @@ const dobRules = [
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* Đồng bộ font chữ và cỡ chữ */
-:deep(.v-container),
-:deep(.v-card),
-:deep(.v-btn),
-:deep(.v-field),
-:deep(.v-list-item-title),
-:deep(span),
-:deep(div),
-:deep(table),
-:deep(th),
-:deep(td) {
-    font-size: 14px !important;
-}
-
-:deep(.text-body-2),
-:deep(.text-subtitle-2),
-:deep(.text-subtitle-1),
-:deep(.text-h6),
-:deep(.text-caption),
-:deep(.v-field__input),
-:deep(.v-btn__content),
-:deep(.v-list-item-title) {
-    font-size: 14px !important;
-    text-transform: none !important;
-}
-
-/* Status chips are now managed globally in _admin-common.scss — NO local overrides */
-
-:deep(.v-btn) {
-    opacity: 1 !important;
-}
 
 /* Custom Table Styles to match main data table */
 .purchase-history-table,
@@ -1129,73 +1098,5 @@ const dobRules = [
 .action-btn:hover {
     opacity: 1 !important;
 }
-
-.mono-font {
-    font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
-}
-
-#khach-hang-form-container,
-#khach-hang-form-container *,
-.khach-hang-dialog-card,
-.khach-hang-dialog-card *,
-#khach-hang-form-container .text-subtitle-1,
-#khach-hang-form-container .text-subtitle-2,
-#khach-hang-form-container .text-h6,
-#khach-hang-form-container .text-h5,
-#khach-hang-form-container .v-card-title,
-#khach-hang-form-container .v-table th,
-#khach-hang-form-container .v-table td,
-#khach-hang-form-container .v-btn__content,
-#khach-hang-form-container .v-field__input {
-    font-size: 13px !important;
-    text-transform: none !important;
-    font-weight: 500 !important;
-}
-
-/* Các tiêu đề (header) */
-#khach-hang-form-container th,
-#khach-hang-form-container .header-cell,
-#khach-hang-form-container .v-card-title,
-#khach-hang-form-container .font-weight-black,
-#khach-hang-form-container .font-weight-bold,
-.khach-hang-dialog-card th,
-.khach-hang-dialog-card .header-cell,
-.khach-hang-dialog-card .v-card-title,
-.khach-hang-dialog-card .font-weight-black,
-.khach-hang-dialog-card .font-weight-bold {
-    font-weight: 700 !important;
-}
-
-/* Đảm bảo các mã code monospaced không bị mất font */
-#khach-hang-form-container .mono-font {
-    font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
-    font-size: 13px !important;
-}
-
-/* CSS Global để ẩn icon mặc định của trình duyệt */
-:deep(input[type='date']::-webkit-calendar-picker-indicator),
-:deep(input[type='date']::-webkit-inner-spin-button) {
-    display: none !important;
-    -webkit-appearance: none !important;
-}
-
-/* Ép icon lịch của date-field lên 20px để đồng bộ */
-#khach-hang-form-container :deep(.date-field .v-icon),
-.khach-hang-dialog-card :deep(.date-field .v-icon) {
-    font-size: 20px !important;
-    opacity: 0.8 !important;
-    color: #475569 !important;
-}
-
-/* Ép màu đỏ tươi cho các cảnh báo lỗi */
-#khach-hang-form-container :deep(.v-messages__message) {
-    color: #ef4444 !important;
-    /* Đỏ tươi */
-    font-weight: 500 !important;
-    font-size: 11px !important;
-}
-
-#khach-hang-form-container :deep(.v-field--error) {
-    --v-field-border-color: #ef4444 !important;
-}
 </style>
+
