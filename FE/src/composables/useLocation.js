@@ -34,11 +34,15 @@ export function useLocation() {
         if (provinces.value.length) return;
         loadingLocations.value.provinces = true;
         try {
-            const res = await axios.get('https://provinces.open-api.vn/api/p/');
-            provinces.value = res.data;
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/ghn/provinces`);
+            if (res.data && res.data.data) {
+                provinces.value = res.data.data.map(p => ({
+                    code: p.ProvinceID,
+                    name: p.ProvinceName
+                }));
+            }
         } catch (e) {
             console.error('Error loading provinces:', e);
-            throw e;
         } finally {
             loadingLocations.value.provinces = false;
         }
@@ -50,11 +54,15 @@ export function useLocation() {
         districts.value = [];
         wards.value = [];
         try {
-            const res = await axios.get(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
-            districts.value = res.data.districts;
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/ghn/districts?provinceId=${provinceCode}`);
+            if (res.data && res.data.data) {
+                districts.value = res.data.data.map(d => ({
+                    code: d.DistrictID,
+                    name: d.DistrictName
+                }));
+            }
         } catch (e) {
             console.error('Error loading districts:', e);
-            throw e;
         } finally {
             loadingLocations.value.districts = false;
         }
@@ -65,11 +73,15 @@ export function useLocation() {
         loadingLocations.value.wards = true;
         wards.value = [];
         try {
-            const res = await axios.get(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
-            wards.value = res.data.wards;
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/ghn/wards?districtId=${districtCode}`);
+            if (res.data && res.data.data) {
+                wards.value = res.data.data.map(w => ({
+                    code: w.WardCode,
+                    name: w.WardName
+                }));
+            }
         } catch (e) {
             console.error('Error loading wards:', e);
-            throw e;
         } finally {
             loadingLocations.value.wards = false;
         }

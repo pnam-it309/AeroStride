@@ -133,6 +133,10 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         lichSuTrangThaiHoaDonRepository.save(history);
 
         if (newStatus == OrderStatus.DA_HUY || newStatus == OrderStatus.HOAN_DON) {
+            if (newStatus == OrderStatus.HOAN_DON && hd.getPhiVanChuyen() != null) {
+                // GHN return fee is typically equal to forward fee
+                hd.setPhiHoanHang(hd.getPhiVanChuyen());
+            }
             hd.getListsHoaDonChiTiet().forEach(detail -> {
                 ChiTietSanPham ct = detail.getChiTietSanPham();
                 if (ct != null) {

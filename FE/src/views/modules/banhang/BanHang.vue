@@ -809,6 +809,45 @@ watch(
     }
 );
 
+import axios from 'axios';
+
+const calculateShippingFee = async () => {
+    if (!recipientDistrict.value || !recipientWard.value || isFreeShip.value) return;
+    const weight = 200 * (selectedOrderItemCount.value || 1);
+    try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/ghn/fee`, {
+            params: {
+                toDistrictId: recipientDistrict.value,
+                toWardCode: recipientWard.value,
+                weight: weight
+            }
+        });
+        if (res.data && res.data.total) {
+            shippingFee.value = res.data.total;
+        }
+    } catch (e) {
+        console.error('Failed to calculate shipping fee', e);
+    }
+};
+
+watch(
+    () => recipientWard.value,
+    async (newVal) => {
+        if (newVal) {
+            await calculateShippingFee();
+        }
+    }
+);
+
+watch(
+    () => selectedOrderItemCount.value,
+    async () => {
+        if (recipientWard.value && orderChannel.value === 'Trực tuyến') {
+            await calculateShippingFee();
+        }
+    }
+);
+
 // Logic: Hóa đơn
 const createNewOrder = async ({ silent = false, force = false } = {}) => {
     if (isProcessing.value && !force) return;

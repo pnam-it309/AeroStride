@@ -1061,6 +1061,29 @@ onMounted(() => {
                                     formatCurrency(order.phiVanChuyen || 0)
                                 }}</span>
                             </div>
+                            <div v-if="order.phiHoanHang > 0" class="summary-row mb-4">
+                                <span class="text-slate-500 d-flex align-center">
+                                    <span>Phí hoàn hàng:</span>
+                                    <svg width="45" height="15" viewBox="0 0 45 15" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        style="display: inline-block; vertical-align: middle; margin-left: 6px;">
+                                        <!-- Left Chevron (Deep Blue/Teal) -->
+                                        <path d="M1 2.5 L7 2.5 L4.5 6.5 L7 6.5 L3.5 10.5 L1 10.5 L3.5 6.5 L1 6.5 Z"
+                                            fill="#0C2A46" />
+                                        <!-- Right Chevron (Orange) -->
+                                        <path
+                                            d="M5.5 2.5 L11.5 2.5 L9 6.5 L11.5 6.5 L8 10.5 L5.5 10.5 L8 6.5 L5.5 6.5 Z"
+                                            fill="#FA6400" />
+                                        <!-- GHN Text (Italic Orange) -->
+                                        <text x="13.5" y="11" fill="#FA6400" font-family="'Inter', sans-serif"
+                                            font-weight="900" font-style="italic" font-size="10.5"
+                                            letter-spacing="-0.5px">GHN</text>
+                                    </svg>
+                                </span>
+                                <span class="text-body-2 text-slate-800">{{
+                                    formatCurrency(order.phiHoanHang || 0)
+                                }}</span>
+                            </div>
                             <v-divider class="my-5 border-opacity-25"></v-divider>
                             <div class="summary-row pb-2">
                                 <span class="text-body-2 text-slate-800">Tổng cộng:</span>

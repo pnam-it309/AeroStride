@@ -16,6 +16,7 @@ public class AdminHoaDonDetailResponse {
     private OrderStatus trangThai;
     private String loaiDon;
     private BigDecimal phiVanChuyen;
+    private BigDecimal phiHoanHang;
     private BigDecimal tongTien;
     private BigDecimal tongTienSauGiam;
     private BigDecimal tienNguoiMua;
