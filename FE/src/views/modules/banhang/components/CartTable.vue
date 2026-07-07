@@ -19,7 +19,7 @@ const handleDirectInput = (item, event) => {
     }
     let newQty = parseInt(val, 10);
     if (isNaN(newQty) || newQty < 0) newQty = 0;
-    
+
     const delta = newQty - item.soLuong;
     if (delta !== 0) {
         // Pass event.target so BanHang can force the input back if max is exceeded
@@ -56,22 +56,28 @@ const handleDirectInput = (item, event) => {
                     </td>
                 </tr>
                 <tr v-for="(item, idx) in items" :key="item.id" class="item-row">
-                    <td class="text-center font-weight-medium text-slate-500" style="font-size: 13px; white-space: nowrap !important;">
+                    <td class="text-center font-weight-medium text-slate-500"
+                        style="font-size: 13px; white-space: nowrap !important;">
                         {{ idx + 1 }}
                     </td>
-                    <td class="text-left font-weight-medium text-slate-700" style="font-size: 13px; white-space: nowrap !important;">
+                    <td class="text-left font-weight-medium text-slate-700"
+                        style="font-size: 13px; white-space: nowrap !important;">
                         {{ item.maChiTietSanPham || item.maSanPham || 'N/A' }}
                     </td>
                     <td>
                         <div class="d-flex align-center py-1.5">
-                            <v-avatar color="grey-lighten-4" rounded="lg" size="38" class="mr-3 border position-relative overflow-visible">
+                            <v-avatar color="grey-lighten-4" rounded="lg" size="38"
+                                class="mr-3 border position-relative overflow-visible">
                                 <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover />
                                 <BoxIcon v-else size="18" class="text-grey" />
-                                <div v-if="item.phanTramGiam > 0" class="cart-discount-badge-small d-flex align-center justify-center">
-                                    <span class="text-white font-weight-bold" style="font-size: 9px !important;">-{{ item.phanTramGiam }}%</span>
+                                <div v-if="item.phanTramGiam > 0"
+                                    class="cart-discount-badge-small d-flex align-center justify-center">
+                                    <span class="text-white font-weight-bold" style="font-size: 9px !important;">-{{
+                                        item.phanTramGiam }}%</span>
                                 </div>
                             </v-avatar>
-                            <span class="text-slate-700 text-body-2 font-weight-medium" style="font-size: 13px !important; line-height: 1.3;">
+                            <span class="text-slate-700 text-body-2 font-weight-medium"
+                                style="font-size: 13px !important; line-height: 1.3;">
                                 {{ item.tenSanPham }}
                             </span>
                         </div>
@@ -87,32 +93,35 @@ const handleDirectInput = (item, event) => {
                             <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, -1)">
                                 <MinusIcon size="12" />
                             </v-btn>
-                            <input 
-                                type="number" 
-                                class="qty-input-table text-center font-weight-medium" 
-                                :value="item.soLuong" 
-                                @change="(e) => handleDirectInput(item, e)"
-                                min="0"
-                            />
+                            <input type="number" class="qty-input-table text-center font-weight-medium"
+                                :value="item.soLuong" @change="(e) => handleDirectInput(item, e)" min="0" />
                             <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, 1)">
                                 <PlusIcon size="12" />
                             </v-btn>
                         </div>
                     </td>
-                    <td class="text-right text-slate-700 font-weight-bold" style="font-size: 13px !important; white-space: nowrap !important;">
+                    <td class="text-right font-weight-bold"
+                        style="font-size: 13px !important; white-space: nowrap !important;">
                         <template v-if="item.phanTramGiam > 0">
-                            <span class="d-block text-slate-700 font-weight-bold" >
+                            <span class="d-block font-weight-bold" style="color: #0c3866 !important;">
                                 {{ formatCurrency(item.donGia) }}
                             </span>
-                            <span class="font-weight-bold" style="text-decoration: line-through; text-decoration-color: #94a3b8; -webkit-text-decoration-color: #94a3b8; color: #c92c04 !important; font-size: 11px !important; font-weight: normal; display: block; margin-top: 2px;">
+                            <span class="font-weight-bold"
+                                style="text-decoration: line-through; text-decoration-color: #94a3b8; -webkit-text-decoration-color: #94a3b8; color: #c92c04 !important; font-size: 11px !important; font-weight: normal; display: block; margin-top: 2px;">
                                 {{ formatCurrency(item.donGia / (1 - item.phanTramGiam / 100)) }}
                             </span>
                         </template>
                         <template v-else>
-                            {{ formatCurrency(item.donGia) }}
+                            <span style="color: #0c3866 !important;">
+                                {{ formatCurrency(item.donGia) }}
+                            </span>
                         </template>
                     </td>
-                    <td class="text-center" style="white-space: nowrap !important;">
+                    <td class="text-right font-weight-bold text-primary text-body-2"
+                        style="white-space: nowrap !important;">
+                        {{ formatCurrency(item.thanhTien) }}
+                    </td>
+                    <td class="text-center">
                         <v-btn icon variant="text" color="error" size="small" @click="emit('remove', item)">
                             <TrashIcon size="16" />
                         </v-btn>
@@ -155,13 +164,16 @@ const handleDirectInput = (item, event) => {
     width: 6px;
     height: 6px;
 }
+
 .pos-table :deep(.v-table__wrapper)::-webkit-scrollbar-track {
     background: transparent;
 }
+
 .pos-table :deep(.v-table__wrapper)::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 3px;
 }
+
 .pos-table :deep(.v-table__wrapper)::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
 }
@@ -273,6 +285,7 @@ const handleDirectInput = (item, event) => {
     display: inline-flex;
     align-items: center;
 }
+
 .sp-badge {
     background-color: #e0f2fe !important;
     color: #0369a1 !important;
@@ -283,5 +296,4 @@ const handleDirectInput = (item, event) => {
     display: inline-flex;
     align-items: center;
 }
-
 </style>

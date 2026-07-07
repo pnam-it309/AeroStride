@@ -12,15 +12,25 @@ export const dichVuDatHang = {
     },
 
     // Lấy danh sách đơn hàng của khách
-    async layDonHangCuaToi(trangThai = '') {
+    async layDonHangCuaToi(trangThai = '', keyword = '') {
         const response = await api.get(API_CUSTOMER.MY_ORDERS, {
-            params: { trangThai }
+            params: { trangThai, keyword }
         });
         return response.data.data;
     },
 
     async layThongKeDonHang() {
         const response = await api.get('/customer/order/stats');
+        return response.data.data;
+    },
+
+    // Tra cứu đơn hàng công khai (Khách vãng lai)
+    async traCuuDonHang(maHoaDon, soDienThoai) {
+        const response = await api.get('/customer/order/track', {
+            params: { maHoaDon, soDienThoai },
+            bigOp: true,
+            loadingMessage: 'Đang tra cứu đơn hàng...'
+        });
         return response.data.data;
     },
 

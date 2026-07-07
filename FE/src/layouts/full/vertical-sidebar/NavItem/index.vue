@@ -9,9 +9,9 @@ const route = useRoute();
 const isActive = computed(() => {
     const path = route.path;
     if (!props.item?.to || typeof path !== 'string') return false;
-    
+
     if (path === props.item.to) return true;
-    
+
     if (props.item.to === '/' || props.item.to === '/admin/thong-ke') return false;
 
     if (props.item.to === '/admin/san-pham' && path.startsWith('/admin/san-pham/bien-the')) {
@@ -21,7 +21,7 @@ const isActive = computed(() => {
     if (path.startsWith(props.item.to + '/')) {
         return true;
     }
-    
+
     return false;
 });
 </script>
@@ -30,9 +30,8 @@ const isActive = computed(() => {
     <!---Single Item-->
     <div class="mb-2" :style="{ paddingLeft: level > 1 ? (level - 1) * 20 + 'px' : '0px' }">
         <v-list-item :to="item.type === 'external' ? '' : item.to" :href="item.type === 'external' ? item.to : ''"
-            :class="{ 'v-list-item--active text-primary bg-lightprimary': isActive }"
-            rounded class="sidebar-link" :ripple="false" :disabled="item.disabled"
-            :target="item.type === 'external' ? '_blank' : ''">
+            :class="{ 'v-list-item--active text-primary bg-lightprimary': isActive }" rounded class="sidebar-link"
+            :ripple="false" :disabled="item.disabled" :target="item.type === 'external' ? '_blank' : ''">
             <!---If icon-->
             <template v-slot:prepend>
                 <div class="navbox">
@@ -41,9 +40,11 @@ const isActive = computed(() => {
                     </span>
                 </div>
             </template>
-            <v-tooltip v-if="hideTitle" activator="parent" location="right">{{ item.title }}</v-tooltip>
+            <v-tooltip v-if="hideTitle" activator="parent" location="right" open-delay="0"
+                content-class="custom-white-tooltip">{{
+                item.title }}</v-tooltip>
             <v-list-item-title v-if="!hideTitle" class="sidebar-item-title font-weight-medium">{{ item.title
-                }}</v-list-item-title>
+            }}</v-list-item-title>
             <!---If Caption-->
             <v-list-item-subtitle v-if="item.subCaption && !hideTitle" class="text-caption mt-n1 hide-menu">
                 {{ item.subCaption }}

@@ -19,6 +19,8 @@ public final class SecurityConstants {
         RoutesConstant.CUSTOMER_CHAT + "/**",
         RoutesConstant.CUSTOMER + "/phieu-giam-gia/**",
         RoutesConstant.CUSTOMER + "/order/vouchers",
+        RoutesConstant.CUSTOMER + "/order/checkout",
+        RoutesConstant.CUSTOMER + "/order/track",
         "/actuator/**",
         "/error"
     };

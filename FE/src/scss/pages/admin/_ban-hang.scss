@@ -36,6 +36,7 @@
     min-height: 32px !important;
     font-size: 13px !important;
 }
+
 .compact-select :deep(input::placeholder) {
     line-height: normal !important;
 }
@@ -85,10 +86,18 @@
 
 .search-input :deep(.v-field) {
     border-radius: 8px !important;
+    --v-input-control-height: 32px !important;
     font-size: 13px !important;
     border: 1px solid #cbd5e1 !important;
     background-color: #ffffff !important;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input :deep(.v-field__input) {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    min-height: 32px !important;
+    font-size: 13px !important;
 }
 
 .search-input :deep(.v-field--focused) {
@@ -102,7 +111,7 @@
 
 .scanner-btn {
     border-radius: 8px !important;
-    height: 40px !important;
+    height: 32px !important;
 }
 
 .hover-autocomplete-item {
@@ -601,14 +610,15 @@
 .expand-fade-enter-active,
 .expand-fade-leave-active {
     transition: max-height 0.85s cubic-bezier(0.16, 1, 0.3, 1),
-                opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
-                margin-bottom 0.85s cubic-bezier(0.16, 1, 0.3, 1),
-                padding 0.85s cubic-bezier(0.16, 1, 0.3, 1),
-                border-width 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+        opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+        margin-bottom 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+        padding 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+        border-width 0.85s cubic-bezier(0.16, 1, 0.3, 1);
     max-height: 220px;
     opacity: 1;
     overflow: hidden;
 }
+
 .expand-fade-enter-from,
 .expand-fade-leave-to {
     max-height: 0 !important;
@@ -653,7 +663,7 @@
     height: 20px !important;
     width: 20px !important;
     background-color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
     transition: background-color 0.3s ease, transform 0.3s ease;
 }
 

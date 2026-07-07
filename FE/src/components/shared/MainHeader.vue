@@ -114,6 +114,10 @@ const handleResultClick = (product) => {
     closeSearch();
 };
 
+const clearSearch = () => {
+    searchQuery.value = '';
+};
+
 const formatPrice = (v) => {
     if (!v && v !== 0) return '';
     return new Intl.NumberFormat('vi-VN').format(v) + ' đ';
@@ -177,9 +181,9 @@ onUnmounted(() => {
         <nav class="main-navbar px-12 py-2">
             <div class="container-custom d-flex align-center justify-space-between w-100">
                 <!-- Logo -->
-                <router-link to="/" class="logo-wrap">
+                <div class="logo-wrap">
                     <LogoClient />
-                </router-link>
+                </div>
 
                 <!-- Nav Links -->
                 <nav class="nav-links">
@@ -212,6 +216,15 @@ onUnmounted(() => {
                             @blur="() => { window.setTimeout(closeSearch, 200) }"
                             autofocus
                         />
+                        <v-icon 
+                            v-if="isSearchOpen && searchQuery" 
+                            size="18" 
+                            class="clear-icon ml-1" 
+                            color="grey-darken-1"
+                            @mousedown.prevent="clearSearch"
+                        >
+                            mdi-close-circle
+                        </v-icon>
                         <!-- Dropdown results -->
                         <div v-if="isSearchOpen && (searchResults.length > 0 || isSearchLoading)" class="search-dropdown">
                             <div v-if="isSearchLoading" class="search-loading">
@@ -417,6 +430,14 @@ onUnmounted(() => {
         width: 100%;
         color: #111;
         margin-left: 8px;
+    }
+    
+    .clear-icon {
+        cursor: pointer;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+        flex-shrink: 0;
+        &:hover { opacity: 1; }
     }
 }
 

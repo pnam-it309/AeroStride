@@ -45,9 +45,12 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     @Override
     @Transactional
     public CustomerOrderResponse checkout(CustomerOrderCheckoutRequest request, String username) {
-        // 1. Tìm khách hàng
-        KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin khách hàng"));
+        // 1. Tìm khách hàng (Cho phép null nếu là khách vãng lai)
+        KhachHang khachHang = null;
+        if (username != null && !username.isBlank() && !"anonymousUser".equals(username)) {
+            khachHang = khachHangRepository.findByTenTaiKhoan(username)
+                    .orElse(null);
+        }
 
         // 2. Validate và lấy chi tiết sản phẩm
         List<ChiTietSanPham> variants = new ArrayList<>();
@@ -245,7 +248,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     // Lấy danh sách các đơn hàng (hóa đơn online) của khách hàng, có thể lọc theo trạng thái
     @Override
     @Transactional(readOnly = true)
-    public List<CustomerOrderResponse> getMyOrders(String username, String trangThai) {
+    public List<CustomerOrderResponse> getMyOrders(String username, String trangThai, String keyword) {
         KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin khách hàng"));
 
@@ -255,6 +258,23 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .filter(hd -> {
                     if (trangThai == null || trangThai.isBlank()) return true;
                     return hd.getTrangThai() != null && hd.getTrangThai().name().equals(trangThai);
+                })
+                .filter(hd -> {
+                    if (keyword == null || keyword.isBlank()) return true;
+                    String kw = keyword.trim().toLowerCase();
+                    if (hd.getMaHoaDon() != null && hd.getMaHoaDon().toLowerCase().contains(kw)) return true;
+                    if (hd.getListsHoaDonChiTiet() != null) {
+                        return hd.getListsHoaDonChiTiet().stream().anyMatch(hdct -> {
+                            if (hdct.getChiTietSanPham() != null && hdct.getChiTietSanPham().getSanPham() != null) {
+                                String maSP = hdct.getChiTietSanPham().getSanPham().getMa();
+                                String tenSP = hdct.getChiTietSanPham().getSanPham().getTen();
+                                if (maSP != null && maSP.toLowerCase().contains(kw)) return true;
+                                if (tenSP != null && tenSP.toLowerCase().contains(kw)) return true;
+                            }
+                            return false;
+                        });
+                    }
+                    return false;
                 })
                 .sorted(Comparator.comparing(HoaDon::getNgayTao, Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());
@@ -274,6 +294,27 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
         if (hoaDon.getKhachHang() == null || !hoaDon.getKhachHang().getId().equals(khachHang.getId())) {
             throw new RuntimeException("Bạn không có quyền xem đơn hàng này");
+        }
+
+        return mapToResponse(hoaDon, null);
+    }
+
+    // Tra cứu đơn hàng công khai bằng mã đơn hàng và số điện thoại
+    @Override
+    @Transactional(readOnly = true)
+    public CustomerOrderResponse trackOrder(String maHoaDon, String soDienThoai) {
+        if (maHoaDon == null || maHoaDon.isBlank()) {
+            throw new RuntimeException("Vui lòng nhập mã đơn hàng");
+        }
+        if (soDienThoai == null || soDienThoai.isBlank()) {
+            throw new RuntimeException("Vui lòng nhập số điện thoại");
+        }
+
+        HoaDon hoaDon = hoaDonRepository.findByMaHoaDon(maHoaDon)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng: " + maHoaDon));
+
+        if (hoaDon.getSoDienThoaiNguoiNhan() == null || !hoaDon.getSoDienThoaiNguoiNhan().equals(soDienThoai)) {
+            throw new RuntimeException("Số điện thoại không khớp với thông tin đơn hàng");
         }
 
         return mapToResponse(hoaDon, null);

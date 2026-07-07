@@ -159,7 +159,7 @@ onUnmounted(() => {
                             >
                                 <div class="shoe-wrapper">
                                     <model-viewer
-                                        :src="activeProduct.modelUrl || 'https://modelviewer.dev/shared-assets/models/Shoe.glb'"
+                                        :src="activeProduct.modelUrl || '/models/Shoe.glb'"
                                         :poster="activeProduct.image || '/assets/images/products/1.jpg'"
                                         :alt="activeProduct.code"
                                         camera-controls
