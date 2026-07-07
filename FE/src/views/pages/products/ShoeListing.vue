@@ -183,16 +183,20 @@ const translateGender = (gender) => {
                         <v-expansion-panels flat variant="accordion" bg-color="transparent">
                             <v-expansion-panel v-for="filter in filters" :key="filter.title" :title="filter.title" class="filter-panel bg-transparent">
                                 <v-expansion-panel-text>
-                                    <v-radio-group v-model="searchParams[filter.key]" @change="handleFilterChange">
-                                        <v-radio
-                                            v-for="item in filter.items"
+                                    <div class="custom-filter-list">
+                                        <div 
+                                            v-for="item in filter.items" 
                                             :key="item.id || item"
-                                            :label="item.ten"
-                                            :value="item.id || item"
-                                            color="black"
-                                            density="compact"
-                                        ></v-radio>
-                                    </v-radio-group>
+                                            class="custom-filter-item"
+                                            :class="{ 'active': searchParams[filter.key] === (item.id || item) }"
+                                            @click="searchParams[filter.key] = (searchParams[filter.key] === (item.id || item) ? null : (item.id || item)); handleFilterChange()"
+                                        >
+                                            <span class="filter-text">{{ item.ten }}</span>
+                                            <v-scale-transition>
+                                                <v-icon v-if="searchParams[filter.key] === (item.id || item)" size="18" color="white" class="check-icon">mdi-check</v-icon>
+                                            </v-scale-transition>
+                                        </div>
+                                    </div>
                                 </v-expansion-panel-text>
                             </v-expansion-panel>
                         </v-expansion-panels>
@@ -296,6 +300,49 @@ const translateGender = (gender) => {
     font-size: 0.9rem;
     font-weight: 600;
     color: #111;
+}
+
+/* Custom Filter UI */
+.custom-filter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.custom-filter-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+        background: #f1f5f9;
+        transform: translateX(4px);
+    }
+
+    &.active {
+        background: #111;
+        border-color: #111;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateX(4px);
+
+        .filter-text {
+            color: #fff;
+            font-weight: 700;
+        }
+    }
+
+    .filter-text {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #475569;
+        transition: color 0.25s ease;
+    }
 }
 
 /* Product Card Placeholder */

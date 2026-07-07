@@ -16,7 +16,23 @@ const fetchFavorites = async () => {
         const favoriteIds = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
         const promises = favoriteIds.map(id => dichVuSanPhamPublic.layChiTietSanPham(id).catch(() => null));
         const results = await Promise.all(promises);
-        favoriteProducts.value = results.filter(p => p !== null);
+        
+        const validProducts = [];
+        const validIds = [];
+        
+        results.forEach((p, index) => {
+            if (p !== null) {
+                validProducts.push(p);
+                validIds.push(favoriteIds[index]);
+            }
+        });
+        
+        favoriteProducts.value = validProducts;
+        
+        if (validIds.length !== favoriteIds.length) {
+            localStorage.setItem('aerostride_favorites', JSON.stringify(validIds));
+            window.dispatchEvent(new Event('favorites-updated'));
+        }
     } catch (error) {
         console.error('Error fetching favorites:', error);
     } finally {

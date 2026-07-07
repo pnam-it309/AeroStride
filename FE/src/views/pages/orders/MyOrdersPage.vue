@@ -11,6 +11,29 @@ const router = useRouter();
 const loading = ref(true);
 const orders = ref([]);
 const activeTab = ref('');
+const searchKeyword = ref('');
+const isLoggedIn = ref(false);
+
+const trackingForm = ref({ maHoaDon: '', soDienThoai: '' });
+const trackingLoading = ref(false);
+
+const handleTrackOrder = async () => {
+    if (!trackingForm.value.maHoaDon || !trackingForm.value.soDienThoai) {
+        alert('Vui lòng nhập đầy đủ Mã đơn hàng và Số điện thoại');
+        return;
+    }
+    trackingLoading.value = true;
+    try {
+        const res = await dichVuDatHang.traCuuDonHang(trackingForm.value.maHoaDon.trim(), trackingForm.value.soDienThoai.trim());
+        if (res && res.id) {
+            router.push(`/my-orders/${res.id}?code=${trackingForm.value.maHoaDon.trim()}&phone=${trackingForm.value.soDienThoai.trim()}`);
+        }
+    } catch (error) {
+        alert(error.response?.data?.message || 'Không tìm thấy đơn hàng hợp lệ');
+    } finally {
+        trackingLoading.value = false;
+    }
+};
 
 const tabs = [
     { label: 'Tất cả', value: '', icon: 'mdi-format-list-bulleted' },
@@ -59,12 +82,16 @@ const stats = ref({ total: 0, completed: 0, cancelled: 0, delivering: 0 });
 const fetchOrders = async () => {
     loading.value = true;
     try {
-        orders.value = await dichVuDatHang.layDonHangCuaToi(activeTab.value);
+        orders.value = await dichVuDatHang.layDonHangCuaToi(activeTab.value, searchKeyword.value);
     } catch (error) {
         console.error('Error fetching orders:', error);
     } finally {
         loading.value = false;
     }
+};
+
+const handleSearch = () => {
+    if (isLoggedIn.value) fetchOrders();
 };
 
 const fetchStats = async () => {
@@ -75,10 +102,18 @@ const fetchStats = async () => {
     }
 };
 
-watch(activeTab, () => fetchOrders());
+watch(activeTab, () => {
+    if (isLoggedIn.value) fetchOrders();
+});
+import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
 onMounted(() => {
-    fetchOrders();
-    fetchStats();
+    isLoggedIn.value = dichVuXacThuc.daDangNhap();
+    if (isLoggedIn.value) {
+        fetchOrders();
+        fetchStats();
+    } else {
+        loading.value = false;
+    }
 });
 
 const goToDetail = (id) => {
@@ -101,11 +136,11 @@ const goToDetail = (id) => {
                                 <v-icon size="28" color="white">mdi-package-variant-closed</v-icon>
                             </div>
                             <div>
-                                <h1 class="text-h4 font-weight-bold text-white mb-1">Đơn hàng của tôi</h1>
-                                <p class="text-body-2 mb-0" style="color: rgba(255,255,255,0.75);">Theo dõi và quản lý tất cả đơn hàng của bạn</p>
+                                <h1 class="text-h4 font-weight-bold mb-1" style="color: #ffffff !important;">Đơn hàng của tôi</h1>
+                                <p class="text-body-2 mb-0" style="color: rgba(255,255,255,0.9) !important;">Theo dõi và quản lý tất cả đơn hàng của bạn</p>
                             </div>
                         </div>
-                        <v-btn variant="outlined" color="white" rounded="pill" class="font-weight-bold text-none"
+                        <v-btn variant="outlined" color="white" rounded="pill" class="font-weight-bold text-none" style="color: white !important;"
                             @click="router.push('/shoes')">
                             <v-icon class="mr-2" size="18">mdi-shopping-outline</v-icon>
                             Mua sắm ngay
@@ -115,29 +150,29 @@ const goToDetail = (id) => {
             </v-container>
         </div>
 
-        <!-- Stats -->
-        <v-container style="max-width: 1000px" class="mt-n8 position-relative">
+        <!-- Stats (Logged In Only) -->
+        <v-container v-if="isLoggedIn" style="max-width: 1000px" class="mt-n8 position-relative z-index-1">
             <v-row class="stats-row">
                 <v-col cols="3" class="pa-2">
-                    <div class="stats-block text-center pa-4">
+                    <div class="stats-block text-center pa-4 rounded-xl elevation-2">
                         <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c;">{{ stats.total }}</p>
                         <p class="text-caption text-grey mb-0">Tổng đơn</p>
                     </div>
                 </v-col>
                 <v-col cols="3" class="pa-2">
-                    <div class="stats-block text-center pa-4">
+                    <div class="stats-block text-center pa-4 rounded-xl elevation-2">
                         <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c;">{{ stats.completed }}</p>
                         <p class="text-caption text-grey mb-0">Hoàn thành</p>
                     </div>
                 </v-col>
                 <v-col cols="3" class="pa-2">
-                    <div class="stats-block text-center pa-4">
+                    <div class="stats-block text-center pa-4 rounded-xl elevation-2">
                         <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c;">{{ stats.delivering }}</p>
                         <p class="text-caption text-grey mb-0">Đang giao</p>
                     </div>
                 </v-col>
                 <v-col cols="3" class="pa-2">
-                    <div class="stats-block text-center pa-4">
+                    <div class="stats-block text-center pa-4 rounded-xl elevation-2">
                         <p class="text-h5 font-weight-bold mb-0" style="color: #1e257c;">{{ stats.cancelled }}</p>
                         <p class="text-caption text-grey mb-0">Đã hủy</p>
                     </div>
@@ -145,25 +180,64 @@ const goToDetail = (id) => {
             </v-row>
         </v-container>
 
-        <!-- Main Content -->
-        <v-container class="py-6" style="max-width: 1000px">
-            <!-- Status Tabs -->
+        <!-- Tracking Form (Guest Only) -->
+        <v-container v-if="!isLoggedIn" style="max-width: 800px" class="mt-n8 position-relative z-index-1">
+            <v-card class="elevation-4 rounded-xl pa-8 text-center" style="border-top: 4px solid #1e257c;">
+                <v-icon size="48" color="#1e257c" class="mb-4">mdi-magnify-scan</v-icon>
+                <h2 class="text-h5 font-weight-bold mb-2">Tra cứu đơn hàng</h2>
+                <p class="text-body-2 text-grey-darken-1 mb-8">
+                    Nhập mã đơn hàng và số điện thoại đã dùng để tra cứu trạng thái đơn hàng của bạn.
+                </p>
+                <v-form @submit.prevent="handleTrackOrder" class="mx-auto" style="max-width: 500px;">
+                    <v-text-field v-model="trackingForm.maHoaDon" label="Mã đơn hàng (VD: HD...)"
+                        variant="outlined" density="comfortable" class="mb-4" hide-details="auto"
+                        prepend-inner-icon="mdi-barcode" />
+                    <v-text-field v-model="trackingForm.soDienThoai" label="Số điện thoại"
+                        variant="outlined" density="comfortable" class="mb-6" hide-details="auto"
+                        prepend-inner-icon="mdi-phone-outline" />
+                    <v-btn type="submit" size="large" rounded="pill" block class="text-none font-weight-bold"
+                        style="background: #1e257c; color: white !important;" :loading="trackingLoading">
+                        <v-icon size="20" class="mr-2">mdi-magnify</v-icon>Tra cứu ngay
+                    </v-btn>
+                </v-form>
+                <p class="text-caption text-grey mt-6">Hoặc <a href="/login" class="font-weight-bold" style="color: #1e257c;">Đăng nhập</a> để quản lý toàn bộ đơn hàng</p>
+            </v-card>
+        </v-container>
+
+        <!-- Main Content (Logged In) -->
+        <v-container v-if="isLoggedIn" class="py-6" style="max-width: 1000px">
+            <!-- Status Tabs and Search -->
             <div class="mb-6 pb-4" style="border-bottom: 1px solid #e0e0e0;">
-                <div class="order-tabs">
-                    <v-chip-group v-model="activeTab" mandatory selected-class="active-tab" show-arrows>
-                        <v-chip
-                            v-for="tab in tabs"
-                            :key="tab.value"
-                            :value="tab.value"
+                <div class="d-flex align-center justify-space-between flex-wrap gap-4">
+                    <div class="order-tabs">
+                        <v-chip-group v-model="activeTab" mandatory selected-class="active-tab" show-arrows>
+                            <v-chip
+                                v-for="tab in tabs"
+                                :key="tab.value"
+                                :value="tab.value"
+                                variant="outlined"
+                                class="tab-chip font-weight-bold text-none"
+                                rounded="pill"
+                                filter
+                            >
+                                <v-icon size="16" class="mr-1">{{ tab.icon }}</v-icon>
+                                {{ tab.label }}
+                            </v-chip>
+                        </v-chip-group>
+                    </div>
+                    <div style="width: 320px; min-width: 250px;">
+                        <v-text-field
+                            v-model="searchKeyword"
+                            label="Mã đơn hàng, mã/tên sản phẩm"
                             variant="outlined"
-                            class="tab-chip font-weight-bold text-none"
-                            rounded="pill"
-                            filter
-                        >
-                            <v-icon size="16" class="mr-1">{{ tab.icon }}</v-icon>
-                            {{ tab.label }}
-                        </v-chip>
-                    </v-chip-group>
+                            density="compact"
+                            hide-details
+                            prepend-inner-icon="mdi-magnify"
+                            clearable
+                            @click:clear="handleSearch"
+                            @keyup.enter="handleSearch"
+                        ></v-text-field>
+                    </div>
                 </div>
             </div>
 
@@ -174,10 +248,10 @@ const goToDetail = (id) => {
             </div>
 
             <!-- Orders List -->
-            <div v-else-if="orders.length > 0" class="orders-list">
+            <div v-else-if="orders.length > 0" class="orders-list custom-scrollbar">
                 <div v-for="order in orders"
                     :key="order.id"
-                    class="order-row pa-5 mb-4"
+                    class="order-row pa-5 mb-5 rounded-xl"
                     @click="goToDetail(order.id)">
                     <!-- Header -->
                     <div class="d-flex align-center justify-space-between mb-4">
@@ -269,7 +343,8 @@ const goToDetail = (id) => {
 }
 
 .orders-header {
-    background: #1e257c;
+    background: linear-gradient(135deg, #1e257c 0%, #3b429f 100%);
+    box-shadow: 0 4px 20px rgba(30, 37, 124, 0.15);
 }
 
 .header-icon {
@@ -281,38 +356,51 @@ const goToDetail = (id) => {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    backdrop-filter: blur(10px);
 }
 
 .stats-row .stats-block {
-    border: 1px solid #e0e0e0;
+    border: 1px solid rgba(0,0,0,0.03);
     background: #fff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stats-row .stats-block:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(30, 37, 124, 0.08) !important;
 }
 
 .order-tabs .tab-chip {
     border-color: #e0e0e0;
     font-size: 0.85rem;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
     padding: 0 16px;
 }
 .order-tabs .tab-chip:hover {
     border-color: #1e257c;
     background: #f5f7ff;
+    transform: translateY(-1px);
 }
 
 :deep(.active-tab) {
-    background: #1e257c !important;
+    background: linear-gradient(135deg, #1e257c 0%, #3b429f 100%) !important;
     color: #fff !important;
-    border-color: #1e257c !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 12px rgba(30, 37, 124, 0.2);
 }
 
 .order-row {
-    border: 1px solid #e0e0e0;
+    border: 1px solid rgba(0,0,0,0.04);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     background: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
 }
 .order-row:hover {
     border-color: #1e257c;
+    box-shadow: 0 8px 24px rgba(30, 37, 124, 0.08);
+    transform: translateY(-2px);
 }
 
 .order-status-dot {
@@ -361,5 +449,26 @@ const goToDetail = (id) => {
     align-items: center;
     justify-content: center;
     border: 2px dashed #e0e0e0;
+}
+
+.orders-list {
+    max-height: calc(100vh - 400px);
+    min-height: 300px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #d1d5db;
+    border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #9ca3af;
 }
 </style>

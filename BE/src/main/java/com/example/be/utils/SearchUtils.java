@@ -31,7 +31,7 @@ public final class SearchUtils {
      * Public helper to build Pageable from DTO.
      */
     public static Pageable buildPageable(PageRequest req) {
-        int page = (req.getPage() == null || req.getPage() < 0) ? 0 : req.getPage();
+        int page = (req.getPage() == null || req.getPage() < 1) ? 0 : req.getPage() - 1;
         int size = (req.getSize() == null || req.getSize() <= 0) ? DEFAULT_SIZE : req.getSize();
         
         String sortBy = StringUtils.hasText(req.getSortBy()) ? req.getSortBy() : DEFAULT_SORT;

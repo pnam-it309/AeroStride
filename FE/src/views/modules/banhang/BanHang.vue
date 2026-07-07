@@ -184,13 +184,13 @@ const suggestionLoading = ref(false);
 // Computed property for suggestion calculations
 const suggestionData = computed(() => {
     if (!productSuggestions.value.length || !selectedOrder.value) return null;
-    
+
     const suggestion = productSuggestions.value[0];
     const currentTotal = selectedOrder.value.tongTien || 0;
     const additionalAmount = suggestion.soTienCanThem || 0;
     const discountAmount = suggestion.soTienGiam || 0;
     const newTotal = currentTotal + additionalAmount - discountAmount;
-    
+
     return {
         productCode: suggestion.maSanPham || 'VCHSXLBAP',
         productName: suggestion.tenSanPham || 'Sản phẩm gợi ý',
@@ -204,7 +204,7 @@ const suggestionData = computed(() => {
 // Function to fetch product suggestions from database
 const fetchProductSuggestions = async () => {
     if (!selectedOrder.value?.id) return;
-    
+
     suggestionLoading.value = true;
     try {
         const res = await dichVuDonHang.getProductSuggestions(selectedOrder.value.id);
@@ -222,7 +222,7 @@ const fetchProductSuggestions = async () => {
 // Add suggested product to cart
 const onAddSuggestedProduct = async () => {
     if (!suggestionData.value) return;
-    
+
     try {
         const keyword = suggestionData.value.productCode;
         const variants = await dichVuDonHang.searchSanPham(keyword);
@@ -252,11 +252,11 @@ const selectedOrderItemCount = computed(() =>
 const orderChannel = computed({
     get() {
         if (!selectedOrder.value) return 'Tại quầy';
-        return selectedOrder.value.loaiDon === 'ONLINE' ? 'Trực tuyến' : 'Tại quầy';
+        return selectedOrder.value.isGiaoHangLocal ? 'Trực tuyến' : 'Tại quầy';
     },
     set(newVal) {
         if (selectedOrder.value) {
-            selectedOrder.value.loaiDon = newVal === 'Trực tuyến' ? 'ONLINE' : 'TAI_QUAY';
+            selectedOrder.value.isGiaoHangLocal = (newVal === 'Trực tuyến');
         }
     }
 });
@@ -264,11 +264,11 @@ const orderChannel = computed({
 const isGiaoHang = computed({
     get() {
         if (!selectedOrder.value) return false;
-        return selectedOrder.value.loaiDon === 'ONLINE';
+        return !!selectedOrder.value.isGiaoHangLocal;
     },
     set(val) {
         if (selectedOrder.value) {
-            selectedOrder.value.loaiDon = val ? 'ONLINE' : 'TAI_QUAY';
+            selectedOrder.value.isGiaoHangLocal = val;
         }
     }
 });
@@ -381,7 +381,7 @@ watch(orderChannel, (channel) => {
 // Sync loaiDon when onlyChargeIfReturned changes manually
 watch(onlyChargeIfReturned, (val) => {
     if (selectedOrder.value) {
-        selectedOrder.value.loaiDon = val ? 'TAI_QUAY' : 'ONLINE';
+        selectedOrder.value.isGiaoHangLocal = !val;
     }
 });
 
@@ -964,13 +964,13 @@ const onAddProduct = async (product) => {
             soLuong: product._soLuongMuonThem || 1
         });
         updateOrderInList(updated);
-        
+
         if (updated.priceChanged) {
             addNotification({ title: 'Giá sản phẩm thay đổi', subtitle: updated.priceChangeMessage, color: 'warning' });
         } else {
             addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm vào giỏ hàng', color: 'success' });
         }
-        
+
         refreshBestVoucher(updated);
     } catch (e) {
         addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK, color: 'error' });
@@ -1089,7 +1089,7 @@ const refreshBestVoucher = async (order = selectedOrder.value) => {
             // Kiểm tra điều kiện đơn hàng tối thiểu
             const currentTotal = order.tongTien || 0;
             const minOrderAmount = best.donHangToiThieu || 0;
-            
+
             if (currentTotal >= minOrderAmount) {
                 // Đủ điều kiện: tự động áp
                 await onApplyVoucher(best.id);
@@ -1204,7 +1204,7 @@ const buildCheckoutPayload = (order, overrides = {}) => {
         tongTien: order?.tongTien || 0,
         phiVanChuyen: shippingFee.value,
         tongTienSauGiam: finalCollectAmount.value,
-        loaiDon: orderChannel.value === 'Trực tuyến' ? 'ONLINE' : 'TAI_QUAY',
+        loaiDon: 'TAI_QUAY',
         ghiChu: compiledNote,
         tienMat: 0,
         tienChuyenKhoan: 0,
@@ -1526,7 +1526,6 @@ const onCheckout = async () => {
             confirmDialog.value.loading = true;
             isProcessing.value = true;
             try {
-                const isCash = checkoutData.value.paymentMethod === 'CASH';
                 let compiledNote = checkoutData.value.note || '';
                 if (orderChannel.value === 'Trực tuyến') {
                     const p = provincesShip.value.find(x => x.code === recipientProvince.value);
@@ -1552,7 +1551,7 @@ const onCheckout = async () => {
                     idPhieuGiamGia: selectedOrder.value.idPhieuGiamGia,
                     tongTien: selectedOrder.value.tongTien,
                     tongTienSauGiam: finalCollectAmount.value,
-                    loaiDon: orderChannel.value === 'Trực tuyến' ? 'ONLINE' : 'TAI_QUAY',
+                    loaiDon: 'TAI_QUAY',
                     ghiChu: compiledNote,
                     tienMat: isCash ? finalCollectAmount.value : 0,
                     tienChuyenKhoan: isCash ? 0 : finalCollectAmount.value,
@@ -1847,7 +1846,7 @@ const formatDateTime = (dateStr) => {
                                                             <span
                                                                 style="margin-left: 15px; margin-right: 15px; font-size: 11px; color: #cbd5e1; opacity: 0.4;">|</span>
                                                             <span class="sku-badge">{{ variant.maChiTietSanPham
-                                                            }}</span>
+                                                                }}</span>
                                                         </div>
 
                                                         <!-- màu sắc --- size --- số lượng -->
@@ -2005,7 +2004,7 @@ const formatDateTime = (dateStr) => {
                                             <div class="d-flex align-center justify-space-between">
                                                 <span class="text-slate-600 flex-shrink-0"
                                                     style="font-size: 13px !important">Phiếu giảm
-                                                    giá đang áp dụng tốt nhất</span>
+                                                    giá</span>
                                                 <v-select :model-value="selectedOrder?.idPhieuGiamGia" :items="vouchers"
                                                     item-title="customTitle" item-value="id" variant="outlined"
                                                     density="compact" hide-details @update:model-value="onApplyVoucher"
@@ -2085,15 +2084,15 @@ const formatDateTime = (dateStr) => {
                                         </div>
 
                                         <!-- Gợi ý mua thêm - Classic Style -->
-                                        <div v-if="showProductSuggestions && suggestionData" 
+                                        <div v-if="showProductSuggestions && suggestionData"
                                             class="suggestion-box mt-3 pa-3 rounded-lg border"
                                             style="border-color: #e2e8f0; background-color: transparent; border-style: solid; border-width: 1px;">
                                             <div class="d-flex justify-space-between align-center mb-2">
-                                                <span class="font-weight-bold text-slate-800" 
+                                                <span class="font-weight-bold text-slate-800"
                                                     style="font-size: 13px !important;">
                                                     Gợi ý mua thêm
                                                 </span>
-                                                <span class="text-caption font-weight-medium" 
+                                                <span class="text-caption font-weight-medium"
                                                     style="color: #b57a00; font-size: 11px !important;">
                                                     1 đề xuất
                                                 </span>
@@ -2103,7 +2102,7 @@ const formatDateTime = (dateStr) => {
                                                     <span class="text-slate-600" style="font-size: 12px !important;">
                                                         Mã sản phẩm:
                                                     </span>
-                                                    <span class="font-weight-bold text-slate-800" 
+                                                    <span class="font-weight-bold text-slate-800"
                                                         style="font-size: 12px !important;">
                                                         {{ suggestionData.productCode }}
                                                     </span>
@@ -2112,7 +2111,7 @@ const formatDateTime = (dateStr) => {
                                                     <span class="text-slate-600" style="font-size: 12px !important;">
                                                         Giảm giá:
                                                     </span>
-                                                    <span class="font-weight-bold text-error" 
+                                                    <span class="font-weight-bold text-error"
                                                         style="font-size: 12px !important;">
                                                         {{ suggestionData.discountPercent }}%
                                                     </span>
@@ -2121,7 +2120,7 @@ const formatDateTime = (dateStr) => {
                                                     <span class="text-slate-600" style="font-size: 12px !important;">
                                                         Cần mua thêm:
                                                     </span>
-                                                    <span class="font-weight-semibold text-slate-800" 
+                                                    <span class="font-weight-semibold text-slate-800"
                                                         style="font-size: 12px !important;">
                                                         {{ formatCurrency(suggestionData.needToBuy) }}
                                                     </span>
@@ -2130,7 +2129,7 @@ const formatDateTime = (dateStr) => {
                                                     <span class="text-slate-600" style="font-size: 12px !important;">
                                                         Sẽ được giảm:
                                                     </span>
-                                                    <span class="font-weight-semibold text-success" 
+                                                    <span class="font-weight-semibold text-success"
                                                         style="font-size: 12px !important;">
                                                         {{ formatCurrency(suggestionData.willReduce) }}
                                                     </span>
@@ -2288,11 +2287,11 @@ const formatDateTime = (dateStr) => {
                                             style="font-size: 13px;">
                                             <div class="d-flex w-100 justify-space-between mb-1">
                                                 <span class="font-weight-bold text-slate-800">{{ c.hoTen || c.ten
-                                                }}</span>
+                                                    }}</span>
                                                 <span class="text-blue-darken-3 font-weight-medium">{{ c.sdt }}</span>
                                             </div>
                                             <span class="text-slate-500 text-caption">{{ c.email || 'Không có email'
-                                            }}</span>
+                                                }}</span>
                                         </div>
                                     </div>
                                     <div v-else class="pa-3 text-center text-slate-500">
@@ -2415,7 +2414,7 @@ const formatDateTime = (dateStr) => {
                             </div>
                             <span class="font-weight-bold" style="font-size: 13px !important;">{{
                                 formatCurrency(remainingBalance)
-                                }}</span>
+                            }}</span>
                         </div>
                         <div v-else-if="changeAmount > 0"
                             class="d-flex align-center justify-space-between pa-3 rounded-lg bg-blue-50 text-blue-800 border-blue">
@@ -2666,7 +2665,7 @@ const formatDateTime = (dateStr) => {
         <!-- Hóa đơn sau thanh toán -->
         <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" />
 
-        <!-- Giao Ca Modal -->        <!-- Tạm thời ẩn chức năng giao ca
+        <!-- Giao Ca Modal --> <!-- Tạm thời ẩn chức năng giao ca
         <GiaoCaModal v-model="showGiaoCaModal" mode="open" @success="handleGiaoCaSuccess" /> 
         -->
     </v-container>

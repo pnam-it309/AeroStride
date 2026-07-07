@@ -52,13 +52,21 @@ const canCancel = computed(() => {
 });
 
 // Các bước tiến trình đơn hàng (luồng bình thường, bỏ qua Đã hủy / Hoàn đơn)
-const timelineSteps = [
-    ORDER_STATUS.CHO_XAC_NHAN,
-    ORDER_STATUS.XAC_NHAN,
-    ORDER_STATUS.CHO_GIAO,
-    ORDER_STATUS.DANG_GIAO,
-    ORDER_STATUS.HOAN_THANH
-];
+const timelineSteps = computed(() => {
+    if (order.value?.loaiDon === 'TAI_QUAY' || order.value?.loaiDon === 'OFFLINE') {
+        return [
+            ORDER_STATUS.CHO_XAC_NHAN,
+            ORDER_STATUS.HOAN_THANH
+        ];
+    }
+    return [
+        ORDER_STATUS.CHO_XAC_NHAN,
+        ORDER_STATUS.XAC_NHAN,
+        ORDER_STATUS.CHO_GIAO,
+        ORDER_STATUS.DANG_GIAO,
+        ORDER_STATUS.HOAN_THANH
+    ];
+});
 
 // Đơn ở trạng thái bất thường -> không hiển thị thanh ngang mà báo riêng
 const isCancelled = computed(() =>
@@ -66,7 +74,7 @@ const isCancelled = computed(() =>
 );
 
 // Vị trí bước hiện tại trong luồng (-1 nếu không thuộc luồng bình thường)
-const currentStepIndex = computed(() => timelineSteps.indexOf(order.value?.trangThai));
+const currentStepIndex = computed(() => timelineSteps.value.indexOf(order.value?.trangThai));
 
 const isPriceChanged = (item) => item.giaHienTai != null && Number(item.giaHienTai) !== Number(item.donGia);
 
@@ -114,9 +122,14 @@ const handleVnPayReturn = async () => {
 const fetchOrder = async () => {
     loading.value = true;
     try {
-        order.value = await dichVuDatHang.layChiTietDonHang(route.params.id);
+        if (route.query.code && route.query.phone) {
+            order.value = await dichVuDatHang.traCuuDonHang(route.query.code, route.query.phone);
+        } else {
+            order.value = await dichVuDatHang.layChiTietDonHang(route.params.id);
+        }
     } catch (error) {
         console.error('Error fetching order:', error);
+        alert(error.response?.data?.message || 'Không thể tải chi tiết đơn hàng');
     } finally {
         loading.value = false;
     }
@@ -218,7 +231,7 @@ onMounted(async () => {
         <MainHeader />
         <div class="header-spacing" style="height: 104px"></div>
 
-        <v-container class="py-8" style="max-width: 1100px">
+        <v-container class="py-8" style="max-width: 1400px">
             <!-- Back -->
             <v-btn variant="text" class="font-weight-bold text-none mb-6 back-btn" 
                 style="color: #1e257c;" @click="router.push('/my-orders')">
@@ -382,13 +395,11 @@ onMounted(async () => {
                                     v-for="(ls, i) in order.lichSuTrangThai"
                                     :key="i"
                                     size="small"
+                                    dot-color="#1e257c"
+                                    :icon="statusIcon(ls.trangThai)"
+                                    icon-color="white"
                                     class="timeline-item-custom"
                                 >
-                                    <template v-slot:icon>
-                                        <div class="timeline-dot" style="background: #1e257c;">
-                                            <v-icon size="14" color="white">{{ statusIcon(ls.trangThai) }}</v-icon>
-                                        </div>
-                                    </template>
                                     <div>
                                         <p class="text-body-2 font-weight-bold mb-0">{{ statusLabel(ls.trangThai) }}</p>
                                         <p class="text-caption text-grey mb-1 d-flex align-center">
@@ -608,6 +619,13 @@ onMounted(async () => {
 <style scoped>
 .order-detail-page {
     padding-top: 64px;
+}
+
+.section-block {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
 }
 
 .stepper-step.is-done .stepper-circle {

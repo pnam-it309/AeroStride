@@ -63,18 +63,18 @@ const productSortBy = ref('bestSelling');
 const productPage = ref(1);
 const productPageSize = ref(5);
 const productPageSizeOptions = [
-    { title: '5 dÃ²ng', value: 5 },
-    { title: '10 dÃ²ng', value: 10 },
-    { title: '20 dÃ²ng', value: 20 }
+    { title: '5 dòng', value: 5 },
+    { title: '10 dòng', value: 10 },
+    { title: '20 dòng', value: 20 }
 ];
 const productSortOptions = [
-    { title: 'BÃ¡n cháº¡y nháº¥t', value: 'bestSelling' },
-    { title: 'Doanh thu cao nháº¥t', value: 'revenueDesc' }
+    { title: 'Bán chạy nhất', value: 'bestSelling' },
+    { title: 'Doanh thu cao nhất', value: 'revenueDesc' }
 ];
 
 const monthlyRevenue = ref([]);
 
-// Cáº¥u hÃ¬nh reactive cho ApexCharts
+// Cấu hình reactive cho ApexCharts
 const areaChartSeries = ref([
     {
         name: 'Doanh thu',
@@ -135,7 +135,7 @@ const areaChartOptions = ref({
         labels: {
             formatter: function (value) {
                 if (value >= 1e9) {
-                    return (value / 1e9).toFixed(1) + ' tá»·';
+                    return (value / 1e9).toFixed(1) + ' tỷ';
                 } else if (value >= 1e6) {
                     return (value / 1e6).toFixed(0) + ' tr';
                 } else if (value >= 1e3) {
@@ -190,7 +190,7 @@ const statusBarOptions = ref({
         strokeDashArray: 4
     },
     xaxis: {
-        categories: ['Chá» xÃ¡c nháº­n', 'Äang giao hÃ ng', 'ÄÃ£ hoÃ n thÃ nh', 'ÄÃ£ há»§y bá»'],
+        categories: ['Chờ xác nhận', 'Đang giao hàng', 'Đã hoàn thành', 'Đã hủy bỏ'],
         axisBorder: {
             show: true,
             color: '#e5e7eb'
@@ -222,7 +222,7 @@ const statusBarOptions = ref({
     tooltip: {
         y: {
             formatter: function (val) {
-                return `${new Intl.NumberFormat('vi-VN').format(val)} Ä‘Æ¡n`;
+                return `${new Intl.NumberFormat('vi-VN').format(val)} đơn`;
             }
         },
         theme: 'light'
@@ -254,7 +254,7 @@ const fetchProductStats = async () => {
             size: productPageSize.value,
             sortBy: productSortBy.value
         });
-        
+
         productStats.value = Array.isArray(response?.content) ? response.content : [];
         productTotalElements.value = response?.totalElements || 0;
         productTotalPages.value = response?.totalPages || 1;
@@ -273,7 +273,7 @@ const loadStatistics = async () => {
         const startOfYear = `${selectedYear.value}-01-01`;
         const endOfYear = `${selectedYear.value}-12-31`;
 
-        // Gá»i API song song Ä‘á»ƒ giáº£m thá»i gian chá»
+        // Gọi API song song để giảm thời gian chờ
         const [overview, dailyData] = await Promise.all([
             dichVuThongKe.layTongQuan(tuNgay, denNgay),
             dichVuThongKe.layDoanhThuTheoNgay(startOfYear, endOfYear)
@@ -324,7 +324,7 @@ const loadStatistics = async () => {
             const categoryShares = Array.isArray(overview.tyTrongTheoDanhMuc)
                 ? overview.tyTrongTheoDanhMuc
                     .map((item) => ({
-                        name: item.name || 'KhÃ¡c',
+                        name: item.name || 'Khác',
                         revenue: Number(item.revenue || 0)
                     }))
                     .filter((item) => Number.isFinite(item.revenue) && item.revenue > 0)
@@ -356,7 +356,7 @@ const loadStatistics = async () => {
         }
         monthlyRevenue.value = months;
 
-        // Cáº­p nháº­t biá»ƒu Ä‘á»“ Area
+        // Cập nhật biểu đồ Area
         areaChartSeries.value = [
             {
                 name: 'Doanh thu',
@@ -364,7 +364,7 @@ const loadStatistics = async () => {
             }
         ];
 
-        // Táº£i danh sÃ¡ch sáº£n pháº©m
+        // Tải danh sách sản phẩm
         fetchProductStats();
 
     } catch (error) {
@@ -394,22 +394,22 @@ const getGrowthIcon = (growth) => {
 };
 
 const statusItems = [
-    { label: 'Chá» xÃ¡c nháº­n', valueKey: 'donHangChoXacNhan', icon: 'mdi-clock-outline', color: 'warning' },
-    { label: 'Äang giao hÃ ng', valueKey: 'donHangDangGiao', icon: 'mdi-truck-fast-outline', color: 'info' },
-    { label: 'ÄÃ£ hoÃ n thÃ nh', valueKey: 'donHangHoanThanh', icon: 'mdi-check-circle-outline', color: 'success' },
-    { label: 'ÄÃ£ há»§y bá»', valueKey: 'donHangDaHuy', icon: 'mdi-close-circle-outline', color: 'error' }
+    { label: 'Chờ xác nhận', valueKey: 'donHangChoXacNhan', icon: 'mdi-clock-outline', color: 'warning' },
+    { label: 'Đang giao hàng', valueKey: 'donHangDangGiao', icon: 'mdi-truck-fast-outline', color: 'info' },
+    { label: 'Đã hoàn thành', valueKey: 'donHangHoanThanh', icon: 'mdi-check-circle-outline', color: 'success' },
+    { label: 'Đã hủy bỏ', valueKey: 'donHangDaHuy', icon: 'mdi-close-circle-outline', color: 'error' }
 ];
 
 const statusChartItems = computed(() => [
-    { label: 'Chá» xÃ¡c nháº­n', amount: 0, count: revenueStats.value.donHangChoXacNhan, active: true },
-    { label: 'Äang giao hÃ ng', amount: 0, count: revenueStats.value.donHangDangGiao },
-    { label: 'ÄÃ£ hoÃ n thÃ nh', amount: revenueStats.value.totalRevenue, count: revenueStats.value.donHangHoanThanh },
-    { label: 'ÄÃ£ há»§y bá»', amount: 0, count: revenueStats.value.donHangDaHuy }
+    { label: 'Chờ xác nhận', amount: 0, count: revenueStats.value.donHangChoXacNhan, active: true },
+    { label: 'Đang giao hàng', amount: 0, count: revenueStats.value.donHangDangGiao },
+    { label: 'Đã hoàn thành', amount: revenueStats.value.totalRevenue, count: revenueStats.value.donHangHoanThanh },
+    { label: 'Đã hủy bỏ', amount: 0, count: revenueStats.value.donHangDaHuy }
 ]);
 
 const statusBarSeries = computed(() => [
     {
-        name: 'Sá»‘ Ä‘Æ¡n',
+        name: 'Số đơn',
         data: [
             revenueStats.value.donHangChoXacNhan,
             revenueStats.value.donHangDangGiao,
@@ -513,7 +513,7 @@ const goToProductPage = (page) => {
 
 const kpiCards = [
     {
-        title: 'Tá»•ng doanh thu',
+        title: 'Tổng doanh thu',
         valueKey: 'totalRevenue',
         icon: 'mdi-currency-usd',
         color: 'primary',
@@ -521,7 +521,7 @@ const kpiCards = [
         formatter: formatCurrency
     },
     {
-        title: 'Tá»•ng Ä‘Æ¡n hÃ ng',
+        title: 'Tổng đơn hàng',
         valueKey: 'totalOrders',
         icon: 'mdi-shopping-outline',
         color: 'success',
@@ -529,7 +529,7 @@ const kpiCards = [
         formatter: formatNumber
     },
     {
-        title: 'Sáº£n pháº©m Ä‘Ã£ bÃ¡n',
+        title: 'Sản phẩm đã bán',
         valueKey: 'sanPhamDaBan',
         icon: 'mdi-package-variant-closed',
         color: 'secondary',
@@ -537,7 +537,7 @@ const kpiCards = [
         formatter: formatNumber
     },
     {
-        title: 'GiÃ¡ trá»‹ trung bÃ¬nh Ä‘Æ¡n',
+        title: 'Giá trị trung bình đơn',
         valueKey: 'averageOrderValue',
         icon: 'mdi-chart-line',
         color: 'info',
@@ -545,7 +545,7 @@ const kpiCards = [
         formatter: formatCurrency
     },
     {
-        title: 'Tá»•ng khÃ¡ch hÃ ng',
+        title: 'Tổng khách hàng',
         valueKey: 'tongKhachHang',
         icon: 'mdi-account-group',
         color: 'warning',
@@ -556,14 +556,14 @@ const kpiCards = [
 
 const salesChannelCards = [
     {
-        title: 'BÃ¡n hÃ ng táº¡i quáº§y',
+        title: 'Bán hàng tại quầy',
         revenueKey: 'doanhThuTaiQuay',
         orderKey: 'donTaiQuay',
         icon: 'mdi-storefront-outline',
         tone: 'green'
     },
     {
-        title: 'BÃ¡n hÃ ng trá»±c tuyáº¿n',
+        title: 'Bán hàng trực tuyến',
         revenueKey: 'doanhThuTrucTuyen',
         orderKey: 'donTrucTuyen',
         icon: 'mdi-web',
@@ -578,27 +578,27 @@ onMounted(() => {
 <template>
     <div class="pa-6 font-body thong-ke-container">
         <AdminBreadcrumbs :items="[
-            { title: 'Quáº£n lÃ½ bÃ¡n hÃ ng', disabled: false, href: '#' },
-            { title: 'Thá»‘ng kÃª', disabled: true }
+            { title: 'Quản lý bán hàng', disabled: false, href: '#' },
+            { title: 'Thống kê', disabled: true }
         ]" />
 
         <section class="stats-shell mt-4">
             <div class="stats-toolbar">
                 <div class="stats-filters">
                     <div class="stats-filter-field stats-filter-field-date">
-                        <div class="filter-field-label">Tá»« ngÃ y</div>
+                        <div class="filter-field-label">Từ ngày</div>
                         <AppDatePicker :model-value="startDate" @update:model-value="onStartDateChange"
                             :max-date="endDate" placeholder="dd/mm/yyyy" />
                     </div>
                     <div class="stats-filter-field stats-filter-field-date">
-                        <div class="filter-field-label">Äáº¿n ngÃ y</div>
+                        <div class="filter-field-label">Đến ngày</div>
                         <AppDatePicker :model-value="endDate" @update:model-value="onEndDateChange"
                             :min-date="startDate" placeholder="dd/mm/yyyy" />
                     </div>
                     <v-btn color="primary" variant="flat" class="stats-refresh-btn px-6" height="40" :loading="loading"
                         @click="loadStatistics">
                         <v-icon start size="18">mdi-refresh</v-icon>
-                        Cáº­p nháº­t dá»¯ liá»‡u
+                        Cập nhật dữ liệu
                     </v-btn>
                 </div>
             </div>
@@ -616,7 +616,7 @@ onMounted(() => {
             <div class="chart-grid">
                 <section class="stats-panel trend-panel chart-panel-wide">
                     <div class="chart-card-heading">
-                        <h2>XU HÆ¯á»šNG DOANH THU (NÄ‚M {{ selectedYear }})</h2>
+                        <h2>Xu hướng doanh thu (năm {{ selectedYear }})</h2>
                     </div>
                     <div class="tab-panel revenue-tab-panel">
                         <div class="sales-channel-grid">
@@ -627,7 +627,7 @@ onMounted(() => {
                                 <div>
                                     <span>{{ item.title }}</span>
                                     <strong>{{ formatCurrency(revenueStats[item.revenueKey]) }}</strong>
-                                    <small>{{ formatNumber(revenueStats[item.orderKey]) }} Ä‘Æ¡n</small>
+                                    <small>{{ formatNumber(revenueStats[item.orderKey]) }} đơn</small>
                                 </div>
                             </article>
                         </div>
@@ -641,7 +641,7 @@ onMounted(() => {
 
                 <section class="stats-panel trend-panel chart-panel-narrow">
                     <div class="chart-card-heading">
-                        <h2>TRáº NG THÃI</h2>
+                        <h2>Trạng thái</h2>
                     </div>
                     <div class="tab-panel">
                         <div v-if="loading" class="panel-loader panel-loader-tall">
@@ -653,7 +653,7 @@ onMounted(() => {
                                     :class="{ active: item.active }">
                                     <span>{{ item.label }}</span>
                                     <strong>{{ formatCurrency(item.amount) }}</strong>
-                                    <small>{{ formatNumber(item.count) }} Ä‘Æ¡n</small>
+                                    <small>{{ formatNumber(item.count) }} đơn</small>
                                 </article>
                             </div>
                             <apexchart class="status-bar-chart" type="bar" height="320" :options="statusBarOptions"
@@ -666,7 +666,7 @@ onMounted(() => {
             <div class="split-grid">
                 <section class="stats-panel monthly-detail-panel">
                     <div class="simple-card-heading">
-                        <h2>CHI TIáº¾T DOANH THU THÃNG (NÄ‚M {{ selectedYear }})</h2>
+                        <h2>Chi tiết doanh thu tháng (năm {{ selectedYear }})</h2>
                         <v-icon color="#0f172a" size="22">mdi-calendar-month</v-icon>
                     </div>
                     <div v-if="loading" class="panel-loader">
@@ -682,20 +682,20 @@ onMounted(() => {
 
                 <section class="stats-panel category-share-panel">
                     <div class="simple-card-heading">
-                        <h2>Tá»¶ TRá»ŒNG THEO DANH Má»¤C</h2>
+                        <h2>Tỷ trọng theo danh mục</h2>
                         <v-icon color="#0f172a" size="22">mdi-chart-donut</v-icon>
                     </div>
                     <div v-if="loading" class="panel-loader">
                         <v-progress-circular indeterminate color="primary" />
                     </div>
-                    <div v-else-if="!hasValidDonutData" class="empty-state">KhÃ´ng cÃ³ dá»¯ liá»‡u trong thá»i gian
-                        nÃ y</div>
+                    <div v-else-if="!hasValidDonutData" class="empty-state">Không có dữ liệu trong thời gian
+                        này</div>
                     <div v-else class="category-chart-body">
                         <div class="category-donut-wrap">
                             <apexchart :key="donutChartKey" type="donut" height="330" :options="donutChartOptions"
                                 :series="donutChartSeries" />
                             <div class="category-donut-center">
-                                <span>Tá»•ng doanh thu</span>
+                                <span>Tổng doanh thu</span>
                                 <strong>{{ formatCurrency(donutTotalRevenue) }}</strong>
                             </div>
                         </div>
@@ -707,89 +707,70 @@ onMounted(() => {
                 <div class="simple-card-heading">
                     <div class="product-stats-title">
                         <v-icon color="#e11d48" size="17">mdi-cube-outline</v-icon>
-                        <h2>THá»NG KÃŠ Sáº¢N PHáº¨M</h2>
+                        <h2>Thống kê sản phẩm</h2>
                     </div>
-                    <span class="product-count-chip">{{ formatNumber(productTotalElements) }} sáº£n pháº©m</span>
+                    <span class="product-count-chip">{{ formatNumber(productTotalElements) }} sản phẩm</span>
                 </div>
                 <div v-if="loading" class="panel-loader">
                     <v-progress-circular indeterminate color="primary" />
                 </div>
-                <div v-else-if="productTotalElements === 0 && !productSearchKeyword" class="empty-state product-empty-state">
-                    KhÃ´ng cÃ³ dá»¯ liá»‡u trong thá»i gian nÃ y
+                <div v-else-if="productTotalElements === 0 && !productSearchKeyword"
+                    class="empty-state product-empty-state">
+                    Không có dữ liệu trong thời gian này
                 </div>
                 <div v-else class="product-table-section">
                     <AdminFilter title="" @refresh="resetProductFilters">
                         <v-col cols="12" sm="6" md="4" class="pb-1">
-                            <div class="filter-field-label">TÃ¬m kiáº¿m</div>
-                            <v-text-field
-                                v-model="productSearchKeyword"
-                                placeholder="MÃ£ hoáº·c tÃªn sáº£n pháº©m..."
-                                density="comfortable"
-                                variant="outlined"
-                                hide-details
-                                clearable
-                                prepend-inner-icon="mdi-magnify"
-                                bg-color="white"
-                                @input="refreshProductFilters"
-                            ></v-text-field>
+                            <div class="filter-field-label">Tìm kiếm</div>
+                            <v-text-field v-model="productSearchKeyword" placeholder="Mã hoặc tên sản phẩm..."
+                                density="comfortable" variant="outlined" hide-details clearable
+                                prepend-inner-icon="mdi-magnify" bg-color="white"
+                                @input="refreshProductFilters"></v-text-field>
                         </v-col>
                         <v-col cols="12" sm="6" md="4" class="pb-1">
-                            <div class="filter-field-label">Sáº¯p xáº¿p</div>
-                            <v-select
-                                v-model="productSortBy"
-                                :items="productSortOptions"
-                                item-title="title"
-                                item-value="value"
-                                density="comfortable"
-                                variant="outlined"
-                                hide-details
-                                bg-color="white"
-                                @update:model-value="refreshProductFilters"
-                            ></v-select>
+                            <div class="filter-field-label">Sắp xếp</div>
+                            <v-select v-model="productSortBy" :items="productSortOptions" item-title="title"
+                                item-value="value" density="comfortable" variant="outlined" hide-details
+                                bg-color="white" @update:model-value="refreshProductFilters"></v-select>
                         </v-col>
                     </AdminFilter>
-                    <AdminTable
-                        hide-toolbar
-                        :headers="[
-                            { text: 'STT', align: 'center', width: '80px' },
-                            { text: 'MÃƒ Sáº¢N PHáº¨M', align: 'center' },
-                            { text: 'TÃŠN Sáº¢N PHáº¨M', align: 'start' },
-                            { text: 'THÆ¯Æ NG HIá»†U', align: 'center' },
-                            { text: 'ÄÃƒ BÃN', align: 'center' },
-                            { text: 'DOANH THU', align: 'center' }
-                        ]"
-                        :items="productStats"
-                    >
+                    <AdminTable hide-toolbar :headers="[
+                        { text: 'STT', align: 'center', width: '80px' },
+                        { text: 'Mã sản phẩm', align: 'center' },
+                        { text: 'Tên sản phẩm', align: 'start' },
+                        { text: 'Thương hiệu', align: 'center' },
+                        { text: 'Đã bán', align: 'center' },
+                        { text: 'Doanh thu', align: 'center' }
+                    ]" :items="productStats">
                         <template #row="{ item, index }">
                             <tr class="data-row" :key="`${item.maSanPham}-${item.name}`">
                                 <td class="data-cell">{{ (productPage - 1) * productPageSize + index + 1 }}</td>
                                 <td class="data-cell">{{ item.maSanPham || '--' }}</td>
                                 <td class="data-cell text-left">
-                                    <div class="product-name-cell" style="justify-content: flex-start; text-align: left;">
+                                    <div class="product-name-cell"
+                                        style="justify-content: flex-start; text-align: left;">
                                         <span class="font-weight-medium" style="color: #1e293b">{{ item.name }}</span>
-                                        <small style="color: #64748b; font-size: 11px">Tá»•ng dá»¯ liá»‡u</small>
+                                        <small style="color: #64748b; font-size: 11px">Tổng dữ liệu</small>
                                     </div>
                                 </td>
                                 <td class="data-cell">
-                                    <span class="brand-pill" style="display: inline-flex; padding: 4px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; font-weight: 600; color: #475569;">
+                                    <span class="brand-pill"
+                                        style="display: inline-flex; padding: 4px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; font-weight: 600; color: #475569;">
                                         {{ item.thuongHieu || '--' }}
                                     </span>
                                 </td>
-                                <td class="data-cell font-weight-medium" style="color: #1e293b">{{ formatNumber(item.quantity) }}</td>
-                                <td class="data-cell font-weight-bold" style="color: #e11d48">{{ formatCurrency(item.revenue) }}</td>
+                                <td class="data-cell font-weight-medium" style="color: #1e293b">{{
+                                    formatNumber(item.quantity) }}</td>
+                                <td class="data-cell font-weight-bold" style="color: #e11d48">{{
+                                    formatCurrency(item.revenue) }}</td>
                             </tr>
                         </template>
 
                         <template #pagination>
-                            <AdminPagination
-                                v-model="productPage"
-                                v-model:page-size="productPageSize"
-                                :total-elements="productTotalElements"
-                                :total-pages="productTotalPages"
-                                :current-size="productStats.length"
-                                @change="goToProductPage"
-                                @update:page-size="changeProductPageSize"
-                            />
+                            <AdminPagination v-model="productPage" v-model:page-size="productPageSize"
+                                :total-elements="productTotalElements" :total-pages="productTotalPages"
+                                :current-size="productStats.length" @change="goToProductPage"
+                                @update:page-size="changeProductPageSize" />
                         </template>
                     </AdminTable>
                 </div>
@@ -797,4 +778,3 @@ onMounted(() => {
         </section>
     </div>
 </template>
-

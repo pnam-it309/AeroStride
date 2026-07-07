@@ -235,7 +235,7 @@ watch(
                                     </div>
 
                                     <model-viewer
-                                        :src="currentShoe.modelUrl || 'https://modelviewer.dev/shared-assets/models/Shoe.glb'"
+                                        :src="currentShoe.modelUrl || '/models/Shoe.glb'"
                                         :poster="currentShoe.image || '/assets/images/products/1.jpg'"
                                         :alt="currentShoe.title"
                                         camera-controls

@@ -17,9 +17,12 @@ public interface CustomerOrderService {
 
     CustomerOrderStatsResponse getMyOrderStats(String username);
 
-    List<CustomerOrderResponse> getMyOrders(String username, String trangThai);
+    // Lấy danh sách các đơn hàng (hóa đơn online) của khách hàng, có thể lọc theo trạng thái
+    List<CustomerOrderResponse> getMyOrders(String username, String trangThai, String keyword);
 
     CustomerOrderResponse getOrderDetail(String id, String username);
+
+    CustomerOrderResponse trackOrder(String maHoaDon, String soDienThoai);
 
     void cancelOrder(String id, String username);
 

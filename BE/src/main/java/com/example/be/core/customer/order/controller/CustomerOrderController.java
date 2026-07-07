@@ -34,13 +34,14 @@ public class CustomerOrderController {
 
     // Xử lý thanh toán và tạo đơn hàng trực tuyến cho khách hàng
     @PostMapping("/checkout")
-    @PreAuthorize("hasRole('KHACH_HANG')")
     public ResponseEntity<ApiResponse<CustomerOrderResponse>> checkout(
             @Valid @RequestBody CustomerOrderCheckoutRequest request,
             Authentication authentication
     ) {
-        log.info("Customer checkout: user={}", authentication.getName());
-        CustomerOrderResponse response = customerOrderService.checkout(request, authentication.getName());
+        String username = (authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getName())) ? authentication.getName() : null;
+        log.info("Customer checkout: user={}", username);
+        CustomerOrderResponse response = customerOrderService.checkout(request, username);
         return ResponseEntity.ok(ApiResponse.success(response, "Đặt hàng thành công"));
     }
 
@@ -49,10 +50,11 @@ public class CustomerOrderController {
     @PreAuthorize("hasRole('KHACH_HANG')")
     public ResponseEntity<ApiResponse<List<CustomerOrderResponse>>> getMyOrders(
             @RequestParam(required = false) String trangThai,
+            @RequestParam(required = false) String keyword,
             Authentication authentication
     ) {
-        log.info("Fetching orders for customer: user={}, status={}", authentication.getName(), trangThai);
-        List<CustomerOrderResponse> orders = customerOrderService.getMyOrders(authentication.getName(), trangThai);
+        log.info("Fetching orders for customer: user={}, status={}, keyword={}", authentication.getName(), trangThai, keyword);
+        List<CustomerOrderResponse> orders = customerOrderService.getMyOrders(authentication.getName(), trangThai, keyword);
         return ResponseEntity.ok(ApiResponse.success(orders));
     }
 
@@ -65,6 +67,17 @@ public class CustomerOrderController {
         log.info("Fetching order stats for customer: user={}", authentication.getName());
         com.example.be.core.customer.order.model.response.CustomerOrderStatsResponse stats = customerOrderService.getMyOrderStats(authentication.getName());
         return ResponseEntity.ok(ApiResponse.success(stats));
+    }
+
+    // Tra cứu đơn hàng công khai (dành cho khách vãng lai)
+    @GetMapping("/track")
+    public ResponseEntity<ApiResponse<CustomerOrderResponse>> trackOrder(
+            @RequestParam String maHoaDon,
+            @RequestParam String soDienThoai
+    ) {
+        log.info("Tracking order: maHoaDon={}, phone={}", maHoaDon, soDienThoai);
+        CustomerOrderResponse response = customerOrderService.trackOrder(maHoaDon, soDienThoai);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // Xem chi tiết một đơn hàng cụ thể của khách hàng

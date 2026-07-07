@@ -38,19 +38,19 @@ export const router = createRouter({
             path: PATH.CHECKOUT,
             name: 'Checkout',
             component: () => import('@/views/pages/orders/CheckoutPage.vue'),
-            meta: { requiresCustomerAuth: true, seoTitle: 'Thanh Toán' }
+            meta: { seoTitle: 'Thanh Toán' }
         },
         {
             path: `${PATH.ORDER_SUCCESS}/:id`,
             name: 'OrderSuccess',
             component: () => import('@/views/pages/orders/OrderSuccessPage.vue'),
-            meta: { requiresCustomerAuth: true, seoTitle: 'Đặt Hàng Thành Công' }
+            meta: { seoTitle: 'Đặt Hàng Thành Công' }
         },
         {
             path: PATH.ORDERS,
             name: 'MyOrders',
             component: () => import('@/views/pages/orders/MyOrdersPage.vue'),
-            meta: { requiresCustomerAuth: true, seoTitle: 'Đơn Hàng Của Tôi' }
+            meta: { seoTitle: 'Đơn Hàng Của Tôi' }
         },
         {
             path: PATH.PROFILE,
@@ -62,7 +62,7 @@ export const router = createRouter({
             path: `${PATH.ORDER_DETAIL}/:id`,
             name: 'OrderDetail',
             component: () => import('@/views/pages/orders/OrderDetailPage.vue'),
-            meta: { requiresCustomerAuth: true, seoTitle: 'Chi Tiết Đơn Hàng' }
+            meta: { seoTitle: 'Chi Tiết Đơn Hàng' }
         },
         {
             path: PATH.FAVORITES,
