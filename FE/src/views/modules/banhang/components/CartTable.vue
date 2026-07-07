@@ -90,8 +90,24 @@ const handleDirectInput = (item, event) => {
                             </v-btn>
                         </div>
                     </td>
-                    <td class="text-right text-caption">{{ formatCurrency(item.donGia) }}</td>
-                    <td class="text-right font-weight-bold text-primary text-body-2">{{ formatCurrency(item.thanhTien) }}</td>
+                    <td class="text-right font-weight-bold" style="font-size: 13px !important; white-space: nowrap !important;">
+                        <template v-if="item.phanTramGiam > 0">
+                            <span class="d-block font-weight-bold" style="color: #0c3866 !important;">
+                                {{ formatCurrency(item.donGia) }}
+                            </span>
+                            <span class="font-weight-bold" style="text-decoration: line-through; text-decoration-color: #94a3b8; -webkit-text-decoration-color: #94a3b8; color: #c92c04 !important; font-size: 11px !important; font-weight: normal; display: block; margin-top: 2px;">
+                                {{ formatCurrency(item.donGia / (1 - item.phanTramGiam / 100)) }}
+                            </span>
+                        </template>
+                        <template v-else>
+                            <span style="color: #0c3866 !important;">
+                                {{ formatCurrency(item.donGia) }}
+                            </span>
+                        </template>
+                    </td>
+                    <td class="text-right font-weight-bold text-primary text-body-2" style="white-space: nowrap !important;">
+                        {{ formatCurrency(item.thanhTien) }}
+                    </td>
                     <td class="text-center">
                         <v-btn icon variant="text" color="error" size="small" @click="emit('remove', item)">
                             <TrashIcon size="16" />
