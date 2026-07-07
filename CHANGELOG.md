@@ -1,3 +1,10 @@
+## [1.26.5](https://github.com/pnam-it309/AeroStride/compare/v1.26.4...v1.26.5) (2026-07-07)
+
+
+### Bug Fixes
+
+* Tìm kiếm , lọc, pgg màn bán hàng ([9421da1](https://github.com/pnam-it309/AeroStride/commit/9421da1d3f1e0b6343af30b96a3a652b9b272be9))
+
 ## [1.26.4](https://github.com/pnam-it309/AeroStride/compare/v1.26.3...v1.26.4) (2026-07-04)
 
 
