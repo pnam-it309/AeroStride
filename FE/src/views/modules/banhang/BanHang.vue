@@ -2428,8 +2428,7 @@ const formatDateTime = (dateStr) => {
                                 <!-- Money Input -->
                                 <div class="d-flex align-center justify-space-between mb-3">
                                     <span class="text-slate-600" style="font-size: 13px !important">
-                                        {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển
-                                        khoản' }}
+                                        {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
                                     </span>
                                     <v-text-field :model-value="formatNumberWithDots(checkoutData.receivedAmount)"
                                         @input="e => checkoutData.receivedAmount = parseNumberFromDots(e.target.value)"
