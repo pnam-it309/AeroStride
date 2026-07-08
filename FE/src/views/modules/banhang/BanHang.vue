@@ -9,6 +9,7 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { BoxIcon, XIcon } from 'vue-tabler-icons';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import QrcodeVue from 'qrcode.vue';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { dichVuVnPay } from './dichVuVnPay';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
@@ -23,11 +24,14 @@ import {
 } from '@/services/product/dichVuThuocTinh';
 import { dichVuSanPham } from '@/services/product/dichVuSanPham';
 import { useNotifications } from '@/services/notificationService';
+import api from '@/services/apiService';
+import { API_ADMIN } from '@/constants/apiPaths';
 import { MESSAGES } from '@/constants/messages';
 import { useUIStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/authStore';
 import { useLocation } from '@/composables/useLocation';
 import { useAddressMapping } from '@/composables/useAddressMapping';
+import { useHoaDonPrinter } from '@/composables/useHoaDonPrinter';
 import { GIOI_TINH_OPTIONS } from '@/constants/appConstants';
 import { isActiveStatus } from '@/utils/statusUtils';
 
@@ -40,6 +44,7 @@ import GiaoCaModal from '@/components/common/GiaoCaModal.vue';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 
 const { addNotification } = useNotifications();
+const { printHoaDonById } = useHoaDonPrinter();
 const uiStore = useUIStore();
 const authStore = useAuthStore();
 const MAX_WAITING_ORDERS = 5;
@@ -72,9 +77,9 @@ const handleGiaoCaSuccess = () => {
 
 // Address and Quick Add
 const { provinces, districts, wards, loadingLocations, fetchProvinces, fetchDistricts, fetchWards, cleanName } = useLocation();
-const { mapCodesToNames } = useAddressMapping();
+const { mapCodesToNames, parseAddressString } = useAddressMapping();
 
-// Separate instance for shipping to prevent quick-add conflicts
+// Instance riêng cho địa chỉ nhận hàng: fallback giúp form vẫn chọn được khu vực khi GHN tạm lỗi.
 const {
     provinces: provincesShip,
     districts: districtsShip,
@@ -82,7 +87,7 @@ const {
     fetchProvinces: fetchProvincesShip,
     fetchDistricts: fetchDistrictsShip,
     fetchWards: fetchWardsShip
-} = useLocation();
+} = useLocation({ allowFallback: true });
 
 // State
 const loading = ref(false);
@@ -98,7 +103,6 @@ const productSearchKeyword = ref('');
 const productSearchResults = ref([]);
 const productSearchLoading = ref(false);
 const showProductAutocomplete = ref(false);
-const onlyInStock = ref(false);
 
 // Dynamic Filter States for POS Products
 const filterThuongHieu = ref('ALL');
@@ -141,9 +145,14 @@ const recipientAddressDetail = ref('');
 const recipientProvince = ref(null);
 const recipientDistrict = ref(null);
 const recipientWard = ref(null);
+const syncingRecipientAddress = ref(false);
+const shippingFeeLoading = ref(false);
+const shippingFeeError = ref('');
+const shippingFeeSource = ref('');
 
 // Order Value Adjustments
-const shippingFee = ref(30000);
+// Phí vận chuyển bắt đầu từ 0, chỉ cập nhật khi GHN trả phí hợp lệ hoặc nhân viên nhập tay.
+const shippingFee = ref(0);
 const surcharge = ref(0);
 const isFreeShip = ref(false);
 const onlyChargeIfReturned = ref(false);
@@ -262,6 +271,7 @@ const orderChannel = computed({
     set(newVal) {
         if (selectedOrder.value) {
             selectedOrder.value.isGiaoHangLocal = (newVal === 'Trực tuyến');
+            selectedOrder.value.loaiDon = selectedOrder.value.isGiaoHangLocal ? 'ONLINE' : 'TAI_QUAY';
         }
     }
 });
@@ -274,6 +284,14 @@ const isGiaoHang = computed({
     set(val) {
         if (selectedOrder.value) {
             selectedOrder.value.isGiaoHangLocal = val;
+            selectedOrder.value.loaiDon = val ? 'ONLINE' : 'TAI_QUAY';
+            if (!val) {
+                shippingFee.value = 0;
+                shippingFeeError.value = '';
+                shippingFeeSource.value = '';
+            } else if (!Number(shippingFee.value || 0)) {
+                void calculateShippingFee();
+            }
         }
     }
 });
@@ -293,10 +311,33 @@ const originalTotalAmount = computed(() => {
     }, 0);
 });
 
+// Tổng tiền hàng thực tế trong giỏ sau khi đã áp đợt giảm giá sản phẩm.
+// BE lưu giá bán hiện tại vào tongTien, nên dùng giá trị này làm nền tính voucher.
+const cartSubtotalAmount = computed(() => {
+    const beTotal = selectedOrder.value?.tongTien;
+    if (beTotal !== undefined && beTotal !== null) {
+        return Number(beTotal || 0);
+    }
+    const items = selectedOrder.value?.listsHoaDonChiTiet || [];
+    return items.reduce((sum, item) => sum + Number(item.thanhTien || 0), 0);
+});
+
+// Phần giảm trực tiếp từ đợt giảm giá sản phẩm, chỉ để giải thích cho nhân viên.
+const productDiscountAmount = computed(() =>
+    Math.max(0, originalTotalAmount.value - cartSubtotalAmount.value)
+);
+
+// Alias cho UI tổng đơn hàng: tiền ban đầu trước mọi đợt/phiếu giảm.
+const totalRawAmount = computed(() => originalTotalAmount.value);
+
+// Tiền hàng sau đợt giảm giá sản phẩm: đây là nền để áp dụng phiếu giảm giá.
+const amountAfterProductDiscount = computed(() => Math.max(0, cartSubtotalAmount.value));
+
+// Phần giảm từ phiếu giảm giá. Không cộng đợt giảm sản phẩm vào đây để tránh trừ hai lần.
 const discountAmount = computed(() => {
-    const raw = originalTotalAmount.value;
+    const raw = amountAfterProductDiscount.value;
     const after = Number(selectedOrder.value?.tongTienSauGiam || selectedOrder.value?.tongTien || 0);
-    return Math.max(0, raw - after);
+    return Math.min(raw, Math.max(0, raw - after));
 });
 
 // Danh sách phần trăm giảm (duy nhất) của các sản phẩm trong đơn
@@ -308,10 +349,24 @@ const appliedDiscountPercents = computed(() => {
     return [...new Set(percents)].sort((a, b) => b - a);
 });
 
+const appliedDiscountSummary = computed(() =>
+    appliedDiscountPercents.value.length
+        ? appliedDiscountPercents.value.map((percent) => `${percent}%`).join(', ')
+        : 'Không có'
+);
+
+// Tiền hàng sau tất cả giảm giá = (tiền ban đầu - đợt giảm) - phiếu giảm.
+const amountAfterAllDiscounts = computed(() =>
+    Math.max(0, amountAfterProductDiscount.value - discountAmount.value)
+);
+
+const totalDiscountAmount = computed(() =>
+    Math.max(0, productDiscountAmount.value + discountAmount.value)
+);
+
 const finalCollectAmount = computed(() => {
-    const after = Number(selectedOrder.value?.tongTienSauGiam || selectedOrder.value?.tongTien || 0);
     const ship = selectedOrder.value?.loaiDon === 'ONLINE' ? Number(shippingFee.value || 0) : 0;
-    return Math.max(0, after + ship + Number(surcharge.value || 0));
+    return Math.max(0, amountAfterAllDiscounts.value + ship + Number(surcharge.value || 0));
 });
 
 const remainingBalance = computed(() => {
@@ -339,7 +394,7 @@ watch(() => selectedOrder.value?.id, (id) => {
             isFreeShip.value = Number(selectedOrder.value.phiVanChuyen) === 0 && selectedOrder.value.loaiDon === 'ONLINE';
         } else {
             const channel = selectedOrder.value.loaiDon === 'ONLINE' ? 'Trực tuyến' : 'Tại quầy';
-            shippingFee.value = channel === 'Trực tuyến' ? 30000 : 0;
+            shippingFee.value = 0;
             isFreeShip.value = false;
         }
 
@@ -362,11 +417,15 @@ watch([orderChannel, isFreeShip], ([channel, freeShip], oldVal) => {
 
     if (freeShip) {
         shippingFee.value = 0;
+        shippingFeeError.value = '';
+        shippingFeeSource.value = '';
     } else {
-        if (oldFreeShip === true && !freeShip) {
-            shippingFee.value = channel === 'Trực tuyến' ? 30000 : 0;
+        if (channel === 'Trực tuyến' && (oldFreeShip === true || channel !== oldChannel)) {
+            void calculateShippingFee();
         } else if (channel !== oldChannel && oldChannel !== undefined) {
-            shippingFee.value = channel === 'Trực tuyến' ? 30000 : 0;
+            shippingFee.value = 0;
+            shippingFeeError.value = '';
+            shippingFeeSource.value = '';
         }
     }
 }, { immediate: true });
@@ -415,20 +474,51 @@ const getVoucherDiscountLabel = (voucher) => {
     }
 };
 
-const getPotentialDiscount = (v) => {
+const getVoucherBaseAmount = (order = selectedOrder.value) =>
+    Number(order?.tongTien ?? amountAfterProductDiscount.value ?? 0);
+
+const getVoucherCode = (voucher) => voucher?.ma || voucher?.maPhieu || voucher?.tenPhieu || voucher?.ten || 'Phiếu giảm giá';
+
+const getVoucherFreshTime = (voucher) => {
+    const raw = voucher?.ngayTao || voucher?.createdAt || voucher?.createdDate || voucher?.ngayBatDau || 0;
+    const numeric = Number(raw);
+    if (Number.isFinite(numeric)) return numeric;
+    const parsedDate = Date.parse(raw);
+    return Number.isFinite(parsedDate) ? parsedDate : 0;
+};
+
+const getPotentialDiscount = (v, baseAmount = getVoucherBaseAmount()) => {
     if (!v) return 0;
+    const amount = Math.max(0, Number(baseAmount || 0));
     const type = String(v.loaiPhieu || '').toUpperCase();
     if (type === 'PHAN_TRAM' || type === 'PERCENT') {
-        const minOrder = Number(v.donHangToiThieu || 0);
         const percent = Number(v.phanTramGiamGia || 0);
-        let discount = (minOrder * percent) / 100;
+        let discount = (amount * percent) / 100;
         if (v.giamToiDa && Number(v.giamToiDa) > 0) {
             discount = Math.min(discount, Number(v.giamToiDa));
         }
-        return discount;
+        return Math.min(amount, Math.max(0, discount));
     } else {
-        return Number(v.soTienGiam || 0);
+        return Math.min(amount, Math.max(0, Number(v.soTienGiam || 0)));
     }
+};
+
+const isVoucherEligibleForAmount = (voucher, amount) =>
+    Number(voucher?.donHangToiThieu || 0) <= Number(amount || 0);
+
+// Chọn PGG tốt nhất theo đúng tổng tiền đang xét: giảm nhiều nhất, nếu bằng nhau ưu tiên phiếu mới hơn.
+const pickBestVoucherForOrder = (order = selectedOrder.value, source = vouchers.value) => {
+    if (!source?.length || !order) return null;
+    const currentTotal = getVoucherBaseAmount(order);
+    const eligible = source.filter((voucher) => isVoucherEligibleForAmount(voucher, currentTotal));
+    if (!eligible.length) return null;
+
+    return [...eligible].sort((a, b) => {
+        const discA = getPotentialDiscount(a, currentTotal);
+        const discB = getPotentialDiscount(b, currentTotal);
+        if (discB !== discA) return discB - discA;
+        return getVoucherFreshTime(b) - getVoucherFreshTime(a);
+    })[0];
 };
 
 const appliedVoucher = computed(() => {
@@ -439,37 +529,20 @@ const appliedVoucher = computed(() => {
 });
 
 const bestEligibleVoucher = computed(() => {
-    if (!vouchers.value?.length || !selectedOrder.value) return null;
-
-    const currentTotal = Number(selectedOrder.value.tongTien || 0);
-
-    const eligible = vouchers.value.filter(v => {
-        const minOrder = Number(v.donHangToiThieu || 0);
-        return minOrder <= currentTotal;
-    });
-
-    if (!eligible.length) return null;
-
-    eligible.sort((a, b) => {
-        const discA = getPotentialDiscount(a);
-        const discB = getPotentialDiscount(b);
-        return discB - discA;
-    });
-
-    return eligible[0];
+    return pickBestVoucherForOrder();
 });
 
 const nextBetterVoucher = computed(() => {
     if (!vouchers.value?.length || !selectedOrder.value) return null;
 
-    const currentTotal = Number(selectedOrder.value.tongTien || 0);
-    const eligibleDiscount = bestEligibleVoucher.value ? getPotentialDiscount(bestEligibleVoucher.value) : 0;
+    const currentTotal = getVoucherBaseAmount();
+    const eligibleDiscount = bestEligibleVoucher.value ? getPotentialDiscount(bestEligibleVoucher.value, currentTotal) : 0;
 
     const candidates = vouchers.value.filter(v => {
         const minOrder = Number(v.donHangToiThieu || 0);
         if (minOrder <= currentTotal) return false;
 
-        const potDiscount = getPotentialDiscount(v);
+        const potDiscount = getPotentialDiscount(v, minOrder);
         return potDiscount > eligibleDiscount;
     });
 
@@ -484,8 +557,45 @@ const nextBetterVoucher = computed(() => {
 const remainingForSuggestedVoucher = computed(() => {
     if (!nextBetterVoucher.value || !selectedOrder.value) return 0;
     const minVal = Number(nextBetterVoucher.value.donHangToiThieu || 0);
-    const current = Number(selectedOrder.value.tongTien || 0);
+    const current = getVoucherBaseAmount();
     return Math.max(0, minVal - current);
+});
+
+// Dong goi cau goi y PGG cho UI: tu dong chon ma tot nhat, dong thoi bao ma tiep theo neu chua du dieu kien.
+const voucherSuggestionText = computed(() => {
+    if (!selectedOrder.value?.listsHoaDonChiTiet?.length) return '';
+
+    const currentTotal = getVoucherBaseAmount();
+    const best = bestEligibleVoucher.value;
+    const applied = appliedVoucher.value;
+
+    if (best?.id && applied?.id && String(best.id) === String(applied.id)) {
+        return `Đã chọn phiếu tốt nhất: ${getVoucherCode(best)} (-${formatCurrency(getPotentialDiscount(best, currentTotal))})`;
+    }
+
+    if (best?.id) {
+        return `Bấm để áp dụng phiếu tốt nhất: ${getVoucherCode(best)} (-${formatCurrency(getPotentialDiscount(best, currentTotal))})`;
+    }
+
+    return nextBetterVoucher.value ? '' : 'Chưa có phiếu giảm giá phù hợp cho đơn hiện tại.';
+});
+
+// Goi y upsell: neu co phieu giam gia tot hon nhung don chua du muc toi thieu thi hien can mua them bao nhieu.
+const betterVoucherSuggestionText = computed(() => {
+    if (!selectedOrder.value?.listsHoaDonChiTiet?.length || !nextBetterVoucher.value) return '';
+    const currentTotal = getVoucherBaseAmount();
+    const futureBase = Math.max(currentTotal, Number(nextBetterVoucher.value.donHangToiThieu || 0));
+    return `Mua thêm ${formatCurrency(remainingForSuggestedVoucher.value)} để nhận phiếu tốt hơn: ${getVoucherCode(nextBetterVoucher.value)} (-${formatCurrency(getPotentialDiscount(nextBetterVoucher.value, futureBase))})`;
+});
+
+const voucherSuggestionClass = computed(() =>
+    bestEligibleVoucher.value ? 'text-success' : (nextBetterVoucher.value ? 'text-deep-orange-darken-3' : 'text-grey-darken-1')
+);
+
+const canApplySuggestedVoucher = computed(() => {
+    const best = bestEligibleVoucher.value;
+    if (!best?.id || !selectedOrder.value?.id) return false;
+    return String(selectedOrder.value.idPhieuGiamGia || '') !== String(best.id);
 });
 
 const isVoucherAutoApplied = ref({});
@@ -496,8 +606,7 @@ const fetchProductSearchResults = async (keyword) => {
         const params = {
             keyword: keyword || '',
             thuongHieu: filterThuongHieu.value,
-            mucDich: filterMucDich.value,
-            onlyInStock: onlyInStock.value
+            mucDich: filterMucDich.value
         };
         const res = await dichVuDonHang.searchSanPham(params);
         productSearchResults.value = res || [];
@@ -614,8 +723,7 @@ watch([
     filterMucDich,
     filterKhoangGia,
     filterMauSac,
-    filterKichCo,
-    onlyInStock
+    filterKichCo
 ], () => {
     if (searchDebounce) clearTimeout(searchDebounce);
     searchDebounce = setTimeout(() => {
@@ -935,10 +1043,174 @@ onUnmounted(() => {
     window.removeEventListener('keydown', handleGlobalKeyDown);
 });
 
-// Khi chuyển tab hóa đơn, hỏi BE lại phiếu giảm giá tốt nhất để gợi ý
-watch(() => selectedOrder.value?.id, (id) => {
-    if (id) refreshBestVoucher();
+// Customer shipping address restore helpers.
+// Principle: customer data can come as split fields or one full address string, so normalize first, then match to the current location list.
+const getAddressDetailValue = (address) => (
+    address?.diaChiChiTiet ||
+    address?.diaChiCuThe ||
+    address?.diaChiNguoiNhan ||
+    address?.diaChi ||
+    ''
+);
+
+const getAddressFullText = (address) => {
+    if (!address) return '';
+    if (address.diaChiDayDu) return address.diaChiDayDu;
+    if (address.diaChiNguoiNhan) return address.diaChiNguoiNhan;
+    if (address.diaChi && String(address.diaChi).includes(',')) return address.diaChi;
+    return [address.diaChiChiTiet, address.phuongXa, address.thanhPho, address.tinh].filter(Boolean).join(', ');
+};
+
+const normalizeAddressRecord = (address) => {
+    if (!address) return null;
+    const normalized = { ...address };
+    const fullText = getAddressFullText(normalized);
+    const needsParse = !normalized.tinh || !normalized.thanhPho || !normalized.phuongXa || !normalized.diaChiChiTiet;
+
+    if (needsParse && fullText) {
+        const parsed = parseAddressString(fullText);
+        normalized.tinh = normalized.tinh || parsed.tinh;
+        normalized.thanhPho = normalized.thanhPho || parsed.thanhPho;
+        normalized.phuongXa = normalized.phuongXa || parsed.phuongXa;
+        normalized.diaChiChiTiet = normalized.diaChiChiTiet || parsed.diaChiChiTiet;
+    }
+
+    if (!normalized.diaChiChiTiet && getAddressDetailValue(normalized)) {
+        normalized.diaChiChiTiet = getAddressDetailValue(normalized);
+    }
+
+    return normalized;
+};
+
+const normalizeAddressList = (source) => {
+    const raw = source?.data?.data || source?.data || source || [];
+    const list = Array.isArray(raw) ? raw : [];
+    return list.map(normalizeAddressRecord).filter(Boolean);
+};
+
+const pickDefaultCustomerAddress = (customer, addrRes) => {
+    const addresses = [
+        ...normalizeAddressList(addrRes),
+        ...normalizeAddressList(customer?.diaChis || customer?.listDiaChi || customer?.addresses),
+        normalizeAddressRecord(customer?.diaChiMacDinh),
+        normalizeAddressRecord(customer)
+    ].filter(Boolean);
+
+    if (!addresses.length) return null;
+    return addresses.find((address) => address.laMacDinh === true || address.macDinh === true)
+        || addresses.find((address) => address.trangThai === true || address.trangThai === 1 || address.trangThai === 'DANG_HOAT_DONG')
+        || addresses[0];
+};
+
+const matchShippingLocation = (list, name) => {
+    if (!name) return null;
+    const cleanTarget = cleanName(name);
+    return list.find((item) => {
+        const cleanItem = cleanName(item.name);
+        return cleanItem === cleanTarget || cleanItem.includes(cleanTarget) || cleanTarget.includes(cleanItem);
+    }) || null;
+};
+
+const resetRecipientAddress = () => {
+    recipientName.value = '';
+    recipientPhone.value = '';
+    recipientAddressDetail.value = '';
+    recipientProvince.value = null;
+    recipientDistrict.value = null;
+    recipientWard.value = null;
+    shippingFee.value = 0;
+    shippingFeeError.value = '';
+    shippingFeeSource.value = '';
+};
+
+const applyDefaultAddressToRecipient = async (address) => {
+    const normalized = normalizeAddressRecord(address);
+    if (!normalized) return;
+
+    syncingRecipientAddress.value = true;
+    try {
+        recipientAddressDetail.value = normalized.diaChiChiTiet || getAddressDetailValue(normalized) || '';
+        await fetchProvincesShip();
+
+        const provinceMatch = matchShippingLocation(provincesShip.value, normalized.tinh);
+        recipientProvince.value = provinceMatch?.code || null;
+        if (!provinceMatch) {
+            shippingFee.value = 0;
+            shippingFeeError.value = 'Không khớp tỉnh/thành phố với GHN.';
+            shippingFeeSource.value = '';
+            return;
+        }
+
+        await fetchDistrictsShip(provinceMatch.code);
+        const districtMatch = matchShippingLocation(districtsShip.value, normalized.thanhPho);
+        recipientDistrict.value = districtMatch?.code || null;
+        if (!districtMatch) {
+            shippingFee.value = 0;
+            shippingFeeError.value = 'Không khớp quận/huyện với GHN.';
+            shippingFeeSource.value = '';
+            return;
+        }
+
+        await fetchWardsShip(districtMatch.code);
+        const wardMatch = matchShippingLocation(wardsShip.value, normalized.phuongXa);
+        recipientWard.value = wardMatch?.code || null;
+        if (!wardMatch) {
+            shippingFee.value = 0;
+            shippingFeeError.value = 'Không khớp phường/xã với GHN.';
+            shippingFeeSource.value = '';
+            return;
+        }
+
+        shippingFeeError.value = '';
+    } finally {
+        syncingRecipientAddress.value = false;
+    }
+
+    await calculateShippingFee();
+};
+
+const syncRecipientFromCustomer = async (customer, addrRes = []) => {
+    recipientName.value = customer?.ten || selectedOrder.value?.tenKhachHang || '';
+    recipientPhone.value = customer?.sdt || selectedOrder.value?.sdtKhachHang || '';
+
+    const defaultAddress = pickDefaultCustomerAddress(customer, addrRes);
+    if (defaultAddress) {
+        await applyDefaultAddressToRecipient(defaultAddress);
+    } else {
+        recipientAddressDetail.value = '';
+        recipientProvince.value = null;
+        recipientDistrict.value = null;
+        recipientWard.value = null;
+        shippingFee.value = 0;
+        shippingFeeError.value = 'Khách hàng chưa có địa chỉ nhận hàng mặc định.';
+        shippingFeeSource.value = '';
+    }
+};
+
+// Keep recipient name/phone aligned with the selected customer while staff edits the customer card.
+watch(
+    () => [customerForm.value.ten, customerForm.value.sdt],
+    ([name, phone]) => {
+        if (!selectedOrder.value?.idKhachHang) return;
+        recipientName.value = name || recipientName.value;
+        recipientPhone.value = phone || recipientPhone.value;
+    }
+);
+
+// Realtime PGG: mỗi lần đổi hóa đơn/khách hàng/tổng tiền/số lượng giỏ thì hỏi lại danh sách phiếu.
+// Không đưa idPhieuGiamGia vào key để tránh vòng lặp sau khi FE tự áp phiếu tốt nhất.
+const voucherRealtimeKey = computed(() => {
+    const order = selectedOrder.value;
+    if (!order?.id) return '';
+    const itemKey = (order.listsHoaDonChiTiet || [])
+        .map((item) => `${item.id}:${item.soLuong}`)
+        .join('|');
+    return `${order.id}|${order.idKhachHang || ''}|${order.tongTien || 0}|${itemKey}`;
 });
+
+watch(voucherRealtimeKey, async (key) => {
+    if (key) await refreshBestVoucher();
+}, { flush: 'post' });
 
 // Watch for order changes to fetch product suggestions
 watch(() => [selectedOrder.value?.id, selectedOrder.value?.tongTien], ([id, total]) => {
@@ -967,37 +1239,13 @@ watch(
                         tongDonHang: customer.tongDonHang || 0
                     };
 
-                    if (!recipientName.value) recipientName.value = customer.ten || '';
-                    if (!recipientPhone.value) recipientPhone.value = customer.sdt || '';
-
-                    // Auto-fill default address
+                    // Restore recipient info from the customer's default address before GHN fee calculation.
                     try {
                         const addrRes = await dichVuKhachHang.layDanhSachDiaChi(newId);
-                        const addresses = addrRes?.data || addrRes || [];
-                        if (addresses.length > 0) {
-                            const defaultAddr = addresses.find(a => a.trangThai === true || a.trangThai === 1) || addresses[0];
-                            if (defaultAddr) {
-                                recipientAddressDetail.value = defaultAddr.diaChiChiTiet || '';
-
-                                await fetchProvincesShip();
-                                const pMatch = provincesShip.value.find(x => cleanName(x.name) === cleanName(defaultAddr.tinh));
-                                if (pMatch) {
-                                    recipientProvince.value = pMatch.code;
-                                    await fetchDistrictsShip(pMatch.code);
-                                    const dMatch = districtsShip.value.find(x => cleanName(x.name) === cleanName(defaultAddr.thanhPho));
-                                    if (dMatch) {
-                                        recipientDistrict.value = dMatch.code;
-                                        await fetchWardsShip(dMatch.code);
-                                        const wMatch = wardsShip.value.find(x => cleanName(x.name) === cleanName(defaultAddr.phuongXa));
-                                        if (wMatch) {
-                                            recipientWard.value = wMatch.code;
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        await syncRecipientFromCustomer(customer, addrRes);
                     } catch (addrErr) {
-                        console.error('Lấy địa chỉ khách hàng thất bại', addrErr);
+                        console.error('Sync customer shipping address failed', addrErr);
+                        await syncRecipientFromCustomer(customer, []);
                     }
                     return;
                 }
@@ -1021,21 +1269,21 @@ watch(
                 ngaySinh: '',
                 tongDonHang: 0
             };
-            recipientProvince.value = null;
-            recipientDistrict.value = null;
-            recipientWard.value = null;
-            recipientAddressDetail.value = '';
+            resetRecipientAddress();
         }
     },
     { immediate: true }
 );
 
-// Watchers for 3-level shipping address selection
+// Watchers for 3-level shipping address selection. Khi đồng bộ từ khách hàng thì không reset dây chuyền.
 watch(
     () => recipientProvince.value,
     async (newVal) => {
+        if (syncingRecipientAddress.value) return;
         recipientDistrict.value = null;
         recipientWard.value = null;
+        shippingFee.value = 0;
+        shippingFeeSource.value = '';
         if (newVal) {
             await fetchDistrictsShip(newVal);
         }
@@ -1045,38 +1293,73 @@ watch(
 watch(
     () => recipientDistrict.value,
     async (newVal) => {
+        if (syncingRecipientAddress.value) return;
         recipientWard.value = null;
+        shippingFee.value = 0;
+        shippingFeeSource.value = '';
         if (newVal) {
             await fetchWardsShip(newVal);
         }
     }
 );
 
-import axios from 'axios';
+const isGhnLocationCode = (list, code) => {
+    const found = list.find((item) => String(item.code) === String(code));
+    return !found || found.source === 'GHN';
+};
 
-const calculateShippingFee = async () => {
-    if (!recipientDistrict.value || !recipientWard.value || isFreeShip.value) return;
-    const weight = 200 * (selectedOrderItemCount.value || 1);
+async function calculateShippingFee() {
+    if (!isGiaoHang.value || isFreeShip.value) return;
+    if (!recipientDistrict.value || !recipientWard.value) {
+        shippingFee.value = 0;
+        shippingFeeSource.value = '';
+        shippingFeeError.value = 'Chưa đủ địa chỉ nhận hàng để tính phí GHN.';
+        return;
+    }
+
+    if (!isGhnLocationCode(districtsShip.value, recipientDistrict.value) || !isGhnLocationCode(wardsShip.value, recipientWard.value)) {
+        shippingFee.value = 0;
+        shippingFeeSource.value = '';
+        shippingFeeError.value = 'Địa chỉ chưa có mã GHN hợp lệ để tính phí.';
+        return;
+    }
+
+    shippingFeeLoading.value = true;
+    shippingFeeError.value = '';
+    const weight = Math.max(200, 200 * (selectedOrderItemCount.value || 1));
     try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/ghn/fee`, {
+        const res = await api.get(`${API_ADMIN.GHN}/fee`, {
             params: {
                 toDistrictId: recipientDistrict.value,
                 toWardCode: recipientWard.value,
-                weight: weight
-            }
+                weight
+            },
+            silent: true
         });
-        if (res.data && res.data.total) {
-            shippingFee.value = res.data.total;
+        const total = Number(res?.data?.data?.total || res?.data?.total || res?.data?.data || 0);
+        if (total > 0) {
+            shippingFee.value = total;
+            shippingFeeSource.value = 'GHN';
+            shippingFeeError.value = '';
+        } else {
+            shippingFee.value = 0;
+            shippingFeeSource.value = '';
+            shippingFeeError.value = 'GHN chưa trả phí vận chuyển hợp lệ.';
         }
     } catch (e) {
         console.error('Failed to calculate shipping fee', e);
+        shippingFee.value = 0;
+        shippingFeeSource.value = '';
+        shippingFeeError.value = 'Không tính được phí GHN, vui lòng kiểm tra địa chỉ/API.';
+    } finally {
+        shippingFeeLoading.value = false;
     }
-};
+}
 
 watch(
     () => recipientWard.value,
     async (newVal) => {
-        if (newVal) {
+        if (newVal && !syncingRecipientAddress.value) {
             await calculateShippingFee();
         }
     }
@@ -1085,7 +1368,7 @@ watch(
 watch(
     () => selectedOrderItemCount.value,
     async () => {
-        if (recipientWard.value && orderChannel.value === 'Trực tuyến') {
+        if (recipientWard.value && isGiaoHang.value) {
             await calculateShippingFee();
         }
     }
@@ -1263,17 +1546,21 @@ const decorateVoucher = (v) => {
     return { ...v, customTitle: `${text} ${discount}` };
 };
 
-// Hỏi BE phiếu giảm giá tốt nhất để gợi ý (BE tự lọc điều kiện & tính giảm giá).
-// Tự động áp phiếu tốt nhất nếu đủ điều kiện, ngược lại thì chỉ gợi ý.
+// Hỏi BE danh sách phiếu giảm giá để gợi ý; FE chọn phiếu tốt nhất theo tổng tiền giỏ hiện tại.
+// Dùng serial để response cũ không ghi đè khi nhân viên thêm/xóa sản phẩm liên tục.
+let voucherRefreshSerial = 0;
 const refreshBestVoucher = async (order = selectedOrder.value, autoApply = true) => {
     if (!order?.id) return;
+    const refreshSerial = ++voucherRefreshSerial;
     try {
         const list = await dichVuDonHang.getVouchers(order.tongTien || 0);
-        vouchers.value = (list || []).map(decorateVoucher);
+        const decorated = (list || []).map(decorateVoucher);
+        if (refreshSerial !== voucherRefreshSerial) return;
+        vouchers.value = decorated;
 
         if (autoApply) {
             isVoucherAutoApplied.value[order.id] = true;
-            const best = bestEligibleVoucher.value;
+            const best = pickBestVoucherForOrder(order, decorated);
             if (best?.id) {
                 if (String(order.idPhieuGiamGia) !== String(best.id)) {
                     await onApplyVoucher(best.id, false, true);
@@ -1307,6 +1594,13 @@ const onApplyVoucher = async (voucherId, autoApply = false, isInternalCall = fal
     }
 };
 
+// Cho phép bấm trực tiếp dòng gợi ý để áp PGG tốt nhất hiện tại.
+const applyBestVoucherFromSuggestion = async () => {
+    if (!canApplySuggestedVoucher.value) return;
+    const best = bestEligibleVoucher.value;
+    if (!best?.id) return;
+    await onApplyVoucher(best.id);
+};
 
 // Logic: Thanh toán VNPay
 const vnpayDialog = ref({
@@ -1316,6 +1610,7 @@ const vnpayDialog = ref({
     statusText: '',
     orderId: '',
     amount: 0,
+    paymentUrl: '',
     pollInterval: null
 });
 
@@ -1392,7 +1687,7 @@ const buildCheckoutPayload = (order, overrides = {}) => {
         tongTien: order?.tongTien || 0,
         phiVanChuyen: shippingFee.value,
         tongTienSauGiam: finalCollectAmount.value,
-        loaiDon: 'TAI_QUAY',
+        loaiDon: isGiaoHang.value ? 'ONLINE' : 'TAI_QUAY',
         ghiChu: compiledNote,
         tienMat: 0,
         tienChuyenKhoan: 0,
@@ -1447,6 +1742,11 @@ const onCloseReceipt = async () => {
     receiptDialog.value.show = false;
 };
 
+const onPrintReceiptInvoice = async (receipt = receiptDialog.value) => {
+    const orderId = receipt?.order?.id || receipt?.order?.idHoaDon || selectedOrder.value?.id;
+    await printHoaDonById(orderId);
+};
+
 const onPrintInvoice = () => {
     if (!selectedOrder.value) return;
 
@@ -1456,6 +1756,7 @@ const onPrintInvoice = () => {
 
     printOrder.tongTien = selectedOrder.value.tongTien || 0;
     printOrder.tongTienSauGiam = finalCollectAmount.value;
+    printOrder.phiVanChuyen = isGiaoHang.value ? Number(shippingFee.value || 0) : 0;
 
     showReceipt(
         printOrder,
@@ -1479,6 +1780,7 @@ const submitCheckout = async ({ order = selectedOrder.value, payload, successMes
 
     const orderSnapshot = JSON.parse(JSON.stringify(order));
     orderSnapshot.tongTienSauGiam = finalCollectAmount.value;
+    orderSnapshot.phiVanChuyen = isGiaoHang.value ? Number(shippingFee.value || 0) : 0;
 
     const pmMethod = checkoutData.value.paymentMethod;
     const pmReceived = checkoutData.value.receivedAmount;
@@ -1594,58 +1896,16 @@ const startVnPayFlow = async () => {
             statusText: 'Đang chờ khách hàng quét mã và thanh toán...',
             orderId: orderId,
             amount: finalCollectAmount.value,
+            paymentUrl: data.paymentUrl,
             pollInterval: null
         };
 
         vnpayDialog.value.pollInterval = setInterval(async () => {
-            let isClosed = false;
+            // QR mode khong co popup de doc callback, nen chi cho phep thu ngan xac nhan da nhan tien.
             try {
-                isClosed = !popup || popup.closed;
+                await Promise.resolve();
             } catch (e) {
-                isClosed = false;
-            }
-
-            if (isClosed) {
-                if (!vnpayDialog.value.verified) {
-                    handleVnPayCanceled();
-                }
-                return;
-            }
-
-            try {
-                const currentUrl = popup.location.href;
-                if (currentUrl && (currentUrl.includes('/vnpay-callback') || currentUrl.includes('vnp_ResponseCode'))) {
-                    clearVnPayPolling();
-
-                    vnpayDialog.value.loading = true;
-                    vnpayDialog.value.statusText = 'Đang kiểm tra kết quả giao dịch...';
-
-                    const urlObj = new URL(currentUrl);
-                    const params = {};
-                    urlObj.searchParams.forEach((val, key) => {
-                        params[key] = val;
-                    });
-
-                    popup.close();
-                    vnpayPopup = null;
-
-                    try {
-                        const verifyResult = await dichVuVnPay.verifyPaymentCallback(params);
-                        if (isVnPayVerifySuccess(verifyResult, params)) {
-                            const txnNo = params['vnp_TransactionNo'] || `VNP_${Date.now()}`;
-                            const paidOrder = getStoredVnPayOrder() || selectedOrder.value;
-                            vnpayDialog.value.verified = true;
-                            await finalizeVnPayCheckout(paidOrder?.tongTienSauGiam || vnpayDialog.value.amount, txnNo, paidOrder);
-                        } else {
-                            handleVnPayCanceled(verifyResult?.message || 'VNPay không trả về trạng thái thanh toán thành công.');
-                        }
-                    } catch (err) {
-                        console.error('Verify callback error:', err);
-                        handleVnPayCanceled('Không thể xác thực kết quả VNPay. Hóa đơn chưa được hoàn tất.');
-                    }
-                }
-            } catch (e) {
-                // Ignore SecurityError
+                // Keep QR waiting screen alive.
             }
         }, 1000);
 
@@ -1694,14 +1954,7 @@ const onCheckout = async () => {
     isProcessing.value = false;
 
     if (checkoutData.value.paymentMethod === 'VNPAY') {
-        confirmDialog.value = {
-            show: true,
-            title: 'Xác nhận thanh toán VNPay',
-            message: `Hệ thống sẽ mở cổng thanh toán VNPay với số tiền [${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(finalCollectAmount.value)}]. Bạn có muốn tiếp tục không?`,
-            color: 'primary',
-            action: startVnPayFlow,
-            loading: false
-        };
+        await startVnPayFlow();
         return;
     }
 
@@ -1714,37 +1967,10 @@ const onCheckout = async () => {
             confirmDialog.value.loading = true;
             isProcessing.value = true;
             try {
-                let compiledNote = checkoutData.value.note || '';
-                if (orderChannel.value === 'Trực tuyến') {
-                    const p = provincesShip.value.find(x => x.code === recipientProvince.value);
-                    const d = districtsShip.value.find(x => x.code === recipientDistrict.value);
-                    const w = wardsShip.value.find(x => x.code === recipientWard.value);
-
-                    const shippingDetails = [
-                        `Người nhận: ${recipientName.value || ''}`,
-                        `SĐT: ${recipientPhone.value || ''}`,
-                        `Địa chỉ: ${recipientAddressDetail.value || ''}`,
-                        w ? w.name : '',
-                        d ? d.name : '',
-                        p ? p.name : ''
-                    ].filter(Boolean).join(', ');
-
-                    compiledNote = compiledNote
-                        ? `${compiledNote} | Ship: ${shippingDetails}`
-                        : `Ship: ${shippingDetails}`;
-                }
-
-                const payload = {
-                    idKhachHang: selectedOrder.value.idKhachHang,
-                    idPhieuGiamGia: selectedOrder.value.idPhieuGiamGia,
-                    tongTien: selectedOrder.value.tongTien,
-                    tongTienSauGiam: finalCollectAmount.value,
-                    loaiDon: 'TAI_QUAY',
-                    ghiChu: compiledNote,
-                    tienMat: isCash ? finalCollectAmount.value : 0,
-                    tienChuyenKhoan: isCash ? 0 : finalCollectAmount.value,
-                    phiVanChuyen: shippingFee.value
-                };
+                const payload = buildCheckoutPayload(selectedOrder.value, {
+                    tienMat: finalCollectAmount.value,
+                    tienChuyenKhoan: 0
+                });
                 await submitCheckout({ payload });
 
                 checkoutData.value.receivedAmount = 0;
@@ -2160,7 +2386,7 @@ const formatDateTime = (dateStr) => {
                     <!-- Row of Price Details -->
                     <v-row no-gutters>
                         <!-- Left Block: Pricing Details -->
-                        <v-col cols="12" md="6" class="pr-md-3 pr-0 mb-4 mb-md-0">
+                        <v-col cols="12" md="12" class="pr-0 mb-4 mb-md-0">
                             <v-card class="pos-card pa-4 rounded-lg border h-100 d-flex flex-column">
                                 <v-row no-gutters class="flex-grow-1">
                                     <!-- Left Column inside the card -->
@@ -2170,86 +2396,46 @@ const formatDateTime = (dateStr) => {
                                             <h3 class="font-weight-bold text-slate-800 m-0"
                                                 style="font-size: 14px !important">
                                                 Tổng đơn hàng</h3>
+                                            <div class="d-flex align-center gap-2">
+                                                <span class="text-slate-600" style="font-size: 13px !important">Giao hàng</span>
+                                                <v-switch v-model="isGiaoHang" color="primary" hide-details density="compact" inset />
+                                            </div>
                                         </div>
 
-                                        <v-row no-gutters class="mb-4 border-b pb-3">
-                                            <v-col cols="6">
-                                                <v-checkbox v-model="isFreeShip" label="Miễn phí giao hàng" hide-details
-                                                    density="compact" class="text-slate-700" />
-                                            </v-col>
-                                            <v-col cols="6">
-                                                <v-checkbox v-model="onlyChargeIfReturned" label="Mua hàng tại quầy"
-                                                    hide-details density="compact" class="text-slate-700" />
-                                            </v-col>
-                                        </v-row>
-
                                         <div class="flex-grow-1 d-flex flex-column" style="gap: 20px;">
-                                            <!-- Voucher Selection -->
-                                            <div class="d-flex align-center justify-space-between">
-                                                <span class="text-slate-600" style="font-size: 13px !important">Phiếu
-                                                    giảm
-                                                    giá</span>
-                                                <v-select :model-value="selectedOrder?.idPhieuGiamGia" :items="vouchers"
-                                                    item-title="customTitle" item-value="id" variant="outlined"
-                                                    density="compact" hide-details @update:model-value="onApplyVoucher"
-                                                    class="compact-select custom-value-input"
-                                                    style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
-                                                    clearable placeholder="Nhập phiếu giảm giá" persistent-placeholder
-                                                    no-data-text="Chưa có phiếu giảm giá" />
+                                            <!-- Voucher Selection: FE goi y, BE van la noi luu va tinh tien sau giam. -->
+                                            <div class="d-flex flex-column" style="gap: 6px;">
+                                                <div class="d-flex align-center justify-space-between">
+                                                    <span class="text-slate-600" style="font-size: 13px !important">Phiếu
+                                                        giảm
+                                                        giá</span>
+                                                    <v-select :model-value="selectedOrder?.idPhieuGiamGia" :items="vouchers"
+                                                        item-title="customTitle" item-value="id" variant="outlined"
+                                                        density="compact" hide-details @update:model-value="onApplyVoucher"
+                                                        class="compact-select custom-value-input"
+                                                        style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
+                                                        clearable placeholder="Nhập phiếu giảm giá" persistent-placeholder
+                                                        no-data-text="Chưa có phiếu giảm giá" />
+                                                </div>
+                                                <!-- Goi y PGG realtime: dong dau co the bam de ap dung phieu tot nhat hien tai. -->
+                                                <div v-if="voucherSuggestionText" class="text-caption text-right font-italic"
+                                                    :class="[voucherSuggestionClass, { 'text-decoration-underline': canApplySuggestedVoucher }]"
+                                                    style="font-size: 11px !important;"
+                                                    :style="{ cursor: canApplySuggestedVoucher ? 'pointer' : 'default' }"
+                                                    @click="applyBestVoucherFromSuggestion">
+                                                    {{ voucherSuggestionText }}
+                                                </div>
+                                                <div v-if="betterVoucherSuggestionText"
+                                                    class="text-caption text-right font-italic text-deep-orange-darken-3"
+                                                    style="font-size: 11px !important;">
+                                                    {{ betterVoucherSuggestionText }}
+                                                </div>
                                             </div>
-
-                                            <!-- Shipping Fee -->
-                                            <div class="d-flex align-center justify-space-between">
-                                                <span class="text-slate-600" style="font-size: 13px !important">Phí vận
-                                                    chuyển</span>
-                                                <v-menu offset="4">
-                                                    <template v-slot:activator="{ props }">
-                                                        <v-text-field :model-value="formatNumberWithDots(shippingFee)"
-                                                            @input="e => shippingFee = parseNumberFromDots(e.target.value)"
-                                                            v-bind="props" variant="outlined" density="compact"
-                                                            suffix="đ" hide-details
-                                                            style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
-                                                            class="text-right-input custom-value-input"
-                                                            :disabled="isFreeShip" />
-                                                    </template>
-                                                    <v-list class="pa-0 border rounded-lg elevation-2 bg-white"
-                                                        style="min-width: 170px;">
-                                                        <!-- Nội thành -->
-                                                        <div>
-                                                            <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
-                                                                style="font-size: 11px;">Nội thành:</div>
-                                                            <v-list-item @click="shippingFee = 30000"
-                                                                class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
-                                                                30.000 <span class="text-decoration-underline">đ</span>
-                                                            </v-list-item>
-                                                        </div>
-                                                        <!-- Ngoại thành -->
-                                                        <div>
-                                                            <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
-                                                                style="font-size: 11px;">Ngoại thành:</div>
-                                                            <v-list-item @click="shippingFee = 30000"
-                                                                class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
-                                                                30.000 <span class="text-decoration-underline">đ</span>
-                                                            </v-list-item>
-                                                        </div>
-                                                        <!-- Ngoại tỉnh -->
-                                                        <div>
-                                                            <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
-                                                                style="font-size: 11px;">Ngoại tỉnh:</div>
-                                                            <v-list-item @click="shippingFee = 30000"
-                                                                class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
-                                                                30.000 <span class="text-decoration-underline">đ</span>
-                                                            </v-list-item>
-                                                        </div>
-                                                    </v-list>
-                                                </v-menu>
-                                            </div>
-
 
                                             <!-- Total Amount Raw -->
                                             <div class="d-flex align-center justify-space-between">
-                                                <span class="text-slate-600" style="font-size: 13px !important">Tổng số
-                                                    tiền</span>
+                                                <span class="text-slate-600" style="font-size: 13px !important">Tổng tiền
+                                                    hàng</span>
                                                 <span class="font-weight-bold"
                                                     style="font-size: 13px !important; color: #0c3866;">{{
                                                         formatCurrency(totalRawAmount)
@@ -2258,12 +2444,14 @@ const formatDateTime = (dateStr) => {
 
                                             <!-- Discount amount applied -->
                                             <div class="d-flex align-center justify-space-between">
-                                                <span class="text-slate-600" style="font-size: 13px !important">Giảm
-                                                    giá</span>
+                                                <span class="text-slate-600" style="font-size: 13px !important">Đợt
+                                                    giảm giá</span>
                                                 <span class="font-weight-bold"
-                                                    style="font-size: 13px !important; color: #dc2626;">
-                                                    {{ discountAmount > 0 ? '-' : '' }}{{ formatCurrency(discountAmount)
-                                                    }}
+                                                    style="font-size: 13px !important; color: #0f172a;">
+                                                    <template v-if="productDiscountAmount > 0">
+                                                        {{ appliedDiscountSummary }} (-{{ formatCurrency(productDiscountAmount) }})
+                                                    </template>
+                                                    <template v-else>Không có</template>
                                                 </span>
                                             </div>
 
@@ -2290,7 +2478,7 @@ const formatDateTime = (dateStr) => {
                                                 giảm</span>
                                             <span class="font-weight-semibold"
                                                 style="font-size: 14px !important; color: #991b1b !important;">
-                                                {{ discountAmount > 0 ? '-' : '' }}{{ formatCurrency(discountAmount) }}
+                                                {{ totalDiscountAmount > 0 ? '-' : '' }}{{ formatCurrency(totalDiscountAmount) }}
                                             </span>
                                         </div>
 
@@ -2324,6 +2512,7 @@ const formatDateTime = (dateStr) => {
                                                             suffix="đ" hide-details
                                                             style="width: 240px !important; max-width: 240px !important; min-width: 240px !important; flex: none !important;"
                                                             class="text-right-input custom-value-input"
+                                                            :loading="shippingFeeLoading"
                                                             :disabled="isFreeShip || !isGiaoHang" />
                                                     </template>
                                                     <v-list class="pa-0 border rounded-lg elevation-2 bg-white"
@@ -2355,6 +2544,15 @@ const formatDateTime = (dateStr) => {
                                                     </v-list>
                                                 </v-menu>
                                             </div>
+                                            <!-- Shipping fee status: GHN success or fallback/error note for staff. -->
+                                            <div v-if="shippingFeeSource === 'GHN'"
+                                                class="text-caption text-success text-right">
+                                                Đã tính phí từ GHN
+                                            </div>
+                                            <div v-else-if="shippingFeeError"
+                                                class="text-caption text-error text-right">
+                                                {{ shippingFeeError }}
+                                            </div>
                                         </div>
 
                                         <div class="d-flex align-center justify-space-between"
@@ -2369,204 +2567,6 @@ const formatDateTime = (dateStr) => {
                                         </div>
                                     </v-col>
                                 </v-row>
-                            </v-card>
-                        </v-col>
-
-                        <!-- Right Block: Payment & Notes -->
-                        <v-col cols="12" md="6" class="pl-md-3 pl-0 d-flex flex-column gap-3">
-                            <!-- Payment Card -->
-                            <v-card class="pos-card pa-4 rounded-lg border">
-                                <div class="d-flex justify-space-between align-center mb-3">
-                                    <h3 class="text-slate-800 m-0" style="font-size: 13px !important">Thanh toán</h3>
-                                </div>
-
-                                <div class="d-flex align-center justify-space-between mb-4">
-                                    <span class="text-slate-600" style="font-size: 13px !important">Hình thức thanh
-                                        toán</span>
-                                    <div class="d-flex gap-2">
-                                        <button type="button" @click="checkoutData.paymentMethod = 'CASH'"
-                                            :class="['px-3 d-flex align-center justify-center transition-all',
-                                                checkoutData.paymentMethod === 'CASH' ? 'cash-active-btn' : 'payment-inactive-btn']"
-                                            style="font-size: 13px !important; border: 1px solid; border-radius: 0px !important; height: 32px; min-width: 90px; cursor: pointer;">
-                                            <v-icon class="mr-1" size="16">mdi-cash</v-icon>
-                                            Tiền mặt
-                                        </button>
-                                        <button type="button" @click="checkoutData.paymentMethod = 'VNPAY'"
-                                            :class="['px-3 d-flex align-center justify-center transition-all',
-                                                checkoutData.paymentMethod === 'VNPAY' ? 'vnpay-active-btn' : 'payment-inactive-btn']"
-                                            style="font-size: 13px !important; border: 1px solid; border-radius: 0px !important; height: 32px; min-width: 90px; cursor: pointer;">
-                                            <v-icon class="mr-1" size="16">mdi-credit-card-outline</v-icon>
-                                            VNPay
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Money Input -->
-                                <div class="d-flex align-center justify-space-between mb-3">
-                                    <span class="text-slate-600" style="font-size: 13px !important">
-                                        {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
-                                    </span>
-                                    <v-text-field :model-value="formatNumberWithDots(checkoutData.receivedAmount)"
-                                        @input="e => checkoutData.receivedAmount = parseNumberFromDots(e.target.value)"
-                                        variant="outlined" density="compact" suffix="đ" hide-details
-                                        style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important;"
-                                        class="text-right-input" />
-                                </div>
-
-                                <!-- Voucher Selection -->
-                                <div class="d-flex flex-column"
-                                    style="min-height: 58px; justify-content: flex-start; gap: 4px;">
-                                    <div class="d-flex align-center justify-space-between">
-                                        <span class="text-slate-600 flex-shrink-0"
-                                            style="font-size: 13px !important">Phiếu giảm
-                                            giá đang áp dụng tốt nhất</span>
-                                        <v-select :model-value="selectedOrder?.idPhieuGiamGia" :items="vouchers"
-                                            item-title="customTitle" item-value="id" variant="outlined"
-                                            density="compact" hide-details @update:model-value="onApplyVoucher"
-                                            class="compact-select custom-value-input"
-                                            style="width: 240px !important; max-width: 240px !important; min-width: 240px !important; flex: none !important;"
-                                            clearable placeholder="Nhập phiếu giảm giá"
-                                            no-data-text="Chưa có phiếu giảm giá">
-                                            <template v-slot:selection="{ item }">
-                                                <div class="d-flex align-center gap-1">
-                                                    <span class="custom-voucher-badge">
-                                                        {{ getVoucherDiscountLabel(item.raw) }}
-                                                    </span>
-                                                    <span class="font-weight-bold text-slate-800"
-                                                        style="font-size: 12px !important; letter-spacing: -0.2px;">
-                                                        {{ item.raw.ma || item.raw.maPhieu || 'Mã' }}
-                                                    </span>
-                                                </div>
-                                            </template>
-                                            <template v-slot:item="{ props, item }">
-                                                <v-list-item v-bind="props" class="px-3 py-1">
-                                                    <template v-slot:title>
-                                                        <div class="d-flex align-center gap-2">
-                                                            <span class="custom-voucher-badge">
-                                                                {{ getVoucherDiscountLabel(item.raw) }}
-                                                            </span>
-                                                            <span class="font-weight-bold text-slate-800"
-                                                                style="font-size: 12px !important;">
-                                                                {{ item.raw.ma || item.raw.maPhieu }}
-                                                            </span>
-                                                            <span class="text-slate-300"
-                                                                style="font-size: 11px;">|</span>
-                                                            <span class="text-slate-600 text-truncate"
-                                                                style="font-size: 11px !important; max-width: 140px; display: inline-block;">
-                                                                {{ item.raw.tenPhieu || item.raw.ten || 'Ưu đãi'
-                                                                }}
-                                                            </span>
-                                                        </div>
-                                                    </template>
-                                                </v-list-item>
-                                            </template>
-                                        </v-select>
-                                    </div>
-                                    <div v-if="nextBetterVoucher || (bestEligibleVoucher && (!appliedVoucher || String(appliedVoucher.id) !== String(bestEligibleVoucher.id))) || (isVoucherAutoApplied[selectedOrder?.id] !== false && appliedVoucher)"
-                                        class="d-flex justify-end pr-1 text-right">
-                                        <!-- Case 1: Mốc voucher cao hơn chưa đạt điều kiện -->
-                                        <span v-if="nextBetterVoucher" class="font-weight-medium"
-                                            style="font-size: 11.5px !important; color: #7c2d12 !important; font-style: italic !important;">
-                                            Mua thêm <strong style="color: #c2410c; font-size: 12px;">{{
-                                                formatCurrency(remainingForSuggestedVoucher) }}</strong> để được nhận
-                                            phiếu giảm giá:
-                                            <strong style="color: #166534; font-size: 12px;">-{{
-                                                getVoucherDiscountLabel(nextBetterVoucher)
-                                                }}</strong> ({{ nextBetterVoucher.ma || nextBetterVoucher.maPhieu }})
-                                        </span>
-                                        <!-- Case 2: Đề xuất phiếu giảm giá tốt hơn có sẵn (Bấm được để áp dụng) -->
-                                        <span
-                                            v-else-if="bestEligibleVoucher && (!appliedVoucher || String(appliedVoucher.id) !== String(bestEligibleVoucher.id))"
-                                            class="font-weight-medium"
-                                            style="font-size: 11.5px !important; color: #7c2d12 !important; font-style: italic !important;">
-                                            Đề xuất phiếu giảm giá tốt hơn đang có sẵn:
-                                            <v-hover v-slot="{ isHovering, props }">
-                                                <span v-bind="props"
-                                                    @click="onApplyVoucher(bestEligibleVoucher.id, false, false)"
-                                                    :class="['ml-1 font-weight-bold cursor-pointer', { 'text-decoration-underline': isHovering }]"
-                                                    style="font-size: 11.5px !important; transition: all 0.2s; color: #166534 !important;">
-                                                    -{{ getVoucherDiscountLabel(bestEligibleVoucher) }} ({{
-                                                    bestEligibleVoucher.ma ||
-                                                    bestEligibleVoucher.maPhieu }})
-                                                </span>
-                                            </v-hover>
-                                        </span>
-                                        <!-- Case 3: Hệ thống tự động áp dụng mã tốt nhất -->
-                                        <span
-                                            v-else-if="isVoucherAutoApplied[selectedOrder?.id] !== false && appliedVoucher"
-                                            class="font-weight-medium"
-                                            style="font-size: 11.5px !important; color: #166534 !important; font-style: italic !important;">
-                                            Đã tự động áp dụng phiếu giảm giá tốt nhất:
-                                            <strong style="color: #166534; font-size: 12px;">-{{
-                                                getVoucherDiscountLabel(appliedVoucher)
-                                                }}</strong> ({{ appliedVoucher.ma || appliedVoucher.maPhieu }})
-                                        </span>
-                                    </div>
-                                </div>
-                            </v-card>
-
-                            <!-- Notes Card -->
-                            <v-card class="pos-card pa-4 rounded-lg border flex-grow-1 d-flex flex-column"
-                                style="min-height: 140px">
-                                <div class="text-slate-800 mb-2" style="font-size: 13px !important">Ghi chú</div>
-
-                                <v-textarea v-model="checkoutData.note"
-                                    placeholder="Viết ghi chú hoặc /shortcut để ghi chú nhanh" variant="outlined"
-                                    rows="2" hide-details class="flex-grow-1 note-textarea text-body-2" />
-
-                                <!-- Gợi ý mua thêm - Classic Style -->
-                                <div v-if="showProductSuggestions && suggestionData"
-                                    class="suggestion-box mt-3 pa-3 rounded-lg border"
-                                    style="border-color: #e2e8f0; background-color: transparent; border-style: solid; border-width: 1px;">
-                                    <div class="d-flex justify-space-between align-center mb-2">
-                                        <span class="font-weight-bold text-slate-800"
-                                            style="font-size: 13px !important;">
-                                            Gợi ý mua thêm
-                                        </span>
-                                        <span class="text-caption font-weight-medium"
-                                            style="color: #b57a00; font-size: 11px !important;">
-                                            1 đề xuất
-                                        </span>
-                                    </div>
-                                    <div class="d-flex flex-column" style="gap: 8px;">
-                                        <div class="d-flex justify-space-between align-center">
-                                            <span class="text-slate-600" style="font-size: 12px !important;">
-                                                Mã sản phẩm:
-                                            </span>
-                                            <span class="font-weight-bold text-slate-800"
-                                                style="font-size: 12px !important;">
-                                                {{ suggestionData.productCode }}
-                                            </span>
-                                        </div>
-                                        <div class="d-flex justify-space-between align-center">
-                                            <span class="text-slate-600" style="font-size: 12px !important;">
-                                                Giảm giá:
-                                            </span>
-                                            <span class="font-weight-bold text-error"
-                                                style="font-size: 12px !important;">
-                                                {{ suggestionData.discountPercent }}%
-                                            </span>
-                                        </div>
-                                        <div class="d-flex justify-space-between align-center">
-                                            <span class="text-slate-600" style="font-size: 12px !important;">
-                                                Cần mua thêm:
-                                            </span>
-                                            <span class="font-weight-semibold text-slate-800"
-                                                style="font-size: 12px !important;">
-                                                {{ formatCurrency(suggestionData.needToBuy) }}
-                                            </span>
-                                        </div>
-                                        <div class="d-flex justify-space-between align-center">
-                                            <span class="text-slate-600" style="font-size: 12px !important;">
-                                                Sẽ được giảm:
-                                            </span>
-                                            <span class="font-weight-semibold text-success"
-                                                style="font-size: 12px !important;">
-                                                {{ formatCurrency(suggestionData.willReduce) }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
                             </v-card>
                         </v-col>
                     </v-row>
@@ -2821,7 +2821,12 @@ const formatDateTime = (dateStr) => {
                     <div v-else class="w-100 d-flex flex-column align-center">
                         <template v-if="checkoutData.vnpayMethod === 'QR'">
                             <div class="pa-2 bg-white rounded-lg elevation-2 mb-4 d-inline-block">
-                                <v-img :src="vnpayDialog.qrUrl" width="220" height="220" />
+                                <QrcodeVue v-if="vnpayDialog.paymentUrl" :value="vnpayDialog.paymentUrl" :size="220"
+                                    level="H" render-as="canvas" />
+                                <div v-else class="d-flex align-center justify-center text-grey"
+                                    style="width: 220px; height: 220px;">
+                                    Chưa có mã QR
+                                </div>
                             </div>
                             <div class="text-h5 font-weight-bold text-error mb-1">
                                 {{ new Intl.NumberFormat('vi-VN', {
@@ -2994,7 +2999,12 @@ const formatDateTime = (dateStr) => {
             @confirm="confirmDialog.action" />
 
         <!-- Hóa đơn sau thanh toán -->
-        <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" />
+        <InvoiceReceiptDialog
+            :show="receiptDialog.show"
+            :receipt="receiptDialog"
+            @close="onCloseReceipt"
+            @print="onPrintReceiptInvoice"
+        />
 
         <!-- Giao Ca Modal --> <!-- Tạm thời ẩn chức năng giao ca
         <GiaoCaModal v-model="showGiaoCaModal" mode="open" @success="handleGiaoCaSuccess" /> 
