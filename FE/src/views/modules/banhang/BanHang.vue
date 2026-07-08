@@ -2586,7 +2586,7 @@ const formatDateTime = (dateStr) => {
                                     Số lần mua: {{ customerForm.tongDonHang || 0 }}
                                 </v-chip>
                                 <v-chip
-                                    v-else-if="customerForm.ten?.trim() || customerForm.sdt?.trim() || customerForm.email?.trim() || (customerForm.gioiTinh && customerForm.gioiTinh !== 'Giới tính') || customerForm.ngaySinh"
+                                    v-else-if="customerForm.ten?.trim() || customerForm.sdt?.trim() || customerForm.email?.trim() || (customerForm.gioiTinh && customerForm.gioiTinh !== 'Giới tính')"
                                     color="green-lighten-4" class="text-green-darken-4 font-weight-bold" size="x-small"
                                     variant="flat"
                                     style="font-size: 11px !important; height: 20px !important; border-radius: 6px !important;">
@@ -2651,18 +2651,9 @@ const formatDateTime = (dateStr) => {
                                 </div>
                             </div>
 
-                            <div class="d-flex gap-3">
-                                <v-text-field v-model="customerForm.email" placeholder="Địa chỉ email"
-                                    variant="outlined" density="compact" hide-details autocomplete="off"
-                                    class="dim-input-field flex-grow-1" />
-                                <div style="width: 170px; flex: none;">
-                                    <v-text-field v-model="customerForm.ngaySinh" type="date" placeholder="Ngày sinh"
-                                        variant="outlined" density="compact" hide-details
-                                        append-inner-icon="mdi-calendar-outline"
-                                        class="dim-input-field date-input-field" @click:append-inner="openDatePicker"
-                                        @click="openDatePicker" />
-                                </div>
-                            </div>
+                            <v-text-field v-model="customerForm.email" placeholder="Địa chỉ email"
+                                variant="outlined" density="compact" hide-details autocomplete="off"
+                                class="dim-input-field w-100" />
                         </div>
                     </v-card>
 
