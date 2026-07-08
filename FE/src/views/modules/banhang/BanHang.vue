@@ -1307,20 +1307,6 @@ const onApplyVoucher = async (voucherId, autoApply = false, isInternalCall = fal
     }
 };
 
-// Cố định 1 voucher do người dùng tự chọn trên giao diện
-// Áp dụng / gỡ phiếu giảm giá: BE lưu, tính lại tổng tiền sau giảm và trả về hóa đơn đã cập nhật.
-const onApplyVoucher = async (voucherId) => {
-    const order = selectedOrder.value;
-    if (!order?.id) return;
-    try {
-        const updated = await dichVuDonHang.setVoucher(order.id, voucherId || null);
-        updateOrderInList(updated);
-        // Áp mã thì ẩn gợi ý; gỡ mã thì hỏi lại gợi ý từ BE.
-        await refreshBestVoucher();
-    } catch (e) {
-        addNotification({ title: 'Lỗi phiếu giảm giá', subtitle: getErrorMessage(e, 'Không thể áp dụng phiếu giảm giá.'), color: 'error' });
-    }
-};
 
 // Logic: Thanh toán VNPay
 const vnpayDialog = ref({
