@@ -1265,16 +1265,6 @@ const decorateVoucher = (v) => {
 
 // Hỏi BE phiếu giảm giá tốt nhất để gợi ý (BE tự lọc điều kiện & tính giảm giá).
 // Tự động áp phiếu tốt nhất nếu đủ điều kiện, ngược lại thì chỉ gợi ý.
-const refreshBestVoucher = async (order = selectedOrder.value) => {
-    if (!order?.id) return;
-    if (order.idPhieuGiamGia) {
-        order.suggestedVoucherId = null;
-        return;
-    }
-
-    return Number(voucher.soTienGiam || 0);
-};
-
 const refreshBestVoucher = async (order = selectedOrder.value, autoApply = true) => {
     if (!order?.id) return;
     try {
