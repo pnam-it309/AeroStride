@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 import { useNotifications } from '@/services/notificationService';
 import { useUIStore } from '@/stores/ui';
-import dayjs from 'dayjs';
+import { formatDateTime } from '@/utils/formatters';
 
 const uiStore = useUIStore();
 const { addNotification } = useNotifications();
@@ -57,7 +57,7 @@ const getStatusLabel = (status) => {
 
 const formatDate = (dateNum) => {
     if (!dateNum) return '--';
-    return dayjs(dateNum).format('HH:mm DD/MM/YYYY');
+    return formatDateTime(dateNum);
 };
 
 const formatCurrency = (val) => {

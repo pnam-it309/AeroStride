@@ -1,0 +1,65 @@
+diff --git a/FE/src/views/modules/banhang/BanHang.vue b/FE/src/views/modules/banhang/BanHang.vue\nindex 0000000..0000000 100644\n--- a/FE/src/views/modules/banhang/BanHang.vue\n+++ b/FE/src/views/modules/banhang/BanHang.vue\n                                                    style="font-size: 11.5px !important; transition: all 0.2s; color: #166534 !important;">
+-                                                    -{{ getVoucherDiscountLabel(bestEligibleVoucher) }} ({{
+-                                                    bestEligibleVoucher.ma ||
+-                                                    bestEligibleVoucher.maPhieu }})
+-                                                </span>
+-                                            </v-hover>
+-                                        </span>
+-                                        <!-- Case 3: Hệ thống tự động áp dụng mã tốt nhất -->
+-                                        <span
+-                                            v-else-if="isVoucherAutoApplied[selectedOrder?.id] !== false && appliedVoucher"
+-                                            class="font-weight-medium"
+-                                            style="font-size: 11.5px !important; color: #166534 !important; font-style: italic !important;">
+-                                            Đã tự động áp dụng phiếu giảm giá tốt nhất:
+-                                            <strong style="color: #166534; font-size: 12px;">-{{
+-                                                getVoucherDiscountLabel(appliedVoucher)
+-                                                }}</strong> ({{ appliedVoucher.ma || appliedVoucher.maPhieu }})
+-                                        </span>
+-                                    </div>
+-                                </div>
+-                            </v-card>
+-
+-                            <!-- Notes Card -->
+-                            <v-card class="pos-card pa-4 rounded-lg border flex-grow-1 d-flex flex-column"
+-                                style="min-height: 140px">
+-                             
+<truncated 4241 bytes>
+rency(suggestionData.willReduce) }}
+-                                            </span>
+-                                        </div>
+-                                    </div>
+-                                </div>
+-                            </v-card>
+-                        </v-col>
+                     </v-row>
+                 </v-col>
+ 
+@@ -2855,7 +2776,12 @@ const formatDateTime = (dateStr) => {
+                     <div v-else class="w-100 d-flex flex-column align-center">
+                         <template v-if="checkoutData.vnpayMethod === 'QR'">
+                             <div class="pa-2 bg-white rounded-lg elevation-2 mb-4 d-inline-block">
+-                                <v-img :src="vnpayDialog.qrUrl" width="220" height="220" />
++                                <QrcodeVue v-if="vnpayDialog.paymentUrl" :value="vnpayDialog.paymentUrl" :size="220"
++                                    level="H" render-as="canvas" />
++                                <div v-else class="d-flex align-center justify-center text-grey"
++                                    style="width: 220px; height: 220px;">
++                                    Chưa có mã QR
++                                </div>
+                             </div>
+                             <div class="text-h5 font-weight-bold text-error mb-1">
+                                 {{ new Intl.NumberFormat('vi-VN', {
+@@ -3028,7 +2954,12 @@ const formatDateTime = (dateStr) => {
+             @confirm="confirmDialog.action" />
+ 
+         <!-- Hóa đơn sau thanh toán -->
+-        <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt" />
++        <InvoiceReceiptDialog
++            :show="receiptDialog.show"
++            :receipt="receiptDialog"
++            @close="onCloseReceipt"
++            @print="onPrintReceiptInvoice"
++        />
+ 
+         <!-- Giao Ca Modal --> <!-- Tạm thời ẩn chức năng giao ca
+         <GiaoCaModal v-model="showGiaoCaModal" mode="open" @success="handleGiaoCaSuccess" /> 
+

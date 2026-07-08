@@ -215,6 +215,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
     @Override
     @Transactional
+    @Caching(evict = {
+        @CacheEvict(value = "products", allEntries = true),
+        @CacheEvict(value = "productDetail", allEntries = true)
+    })
     public void removeHoaDonChiTiet(String idHoaDon, String idHoaDonChiTiet) {
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHoaDonChiTiet)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PRODUCT_DETAIL_NOT_FOUND));
@@ -286,7 +290,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             tongTienThucTe = tongTienThucTe.add(giaHienTai.multiply(BigDecimal.valueOf(detail.getSoLuong())));
         }
 
-        // Xử lý Voucher từ FE gửi lên (vì FE tính offline)
+        // Xử lý Voucher từ FE gửi lên; BE vẫn tự tính lại số tiền để tránh FE gửi sai.
+        PhieuGiamGia voucher = null;
         if (request.getIdPhieuGiamGia() != null && !request.getIdPhieuGiamGia().isEmpty()) {
             PhieuGiamGia v = phieuGiamGiaRepository.findById(request.getIdPhieuGiamGia())
                     .orElseThrow(() -> new BusinessException("Voucher không tồn tại."));
@@ -297,7 +302,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             if (tongTienThucTe.compareTo(threshold) < 0) {
                  throw new BusinessException("Tổng tiền không đủ điều kiện áp dụng Voucher. Vui lòng tải lại giỏ hàng.");
             }
-            hd.setPhieuGiamGia(v);
+            voucher = v;
+            hd.setPhieuGiamGia(voucher);
         } else {
             hd.setPhieuGiamGia(null);
         }
@@ -312,13 +318,23 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
         hd.setKhachHang(resolveCheckoutCustomer(hd, request));
         hd.setTrangThai(OrderStatus.HOAN_THANH);
-        hd.setLoaiDon(request.getLoaiDon());
+        String loaiDon = normalizeBlank(request.getLoaiDon());
+        BigDecimal phiVanChuyen = isShippingOrder(loaiDon) ? normalizeMoney(request.getPhiVanChuyen()) : BigDecimal.ZERO;
+        BigDecimal tienGiamVoucher = calculateVoucherDiscount(tongTienThucTe, voucher);
+        BigDecimal tongSauGiamHang = tongTienThucTe.subtract(tienGiamVoucher);
+        if (tongSauGiamHang.compareTo(BigDecimal.ZERO) < 0) {
+            tongSauGiamHang = BigDecimal.ZERO;
+        }
+        // Cong thuc chot don POS: final = ship + ((tien sau dot giam) - phieu giam gia).
+        BigDecimal tongTienCanThu = tongSauGiamHang.add(phiVanChuyen);
+
+        hd.setLoaiDon(loaiDon);
         hd.setOrderType(com.example.be.infrastructure.constants.OrderType.IN_STORE); // Luôn là IN_STORE cho POS
-        hd.setPhiVanChuyen(request.getPhiVanChuyen() != null ? request.getPhiVanChuyen() : BigDecimal.ZERO);
+        hd.setPhiVanChuyen(phiVanChuyen);
         hd.setDiaChiNguoiNhan(normalizeBlank(request.getDiaChiNguoiNhan()));
         hd.setSoDienThoaiNguoiNhan(normalizeBlank(request.getSdtNguoiNhan()));
         hd.setTongTien(tongTienThucTe); // Lấy giá trị thực tế thay vì request
-        hd.setTongTienSauGiam(request.getTongTienSauGiam()); // FE đã tính, nhưng có thể tính lại cho an toàn. Tạm dùng FE hoặc gọi hàm tính lại.
+        hd.setTongTienSauGiam(tongTienCanThu);
         hd.setGhiChu(request.getGhiChu());
         hd.setNgayCapNhat(System.currentTimeMillis());
         hoaDonRepository.save(hd);
@@ -590,20 +606,20 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     }
 
     private ChiTietSanPham deductStock(String variantId, int qty, String errorMessage) {
-        int updated = chiTietSanPhamRepository.deductStock(variantId, qty);
-        if (updated == 0) {
+        ChiTietSanPham ctsp = chiTietSanPhamRepository.findByIdWithPessimisticLock(variantId)
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
+        if (ctsp.getSoLuong() < qty) {
             throw new BusinessException(errorMessage);
         }
-        return chiTietSanPhamRepository.findById(variantId)
-                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
+        ctsp.setSoLuong(ctsp.getSoLuong() - qty);
+        return chiTietSanPhamRepository.saveAndFlush(ctsp);
     }
 
     private ChiTietSanPham restoreStock(String variantId, int qty) {
-        int updated = chiTietSanPhamRepository.restoreStock(variantId, qty);
-        if (updated == 0) {
-            throw new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND);
-        }
-        return chiTietSanPhamRepository.findById(variantId).orElseThrow();
+        ChiTietSanPham ctsp = chiTietSanPhamRepository.findByIdWithPessimisticLock(variantId)
+                .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.SAN_PHAM_NOT_FOUND));
+        ctsp.setSoLuong(ctsp.getSoLuong() + qty);
+        return chiTietSanPhamRepository.saveAndFlush(ctsp);
     }
 
     /** Cap nhat tong tien hoa don moi khi gio hang/voucher thay doi. */
@@ -653,26 +669,45 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         hd.setTongTien(total);
 
-        BigDecimal discounted = total;
-        if (hd.getPhieuGiamGia() != null) {
-            PhieuGiamGia v = hd.getPhieuGiamGia();
-            BigDecimal threshold = v.getDonHangToiThieu() != null ? v.getDonHangToiThieu() : BigDecimal.ZERO;
-
-            if (total.compareTo(threshold) >= 0) {
-                BigDecimal val = BigDecimal.ZERO;
-                if ("PHAN_TRAM".equalsIgnoreCase(v.getLoaiPhieu()) || "PERCENT".equalsIgnoreCase(v.getLoaiPhieu())) {
-                    Integer percent = v.getPhanTramGiamGia() != null ? v.getPhanTramGiamGia() : 0;
-                    val = total.multiply(BigDecimal.valueOf(percent)).divide(BigDecimal.valueOf(100));
-                    if (v.getGiamToiDa() != null && val.compareTo(v.getGiamToiDa()) > 0) val = v.getGiamToiDa();
-                } else {
-                    val = v.getSoTienGiam() != null ? v.getSoTienGiam() : BigDecimal.ZERO;
-                }
-                discounted = total.subtract(val);
-                if (discounted.compareTo(BigDecimal.ZERO) < 0) discounted = BigDecimal.ZERO;
-            }
-        }
+        BigDecimal discounted = total.subtract(calculateVoucherDiscount(total, hd.getPhieuGiamGia()));
+        if (discounted.compareTo(BigDecimal.ZERO) < 0) discounted = BigDecimal.ZERO;
         hd.setTongTienSauGiam(discounted);
         hoaDonRepository.save(hd);
+    }
+
+    /** Tinh so tien giam cua voucher tren tien hang da tru dot giam gia san pham. */
+    private BigDecimal calculateVoucherDiscount(BigDecimal subtotalAfterProductDiscount, PhieuGiamGia voucher) {
+        BigDecimal subtotal = normalizeMoney(subtotalAfterProductDiscount);
+        if (voucher == null || subtotal.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal threshold = normalizeMoney(voucher.getDonHangToiThieu());
+        if (subtotal.compareTo(threshold) < 0) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal discount;
+        if ("PHAN_TRAM".equalsIgnoreCase(voucher.getLoaiPhieu()) || "PERCENT".equalsIgnoreCase(voucher.getLoaiPhieu())) {
+            Integer percent = voucher.getPhanTramGiamGia() != null ? voucher.getPhanTramGiamGia() : 0;
+            discount = subtotal.multiply(BigDecimal.valueOf(percent)).divide(BigDecimal.valueOf(100));
+            BigDecimal max = normalizeMoney(voucher.getGiamToiDa());
+            if (max.compareTo(BigDecimal.ZERO) > 0 && discount.compareTo(max) > 0) {
+                discount = max;
+            }
+        } else {
+            discount = normalizeMoney(voucher.getSoTienGiam());
+        }
+        return discount.min(subtotal);
+    }
+
+    /** Chuan hoa tien: null/am thi dua ve 0 de tong tien khong bi am. */
+    private BigDecimal normalizeMoney(BigDecimal value) {
+        return value != null && value.compareTo(BigDecimal.ZERO) > 0 ? value : BigDecimal.ZERO;
+    }
+
+    private boolean isShippingOrder(String loaiDon) {
+        return "ONLINE".equalsIgnoreCase(loaiDon) || "GIAO_HANG".equalsIgnoreCase(loaiDon);
     }
 
     private void createGiaoDich(HoaDon hd, String maPTTT, BigDecimal soTien, String maGiaoDichNgoai) {

@@ -1,7 +1,10 @@
 import { ref } from 'vue';
 import axios from 'axios';
+import api from '@/services/apiService';
+import { API_ADMIN } from '@/constants/apiPaths';
 
-export function useLocation() {
+export function useLocation(options = {}) {
+    const allowFallback = options.allowFallback !== false;
     const provinces = ref([]);
     const districts = ref([]);
     const wards = ref([]);
@@ -30,19 +33,69 @@ export function useLocation() {
         return list.find((x) => cleanName(x.name) === cleanN || cleanName(x.name).includes(cleanN) || cleanN.includes(cleanName(x.name)));
     };
 
+    const extractList = (response) => {
+        const body = response?.data ?? response;
+        if (Array.isArray(body)) return body;
+        if (Array.isArray(body?.data)) return body.data;
+        if (Array.isArray(body?.data?.data)) return body.data.data;
+        return [];
+    };
+
+    const logLocationFallback = (message, error) => {
+        if (import.meta.env.DEV) {
+            console.warn(message, error?.response?.data?.message || error?.message || error);
+        }
+    };
+
+    const loadFallbackProvinces = async () => {
+        const fallback = await axios.get('https://provinces.open-api.vn/api/p/');
+        provinces.value = (fallback.data || []).map((p) => ({
+            code: p.code,
+            name: p.name,
+            source: 'OPEN_API'
+        }));
+    };
+
+    const loadFallbackDistricts = async (provinceCode) => {
+        const fallback = await axios.get(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+        districts.value = (fallback.data?.districts || []).map((d) => ({
+            code: d.code,
+            name: d.name,
+            source: 'OPEN_API'
+        }));
+    };
+
+    const loadFallbackWards = async (districtCode) => {
+        const fallback = await axios.get(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
+        wards.value = (fallback.data?.wards || []).map((w) => ({
+            code: w.code,
+            name: w.name,
+            source: 'OPEN_API'
+        }));
+    };
+
     const fetchProvinces = async () => {
         if (provinces.value.length) return;
         loadingLocations.value.provinces = true;
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/ghn/provinces`);
-            if (res.data && res.data.data) {
-                provinces.value = res.data.data.map(p => ({
-                    code: p.ProvinceID,
-                    name: p.ProvinceName
-                }));
-            }
+            // Nguồn chính: đi qua backend để giữ token GHN ở server và dùng chung prefix /api/v1.
+            const res = await api.get(`${API_ADMIN.GHN}/provinces`, { silent: true });
+            const list = extractList(res);
+            if (!list.length) throw new Error('GHN provinces empty');
+            provinces.value = list.map((p) => ({
+                code: p.ProvinceID ?? p.code,
+                name: p.ProvinceName ?? p.name,
+                source: 'GHN'
+            })).filter((p) => p.code && p.name);
         } catch (e) {
-            console.error('Error loading provinces:', e);
+            logLocationFallback('GHN provinces unavailable, fallback to open-api.', e);
+            if (!allowFallback) return;
+            try {
+                // Fallback chỉ để form địa chỉ vẫn chọn được khu vực khi GHN tạm lỗi; không dùng mã này để tính phí GHN.
+                await loadFallbackProvinces();
+            } catch (fallbackError) {
+                logLocationFallback('Fallback provinces unavailable.', fallbackError);
+            }
         } finally {
             loadingLocations.value.provinces = false;
         }
@@ -54,15 +107,23 @@ export function useLocation() {
         districts.value = [];
         wards.value = [];
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/ghn/districts?provinceId=${provinceCode}`);
-            if (res.data && res.data.data) {
-                districts.value = res.data.data.map(d => ({
-                    code: d.DistrictID,
-                    name: d.DistrictName
-                }));
+            // Quận/huyện lấy theo mã GHN từ tỉnh đã chọn; nếu tỉnh là fallback thì dùng open-api.
+            const selectedProvince = provinces.value.find((p) => String(p.code) === String(provinceCode));
+            if (selectedProvince?.source === 'OPEN_API') {
+                if (!allowFallback) return;
+                await loadFallbackDistricts(provinceCode);
+                return;
             }
+            const res = await api.get(`${API_ADMIN.GHN}/districts`, { params: { provinceId: provinceCode }, silent: true });
+            const list = extractList(res);
+            if (!list.length) throw new Error('GHN districts empty');
+            districts.value = list.map((d) => ({
+                code: d.DistrictID ?? d.code,
+                name: d.DistrictName ?? d.name,
+                source: 'GHN'
+            })).filter((d) => d.code && d.name);
         } catch (e) {
-            console.error('Error loading districts:', e);
+            logLocationFallback('GHN districts unavailable.', e);
         } finally {
             loadingLocations.value.districts = false;
         }
@@ -73,15 +134,23 @@ export function useLocation() {
         loadingLocations.value.wards = true;
         wards.value = [];
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/ghn/wards?districtId=${districtCode}`);
-            if (res.data && res.data.data) {
-                wards.value = res.data.data.map(w => ({
-                    code: w.WardCode,
-                    name: w.WardName
-                }));
+            // Phường/xã đi cùng nguồn với quận/huyện để tránh lệch mã khi tính phí ship.
+            const selectedDistrict = districts.value.find((d) => String(d.code) === String(districtCode));
+            if (selectedDistrict?.source === 'OPEN_API') {
+                if (!allowFallback) return;
+                await loadFallbackWards(districtCode);
+                return;
             }
+            const res = await api.get(`${API_ADMIN.GHN}/wards`, { params: { districtId: districtCode }, silent: true });
+            const list = extractList(res);
+            if (!list.length) throw new Error('GHN wards empty');
+            wards.value = list.map((w) => ({
+                code: w.WardCode ?? w.code,
+                name: w.WardName ?? w.name,
+                source: 'GHN'
+            })).filter((w) => w.code && w.name);
         } catch (e) {
-            console.error('Error loading wards:', e);
+            logLocationFallback('GHN wards unavailable.', e);
         } finally {
             loadingLocations.value.wards = false;
         }

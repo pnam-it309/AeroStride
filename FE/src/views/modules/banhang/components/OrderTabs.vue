@@ -31,7 +31,7 @@ const getOrderItemCount = (order) =>
             @click="emit('select', idx)"
         >
             <span class="order-tab-label font-weight-bold text-body-2 text-truncate">
-         #{{ order.maHoaDon || idx + 1 }}
+                Đơn hàng #{{ order.maHoaDon || idx + 1 }}
             </span>
             <span class="order-item-count" :title="`Tổng số lượng sản phẩm trong giỏ: ${getOrderItemCount(order)}`">
                 {{ getOrderItemCount(order) }} SP

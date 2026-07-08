@@ -114,6 +114,16 @@
     height: 32px !important;
 }
 
+.summary-delivery-switch :deep(.v-selection-control) {
+    min-height: 28px !important;
+}
+
+.summary-delivery-switch :deep(.v-label) {
+    color: #475569 !important;
+    font-size: 13px !important;
+    opacity: 1 !important;
+}
+
 .hover-autocomplete-item {
     border-bottom: 1px solid #e2e8f0 !important;
     transition: background-color 0.2s ease;

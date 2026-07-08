@@ -4,6 +4,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
 import { useNotifications } from '@/services/notificationService';
+import { useHoaDonPrinter } from '@/composables/useHoaDonPrinter';
 import {
     ChevronLeftIcon, PrinterIcon, EditIcon, CalendarIcon,
     PackageIcon, UserIcon, MapPinIcon, CreditCardIcon, TruckIcon,
@@ -17,6 +18,7 @@ import { ORDER_STATUS_ORDINALS } from "@/constants/hoaDonConstants";
 const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
+const { printHoaDonById } = useHoaDonPrinter();
 
 const loaded = ref(false);
 const loading = ref(false);
@@ -400,7 +402,10 @@ const displayAddress = computed(() => {
 const orderDiscountAmount = computed(() => {
     const total = order.value.tongTien || 0;
     const final = order.value.tongTienSauGiam || total;
-    return total - final;
+    const shipping = order.value.phiVanChuyen || 0;
+    // tongTienSauGiam đã gồm phí ship, nên dòng giảm giá chỉ so tiền hàng sau giảm với tongTien.
+    const productTotalAfterDiscount = Math.max(0, final - shipping);
+    return Math.max(0, total - productTotalAfterDiscount);
 });
 
 const orderTotalAmount = computed(() => order.value.tongTienSauGiam || order.value.tongTien || 0);
@@ -710,33 +715,8 @@ const submitEditOrder = async () => {
 const getStepIcon = (step) => step.icon;
 
 const printInvoice = async () => {
-    try {
-        addNotification({ title: 'Đang chuẩn bị', subtitle: 'Đang tạo bản in hóa đơn...', color: 'info' });
-        const html = await dichVuHoaDon.inHoaDon(order.value.id);
-
-        const printWindow = window.open('', '_blank', 'width=900,height=1000');
-        if (!printWindow) {
-            addNotification({
-                title: 'Lỗi',
-                subtitle: 'Trình duyệt đã chặn cửa sổ bật lên. Vui lòng cho phép popup để in.',
-                color: 'warning'
-            });
-            return;
-        }
-
-        printWindow.document.write(html);
-        printWindow.document.close();
-
-        // Use onload to ensure all styles and fonts are ready before printing
-        printWindow.onload = () => {
-            setTimeout(() => {
-                printWindow.print();
-            }, 500);
-        };
-    } catch (error) {
-        console.error('Print error:', error);
-        addNotification({ title: 'Lỗi', subtitle: 'Không thể tải bản in từ máy chủ. Vui lòng kiểm tra lại kết nối.', color: 'error' });
-    }
+    // Dung helper chung de mau in o Quan ly hoa don va Ban hang luon di cung mot API/HTML.
+    await printHoaDonById(order.value.id);
 };
 
 onMounted(() => {
