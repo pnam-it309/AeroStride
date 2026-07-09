@@ -47,8 +47,9 @@ public class NhanVien extends BaseCodeNameEntity {
     @Column(name = "mat_khau")
     private String matKhau;
 
+    // Ảnh đại diện nhân viên dùng LONGTEXT để không lỗi khi nhận base64 từ frontend.
     @Lob
-    @Column(name = "hinh_anh")
+    @Column(name = "hinh_anh", columnDefinition = "LONGTEXT")
     private String hinhAnh;
 
     @Column(name = "tinh")

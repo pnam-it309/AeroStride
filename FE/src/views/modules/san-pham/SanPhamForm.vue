@@ -1,8 +1,8 @@
 <script setup>
 /**
- * Module: Form san pham
- * Y nghia: tao/cap nhat san pham cha, chon thuoc tinh, sinh bien the theo mau/size,
- * quan ly ton kho-gia-SKU-QR va dong bo payload bien the ve BE.
+ * Khu vực: Biểu mẫu sản phẩm
+ * Ý nghĩa: tạo/cập nhật sản phẩm cha, chọn thuộc tính, sinh biến thể theo màu/size,
+ * quản lý tồn kho - giá - SKU - QR và đồng bộ dữ liệu biến thể về backend.
  */
 import { ref, onMounted, computed, watch, reactive, nextTick } from 'vue';
 import debounce from 'lodash/debounce';
@@ -70,7 +70,7 @@ const isEditMode = computed(() => !!route.params.id);
 const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm');
 const defaultVariantStatus = 'DANG_HOAT_DONG';
 
-// Danh muc thuoc tinh dung de tao san pham va sinh bien the.
+// Danh mục thuộc tính dùng để tạo sản phẩm và sinh biến thể.
 const brands = ref([]);
 
 const materials = ref([]);
@@ -82,21 +82,18 @@ const colors = ref([]);
 const sizes = ref([]);
 const existingProductNames = ref([]);
 
-// Tìm kiếm nhanh cho Chip Group
-// Tu khoa tim nhanh trong menu chon mau/size.
+// Từ khóa tìm nhanh trong menu chọn màu/size.
 const colorSearch = ref('');
 const sizeSearch = ref('');
 
-// UI Refs cho Biến thể
-// Trang thai UI khi them nhanh mau sac/kich thuoc.
+// Trạng thái UI khi thêm nhanh màu sắc/kích thước.
 const showColorMenu = ref(false);
 const showSizeMenu = ref(false);
 const customColorName = ref('');
 const customColorHex = ref('#FF5733');
 const customSizeName = ref('');
 
-// Bảng màu phổ biến (Việt - Anh) mapping sang HEX
-// Tu dien mau pho bien de tu dien ma HEX khi nguoi dung nhap ten mau.
+// Bảng màu phổ biến Việt/Anh để tự điền mã màu khi người dùng nhập tên màu.
 const COLOR_DICTIONARY = {
     // Tiếng Việt
     'đỏ': '#FF0000', 'xanh dương': '#0000FF', 'xanh lá': '#00FF00',
@@ -119,7 +116,7 @@ const COLOR_DICTIONARY = {
     'maroon': '#800000'
 };
 
-// Hàm bỏ dấu tiếng việt
+// Bỏ dấu tiếng Việt để so khớp tên màu/kích thước linh hoạt hơn.
 const removeAccents = (str) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : '';
 
 const getColorHexFallback = (colorItem) => {
@@ -134,7 +131,7 @@ const getColorHexFallback = (colorItem) => {
             return hex;
         }
     }
-    return '#e2e8f0'; // Default fallback
+    return '#e2e8f0'; // Màu dự phòng khi không khớp từ điển.
 };
 
 watch(customColorName, (newName) => {
@@ -205,7 +202,7 @@ const handleSizePaste = (event) => {
     customSizeName.value = normalizeSizeInput(event.clipboardData?.getData('text'));
 };
 
-// Them/chon size moi tu popover: trung thi chon lai, chua co thi tao thuoc tinh kich thuoc.
+// Thêm/chọn size mới từ khung nổi: nếu trùng thì chọn lại, nếu chưa có thì tạo thuộc tính kích thước.
 const handleAddCustomSize = async () => {
     const rawInput = customSizeName.value;
 
@@ -229,7 +226,7 @@ const handleAddCustomSize = async () => {
         return;
     }
 
-    // 2. Range 40 đến 70
+    // 2. Giới hạn size hợp lệ từ 35 đến 60.
     if (sizeNumber < 35 || sizeNumber > 60) {
         addNotification({ title: 'Loi', subtitle: 'Kich thuoc phai tu 35 den 60', color: 'error' });
         return;
@@ -243,7 +240,7 @@ const handleAddCustomSize = async () => {
         return;
     }
 
-    // 4. Định dạng lại final (ví dụ 40.0 -> 40)
+    // 4. Định dạng lại giá trị cuối cùng (ví dụ 40.0 -> 40).
     const finalNumericSize = sizeNumber.toString();
 
     // 2. Lỗi trùng lặp: Kiểm tra trùng lặp không phân biệt hoa thường
@@ -305,7 +302,7 @@ const filteredSizes = computed(() => {
     return sortedSizes.value.filter(s => normalizeSearchText(s.ten).includes(query));
 });
 
-// Theo dõi nội dung đang gõ trong các combobox
+// Theo dõi nội dung đang gõ trong các ô chọn có tìm kiếm.
 const searchQueries = reactive({
     idThuongHieu: '',
     idXuatXu: '',
@@ -323,21 +320,21 @@ const displaySoles = computed(() => getDisplayItems(soles.value, searchQueries.i
 const displayCollars = computed(() => getDisplayItems(collars.value, searchQueries.idCoGiay, 'idCoGiay'));
 const displayPurposes = computed(() => getDisplayItems(purposes.value, searchQueries.idMucDichChay, 'idMucDichChay'));
 
-// Mau/size duoc chon de sinh ma tran bien the san pham.
+// Màu/size được chọn để sinh ma trận biến thể sản phẩm.
 const selectedColors = ref([]);
 const selectedSizes = ref([]);
-// Danh sach bien the dang thao tac tren FE truoc khi gui payload ve BE.
+// Danh sách biến thể đang thao tác trên giao diện trước khi gửi dữ liệu về backend.
 const variantItems = ref([]);
 const colorImageState = ref({});
 const colorFileInputRefs = ref({});
-// Gia/ton kho ap dung nhanh cho tat ca bien the hoac theo tung nhom mau.
+// Giá/tồn kho áp dụng nhanh cho tất cả biến thể hoặc theo từng nhóm màu.
 const bulkAllForm = ref({
     soLuong: '',
     giaNhap: '',
     giaBan: ''
 });
 const bulkByColorForms = ref({});
-// Modal them/sua mot bien the rieng le.
+// Hộp thoại thêm/sửa một biến thể riêng lẻ.
 const variantModal = ref({
     open: false,
     mode: 'create',
@@ -347,7 +344,7 @@ const variantModal = ref({
 const qrExportItems = ref([]);
 const qrExportContainer = ref(null);
 
-// Bảng biến thể (lọc/khoảng giá/phân trang/chọn) — tách sang composable useVariantTable.
+// Bảng biến thể (lọc/khoảng giá/phân trang/chọn) dùng chung qua useVariantTable.
 const {
     variantTableFilters,
     variantPriceBounds,
@@ -380,7 +377,7 @@ const {
     maxPrice: DEFAULT_MAX_VARIANT_PRICE
 });
 
-// Options truyen sang modal bien the gom mau, size va trang thai hop le.
+// Dữ liệu truyền sang hộp thoại biến thể, gồm màu, size và trạng thái hợp lệ.
 const variantOptions = computed(() => ({
     mauSacs: colors.value,
     kichThuocs: sizes.value,
@@ -406,7 +403,7 @@ const totalVariantStock = computed(() => variantItems.value.reduce(
     0
 ));
 
-// Gom bien the theo mau de hien tab/chinh sua nhanh theo tung mau.
+// Gom biến thể theo màu để hiển thị tab và chỉnh sửa nhanh theo từng màu.
 const variantsByColor = computed(() => {
     const groups = {};
     variantItems.value.forEach(item => {
@@ -420,7 +417,7 @@ const variantsByColor = computed(() => {
 
 const activeColorTab = ref('ALL');
 
-// Form ap dung nhanh gia ban/gia nhap/ton kho cho nhom bien the dang hien.
+// Biểu mẫu áp dụng nhanh giá bán/giá nhập/tồn kho cho nhóm biến thể đang hiển thị.
 const quickApplyValues = reactive({
     giaBan: '',
     giaNhap: '',
@@ -647,7 +644,7 @@ const refreshAttributeOptions = async (config) => {
 const resolveAttributeField = async (config, { notifyOnCreate = false } = {}) => {
     let currentValue = product.value[config.field];
 
-    // Nếu là ID tạm thời từ việc click "Thêm nhanh", bóc tách lấy text thực tế
+    // Nếu là ID tạm thời từ việc bấm "Thêm nhanh", bóc tách lấy chữ thực tế.
     let isExplicitQuickAdd = false;
     if (typeof currentValue === 'string' && currentValue.startsWith('__new__')) {
         currentValue = currentValue.replace('__new__', '');
@@ -770,7 +767,7 @@ const formatNumber = (value) => {
     return new Intl.NumberFormat('vi-VN').format(Number(value));
 };
 
-// getStatusLabel is now imported from @/utils/statusUtils
+// getStatusLabel được dùng chung từ @/utils/statusUtils.
 
 
 const normalizeOptionList = (listLike) => {
@@ -839,6 +836,22 @@ const getVariantThumbnail = (variant) => {
 const getVariantCombinationKey = (colorId, sizeId) => `${colorId}-${sizeId}`;
 const getColorUploadEntry = (colorId) => colorImageState.value[colorId] || { url: '', uploading: false };
 const getColorUploadPreviewUrl = (colorId) => getColorUploadEntry(colorId).url || logoPlaceholder;
+
+// Chuẩn hóa mã SKU trước khi gửi backend để tránh khoảng trắng/ký tự quá dài gây lỗi lưu DB.
+const normalizeVariantSku = (value) => String(value ?? '').trim().toUpperCase().slice(0, 50);
+
+// Khi tạo sản phẩm mới, frontend sinh trước SKU duy nhất cho từng biến thể để backend không phải tự sinh hàng loạt.
+const buildGeneratedVariantSku = (index) => {
+    const baseCode = normalizeVariantSku(product.value.maSanPham || 'SP').slice(0, 42) || 'SP';
+    return `${baseCode}-${String(index + 1).padStart(2, '0')}`;
+};
+
+// Lấy SKU cuối cùng của biến thể: ưu tiên mã người dùng nhập, nếu trống thì tự sinh theo thứ tự biến thể.
+const getVariantPayloadSku = (variant, index) => {
+    const manualSku = normalizeVariantSku(variant.maChiTietSanPham);
+    return manualSku || buildGeneratedVariantSku(index);
+};
+
 const getBulkColorForm = (colorId) => {
     if (!bulkByColorForms.value[colorId]) {
         bulkByColorForms.value[colorId] = { soLuong: '', giaNhap: '', giaBan: '' };
@@ -850,7 +863,7 @@ const getVariantColorLabel = (colorId) => getOptionLabel(colors, colorId);
 const getVariantSizeLabel = (sizeId) => getOptionLabel(sizes, sizeId);
 const getVariantDescriptor = () => variantContextSummary.value.join(' • ');
 
-// Chuyen response bien the tu BE ve state FE thong nhat cho form/bang/modal.
+// Chuyển phản hồi biến thể từ backend về trạng thái giao diện thống nhất cho biểu mẫu/bảng/hộp thoại.
 const mapVariantToFormState = (variant = {}) => ({
     id: variant.id || null,
     clientKey: variant.clientKey || createDraftKey(),
@@ -866,7 +879,7 @@ const mapVariantToFormState = (variant = {}) => ({
     urlAnh: getVariantThumbnail(variant) === logoPlaceholder ? '' : getVariantThumbnail(variant)
 });
 
-// Tao bien the nhap lieu tu cap mau-size; giu lai gia/ton kho neu da co ban nhap cu.
+// Tạo biến thể nhập liệu từ cặp màu-size; giữ lại giá/tồn kho nếu đã có bản nháp cũ.
 const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackImageUrl = '') => mapVariantToFormState({
     ...existingVariant,
     clientKey: existingVariant.clientKey || createDraftKey(),
@@ -880,14 +893,14 @@ const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackI
     urlAnh: normalizeUploadedFileUrl(existingVariant.urlAnh || fallbackImageUrl || '')
 });
 
-// Dong goi bien the theo schema ProductVariantRequest cua BE.
-const buildVariantPayload = (variant, includeImages = true) => {
+// Đóng gói biến thể theo cấu trúc ProductVariantRequest của backend.
+const buildVariantPayload = (variant, includeImages = true, index = 0) => {
     const imageUrl = normalizeUploadedFileUrl(variant.urlAnh);
     const payload = {
-        maChiTietSanPham: variant.maChiTietSanPham || null,
+        maChiTietSanPham: getVariantPayloadSku(variant, index),
         idMauSac: variant.idMauSac,
         idKichThuoc: variant.idKichThuoc,
-        soLuong: Number(variant.soLuong ?? 0),
+        soLuong: Math.trunc(Number(variant.soLuong ?? 0)),
         giaNhap: Number(variant.giaNhap ?? 0),
         giaBan: Number(variant.giaBan ?? 0),
         trangThai: variant.trangThai || defaultVariantStatus
@@ -903,8 +916,8 @@ const buildVariantPayload = (variant, includeImages = true) => {
 };
 
 const handleAttributeChange = async (field, value) => {
-    // Chỉ tự động tạo nếu người dùng chọn mục "Thêm nhanh" (có prefix __new__)
-    // Hoặc nếu họ nhấn Enter (được xử lý ở onKeyUpEnter)
+    // Chỉ tự động tạo nếu người dùng chọn mục "Thêm nhanh" (có tiền tố __new__).
+    // Hoặc nếu họ nhấn Enter, phần đó được xử lý ở onKeyUpEnter.
     if (typeof value === 'string' && value.startsWith('__new__')) {
         const config = attributeConfig.find(item => item.field === field);
         if (!config) return;
@@ -1017,13 +1030,13 @@ const buildProductPayload = ({ includeVariants = false } = {}) => {
         idMucDichChay: product.value.idMucDichChay,
         gioiTinhKhachHang: product.value.gioiTinhKhachHang,
         trangThai: product.value.trangThai,
-        hinhAnh: product.value.hinhAnh || '',
+        hinhAnh: normalizeUploadedFileUrl(product.value.hinhAnh) || '',
 
         moTaChiTiet: product.value.moTaChiTiet || ''
     };
 
     if (includeVariants) {
-        payload.variants = variantItems.value.map(item => buildVariantPayload(item, true));
+        payload.variants = variantItems.value.map((item, index) => buildVariantPayload(item, true, index));
     }
 
     return payload;
@@ -1248,7 +1261,7 @@ const executeGenerateVariants = () => {
     });
 };
 
-// Sinh/cap nhat danh sach bien the tu tat ca cap mau-size da chon.
+// Sinh/cập nhật danh sách biến thể từ tất cả cặp màu-size đã chọn.
 const generateVariants = () => {
     if (selectedColors.value.length === 0 || selectedSizes.value.length === 0) {
         addNotification({
@@ -1334,7 +1347,7 @@ const fetchFormOptions = async () => {
     }
 };
 
-// FORM STATE
+// Trạng thái kiểm tra trùng tên sản phẩm.
 const tenError = ref('');
 const existingProductId = ref(null);
 
@@ -1345,7 +1358,7 @@ const checkProductName = debounce(async (name) => {
         return;
     }
 
-    // Only check if creating a new product
+    // Chỉ kiểm tra trùng tên khi đang tạo sản phẩm mới.
     if (isEditMode.value) return;
 
     try {
@@ -1362,15 +1375,14 @@ const checkProductName = debounce(async (name) => {
     }
 }, 500);
 
-// Note: watch block moved below product initialization
-// Navigate to edit page to add variants
+// Điều hướng tới trang sửa sản phẩm đã tồn tại để thêm biến thể.
 const handleNavigateToUpdate = () => {
     if (existingProductId.value) {
         router.push(`${PATH.SAN_PHAM_FORM}/${existingProductId.value}`);
     }
 };
 
-// FORM STATE
+// Trạng thái biểu mẫu sản phẩm chính.
 const product = ref({
     maSanPham: '',
     tenSanPham: null,
@@ -1389,7 +1401,7 @@ const product = ref({
     hinhAnh: ''
 });
 
-// Watch for product name changes
+// Theo dõi thay đổi tên sản phẩm để kiểm tra trùng tên.
 watch(() => product.value.tenSanPham, (newVal) => {
     if (!isEditMode.value) {
         checkProductName(newVal);
@@ -1422,7 +1434,7 @@ const loadProduct = async (id) => {
     syncColorImageStateFromVariants();
 };
 
-// Các watcher đồng bộ giá/phân trang/lựa chọn của bảng biến thể đã nằm trong useVariantTable.
+// Các bộ theo dõi đồng bộ giá/phân trang/lựa chọn của bảng biến thể đã nằm trong useVariantTable.
 
 const loadInitData = async () => {
     loading.value = true;
@@ -1432,15 +1444,15 @@ const loadInitData = async () => {
         if (route.params.id) {
             await loadProduct(route.params.id);
 
-            // Check if there are variants to merge
+            // Kiểm tra có biến thể tạm cần gộp vào sản phẩm hiện tại không.
             const mergeKey = 'mergeVariants_' + route.params.id;
             const mergeVariantsStr = localStorage.getItem(mergeKey);
             if (mergeVariantsStr) {
                 try {
                     const variantsToMerge = JSON.parse(mergeVariantsStr);
                     if (Array.isArray(variantsToMerge) && variantsToMerge.length > 0) {
-                        // Append to current variants, avoiding duplicates if possible
-                        // Ensure they don't have IDs since they are new to this product
+                        // Gộp vào danh sách biến thể hiện tại và cố gắng tránh trùng.
+                        // Xóa ID vì đây là biến thể mới của sản phẩm hiện tại.
                         const sanitizedToMerge = variantsToMerge.map(v => ({ ...v, id: null, ma: '' }));
                         variantItems.value = [...variantItems.value, ...sanitizedToMerge];
                         addNotification({ title: 'Đã gộp', subtitle: `Đã tự động thêm ${variantsToMerge.length} biến thể từ sản phẩm trùng lặp. Vui lòng bấm Cập nhật để lưu.`, color: 'info' });
@@ -1569,6 +1581,9 @@ const validateProduct = () => {
         return false;
     }
 
+    const variantCombinationKeys = new Set();
+    const variantSkuKeys = new Set();
+
     for (let i = 0; i < variantItems.value.length; i++) {
         const item = variantItems.value[i];
         if (!item.idMauSac || !item.idKichThuoc) {
@@ -1579,6 +1594,28 @@ const validateProduct = () => {
             });
             return false;
         }
+
+        const combinationKey = getVariantCombinationKey(item.idMauSac, item.idKichThuoc);
+        if (variantCombinationKeys.has(combinationKey)) {
+            addNotification({
+                title: 'Lỗi trùng biến thể',
+                subtitle: `Biến thể màu ${item.tenMauSac || getVariantColorLabel(item.idMauSac)} - size ${item.tenKichThuoc || getVariantSizeLabel(item.idKichThuoc)} đang bị trùng. Vui lòng xóa bớt trước khi lưu.`,
+                color: 'error'
+            });
+            return false;
+        }
+        variantCombinationKeys.add(combinationKey);
+
+        const skuKey = getVariantPayloadSku(item, i);
+        if (variantSkuKeys.has(skuKey)) {
+            addNotification({
+                title: 'Lỗi trùng SKU',
+                subtitle: `Mã SKU ${skuKey} đang bị trùng trong danh sách biến thể. Vui lòng kiểm tra lại.`,
+                color: 'error'
+            });
+            return false;
+        }
+        variantSkuKeys.add(skuKey);
 
         const soLuong = Number(item.soLuong);
         const giaNhap = Number(item.giaNhap);
@@ -1821,7 +1858,7 @@ const handleMergeDuplicate = () => {
     const dupProdId = duplicateAttributeDialog.value.duplicateProduct.id;
     duplicateAttributeDialog.value.show = false;
 
-    // Store new variants in localStorage to merge after redirect
+    // Lưu biến thể mới vào localStorage để gộp sau khi chuyển sang trang sửa sản phẩm trùng.
     const newVariantsToMerge = variantItems.value;
     if (newVariantsToMerge.length > 0) {
         localStorage.setItem('mergeVariants_' + dupProdId, JSON.stringify(newVariantsToMerge));
@@ -2288,7 +2325,7 @@ const handleSave = async () => {
                             <div v-if="variantItems.length > 0" class="variants-tab-container mb-6">
                                 <v-row no-gutters class="rounded-lg overflow-hidden"
                                     style="height: 600px; border: 1px solid #cbd5e1 !important;">
-                                    <!-- Sidebar Màu sắc -->
+                                    <!-- Thanh bên màu sắc -->
                                     <v-col cols="12" md="3" class="bg-slate-50 d-flex flex-column h-100"
                                         style="border-right: 1px solid #cbd5e1;">
                                         <div class="pa-2 flex-shrink-0">
@@ -2675,7 +2712,7 @@ const handleSave = async () => {
             :lock-attributes-on-edit="isEditMode" :allow-image-upload="true" @close="closeVariantModal"
             @submit="handleVariantSubmit" @options-refreshed="fetchFormOptions" />
 
-        <!-- Modal Thiết lập nhanh hàng loạt -->
+        <!-- Hộp thoại thiết lập nhanh hàng loạt -->
         <v-dialog v-model="bulkEditModal.show" max-width="500">
             <v-card class="premium-card rounded-xl">
                 <v-card-title class="pa-6 border-b d-flex align-center">

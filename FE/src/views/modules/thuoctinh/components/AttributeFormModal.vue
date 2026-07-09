@@ -20,7 +20,7 @@ const handleSave = () => emit('save');
 const updateFormField = (field, value) => {
     const updatedForm = { ...props.form, [field]: value };
 
-    // Auto-detect color name/hex if in colors tab
+    // Tự nhận diện tên màu hoặc mã HEX khi đang ở tab màu sắc.
     if (props.selectedTab === 'colors') {
         if (field === 'ten') {
             const hex = getColorHexByName(value);
@@ -72,7 +72,7 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                                     class="modern-input" :type="selectedTab === 'sizes' ? 'number' : 'text'" min="0"></v-text-field>
                             </div>
 
-                            <!-- Color Specific -->
+                            <!-- Trường riêng cho màu sắc. -->
                             <div v-if="selectedTab === 'colors'" class="form-group mb-4">
                                 <label class="popover-label">Mã màu (Hex)</label>
                                 <div class="d-flex align-center gap-2">
@@ -89,7 +89,7 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                                 </div>
                             </div>
 
-                            <!-- Size Specific -->
+                            <!-- Trường riêng cho kích thước. -->
                             <div v-if="selectedTab === 'sizes'" class="form-group mb-4">
                                 <label class="popover-label">Giá trị (Số)</label>
                                 <v-text-field :model-value="form.giaTriKichThuoc"

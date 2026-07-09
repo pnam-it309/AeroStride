@@ -1,8 +1,8 @@
 <script setup>
 /**
- * Module: Biến thể sản phẩm (Admin)
- * Component: VariantImageModal
- * Chức năng: Form modal tải lên và chỉnh sửa thông tin hình ảnh của biến thể 
+ * Khu vực: Biến thể sản phẩm (Admin)
+ * Thành phần: VariantImageModal
+ * Chức năng: Hộp thoại tải lên và chỉnh sửa thông tin hình ảnh của biến thể 
  *            (gồm URL, ảnh đại diện, mô tả ảnh).
  */
 import { ref, watch } from 'vue';
@@ -52,17 +52,17 @@ watch(
     }
 );
 
-// Mở hộp thoại chọn file của hệ điều hành
+// Mở hộp thoại chọn tệp của hệ điều hành.
 const triggerFileInput = () => {
     fileInput.value?.click();
 };
 
-// Lắng nghe sự kiện người dùng chọn file, validate định dạng ảnh, gửi file lên server/cloud
+// Lắng nghe khi người dùng chọn tệp, kiểm tra đúng định dạng ảnh rồi gửi lên máy chủ/cloud.
 const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Validate if it's an image
+    // Kiểm tra tệp được chọn có phải hình ảnh không.
     if (!file.type.startsWith('image/')) {
         addNotification({ title: 'Lỗi', subtitle: 'Vui lòng chọn tệp hình ảnh', color: 'error' });
         return;
@@ -86,12 +86,12 @@ const handleFileChange = async (event) => {
         addNotification({ title: 'Lỗi', subtitle: 'Không thể xử lý ảnh', color: 'error' });
     } finally {
         uploading.value = false;
-        // Reset file input
+        // Đặt lại ô chọn tệp để lần sau chọn lại cùng một ảnh vẫn nhận sự kiện.
         if (event.target) event.target.value = '';
     }
 };
 
-// Đẩy dữ liệu form (gồm URL vừa upload) ra component cha để lưu
+// Đẩy dữ liệu biểu mẫu, gồm URL vừa tải lên, ra thành phần cha để lưu.
 const handleSubmit = () => {
     emit('submit', { ...formData.value });
 };
@@ -111,7 +111,7 @@ const handleSubmit = () => {
             </div>
 
             <div class="p-8 space-y-6">
-                <!-- Upload Area -->
+                <!-- Khu vực tải ảnh lên. -->
                 <div
                     @click="triggerFileInput"
                     class="relative aspect-video rounded-3xl bg-slate-50 border-2 border-dashed border-slate-200 overflow-hidden flex flex-column items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all group"
@@ -213,7 +213,7 @@ const handleSubmit = () => {
 </template>
 
 <style scoped>
-/* .font-display is now defined globally in _admin-common.scss */
+/* .font-display đã được định nghĩa toàn cục trong _admin-common.scss. */
 .filter-label {
     font-size: 13px;
     font-weight: 700;

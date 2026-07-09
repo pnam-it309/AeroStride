@@ -1,7 +1,7 @@
 <script setup>
 /**
- * Module: Quản lý sản phẩm (Admin)
- * View: SanPham
+ * Khu vực: Quản lý sản phẩm (Admin)
+ * Màn hình: SanPham
  * Chức năng: Màn hình danh sách sản phẩm. Cho phép lọc, tìm kiếm, xem khoảng giá, 
  *            đổi trạng thái (đơn lẻ hoặc hàng loạt), xuất/nhập Excel, và quét mã QR.
  */
@@ -30,7 +30,7 @@ const router = useRouter();
 const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 const { isRefreshing, handleRefresh: refreshData } = useRefreshHandler();
 
-// Phân trang + tải dữ liệu server-side (composable dùng chung)
+// Phân trang và tải dữ liệu phía máy chủ bằng hàm dùng chung.
 const {
     items: products,
     loading,
@@ -86,7 +86,7 @@ const toNumber = (value, fallback = 0) => {
     return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-// Danh sách sản phẩm hiển thị là dữ liệu của đúng trang hiện tại do BE trả về.
+// Danh sách sản phẩm hiển thị là dữ liệu của đúng trang hiện tại do backend trả về.
 const filteredProductIds = computed(() => products.value.map((item) => item.id));
 const selectedProducts = computed(() => products.value.filter((item) => selectedProductIds.value.includes(item.id)));
 const allProductsSelected = computed(
@@ -127,7 +127,7 @@ const resetProductFiltersState = () => {
     clearProductSelection();
 };
 
-// Build phần params LỌC gửi lên API (page/size do composable useServerPagination tự thêm)
+// Dựng phần tham số lọc gửi lên API; page/size do useServerPagination tự thêm.
 const buildProductFilterParams = () => ({
     sortBy: 'ngayTao',
     sortDirection: 'desc',
@@ -140,7 +140,7 @@ const buildProductFilterParams = () => ({
     maxGia: priceFilterDirty.value ? filters.khoangGia[1] : undefined
 });
 
-// Gọi API lấy mức giá lớn nhất có trong database để làm max cho thanh trượt
+// Gọi API lấy mức giá lớn nhất trong CSDL để làm cận trên cho thanh trượt.
 const loadMaxPrice = async () => {
     try {
         const maxPrice = await dichVuSanPham.layGiaLonNhat();
@@ -156,7 +156,7 @@ const loadMaxPrice = async () => {
     }
 };
 
-// Gọi API lấy các tùy chọn cho các dropdown bộ lọc (danh mục, thương hiệu...)
+// Gọi API lấy các tùy chọn cho danh sách xổ xuống của bộ lọc (danh mục, thương hiệu...).
 const loadFilterOptions = async () => {
     try {
         const options = await dichVuSanPham.layOptionsForm();
@@ -176,7 +176,7 @@ const loadFilterOptions = async () => {
     }
 };
 
-// Xử lý sự kiện submit tìm kiếm (khi nhấn Enter/Click nút)
+// Xử lý tìm kiếm khi nhấn Enter hoặc bấm nút.
 const handleSearch = async () => {
     clearProductSelection();
     await reloadProducts();
@@ -190,7 +190,7 @@ const handleRefresh = async () => {
     });
 };
 
-// Debounce việc lọc giá khi kéo thanh trượt (gọi lại API với minGia/maxGia)
+// Chờ người dùng ngừng kéo thanh trượt rồi mới gọi lại API với minGia/maxGia.
 const schedulePriceSearch = () => {
     priceFilterDirty.value = true;
     if (priceSearchTimer) {
@@ -203,7 +203,6 @@ const schedulePriceSearch = () => {
     }, 300);
 };
 
-// <- chỗ này viêt commet để biết mik làm gì đoạn này >
 // Đảm bảo khoảng giá hợp lệ, min <= max, không vượt qua khoảng cho phép
 const sanitizePriceRange = (range, maxPrice = productPriceBounds.value.max) => {
     const safeMaxPrice = Math.max(MIN_PRICE, toNumber(maxPrice, DEFAULT_MAX_PRICE));
@@ -214,7 +213,7 @@ const sanitizePriceRange = (range, maxPrice = productPriceBounds.value.max) => {
     return [nextMin, nextMax];
 };
 
-// Cập nhật cận trên/dưới của khoảng giá (từ input textbox nếu có)
+// Cập nhật cận trên/dưới của khoảng giá (từ ô nhập nếu có).
 const updatePriceFilterBoundary = (boundary, value) => {
     const nextRange = [...filters.khoangGia];
     if (boundary === 'min') {
@@ -233,7 +232,7 @@ const handleSliderPriceChange = (value) => {
     schedulePriceSearch();
 };
 
-// Chống XSS cho các chuỗi dữ liệu đưa vào Excel
+// Chống mã độc XSS cho các chuỗi dữ liệu đưa vào Excel.
 const escapeCell = (value) =>
     String(value ?? '')
         .replace(/&/g, '&amp;')
@@ -241,7 +240,7 @@ const escapeCell = (value) =>
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
 
-// Khởi tạo file Excel dạng HTML table và trigger tải về
+// Khởi tạo tệp Excel dạng bảng HTML và kích hoạt tải về.
 const exportHtmlTableToExcel = ({ headers, rows, fileName }) => {
     const tableRows = [headers, ...rows]
         .map((columns) => `<tr>${columns.map((column) => `<td>${escapeCell(column)}</td>`).join('')}</tr>`)
@@ -264,7 +263,7 @@ const exportHtmlTableToExcel = ({ headers, rows, fileName }) => {
     downloadFile(blob, fileName);
 };
 
-// Format chuỗi khoảng giá để hiển thị trên bảng
+// Định dạng chuỗi khoảng giá để hiển thị trên bảng.
 const getPriceRange = (item) => {
     if (item?.giaBanThapNhat == null && item?.giaBanCaoNhat == null) return formatCurrency(0);
     if (item?.giaBanThapNhat === item?.giaBanCaoNhat) {
@@ -307,7 +306,7 @@ const handleExportProducts = () => {
     });
 };
 
-// Tải template file excel nhập liệu sản phẩm mẫu
+// Tải tệp Excel mẫu để nhập liệu sản phẩm.
 const handleDownloadTemplate = async () => {
     try {
         const blob = await dichVuSanPham.taiTemplateExcel();
@@ -322,7 +321,7 @@ const handleDownloadTemplate = async () => {
     }
 };
 
-// Gọi API upload file excel đã nhập để thêm/sửa nhanh sản phẩm
+// Gọi API tải lên tệp Excel đã nhập để thêm/sửa nhanh sản phẩm.
 const handleImport = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -354,7 +353,7 @@ const updateSingleProductStatus = async (product, nextStatus) => {
     await dichVuSanPham.thayDoiTrangThai(product.id, nextStatus);
 };
 
-// Xác nhận với user trước khi thay đổi trạng thái sản phẩm
+// Xác nhận với người dùng trước khi thay đổi trạng thái sản phẩm.
 const confirmToggleStatus = (product) => {
     setConfirm({
         title: 'Xác nhận trạng thái',
@@ -453,7 +452,7 @@ const toggleSelectAllProducts = (checked) => {
     selectedProductIds.value = [];
 };
 
-// Format số thông thường sang định dạng có dấu phẩy
+// Định dạng số thông thường sang định dạng có dấu phẩy.
 const formatNumber = (value) => {
     if (value === null || value === undefined) return '0';
     return new Intl.NumberFormat('vi-VN').format(Number(value));

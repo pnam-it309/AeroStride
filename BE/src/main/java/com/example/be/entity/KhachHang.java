@@ -41,8 +41,9 @@ public class KhachHang extends BaseCodeNameEntity {
     @Column(name = "ngay_sinh")
     private LocalDate ngaySinh;
 
+    // Ảnh đại diện khách hàng dùng chung kiểu LONGTEXT với các màn upload ảnh.
     @Lob
-    @Column(name = "hinh_anh")
+    @Column(name = "hinh_anh", columnDefinition = "LONGTEXT")
     private String hinhAnh;
 
     @Column(name = "ghi_chu")

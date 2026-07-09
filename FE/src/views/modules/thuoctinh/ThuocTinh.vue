@@ -18,7 +18,7 @@ import { SYSTEM_STATUS } from '@/constants/statusConstants';
 import { generateRandomCode } from '@/utils/codeGenerator';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
 
-// REUSABLE COMPONENTS
+// Thành phần dùng chung cho màn thuộc tính.
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
 import AttributeFilter from './components/AttributeFilter.vue';
 import AttributeTable from './components/AttributeTable.vue';
@@ -49,7 +49,7 @@ const activatorElement = ref(null);
 const route = useRoute();
 const router = useRouter();
 
-// Use composables
+// Sử dụng hàm dùng chung để xử lý bảng thuộc tính và xác nhận thao tác.
 const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 
 const routeMap = {
@@ -519,7 +519,7 @@ watch(selectedTab, (n) => {
 
 <template>
     <v-container fluid class="pa-4 animate-fade-in d-flex flex-column overflow-hidden font-body admin-module-page">
-        <!-- Breadcrumbs -->
+        <!-- Thanh điều hướng phân cấp. -->
         <AdminBreadcrumbs
             :items="[
                 { title: 'Quản lý sản phẩm', disabled: false, href: '#' },
@@ -529,7 +529,7 @@ watch(selectedTab, (n) => {
 
         <div class="mb-2"></div>
 
-        <!-- 1. FILTER -->
+        <!-- 1. Bộ lọc thuộc tính. -->
         <AttributeFilter
             v-model:searchQuery="searchQuery"
             v-model:statusFilter="statusFilter"
@@ -540,7 +540,7 @@ watch(selectedTab, (n) => {
             @update:statusFilter="loadItems"
         />
 
-        <!-- 2. TABLE -->
+        <!-- 2. Bảng danh sách thuộc tính. -->
         <AttributeTable
             v-model:tab="selectedTab"
             :title="`Danh sách ${getCurrentTabTitle()}`"
@@ -558,7 +558,7 @@ watch(selectedTab, (n) => {
             class="flex-grow-1 min-h-0"
         />
 
-        <!-- FORM MODAL -->
+        <!-- Hộp thoại thêm/sửa thuộc tính. -->
         <AttributeFormModal
             v-model:show="showDialog"
             v-model:form="itemForm"
@@ -569,7 +569,7 @@ watch(selectedTab, (n) => {
             @save="confirmSaveItem"
         />
 
-        <!-- SHARED CONFIRM -->
+        <!-- Hộp thoại xác nhận dùng chung. -->
         <AdminConfirm
             v-model:show="confirmDialog.show"
             :title="confirmDialog.title"
@@ -583,5 +583,5 @@ watch(selectedTab, (n) => {
 </template>
 
 <style scoped>
-/* .font-body is now defined globally in _admin-common.scss */
+/* .font-body đã được định nghĩa dùng chung trong _admin-common.scss. */
 </style>

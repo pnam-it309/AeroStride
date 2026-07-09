@@ -35,7 +35,7 @@ import { useHoaDonPrinter } from '@/composables/useHoaDonPrinter';
 import { GIOI_TINH_OPTIONS } from '@/constants/appConstants';
 import { isActiveStatus } from '@/utils/statusUtils';
 
-// Import Components
+// Nạp các component con của màn bán hàng.
 import OrderTabs from './components/OrderTabs.vue';
 import CartTable from './components/CartTable.vue';
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
@@ -51,7 +51,7 @@ const MAX_WAITING_ORDERS = 5;
 const VNPAY_PENDING_KEY = 'aerostride_pos_vnpay_pending';
 const BYPASS_PAYMENT_RECORD_INSERT = false;
 
-// Giao Ca State
+// Trạng thái giao ca: dùng để kiểm tra nhân viên đã mở ca trước khi bán hàng.
 const showGiaoCaModal = ref(false);
 const currentGiaoCa = ref(null);
 
@@ -60,13 +60,13 @@ const checkGiaoCa = async () => {
         const res = await dichVuGiaoCa.getCaHienTai();
         const data = res?.data || res;
         if (!data || !data.id) {
-            // Tạm thời comment Giao ca theo yêu cầu
+            // Tạm thời tắt mở popup giao ca theo yêu cầu.
             // showGiaoCaModal.value = true;
         } else {
             currentGiaoCa.value = data;
         }
     } catch (e) {
-        // Tạm thời comment Giao ca
+        // Tạm thời tắt mở popup giao ca.
         // showGiaoCaModal.value = true;
     }
 };
@@ -75,11 +75,11 @@ const handleGiaoCaSuccess = () => {
     checkGiaoCa();
 };
 
-// Address and Quick Add
+// Địa chỉ và form thêm nhanh khách hàng.
 const { provinces, districts, wards, loadingLocations, fetchProvinces, fetchDistricts, fetchWards, cleanName } = useLocation();
 const { mapCodesToNames, parseAddressString } = useAddressMapping();
 
-// Instance riêng cho địa chỉ nhận hàng: fallback giúp form vẫn chọn được khu vực khi GHN tạm lỗi.
+// Bộ dữ liệu riêng cho địa chỉ nhận hàng: dữ liệu dự phòng giúp form vẫn chọn được khu vực khi GHN tạm lỗi.
 const {
     provinces: provincesShip,
     districts: districtsShip,
@@ -89,14 +89,14 @@ const {
     fetchWards: fetchWardsShip
 } = useLocation({ allowFallback: true });
 
-// State
+// Trạng thái chính của màn hình.
 const loading = ref(false);
 const orders = ref([]);
 const activeOrderIndex = ref(0);
 const vouchers = ref([]);
 const isProcessing = ref(false);
 
-// Redesigned Page Custom State
+// Trạng thái riêng phục vụ giao diện POS mới.
 const orderWarehouse = ref('KHO ANSHA BIGSIZE');
 
 const productSearchKeyword = ref('');
@@ -104,7 +104,7 @@ const productSearchResults = ref([]);
 const productSearchLoading = ref(false);
 const showProductAutocomplete = ref(false);
 
-// Dynamic Filter States for POS Products
+// Bộ lọc động cho danh sách sản phẩm tại quầy.
 const filterThuongHieu = ref('ALL');
 const filterMucDich = ref('ALL');
 const filterKhoangGia = ref('ALL');
@@ -124,7 +124,7 @@ const showQuickAddDialog = ref(false);
 const quickAddLoading = ref(false);
 const quickAddForm = ref({ ten: '', sdt: '', email: '', gioiTinh: true, tinh: null, thanhPho: null, phuongXa: null, diaChiChiTiet: '' });
 
-// Right Column Fields
+// Dữ liệu cột phải: khách hàng, người nhận và địa chỉ giao hàng.
 const currentEmployeeDetail = ref(null);
 
 
@@ -150,7 +150,7 @@ const shippingFeeLoading = ref(false);
 const shippingFeeError = ref('');
 const shippingFeeSource = ref('');
 
-// Order Value Adjustments
+// Các giá trị điều chỉnh tiền đơn hàng.
 // Phí vận chuyển bắt đầu từ 0, chỉ cập nhật khi GHN trả phí hợp lệ hoặc nhân viên nhập tay.
 const shippingFee = ref(0);
 const surcharge = ref(0);
@@ -159,7 +159,7 @@ const onlyChargeIfReturned = ref(false);
 const chargeTax = ref(false);
 const noteType = ref('NOI_BO');
 
-// State hiển thị hóa đơn sau thanh toán
+// Trạng thái hiển thị hóa đơn sau thanh toán.
 const receiptDialog = ref({
     show: false,
     order: null,
@@ -190,12 +190,12 @@ const vnpayChoiceDialog = ref({
     method: 'QR'
 });
 
-// Product Suggestion State
+// Trạng thái gợi ý mua thêm sản phẩm.
 const productSuggestions = ref([]);
 const showProductSuggestions = ref(false);
 const suggestionLoading = ref(false);
 
-// Computed property for suggestion calculations
+// Tính toán dữ liệu hiển thị cho khối gợi ý mua thêm.
 const suggestionData = computed(() => {
     if (!productSuggestions.value.length || !selectedOrder.value) return null;
 
@@ -215,7 +215,7 @@ const suggestionData = computed(() => {
     };
 });
 
-// Function to fetch product suggestions from database
+// Lấy danh sách sản phẩm gợi ý từ CSDL theo hóa đơn hiện tại.
 const fetchProductSuggestions = async () => {
     if (!selectedOrder.value?.id) return;
 
@@ -233,7 +233,7 @@ const fetchProductSuggestions = async () => {
     }
 };
 
-// Add suggested product to cart
+// Thêm sản phẩm được gợi ý vào giỏ hàng.
 const onAddSuggestedProduct = async () => {
     if (!suggestionData.value) return;
 
@@ -296,7 +296,7 @@ const isGiaoHang = computed({
     }
 });
 
-// Order Value Calculations
+// Tính toán tiền đơn hàng.
 const originalTotalAmount = computed(() => {
     const items = selectedOrder.value?.listsHoaDonChiTiet || [];
     return items.reduce((sum, item) => {
@@ -327,7 +327,7 @@ const productDiscountAmount = computed(() =>
     Math.max(0, originalTotalAmount.value - cartSubtotalAmount.value)
 );
 
-// Alias cho UI tổng đơn hàng: tiền ban đầu trước mọi đợt/phiếu giảm.
+// Tên dùng cho UI tổng đơn hàng: tiền ban đầu trước mọi đợt/phiếu giảm.
 const totalRawAmount = computed(() => originalTotalAmount.value);
 
 // Tiền hàng sau đợt giảm giá sản phẩm: đây là nền để áp dụng phiếu giảm giá.
@@ -379,10 +379,10 @@ const changeAmount = computed(() => {
     return Math.max(0, received - finalCollectAmount.value);
 });
 
-// Sync shipping fee when channel or free ship changes
+// Ghi nhớ hóa đơn đang mở để không reset phí ship khi chỉ đổi tab hóa đơn.
 const lastActiveOrderId = ref(selectedOrder.value?.id || null);
 
-// Watcher when active order changes, update note, shipping fee and reset search
+// Khi đổi hóa đơn đang thao tác: reset ô tìm kiếm, đồng bộ ghi chú và phí vận chuyển của hóa đơn đó.
 watch(() => selectedOrder.value?.id, (id) => {
     productSearchKeyword.value = '';
     showProductAutocomplete.value = false;
@@ -403,11 +403,11 @@ watch(() => selectedOrder.value?.id, (id) => {
     }
 });
 
-// Sync shipping fee when channel or free ship changes
+// Khi đổi kênh bán hoặc miễn phí ship: cập nhật lại phí vận chuyển phù hợp.
 watch([orderChannel, isFreeShip], ([channel, freeShip], oldVal) => {
     const currentId = selectedOrder.value?.id || null;
     if (currentId !== lastActiveOrderId.value) {
-        // Just switched tabs/orders; do not reset shippingFee. Update tracking ID.
+        // Chỉ vừa đổi tab hóa đơn nên giữ nguyên phí ship của hóa đơn mới.
         lastActiveOrderId.value = currentId;
         return;
     }
@@ -430,26 +430,26 @@ watch([orderChannel, isFreeShip], ([channel, freeShip], oldVal) => {
     }
 }, { immediate: true });
 
-// Automatically uncheck Free Ship if a non-zero shipping fee is typed/selected
+// Nếu nhân viên nhập/chọn phí ship lớn hơn 0 thì tự tắt miễn phí ship.
 watch(shippingFee, (newVal) => {
     if (Number(newVal) > 0) {
         isFreeShip.value = false;
     }
 });
 
-// Sync onlyChargeIfReturned when channel changes
+// Đồng bộ trạng thái tại quầy/giao hàng khi đổi kênh bán.
 watch(orderChannel, (channel) => {
     onlyChargeIfReturned.value = channel === 'Tại quầy';
 });
 
-// Sync loaiDon when onlyChargeIfReturned changes manually
+// Khi nhân viên đổi thủ công trạng thái tại quầy/giao hàng thì cập nhật lại loại đơn.
 watch(onlyChargeIfReturned, (val) => {
     if (selectedOrder.value) {
         selectedOrder.value.loaiDon = val ? 'TAI_QUAY' : 'ONLINE';
     }
 });
 
-// Automatically sync received amount with total payable amount when VNPay is selected
+// Với VNPay, số tiền nhận luôn bằng tổng tiền cần thanh toán.
 watch(
     () => [checkoutData.value.paymentMethod, finalCollectAmount.value],
     ([method, amount]) => {
@@ -561,7 +561,7 @@ const remainingForSuggestedVoucher = computed(() => {
     return Math.max(0, minVal - current);
 });
 
-// Dong goi cau goi y PGG cho UI: tu dong chon ma tot nhat, dong thoi bao ma tiep theo neu chua du dieu kien.
+// Đóng gói câu gợi ý PGG cho UI: tự động chọn mã tốt nhất và báo mã tiếp theo nếu chưa đủ điều kiện.
 const voucherSuggestionText = computed(() => {
     if (!selectedOrder.value?.listsHoaDonChiTiet?.length) return '';
 
@@ -580,7 +580,7 @@ const voucherSuggestionText = computed(() => {
     return nextBetterVoucher.value ? '' : 'Chưa có phiếu giảm giá phù hợp cho đơn hiện tại.';
 });
 
-// Goi y upsell: neu co phieu giam gia tot hon nhung don chua du muc toi thieu thi hien can mua them bao nhieu.
+// Gợi ý mua thêm: nếu có PGG tốt hơn nhưng đơn chưa đủ mốc thì báo cần mua thêm bao nhiêu.
 const betterVoucherSuggestionText = computed(() => {
     if (!selectedOrder.value?.listsHoaDonChiTiet?.length || !nextBetterVoucher.value) return '';
     const currentTotal = getVoucherBaseAmount();
@@ -678,17 +678,17 @@ const priceRangeOptions = computed(() => {
 const filteredProductSearchResults = computed(() => {
     let results = productSearchResults.value || [];
 
-    // Filter by color (mauSac)
+    // Lọc theo màu sắc.
     if (filterMauSac.value !== 'ALL') {
         results = results.filter(p => p.tenMauSac === filterMauSac.value);
     }
 
-    // Filter by size (kichCo / kichThuoc)
+    // Lọc theo kích cỡ.
     if (filterKichCo.value !== 'ALL') {
         results = results.filter(p => p.tenKichThuoc === filterKichCo.value);
     }
 
-    // Filter by price range (khoangGia)
+    // Lọc theo khoảng giá.
     if (filterKhoangGia.value !== 'ALL') {
         const option = priceRangeOptions.value.find(o => o.value === filterKhoangGia.value);
         if (option) {
@@ -750,7 +750,7 @@ const selectProductFromSearch = (variant) => {
     showProductAutocomplete.value = false;
 };
 
-// Search Customer Dropdown
+// Danh sách xổ xuống để tìm kiếm khách hàng.
 const searchCustomers = async () => {
     const kw = customerSearch.value?.trim();
     if (!kw || kw.length < 2) {
@@ -855,7 +855,7 @@ const ensureCustomerAndGetId = async () => {
 };
 
 
-// Chuẩn hóa định dạng danh sách đơn hàng trả về từ nhiều dạng API response khác nhau
+// Chuẩn hóa định dạng danh sách đơn hàng trả về từ nhiều dạng phản hồi API khác nhau.
 const normalizeOrderList = (payload) => {
     if (Array.isArray(payload)) return payload;
     if (Array.isArray(payload?.content)) return payload.content;
@@ -889,7 +889,7 @@ const setOrders = (payload, { preferOrderId = null } = {}) => {
     clampActiveOrderIndex();
 };
 
-// QR / Barcode Scanner Logic
+// Luồng quét mã QR / mã vạch.
 const showScanner = ref(false);
 let html5QrcodeScanner = null;
 
@@ -955,10 +955,10 @@ const onScanSuccess = async (decodedText) => {
 };
 
 const onScanFailure = (error) => {
-    // Console error ignored
+        // Bỏ qua lỗi quét liên tục để bảng lỗi trình duyệt không bị nhiễu.
 };
 
-// Global keydown handler for F9, F10 and barcode scanners
+// Phím tắt toàn màn hình: F9 mở quét mã, F10 thanh toán, đồng thời nhận dữ liệu từ máy quét mã vạch.
 let barcodeBuffer = '';
 let lastKeyTime = 0;
 
@@ -1003,7 +1003,7 @@ const loadCurrentEmployeeDetails = async () => {
     }
 };
 
-// Lifecycle
+// Vòng đời component của màn bán hàng.
 onMounted(async () => {
     uiStore.setBreadcrumbs([
         { title: 'Bán hàng', disabled: false, href: '/admin/ban-hang' },
@@ -1043,8 +1043,8 @@ onUnmounted(() => {
     window.removeEventListener('keydown', handleGlobalKeyDown);
 });
 
-// Customer shipping address restore helpers.
-// Principle: customer data can come as split fields or one full address string, so normalize first, then match to the current location list.
+// Nhóm hàm khôi phục địa chỉ nhận hàng của khách.
+// Nguyên lý: dữ liệu khách có thể tách theo từng trường hoặc là một chuỗi địa chỉ đầy đủ, nên chuẩn hóa trước rồi mới khớp với danh sách khu vực.
 const getAddressDetailValue = (address) => (
     address?.diaChiChiTiet ||
     address?.diaChiCuThe ||
@@ -1187,7 +1187,7 @@ const syncRecipientFromCustomer = async (customer, addrRes = []) => {
     }
 };
 
-// Keep recipient name/phone aligned with the selected customer while staff edits the customer card.
+// Giữ tên/số điện thoại người nhận đồng bộ với khách hàng đang chọn khi nhân viên sửa form khách hàng.
 watch(
     () => [customerForm.value.ten, customerForm.value.sdt],
     ([name, phone]) => {
@@ -1197,7 +1197,7 @@ watch(
     }
 );
 
-// Realtime PGG: mỗi lần đổi hóa đơn/khách hàng/tổng tiền/số lượng giỏ thì hỏi lại danh sách phiếu.
+// Phiếu giảm giá thời gian thực: mỗi lần đổi hóa đơn/khách hàng/tổng tiền/số lượng giỏ thì hỏi lại danh sách phiếu.
 // Không đưa idPhieuGiamGia vào key để tránh vòng lặp sau khi FE tự áp phiếu tốt nhất.
 const voucherRealtimeKey = computed(() => {
     const order = selectedOrder.value;
@@ -1212,7 +1212,7 @@ watch(voucherRealtimeKey, async (key) => {
     if (key) await refreshBestVoucher();
 }, { flush: 'post' });
 
-// Watch for order changes to fetch product suggestions
+// Khi đổi hóa đơn hoặc tổng tiền, tải lại gợi ý mua thêm sản phẩm.
 watch(() => [selectedOrder.value?.id, selectedOrder.value?.tongTien], ([id, total]) => {
     if (id && total > 0) {
         fetchProductSuggestions();
@@ -1222,7 +1222,7 @@ watch(() => [selectedOrder.value?.id, selectedOrder.value?.tongTien], ([id, tota
     }
 });
 
-// Watch selected customer id and fetch full details to populate the right column form
+// Khi chọn khách hàng, lấy chi tiết để đổ dữ liệu vào form khách hàng và thông tin nhận hàng.
 watch(
     () => selectedOrder.value?.idKhachHang,
     async (newId) => {
@@ -1239,12 +1239,12 @@ watch(
                         tongDonHang: customer.tongDonHang || 0
                     };
 
-                    // Restore recipient info from the customer's default address before GHN fee calculation.
+                    // Khôi phục thông tin nhận hàng từ địa chỉ mặc định của khách trước khi tính phí GHN.
                     try {
                         const addrRes = await dichVuKhachHang.layDanhSachDiaChi(newId);
                         await syncRecipientFromCustomer(customer, addrRes);
                     } catch (addrErr) {
-                        console.error('Sync customer shipping address failed', addrErr);
+                        console.error('Đồng bộ địa chỉ nhận hàng của khách thất bại', addrErr);
                         await syncRecipientFromCustomer(customer, []);
                     }
                     return;
@@ -1275,7 +1275,7 @@ watch(
     { immediate: true }
 );
 
-// Watchers for 3-level shipping address selection. Khi đồng bộ từ khách hàng thì không reset dây chuyền.
+// Theo dõi 3 cấp địa chỉ nhận hàng. Khi đang đồng bộ từ khách hàng thì không reset dây chuyền tỉnh/huyện/xã.
 watch(
     () => recipientProvince.value,
     async (newVal) => {
@@ -1374,7 +1374,7 @@ watch(
     }
 );
 
-// Logic: Hóa đơn
+// Luồng hóa đơn.
 const createNewOrder = async ({ silent = false, force = false } = {}) => {
     if (isProcessing.value && !force) return;
     if (orders.value.length >= MAX_WAITING_ORDERS) {
@@ -1421,7 +1421,7 @@ const closeOrder = (orderId, index) => {
     };
 };
 
-// Logic: Sản phẩm
+// Luồng sản phẩm trong giỏ hàng.
 const onAddProduct = async (product) => {
     if (!selectedOrder.value) {
         addNotification({ title: 'Cảnh báo', subtitle: 'Vui lòng chọn hoặc tạo hóa đơn trước.', color: 'warning' });
@@ -1532,8 +1532,8 @@ const onRemoveCustomer = async () => {
     }
 };
 
-// Logic: Voucher
-// Gắn nhãn hiển thị (customTitle) cho phiếu giảm giá trên dropdown. Chỉ phục vụ hiển thị,
+// Luồng phiếu giảm giá.
+// Gắn nhãn hiển thị (customTitle) cho phiếu giảm giá trên danh sách xổ xuống. Chỉ phục vụ hiển thị,
 // mọi tính toán giảm giá đều do BE thực hiện.
 const decorateVoucher = (v) => {
     let text = v.tenPhieu || v.ten || 'Phiếu giảm giá';
@@ -1547,7 +1547,7 @@ const decorateVoucher = (v) => {
 };
 
 // Hỏi BE danh sách phiếu giảm giá để gợi ý; FE chọn phiếu tốt nhất theo tổng tiền giỏ hiện tại.
-// Dùng serial để response cũ không ghi đè khi nhân viên thêm/xóa sản phẩm liên tục.
+// Dùng mã lượt gọi để phản hồi cũ không ghi đè khi nhân viên thêm/xóa sản phẩm liên tục.
 let voucherRefreshSerial = 0;
 const refreshBestVoucher = async (order = selectedOrder.value, autoApply = true) => {
     if (!order?.id) return;
@@ -1602,7 +1602,7 @@ const applyBestVoucherFromSuggestion = async () => {
     await onApplyVoucher(best.id);
 };
 
-// Logic: Thanh toán VNPay
+// Luồng thanh toán VNPay.
 const vnpayDialog = ref({
     show: false,
     loading: false,
@@ -1790,7 +1790,7 @@ const submitCheckout = async ({ order = selectedOrder.value, payload, successMes
         await dichVuDonHang.checkout(order.id, requestPayload);
         addNotification({ title: 'Thành công', subtitle: successMessage, color: 'success' });
 
-        // Xóa order khỏi danh sách
+        // Xóa hóa đơn khỏi danh sách.
         await completePaidOrder(order.id);
 
         // Hiển thị hóa đơn sau khi thanh toán
@@ -1901,11 +1901,11 @@ const startVnPayFlow = async () => {
         };
 
         vnpayDialog.value.pollInterval = setInterval(async () => {
-            // QR mode khong co popup de doc callback, nen chi cho phep thu ngan xac nhan da nhan tien.
+            // Chế độ QR không có cửa sổ thanh toán riêng để đọc callback, nên chỉ cho phép thu ngân xác nhận đã nhận tiền.
             try {
                 await Promise.resolve();
             } catch (e) {
-                // Keep QR waiting screen alive.
+                // Giữ màn hình chờ QR hoạt động ổn định.
             }
         }, 1000);
 
@@ -1929,8 +1929,8 @@ const onConfirmVnPayManual = async () => {
     }
 };
 
-// Logic: Thanh toán
-// Handler chính cho nút "Thanh toán"
+// Luồng thanh toán.
+// Hàm xử lý chính cho nút "Thanh toán".
 const onCheckout = async () => {
     if (!selectedOrder.value?.listsHoaDonChiTiet?.length) {
         addNotification({ title: 'Cảnh báo', subtitle: 'Vui lòng thêm sản phẩm trước khi thanh toán.', color: 'warning' });
@@ -1942,7 +1942,7 @@ const onCheckout = async () => {
         return;
     }
 
-    // Ensure customer is saved/resolved first if they typed new name/phone
+    // Nếu nhân viên nhập khách mới bằng tên/SĐT thì lưu hoặc tìm khách trước khi chốt đơn.
     isProcessing.value = true;
     try {
         await ensureCustomerAndGetId();
@@ -1988,7 +1988,7 @@ const onCheckout = async () => {
     };
 };
 
-// Helpers
+// Hàm hỗ trợ dùng chung trong màn bán hàng.
 const updateOrderInList = (updated) => {
     const idx = orders.value.findIndex((o) => o.id === updated.id);
     if (idx !== -1) orders.value[idx] = updated;
@@ -2053,7 +2053,7 @@ const handleVnPayCallbackFromUrl = async () => {
     }
 };
 
-// Customer Dialog Add Quick
+// Popup thêm nhanh khách hàng.
 const resetQuickAddForm = () => {
     quickAddForm.value = { ten: '', sdt: '', email: '', gioiTinh: true, tinh: null, thanhPho: null, phuongXa: null, diaChiChiTiet: '' };
 };
@@ -2092,7 +2092,7 @@ const findExistingCustomerByContact = async (phone, email) => {
         }
     }
     const allCustomers = await dichVuKhachHang.layTatCaKhachHang();
-    // BE trả PageResponse chuẩn ({ content: [...] }) nên chỉ cần đọc .content
+    // BE trả PageResponse chuẩn ({ content: [...] }) nên chỉ cần đọc .content.
     const content = allCustomers?.content || [];
     return findExactCustomer(content, phone, email) || null;
 };
@@ -2199,7 +2199,7 @@ const formatDateTime = (dateStr) => {
 <template>
     <v-container fluid class="pos-wrapper pa-0">
         <div class="pos-shell">
-            <!-- Header section containing title and tabs -->
+            <!-- Thanh đầu màn: chứa tab hóa đơn và nút tạo hóa đơn mới. -->
             <header class="pos-header-row d-flex align-center justify-space-between">
                 <div class="d-flex align-center gap-4">
                     <OrderTabs :orders="orders" :active-index="activeOrderIndex"
@@ -2207,17 +2207,17 @@ const formatDateTime = (dateStr) => {
                 </div>
             </header>
 
-            <!-- Main Workspace Grid -->
+            <!-- Bố cục chính của màn POS. -->
             <v-row v-if="selectedOrder" class="pos-grid">
-                <!-- Left Column (8 cols out of 12) -->
+                <!-- Cột trái: tìm sản phẩm, giỏ hàng và tổng đơn. -->
                 <v-col cols="12" lg="8" class="d-flex flex-column gap-4 pr-lg-2">
-                    <!-- Sản phẩm Card -->
+                    <!-- Khối sản phẩm và giỏ hàng. -->
                     <v-card class="pos-card pa-4 rounded-lg border"
                         style="overflow: visible !important; z-index: 15 !important;">
 
-                        <!-- Search and Filters Consolidated Row -->
+                        <!-- Hàng tìm kiếm và bộ lọc sản phẩm. -->
                         <div class="d-flex align-center gap-2 mb-3 bg-slate-50 pa-1.5 rounded-lg flex-wrap w-100">
-                            <!-- Custom Search Input with floating Dropdown -->
+                            <!-- Ô tìm kiếm sản phẩm kèm danh sách xổ xuống nổi. -->
                             <div class="position-relative flex-grow-1" style="min-width: 240px; flex: 2 1 240px;">
                                 <v-text-field v-model="productSearchKeyword" placeholder="Nhập mã, tên sản phẩm"
                                     variant="outlined" density="compact" hide-details prepend-inner-icon="mdi-magnify"
@@ -2225,7 +2225,7 @@ const formatDateTime = (dateStr) => {
                                     @blur="onProductSearchBlur" bg-color="white" class="search-input"
                                     autocomplete="off" />
 
-                                <!-- Search dropdown overlay -->
+                                <!-- Danh sách kết quả tìm kiếm sản phẩm. -->
                                 <v-card v-if="showProductAutocomplete && filteredProductSearchResults.length > 0"
                                     class="position-absolute mt-1 shadow-lg border rounded-lg overflow-y-auto product-dropdown-card"
                                     style="max-height: 495px !important; z-index: 1000">
@@ -2234,7 +2234,7 @@ const formatDateTime = (dateStr) => {
                                             @mousedown="selectProductFromSearch(variant)"
                                             class="border-b py-3 hover-autocomplete-item pointer">
                                             <div class="d-flex justify-space-between w-100 align-start">
-                                                <!-- Left info block -->
+                                                <!-- Khối thông tin sản phẩm bên trái. -->
                                                 <div class="d-flex align-start flex-grow-1">
                                                     <v-avatar rounded="lg" size="48"
                                                         class="mr-3 bg-grey-lighten-4 border flex-shrink-0">
@@ -2242,13 +2242,13 @@ const formatDateTime = (dateStr) => {
                                                         <BoxIcon v-else size="20" class="text-grey" />
                                                     </v-avatar>
                                                     <div class="d-flex flex-column" style="gap: 8px !important;">
-                                                        <!-- Product Name (Tên biến thể) -->
+                                                        <!-- Tên sản phẩm / biến thể. -->
                                                         <div class="text-slate-700"
                                                             style="font-size: 13.5px !important; line-height: 1.3;">
                                                             {{ variant.tenSanPham }}
                                                         </div>
 
-                                                        <!-- mã sp --- mã sku (với nhãn vuông pastel nhé) -->
+                                                        <!-- Mã sản phẩm và mã SKU. -->
                                                         <div class="d-flex align-center gap-1.5 mt-0.5 flex-wrap">
                                                             <span class="sp-badge">Mã Sản phẩm: {{ variant.maSanPham ||
                                                                 'SP0001' }}</span>
@@ -2258,7 +2258,7 @@ const formatDateTime = (dateStr) => {
                                                             }}</span>
                                                         </div>
 
-                                                        <!-- màu sắc --- size --- số lượng -->
+                                                        <!-- Màu sắc, size và tồn kho. -->
                                                         <div class="d-flex align-center mt-0.5 text-slate-600"
                                                             style="font-size: 12px; flex-wrap: wrap;">
                                                             <span>Màu sắc: <span class="text-slate-500">{{
@@ -2275,7 +2275,7 @@ const formatDateTime = (dateStr) => {
                                                     </div>
                                                 </div>
 
-                                                <!-- Right info block -->
+                                                <!-- Khối giá bán bên phải. -->
                                                 <div class="text-right flex-shrink-0 pl-3">
                                                     <template v-if="variant.phanTramGiam > 0">
                                                         <div class="price-text">{{ formatCurrency(variant.giaBan) }}
@@ -2337,7 +2337,7 @@ const formatDateTime = (dateStr) => {
                                     bg-color="white" class="compact-select" @update:model-value="onFilterChange" />
                             </div>
 
-                            <!-- Scanner Button -->
+                            <!-- Nút quét mã vạch. -->
                             <v-tooltip text="Quét mã vạch" location="top" open-delay="0"
                                 content-class="custom-white-tooltip">
                                 <template v-slot:activator="{ props }">
@@ -2349,7 +2349,7 @@ const formatDateTime = (dateStr) => {
                                 </template>
                             </v-tooltip>
 
-                            <!-- Reset Filters Button -->
+                            <!-- Nút làm mới bộ lọc. -->
                             <v-tooltip text="Làm mới bộ lọc" location="top" open-delay="0"
                                 content-class="custom-white-tooltip">
                                 <template v-slot:activator="{ props }">
@@ -2364,14 +2364,14 @@ const formatDateTime = (dateStr) => {
 
 
 
-                        <!-- Cart list rendering -->
+                        <!-- Danh sách sản phẩm trong giỏ. -->
                         <div class="cart-container-box border rounded-lg overflow-hidden"
                             style="height: 420px; background-color: #ffffff !important;">
                             <CartTable v-if="selectedOrder?.listsHoaDonChiTiet?.length"
                                 :items="selectedOrder.listsHoaDonChiTiet" @update-qty="onUpdateQty"
                                 @remove="onRemoveItem" />
 
-                            <!-- Empty Cart State -->
+                            <!-- Trạng thái giỏ hàng trống. -->
                             <div v-else class="d-flex flex-column align-center justify-center h-100"
                                 style="background-color: #ffffff;">
                                 <div class="mb-2">
@@ -2383,13 +2383,13 @@ const formatDateTime = (dateStr) => {
                             </div>
                         </div>
                     </v-card>
-                    <!-- Row of Price Details -->
+                    <!-- Hàng tổng hợp tiền đơn hàng. -->
                     <v-row no-gutters>
-                        <!-- Left Block: Pricing Details -->
+                        <!-- Khối thông tin tiền hàng và phiếu giảm giá. -->
                         <v-col cols="12" md="12" class="pr-0 mb-4 mb-md-0">
                             <v-card class="pos-card pa-4 rounded-lg border h-100 d-flex flex-column">
                                 <v-row no-gutters class="flex-grow-1">
-                                    <!-- Left Column inside the card -->
+                                    <!-- Nửa trái: tổng đơn hàng và PGG. -->
                                     <v-col cols="12" md="6" class="pr-md-6 d-flex flex-column justify-space-between"
                                         style="gap: 15px;">
                                         <div class="d-flex justify-space-between align-center mb-3">
@@ -2403,7 +2403,7 @@ const formatDateTime = (dateStr) => {
                                         </div>
 
                                         <div class="flex-grow-1 d-flex flex-column" style="gap: 20px;">
-                                            <!-- Voucher Selection: FE goi y, BE van la noi luu va tinh tien sau giam. -->
+                                            <!-- Chọn PGG: FE chỉ gợi ý, BE vẫn là nơi lưu và tính tiền sau giảm. -->
                                             <div class="d-flex flex-column" style="gap: 6px;">
                                                 <div class="d-flex align-center justify-space-between">
                                                     <span class="text-slate-600" style="font-size: 13px !important">Phiếu
@@ -2417,7 +2417,7 @@ const formatDateTime = (dateStr) => {
                                                         clearable placeholder="Nhập phiếu giảm giá" persistent-placeholder
                                                         no-data-text="Chưa có phiếu giảm giá" />
                                                 </div>
-                                                <!-- Goi y PGG realtime: dong dau co the bam de ap dung phieu tot nhat hien tai. -->
+                                                <!-- Gợi ý PGG thời gian thực: dòng đầu có thể bấm để áp dụng phiếu tốt nhất hiện tại. -->
                                                 <div v-if="voucherSuggestionText" class="text-caption text-right font-italic"
                                                     :class="[voucherSuggestionClass, { 'text-decoration-underline': canApplySuggestedVoucher }]"
                                                     style="font-size: 11px !important;"
@@ -2432,7 +2432,7 @@ const formatDateTime = (dateStr) => {
                                                 </div>
                                             </div>
 
-                                            <!-- Total Amount Raw -->
+                                            <!-- Tổng tiền hàng trước giảm. -->
                                             <div class="d-flex align-center justify-space-between">
                                                 <span class="text-slate-600" style="font-size: 13px !important">Tổng tiền
                                                     hàng</span>
@@ -2442,7 +2442,7 @@ const formatDateTime = (dateStr) => {
                                                     }}</span>
                                             </div>
 
-                                            <!-- Discount amount applied -->
+                                            <!-- Đợt giảm giá sản phẩm đang áp dụng. -->
                                             <div class="d-flex align-center justify-space-between">
                                                 <span class="text-slate-600" style="font-size: 13px !important">Đợt
                                                     giảm giá</span>
@@ -2455,7 +2455,7 @@ const formatDateTime = (dateStr) => {
                                                 </span>
                                             </div>
 
-                                            <!-- Final net collected amount -->
+                                            <!-- Số tiền cuối cùng cần thu. -->
                                             <div style="border-top: 1px dashed #cbd5e1; margin: 4px 0;"></div>
 
                                             <div class="d-flex align-center justify-space-between">
@@ -2468,11 +2468,11 @@ const formatDateTime = (dateStr) => {
                                         </div>
                                     </v-col>
 
-                                    <!-- Right Column: Shipping Fee + Final Collected Amount -->
+                                    <!-- Nửa phải: tổng giảm, phí vận chuyển và tổng thanh toán. -->
                                     <v-col cols="12" md="6"
                                         class="d-flex flex-column justify-start pl-md-6 border-s-dashed-md"
                                         style="gap: 15px;">
-                                        <!-- Total Discount Amount -->
+                                        <!-- Tổng tiền giảm. -->
                                         <div class="d-flex align-center justify-space-between">
                                             <span class="text-slate-600" style="font-size: 13px !important">Tổng tiền
                                                 giảm</span>
@@ -2482,7 +2482,7 @@ const formatDateTime = (dateStr) => {
                                             </span>
                                         </div>
 
-                                        <!-- Shipping Fee -->
+                                        <!-- Phí vận chuyển. -->
                                         <div class="d-flex flex-column"
                                             style="min-height: 58px; justify-content: flex-start;">
                                             <div class="d-flex align-center justify-space-between">
@@ -2544,7 +2544,7 @@ const formatDateTime = (dateStr) => {
                                                     </v-list>
                                                 </v-menu>
                                             </div>
-                                            <!-- Shipping fee status: GHN success or fallback/error note for staff. -->
+                                            <!-- Trạng thái tính phí GHN hoặc lỗi để nhân viên kiểm tra. -->
                                             <div v-if="shippingFeeSource === 'GHN'"
                                                 class="text-caption text-success text-right">
                                                 Đã tính phí từ GHN
@@ -2572,9 +2572,9 @@ const formatDateTime = (dateStr) => {
                     </v-row>
                 </v-col>
 
-                <!-- Right Column (4 cols out of 12) -->
+                <!-- Cột phải: khách hàng, nhận hàng và thanh toán. -->
                 <v-col cols="12" lg="4" class="d-flex flex-column gap-4 pl-lg-2 mt-4 mt-lg-0">
-                    <!-- Khách hàng Card -->
+                    <!-- Khối thông tin khách hàng. -->
                     <v-card class="pos-card pa-4 rounded-lg border">
                         <div class="d-flex justify-space-between align-center border-b pb-2 mb-3">
                             <div class="d-flex align-center gap-2">
@@ -2608,7 +2608,7 @@ const formatDateTime = (dateStr) => {
                         </div>
 
                         <div class="d-flex flex-column gap-4">
-                            <!-- Input tìm kiếm khách hàng -->
+                            <!-- Ô tìm kiếm khách hàng. -->
                             <div class="position-relative">
                                 <v-text-field v-model="customerSearch"
                                     placeholder="Tìm kiếm khách hàng (SĐT, Tên, Email)" variant="outlined"
@@ -2657,7 +2657,7 @@ const formatDateTime = (dateStr) => {
                         </div>
                     </v-card>
 
-                    <!-- Nhận hàng Card -->
+                    <!-- Khối thông tin nhận hàng. -->
                     <transition name="expand-fade">
                         <v-card v-if="isGiaoHang" class="pos-card pa-4 rounded-lg border">
                             <div class="font-weight-bold text-slate-800 mb-3" style="font-size: 14px !important">Thông
@@ -2697,7 +2697,7 @@ const formatDateTime = (dateStr) => {
                         </v-card>
                     </transition>
 
-                    <!-- Payment Card -->
+                    <!-- Khối thanh toán. -->
                     <v-card class="pos-card pa-4 rounded-lg border">
                         <div class="d-flex justify-space-between align-center mb-3">
                             <h3 class="text-slate-800 m-0" style="font-size: 13px !important">Thanh toán</h3>
@@ -2724,7 +2724,7 @@ const formatDateTime = (dateStr) => {
                             </div>
                         </div>
 
-                        <!-- Money Input -->
+                        <!-- Ô nhập tiền khách đưa / tiền chuyển khoản. -->
                         <div class="d-flex align-center justify-space-between mb-3">
                             <span class="text-slate-600" style="font-size: 13px !important">
                                 {{ checkoutData.paymentMethod === 'CASH' ? 'Tiền khách đưa' : 'Tiền chuyển khoản' }}
@@ -2736,7 +2736,7 @@ const formatDateTime = (dateStr) => {
                                 class="text-right-input" />
                         </div>
 
-                        <!-- Unpaid / Refund Message Alert -->
+                        <!-- Cảnh báo còn thiếu tiền hoặc tiền thừa trả khách. -->
                         <div v-if="remainingBalance > 0"
                             class="d-flex align-center justify-space-between pa-3 rounded-lg bg-red-50 text-red-800 border-red">
                             <div class="d-flex align-center gap-2">
@@ -2759,7 +2759,7 @@ const formatDateTime = (dateStr) => {
                         </div>
                     </v-card>
 
-                    <!-- Checkout / Print Action Buttons at Bottom Right -->
+                    <!-- Nút in hóa đơn và thanh toán. -->
                     <div class="d-flex gap-3 mt-2 w-100">
                         <v-btn color="#107c41" height="60"
                             class="font-weight-bold rounded-lg shadow-md text-white px-4 flex-grow-1"
@@ -2779,12 +2779,12 @@ const formatDateTime = (dateStr) => {
                 </v-col>
             </v-row>
 
-            <!-- Loading Spinner -->
+            <!-- Trạng thái đang tải dữ liệu. -->
             <div v-else-if="loading" class="fill-height d-flex align-center justify-center text-grey">
                 <v-progress-circular indeterminate color="primary"></v-progress-circular>
             </div>
 
-            <!-- Empty Orders State -->
+            <!-- Trạng thái chưa có hóa đơn chờ. -->
             <div v-else class="empty-orders-state">
                 <v-icon size="56" color="grey-lighten-1">mdi-receipt-text-outline</v-icon>
                 <div class="text-subtitle-1 font-weight-bold mt-3">Chưa có hóa đơn chờ</div>
@@ -2795,7 +2795,7 @@ const formatDateTime = (dateStr) => {
             </div>
         </div>
 
-        <!-- VNPay QR Dialog -->
+        <!-- Popup QR thanh toán VNPay. -->
         <v-dialog v-model="vnpayDialog.show" max-width="450" persistent>
             <v-card class="rounded-xl overflow-hidden pb-4">
                 <v-card-text class="pt-6 text-center d-flex flex-column align-center">
@@ -2870,7 +2870,7 @@ const formatDateTime = (dateStr) => {
             </v-card>
         </v-dialog>
 
-        <!-- VNPay Choice Dialog -->
+        <!-- Popup chọn hình thức thanh toán VNPay. -->
         <v-dialog v-model="vnpayChoiceDialog.show" max-width="400" persistent>
             <v-card class="rounded-xl pa-5">
                 <div class="text-center mb-5">
@@ -2893,7 +2893,7 @@ const formatDateTime = (dateStr) => {
             </v-card>
         </v-dialog>
 
-        <!-- Scanner dialog -->
+        <!-- Popup quét mã sản phẩm. -->
         <v-dialog v-model="showScanner" max-width="500" transition="dialog-bottom-transition">
             <v-card class="rounded-lg pa-4">
                 <div class="d-flex justify-space-between align-center mb-4">
@@ -2910,7 +2910,7 @@ const formatDateTime = (dateStr) => {
             </v-card>
         </v-dialog>
 
-        <!-- Quick Add Customer Dialog -->
+        <!-- Popup thêm nhanh khách hàng. -->
         <v-dialog v-model="showQuickAddDialog" max-width="650" transition="dialog-bottom-transition" persistent>
             <v-card class="rounded-lg overflow-hidden">
                 <v-card-title
@@ -2993,7 +2993,7 @@ const formatDateTime = (dateStr) => {
             </v-card>
         </v-dialog>
 
-        <!-- Confirmation Dialog -->
+        <!-- Popup xác nhận thao tác. -->
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
             :color="confirmDialog.color" :confirm-color="confirmDialog.confirmColor" :loading="confirmDialog.loading"
             @confirm="confirmDialog.action" />
@@ -3006,7 +3006,7 @@ const formatDateTime = (dateStr) => {
             @print="onPrintReceiptInvoice"
         />
 
-        <!-- Giao Ca Modal --> <!-- Tạm thời ẩn chức năng giao ca
+        <!-- Popup giao ca. Tạm thời ẩn chức năng giao ca.
         <GiaoCaModal v-model="showGiaoCaModal" mode="open" @success="handleGiaoCaSuccess" /> 
         -->
     </v-container>

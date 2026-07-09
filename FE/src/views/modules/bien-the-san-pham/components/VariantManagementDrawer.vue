@@ -1,13 +1,9 @@
 <script setup>
 /**
- * Component: VariantManagementDrawer
- * Y nghia: drawer quan ly nhanh mot bien the da co, gom trang thai, ton kho,
- * gia goc va danh sach anh cua bien the.
- */
-/**
- * Module: Quản lý Hình ảnh Biến thể Sản phẩm (Variant Management Drawer)
- * Chức năng: Component dạng Drawer (ngăn kéo) cho phép người dùng xem, thêm, xóa và
- * đặt ảnh chính (ảnh đại diện) cho một biến thể sản phẩm cụ thể.
+ * Khu vực: Quản lý nhanh biến thể sản phẩm
+ * Thành phần: VariantManagementDrawer
+ * Chức năng: Khung trượt quản lý một biến thể đã có, gồm trạng thái, tồn kho,
+ *            giá và thư viện ảnh; hỗ trợ thêm/xóa ảnh và đặt ảnh đại diện.
  */
 import { ref, watch, reactive } from 'vue';
 import { XIcon, PhotoIcon, DeviceFloppyIcon, SettingsIcon, TrashIcon, InfoCircleIcon, PlusIcon, UploadIcon } from 'vue-tabler-icons';
@@ -97,12 +93,12 @@ const triggerFileInput = () => {
     fileInput.value?.click();
 };
 
-// Xử lý sự kiện khi người dùng chọn file ảnh từ máy tính để tải lên
+// Xử lý sự kiện khi người dùng chọn tệp ảnh từ máy tính để tải lên.
 const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Validate
+    // Kiểm tra tệp được chọn có phải hình ảnh không.
     if (!file.type.startsWith('image/')) {
         addNotification({ title: 'Lỗi', subtitle: 'Vui lòng chọn tệp hình ảnh', color: 'error' });
         return;
@@ -110,10 +106,10 @@ const handleFileChange = async (event) => {
 
     uploading.value = true;
     try {
-        // 1. Nén ảnh + tạo base64 (lưu thẳng vào DB)
+        // 1. Tải ảnh lên và nhận lại URL lưu trữ.
         const uploadResult = await dichVuFile.taiLenFile(file);
         
-        // Trích xuất URL an toàn (hỗ trợ cả object và string)
+        // Trích xuất URL an toàn (hỗ trợ cả dữ liệu dạng đối tượng và chuỗi).
         const fileUrl = uploadResult?.fileUrl || uploadResult?.url || uploadResult?.secure_url || uploadResult?.duongDanAnh || (typeof uploadResult === 'string' ? uploadResult : '');
 
         if (!fileUrl) {
@@ -121,14 +117,14 @@ const handleFileChange = async (event) => {
             return;
         }
 
-        // 2. Save to database for this variant
+        // 2. Lưu ảnh vào cơ sở dữ liệu cho biến thể hiện tại.
         const newImage = await dichVuBienThe.themAnh(props.variant.id, {
             duongDanAnh: fileUrl,
             moTa: `Ảnh của ${props.variant.maChiTietSanPham}`,
             hinhAnhDaiDien: images.value.length === 0
         });
 
-        // Update local list for instant feedback
+        // Cập nhật danh sách ảnh cục bộ để giao diện phản hồi ngay.
         images.value.push(newImage);
 
         addNotification({ title: 'Thành công', subtitle: 'Đã tải lên và lưu ảnh', color: 'success' });
@@ -147,7 +143,7 @@ const deleteImage = async (imgId) => {
     try {
         await dichVuBienThe.xoaAnh(imgId);
 
-        // Update local list for instant feedback
+        // Cập nhật danh sách ảnh cục bộ để giao diện phản hồi ngay.
         images.value = images.value.filter((img) => img.id !== imgId);
 
         addNotification({ title: 'Thành công', subtitle: 'Đã xóa ảnh', color: 'success' });
@@ -157,12 +153,12 @@ const deleteImage = async (imgId) => {
     }
 };
 
-// Thiết lập một hình ảnh được chọn làm ảnh đại diện (main image) cho biến thể
+// Thiết lập một hình ảnh được chọn làm ảnh đại diện cho biến thể.
 const setMainImage = async (imgId) => {
     try {
         await dichVuBienThe.datAnhChinh(props.variant.id, imgId);
 
-        // Update local list for instant feedback
+        // Cập nhật danh sách ảnh cục bộ để giao diện phản hồi ngay.
         images.value = images.value.map((img) => ({
             ...img,
             hinhAnhDaiDien: img.id === imgId
@@ -180,7 +176,7 @@ const setMainImage = async (imgId) => {
     <v-navigation-drawer :model-value="show" @update:model-value="emit('update:show', $event)" location="right"
         temporary width="450" class="variant-drawer">
         <div v-if="variant" class="d-flex flex-column h-100 bg-white">
-            <!-- Header Area: High-end design -->
+            <!-- Khu vực đầu khung trượt: thông tin nhanh và nút đóng. -->
             <div class="pa-6 border-b d-flex align-center justify-space-between bg-slate-50/50">
                 <div>
                     <div class="d-flex align-center gap-2 mb-1">
@@ -198,9 +194,9 @@ const setMainImage = async (imgId) => {
                     <v-tooltip activator="parent" location="top" text="Đóng bảng quản lý biến thể" />
                 </v-btn>
             </div>
-        <!-- Main Scrollable Content -->
+        <!-- Nội dung chính có thể cuộn. -->
         <div class="flex-grow-1 overflow-y-auto pa-6 custom-scrollbar">
-            <!-- Persistent Variant Summary Grid -->
+            <!-- Bảng tóm tắt thông tin biến thể luôn hiển thị. -->
             <div class="variant-detail-grid mb-8 pa-4 rounded-lg border bg-slate-50/30">
                 <v-row dense>
                     <v-col cols="6">
@@ -231,7 +227,7 @@ const setMainImage = async (imgId) => {
                 </v-row>
             </div>
 
-        <!-- Custom Styled Tabs -->
+        <!-- Tab tùy chỉnh cho các khu quản lý biến thể. -->
         <v-tabs v-model="activeTab" color="primary" align-tabs="start" class="mb-6 mb-tabs-border" grow hide-slider>
             <v-tab :value="1" class="custom-tab px-6" rounded="lg" style="font-size: 13px !important">
                 <PhotoIcon size="18" class="mr-2" />
@@ -240,9 +236,9 @@ const setMainImage = async (imgId) => {
         </v-tabs>
 
         <v-window v-model="activeTab">
-            <!-- TAB 1: IMAGE GALLERY -->
+            <!-- Tab 1: thư viện hình ảnh. -->
             <v-window-item :value="1">
-                <!-- Advanced Upload Zone -->
+                <!-- Khu vực tải ảnh nâng cao. -->
                 <div class="mb-6">
                     <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="handleFileChange" />
                     <div class="upload-dropzone rounded-xl border border-dashed border-slate-100 pa-8 text-center cursor-pointer hover-border-primary transition-all"
@@ -273,7 +269,7 @@ const setMainImage = async (imgId) => {
                                     :fallback-src="logoPlaceholder" :alt="img.moTa || 'variant-gallery-image'" />
                             </div>
 
-                            <!-- Labels & Actions -->
+                            <!-- Nhãn ảnh chính và nút thao tác. -->
                             <div v-if="img.hinhAnhDaiDien" class="main-badge">CHÍNH</div>
                             <v-btn icon size="24" color="rose-darken-1" variant="flat" class="delete-btn shadow-md"
                                 @click.stop="deleteImage(img.id)">

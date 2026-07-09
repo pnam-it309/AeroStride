@@ -88,7 +88,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                     </td>
                     <td class="data-cell">
                         <div class="d-flex align-center justify-center action-controls">
-                            <!-- Edit Button -->
+                            <!-- Nút sửa thuộc tính. -->
                             <v-btn
                                 icon
                                 variant="text"
@@ -101,7 +101,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                                 <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
                             </v-btn>
 
-                            <!-- Switch -->
+                            <!-- Công tắc bật/tắt trạng thái. -->
                             <div class="switch-wrapper d-flex align-center">
                                 <v-switch
                                     :model-value="isActiveStatus(item.trangThai)"
@@ -134,7 +134,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
 </template>
 
 <style scoped>
-/* Scoped styles removed in favor of global _admin-common.scss */
+/* Kiểu dáng riêng đã chuyển sang dùng chung trong _admin-common.scss. */
 .color-preview-circle-small {
     width: 20px;
     height: 20px;

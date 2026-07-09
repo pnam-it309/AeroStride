@@ -52,5 +52,5 @@ const handleSearch = () => emit('search');
 </template>
 
 <style scoped>
-/* Scoped styles removed in favor of global _admin-common.scss */
+/* Kiểu dáng riêng đã chuyển sang dùng chung trong _admin-common.scss. */
 </style>

@@ -55,8 +55,9 @@ public class SanPham extends BaseCodeNameEntity {
     @Enumerated(EnumType.STRING)
     private GioiTinhKhachHang gioiTinhKhachHang;
 
+    // Ảnh sản phẩm có thể là base64 rất dài khi người dùng upload trực tiếp từ form.
     @Lob
-    @Column(name = "hinh_anh")
+    @Column(name = "hinh_anh", columnDefinition = "LONGTEXT")
     private String hinhAnh;
 
     @Column(name = "mo_ta_chi_tiet")

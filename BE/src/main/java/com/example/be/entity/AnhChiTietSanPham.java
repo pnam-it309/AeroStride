@@ -21,8 +21,9 @@ public class AnhChiTietSanPham extends PrimaryEntity {
     @JsonBackReference(value = "ctsp-anh")
     private ChiTietSanPham chiTietSanPham;
 
+    // Ảnh biến thể có thể lưu URL hoặc base64, nên cần LONGTEXT để tránh lỗi DB khi ảnh dài.
     @Lob
-    @Column(name = "duong_dan_anh")
+    @Column(name = "duong_dan_anh", columnDefinition = "LONGTEXT")
     private String duongDanAnh;
 
     @Column(name = "hinh_anh_dai_dien")

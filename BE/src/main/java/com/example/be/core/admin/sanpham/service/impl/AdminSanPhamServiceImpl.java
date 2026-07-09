@@ -41,7 +41,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     private final AdminChiTietDotGiamGiaRepository adminChiTietDotGiamGiaRepository;
     private final AdminSanPhamMapper adminSanPhamMapper;
     
-    // Delegate lookup logic to ProductOptionService (SRP)
+    // Chuyển phần tra cứu thuộc tính sản phẩm sang service riêng để form thêm/sửa gọn hơn.
     private final ProductOptionService productOptionService;
 
     @Override
@@ -334,7 +334,21 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         v.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : TrangThai.DANG_HOAT_DONG);
         v.setXoaMem(false);
         
-        if (v.getMaChiTietSanPham() == null || v.getMaChiTietSanPham().trim().isEmpty()) {
+        String requestSku = StringUtils.hasText(req.getMaChiTietSanPham())
+                ? req.getMaChiTietSanPham().trim().toUpperCase(Locale.ROOT)
+                : null;
+
+        if (requestSku != null) {
+            // Ưu tiên SKU frontend gửi lên để mỗi biến thể có mã ổn định trước khi lưu.
+            boolean skuExists = existing == null
+                    ? adminChiTietSanPhamRepository.existsByMaChiTietSanPhamIgnoreCaseAndXoaMemFalse(requestSku)
+                    : adminChiTietSanPhamRepository.existsByMaChiTietSanPhamIgnoreCaseAndXoaMemFalseAndIdNot(requestSku, existing.getId());
+            if (skuExists) {
+                throw new DuplicateResourceException("Mã SKU biến thể đã tồn tại: " + requestSku);
+            }
+            v.setMaChiTietSanPham(requestSku);
+        } else if (v.getMaChiTietSanPham() == null || v.getMaChiTietSanPham().trim().isEmpty()) {
+            // Nếu frontend không gửi SKU, backend tự sinh theo mã sản phẩm và thứ tự còn trống.
             List<String> existingMas = adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalse(sp.getId()).stream()
                     .map(ChiTietSanPham::getMaChiTietSanPham)
                     .filter(Objects::nonNull)
@@ -352,7 +366,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         
         v = adminChiTietSanPhamRepository.save(v);
         
-        // Handle images if provided
+        // Đồng bộ ảnh biến thể sau khi biến thể đã có id để ảnh có khóa ngoại hợp lệ.
         if (req.getImages() != null && !req.getImages().isEmpty()) {
             syncVariantImages(v, req.getImages());
         }
@@ -364,13 +378,13 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
             return;
         }
 
-        // 1. Ảnh đầu tiên (index 0) sẽ được lưu làm ảnh đại diện cho Sản Phẩm gốc
+        // Ảnh đầu tiên là ảnh đại diện cho sản phẩm gốc để danh sách sản phẩm có thumbnail.
         SanPham sanPham = variant.getSanPham();
         ProductVariantImageRequest firstImage = imageRequests.get(0);
         sanPham.setHinhAnh(firstImage.getDuongDanAnh());
         adminSanPhamRepository.save(sanPham);
 
-        // 2. Từ ảnh thứ 2 trở đi sẽ được lưu vào danh sách ảnh của Biến thể (Chi Tiết Sản Phẩm)
+        // Từ ảnh thứ hai trở đi lưu vào bộ ảnh riêng của biến thể.
         List<ProductVariantImageRequest> variantImageRequests = new ArrayList<>();
         if (imageRequests.size() > 1) {
             variantImageRequests = imageRequests.subList(1, imageRequests.size());
