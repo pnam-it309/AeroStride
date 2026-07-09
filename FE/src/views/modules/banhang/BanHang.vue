@@ -8,7 +8,7 @@
  */
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { BoxIcon, XIcon } from 'vue-tabler-icons';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import QrcodeVue from 'qrcode.vue';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { dichVuVnPay } from './dichVuVnPay';
@@ -780,35 +780,57 @@ const setOrders = (payload, { preferOrderId = null } = {}) => {
 // QR / Barcode Scanner Logic
 const showScanner = ref(false);
 let html5QrcodeScanner = null;
+const scannerElementId = 'ban-hang-qr-reader';
 
 const startScanner = () => {
     showScanner.value = true;
-    setTimeout(() => {
-        const el = document.getElementById('reader');
+    setTimeout(async () => {
+        const el = document.getElementById(scannerElementId);
         if (!el || el.clientWidth === 0) {
-            startScanner();
+            if (showScanner.value) startScanner();
             return;
         }
 
         if (html5QrcodeScanner) {
-            html5QrcodeScanner.clear().catch(e => console.error(e));
+            await stopScanner(false);
         }
 
-        html5QrcodeScanner = new Html5QrcodeScanner('reader', { fps: 10, qrbox: { width: 250, height: 250 } }, false);
-        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        try {
+            // Mở camera trực tiếp để thu ngân thấy hình camera ngay trong popup quét mã.
+            html5QrcodeScanner = new Html5Qrcode(scannerElementId);
+            await html5QrcodeScanner.start(
+                { facingMode: 'environment' },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onScanSuccess,
+                onScanFailure
+            );
+        } catch (error) {
+            console.error('Camera start error:', error);
+            addNotification({
+                title: 'Không mở được camera',
+                subtitle: 'Vui lòng cấp quyền camera cho trình duyệt hoặc kiểm tra camera đang bị ứng dụng khác dùng.',
+                color: 'error'
+            });
+            await stopScanner();
+        }
     }, 150);
 };
 
-const stopScanner = () => {
+const stopScanner = async (closeDialog = true) => {
     if (html5QrcodeScanner) {
-        html5QrcodeScanner.clear().catch((error) => console.error('Failed to clear scanner', error));
+        try {
+            await html5QrcodeScanner.stop();
+            await html5QrcodeScanner.clear();
+        } catch (error) {
+            console.error('Failed to stop scanner', error);
+        }
         html5QrcodeScanner = null;
     }
-    showScanner.value = false;
+    if (closeDialog) showScanner.value = false;
 };
 
 const onScanSuccess = async (decodedText) => {
-    stopScanner();
+    await stopScanner();
     const keyword = decodedText?.trim();
     if (!keyword) return;
     if (!selectedOrder.value) {
@@ -929,6 +951,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
     window.removeEventListener('keydown', handleGlobalKeyDown);
+    stopScanner();
 });
 
 // Customer shipping address restore helpers.
@@ -2295,11 +2318,11 @@ const formatDateTime = (dateStr) => {
             <v-card class="rounded-lg pa-4">
                 <div class="d-flex justify-space-between align-center mb-4">
                     <span class="text-h6 font-weight-bold">Quét mã sản phẩm</span>
-                    <v-btn icon variant="text" @click="stopScanner">
+                    <v-btn icon variant="text" @click="() => stopScanner()">
                         <XIcon />
                     </v-btn>
                 </div>
-                <div id="reader" style="width: 100%"></div>
+                <div :id="scannerElementId" class="qr-reader-box"></div>
                 <div class="mt-4 text-center text-caption text-grey">Đưa mã QR hoặc Barcode của sản phẩm vào
                     khung
                     hình
@@ -2421,5 +2444,20 @@ const formatDateTime = (dateStr) => {
             font-size: 13px !important;
         }
     }
+}
+
+.qr-reader-box {
+    width: 100%;
+    min-height: 320px;
+    overflow: hidden;
+    border: 1px solid #dbe3ef;
+    border-radius: 12px;
+    background: #0f172a;
+}
+
+:deep(.qr-reader-box video) {
+    width: 100% !important;
+    min-height: 320px;
+    object-fit: cover;
 }
 </style>
