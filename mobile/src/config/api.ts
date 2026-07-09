@@ -7,19 +7,19 @@ import { Platform } from 'react-native';
 
 // Android emulator uses 10.0.2.2 to access host machine's localhost.
 const DEV_HOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
-const DEV_ORIGIN = `http://${DEV_HOST}:8080`;
-const PROD_ORIGIN = 'https://aerostride.example.com';
+const DEV_ORIGIN = process.env.EXPO_PUBLIC_API_URL || `http://${DEV_HOST}:8080`;
+const PROD_ORIGIN = process.env.EXPO_PUBLIC_API_URL || 'https://aerostride.example.com';
 
 export const API_CONFIG = {
   ORIGIN: __DEV__ ? DEV_ORIGIN : PROD_ORIGIN,
   BASE_URL: __DEV__ ? `${DEV_ORIGIN}/api/v1` : `${PROD_ORIGIN}/api/v1`,
   WS_URL: __DEV__
-    ? `ws://${DEV_HOST}:8080/ws`
+    ? `${DEV_ORIGIN.replace(/^http/, 'ws')}/ws`
     : `${PROD_ORIGIN.replace(/^http/, 'ws')}/ws`,
   // Raw WebSocket endpoint of the SockJS `/ws-chat` endpoint, used by @stomp/stompjs
   // directly (SockJS protocol itself is not React Native friendly).
   CHAT_WS_URL: __DEV__
-    ? `ws://${DEV_HOST}:8080/ws-chat/websocket`
+    ? `${DEV_ORIGIN.replace(/^http/, 'ws')}/ws-chat/websocket`
     : `${PROD_ORIGIN.replace(/^http/, 'ws')}/ws-chat/websocket`,
   TIMEOUT: 15000,
 };

@@ -2014,7 +2014,7 @@ const formatDateTime = (dateStr) => {
                                                             <span
                                                                 style="margin-left: 15px; margin-right: 15px; font-size: 11px; color: #cbd5e1; opacity: 0.4;">|</span>
                                                             <span class="sku-badge">{{ variant.maChiTietSanPham
-                                                            }}</span>
+                                                                }}</span>
                                                         </div>
 
                                                         <!-- màu sắc --- size --- số lượng -->
@@ -2458,7 +2458,7 @@ const formatDateTime = (dateStr) => {
                                             phiếu giảm giá:
                                             <strong style="color: #166534; font-size: 12px;">-{{
                                                 getVoucherDiscountLabel(nextBetterVoucher)
-                                                }}</strong> ({{ nextBetterVoucher.ma || nextBetterVoucher.maPhieu }})
+                                            }}</strong> ({{ nextBetterVoucher.ma || nextBetterVoucher.maPhieu }})
                                         </span>
                                         <!-- Case 2: Đề xuất phiếu giảm giá tốt hơn có sẵn (Bấm được để áp dụng) -->
                                         <span
@@ -2472,8 +2472,8 @@ const formatDateTime = (dateStr) => {
                                                     :class="['ml-1 font-weight-bold cursor-pointer', { 'text-decoration-underline': isHovering }]"
                                                     style="font-size: 11.5px !important; transition: all 0.2s; color: #166534 !important;">
                                                     -{{ getVoucherDiscountLabel(bestEligibleVoucher) }} ({{
-                                                    bestEligibleVoucher.ma ||
-                                                    bestEligibleVoucher.maPhieu }})
+                                                        bestEligibleVoucher.ma ||
+                                                        bestEligibleVoucher.maPhieu }})
                                                 </span>
                                             </v-hover>
                                         </span>
@@ -2485,7 +2485,7 @@ const formatDateTime = (dateStr) => {
                                             Đã tự động áp dụng phiếu giảm giá tốt nhất:
                                             <strong style="color: #166534; font-size: 12px;">-{{
                                                 getVoucherDiscountLabel(appliedVoucher)
-                                                }}</strong> ({{ appliedVoucher.ma || appliedVoucher.maPhieu }})
+                                            }}</strong> ({{ appliedVoucher.ma || appliedVoucher.maPhieu }})
                                         </span>
                                     </div>
                                 </div>
@@ -2613,11 +2613,11 @@ const formatDateTime = (dateStr) => {
                                             style="font-size: 13px;">
                                             <div class="d-flex w-100 justify-space-between mb-1">
                                                 <span class="font-weight-bold text-slate-800">{{ c.hoTen || c.ten
-                                                }}</span>
+                                                    }}</span>
                                                 <span class="text-blue-darken-3 font-weight-medium">{{ c.sdt }}</span>
                                             </div>
                                             <span class="text-slate-500 text-caption">{{ c.email || 'Không có email'
-                                            }}</span>
+                                                }}</span>
                                         </div>
                                     </div>
                                     <div v-else class="pa-3 text-center text-slate-500">
@@ -2740,7 +2740,7 @@ const formatDateTime = (dateStr) => {
                             </div>
                             <span class="font-weight-bold" style="font-size: 13px !important;">{{
                                 formatCurrency(remainingBalance)
-                                }}</span>
+                            }}</span>
                         </div>
                         <div v-else-if="changeAmount > 0"
                             class="d-flex align-center justify-space-between pa-3 rounded-lg bg-blue-50 text-blue-800 border-blue">
