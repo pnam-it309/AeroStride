@@ -15,6 +15,12 @@ import { isActiveStatus } from '@/utils/statusUtils';
 import { useBanHangStore } from '@/stores/banHangStore';
 
 const emit = defineEmits(['add-product']);
+const props = defineProps({
+    activeOrder: {
+        type: Object,
+        default: null
+    }
+});
 const store = useBanHangStore();
 const { addNotification } = useNotifications();
 
@@ -213,7 +219,8 @@ const onScanSuccess = async (decodedText) => {
     await stopScanner();
     const keyword = decodedText?.trim();
     if (!keyword) return;
-    if (!store.selectedOrder) {
+    // Hóa đơn đang chọn được quản lý ở BanHang.vue; dùng prop để quét QR không bị lệch state Pinia.
+    if (!props.activeOrder?.id) {
         addNotification({ title: 'Chưa có hóa đơn', subtitle: 'Vui lòng tạo hoặc chọn hóa đơn trước khi quét mã.', color: 'warning' });
         return;
     }

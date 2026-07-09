@@ -2128,7 +2128,7 @@ const formatDateTime = (dateStr) => {
                         style="overflow: visible !important; z-index: 15 !important; min-height: 0;">
 
                         <!-- Product Picker Block (Nhúng Component Mới) -->
-                        <ProductPicker @add-product="onAddProduct" />
+                        <ProductPicker :active-order="selectedOrder" @add-product="onAddProduct" />
 
                         <!-- Cart list rendering -->
                         <div class="cart-container-box border rounded-lg overflow-y-auto flex-grow-1 d-flex flex-column"
