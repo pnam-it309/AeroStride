@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/pnam-it309/AeroStride/compare/v1.26.5...v1.27.0) (2026-07-09)
+
+
+### Features
+
+* Integrate GHN shipping fee and return fee ([7119843](https://github.com/pnam-it309/AeroStride/commit/7119843edcd181f6be3a5d3cf65774a24267a41a))
+
 ## [1.26.5](https://github.com/pnam-it309/AeroStride/compare/v1.26.4...v1.26.5) (2026-07-07)
 
 
