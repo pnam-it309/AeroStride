@@ -114,6 +114,24 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         return adminNhanVienRepository.detail(nv.getId());
     }
 
+    @Override
+    @Transactional
+    public void registerFace(String id, org.springframework.web.multipart.MultipartFile image) {
+        NhanVien nv = adminNhanVienRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên"));
+        try {
+            if (image == null || image.isEmpty()) {
+                throw new RuntimeException("Hình ảnh không hợp lệ");
+            }
+            byte[] bytes = image.getBytes();
+            String base64Image = java.util.Base64.getEncoder().encodeToString(bytes);
+            nv.setFaceEncoding("data:image/jpeg;base64," + base64Image);
+            adminNhanVienRepository.save(nv);
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Lỗi khi xử lý hình ảnh", e);
+        }
+    }
+
     // ── UPDATE ────────────────────────────────────────────────────────────
     @Override
     @Transactional

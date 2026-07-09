@@ -83,6 +83,13 @@ export const dichVuDonHang = {
         return response.data.data;
     },
 
+    // Cập nhật phí vận chuyển và loại đơn hàng
+    async updateShippingAndChannel(idHoaDon, payload) {
+        // payload: { loaiDon, phiVanChuyen }
+        const response = await api.put(`${API_ADMIN.BAN_HANG}/${idHoaDon}/shipping`, payload);
+        return response.data.data;
+    },
+
     // Checkout (Thanh toán)
     async checkout(idHoaDon, checkoutData) {
         const response = await api.post(`${API_ADMIN.BAN_HANG}/${idHoaDon}/checkout`, checkoutData);

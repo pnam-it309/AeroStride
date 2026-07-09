@@ -404,6 +404,83 @@ public class LichLamViecServiceImpl implements LichLamViecService {
 
     @Override
     @Transactional
+    public String processFaceAttendance(org.springframework.web.multipart.MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            throw new RuntimeException("Hình ảnh không hợp lệ");
+        }
+        
+        NhanVien matchedEmployee = null;
+        double maxSimilarity = 0.0;
+        
+        try {
+            for (NhanVien nv : nhanVienRepository.findAll()) {
+                if (nv.getFaceEncoding() != null && !nv.getFaceEncoding().isEmpty()) {
+                    double similarity = com.example.be.utils.ImageComparisonUtil.compareImage(image, nv.getFaceEncoding());
+                    if (similarity > maxSimilarity) {
+                        maxSimilarity = similarity;
+                        matchedEmployee = nv;
+                    }
+                }
+            }
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Lỗi khi so sánh hình ảnh", e);
+        }
+        
+        if (matchedEmployee == null || maxSimilarity < 85.0) {
+            throw new RuntimeException("Khuôn mặt không khớp với bất kỳ nhân viên nào trong hệ thống (Độ giống cao nhất: " + String.format("%.2f", maxSimilarity) + "%)");
+        }
+                
+        // Now automatically clock in/out for today
+        LocalDate today = LocalDate.now();
+        LocalTime nowTime = LocalTime.now();
+        
+        final NhanVien finalMatchedEmployee = matchedEmployee;
+        
+        // Find if this employee already has an open attendance today
+        LichLamViec activeShift = lichLamViecRepository.findAll().stream()
+                .filter(l -> l.getNhanVien() != null && l.getNhanVien().getId().equals(finalMatchedEmployee.getId()) 
+                          && today.equals(l.getNgayLam())
+                          && l.getGioVao() != null 
+                          && l.getGioRa() == null)
+                .findFirst()
+                .orElse(null);
+                
+        if (activeShift != null) {
+            // Check out
+            activeShift.setGioRa(nowTime);
+            lichLamViecRepository.save(activeShift);
+            
+            LichSuHoatDong activity = LichSuHoatDong.builder()
+                .hanhDong("Chấm công bằng khuôn mặt (Checkout)")
+                .doiTuong("Nhân viên " + matchedEmployee.getTen() + " (" + matchedEmployee.getMa() + ")")
+                .build();
+            lichSuHoatDongRepository.save(activity);
+            
+            return "Đã nhận diện: " + matchedEmployee.getTen() + ". Cập nhật giờ ra thành công lúc " + timeFormatter.format(nowTime) + "!";
+        } else {
+            // Check in
+            LichLamViec schedule = LichLamViec.builder()
+                .nhanVien(matchedEmployee)
+                .ngayLam(today)
+                .gioVao(nowTime)
+                .trangThaiLich(LichLamViec.TrangThaiLichLamViec.CHO_XAC_NHAN)
+                .ghiChu("Chấm công tự động qua khuôn mặt")
+                .build();
+            lichLamViecRepository.save(schedule);
+            
+            LichSuHoatDong activity = LichSuHoatDong.builder()
+                .hanhDong("Chấm công bằng khuôn mặt (Checkin)")
+                .doiTuong("Nhân viên " + matchedEmployee.getTen() + " (" + matchedEmployee.getMa() + ")")
+                .build();
+            lichSuHoatDongRepository.save(activity);
+            
+            return "Đã nhận diện: " + matchedEmployee.getTen() + ". Ghi nhận giờ vào thành công lúc " + timeFormatter.format(nowTime) + "!";
+        }
+    }
+
+
+    @Override
+    @Transactional
     public String saveAttendance(com.example.be.core.admin.lichlamviec.model.request.AttendanceRequest request) {
         if (request.getNhanVienId() == null || request.getNgay() == null) {
             throw new RuntimeException("Vui lòng chọn nhân viên và ngày làm!");

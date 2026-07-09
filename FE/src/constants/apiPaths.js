@@ -17,6 +17,7 @@ export const API_ADMIN = {
     PHIEU_GIAM_GIA: `${API_BASE.ADMIN}/phieu-giam-gia`,
     SAN_PHAM: `${API_BASE.ADMIN}/san-pham`,
     DIA_CHI: `${API_BASE.ADMIN}/dia-chi`,
+    GHN: `${API_BASE.ADMIN}/ghn`,
     THUOC_TINH: `${API_BASE.ADMIN}/thuoc-tinh`,
     BAN_HANG: `${API_BASE.ADMIN}/ban-hang`,
     THONG_KE: `${API_BASE.ADMIN}/thong-ke`

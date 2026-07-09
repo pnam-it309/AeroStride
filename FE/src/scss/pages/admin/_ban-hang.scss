@@ -4,8 +4,8 @@
 // ===================================================================
 .pos-wrapper {
     background: #eef2f6;
-    min-height: calc(100vh - 64px);
-    overflow-y: auto;
+    height: calc(100vh - 64px);
+    overflow: hidden;
 }
 
 .pos-wrapper :deep(.v-btn) {
@@ -17,6 +17,14 @@
     display: flex;
     flex-direction: column;
     padding: 16px;
+    height: 100%;
+}
+
+.pos-grid {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    margin: 0 !important;
 }
 
 .pos-header-row {
@@ -112,6 +120,16 @@
 .scanner-btn {
     border-radius: 8px !important;
     height: 32px !important;
+}
+
+.summary-delivery-switch :deep(.v-selection-control) {
+    min-height: 28px !important;
+}
+
+.summary-delivery-switch :deep(.v-label) {
+    color: #475569 !important;
+    font-size: 13px !important;
+    opacity: 1 !important;
 }
 
 .hover-autocomplete-item {

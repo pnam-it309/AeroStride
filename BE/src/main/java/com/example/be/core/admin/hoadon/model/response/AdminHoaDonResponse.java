@@ -19,6 +19,7 @@ public class AdminHoaDonResponse {
     private String tenNhanVien;
     private String loaiDon;
     private BigDecimal phiVanChuyen;
+    private BigDecimal phiHoanHang;
     private BigDecimal tongTien;
     private BigDecimal tongTienSauGiam;
     private Integer trangThai;

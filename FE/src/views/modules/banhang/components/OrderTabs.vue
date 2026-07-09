@@ -30,8 +30,8 @@ const getOrderItemCount = (order) =>
             :class="activeIndex === idx ? 'order-tab-active' : 'order-tab-inactive'"
             @click="emit('select', idx)"
         >
-            <span class="order-tab-label font-weight-bold text-body-2 text-truncate">
-         #{{ order.maHoaDon || idx + 1 }}
+            <span class="order-tab-label font-weight-bold text-body-2">
+                Đơn hàng #{{ order.maHoaDon || idx + 1 }}
             </span>
             <span class="order-item-count" :title="`Tổng số lượng sản phẩm trong giỏ: ${getOrderItemCount(order)}`">
                 {{ getOrderItemCount(order) }} SP
@@ -70,7 +70,6 @@ const getOrderItemCount = (order) =>
 }
 .order-tab {
     min-width: 206px;
-    max-width: 260px;
     height: 40px;
     border-radius: 8px;
     user-select: none;
@@ -81,7 +80,7 @@ const getOrderItemCount = (order) =>
 
 .order-tab-label {
     flex: 1 1 auto;
-    min-width: 0;
+    white-space: nowrap;
 }
 
 .order-item-count {

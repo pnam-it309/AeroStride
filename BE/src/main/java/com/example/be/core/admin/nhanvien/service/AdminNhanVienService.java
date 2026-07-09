@@ -23,6 +23,8 @@ public interface AdminNhanVienService {
 
     AdminNhanVienResponse add(AdminNhanVienRequest request);
 
+    void registerFace(String id, org.springframework.web.multipart.MultipartFile image);
+
     AdminNhanVienResponse update(String id, AdminNhanVienRequest request);
 
     void doiTrangThai(String id, TrangThai trangThai);

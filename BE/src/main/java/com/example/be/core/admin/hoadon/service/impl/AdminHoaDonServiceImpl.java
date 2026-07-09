@@ -133,6 +133,10 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         lichSuTrangThaiHoaDonRepository.save(history);
 
         if (newStatus == OrderStatus.DA_HUY || newStatus == OrderStatus.HOAN_DON) {
+            if (newStatus == OrderStatus.HOAN_DON && hd.getPhiVanChuyen() != null) {
+                // GHN return fee is typically equal to forward fee
+                hd.setPhiHoanHang(hd.getPhiVanChuyen());
+            }
             hd.getListsHoaDonChiTiet().forEach(detail -> {
                 ChiTietSanPham ct = detail.getChiTietSanPham();
                 if (ct != null) {
@@ -334,6 +338,10 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         BigDecimal subtotal = hd.getTongTien() != null ? hd.getTongTien() : BigDecimal.ZERO;
         BigDecimal shippingFee = hd.getPhiVanChuyen() != null ? hd.getPhiVanChuyen() : BigDecimal.ZERO;
         BigDecimal payableTotal = hd.getTongTienSauGiam() != null ? hd.getTongTienSauGiam() : subtotal.add(shippingFee);
+        // Giảm giá chỉ tính trên tiền hàng. tongTienSauGiam đã bao gồm phí ship,
+        // nên phải trừ shippingFee ra trước để không làm dòng "Giảm giá" trên bản in bị thiếu.
+        BigDecimal payableProductTotal = payableTotal.subtract(shippingFee).max(BigDecimal.ZERO);
+        BigDecimal discountAmount = subtotal.subtract(payableProductTotal).max(BigDecimal.ZERO);
         
         Context context = new Context();
         context.setVariable("hd", hd);
@@ -341,6 +349,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         context.setVariable("subtotal", subtotal);
         context.setVariable("shippingFee", shippingFee);
         context.setVariable("payableTotal", payableTotal);
+        context.setVariable("discountAmount", discountAmount);
         context.setVariable("paymentMethodLabel", resolvePaymentMethodLabel(hd));
         context.setVariable("ngayIn", new Date());
 

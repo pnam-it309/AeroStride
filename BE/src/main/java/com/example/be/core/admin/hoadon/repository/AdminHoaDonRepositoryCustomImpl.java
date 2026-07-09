@@ -118,7 +118,7 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                         hd.soDienThoaiNguoiNhan, hd.diaChiNguoiNhan,
                         khdc.diaChiChiTiet, khdc.phuongXa, khdc.thanhPho, khdc.tinh,
                         nv.ma, nv.ten,
-                        hd.loaiDon, hd.phiVanChuyen, hd.tongTien, hd.tongTienSauGiam, hd.trangThai, hd.ghiChu
+                        hd.loaiDon, hd.phiVanChuyen, hd.phiHoanHang, hd.tongTien, hd.tongTienSauGiam, hd.trangThai, hd.ghiChu
                 )
                 .from(hd)
                 .leftJoin(hd.khachHang, kh)
@@ -200,6 +200,7 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                     .tenNhanVien(finalTenNv)
                     .loaiDon(t.get(hd.loaiDon))
                     .phiVanChuyen(t.get(hd.phiVanChuyen))
+                    .phiHoanHang(t.get(hd.phiHoanHang))
                     .tongTien(t.get(hd.tongTien))
                     .tongTienSauGiam(t.get(hd.tongTienSauGiam))
                     .trangThai(status != null ? status.ordinal() : null)

@@ -22,6 +22,8 @@ public interface AdminBanHangService {
     AdminBanHangHoaDonResponse setPhieuGiamGia(String idHoaDon, String idPhieuGiamGia);
     void checkout(String idHoaDon, AdminBanHangCheckoutRequest request);
 
+    AdminBanHangHoaDonResponse updateShippingAndChannel(String idHoaDon, com.example.be.core.admin.banhang.model.request.AdminBanHangUpdateShippingRequest request);
+
     List<BanHangSanPhamResponse> searchSanPham(String keyword, String thuongHieu, String chatLieu, String xuatXu, String mucDich);
     List<AdminBanHangKhachHangResponse> searchKhachHang(String keyword);
     List<PhieuGiamGia> getVouchers(BigDecimal tongTien);

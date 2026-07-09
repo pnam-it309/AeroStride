@@ -105,6 +105,16 @@ public class AdminBanHangController {
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.setPhieuGiamGia(id, idVoucher)));
     }
 
+    // Cập nhật phí vận chuyển và loại giao hàng
+    @PutMapping("/{id}/shipping")
+    public ResponseEntity<ApiResponse<AdminBanHangHoaDonResponse>> updateShipping(
+            @PathVariable String id,
+            @RequestBody com.example.be.core.admin.banhang.model.request.AdminBanHangUpdateShippingRequest request
+    ) {
+        log.info("Updating shipping for invoice {}: {}", id, request);
+        return ResponseEntity.ok(ApiResponse.success(adminBanHangService.updateShippingAndChannel(id, request)));
+    }
+
     // Thực hiện thanh toán và hoàn tất hóa đơn
     @PostMapping(RoutesConstant.CHECKOUT)
     public ResponseEntity<ApiResponse<Void>> checkout(

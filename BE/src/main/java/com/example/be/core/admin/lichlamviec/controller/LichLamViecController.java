@@ -98,6 +98,11 @@ public class LichLamViecController {
         return ResponseEntity.ok(ApiResponse.success(lichLamViecService.saveAttendance(request)));
     }
 
+    @PostMapping("/face-attendance")
+    public ResponseEntity<ApiResponse<?>> saveFaceAttendance(@RequestParam("image") MultipartFile image) {
+        return ResponseEntity.ok(ApiResponse.success(lichLamViecService.processFaceAttendance(image)));
+    }
+
     @PutMapping("/attendance/{id}")
     public ResponseEntity<ApiResponse<?>> updateAttendance(@PathVariable String id, @RequestBody com.example.be.core.admin.lichlamviec.model.request.AttendanceRequest request) {
         return ResponseEntity.ok(ApiResponse.success(lichLamViecService.updateAttendance(id, request)));

@@ -247,9 +247,9 @@
                         <td>Phí vận chuyển:</td>
                         <td style="text-align: right;" th:text="${'+ ' + #numbers.formatDecimal(shippingFee, 0, 'COMMA', 0, 'POINT') + ' ₫'}">30,000</td>
                     </tr>
-                    <tr th:if="${hd.tongTienSauGiam != null and subtotal.compareTo(hd.tongTienSauGiam) > 0}">
+                    <tr th:if="${discountAmount != null and discountAmount.doubleValue() > 0}">
                         <td>Giảm giá:</td>
-                        <td style="text-align: right; color: #ef4444;" th:text="${'- ' + #numbers.formatDecimal(subtotal.subtract(hd.tongTienSauGiam), 0, 'COMMA', 0, 'POINT') + ' ₫'}">-100,000</td>
+                        <td style="text-align: right; color: #ef4444;" th:text="${'- ' + #numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT') + ' ₫'}">-100,000</td>
                     </tr>
                     <tr class="total-row">
                         <td>TỔNG CỘNG:</td>

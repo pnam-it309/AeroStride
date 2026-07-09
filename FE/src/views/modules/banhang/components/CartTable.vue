@@ -42,12 +42,13 @@ const handleDirectInput = (item, event) => {
                     <th class="text-left py-2" style="width: 90px; white-space: nowrap !important;">Kích cỡ</th>
                     <th class="text-center py-2" style="width: 130px; white-space: nowrap !important;">Số lượng</th>
                     <th class="text-right py-2" style="width: 140px; white-space: nowrap !important;">Đơn giá</th>
+                    <th class="text-right py-2" style="width: 140px; white-space: nowrap !important;">Thành tiền</th>
                     <th class="text-center py-2" style="width: 90px; white-space: nowrap !important;">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
                 <tr v-if="!items?.length">
-                    <td colspan="8" class="text-center py-16">
+                    <td colspan="9" class="text-center py-16">
                         <div class="opacity-20 mb-4">
                             <ShoppingCartIcon size="64" />
                         </div>

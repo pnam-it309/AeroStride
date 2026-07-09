@@ -67,6 +67,9 @@ public class HoaDon extends AuditEntity implements IsIdentified {
     @Column(name = "phi_van_chuyen")
     private BigDecimal phiVanChuyen;
 
+    @Column(name = "phi_hoan_hang")
+    private BigDecimal phiHoanHang;
+
     @Column(name = "tong_tien")
     private BigDecimal tongTien;
 

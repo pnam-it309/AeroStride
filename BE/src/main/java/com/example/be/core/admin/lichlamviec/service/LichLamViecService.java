@@ -29,6 +29,8 @@ public interface LichLamViecService {
 
     String updateSchedule(String id, LichLamViecRequest request);
 
+    String processFaceAttendance(org.springframework.web.multipart.MultipartFile image);
+
     List<Map<String, Object>> previewImport(MultipartFile file);
 
     String confirmImport(List<Map<String, Object>> data);

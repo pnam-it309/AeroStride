@@ -16,7 +16,7 @@ const props = defineProps({
         // receipt: { order, paymentMethod, receivedAmount, note, paidAt }
     }
 });
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'print']);
 
 // Format tiền tệ chuẩn Việt Nam
 const fmt = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
@@ -35,20 +35,14 @@ const items = computed(() => order.value?.listsHoaDonChiTiet || []);
 const paymentMethod = computed(() => props.receipt?.paymentMethod || 'CASH');
 const receivedAmount = computed(() => Number(props.receipt?.receivedAmount || 0));
 const tongTienSauGiam = computed(() => Number(order.value?.tongTienSauGiam || 0));
+const shippingFee = computed(() => Number(order.value?.phiVanChuyen || 0));
 const tienThua = computed(() => Math.max(0, receivedAmount.value - tongTienSauGiam.value));
-const originalTotalAmount = computed(() => {
-    return items.value.reduce((sum, item) => {
-        const qty = Number(item.soLuong || 0);
-        const price = Number(item.donGia || 0);
-        const percent = Number(item.phanTramGiam || 0);
-        if (percent > 0 && percent < 100) {
-            const originalPrice = price / (1 - percent / 100);
-            return sum + (originalPrice * qty);
-        }
-        return sum + (price * qty);
-    }, 0);
+const subtotal = computed(() => {
+    return items.value.reduce((sum, item) => sum + Number(item.thanhTien || (item.donGia * item.soLuong) || 0), 0);
 });
-const discount = computed(() => Math.max(0, originalTotalAmount.value - tongTienSauGiam.value));
+// tongTienSauGiam returned from backend already includes shipping fee.
+// So discount (voucher) is calculated by excluding shipping fee.
+const discount = computed(() => Math.max(0, subtotal.value - Math.max(0, tongTienSauGiam.value - shippingFee.value)));
 const paidAt = computed(() => fmtDate(props.receipt?.paidAt));
 
 const paymentLabel = computed(() => {
@@ -58,9 +52,9 @@ const paymentLabel = computed(() => {
     return pm;
 });
 
-// Gọi lệnh in của trình duyệt để in hóa đơn
+// Chuyen viec in len parent de dung mau HTML hoa don chuan cua module Quan ly hoa don.
 const handlePrint = () => {
-    window.print();
+    emit('print', props.receipt);
 };
 </script>
 
@@ -157,8 +151,12 @@ const handlePrint = () => {
                 <!-- Totals -->
                 <div class="receipt-totals mb-3">
                     <div class="total-row">
-                        <span>Tạm tính</span>
-                        <span>{{ fmt(originalTotalAmount) }}</span>
+                        <span>Cộng tiền hàng</span>
+                        <span>{{ fmt(subtotal) }}</span>
+                    </div>
+                    <div class="total-row" v-if="shippingFee > 0">
+                        <span>Phí vận chuyển</span>
+                        <span>+{{ fmt(shippingFee) }}</span>
                     </div>
                     <div class="total-row text-success" v-if="discount > 0">
                         <span>Giảm giá</span>

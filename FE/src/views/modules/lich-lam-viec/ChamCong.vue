@@ -201,6 +201,13 @@ const handleFilter = () => {
     pagination.value.totalPages = Math.ceil(attendanceRows.value.length / pagination.value.size);
 };
 
+const openFaceScan = () => {
+    addNotification({
+        type: 'info',
+        message: 'Chức năng quét mặt đang được phát triển'
+    });
+};
+
 // Ghi nhận giờ vào/ra thủ công
 const openAddDialog = () => {
     const authStore = useAuthStore();
@@ -367,6 +374,11 @@ onMounted(loadData);
                 addButtonText="Ghi nhận"
                 @add="openAddDialog"
             >
+                <template #extra-actions>
+                    <v-btn prepend-icon="mdi-face-recognition" variant="flat" color="primary" class="add-btn-primary mr-2" @click="openFaceScan">
+                        Quét mặt
+                    </v-btn>
+                </template>
                 <template #row="{ item, index }">
                     <tr class="data-row">
                         <td class="data-cell text-center">

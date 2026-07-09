@@ -47,6 +47,12 @@ public class AdminNhanVienController {
         return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.NHAN_VIEN_ADD_SUCCESS));
     }
 
+    @PostMapping("/{id}/register-face")
+    public ResponseEntity<ApiResponse<Void>> registerFace(@PathVariable String id, @RequestParam("image") MultipartFile image) {
+        adminNhanVienService.registerFace(id, image);
+        return ResponseEntity.ok(ApiResponse.success(null, "Đăng ký khuôn mặt thành công!"));
+    }
+
     @PutMapping(RoutesConstant.UPDATE) // Compatibility Alias
     public ResponseEntity<ApiResponse<Void>> update(@PathVariable String id,
                                                      @Valid @RequestBody AdminNhanVienRequest request) {

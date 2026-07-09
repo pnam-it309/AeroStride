@@ -8,8 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.be.infrastructure.constants.RoutesConstant;
+
 @RestController
-@RequestMapping("/api/admin/giao-ca")
+@RequestMapping(RoutesConstant.ADMIN + "/giao-ca")
 public class AdminGiaoCaController {
 
     @Autowired

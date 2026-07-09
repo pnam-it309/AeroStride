@@ -60,6 +60,10 @@ public class NhanVien extends BaseCodeNameEntity {
     @Column(name = "phuong_xa")
     private String phuongXa;
 
+    @Lob
+    @Column(name = "face_encoding", columnDefinition = "LONGTEXT")
+    private String faceEncoding;
+
     @Column(name = "dia_chi_chi_tiet")
     private String diaChiChiTiet;
 

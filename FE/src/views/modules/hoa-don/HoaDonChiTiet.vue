@@ -4,6 +4,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { dichVuHoaDon } from '@/services/admin/dichVuHoaDon';
 import { useNotifications } from '@/services/notificationService';
+import { useHoaDonPrinter } from '@/composables/useHoaDonPrinter';
 import {
     ChevronLeftIcon, PrinterIcon, EditIcon, CalendarIcon,
     PackageIcon, UserIcon, MapPinIcon, CreditCardIcon, TruckIcon,
@@ -17,6 +18,7 @@ import { ORDER_STATUS_ORDINALS } from "@/constants/hoaDonConstants";
 const route = useRoute();
 const router = useRouter();
 const { addNotification } = useNotifications();
+const { printHoaDonById } = useHoaDonPrinter();
 
 const loaded = ref(false);
 const loading = ref(false);
@@ -400,7 +402,10 @@ const displayAddress = computed(() => {
 const orderDiscountAmount = computed(() => {
     const total = order.value.tongTien || 0;
     const final = order.value.tongTienSauGiam || total;
-    return total - final;
+    const shipping = order.value.phiVanChuyen || 0;
+    // tongTienSauGiam đã gồm phí ship, nên dòng giảm giá chỉ so tiền hàng sau giảm với tongTien.
+    const productTotalAfterDiscount = Math.max(0, final - shipping);
+    return Math.max(0, total - productTotalAfterDiscount);
 });
 
 const orderTotalAmount = computed(() => order.value.tongTienSauGiam || order.value.tongTien || 0);
@@ -710,33 +715,8 @@ const submitEditOrder = async () => {
 const getStepIcon = (step) => step.icon;
 
 const printInvoice = async () => {
-    try {
-        addNotification({ title: 'Đang chuẩn bị', subtitle: 'Đang tạo bản in hóa đơn...', color: 'info' });
-        const html = await dichVuHoaDon.inHoaDon(order.value.id);
-
-        const printWindow = window.open('', '_blank', 'width=900,height=1000');
-        if (!printWindow) {
-            addNotification({
-                title: 'Lỗi',
-                subtitle: 'Trình duyệt đã chặn cửa sổ bật lên. Vui lòng cho phép popup để in.',
-                color: 'warning'
-            });
-            return;
-        }
-
-        printWindow.document.write(html);
-        printWindow.document.close();
-
-        // Use onload to ensure all styles and fonts are ready before printing
-        printWindow.onload = () => {
-            setTimeout(() => {
-                printWindow.print();
-            }, 500);
-        };
-    } catch (error) {
-        console.error('Print error:', error);
-        addNotification({ title: 'Lỗi', subtitle: 'Không thể tải bản in từ máy chủ. Vui lòng kiểm tra lại kết nối.', color: 'error' });
-    }
+    // Dung helper chung de mau in o Quan ly hoa don va Ban hang luon di cung mot API/HTML.
+    await printHoaDonById(order.value.id);
 };
 
 onMounted(() => {
@@ -1059,6 +1039,29 @@ onMounted(() => {
                                 </span>
                                 <span class="text-body-2 text-slate-800">{{
                                     formatCurrency(order.phiVanChuyen || 0)
+                                }}</span>
+                            </div>
+                            <div v-if="order.phiHoanHang > 0" class="summary-row mb-4">
+                                <span class="text-slate-500 d-flex align-center">
+                                    <span>Phí hoàn hàng:</span>
+                                    <svg width="45" height="15" viewBox="0 0 45 15" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        style="display: inline-block; vertical-align: middle; margin-left: 6px;">
+                                        <!-- Left Chevron (Deep Blue/Teal) -->
+                                        <path d="M1 2.5 L7 2.5 L4.5 6.5 L7 6.5 L3.5 10.5 L1 10.5 L3.5 6.5 L1 6.5 Z"
+                                            fill="#0C2A46" />
+                                        <!-- Right Chevron (Orange) -->
+                                        <path
+                                            d="M5.5 2.5 L11.5 2.5 L9 6.5 L11.5 6.5 L8 10.5 L5.5 10.5 L8 6.5 L5.5 6.5 Z"
+                                            fill="#FA6400" />
+                                        <!-- GHN Text (Italic Orange) -->
+                                        <text x="13.5" y="11" fill="#FA6400" font-family="'Inter', sans-serif"
+                                            font-weight="900" font-style="italic" font-size="10.5"
+                                            letter-spacing="-0.5px">GHN</text>
+                                    </svg>
+                                </span>
+                                <span class="text-body-2 text-slate-800">{{
+                                    formatCurrency(order.phiHoanHang || 0)
                                 }}</span>
                             </div>
                             <v-divider class="my-5 border-opacity-25"></v-divider>

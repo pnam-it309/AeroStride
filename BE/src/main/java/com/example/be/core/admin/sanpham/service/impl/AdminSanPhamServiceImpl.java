@@ -116,7 +116,7 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
     public ProductDetailResponse createProduct(CreateProductRequest request) {
-        if (adminSanPhamRepository.existsByTenIgnoreCaseAndXoaMemFalse(request.getTenSanPham().trim())) {
+        if (request.getTenSanPham() != null && adminSanPhamRepository.existsByTenIgnoreCaseAndXoaMemFalse(request.getTenSanPham().trim())) {
             throw new com.example.be.infrastructure.exceptions.DuplicateResourceException("Tên sản phẩm đã tồn tại. Vui lòng chọn tên khác hoặc cập nhật sản phẩm cũ.");
         }
         validateVariantRequests(request.getVariants());
