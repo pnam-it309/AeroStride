@@ -66,15 +66,6 @@
                     </span>
                 </div>
 
-                <!-- Final net collected amount -->
-                <div style="border-top: 1px dashed #cbd5e1; margin: 4px 0;"></div>
-
-                <div class="d-flex align-center justify-space-between">
-                    <span class="text-slate-600" style="font-size: 13px !important">Tiền cần thu</span>
-                    <span class="font-weight-bold"
-                        style="font-size: 13px !important; color: #0c3866;">{{
-                            formatCurrency(finalCollectAmount) }}</span>
-                </div>
             </div>
         </v-col>
 

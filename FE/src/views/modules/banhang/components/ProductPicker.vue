@@ -197,9 +197,10 @@ const onScanSuccess = async (decodedText) => {
     }
 
     try {
-        const variants = await dichVuDonHang.searchSanPham(keyword);
+        const variants = await dichVuDonHang.searchSanPham({ keyword });
         if (variants && variants.length > 0) {
-            const exactMatch = variants.find((v) => v.maChiTietSanPham === keyword) || variants[0];
+            const normalizedKeyword = keyword.toLowerCase();
+            const exactMatch = variants.find((v) => String(v.maChiTietSanPham || '').trim().toLowerCase() === normalizedKeyword) || variants[0];
 
             if (exactMatch) {
                 if (exactMatch.trangThai !== undefined && !isActiveStatus(exactMatch.trangThai)) {

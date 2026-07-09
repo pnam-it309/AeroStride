@@ -185,6 +185,33 @@ const pickFirst = (item, keys, fallback = '--') => {
 const getItemCode = (item) => String(pickFirst(item, currentMeta.value.codeKeys));
 const getItemName = (item) => String(pickFirst(item, currentMeta.value.nameKeys));
 
+// Chuẩn hóa riêng cho kích thước: người dùng có thể nhập "42", "Size 42" hoặc "size 42".
+// Khi gửi lên backend, tên vẫn theo quy ước cũ "Size 42", còn giaTriKichThuoc chỉ giữ phần số.
+const normalizeSizeInput = (value) => {
+    let sizeText = String(value || '').replace(/<[^>]*>?/gm, '');
+    sizeText = sizeText.replace(/[^a-zA-Z0-9.,\-\s]/g, '');
+    sizeText = sizeText.replace(/(?:^|\s)(?:kich thuoc|size|sz)\s*/gi, '');
+    sizeText = sizeText.replace(/(?:^|\s)s\s*(?=\d)/gi, '');
+    return sizeText.replace(/\s+/g, ' ').trim();
+};
+
+const getApiErrorMessage = (error) =>
+    error?.response?.data?.message ||
+    error?.response?.data?.error ||
+    error?.message ||
+    'Không thể lưu dữ liệu, vui lòng thử lại.';
+
+const notifySaveError = (error, actionText) => {
+    const apiMessage = getApiErrorMessage(error);
+    const isDuplicateSize = selectedTab.value === 'sizes' && /ton tai|tồn tại|duplicate/i.test(apiMessage);
+
+    addNotification({
+        title: `${actionText} thất bại`,
+        subtitle: isDuplicateSize ? `Kích thước [${itemForm.value.ten}] đã tồn tại, vui lòng nhập size khác.` : apiMessage,
+        color: 'error'
+    });
+};
+
 const loadItems = async () => {
     loading.value = true;
     try {
@@ -258,12 +285,8 @@ const confirmSaveItem = () => {
     }
 
     if (selectedTab.value === 'sizes') {
-        const rawInput = itemForm.value.ten;
-        let s = rawInput.replace(/<[^>]*>?/gm, '');
-        s = s.replace(/[^a-zA-Z0-9.,\-\s]/g, '');
-        s = s.replace(/(?:^|\s)(?:kích thước|size|sz)\s*/gi, '');
-        s = s.replace(/(?:^|\s)s\s*(?=\d)/gi, '');
-        const normalizedSize = s.replace(/\s+/g, ' ').trim();
+        const rawInput = itemForm.value.giaTriKichThuoc || itemForm.value.ten;
+        const normalizedSize = normalizeSizeInput(rawInput);
         
         if (!normalizedSize) {
             addNotification({ title: 'Lỗi', subtitle: 'Kích thước không hợp lệ', color: 'error' });
@@ -305,6 +328,7 @@ const confirmSaveItem = () => {
 };
 
 const createItem = async () => {
+    try {
     const service = services[selectedTab.value];
     let res;
     switch (selectedTab.value) {
@@ -343,9 +367,14 @@ const createItem = async () => {
     dataRefs[selectedTab.value].value.unshift(res);
     showDialog.value = false;
     loadItems();
+    } catch (error) {
+        console.error(error);
+        notifySaveError(error, 'Thêm mới');
+    }
 };
 
 const updateItem = async () => {
+    try {
     const service = services[selectedTab.value];
     let res;
     const id = selectedItem.value.id;
@@ -385,6 +414,10 @@ const updateItem = async () => {
         color: 'primary'
     });
     showDialog.value = false;
+    } catch (error) {
+        console.error(error);
+        notifySaveError(error, 'Cập nhật');
+    }
 };
 
 const confirmChangeStatus = (item) => {

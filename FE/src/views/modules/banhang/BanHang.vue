@@ -228,9 +228,10 @@ const onAddSuggestedProduct = async () => {
 
     try {
         const keyword = suggestionData.value.productCode;
-        const variants = await dichVuDonHang.searchSanPham(keyword);
+        const variants = await dichVuDonHang.searchSanPham({ keyword });
         if (variants && variants.length > 0) {
-            const exactMatch = variants.find((v) => v.maChiTietSanPham === keyword) || variants[0];
+            const normalizedKeyword = keyword.toLowerCase();
+            const exactMatch = variants.find((v) => String(v.maChiTietSanPham || '').trim().toLowerCase() === normalizedKeyword) || variants[0];
             if (exactMatch) {
                 await onAddProduct({ ...exactMatch, _soLuongMuonThem: 1 });
                 showProductSuggestions.value = false;
@@ -353,6 +354,17 @@ const changeAmount = computed(() => {
     return Math.max(0, received - finalCollectAmount.value);
 });
 
+// Backend chỉ trả loaiDon, còn UI dùng isGiaoHangLocal cho công tắc giao hàng.
+// Chuẩn hóa tại một chỗ để mỗi lần refresh/cập nhật order không làm công tắc bị tắt sai.
+const isShippingOrderType = (loaiDon) => ['ONLINE', 'GIAO_HANG'].includes(String(loaiDon || '').toUpperCase());
+const normalizeSalesOrder = (order) => {
+    if (!order) return order;
+    return {
+        ...order,
+        isGiaoHangLocal: order.isGiaoHangLocal ?? isShippingOrderType(order.loaiDon)
+    };
+};
+
 // ==============================
 // GỌI API ĐỒNG BỘ SHIPPING VÀ CHANNEL
 // ==============================
@@ -364,8 +376,10 @@ const syncShippingAndChannel = () => {
 
     shippingSyncTimeout = setTimeout(async () => {
         try {
-            const loaiDon = onlyChargeIfReturned.value ? 'TAI_QUAY' : 'ONLINE';
-            const shipFee = isFreeShip.value ? 0 : Number(shippingFee.value || 0);
+            // Công tắc "Giao hàng" là nguồn trạng thái chính của loại đơn.
+            // Không dùng biến phụ để tránh lúc vừa bật giao hàng bị sync nhầm về TẠI_QUẦY.
+            const loaiDon = isGiaoHang.value ? 'ONLINE' : 'TAI_QUAY';
+            const shipFee = loaiDon === 'ONLINE' && !isFreeShip.value ? Number(shippingFee.value || 0) : 0;
 
             const updatedOrder = await dichVuDonHang.updateShippingAndChannel(selectedOrder.value.id, {
                 loaiDon: loaiDon,
@@ -373,13 +387,14 @@ const syncShippingAndChannel = () => {
             });
 
             // Cập nhật lại state của đơn hàng hiện tại từ phản hồi của Backend
-            const idx = orders.value.findIndex((o) => o.id === selectedOrder.value.id);
-            if (idx !== -1) {
-                orders.value[idx] = updatedOrder;
-            }
+            updateOrderInList(updatedOrder);
         } catch (error) {
             console.error('Error syncing shipping/channel:', error);
-            toast.error('Không thể đồng bộ phí vận chuyển!');
+            addNotification({
+                title: 'Lỗi giao hàng',
+                subtitle: 'Không thể đồng bộ phí vận chuyển, vui lòng thử lại.',
+                color: 'error'
+            });
         }
     }, 500); // Debounce 500ms
 };
@@ -657,6 +672,23 @@ const onSelectSuggestedCustomer = async (c) => {
     await selectCustomer(c);
 };
 
+// Nhận dữ liệu khách hàng nhân viên nhập trong panel bên phải.
+// Component con dùng form nội bộ, còn màn chính giữ state này để lưu khách mới khi thanh toán.
+const onCustomerFormUpdate = (form) => {
+    customerForm.value = { ...customerForm.value, ...(form || {}) };
+};
+
+// Nhận dữ liệu địa chỉ giao hàng từ panel bên phải để watcher GHN ở màn chính tính lại phí ship.
+const onShippingPanelUpdate = (shipping) => {
+    const next = shipping || {};
+    recipientName.value = next.name || '';
+    recipientPhone.value = next.phone || '';
+    recipientAddressDetail.value = next.detail || '';
+    recipientProvince.value = next.province || null;
+    recipientDistrict.value = next.district || null;
+    recipientWard.value = next.ward || null;
+};
+
 const openDatePicker = (event) => {
     const el = event.target.closest('.v-input');
     const input = el ? el.querySelector('input[type="date"]') : null;
@@ -713,9 +745,9 @@ const ensureCustomerAndGetId = async () => {
 
 // Chuẩn hóa định dạng danh sách đơn hàng trả về từ nhiều dạng API response khác nhau
 const normalizeOrderList = (payload) => {
-    if (Array.isArray(payload)) return payload;
-    if (Array.isArray(payload?.content)) return payload.content;
-    if (Array.isArray(payload?.data)) return payload.data;
+    if (Array.isArray(payload)) return payload.map(normalizeSalesOrder);
+    if (Array.isArray(payload?.content)) return payload.content.map(normalizeSalesOrder);
+    if (Array.isArray(payload?.data)) return payload.data.map(normalizeSalesOrder);
     return [];
 };
 
@@ -785,9 +817,10 @@ const onScanSuccess = async (decodedText) => {
     }
 
     try {
-        const variants = await dichVuDonHang.searchSanPham(keyword);
+        const variants = await dichVuDonHang.searchSanPham({ keyword });
         if (variants && variants.length > 0) {
-            const exactMatch = variants.find((v) => v.maChiTietSanPham === keyword) || variants[0];
+            const normalizedKeyword = keyword.toLowerCase();
+            const exactMatch = variants.find((v) => String(v.maChiTietSanPham || '').trim().toLowerCase() === normalizedKeyword) || variants[0];
 
             if (exactMatch) {
                 if (exactMatch.trangThai !== undefined && !isActiveStatus(exactMatch.trangThai)) {
@@ -1242,7 +1275,7 @@ const createNewOrder = async ({ silent = false, force = false } = {}) => {
     isProcessing.value = true;
     try {
         const newOrder = await dichVuDonHang.taoDonHang();
-        orders.value.push(newOrder);
+        orders.value.push(normalizeSalesOrder(newOrder));
         activeOrderIndex.value = orders.value.length - 1;
     } catch (e) {
         if (!silent) {
@@ -1845,8 +1878,9 @@ const onCheckout = async () => {
 
 // Helpers
 const updateOrderInList = (updated) => {
-    const idx = orders.value.findIndex((o) => o.id === updated.id);
-    if (idx !== -1) orders.value[idx] = updated;
+    const normalized = normalizeSalesOrder(updated);
+    const idx = orders.value.findIndex((o) => o.id === normalized.id);
+    if (idx !== -1) orders.value[idx] = normalized;
     clampActiveOrderIndex();
 };
 
@@ -2117,16 +2151,20 @@ const formatDateTime = (dateStr) => {
                 <v-col cols="12" lg="4" class="h-100 d-flex flex-column gap-4 pl-lg-2 mt-4 mt-lg-0 overflow-y-auto"
                     style="min-height: 0;">
                     <!-- Khách hàng và Nhận hàng Card -->
-                    <CustomerAndShippingPanel :selected-order="selectedOrder" v-model:customerForm="customerForm"
-                        v-model:customerSearch="customerSearch" :show-customer-suggestions="showCustomerSuggestions"
-                        :customer-results="customerResults" :is-giao-hang="isGiaoHang"
-                        v-model:recipientName="recipientName" v-model:recipientPhone="recipientPhone"
-                        v-model:recipientAddressDetail="recipientAddressDetail"
-                        v-model:recipientProvince="recipientProvince" v-model:recipientDistrict="recipientDistrict"
-                        v-model:recipientWard="recipientWard" :provinces-ship="provincesShip"
-                        :districts-ship="districtsShip" :wards-ship="wardsShip" @remove-customer="onRemoveCustomer"
-                        @update:showCustomerSuggestions="val => showCustomerSuggestions = val"
-                        @select-suggested-customer="onSelectSuggestedCustomer" />
+                    <CustomerAndShippingPanel :order="selectedOrder" :is-giao-hang="isGiaoHang"
+                        :initial-customer-form="customerForm"
+                        :initial-shipping="{
+                            name: recipientName,
+                            phone: recipientPhone,
+                            detail: recipientAddressDetail,
+                            province: recipientProvince,
+                            district: recipientDistrict,
+                            ward: recipientWard
+                        }"
+                        @remove-customer="onRemoveCustomer"
+                        @set-customer="onSelectSuggestedCustomer"
+                        @update:customer-form="onCustomerFormUpdate"
+                        @update:shipping="onShippingPanelUpdate" />
 
                     <!-- Payment Card -->
                     <PaymentPanel v-model:paymentMethod="checkoutData.paymentMethod"

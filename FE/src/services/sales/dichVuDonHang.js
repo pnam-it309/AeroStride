@@ -22,11 +22,15 @@ export const dichVuDonHang = {
 
     // Tìm kiếm sản phẩm
     async searchSanPham(params = {}) {
+        // Cho phép truyền trực tiếp chuỗi mã quét QR/barcode hoặc object bộ lọc.
+        // Nếu không chuẩn hóa ở đây, Object.keys("SP001") sẽ biến thành key 0,1,2... và API không nhận được keyword.
+        const normalizedParams = typeof params === 'string' ? { keyword: params } : (params || {});
+
         // params: { keyword, thuongHieu, chatLieu, xuatXu, mucDich }
         // Clean params (remove 'ALL' or empty strings)
-        const cleanParams = Object.keys(params).reduce((acc, key) => {
-            if (params[key] && params[key] !== 'ALL') {
-                acc[key] = params[key];
+        const cleanParams = Object.keys(normalizedParams).reduce((acc, key) => {
+            if (normalizedParams[key] && normalizedParams[key] !== 'ALL') {
+                acc[key] = normalizedParams[key];
             }
             return acc;
         }, {});

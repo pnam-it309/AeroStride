@@ -20,7 +20,7 @@ const handleSave = () => emit('save');
 const updateFormField = (field, value) => {
     const updatedForm = { ...props.form, [field]: value };
 
-    // Auto-detect color name/hex if in colors tab
+    // Tự động đồng bộ tên màu và mã hex khi quản lý màu sắc.
     if (props.selectedTab === 'colors') {
         if (field === 'ten') {
             const hex = getColorHexByName(value);
@@ -33,6 +33,13 @@ const updateFormField = (field, value) => {
                 updatedForm.ten = name;
             }
         }
+    }
+
+    // Kích thước có 2 trường tên và giá trị số; nhập ô nào cũng đồng bộ về cùng một số.
+    if (props.selectedTab === 'sizes' && (field === 'ten' || field === 'giaTriKichThuoc')) {
+        const numericSize = String(value || '').replace(/[^0-9]/g, '');
+        updatedForm.ten = numericSize;
+        updatedForm.giaTriKichThuoc = numericSize;
     }
 
     emit('update:form', updatedForm);
@@ -69,7 +76,7 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                                     @update:model-value="updateFormField('ten', selectedTab === 'sizes' ? String($event || '').replace(/[^0-9]/g, '') : $event)"
                                     placeholder="Nhập tên..."
                                     variant="outlined" density="compact" hide-details autofocus maxlength="250"
-                                    class="modern-input" :type="selectedTab === 'sizes' ? 'number' : 'text'" min="0"></v-text-field>
+                                    class="modern-input" type="text" min="0"></v-text-field>
                             </div>
 
                             <!-- Color Specific -->

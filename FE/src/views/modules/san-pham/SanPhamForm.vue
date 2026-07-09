@@ -47,6 +47,9 @@ const { addNotification } = useNotifications();
 
 const MIN_VARIANT_PRICE = 0;
 const DEFAULT_MAX_VARIANT_PRICE = 100000000;
+// Cho phép tạo sản phẩm mới có cùng bộ thuộc tính với sản phẩm cũ.
+// Các mẫu giày theo năm có thể giống thương hiệu/chất liệu/đế/cổ/mục đích nhưng khác tên và biến thể.
+const DUPLICATE_ATTRIBUTE_CHECK_ENABLED = false;
 
 const loading = ref(false);
 const saving = ref(false);
@@ -1852,7 +1855,7 @@ const handleSave = async () => {
     const creatingNew = !isEditMode.value;
     const variantCount = variantItems.value.length;
 
-    if (creatingNew) {
+    if (creatingNew && DUPLICATE_ATTRIBUTE_CHECK_ENABLED) {
         try {
             const payload = {
                 idThuongHieu: product.value.idThuongHieu,
