@@ -1,3 +1,12 @@
+## [1.27.1](https://github.com/pnam-it309/AeroStride/compare/v1.27.0...v1.27.1) (2026-07-11)
+
+
+### Bug Fixes
+
+* ban hang qr and product attribute flows ([7d3e571](https://github.com/pnam-it309/AeroStride/commit/7d3e5711499f8df8fc8c260faab3e16b7f1caf5f))
+* open sales qr camera directly ([09bc2d3](https://github.com/pnam-it309/AeroStride/commit/09bc2d33689c75be9e1a10ac1ec14203ef0bdd3c))
+* use active order for sales qr scan ([37f78a9](https://github.com/pnam-it309/AeroStride/commit/37f78a99f00c15d3c74e96d3fd5d8d16d604c245))
+
 # [1.27.0](https://github.com/pnam-it309/AeroStride/compare/v1.26.5...v1.27.0) (2026-07-09)
 
 
