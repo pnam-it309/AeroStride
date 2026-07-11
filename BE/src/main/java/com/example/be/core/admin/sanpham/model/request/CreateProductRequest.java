@@ -44,7 +44,7 @@ public class CreateProductRequest {
     @NotNull(message = "gioiTinhKhachHang khong duoc de trong")
     private GioiTinhKhachHang gioiTinhKhachHang;
 
-    @Size(max = 1000, message = "hinhAnh khong duoc vuot qua 1000 ky tu")
+    // Anh san pham co the la base64 data URL nen khong gioi han 1000 ky tu.
     private String hinhAnh;
 
 

@@ -22,7 +22,7 @@ public class AnhChiTietSanPham extends PrimaryEntity {
     private ChiTietSanPham chiTietSanPham;
 
     @Lob
-    @Column(name = "duong_dan_anh")
+    @Column(name = "duong_dan_anh", columnDefinition = "LONGTEXT")
     private String duongDanAnh;
 
     @Column(name = "hinh_anh_dai_dien")
