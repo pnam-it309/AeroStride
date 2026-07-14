@@ -56,7 +56,7 @@ public class SanPham extends BaseCodeNameEntity {
     private GioiTinhKhachHang gioiTinhKhachHang;
 
     @Lob
-    @Column(name = "hinh_anh")
+    @Column(name = "hinh_anh", columnDefinition = "LONGTEXT")
     private String hinhAnh;
 
     @Column(name = "mo_ta_chi_tiet")
