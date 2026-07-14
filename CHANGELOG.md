@@ -1,3 +1,11 @@
+## [1.27.2](https://github.com/pnam-it309/AeroStride/compare/v1.27.1...v1.27.2) (2026-07-14)
+
+
+### Bug Fixes
+
+* design UI bán hàng ([35172e8](https://github.com/pnam-it309/AeroStride/commit/35172e81d10c663c5bd80c52a8535da07821ad11))
+* hien thi o input, button, khung ([ad0bd08](https://github.com/pnam-it309/AeroStride/commit/ad0bd08792680a7a0f262d6e921c3b0cd2747f61))
+
 ## [1.27.1](https://github.com/pnam-it309/AeroStride/compare/v1.27.0...v1.27.1) (2026-07-11)
 
 
