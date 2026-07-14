@@ -241,6 +241,7 @@ onMounted(() => taiDanhSachPhieuGiamGia());
                         { title: 'Công khai', value: 'CONG_KHAI' },
                         { title: 'Cá nhân', value: 'CA_NHAN' }
                     ]" variant="outlined" density="compact" hide-details class="compact-input"
+                        :menu-props="{ contentClass: 'voucher-select-menu' }"
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
                 <v-col cols="6" sm="3" md="2" class="filter-cell">
@@ -251,6 +252,7 @@ onMounted(() => taiDanhSachPhieuGiamGia());
                         { title: 'Sắp diễn ra', value: 'SAP_DIEN_RA' },
                         { title: 'Đã kết thúc', value: 'DA_KET_THUC' }
                     ]" variant="outlined" density="compact" hide-details class="compact-input"
+                        :menu-props="{ contentClass: 'voucher-select-menu' }"
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
                 <v-col cols="12" md="2" class="filter-cell">
@@ -380,3 +382,21 @@ onMounted(() => taiDanhSachPhieuGiamGia());
             @cancel="handleConfirm(false)" />
     </v-container>
 </template>
+
+<style scoped>
+:deep(.compact-input) .v-field__input,
+:deep(.compact-input) input,
+:deep(.compact-input) input::placeholder,
+:deep(.compact-input) .v-select__selection-text {
+    font-size: 13px !important;
+}
+
+.filter-field-label {
+    font-size: 13px !important;
+}
+
+:global(.voucher-select-menu .v-list-item-title),
+:global(.voucher-select-menu .v-list-item) {
+    font-size: 13px !important;
+}
+</style>

@@ -214,6 +214,7 @@ onMounted(() => loadCampaigns());
                         { title: 'Sắp diễn ra', value: 'SAP_DIEN_RA' },
                         { title: 'Đã kết thúc', value: 'DA_KET_THUC' }
                     ]" variant="outlined" density="compact" hide-details class="compact-input"
+                        :menu-props="{ contentClass: 'campaign-select-menu' }"
                         @update:model-value="handleSearch"></v-select>
                 </v-col>
 
@@ -324,4 +325,25 @@ onMounted(() => loadCampaigns());
 
 <style scoped>
 /* All styles migrated to _admin-common.scss under .admin-module-page */
+
+:deep(.v-field__input),
+:deep(input),
+:deep(input::placeholder),
+:deep(textarea),
+:deep(.v-select__selection-text) {
+    font-size: 13px !important;
+}
+
+:deep(.v-field__input::placeholder) {
+    font-size: 13px !important;
+}
+
+.filter-field-label {
+    font-size: 13px !important;
+}
+
+:global(.campaign-select-menu .v-list-item-title),
+:global(.campaign-select-menu .v-list-item) {
+    font-size: 13px !important;
+}
 </style>

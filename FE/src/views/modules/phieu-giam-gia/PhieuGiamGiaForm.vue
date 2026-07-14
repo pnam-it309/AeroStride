@@ -399,7 +399,7 @@ onMounted(init);
             </div>
             <div class="d-flex gap-3">
                 <v-btn v-if="!isViewOnly" color="primary" variant="flat"
-                    class="text-none px-8 rounded-lg h-11 elevation-4" @click="handleSave" :loading="saving">
+                    class="text-none px-8 voucher-submit-btn elevation-4" @click="handleSave" :loading="saving">
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
                     {{ submitButtonText }}
                 </v-btn>
@@ -661,4 +661,33 @@ onMounted(init);
 
 <style scoped>
 /* All styles migrated to _admin-common.scss under .admin-module-page */
+
+:deep(.v-field),
+:deep(.v-field__outline) {
+    border-radius: 12px !important;
+}
+
+:deep(.v-field__input),
+:deep(input),
+:deep(input::placeholder),
+:deep(textarea),
+:deep(.v-select__selection-text),
+:deep(.v-label) {
+    font-size: 13px !important;
+}
+
+:deep(.v-field__input::placeholder) {
+    font-size: 13px !important;
+}
+
+:global(.voucher-select-menu .v-list-item-title),
+:global(.voucher-select-menu .v-list-item) {
+    font-size: 13px !important;
+}
+
+.voucher-submit-btn {
+    border-radius: 16px !important;
+    font-size: 13px !important;
+    height: 44px !important;
+}
 </style>

@@ -253,4 +253,33 @@ onMounted(() => {
     </v-container>
 </template>
 
-<style scoped></style>
+<style scoped>
+:deep(.v-field),
+:deep(.v-field__outline) {
+    border-radius: 12px !important;
+}
+
+:deep(.v-field__input),
+:deep(input),
+:deep(input::placeholder),
+:deep(textarea),
+:deep(.v-select__selection-text),
+:deep(.v-label) {
+    font-size: 13px !important;
+}
+
+:deep(.v-field__input::placeholder) {
+    font-size: 13px !important;
+}
+
+.filter-field-label,
+.field-label,
+.field-label-small {
+    font-size: 13px !important;
+}
+
+:global(.v-overlay-container .v-list-item-title),
+:global(.v-overlay-container .v-list-item) {
+    font-size: 13px !important;
+}
+</style>

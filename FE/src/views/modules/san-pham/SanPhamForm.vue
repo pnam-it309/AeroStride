@@ -1900,12 +1900,12 @@ const handleSave = async () => {
             <div class="d-flex align-center gap-3 header-actions__buttons">
                 <v-btn v-if="isEditMode" variant="outlined" color="primary"
                     class="text-none px-6"
-                    style="border-radius: 18px !important; height: 44px !important; font-size: 16px !important; font-weight: 600 !important;"
+                    style="border-radius: 12px !important; height: 44px !important; font-size: 13px !important; font-weight: 600 !important;"
                     @click="router.push({ name: 'BienTheSanPham', query: { productId: route.params.id } })">
                     <BoxIcon size="18" class="mr-2" /> Quản lý biến thể
                 </v-btn>
                 <v-btn variant="flat"
-                    class="add-btn-primary text-none font-weight-medium px-8 h-11" :loading="saving"
+                    class="add-btn-primary text-none font-weight-medium px-8" :loading="saving"
                     @click="handleSave">
                     <DeviceFloppyIcon size="18" class="mr-2" />
                     {{ submitButtonText }}
@@ -2777,5 +2777,11 @@ const handleSave = async () => {
 :global(.product-select-menu .v-list-item-title),
 :global(.product-select-menu .v-list-item) {
     font-size: 13px !important;
+}
+
+.add-btn-primary {
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    height: 44px !important;
 }
 </style>

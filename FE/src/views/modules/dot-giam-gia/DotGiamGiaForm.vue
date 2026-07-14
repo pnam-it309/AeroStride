@@ -368,7 +368,7 @@ const init = async () => {
             maSanPham: p.maSanPham || p.sanPhamMa || p.maSp || p.maChiTietSanPham || p.ma,
             tenSanPham: p.tenSanPham || p.tenSanPhamDayDu || p.ten,
             tenSanPhamDayDu: p.tenSanPhamDayDu || p.tenSanPham || p.ten,
-            anhMauc: p.anhMauc || (p.images?.length > 0 ? p.images[0].duongDanAnh : null) || p.urlAnh || 'https://via.placeholder.com/40',
+            anhMauc: p.hinhAnh || p.urlAnh || p.anhMauc || (p.images?.length > 0 ? p.images[0].duongDanAnh : null) || p.anh || p.duongDanAnh || p.imageUrl || 'https://via.placeholder.com/40',
             color: p.tenMauSac || p.color || '--',
             kichCo: p.tenKichThuoc || p.kichCo || '--',
             thuongHieu: p.sanPham?.thuongHieu?.ten || p.tenThuongHieu || p.thuongHieu || '--',
@@ -548,7 +548,7 @@ onMounted(init);
             </div>
             <div class="d-flex gap-3">
                 <v-btn v-if="!isDetailView" color="primary" variant="flat"
-                    class="text-none px-8 rounded-lg h-11 elevation-4" @click="handleSave" :loading="saving">
+                    class="text-none px-8 campaign-submit-btn elevation-4" @click="handleSave" :loading="saving">
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
                     {{ submitButtonText }}
                 </v-btn>
@@ -578,7 +578,7 @@ onMounted(init);
                             <div class="mb-5">
                                 <div class="field-label">Mã đợt giảm giá</div>
                                 <v-text-field v-model="form.ma" readonly placeholder="Mã tự sinh..." variant="outlined"
-                                    density="comfortable" class="bg-slate-50 mono-font" hide-details></v-text-field>
+                                    density="compact" class="bg-slate-50 mono-font" hide-details></v-text-field>
                             </div>
 
                             <div class="mb-5">
@@ -590,7 +590,7 @@ onMounted(init);
                                         (v) => (v && /^[\p{L}0-9\s]+$/u.test(v)) || 'Không được chứa ký tự đặc biệt',
                                         (v) => (v && v.length <= 255) || 'Không vượt quá 255 ký tự'
                                     ]"
-                                    placeholder="Nhập tên đợt giảm giá" variant="outlined" density="comfortable"
+                                    placeholder="Nhập tên đợt giảm giá" variant="outlined" density="compact"
                                     hide-details="auto"></v-text-field>
                             </div>
 
@@ -599,7 +599,7 @@ onMounted(init);
                                 <v-text-field :model-value="form.soTienGiam" 
                                     @update:model-value="val => { let v = Number(val); form.soTienGiam = isNaN(v) ? null : (v < 0 ? 0 : (v > 100 ? 100 : v)) }" 
                                     :readonly="isDetailView" type="number"
-                                    suffix="%" placeholder="0" variant="outlined" density="comfortable"
+                                    suffix="%" placeholder="0" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </div>
 
@@ -630,14 +630,16 @@ onMounted(init);
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách sản phẩm</span>
                         </div>
 
-                        <AdminFilter title="Tìm kiếm sản phẩm" class="mx-n4 bg-transparent" @refresh="handleRefreshSearch">
-                            <v-col cols="12" sm="4">
-                                <div class="field-label-small mb-1">Tìm kiếm sản phẩm</div>
-                                <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
-                                    placeholder="Tìm theo tên hoặc mã SKU..." variant="outlined" density="compact"
-                                    hide-details class="compact-input"></v-text-field>
-                            </v-col>
-                        </AdminFilter>
+                        <div class="d-flex align-center gap-3 mb-4 mt-2">
+                            <span class="text-slate-800 text-no-wrap" style="font-size: 14px;">Tìm kiếm sản phẩm</span>
+                            <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
+                                placeholder="Tìm theo tên hoặc mã SKU..." variant="outlined" density="compact"
+                                hide-details class="compact-input flex-grow-1"></v-text-field>
+                            <v-btn variant="outlined" color="primary" class="reset-btn" @click="handleRefreshSearch">
+                                <v-icon size="18">mdi-refresh</v-icon>
+                                <v-tooltip activator="parent" location="top">Làm mới bộ lọc</v-tooltip>
+                            </v-btn>
+                        </div>
 
                         <div class="table-wrapper border rounded-lg overflow-y-auto mt-4" style="height: 380px">
                             <table class="native-admin-table">
@@ -696,18 +698,20 @@ onMounted(init);
                                                 </div>
                                             </td>
                                             <td class="data-cell text-center text-slate-500 font-weight-medium">
-                                                <span class="text-slate-300 font-weight-bold mr-1">↳</span> {{
-                                                    variant.ma }}
+                                                {{ variant.ma }}
                                             </td>
                                             <td class="data-cell text-center text-slate-500">
                                                 {{ variant.color }} - {{ variant.kichCo }} - {{ variant.chatLieu }}
                                             </td>
                                         </tr>
                                     </template>
-                                    <TableEmptyState v-if="filteredProductsToSelect.length === 0" :colspan="4"
-                                        text="Không tìm thấy sản phẩm nào." />
                                 </tbody>
                             </table>
+
+                            <div v-if="filteredProductsToSelect.length === 0" class="d-flex flex-column align-center justify-center py-12 bg-slate-50/30 rounded-lg mx-4 my-2 border-t">
+                                <v-icon icon="mdi-package-variant" size="48" style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
+                                <span class="text-slate-500 text-center" style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block;">Không tìm thấy sản phẩm nào.</span>
+                            </div>
                         </div>
 
                         <AdminPagination v-model="selectionPage" :page-size="selectionPageSize"
@@ -754,24 +758,28 @@ onMounted(init);
                                 <div class="field-label-small mb-1">Thương hiệu</div>
                                 <v-select v-model="detailFilters.thuongHieu" :items="brands" density="compact"
                                     variant="outlined" hide-details clearable placeholder="Thương hiệu"
+                                    :menu-props="{ contentClass: 'campaign-select-menu' }"
                                     class="compact-input"></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Chất liệu</div>
                                 <v-select v-model="detailFilters.chatLieu" :items="materials" density="compact"
                                     variant="outlined" hide-details clearable placeholder="Chất liệu"
+                                    :menu-props="{ contentClass: 'campaign-select-menu' }"
                                     class="compact-input"></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Kích cỡ</div>
                                 <v-select v-model="detailFilters.kichCo" :items="sizes" density="compact"
                                     variant="outlined" hide-details clearable placeholder="Kích cỡ"
+                                    :menu-props="{ contentClass: 'campaign-select-menu' }"
                                     class="compact-input"></v-select>
                             </v-col>
                             <v-col cols="12" sm="2">
                                 <div class="field-label-small mb-1">Màu sắc</div>
                                 <v-select v-model="detailFilters.mauSac" :items="colors" density="compact"
                                     variant="outlined" hide-details clearable placeholder="Màu sắc"
+                                    :menu-props="{ contentClass: 'campaign-select-menu' }"
                                     class="compact-input"></v-select>
                             </v-col>
 
@@ -878,10 +886,13 @@ onMounted(init);
                                             </div>
                                         </td>
                                     </tr>
-                                    <TableEmptyState v-if="filteredSelectedDetails.length === 0" :colspan="10"
-                                        text="Không tìm thấy sản phẩm nào phù hợp." />
                                 </tbody>
                             </table>
+
+                            <div v-if="filteredSelectedDetails.length === 0" class="d-flex flex-column align-center justify-center py-12 bg-slate-50/30 rounded-lg mx-4 my-2 border-t">
+                                <v-icon icon="mdi-package-variant" size="48" style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
+                                <span class="text-slate-500 text-center" style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block;">Không tìm thấy sản phẩm nào phù hợp.</span>
+                            </div>
                         </div>
 
                         <AdminPagination v-model="bottomPage" :page-size="bottomPageSize"
@@ -899,5 +910,49 @@ onMounted(init);
 
 <style scoped>
 /* All styles migrated to _admin-common.scss under .admin-module-page */
+
+:deep(.v-field),
+:deep(.v-field__outline) {
+    border-radius: 12px !important;
+}
+
+:deep(.v-field__input),
+:deep(input),
+:deep(input::placeholder),
+:deep(textarea),
+:deep(.v-select__selection-text),
+:deep(.v-label) {
+    font-size: 13px !important;
+}
+
+:deep(.v-field__input::placeholder) {
+    font-size: 13px !important;
+}
+
+.field-label,
+.field-label-small {
+    font-size: 13px !important;
+}
+
+:global(.campaign-select-menu .v-list-item-title),
+:global(.campaign-select-menu .v-list-item) {
+    font-size: 13px !important;
+}
+
+.campaign-submit-btn {
+    border-radius: 16px !important;
+    font-size: 13px !important;
+    height: 44px !important;
+}
+
+.discount-badge {
+    font-size: 9px !important;
+    font-weight: 500 !important;
+    padding: 1px 4px !important;
+    border-radius: 4px !important;
+    top: -4px !important;
+    right: -4px !important;
+    left: auto !important;
+}
 </style>
 
