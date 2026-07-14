@@ -18,13 +18,17 @@
     flex-direction: column;
     padding: 16px;
     height: 100%;
+    overflow: hidden;
+    /* Prevent page-level scrollbars */
 }
 
 .pos-grid {
     flex: 1;
     min-height: 0;
-    height: 100%;
+    height: calc(100% - 48px);
+    /* subtracts header height to prevent vertical overflow */
     margin: 0 !important;
+    overflow: hidden;
 }
 
 .pos-header-row {
@@ -33,24 +37,25 @@
 
 .pos-card {
     background: #ffffff;
-    border: 1px solid #dfe5ee !important;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
-    border-radius: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.04), 0 4px 6px -4px rgba(15, 23, 42, 0.04) !important;
+    border-radius: 24px !important;
 }
 
-.compact-select :deep(.v-field__input) {
+:deep(.compact-select) .v-field__input {
     padding-top: 6px !important;
     padding-bottom: 6px !important;
     min-height: 32px !important;
     font-size: 13px !important;
 }
 
-.compact-select :deep(input::placeholder) {
+:deep(.compact-select) input::placeholder {
     line-height: normal !important;
 }
 
-.compact-select :deep(.v-field) {
+:deep(.compact-select) .v-field {
     border-radius: 8px !important;
+    overflow: hidden !important;
     --v-input-control-height: 32px !important;
     font-size: 13px !important;
     background-color: #ffffff !important;
@@ -58,18 +63,18 @@
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.compact-select :deep(.v-field--focused) {
-    border-color: #4285F4 !important;
+:deep(.compact-select) .v-field--focused {
+    border-color: #27487e !important;
     box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
-.compact-select :deep(.v-field__outline) {
+:deep(.compact-select) .v-field__outline {
     display: none !important;
 }
 
 .compact-btn {
     height: 32px !important;
-    border-radius: 8px !important;
+    border-radius: 16px !important;
     font-size: 13px !important;
     border: 1px solid #dfe5ee !important;
     background: #ffffff !important;
@@ -92,8 +97,9 @@
     border-radius: 6px !important;
 }
 
-.search-input :deep(.v-field) {
+:deep(.search-input) .v-field {
     border-radius: 8px !important;
+    overflow: hidden !important;
     --v-input-control-height: 32px !important;
     font-size: 13px !important;
     border: 1px solid #cbd5e1 !important;
@@ -101,23 +107,23 @@
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.search-input :deep(.v-field__input) {
+:deep(.search-input) .v-field__input {
     padding-top: 6px !important;
     padding-bottom: 6px !important;
     min-height: 32px !important;
     font-size: 13px !important;
 }
 
-.search-input :deep(.v-field--focused) {
-    border-color: #4285F4 !important;
+:deep(.search-input) .v-field--focused {
+    border-color: #27487e !important;
     box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
-.search-input :deep(.v-field__outline) {
+:deep(.search-input) .v-field__outline {
     display: none !important;
 }
 
-.scanner-btn {
+:deep(.scanner-btn) {
     border-radius: 8px !important;
     height: 32px !important;
 }
@@ -148,45 +154,47 @@
 .cart-container-box {
     background-color: #ffffff;
     min-height: 200px;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
 }
 
 .text-right-input :deep(input) {
     text-align: right !important;
 }
 
-.text-right-input :deep(.v-field) {
+:deep(.text-right-input) .v-field {
     border-radius: 8px !important;
+    overflow: hidden !important;
     font-size: 13px !important;
     border: 1px solid #cbd5e1 !important;
     background-color: #ffffff !important;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.text-right-input :deep(.v-field--focused) {
-    border-color: #4285F4 !important;
+:deep(.text-right-input) .v-field--focused {
+    border-color: #27487e !important;
     box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
-.text-right-input :deep(.v-field__outline) {
+:deep(.text-right-input) .v-field__outline {
     display: none !important;
 }
 
-.custom-value-input :deep(.v-field) {
+:deep(.custom-value-input) .v-field {
     background-color: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     box-shadow: none !important;
     border-radius: 8px !important;
+    overflow: hidden !important;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.custom-value-input :deep(.v-field--focused) {
-    border-color: #4285F4 !important;
+:deep(.custom-value-input) .v-field--focused {
+    border-color: #27487e !important;
     box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
-.custom-value-input :deep(.v-field__outline) {
+:deep(.custom-value-input) .v-field__outline {
     display: none !important;
 }
 
@@ -271,19 +279,20 @@
     text-transform: none !important;
 }
 
-.note-textarea :deep(.v-field) {
+:deep(.note-textarea) .v-field {
     border-radius: 8px !important;
+    overflow: hidden !important;
     border: 1px solid #cbd5e1 !important;
     background-color: #ffffff !important;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.note-textarea :deep(.v-field--focused) {
-    border-color: #4285F4 !important;
+:deep(.note-textarea) .v-field--focused {
+    border-color: #27487e !important;
     box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
-.note-textarea :deep(.v-field__outline) {
+:deep(.note-textarea) .v-field__outline {
     display: none !important;
 }
 
@@ -434,25 +443,26 @@
 }
 
 /* Styled input fields for customer card */
-.dim-input-field :deep(.v-field) {
+:deep(.dim-input-field) .v-field {
     background-color: #ffffff !important;
     border-radius: 8px !important;
+    overflow: hidden !important;
     --v-input-control-height: 32px !important;
     font-size: 13px !important;
     border: 1px solid #cbd5e1 !important;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.dim-input-field :deep(.v-field--focused) {
-    border-color: #4285F4 !important;
+:deep(.dim-input-field) .v-field--focused {
+    border-color: #27487e !important;
     box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
-.dim-input-field :deep(.v-field__outline) {
+:deep(.dim-input-field) .v-field__outline {
     display: none !important;
 }
 
-.dim-input-field :deep(.v-field__input) {
+:deep(.dim-input-field) .v-field__input {
     padding-top: 2px !important;
     padding-bottom: 2px !important;
     min-height: 32px !important;
@@ -509,25 +519,26 @@
 }
 
 /* Styled select field for delivery card */
-.dim-select-field :deep(.v-field) {
+:deep(.dim-select-field) .v-field {
     background-color: #ffffff !important;
     border-radius: 8px !important;
+    overflow: hidden !important;
     --v-input-control-height: 32px !important;
     font-size: 13px !important;
     border: 1px solid #cbd5e1 !important;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.dim-select-field :deep(.v-field--focused) {
-    border-color: #4285F4 !important;
+:deep(.dim-select-field) .v-field--focused {
+    border-color: #27487e !important;
     box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.15) !important;
 }
 
-.dim-select-field :deep(.v-field__outline) {
+:deep(.dim-select-field) .v-field__outline {
     display: none !important;
 }
 
-.dim-select-field :deep(.v-field__input) {
+:deep(.dim-select-field) .v-field__input {
     padding-top: 2px !important;
     padding-bottom: 2px !important;
     min-height: 32px !important;

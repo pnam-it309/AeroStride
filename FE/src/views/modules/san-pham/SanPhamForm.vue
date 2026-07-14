@@ -945,7 +945,7 @@ const handleExportVariantQrZip = async () => {
     if (!targetVariants.length) {
         addNotification({
             title: 'Thông báo',
-            subtitle: 'Chọn ít nhất 1 biến thể để xuất ZIP QR',
+            subtitle: 'Chọn ít nhất 1 biến thể để tải mã QR',
             color: 'warning'
         });
         return;
@@ -1897,14 +1897,15 @@ const handleSave = async () => {
                     <v-tooltip activator="parent" location="top" text="Quay lại danh sách sản phẩm" />
                 </v-btn>
             </div>
-            <div class="d-flex gap-3 header-actions__buttons">
+            <div class="d-flex align-center gap-3 header-actions__buttons">
                 <v-btn v-if="isEditMode" variant="outlined" color="primary"
-                    class="text-none font-weight-bold px-6 rounded-lg h-11 border-2"
+                    class="text-none px-6"
+                    style="border-radius: 18px !important; height: 44px !important; font-size: 16px !important; font-weight: 600 !important;"
                     @click="router.push({ name: 'BienTheSanPham', query: { productId: route.params.id } })">
                     <BoxIcon size="18" class="mr-2" /> Quản lý biến thể
                 </v-btn>
-                <v-btn color="primary" variant="flat"
-                    class="text-none font-weight-medium px-8 rounded-lg h-11 elevation-4" :loading="saving"
+                <v-btn variant="flat"
+                    class="add-btn-primary text-none font-weight-medium px-8 h-11" :loading="saving"
                     @click="handleSave">
                     <DeviceFloppyIcon size="18" class="mr-2" />
                     {{ submitButtonText }}
@@ -1945,7 +1946,7 @@ const handleSave = async () => {
                                     placeholder="Ví dụ: Giày Nike Air..."
                                     :rules="[rules.required, rules.noSpecialChar, rules.uniqueProductName]"
                                     variant="outlined" density="comfortable" hide-details="auto" maxlength="250"
-                                    :return-object="false"></v-combobox>
+                                    :return-object="false" :menu-props="{ contentClass: 'product-select-menu' }"></v-combobox>
                                 <v-alert v-if="tenError" type="error" variant="tonal" density="compact"
                                     class="mt-2 text-caption">
                                     {{ tenError }}
@@ -1964,7 +1965,8 @@ const handleSave = async () => {
                                     item-title="ten" item-value="id" :rules="[rules.required]"
                                     placeholder="Thương hiệu..." variant="outlined" density="comfortable"
                                     :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"
-                                    @update:model-value="(val) => handleAttributeChange('idThuongHieu', val)">
+                                    @update:model-value="(val) => handleAttributeChange('idThuongHieu', val)"
+                                    :menu-props="{ contentClass: 'product-select-menu' }">
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
@@ -1985,7 +1987,8 @@ const handleSave = async () => {
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Xuất xứ"
                                     variant="outlined" density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"
-                                    @update:model-value="(val) => handleAttributeChange('idXuatXu', val)">
+                                    @update:model-value="(val) => handleAttributeChange('idXuatXu', val)"
+                                    :menu-props="{ contentClass: 'product-select-menu' }">
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
@@ -2003,7 +2006,8 @@ const handleSave = async () => {
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Chất liệu"
                                     variant="outlined" density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"
-                                    @update:model-value="(val) => handleAttributeChange('idChatLieu', val)">
+                                    @update:model-value="(val) => handleAttributeChange('idChatLieu', val)"
+                                    :menu-props="{ contentClass: 'product-select-menu' }">
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
@@ -2019,7 +2023,7 @@ const handleSave = async () => {
                                 <v-select v-model="product.gioiTinhKhachHang"
                                     :items="[{ title: 'Nam', value: 'NAM' }, { title: 'Nữ', value: 'NU' }, { title: 'Unisex', value: 'UNISEX' }]"
                                     :rules="[rules.required]" clearable variant="outlined" density="comfortable"
-                                    placeholder="Đối tượng"></v-select>
+                                    placeholder="Đối tượng" :menu-props="{ contentClass: 'product-select-menu' }"></v-select>
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="field-label">Mục đích <span class="text-error">*</span></div>
@@ -2028,7 +2032,8 @@ const handleSave = async () => {
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Mục đích"
                                     variant="outlined" density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"
-                                    @update:model-value="(val) => handleAttributeChange('idMucDichChay', val)">
+                                    @update:model-value="(val) => handleAttributeChange('idMucDichChay', val)"
+                                    :menu-props="{ contentClass: 'product-select-menu' }">
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
@@ -2048,7 +2053,8 @@ const handleSave = async () => {
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Loại đế"
                                     variant="outlined" density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"
-                                    @update:model-value="(val) => handleAttributeChange('idDeGiay', val)">
+                                    @update:model-value="(val) => handleAttributeChange('idDeGiay', val)"
+                                    :menu-props="{ contentClass: 'product-select-menu' }">
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
@@ -2066,7 +2072,8 @@ const handleSave = async () => {
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Loại cổ"
                                     variant="outlined" density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"
-                                    @update:model-value="(val) => handleAttributeChange('idCoGiay', val)">
+                                    @update:model-value="(val) => handleAttributeChange('idCoGiay', val)"
+                                    :menu-props="{ contentClass: 'product-select-menu' }">
                                     <template #item="{ props, item }">
                                         <v-list-item v-bind="props">
                                             <template #append v-if="item.raw.isNew">
@@ -2487,13 +2494,7 @@ const handleSave = async () => {
 
                         <div v-if="variantItems.length > 0 && isEditMode" class="variant-filter-container mt-6">
                             <AdminFilter title="Bộ lọc nâng cao" @refresh="resetVariantTableFilters" :loading="loading">
-                                <v-col cols="12" sm="2">
-                                    <div class="variant-filter-label">Sản phẩm</div>
-                                    <v-text-field :model-value="variantFilterProductLabel" variant="outlined"
-                                        density="compact" hide-details readonly
-                                        class="variant-filter-input bg-slate-50" />
-                                </v-col>
-                                <v-col cols="12" sm="2">
+                                <v-col cols="12" sm="3">
                                     <div class="variant-filter-label">Tìm kiếm nhanh</div>
                                     <v-text-field v-model="variantTableFilters.keyword"
                                         placeholder="Mã SKU, màu, size..." prepend-inner-icon="mdi-magnify"
@@ -2501,18 +2502,24 @@ const handleSave = async () => {
                                         class="variant-filter-input" />
                                 </v-col>
                                 <v-col cols="12" sm="2">
+                                    <div class="variant-filter-label">Sản phẩm</div>
+                                    <v-text-field :model-value="variantFilterProductLabel" variant="outlined"
+                                        density="compact" hide-details readonly
+                                        class="variant-filter-input bg-slate-50" />
+                                </v-col>
+                                <v-col cols="12" sm="2">
                                     <div class="variant-filter-label">Màu sắc</div>
                                     <v-select v-model="variantTableFilters.mauSacId"
                                         :items="[{ title: 'Tất cả màu', value: '' }, ...colors.map((item) => ({ title: item.ten, value: item.id }))]"
                                         variant="outlined" density="compact" hide-details
-                                        class="variant-filter-input" />
+                                        class="variant-filter-input" :menu-props="{ contentClass: 'product-select-menu' }" />
                                 </v-col>
                                 <v-col cols="12" sm="2">
                                     <div class="variant-filter-label">Kích thước</div>
                                     <v-select v-model="variantTableFilters.kichThuocId"
                                         :items="[{ title: 'Tất cả size', value: '' }, ...sizes.map((item) => ({ title: item.ten, value: item.id }))]"
                                         variant="outlined" density="compact" hide-details
-                                        class="variant-filter-input" />
+                                        class="variant-filter-input" :menu-props="{ contentClass: 'product-select-menu' }" />
                                 </v-col>
                                 <v-col cols="12" sm="2">
                                     <div class="variant-filter-label">Trạng thái</div>
@@ -2521,7 +2528,7 @@ const handleSave = async () => {
                                         { title: 'Đang hoạt động', value: defaultVariantStatus },
                                         { title: 'Ngừng hoạt động', value: 'NGUNG_HOAT_DONG' }
                                     ]" variant="outlined" density="compact" hide-details
-                                        class="variant-filter-input" />
+                                        class="variant-filter-input" :menu-props="{ contentClass: 'product-select-menu' }" />
                                 </v-col>
 
                                 <template #after>
@@ -2755,4 +2762,20 @@ const handleSave = async () => {
 
 <style scoped lang="scss">
 @import '@/scss/pages/admin/_san-pham-form.scss';
+
+/* Style input text, placeholders and selections */
+:deep(.v-field__input),
+:deep(input),
+:deep(input::placeholder),
+:deep(textarea),
+:deep(textarea::placeholder),
+:deep(.v-select__selection-text) {
+    font-size: 13px !important;
+}
+
+/* Style select dropdown popover option list */
+:global(.product-select-menu .v-list-item-title),
+:global(.product-select-menu .v-list-item) {
+    font-size: 13px !important;
+}
 </style>

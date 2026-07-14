@@ -265,42 +265,42 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="d-flex flex-column gap-2 mb-3 bg-slate-50 pa-2 rounded-lg w-100">
+    <div class="d-flex flex-column gap-2 mb-3 bg-slate-50 pa-2 rounded-xl w-100">
         <!-- Hàng 1: Các Combobox lọc (CBO) lên trên -->
         <div class="d-flex align-center gap-2 flex-wrap">
             <!-- Thương hiệu -->
             <div style="min-width: 130px; flex: 1 1 130px;">
                 <v-select v-model="store.filterThuongHieu" :items="store.filterBrands" item-title="title"
                     item-value="value" density="compact" hide-details variant="outlined"
-                    bg-color="white" class="compact-select" @update:model-value="onFilterChange" />
+                    bg-color="white" class="compact-select" :menu-props="{ contentClass: 'pos-select-menu' }" @update:model-value="onFilterChange" />
             </div>
 
             <!-- Mục đích chạy -->
             <div style="min-width: 130px; flex: 1 1 130px;">
                 <v-select v-model="store.filterMucDich" :items="store.filterPurposes" item-title="title"
                     item-value="value" density="compact" hide-details variant="outlined"
-                    bg-color="white" class="compact-select" @update:model-value="onFilterChange" />
+                    bg-color="white" class="compact-select" :menu-props="{ contentClass: 'pos-select-menu' }" @update:model-value="onFilterChange" />
             </div>
 
             <!-- Khoảng giá -->
             <div style="min-width: 135px; flex: 1 1 135px;">
                 <v-select v-model="store.filterKhoangGia" :items="priceRangeOptions" item-title="title"
                     item-value="value" density="compact" hide-details variant="outlined"
-                    bg-color="white" class="compact-select" @update:model-value="onFilterChange" />
+                    bg-color="white" class="compact-select" :menu-props="{ contentClass: 'pos-select-menu' }" @update:model-value="onFilterChange" />
             </div>
 
             <!-- Màu sắc -->
             <div style="min-width: 110px; flex: 1 1 110px;">
                 <v-select v-model="store.filterMauSac" :items="store.filterColors" item-title="title"
                     item-value="value" density="compact" hide-details variant="outlined"
-                    bg-color="white" class="compact-select" @update:model-value="onFilterChange" />
+                    bg-color="white" class="compact-select" :menu-props="{ contentClass: 'pos-select-menu' }" @update:model-value="onFilterChange" />
             </div>
 
             <!-- Kích cỡ -->
             <div style="min-width: 110px; flex: 1 1 110px;">
                 <v-select v-model="store.filterKichCo" :items="store.filterSizes" item-title="title"
                     item-value="value" density="compact" hide-details variant="outlined"
-                    bg-color="white" class="compact-select" @update:model-value="onFilterChange" />
+                    bg-color="white" class="compact-select" :menu-props="{ contentClass: 'pos-select-menu' }" @update:model-value="onFilterChange" />
             </div>
         </div>
 

@@ -118,8 +118,8 @@ const handleDirectInput = (item, event) => {
                             </span>
                         </template>
                     </td>
-                    <td class="text-right font-weight-bold text-primary text-body-2"
-                        style="white-space: nowrap !important;">
+                    <td class="text-right font-weight-bold text-body-2"
+                        style="white-space: nowrap !important; color: #0c3866 !important; font-size: 13px !important;">
                         {{ formatCurrency(item.thanhTien) }}
                     </td>
                     <td class="text-center">
@@ -147,7 +147,7 @@ const handleDirectInput = (item, event) => {
     height: 100% !important;
     flex: 1;
     min-height: 0;
-    border-radius: 8px !important;
+    border-radius: 16px !important;
     background: transparent !important;
 }
 
@@ -212,13 +212,13 @@ const handleDirectInput = (item, event) => {
 }
 
 .pos-table :deep(thead th:first-child) {
-    border-top-left-radius: 8px !important;
-    border-bottom-left-radius: 8px !important;
+    border-top-left-radius: 12px !important;
+    border-bottom-left-radius: 12px !important;
 }
 
 .pos-table :deep(thead th:last-child) {
-    border-top-right-radius: 8px !important;
-    border-bottom-right-radius: 8px !important;
+    border-top-right-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
 }
 
 .pos-table :deep(tbody tr.item-row) {
@@ -247,14 +247,14 @@ const handleDirectInput = (item, event) => {
 
 .pos-table :deep(tbody td:first-child) {
     border-left: 1px solid #e2e8f0 !important;
-    border-top-left-radius: 8px !important;
-    border-bottom-left-radius: 8px !important;
+    border-top-left-radius: 12px !important;
+    border-bottom-left-radius: 12px !important;
 }
 
 .pos-table :deep(tbody td:last-child) {
     border-right: 1px solid #e2e8f0 !important;
-    border-top-right-radius: 8px !important;
-    border-bottom-right-radius: 8px !important;
+    border-top-right-radius: 12px !important;
+    border-bottom-right-radius: 12px !important;
 }
 
 .qty-input-table {

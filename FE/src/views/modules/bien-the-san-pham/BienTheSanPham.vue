@@ -487,7 +487,7 @@ const handleExportVariantQrZip = async () => {
     if (!selectedVariantIds.value.length) {
         addNotification({
             title: 'Thông báo',
-            subtitle: 'Chọn ít nhất 1 biến thể để xuất ZIP QR',
+            subtitle: 'Chọn ít nhất 1 biến thể để tải mã QR',
             color: 'warning'
         });
         return;
@@ -725,13 +725,6 @@ onMounted(async () => {
 
         <div class="filter-shell">
             <AdminFilter title="Bộ lọc nâng cao" @refresh="resetFilters" :loading="loading">
-                <v-col cols="12" md="2">
-                    <div class="filter-field-label">Sản phẩm</div>
-                    <v-autocomplete v-model="selectedProductId"
-                        :items="[{ tenSanPham: 'Tất cả sản phẩm', id: 'ALL' }, ...productOptions]"
-                        item-title="tenSanPham" item-value="id" variant="outlined" density="compact" hide-details
-                        class="compact-input" />
-                </v-col>
                 <v-col cols="12" md="3">
                     <div class="filter-field-label">Tìm kiếm nhanh</div>
                     <v-text-field v-model="filters.keyword" placeholder="Mã SKU, màu, size..."
@@ -739,25 +732,35 @@ onMounted(async () => {
                         class="compact-input" />
                 </v-col>
                 <v-col cols="12" md="2">
+                    <div class="filter-field-label">Sản phẩm</div>
+                    <v-autocomplete v-model="selectedProductId"
+                        :items="[{ tenSanPham: 'Tất cả sản phẩm', id: 'ALL' }, ...productOptions]"
+                        item-title="tenSanPham" item-value="id" variant="outlined" density="compact" hide-details
+                        class="compact-input" :menu-props="{ contentClass: 'product-select-menu' }" />
+                </v-col>
+                <v-col cols="12" md="2">
                     <div class="filter-field-label">Màu sắc</div>
                     <v-select v-model="filters.mauSacId" :items="[
                         { title: 'Tất cả màu', value: '' },
                         ...formOptions.mauSacs.map((mauSac) => ({ title: mauSac.ten, value: mauSac.id }))
-                    ]" variant="outlined" density="compact" hide-details class="compact-input" />
+                    ]" variant="outlined" density="compact" hide-details class="compact-input"
+                        :menu-props="{ contentClass: 'product-select-menu' }" />
                 </v-col>
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Kích thước</div>
                     <v-select v-model="filters.kichThuocId" :items="[
                         { title: 'Tất cả size', value: '' },
                         ...formOptions.kichThuocs.map((kichThuoc) => ({ title: kichThuoc.ten, value: kichThuoc.id }))
-                    ]" variant="outlined" density="compact" hide-details class="compact-input" />
+                    ]" variant="outlined" density="compact" hide-details class="compact-input"
+                        :menu-props="{ contentClass: 'product-select-menu' }" />
                 </v-col>
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select v-model="filters.trangThai" :items="[
                         { title: 'Tất cả trạng thái', value: '' },
                         ...formOptions.trangThais.map((trangThai) => ({ title: getStatusLabel(trangThai), value: trangThai }))
-                    ]" variant="outlined" density="compact" hide-details class="compact-input" />
+                    ]" variant="outlined" density="compact" hide-details class="compact-input"
+                        :menu-props="{ contentClass: 'product-select-menu' }" />
                 </v-col>
 
                 <template #after>
@@ -780,154 +783,153 @@ onMounted(async () => {
             </AdminFilter>
         </div>
 
-        <div class="flex-grow-1 min-h-0">
-            <AdminTable title="Danh mục biến thể" :headers="[
-                { text: 'Chọn', width: '40px' },
-                { text: 'STT', width: '50px' },
-                { text: 'Mã sản phẩm', width: '90px' },
-                { text: 'Hình ảnh', width: '70px' },
-                { text: 'Mã SKU', width: '90px' },
-                { text: 'Màu sắc', width: '90px' },
-                { text: 'Kích thước', width: '90px' },
-                { text: 'Số lượng', width: '80px' },
-                { text: 'Giá bán niêm yết', width: '120px' },
-                { text: 'Trạng thái', width: '120px' },
-                { text: 'Hành động', width: '160px' }
-            ]" :items="variants" :loading="loading"
-                :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'" addButtonText="Tạo mới"
-                @add="openCreateVariantModal" class="h-100 all-center-table">
+        <AdminTable title="Danh mục biến thể" :headers="[
+            { text: 'Chọn', width: '40px' },
+            { text: 'STT', width: '70px' },
+            { text: 'Mã sản phẩm', width: '100px' },
+            { text: 'Hình ảnh', width: '70px' },
+            { text: 'Mã SKU', width: '100px' },
+            { text: 'Màu sắc', width: '100px' },
+            { text: 'Kích thước', width: '100px' },
+            { text: 'Số lượng', width: '80px' },
+            { text: 'Giá bán', width: '120px' },
+            { text: 'Trạng thái', width: '120px' },
+            { text: 'Hành động', width: '160px' }
+        ]" :items="variants" :loading="loading"
+            :showAddButton="!!selectedProductId && selectedProductId !== 'ALL'" addButtonText="Tạo mới"
+            @add="openCreateVariantModal" class="all-center-table">
 
-                <template #extra-actions>
-                    <v-btn prepend-icon="mdi-qrcode" variant="flat" class="admin-btn-secondary"
-                        @click="handleExportVariantQrZip">
-                        Tải mã QR
-                        <v-tooltip activator="parent" location="top" text="Tải mã QR" />
-                    </v-btn>
+            <template #extra-actions>
+                <v-btn prepend-icon="mdi-qrcode" variant="flat" class="admin-btn-secondary"
+                    @click="handleExportVariantQrZip">
+                    Tải mã QR
+                    <v-tooltip activator="parent" location="top" text="Tải mã QR" />
+                </v-btn>
 
-                </template>
+            </template>
 
-                <template #headers>
-                    <tr>
-                        <th class="header-cell px-0" style="width: 50px; text-align: center;">
-                            <v-checkbox-btn :model-value="allVariantsSelected" :indeterminate="someVariantsSelected"
-                                color="primary" hide-details density="compact"
-                                style="margin: auto; display: inline-flex; width: auto;"
-                                @update:model-value="toggleSelectAllVariants" />
-                        </th>
-                        <th class="header-cell" style="width: 40px;">STT</th>
-                        <th class="header-cell" style="width: 90px;">Mã sản phẩm</th>
-                        <th class="header-cell" style="width: 100px;">Hình ảnh</th>
-                        <th class="header-cell" style="width: 90px;">Mã SKU</th>
-                        <th class="header-cell" style="width: 90px;">Màu sắc</th>
-                        <th class="header-cell" style="width: 90px;">Kích thước</th>
-                        <th class="header-cell" style="width: 80px;">Số lượng</th>
-                        <th class="header-cell" style="width: 120px;">Giá bán niêm yết</th>
-                        <th class="header-cell" style="width: 120px;">Trạng thái</th>
-                        <th class="header-cell" style="width: 120px;">Hành động</th>
-                    </tr>
-                </template>
+            <template #headers>
+                <tr>
+                    <th class="header-cell px-0" style="width: 50px; text-align: center;">
+                        <v-checkbox-btn :model-value="allVariantsSelected" :indeterminate="someVariantsSelected"
+                            color="primary" hide-details density="compact"
+                            style="margin: auto; display: inline-flex; width: auto;"
+                            @update:model-value="toggleSelectAllVariants" />
+                    </th>
+                    <th class="header-cell" style="width: 70px;">STT</th>
+                    <th class="header-cell" style="width: 100px;">Mã sản phẩm</th>
+                    <th class="header-cell" style="width: 100px;">Hình ảnh</th>
+                    <th class="header-cell" style="width: 100px;">Mã SKU</th>
+                    <th class="header-cell" style="width: 100px;">Màu sắc</th>
+                    <th class="header-cell" style="width: 100px;">Kích thước</th>
+                    <th class="header-cell" style="width: 80px;">Số lượng</th>
+                    <th class="header-cell" style="width: 120px;">Giá bán</th>
+                    <th class="header-cell" style="width: 120px;">Trạng thái</th>
+                    <th class="header-cell" style="width: 120px;">Hành động</th>
+                </tr>
+            </template>
 
-                <template #top>
-                    <div
-                        class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
-                        <div class="d-flex align-center flex-wrap gap-2">
-                            <span class="text-caption font-weight-medium text-slate-500">
-                                Đã chọn {{ selectedVariantIds.length }} biến thể
-                            </span>
-                        </div>
+            <template #top>
+                <div
+                    class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
+                    <div class="d-flex align-center flex-wrap gap-2">
+                        <span class="text-caption font-weight-medium text-slate-500">
+                            Đã chọn {{ selectedVariantIds.length }} biến thể
+                        </span>
                     </div>
-                </template>
+                </div>
+            </template>
 
-                <template #row="{ item, index }">
-                    <tr class="data-row">
-                        <td class="data-cell">
-                            <v-checkbox-btn :model-value="selectedVariantIds.includes(item.id)" color="primary"
-                                hide-details density="compact"
-                                @update:model-value="toggleVariantSelection(item.id, $event)" />
-                        </td>
-                        <td class="data-cell text-center">
-                            {{ (pagination.page - 1) * pagination.size + index + 1 }}
-                        </td>
-                        <td class="data-cell text-center">
-                            <div class="text-truncate" :title="getVariantProductCode(item)">{{
-                                getVariantProductCode(item) }}</div>
-                        </td>
-                        <td class="data-cell text-center">
-                            <div class="product-image-container d-inline-block position-relative">
-                                <v-avatar rounded="lg" size="44" class="border bg-slate-50 shadow-sm avatar-hover">
-                                    <SafeProductImage :src="getVariantThumbnail(item)" :fallback-src="logoPlaceholder"
-                                        :alt="item.maChiTietSanPham || 'variant-image'" />
-                                </v-avatar>
-                                <div v-if="item.phanTramGiam > 0" class="discount-badge">
-                                    -{{ Math.round(item.phanTramGiam) }}%
-                                </div>
+            <template #row="{ item, index }">
+                <tr class="data-row">
+                    <td class="data-cell px-0" style="width: 50px; text-align: center;">
+                        <v-checkbox-btn :model-value="selectedVariantIds.includes(item.id)" color="primary"
+                            hide-details density="compact"
+                            style="margin: auto; display: inline-flex; width: auto;"
+                            @update:model-value="toggleVariantSelection(item.id, $event)" />
+                    </td>
+                    <td class="data-cell text-center">
+                        {{ (pagination.page - 1) * pagination.size + index + 1 }}
+                    </td>
+                    <td class="data-cell text-center">
+                        <div class="text-truncate" :title="getVariantProductCode(item)">{{
+                            getVariantProductCode(item) }}</div>
+                    </td>
+                    <td class="data-cell text-center">
+                        <div class="product-image-container d-inline-block position-relative">
+                            <v-avatar rounded="lg" size="44" class="border bg-slate-50 shadow-sm avatar-hover">
+                                <SafeProductImage :src="getVariantThumbnail(item)" :fallback-src="logoPlaceholder"
+                                    :alt="item.maChiTietSanPham || 'variant-image'" />
+                            </v-avatar>
+                            <div v-if="item.phanTramGiam > 0" class="discount-badge">
+                                -{{ Math.round(item.phanTramGiam) }}%
                             </div>
-                        </td>
-                        <td class="data-cell text-center">
-                            <div class="text-truncate" :title="item.maChiTietSanPham">
-                                <span class="text-truncate">{{ item.maChiTietSanPham ?
-                                    item.maChiTietSanPham.split('-')[0] : '--' }}</span>
+                        </div>
+                    </td>
+                    <td class="data-cell text-center">
+                        <div class="text-truncate" :title="item.maChiTietSanPham">
+                            <span class="text-truncate">{{ item.maChiTietSanPham ?
+                                item.maChiTietSanPham.split('-')[0] : '--' }}</span>
+                        </div>
+                    </td>
+                    <td class="data-cell text-center">
+                        <div class="text-truncate" :title="item.tenMauSac">
+                            <span class="text-truncate">{{ item.tenMauSac }}</span>
+                        </div>
+                    </td>
+                    <td class="data-cell text-center">
+                        <div class="text-truncate" :title="item.tenKichThuoc">
+                            <span class="text-truncate">{{ item.tenKichThuoc }}</span>
+                        </div>
+                    </td>
+                    <td class="data-cell text-center">
+                        <div class="text-truncate" :title="formatNumber(item.soLuong)">
+                            <span class="text-truncate font-weight-medium">{{ formatNumber(item.soLuong) }}</span>
+                        </div>
+                    </td>
+                    <td class="data-cell text-center">
+                        <div class="text-primary text-truncate" :title="formatCurrency(item.giaBan)">{{
+                            formatCurrency(item.giaBan) }}</div>
+                    </td>
+                    <td class="data-cell">
+                        <v-chip variant="flat"
+                            :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
+                            {{ getStatusLabel(item.trangThai) }}
+                        </v-chip>
+                    </td>
+                    <td class="data-cell">
+                        <div class="d-flex align-center justify-center action-controls">
+                            <v-btn variant="text" class="action-icon-btn action-icon-btn--edit"
+                                @click="openEditVariantModal(item)">
+                                <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
+                                <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
+                            </v-btn>
+                            <v-btn variant="text" class="action-icon-btn" @click="openImageModal(item)">
+                                <component :is="ADMIN_ICONS.ACTION.VIEW" size="15" />
+                                <v-tooltip activator="parent" location="top">Thư viện ảnh</v-tooltip>
+                            </v-btn>
+                            <v-btn variant="text" color="primary" class="action-icon-btn qr-action-btn"
+                                @click="openQrDialog(item)">
+                                <QrcodeIcon />
+                                <v-tooltip activator="parent" location="top">QR code</v-tooltip>
+                            </v-btn>
+                            <div class="switch-wrapper">
+                                <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details
+                                    density="compact" class="tight-switch action-switch"
+                                    @click.prevent.stop="handleToggleVariantStatus(item)" />
+                                <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái" />
                             </div>
-                        </td>
-                        <td class="data-cell text-center">
-                            <div class="text-truncate" :title="item.tenMauSac">
-                                <span class="text-truncate">{{ item.tenMauSac }}</span>
-                            </div>
-                        </td>
-                        <td class="data-cell text-center">
-                            <div class="text-truncate" :title="item.tenKichThuoc">
-                                <span class="text-truncate">{{ item.tenKichThuoc }}</span>
-                            </div>
-                        </td>
-                        <td class="data-cell text-center">
-                            <div class="text-truncate" :title="formatNumber(item.soLuong)">
-                                <span class="text-truncate font-weight-medium">{{ formatNumber(item.soLuong) }}</span>
-                            </div>
-                        </td>
-                        <td class="data-cell text-center">
-                            <div class="text-primary text-truncate" :title="formatCurrency(item.giaBan)">{{
-                                formatCurrency(item.giaBan) }}</div>
-                        </td>
-                        <td class="data-cell">
-                            <v-chip variant="flat"
-                                :class="['status-chip', isActiveStatus(item.trangThai) ? 'status-chip-active' : 'status-chip-inactive']">
-                                {{ getStatusLabel(item.trangThai) }}
-                            </v-chip>
-                        </td>
-                        <td class="data-cell">
-                            <div class="d-flex align-center justify-center action-controls">
-                                <v-btn variant="text" class="action-icon-btn action-icon-btn--edit"
-                                    @click="openEditVariantModal(item)">
-                                    <component :is="ADMIN_ICONS.ACTION.EDIT" size="15" />
-                                    <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
-                                </v-btn>
-                                <v-btn variant="text" class="action-icon-btn" @click="openImageModal(item)">
-                                    <component :is="ADMIN_ICONS.ACTION.VIEW" size="15" />
-                                    <v-tooltip activator="parent" location="top">Thư viện ảnh</v-tooltip>
-                                </v-btn>
-                                <v-btn variant="text" color="primary" class="action-icon-btn qr-action-btn"
-                                    @click="openQrDialog(item)">
-                                    <QrcodeIcon />
-                                    <v-tooltip activator="parent" location="top">QR code</v-tooltip>
-                                </v-btn>
-                                <div class="switch-wrapper">
-                                    <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details
-                                        density="compact" class="tight-switch action-switch"
-                                        @click.prevent.stop="handleToggleVariantStatus(item)" />
-                                    <v-tooltip activator="parent" location="top" text="Chuyển đổi trạng thái" />
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                </template>
+                        </div>
+                    </td>
+                </tr>
+            </template>
 
-                <template #pagination>
-                    <AdminPagination v-model="pagination.page" :page-size="pagination.size"
-                        @update:pageSize="pagination.size = $event" @change="fetchSelectedProduct"
-                        :total-pages="totalPages" :total-elements="totalElements" :current-size="variants.length" />
-                </template>
-            </AdminTable>
-        </div>
+            <template #pagination>
+                <AdminPagination v-model="pagination.page" :page-size="pagination.size"
+                    @update:pageSize="pagination.size = $event" @change="fetchSelectedProduct"
+                    :total-pages="totalPages" :total-elements="totalElements" :current-size="variants.length" />
+            </template>
+        </AdminTable>
 
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
             :color="confirmDialog.color" :loading="confirmDialog.loading" @confirm="confirmDialog.action" />
@@ -1066,5 +1068,19 @@ onMounted(async () => {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     z-index: 2;
     white-space: nowrap;
+}
+
+/* Style input text, placeholders and selections */
+:deep(.compact-input) .v-field__input,
+:deep(.compact-input) input,
+:deep(.compact-input) input::placeholder,
+:deep(.compact-input) .v-select__selection-text {
+    font-size: 13px !important;
+}
+
+/* Style select dropdown popover option list */
+:global(.product-select-menu .v-list-item-title),
+:global(.product-select-menu .v-list-item) {
+    font-size: 13px !important;
 }
 </style>

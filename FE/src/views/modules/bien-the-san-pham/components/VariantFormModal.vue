@@ -521,8 +521,8 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
             <v-form ref="formRef">
                 <v-card-text class="pa-8">
                     <v-row class="variant-modal-layout">
-                        <v-col cols="12" md="4">
-                            <div class="form-group h-100">
+                        <v-col cols="12" md="4" class="image-column-wrap">
+                            <div class="image-form-group">
                                 <div class="mb-2 px-1">
                                     <span class="text-caption font-weight-bold text-slate-700 tracking-wider"> Hình ảnh </span>
                                 </div>
@@ -552,22 +552,7 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                                             </div>
                                         </div>
                                     </div>
-
-                                    <div class="variant-image-panel__body mt-4">
-                                        <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="handleImageUpload" />
-                                        <div v-if="formData.urlAnh" class="d-flex justify-center mt-2">
-                                            <v-btn
-                                                variant="text"
-                                                color="error"
-                                                density="compact"
-                                                class="text-none"
-                                                @click.stop="formData.urlAnh = ''"
-                                            >
-                                                <v-icon start size="14">mdi-trash-can-outline</v-icon>
-                                                Xóa ảnh
-                                            </v-btn>
-                                        </div>
-                                    </div>
+                                    <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="handleImageUpload" />
                                 </div>
                             </div>
                         </v-col>
@@ -667,24 +652,43 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                                         ></v-text-field>
                                     </div>
                                 </v-col>
-
-                                <v-col cols="12">
-                                    <div class="form-group">
-                                        <div class="field-label">Giá bán (VNĐ) <span class="text-error">*</span></div>
-                                        <FormattedNumberField
-                                            v-model="formData.giaBan"
-                                            min="0"
-                                            :rules="[rules.required, rules.min0]"
-                                            variant="outlined"
-                                            density="comfortable"
-                                            hide-details="auto"
-                                            placeholder="0"
-                                            suffix="₫"
-                                            class="modern-input"
-                                        ></FormattedNumberField>
-                                    </div>
-                                </v-col>
                             </v-row>
+                        </v-col>
+                    </v-row>
+
+                    <!-- Bottom row for aligned Delete Image button and Price Input -->
+                    <v-row class="mt-2">
+                        <v-col cols="12" md="4">
+                            <div class="form-group mb-0">
+                                <div class="field-label" style="visibility: hidden;">Spacer</div>
+                                <div v-if="formData.urlAnh" class="d-flex">
+                                    <v-btn
+                                        variant="outlined"
+                                        class="text-none delete-image-btn w-100"
+                                        @click.stop="formData.urlAnh = ''"
+                                    >
+                                        <v-icon start size="14">mdi-trash-can-outline</v-icon>
+                                        Xóa ảnh
+                                    </v-btn>
+                                </div>
+                            </div>
+                        </v-col>
+
+                        <v-col cols="12" md="8">
+                            <div class="form-group mb-0">
+                                <div class="field-label">Giá bán (VNĐ) <span class="text-error">*</span></div>
+                                <FormattedNumberField
+                                    v-model="formData.giaBan"
+                                    min="0"
+                                    :rules="[rules.required, rules.min0]"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    hide-details="auto"
+                                    placeholder="0"
+                                    suffix="₫"
+                                    class="modern-input"
+                                ></FormattedNumberField>
+                            </div>
                         </v-col>
                     </v-row>
                 </v-card-text>
@@ -693,13 +697,13 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
             <v-divider></v-divider>
 
             <v-card-actions class="px-8 py-6 bg-slate-50 d-flex justify-end gap-3">
-                <v-btn variant="tonal" color="slate-500" class="px-6 rounded-xl font-weight-medium h-11" @click="emit('close')">
+                <v-btn variant="tonal" color="slate-500" class="px-6 font-weight-medium h-11" @click="emit('close')">
                     Hủy bỏ
                 </v-btn>
                 <v-btn
                     color="primary"
                     variant="flat"
-                    class="px-8 rounded-xl font-weight-medium h-11"
+                    class="px-8 font-weight-medium h-11"
                     :loading="submitting"
                     @click="handleSubmit"
                 >
@@ -718,7 +722,8 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 /* Đồng bộ cỡ chữ với màn hình cha (13px) */
 .field-label,
 :deep(.v-field__input),
-:deep(.v-field__input input),
+:deep(input),
+:deep(input::placeholder),
 :deep(.v-select__selection-text),
 :deep(.v-list-item-title) {
     font-size: 13px !important;
@@ -732,6 +737,22 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 
 :deep(.v-field__input::placeholder) {
     font-size: 13px !important;
+}
+
+/* Nút xóa ảnh đỏ tươi pastel */
+.delete-image-btn {
+    border-color: #fca5a5 !important;
+    color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+    border-radius: 12px !important;
+    height: 44px !important;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+}
+
+.delete-image-btn:hover {
+    background-color: #fee2e2 !important;
+    border-color: #f87171 !important;
 }
 
 .h-1-5 {
@@ -754,11 +775,24 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
     align-items: stretch;
 }
 
+.image-column-wrap {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.image-form-group {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-grow: 1 !important;
+    height: 100% !important;
+}
+
 .variant-image-panel {
-    min-height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    display: flex !important;
+    flex-direction: column !important;
+    flex-grow: 1 !important;
+    justify-content: space-between !important;
+    min-height: 100% !important;
     gap: 20px;
 }
 
@@ -787,6 +821,7 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 
 :deep(.v-btn) {
     letter-spacing: 0.02em;
+    border-radius: 12px !important;
 }
 
 @media (max-width: 959px) {

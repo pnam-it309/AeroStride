@@ -287,7 +287,8 @@ onMounted(() => loadOrders());
                     <div class="filter-field-label">Loại đơn</div>
                     <v-select v-model="filters.loaiDon" :items="ORDER_TYPE_OPTIONS" item-title="title"
                         item-value="value" variant="outlined" density="compact" hide-details
-                        class="compact-input loai-don-field" @update:model-value="handleSearch"></v-select>
+                        class="compact-input loai-don-field" :menu-props="{ contentClass: 'invoice-select-menu' }"
+                        @update:model-value="handleSearch"></v-select>
                 </v-col>
 
 
@@ -514,4 +515,20 @@ onMounted(() => loadOrders());
         </v-dialog>
     </v-container>
 </template>
+
+<style scoped>
+/* Style input text, placeholders and date selections */
+:deep(.compact-input) .v-field__input,
+:deep(.compact-input) input,
+:deep(.compact-input) input::placeholder,
+:deep(.compact-input) .v-select__selection-text {
+    font-size: 13px !important;
+}
+
+/* Style select dropdown popover option list */
+:global(.invoice-select-menu .v-list-item-title),
+:global(.invoice-select-menu .v-list-item) {
+    font-size: 13px !important;
+}
+</style>
 

@@ -503,13 +503,15 @@ onBeforeUnmount(() => {
                         { title: 'Tất cả thương hiệu', value: null },
                         ...filterOptions.thuongHieus.map((thuongHieu) => ({ title: thuongHieu.ten, value: thuongHieu.id }))
                     ]" variant="outlined" density="compact" hide-details class="compact-input"
+                        :menu-props="{ contentClass: 'product-select-menu' }"
                         @update:model-value="handleSearch" />
                 </v-col>
 
                 <v-col cols="12" md="2">
                     <div class="filter-field-label">Trạng thái</div>
                     <v-select v-model="filters.trangThai" :items="STATUS_OPTIONS" variant="outlined" density="compact"
-                        hide-details class="compact-input" @update:model-value="handleSearch" />
+                        hide-details class="compact-input" :menu-props="{ contentClass: 'product-select-menu' }"
+                        @update:model-value="handleSearch" />
                 </v-col>
                 <template #after>
                     <v-col cols="12" class="mt-4 pa-0">
@@ -653,5 +655,19 @@ onBeforeUnmount(() => {
 :deep(.blue-range-slider .v-slider-track__fill) {
     height: 2px !important;
     border-radius: 1px !important;
+}
+
+/* Style input text, placeholders and selections */
+:deep(.compact-input) .v-field__input,
+:deep(.compact-input) input,
+:deep(.compact-input) input::placeholder,
+:deep(.compact-input) .v-select__selection-text {
+    font-size: 13px !important;
+}
+
+/* Style select dropdown popover option list */
+:global(.product-select-menu .v-list-item-title),
+:global(.product-select-menu .v-list-item) {
+    font-size: 13px !important;
 }
 </style>

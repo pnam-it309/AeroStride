@@ -45,6 +45,7 @@ const handleSearch = () => emit('search');
                     density="compact"
                     hide-details
                     class="compact-input"
+                    :menu-props="{ contentClass: 'attribute-select-menu' }"
                 ></v-select>
             </v-col>
         </AdminFilter>
@@ -52,5 +53,19 @@ const handleSearch = () => emit('search');
 </template>
 
 <style scoped>
-/* Scoped styles removed in favor of global _admin-common.scss */
+:deep(.compact-input) .v-field__input,
+:deep(.compact-input) input,
+:deep(.compact-input) input::placeholder,
+:deep(.compact-input) .v-select__selection-text {
+    font-size: 13px !important;
+}
+
+.filter-field-label {
+    font-size: 13px !important;
+}
+
+:global(.attribute-select-menu .v-list-item-title),
+:global(.attribute-select-menu .v-list-item) {
+    font-size: 13px !important;
+}
 </style>

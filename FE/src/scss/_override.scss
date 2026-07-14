@@ -141,3 +141,28 @@ body .v-overlay-container .v-tooltip .v-overlay__content.custom-white-tooltip {
     padding: 6px 10px !important;
     border-radius: 6px !important;
 }
+
+/* 9. POS SEARCH COMBOBOX DROPDOWN OVERLAYS */
+body .v-overlay-container {
+    .pos-select-menu {
+        .v-list {
+            padding: 4px 0 !important;
+        }
+
+        .v-list-item {
+            min-height: 32px !important;
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+
+            .v-list-item-title,
+            .v-list-item__content,
+            .v-list-item-subtitle {
+                font-size: 13px !important;
+                font-weight: 500 !important;
+                color: #334155 !important;
+            }
+        }
+    }
+}

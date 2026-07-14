@@ -1216,13 +1216,13 @@ onMounted(() => {
                     <v-col cols="12" md="2" class="px-2">
                         <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Màu sắc</div>
                         <v-select v-model="productColorFilter" :items="availableColors" placeholder="Tất cả" variant="outlined"
-                            density="compact" hide-details
+                            density="compact" hide-details class="compact-input" :menu-props="{ contentClass: 'product-select-menu' }"
                             @update:modelValue="productPagination.page = 1"></v-select>
                     </v-col>
                     <v-col cols="12" md="2" class="px-2">
                         <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Kích thước</div>
                         <v-select v-model="productSizeFilter" :items="availableSizes" placeholder="Tất cả" variant="outlined"
-                            density="compact" hide-details
+                            density="compact" hide-details class="compact-input" :menu-props="{ contentClass: 'product-select-menu' }"
                             @update:modelValue="productPagination.page = 1"></v-select>
                     </v-col>
                     <v-col cols="12" md="5" class="pa-0 d-flex align-center pl-2">
@@ -1842,5 +1842,19 @@ onMounted(() => {
     text-align: center !important;
     height: auto !important;
     padding: 16px !important;
+}
+
+/* Style input text, placeholders and selections */
+:deep(.compact-input) .v-field__input,
+:deep(.compact-input) input,
+:deep(.compact-input) input::placeholder,
+:deep(.compact-input) .v-select__selection-text {
+    font-size: 13px !important;
+}
+
+/* Style select dropdown popover option list */
+:global(.product-select-menu .v-list-item-title),
+:global(.product-select-menu .v-list-item) {
+    font-size: 13px !important;
 }
 </style>

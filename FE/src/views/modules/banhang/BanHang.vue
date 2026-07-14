@@ -569,8 +569,13 @@ const nextBetterVoucher = computed(() => {
 
     if (!candidates.length) return null;
 
-    // Gợi ý mốc tiếp theo gần nhất
-    candidates.sort((a, b) => Number(a.donHangToiThieu || 0) - Number(b.donHangToiThieu || 0));
+    // Gợi ý phiếu tốt nhất dựa trên giá trị giảm giá tiềm năng lớn nhất, sau đó mới đến đơn tối thiểu nhỏ nhất để tối ưu quyền lợi cho khách hàng
+    candidates.sort((a, b) => {
+        const discA = getPotentialDiscount(a, Number(a.donHangToiThieu || 0));
+        const discB = getPotentialDiscount(b, Number(b.donHangToiThieu || 0));
+        if (discB !== discA) return discB - discA;
+        return Number(a.donHangToiThieu || 0) - Number(b.donHangToiThieu || 0);
+    });
 
     return candidates[0];
 });
@@ -591,11 +596,11 @@ const voucherSuggestionText = computed(() => {
     const applied = appliedVoucher.value;
 
     if (best?.id && applied?.id && String(best.id) === String(applied.id)) {
-        return `Đã chọn phiếu tốt nhất: ${getVoucherCode(best)} (-${formatCurrency(getPotentialDiscount(best, currentTotal))})`;
+        return `Đã áp dụng mã giảm giá ưu đãi nhất: ${getVoucherCode(best)} (-${formatCurrency(getPotentialDiscount(best, currentTotal))})`;
     }
 
     if (best?.id) {
-        return `Bấm để áp dụng phiếu tốt nhất: ${getVoucherCode(best)} (-${formatCurrency(getPotentialDiscount(best, currentTotal))})`;
+        return `Bấm để áp dụng mã giảm giá ưu đãi nhất: ${getVoucherCode(best)} (-${formatCurrency(getPotentialDiscount(best, currentTotal))})`;
     }
 
     return nextBetterVoucher.value ? '' : 'Chưa có phiếu giảm giá phù hợp cho đơn hiện tại.';
@@ -932,7 +937,7 @@ onMounted(async () => {
         // Tải danh sách phiếu giảm giá cho dropdown (BE là nguồn dữ liệu)
         try {
             const list = await dichVuDonHang.getVouchers(selectedOrder.value?.tongTien || 0);
-            vouchers.value = (list || []).map(decorateVoucher);
+            vouchers.value = (list || []).map(v => decorateVoucher(v, selectedOrder.value));
             await refreshBestVoucher();
         } catch (e) {
             console.error('Lỗi khi tải phiếu giảm giá', e);
@@ -1445,8 +1450,8 @@ const onRemoveCustomer = async () => {
 
 // Logic: Voucher
 // Gắn nhãn hiển thị (customTitle) cho phiếu giảm giá trên dropdown. Chỉ phục vụ hiển thị,
-// mọi tính toán giảm giá đều do BE thực hiện.
-const decorateVoucher = (v) => {
+// mọi tính toán giảm giá đều do BE thực hiện. Vô hiệu hóa phiếu nếu đơn hàng chưa đạt giá trị tối thiểu.
+const decorateVoucher = (v, order = selectedOrder.value) => {
     let text = v.tenPhieu || v.ten || 'Phiếu giảm giá';
     const code = v.ma || v.maPhieu;
     if (code) text = `${code} - ${text}`;
@@ -1454,7 +1459,12 @@ const decorateVoucher = (v) => {
     const discount = (type === 'PHAN_TRAM' || type === 'PERCENT')
         ? `(Giảm ${v.phanTramGiamGia || 0}%)`
         : `(Giảm ${new Intl.NumberFormat('vi-VN').format(v.soTienGiam || 0)}đ)`;
-    return { ...v, customTitle: `${text} ${discount}` };
+    
+    // Disable voucher if order total doesn't meet the minimum required amount
+    const baseAmount = getVoucherBaseAmount(order);
+    const disabled = Number(v.donHangToiThieu || 0) > baseAmount;
+    
+    return { ...v, customTitle: `${text} ${discount}`, disabled };
 };
 
 // Hỏi BE danh sách phiếu giảm giá để gợi ý; FE chọn phiếu tốt nhất theo tổng tiền giỏ hiện tại.
@@ -1465,20 +1475,34 @@ const refreshBestVoucher = async (order = selectedOrder.value, autoApply = true)
     const refreshSerial = ++voucherRefreshSerial;
     try {
         const list = await dichVuDonHang.getVouchers(order.tongTien || 0);
-        const decorated = (list || []).map(decorateVoucher);
+        const decorated = (list || []).map(v => decorateVoucher(v, order));
         if (refreshSerial !== voucherRefreshSerial) return;
         vouchers.value = decorated;
 
-        if (autoApply) {
+        // Kiểm tra xem phiếu giảm giá hiện đang áp dụng có còn thỏa mãn điều kiện tối thiểu không
+        const currentAppliedVoucherId = order.idPhieuGiamGia;
+        const appliedVoucherObj = decorated.find(v => String(v.id) === String(currentAppliedVoucherId));
+        const isAppliedStillEligible = appliedVoucherObj && isVoucherEligibleForAmount(appliedVoucherObj, getVoucherBaseAmount(order));
+
+        // Nếu phiếu do người dùng tự chọn đã hết hiệu lực, tự động hoàn tác về trạng thái tự động chọn
+        if (currentAppliedVoucherId && !isAppliedStillEligible) {
             isVoucherAutoApplied.value[order.id] = true;
-            const best = pickBestVoucherForOrder(order, decorated);
-            if (best?.id) {
-                if (String(order.idPhieuGiamGia) !== String(best.id)) {
-                    await onApplyVoucher(best.id, false, true);
-                }
-            } else {
-                if (order.idPhieuGiamGia) {
-                    await onApplyVoucher(null, false, true);
+        }
+
+        if (autoApply) {
+            // Chỉ tự động chọn nếu người dùng chưa chọn thủ công, hoặc đã bị thu hồi do hết hiệu lực ở trên
+            const shouldAutoApply = isVoucherAutoApplied.value[order.id] !== false;
+            if (shouldAutoApply) {
+                isVoucherAutoApplied.value[order.id] = true;
+                const best = pickBestVoucherForOrder(order, decorated);
+                if (best?.id) {
+                    if (String(order.idPhieuGiamGia) !== String(best.id)) {
+                        await onApplyVoucher(best.id, false, true);
+                    }
+                } else {
+                    if (order.idPhieuGiamGia) {
+                        await onApplyVoucher(null, false, true);
+                    }
                 }
             }
         }
@@ -2124,14 +2148,14 @@ const formatDateTime = (dateStr) => {
                 <!-- Left Column (8 cols out of 12) -->
                 <v-col cols="12" lg="8" class="h-100 d-flex flex-column gap-4 pr-lg-2" style="min-height: 0;">
                     <!-- Sản phẩm Card -->
-                    <v-card class="pos-card pa-4 rounded-lg border d-flex flex-column flex-grow-1"
+                    <v-card class="pos-card pa-4 d-flex flex-column flex-grow-1"
                         style="overflow: visible !important; z-index: 15 !important; min-height: 0;">
 
                         <!-- Product Picker Block (Nhúng Component Mới) -->
                         <ProductPicker :active-order="selectedOrder" @add-product="onAddProduct" />
 
                         <!-- Cart list rendering -->
-                        <div class="cart-container-box border rounded-lg overflow-y-auto flex-grow-1 d-flex flex-column"
+                        <div class="cart-container-box rounded-lg overflow-y-auto flex-grow-1 d-flex flex-column"
                             style="min-height: 200px; background-color: #ffffff !important;">
                             <CartTable v-if="selectedOrder?.listsHoaDonChiTiet?.length"
                                 :items="selectedOrder.listsHoaDonChiTiet" @update-qty="onUpdateQty"
@@ -2149,25 +2173,6 @@ const formatDateTime = (dateStr) => {
                             </div>
                         </div>
                     </v-card>
-                    <!-- Row of Price Details -->
-                    <v-row no-gutters class="flex-shrink-0" style="flex: 0 0 auto;">
-                        <!-- Left Block: Pricing Details -->
-                        <v-col cols="12" md="12" class="pr-0 mb-4 mb-md-0">
-                            <OrderSummaryPanel v-model:isGiaoHang="isGiaoHang" :vouchers="vouchers"
-                                :selected-voucher-id="selectedOrder?.idPhieuGiamGia"
-                                :voucher-suggestion-text="voucherSuggestionText"
-                                :voucher-suggestion-class="voucherSuggestionClass"
-                                :can-apply-suggested-voucher="canApplySuggestedVoucher"
-                                :better-voucher-suggestion-text="betterVoucherSuggestionText"
-                                :total-raw-amount="totalRawAmount" :product-discount-amount="productDiscountAmount"
-                                :applied-discount-summary="appliedDiscountSummary"
-                                :total-discount-amount="totalDiscountAmount" :final-collect-amount="finalCollectAmount"
-                                v-model:shippingFee="shippingFee" :shipping-fee-loading="shippingFeeLoading"
-                                :shipping-fee-source="shippingFeeSource" :shipping-fee-error="shippingFeeError"
-                                :is-free-ship="isFreeShip" @apply-voucher="onApplyVoucher"
-                                @apply-suggested-voucher="applyBestVoucherFromSuggestion" />
-                        </v-col>
-                    </v-row>
                 </v-col>
 
                 <!-- Right Column (4 cols out of 12) -->
@@ -2175,6 +2180,7 @@ const formatDateTime = (dateStr) => {
                     style="min-height: 0;">
                     <!-- Khách hàng và Nhận hàng Card -->
                     <CustomerAndShippingPanel :order="selectedOrder" :is-giao-hang="isGiaoHang"
+                        class="flex-shrink-0"
                         :initial-customer-form="customerForm"
                         :initial-shipping="{
                             name: recipientName,
@@ -2189,8 +2195,25 @@ const formatDateTime = (dateStr) => {
                         @update:customer-form="onCustomerFormUpdate"
                         @update:shipping="onShippingPanelUpdate" />
 
+                    <!-- Pricing/Voucher Details (Moved from left column) -->
+                    <OrderSummaryPanel v-model:isGiaoHang="isGiaoHang" :vouchers="vouchers"
+                        class="flex-shrink-0"
+                        :selected-voucher-id="selectedOrder?.idPhieuGiamGia"
+                        :voucher-suggestion-text="voucherSuggestionText"
+                        :voucher-suggestion-class="voucherSuggestionClass"
+                        :can-apply-suggested-voucher="canApplySuggestedVoucher"
+                        :better-voucher-suggestion-text="betterVoucherSuggestionText"
+                        :total-raw-amount="totalRawAmount" :product-discount-amount="productDiscountAmount"
+                        :applied-discount-summary="appliedDiscountSummary"
+                        :total-discount-amount="totalDiscountAmount" :final-collect-amount="finalCollectAmount"
+                        v-model:shippingFee="shippingFee" :shipping-fee-loading="shippingFeeLoading"
+                        :shipping-fee-source="shippingFeeSource" :shipping-fee-error="shippingFeeError"
+                        :is-free-ship="isFreeShip" @apply-voucher="onApplyVoucher"
+                        @apply-suggested-voucher="applyBestVoucherFromSuggestion" />
+
                     <!-- Payment Card -->
                     <PaymentPanel v-model:paymentMethod="checkoutData.paymentMethod"
+                        class="flex-shrink-0"
                         v-model:receivedAmount="checkoutData.receivedAmount" :remaining-balance="remainingBalance"
                         :change-amount="changeAmount" :is-processing="isProcessing"
                         :has-items="!!selectedOrder?.listsHoaDonChiTiet?.length"
