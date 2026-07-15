@@ -165,6 +165,31 @@ const closeChat = async () => {
     }
 };
 
+const isSummarizing = ref(false);
+const showSummaryModal = ref(false);
+const chatSummary = ref('');
+
+const summarizeChat = async () => {
+    if (!activeChat.value) return;
+    
+    isSummarizing.value = true;
+    try {
+        // API này phải match với API bên BE
+        const response = await api.get(`/api/v1/admin/chat/summarize/${activeChat.value.id}`);
+        if (response.data?.success) {
+            chatSummary.value = response.data.data;
+            showSummaryModal.value = true;
+        } else {
+            notificationStore.showError('Không thể tóm tắt hội thoại này.');
+        }
+    } catch (error) {
+        console.error('Lỗi khi tóm tắt:', error);
+        notificationStore.showError('Có lỗi xảy ra khi tóm tắt hội thoại.');
+    } finally {
+        isSummarizing.value = false;
+    }
+};
+
 // Xóa lịch sử đoạn chat (xóa hẳn cuộc hội thoại + toàn bộ tin nhắn)
 const confirmDeleteChat = () => {
     if (!activeChat.value) return;
@@ -376,6 +401,16 @@ onMounted(() => {
                                 style="letter-spacing: 0"
                                 >Đóng phiên</v-btn
                             >
+                            <v-btn
+                                color="purple"
+                                variant="flat"
+                                prepend-icon="mdi-robot-outline"
+                                @click="summarizeChat"
+                                class="rounded-lg px-6 text-none font-weight-bold"
+                                style="letter-spacing: 0"
+                                :loading="isSummarizing"
+                                >AI Tóm tắt</v-btn
+                            >
                             <v-menu location="bottom end">
                                 <template #activator="{ props }">
                                     <v-btn icon="mdi-dots-vertical" variant="text" color="grey-darken-1" v-bind="props"></v-btn>
@@ -486,6 +521,25 @@ onMounted(() => {
             @confirm="handleConfirm(true)"
             @cancel="handleConfirm(false)"
         />
+
+        <!-- AI Summary Modal -->
+        <v-dialog v-model="showSummaryModal" max-width="500">
+            <v-card class="rounded-xl overflow-hidden">
+                <v-card-title class="bg-purple text-white d-flex align-center py-3">
+                    <v-icon icon="mdi-robot-outline" class="mr-2"></v-icon>
+                    AI Tóm tắt hội thoại
+                    <v-spacer></v-spacer>
+                    <v-btn icon="mdi-close" variant="text" color="white" @click="showSummaryModal = false" density="compact"></v-btn>
+                </v-card-title>
+                <v-card-text class="pa-4">
+                    <div style="white-space: pre-wrap; line-height: 1.6;" class="text-body-1 text-grey-darken-3">{{ chatSummary }}</div>
+                </v-card-text>
+                <v-card-actions class="px-4 pb-4">
+                    <v-spacer></v-spacer>
+                    <v-btn color="grey-darken-1" variant="text" @click="showSummaryModal = false" class="text-none">Đóng</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-container>
 </template>
 

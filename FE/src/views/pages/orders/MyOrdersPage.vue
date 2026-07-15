@@ -106,6 +106,20 @@ watch(activeTab, () => {
     if (isLoggedIn.value) fetchOrders();
 });
 import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
+import ReviewModal from '@/components/shared/ReviewModal.vue';
+
+const showReviewModal = ref(false);
+const orderToReview = ref(null);
+
+const openReviewModal = (order) => {
+    orderToReview.value = order;
+    showReviewModal.value = true;
+};
+
+const handleReviewSuccess = () => {
+    fetchOrders(); // Refresh to update status if needed
+};
+
 onMounted(() => {
     isLoggedIn.value = dichVuXacThuc.daDangNhap();
     if (isLoggedIn.value) {
@@ -300,12 +314,37 @@ const goToDetail = (id) => {
                     <hr style="border: none; border-top: 1px solid #f0f0f0; margin: 12px 0;" />
 
                     <!-- Footer -->
-                    <div class="d-flex align-center justify-space-between">
+                    <div class="d-flex align-center justify-space-between mt-3">
                         <div class="d-flex align-center">
                             <v-icon size="14" color="grey" class="mr-1">mdi-currency-usd</v-icon>
                             <span class="text-body-2 text-grey-darken-1">Tổng:</span>
                         </div>
                         <span class="text-body-1 font-weight-bold" style="color: #1e257c;">{{ formatPrice(order.tongTienSauGiam) }}</span>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex justify-end mt-4 gap-2 border-t pt-3" style="border-top: 1px solid #f0f0f0;">
+                        <v-btn 
+                            v-if="order.trangThai === 'HOAN_THANH'" 
+                            color="#1e257c" 
+                            variant="outlined" 
+                            size="small" 
+                            rounded="pill" 
+                            class="text-none font-weight-bold px-4" 
+                            @click.stop="openReviewModal(order)"
+                        >
+                            <v-icon size="16" class="mr-1">mdi-star-outline</v-icon>Đánh giá
+                        </v-btn>
+                        <v-btn 
+                            color="#1e257c" 
+                            variant="flat" 
+                            size="small" 
+                            rounded="pill" 
+                            class="text-none font-weight-bold px-4" 
+                            @click.stop="goToDetail(order.id)"
+                        >
+                            Xem chi tiết
+                        </v-btn>
                     </div>
                 </div>
             </div>
@@ -333,6 +372,12 @@ const goToDetail = (id) => {
 
         
         <CustomerChat />
+
+        <ReviewModal
+            v-model:show="showReviewModal"
+            :order="orderToReview"
+            @review-success="handleReviewSuccess"
+        />
     </div>
 </template>
 

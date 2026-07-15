@@ -7,6 +7,7 @@ import PromotionBar from '@/components/shared/PromotionBar.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
 
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
+import api from '@/services/apiService';
 import { useCartStore } from '@/stores/cartStore';
 import { useToastStore } from '@/stores/toastStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -27,6 +28,10 @@ const activeSlide = ref(0);
 const isFavorite = ref(false);
 const addingToCart = ref(false);
 const recommendedProducts = ref([]);
+const reviews = ref([]);
+const totalReviews = ref(0);
+const averageRating = ref(0);
+const reviewsLoading = ref(false);
 
 const fetchProduct = async () => {
     loading.value = true;
@@ -49,11 +54,31 @@ const fetchRecommendations = async () => {
     }
 };
 
+const fetchReviews = async () => {
+    reviewsLoading.value = true;
+    try {
+        const res = await api.get(`/api/v1/customer/review/product/${route.params.id}`);
+        if (res.data?.success && res.data.data) {
+            reviews.value = res.data.data.content || [];
+            totalReviews.value = res.data.data.totalElements || 0;
+            if (reviews.value.length > 0) {
+                const sum = reviews.value.reduce((acc, curr) => acc + curr.rating, 0);
+                averageRating.value = (sum / reviews.value.length).toFixed(1);
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching reviews:', error);
+    } finally {
+        reviewsLoading.value = false;
+    }
+};
+
 const { setProductSeo } = useSeoMeta();
 
 onMounted(() => {
     fetchProduct();
     fetchRecommendations();
+    fetchReviews();
 });
 
 // Cập nhật SEO và trạng thái Yêu thích khi product data load xong
@@ -427,6 +452,63 @@ const toggleFavorite = () => {
                     </div>
                 </v-col>
             </v-row>
+            
+            <!-- Reviews Section -->
+            <div class="reviews-section mt-16 pt-8 border-top">
+                <h2 class="text-h4 font-weight-black mb-8 text-center">Đánh Giá Sản Phẩm</h2>
+                
+                <div v-if="reviewsLoading" class="text-center py-8">
+                    <v-progress-circular indeterminate color="black"></v-progress-circular>
+                </div>
+                <div v-else-if="reviews.length > 0">
+                    <div class="d-flex align-center justify-center mb-10">
+                        <div class="text-center">
+                            <div class="text-h2 font-weight-black text-amber-darken-3">{{ averageRating }}</div>
+                            <v-rating
+                                :model-value="Number(averageRating)"
+                                color="amber"
+                                active-color="amber"
+                                half-increments
+                                readonly
+                                size="large"
+                                class="my-2"
+                            ></v-rating>
+                            <div class="text-body-2 text-grey-darken-1">{{ totalReviews }} đánh giá</div>
+                        </div>
+                    </div>
+                    
+                    <v-row>
+                        <v-col v-for="review in reviews" :key="review.id" cols="12" md="6">
+                            <v-card variant="outlined" class="pa-4 rounded-xl border-grey-lighten-2 h-100">
+                                <div class="d-flex align-center mb-3">
+                                    <v-avatar color="indigo-lighten-4" size="40" class="mr-3">
+                                        <span class="text-indigo-darken-4 font-weight-bold">{{ review.tenKhachHang ? review.tenKhachHang.charAt(0) : 'U' }}</span>
+                                    </v-avatar>
+                                    <div>
+                                        <div class="font-weight-bold">{{ review.tenKhachHang || 'Khách hàng ẩn danh' }}</div>
+                                        <div class="text-caption text-grey">{{ new Date(review.ngayTao).toLocaleDateString('vi-VN') }}</div>
+                                    </div>
+                                    <v-spacer></v-spacer>
+                                    <v-rating
+                                        :model-value="review.rating"
+                                        color="amber"
+                                        active-color="amber"
+                                        readonly
+                                        size="small"
+                                        density="compact"
+                                    ></v-rating>
+                                </div>
+                                <p class="text-body-2 mb-0" style="line-height: 1.6;">{{ review.comment }}</p>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+                </div>
+                <div v-else class="text-center py-10 bg-grey-lighten-4 rounded-xl">
+                    <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-comment-outline</v-icon>
+                    <h3 class="text-h6 text-grey-darken-1">Chưa có đánh giá nào</h3>
+                    <p class="text-body-2 text-grey">Hãy là người đầu tiên trải nghiệm và đánh giá sản phẩm này.</p>
+                </div>
+            </div>
             
             <!-- Recommended Products Section -->
             <div class="recommended-section mt-16 pt-8 border-top" v-if="recommendedProducts.length > 0">

@@ -115,7 +115,8 @@ const scrollToSection = (index) => {
     overscroll-behavior-y: contain;
     -ms-overflow-style: none;
     scrollbar-width: none;
-    /* Optimize for smooth momentum scrolling */
+    /* Native CSS Scroll Snapping for smooth performance */
+    scroll-snap-type: y mandatory;
     -webkit-overflow-scrolling: touch;
 
     &::-webkit-scrollbar {
@@ -124,12 +125,13 @@ const scrollToSection = (index) => {
 }
 
 .landing-scroll-container :deep(.snap-section) {
-    contain: layout paint style;
-    content-visibility: auto;
-    contain-intrinsic-size: 100vh;
-    /* GPU Acceleration */
-    backface-visibility: hidden;
-    transform: translateZ(0);
+    /* Performance optimizations */
+    contain: content;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    height: 100vh;
+    position: relative; /* Remove sticky to prevent GPU overlap lag */
+    background: #ffffff;
 }
 
 .navbar {
@@ -201,16 +203,6 @@ const scrollToSection = (index) => {
 .footer-landing {
     position: relative;
     z-index: 100;
-}
-
-:deep(.snap-section) {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    background: #ffffff;
-    /* Default background for all sections */
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.03);
-    /* Subtle shadow when sliding over */
-    will-change: transform;
+    scroll-snap-align: end;
 }
 </style>

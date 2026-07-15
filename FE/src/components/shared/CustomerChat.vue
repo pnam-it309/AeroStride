@@ -135,8 +135,51 @@ const scrollToBottom = async () => {
     }
 };
 
+const isSending = ref(false);
+const lastSendTime = ref(0);
+const COOLDOWN_MS = 3000;
+const typingTimeout = ref(null);
+
+const imageFile = ref(null);
+const imagePreview = ref(null);
+const fileInput = ref(null);
+
+const triggerImageUpload = () => {
+    if (fileInput.value) {
+        fileInput.value.click();
+    }
+};
+
+const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        if (!file.type.startsWith('image/')) {
+            alert('Vui lòng chọn file hình ảnh.');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Kích thước ảnh không được vượt quá 5MB.');
+            return;
+        }
+        imageFile.value = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imagePreview.value = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+
+const clearImage = () => {
+    imageFile.value = null;
+    imagePreview.value = null;
+    if (fileInput.value) {
+        fileInput.value.value = '';
+    }
+};
+
 const sendMessage = () => {
-    if (!message.value.trim() || isSending.value) return;
+    if ((!message.value.trim() && !imagePreview.value) || isSending.value) return;
 
     const now = Date.now();
     if (now - lastSendTime.value < COOLDOWN_MS) return;
@@ -172,10 +215,15 @@ const sendMessage = () => {
 
     // Tạm thời hiển thị tin nhắn user để UI phản hồi nhanh
     const tempId = Date.now();
+    
+    // Copy ảnh base64 để render ngay lập tức (nếu có)
+    const currentImagePreview = imagePreview.value;
+    
     chatHistory.value.push({
         id: tempId,
         sender: 'user',
         text: userMsg,
+        image: currentImagePreview,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
 
@@ -197,12 +245,22 @@ const sendMessage = () => {
 
     scrollToBottom();
     updateActivity();
+    
+    // Tạo data base64 thuần túy (bỏ header "data:image/jpeg;base64,") nếu cần
+    let base64Image = null;
+    if (currentImagePreview) {
+        base64Image = currentImagePreview.split(',')[1];
+    }
+    
+    // Clear image sau khi gửi
+    clearImage();
 
     apiService
         .post(API_CHAT.CUSTOMER_SEND, {
             sessionId: sessionId.value,
             sender: CHAT_SENDER_TYPE.CUSTOMER,
-            text: userMsg
+            text: userMsg,
+            image: base64Image
         })
         .then(() => {
             isSending.value = false;
@@ -351,6 +409,12 @@ onMounted(() => {
                 parsed.text = currentText.replace(/\[\[SUGGESTIONS:[\s\S]*?\]\]\]?/, '').trim();
             }
 
+            // Hiển thị form đánh giá nếu cuộc trò chuyện bị đóng
+            if (data.sender === 'system' && data.text && data.text.includes('Cuộc trò chuyện đã được đóng')) {
+                showRatingForm.value = true;
+                ratingConversationId.value = data.idCuocHoiThoai;
+            }
+
             // Xóa tin nhắn tạm thời nếu trùng nội dung (giảm giật lag)
             chatHistory.value = chatHistory.value.filter((m) => m.id > 2000000000000 || m.text !== data.text || m.sender !== 'user');
 
@@ -365,10 +429,75 @@ const goToDetail = (id) => {
     isOpen.value = false;
     router.push(`/product/${id}`);
 };
+
+// --- Rating Logic ---
+const showRatingForm = ref(false);
+const ratingConversationId = ref(null);
+const ratingScore = ref(5);
+const ratingComment = ref('');
+const isSubmittingRating = ref(false);
+
+const submitRating = async () => {
+    if (!ratingConversationId.value) return;
+    
+    isSubmittingRating.value = true;
+    try {
+        await apiService.post(`${API_CHAT.CUSTOMER_BASE}/rating`, {
+            conversationId: ratingConversationId.value,
+            rating: ratingScore.value,
+            feedback: ratingComment.value
+        });
+        showRatingForm.value = false;
+        chatHistory.value.push({
+            id: Date.now(),
+            sender: 'system',
+            text: 'Cảm ơn bạn đã đánh giá cuộc trò chuyện này!'
+        });
+        scrollToBottom();
+    } catch (error) {
+        console.error('Lỗi khi gửi đánh giá:', error);
+    } finally {
+        isSubmittingRating.value = false;
+    }
+};
+
+const skipRating = () => {
+    showRatingForm.value = false;
+};
 </script>
 
 <template>
     <div class="customer-chat-container">
+        <!-- Rating Modal -->
+        <v-dialog v-model="showRatingForm" max-width="400" persistent>
+            <v-card class="rating-card">
+                <v-card-title class="text-center pb-0 mt-3">Đánh giá hỗ trợ</v-card-title>
+                <v-card-text class="text-center pt-2">
+                    <p class="text-body-2 text-grey-darken-1 mb-4">Bạn cảm thấy cuộc trò chuyện vừa rồi như thế nào?</p>
+                    <v-rating
+                        v-model="ratingScore"
+                        color="amber"
+                        active-color="amber"
+                        hover
+                        size="x-large"
+                    ></v-rating>
+                    
+                    <v-textarea
+                        v-model="ratingComment"
+                        placeholder="Nhập góp ý của bạn (không bắt buộc)..."
+                        variant="outlined"
+                        auto-grow
+                        rows="2"
+                        class="mt-4"
+                        density="compact"
+                    ></v-textarea>
+                </v-card-text>
+                <v-card-actions class="justify-center pb-4 px-4">
+                    <v-btn variant="text" color="grey-darken-1" @click="skipRating">Bỏ qua</v-btn>
+                    <v-btn color="black" variant="flat" :loading="isSubmittingRating" @click="submitRating" class="px-6">Gửi đánh giá</v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
         <!-- Floating Chat Icon -->
         <div v-if="!isOpen" class="chat-fab-container" @click="isOpen = true">
             <div class="chat-badge" v-if="false">1</div>
@@ -428,6 +557,12 @@ const goToDetail = (id) => {
                             </v-avatar>
 
                             <div class="msg-content-wrap">
+                                <div v-if="msg.sender === 'staff' && msg.idNhanVien" class="staff-name-label">
+                                    {{ msg.idNhanVien }}
+                                </div>
+                                <div v-if="msg.image" class="message-image">
+                                    <img :src="msg.image" alt="Uploaded Image" style="max-width: 100%; border-radius: 8px; margin-bottom: 8px;" />
+                                </div>
                                 <div v-if="msg.text" class="message-bubble" v-html="marked(msg.text)"></div>
 
                                 <!-- Product Showcase in Chat -->
@@ -478,31 +613,55 @@ const goToDetail = (id) => {
                         </div>
                     </transition>
 
-                    <div class="input-container">
-                        <!-- Yellow lightbulb icon toggle button -->
-                        <v-btn
-                            icon="mdi-lightbulb"
-                            variant="text"
-                            size="small"
-                            :color="showSuggestions ? 'amber-darken-2' : 'grey-darken-1'"
-                            class="mr-2"
-                            @click="showSuggestions = !showSuggestions"
-                        ></v-btn>
+                    <div class="input-container-wrapper">
+                        <!-- Image Preview Area -->
+                        <div v-if="imagePreview" class="image-preview-container">
+                            <img :src="imagePreview" alt="Preview" class="image-preview" />
+                            <v-btn icon="mdi-close" size="x-small" color="red" class="remove-image-btn" @click="clearImage"></v-btn>
+                        </div>
+                        <div class="input-container">
+                            <!-- Yellow lightbulb icon toggle button -->
+                            <v-btn
+                                icon="mdi-lightbulb"
+                                variant="text"
+                                size="small"
+                                :color="showSuggestions ? 'amber-darken-2' : 'grey-darken-1'"
+                                class="mr-2"
+                                @click="showSuggestions = !showSuggestions"
+                            ></v-btn>
 
-                        <textarea
-                            v-model="message"
-                            placeholder="Nhập câu hỏi của bạn..."
-                            rows="1"
-                            @keydown.enter.prevent="sendMessage"
-                            @input="updateActivity"
-                        ></textarea>
-                        <v-btn
-                            icon="mdi-send"
-                            variant="text"
-                            :disabled="!message.trim() || isSending"
-                            :color="message.trim() && !isSending ? 'black' : 'grey-lighten-1'"
-                            @click="sendMessage"
-                        ></v-btn>
+                            <!-- Image Upload Button -->
+                            <v-btn
+                                icon="mdi-image-outline"
+                                variant="text"
+                                size="small"
+                                color="grey-darken-1"
+                                class="mr-2"
+                                @click="triggerImageUpload"
+                            ></v-btn>
+                            <input
+                                type="file"
+                                ref="fileInput"
+                                accept="image/*"
+                                style="display: none"
+                                @change="handleImageUpload"
+                            />
+
+                            <textarea
+                                v-model="message"
+                                placeholder="Nhập câu hỏi của bạn..."
+                                rows="1"
+                                @keydown.enter.prevent="sendMessage"
+                                @input="updateActivity"
+                            ></textarea>
+                            <v-btn
+                                icon="mdi-send"
+                                variant="text"
+                                :disabled="(!message.trim() && !imagePreview) || isSending"
+                                :color="(message.trim() || imagePreview) && !isSending ? 'black' : 'grey-lighten-1'"
+                                @click="sendMessage"
+                            ></v-btn>
+                        </div>
                     </div>
                     <div class="footer-credit">Powered by AeroStride AI</div>
                 </div>
@@ -760,19 +919,53 @@ const goToDetail = (id) => {
     background: #fff;
     border-top: 1px solid #f1f1f1;
 
-    .input-container {
-        display: flex;
-        align-items: center;
+    .input-container-wrapper {
         background: #f8f9fa;
         border-radius: 16px;
-        padding: 5px 5px 5px 15px;
         border: 1px solid #eee;
         transition: all 0.2s ease;
+        padding: 5px;
 
         &:focus-within {
             border-color: #000;
             background: #fff;
             box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.03);
+        }
+    }
+
+    .image-preview-container {
+        position: relative;
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 4px;
+
+        .image-preview {
+            max-height: 100px;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .remove-image-btn {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    }
+
+    .input-container {
+        display: flex;
+        align-items: center;
+        background: transparent;
+        border-radius: 0;
+        padding: 0 5px 0 10px;
+        border: none;
+
+        &:focus-within {
+            border-color: transparent;
+            background: transparent;
+            box-shadow: none;
         }
 
         textarea {
@@ -789,6 +982,14 @@ const goToDetail = (id) => {
                 color: #b2bec3;
             }
         }
+    }
+    
+    .staff-name-label {
+        font-size: 0.7rem;
+        color: #747d8c;
+        margin-bottom: 4px;
+        margin-left: 8px;
+        font-weight: 500;
     }
 
     .footer-credit {

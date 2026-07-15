@@ -60,13 +60,11 @@ export function useLandingPage() {
     };
 
     onMounted(() => {
-        window.addEventListener('scroll', onScroll, { passive: true });
-        // other onMounted logic if any...
+        // Scroll is handled by the container @scroll event, do not bind to window
     });
 
     onUnmounted(() => {
-        window.removeEventListener('scroll', onScroll);
-        // other onUnmounted logic if any...
+        // No window scroll event to remove
     });
 
     const handleLogout = async () => {
