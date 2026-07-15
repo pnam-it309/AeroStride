@@ -624,7 +624,7 @@ const dobRules = [
                                     <v-text-field v-model="customerForm.ma" readonly
                                         :placeholder="isEditMode ? 'KH-XXXX' : 'Hệ thống tự sinh khi lưu'"
                                         variant="outlined" bg-color="white" density="compact"
-                                        class="font-weight-medium mono-font" hide-details></v-text-field>
+                                        class="font-weight-medium mono-font" hide-details="auto"></v-text-field>
                                 </v-col>
                                 <v-col cols="12" md="8">
                                     <div class="field-label">Họ và tên <span class="text-error">*</span></div>
@@ -650,13 +650,13 @@ const dobRules = [
                                 <v-col cols="12" md="6">
                                     <div class="field-label">Ngày sinh</div>
                                     <AppDatePicker v-model="customerForm.ngaySinh" :disabled="isDetailView"
-                                        placeholder="Chọn ngày sinh" :text-field-props="{ rules: dobRules }" />
+                                        placeholder="Chọn ngày sinh" :text-field-props="{ rules: dobRules, 'hide-details': 'auto' }" />
                                 </v-col>
                                 <v-col cols="12" md="6">
                                     <div class="field-label">Giới tính</div>
                                     <v-select v-model="customerForm.gioiTinh" :readonly="isDetailView"
                                         :items="GIOI_TINH_OPTIONS" variant="outlined" bg-color="white" density="compact"
-                                        hide-details></v-select>
+                                        hide-details="auto"></v-select>
                                 </v-col>
                             </v-row>
                         </v-card-text>
@@ -675,7 +675,7 @@ const dobRules = [
 
                             <div class="position-relative d-inline-block mx-auto mb-6">
                                 <v-avatar size="160" color="blue-lighten-5"
-                                    class="cursor-pointer avatar-hover transition-all overflow-hidden"
+                                    class="border-xl border-white elevation-6 cursor-pointer avatar-hover transition-all overflow-hidden"
                                     @click="handleFileClick">
                                     <v-img :src="resolvedAvatarUrl" cover>
                                         <template v-slot:placeholder>
@@ -690,6 +690,9 @@ const dobRules = [
                                             width="5"></v-progress-circular>
                                     </div>
                                 </v-avatar>
+                                <div v-if="!isDetailView" class="camera-icon-bubble" @click="handleFileClick">
+                                    <v-icon color="white" size="20">mdi-camera-plus</v-icon>
+                                </div>
                             </div>
                             <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="onFileChange" />
 
@@ -697,7 +700,7 @@ const dobRules = [
                                 <div class="field-label">Liên kết ảnh (URL)</div>
                                 <v-text-field v-if="!isDetailView" v-model="customerForm.hinhAnh"
                                     placeholder="Dán URL ảnh hoặc nhấn vào vòng tròn phía trên" variant="outlined"
-                                    bg-color="white" density="compact" hide-details
+                                    bg-color="white" density="compact" hide-details="auto"
                                     class="font-weight-medium bg-slate-50"></v-text-field>
                                 <p class="text-caption font-weight-medium text-slate-400 mt-2 px-1">
                                     Gợi ý: Sử dụng ảnh .jpg hoặc .png chất lượng cao.
@@ -733,7 +736,7 @@ const dobRules = [
                                         <div class="field-label">Tỉnh / Thành phố</div>
                                         <v-autocomplete v-model="customerForm.tinh" :items="provinces" item-title="name"
                                             item-value="code" placeholder="Chọn Tỉnh / Thành phố" variant="outlined"
-                                            bg-color="white" density="compact" />
+                                            bg-color="white" density="compact" hide-details="auto" />
                                     </v-col>
 
                                     <v-col cols="12" md="4">
@@ -741,21 +744,21 @@ const dobRules = [
                                         <v-autocomplete v-model="customerForm.thanhPho" :items="districts"
                                             item-title="name" item-value="code" placeholder="Chọn Quận / Huyện"
                                             variant="outlined" bg-color="white" density="compact"
-                                            :disabled="!customerForm.tinh" />
+                                            :disabled="!customerForm.tinh" hide-details="auto" />
                                     </v-col>
 
                                     <v-col cols="12" md="4">
                                         <div class="field-label">Phường / Xã</div>
                                         <v-autocomplete v-model="customerForm.phuongXa" :items="wards" item-title="name"
                                             item-value="code" placeholder="Chọn Phường / Xã" variant="outlined"
-                                            bg-color="white" density="compact" :disabled="!customerForm.thanhPho" />
+                                            bg-color="white" density="compact" :disabled="!customerForm.thanhPho" hide-details="auto" />
                                     </v-col>
 
                                     <v-col cols="12">
                                         <div class="field-label">Địa chỉ cụ thể (Số nhà, đường...)</div>
                                         <v-textarea v-model="customerForm.diaChiChiTiet"
                                             placeholder="Nhập địa chỉ cụ thể" variant="outlined" bg-color="white"
-                                            rows="2" hide-details />
+                                            rows="2" hide-details="auto" />
                                     </v-col>
                                 </v-row>
                             </div>
@@ -820,7 +823,7 @@ const dobRules = [
                             </div>
                             <v-textarea v-model="customerForm.ghiChu"
                                 placeholder="Ghi chú về khách hàng (Sở thích, lưu ý giao hàng...)" variant="outlined"
-                                bg-color="white" rows="3" hide-details></v-textarea>
+                                bg-color="white" rows="3" hide-details="auto"></v-textarea>
                         </v-card-text>
                     </v-card>
 
@@ -1043,9 +1046,27 @@ const dobRules = [
 }
 
 .camera-icon-bubble {
-    border: 4px solid #fff;
+    position: absolute;
+    right: -6px;
+    bottom: -6px;
+    background: #ffffff;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #dbe4ef;
     cursor: pointer;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    box-shadow: 0 10px 22px rgba(30, 37, 124, 0.18);
+    transition: all 0.2s ease;
+}
+
+.camera-icon-bubble:hover {
+    transform: scale(1.1);
+    background: #f8fafc;
+    border-color: #cbd5e1;
 }
 
 

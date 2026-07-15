@@ -197,8 +197,8 @@ const handlePrint = () => {
 
                 <!-- Footer -->
                 <div class="text-center text-caption text-grey-darken-1 mt-2">
-                    <div class="mb-1">Cảm ơn quý khách đã mua sắm tại AeroStride!</div>
-                    <div>Hẹn gặp lại 🙏</div>
+                    <div class="mb-1">Cảm ơn quý khách đã mua sắm tại AeroStride.</div>
+                    <div>Trân trọng và hẹn gặp lại!</div>
                 </div>
             </div>
         </v-card>

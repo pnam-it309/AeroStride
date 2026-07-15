@@ -107,7 +107,12 @@
 .shift-default   { background: var(--chip-blue-bg);   color: var(--chip-blue-fg);   border-left-color: #3b82f6; }
 
 /* Chip ca dạng tròn (Chấm công) – nền nhạt + chữ màu theo tông ca */
-.shift-chip { @include admin-chip-base; min-width: 70px !important; }
+.shift-chip {
+    @include admin-chip-base;
+    min-width: 92px !important;
+    padding: 0 14px !important;
+    white-space: nowrap !important;
+}
 .shift-chip-morning   { @include chip-tone(green); }
 .shift-chip-afternoon { @include chip-tone(amber); }
 .shift-chip-night     { @include chip-tone(purple); }

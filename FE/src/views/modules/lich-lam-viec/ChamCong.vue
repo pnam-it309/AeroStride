@@ -11,6 +11,8 @@ import AdminConfirm from '@/components/common/AdminConfirm.vue';
 const { addNotification } = useNotifications();
 const { confirmDialog, setConfirm, handleConfirm } = useConfirmDialog();
 
+const todayStr = new Date().toISOString().substr(0, 10);
+
 const loading = ref(false);
 const isRefreshing = ref(false);
 const items = ref([]);
@@ -32,9 +34,19 @@ const form = ref({
 
 const filters = ref({
     search: '',
-    ngay: null,
+    ngay: todayStr,
+    ngayTu: todayStr,
+    ngayDen: todayStr,
+    trangThai: 'ALL',
     nhanVienId: null
 });
+
+const statusOptions = [
+    { title: 'Tất cả trạng thái', value: 'ALL' },
+    { title: 'Vắng mặt', value: 'VANG_MAT' },
+    { title: 'Đi muộn', value: 'DI_MUON' },
+    { title: 'Đúng giờ', value: 'DUNG_GIO' }
+];
 
 const pagination = ref({ page: 1, size: 5, totalElements: 0, totalPages: 0 });
 
@@ -54,6 +66,7 @@ const tableHeaders = [
     { text: 'Giờ TT', width: '85px', align: 'center' },
     { text: 'Tăng ca', width: '85px', align: 'center' },
     { text: 'Tổng giờ', width: '90px', align: 'center' },
+    { text: 'Trạng thái', width: '120px', align: 'center' },
     { text: 'Hành động', width: '100px', align: 'center' }
 ];
 
@@ -82,6 +95,32 @@ const calcOvertimeHours = (row) => {
 // Tổng giờ
 const calcTotalHours = (row) => {
     return parseFloat((calcActualHours(row) + calcOvertimeHours(row)).toFixed(2));
+};
+
+const getShiftByName = (caName) => {
+    if (!caName) return null;
+    return rawShifts.value.find((shift) => shift.tenCa === caName) || null;
+};
+
+const getAttendanceStatus = (row) => {
+    if (!row?.gioVao) {
+        return { text: 'Vắng mặt', className: 'attendance-status-absent' };
+    }
+
+    const shift = getShiftByName(row.ca);
+    if (!shift?.gioBatDau) {
+        return { text: 'Đúng giờ', className: 'attendance-status-on-time' };
+    }
+
+    const checkInMinutes = toMinutes(row.gioVao);
+    const startMinutes = toMinutes(shift.gioBatDau);
+    const lateThreshold = startMinutes + 15;
+
+    if (checkInMinutes > lateThreshold) {
+        return { text: 'Đi muộn', className: 'attendance-status-late' };
+    }
+
+    return { text: 'Đúng giờ', className: 'attendance-status-on-time' };
 };
 
 // Xác định tên ca dựa vào giờ vào
@@ -130,8 +169,22 @@ const attendanceRows = computed(() => {
             (r.maNhanVien && r.maNhanVien.toLowerCase().includes(q))
         );
     }
-    if (filters.value.ngay) {
-        rows = rows.filter(r => r.ngay === filters.value.ngay);
+    if (filters.value.ngayTu || filters.value.ngayDen) {
+        const fromDate = filters.value.ngayTu || filters.value.ngay || todayStr;
+        const toDate = filters.value.ngayDen || filters.value.ngay || todayStr;
+        rows = rows.filter((row) => {
+            if (!row.ngay) return false;
+            return row.ngay >= fromDate && row.ngay <= toDate;
+        });
+    }
+    if (filters.value.trangThai && filters.value.trangThai !== 'ALL') {
+        rows = rows.filter((row) => {
+            const status = getAttendanceStatus(row).text;
+            if (filters.value.trangThai === 'VANG_MAT') return status === 'Vắng mặt';
+            if (filters.value.trangThai === 'DI_MUON') return status === 'Đi muộn';
+            if (filters.value.trangThai === 'DUNG_GIO') return status === 'Đúng giờ';
+            return true;
+        });
     }
     return rows;
 });
@@ -191,6 +244,9 @@ const loadData = async (showLoading = true) => {
 
 const handleRefresh = async () => {
     isRefreshing.value = true;
+    filters.value.ngay = todayStr;
+    filters.value.ngayTu = todayStr;
+    filters.value.ngayDen = todayStr;
     await loadData();
     setTimeout(() => (isRefreshing.value = false), 800);
 };
@@ -199,6 +255,14 @@ const handleFilter = () => {
     pagination.value.page = 1;
     pagination.value.totalElements = attendanceRows.value.length;
     pagination.value.totalPages = Math.ceil(attendanceRows.value.length / pagination.value.size);
+};
+
+const handlePaginationChange = () => {
+    pagination.value.totalElements = attendanceRows.value.length;
+    pagination.value.totalPages = Math.ceil(attendanceRows.value.length / pagination.value.size);
+    if (pagination.value.page > pagination.value.totalPages) {
+        pagination.value.page = Math.max(1, pagination.value.totalPages);
+    }
 };
 
 const openFaceScan = () => {
@@ -340,8 +404,8 @@ onMounted(loadData);
 
         <!-- Filter -->
         <div class="filter-shell mb-4">
-            <AdminFilter title="Bộ lọc chấm công" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
-                <v-col cols="12" md="5" class="filter-cell">
+            <AdminFilter title="Bộ lọc" :loading="loading" :is-refreshing="isRefreshing" @refresh="handleRefresh">
+                <v-col cols="12" md="3" class="filter-cell">
                     <div class="filter-field-label">Tìm kiếm nhân viên</div>
                     <v-text-field
                         v-model="filters.search"
@@ -352,19 +416,41 @@ onMounted(loadData);
                         @input="handleFilter"
                     />
                 </v-col>
-                <v-col cols="12" md="4" class="filter-cell">
-                    <div class="filter-field-label">Lọc theo ngày</div>
+                <v-col cols="12" md="3" class="filter-cell">
+                    <div class="filter-field-label">Từ ngày</div>
                     <AppDatePicker
-                        :model-value="filters.ngay"
-                        @update:model-value="val => { filters.ngay = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : null; handleFilter(); }"
-                        placeholder="Chọn ngày"
+                        :model-value="filters.ngayTu"
+                        @update:model-value="val => { filters.ngayTu = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : todayStr; handleFilter(); }"
+                        placeholder="Chọn từ ngày"
+                    />
+                </v-col>
+                <v-col cols="12" md="3" class="filter-cell">
+                    <div class="filter-field-label">Đến ngày</div>
+                    <AppDatePicker
+                        :model-value="filters.ngayDen"
+                        @update:model-value="val => { filters.ngayDen = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : todayStr; handleFilter(); }"
+                        placeholder="Chọn đến ngày"
+                    />
+                </v-col>
+                <v-col cols="12" md="2" class="filter-cell">
+                    <div class="filter-field-label">Trạng thái</div>
+                    <v-select
+                        v-model="filters.trangThai"
+                        :items="statusOptions"
+                        item-title="title"
+                        item-value="value"
+                        variant="outlined"
+                        density="compact"
+                        hide-details
+                        class="compact-input"
+                        @update:model-value="handleFilter"
                     />
                 </v-col>
             </AdminFilter>
         </div>
 
         <!-- Table -->
-        <div class="bg-white rounded-xl border overflow-hidden">
+        <div class="flex-grow-1 overflow-hidden d-flex flex-column bg-white rounded-xl border">
             <AdminTable
                 title="Bảng chấm công nhân viên"
                 :headers="tableHeaders"
@@ -440,6 +526,12 @@ onMounted(loadData);
                             </span>
                             <span v-else class="text-slate-400 text-caption">--</span>
                         </td>
+                        <!-- Trạng thái -->
+                        <td class="data-cell text-center">
+                            <span :class="['status-badge', getAttendanceStatus(item).className]">
+                                {{ getAttendanceStatus(item).text }}
+                            </span>
+                        </td>
                         <!-- Hành động -->
                         <td class="data-cell action-cell">
                             <div class="action-controls">
@@ -459,7 +551,7 @@ onMounted(loadData);
                         :total-pages="pagination.totalPages"
                         :total-elements="pagination.totalElements"
                         :current-size="paginatedRows.length"
-                        @change="handleFilter"
+                        @change="handlePaginationChange"
                     />
                 </template>
             </AdminTable>
@@ -587,6 +679,37 @@ onMounted(loadData);
     border: 1px solid #bbf7d0;
 }
 
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 78px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.attendance-status-absent {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.attendance-status-late {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #fed7aa;
+}
+
+.attendance-status-on-time {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
 /* Summary cards */
 .summary-card {
     display: flex;
@@ -626,5 +749,18 @@ onMounted(loadData);
     color: #94a3b8;
     font-weight: 500;
     margin-top: 2px;
+}
+
+.filter-shell :deep(.v-field__input),
+.filter-shell :deep(input),
+.filter-shell :deep(.v-select__selection-text),
+.filter-shell :deep(.v-field__placeholder),
+.filter-shell :deep(input::placeholder) {
+    font-size: 13px !important;
+}
+
+.filter-shell :deep(.v-label),
+.filter-shell :deep(.v-field__input) {
+    font-size: 13px !important;
 }
 </style>

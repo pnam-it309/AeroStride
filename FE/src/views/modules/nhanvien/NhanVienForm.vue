@@ -495,14 +495,15 @@ onMounted(async () => {
                 </v-btn>
             </div>
             <div class="d-flex gap-3 header-actions__buttons">
-                <v-btn variant="flat" class="admin-btn-qr text-none" @click="showQR = true">
+                <v-btn variant="flat" class="admin-btn-qr text-none px-8 rounded-xl h-11 elevation-4" @click="showQR = true">
                     <v-icon size="20" class="mr-2">mdi-qrcode-scan</v-icon>
                     <span>Quét QR CCCD</span>
                 </v-btn>
-                <v-btn color="primary" variant="flat" class="add-btn-primary text-none" :loading="saving"
+                <v-btn color="primary" variant="flat" class="add-btn-primary text-none px-8 rounded-xl h-11 elevation-4"
+                    style="font-size: 13px !important; font-weight: 600 !important" :loading="saving"
                     @click="handleSave">
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
-                    <span>{{ submitButtonText }}</span>
+                    <span style="font-size: 13px !important; font-weight: 600 !important">{{ submitButtonText }}</span>
                 </v-btn>
             </div>
         </div>
@@ -552,8 +553,8 @@ onMounted(async () => {
                             <v-col cols="12" md="6">
                                 <div class="field-label">Mã nhân viên</div>
                                 <v-text-field v-model="employeeForm.ma" readonly placeholder="Hệ thống tự tạo..."
-                                    variant="outlined" density="comfortable" class="bg-slate-50"
-                                    hide-details></v-text-field>
+                                    variant="outlined" density="compact" class="bg-slate-50"
+                                    hide-details="auto"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Họ và tên <span class="text-error">*</span></div>
@@ -581,54 +582,54 @@ onMounted(async () => {
                                 <div class="field-label">Tên tài khoản</div>
                                 <v-text-field v-model="employeeForm.tenTaiKhoan" :readonly="isDetailView"
                                     placeholder="Nhập tên tài khoản..." variant="outlined" bg-color="white"
-                                    density="compact" hide-details></v-text-field>
+                                    density="compact" hide-details="auto"></v-text-field>
                             </v-col>
 
                             <v-col cols="12" md="6">
                                 <div class="field-label">Ngày sinh</div>
                                 <AppDatePicker v-model="employeeForm.ngaySinh" :disabled="isDetailView"
                                     placeholder="Chọn ngày sinh"
-                                    :text-field-props="{ rules: dobRules }" />
+                                    :text-field-props="{ rules: dobRules, 'hide-details': 'auto' }" />
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Giới tính</div>
                                 <v-select v-model="employeeForm.gioiTinh" :readonly="isDetailView" :items="[
                                     { title: 'Nam', value: true },
                                     { title: 'Nữ', value: false }
-                                ]" variant="outlined" density="compact" hide-details></v-select>
+                                ]" variant="outlined" density="compact" hide-details="auto"></v-select>
                             </v-col>
                             <v-col cols="12" md="6">
                                 <div class="field-label">Vai trò</div>
                                 <v-select v-model="employeeForm.idPhanQuyen" :readonly="isDetailView" :items="roles"
                                     item-title="title" item-value="value" variant="outlined" density="compact"
-                                    hide-details></v-select>
+                                    hide-details="auto"></v-select>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Tỉnh / Thành phố *</div>
                                 <v-select v-model="employeeForm.tinh" :readonly="isDetailView" :items="provinces"
                                     item-title="name" item-value="code" placeholder="Chọn tỉnh/thành phố"
-                                    variant="outlined" density="compact" hide-details
+                                    variant="outlined" density="compact" hide-details="auto"
                                     :loading="loadingLocations.provinces"></v-select>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Quận / Huyện *</div>
                                 <v-select v-model="employeeForm.thanhPho" :readonly="isDetailView" :items="districts"
                                     item-title="name" item-value="code" placeholder="Chọn quận/huyện" variant="outlined"
-                                    density="compact" hide-details :loading="loadingLocations.districts"
+                                    density="compact" hide-details="auto" :loading="loadingLocations.districts"
                                     :disabled="isDetailView || !employeeForm.tinh"></v-select>
                             </v-col>
                             <v-col cols="12" md="4">
                                 <div class="field-label">Phường / Xã *</div>
                                 <v-select v-model="employeeForm.phuongXa" :readonly="isDetailView" :items="wards"
                                     item-title="name" item-value="code" placeholder="Chọn phường/xã" variant="outlined"
-                                    density="compact" hide-details :loading="loadingLocations.wards"
+                                    density="compact" hide-details="auto" :loading="loadingLocations.wards"
                                     :disabled="isDetailView || !employeeForm.thanhPho"></v-select>
                             </v-col>
                             <v-col cols="12">
                                 <div class="field-label">Địa chỉ chi tiết *</div>
                                 <v-textarea v-model="employeeForm.diaChiChiTiet" :readonly="isDetailView"
                                     placeholder="Số nhà, tên đường..." variant="outlined" density="compact" rows="2"
-                                    hide-details></v-textarea>
+                                    hide-details="auto"></v-textarea>
                             </v-col>
                         </v-row>
                     </v-card-text>
@@ -671,7 +672,7 @@ onMounted(async () => {
                             <div class="field-label">Liên kết ảnh (URL)</div>
                             <v-text-field v-if="!isDetailView" v-model="employeeForm.hinhAnh"
                                 placeholder="Dán URL ảnh hoặc nhấn vào vòng tròn" variant="outlined" bg-color="white"
-                                density="comfortable" hide-details class="bg-white"></v-text-field>
+                                density="compact" hide-details="auto" class="bg-white"></v-text-field>
                             <p class="text-caption font-weight-medium text-slate-400 mt-3 px-1">
                                 Ảnh đại diện sẽ hiển thị trên hồ sơ và thanh thực đơn cá nhân.
                             </p>
@@ -710,23 +711,24 @@ onMounted(async () => {
     position: absolute;
     bottom: 0px;
     right: 0px;
-    background: #000;
+    background: #ffffff;
     width: 42px;
     height: 42px;
-    border-radius: 50%;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 4px solid #fff;
+    border: 1px solid #dbe4ef;
     cursor: pointer;
     z-index: 10;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 18px rgba(30, 37, 124, 0.12);
     transition: all 0.2s ease;
 }
 
 .camera-icon-bubble:hover {
     transform: scale(1.1);
-    background: #1e293b;
+    background: #f8fafc;
+    border-color: #cbd5e1;
 }
 
 .avatar-hover {
@@ -746,8 +748,9 @@ onMounted(async () => {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 0.72);
     z-index: 5;
+    backdrop-filter: blur(1px);
 }
 
 :deep(input[type="date"]::-webkit-calendar-picker-indicator) {
@@ -786,6 +789,23 @@ onMounted(async () => {
 .field-label,
 .field-label-small {
     font-size: 13px !important;
+}
+
+.admin-btn-qr {
+    height: 44px !important;
+    padding: 0 24px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    background: #107c41 !important;
+    color: #ffffff !important;
+    border: 1px solid #107c41 !important;
+    box-shadow: 0 4px 14px rgba(16, 124, 65, 0.3) !important;
+}
+
+.admin-btn-qr:hover {
+    background: #0f8a49 !important;
+    box-shadow: 0 6px 20px rgba(16, 124, 65, 0.45) !important;
 }
 
 :global(.v-overlay-container .v-list-item-title),
