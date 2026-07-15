@@ -997,10 +997,9 @@ onMounted(() => {
                                 <span class="text-body-2 font-weight-bold" style="color: #dc2626 !important;">-{{ campaignDiscountPercent }}%</span>
                             </div>
                             <div class="summary-row mb-3">
-                                <span class="text-slate-500">Mã giảm giá:</span>
+                                <span class="text-slate-500">Phiếu giảm giá:</span>
                                 <div class="text-right d-flex align-center justify-end">
                                     <template v-if="order.maPhieuGiamGia">
-                                        <v-chip size="x-small" color="error" variant="flat" class="mr-2">Phiếu giảm giá</v-chip>
                                         <span class="text-body-2 font-weight-bold text-slate-800">{{ order.maPhieuGiamGia }}</span>
                                     </template>
                                     <template v-else-if="orderDiscountAmount > 0">
@@ -1014,9 +1013,9 @@ onMounted(() => {
                                     </template>
                                 </div>
                             </div>
-                            <div v-if="orderDiscountAmount > 0" class="summary-row mb-5" style="color: #ef4444 !important;">
+                            <div v-if="orderDiscountAmount > 0" class="summary-row mb-5 discount-amount-row">
                                 <span class="font-weight-medium">Giảm giá:</span>
-                                <span class="text-body-2 font-weight-bold">- {{ formatCurrency(Math.abs(orderDiscountAmount)) }}</span>
+                                <span class="text-body-2 font-weight-bold discount-amount-value">- {{ formatCurrency(Math.abs(orderDiscountAmount)) }}</span>
                             </div>
                             <div class="summary-row mb-4">
                                 <span class="text-slate-500 d-flex align-center">
@@ -1580,6 +1579,17 @@ onMounted(() => {
 
 .price-changed-cell td {
     background-color: #fffdf5 !important;
+}
+
+.discount-amount-row {
+    color: #b91c1c !important;
+}
+
+.discount-amount-value {
+    color: #b91c1c !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.15px;
+    text-shadow: 0 0 0 #b91c1c;
 }
 
 .customer-main-col,

@@ -115,10 +115,12 @@ const handleJump = (e) => {
 .pagination-shell {
     width: 100%;
     gap: 12px;
+    flex-wrap: wrap;
 }
 
 .pagination-summary {
     font-size: 13px !important;
+    line-height: 1.4;
 }
 .pagination-summary strong {
     color: #000;
@@ -146,6 +148,7 @@ const handleJump = (e) => {
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    flex-wrap: wrap;
 }
 .pager-btn {
     min-width: 32px;

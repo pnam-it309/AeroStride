@@ -44,7 +44,7 @@ const breadcrumbs = [
 
 const tableHeaders = [
     { text: 'STT', width: '50px' },
-    { text: 'Tên ca', width: '200px' },
+    { text: 'Thông tin ca làm', width: '200px' },
     { text: 'Giờ bắt đầu', width: '150px' },
     { text: 'Giờ kết thúc', width: '150px' },
     { text: 'Mô tả', width: '150px' },
@@ -74,6 +74,15 @@ const filteredItems = computed(() => {
             (item.moTa && item.moTa.toLowerCase().includes(filters.value.search.toLowerCase()));
     });
 });
+
+const getShiftChipClass = (caName) => {
+    if (!caName) return 'shift-chip-default';
+    const name = caName.toLowerCase();
+    if (name.includes('sáng') || name.includes('sang')) return 'shift-chip-morning';
+    if (name.includes('chiều') || name.includes('chieu')) return 'shift-chip-afternoon';
+    if (name.includes('tối') || name.includes('toi') || name.includes('đêm')) return 'shift-chip-night';
+    return 'shift-chip-default';
+};
 
 const paginatedItems = computed(() => {
     const start = (pagination.value.page - 1) * pagination.value.size;
@@ -219,7 +228,11 @@ onMounted(() => {
             <template #row="{ item, index }">
                 <tr class="data-row">
                     <td class="data-cell">{{ (pagination.page - 1) * pagination.size + index + 1 }}</td>
-                    <td class="data-cell font-weight-bold">{{ item.tenCa }}</td>
+                    <td class="data-cell font-weight-bold text-center">
+                        <v-chip size="small" variant="flat" :class="['shift-chip', getShiftChipClass(item.tenCa)]">
+                            {{ item.tenCa }}
+                        </v-chip>
+                    </td>
                     <td class="data-cell">{{ item.gioBatDau }}</td>
                     <td class="data-cell">{{ item.gioKetThuc }}</td>
                     <td class="data-cell text-truncate" style="max-width: 300px">{{ item.moTa }}</td>
