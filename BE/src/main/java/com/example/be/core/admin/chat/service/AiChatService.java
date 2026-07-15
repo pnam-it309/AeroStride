@@ -4,6 +4,7 @@ import com.example.be.entity.CuocHoiThoai;
 import java.util.List;
 
 public interface AiChatService {
-    void generateAndSendResponse(CuocHoiThoai conversation, String customerText);
+    void generateAndSendResponse(CuocHoiThoai conversation, String customerText, String imageBase64);
+    String summarizeChat(CuocHoiThoai conversation);
     List<String> getDynamicWelcomeSuggestions(String sessionId);
 }

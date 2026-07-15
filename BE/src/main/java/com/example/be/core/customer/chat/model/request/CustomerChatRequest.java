@@ -16,4 +16,5 @@ public class CustomerChatRequest {
     private String sessionId;
     private String text;
     private String sender;
+    private String imageBase64;
 }

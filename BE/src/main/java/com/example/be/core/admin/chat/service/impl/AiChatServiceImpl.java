@@ -251,7 +251,7 @@ public class AiChatServiceImpl implements AiChatService {
 
     @Async
     @Override
-    public void generateAndSendResponse(CuocHoiThoai conversation, String customerText) {
+    public void generateAndSendResponse(CuocHoiThoai conversation, String customerText, String imageBase64) {
         log.info("AI đang xử lý tin nhắn: {}", customerText);
 
         // [Handoff Interceptor] Phát hiện từ khóa yêu cầu gặp nhân viên để phản hồi tức thì
@@ -322,7 +322,7 @@ public class AiChatServiceImpl implements AiChatService {
                 log.info("Tự động chuyển đổi: Khởi động gọi Google Gemini API...");
                 String apiUrl = String.format("%s/models/%s:generateContent?key=%s",
                         geminiBaseUrl, geminiModel, activeGeminiKey);
-                String botResponseText = callGeminiApi(apiUrl, prompt);
+                String botResponseText = callGeminiApi(apiUrl, prompt, imageBase64);
                 saveAndBroadcast(conversation, botResponseText);
                 log.info("Google Gemini phản hồi thành công.");
                 return; // Xử lý xong, kết thúc!
@@ -701,12 +701,32 @@ public class AiChatServiceImpl implements AiChatService {
      * Gọi Gemini API và trích xuất kết quả.
      */
     @SuppressWarnings("unchecked")
-    private String callGeminiApi(String apiUrl, String prompt) {
+    private String callGeminiApi(String apiUrl, String prompt, String imageBase64) {
         Map<String, Object> requestBody = new HashMap<>();
         Map<String, Object> content = new HashMap<>();
-        Map<String, String> part = new HashMap<>();
-        part.put("text", prompt);
-        content.put("parts", List.of(part));
+        
+        List<Map<String, Object>> parts = new ArrayList<>();
+        
+        Map<String, Object> textPart = new HashMap<>();
+        textPart.put("text", prompt);
+        parts.add(textPart);
+
+        if (imageBase64 != null && !imageBase64.trim().isEmpty()) {
+            Map<String, Object> inlineData = new HashMap<>();
+            inlineData.put("mimeType", "image/jpeg");
+            // Bỏ đi tiền tố "data:image/jpeg;base64," nếu có
+            String base64Data = imageBase64;
+            if (base64Data.contains(",")) {
+                base64Data = base64Data.split(",")[1];
+            }
+            inlineData.put("data", base64Data);
+
+            Map<String, Object> imagePart = new HashMap<>();
+            imagePart.put("inlineData", inlineData);
+            parts.add(imagePart);
+        }
+
+        content.put("parts", parts);
         requestBody.put("contents", List.of(content));
 
         HttpHeaders headers = new HttpHeaders();
@@ -739,6 +759,23 @@ public class AiChatServiceImpl implements AiChatService {
                 .build();
 
         messagingTemplate.convertAndSend(ChatConstants.TOPIC_MESSAGES, responseDto);
+    }
+
+    @Override
+    public String summarizeChat(CuocHoiThoai conversation) {
+        String chatHistory = buildChatHistory(conversation.getId());
+        String prompt = "Dựa trên lịch sử hội thoại sau, hãy tóm tắt nội dung chính (khoảng 3-4 dòng) và đánh dấu xem có cần nhân viên chú ý đặc biệt không (ví dụ: đòi hoàn tiền, khiếu nại, ...):\n\n" + chatHistory;
+        
+        String activeGeminiKey = getApiKey();
+        if (activeGeminiKey != null && !activeGeminiKey.isBlank() && !"your_gemini_api_key_here".equals(activeGeminiKey)) {
+            try {
+                String apiUrl = String.format("%s/models/%s:generateContent?key=%s", geminiBaseUrl, geminiModel, activeGeminiKey);
+                return callGeminiApi(apiUrl, prompt, null);
+            } catch (Exception e) {
+                log.error("Lỗi tóm tắt bằng Gemini: {}", e.getMessage());
+            }
+        }
+        return "Không thể tóm tắt hội thoại lúc này do lỗi kết nối AI.";
     }
 
     /**

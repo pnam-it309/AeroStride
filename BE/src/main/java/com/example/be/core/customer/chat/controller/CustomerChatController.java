@@ -19,7 +19,7 @@ public class CustomerChatController {
 
     @PostMapping("/send")
     public ResponseEntity<?> sendMessage(@RequestBody CustomerChatRequest payload) {
-        chatService.sendMessage(payload.getConversationId(), payload.getText(), payload.getSender(), payload.getSessionId());
+        chatService.sendMessage(payload.getConversationId(), payload.getText(), payload.getSender(), payload.getSessionId(), payload.getImageBase64());
         
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -39,6 +39,13 @@ public class CustomerChatController {
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("data", chatService.getDynamicWelcomeSuggestions(sessionId));
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/rating")
+    public ResponseEntity<?> submitRating(@RequestBody com.example.be.core.customer.chat.model.request.ChatRatingRequest payload) {
+        chatService.submitRating(payload.getSessionId(), payload.getRating(), payload.getFeedback());
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
         return ResponseEntity.ok(response);
     }
 }

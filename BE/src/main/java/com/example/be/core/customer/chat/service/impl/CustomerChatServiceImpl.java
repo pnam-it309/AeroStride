@@ -58,7 +58,7 @@ public class CustomerChatServiceImpl implements CustomerChatService {
 
     @Override
     @Transactional
-    public void sendMessage(String conversationId, String text, String senderType, String sessionId) {
+    public void sendMessage(String conversationId, String text, String senderType, String sessionId, String imageBase64) {
         CuocHoiThoai conversation;
 
         if (conversationId != null && !conversationId.isEmpty() && !conversationId.equals("undefined")) {
@@ -129,7 +129,7 @@ public class CustomerChatServiceImpl implements CustomerChatService {
             Boolean.FALSE.equals(conversation.getDaChapNhan()) && 
             (conversation.getLoaiHoiThoai() == null || conversation.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER)) {
             log.info("Triggering AI response for conversation: {}", conversation.getId());
-            aiChatService.generateAndSendResponse(conversation, text);
+            aiChatService.generateAndSendResponse(conversation, text, imageBase64);
         }
     }
 
@@ -144,5 +144,16 @@ public class CustomerChatServiceImpl implements CustomerChatService {
     @Override
     public List<String> getDynamicWelcomeSuggestions(String sessionId) {
         return aiChatService.getDynamicWelcomeSuggestions(sessionId);
+    }
+
+    @Override
+    @Transactional
+    public void submitRating(String sessionId, Integer rating, String feedback) {
+        CuocHoiThoai conversation = conversationRepository.findByMaPhien(sessionId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy cuộc trò chuyện."));
+        
+        conversation.setDanhGiaChat(rating);
+        conversation.setPhanHoiChat(feedback);
+        conversationRepository.save(conversation);
     }
 }

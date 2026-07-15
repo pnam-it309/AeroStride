@@ -23,5 +23,7 @@ public interface AdminChatService {
 
     void sendMessage(String conversationId, String text, String senderType, String sessionId);
 
+    String summarizeConversation(String id);
+
     List<String> getDynamicWelcomeSuggestions(String sessionId);
 }

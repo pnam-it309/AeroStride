@@ -45,6 +45,12 @@ public class CuocHoiThoai extends PrimaryEntity {
     @Builder.Default
     private TrangThaiHoiThoai trangThaiHoiThoai = TrangThaiHoiThoai.PENDING;
 
+    @Column(name = "danh_gia_chat")
+    private Integer danhGiaChat; // Đánh giá sao từ 1-5
+
+    @Column(name = "phan_hoi_chat", columnDefinition = "NVARCHAR(500)")
+    private String phanHoiChat; // Feedback text
+
     @OneToMany(mappedBy = "cuocHoiThoai", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("ngayTao ASC")
     @Builder.Default

@@ -463,4 +463,61 @@ CREATE TABLE IF NOT EXISTS lich_lam_viec (
     FOREIGN KEY (id_ca_lam) REFERENCES ca_lam(id)
 );
 
+-- Bảng Cuộc Hội Thoại
+CREATE TABLE IF NOT EXISTS cuoc_hoi_thoai (
+    id VARCHAR(36) PRIMARY KEY,
+    id_khach_hang VARCHAR(36),
+    id_nhan_vien VARCHAR(36),
+    id_nhan_vien_nhan VARCHAR(36),
+    ma_phien VARCHAR(255),
+    da_chap_nhan BIT DEFAULT 0,
+    loai_hoi_thoai VARCHAR(50) DEFAULT 'CUSTOMER',
+    trang_thai_hoi_thoai VARCHAR(50) DEFAULT 'PENDING',
+    danh_gia_chat INT,
+    phan_hoi_chat NVARCHAR(500),
+    ngay_tao BIGINT,
+    ngay_cap_nhat BIGINT,
+    nguoi_tao VARCHAR(100),
+    nguoi_cap_nhat VARCHAR(100),
+    FOREIGN KEY (id_khach_hang) REFERENCES khach_hang(id),
+    FOREIGN KEY (id_nhan_vien) REFERENCES nhan_vien(id),
+    FOREIGN KEY (id_nhan_vien_nhan) REFERENCES nhan_vien(id)
+);
+
+-- Bảng Tin Nhắn
+CREATE TABLE IF NOT EXISTS tin_nhan (
+    id VARCHAR(36) PRIMARY KEY,
+    id_cuoc_hoi_thoai VARCHAR(36),
+    loai_nguoi_gui VARCHAR(50),
+    id_nguoi_gui VARCHAR(36),
+    ten_nguoi_gui VARCHAR(255),
+    noi_dung TEXT,
+    ngay_tao BIGINT,
+    ngay_cap_nhat BIGINT,
+    nguoi_tao VARCHAR(100),
+    nguoi_cap_nhat VARCHAR(100),
+    FOREIGN KEY (id_cuoc_hoi_thoai) REFERENCES cuoc_hoi_thoai(id)
+);
+
+-- Bảng Đánh Giá Sản Phẩm
+CREATE TABLE IF NOT EXISTS danh_gia_san_pham (
+    id VARCHAR(36) PRIMARY KEY,
+    id_hoa_don VARCHAR(36) NOT NULL,
+    id_san_pham VARCHAR(36) NOT NULL,
+    id_khach_hang VARCHAR(36) NOT NULL,
+    diem_danh_gia INT NOT NULL,
+    noi_dung NVARCHAR(2000),
+    hinh_anh JSON,
+    video VARCHAR(500),
+    trang_thai VARCHAR(50) DEFAULT 'PENDING',
+    ngay_tao BIGINT,
+    ngay_cap_nhat BIGINT,
+    nguoi_tao VARCHAR(100),
+    nguoi_cap_nhat VARCHAR(100),
+    
+    FOREIGN KEY (id_hoa_don) REFERENCES hoa_don(id),
+    FOREIGN KEY (id_san_pham) REFERENCES san_pham(id),
+    FOREIGN KEY (id_khach_hang) REFERENCES khach_hang(id)
+);
+
 SET FOREIGN_KEY_CHECKS = 1;

@@ -451,5 +451,15 @@ public class AdminChatServiceImpl implements AdminChatService {
     public List<String> getDynamicWelcomeSuggestions(String sessionId) {
         return aiChatService.getDynamicWelcomeSuggestions(sessionId);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String summarizeConversation(String id) {
+        CuocHoiThoai conversation = conversationRepository.findById(id).orElse(null);
+        if (conversation == null) {
+            return "Không tìm thấy cuộc hội thoại.";
+        }
+        return aiChatService.summarizeChat(conversation);
+    }
 }
 

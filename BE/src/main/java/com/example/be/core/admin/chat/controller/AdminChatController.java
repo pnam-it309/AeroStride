@@ -79,4 +79,9 @@ public class AdminChatController {
         chatService.sendMessage(request.getConversationId(), request.getText(), request.getSender(), null);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    @GetMapping("/summarize/{id}")
+    public ResponseEntity<ApiResponse<String>> summarizeChat(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(chatService.summarizeConversation(id)));
+    }
 }
