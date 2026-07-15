@@ -1,3 +1,10 @@
+## [1.27.4](https://github.com/pnam-it309/AeroStride/compare/v1.27.3...v1.27.4) (2026-07-15)
+
+
+### Bug Fixes
+
+* sua giao dien lich lam viec ([55c8e4a](https://github.com/pnam-it309/AeroStride/commit/55c8e4afc4699dccae9327e86dc9b18c6fa365ae))
+
 ## [1.27.3](https://github.com/pnam-it309/AeroStride/compare/v1.27.2...v1.27.3) (2026-07-14)
 
 
