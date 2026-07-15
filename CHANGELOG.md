@@ -1,3 +1,10 @@
+## [1.27.3](https://github.com/pnam-it309/AeroStride/compare/v1.27.2...v1.27.3) (2026-07-14)
+
+
+### Bug Fixes
+
+* expand product image columns ([b857d98](https://github.com/pnam-it309/AeroStride/commit/b857d985eddf5e4be9f96bfc31d1de863b8ab1ca))
+
 ## [1.27.2](https://github.com/pnam-it309/AeroStride/compare/v1.27.1...v1.27.2) (2026-07-14)
 
 
