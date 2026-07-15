@@ -111,7 +111,20 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         }
 
         hoaDonChiTietRepository.deleteAll(details);
-        hoaDonRepository.delete(hd);
+
+        // Soft-delete: chuyển trạng thái sang DA_HUY thay vì xóa hẳn khỏi DB
+        Integer trangThaiCu = hd.getTrangThai() != null ? hd.getTrangThai().ordinal() : null;
+        hd.setTrangThai(OrderStatus.DA_HUY);
+        hoaDonRepository.save(hd);
+
+        // Ghi lịch sử hủy hóa đơn
+        LichSuTrangThaiHoaDon lichSu = LichSuTrangThaiHoaDon.builder()
+                .hoaDon(hd)
+                .trangThaiCu(trangThaiCu)
+                .trangThaiMoi(OrderStatus.DA_HUY.ordinal())
+                .ghiChu("Hủy hóa đơn chờ tại quầy")
+                .build();
+        lichSuTrangThaiHoaDonRepository.save(lichSu);
     }
 
     @Override
@@ -227,15 +240,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
         hoaDonChiTietRepository.delete(hdct);
 
+        // Cập nhật tổng tiền hóa đơn (có thể = 0 nếu giỏ trống, hóa đơn vẫn giữ trạng thái CHO_XAC_NHAN)
         HoaDon hd = getHoaDonOrThrow(idHoaDon);
-        List<HoaDonChiTiet> remainingDetails = hoaDonChiTietRepository.findAllByHoaDon(hd);
-        boolean isEmpty = remainingDetails.isEmpty() || (remainingDetails.size() == 1 && remainingDetails.get(0).getId().equals(hdct.getId()));
-        if (isEmpty) {
-            hd.setTrangThai(OrderStatus.DA_HUY);
-            hoaDonRepository.save(hd);
-        } else {
-            updateHoaDonTotals(hd);
-        }
+        updateHoaDonTotals(hd);
     }
 
     @Override
@@ -475,11 +482,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Override
     @Transactional(readOnly = true)
     /** Tim bien the cho man ban hang, kem gia goc/gia sau giam/badge phan tram. */
-    public List<BanHangSanPhamResponse> searchSanPham(String keyword, String thuongHieu, String chatLieu, String xuatXu, String mucDich) {
-        // Gioi han ket qua de khong load toan bo bien the khi o tim kiem dang rong.
-        List<ChiTietSanPham> variants = chiTietSanPhamRepository
-                .searchByKeywordLite(keyword, thuongHieu, chatLieu, xuatXu, mucDich, PageRequest.of(0, 2000))
-                .getContent();
+    public List<BanHangSanPhamResponse> searchSanPham(String keyword, String thuongHieu, String chatLieu, String xuatXu, String mucDich, String mauSac, String kichCo, BigDecimal minGia, BigDecimal maxGia) {
+        List<ChiTietSanPham> variants = chiTietSanPhamRepository.searchForPOS(keyword, thuongHieu, chatLieu, xuatXu, mucDich, mauSac, kichCo, minGia, maxGia);
         Map<String, List<ChiTietDotGiamGia>> discountMap = getDiscountRelationMap(variants);
 
         return variants
@@ -532,6 +536,12 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         Integer maxPercent = 0;
 
         for (PhieuGiamGia voucher : allVouchers) {
+            // Kiểm tra điều kiện đơn hàng tối thiểu
+            BigDecimal minOrder = voucher.getDonHangToiThieu() != null ? voucher.getDonHangToiThieu() : BigDecimal.ZERO;
+            if (total.compareTo(minOrder) < 0) {
+                continue;
+            }
+
             // Kiểm tra loại phiếu: công khai hoặc cá nhân
             String hinhThuc = voucher.getHinhThuc();
             
@@ -555,33 +565,78 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 }
             }
 
-            // Ưu tiên voucher có % giảm giá cao hơn
-            Integer currentPercent = 0;
-            BigDecimal discount = BigDecimal.ZERO;
-            
-            if ("PHAN_TRAM".equalsIgnoreCase(voucher.getLoaiPhieu()) || "PERCENT".equalsIgnoreCase(voucher.getLoaiPhieu())) {
-                currentPercent = voucher.getPhanTramGiamGia() != null ? voucher.getPhanTramGiamGia() : 0;
-                discount = total.multiply(BigDecimal.valueOf(currentPercent)).divide(BigDecimal.valueOf(100));
-                BigDecimal max = voucher.getGiamToiDa() != null ? voucher.getGiamToiDa() : BigDecimal.valueOf(Long.MAX_VALUE);
-                if (discount.compareTo(max) > 0) discount = max;
-            } else {
-                // Voucher cố định: tính % tương đương để so sánh
-                if (total.compareTo(BigDecimal.ZERO) > 0) {
-                    discount = voucher.getSoTienGiam() != null ? voucher.getSoTienGiam() : BigDecimal.ZERO;
-                    currentPercent = discount.multiply(BigDecimal.valueOf(100))
-                            .divide(total, 0, java.math.RoundingMode.HALF_UP).intValue();
-                }
-            }
-
-            // Ưu tiên theo % giảm giá trước Sau đó mới xét số tiền giảm tuyệt đối
-            if (currentPercent > maxPercent || 
-                (currentPercent == maxPercent && discount.compareTo(maxDiscount) > 0)) {
-                maxPercent = currentPercent;
+            BigDecimal discount = getPotentialDiscount(voucher, total);
+            // Ưu tiên theo số tiền giảm lớn nhất
+            if (discount.compareTo(maxDiscount) > 0) {
                 maxDiscount = discount;
                 bestVoucher = voucher;
+            } else if (discount.compareTo(maxDiscount) == 0 && discount.compareTo(BigDecimal.ZERO) > 0) {
+                // Nếu giảm giá bằng nhau, lấy cái nào mức % hoặc cái mới hơn. Để đơn giản cứ giữ cái đầu.
             }
         }
         return bestVoucher;
+    }
+
+    private BigDecimal getPotentialDiscount(PhieuGiamGia v, BigDecimal baseAmount) {
+        if (v == null) return BigDecimal.ZERO;
+        BigDecimal amount = baseAmount.max(BigDecimal.ZERO);
+        String type = v.getLoaiPhieu() != null ? v.getLoaiPhieu().toUpperCase() : "";
+        if ("PHAN_TRAM".equals(type) || "PERCENT".equals(type)) {
+            Integer percent = v.getPhanTramGiamGia() != null ? v.getPhanTramGiamGia() : 0;
+            BigDecimal discount = amount.multiply(BigDecimal.valueOf(percent)).divide(BigDecimal.valueOf(100), java.math.RoundingMode.HALF_UP);
+            if (v.getGiamToiDa() != null && v.getGiamToiDa().compareTo(BigDecimal.ZERO) > 0) {
+                discount = discount.min(v.getGiamToiDa());
+            }
+            return amount.min(discount.max(BigDecimal.ZERO));
+        } else {
+            return amount.min(v.getSoTienGiam() != null ? v.getSoTienGiam().max(BigDecimal.ZERO) : BigDecimal.ZERO);
+        }
+    }
+
+    private String getVoucherCode(PhieuGiamGia v) {
+        if (v == null) return "";
+        if (v.getMa() != null && !v.getMa().isEmpty()) return v.getMa();
+        if (v.getTen() != null && !v.getTen().isEmpty()) return v.getTen();
+        return "Phiếu giảm giá";
+    }
+
+    private PhieuGiamGia getNextBetterVoucher(HoaDon hd, PhieuGiamGia bestVoucher) {
+        BigDecimal total = hd.getTongTien();
+        if (total == null) total = BigDecimal.ZERO;
+
+        BigDecimal eligibleDiscount = bestVoucher != null ? getPotentialDiscount(bestVoucher, total) : BigDecimal.ZERO;
+        
+        List<PhieuGiamGia> allVouchers = phieuGiamGiaRepository.findAllByTrangThai(TrangThai.DANG_HOAT_DONG);
+        
+        PhieuGiamGia nextBest = null;
+        BigDecimal maxPotentialDiscount = eligibleDiscount;
+        BigDecimal bestMinOrder = BigDecimal.valueOf(Long.MAX_VALUE);
+
+        for (PhieuGiamGia v : allVouchers) {
+            BigDecimal minOrder = v.getDonHangToiThieu() != null ? v.getDonHangToiThieu() : BigDecimal.ZERO;
+            if (minOrder.compareTo(total) <= 0) continue; // Nếu đã đủ điều kiện rồi thì khuyến mãi đó sẽ nằm trong bestVoucher.
+
+            // Phải test potential discount nếu họ đạt được minOrder.
+            BigDecimal potDiscount = getPotentialDiscount(v, minOrder);
+            if (potDiscount.compareTo(maxPotentialDiscount) > 0) {
+                // Ưu tiên giảm nhiều hơn, nếu bằng nhau thì ưu tiên min order thấp hơn
+                maxPotentialDiscount = potDiscount;
+                bestMinOrder = minOrder;
+                nextBest = v;
+            } else if (potDiscount.compareTo(maxPotentialDiscount) == 0 && potDiscount.compareTo(eligibleDiscount) > 0) {
+                if (minOrder.compareTo(bestMinOrder) < 0) {
+                    bestMinOrder = minOrder;
+                    nextBest = v;
+                }
+            }
+        }
+        return nextBest;
+    }
+
+    private String formatCurrencyVND(BigDecimal amount) {
+        if (amount == null) return "0đ";
+        java.text.NumberFormat format = java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("vi", "VN"));
+        return format.format(amount);
     }
 
     /** Tinh gia POS hien tai cua mot bien the bang cach doc dot giam gia tu DB. */
@@ -799,6 +854,40 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         BigDecimal tienGiamGiaPhieu = tongTien.subtract(tongTienSauGiam);
         BigDecimal phiVanChuyen = hd.getPhiVanChuyen() != null ? hd.getPhiVanChuyen() : BigDecimal.ZERO;
         BigDecimal thanhTien = tongTienSauGiam.add(phiVanChuyen);
+        
+        // --- VOUCHER SUGGESTION LOGIC ---
+        String bestVoucherId = null;
+        String voucherSuggestionText = "";
+        String betterVoucherSuggestionText = "";
+        Boolean canApplySuggestedVoucher = false;
+        
+        if (!chiTietList.isEmpty()) {
+            PhieuGiamGia bestVoucher = getBestVoucher(hd.getId());
+            PhieuGiamGia appliedVoucher = hd.getPhieuGiamGia();
+            
+            if (bestVoucher != null && appliedVoucher != null && bestVoucher.getId().equals(appliedVoucher.getId())) {
+                voucherSuggestionText = "Đã áp dụng mã giảm giá ưu đãi nhất: " + getVoucherCode(bestVoucher) + " (-" + formatCurrencyVND(getPotentialDiscount(bestVoucher, tongTien)) + ")";
+                bestVoucherId = bestVoucher.getId();
+            } else if (bestVoucher != null) {
+                voucherSuggestionText = "Bấm để áp dụng mã giảm giá ưu đãi nhất: " + getVoucherCode(bestVoucher) + " (-" + formatCurrencyVND(getPotentialDiscount(bestVoucher, tongTien)) + ")";
+                bestVoucherId = bestVoucher.getId();
+                canApplySuggestedVoucher = true;
+            } else {
+                PhieuGiamGia nextBetterVoucher = getNextBetterVoucher(hd, null);
+                if (nextBetterVoucher == null) {
+                    voucherSuggestionText = "Chưa có phiếu giảm giá phù hợp cho đơn hiện tại.";
+                }
+            }
+            
+            PhieuGiamGia nextBetterVoucher = getNextBetterVoucher(hd, bestVoucher);
+            if (nextBetterVoucher != null) {
+                BigDecimal minVal = nextBetterVoucher.getDonHangToiThieu() != null ? nextBetterVoucher.getDonHangToiThieu() : BigDecimal.ZERO;
+                BigDecimal remaining = minVal.subtract(tongTien).max(BigDecimal.ZERO);
+                BigDecimal futureBase = tongTien.max(minVal);
+                betterVoucherSuggestionText = "Mua thêm " + formatCurrencyVND(remaining) + " để nhận phiếu tốt hơn: " + getVoucherCode(nextBetterVoucher) + " (-" + formatCurrencyVND(getPotentialDiscount(nextBetterVoucher, futureBase)) + ")";
+            }
+        }
+        // --- END VOUCHER SUGGESTION LOGIC ---
 
         return AdminBanHangHoaDonResponse.builder()
                 .id(hd.getId())
@@ -816,6 +905,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .phiVanChuyen(phiVanChuyen)
                 .thanhTien(thanhTien)
                 .listsHoaDonChiTiet(detailDTOs)
+                .bestVoucherId(bestVoucherId)
+                .voucherSuggestionText(voucherSuggestionText)
+                .betterVoucherSuggestionText(betterVoucherSuggestionText)
+                .canApplySuggestedVoucher(canApplySuggestedVoucher)
                 .build();
     }
 
@@ -907,5 +1000,32 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         }
         
         return suggestions;
+    }
+
+    @Override
+    public com.example.be.core.admin.banhang.model.response.AdminBanHangPaymentStatusResponse checkPaymentStatus(String idHoaDon) {
+        HoaDon hd = hoaDonRepository.findById(idHoaDon).orElse(null);
+        if (hd == null) {
+            return com.example.be.core.admin.banhang.model.response.AdminBanHangPaymentStatusResponse.builder()
+                    .isPaid(false).transactionNo(null).build();
+        }
+
+        // Đơn POS sau khi IPN VNPay thành công sẽ có trạng thái XAC_NHAN
+        boolean isPaid = hd.getTrangThai() == OrderStatus.XAC_NHAN || hd.getTrangThai() == OrderStatus.HOAN_THANH;
+        String transactionNo = null;
+
+        if (isPaid && hd.getListsGiaoDichThanhToan() != null) {
+            for (GiaoDichThanhToan gd : hd.getListsGiaoDichThanhToan()) {
+                if (gd.getMaGiaoDichNgoai() != null) {
+                    transactionNo = gd.getMaGiaoDichNgoai();
+                    break;
+                }
+            }
+        }
+
+        return com.example.be.core.admin.banhang.model.response.AdminBanHangPaymentStatusResponse.builder()
+                .isPaid(isPaid)
+                .transactionNo(transactionNo)
+                .build();
     }
 }

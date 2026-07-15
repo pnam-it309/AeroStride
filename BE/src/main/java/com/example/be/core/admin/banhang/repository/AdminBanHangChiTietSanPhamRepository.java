@@ -52,17 +52,25 @@ public interface AdminBanHangChiTietSanPhamRepository extends ChiTietSanPhamRepo
         AND (:chatLieu IS NULL OR sp.chatLieu.ten = :chatLieu)
         AND (:xuatXu IS NULL OR sp.xuatXu.ten = :xuatXu)
         AND (:mucDich IS NULL OR sp.mucDichChay.ten = :mucDich)
+        AND (:mauSac IS NULL OR ct.mauSac.ten = :mauSac)
+        AND (:kichCo IS NULL OR ct.kichThuoc.ten = :kichCo)
+        AND (:minGia IS NULL OR ct.giaBan >= :minGia)
+        AND (:maxGia IS NULL OR ct.giaBan <= :maxGia)
         AND (
             LOWER(ct.maChiTietSanPham) LIKE LOWER(CONCAT('%', :keyword, '%'))
             OR LOWER(sp.ten) LIKE LOWER(CONCAT('%', :keyword, '%'))
             OR LOWER(sp.ma) LIKE LOWER(CONCAT('%', :keyword, '%'))
         )
+        ORDER BY ct.ngayTao DESC
         """)
-    Page<ChiTietSanPham> searchByKeywordLite(
+    List<ChiTietSanPham> searchForPOS(
         @Param("keyword") String keyword, 
         @Param("thuongHieu") String thuongHieu,
         @Param("chatLieu") String chatLieu,
         @Param("xuatXu") String xuatXu,
         @Param("mucDich") String mucDich,
-        Pageable pageable);
+        @Param("mauSac") String mauSac,
+        @Param("kichCo") String kichCo,
+        @Param("minGia") java.math.BigDecimal minGia,
+        @Param("maxGia") java.math.BigDecimal maxGia);
 }

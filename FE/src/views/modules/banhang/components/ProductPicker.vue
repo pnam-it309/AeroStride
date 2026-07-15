@@ -30,10 +30,23 @@ const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currenc
 const fetchProductSearchResults = async (keyword) => {
     store.productSearchLoading = true;
     try {
+        let minGia = undefined;
+        let maxGia = undefined;
+        if (store.filterKhoangGia && store.filterKhoangGia !== 'ALL') {
+            const option = priceRangeOptions.value.find(o => o.value === store.filterKhoangGia);
+            if (option) {
+                minGia = option.min;
+                maxGia = option.max;
+            }
+        }
         const params = {
             keyword: keyword || '',
             thuongHieu: store.filterThuongHieu,
-            mucDich: store.filterMucDich
+            mucDich: store.filterMucDich,
+            mauSac: store.filterMauSac,
+            kichCo: store.filterKichCo,
+            minGia: minGia,
+            maxGia: maxGia
         };
         const res = await dichVuDonHang.searchSanPham(params);
         store.productSearchResults = res || [];
@@ -103,24 +116,7 @@ const priceRangeOptions = computed(() => {
 });
 
 const filteredProductSearchResults = computed(() => {
-    let results = store.productSearchResults || [];
-
-    if (store.filterMauSac !== 'ALL') {
-        results = results.filter(p => p.tenMauSac === store.filterMauSac);
-    }
-    if (store.filterKichCo !== 'ALL') {
-        results = results.filter(p => p.tenKichThuoc === store.filterKichCo);
-    }
-    if (store.filterKhoangGia !== 'ALL') {
-        const option = priceRangeOptions.value.find(o => o.value === store.filterKhoangGia);
-        if (option) {
-            results = results.filter(p => {
-                const price = p.giaBan || 0;
-                return price >= option.min && price <= option.max;
-            });
-        }
-    }
-    return results;
+    return store.productSearchResults || [];
 });
 
 const onFilterChange = () => {

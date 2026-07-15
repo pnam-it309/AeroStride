@@ -189,17 +189,17 @@ const toggleProductSelection = (productId) => {
 };
 
 const isAllProductsSelected = computed(() => {
-    return paginatedProductsToSelect.value.length > 0 && paginatedProductsToSelect.value.every((p) => isProductSelected(p.id));
+    return filteredProductsToSelect.value.length > 0 && filteredProductsToSelect.value.every((p) => isProductSelected(p.id));
 });
 
 const toggleAllProductsSelection = () => {
     if (isAllProductsSelected.value) {
-        paginatedProductsToSelect.value.forEach((p) => {
+        filteredProductsToSelect.value.forEach((p) => {
             const variantIds = p.variants.map((v) => v.id);
             selectedVariantsIds.value = selectedVariantsIds.value.filter((vid) => !variantIds.includes(vid));
         });
     } else {
-        paginatedProductsToSelect.value.forEach((p) => {
+        filteredProductsToSelect.value.forEach((p) => {
             p.variants.forEach((v) => {
                 if (!selectedVariantsIds.value.includes(v.id)) {
                     selectedVariantsIds.value.push(v.id);

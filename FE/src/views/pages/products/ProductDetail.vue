@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import PromotionBar from '@/components/shared/PromotionBar.vue';
@@ -9,11 +9,15 @@ import CustomerChat from '@/components/shared/CustomerChat.vue';
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 import { useCartStore } from '@/stores/cartStore';
 import { useToastStore } from '@/stores/toastStore';
+import { useAuthStore } from '@/stores/authStore';
 import { useSeoMeta } from '@/composables/useSeoMeta';
+import { PATH } from '@/router/routePaths';
 
 const route = useRoute();
+const router = useRouter();
 const cartStore = useCartStore();
 const toastStore = useToastStore();
+const authStore = useAuthStore();
 const loading = ref(true);
 const product = ref(null);
 const selectedColor = ref(null);
@@ -239,6 +243,11 @@ const addToCart = async () => {
 };
 
 const toggleFavorite = () => {
+    if (!authStore.isLoggedIn) {
+        toastStore.showToast('Vui lòng đăng nhập để thêm vào yêu thích', 'warning');
+        router.push(PATH.LOGIN);
+        return;
+    }
     isFavorite.value = !isFavorite.value;
     let favorites = JSON.parse(localStorage.getItem('aerostride_favorites') || '[]');
     if (isFavorite.value) {
@@ -397,7 +406,7 @@ const toggleFavorite = () => {
                                 <v-icon class="mr-2">mdi-bag-plus-outline</v-icon>
                                 Thêm vào giỏ hàng
                             </v-btn>
-                            <v-btn block size="x-large" variant="outlined" rounded="pill" class="font-weight-black py-6"
+                            <v-btn v-if="authStore.isLoggedIn" block size="x-large" variant="outlined" rounded="pill" class="font-weight-black py-6"
                                 :class="isFavorite ? 'text-red' : ''"
                                 :color="isFavorite ? 'red' : 'black'" @click="toggleFavorite">
                                 {{ isFavorite ? 'Đã yêu thích' : 'Yêu thích' }}

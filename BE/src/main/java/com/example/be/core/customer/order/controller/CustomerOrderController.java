@@ -82,13 +82,14 @@ public class CustomerOrderController {
 
     // Xem chi tiết một đơn hàng cụ thể của khách hàng
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('KHACH_HANG')")
     public ResponseEntity<ApiResponse<CustomerOrderResponse>> getOrderDetail(
             @PathVariable String id,
             Authentication authentication
     ) {
-        log.info("Fetching order detail: id={}, user={}", id, authentication.getName());
-        CustomerOrderResponse response = customerOrderService.getOrderDetail(id, authentication.getName());
+        String username = (authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getName())) ? authentication.getName() : null;
+        log.info("Fetching order detail: id={}, user={}", id, username);
+        CustomerOrderResponse response = customerOrderService.getOrderDetail(id, username);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -132,14 +133,15 @@ public class CustomerOrderController {
 
     // Tạo lại URL thanh toán VNPay cho đơn chuyển khoản chưa thanh toán (thanh toán lại)
     @PostMapping("/{id}/vnpay-url")
-    @PreAuthorize("hasRole('KHACH_HANG')")
     public ResponseEntity<ApiResponse<String>> createVnPayUrl(
             @PathVariable String id,
             @RequestParam String returnUrl,
             Authentication authentication
     ) {
-        log.info("Customer re-pay VNPay: id={}, user={}", id, authentication.getName());
-        String url = customerOrderService.createVnPayUrl(id, returnUrl, authentication.getName());
+        String username = (authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(authentication.getName())) ? authentication.getName() : null;
+        log.info("Customer re-pay VNPay: id={}, user={}", id, username);
+        String url = customerOrderService.createVnPayUrl(id, returnUrl, username);
         return ResponseEntity.ok(ApiResponse.success(url, "Tạo URL thanh toán thành công"));
     }
 

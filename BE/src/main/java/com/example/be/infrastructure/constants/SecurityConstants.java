@@ -18,9 +18,10 @@ public final class SecurityConstants {
         "/ws-chat/**",
         RoutesConstant.CUSTOMER_CHAT + "/**",
         RoutesConstant.CUSTOMER + "/phieu-giam-gia/**",
-        RoutesConstant.CUSTOMER + "/order/vouchers",
-        RoutesConstant.CUSTOMER + "/order/checkout",
-        RoutesConstant.CUSTOMER + "/order/track",
+        RoutesConstant.CUSTOMER + "/order/**",
+        RoutesConstant.CONFIG + "/**",
+        RoutesConstant.ADMIN + "/ghn/**",
+        RoutesConstant.PAYMENT + "/**",
         "/actuator/**",
         "/error"
     };

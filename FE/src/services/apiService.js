@@ -86,18 +86,13 @@ api.interceptors.response.use(
                 sessionStorage.clear(); // Xóa sạch để đảm bảo an toàn
 
                 const currentPath = window.location.pathname;
-                const publicPaths = ['/shoes', '/product', '/user', '/auth'];
-                const isPublicPath = currentPath === '/' || publicPaths.some((path) => currentPath.startsWith(path));
-                const isAdminPath = currentPath.startsWith('/admin') || !isPublicPath;
+                const isAdminPath = currentPath.startsWith('/admin');
+                const isCustomerAuthPath = ['/profile', '/my-orders', '/favorites'].some(path => currentPath.startsWith(path));
 
-                // Chỉ tự động nhảy về Login nếu đang ở trong vùng quản trị
-                // Nếu ở Landing Page hoặc các trang public, ta cứ ở lại đó
                 if (isAdminPath) {
                     window.location.href = '/admin/login';
-                } else if (currentPath === '/user/login') {
-                    // Đã ở trang login rồi thì thôi
-                } else if (currentPath.startsWith('/auth')) {
-                    // Các trang auth khác
+                } else if (isCustomerAuthPath) {
+                    window.location.href = '/user/login';
                 }
             } else if (status === 403) {
                 if (import.meta.env.DEV) {

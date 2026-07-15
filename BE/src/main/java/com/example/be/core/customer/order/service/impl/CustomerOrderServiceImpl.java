@@ -289,11 +289,16 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         HoaDon hoaDon = hoaDonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
-        KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin khách hàng"));
+        if (hoaDon.getKhachHang() != null) {
+            if (username == null || "anonymousUser".equals(username)) {
+                throw new RuntimeException("Bạn không có quyền xem đơn hàng này");
+            }
+            KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin khách hàng"));
 
-        if (hoaDon.getKhachHang() == null || !hoaDon.getKhachHang().getId().equals(khachHang.getId())) {
-            throw new RuntimeException("Bạn không có quyền xem đơn hàng này");
+            if (!hoaDon.getKhachHang().getId().equals(khachHang.getId())) {
+                throw new RuntimeException("Bạn không có quyền xem đơn hàng này");
+            }
         }
 
         return mapToResponse(hoaDon, null);
@@ -564,11 +569,16 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         HoaDon hoaDon = hoaDonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
-        KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin khách hàng"));
+        if (hoaDon.getKhachHang() != null) {
+            if (username == null || "anonymousUser".equals(username)) {
+                throw new RuntimeException("Bạn không có quyền thao tác đơn hàng này");
+            }
+            KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin khách hàng"));
 
-        if (hoaDon.getKhachHang() == null || !hoaDon.getKhachHang().getId().equals(khachHang.getId())) {
-            throw new RuntimeException("Bạn không có quyền thao tác đơn hàng này");
+            if (!hoaDon.getKhachHang().getId().equals(khachHang.getId())) {
+                throw new RuntimeException("Bạn không có quyền thao tác đơn hàng này");
+            }
         }
         return hoaDon;
     }

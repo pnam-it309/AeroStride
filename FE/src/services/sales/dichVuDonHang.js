@@ -110,5 +110,11 @@ export const dichVuDonHang = {
     async getProductSuggestions(idHoaDon) {
         const response = await api.get(`${API_ADMIN.BAN_HANG}/${idHoaDon}/product-suggestions`);
         return response.data.data;
+    },
+
+    // Kiểm tra trạng thái thanh toán
+    async checkPaymentStatus(idHoaDon) {
+        const response = await api.get(`${API_ADMIN.BAN_HANG}/${idHoaDon}/payment-status`);
+        return response.data.data;
     }
 };

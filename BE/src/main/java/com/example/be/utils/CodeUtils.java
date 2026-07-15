@@ -30,7 +30,7 @@ public final class CodeUtils {
     public static String generateRandom(String type) {
         String prefix = getPrefix(type);
         StringBuilder sb = new StringBuilder(prefix);
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 6; i++) {
             sb.append(CHARS.charAt(RANDOM.nextInt(CHARS.length())));
         }
         return sb.toString();

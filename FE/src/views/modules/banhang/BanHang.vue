@@ -11,7 +11,7 @@ import { BoxIcon, XIcon } from 'vue-tabler-icons';
 import { Html5Qrcode } from 'html5-qrcode';
 import QrcodeVue from 'qrcode.vue';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
-import { dichVuVnPay } from './dichVuVnPay';
+import { dichVuVnPay } from './composables/dichVuVnPay.js';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import {
@@ -35,6 +35,8 @@ import { useHoaDonPrinter } from '@/composables/useHoaDonPrinter';
 import { GIOI_TINH_OPTIONS } from '@/constants/appConstants';
 import { isActiveStatus } from '@/utils/statusUtils';
 
+import { useCustomerSelect } from './composables/useCustomerSelect';
+
 // Import Components
 import OrderTabs from './components/OrderTabs.vue';
 import CartTable from './components/CartTable.vue';
@@ -45,6 +47,9 @@ import CustomerAndShippingPanel from './components/CustomerAndShippingPanel.vue'
 import OrderSummaryPanel from './components/OrderSummaryPanel.vue';
 import PaymentPanel from './components/PaymentPanel.vue';
 import GiaoCaModal from '@/components/common/GiaoCaModal.vue';
+import VnPayDialogs from './components/VnPayDialogs.vue';
+import ScannerDialog from './components/ScannerDialog.vue';
+import QuickAddCustomerDialog from './components/QuickAddCustomerDialog.vue';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 
 const { addNotification } = useNotifications();
@@ -106,25 +111,28 @@ const orderWarehouse = ref('KHO ANSHA BIGSIZE');
 // Dynamic Filter States for POS Products
 const maxProductPrice = ref(7000000);
 
-const customerSearch = ref('');
-const customerResults = ref([]);
-const customerLoading = ref(false);
-const showQuickAddDialog = ref(false);
-const quickAddLoading = ref(false);
-const quickAddForm = ref({ ten: '', sdt: '', email: '', gioiTinh: true, tinh: null, thanhPho: null, phuongXa: null, diaChiChiTiet: '' });
-
 // Right Column Fields
 const currentEmployeeDetail = ref(null);
 
-
-const customerForm = ref({
-    ten: '',
-    sdt: '',
-    email: '',
-    gioiTinh: 'Giới tính',
-    ngaySinh: '',
-    tongDonHang: 0
-});
+const {
+    customerSearch,
+    customerResults,
+    customerLoading,
+    showCustomerSuggestions,
+    customerForm,
+    searchCustomers,
+    selectCustomer,
+    onCustomerInput,
+    onSelectSuggestedCustomer,
+    onCustomerFormUpdate,
+    ensureCustomerAndGetId,
+    onRemoveCustomer
+} = useCustomerSelect(
+    computed(() => orders.value[activeOrderIndex.value] || null),
+    (updated) => updateOrderInList(updated),
+    (order, autoApply) => refreshBestVoucher(order, autoApply),
+    addNotification
+);
 
 const shippingAddressSelect = ref('Chọn địa chỉ');
 const expectedDeliveryDate = ref('');
@@ -256,12 +264,12 @@ const selectedOrderItemCount = computed(() =>
 const orderChannel = computed({
     get() {
         if (!selectedOrder.value) return 'Tại quầy';
-        return selectedOrder.value.isGiaoHangLocal ? 'Trực tuyến' : 'Tại quầy';
+        return selectedOrder.value.isGiaoHangLocal ? 'Giao hàng' : 'Tại quầy';
     },
     set(newVal) {
         if (selectedOrder.value) {
-            selectedOrder.value.isGiaoHangLocal = (newVal === 'Trực tuyến');
-            selectedOrder.value.loaiDon = selectedOrder.value.isGiaoHangLocal ? 'ONLINE' : 'TAI_QUAY';
+            selectedOrder.value.isGiaoHangLocal = (newVal === 'Giao hàng' || newVal === 'Trực tuyến');
+            selectedOrder.value.loaiDon = selectedOrder.value.isGiaoHangLocal ? 'GIAO_HANG' : 'TAI_QUAY';
         }
     }
 });
@@ -274,7 +282,7 @@ const isGiaoHang = computed({
     set(val) {
         if (selectedOrder.value) {
             selectedOrder.value.isGiaoHangLocal = val;
-            selectedOrder.value.loaiDon = val ? 'ONLINE' : 'TAI_QUAY';
+            selectedOrder.value.loaiDon = val ? 'GIAO_HANG' : 'TAI_QUAY';
             if (!val) {
                 shippingFee.value = 0;
                 shippingFeeError.value = '';
@@ -378,8 +386,8 @@ const syncShippingAndChannel = () => {
         try {
             // Công tắc "Giao hàng" là nguồn trạng thái chính của loại đơn.
             // Không dùng biến phụ để tránh lúc vừa bật giao hàng bị sync nhầm về TẠI_QUẦY.
-            const loaiDon = isGiaoHang.value ? 'ONLINE' : 'TAI_QUAY';
-            const shipFee = loaiDon === 'ONLINE' && !isFreeShip.value ? Number(shippingFee.value || 0) : 0;
+            const loaiDon = isGiaoHang.value ? 'GIAO_HANG' : 'TAI_QUAY';
+            const shipFee = loaiDon === 'GIAO_HANG' && !isFreeShip.value ? Number(shippingFee.value || 0) : 0;
 
             const updatedOrder = await dichVuDonHang.updateShippingAndChannel(selectedOrder.value.id, {
                 loaiDon: loaiDon,
@@ -481,207 +489,25 @@ watch(
     { immediate: true }
 );
 
-const getVoucherDiscountLabel = (voucher) => {
-    if (!voucher) return '';
-    const isPercent = String(voucher.loaiPhieu || '').toUpperCase() === 'PHAN_TRAM' || String(voucher.loaiPhieu || '').toUpperCase() === 'PERCENT';
-    if (isPercent) {
-        return `${voucher.phanTramGiamGia || 0}%`;
-    } else {
-        const cash = Number(voucher.soTienGiam || 0);
-        if (cash >= 1000) {
-            return `${Math.round(cash / 1000)}k`;
-        }
-        return `${cash}đ`;
-    }
-};
-
-const getVoucherBaseAmount = (order = selectedOrder.value) =>
-    Number(order?.tongTien ?? amountAfterProductDiscount.value ?? 0);
-
-const getVoucherCode = (voucher) => voucher?.ma || voucher?.maPhieu || voucher?.tenPhieu || voucher?.ten || 'Phiếu giảm giá';
-
-const getVoucherFreshTime = (voucher) => {
-    const raw = voucher?.ngayTao || voucher?.createdAt || voucher?.createdDate || voucher?.ngayBatDau || 0;
-    const numeric = Number(raw);
-    if (Number.isFinite(numeric)) return numeric;
-    const parsedDate = Date.parse(raw);
-    return Number.isFinite(parsedDate) ? parsedDate : 0;
-};
-
-const getPotentialDiscount = (v, baseAmount = getVoucherBaseAmount()) => {
-    if (!v) return 0;
-    const amount = Math.max(0, Number(baseAmount || 0));
-    const type = String(v.loaiPhieu || '').toUpperCase();
-    if (type === 'PHAN_TRAM' || type === 'PERCENT') {
-        const percent = Number(v.phanTramGiamGia || 0);
-        let discount = (amount * percent) / 100;
-        if (v.giamToiDa && Number(v.giamToiDa) > 0) {
-            discount = Math.min(discount, Number(v.giamToiDa));
-        }
-        return Math.min(amount, Math.max(0, discount));
-    } else {
-        return Math.min(amount, Math.max(0, Number(v.soTienGiam || 0)));
-    }
-};
-
-const isVoucherEligibleForAmount = (voucher, amount) =>
-    Number(voucher?.donHangToiThieu || 0) <= Number(amount || 0);
-
-// Chọn PGG tốt nhất theo đúng tổng tiền đang xét: giảm nhiều nhất, nếu bằng nhau ưu tiên phiếu mới hơn.
-const pickBestVoucherForOrder = (order = selectedOrder.value, source = vouchers.value) => {
-    if (!source?.length || !order) return null;
-    const currentTotal = getVoucherBaseAmount(order);
-    const eligible = source.filter((voucher) => isVoucherEligibleForAmount(voucher, currentTotal));
-    if (!eligible.length) return null;
-
-    return [...eligible].sort((a, b) => {
-        const discA = getPotentialDiscount(a, currentTotal);
-        const discB = getPotentialDiscount(b, currentTotal);
-        if (discB !== discA) return discB - discA;
-        return getVoucherFreshTime(b) - getVoucherFreshTime(a);
-    })[0];
-};
-
-const appliedVoucher = computed(() => {
-    if (!vouchers.value?.length || !selectedOrder.value?.idPhieuGiamGia) {
-        return null;
-    }
-    return vouchers.value.find(v => String(v.id) === String(selectedOrder.value.idPhieuGiamGia)) || null;
-});
-
-const bestEligibleVoucher = computed(() => {
-    return pickBestVoucherForOrder();
-});
-
-const nextBetterVoucher = computed(() => {
-    if (!vouchers.value?.length || !selectedOrder.value) return null;
-
-    const currentTotal = getVoucherBaseAmount();
-    const eligibleDiscount = bestEligibleVoucher.value ? getPotentialDiscount(bestEligibleVoucher.value, currentTotal) : 0;
-
-    const candidates = vouchers.value.filter(v => {
-        const minOrder = Number(v.donHangToiThieu || 0);
-        if (minOrder <= currentTotal) return false;
-
-        const potDiscount = getPotentialDiscount(v, minOrder);
-        return potDiscount > eligibleDiscount;
-    });
-
-    if (!candidates.length) return null;
-
-    // Gợi ý phiếu tốt nhất dựa trên giá trị giảm giá tiềm năng lớn nhất, sau đó mới đến đơn tối thiểu nhỏ nhất để tối ưu quyền lợi cho khách hàng
-    candidates.sort((a, b) => {
-        const discA = getPotentialDiscount(a, Number(a.donHangToiThieu || 0));
-        const discB = getPotentialDiscount(b, Number(b.donHangToiThieu || 0));
-        if (discB !== discA) return discB - discA;
-        return Number(a.donHangToiThieu || 0) - Number(b.donHangToiThieu || 0);
-    });
-
-    return candidates[0];
-});
-
-const remainingForSuggestedVoucher = computed(() => {
-    if (!nextBetterVoucher.value || !selectedOrder.value) return 0;
-    const minVal = Number(nextBetterVoucher.value.donHangToiThieu || 0);
-    const current = getVoucherBaseAmount();
-    return Math.max(0, minVal - current);
-});
-
-// Dong goi cau goi y PGG cho UI: tu dong chon ma tot nhat, dong thoi bao ma tiep theo neu chua du dieu kien.
 const voucherSuggestionText = computed(() => {
-    if (!selectedOrder.value?.listsHoaDonChiTiet?.length) return '';
-
-    const currentTotal = getVoucherBaseAmount();
-    const best = bestEligibleVoucher.value;
-    const applied = appliedVoucher.value;
-
-    if (best?.id && applied?.id && String(best.id) === String(applied.id)) {
-        return `Đã áp dụng mã giảm giá ưu đãi nhất: ${getVoucherCode(best)} (-${formatCurrency(getPotentialDiscount(best, currentTotal))})`;
-    }
-
-    if (best?.id) {
-        return `Bấm để áp dụng mã giảm giá ưu đãi nhất: ${getVoucherCode(best)} (-${formatCurrency(getPotentialDiscount(best, currentTotal))})`;
-    }
-
-    return nextBetterVoucher.value ? '' : 'Chưa có phiếu giảm giá phù hợp cho đơn hiện tại.';
+    return selectedOrder.value?.voucherSuggestionText || '';
 });
 
-// Goi y upsell: neu co phieu giam gia tot hon nhung don chua du muc toi thieu thi hien can mua them bao nhieu.
 const betterVoucherSuggestionText = computed(() => {
-    if (!selectedOrder.value?.listsHoaDonChiTiet?.length || !nextBetterVoucher.value) return '';
-    const currentTotal = getVoucherBaseAmount();
-    const futureBase = Math.max(currentTotal, Number(nextBetterVoucher.value.donHangToiThieu || 0));
-    return `Mua thêm ${formatCurrency(remainingForSuggestedVoucher.value)} để nhận phiếu tốt hơn: ${getVoucherCode(nextBetterVoucher.value)} (-${formatCurrency(getPotentialDiscount(nextBetterVoucher.value, futureBase))})`;
+    return selectedOrder.value?.betterVoucherSuggestionText || '';
 });
 
 const voucherSuggestionClass = computed(() =>
-    bestEligibleVoucher.value ? 'text-success' : (nextBetterVoucher.value ? 'text-deep-orange-darken-3' : 'text-grey-darken-1')
+    selectedOrder.value?.bestVoucherId ? 'text-success' : (selectedOrder.value?.betterVoucherSuggestionText ? 'text-deep-orange-darken-3' : 'text-grey-darken-1')
 );
 
 const canApplySuggestedVoucher = computed(() => {
-    const best = bestEligibleVoucher.value;
-    if (!best?.id || !selectedOrder.value?.id) return false;
-    return String(selectedOrder.value.idPhieuGiamGia || '') !== String(best.id);
+    return selectedOrder.value?.canApplySuggestedVoucher || false;
 });
 
 const isVoucherAutoApplied = ref({});
 
-// Search Customer Dropdown
-const searchCustomers = async () => {
-    const kw = customerSearch.value?.trim();
-    if (!kw || kw.length < 2) {
-        customerResults.value = [];
-        return;
-    }
-    customerLoading.value = true;
-    try {
-        const data = await dichVuDonHang.searchKhachHang(kw);
-        customerResults.value = data || [];
-    } catch (e) {
-        console.error(e);
-    } finally {
-        customerLoading.value = false;
-    }
-};
-
-let customerDebounce = null;
-watch(customerSearch, () => {
-    if (customerDebounce) clearTimeout(customerDebounce);
-    customerDebounce = setTimeout(() => {
-        searchCustomers();
-    }, 300);
-});
-
-const selectCustomer = async (customer) => {
-    if (!customer?.id) return;
-    try {
-        const updated = await dichVuDonHang.setKhachHang(selectedOrder.value.id, customer.id);
-        updateOrderInList(updated);
-        refreshBestVoucher(updated);
-        customerSearch.value = '';
-        customerResults.value = [];
-    } catch (e) {
-        addNotification({ title: 'Lỗi khách hàng', subtitle: 'Không thể gắn khách hàng vào hóa đơn.', color: 'error' });
-    }
-};
-const showCustomerSuggestions = ref(false);
-
-const onCustomerInput = () => {
-    const searchVal = (customerForm.value.ten || '') + ' ' + (customerForm.value.sdt || '');
-    customerSearch.value = searchVal.trim();
-    showCustomerSuggestions.value = true;
-};
-
-const onSelectSuggestedCustomer = async (c) => {
-    showCustomerSuggestions.value = false;
-    await selectCustomer(c);
-};
-
-// Nhận dữ liệu khách hàng nhân viên nhập trong panel bên phải.
-// Component con dùng form nội bộ, còn màn chính giữ state này để lưu khách mới khi thanh toán.
-const onCustomerFormUpdate = (form) => {
-    customerForm.value = { ...customerForm.value, ...(form || {}) };
-};
+// Removed searchCustomers, selectCustomer, onCustomerInput, onSelectSuggestedCustomer, onCustomerFormUpdate
 
 // Nhận dữ liệu địa chỉ giao hàng từ panel bên phải để watcher GHN ở màn chính tính lại phí ship.
 const onShippingPanelUpdate = (shipping) => {
@@ -706,46 +532,7 @@ const openDatePicker = (event) => {
     }
 };
 
-const ensureCustomerAndGetId = async () => {
-    if (selectedOrder.value?.idKhachHang) {
-        return selectedOrder.value.idKhachHang;
-    }
-
-    const ten = customerForm.value.ten?.trim();
-    const sdt = customerForm.value.sdt?.trim();
-    const email = customerForm.value.email?.trim() || null;
-    const ns = customerForm.value.ngaySinh?.trim() || null;
-    const gt = customerForm.value.gioiTinh === 'Nam' ? true : customerForm.value.gioiTinh === 'Nữ' ? false : null;
-
-    if (!ten && !sdt) {
-        return null;
-    }
-
-    if (!ten || !sdt) {
-        throw new Error('Vui lòng điền đầy đủ Tên khách hàng và SĐT để thêm khách hàng mới.');
-    }
-
-    const existed = await findExistingCustomerByContact(sdt, email);
-    if (existed) {
-        await selectCustomer(existed);
-        return existed.id;
-    }
-
-    const newCustomerPayload = {
-        ten,
-        sdt,
-        email,
-        gioiTinh: gt,
-        ngaySinh: ns
-    };
-
-    const created = await dichVuKhachHang.taoKhachHang(newCustomerPayload);
-    if (created?.id) {
-        await selectCustomer(created);
-        return created.id;
-    }
-    return null;
-};
+// Removed ensureCustomerAndGetId
 
 
 // Chuẩn hóa định dạng danh sách đơn hàng trả về từ nhiều dạng API response khác nhau
@@ -1437,16 +1224,7 @@ const onRemoveItem = (item) => {
     };
 };
 
-const onRemoveCustomer = async () => {
-    try {
-        const updated = await dichVuDonHang.setKhachHang(selectedOrder.value.id, null);
-        updateOrderInList(updated);
-        refreshBestVoucher(updated);
-        addNotification({ title: 'Thêm khách hàng thành công.', subtitle: 'Đã gỡ khách hàng khỏi hóa đơn.', color: 'success' });
-    } catch (e) {
-        addNotification({ title: 'Không thêm được khách hàng.', subtitle: getErrorMessage(e, 'Không thể gỡ khách hàng khỏi hóa đơn.'), color: 'error' });
-    }
-};
+// Removed onRemoveCustomer
 
 // Logic: Voucher
 // Gắn nhãn hiển thị (customTitle) cho phiếu giảm giá trên dropdown. Chỉ phục vụ hiển thị,
@@ -1459,11 +1237,11 @@ const decorateVoucher = (v, order = selectedOrder.value) => {
     const discount = (type === 'PHAN_TRAM' || type === 'PERCENT')
         ? `(Giảm ${v.phanTramGiamGia || 0}%)`
         : `(Giảm ${new Intl.NumberFormat('vi-VN').format(v.soTienGiam || 0)}đ)`;
-    
+
     // Disable voucher if order total doesn't meet the minimum required amount
     const baseAmount = getVoucherBaseAmount(order);
     const disabled = Number(v.donHangToiThieu || 0) > baseAmount;
-    
+
     return { ...v, customTitle: `${text} ${discount}`, disabled };
 };
 
@@ -1479,25 +1257,16 @@ const refreshBestVoucher = async (order = selectedOrder.value, autoApply = true)
         if (refreshSerial !== voucherRefreshSerial) return;
         vouchers.value = decorated;
 
-        // Kiểm tra xem phiếu giảm giá hiện đang áp dụng có còn thỏa mãn điều kiện tối thiểu không
-        const currentAppliedVoucherId = order.idPhieuGiamGia;
-        const appliedVoucherObj = decorated.find(v => String(v.id) === String(currentAppliedVoucherId));
-        const isAppliedStillEligible = appliedVoucherObj && isVoucherEligibleForAmount(appliedVoucherObj, getVoucherBaseAmount(order));
-
-        // Nếu phiếu do người dùng tự chọn đã hết hiệu lực, tự động hoàn tác về trạng thái tự động chọn
-        if (currentAppliedVoucherId && !isAppliedStillEligible) {
-            isVoucherAutoApplied.value[order.id] = true;
-        }
-
+        // Backend đã tính sẵn `bestVoucherId` trong selectedOrder
+        // Nhưng nếu autoApply = true, chúng ta có thể gọi onApplyVoucher(order.bestVoucherId)
         if (autoApply) {
-            // Chỉ tự động chọn nếu người dùng chưa chọn thủ công, hoặc đã bị thu hồi do hết hiệu lực ở trên
             const shouldAutoApply = isVoucherAutoApplied.value[order.id] !== false;
             if (shouldAutoApply) {
                 isVoucherAutoApplied.value[order.id] = true;
-                const best = pickBestVoucherForOrder(order, decorated);
-                if (best?.id) {
-                    if (String(order.idPhieuGiamGia) !== String(best.id)) {
-                        await onApplyVoucher(best.id, false, true);
+                const bestId = order.bestVoucherId;
+                if (bestId) {
+                    if (String(order.idPhieuGiamGia) !== String(bestId)) {
+                        await onApplyVoucher(bestId, false, true);
                     }
                 } else {
                     if (order.idPhieuGiamGia) {
@@ -1532,9 +1301,9 @@ const onApplyVoucher = async (voucherId, autoApply = false, isInternalCall = fal
 // Cho phép bấm trực tiếp dòng gợi ý để áp PGG tốt nhất hiện tại.
 const applyBestVoucherFromSuggestion = async () => {
     if (!canApplySuggestedVoucher.value) return;
-    const best = bestEligibleVoucher.value;
-    if (!best?.id) return;
-    await onApplyVoucher(best.id);
+    const bestId = selectedOrder.value?.bestVoucherId;
+    if (!bestId) return;
+    await onApplyVoucher(bestId);
 };
 
 // Logic: Thanh toán VNPay
@@ -1810,39 +1579,54 @@ const startVnPayFlow = async () => {
             transactionId: orderId
         }));
 
-        if (checkoutData.value.vnpayMethod === 'GATEWAY') {
-            vnpayPopup = window.open(data.paymentUrl, 'vnpay', 'width=800,height=600');
-            vnpayDialog.value.pollInterval = setInterval(() => {
-                if (vnpayPopup && vnpayPopup.closed) {
-                    clearInterval(vnpayDialog.value.pollInterval);
-                    vnpayDialog.value.pollInterval = null;
-                    if (!vnpayDialog.value.verified && sessionStorage.getItem(VNPAY_PENDING_KEY)) {
-                        handleVnPayCanceled('Khách hàng đã đóng cửa sổ thanh toán.');
-                    }
-                }
-            }, 1000);
-            return;
-        }
-
         vnpayDialog.value = {
             show: true,
             loading: false,
             verified: false,
-            statusText: 'Đang chờ khách hàng quét mã và thanh toán...',
+            statusText: checkoutData.value.vnpayMethod === 'GATEWAY' ? 'Đang chờ khách hàng thanh toán qua cổng VNPay...' : 'Đang chờ khách hàng quét mã và thanh toán...',
             orderId: orderId,
             amount: finalCollectAmount.value,
             paymentUrl: data.paymentUrl,
             pollInterval: null
         };
 
+        if (checkoutData.value.vnpayMethod === 'GATEWAY') {
+            vnpayPopup = window.open(data.paymentUrl, 'vnpay', 'width=800,height=600');
+        }
+
+        // Tự động Polling trạng thái đơn hàng từ Backend mỗi 3 giây
         vnpayDialog.value.pollInterval = setInterval(async () => {
-            // QR mode khong co popup de doc callback, nen chi cho phep thu ngan xac nhan da nhan tien.
             try {
-                await Promise.resolve();
+                if (!vnpayDialog.value.show) return;
+
+                // 1. Kiểm tra trạng thái thanh toán từ Backend
+                const status = await dichVuDonHang.checkPaymentStatus(selectedOrder.value.id);
+
+                if (status && status.isPaid) {
+                    clearInterval(vnpayDialog.value.pollInterval);
+                    vnpayDialog.value.pollInterval = null;
+
+                    if (vnpayPopup && !vnpayPopup.closed) {
+                        vnpayPopup.close();
+                    }
+
+                    // Gọi API finalize để cập nhật giao diện (BE đã tự trừ kho qua IPN)
+                    await finalizeVnPayCheckout(vnpayDialog.value.amount, status.transactionNo || 'VNP_AUTO', selectedOrder.value);
+                    return;
+                }
+
+                // 2. Nếu là GATEWAY và popup bị đóng nhưng chưa thanh toán -> Hủy
+                if (checkoutData.value.vnpayMethod === 'GATEWAY' && vnpayPopup && vnpayPopup.closed && !status.isPaid) {
+                    clearInterval(vnpayDialog.value.pollInterval);
+                    vnpayDialog.value.pollInterval = null;
+                    if (!vnpayDialog.value.verified && sessionStorage.getItem(VNPAY_PENDING_KEY)) {
+                        handleVnPayCanceled('Khách hàng đã đóng cửa sổ thanh toán.');
+                    }
+                }
             } catch (e) {
-                // Keep QR waiting screen alive.
+                console.warn('Lỗi khi kiểm tra trạng thái VNPay:', e);
             }
-        }, 1000);
+        }, 3000);
 
     } catch (error) {
         console.error('VNPay flow error:', error);
@@ -1857,6 +1641,7 @@ const onConfirmVnPayManual = async () => {
     vnpayDialog.value.statusText = 'Đang xác nhận hóa đơn...';
     try {
         const txnNo = `VNP_MANUAL_${Date.now()}`;
+        // Nếu admin bấm thủ công, ta vẫn gửi request finalize để chốt đơn
         await finalizeVnPayCheckout(vnpayDialog.value.amount, txnNo, selectedOrder.value);
     } catch (error) {
         addNotification({ title: 'Lỗi', subtitle: 'Không thể xác nhận thanh toán', color: 'error' });
@@ -1989,127 +1774,7 @@ const handleVnPayCallbackFromUrl = async () => {
     }
 };
 
-// Customer Dialog Add Quick
-const resetQuickAddForm = () => {
-    quickAddForm.value = { ten: '', sdt: '', email: '', gioiTinh: true, tinh: null, thanhPho: null, phuongXa: null, diaChiChiTiet: '' };
-};
 
-const openQuickAddDialog = async () => {
-    resetQuickAddForm();
-    if (provinces.value.length === 0) {
-        await fetchProvinces();
-    }
-    showQuickAddDialog.value = true;
-};
-
-const findExactCustomer = (list, phone, email) => {
-    const normalizedPhone = String(phone ?? '').replace(/\D/g, '');
-    const normalizedEmail = String(email ?? '').trim().toLowerCase();
-
-    return list.find((customer) => {
-        const customerPhone = String(customer?.sdt ?? '').replace(/\D/g, '');
-        const customerEmail = String(customer?.email ?? '').trim().toLowerCase();
-
-        if (normalizedPhone && customerPhone === normalizedPhone) return true;
-        if (normalizedEmail && customerEmail === normalizedEmail) return true;
-        return false;
-    });
-};
-
-const findExistingCustomerByContact = async (phone, email) => {
-    const keywords = [phone, email].filter(Boolean);
-    for (const keyword of keywords) {
-        try {
-            const searchData = await dichVuDonHang.searchKhachHang(keyword);
-            const matched = findExactCustomer(Array.isArray(searchData) ? searchData : [], phone, email);
-            if (matched) return matched;
-        } catch (e) {
-            console.error(e);
-        }
-    }
-    const allCustomers = await dichVuKhachHang.layTatCaKhachHang();
-    // BE trả PageResponse chuẩn ({ content: [...] }) nên chỉ cần đọc .content
-    const content = allCustomers?.content || [];
-    return findExactCustomer(content, phone, email) || null;
-};
-
-const submitQuickAdd = async () => {
-    const phone = quickAddForm.value.sdt?.trim() || '';
-    const email = quickAddForm.value.email?.trim() || '';
-    const name = quickAddForm.value.ten?.trim() || '';
-
-    if (!phone || !name) {
-        addNotification({ title: 'Thiếu thông tin', subtitle: 'Vui lòng nhập Tên và Số điện thoại.', color: 'warning' });
-        return;
-    }
-
-    const phoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/;
-    if (!phoneRegex.test(phone)) {
-        addNotification({ title: 'SĐT không hợp lệ', subtitle: 'Số điện thoại phải có 10 số và bắt đầu bằng 03, 05, 07, 08, hoặc 09.', color: 'warning' });
-        return;
-    }
-
-    quickAddLoading.value = true;
-    try {
-        const existedCustomer = await findExistingCustomerByContact(phone, email);
-        if (existedCustomer) {
-            await selectCustomer(existedCustomer);
-            addNotification({
-                title: 'Đã tìm thấy',
-                subtitle: `Khách hàng này đã tồn tại, tự động gán khách hàng ${existedCustomer.ten || existedCustomer.sdt}`,
-                color: 'success'
-            });
-            showQuickAddDialog.value = false;
-            return;
-        }
-
-        const newCustomerPayload = {
-            ten: name,
-            sdt: phone,
-            email: email,
-            gioiTinh: quickAddForm.value.gioiTinh,
-            tenTaiKhoan: '',
-            matKhau: '',
-            trangThai: 'DANG_HOAT_DONG',
-            ghiChu: 'Khách tạo nhanh tại quầy'
-        };
-
-        const createdCustomer = await dichVuKhachHang.taoKhachHang(newCustomerPayload);
-
-        if (createdCustomer?.id && quickAddForm.value.tinh && quickAddForm.value.thanhPho && quickAddForm.value.phuongXa && quickAddForm.value.diaChiChiTiet) {
-            try {
-                const addressPayload = mapCodesToNames(quickAddForm.value, provinces.value, districts.value, wards.value);
-                await dichVuKhachHang.taoDiaChi({
-                    idKhachHang: createdCustomer.id,
-                    tinh: addressPayload.tinh,
-                    thanhPho: addressPayload.thanhPho,
-                    phuongXa: addressPayload.phuongXa,
-                    diaChiChiTiet: addressPayload.diaChiChiTiet,
-                    tenNguoiNhan: name,
-                    sdtNguoiNhan: phone,
-                    laMacDinh: true
-                });
-            } catch (err) {
-                console.error("Lỗi tạo địa chỉ", err);
-            }
-        }
-
-        const targetCustomer = createdCustomer?.id ? createdCustomer : await findExistingCustomerByContact(phone, email);
-        if (targetCustomer) {
-            await selectCustomer(targetCustomer);
-            addNotification({ title: 'Thành công', subtitle: 'Đã thêm khách mới vào hóa đơn.', color: 'success' });
-        } else {
-            addNotification({ title: 'Tạo thành công', subtitle: 'Đã thêm khách mới.', color: 'info' });
-        }
-        showQuickAddDialog.value = false;
-    } catch (e) {
-        addNotification({ title: 'Lỗi', subtitle: e?.response?.data?.message || 'Không thể tạo khách hàng.', color: 'error' });
-    } finally {
-        quickAddLoading.value = false;
-    }
-};
-
-const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
 
 const formatNumberWithDots = (val) => {
     if (val === undefined || val === null || val === '') return '';
@@ -2179,41 +1844,33 @@ const formatDateTime = (dateStr) => {
                 <v-col cols="12" lg="4" class="h-100 d-flex flex-column gap-4 pl-lg-2 mt-4 mt-lg-0 overflow-y-auto"
                     style="min-height: 0;">
                     <!-- Khách hàng và Nhận hàng Card -->
-                    <CustomerAndShippingPanel :order="selectedOrder" :is-giao-hang="isGiaoHang"
-                        class="flex-shrink-0"
-                        :initial-customer-form="customerForm"
-                        :initial-shipping="{
+                    <CustomerAndShippingPanel :order="selectedOrder" :is-giao-hang="isGiaoHang" class="flex-shrink-0"
+                        :initial-customer-form="customerForm" :initial-shipping="{
                             name: recipientName,
                             phone: recipientPhone,
                             detail: recipientAddressDetail,
                             province: recipientProvince,
                             district: recipientDistrict,
                             ward: recipientWard
-                        }"
-                        @remove-customer="onRemoveCustomer"
-                        @set-customer="onSelectSuggestedCustomer"
-                        @update:customer-form="onCustomerFormUpdate"
-                        @update:shipping="onShippingPanelUpdate" />
+                        }" @remove-customer="onRemoveCustomer" @set-customer="onSelectSuggestedCustomer"
+                        @update:customer-form="onCustomerFormUpdate" @update:shipping="onShippingPanelUpdate" />
 
                     <!-- Pricing/Voucher Details (Moved from left column) -->
-                    <OrderSummaryPanel v-model:isGiaoHang="isGiaoHang" :vouchers="vouchers"
-                        class="flex-shrink-0"
+                    <OrderSummaryPanel v-model:isGiaoHang="isGiaoHang" :vouchers="vouchers" class="flex-shrink-0"
                         :selected-voucher-id="selectedOrder?.idPhieuGiamGia"
                         :voucher-suggestion-text="voucherSuggestionText"
                         :voucher-suggestion-class="voucherSuggestionClass"
                         :can-apply-suggested-voucher="canApplySuggestedVoucher"
-                        :better-voucher-suggestion-text="betterVoucherSuggestionText"
-                        :total-raw-amount="totalRawAmount" :product-discount-amount="productDiscountAmount"
-                        :applied-discount-summary="appliedDiscountSummary"
-                        :total-discount-amount="totalDiscountAmount" :final-collect-amount="finalCollectAmount"
-                        v-model:shippingFee="shippingFee" :shipping-fee-loading="shippingFeeLoading"
-                        :shipping-fee-source="shippingFeeSource" :shipping-fee-error="shippingFeeError"
-                        :is-free-ship="isFreeShip" @apply-voucher="onApplyVoucher"
-                        @apply-suggested-voucher="applyBestVoucherFromSuggestion" />
+                        :better-voucher-suggestion-text="betterVoucherSuggestionText" :total-raw-amount="totalRawAmount"
+                        :product-discount-amount="productDiscountAmount"
+                        :applied-discount-summary="appliedDiscountSummary" :total-discount-amount="totalDiscountAmount"
+                        :final-collect-amount="finalCollectAmount" v-model:shippingFee="shippingFee"
+                        :shipping-fee-loading="shippingFeeLoading" :shipping-fee-source="shippingFeeSource"
+                        :shipping-fee-error="shippingFeeError" :is-free-ship="isFreeShip"
+                        @apply-voucher="onApplyVoucher" @apply-suggested-voucher="applyBestVoucherFromSuggestion" />
 
                     <!-- Payment Card -->
-                    <PaymentPanel v-model:paymentMethod="checkoutData.paymentMethod"
-                        class="flex-shrink-0"
+                    <PaymentPanel v-model:paymentMethod="checkoutData.paymentMethod" class="flex-shrink-0"
                         v-model:receivedAmount="checkoutData.receivedAmount" :remaining-balance="remainingBalance"
                         :change-amount="changeAmount" :is-processing="isProcessing"
                         :has-items="!!selectedOrder?.listsHoaDonChiTiet?.length"
@@ -2238,203 +1895,17 @@ const formatDateTime = (dateStr) => {
             </div>
         </div>
 
-        <!-- VNPay QR Dialog -->
-        <v-dialog v-model="vnpayDialog.show" max-width="450" persistent>
-            <v-card class="rounded-xl overflow-hidden pb-4">
-                <v-card-text class="pt-6 text-center d-flex flex-column align-center">
-                    <div class="vnpay-logo-wrapper mb-4">
-                        <v-img src="https://vnpay.vn/assets/images/logo-icon/logo-primary.svg" width="60" />
-                    </div>
-
-                    <h3 class="text-h6 font-weight-bold mb-1">Thanh toán VNPay</h3>
-                    <p class="text-subtitle-2 text-grey-darken-1 mb-6">Mã đơn: {{ vnpayDialog.orderId }}</p>
-
-                    <div v-if="vnpayDialog.loading" class="pa-8 d-flex flex-column align-center">
-                        <v-progress-circular indeterminate color="#005BAA" size="48" class="mb-4"></v-progress-circular>
-                        <div class="text-body-2 font-weight-medium text-grey-darken-2">{{ vnpayDialog.statusText }}
-                        </div>
-                    </div>
-
-                    <div v-else-if="vnpayDialog.verified" class="pa-8 d-flex flex-column align-center">
-                        <v-icon color="success" size="64" class="mb-4">mdi-check-circle</v-icon>
-                        <div class="text-h6 font-weight-bold text-success mb-2">Giao dịch thành công!</div>
-                        <div class="text-body-2 text-grey-darken-1">Đơn hàng đang được hoàn tất...</div>
-                    </div>
-
-                    <div v-else class="w-100 d-flex flex-column align-center">
-                        <template v-if="checkoutData.vnpayMethod === 'QR'">
-                            <div class="pa-2 bg-white rounded-lg elevation-2 mb-4 d-inline-block">
-                                <QrcodeVue v-if="vnpayDialog.paymentUrl" :value="vnpayDialog.paymentUrl" :size="220"
-                                    level="H" render-as="canvas" />
-                                <div v-else class="d-flex align-center justify-center text-grey"
-                                    style="width: 220px; height: 220px;">
-                                    Chưa có mã QR
-                                </div>
-                            </div>
-                            <div class="text-h5 font-weight-bold text-error mb-1">
-                                {{ new Intl.NumberFormat('vi-VN', {
-                                    style: 'currency', currency: 'VND'
-                                }).format(vnpayDialog.amount) }}
-                            </div>
-                            <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
-                                Sử dụng ứng dụng ngân hàng hoặc ví VNPay để quét mã.
-                            </div>
-                        </template>
-                        <template v-else>
-                            <div class="text-h5 font-weight-bold text-error mb-4">
-                                {{ new Intl.NumberFormat('vi-VN', {
-                                    style: 'currency', currency: 'VND'
-                                }).format(vnpayDialog.amount) }}
-                            </div>
-                            <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
-                                Vui lòng hoàn tất thanh toán trên VNPay.
-                            </div>
-                            <v-btn color="#005BAA" class="mb-6 rounded-lg text-white font-weight-bold"
-                                @click="() => { vnpayPopup = window.open(vnpayDialog.paymentUrl, 'vnpay', 'width=800,height=600'); }">
-                                Mở lại thanh toán
-                            </v-btn>
-                        </template>
-
-                        <v-btn block color="#005BAA" class="mb-3 rounded-lg text-white font-weight-bold" height="48"
-                            @click="onConfirmVnPayManual">
-                            XÁC NHẬN ĐÃ NHẬN TIỀN
-                        </v-btn>
-
-                        <v-btn v-if="checkoutData.vnpayMethod === 'QR'" block variant="outlined" color="grey-darken-1"
-                            class="rounded-lg font-weight-bold" height="48" @click="startVnPayFlow">
-                            TẠO LẠI MÃ QR
-                        </v-btn>
-
-                        <v-btn variant="text" color="error" class="mt-4" size="small" @click="cancelVnPayFlow">
-                            Hủy giao dịch
-                        </v-btn>
-                    </div>
-                </v-card-text>
-            </v-card>
-        </v-dialog>
-
-        <!-- VNPay Choice Dialog -->
-        <v-dialog v-model="vnpayChoiceDialog.show" max-width="400" persistent>
-            <v-card class="rounded-xl pa-5">
-                <div class="text-center mb-5">
-                    <div class="text-h6 font-weight-bold">Chọn hình thức thanh toán</div>
-                </div>
-                <v-radio-group v-model="vnpayChoiceDialog.method" column hide-details class="mb-5">
-                    <v-radio value="QR" label="Thanh toán qua quét mã QR" color="#2E4E8E"></v-radio>
-                    <v-radio value="GATEWAY" label="Nhập mã thẻ qua cổng VNPay" color="#2E4E8E"></v-radio>
-                </v-radio-group>
-                <div class="d-flex gap-3">
-                    <v-btn class="flex-grow-1 rounded-lg font-weight-bold" variant="outlined" color="grey-darken-1"
-                        height="44" @click="vnpayChoiceDialog.show = false">
-                        Hủy
-                    </v-btn>
-                    <v-btn class="flex-grow-1 rounded-lg font-weight-bold text-white" color="#4285F4" height="44"
-                        @click="proceedVnPayChoice">
-                        Tiếp tục
-                    </v-btn>
-                </div>
-            </v-card>
-        </v-dialog>
+        <!-- VNPay Dialogs -->
+        <VnPayDialogs v-model:vnpayDialog="vnpayDialog" v-model:vnpayChoiceDialog="vnpayChoiceDialog"
+            :vnpay-method="checkoutData.vnpayMethod" @proceed-choice="proceedVnPayChoice"
+            @confirm-manual="onConfirmVnPayManual" @retry-qr="startVnPayFlow" @cancel="cancelVnPayFlow"
+            @open-gateway="() => { vnpayPopup = window.open(vnpayDialog.paymentUrl, 'vnpay', 'width=800,height=600'); }" />
 
         <!-- Scanner dialog -->
-        <v-dialog v-model="showScanner" max-width="500" transition="dialog-bottom-transition">
-            <v-card class="rounded-lg pa-4">
-                <div class="d-flex justify-space-between align-center mb-4">
-                    <span class="text-h6 font-weight-bold">Quét mã sản phẩm</span>
-                    <v-btn icon variant="text" @click="() => stopScanner()">
-                        <XIcon />
-                    </v-btn>
-                </div>
-                <div :id="scannerElementId" class="qr-reader-box"></div>
-                <div class="mt-4 text-center text-caption text-grey">Đưa mã QR hoặc Barcode của sản phẩm vào
-                    khung
-                    hình
-                </div>
-            </v-card>
-        </v-dialog>
+        <ScannerDialog v-model="showScanner" :scanner-element-id="scannerElementId" @stop="stopScanner" />
 
         <!-- Quick Add Customer Dialog -->
-        <v-dialog v-model="showQuickAddDialog" max-width="650" transition="dialog-bottom-transition" persistent>
-            <v-card class="rounded-lg overflow-hidden">
-                <v-card-title
-                    class="text-subtitle-1 font-weight-bold pa-4 border-b bg-slate-50 d-flex justify-space-between align-center">
-                    Thêm nhanh thông tin khách hàng
-                    <v-btn icon size="small" variant="text" @click="showQuickAddDialog = false">
-                        <XIcon size="20" />
-                    </v-btn>
-                </v-card-title>
-                <v-card-text class="pa-5">
-                    <div class="text-body-2 text-medium-emphasis mb-4">
-                        Nếu SĐT đã tồn tại, hệ thống sẽ tự động nhận diện và gán khách hàng vào đơn.
-                    </div>
-
-                    <v-row dense>
-                        <v-col cols="12" md="6">
-                            <v-text-field v-model="quickAddForm.ten" label="Tên khách hàng" placeholder="Nhập tên..."
-                                variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2"
-                                maxlength="100" />
-                        </v-col>
-                        <v-col cols="12" md="6">
-                            <v-text-field v-model="quickAddForm.sdt" label="Số điện thoại"
-                                placeholder="Ví dụ: 0912345678" variant="outlined" density="comfortable"
-                                hide-details="auto" class="mb-3 text-body-2"
-                                @input="quickAddForm.sdt = String($event.target.value || '').replace(/[^0-9]/g, '')" />
-                        </v-col>
-                        <v-col cols="12" md="6">
-                            <v-select v-model="quickAddForm.gioiTinh" :items="GIOI_TINH_OPTIONS" label="Giới tính"
-                                variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2" />
-                        </v-col>
-                        <v-col cols="12" md="6">
-                            <v-text-field v-model="quickAddForm.email" label="Email (Không bắt buộc)"
-                                placeholder="Ví dụ: abc@gmail.com" variant="outlined" density="comfortable"
-                                hide-details="auto" class="mb-3 text-body-2" />
-                        </v-col>
-
-                        <v-col cols="12">
-                            <div class="text-subtitle-2 font-weight-bold mt-2 mb-2 text-slate-700">Địa chỉ
-                                (Tùy
-                                chọn)
-                            </div>
-                        </v-col>
-                        <v-col cols="12" md="4">
-                            <v-autocomplete v-model="quickAddForm.tinh" :items="provinces" item-title="name"
-                                item-value="code" placeholder="Tỉnh / Thành phố" variant="outlined" bg-color="white"
-                                density="compact" hide-details :loading="loadingLocations.provinces"
-                                @update:model-value="(val) => { quickAddForm.thanhPho = null; quickAddForm.phuongXa = null; if (val) fetchDistricts(val); }"
-                                class="mb-3 text-body-2" />
-                        </v-col>
-                        <v-col cols="12" md="4">
-                            <v-autocomplete v-model="quickAddForm.thanhPho" :items="districts" item-title="name"
-                                item-value="code" placeholder="Quận / Huyện" variant="outlined" bg-color="white"
-                                density="compact" hide-details :loading="loadingLocations.districts"
-                                :disabled="!quickAddForm.tinh"
-                                @update:model-value="(val) => { quickAddForm.phuongXa = null; if (val) fetchWards(val); }"
-                                class="mb-3 text-body-2" />
-                        </v-col>
-                        <v-col cols="12" md="4">
-                            <v-autocomplete v-model="quickAddForm.phuongXa" :items="wards" item-title="name"
-                                item-value="code" placeholder="Phường / Xã" variant="outlined" bg-color="white"
-                                density="compact" hide-details :loading="loadingLocations.wards"
-                                :disabled="!quickAddForm.thanhPho" class="mb-3 text-body-2" />
-                        </v-col>
-                        <v-col cols="12">
-                            <v-text-field v-model="quickAddForm.diaChiChiTiet"
-                                placeholder="Địa chỉ cụ thể (Số nhà, đường...)" variant="outlined" density="compact"
-                                hide-details class="text-body-2" />
-                        </v-col>
-                    </v-row>
-                </v-card-text>
-                <v-card-actions class="px-6 pb-5 border-t bg-slate-50">
-                    <v-spacer />
-                    <v-btn variant="tonal" color="slate-500" class="rounded-lg text-none"
-                        @click="showQuickAddDialog = false">Hủy</v-btn>
-                    <v-btn :loading="quickAddLoading" color="primary" variant="flat"
-                        class="px-6 rounded-lg font-weight-bold text-none" @click="submitQuickAdd"> Thêm
-                        nhanh
-                    </v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
+        <QuickAddCustomerDialog v-model="showQuickAddDialog" @success="(customer) => selectCustomer(customer)" />
 
         <!-- Confirmation Dialog -->
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"

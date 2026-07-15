@@ -59,23 +59,24 @@ public class PaymentOrderFinalizer {
 
         // Trừ tồn kho tại thời điểm thanh toán thành công (đơn VNPay chưa trừ lúc đặt hàng).
         // Dùng UPDATE atomic có điều kiện soLuong >= qty để chống oversell khi nhiều đơn tranh nhau hàng cuối.
-        // Nếu có SP không đủ tồn (đã bị đơn khác lấy mất trong lúc chờ thanh toán): vẫn trừ để phản ánh đúng
-        // số cần giao (cho phép âm) và đánh dấu cảnh báo để admin xử lý (nhập thêm hàng hoặc hoàn tiền).
-        List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findAllByHoaDon(hoaDon);
+        // Đơn TAI_QUAY đã trừ lúc thêm vào giỏ hàng, nên bỏ qua bước này.
         StringBuilder thieuHangNote = new StringBuilder();
-        for (HoaDonChiTiet ct : chiTiets) {
-            ChiTietSanPham ctsp = ct.getChiTietSanPham();
-            if (ctsp == null) continue;
+        if (!"TAI_QUAY".equalsIgnoreCase(hoaDon.getLoaiDon())) {
+            List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findAllByHoaDon(hoaDon);
+            for (HoaDonChiTiet ct : chiTiets) {
+                ChiTietSanPham ctsp = ct.getChiTietSanPham();
+                if (ctsp == null) continue;
 
-            int affected = chiTietSanPhamRepository.deductStock(ctsp.getId(), ct.getSoLuong());
-            if (affected == 0) {
-                // Không đủ tồn: trừ cho phép âm để giữ đúng nghĩa vụ giao hàng đã thanh toán.
-                int tonHienTai = ctsp.getSoLuong() != null ? ctsp.getSoLuong() : 0;
-                ctsp.setSoLuong(tonHienTai - ct.getSoLuong());
-                chiTietSanPhamRepository.save(ctsp);
+                int affected = chiTietSanPhamRepository.deductStock(ctsp.getId(), ct.getSoLuong());
+                if (affected == 0) {
+                    // Không đủ tồn: trừ cho phép âm để giữ đúng nghĩa vụ giao hàng đã thanh toán.
+                    int tonHienTai = ctsp.getSoLuong() != null ? ctsp.getSoLuong() : 0;
+                    ctsp.setSoLuong(tonHienTai - ct.getSoLuong());
+                    chiTietSanPhamRepository.save(ctsp);
 
-                String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
-                thieuHangNote.append(String.format("'%s' (tồn %d, cần %d); ", tenSP, tonHienTai, ct.getSoLuong()));
+                    String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
+                    thieuHangNote.append(String.format("'%s' (tồn %d, cần %d); ", tenSP, tonHienTai, ct.getSoLuong()));
+                }
             }
         }
 

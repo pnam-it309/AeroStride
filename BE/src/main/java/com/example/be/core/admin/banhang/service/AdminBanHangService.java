@@ -24,9 +24,10 @@ public interface AdminBanHangService {
 
     AdminBanHangHoaDonResponse updateShippingAndChannel(String idHoaDon, com.example.be.core.admin.banhang.model.request.AdminBanHangUpdateShippingRequest request);
 
-    List<BanHangSanPhamResponse> searchSanPham(String keyword, String thuongHieu, String chatLieu, String xuatXu, String mucDich);
+    List<BanHangSanPhamResponse> searchSanPham(String keyword, String thuongHieu, String chatLieu, String xuatXu, String mucDich, String mauSac, String kichCo, BigDecimal minGia, BigDecimal maxGia);
     List<AdminBanHangKhachHangResponse> searchKhachHang(String keyword);
     List<PhieuGiamGia> getVouchers(BigDecimal tongTien);
     PhieuGiamGia getBestVoucher(String idHoaDon);
     List<ProductSuggestionResponse> getProductSuggestions(String idHoaDon);
+    com.example.be.core.admin.banhang.model.response.AdminBanHangPaymentStatusResponse checkPaymentStatus(String idHoaDon);
 }

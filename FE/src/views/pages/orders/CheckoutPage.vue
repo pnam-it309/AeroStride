@@ -9,7 +9,7 @@ import { useAuthStore } from '@/stores/authStore';
 import apiService from '@/services/apiService';
 import { dichVuDatHang } from '@/services/public/dichVuDatHang';
 import { dichVuKhachHang } from '@/services/public/dichVuKhachHang';
-import { dichVuVnPay } from '@/views/modules/banhang/dichVuVnPay';
+import { dichVuVnPay } from '@/views/modules/banhang/composables/dichVuVnPay';
 import { PATH } from '@/router/routePaths';
 import { useLocation } from '@/composables/useLocation';
 
@@ -340,7 +340,7 @@ const handleCheckout = async () => {
             if (paymentMethod.value === 'VNPAY') {
                 try {
                     const payload = {
-                        amount: finalTotal.value,
+                        amount: totalAmount.value,
                         orderId: createdOrder.id,
                         orderInfo: 'Thanh toan hoa don ' + (createdOrder.maHoaDon || createdOrder.id),
                         returnUrl: `${window.location.origin}/order-success/${createdOrder.id}`
@@ -353,7 +353,7 @@ const handleCheckout = async () => {
                             checking: false,
                             orderId: createdOrder.id,
                             orderCode: createdOrder.maHoaDon || createdOrder.id,
-                            amount: finalTotal.value,
+                            amount: totalAmount.value,
                             qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(vnpData.paymentUrl)}`,
                             paymentUrl: vnpData.paymentUrl,
                             pollInterval: setInterval(() => checkOnlineOrderStatus(createdOrder.id), 3000)
@@ -448,7 +448,6 @@ onMounted(async () => {
                                     <v-text-field v-model="shippingInfo.email" label="Email nhận thông báo đơn hàng"
                                         variant="outlined" hide-details="auto"
                                         prepend-inner-icon="mdi-email-outline"
-                                        placeholder="Ví dụ: emailcuaban@gmail.com"
                                         :rules="[
                                             (v) => !!v || 'Vui lòng nhập Email',
                                             (v) => /.+@.+\..+/.test(v) || 'Email không hợp lệ'
@@ -824,11 +823,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-:deep(.v-field__input) {
-    min-height: 52px !important;
-    font-size: 0.95rem;
-}
-
 :deep(.v-field) {
     font-size: 0.95rem;
 }

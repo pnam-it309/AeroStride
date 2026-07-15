@@ -110,8 +110,8 @@ const clearProductSelection = () => {
 
 // Đồng bộ lại danh sách chọn sau khi lọc/đổi trang, loại bỏ những sản phẩm không còn hiển thị
 const syncProductSelection = () => {
-    const validIds = new Set(products.value.map((item) => item.id));
-    selectedProductIds.value = selectedProductIds.value.filter((id) => validIds.has(id));
+    // Để giữ lựa chọn khi sang trang, không xoá các ID khỏi selectedProductIds
+    // Việc xoá (nếu cần khi filter thay đổi) đã được handle ở clearProductSelection() trong handleSearch.
 };
 
 // Xóa tất cả các bộ lọc, đưa về trạng thái mặc định
@@ -444,9 +444,21 @@ const toggleProductSelection = (productId, checked) => {
 };
 
 // Chọn/Bỏ chọn tất cả các sản phẩm đang hiển thị trên tất cả phân trang
-const toggleSelectAllProducts = (checked) => {
+const toggleSelectAllProducts = async (checked) => {
     if (checked) {
-        selectedProductIds.value = [...filteredProductIds.value];
+        try {
+            // Lấy tất cả danh sách sản phẩm theo bộ lọc hiện tại thay vì chỉ lấy ID trên trang hiện tại
+            const response = await dichVuSanPham.layDanhSachSanPham({
+                ...buildProductFilterParams(),
+                page: 1,
+                size: 10000 // Tối đa để lấy đủ toàn bộ ID
+            });
+            const allIds = response?.content?.map(item => item.id) || [];
+            selectedProductIds.value = allIds;
+        } catch (e) {
+            console.error('Lỗi khi lấy tất cả sản phẩm', e);
+            selectedProductIds.value = [...filteredProductIds.value];
+        }
         return;
     }
 

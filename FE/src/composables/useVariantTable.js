@@ -64,9 +64,9 @@ export function useVariantTable(variantItems, {
     });
     const visibleVariantKeys = computed(() => paginatedVariantItems.value.map((item) => getVariantKey(item)));
     const selectedVariants = computed(() => filteredVariantItems.value.filter((item) => selectedVariantKeys.value.includes(getVariantKey(item))));
-    const allVisibleVariantsSelected = computed(() => visibleVariantKeys.value.length > 0
-        && visibleVariantKeys.value.every((key) => selectedVariantKeys.value.includes(key)));
-    const someVisibleVariantsSelected = computed(() => visibleVariantKeys.value.some((key) => selectedVariantKeys.value.includes(key))
+    const allVisibleVariantsSelected = computed(() => filteredVariantItems.value.length > 0
+        && filteredVariantItems.value.every((item) => selectedVariantKeys.value.includes(getVariantKey(item))));
+    const someVisibleVariantsSelected = computed(() => filteredVariantItems.value.some((item) => selectedVariantKeys.value.includes(getVariantKey(item)))
         && !allVisibleVariantsSelected.value);
 
     const updateVariantPriceBounds = () => {
@@ -128,12 +128,11 @@ export function useVariantTable(variantItems, {
 
     const toggleSelectVisibleVariants = (checked) => {
         if (checked) {
-            const mergedKeys = new Set([...selectedVariantKeys.value, ...visibleVariantKeys.value]);
-            selectedVariantKeys.value = Array.from(mergedKeys);
+            const allFilteredKeys = filteredVariantItems.value.map((item) => getVariantKey(item));
+            selectedVariantKeys.value = allFilteredKeys;
             return;
         }
-        const visibleKeySet = new Set(visibleVariantKeys.value);
-        selectedVariantKeys.value = selectedVariantKeys.value.filter((key) => !visibleKeySet.has(key));
+        selectedVariantKeys.value = [];
     };
 
     const resetVariantTableFilters = () => {

@@ -29,7 +29,7 @@ const formatPrice = (price) => {
 };
 
 const shippingFee = computed(() => {
-    return cartStore.cartTotal >= FREE_SHIP_THRESHOLD ? 0 : SHIPPING_FEE;
+    return cartStore.cartTotal >= FREE_SHIP_THRESHOLD ? 0 : null;
 });
 
 const shippingProgress = computed(() => {
@@ -95,11 +95,7 @@ const handleQuantityInput = async (item, eventTargetValue) => {
 
 const handleCheckout = () => {
     cartStore.closeDrawer();
-    if (!authStore.isLoggedIn) {
-        router.push(PATH.LOGIN);
-    } else {
-        router.push(PATH.CHECKOUT);
-    }
+    router.push(PATH.CHECKOUT);
 };
 </script>
 
@@ -121,7 +117,7 @@ const handleCheckout = () => {
             <v-divider />
 
             <!-- Free Shipping Progress -->
-            <div v-if="!cartStore.isEmpty && cartStore.cartTotal < FREE_SHIP_THRESHOLD" class="shipping-progress px-6 py-4">
+            <div v-if="authStore.isLoggedIn && !cartStore.isEmpty && cartStore.cartTotal < FREE_SHIP_THRESHOLD" class="shipping-progress px-6 py-4">
                 <div class="d-flex align-center mb-2">
                     <v-icon size="16" color="orange-darken-2" class="mr-2">mdi-truck-fast-outline</v-icon>
                     <span class="text-caption font-weight-medium text-grey-darken-1">
@@ -131,7 +127,7 @@ const handleCheckout = () => {
                 </div>
                 <v-progress-linear :model-value="shippingProgress" height="6" color="orange" rounded class="shipping-bar"></v-progress-linear>
             </div>
-            <div v-else-if="!cartStore.isEmpty" class="shipping-progress-free px-6 py-3">
+            <div v-else-if="authStore.isLoggedIn && !cartStore.isEmpty" class="shipping-progress-free px-6 py-3">
                 <div class="d-flex align-center">
                     <v-icon size="16" color="green" class="mr-2">mdi-check-circle</v-icon>
                     <span class="text-caption font-weight-bold text-green">Bạn đã được miễn phí vận chuyển!</span>
@@ -254,16 +250,14 @@ const handleCheckout = () => {
                             <span class="text-body-2 text-grey-darken-1">Tạm tính</span>
                             <span class="text-body-1 font-weight-bold">{{ formatPrice(cartStore.cartTotal) }}</span>
                         </div>
-                        <div class="d-flex justify-space-between align-center mb-2">
+                        <div class="d-flex justify-space-between align-center mb-2" v-if="authStore.isLoggedIn && shippingFee === 0">
                             <span class="text-body-2 text-grey-darken-1">Phí vận chuyển</span>
-                            <span class="text-body-2 font-weight-medium" :class="shippingFee === 0 ? 'text-green' : 'text-grey-darken-1'">
-                                {{ shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee) }}
-                            </span>
+                            <span class="text-body-2 font-weight-medium text-green">Miễn phí</span>
                         </div>
                         <v-divider class="my-2" />
                         <div class="d-flex justify-space-between align-center">
                             <span class="text-body-1 font-weight-bold text-black">Tổng cộng</span>
-                            <span class="text-h6 font-weight-black text-black">{{ formatPrice(cartStore.cartTotal + shippingFee) }}</span>
+                            <span class="text-h6 font-weight-black text-black">{{ formatPrice(cartStore.cartTotal + (shippingFee || 0)) }}</span>
                         </div>
                     </div>
 
@@ -276,7 +270,7 @@ const handleCheckout = () => {
                         @click="handleCheckout"
                     >
                         <v-icon class="mr-2" size="20">mdi-lock-outline</v-icon>
-                        Thanh toán ngay · {{ formatPrice(cartStore.cartTotal + shippingFee) }}
+                        Thanh toán ngay · {{ formatPrice(cartStore.cartTotal + (shippingFee || 0)) }}
                     </v-btn>
                     <v-btn
                         block

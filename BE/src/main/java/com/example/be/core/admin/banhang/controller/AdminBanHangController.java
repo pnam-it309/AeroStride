@@ -133,9 +133,13 @@ public class AdminBanHangController {
             @RequestParam(required = false) String thuongHieu,
             @RequestParam(required = false) String chatLieu,
             @RequestParam(required = false) String xuatXu,
-            @RequestParam(required = false) String mucDich) {
-        log.info("Searching products for counter sales with keyword: {}, thuongHieu: {}, chatLieu: {}, xuatXu: {}, mucDich: {}", keyword, thuongHieu, chatLieu, xuatXu, mucDich);
-        return ResponseEntity.ok(ApiResponse.success(adminBanHangService.searchSanPham(keyword, thuongHieu, chatLieu, xuatXu, mucDich)));
+            @RequestParam(required = false) String mucDich,
+            @RequestParam(required = false) String mauSac,
+            @RequestParam(required = false) String kichCo,
+            @RequestParam(required = false) java.math.BigDecimal minGia,
+            @RequestParam(required = false) java.math.BigDecimal maxGia) {
+        log.info("Searching products for counter sales with keyword: {}, thuongHieu: {}, chatLieu: {}, xuatXu: {}, mucDich: {}, mauSac: {}, kichCo: {}, minGia: {}, maxGia: {}", keyword, thuongHieu, chatLieu, xuatXu, mucDich, mauSac, kichCo, minGia, maxGia);
+        return ResponseEntity.ok(ApiResponse.success(adminBanHangService.searchSanPham(keyword, thuongHieu, chatLieu, xuatXu, mucDich, mauSac, kichCo, minGia, maxGia)));
     }
 
     // Tìm kiếm khách hàng theo từ khóa (tên, sđt)
@@ -164,5 +168,11 @@ public class AdminBanHangController {
     public ResponseEntity<ApiResponse<List<com.example.be.core.admin.banhang.model.response.ProductSuggestionResponse>>> getProductSuggestions(@PathVariable String id) {
         log.info("Fetching product suggestions for order: {}", id);
         return ResponseEntity.ok(ApiResponse.success(adminBanHangService.getProductSuggestions(id)));
+    }
+    // Kiểm tra trạng thái thanh toán VNPay của hóa đơn
+    @GetMapping("/{id}/payment-status")
+    public ResponseEntity<ApiResponse<com.example.be.core.admin.banhang.model.response.AdminBanHangPaymentStatusResponse>> checkPaymentStatus(@PathVariable String id) {
+        log.info("Checking payment status for order: {}", id);
+        return ResponseEntity.ok(ApiResponse.success(adminBanHangService.checkPaymentStatus(id)));
     }
 }

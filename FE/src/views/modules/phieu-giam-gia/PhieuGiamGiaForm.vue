@@ -110,9 +110,15 @@ watch(
 );
 
 const isSelectAll = computed({
-    get: () => filteredCustomers.value.length > 0 && selectedCustomerIds.value.length === filteredCustomers.value.length,
+    get: () => filteredCustomers.value.length > 0 && filteredCustomers.value.every((c) => selectedCustomerIds.value.includes(c.id)),
     set: (value) => {
-        selectedCustomerIds.value = value ? filteredCustomers.value.map((c) => c.id) : [];
+        if (value) {
+            const newIds = filteredCustomers.value.map((c) => c.id);
+            selectedCustomerIds.value = [...new Set([...selectedCustomerIds.value, ...newIds])];
+        } else {
+            const filteredIds = new Set(filteredCustomers.value.map((c) => c.id));
+            selectedCustomerIds.value = selectedCustomerIds.value.filter((id) => !filteredIds.has(id));
+        }
     }
 });
 
@@ -459,12 +465,12 @@ onMounted(init);
                                     type="number" placeholder="0" variant="outlined" density="compact"
                                     hide-details></v-text-field>
                             </v-col>
-                            <v-col cols="12" md="4">
+                            <v-col cols="12" md="4" v-if="form.loaiPhieu === 'TIEN_MAT'"></v-col>
+                            <v-col cols="12" md="4" v-if="form.loaiPhieu === 'PHAN_TRAM'">
                                 <div class="field-label">Giảm tối đa</div>
                                 <FormattedNumberField v-model="form.giamToiDa"
-                                    :readonly="isViewOnly || form.loaiPhieu === 'TIEN_MAT'" placeholder="Không giới hạn"
-                                    variant="outlined" density="compact" hide-details
-                                    :class="getTienMatClass()"></FormattedNumberField>
+                                    :readonly="isViewOnly" placeholder="Không giới hạn"
+                                    variant="outlined" density="compact" hide-details></FormattedNumberField>
                             </v-col>
 
                             <!-- 3. Số lượng sử dụng, Hóa đơn tối thiểu & Loại phiếu -->

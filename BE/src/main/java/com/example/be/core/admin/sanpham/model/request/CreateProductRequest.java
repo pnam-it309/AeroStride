@@ -47,8 +47,6 @@ public class CreateProductRequest {
     // Anh san pham co the la base64 data URL nen khong gioi han 1000 ky tu.
     private String hinhAnh;
 
-
-
     private String moTaChiTiet;
 
     private TrangThai trangThai;

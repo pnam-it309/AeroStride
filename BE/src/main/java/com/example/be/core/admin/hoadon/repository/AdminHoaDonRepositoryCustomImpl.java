@@ -50,10 +50,13 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
         QKhachHang kh = QKhachHang.khachHang;
         BooleanBuilder builder = new BooleanBuilder();
 
-        // Loại bỏ hóa đơn đang chờ tại quầy (chưa thanh toán) khỏi Quản lý hóa đơn
-        builder.and(hd.loaiDon.isNull()
-                .or(hd.loaiDon.ne("TAI_QUAY"))
-                .or(hd.trangThai.ne(OrderStatus.CHO_XAC_NHAN)));
+        // Ẩn các hóa đơn nháp (trống) do màn hình Bán Hàng tạo ra (Tổng tiền <= 0 và đang chờ xác nhận)
+        // Đồng thời, ẩn CẢ các hóa đơn có NhanVien != null đang ở trạng thái CHO_XAC_NHAN 
+        // (đây là các hóa đơn POS draft, dù có được đổi loaiDon thành ONLINE hay thêm sản phẩm thì vẫn là draft chưa thanh toán)
+        builder.and(
+            hd.trangThai.ne(OrderStatus.CHO_XAC_NHAN)
+            .or(hd.nhanVien.isNull())
+        );
 
         if (req.getSearch() != null && !req.getSearch().trim().isEmpty()) {
             String search = req.getSearch().toLowerCase().trim();
