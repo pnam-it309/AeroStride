@@ -31,16 +31,16 @@ public class DanhGiaSanPham extends PrimaryEntity {
     @Column(name = "noi_dung", columnDefinition = "NVARCHAR(2000)")
     private String noiDung;
 
-    @Column(name = "hinh_anh", columnDefinition = "JSON")
+    @Column(name = "hinh_anh", columnDefinition = "LONGTEXT")
     private String hinhAnh; // Lưu dạng mảng URL JSON
 
     @Column(name = "video", length = 500)
     private String video;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "trang_thai")
+    @Column(name = "trang_thai_danh_gia")
     @Builder.Default
-    private TrangThaiDanhGia trangThai = TrangThaiDanhGia.PENDING;
+    private TrangThaiDanhGia trangThaiDanhGia = TrangThaiDanhGia.PENDING;
 
     public enum TrangThaiDanhGia {
         PENDING, APPROVED, REJECTED, SPAM

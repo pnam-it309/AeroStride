@@ -17,4 +17,6 @@ public interface AdminCuocHoiThoaiRepository extends CuocHoiThoaiRepository, Jpa
            "((c.nhanVien.id = :id1 AND c.nhanVienNhan.id = :id2) OR " +
            "(c.nhanVien.id = :id2 AND c.nhanVienNhan.id = :id1))")
     Optional<CuocHoiThoai> findInternalConversation(@Param("id1") String id1, @Param("id2") String id2);
+
+    java.util.List<CuocHoiThoai> findByTrangThaiHoiThoaiIn(java.util.List<CuocHoiThoai.TrangThaiHoiThoai> trangThais);
 }

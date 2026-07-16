@@ -435,7 +435,7 @@ public class AdminChatServiceImpl implements AdminChatService {
             Boolean.FALSE.equals(conversation.getDaChapNhan()) && 
             (conversation.getLoaiHoiThoai() == null || conversation.getLoaiHoiThoai() == CuocHoiThoai.LoaiHoiThoai.CUSTOMER)) {
             log.info("Triggering AI response for conversation: {}", conversation.getId());
-            aiChatService.generateAndSendResponse(conversation, text);
+            aiChatService.generateAndSendResponse(conversation, text, null);
         }
     }
 

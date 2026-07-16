@@ -39,11 +39,11 @@ public class ReviewServiceImpl implements ReviewService {
             throw new RuntimeException("Không đủ điều kiện đánh giá sản phẩm này.");
         }
 
-        HoaDon hoaDon = hoaDonRepository.findById(String.valueOf(request.getIdHoaDon()))
+        HoaDon hoaDon = hoaDonRepository.findById(request.getIdHoaDon())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn."));
-        SanPham sanPham = sanPhamRepository.findById(String.valueOf(request.getIdSanPham()))
+        SanPham sanPham = sanPhamRepository.findById(request.getIdSanPham())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm."));
-        KhachHang khachHang = khachHangRepository.findById(String.valueOf(request.getIdKhachHang()))
+        KhachHang khachHang = khachHangRepository.findById(request.getIdKhachHang())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng."));
 
         DanhGiaSanPham.TrangThaiDanhGia status = DanhGiaSanPham.TrangThaiDanhGia.PENDING;
@@ -70,7 +70,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .noiDung(request.getNoiDung())
                 .hinhAnh(request.getHinhAnh())
                 .video(request.getVideo())
-                .trangThai(status)
+                .trangThaiDanhGia(status)
                 .build();
 
         reviewRepository.save(review);
@@ -78,31 +78,31 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<DanhGiaSanPham> getReviewsByProduct(Long idSanPham, Pageable pageable) {
-        return reviewRepository.findBySanPhamIdAndTrangThai(idSanPham, DanhGiaSanPham.TrangThaiDanhGia.APPROVED, pageable);
+    public Page<DanhGiaSanPham> getReviewsByProduct(String idSanPham, Pageable pageable) {
+        return reviewRepository.findBySanPhamIdAndTrangThaiDanhGia(idSanPham, DanhGiaSanPham.TrangThaiDanhGia.APPROVED, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public boolean checkEligibility(Long idHoaDon, Long idSanPham, Long idKhachHang) {
+    public boolean checkEligibility(String idHoaDon, String idSanPham, String idKhachHang) {
         // 1. Check if already reviewed
         if (reviewRepository.existsByHoaDonIdAndSanPhamId(idHoaDon, idSanPham)) {
             return false;
         }
 
         // 2. Check if HoaDon is COMPLETED and belongs to KhachHang
-        HoaDon hoaDon = hoaDonRepository.findById(String.valueOf(idHoaDon)).orElse(null);
-        if (hoaDon == null || hoaDon.getTrangThai() != OrderStatus.COMPLETED) {
+        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon).orElse(null);
+        if (hoaDon == null || hoaDon.getTrangThai() != OrderStatus.HOAN_THANH) {
             return false;
         }
         
-        if (hoaDon.getKhachHang() == null || !hoaDon.getKhachHang().getId().equals(String.valueOf(idKhachHang))) {
+        if (hoaDon.getKhachHang() == null || !hoaDon.getKhachHang().getId().equals(idKhachHang)) {
             return false;
         }
 
         // 3. Check time limit (e.g., within 30 days)
-        if (hoaDon.getNgaySua() != null) {
-            long daysSinceCompletion = ChronoUnit.DAYS.between(Instant.ofEpochMilli(hoaDon.getNgaySua()), Instant.now());
+        if (hoaDon.getNgayCapNhat() != null) {
+            long daysSinceCompletion = ChronoUnit.DAYS.between(Instant.ofEpochMilli(hoaDon.getNgayCapNhat()), Instant.now());
             if (daysSinceCompletion > 30) {
                 return false;
             }

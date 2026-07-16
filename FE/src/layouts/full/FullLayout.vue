@@ -18,7 +18,9 @@ import MainView from './Main.vue';
                             <transition name="route-shell" mode="out-in">
                                 <Suspense>
                                     <template #default>
-                                        <component :is="Component" :key="route.path" />
+                                        <keep-alive include="BanHang">
+                                            <component :is="Component" :key="route.path" />
+                                        </keep-alive>
                                     </template>
                                     <template #fallback>
                                         <div
