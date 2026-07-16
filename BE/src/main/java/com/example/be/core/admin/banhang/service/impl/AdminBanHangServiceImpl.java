@@ -118,11 +118,17 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         hoaDonRepository.save(hd);
 
         // Ghi lịch sử hủy hóa đơn
+        String nguoiThucHienName = SecurityUtils.getCurrentUserEmail()
+                .map(email -> nhanVienRepository.findByEmail(email)
+                        .map(nv -> nv.getTen() != null ? nv.getTen() : email)
+                        .orElse(email))
+                .orElse("Hệ thống");
         LichSuTrangThaiHoaDon lichSu = LichSuTrangThaiHoaDon.builder()
                 .hoaDon(hd)
                 .trangThaiCu(trangThaiCu)
                 .trangThaiMoi(OrderStatus.DA_HUY.ordinal())
                 .ghiChu("Hủy hóa đơn chờ tại quầy")
+                .nguoiThucHien(nguoiThucHienName)
                 .build();
         lichSuTrangThaiHoaDonRepository.save(lichSu);
     }
@@ -296,9 +302,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     public void checkout(String idHoaDon, AdminBanHangCheckoutRequest request) {
         HoaDon hd = getHoaDonOrThrow(idHoaDon);
 
-        // Kiểm tra hóa đơn chưa được thanh toán
-        if (hd.getTrangThai() == OrderStatus.HOAN_THANH) {
-            throw new BusinessException("Hóa đơn này đã được thanh toán.");
+        // Kiểm tra hóa đơn chưa được xử lý
+        if (hd.getTrangThai() != OrderStatus.CHO_XAC_NHAN && hd.getTrangThai() != null) {
+            throw new BusinessException("Hóa đơn này đã được xử lý hoặc thanh toán.");
         }
 
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
@@ -343,8 +349,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         // Chỉ cần cập nhật trạng thái hóa đơn.
 
         hd.setKhachHang(resolveCheckoutCustomer(hd, request));
-        hd.setTrangThai(OrderStatus.HOAN_THANH);
         String loaiDon = normalizeBlank(request.getLoaiDon());
+        OrderStatus finalStatus = isShippingOrder(loaiDon) ? OrderStatus.XAC_NHAN : OrderStatus.HOAN_THANH;
+        hd.setTrangThai(finalStatus);
         BigDecimal phiVanChuyen = isShippingOrder(loaiDon) ? normalizeMoney(request.getPhiVanChuyen()) : BigDecimal.ZERO;
         BigDecimal tienGiamVoucher = calculateVoucherDiscount(tongTienThucTe, voucher);
         BigDecimal tongSauGiamHang = tongTienThucTe.subtract(tienGiamVoucher);
@@ -374,13 +381,19 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             createGiaoDich(hd, "CHUYEN_KHOAN", request.getTienChuyenKhoan(), request.getMaGiaoDich());
         }
 
+        String nguoiThucHienName = SecurityUtils.getCurrentUserEmail()
+                .map(email -> nhanVienRepository.findByEmail(email)
+                        .map(nv -> nv.getTen() != null ? nv.getTen() : email)
+                        .orElse(email))
+                .orElse("Hệ thống");
+
         // Add history record for timeline
         LichSuTrangThaiHoaDon history = LichSuTrangThaiHoaDon.builder()
                 .hoaDon(hd)
                 .trangThaiCu(OrderStatus.CHO_XAC_NHAN.ordinal())
-                .trangThaiMoi(OrderStatus.HOAN_THANH.ordinal())
-                .ghiChu("Thanh toán tại quầy thành công")
-                .nguoiThucHien(SecurityUtils.getCurrentUserEmail().orElse("ADMIN"))
+                .trangThaiMoi(finalStatus.ordinal())
+                .ghiChu(isShippingOrder(loaiDon) ? "Xác nhận đơn giao hàng tại quầy" : "Thanh toán tại quầy thành công")
+                .nguoiThucHien(nguoiThucHienName)
                 .build();
         history.setNgayTao(System.currentTimeMillis());
         lichSuTrangThaiHoaDonRepository.save(history);

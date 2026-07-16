@@ -361,8 +361,25 @@ const showStatusChip = computed(() => loaded.value && getOrderStatusMeta(order.v
 const canUpdateStatus = computed(() => order.value && getOrderStatus() !== null && getOrderStatus() < ORDER_STATUS_ORDINALS.HOAN_THANH);
 const isOrderEditable = computed(() => order.value.trangThai === 'CHO_XAC_NHAN' || getOrderStatus() < ORDER_STATUS_ORDINALS.CHO_GIAO);
 
-const customerName = computed(() => order.value.tenKhachHang || 'Khách lẻ');
+const customerName = computed(() => order.value.tenKhachHang || 'Khách vãng lai');
 const orderTypeLabel = computed(() => (order.value.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi'));
+
+/**
+ * Dịch tên người thực hiện sang tiếng Việt thân thiện:
+ * - "GUEST"  → "Khách vãng lai"
+ * - "SYSTEM" → nếu đặt ONLINE → "Người hệ thống", ngược lại → "Hệ thống"
+ * - email (chứa @) → lấy phần trước @ để hiển thị gọn hơn
+ */
+const formatNguoi = (value, isOnline = false) => {
+    if (!value) return isOnline ? 'Người hệ thống' : 'Hệ thống';
+    const v = value.trim().toUpperCase();
+    if (v === 'GUEST') return 'Khách vãng lai';
+    if (v === 'SYSTEM') return isOnline ? 'Người hệ thống' : 'Hệ thống';
+    if (v === 'ADMIN') return 'Quản trị viên';
+    // Nếu là email, giữ nguyên để hiển thị (backend mới đã lưu tên rồi, trường hợp cũ vẫn xử lý)
+    if (value.includes('@')) return value.split('@')[0];
+    return value;
+};
 
 const displayAddress = computed(() => {
     let addr = order.value.diaChiNguoiNhan;
@@ -425,9 +442,13 @@ const campaignDiscountPercent = computed(() => {
 });
 
 const initialHistoryLog = computed(() => {
-    let performer = order.value.maNhanVien || null;
-    if (order.value.loaiDon === 'ONLINE' && order.value.tenKhachHang) {
-        performer = 'Khách hàng';
+    let performer;
+    if (order.value.loaiDon === 'ONLINE') {
+        // Đặt online: người tạo là khách hàng
+        performer = order.value.tenKhachHang || 'Khách hàng';
+    } else {
+        // Tại quầy: người tạo là nhân viên
+        performer = order.value.tenNhanVien || order.value.maNhanVien || null;
     }
     return {
         trangThaiMoi: 'CHO_XAC_NHAN', // Trạng thái mặc định khi tạo đơn
@@ -757,7 +778,7 @@ onMounted(() => {
                         <span>Nhân viên hỗ trợ:</span>
                         <span class="font-weight-bold ml-1 text-slate-900">
                             {{ order.tenNhanVien ? `${order.tenNhanVien}
-                            (${order.maNhanVien || 'N/A'})` : 'Hệ thống (SYSTEM)' }}
+                            (${order.maNhanVien || 'N/A'})` : 'Hệ thống' }}
                         </span>
                     </div>
                 </div>
@@ -787,7 +808,7 @@ onMounted(() => {
                         </div>
                         <div class="timeline-info">
                             <div class="text-body-2 mb-1">{{ step.label }}</div>
-                            
+
                         </div>
                     </div>
                 </transition-group>
@@ -810,7 +831,8 @@ onMounted(() => {
                                 Tạo lúc
                             </v-col>
                             <v-col cols="8">
-                                <div class="text-body-2 text-slate-600 pa-2 bg-slate-50 rounded-lg d-flex justify-space-between align-center border" style="border-color: #f1f5f9 !important;">
+                                <div class="text-body-2 text-slate-600 pa-2 bg-slate-50 rounded-lg d-flex justify-space-between align-center border"
+                                    style="border-color: #f1f5f9 !important;">
                                     <span>{{ order.ngayTao ? formatDate(order.ngayTao) : '' }}</span>
                                     <v-icon size="16" class="text-slate-400">mdi-calendar-blank-outline</v-icon>
                                 </div>
@@ -856,7 +878,7 @@ onMounted(() => {
                                                 <div class="text-body-2 text-slate-800 d-flex align-center">
                                                     <v-icon color="primary" class="mr-2"
                                                         size="18">mdi-card-account-details-outline</v-icon>
-                                                    <span>{{ order.maKhachHang || 'GUEST' }}</span>
+                                                    <span>{{ order.maKhachHang || 'Khách vãng lai' }}</span>
                                                 </div>
                                             </div>
                                             <div class="info-item">
@@ -865,7 +887,7 @@ onMounted(() => {
                                                     <v-icon color="primary" class="mr-2"
                                                         size="18">mdi-note-text-outline</v-icon>
                                                     <span>{{ order.khachHang?.ghiChu || 'Không có ghi chú đặc biệt'
-                                                    }}</span>
+                                                        }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -919,37 +941,42 @@ onMounted(() => {
                                     Tên người nhận
                                 </v-col>
                                 <v-col cols="8">
-                                    <div class="text-body-2 text-slate-600 pa-2 bg-slate-50 rounded-lg border" style="border-color: #f1f5f9 !important;">
+                                    <div class="text-body-2 text-slate-600 pa-2 bg-slate-50 rounded-lg border"
+                                        style="border-color: #f1f5f9 !important;">
                                         {{ order.tenNguoiNhan || customerName || 'Khách vãng lai' }}
                                     </div>
                                 </v-col>
                             </v-row>
                             <v-row dense align="center" class="mb-2">
-                                <v-col cols="4" class="text-body-2 text-slate-500 font-weight-medium d-flex align-center">
+                                <v-col cols="4"
+                                    class="text-body-2 text-slate-500 font-weight-medium d-flex align-center">
                                     Số điện thoại
-                                    
+
                                 </v-col>
                                 <v-col cols="8">
-                                    <div class="text-body-2 text-slate-600 pa-2 bg-slate-50 rounded-lg border" style="border-color: #f1f5f9 !important;">
+                                    <div class="text-body-2 text-slate-600 pa-2 bg-slate-50 rounded-lg border"
+                                        style="border-color: #f1f5f9 !important;">
                                         {{ order.soDienThoaiNguoiNhan || order.soDienThoaiKhachHang || 'Chưa có SĐT' }}
                                     </div>
                                 </v-col>
                             </v-row>
                             <v-row dense align="center">
-                                <v-col cols="4" class="text-body-2 text-slate-500 font-weight-medium d-flex align-center">
+                                <v-col cols="4"
+                                    class="text-body-2 text-slate-500 font-weight-medium d-flex align-center">
                                     Địa chỉ nhận hàng
                                 </v-col>
                                 <v-col cols="8">
-                                    <div class="text-body-2 text-slate-600 pa-2 bg-slate-50 rounded-lg border" style="border-color: #f1f5f9 !important;">
+                                    <div class="text-body-2 text-slate-600 pa-2 bg-slate-50 rounded-lg border"
+                                        style="border-color: #f1f5f9 !important;">
                                         <template v-if="displayAddress">{{ displayAddress }}</template>
                                         <template v-else><em class="text-slate-400">Chưa có địa chỉ</em></template>
                                     </div>
                                 </v-col>
                             </v-row>
                         </div>
-                        
+
                         <v-divider class="mb-3 border-opacity-10"></v-divider>
-                        
+
                         <!-- Order Type -->
                         <div class="info-group mb-3">
                             <v-row dense align="center">
@@ -957,7 +984,8 @@ onMounted(() => {
                                     Loại đơn hàng
                                 </v-col>
                                 <v-col cols="8">
-                                    <v-chip variant="flat" class="px-3" style="background-color: #eff6ff !important; color: #1e40af !important; font-weight: 500;">
+                                    <v-chip variant="flat" class="px-3"
+                                        style="background-color: #eff6ff !important; color: #1e40af !important; font-weight: 500;">
                                         {{ orderTypeLabel }}
                                     </v-chip>
                                 </v-col>
@@ -969,7 +997,8 @@ onMounted(() => {
                         <!-- Ghi chú -->
                         <div class="info-group">
                             <div class="text-body-2 text-slate-500 mb-2 font-weight-medium">Ghi chú vận chuyển</div>
-                            <div class="text-body-2 text-slate-600 pa-2 bg-slate-50 rounded-lg border" style="border-color: #f1f5f9 !important; min-height: 44px;">
+                            <div class="text-body-2 text-slate-600 pa-2 bg-slate-50 rounded-lg border"
+                                style="border-color: #f1f5f9 !important; min-height: 44px;">
                                 {{ order.ghiChu || 'Không có ghi chú' }}
                             </div>
                         </div>
@@ -978,7 +1007,7 @@ onMounted(() => {
             </v-col>
 
             <!-- RIGHT COLUMN (6/12): Thông tin khách hàng, Thông tin vận chuyển -->
-            
+
             <v-col cols="12" lg="6" class="d-flex flex-column ga-4">
                 <!-- 1. Order Summary -->
                 <v-card elevation="0" class="premium-card mb-0 bg-white flex-grow-0">
@@ -990,17 +1019,20 @@ onMounted(() => {
                         <div class="summary-grid w-100">
                             <div class="summary-row mb-5">
                                 <span class="text-slate-500">Tổng tiền hàng:</span>
-                                <span class="text-body-2 text-primary" style="font-weight: 700 !important;">{{ formatCurrency(order.tongTien) }}</span>
+                                <span class="text-body-2 text-primary" style="font-weight: 700 !important;">{{
+                                    formatCurrency(order.tongTien) }}</span>
                             </div>
                             <div v-if="campaignDiscountAmount > 0" class="summary-row mb-3">
                                 <span class="text-slate-500">Đợt giảm giá:</span>
-                                <span class="text-body-2 font-weight-bold" style="color: #dc2626 !important;">-{{ campaignDiscountPercent }}%</span>
+                                <span class="text-body-2 font-weight-bold" style="color: #dc2626 !important;">-{{
+                                    campaignDiscountPercent }}%</span>
                             </div>
                             <div class="summary-row mb-3">
                                 <span class="text-slate-500">Phiếu giảm giá:</span>
                                 <div class="text-right d-flex align-center justify-end">
                                     <template v-if="order.maPhieuGiamGia">
-                                        <span class="text-body-2 font-weight-bold text-slate-800">{{ order.maPhieuGiamGia }}</span>
+                                        <span class="text-body-2 font-weight-bold text-slate-800">{{
+                                            order.maPhieuGiamGia }}</span>
                                     </template>
                                     <template v-else-if="orderDiscountAmount > 0">
                                         <v-chip size="x-small" color="error" variant="flat">Đợt giảm giá</v-chip>
@@ -1015,7 +1047,8 @@ onMounted(() => {
                             </div>
                             <div v-if="orderDiscountAmount > 0" class="summary-row mb-5 discount-amount-row">
                                 <span class="font-weight-medium">Giảm giá:</span>
-                                <span class="text-body-2 font-weight-bold discount-amount-value">- {{ formatCurrency(Math.abs(orderDiscountAmount)) }}</span>
+                                <span class="text-body-2 font-weight-bold discount-amount-value">- {{
+                                    formatCurrency(Math.abs(orderDiscountAmount)) }}</span>
                             </div>
                             <div class="summary-row mb-4">
                                 <span class="text-slate-500 d-flex align-center">
@@ -1038,7 +1071,7 @@ onMounted(() => {
                                 </span>
                                 <span class="text-body-2 text-slate-800">{{
                                     formatCurrency(order.phiVanChuyen || 0)
-                                }}</span>
+                                    }}</span>
                             </div>
                             <div v-if="order.phiHoanHang > 0" class="summary-row mb-4">
                                 <span class="text-slate-500 d-flex align-center">
@@ -1061,12 +1094,13 @@ onMounted(() => {
                                 </span>
                                 <span class="text-body-2 text-slate-800">{{
                                     formatCurrency(order.phiHoanHang || 0)
-                                }}</span>
+                                    }}</span>
                             </div>
                             <v-divider class="my-5 border-opacity-25"></v-divider>
                             <div class="summary-row pb-2">
                                 <span class="text-body-2 text-slate-800">Tổng cộng:</span>
-                                <span class="text-body-2 text-primary" style="font-weight: 700 !important;">{{ formatCurrency(orderTotalAmount) }}</span>
+                                <span class="text-body-2 text-primary" style="font-weight: 700 !important;">{{
+                                    formatCurrency(orderTotalAmount) }}</span>
                             </div>
                         </div>
                     </div>
@@ -1087,18 +1121,22 @@ onMounted(() => {
                                             <div class="text-body-2 text-slate-500 mb-2">Phương thức thanh toán</div>
                                             <v-chip variant="tonal" :color="getPaymentMethodColor(pay.tenPhuongThuc)"
                                                 class="px-3 py-1 font-weight-bold">
-                                                <v-icon start size="16">{{ getPaymentMethodIcon(pay.tenPhuongThuc) }}</v-icon>
+                                                <v-icon start size="16">{{ getPaymentMethodIcon(pay.tenPhuongThuc)
+                                                    }}</v-icon>
                                                 {{ pay.tenPhuongThuc === 'TIEN_MAT' ? 'Tiền mặt' : pay.tenPhuongThuc ===
                                                     'CHUYEN_KHOAN' ? 'Chuyển khoản' : pay.tenPhuongThuc }}
-                                                <span v-if="pay.tenPhuongThuc !== 'TIEN_MAT' && pay.ghiChu" class="ml-1">
-                                                    - {{ pay.ghiChu.length > 30 ? pay.ghiChu.substring(0, 30) + '...' : pay.ghiChu }}
+                                                <span v-if="pay.tenPhuongThuc !== 'TIEN_MAT' && pay.ghiChu"
+                                                    class="ml-1">
+                                                    - {{ pay.ghiChu.length > 30 ? pay.ghiChu.substring(0, 30) + '...' :
+                                                    pay.ghiChu }}
                                                 </span>
                                             </v-chip>
                                         </div>
                                         <div class="text-right">
                                             <div class="text-body-2 text-slate-500 mb-2">Tổng tiền</div>
-                                            <div class="text-primary" style="font-weight: 700 !important; font-size: 1.1rem">{{
-                                                formatCurrency(pay.soTien) }}</div>
+                                            <div class="text-primary"
+                                                style="font-weight: 700 !important; font-size: 1.1rem">{{
+                                                    formatCurrency(pay.soTien) }}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -1117,7 +1155,7 @@ onMounted(() => {
                                                 <v-icon color="primary" class="mr-2"
                                                     size="18">mdi-account-check-outline</v-icon>
                                                 <span><span class="font-weight-medium">Người xác nhận:</span> {{
-                                                    pay.nguoiXacNhan || order.tenNhanVien || 'Hệ thống' }}</span>
+                                                    formatNguoi(pay.nguoiXacNhan || order.tenNhanVien, order.loaiDon === 'ONLINE') }}</span>
                                             </div>
                                         </div>
                                         <div class="text-right d-flex flex-column align-end">
@@ -1154,8 +1192,8 @@ onMounted(() => {
                     class="premium-card mb-0 pa-4 bg-white d-flex flex-column justify-center ga-3 flex-grow-0"
                     style="border: 1px dashed rgba(30, 37, 124, 0.3) !important; background: rgba(30, 37, 124, 0.02) !important;">
                     <div class="text-body-2 text-slate-600 font-weight-bold text-center mb-1">Thao tác đơn hàng</div>
-                    <v-btn v-if="order.canHoanPhi" variant="flat" color="deep-purple" class="rounded-lg px-6" height="44"
-                        @click="confirmHoanPhi">
+                    <v-btn v-if="order.canHoanPhi" variant="flat" color="deep-purple" class="rounded-lg px-6"
+                        height="44" @click="confirmHoanPhi">
                         <template v-slot:prepend>
                             <v-icon size="18" class="mr-1">mdi-cash-refund</v-icon>
                         </template>
@@ -1193,8 +1231,8 @@ onMounted(() => {
                         <EditIcon size="16" class="mr-1" /> Sửa số lượng
                     </v-btn>
                     <template v-else>
-                        <v-btn variant="text" color="slate-500" size="small" class="rounded-lg" :disabled="savingProducts"
-                            @click="cancelEditProducts">Hủy</v-btn>
+                        <v-btn variant="text" color="slate-500" size="small" class="rounded-lg"
+                            :disabled="savingProducts" @click="cancelEditProducts">Hủy</v-btn>
                         <v-btn variant="flat" color="primary" size="small" class="rounded-lg" :loading="savingProducts"
                             @click="saveProducts">
                             <CheckIcon size="16" class="mr-1" /> Lưu
@@ -1207,21 +1245,26 @@ onMounted(() => {
                 @refresh="() => { productSearch = ''; priceRange = [0, maxOrderPrice]; productColorFilter = null; productSizeFilter = null; productPagination.page = 1; }">
                 <v-row dense class="w-100 align-center">
                     <v-col cols="12" md="3" class="pr-2">
-                        <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Từ khóa</div>
+                        <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Từ khóa
+                        </div>
                         <v-text-field v-model="productSearch" placeholder="Tìm tên, mã..." variant="outlined"
                             density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
                             @input="productPagination.page = 1"></v-text-field>
                     </v-col>
                     <v-col cols="12" md="2" class="px-2">
-                        <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Màu sắc</div>
-                        <v-select v-model="productColorFilter" :items="availableColors" placeholder="Tất cả" variant="outlined"
-                            density="compact" hide-details class="compact-input" :menu-props="{ contentClass: 'product-select-menu' }"
+                        <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Màu sắc
+                        </div>
+                        <v-select v-model="productColorFilter" :items="availableColors" placeholder="Tất cả"
+                            variant="outlined" density="compact" hide-details class="compact-input"
+                            :menu-props="{ contentClass: 'product-select-menu' }"
                             @update:modelValue="productPagination.page = 1"></v-select>
                     </v-col>
                     <v-col cols="12" md="2" class="px-2">
-                        <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Kích thước</div>
-                        <v-select v-model="productSizeFilter" :items="availableSizes" placeholder="Tất cả" variant="outlined"
-                            density="compact" hide-details class="compact-input" :menu-props="{ contentClass: 'product-select-menu' }"
+                        <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Kích
+                            thước</div>
+                        <v-select v-model="productSizeFilter" :items="availableSizes" placeholder="Tất cả"
+                            variant="outlined" density="compact" hide-details class="compact-input"
+                            :menu-props="{ contentClass: 'product-select-menu' }"
                             @update:modelValue="productPagination.page = 1"></v-select>
                     </v-col>
                     <v-col cols="12" md="5" class="pa-0 d-flex align-center pl-2">
@@ -1235,8 +1278,8 @@ onMounted(() => {
                                     {{ formatCurrency(priceRange[0]) }} – {{ formatCurrency(priceRange[1]) }}
                                 </span>
                             </div>
-                            <v-range-slider v-model="priceRange" :min="0" :max="maxOrderPrice" :step="10000" hide-details
-                                color="primary" track-color="#e2e8f0" track-size="2" thumb-size="14"
+                            <v-range-slider v-model="priceRange" :min="0" :max="maxOrderPrice" :step="10000"
+                                hide-details color="primary" track-color="#e2e8f0" track-size="2" thumb-size="14"
                                 class="blue-range-slider" @update:modelValue="productPagination.page = 1" />
                         </div>
                     </v-col>
@@ -1277,7 +1320,9 @@ onMounted(() => {
                                     :disabled="(editQtyMap[item.id] || 1) <= 1" @click="changeProductQty(item, -1)">
                                     <v-icon size="16">mdi-minus</v-icon>
                                 </v-btn>
-                                <span class="text-body-2 text-slate-800 mx-1" style="min-width: 24px; display: inline-block; text-align: center;">{{ editQtyMap[item.id] }}</span>
+                                <span class="text-body-2 text-slate-800 mx-1"
+                                    style="min-width: 24px; display: inline-block; text-align: center;">{{
+                                    editQtyMap[item.id] }}</span>
                                 <v-btn icon size="x-small" variant="tonal" color="primary"
                                     @click="changeProductQty(item, 1)">
                                     <v-icon size="16">mdi-plus</v-icon>
@@ -1287,14 +1332,17 @@ onMounted(() => {
                         </td>
                         <td class="py-4 text-slate-700">
                             <template v-if="isPriceChanged(item)">
-                                <span class="text-decoration-line-through text-slate-400 mr-1">{{ formatCurrency(item.donGia) }}</span>
+                                <span class="text-decoration-line-through text-slate-400 mr-1">{{
+                                    formatCurrency(item.donGia) }}</span>
                                 <span class="text-warning font-weight-bold">{{ formatCurrency(item.giaHienTai) }}</span>
                             </template>
                             <template v-else>{{ formatCurrency(item.donGia) }}</template>
                         </td>
                         <td class="py-4 text-primary text-body-2">
                             <div class="d-flex align-center justify-center ga-2">
-                                <span>{{ formatCurrency(Number(editingProducts ? (editQtyMap[item.id] || item.soLuong) : item.soLuong) * Number(item.donGia)) }}</span>
+                                <span>{{ formatCurrency(Number(editingProducts ? (editQtyMap[item.id] || item.soLuong) :
+                                    item.soLuong) *
+                                    Number(item.donGia)) }}</span>
                                 <v-btn v-if="editingProducts" icon size="x-small" variant="text" color="error"
                                     @click="removeProduct(item)">
                                     <TrashIcon size="16" />
@@ -1308,7 +1356,9 @@ onMounted(() => {
                             <div class="d-flex align-center justify-space-between flex-wrap ga-2">
                                 <div class="d-flex align-center ga-2 text-amber-darken-4">
                                     <v-icon size="18" color="amber-darken-3">mdi-alert-outline</v-icon>
-                                    <span>Giá sản phẩm đã thay đổi: từ <b>{{ formatCurrency(item.donGia) }}</b> thành <b>{{ formatCurrency(item.giaHienTai) }}</b></span>
+                                    <span>Giá sản phẩm đã thay đổi: từ <b>{{ formatCurrency(item.donGia) }}</b> thành
+                                        <b>{{
+                                            formatCurrency(item.giaHienTai) }}</b></span>
                                 </div>
                                 <v-btn v-if="isOrderEditable" size="x-small" variant="flat" color="amber-darken-2"
                                     class="rounded-lg text-none font-weight-bold" @click="applyNewPrice(item)">
@@ -1375,7 +1425,7 @@ onMounted(() => {
                                     <!-- Column 3: Performer -->
                                     <div style="width: 150px;" class="text-center">
                                         <span class="text-body-2 text-slate-600">{{
-                                            log.nguoiThucHien || 'Hệ thống' }}</span>
+                                            formatNguoi(log.nguoiThucHien, order.loaiDon === 'ONLINE') }}</span>
                                     </div>
 
                                     <!-- Column 4: Time -->
@@ -1410,7 +1460,7 @@ onMounted(() => {
                                     <!-- Column 3: Performer -->
                                     <div style="width: 150px;" class="text-center">
                                         <span class="text-body-2 text-slate-600">{{
-                                            initialHistoryLog.nguoiThucHien }}</span>
+                                            formatNguoi(initialHistoryLog.nguoiThucHien, order.loaiDon === 'ONLINE') }}</span>
                                     </div>
 
                                     <!-- Column 4: Time -->
@@ -1489,9 +1539,8 @@ onMounted(() => {
                                 <v-col cols="12" class="mb-2">
                                     <span class="text-body-2 text-slate-600 font-weight-bold d-block mb-2">Tên người
                                         nhận</span>
-                                    <v-text-field v-model="editForm.tenNguoiNhan"
-                                        placeholder="Nhập tên người nhận..." variant="outlined" rounded="lg"
-                                        density="comfortable" hide-details
+                                    <v-text-field v-model="editForm.tenNguoiNhan" placeholder="Nhập tên người nhận..."
+                                        variant="outlined" rounded="lg" density="comfortable" hide-details
                                         prepend-inner-icon="mdi-account"></v-text-field>
                                 </v-col>
                                 <!-- Phone Field -->

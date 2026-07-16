@@ -128,7 +128,11 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                 .leftJoin(khdc).on(khdc.khachHang.id.eq(kh.id).and(khdc.laMacDinh.eq(true)))
                 .leftJoin(hd.nhanVien, nv)
                 .where(conditions)
-                .orderBy("asc".equalsIgnoreCase(req.getSortDirection()) ? hd.ngayTao.asc() : hd.ngayTao.desc())
+                .orderBy(
+                        "asc".equalsIgnoreCase(req.getSortDirection()) ? hd.ngayCapNhat.coalesce(hd.ngayTao).asc() : hd.ngayCapNhat.coalesce(hd.ngayTao).desc(),
+                        "asc".equalsIgnoreCase(req.getSortDirection()) ? hd.ngayTao.asc() : hd.ngayTao.desc(),
+                        "asc".equalsIgnoreCase(req.getSortDirection()) ? hd.id.asc() : hd.id.desc()
+                )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

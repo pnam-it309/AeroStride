@@ -251,6 +251,12 @@ public class AiChatServiceImpl implements AiChatService {
 
     @Async
     @Override
+    public void generateAndSendResponse(CuocHoiThoai conversation, String customerText) {
+        generateAndSendResponse(conversation, customerText, null);
+    }
+
+    @Async
+    @Override
     public void generateAndSendResponse(CuocHoiThoai conversation, String customerText, String imageBase64) {
         log.info("AI đang xử lý tin nhắn: {}", customerText);
 
@@ -700,6 +706,10 @@ public class AiChatServiceImpl implements AiChatService {
     /**
      * Gọi Gemini API và trích xuất kết quả.
      */
+    private String callGeminiApi(String apiUrl, String prompt) {
+        return callGeminiApi(apiUrl, prompt, null);
+    }
+
     @SuppressWarnings("unchecked")
     private String callGeminiApi(String apiUrl, String prompt, String imageBase64) {
         Map<String, Object> requestBody = new HashMap<>();

@@ -28,9 +28,12 @@ const props = defineProps({
                         <p class="hero-subtitle reveal-item delay-2 text-grey-darken-3 mt-4">
                             {{ props.product?.tenThuongHieu || 'PREMIUM' }}
                         </p>
-                        <div class="hero-price reveal-item delay-3 text-black mb-8">
-                            {{ props.product?.giaBanThapNhat ? formatPrice(props.product.giaBanThapNhat) : '1.200.000 ₫'
-                            }}
+                        <div class="hero-price reveal-item delay-3 text-black mb-8 d-flex align-center flex-wrap gap-3">
+                            <span>{{ props.product?.giaBanThapNhat ? formatPrice(props.product.giaBanThapNhat) : '1.200.000 ₫' }}</span>
+                            <span v-if="props.product?.tongSoLuongTon != null" class="text-subtitle-1 font-weight-bold px-3 py-1 rounded-pill"
+                                  :style="props.product.tongSoLuongTon > 0 ? 'background: rgba(46, 125, 50, 0.15); color: #2e7d32; font-size: 0.95rem;' : 'background: rgba(198, 40, 40, 0.15); color: #c62828; font-size: 0.95rem;'">
+                                {{ props.product.tongSoLuongTon > 0 ? `Còn ${props.product.tongSoLuongTon} sản phẩm` : 'Hết hàng' }}
+                            </span>
                         </div>
                         <v-btn size="x-large" rounded="xl" class="px-12 hero-btn reveal-item delay-4"
                             :to="props.product?.id ? `/product/${props.product.id}` : '/shoes'">

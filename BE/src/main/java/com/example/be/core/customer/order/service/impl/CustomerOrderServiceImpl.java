@@ -179,12 +179,13 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
         hoaDon = hoaDonRepository.save(hoaDon);
 
-        // 7. Tạo chi tiết hóa đơn và trừ tồn kho
-        // Đơn VNPay: CHƯA trừ kho lúc đặt hàng, sẽ trừ khi thanh toán thành công (PaymentOrderFinalizer.markPaid).
-        // Đơn COD: trừ kho ngay vì không có bước thanh toán online.
-        boolean laVnPay = "VNPAY".equalsIgnoreCase(request.getPhuongThucThanhToan());
+        // 7. Tạo chi tiết hóa đơn (CHƯA trừ kho lúc đặt hàng online; sẽ trừ khi Admin xác nhận hóa đơn hoặc thanh toán VNPay thành công)
         for (ChiTietSanPham ctsp : variants) {
             int soLuong = quantityMap.get(ctsp.getId());
+            if (ctsp.getSoLuong() == null || ctsp.getSoLuong() < soLuong) {
+                String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
+                throw new RuntimeException("Sản phẩm '" + tenSP + "' không đủ số lượng trong kho. Vui lòng tải lại giỏ hàng.");
+            }
 
             HoaDonChiTiet hdct = HoaDonChiTiet.builder()
                     .hoaDon(hoaDon)
@@ -193,15 +194,6 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                     .donGia(giaMap.get(ctsp.getId()))
                     .build();
             hoaDonChiTietRepository.save(hdct);
-
-            // Trừ tồn kho (chỉ với COD)
-            if (!laVnPay) {
-                int affected = chiTietSanPhamRepository.deductStock(ctsp.getId(), soLuong);
-                if (affected == 0) {
-                    String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
-                    throw new RuntimeException("Sản phẩm '" + tenSP + "' không đủ tồn kho. Vui lòng tải lại giỏ hàng.");
-                }
-            }
         }
 
         // 8. Tạo lịch sử trạng thái
@@ -343,17 +335,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             throw new RuntimeException("Chỉ có thể hủy đơn hàng ở trạng thái 'Chờ xác nhận'");
         }
 
-        // Hoàn tồn kho — chỉ hoàn nếu kho đã thực sự bị trừ.
-        // COD: trừ kho ngay lúc đặt -> cần hoàn.
-        // VNPay chưa thanh toán (vẫn ở 'Chờ xác nhận'): kho CHƯA bị trừ -> KHÔNG hoàn (tránh cộng ảo).
-        if (isCashOrder(hoaDon)) {
-            List<HoaDonChiTiet> items = hoaDonChiTietRepository.findAllByHoaDon(hoaDon);
-            for (HoaDonChiTiet hdct : items) {
-                ChiTietSanPham ctsp = hdct.getChiTietSanPham();
-                ctsp.setSoLuong(ctsp.getSoLuong() + hdct.getSoLuong());
-                chiTietSanPhamRepository.save(ctsp);
-            }
-        }
+        // Hoàn tồn kho — không cần hoàn vì ở trạng thái 'Chờ xác nhận' kho CHƯA bị trừ (chỉ trừ khi Admin xác nhận).
 
         // Hoàn voucher
         if (hoaDon.getPhieuGiamGia() != null) {

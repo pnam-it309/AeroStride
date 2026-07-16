@@ -1,6 +1,9 @@
 package com.example.be.entity;
 
-import com.example.be.core.common.base.PrimaryEntity;
+import com.example.be.core.common.base.AuditEntity;
+import com.example.be.core.common.base.IsIdentified;
+import com.example.be.infrastructure.constants.EntityProperties;
+import com.example.be.infrastructure.listener.PrimaryEntityListener;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,7 +14,13 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DanhGiaSanPham extends PrimaryEntity {
+@EntityListeners(PrimaryEntityListener.class)
+public class DanhGiaSanPham extends AuditEntity implements IsIdentified {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = EntityProperties.LENGTH_ID, updatable = false)
+    private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_hoa_don")

@@ -44,4 +44,15 @@ public interface EmailService {
      */
     void guiEmailTaiKhoanNhanVien(String to, String tenNhanVien,
                                   String tenTaiKhoan, String matKhau, String vaiTro);
+
+    /**
+     * Sends an order status-change notification to the customer.
+     * @param to             Recipient email.
+     * @param tenKhachHang   Customer's display name.
+     * @param maHoaDon       Invoice code.
+     * @param trangThaiLabel Human-readable new status label.
+     * @param ghiChu         Optional note attached to the status change.
+     */
+    void guiEmailCapNhatTrangThaiHoaDon(String to, String tenKhachHang, String maHoaDon,
+                                        String trangThaiLabel, String ghiChu);
 }

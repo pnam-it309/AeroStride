@@ -141,10 +141,16 @@ const addToCart = (e, product) => {
 
                                         <!-- Info -->
                                         <div class="card-info">
-                                            <div class="brand-name">{{ product.tenThuongHieu || 'AeroStride' }}</div>
+                                            <div class="brand-name d-flex align-center justify-space-between">
+                                                <span>{{ product.tenThuongHieu || 'AeroStride' }}</span>
+                                                <span class="px-2 py-0.5 rounded-pill text-caption font-weight-bold"
+                                                      :style="product.soLuong > 0 ? 'background: rgba(46, 125, 50, 0.15); color: #2e7d32; font-size: 0.7rem;' : 'background: rgba(198, 40, 40, 0.15); color: #c62828; font-size: 0.7rem;'">
+                                                    {{ product.soLuong > 0 ? `Còn ${product.soLuong}` : 'Hết' }}
+                                                </span>
+                                            </div>
                                             <div class="price-row">
-                                                <span v-if="product.giaBan" class="current-price">{{ formatPrice(product.giaBan) }}</span>
-                                                <span v-else class="out-of-stock">Hết hàng</span>
+                                                <span v-if="product.giaBan != null" class="current-price">{{ formatPrice(product.giaBan) }}</span>
+                                                <span v-else class="out-of-stock">Liên hệ</span>
                                             </div>
                                             <div class="size-list">
                                                 <span v-if="product.tenMauSac" class="size-chip color-chip">{{ product.tenMauSac }}</span>

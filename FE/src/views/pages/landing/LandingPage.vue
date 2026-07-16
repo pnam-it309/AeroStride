@@ -110,13 +110,12 @@ const scrollToSection = (index) => {
 <style scoped lang="scss">
 .landing-scroll-container {
     height: 100vh;
-    overflow-y: scroll;
-    scroll-behavior: smooth;
+    overflow-y: auto;
     overscroll-behavior-y: contain;
     -ms-overflow-style: none;
     scrollbar-width: none;
-    /* Native CSS Scroll Snapping for smooth performance */
-    scroll-snap-type: y mandatory;
+    /* Native CSS Scroll Snapping with proximity allows smooth natural scrolling without getting stuck or locked on mouse wheels */
+    scroll-snap-type: y proximity;
     -webkit-overflow-scrolling: touch;
 
     &::-webkit-scrollbar {
@@ -126,11 +125,9 @@ const scrollToSection = (index) => {
 
 .landing-scroll-container :deep(.snap-section) {
     /* Performance optimizations */
-    contain: content;
     scroll-snap-align: start;
-    scroll-snap-stop: always;
-    height: 100vh;
-    position: relative; /* Remove sticky to prevent GPU overlap lag */
+    min-height: 100vh;
+    position: relative;
     background: #ffffff;
 }
 

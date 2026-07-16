@@ -67,16 +67,13 @@ public class PaymentOrderFinalizer {
                 ChiTietSanPham ctsp = ct.getChiTietSanPham();
                 if (ctsp == null) continue;
 
-                int affected = chiTietSanPhamRepository.deductStock(ctsp.getId(), ct.getSoLuong());
-                if (affected == 0) {
-                    // Không đủ tồn: trừ cho phép âm để giữ đúng nghĩa vụ giao hàng đã thanh toán.
-                    int tonHienTai = ctsp.getSoLuong() != null ? ctsp.getSoLuong() : 0;
-                    ctsp.setSoLuong(tonHienTai - ct.getSoLuong());
-                    chiTietSanPhamRepository.save(ctsp);
-
+                int tonHienTai = ctsp.getSoLuong() != null ? ctsp.getSoLuong() : 0;
+                if (tonHienTai < ct.getSoLuong()) {
                     String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
                     thieuHangNote.append(String.format("'%s' (tồn %d, cần %d); ", tenSP, tonHienTai, ct.getSoLuong()));
                 }
+                ctsp.setSoLuong(tonHienTai - ct.getSoLuong());
+                chiTietSanPhamRepository.save(ctsp);
             }
         }
 

@@ -137,4 +137,25 @@ public class EmailServiceImpl implements EmailService {
 
         this.sendHtmlEmail(request);
     }
+
+    @Async("mailExecutor")
+    @Override
+    public void guiEmailCapNhatTrangThaiHoaDon(String to, String tenKhachHang, String maHoaDon,
+                                               String trangThaiLabel, String ghiChu) {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("title", "Cập nhật trạng thái đơn hàng");
+        variables.put("tenKhachHang", tenKhachHang);
+        variables.put("maHoaDon", maHoaDon);
+        variables.put("trangThaiLabel", trangThaiLabel);
+        variables.put("ghiChu", ghiChu);
+
+        EmailRequest request = EmailRequest.builder()
+                .to(to)
+                .subject("AeroStride - Cập nhật đơn hàng #" + maHoaDon + ": " + trangThaiLabel)
+                .templateName("order-status-update")
+                .variables(variables)
+                .build();
+
+        this.sendHtmlEmail(request);
+    }
 }

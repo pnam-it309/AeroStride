@@ -161,8 +161,12 @@ watch(() => shippingInfo.value.tinhThanh, () => {
 });
 
 const shippingFee = computed(() => {
+    if (!shippingInfo.value.tinhThanh || !shippingInfo.value.quanHuyen || !shippingInfo.value.phuongXa) {
+        return null;
+    }
     return cartStore.cartTotal >= FREE_SHIP_THRESHOLD.value ? 0 : calculatedShippingFee.value;
 });
+
 
 // cartStore.cartTotal đã là tổng SAU đợt giảm giá (server trả về giaBan đã giảm).
 // Tính tổng theo GIÁ GỐC và số tiền đợt giảm giá để hiển thị minh bạch trên phần tạm tính.
@@ -209,9 +213,11 @@ const isBestSelected = computed(
 );
 
 const totalAmount = computed(() => {
-    const total = cartStore.cartTotal + shippingFee.value - voucherDiscount.value;
+    const fee = shippingFee.value !== null ? shippingFee.value : 0;
+    const total = cartStore.cartTotal + fee - voucherDiscount.value;
     return total > 0 ? total : 0;
 });
+
 
 const isShippingValid = computed(() => {
     return (
@@ -228,11 +234,15 @@ const isShippingValid = computed(() => {
 const remainingForFreeShip = computed(() => Math.max(0, FREE_SHIP_THRESHOLD - cartStore.cartTotal));
 
 const estimatedDelivery = computed(() => {
+    if (!shippingInfo.value.tinhThanh || !shippingInfo.value.quanHuyen || !shippingInfo.value.phuongXa) {
+        return null;
+    }
     const now = new Date();
     const est = new Date(now);
-    est.setDate(est.getDate() + (cartStore.cartTotal >= FREE_SHIP_THRESHOLD ? 5 : 7));
+    est.setDate(est.getDate() + (cartStore.cartTotal >= FREE_SHIP_THRESHOLD.value ? 5 : 7));
     return est.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 });
+
 
 const fetchUserProfile = async () => {
     if (authStore.isLoggedIn) {
@@ -542,7 +552,7 @@ onMounted(async () => {
                                 </div>
                             </div>
                             <div class="delivery-estimate pa-5">
-                                <div class="d-flex align-center">
+                                <div v-if="estimatedDelivery" class="d-flex align-center">
                                     <div class="delivery-icon mr-4">
                                         <v-icon size="32" color="#1e257c">mdi-truck-fast-outline</v-icon>
                                     </div>
@@ -552,6 +562,17 @@ onMounted(async () => {
                                         <p class="text-caption text-grey-darken-1 mb-0 d-flex align-center">
                                             <v-icon size="14" class="mr-1">mdi-clock-outline</v-icon>
                                             Thời gian giao hàng từ 8:00 - 20:00 tất cả các ngày trong tuần
+                                        </p>
+                                    </div>
+                                </div>
+                                <div v-else class="d-flex align-center">
+                                    <div class="delivery-icon mr-4">
+                                        <v-icon size="32" color="grey">mdi-map-marker-question-outline</v-icon>
+                                    </div>
+                                    <div>
+                                        <p class="text-body-2 font-weight-bold text-grey-darken-2 mb-1">Chưa có thông tin giao hàng</p>
+                                        <p class="text-caption text-grey-darken-1 mb-0">
+                                            Vui lòng chọn Tỉnh/Thành phố, Quận/Huyện, Phường/Xã để tính thời gian và phí giao hàng.
                                         </p>
                                     </div>
                                 </div>
@@ -673,9 +694,14 @@ onMounted(async () => {
                                             </svg>
                                         </span>
                                         <span class="text-body-2 font-weight-medium"
-                                            :class="{ 'text-blue-darken-4': shippingFee === 0 }">
-                                            <v-icon v-if="shippingFee === 0" size="14" color="#1e257c" class="mr-1">mdi-check-circle</v-icon>
-                                            {{ shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee) }}
+                                            :class="{ 'text-blue-darken-4': shippingFee === 0, 'text-grey-darken-1': shippingFee === null }">
+                                            <template v-if="shippingFee === null">
+                                                Chưa tính
+                                            </template>
+                                            <template v-else>
+                                                <v-icon v-if="shippingFee === 0" size="14" color="#1e257c" class="mr-1">mdi-check-circle</v-icon>
+                                                {{ shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee) }}
+                                            </template>
                                         </span>
                                     </div>
                                     <div v-if="voucherDiscount > 0" class="d-flex justify-space-between mb-1">

@@ -5,7 +5,7 @@
  * Chức năng: Quản lý danh sách chi tiết các biến thể của sản phẩm. Cho phép tìm kiếm, lọc
  *            quét mã QR, tải xuống mã QR, chỉnh sửa giá/số lượng, thêm/cập nhật biến thể.
  */
-import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ArrowLeftIcon, QrcodeIcon } from 'vue-tabler-icons';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
@@ -684,7 +684,25 @@ watch(
     }
 );
 
+// Lắng nghe sự kiện WebSocket khi tồn kho thay đổi từ server
+const handleRealtimeStockUpdate = (event) => {
+    const { id, maChiTietSanPham, soLuongTon } = event.detail || {};
+    if (variants.value && Array.isArray(variants.value)) {
+        const item = variants.value.find(v => v.id === id || v.maChiTietSanPham === maChiTietSanPham);
+        if (item) {
+            item.soLuong = Number(soLuongTon ?? 0);
+        }
+    }
+    if (selectedProduct.value && Array.isArray(selectedProduct.value.variants)) {
+        const item = selectedProduct.value.variants.find(v => v.id === id || v.maChiTietSanPham === maChiTietSanPham);
+        if (item) {
+            item.soLuong = Number(soLuongTon ?? 0);
+        }
+    }
+};
+
 onMounted(async () => {
+    window.addEventListener('product-stock-update', handleRealtimeStockUpdate);
     await Promise.all([loadMaxPrice(), fetchFormOptions(), fetchProductOptions()])
     const routeProductId = route.query.productId?.toString()
     selectedProductId.value = routeProductId || 'ALL'
@@ -692,6 +710,10 @@ onMounted(async () => {
     if (route.query.keyword) {
         filters.keyword = route.query.keyword.toString()
     }
+})
+
+onBeforeUnmount(() => {
+    window.removeEventListener('product-stock-update', handleRealtimeStockUpdate);
 })
 </script>
 

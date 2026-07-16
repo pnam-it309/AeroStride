@@ -29,6 +29,7 @@ import { API_ADMIN } from '@/constants/apiPaths';
 import { MESSAGES } from '@/constants/messages';
 import { useUIStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/authStore';
+import { useBanHangStore } from '@/stores/banHangStore';
 import { useLocation } from '@/composables/useLocation';
 import { useAddressMapping } from '@/composables/useAddressMapping';
 import { useHoaDonPrinter } from '@/composables/useHoaDonPrinter';
@@ -99,6 +100,7 @@ const {
 } = useLocation({ allowFallback: true });
 
 // State
+const banHangStore = useBanHangStore();
 const loading = ref(false);
 const orders = ref([]);
 const activeOrderIndex = ref(0);
@@ -1156,15 +1158,10 @@ const onAddProduct = async (product) => {
 const onUpdateQty = async (item, delta, inputEventTarget = null) => {
     let newQty = item.soLuong + delta;
     if (newQty < 1) {
-        try {
-            if (!selectedOrder.value?.id) return;
-            await dichVuDonHang.removeSanPham(selectedOrder.value.id, item.id);
-            const data = await dichVuDonHang.layDonHangCho();
-            setOrders(data, { preferOrderId: selectedOrder.value.id });
-            refreshBestVoucher();
-        } catch (e) {
-            addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.DELETE_DATA, color: 'error' });
+        if (inputEventTarget) {
+            inputEventTarget.value = item.soLuong;
         }
+        onRemoveItem(item);
         return;
     }
 
@@ -1714,6 +1711,14 @@ const updateOrderInList = (updated) => {
     const idx = orders.value.findIndex((o) => o.id === normalized.id);
     if (idx !== -1) orders.value[idx] = normalized;
     clampActiveOrderIndex();
+
+    if (normalized.listsHoaDonChiTiet && Array.isArray(normalized.listsHoaDonChiTiet)) {
+        normalized.listsHoaDonChiTiet.forEach(item => {
+            if (item.idChiTietSanPham && item.soLuongTon !== undefined && item.soLuongTon !== null) {
+                banHangStore.updateProductStock(item.idChiTietSanPham, item.soLuongTon);
+            }
+        });
+    }
 };
 
 const getErrorMessage = (error, fallback) => {
@@ -1903,9 +1908,6 @@ const formatDateTime = (dateStr) => {
 
         <!-- Scanner dialog -->
         <ScannerDialog v-model="showScanner" :scanner-element-id="scannerElementId" @stop="stopScanner" />
-
-        <!-- Quick Add Customer Dialog -->
-        <QuickAddCustomerDialog v-model="showQuickAddDialog" @success="(customer) => selectCustomer(customer)" />
 
         <!-- Confirmation Dialog -->
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"

@@ -67,6 +67,8 @@ export function useLandingPage() {
         // No window scroll event to remove
     });
 
+    const warmedSections = ref(new Set([0, 1, 2]));
+
     const handleLogout = async () => {
         await dichVuXacThuc.dangXuat();
         isLoggedIn.value = false;
@@ -75,13 +77,29 @@ export function useLandingPage() {
     const handlePreloaderFinish = () => {
         isLoading.value = false;
         hasLoadedBefore = true;
+        setTimeout(() => {
+            for (let i = 0; i <= LANDING_SECTIONS.length; i++) {
+                warmedSections.value.add(i);
+            }
+        }, 500);
     };
 
-    const isSectionWarm = (index) => Math.abs(activeSection.value - index) <= 1;
+    const isSectionWarm = (index) => {
+        if (Math.abs(activeSection.value - index) <= 2 || warmedSections.value.has(index)) {
+            warmedSections.value.add(index);
+            return true;
+        }
+        return false;
+    };
 
     onMounted(() => {
         window.addEventListener('mousemove', handleMouseMove, { passive: true });
         isLoggedIn.value = dichVuXacThuc.daDangNhap();
+        if (hasLoadedBefore) {
+            for (let i = 0; i <= LANDING_SECTIONS.length; i++) {
+                warmedSections.value.add(i);
+            }
+        }
     });
 
     onUnmounted(() => {

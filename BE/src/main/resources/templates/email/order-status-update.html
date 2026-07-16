@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{email/base-template :: layout(~{::#main-content})}">
+<head>
+    <title>Cập nhật trạng thái đơn hàng</title>
+</head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,sans-serif;">
+
+<div id="main-content">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center" style="padding: 10px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:white;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">
+          <tr>
+            <td style="background:#1e257c;padding:28px;text-align:center;">
+              <h1 style="color:white;margin:0;font-size:24px;letter-spacing:1px;">⚡ AeroStride</h1>
+              <p style="color:#93c5fd;margin:6px 0 0;font-size:14px;">
+                Cập nhật trạng thái đơn hàng
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 36px;">
+              <p style="font-size:16px;color:#1e293b;margin:0 0 12px;">
+                Xin chào <strong th:text="${tenKhachHang ?: 'Quý khách'}">Quý khách</strong>,
+              </p>
+              <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 24px;">
+                Đơn hàng <strong style="color:#1e257c;" th:text="${'#' + maHoaDon}">#HD123456</strong>
+                của bạn vừa được cập nhật trạng thái.
+              </p>
+
+              <!-- Trạng thái mới -->
+              <table width="100%" cellpadding="0" cellspacing="0"
+                     style="background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:24px;text-align:center;">
+                    <p style="margin:0 0 10px;font-size:13px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">
+                      Trạng thái hiện tại
+                    </p>
+                    <span style="display:inline-block;padding:10px 24px;background:#1e257c;color:#ffffff;border-radius:9999px;font-size:15px;font-weight:bold;"
+                          th:text="${trangThaiLabel}">Đã xác nhận</span>
+                  </td>
+                </tr>
+              </table>
+
+              <table width="100%" cellpadding="0" cellspacing="0"
+                     th:if="${ghiChu != null and !ghiChu.isEmpty()}"
+                     style="background:#fffbeb;border-radius:10px;border:1px solid #fde68a;margin-bottom:24px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <p style="margin:0;font-size:13px;color:#92400e;">
+                      <strong>Ghi chú:</strong> <span th:text="${ghiChu}">Ghi chú</span>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <div style="text-align:center;">
+                <p style="font-size:13px;color:#64748b;margin-bottom:18px;">
+                  Cảm ơn bạn đã mua sắm tại AeroStride. Nếu có thắc mắc, vui lòng liên hệ với chúng tôi để được hỗ trợ.
+                </p>
+                <a href="http://localhost:5173/orders"
+                   style="display:inline-block;padding:12px 28px;background:#1e257c;color:#ffffff;text-decoration:none;border-radius:9999px;font-size:14px;font-weight:bold;">
+                  Theo dõi đơn hàng
+                </a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>
+
+</body>
+</html>

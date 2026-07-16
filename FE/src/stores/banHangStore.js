@@ -139,6 +139,14 @@ export const useBanHangStore = defineStore('banHang', {
       this.filterKichCo = 'ALL';
       this.productSearchKeyword = '';
       this.showProductAutocomplete = false;
+    },
+    updateProductStock(variantId, newStock) {
+      if (!this.productSearchResults || !Array.isArray(this.productSearchResults)) return;
+      const idx = this.productSearchResults.findIndex(p => p.id === variantId);
+      if (idx !== -1) {
+        this.productSearchResults[idx].soLuongTon = Number(newStock);
+        this.productSearchResults = [...this.productSearchResults];
+      }
     }
   }
 });

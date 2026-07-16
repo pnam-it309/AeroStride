@@ -478,11 +478,20 @@ const handleQrScan = async (decodedText) => {
     router.push({ name: 'BienTheSanPham', query: { keyword: decodedText } });
 };
 
+// Lắng nghe WebSocket khi tồn kho thay đổi từ server
+const handleRealtimeStockUpdate = () => {
+    if (products.value && products.value.length > 0) {
+        loadProducts();
+    }
+};
+
 onMounted(async () => {
+    window.addEventListener('product-stock-update', handleRealtimeStockUpdate);
     await Promise.all([loadMaxPrice(), loadProducts(), loadFilterOptions()]);
 });
 
 onBeforeUnmount(() => {
+    window.removeEventListener('product-stock-update', handleRealtimeStockUpdate);
     if (priceSearchTimer) {
         window.clearTimeout(priceSearchTimer);
     }

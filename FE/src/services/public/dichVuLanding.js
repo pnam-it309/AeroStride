@@ -22,6 +22,9 @@ export const dichVuLanding = {
             subtitle: product.tenThuongHieu || '',
             summary: product.moTaNgan || '',
             imageUrl: resolveImageUrl(product.hinhAnh),
+            giaBanThapNhat: product.giaBanThapNhat,
+            giaBanCaoNhat: product.giaBanCaoNhat,
+            tongSoLuongTon: product.tongSoLuongTon ?? 0,
             color: '#2962FF',
             raw: product
         }));

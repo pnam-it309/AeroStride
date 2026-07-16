@@ -9,13 +9,14 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface DanhGiaSanPhamRepository extends JpaRepository<DanhGiaSanPham, Long> {
+public interface DanhGiaSanPhamRepository extends JpaRepository<DanhGiaSanPham, String> {
     
-    Page<DanhGiaSanPham> findBySanPhamIdAndTrangThai(Long idSanPham, DanhGiaSanPham.TrangThaiDanhGia trangThai, Pageable pageable);
+    Page<DanhGiaSanPham> findBySanPham_IdAndTrangThai(String idSanPham, DanhGiaSanPham.TrangThaiDanhGia trangThai, Pageable pageable);
     
-    List<DanhGiaSanPham> findByKhachHangId(Long idKhachHang);
+    List<DanhGiaSanPham> findByKhachHang_Id(String idKhachHang);
     
-    boolean existsByHoaDonIdAndSanPhamId(Long idHoaDon, Long idSanPham);
+    boolean existsByHoaDon_IdAndSanPham_Id(String idHoaDon, String idSanPham);
     
     Page<DanhGiaSanPham> findAll(Pageable pageable);
 }
+

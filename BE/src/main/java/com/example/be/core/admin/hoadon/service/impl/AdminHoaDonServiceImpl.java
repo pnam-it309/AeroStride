@@ -48,6 +48,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     private final KhachHangRepository khachHangRepository;
     private final TemplateEngine templateEngine;
     private final AdminHoaDonMapper hoaDonMapper;
+    private final com.example.be.core.notification.EmailService emailService;
 
 
     @Override
@@ -118,16 +119,40 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             );
         }
 
+        // Với đơn ONLINE: Trừ kho khi Admin xác nhận hóa đơn (từ Chờ xác nhận -> Đã xác nhận)
+        if (oldStatus == OrderStatus.CHO_XAC_NHAN && newStatus == OrderStatus.XAC_NHAN && "ONLINE".equalsIgnoreCase(hd.getLoaiDon())) {
+            if (hd.getListsHoaDonChiTiet() != null) {
+                for (HoaDonChiTiet detail : hd.getListsHoaDonChiTiet()) {
+                    ChiTietSanPham ct = detail.getChiTietSanPham();
+                    if (ct != null && detail.getSoLuong() != null) {
+                        int currentStock = ct.getSoLuong() != null ? ct.getSoLuong() : 0;
+                        if (currentStock < detail.getSoLuong()) {
+                            String tenSP = ct.getSanPham() != null ? ct.getSanPham().getTen() : ct.getMaChiTietSanPham();
+                            throw new BusinessException("Sản phẩm '" + tenSP + "' hiện không đủ số lượng trong kho (" + currentStock + ") để xác nhận đơn hàng.");
+                        }
+                        ct.setSoLuong(currentStock - detail.getSoLuong());
+                        chiTietSanPhamRepository.saveAndFlush(ct);
+                    }
+                }
+            }
+        }
+
         hd.setTrangThai(newStatus);
         hd.setNgayCapNhat(System.currentTimeMillis());
         repository.save(hd);
 
+        // Resolve display name for the person performing the action
+        String nguoiThucHienName = com.example.be.utils.SecurityUtils.getCurrentUserEmail()
+                .map(email -> nhanVienRepository.findByEmail(email)
+                        .map(nv -> nv.getTen() != null ? nv.getTen() : email)
+                        .orElse(email))
+                .orElse("Hệ thống");
         LichSuTrangThaiHoaDon history = LichSuTrangThaiHoaDon.builder()
                 .hoaDon(hd)
                 .trangThaiCu(oldStatus != null ? oldStatus.ordinal() : null)
                 .trangThaiMoi(newStatus.ordinal())
                 .ghiChu(note != null && !note.trim().isEmpty() ? note : "Cập nhật trạng thái")
-                .nguoiThucHien(com.example.be.utils.SecurityUtils.getCurrentUserEmail().orElse("ADMIN"))
+                .nguoiThucHien(nguoiThucHienName)
                 .build();
         history.setNgayTao(System.currentTimeMillis());
         lichSuTrangThaiHoaDonRepository.save(history);
@@ -137,16 +162,58 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 // GHN return fee is typically equal to forward fee
                 hd.setPhiHoanHang(hd.getPhiVanChuyen());
             }
-            hd.getListsHoaDonChiTiet().forEach(detail -> {
-                ChiTietSanPham ct = detail.getChiTietSanPham();
-                if (ct != null) {
-                    ct.setSoLuong(ct.getSoLuong() + detail.getSoLuong());
-                    chiTietSanPhamRepository.save(ct);
+            // Chỉ hoàn kho nếu kho ĐÃ TỪNG BỊ TRỪ (tức là không phải đơn ONLINE đang ở Chờ xác nhận)
+            boolean chuaTruKho = (oldStatus == OrderStatus.CHO_XAC_NHAN && "ONLINE".equalsIgnoreCase(hd.getLoaiDon()));
+            if (!chuaTruKho) {
+                if (hd.getListsHoaDonChiTiet() != null) {
+                    hd.getListsHoaDonChiTiet().forEach(detail -> {
+                        ChiTietSanPham ct = detail.getChiTietSanPham();
+                        if (ct != null && detail.getSoLuong() != null) {
+                            int currentStock = ct.getSoLuong() != null ? ct.getSoLuong() : 0;
+                            ct.setSoLuong(currentStock + detail.getSoLuong());
+                            chiTietSanPhamRepository.saveAndFlush(ct);
+                        }
+                    });
                 }
-            });
+            }
         }
 
+        // Gửi email thông báo cho khách hàng với mọi thay đổi trạng thái
+        guiEmailTrangThai(hd, newStatus, note);
+
         return detail(id);
+    }
+
+    /** Gửi email báo trạng thái mới về email khách hàng trên hóa đơn (ưu tiên tài khoản, fallback người nhận). */
+    private void guiEmailTrangThai(HoaDon hd, OrderStatus newStatus, String note) {
+        String email = null;
+        if (hd.getKhachHang() != null && hd.getKhachHang().getEmail() != null
+                && !hd.getKhachHang().getEmail().trim().isEmpty()) {
+            email = hd.getKhachHang().getEmail().trim();
+        } else if (hd.getEmailNguoiNhan() != null && !hd.getEmailNguoiNhan().trim().isEmpty()) {
+            email = hd.getEmailNguoiNhan().trim();
+        }
+        if (email == null) return; // Không có email thì bỏ qua, không chặn luồng đổi trạng thái
+
+        String tenKhachHang = hd.getKhachHang() != null && hd.getKhachHang().getTen() != null
+                ? hd.getKhachHang().getTen()
+                : (hd.getTenNguoiNhan() != null ? hd.getTenNguoiNhan() : "Quý khách");
+
+        emailService.guiEmailCapNhatTrangThaiHoaDon(email, tenKhachHang, hd.getMaHoaDon(),
+                trangThaiLabel(newStatus), note);
+    }
+
+    private String trangThaiLabel(OrderStatus status) {
+        if (status == null) return "Không xác định";
+        return switch (status) {
+            case CHO_XAC_NHAN -> "Chờ xác nhận";
+            case XAC_NHAN -> "Đã xác nhận";
+            case CHO_GIAO -> "Chờ giao hàng";
+            case DANG_GIAO -> "Đang giao hàng";
+            case HOAN_THANH -> "Hoàn thành";
+            case DA_HUY -> "Đã hủy";
+            case HOAN_DON -> "Hoàn đơn";
+        };
     }
 
     @Override
@@ -210,8 +277,11 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             hdct.setNgayTao(System.currentTimeMillis());
         }
 
-        ctsp.setSoLuong(ctsp.getSoLuong() - delta);
-        chiTietSanPhamRepository.save(ctsp);
+        boolean chuaTruKho = (hd.getTrangThai() == OrderStatus.CHO_XAC_NHAN && "ONLINE".equalsIgnoreCase(hd.getLoaiDon()));
+        if (!chuaTruKho) {
+            ctsp.setSoLuong(ctsp.getSoLuong() - delta);
+            chiTietSanPhamRepository.saveAndFlush(ctsp);
+        }
         hoaDonChiTietRepository.save(hdct);
 
         if (giaThayDoi) {
@@ -232,10 +302,11 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHdct)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PRODUCT_DETAIL_NOT_FOUND));
         
+        boolean chuaTruKho = (hd.getTrangThai() == OrderStatus.CHO_XAC_NHAN && "ONLINE".equalsIgnoreCase(hd.getLoaiDon()));
         ChiTietSanPham ct = hdct.getChiTietSanPham();
-        if (ct != null) {
+        if (ct != null && !chuaTruKho) {
             ct.setSoLuong(ct.getSoLuong() + hdct.getSoLuong());
-            chiTietSanPhamRepository.save(ct);
+            chiTietSanPhamRepository.saveAndFlush(ct);
         }
         
         hoaDonChiTietRepository.delete(hdct);
@@ -271,12 +342,17 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
     }
 
     private void logHistory(HoaDon hd, String note) {
+        String nguoiThucHienName = com.example.be.utils.SecurityUtils.getCurrentUserEmail()
+                .map(email -> nhanVienRepository.findByEmail(email)
+                        .map(nv -> nv.getTen() != null ? nv.getTen() : email)
+                        .orElse(email))
+                .orElse("Hệ thống");
         LichSuTrangThaiHoaDon history = LichSuTrangThaiHoaDon.builder()
                 .hoaDon(hd)
                 .trangThaiMoi(hd.getTrangThai().ordinal())
                 .trangThaiCu(hd.getTrangThai().ordinal())
                 .ghiChu(note)
-                .nguoiThucHien(com.example.be.utils.SecurityUtils.getCurrentUserEmail().orElse("ADMIN"))
+                .nguoiThucHien(nguoiThucHienName)
                 .build();
         history.setNgayTao(System.currentTimeMillis());
         lichSuTrangThaiHoaDonRepository.save(history);

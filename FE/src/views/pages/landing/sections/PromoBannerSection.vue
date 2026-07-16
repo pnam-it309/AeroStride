@@ -32,7 +32,8 @@ const displayBanners = computed(() => {
         id: p.id,
         tenSanPham: p.tenSanPham || p.title,
         tenThuongHieu: p.tenThuongHieu || p.subtitle || 'PREMIUM',
-        gia: p.giaBanThapNhat,
+        gia: p.giaBanThapNhat ?? p.raw?.giaBanThapNhat ?? p.gia ?? p.raw?.giaBan ?? null,
+        soLuong: p.tongSoLuongTon ?? p.raw?.tongSoLuongTon ?? p.soLuong ?? p.raw?.soLuong ?? 0,
         hinhAnh: resolveImg(p.hinhAnh || p.imageUrl),
         link: `/product/${p.id}`,
         bg: GRADIENTS[i % GRADIENTS.length],
@@ -41,7 +42,7 @@ const displayBanners = computed(() => {
 });
 
 const formatPrice = (v) => {
-    if (!v && v !== 0) return '';
+    if (!v && v !== 0) return 'Liên hệ';
     return new Intl.NumberFormat('vi-VN').format(v) + ' đ';
 };
 </script>
@@ -86,7 +87,21 @@ const formatPrice = (v) => {
                                         </div>
                                         <div class="banner-icon" v-else>👟</div>
                                         <h3 class="banner-title">{{ banner.tenSanPham }}</h3>
-                                        <p class="banner-price" v-if="banner.gia">Từ {{ formatPrice(banner.gia) }}</p>
+                                        <div class="banner-meta d-flex align-center justify-space-between mt-2 mb-4">
+                                            <div class="banner-price-box">
+                                                <span class="price-label text-caption d-block" style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">Giá từ</span>
+                                                <span class="banner-price font-weight-bold" style="font-size: 1.1rem; color: #fff;">
+                                                    {{ banner.gia != null ? formatPrice(banner.gia) : 'Liên hệ' }}
+                                                </span>
+                                            </div>
+                                            <div class="banner-stock-box text-right">
+                                                <span class="stock-label text-caption d-block" style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">Số lượng tồn</span>
+                                                <span class="banner-stock px-2 py-1 rounded-pill text-caption font-weight-bold d-inline-block"
+                                                      :style="banner.soLuong > 0 ? 'background: rgba(46, 125, 50, 0.25); color: #81c784; border: 1px solid rgba(129, 199, 132, 0.4);' : 'background: rgba(198, 40, 40, 0.25); color: #e57373; border: 1px solid rgba(229, 115, 115, 0.4);'">
+                                                    {{ banner.soLuong > 0 ? `${banner.soLuong} sản phẩm` : 'Hết hàng' }}
+                                                </span>
+                                            </div>
+                                        </div>
                                         <div class="banner-cta">
                                             Khám phá ngay <v-icon size="16">mdi-arrow-right</v-icon>
                                         </div>
@@ -110,10 +125,9 @@ const formatPrice = (v) => {
 
 <style scoped lang="scss">
 .snap-section {
-    height: 100vh;
+    min-height: 100vh;
     width: 100%;
     position: relative;
-    overflow-y: auto;
     display: flex;
     align-items: center;
     background: #f8fafc;

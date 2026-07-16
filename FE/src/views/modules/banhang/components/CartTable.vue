@@ -91,7 +91,7 @@ const handleDirectInput = (item, event) => {
                     </td>
                     <td class="text-center" style="white-space: nowrap !important;">
                         <div class="qty-control">
-                            <v-btn icon size="x-small" variant="text" @click="emit('update-qty', item, -1)">
+                            <v-btn icon size="x-small" variant="text" :disabled="item.soLuong <= 1" @click="emit('update-qty', item, -1)">
                                 <MinusIcon size="12" />
                             </v-btn>
                             <input type="number" class="qty-input-table text-center font-weight-medium"

@@ -29,8 +29,8 @@ const decoratedProducts = computed(() => {
         specs: [
             { label: 'CHẤT LIỆU', value: p.chatLieu || 'CAO CẤP' },
             { label: 'ĐẾ GIÀY', value: p.deGiay || 'ÊM ÁI' },
-            { label: 'XUẤT XỨ', value: p.xuatXu || 'VIỆT NAM' },
-            { label: 'GIÁ CHỈ TỪ', value: p.giaBanThapNhat ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.giaBanThapNhat) : '1.000.000 ₫' }
+            { label: 'SỐ LƯỢNG TỒN', value: `${p.tongSoLuongTon ?? p.raw?.tongSoLuongTon ?? p.soLuong ?? 0} sản phẩm` },
+            { label: 'GIÁ CHỈ TỪ', value: (p.giaBanThapNhat ?? p.raw?.giaBanThapNhat) ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.giaBanThapNhat ?? p.raw?.giaBanThapNhat) : 'Liên hệ' }
         ],
         image: p.imageUrl || '',
         modelUrl: p.modelUrl || ''

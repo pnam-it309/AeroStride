@@ -27,4 +27,5 @@ public class CustomerLandingProductResponse {
     private String tenCoGiay;
     private String tenXuatXu;
     private String tenMucDichChay;
+    private Long tongSoLuongTon;
 }

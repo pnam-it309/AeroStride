@@ -1,15 +1,16 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Thêm Thương Hiệu Mới (Bắt đầu từ th6)
-INSERT IGNORE INTO thuong_hieu (id, ma_thuong_hieu, ten_thuong_hieu, trang_thai, xoa_mem, ngay_tao) VALUES
+INSERT INTO thuong_hieu (id, ma_thuong_hieu, ten_thuong_hieu, trang_thai, xoa_mem, ngay_tao) VALUES
 ('th6', 'TH006', 'Bitis', 0, 0, 1711814500000),
 ('th7', 'TH007', 'Vans', 0, 0, 1711814500000),
 ('th8', 'TH008', 'Asics', 0, 0, 1711814500000),
 ('th9', 'TH009', 'Puma', 0, 0, 1711814500000),
-('th10', 'TH010', 'Reebok', 0, 0, 1711814500000);
+('th10', 'TH010', 'Reebok', 0, 0, 1711814500000)
+ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- Thêm Sản Phẩm Mới (Bắt đầu từ sp6)
-INSERT IGNORE INTO san_pham (id, id_thuong_hieu, id_xuat_xu, id_muc_dich_chay, id_chat_lieu, id_de_giay, id_co_giay, ma_san_pham, ten_san_pham, gioi_tinh_khach_hang, hinh_anh, mo_ta, mo_ta_chi_tiet, trang_thai, xoa_mem, ngay_tao) VALUES
+INSERT INTO san_pham (id, id_thuong_hieu, id_xuat_xu, id_muc_dich_chay, id_chat_lieu, id_de_giay, id_co_giay, ma_san_pham, ten_san_pham, gioi_tinh_khach_hang, hinh_anh, mo_ta, mo_ta_chi_tiet, trang_thai, xoa_mem, ngay_tao) VALUES
 ('sp6', 'th6', 'xx1', 'md3', 'cl3', 'dg1', 'cg1', 'SP006', 'Bitis Hunter Street', 'UNISEX', 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?q=80&w=1996&auto=format&fit=crop', 'Dòng giày thể thao đường phố của Bitis.', 'Mô tả chi tiết giày Bitis Hunter', 0, 0, 1711814600000),
 ('sp7', 'th7', 'xx2', 'md3', 'cl3', 'dg1', 'cg1', 'SP007', 'Vans Old Skool', 'UNISEX', 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?q=80&w=1974&auto=format&fit=crop', 'Huyền thoại Vans trượt ván.', 'Mô tả chi tiết giày Vans Old Skool', 0, 0, 1711814600000),
 ('sp8', 'th8', 'xx3', 'md1', 'cl2', 'dg5', 'cg1', 'SP008', 'Asics Gel-Kayano 30', 'NAM', 'https://images.unsplash.com/photo-1560769629-975ec94e6a86?q=80&w=1964&auto=format&fit=crop', 'Giày chạy bộ đường dài chuyên nghiệp.', 'Mô tả chi tiết giày Asics Gel', 0, 0, 1711814600000),
@@ -29,10 +30,11 @@ INSERT IGNORE INTO san_pham (id, id_thuong_hieu, id_xuat_xu, id_muc_dich_chay, i
 ('sp22', 'th8', 'xx1', 'md1', 'cl2', 'dg1', 'cg1', 'SP022', 'Asics Novablast 4', 'NAM', 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?q=80&w=1964&auto=format&fit=crop', 'Độ nảy cực tốt.', 'Mô tả chi tiết', 0, 0, 1711814600000),
 ('sp23', 'th1', 'xx2', 'md2', 'cl5', 'dg2', 'cg2', 'SP023', 'Nike Mercurial Vapor 15', 'NAM', 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?q=80&w=2071&auto=format&fit=crop', 'Giày bóng đá tốc độ.', 'Mô tả chi tiết', 0, 0, 1711814600000),
 ('sp24', 'th2', 'xx1', 'md2', 'cl1', 'dg4', 'cg2', 'SP024', 'Adidas Predator Accuracy', 'NAM', 'https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?q=80&w=2031&auto=format&fit=crop', 'Kiểm soát bóng tối ưu.', 'Mô tả chi tiết', 0, 0, 1711814600000),
-('sp25', 'th9', 'xx3', 'md3', 'cl3', 'dg1', 'cg1', 'SP025', 'Puma Suede Classic', 'UNISEX', 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?q=80&w=2070&auto=format&fit=crop', 'Vải da lộn sang trọng.', 'Mô tả chi tiết', 0, 0, 1711814600000);
+('sp25', 'th9', 'xx3', 'md3', 'cl3', 'dg1', 'cg1', 'SP025', 'Puma Suede Classic', 'UNISEX', 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?q=80&w=2070&auto=format&fit=crop', 'Vải da lộn sang trọng.', 'Mô tả chi tiết', 0, 0, 1711814600000)
+ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- Thêm Chi Tiết Sản Phẩm (250 biến thể - 10 bản ghi cho mỗi sản phẩm từ sp1 đến sp25)
-INSERT IGNORE INTO chi_tiet_san_pham (id, id_san_pham, id_kich_thuoc, id_mau_sac, ma_chi_tiet_san_pham, so_luong, gia_nhap, gia_ban, trang_thai, xoa_mem, ngay_tao) VALUES
+INSERT INTO chi_tiet_san_pham (id, id_san_pham, id_kich_thuoc, id_mau_sac, ma_chi_tiet_san_pham, so_luong, gia_nhap, gia_ban, trang_thai, xoa_mem, ngay_tao) VALUES
 -- Sản phẩm sp1
 ('ct_sp1_1', 'sp1', 'kt1', 'ms1', 'CT0001', 50, 1000000, 1500000, 0, 0, 1711814700000),
 ('ct_sp1_2', 'sp1', 'kt2', 'ms2', 'CT0002', 50, 1000000, 1500000, 0, 0, 1711814700001),
@@ -307,10 +309,11 @@ INSERT IGNORE INTO chi_tiet_san_pham (id, id_san_pham, id_kich_thuoc, id_mau_sac
 ('ct_sp25_7', 'sp25', 'kt2', 'ms4', 'CT0247', 80, 1000000, 1800000, 0, 0, 1711814700246),
 ('ct_sp25_8', 'sp25', 'kt3', 'ms4', 'CT0248', 80, 1000000, 1800000, 0, 0, 1711814700247),
 ('ct_sp25_9', 'sp25', 'kt4', 'ms5', 'CT0249', 80, 1000000, 1800000, 0, 0, 1711814700248),
-('ct_sp25_10', 'sp25', 'kt5', 'ms5', 'CT0250', 80, 1000000, 1800000, 0, 0, 1711814700249);
+('ct_sp25_10', 'sp25', 'kt5', 'ms5', 'CT0250', 80, 1000000, 1800000, 0, 0, 1711814700249)
+ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- Thêm Địa Chỉ Mới
-INSERT IGNORE INTO dia_chi (id, ma_dia_chi, tinh, thanh_pho, phuong_xa, dia_chi_chi_tiet, ten_nguoi_nhan, sdt_nguoi_nhan, trang_thai, ngay_tao) VALUES
+INSERT INTO dia_chi (id, ma_dia_chi, tinh, thanh_pho, phuong_xa, dia_chi_chi_tiet, ten_nguoi_nhan, sdt_nguoi_nhan, trang_thai, ngay_tao) VALUES
 ('dc6', 'DC006', 'Đồng Nai', 'Biên Hòa', 'Phường Tam Hiệp', 'Số 1 Phạm Văn Thuận', 'Khách Test 6', '0906667777', 0, 1711814800000),
 ('dc7', 'DC007', 'Bình Dương', 'Thủ Dầu Một', 'Phường Phú Cường', 'Số 2 Yersin', 'Khách Test 7', '0907778888', 0, 1711814800000),
 ('dc8', 'DC008', 'Hà Nội', 'Hoàn Kiếm', 'Phường Tràng Tiền', 'Số 10 Lý Thái Tổ', 'Nguyễn Văn A', '0912111222', 0, 1711814800000),
@@ -330,10 +333,11 @@ INSERT IGNORE INTO dia_chi (id, ma_dia_chi, tinh, thanh_pho, phuong_xa, dia_chi_
 ('dc22', 'DC022', 'Đồng Nai', 'Biên Hòa', 'Phường Quyết Thắng', '11 Hà Huy Giáp', 'Vũ Thị Q', '0916777888', 0, 1711814800000),
 ('dc23', 'DC023', 'Khánh Hòa', 'Nha Trang', 'Phường Lộc Thọ', '34 Trần Phú', 'Lý Văn R', '0916888999', 0, 1711814800000),
 ('dc24', 'DC024', 'Lâm Đồng', 'Đà Lạt', 'Phường 1', '67 Nguyễn Văn Cừ', 'Chu Thị S', '0916999000', 0, 1711814800000),
-('dc25', 'DC025', 'Thừa Thiên Huế', 'Huế', 'Phường Phú Hội', '15 Lê Lợi', 'Tạ Văn T', '0916000111', 0, 1711814800000);
+('dc25', 'DC025', 'Thừa Thiên Huế', 'Huế', 'Phường Phú Hội', '15 Lê Lợi', 'Tạ Văn T', '0916000111', 0, 1711814800000)
+ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- Thêm Khách Hàng Mới
-INSERT IGNORE INTO khach_hang (id, id_dia_chi, ma_nguoi_dung, ten_nguoi_dung, email, ten_tai_khoan, mat_khau, gioi_tinh, sdt, ngay_sinh, hinh_anh, ghi_chu, trang_thai, ngay_tao) VALUES
+INSERT INTO khach_hang (id, id_dia_chi, ma_nguoi_dung, ten_nguoi_dung, email, ten_tai_khoan, mat_khau, gioi_tinh, sdt, ngay_sinh, hinh_anh, ghi_chu, trang_thai, ngay_tao) VALUES
 ('kh11', 'dc11', 'KH011', 'Phạm Thị D', 'khach11@gmail.com', 'khach11', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0912777888', '1995-03-25', 'kh11.jpg', NULL, 0, 1711814900000),
 ('kh12', 'dc12', 'KH012', 'Hoàng Văn E', 'khach12@gmail.com', 'khach12', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0912999000', '1993-07-30', 'kh12.jpg', NULL, 0, 1711814900000),
 ('kh13', 'dc13', 'KH013', 'Ngô Thị F', 'khach13@gmail.com', 'khach13', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0913123456', '1991-11-05', 'kh13.jpg', NULL, 0, 1711814900000),
@@ -348,10 +352,11 @@ INSERT IGNORE INTO khach_hang (id, id_dia_chi, ma_nguoi_dung, ten_nguoi_dung, em
 ('kh22', 'dc22', 'KH022', 'Vũ Thị Q', 'khach22@gmail.com', 'khach22', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0916777888', '1996-07-07', 'kh22.jpg', NULL, 0, 1711814900000),
 ('kh23', 'dc23', 'KH023', 'Lý Văn R', 'khach23@gmail.com', 'khach23', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0916888999', '1997-08-08', 'kh23.jpg', NULL, 0, 1711814900000),
 ('kh24', 'dc24', 'KH024', 'Chu Thị S', 'khach24@gmail.com', 'khach24', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 0, '0916999000', '1998-09-09', 'kh24.jpg', NULL, 0, 1711814900000),
-('kh25', 'dc25', 'KH025', 'Tạ Văn T', 'khach25@gmail.com', 'khach25', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0916000111', '1999-10-10', 'kh25.jpg', NULL, 0, 1711814900000);
+('kh25', 'dc25', 'KH025', 'Tạ Văn T', 'khach25@gmail.com', 'khach25', '{bcrypt}$2a$10$oocVPP6YqNyiSKxcgIZK4OgYXwGLfOVsShJcYSrUl55luGoRPr5rq', 1, '0916000111', '1999-10-10', 'kh25.jpg', NULL, 0, 1711814900000)
+ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- Thêm Hóa Đơn Trạng Thái Đã Hủy (Trạng thái = 4)
-INSERT IGNORE INTO hoa_don (id, id_phieu_giam_gia, id_phieu_giam_gia_ca_nhan, id_khach_hang, id_nhan_vien, ma_hoa_don, loai_don, phi_van_chuyen, tong_tien, tong_tien_sau_giam, tien_nguoi_mua, dia_chi_nguoi_nhan, so_dien_thoai_nguoi_nhan, ngay_du_kien_nhan, ghi_chu, trang_thai, ngay_tao) VALUES
+INSERT INTO hoa_don (id, id_phieu_giam_gia, id_phieu_giam_gia_ca_nhan, id_khach_hang, id_nhan_vien, ma_hoa_don, loai_don, phi_van_chuyen, tong_tien, tong_tien_sau_giam, tien_nguoi_mua, dia_chi_nguoi_nhan, so_dien_thoai_nguoi_nhan, ngay_du_kien_nhan, ghi_chu, trang_thai, ngay_tao) VALUES
 ('hd6', NULL, NULL, 'kh6', 'nv2', 'HD006', 'ONLINE', 30000.00, 850000.00, 880000.00, 880000.00, 'Số 1 Phạm Văn Thuận, Biên Hòa', '0906667777', NULL, 'Khách đổi ý không mua nữa', 4, 1711815000000),
 ('hd7', NULL, NULL, 'kh7', 'nv1', 'HD007', 'OFFLINE', 0.00, 3500000.00, 3500000.00, 3500000.00, 'Tại cửa hàng', '0907778888', NULL, NULL, 3, 1711816000000),
 ('hd8', NULL, NULL, 'kh8', 'nv1', 'HD008', 'OFFLINE', 0.00, 3800000.00, 3800000.00, 3800000.00, 'Mua tại quầy', '0912111222', NULL, NULL, 3, 1711817000000),
@@ -361,10 +366,11 @@ INSERT IGNORE INTO hoa_don (id, id_phieu_giam_gia, id_phieu_giam_gia_ca_nhan, id
 ('hd12', NULL, NULL, 'kh12', 'nv1', 'HD012', 'ONLINE', 30000.00, 1950000.00, 1980000.00, 1980000.00, '15 Núi Thành, Đà Nẵng', '0912999000', 1712246400000, NULL, 0, 1711821000000),
 ('hd13', NULL, NULL, 'kh13', 'nv2', 'HD013', 'OFFLINE', 0.00, 2800000.00, 2800000.00, 2800000.00, 'Mua tại quầy', '0913123456', NULL, NULL, 4, 1711822000000),
 ('hd14', NULL, NULL, 'kh14', 'nv1', 'HD014', 'ONLINE', 35000.00, 1700000.00, 1735000.00, 1735000.00, '12 Lạch Tray, Hải Phòng', '0913234567', 1712332800000, NULL, 3, 1711823000000),
-('hd15', NULL, NULL, 'kh15', 'nv2', 'HD015', 'OFFLINE', 0.00, 6500000.00, 6500000.00, 6500000.00, 'Mua tại quầy', '0913345678', NULL, NULL, 3, 1711824000000);
+('hd15', NULL, NULL, 'kh15', 'nv2', 'HD015', 'OFFLINE', 0.00, 6500000.00, 6500000.00, 6500000.00, 'Mua tại quầy', '0913345678', NULL, NULL, 3, 1711824000000)
+ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- Chi Tiết Hóa Đơn Tương Ứng
-INSERT IGNORE INTO hoa_don_chi_tiet (id, id_hoa_don, id_chi_tiet_san_pham, ma_hoa_don_chi_tiet, so_luong, don_gia, trang_thai, ngay_tao) VALUES
+INSERT INTO hoa_don_chi_tiet (id, id_hoa_don, id_chi_tiet_san_pham, ma_hoa_don_chi_tiet, so_luong, don_gia, trang_thai, ngay_tao) VALUES
 ('hdct6', 'hd6', 'ct_sp6_1', 'HDCT006', 1, 850000.00, 0, 1711815000000),
 ('hdct7', 'hd7', 'ct_sp8_1', 'HDCT007', 1, 3500000.00, 0, 1711816000000),
 ('hdct8', 'hd8', 'ct_sp9_1', 'HDCT008', 1, 3800000.00, 0, 1711817000000),
@@ -374,10 +380,11 @@ INSERT IGNORE INTO hoa_don_chi_tiet (id, id_hoa_don, id_chi_tiet_san_pham, ma_ho
 ('hdct12', 'hd12', 'ct_sp13_1', 'HDCT012', 1, 1950000.00, 0, 1711821000000),
 ('hdct13', 'hd13', 'ct_sp14_1', 'HDCT013', 1, 2800000.00, 0, 1711822000000),
 ('hdct14', 'hd14', 'ct_sp15_1', 'HDCT014', 1, 1700000.00, 0, 1711823000000),
-('hdct15', 'hd15', 'ct_sp16_1', 'HDCT015', 1, 6500000.00, 0, 1711824000000);
+('hdct15', 'hd15', 'ct_sp16_1', 'HDCT015', 1, 6500000.00, 0, 1711824000000)
+ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- Lịch Sử Trạng Thái Hóa Đơn
-INSERT IGNORE INTO lich_su_trang_thai_hoa_don (id, id_hoa_don, trang_thai_cu, trang_thai_moi, ghi_chu, nguoi_thuc_hien, ngay_tao) VALUES
+INSERT INTO lich_su_trang_thai_hoa_don (id, id_hoa_don, trang_thai_cu, trang_thai_moi, ghi_chu, nguoi_thuc_hien, ngay_tao) VALUES
 ('ls6', 'hd6', 0, 4, 'Hủy đơn hàng', 'kh6', 1711815500000),
 ('ls7', 'hd7', 0, 3, 'Giao dịch thành công', 'nv1', 1711816500000),
 ('ls8', 'hd8', 0, 3, 'Thanh toán tại quầy', 'nv1', 1711817500000),
@@ -386,9 +393,10 @@ INSERT IGNORE INTO lich_su_trang_thai_hoa_don (id, id_hoa_don, trang_thai_cu, tr
 ('ls11', 'hd11', 1, 2, 'Giao cho đơn vị vận chuyển', 'nv2', 1711820500000),
 ('ls12', 'hd12', NULL, 0, 'Khách đặt hàng thành công', 'kh12', 1711821500000),
 ('ls13', 'hd13', 0, 4, 'Khách trả hàng', 'nv2', 1711822500000),
-('ls14', 'hd14', 2, 3, 'Giao hàng thành công', 'Shipper', 1711823500000);
+('ls14', 'hd14', 2, 3, 'Giao hàng thành công', 'Shipper', 1711823500000)
+ON DUPLICATE KEY UPDATE id = VALUES(id);
 -- Giao Dịch Thanh Toán Bổ Sung cho toàn bộ các hóa đơn mẫu (hd6 -> hd299)
-INSERT IGNORE INTO giao_dich_thanh_toan (id, id_hoa_don, id_phuong_thuc_thanh_toan, ma_giao_dich_thanh_toan, so_tien, loai_giao_dich, ma_giao_dich_ngoai, ma_tham_chieu, ngay_tao, trang_thai, ghi_chu) VALUES
+INSERT INTO giao_dich_thanh_toan (id, id_hoa_don, id_phuong_thuc_thanh_toan, ma_giao_dich_thanh_toan, so_tien, loai_giao_dich, ma_giao_dich_ngoai, ma_tham_chieu, ngay_tao, trang_thai, ghi_chu) VALUES
 ('gd6', 'hd6', 'pt1', 'GD006', 880000.00, 'PAYMENT', NULL, 'REF006', 1711815000000, 1, 'Thanh toán tiền mặt'),
 ('gd7', 'hd7', 'pt2', 'GD007', 3500000.00, 'PAYMENT', 'BANK777', 'REF007', 1711816000000, 1, 'Chuyển khoản thành công'),
 ('gd8', 'hd8', 'pt1', 'GD008', 3800000.00, 'PAYMENT', NULL, 'REF008', 1711817000000, 1, 'Tiền mặt tại quầy'),
@@ -597,9 +605,10 @@ INSERT IGNORE INTO giao_dich_thanh_toan (id, id_hoa_don, id_phuong_thuc_thanh_to
 ('gd296', 'hd296', 'pt1', 'GD296', 1200000.00, 'PAYMENT', NULL, 'REF296', 1775880300000, 1, 'Tiền mặt'),
 ('gd297', 'hd297', 'pt2', 'GD297', 4600000.00, 'PAYMENT', 'BANK297', 'REF297', 1776001920000, 1, 'Chuyển khoản'),
 ('gd298', 'hd298', 'pt3', 'GD298', 3930000.00, 'PAYMENT', 'MOMO298', 'REF298', 1775976900000, 1, 'MoMo'),
-('gd299', 'hd299', 'pt1', 'GD299', 4330000.00, 'PAYMENT', NULL, 'REF299', 1775962920000, 1, 'Tiền mặt');
+('gd299', 'hd299', 'pt1', 'GD299', 4330000.00, 'PAYMENT', NULL, 'REF299', 1775962920000, 1, 'Tiền mặt')
+ON DUPLICATE KEY UPDATE id = VALUES(id);
 
-INSERT IGNORE INTO hoa_don (id, id_phieu_giam_gia, id_phieu_giam_gia_ca_nhan, id_khach_hang, id_nhan_vien, ma_hoa_don, loai_don, phi_van_chuyen, tong_tien, tong_tien_sau_giam, tien_nguoi_mua, dia_chi_nguoi_nhan, so_dien_thoai_nguoi_nhan, ngay_du_kien_nhan, ghi_chu, trang_thai, ngay_tao) VALUES
+INSERT INTO hoa_don (id, id_phieu_giam_gia, id_phieu_giam_gia_ca_nhan, id_khach_hang, id_nhan_vien, ma_hoa_don, loai_don, phi_van_chuyen, tong_tien, tong_tien_sau_giam, tien_nguoi_mua, dia_chi_nguoi_nhan, so_dien_thoai_nguoi_nhan, ngay_du_kien_nhan, ghi_chu, trang_thai, ngay_tao) VALUES
 ('hd100', NULL, NULL, 'kh24', 'nv1', 'HD100', 'OFFLINE', 0.0, 900000.0, 900000.0, 0, 'Mua tại quầy', '0955147291', NULL, NULL, 0, 1773105540000),
 ('hd101', NULL, NULL, 'kh2', 'nv2', 'HD101', 'OFFLINE', 0.0, 3700000.0, 3700000.0, 3700000.0, 'Mua tại quầy', '0922357315', NULL, NULL, 4, 1773128400000),
 ('hd102', NULL, NULL, 'kh12', 'nv1', 'HD102', 'ONLINE', 30000.0, 3400000.0, 3430000.0, 3430000.0, '88 Cầu Giấy, Hà Nội', '0945991928', 1773380640000, NULL, 3, 1773121440000),
@@ -799,9 +808,9 @@ INSERT IGNORE INTO hoa_don (id, id_phieu_giam_gia, id_phieu_giam_gia_ca_nhan, id
 ('hd296', NULL, NULL, 'kh25', 'nv1', 'HD296', 'OFFLINE', 0.0, 1200000.0, 1200000.0, 1200000.0, 'Mua tại quầy', '0937329341', NULL, NULL, 0, 1775880300000),
 ('hd297', NULL, NULL, 'kh23', 'nv2', 'HD297', 'OFFLINE', 0.0, 4600000.0, 4600000.0, 4600000.0, 'Mua tại quầy', '0928383229', NULL, NULL, 0, 1776001920000),
 ('hd298', NULL, NULL, 'kh7', 'nv2', 'HD298', 'ONLINE', 30000.0, 3900000.0, 3930000.0, 3930000.0, '88 Cầu Giấy, Hà Nội', '0954891070', 1776236100000, NULL, 1, 1775976900000),
-('hd299', NULL, NULL, 'kh9', 'nv2', 'HD299', 'ONLINE', 30000.0, 4300000.0, 4330000.0, 4330000.0, '64 Hùng Vương, Huế', '0954860081', 1776222120000, NULL, 2, 1775962920000);
+('hd299', NULL, NULL, 'kh9', 'nv2', 'HD299', 'ONLINE', 30000.0, 4300000.0, 4330000.0, 4330000.0, '64 Hùng Vương, Huế', '0954860081', 1776222120000, NULL, 2, 1775962920000) ON DUPLICATE KEY UPDATE id = VALUES(id);
 
-INSERT IGNORE INTO hoa_don_chi_tiet (id, id_hoa_don, id_chi_tiet_san_pham, ma_hoa_don_chi_tiet, so_luong, don_gia, trang_thai, ngay_tao) VALUES
+INSERT INTO hoa_don_chi_tiet (id, id_hoa_don, id_chi_tiet_san_pham, ma_hoa_don_chi_tiet, so_luong, don_gia, trang_thai, ngay_tao) VALUES
 ('hdct100', 'hd100', 'ct_sp10_4', 'HDCT100', 2, 3200000.0, 0, 1773105540000),
 ('hdct101', 'hd101', 'ct_sp20_3', 'HDCT101', 1, 3700000.0, 0, 1773128400000),
 ('hdct102', 'hd102', 'ct_sp17_5', 'HDCT102', 1, 3900000.0, 0, 1773121440000),
@@ -1219,5 +1228,5 @@ INSERT IGNORE INTO hoa_don_chi_tiet (id, id_hoa_don, id_chi_tiet_san_pham, ma_ho
 ('hdct514', 'hd298', 'ct_sp14_5', 'HDCT514', 2, 2000000.0, 0, 1775976900000),
 ('hdct515', 'hd298', 'ct_sp25_8', 'HDCT515', 2, 2900000.0, 0, 1775976900000),
 ('hdct516', 'hd299', 'ct_sp9_9', 'HDCT516', 1, 1000000.0, 0, 1775962920000),
-('hdct517', 'hd299', 'ct_sp13_4', 'HDCT517', 1, 2600000.0, 0, 1775962920000);
+('hdct517', 'hd299', 'ct_sp13_4', 'HDCT517', 1, 2600000.0, 0, 1775962920000) ON DUPLICATE KEY UPDATE id = VALUES(id);
 SET FOREIGN_KEY_CHECKS = 1;

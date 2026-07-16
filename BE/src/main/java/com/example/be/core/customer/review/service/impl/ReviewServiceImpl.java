@@ -79,20 +79,20 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public Page<DanhGiaSanPham> getReviewsByProduct(Long idSanPham, Pageable pageable) {
-        return reviewRepository.findBySanPhamIdAndTrangThai(idSanPham, DanhGiaSanPham.TrangThaiDanhGia.APPROVED, pageable);
+        return reviewRepository.findBySanPham_IdAndTrangThai(String.valueOf(idSanPham), DanhGiaSanPham.TrangThaiDanhGia.APPROVED, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean checkEligibility(Long idHoaDon, Long idSanPham, Long idKhachHang) {
         // 1. Check if already reviewed
-        if (reviewRepository.existsByHoaDonIdAndSanPhamId(idHoaDon, idSanPham)) {
+        if (reviewRepository.existsByHoaDon_IdAndSanPham_Id(String.valueOf(idHoaDon), String.valueOf(idSanPham))) {
             return false;
         }
 
         // 2. Check if HoaDon is COMPLETED and belongs to KhachHang
         HoaDon hoaDon = hoaDonRepository.findById(String.valueOf(idHoaDon)).orElse(null);
-        if (hoaDon == null || hoaDon.getTrangThai() != OrderStatus.COMPLETED) {
+        if (hoaDon == null || hoaDon.getTrangThai() != OrderStatus.HOAN_THANH) {
             return false;
         }
         
@@ -101,8 +101,9 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         // 3. Check time limit (e.g., within 30 days)
-        if (hoaDon.getNgaySua() != null) {
-            long daysSinceCompletion = ChronoUnit.DAYS.between(Instant.ofEpochMilli(hoaDon.getNgaySua()), Instant.now());
+        Long completionTime = hoaDon.getNgayCapNhat() != null ? hoaDon.getNgayCapNhat() : hoaDon.getNgayTao();
+        if (completionTime != null) {
+            long daysSinceCompletion = ChronoUnit.DAYS.between(Instant.ofEpochMilli(completionTime), Instant.now());
             if (daysSinceCompletion > 30) {
                 return false;
             }

@@ -1,6 +1,8 @@
 package com.example.be.entity;
 
 import com.example.be.core.common.base.PrimaryEntity;
+import com.example.be.infrastructure.listener.ChiTietSanPhamListener;
+import com.example.be.infrastructure.listener.PrimaryEntityListener;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
@@ -26,6 +28,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@EntityListeners({PrimaryEntityListener.class, ChiTietSanPhamListener.class})
 public class ChiTietSanPham extends PrimaryEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

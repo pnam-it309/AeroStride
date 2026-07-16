@@ -1,11 +1,13 @@
 package com.example.be.core.admin.chat.repository;
 
+import com.example.be.entity.CuocHoiThoai;
 import com.example.be.entity.TinNhan;
 import com.example.be.repository.TinNhanRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface AdminTinNhanRepository extends TinNhanRepository, JpaSpecificationExecutor<TinNhan> {
@@ -14,4 +16,7 @@ public interface AdminTinNhanRepository extends TinNhanRepository, JpaSpecificat
 
     // Lấy N tin nhắn gần nhất của cuộc hội thoại (dùng cho AI context history)
     List<TinNhan> findTop10ByCuocHoiThoai_IdOrderByNgayTaoDesc(String conversationId);
+
+    Optional<TinNhan> findTopByCuocHoiThoaiOrderByNgayTaoDesc(CuocHoiThoai cuocHoiThoai);
 }
+
