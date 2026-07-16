@@ -135,11 +135,6 @@ const scrollToBottom = async () => {
     }
 };
 
-const isSending = ref(false);
-const lastSendTime = ref(0);
-const COOLDOWN_MS = 3000;
-const typingTimeout = ref(null);
-
 const imageFile = ref(null);
 const imagePreview = ref(null);
 const fileInput = ref(null);

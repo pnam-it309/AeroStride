@@ -14,4 +14,6 @@ public interface AdminTinNhanRepository extends TinNhanRepository, JpaSpecificat
 
     // Lấy N tin nhắn gần nhất của cuộc hội thoại (dùng cho AI context history)
     List<TinNhan> findTop10ByCuocHoiThoai_IdOrderByNgayTaoDesc(String conversationId);
+
+    java.util.Optional<TinNhan> findTopByCuocHoiThoaiOrderByNgayTaoDesc(com.example.be.entity.CuocHoiThoai cuocHoiThoai);
 }

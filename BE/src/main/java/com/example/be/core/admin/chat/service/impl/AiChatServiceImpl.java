@@ -1262,7 +1262,7 @@ public class AiChatServiceImpl implements AiChatService {
             try {
                 String apiUrl = String.format("%s/models/%s:generateContent?key=%s",
                         geminiBaseUrl, geminiModel, activeGeminiKey);
-                jsonResult = callGeminiApi(apiUrl, prompt);
+                jsonResult = callGeminiApi(apiUrl, prompt, null);
             } catch (Exception e) {
                 log.warn("Gemini không thể sinh gợi ý chào mừng: {}", e.getMessage());
                 markModelUnhealthy("GEMINI");

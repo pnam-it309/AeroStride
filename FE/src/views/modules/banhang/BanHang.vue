@@ -1,4 +1,5 @@
 <script setup>
+defineOptions({ name: 'BanHang' });
 /**
  * Module: Bán hàng tại quầy (Admin/POS)
  * View: BanHang
@@ -6,7 +7,7 @@
  *            chọn khách hàng, áp dụng voucher, thanh toán bằng tiền mặt/chuyển khoản (VNPay),
  *            và in hóa đơn sau khi hoàn tất.
  */
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, onActivated, onDeactivated } from 'vue';
 import { BoxIcon, XIcon } from 'vue-tabler-icons';
 import { Html5Qrcode } from 'html5-qrcode';
 import QrcodeVue from 'qrcode.vue';
@@ -712,7 +713,6 @@ onMounted(async () => {
         { title: 'Bán hàng', disabled: false, href: '/admin/ban-hang' },
         { title: 'Tạo đơn hàng', disabled: true }
     ]);
-    window.addEventListener('keydown', handleGlobalKeyDown);
     loading.value = true;
     try {
         await checkGiaoCa();
@@ -742,6 +742,15 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+    window.removeEventListener('keydown', handleGlobalKeyDown);
+    stopScanner();
+});
+
+onActivated(() => {
+    window.addEventListener('keydown', handleGlobalKeyDown);
+});
+
+onDeactivated(() => {
     window.removeEventListener('keydown', handleGlobalKeyDown);
     stopScanner();
 });
