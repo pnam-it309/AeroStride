@@ -71,6 +71,7 @@ const duplicateAttributeDialog = ref({
 
 const isEditMode = computed(() => !!route.params.id);
 const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm');
+const originalProductName = ref(null);
 const defaultVariantStatus = 'DANG_HOAT_DONG';
 
 // Danh muc thuoc tinh dung de tao san pham va sinh bien the.
@@ -1404,6 +1405,7 @@ const loadProduct = async (id) => {
         dichVuSanPham.layChiTietSanPham(id),
         dichVuBienThe.layBienTheTheoSanPham(id).catch(() => [])
     ]);
+    originalProductName.value = data.tenSanPham || null;
     product.value = {
         maSanPham: data.maSanPham || data.ma || '',
         tenSanPham: data.tenSanPham || null,
