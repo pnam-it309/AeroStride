@@ -108,6 +108,10 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
                     .findFirst()
                     .map(AnhChiTietSanPham::getDuongDanAnh)
                     .orElse(imgUrls.isEmpty() ? null : imgUrls.get(0));
+                    
+            if (primaryImage == null && v.getSanPham() != null) {
+                primaryImage = v.getSanPham().getHinhAnh();
+            }
 
             BigDecimal activeDiscount = BigDecimal.ZERO;
             List<ChiTietDotGiamGia> rels = relationMap.getOrDefault(v.getId(), Collections.emptyList());
@@ -181,6 +185,10 @@ public class CustomerLandingServiceImpl implements CustomerLandingService {
                     .findFirst()
                     .map(AnhChiTietSanPham::getDuongDanAnh)
                     .orElse(imgUrls.isEmpty() ? null : imgUrls.get(0));
+                    
+            if (primaryImage == null && v.getSanPham() != null) {
+                primaryImage = v.getSanPham().getHinhAnh();
+            }
 
             BigDecimal activeDiscount = BigDecimal.ZERO;
             List<ChiTietDotGiamGia> rels = relationMap.getOrDefault(v.getId(), Collections.emptyList());

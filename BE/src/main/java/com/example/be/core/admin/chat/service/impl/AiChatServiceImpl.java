@@ -1384,5 +1384,13 @@ public class AiChatServiceImpl implements AiChatService {
                 "Liên hệ nhân viên hỗ trợ"
         );
     }
+
+    @Override
+    public String getDashboardInsights(int pendingOrders, int lowStockItems) {
+        String prompt = "Phân tích nhanh cho trang chủ Admin: Hiện có " + pendingOrders + " đơn hàng chờ xác nhận và " + lowStockItems + " sản phẩm sắp hết hàng (số lượng < 5). Viết 1-2 câu tư vấn ngắn gọn cho Admin.";
+        String apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=" + getApiKey();
+        return callGeminiApi(apiUrl, prompt);
+    }
 }
+
 

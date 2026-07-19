@@ -44,7 +44,7 @@ const props = defineProps({
                         <div class="hero-shoe-wrapper reveal-item delay-4">
                             <model-viewer :src="props.product?.modelUrl || '/models/Shoe.glb'"
                                 :poster="props.product?.imageUrl || '/assets/images/products/1.jpg'"
-                                alt="AeroStride 3D Shoe" camera-controls auto-rotate rotation-per-second="30deg"
+                                alt="AeroStride 3D Shoe" camera-controls :auto-rotate="props.active" rotation-per-second="30deg"
                                 shadow-intensity="1" environment-image="neutral" class="the-shoe mx-auto hero-shoe-main"
                                 style="width: 100%; max-width: 600px; height: 400px; display: block; outline: none;"></model-viewer>
                         </div>

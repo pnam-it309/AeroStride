@@ -72,7 +72,7 @@ const scrollToSection = (index) => {
             </div>
         </div>
 
-        <div class="landing-scroll-container" v-if="!isLoading" @scroll="onScroll">
+        <div class="landing-scroll-container" v-if="!isLoading" @scroll.passive="onScroll">
             <!-- Premium Global Header & Mega Menu -->
             <MainHeader v-if="!isLoading" />
 

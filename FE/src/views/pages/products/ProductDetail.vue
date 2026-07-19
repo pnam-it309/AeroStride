@@ -32,6 +32,57 @@ const reviews = ref([]);
 const totalReviews = ref(0);
 const averageRating = ref(0);
 const reviewsLoading = ref(false);
+const ratingCounts = ref({ 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 });
+const selectedFilter = ref('all');
+
+// State cho modal đánh giá trực tiếp
+const showReviewModal = ref(false);
+const newReview = ref({ rating: 5, comment: '' });
+const submittingReview = ref(false);
+
+const handleWriteReview = () => {
+    if (!authStore.isLoggedIn) {
+        toastStore.showToast('Vui lòng đăng nhập để đánh giá sản phẩm', 'warning');
+        router.push(PATH.LOGIN);
+        return;
+    }
+    // Mở modal viết bình luận
+    showReviewModal.value = true;
+};
+
+const submitDirectReview = async () => {
+    if (!newReview.value.comment.trim()) {
+        toastStore.showToast('Vui lòng nhập nội dung đánh giá', 'warning');
+        return;
+    }
+
+    submittingReview.value = true;
+    try {
+        const payload = {
+            idHoaDon: null,
+            idSanPham: product.value.id,
+            idKhachHang: authStore.user?.id,
+            diemDanhGia: newReview.value.rating,
+            noiDung: newReview.value.comment
+        };
+
+        const response = await api.post('/api/v1/customer/review/submit', payload);
+        if (response.data?.success || response.status === 200) {
+            toastStore.showToast('Cảm ơn bạn đã đánh giá sản phẩm!', 'success');
+            showReviewModal.value = false;
+            newReview.value.comment = '';
+            newReview.value.rating = 5;
+            fetchReviews(); // Reload reviews
+        } else {
+            toastStore.showToast(response.data?.message || 'Có lỗi xảy ra', 'error');
+        }
+    } catch (error) {
+        console.error('Lỗi khi gửi đánh giá:', error);
+        toastStore.showToast(error.response?.data?.message || 'Có lỗi xảy ra khi gửi đánh giá', 'error');
+    } finally {
+        submittingReview.value = false;
+    }
+};
 
 const fetchProduct = async () => {
     loading.value = true;
@@ -61,10 +112,21 @@ const fetchReviews = async () => {
         if (res.data?.success && res.data.data) {
             reviews.value = res.data.data.content || [];
             totalReviews.value = res.data.data.totalElements || 0;
+            
+            // Tính toán breakdown
+            const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+            let sum = 0;
+            
             if (reviews.value.length > 0) {
-                const sum = reviews.value.reduce((acc, curr) => acc + curr.rating, 0);
+                reviews.value.forEach(r => {
+                    if (r.rating >= 1 && r.rating <= 5) {
+                        counts[Math.floor(r.rating)]++;
+                    }
+                    sum += r.rating;
+                });
                 averageRating.value = (sum / reviews.value.length).toFixed(1);
             }
+            ratingCounts.value = counts;
         }
     } catch (error) {
         console.error('Error fetching reviews:', error);
@@ -455,58 +517,101 @@ const toggleFavorite = () => {
             
             <!-- Reviews Section -->
             <div class="reviews-section mt-16 pt-8 border-top">
-                <h2 class="text-h4 font-weight-black mb-8 text-center">Đánh Giá Sản Phẩm</h2>
-                
-                <div v-if="reviewsLoading" class="text-center py-8">
-                    <v-progress-circular indeterminate color="black"></v-progress-circular>
+                <div class="d-flex align-center justify-space-between mb-8">
+                    <h2 class="text-h4 font-weight-black mb-0">Đánh Giá Sản Phẩm</h2>
+                    <v-btn color="black" variant="flat" rounded="pill" class="font-weight-bold px-6" prepend-icon="mdi-pencil-outline" @click="handleWriteReview">
+                        Viết đánh giá
+                    </v-btn>
                 </div>
-                <div v-else-if="reviews.length > 0">
-                    <div class="d-flex align-center justify-center mb-10">
-                        <div class="text-center">
-                            <div class="text-h2 font-weight-black text-amber-darken-3">{{ averageRating }}</div>
+                
+                <v-card variant="outlined" class="rounded-xl border-grey-lighten-2 mb-8 overflow-hidden">
+                    <v-row no-gutters class="align-center">
+                        <!-- Rating Summary -->
+                        <v-col cols="12" md="4" class="pa-6 text-center border-e-md border-grey-lighten-2 bg-grey-lighten-4">
+                            <div class="text-h2 font-weight-black text-amber-darken-3 mb-1">{{ averageRating || '5.0' }}</div>
                             <v-rating
-                                :model-value="Number(averageRating)"
+                                :model-value="Number(averageRating) || 5"
                                 color="amber"
                                 active-color="amber"
                                 half-increments
                                 readonly
                                 size="large"
-                                class="my-2"
+                                class="mb-2"
                             ></v-rating>
-                            <div class="text-body-2 text-grey-darken-1">{{ totalReviews }} đánh giá</div>
-                        </div>
-                    </div>
-                    
+                            <div class="text-body-1 text-grey-darken-1 font-weight-medium">{{ totalReviews }} đánh giá</div>
+                        </v-col>
+                        
+                        <!-- Rating Bars & Filters -->
+                        <v-col cols="12" md="8" class="pa-6">
+                            <div class="d-flex flex-wrap gap-2 mb-2">
+                                <v-chip
+                                    :variant="selectedFilter === 'all' ? 'flat' : 'outlined'"
+                                    :color="selectedFilter === 'all' ? 'black' : 'grey-darken-1'"
+                                    @click="selectedFilter = 'all'"
+                                    class="font-weight-bold px-4"
+                                >
+                                    Tất cả ({{ totalReviews }})
+                                </v-chip>
+                                <v-chip
+                                    v-for="star in [5,4,3,2,1]"
+                                    :key="star"
+                                    :variant="selectedFilter === star ? 'flat' : 'outlined'"
+                                    :color="selectedFilter === star ? 'black' : 'grey-darken-1'"
+                                    @click="selectedFilter = star"
+                                    class="font-weight-bold px-4"
+                                >
+                                    {{ star }} Sao ({{ ratingCounts[star] }})
+                                </v-chip>
+                            </div>
+                        </v-col>
+                    </v-row>
+                </v-card>
+
+                <div v-if="reviewsLoading" class="text-center py-8">
+                    <v-progress-circular indeterminate color="black"></v-progress-circular>
+                </div>
+                
+                <div v-else-if="reviews.length > 0">
                     <v-row>
-                        <v-col v-for="review in reviews" :key="review.id" cols="12" md="6">
-                            <v-card variant="outlined" class="pa-4 rounded-xl border-grey-lighten-2 h-100">
-                                <div class="d-flex align-center mb-3">
-                                    <v-avatar color="indigo-lighten-4" size="40" class="mr-3">
-                                        <span class="text-indigo-darken-4 font-weight-bold">{{ review.tenKhachHang ? review.tenKhachHang.charAt(0) : 'U' }}</span>
+                        <v-col v-for="review in reviews.filter(r => selectedFilter === 'all' || Math.floor(r.rating) === selectedFilter)" :key="review.id" cols="12">
+                            <v-card variant="flat" class="pa-4 border-bottom rounded-0">
+                                <div class="d-flex mb-3">
+                                    <v-avatar color="grey-lighten-3" size="48" class="mr-4 mt-1">
+                                        <span class="text-grey-darken-3 font-weight-bold text-h6">{{ review.tenKhachHang ? review.tenKhachHang.charAt(0) : 'U' }}</span>
                                     </v-avatar>
-                                    <div>
-                                        <div class="font-weight-bold">{{ review.tenKhachHang || 'Khách hàng ẩn danh' }}</div>
-                                        <div class="text-caption text-grey">{{ new Date(review.ngayTao).toLocaleDateString('vi-VN') }}</div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-center justify-space-between mb-1">
+                                            <div class="font-weight-bold text-body-1">{{ review.tenKhachHang || 'Khách hàng ẩn danh' }}</div>
+                                            <div class="text-caption text-grey">{{ new Date(review.ngayTao).toLocaleDateString('vi-VN') }}</div>
+                                        </div>
+                                        <v-rating
+                                            :model-value="review.rating"
+                                            color="amber"
+                                            active-color="amber"
+                                            readonly
+                                            size="small"
+                                            density="compact"
+                                            class="mb-2"
+                                        ></v-rating>
+                                        <p class="text-body-1 text-grey-darken-3 mb-2" style="line-height: 1.6;">{{ review.comment }}</p>
+                                        <div class="text-caption d-flex align-center font-weight-medium" :class="review.hoaDon ? 'text-success' : 'text-blue-grey'">
+                                            <v-icon size="14" class="mr-1">{{ review.hoaDon ? 'mdi-check-circle' : 'mdi-account-check' }}</v-icon>
+                                            {{ review.hoaDon ? 'Đã mua hàng' : 'Thành viên' }}
+                                        </div>
                                     </div>
-                                    <v-spacer></v-spacer>
-                                    <v-rating
-                                        :model-value="review.rating"
-                                        color="amber"
-                                        active-color="amber"
-                                        readonly
-                                        size="small"
-                                        density="compact"
-                                    ></v-rating>
                                 </div>
-                                <p class="text-body-2 mb-0" style="line-height: 1.6;">{{ review.comment }}</p>
                             </v-card>
                         </v-col>
                     </v-row>
                 </div>
-                <div v-else class="text-center py-10 bg-grey-lighten-4 rounded-xl">
-                    <v-icon size="48" color="grey-lighten-1" class="mb-3">mdi-comment-outline</v-icon>
-                    <h3 class="text-h6 text-grey-darken-1">Chưa có đánh giá nào</h3>
-                    <p class="text-body-2 text-grey">Hãy là người đầu tiên trải nghiệm và đánh giá sản phẩm này.</p>
+                
+                <div v-else class="text-center py-12 bg-grey-lighten-4 rounded-xl border-dashed border-grey-lighten-1" style="border-width: 2px;">
+                    <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-comment-text-outline</v-icon>
+                    <h3 class="text-h5 font-weight-bold text-grey-darken-2 mb-2">Chưa có đánh giá nào</h3>
+                    <p class="text-body-1 text-grey">Hãy là người đầu tiên trải nghiệm và đánh giá sản phẩm này.</p>
+                    <v-btn color="black" variant="outlined" rounded="pill" class="mt-4 font-weight-bold px-6" @click="handleWriteReview">
+                        Viết đánh giá ngay
+                    </v-btn>
                 </div>
             </div>
             
@@ -562,6 +667,66 @@ const toggleFavorite = () => {
                     <v-btn color="black" variant="flat" rounded="pill" class="px-8 font-weight-bold text-none"
                         @click="stockAlertModal.show = false">
                         Đã hiểu
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Direct Review Modal -->
+        <v-dialog v-model="showReviewModal" max-width="500" persistent>
+            <v-card class="rounded-xl overflow-hidden">
+                <v-card-title class="d-flex align-center py-3 bg-black text-white">
+                    <v-icon icon="mdi-star-circle-outline" class="mr-2"></v-icon>
+                    Viết đánh giá
+                    <v-spacer></v-spacer>
+                    <v-btn icon="mdi-close" variant="text" color="white" @click="showReviewModal = false" density="compact" :disabled="submittingReview"></v-btn>
+                </v-card-title>
+                
+                <v-card-text class="pa-4">
+                    <div class="d-flex align-center mb-4 p-2 bg-grey-lighten-4 rounded-lg pa-3" v-if="product">
+                        <v-avatar rounded size="48" class="mr-3 bg-white elevation-1">
+                            <v-img :src="product.hinhAnh" cover></v-img>
+                        </v-avatar>
+                        <div>
+                            <div class="font-weight-bold text-body-2 text-truncate" style="max-width: 300px;">{{ product.tenSanPham }}</div>
+                            <div class="text-caption text-grey">{{ product.tenThuongHieu }}</div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-4">
+                        <p class="text-subtitle-2 font-weight-bold mb-1">Chất lượng sản phẩm</p>
+                        <v-rating
+                            v-model="newReview.rating"
+                            color="amber"
+                            active-color="amber"
+                            hover
+                            size="x-large"
+                        ></v-rating>
+                    </div>
+
+                    <v-textarea
+                        v-model="newReview.comment"
+                        label="Nhận xét của bạn"
+                        placeholder="Hãy chia sẻ cảm nhận của bạn về sản phẩm này nhé..."
+                        variant="outlined"
+                        rows="4"
+                        auto-grow
+                        hide-details="auto"
+                        bg-color="grey-lighten-5"
+                    ></v-textarea>
+                </v-card-text>
+
+                <v-card-actions class="pa-4 pt-0">
+                    <v-spacer></v-spacer>
+                    <v-btn variant="text" class="text-none font-weight-bold" @click="showReviewModal = false" :disabled="submittingReview">Hủy</v-btn>
+                    <v-btn 
+                        color="black" 
+                        variant="flat" 
+                        class="text-none font-weight-bold px-6 rounded-pill" 
+                        :loading="submittingReview"
+                        @click="submitDirectReview"
+                    >
+                        Gửi đánh giá
                     </v-btn>
                 </v-card-actions>
             </v-card>

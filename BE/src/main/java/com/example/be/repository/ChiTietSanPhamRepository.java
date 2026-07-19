@@ -17,4 +17,6 @@ public interface ChiTietSanPhamRepository extends JpaRepository<ChiTietSanPham, 
     @Modifying(flushAutomatically = true)
     @Query("UPDATE ChiTietSanPham c SET c.soLuong = c.soLuong + :qty WHERE c.id = :id")
     int restoreStock(@Param("id") String id, @Param("qty") int qty);
+
+    long countBySoLuongLessThan(int quantity);
 }

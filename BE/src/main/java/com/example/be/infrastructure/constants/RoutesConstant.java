@@ -31,6 +31,8 @@ public final class RoutesConstant {
     public static final String ADMIN_CHAT = ADMIN + "/chat";
     public static final String ADMIN_LICH_LAM_VIEC = ADMIN + "/lich-lam-viec";
     public static final String ADMIN_THONG_KE = ADMIN + "/thong-ke";
+    public static final String ADMIN_AI_ASSISTANT = ADMIN + "/ai-assistant";
+    public static final String ADMIN_DANH_GIA = ADMIN + "/danh-gia";
 
     // Staff routes
     public static final String STAFF = API_PREFIX + "/staff";

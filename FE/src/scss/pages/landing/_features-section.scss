@@ -15,28 +15,27 @@
     .soft-glow {
         position: absolute;
         border-radius: 50%;
-        filter: blur(120px);
         opacity: 0.12;
     }
 
     .glow-1 {
         width: 900px;
         height: 900px;
-        background: #2962ff;
+        background: radial-gradient(circle, #2962ff 0%, transparent 70%);
         top: -20%;
         left: -10%;
     }
     .glow-2 {
         width: 700px;
         height: 700px;
-        background: #00e676;
+        background: radial-gradient(circle, #00e676 0%, transparent 70%);
         bottom: -10%;
         right: -10%;
     }
     .glow-3 {
         width: 520px;
         height: 520px;
-        background: #6200ea;
+        background: radial-gradient(circle, #6200ea 0%, transparent 70%);
         top: 35%;
         right: 20%;
     }
@@ -106,8 +105,7 @@
 }
 
 .bento-card {
-    background: rgba(255, 255, 255, 0.72);
-    backdrop-filter: blur(16px);
+    background: rgba(255, 255, 255, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.58);
     border-radius: 28px;
     padding: 30px;

@@ -26,7 +26,7 @@ import java.time.temporal.ChronoUnit;
 @Slf4j
 public class ReviewServiceImpl implements ReviewService {
 
-    private final DanhGiaSanPhamRepository reviewRepository;
+    private final DanhGiaSanPhamRepository danhGiaSanPhamRepository;
     private final HoaDonRepository hoaDonRepository;
     private final SanPhamRepository sanPhamRepository;
     private final KhachHangRepository khachHangRepository;
@@ -35,12 +35,13 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional
     public void submitReview(ReviewRequest request) {
-        if (!checkEligibility(request.getIdHoaDon(), request.getIdSanPham(), request.getIdKhachHang())) {
-            throw new RuntimeException("Không đủ điều kiện đánh giá sản phẩm này.");
+        // Cho phép tất cả người dùng đăng nhập bình luận (không cần check hóa đơn)
+        
+        HoaDon hoaDon = null;
+        if (request.getIdHoaDon() != null) {
+            hoaDon = hoaDonRepository.findById(String.valueOf(request.getIdHoaDon())).orElse(null);
         }
-
-        HoaDon hoaDon = hoaDonRepository.findById(String.valueOf(request.getIdHoaDon()))
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn."));
+        
         SanPham sanPham = sanPhamRepository.findById(String.valueOf(request.getIdSanPham()))
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm."));
         KhachHang khachHang = khachHangRepository.findById(String.valueOf(request.getIdKhachHang()))
@@ -73,20 +74,20 @@ public class ReviewServiceImpl implements ReviewService {
                 .trangThai(status)
                 .build();
 
-        reviewRepository.save(review);
+        danhGiaSanPhamRepository.save(review);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<DanhGiaSanPham> getReviewsByProduct(Long idSanPham, Pageable pageable) {
-        return reviewRepository.findBySanPham_IdAndTrangThai(String.valueOf(idSanPham), DanhGiaSanPham.TrangThaiDanhGia.APPROVED, pageable);
+        return danhGiaSanPhamRepository.findBySanPham_IdAndTrangThai(String.valueOf(idSanPham), DanhGiaSanPham.TrangThaiDanhGia.APPROVED, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean checkEligibility(Long idHoaDon, Long idSanPham, Long idKhachHang) {
         // 1. Check if already reviewed
-        if (reviewRepository.existsByHoaDon_IdAndSanPham_Id(String.valueOf(idHoaDon), String.valueOf(idSanPham))) {
+        if (danhGiaSanPhamRepository.existsByHoaDon_IdAndSanPham_Id(String.valueOf(idHoaDon), String.valueOf(idSanPham))) {
             return false;
         }
 

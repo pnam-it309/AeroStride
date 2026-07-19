@@ -71,6 +71,7 @@ const duplicateAttributeDialog = ref({
 
 const isEditMode = computed(() => !!route.params.id);
 const submitButtonText = computed(() => isEditMode.value ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm');
+const originalProductName = ref(null);
 const defaultVariantStatus = 'DANG_HOAT_DONG';
 
 // Danh muc thuoc tinh dung de tao san pham va sinh bien the.
@@ -1404,6 +1405,7 @@ const loadProduct = async (id) => {
         dichVuSanPham.layChiTietSanPham(id),
         dichVuBienThe.layBienTheTheoSanPham(id).catch(() => [])
     ]);
+    originalProductName.value = data.tenSanPham || null;
     product.value = {
         maSanPham: data.maSanPham || data.ma || '',
         tenSanPham: data.tenSanPham || null,
@@ -1898,14 +1900,12 @@ const handleSave = async () => {
                 </v-btn>
             </div>
             <div class="d-flex align-center gap-3 header-actions__buttons">
-                <v-btn v-if="isEditMode" variant="outlined" color="primary"
-                    class="text-none px-6"
+                <v-btn v-if="isEditMode" variant="outlined" color="primary" class="text-none px-6"
                     style="border-radius: 12px !important; height: 44px !important; font-size: 13px !important; font-weight: 600 !important;"
                     @click="router.push({ name: 'BienTheSanPham', query: { productId: route.params.id } })">
                     <BoxIcon size="18" class="mr-2" /> Quản lý biến thể
                 </v-btn>
-                <v-btn variant="flat"
-                    class="add-btn-primary text-none font-weight-medium px-8" :loading="saving"
+                <v-btn variant="flat" class="add-btn-primary text-none font-weight-medium px-8" :loading="saving"
                     @click="handleSave">
                     <DeviceFloppyIcon size="18" class="mr-2" />
                     {{ submitButtonText }}
@@ -1946,7 +1946,8 @@ const handleSave = async () => {
                                     placeholder="Ví dụ: Giày Nike Air..."
                                     :rules="[rules.required, rules.noSpecialChar, rules.uniqueProductName]"
                                     variant="outlined" density="comfortable" hide-details="auto" maxlength="250"
-                                    :return-object="false" :menu-props="{ contentClass: 'product-select-menu' }"></v-combobox>
+                                    :return-object="false"
+                                    :menu-props="{ contentClass: 'product-select-menu' }"></v-combobox>
                                 <v-alert v-if="tenError" type="error" variant="tonal" density="compact"
                                     class="mt-2 text-caption">
                                     {{ tenError }}
@@ -2023,7 +2024,8 @@ const handleSave = async () => {
                                 <v-select v-model="product.gioiTinhKhachHang"
                                     :items="[{ title: 'Nam', value: 'NAM' }, { title: 'Nữ', value: 'NU' }, { title: 'Unisex', value: 'UNISEX' }]"
                                     :rules="[rules.required]" clearable variant="outlined" density="comfortable"
-                                    placeholder="Đối tượng" :menu-props="{ contentClass: 'product-select-menu' }"></v-select>
+                                    placeholder="Đối tượng"
+                                    :menu-props="{ contentClass: 'product-select-menu' }"></v-select>
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="field-label">Mục đích <span class="text-error">*</span></div>
@@ -2511,15 +2513,15 @@ const handleSave = async () => {
                                     <div class="variant-filter-label">Màu sắc</div>
                                     <v-select v-model="variantTableFilters.mauSacId"
                                         :items="[{ title: 'Tất cả màu', value: '' }, ...colors.map((item) => ({ title: item.ten, value: item.id }))]"
-                                        variant="outlined" density="compact" hide-details
-                                        class="variant-filter-input" :menu-props="{ contentClass: 'product-select-menu' }" />
+                                        variant="outlined" density="compact" hide-details class="variant-filter-input"
+                                        :menu-props="{ contentClass: 'product-select-menu' }" />
                                 </v-col>
                                 <v-col cols="12" sm="2">
                                     <div class="variant-filter-label">Kích thước</div>
                                     <v-select v-model="variantTableFilters.kichThuocId"
                                         :items="[{ title: 'Tất cả size', value: '' }, ...sizes.map((item) => ({ title: item.ten, value: item.id }))]"
-                                        variant="outlined" density="compact" hide-details
-                                        class="variant-filter-input" :menu-props="{ contentClass: 'product-select-menu' }" />
+                                        variant="outlined" density="compact" hide-details class="variant-filter-input"
+                                        :menu-props="{ contentClass: 'product-select-menu' }" />
                                 </v-col>
                                 <v-col cols="12" sm="2">
                                     <div class="variant-filter-label">Trạng thái</div>
@@ -2527,8 +2529,8 @@ const handleSave = async () => {
                                         { title: 'Tất cả trạng thái', value: '' },
                                         { title: 'Đang hoạt động', value: defaultVariantStatus },
                                         { title: 'Ngừng hoạt động', value: 'NGUNG_HOAT_DONG' }
-                                    ]" variant="outlined" density="compact" hide-details
-                                        class="variant-filter-input" :menu-props="{ contentClass: 'product-select-menu' }" />
+                                    ]" variant="outlined" density="compact" hide-details class="variant-filter-input"
+                                        :menu-props="{ contentClass: 'product-select-menu' }" />
                                 </v-col>
 
                                 <template #after>

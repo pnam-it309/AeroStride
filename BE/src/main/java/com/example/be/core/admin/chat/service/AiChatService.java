@@ -10,5 +10,6 @@ public interface AiChatService {
     }
     String summarizeChat(CuocHoiThoai conversation);
     List<String> getDynamicWelcomeSuggestions(String sessionId);
+    String getDashboardInsights(int pendingOrders, int lowStockItems);
 }
 

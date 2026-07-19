@@ -57,49 +57,65 @@ const displayVariants = computed(() => {
                                     class="product-col"
                                 >
                                     <div
-                                        class="product-card"
+                                        class="premium-product-card"
                                         :style="{ transitionDelay: `${0.05 * index}s` }"
                                     >
-                                        <div class="card-image-wrapper">
+                                        <div class="card-image-wrap">
+                                            <div class="premium-badges">
+                                                <div class="badge-featured">HOT</div>
+                                                <div v-if="variant.phanTramGiam > 0" class="badge-sale">
+                                                    -{{ variant.phanTramGiam }}%
+                                                </div>
+                                            </div>
+                                            
                                             <div
-                                                class="color-swatch"
+                                                class="premium-placeholder"
                                                 :style="{ backgroundColor: variant.maMauHex || '#2962FF' }"
                                                 v-if="!variant.hinhAnh"
                                             >
-                                                <span class="color-label">{{ variant.tenMauSac }}</span>
+                                                <v-icon size="40" color="white" style="opacity: 0.5;">mdi-shoe-sneaker</v-icon>
                                             </div>
-                                            <v-img
+                                            <img
                                                 v-else
                                                 :src="variant.hinhAnh"
-                                                class="product-image"
-                                                contain
-                                                loading="lazy"
-                                            ></v-img>
-                                            <div v-if="variant.phanTramGiam > 0" class="discount-badge">
-                                                -{{ formatPrice(variant.phanTramGiam) }}
+                                                class="premium-img"
+                                                :alt="variant.tenSanPham"
+                                            />
+                                            
+                                            <!-- Hover Actions -->
+                                            <div class="premium-hover-overlay">
+                                                <div class="action-buttons">
+                                                    <v-btn icon class="hover-btn eye-btn" size="40" :to="`/san-pham/${variant.idSanPham}`">
+                                                        <v-icon size="20">mdi-eye-outline</v-icon>
+                                                    </v-btn>
+                                                    <v-btn icon class="hover-btn cart-btn" size="40" :to="`/san-pham/${variant.idSanPham}`">
+                                                        <v-icon size="20">mdi-cart-outline</v-icon>
+                                                    </v-btn>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div class="card-body">
-                                            <div class="brand-name">{{ variant.tenThuongHieu }}</div>
-                                            <div class="product-name">{{ variant.tenSanPham }}</div>
-                                            <div class="variant-info">
-                                                <span class="color-name">{{ variant.tenMauSac }}</span>
-                                                <span class="size-name">Size {{ variant.tenKichThuoc }}</span>
+
+                                        <div class="card-info-wrap">
+                                            <div class="premium-brand">{{ variant.tenThuongHieu || 'AeroStride' }}</div>
+                                            <h3 class="premium-title">{{ variant.tenSanPham }}</h3>
+                                            
+                                            <div class="premium-price-row mt-2 mb-3">
+                                                <span class="price-main">{{ formatPrice(variant.giaBan) }}</span>
+                                                <span v-if="variant.phanTramGiam > 0" class="price-old">
+                                                    {{ formatPrice(variant.giaBan / (1 - variant.phanTramGiam / 100)) }}
+                                                </span>
                                             </div>
-                                            <div class="price-row">
-                                                <span class="current-price">{{ formatPrice(variant.giaBan) }}</span>
+                                            
+                                            <div class="premium-attributes mt-auto">
+                                                <div class="attr-pill" v-if="variant.tenMauSac">
+                                                    <span class="color-dot" :style="{ backgroundColor: variant.maMauHex || '#000' }"></span>
+                                                    {{ variant.tenMauSac }}
+                                                </div>
+                                                <div class="attr-pill" v-if="variant.tenKichThuoc">
+                                                    <v-icon size="12" class="mr-1" color="grey-darken-1">mdi-ruler</v-icon>
+                                                    {{ variant.tenKichThuoc }}
+                                                </div>
                                             </div>
-                                            <v-btn
-                                                variant="outlined"
-                                                color="blue-darken-4"
-                                                size="small"
-                                                rounded="pill"
-                                                block
-                                                class="mt-2 view-btn"
-                                                :to="`/san-pham/${variant.idSanPham}`"
-                                            >
-                                                Xem chi tiết
-                                            </v-btn>
                                         </div>
                                     </div>
                                 </v-col>
@@ -125,4 +141,256 @@ const displayVariants = computed(() => {
 </template>
 
 <style scoped lang="scss">
+.featured-section {
+    background-color: #f8fafc;
+    position: relative;
+    padding: 60px 0;
+}
+
+.bg-pattern {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.5;
+    z-index: 0;
+}
+
+.section-tag {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(41, 98, 255, 0.1);
+    color: #2962ff;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #1e293b;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.section-desc {
+    font-size: 1.1rem;
+    color: #64748b;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.premium-product-card {
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    overflow: hidden;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+
+    .active & {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    &:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        border-color: rgba(41, 98, 255, 0.3);
+
+        .premium-img {
+            transform: scale(1.08) rotate(-2deg);
+        }
+        .premium-hover-overlay {
+            opacity: 1;
+        }
+        .action-buttons {
+            transform: translateY(0);
+        }
+        .premium-title {
+            color: #2962ff;
+        }
+    }
+}
+
+.card-image-wrap {
+    position: relative;
+    height: 250px;
+    background: #f8fafc;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.premium-img {
+    width: 85%;
+    height: 85%;
+    object-fit: contain;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.15));
+}
+
+.premium-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.9;
+}
+
+.premium-badges {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.badge-featured, .badge-sale {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    backdrop-filter: blur(8px);
+}
+
+.badge-featured {
+    background: rgba(41, 98, 255, 0.9);
+    color: #fff;
+}
+
+.badge-sale {
+    background: rgba(211, 47, 47, 0.9);
+    color: #fff;
+}
+
+.premium-hover-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 3;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    transform: translateY(20px);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hover-btn {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    transition: all 0.3s ease !important;
+
+    &:hover {
+        background: #2962ff !important;
+        color: #ffffff !important;
+        transform: scale(1.1);
+    }
+}
+
+.card-info-wrap {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.premium-brand {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #2962ff;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.premium-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.3s ease;
+}
+
+.premium-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.price-main {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #1e293b;
+}
+
+.price-old {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-decoration: line-through;
+}
+
+.premium-attributes {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.attr-pill {
+    display: flex;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+}
+
+.color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 6px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+@media (max-width: 960px) {
+    .section-title { font-size: 1.8rem; }
+    .card-image-wrap { height: 180px; }
+    .premium-title { font-size: 0.9rem; }
+    .price-main { font-size: 1.1rem; }
+}
 </style>
