@@ -33,7 +33,7 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         Long denNgayMs = AccountUtils.parseDateToLong(denNgay != null ? denNgay.toString() : null, true);
 
         List<Object[]> stats = thongKeRepository.getOverviewStats(tuNgayMs, denNgayMs);
-        Object[] overviewRow = stats != null && !stats.isEmpty() ? stats.get(0) : new Object[6];
+        Object[] overviewRow = stats != null && !stats.isEmpty() ? stats.get(0) : new Object[10];
 
         BigDecimal tongDoanhThu = overviewRow[0] != null ? new BigDecimal(overviewRow[0].toString()) : BigDecimal.ZERO;
         Long tongDonHang = overviewRow[1] != null ? Long.parseLong(overviewRow[1].toString()) : 0L;
@@ -41,6 +41,10 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
         Long donChoXacNhan = overviewRow[3] != null ? Long.parseLong(overviewRow[3].toString()) : 0L;
         Long donDangGiao = overviewRow[4] != null ? Long.parseLong(overviewRow[4].toString()) : 0L;
         Long donDaHuy = overviewRow[5] != null ? Long.parseLong(overviewRow[5].toString()) : 0L;
+        Long donHoan = overviewRow[6] != null ? Long.parseLong(overviewRow[6].toString()) : 0L;
+        BigDecimal dtChoXacNhan = overviewRow[7] != null ? new BigDecimal(overviewRow[7].toString()) : BigDecimal.ZERO;
+        BigDecimal dtDangGiao = overviewRow[8] != null ? new BigDecimal(overviewRow[8].toString()) : BigDecimal.ZERO;
+        BigDecimal dtDaHuy = overviewRow[9] != null ? new BigDecimal(overviewRow[9].toString()) : BigDecimal.ZERO;
 
         List<Object[]> orderTypeStats = thongKeRepository.getOrderTypeStats(tuNgayMs, denNgayMs);
         Object[] orderTypeRow = orderTypeStats != null && !orderTypeStats.isEmpty() ? orderTypeStats.get(0) : new Object[4];
@@ -74,6 +78,25 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                     .revenue(row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO)
                     .build());
         }
+        int targetYear = denNgay != null ? denNgay.getYear() : (tuNgay != null ? tuNgay.getYear() : java.time.LocalDate.now().getYear());
+        Long startOfYearMs = AccountUtils.parseDateToLong(java.time.LocalDate.of(targetYear, 1, 1).toString(), false);
+        Long endOfYearMs = AccountUtils.parseDateToLong(java.time.LocalDate.of(targetYear, 12, 31).toString(), true);
+        List<Object[]> custRows = thongKeRepository.getCustomerPurchaseStats(startOfYearMs, endOfYearMs);
+        List<AdminThongKeResponse.KhachHangThongKe> topCustomers = new java.util.ArrayList<>();
+        for (Object[] row : custRows) {
+            BigDecimal customerTongChi = row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO;
+            Long customerTongSanPham = row[2] != null ? Long.parseLong(row[2].toString()) : 0L;
+            Long customerDonThanhCong = row[3] != null ? Long.parseLong(row[3].toString()) : 0L;
+            Long customerDonHoan = row[4] != null ? Long.parseLong(row[4].toString()) : 0L;
+
+            topCustomers.add(AdminThongKeResponse.KhachHangThongKe.builder()
+                    .tenKhachHang(row[0] != null ? row[0].toString() : "Khách lẻ")
+                    .tongChi(customerTongChi)
+                    .tongSanPham(customerTongSanPham)
+                    .donThanhCong(customerDonThanhCong)
+                    .donHoan(customerDonHoan)
+                    .build());
+        }
 
         BigDecimal giaTriTrungBinh = donHoanThanh > 0
                 ? tongDoanhThu.divide(BigDecimal.valueOf(donHoanThanh), 2, java.math.RoundingMode.HALF_UP)
@@ -86,6 +109,10 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                 .donHangChoXacNhan(donChoXacNhan != null ? donChoXacNhan : 0L)
                 .donHangDangGiao(donDangGiao != null ? donDangGiao : 0L)
                 .donHangDaHuy(donDaHuy != null ? donDaHuy : 0L)
+                .donHangHoan(donHoan != null ? donHoan : 0L)
+                .doanhThuChoXacNhan(dtChoXacNhan)
+                .doanhThuDangGiao(dtDangGiao)
+                .doanhThuDaHuy(dtDaHuy)
                 .tongKhachHang(tongKhachHang)
                 .tongSanPham(tongSanPham)
                 .doanhThuTaiQuay(doanhThuTaiQuay)
@@ -96,6 +123,7 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                 .sanPhamSapHet(0L)
                 .topSanPhamBanChay(topProducts)
                 .tyTrongTheoDanhMuc(categoryShares)
+                .topKhachHang(topCustomers)
                 .build();
     }
 

@@ -121,12 +121,14 @@
 .shoe-visual-wrapper-center {
     position: relative;
     transform-style: preserve-3d;
+    pointer-events: none;
 }
 .the-shoe {
     width: 500px;
     filter: drop-shadow(0 40px 80px rgba(0, 0, 0, 0.12));
     animation: shoe-hover 6s ease-in-out infinite;
     z-index: 5;
+    pointer-events: auto;
 }
 @keyframes shoe-hover {
     0%,
@@ -204,7 +206,8 @@
     top: 12%;
     left: 8%;
     text-align: left;
-    z-index: 20;
+    z-index: 40;
+    pointer-events: auto;
 }
 .tech-specs-fixed {
     position: absolute;

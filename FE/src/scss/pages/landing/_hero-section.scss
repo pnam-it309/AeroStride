@@ -63,13 +63,26 @@
 }
 
 .hero-title {
-    font-size: 5.5rem;
+    font-size: 5.625rem; /* Increased by 2px (88px to 90px) */
     line-height: 0.9;
     font-weight: 800;
     background: linear-gradient(135deg, #0c3866 0%, #1e40af 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -2px;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem; /* Increased by 2px (18px to 20px) */
+}
+
+.hero-price {
+    font-size: 1.625rem; /* Increased by 2px */
+    font-weight: 700;
+
+    span {
+        font-size: 1.625rem;
+    }
 }
 
 .hero-shoe-main {
@@ -139,7 +152,19 @@
 
 @media (max-width: 960px) {
     .hero-title {
-        font-size: 3rem;
+        font-size: 3.125rem; /* Increased by 2px */
+    }
+
+    .hero-subtitle {
+        font-size: 1.125rem; /* Increased by 2px */
+    }
+
+    .hero-price {
+        font-size: 1.375rem; /* Increased by 2px */
+
+        span {
+            font-size: 1.375rem;
+        }
     }
 
     .hero-shoe-main {
@@ -152,6 +177,7 @@
     color: #ffffff !important;
     border: none !important;
     font-weight: 700 !important;
+    font-size: 1.125rem !important; /* Increased font-size by ~2px */
     letter-spacing: 1px !important;
     box-shadow: 0 10px 25px -5px rgba(12, 56, 102, 0.45) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;

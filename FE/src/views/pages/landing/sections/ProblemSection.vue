@@ -79,7 +79,7 @@ const startAutoPlay = () => {
         if (autoPlayProgress.value >= 100) {
             nextCard();
         }
-    }, 80);
+    }, 100);
 };
 
 const stopAutoPlay = () => {
@@ -167,7 +167,7 @@ watch(
                 ></div>
             </div>
 
-            <v-container fluid class="pa-0 fill-height position-relative z-index-10">
+            <v-container fluid class="pa-0 fill-height position-relative z-10">
                 <v-row no-gutters class="fill-height align-center">
                     <v-col cols="12" class="position-relative">
                         <div class="shoe-focus-container">
@@ -180,32 +180,17 @@ watch(
                                     <v-btn
                                         variant="outlined"
                                         :color="currentShoe.color"
-                                        class="mt-4 px-8 py-4 font-weight-black explore-btn reveal-item delay-3"
-                                        rounded="lg"
+                                        class="mt-4 px-8 font-weight-black explore-btn reveal-item delay-3"
+                                        height="48"
+                                        rounded="pill"
+                                        :to="currentShoe.id ? `/product/${currentShoe.id}` : '/shoes'"
                                     >
-                                        KHAM PHA CHI TIET
+                                        KHÁM PHÁ CHI TIẾT
                                         <v-icon end>mdi-arrow-right</v-icon>
                                     </v-btn>
                                 </div>
 
-                                <div class="tech-specs-fixed reveal-container" :class="{ active: props.active }">
-                                    <div class="spec-group reveal-item delay-4" :style="{ borderColor: `${currentShoe.color}4d` }">
-                                        <div class="spec-item">
-                                            <span class="label">ENGINE</span>
-                                            <span class="val">{{ activeCard === 1 ? 'HYPER' : 'AIR' }} V{{ activeCard + 1 }}</span>
-                                        </div>
-                                        <div class="spec-divider"></div>
-                                        <div class="spec-item">
-                                            <span class="label">NEXT_SLIDE</span>
-                                            <div class="auto-progress-bar">
-                                                <div
-                                                    class="progress-fill"
-                                                    :style="{ width: autoPlayProgress + '%', background: currentShoe.color }"
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+
 
                                 <div class="shoe-visual-wrapper-center">
                                     <div class="micro-details">
@@ -216,19 +201,27 @@ watch(
                                             :style="{
                                                 animationDelay: `${idx * 0.2}s`,
                                                 top: `${15 + idx * 30}%`,
-                                                left: activeCard === 1 ? '115%' : '-25%'
+                                                left: activeCard === 1 ? '115%' : '-25%',
+                                                flexDirection: activeCard === 1 ? 'row' : 'row-reverse'
                                             }"
                                         >
                                             <div
                                                 class="node-line"
-                                                :style="{ background: currentShoe.color, height: '3px', opacity: 1 }"
+                                                :style="{ background: currentShoe.color, height: '2px', opacity: 0.6 }"
                                             ></div>
-                                            <div class="node-content">
-                                                <div class="node-text" :style="{ borderColor: currentShoe.color, borderWidth: '3px' }">
+                                            <div class="node-content" :style="{ textAlign: activeCard === 1 ? 'left' : 'right' }">
+                                                <div class="node-text" :style="{ 
+                                                    borderColor: currentShoe.color, 
+                                                    borderWidth: '2px',
+                                                    background: `${currentShoe.color}0a`,
+                                                    color: '#1e293b'
+                                                }">
                                                     {{ feat }}
                                                 </div>
-                                                <div class="node-hud" :style="{ color: currentShoe.color, fontWeight: '950' }">
-                                                    SYNC_VAL // {{ hudValues[idx] }}%
+                                                <div class="node-hud" :style="{ color: currentShoe.color, fontWeight: '800' }">
+                                                    <span v-if="idx === 0">ĐỘ BỀN VẬT LIỆU // {{ hudValues[0] }}%</span>
+                                                    <span v-else-if="idx === 1">HẤP THỤ XUNG LỰC // {{ hudValues[1] }}%</span>
+                                                    <span v-else>HIỆU SUẤT TỐI ƯU // {{ hudValues[2] }}%</span>
                                                 </div>
                                             </div>
                                         </div>

@@ -57,7 +57,7 @@ const formatPrice = (v) => {
                         <div class="section-header reveal-container mb-8" :class="{ active: props.active }">
                             <div class="d-flex align-center justify-space-between">
                                 <div>
-                                    <span class="section-tag reveal-item delay-1">SẢN PHẨM ĐẶC SẮC</span>
+                                    <span class="section-tag reveal-item delay-1">Sản phẩm đặc sắc</span>
                                     <h2 class="section-title reveal-item delay-2">Nổi Bật Tháng Này</h2>
                                 </div>
                                 <v-btn variant="text" color="blue-darken-3" class="reveal-item delay-2 see-all-btn" to="/shoes">
@@ -214,10 +214,10 @@ const formatPrice = (v) => {
 
 .banner-title {
     font-size: 1.3rem;
-    font-weight: 950;
+    font-weight: 700;
     color: #ffffff;
     margin-bottom: 6px;
-    letter-spacing: -0.3px;
+    letter-spacing: normal;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;

@@ -177,8 +177,21 @@ const translateGender = (gender) => {
                 <!-- Sidebar Filters -->
                 <transition name="sidebar-slide">
                     <v-col v-if="isFilterVisible" cols="12" md="2" class="filter-sidebar">
-                        <div class="filter-group mb-8">
-                            <h3 class="filter-main-label mb-4">Giày</h3>
+                        <div class="filter-group mb-8 d-flex align-center justify-space-between">
+                            <h3 class="filter-main-label mb-0">Giày</h3>
+                            <v-btn
+                                icon
+                                variant="text"
+                                density="comfortable"
+                                color="grey-darken-1"
+                                @click="
+                                    searchParams = { sortBy: 'newest' };
+                                    handleFilterChange();
+                                "
+                            >
+                                <v-icon size="20">mdi-filter-off-outline</v-icon>
+                                <v-tooltip activator="parent">Làm mới bộ lọc</v-tooltip>
+                            </v-btn>
                         </div>
                         <v-expansion-panels flat variant="accordion" bg-color="transparent">
                             <v-expansion-panel v-for="filter in filters" :key="filter.title" :title="filter.title" class="filter-panel bg-transparent">
@@ -200,16 +213,7 @@ const translateGender = (gender) => {
                                 </v-expansion-panel-text>
                             </v-expansion-panel>
                         </v-expansion-panels>
-                        <v-btn
-                            variant="text"
-                            color="grey"
-                            @click="
-                                searchParams = { sortBy: 'newest' };
-                                handleFilterChange();
-                            "
-                            class="mt-4 text-none"
-                            >Xóa tất cả</v-btn
-                        >
+
                     </v-col>
                 </transition>
 
@@ -348,13 +352,22 @@ const translateGender = (gender) => {
 /* Product Card Placeholder */
 .product-card-placeholder {
     cursor: pointer;
-    transition: transform 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 20px;
+    padding: 10px;
+    background: transparent;
+    border: 1px solid transparent;
+
     &:hover {
-        .image-box-placeholder {
-            transform: scale(1.02);
+        background: #f8fafc;
+        box-shadow: 0 12px 24px -10px rgba(30, 37, 124, 0.15);
+        transform: translateY(-6px);
+
+        .image-box-placeholder :deep(.v-img__img) {
+            transform: scale(1.08);
         }
         .product-name {
-            color: #2962ff;
+            color: #2563eb;
         }
     }
 }
@@ -369,10 +382,14 @@ const translateGender = (gender) => {
     justify-content: center;
     position: relative;
     overflow: hidden;
-    transition: transform 0.3s ease;
+
+    :deep(.v-img__img) {
+        transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 }
 
 .product-info {
+    padding: 8px 4px 0;
     .promo-label {
         color: #ff3d00;
         font-size: 0.85rem;
@@ -383,8 +400,9 @@ const translateGender = (gender) => {
     .product-name {
         font-size: 1rem;
         font-weight: 700;
-        color: #1e293b;
+        color: #1e257c;
         margin-bottom: 2px;
+        transition: color 0.3s ease;
     }
     .product-category {
         color: #757575;
@@ -395,7 +413,7 @@ const translateGender = (gender) => {
     .product-price {
         font-size: 1.05rem;
         font-weight: 800;
-        color: #111;
+        color: #1e257c;
     }
 }
 

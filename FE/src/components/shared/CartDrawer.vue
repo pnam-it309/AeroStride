@@ -107,7 +107,7 @@ const handleCheckout = () => {
                 <h3 class="text-h6 font-weight-black d-flex align-center">
                     <v-icon class="mr-2" size="22" color="black">mdi-bag-outline</v-icon>
                     Giỏ hàng
-                    <v-chip size="small" color="black" variant="flat" class="ml-2 font-weight-bold">{{ cartStore.cartCount }}</v-chip>
+                    <span class="cart-badge-count ml-2">{{ cartStore.cartCount }}</span>
                 </h3>
                 <v-btn icon variant="text" size="small" @click="cartStore.closeDrawer()" class="close-btn">
                     <v-icon>mdi-close</v-icon>
@@ -203,7 +203,7 @@ const handleCheckout = () => {
                                             </v-btn>
                                         </div>
                                         <div class="d-flex align-center gap-2">
-                                            <span class="text-body-2 font-weight-black text-black">{{ formatPrice(item.giaBan * item.soLuong) }}</span>
+                                            <span class="text-body-2 font-weight-black item-total-price">{{ formatPrice(item.giaBan * item.soLuong) }}</span>
                                             <v-btn
                                                 icon
                                                 variant="text"
@@ -248,7 +248,7 @@ const handleCheckout = () => {
                     <div class="price-summary mb-4">
                         <div class="d-flex justify-space-between align-center mb-2">
                             <span class="text-body-2 text-grey-darken-1">Tạm tính</span>
-                            <span class="text-body-1 font-weight-bold">{{ formatPrice(cartStore.cartTotal) }}</span>
+                            <span class="text-body-1 font-weight-bold total-summary-price">{{ formatPrice(cartStore.cartTotal) }}</span>
                         </div>
                         <div class="d-flex justify-space-between align-center mb-2" v-if="authStore.isLoggedIn && shippingFee === 0">
                             <span class="text-body-2 text-grey-darken-1">Phí vận chuyển</span>
@@ -257,16 +257,16 @@ const handleCheckout = () => {
                         <v-divider class="my-2" />
                         <div class="d-flex justify-space-between align-center">
                             <span class="text-body-1 font-weight-bold text-black">Tổng cộng</span>
-                            <span class="text-h6 font-weight-black text-black">{{ formatPrice(cartStore.cartTotal + (shippingFee || 0)) }}</span>
+                            <span class="text-h6 font-weight-black total-summary-price">{{ formatPrice(cartStore.cartTotal + (shippingFee || 0)) }}</span>
                         </div>
                     </div>
 
                     <v-btn
                         block
                         size="large"
-                        color="black"
+                        variant="flat"
                         rounded="pill"
-                        class="font-weight-bold text-none checkout-btn elevation-2 mb-3"
+                        class="font-weight-bold text-none checkout-btn-custom mb-3"
                         @click="handleCheckout"
                     >
                         <v-icon class="mr-2" size="20">mdi-lock-outline</v-icon>
@@ -275,9 +275,9 @@ const handleCheckout = () => {
                     <v-btn
                         block
                         size="large"
-                        variant="outlined"
+                        variant="flat"
                         rounded="pill"
-                        class="font-weight-bold text-none"
+                        class="font-weight-bold text-none continue-btn-custom"
                         @click="cartStore.closeDrawer(); router.push(PATH.SHOES)"
                     >
                         Tiếp tục mua sắm
@@ -315,6 +315,21 @@ const handleCheckout = () => {
         display: flex;
         flex-direction: column;
     }
+}
+
+.cart-badge-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ff1744;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    padding: 0 6px;
+    line-height: 1;
 }
 
 .cart-header {
@@ -374,7 +389,7 @@ const handleCheckout = () => {
         position: absolute;
         top: -6px;
         right: -6px;
-        background: #000;
+        background: #d32f2f;
         color: #fff;
         font-size: 0.65rem;
         font-weight: 700;
@@ -458,16 +473,42 @@ const handleCheckout = () => {
     padding: 16px;
 }
 
-.checkout-btn {
-    letter-spacing: 0.3px;
-    font-size: 0.95rem;
+.checkout-btn-custom {
+    background-color: #e8f5e9 !important;
+    border: 1.5px solid #4caf50 !important;
+    color: #1b5e20 !important;
     height: 52px !important;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+        background-color: #c8e6c9 !important;
+        border-color: #388e3c !important;
+        color: #1b5e20 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(27, 94, 32, 0.15);
     }
+}
+
+.continue-btn-custom {
+    background-color: #f0f1ff !important;
+    border: 1.5px solid #1e257c !important;
+    color: #1e257c !important;
+    height: 52px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+        background-color: #e2e4ff !important;
+        border-color: #1a206a !important;
+        color: #1a206a !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(30, 37, 124, 0.15);
+    }
+}
+
+.cart-item-price,
+.item-total-price,
+.total-summary-price {
+    color: #1e257c !important;
 }
 
 .empty-icon-wrap {

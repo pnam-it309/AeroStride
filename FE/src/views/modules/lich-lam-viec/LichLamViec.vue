@@ -459,34 +459,34 @@ const handleEditSchedule = (s) => {
     showAddDialog.value = true;
 };
 
-const handleDeleteSchedule = async (schedule) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa lịch làm việc của nhân viên "${schedule.nhanVien}" vào ngày ${schedule.ngay} không?`)) {
-        return;
-    }
-    loading.value = true;
-    try {
-        const res = await apiService.delete(`${API_LICH_LAM_VIEC.BASE}/schedules/${schedule.id}`);
-        if (res.data.success) {
-            alert('Xóa lịch thành công!');
-            loadData();
-        }
-    } catch (error) {
-        console.error('Delete schedule error:', error);
-        alert('Có lỗi xảy ra khi xóa lịch làm việc!');
-    } finally {
-        loading.value = false;
-    }
-};
+// const handleDeleteSchedule = async (schedule) => {
+//     if (!confirm(`Bạn có chắc chắn muốn xóa lịch làm việc của nhân viên "${schedule.nhanVien}" vào ngày ${schedule.ngay} không?`)) {
+//         return;
+//     }
+//     loading.value = true;
+//     try {
+//         const res = await apiService.delete(`${API_LICH_LAM_VIEC.BASE}/schedules/${schedule.id}`);
+//         if (res.data.success) {
+//             alert('Xóa lịch thành công!');
+//             loadData();
+//         }
+//     } catch (error) {
+//         console.error('Delete schedule error:', error);
+//         alert('Có lỗi xảy ra khi xóa lịch làm việc!');
+//     } finally {
+//         loading.value = false;
+//     }
+// };
 
-const handleAddForCell = (employeeId, dateStr) => {
-    isEditSchedule.value = false;
-    editScheduleId.value = null;
-    addForm.value.nhanVien = [employeeId];
-    addForm.value.ca = [];
-    addForm.value.ngay = dateStr;
-    addForm.value.trangThai = 'CHO_XAC_NHAN';
-    showAddDialog.value = true;
-};
+// const handleAddForCell = (employeeId, dateStr) => {
+//     isEditSchedule.value = false;
+//     editScheduleId.value = null;
+//     addForm.value.nhanVien = [employeeId];
+//     addForm.value.ca = [];
+//     addForm.value.ngay = dateStr;
+//     addForm.value.trangThai = 'CHO_XAC_NHAN';
+//     showAddDialog.value = true;
+// };
 
 // Format date range or month or day title label
 const periodLabel = computed(() => {

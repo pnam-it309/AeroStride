@@ -115,25 +115,25 @@ onMounted(() => {
             </section>
 
             <!-- Stats -->
-            <section class="stats-section py-16 bg-grey-lighten-4 position-relative">
+            <section class="stats-section py-16 position-relative">
                 <v-container>
                     <v-row class="text-center">
                         <v-col cols="12" sm="4">
-                            <div class="stat-item hover-glow">
-                                <div class="text-h1 font-weight-black text-primary mb-2 stat-number">50+</div>
-                                <div class="text-subtitle-1 font-weight-bold text-grey-darken-2 uppercase tracking-wide">Chi Nhánh Toàn Quốc</div>
+                            <div class="stat-card">
+                                <div class="stat-number">50+</div>
+                                <div class="stat-label">Chi Nhánh Toàn Quốc</div>
                             </div>
                         </v-col>
                         <v-col cols="12" sm="4">
-                            <div class="stat-item hover-glow delay-1">
-                                <div class="text-h1 font-weight-black text-primary mb-2 stat-number">1M+</div>
-                                <div class="text-subtitle-1 font-weight-bold text-grey-darken-2 uppercase tracking-wide">Khách Hàng Tin Tưởng</div>
+                            <div class="stat-card">
+                                <div class="stat-number">1M+</div>
+                                <div class="stat-label">Khách Hàng Tin Tưởng</div>
                             </div>
                         </v-col>
                         <v-col cols="12" sm="4">
-                            <div class="stat-item hover-glow delay-2">
-                                <div class="text-h1 font-weight-black text-primary mb-2 stat-number">100%</div>
-                                <div class="text-subtitle-1 font-weight-bold text-grey-darken-2 uppercase tracking-wide">Sản Phẩm Chính Hãng</div>
+                            <div class="stat-card">
+                                <div class="stat-number">100%</div>
+                                <div class="stat-label">Sản Phẩm Chính Hãng</div>
                             </div>
                         </v-col>
                     </v-row>
@@ -322,6 +322,10 @@ export default {
 }
 
 /* Core Values */
+.core-values {
+    background-color: #0f172a !important; /* Elegant slate-900 dark background */
+}
+
 .value-card {
     padding: 40px 30px;
     background: rgba(255,255,255,0.03);
@@ -356,22 +360,67 @@ export default {
 }
 
 /* Stats */
-.stat-item {
-    padding: 30px;
-    transition: all 0.3s ease;
+.stats-section {
+    background-color: #f8fafc !important; /* Soft light slate background */
 }
+
+.stat-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    padding: 40px 32px;
+    height: 100%;
+    box-shadow: 0 10px 25px -5px rgba(30, 37, 124, 0.04), 0 8px 10px -6px rgba(30, 37, 124, 0.04);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #1e257c, #2563eb);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    &:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px -15px rgba(30, 37, 124, 0.12);
+        border-color: rgba(30, 37, 124, 0.15);
+
+        &::before {
+            opacity: 1;
+        }
+
+        .stat-number {
+            background: linear-gradient(135deg, #1e257c 0%, #2563eb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    }
+}
+
 .stat-number {
-    font-size: 4rem;
-    background: linear-gradient(45deg, #111, #444);
+    font-size: 3.5rem;
+    line-height: 1;
+    font-weight: 900;
+    background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    transition: all 0.3s ease;
+    transition: all 0.4s ease;
 }
-.hover-glow:hover .stat-number {
-    background: linear-gradient(45deg, #2962ff, #ff416c);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    transform: scale(1.1);
+
+.stat-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #475569;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 12px;
 }
 
 /* Founder */
