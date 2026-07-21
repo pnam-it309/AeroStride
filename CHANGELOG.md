@@ -1,3 +1,10 @@
+## [1.27.5](https://github.com/pnam-it309/AeroStride/compare/v1.27.4...v1.27.5) (2026-07-21)
+
+
+### Bug Fixes
+
+* bo sung bieu do, sua gg thong ke, ban hang online ([af6ce7d](https://github.com/pnam-it309/AeroStride/commit/af6ce7d234b52dd2c633f104a0eba74b37c986ba))
+
 ## [1.27.4](https://github.com/pnam-it309/AeroStride/compare/v1.27.3...v1.27.4) (2026-07-15)
 
 
