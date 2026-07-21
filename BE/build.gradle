@@ -41,7 +41,7 @@ dependencies {
     testImplementation springAiBom
 
     testImplementation 'org.seleniumhq.selenium:selenium-java:4.33.0'
-    testImplementation 'io.github.bonigarcia:webdrivermanager:6.1.0'
+    testImplementation 'io.github.bonigarcia:webdrivermanager:6.3.4'
 
     // Spring AI & MCP
     implementation 'org.springframework.ai:spring-ai-starter-model-openai'
