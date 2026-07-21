@@ -29,6 +29,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -77,9 +78,14 @@ public class SecurityConfig {
         final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         
-        // Use configured origin or fallback to a safe pattern
+        // Use configured origin or fallback to a safe pattern.
+        // Comma-separated so dev can serve several front-ends at once (the Vite
+        // app and the Expo web build listen on different ports).
         if (org.springframework.util.StringUtils.hasText(ALLOWED_ORIGIN)) {
-            config.setAllowedOrigins(List.of(ALLOWED_ORIGIN));
+            config.setAllowedOrigins(Arrays.stream(ALLOWED_ORIGIN.split(","))
+                    .map(String::trim)
+                    .filter(origin -> !origin.isEmpty())
+                    .toList());
         } else {
             config.addAllowedOriginPattern("*");
         }

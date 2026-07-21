@@ -57,7 +57,7 @@ dependencies {
     // Security test
     testImplementation 'org.springframework.security:spring-security-test'
 
-    // developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -131,6 +131,18 @@ jacocoTestReport {
         csv.required = false
         html.required = true
         html.outputLocation = layout.buildDirectory.dir('reports/jacocoHtml')
+    }
+}
+
+// bootRun forks its own JVM, so JAVA_OPTS (used only by the production
+// entrypoint) does not reach it. In Docker the container memory limit has to be
+// split between the Gradle daemons and this JVM, so the heap is set explicitly
+// via BOOT_RUN_JVM_ARGS from docker/.env. Empty outside Docker -> IDE/local runs
+// keep the JVM defaults.
+tasks.named('bootRun') {
+    def extraJvmArgs = System.getenv('BOOT_RUN_JVM_ARGS')
+    if (extraJvmArgs) {
+        jvmArgs = extraJvmArgs.tokenize(' ')
     }
 }
 

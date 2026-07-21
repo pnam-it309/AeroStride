@@ -29,8 +29,12 @@ EXPOSE ${BE_PORT}
 # settings at runtime using -Dorg.gradle.* system properties (env-driven).
 ENV GRADLE_OPTS=${GRADLE_OPTS}
 
-# Development Entrypoint: Keep Gradle daemon running for faster hot reload
-ENTRYPOINT ["sh", "-c", "./gradlew bootRun"]
+# Development Entrypoint: bootRun plus a watcher that recompiles src/ into
+# build/ so spring-boot-devtools can hot-reload. See the script for why the
+# watcher polls instead of using `gradle --continuous`.
+COPY docker/be-dev-entrypoint.sh /usr/local/bin/be-dev-entrypoint.sh
+RUN chmod +x /usr/local/bin/be-dev-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/be-dev-entrypoint.sh"]
 
 # Stage 2: Builder stage (Production)
 FROM build AS builder

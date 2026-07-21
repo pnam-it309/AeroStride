@@ -125,8 +125,12 @@ services:
     env_file:
       - .env
     depends_on:
+      # service_started, not service_healthy: the backend healthcheck allows a
+      # 120s start_period, and waiting on it meant frontend-only edits could not
+      # be seen until the whole backend had booted. Vite tolerates a 502 until
+      # the backend is up.
       backend:
-        condition: service_healthy
+        condition: service_started
     deploy:
       resources:
         limits:
@@ -135,6 +139,42 @@ services:
         reservations:
           cpus: ${FRONTEND_CPU_RESERVATION}
           memory: ${FRONTEND_MEMORY_RESERVATION}
+
+  mobile:
+    image: ${MOBILE_IMAGE}
+    build:
+      context: ..
+      dockerfile: docker/MOBILE.Dockerfile
+      target: ${DOCKER_MOBILE_TARGET}
+      args:
+        - MOBILE_PORT=${MOBILE_INTERNAL_PORT}
+    container_name: aerostride-mobile
+    <<: *common
+    env_file:
+      - .env
+    environment:
+      - MOBILE_PORT=${MOBILE_INTERNAL_PORT}
+      # The browser runs on the host, so it reaches the backend through the
+      # published port, not through the compose network.
+      - EXPO_PUBLIC_API_URL=${EXPO_PUBLIC_API_URL}
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    ports:
+      - "${MOBILE_PORT_HOST}:${MOBILE_INTERNAL_PORT}"
+    volumes:
+      - ${DOCKER_MOBILE_VOL_APP}
+      - mobile-node-modules:/app/node_modules
+      # Metro's cache is thousands of small files; keep it off the bind mount.
+      - mobile-metro-cache:/app/.expo
+    depends_on:
+      backend:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: ${MOBILE_MEMORY_LIMIT}
+        reservations:
+          memory: ${MOBILE_MEMORY_RESERVATION}
 
   mcp-server:
     build:
@@ -208,4 +248,6 @@ volumes:
   be-build:
   be-gradle:
   fe-node-modules:
+  mobile-node-modules:
+  mobile-metro-cache:
   mysql-data:
