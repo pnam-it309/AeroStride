@@ -589,13 +589,15 @@ const dobRules = [
 
         <!-- Action Header -->
         <div class="d-flex align-center justify-space-between mb-8 mt-4">
-            <div class="d-flex align-center gap-4">
-                <v-btn icon variant="flat" @click="goBack" class="btn-back-header">
-                    <ArrowLeftIcon size="20" />
+            <div class="d-flex align-center ga-4">
+                <v-btn icon variant="flat" color="white" class="mr-3 border elevation-1 rounded-lg" size="36"
+                    style="height: 36px !important; width: 36px !important; min-height: 36px !important"
+                    @click="goBack">
+                    <v-icon size="18" color="slate-700">mdi-arrow-left</v-icon>
                 </v-btn>
             </div>
-            <div class="d-flex gap-3">
-                <v-btn color="primary" variant="flat" class="add-btn-primary text-none px-8 rounded-xl h-11 elevation-4"
+            <div class="d-flex ga-3">
+                <v-btn color="primary" variant="flat" class="add-btn-primary text-none px-8 rounded-xl elevation-4"
                     style="font-size: 16px !important; font-weight: 600 !important" :loading="saving"
                     @click="handleSave">
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
@@ -766,12 +768,12 @@ const dobRules = [
                             <div v-else-if="listDiaChi.length > 0" class="address-list-scrollable custom-scrollbar pt-1"
                                 style="max-height: 400px; overflow-y: auto; padding-right: 8px; margin-right: -8px;">
                                 <div v-for="addr in listDiaChi" :key="addr.id"
-                                    class="mb-4 pa-5 border rounded-xl d-flex align-center gap-4 bg-white shadow-sm hover-addr-card transition-all">
+                                    class="mb-4 pa-5 border rounded-xl d-flex align-center ga-4 bg-white elevation-1 hover-addr-card transition-all">
                                     <v-avatar color="primary" class="mr-2 elevation-2" size="36">
                                         <v-icon color="white" size="18">mdi-map-marker</v-icon>
                                     </v-avatar>
                                     <div class="flex-grow-1">
-                                        <div class="d-flex align-center gap-2 mb-1">
+                                        <div class="d-flex align-center ga-2 mb-1">
                                             <span class="font-weight-black text-slate-800">{{ addr.tenNguoiNhan
                                                 }}</span>
                                             <span
@@ -787,7 +789,7 @@ const dobRules = [
                                             }}
                                         </div>
                                     </div>
-                                    <div class="d-flex align-center gap-1" v-if="!isDetailView">
+                                    <div class="d-flex align-center ga-1" v-if="!isDetailView">
                                         <v-btn icon variant="text" size="small" color="primary"
                                             @click="openAddrDialog(addr)" class="action-icon-btn">
                                             <EditIcon size="18" />
@@ -829,7 +831,7 @@ const dobRules = [
 
                     <!-- Security -->
                     <v-card
-                        class="filter-card elevation-0 bg-primary-lighten-5 border-primary-lighten-4 flex-grow-1 d-flex flex-column justify-center mb-0">
+                        class="filter-card elevation-0 bg-lightprimary border-thin border-primary-subtle flex-grow-1 d-flex flex-column justify-center mb-0">
                         <v-card-text class="pa-8">
                             <div class="d-flex align-center mb-4">
                                 <v-icon color="primary" size="24" class="mr-3">mdi-shield-check</v-icon>

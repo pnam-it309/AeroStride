@@ -503,11 +503,11 @@ const skipRating = () => {
 
         <!-- Chat Window -->
         <transition name="chat-slide">
-            <div v-if="isOpen" class="chat-window shadow-xl">
+            <div v-if="isOpen" class="chat-window elevation-8">
                 <!-- Header -->
                 <div class="chat-header">
                     <div class="header-content">
-                        <v-avatar size="34" class="header-avatar shadow-sm">
+                        <v-avatar size="34" class="header-avatar elevation-1">
                             <img
                                 src="@/assets/images/logos/logoclient.jpg"
                                 alt="AeroStride"

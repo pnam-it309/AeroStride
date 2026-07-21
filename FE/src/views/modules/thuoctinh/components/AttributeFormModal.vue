@@ -51,8 +51,8 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
 
 <template>
     <v-dialog :model-value="show" @update:model-value="emit('update:show', $event)" max-width="500" persistent>
-        <v-card class="attribute-popover-card rounded-xl border-0 shadow-2xl overflow-hidden">
-            <div class="px-6 py-4 border-b bg-slate-50/80 d-flex align-center justify-space-between">
+        <v-card class="attribute-popover-card rounded-xl border-0 elevation-12 overflow-hidden">
+            <div class="px-6 py-4 border-b bg-slate-50-80 d-flex align-center justify-space-between">
                 <h3 class="text-subtitle-1 font-weight-bold text-slate-900 mb-0">
                     {{ headerTitle }}
                 </h3>
@@ -82,11 +82,11 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                             <!-- Color Specific -->
                             <div v-if="selectedTab === 'colors'" class="form-group mb-4">
                                 <label class="popover-label">Mã màu (Hex)</label>
-                                <div class="d-flex align-center gap-2">
+                                <div class="d-flex align-center ga-2">
                                     <v-text-field :model-value="form.maMauHex"
                                         @update:model-value="updateFormField('maMauHex', $event)" variant="outlined"
                                         density="compact" hide-details class="modern-input flex-grow-1" maxlength="250"></v-text-field>
-                                    <div class="color-preview-wrapper shadow-sm">
+                                    <div class="color-preview-wrapper elevation-1">
                                         <input type="color" :value="form.maMauHex"
                                             @input="updateFormField('maMauHex', $event.target.value)"
                                             class="color-picker-input-hidden" />
@@ -117,9 +117,9 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                 </v-form>
             </v-card-text>
 
-            <div class="px-6 py-4 bg-slate-50 border-t d-flex justify-end gap-2">
+            <div class="px-6 py-4 bg-slate-50 border-t d-flex justify-end ga-2">
                 <v-btn variant="text" color="slate-600" class="text-none px-4" @click="closeModal"> Hủy </v-btn>
-                <v-btn color="primary" variant="flat" class="text-none px-6 shadow-sm" @click="handleSave"
+                <v-btn color="primary" variant="flat" class="text-none px-6 elevation-1" @click="handleSave"
                     :disabled="!form?.ten">
                     <template #prepend>
                         <DeviceFloppyIcon size="16" />

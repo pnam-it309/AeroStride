@@ -70,7 +70,7 @@ const getCreatedAt = (item) => item?.ngayTao ?? item?.createdAt ?? item?.ngay_ta
                         <div class="text-slate-600 text-truncate" :title="getItemName(item)">{{ getItemName(item) }}</div>
                     </td>
                     <td class="data-cell" v-if="tab === 'colors'">
-                        <div class="d-flex align-center gap-2">
+                        <div class="d-flex align-center ga-2">
                             <div class="color-preview-circle-small" :style="{ backgroundColor: item.maMauHex || '#cccccc' }"></div>
                             <span class="text-slate-600">{{ item.maMauHex || '--' }}</span>
                         </div>

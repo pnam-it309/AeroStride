@@ -56,7 +56,7 @@
             <v-btn icon variant="text" size="small" @click="prevMonth">
               <v-icon>mdi-chevron-left</v-icon>
             </v-btn>
-            <div class="d-flex gap-2 align-center">
+            <div class="d-flex ga-2 align-center">
               <select v-model="currentMonth" class="custom-select font-weight-bold text-body-1">
                 <option v-for="m in monthOptions" :key="m.value" :value="m.value">{{ m.title }}</option>
               </select>
@@ -86,7 +86,7 @@
           <template v-if="enableTimePicker">
             <v-divider class="my-4" />
             <div class="time-picker-section">
-              <div v-if="range" class="d-flex gap-4">
+              <div v-if="range" class="d-flex ga-4">
                 <div class="flex-grow-1">
                   <label class="text-caption text-grey font-weight-bold mb-1 d-block">Từ</label>
                   <v-text-field
@@ -122,7 +122,7 @@
           </template>
         </v-card-text>
 
-        <v-card-actions class="pa-4 pt-0 d-flex justify-end gap-3">
+        <v-card-actions class="pa-4 pt-0 d-flex justify-end ga-3">
           <v-btn variant="outlined" rounded="pill" class="font-weight-bold text-none" @click="open = false">
             Hủy
           </v-btn>

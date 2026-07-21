@@ -11,7 +11,7 @@ const emit = defineEmits(['refresh', 'search']);
 </script>
 
 <template>
-    <v-card class="filter-card mb-2 shadow-none" elevation="0">
+    <v-card class="filter-card mb-2 elevation-0" elevation="0">
         <v-card-text class="pa-4">
             <div v-if="title" class="filter-header d-flex align-center mb-3">
                 <v-icon color="#000000" class="mr-2 filter-main-icon">mdi-filter-variant</v-icon>

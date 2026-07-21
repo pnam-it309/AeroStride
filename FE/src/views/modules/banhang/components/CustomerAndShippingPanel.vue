@@ -3,8 +3,8 @@
     <!-- Khách hàng Card -->
     <v-card class="pos-card pa-4">
         <!-- Header Row: Title & Search Field Side-by-Side -->
-        <div class="d-flex justify-space-between align-center border-b pb-2 mb-3 gap-3">
-            <div class="d-flex align-center gap-2 flex-shrink-0">
+        <div class="d-flex justify-space-between align-center border-b pb-2 mb-3 ga-3">
+            <div class="d-flex align-center ga-2 flex-shrink-0">
                 <span class="font-weight-semibold" style="font-size: 14px !important; color: #2b2a2a !important;">Khách hàng</span>
                 <v-chip v-if="order?.idKhachHang" color="blue-lighten-4"
                     class="text-blue-darken-4 font-weight-bold" size="x-small" variant="flat"
@@ -14,7 +14,7 @@
             </div>
 
             <!-- Customer Search Field & Clear Button -->
-            <div class="position-relative flex-grow-1 d-flex align-center gap-2" style="max-width: 260px;">
+            <div class="position-relative flex-grow-1 d-flex align-center ga-2" style="max-width: 260px;">
                 <v-text-field v-model="customerSearch"
                     placeholder="Tìm khách hàng (SĐT, Tên...)" variant="outlined"
                     density="compact" hide-details prepend-inner-icon="mdi-magnify"
@@ -32,7 +32,7 @@
                     class="suggestion-popover overflow-y-auto w-100"
                     style="max-height: 250px; z-index: 100; top: calc(100% + 4px);"
                     v-click-outside="() => showCustomerSuggestions = false">
-                    <div v-if="customerResults.length > 0" class="pa-1 d-flex flex-column gap-1">
+                    <div v-if="customerResults.length > 0" class="pa-1 d-flex flex-column ga-1">
                         <div v-for="c in customerResults" :key="c.id"
                             @click="onSelectSuggestedCustomer(c)"
                             class="suggestion-item d-flex flex-column px-3 py-2 cursor-pointer transition-all border-b"
@@ -44,12 +44,12 @@
                             <span class="text-slate-500 text-caption">{{ c.email || 'Không có email' }}</span>
                         </div>
                     </div>
-                    <div v-else class="pa-1 d-flex flex-column gap-1">
+                    <div v-else class="pa-1 d-flex flex-column ga-1">
                         <div class="pa-2 text-center text-slate-400 text-caption border-b">
                             Không tìm thấy khách hàng
                         </div>
                         <div @click="quickCreateCustomer"
-                            class="suggestion-item d-flex align-center gap-2 px-3 py-2.5 cursor-pointer transition-all text-primary font-weight-medium"
+                            class="suggestion-item d-flex align-center ga-2 px-3 py-3 cursor-pointer transition-all text-primary font-weight-medium"
                             style="font-size: 13px;">
                             <v-icon size="16">mdi-plus-circle-outline</v-icon>
                             <span>Thêm nhanh: "{{ customerSearch }}"</span>
@@ -60,14 +60,14 @@
         </div>
 
         <!-- Body Section: Input fields always visible -->
-        <div class="d-flex flex-column gap-3">
+        <div class="d-flex flex-column ga-3">
             <!-- Row 1: Khách hàng Input (Tên khách hàng) -->
             <v-text-field v-model="customerForm.ten" placeholder="Khách hàng" variant="outlined"
                 density="compact" hide-details autocomplete="off"
                 class="dim-input-field w-100" @input="emitFormChange" />
 
             <!-- Row 2: Số điện thoại and Địa chỉ email side-by-side -->
-            <div class="d-flex gap-3">
+            <div class="d-flex ga-3">
                 <v-text-field v-model="customerForm.sdt" placeholder="Số điện thoại" variant="outlined"
                     density="compact" hide-details autocomplete="off"
                     class="dim-input-field flex-grow-1" @input="emitFormChange" />
@@ -83,8 +83,8 @@
         <div v-if="isGiaoHang" class="shipping-wrapper">
             <v-card class="pos-card pa-4">
                 <div class="font-weight-bold text-slate-800 mb-3" style="font-size: 14px !important">Thông tin nhận hàng</div>
-                <div class="d-flex flex-column gap-4">
-                    <div class="d-flex gap-3">
+                <div class="d-flex flex-column ga-4">
+                    <div class="d-flex ga-3">
                         <v-text-field v-model="recipientName" placeholder="Tên người nhận"
                             variant="outlined" density="compact" hide-details autocomplete="off"
                             class="dim-input-field flex-grow-1" @input="emitShippingChange" />
@@ -99,7 +99,7 @@
                         variant="outlined" density="compact" hide-details autocomplete="off"
                         class="dim-input-field w-100" @input="emitShippingChange" />
 
-                    <div class="d-flex gap-3">
+                    <div class="d-flex ga-3">
                         <v-select v-model="recipientProvince" :items="provincesShip" item-title="name"
                             item-value="code" placeholder="Tỉnh/Thành phố" density="compact"
                             variant="outlined" hide-details class="dim-select-field flex-grow-1"

@@ -1893,13 +1893,15 @@ const handleSave = async () => {
         ]" />
 
         <div class="d-flex align-center justify-space-between mb-8 mt-4 header-actions">
-            <div class="d-flex align-center gap-4">
-                <v-btn icon variant="flat" @click="router.push(PATH.SAN_PHAM)" class="btn-back-header">
-                    <ArrowLeftIcon size="20" />
+            <div class="d-flex align-center ga-4">
+                <v-btn icon variant="flat" color="white" class="mr-3 border elevation-1 rounded-lg" size="36"
+                    style="height: 36px !important; width: 36px !important; min-height: 36px !important"
+                    @click="router.push(PATH.SAN_PHAM)">
+                    <v-icon size="18" color="slate-700">mdi-arrow-left</v-icon>
                     <v-tooltip activator="parent" location="top" text="Quay lại danh sách sản phẩm" />
                 </v-btn>
             </div>
-            <div class="d-flex align-center gap-3 header-actions__buttons">
+            <div class="d-flex align-center ga-3 header-actions__buttons">
                 <v-btn v-if="isEditMode" variant="outlined" color="primary" class="text-none px-6"
                     style="border-radius: 12px !important; height: 44px !important; font-size: 13px !important; font-weight: 600 !important;"
                     @click="router.push({ name: 'BienTheSanPham', query: { productId: route.params.id } })">
@@ -2111,7 +2113,7 @@ const handleSave = async () => {
                         <div class="mt-2 flex-grow-1">
                             <!-- MÀU SẮC -->
                             <div class="field-label mb-3">Màu sắc <span class="text-error">*</span></div>
-                            <div class="d-flex flex-wrap gap-4 mb-8">
+                            <div class="d-flex flex-wrap ga-4 mb-8">
                                 <div v-for="c in colors.filter(x => selectedColors.includes(x.id))" :key="c.id"
                                     class="text-center cursor-pointer" @click="toggleColor(c.id)">
                                     <div class="color-circle mx-auto"
@@ -2133,7 +2135,7 @@ const handleSave = async () => {
                                             <div class="text-caption mt-1 text-grey-darken-1">Thêm</div>
                                         </div>
                                     </template>
-                                    <v-card class="rounded-xl pa-4 shadow-lg border">
+                                    <v-card class="rounded-xl pa-4 elevation-4 border">
                                         <div class="d-flex justify-space-between align-center mb-4">
                                             <span class="text-subtitle-1 font-weight-bold">Chọn màu sắc</span>
                                             <v-btn icon="mdi-close" variant="text" size="small"
@@ -2144,7 +2146,7 @@ const handleSave = async () => {
                                             hide-details class="mb-4 bg-slate-50"></v-text-field>
 
                                         <div class="text-caption font-weight-bold text-grey mb-3">MÀU PHỔ BIẾN</div>
-                                        <div class="d-flex flex-wrap gap-3 mb-6"
+                                        <div class="d-flex flex-wrap ga-3 mb-6"
                                             style="max-height: 150px; overflow-y: auto;">
                                             <div v-for="c in filteredColors" :key="c.id"
                                                 class="text-center cursor-pointer" @click="toggleColor(c.id)">
@@ -2162,7 +2164,7 @@ const handleSave = async () => {
 
                                         <div class="text-caption font-weight-bold text-grey mb-3">THÊM NHANH MÀU SẮC
                                         </div>
-                                        <div class="d-flex gap-3 mb-4">
+                                        <div class="d-flex ga-3 mb-4">
                                             <div class="custom-color-preview rounded-lg position-relative overflow-hidden cursor-pointer"
                                                 :style="{ backgroundColor: customColorHex }">
                                                 <input type="color" v-model="customColorHex"
@@ -2178,7 +2180,7 @@ const handleSave = async () => {
                                                 <v-text-field v-model="customColorHex" variant="outlined"
                                                     density="compact" hide-details maxlength="250"
                                                     class="bg-slate-50 mb-2"></v-text-field>
-                                                <div class="d-flex align-center gap-2 px-3 py-1 bg-slate-50 rounded-lg">
+                                                <div class="d-flex align-center ga-2 px-3 py-1 bg-slate-50 rounded-lg">
                                                     <div class="color-dot" :style="{ backgroundColor: customColorHex }">
                                                     </div>
                                                     <span class="text-caption font-weight-medium">Màu đang chọn</span>
@@ -2196,7 +2198,7 @@ const handleSave = async () => {
 
                             <!-- KÍCH THƯỚC -->
                             <div class="field-label mb-3 mt-2">Kích thước <span class="text-error">*</span></div>
-                            <div class="d-flex flex-wrap gap-2 mb-4">
+                            <div class="d-flex flex-wrap ga-2 mb-4">
                                 <v-chip v-for="s in sortedSizes.filter(x => selectedSizes.includes(x.id))" :key="s.id"
                                     variant="flat" color="primary"
                                     class="rounded-lg font-weight-medium px-4 cursor-pointer" @click="toggleSize(s.id)">
@@ -2212,13 +2214,13 @@ const handleSave = async () => {
                                             <v-icon start size="16">mdi-plus</v-icon> Thêm mới
                                         </v-chip>
                                     </template>
-                                    <v-card class="rounded-xl pa-4 shadow-lg border">
+                                    <v-card class="rounded-xl pa-4 elevation-4 border">
                                         <div class="d-flex justify-space-between align-center mb-4">
                                             <span class="text-subtitle-1 font-weight-bold">Chọn kích thước</span>
                                             <v-btn icon="mdi-close" variant="text" size="small"
                                                 @click="showSizeMenu = false"></v-btn>
                                         </div>
-                                        <div class="d-flex gap-2 mb-4">
+                                        <div class="d-flex ga-2 mb-4">
                                             <v-text-field :model-value="customSizeName"
                                                 @update:model-value="updateCustomSizeName"
                                                 @keydown="blockNonNumericSizeInput" @paste="handleSizePaste"
@@ -2232,7 +2234,7 @@ const handleSave = async () => {
                                             </v-btn>
                                         </div>
                                         <div class="text-caption text-grey mb-3">Gợi ý kích thước</div>
-                                        <div class="d-flex flex-wrap gap-2 mb-4"
+                                        <div class="d-flex flex-wrap ga-2 mb-4"
                                             style="max-height: 150px; overflow-y: auto;">
                                             <v-chip v-for="s in filteredSizes" :key="s.id"
                                                 :variant="selectedSizes.includes(s.id) ? 'flat' : 'tonal'"
@@ -2280,7 +2282,7 @@ const handleSave = async () => {
                                             <div class="text-subtitle-1 text-slate-800">Danh sách biến thể</div>
                                         </div>
                                     </div>
-                                    <div class="d-flex align-center gap-3">
+                                    <div class="d-flex align-center ga-3">
                                         <v-btn v-if="variantItems.length > 0" color="primary" variant="flat"
                                             class="text-none font-weight-bold rounded-lg px-4"
                                             style="color: white !important;" @click="openBulkEdit(null)">
@@ -2355,7 +2357,7 @@ const handleSave = async () => {
                                                 {{ activeColorTab === 'ALL' ? 'Đang xem tất cả biến thể' :
                                                     'Đang xem màu: ' + getVariantColorLabel(activeColorTab) }}
                                             </div>
-                                            <div class="d-flex align-center gap-2" v-if="activeColorTab !== 'ALL'">
+                                            <div class="d-flex align-center ga-2" v-if="activeColorTab !== 'ALL'">
                                                 <span
                                                     class="text-caption font-weight-bold text-slate-500 mr-2 d-none d-sm-block">
                                                     áp dụng nhanh:</span>
@@ -2536,7 +2538,7 @@ const handleSave = async () => {
                                 <template #after>
                                     <v-col cols="12" class="mt-4 pa-0">
                                         <div class="d-flex align-center justify-space-between mb-2">
-                                            <div class="d-flex align-center gap-2">
+                                            <div class="d-flex align-center ga-2">
                                                 <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
                                                 <span class="text-caption font-weight-bold text-slate-600">Khoảng
                                                     giá</span>
@@ -2579,14 +2581,14 @@ const handleSave = async () => {
 
                             <template #top>
                                 <div
-                                    class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
-                                    <div class="d-flex align-center flex-wrap gap-2">
+                                    class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap ga-3">
+                                    <div class="d-flex align-center flex-wrap ga-2">
                                         <span class="text-caption font-weight-medium text-slate-500">
                                             Đã chọn {{ selectedVariantKeys.length }} biến thể
                                         </span>
                                     </div>
 
-                                    <div class="d-flex align-center flex-wrap gap-2">
+                                    <div class="d-flex align-center flex-wrap ga-2">
                                         <v-btn v-if="selectedVariants.length > 0" size="small" variant="tonal"
                                             color="primary" class="text-none font-weight-bold"
                                             @click="handleExportVariantQrZip">
@@ -2611,7 +2613,7 @@ const handleSave = async () => {
                                     </td>
                                     <td class="data-cell">
                                         <v-avatar rounded="lg" size="44"
-                                            class="border bg-slate-50 shadow-sm avatar-hover">
+                                            class="border bg-slate-50 elevation-1 avatar-hover">
                                             <SafeProductImage :src="getVariantThumbnail(variant)"
                                                 :fallback-src="logoPlaceholder" :alt="getVariantSkuLabel(variant)" />
                                         </v-avatar>
@@ -2721,7 +2723,7 @@ const handleSave = async () => {
                     <v-spacer />
                     <v-btn variant="text" color="slate-500" class="text-none font-weight-bold"
                         @click="bulkEditModal.show = false">Hủy</v-btn>
-                    <v-btn color="primary" variant="flat" class="text-none font-weight-bold px-6 rounded-lg h-11"
+                    <v-btn color="primary" variant="flat" class="text-none font-weight-bold px-6 rounded-lg"
                         @click="applyBulkEdit">Áp dụng</v-btn>
                 </v-card-actions>
             </v-card>

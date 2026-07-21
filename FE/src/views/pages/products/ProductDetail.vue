@@ -419,7 +419,7 @@ const toggleFavorite = () => {
                         <!-- Description Info moved to top -->
                         <div class="product-description mb-8">
                             <p class="desc-text text-body-1">{{ product.moTa }}</p>
-                            <div class="d-flex flex-wrap gap-4 mt-3">
+                            <div class="d-flex flex-wrap ga-4 mt-3">
                                 <v-chip size="small" variant="flat" color="grey-lighten-4"
                                     class="font-weight-bold"><v-icon start size="14">mdi-domain</v-icon> {{
                                     product.tenThuongHieu }}</v-chip>
@@ -487,7 +487,7 @@ const toggleFavorite = () => {
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="action-buttons d-flex flex-column gap-4">
+                        <div class="action-buttons d-flex flex-column ga-4">
                             <v-btn block size="x-large" color="black" rounded="pill" class="font-weight-black py-6"
                                 :loading="addingToCart" @click="addToCart">
                                 <v-icon class="mr-2">mdi-bag-plus-outline</v-icon>
@@ -543,7 +543,7 @@ const toggleFavorite = () => {
                         
                         <!-- Rating Bars & Filters -->
                         <v-col cols="12" md="8" class="pa-6">
-                            <div class="d-flex flex-wrap gap-2 mb-2">
+                            <div class="d-flex flex-wrap ga-2 mb-2">
                                 <v-chip
                                     :variant="selectedFilter === 'all' ? 'flat' : 'outlined'"
                                     :color="selectedFilter === 'all' ? 'black' : 'grey-darken-1'"
@@ -653,7 +653,7 @@ const toggleFavorite = () => {
 
         <!-- Stock Alert Modal -->
         <v-dialog v-model="stockAlertModal.show" max-width="450">
-            <v-card class="rounded-2xl pa-4 text-center">
+            <v-card class="rounded-xl pa-4 text-center">
                 <div class="d-flex justify-center mt-2 mb-3">
                     <v-avatar color="amber-lighten-4" size="64">
                         <v-icon color="amber-darken-3" size="36">mdi-alert-circle-outline</v-icon>
@@ -683,7 +683,7 @@ const toggleFavorite = () => {
                 </v-card-title>
                 
                 <v-card-text class="pa-4">
-                    <div class="d-flex align-center mb-4 p-2 bg-grey-lighten-4 rounded-lg pa-3" v-if="product">
+                    <div class="d-flex align-center mb-4 pa-2 bg-grey-lighten-4 rounded-lg pa-3" v-if="product">
                         <v-avatar rounded size="48" class="mr-3 bg-white elevation-1">
                             <v-img :src="product.hinhAnh" cover></v-img>
                         </v-avatar>

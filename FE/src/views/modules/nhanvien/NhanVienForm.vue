@@ -489,17 +489,19 @@ onMounted(async () => {
 
         <!-- Action Header -->
         <div class="d-flex align-center justify-space-between mb-8 mt-4">
-            <div class="d-flex align-center gap-4">
-                <v-btn icon variant="flat" @click="goBack" class="btn-back-header">
-                    <ArrowLeftIcon size="20" />
+            <div class="d-flex align-center ga-4">
+                <v-btn icon variant="flat" color="white" class="mr-3 border elevation-1 rounded-lg" size="36"
+                    style="height: 36px !important; width: 36px !important; min-height: 36px !important"
+                    @click="goBack">
+                    <v-icon size="18" color="slate-700">mdi-arrow-left</v-icon>
                 </v-btn>
             </div>
-            <div class="d-flex gap-3 header-actions__buttons">
-                <v-btn variant="flat" class="admin-btn-qr text-none px-8 rounded-xl h-11 elevation-4" @click="showQR = true">
+            <div class="d-flex ga-3 header-actions__buttons">
+                <v-btn variant="flat" class="admin-btn-qr text-none px-8 rounded-xl elevation-4" @click="showQR = true">
                     <v-icon size="20" class="mr-2">mdi-qrcode-scan</v-icon>
                     <span>Quét QR CCCD</span>
                 </v-btn>
-                <v-btn color="primary" variant="flat" class="add-btn-primary text-none px-8 rounded-xl h-11 elevation-4"
+                <v-btn color="primary" variant="flat" class="add-btn-primary text-none px-8 rounded-xl elevation-4"
                     style="font-size: 13px !important; font-weight: 600 !important" :loading="saving"
                     @click="handleSave">
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
@@ -516,7 +518,7 @@ onMounted(async () => {
                     Quét mã QR CCCD
                 </v-card-title>
                 <v-card-text class="pa-6">
-                    <div class="border-4 border-dashed rounded-lg overflow-hidden mb-4">
+                    <div class="border-lg border-dashed rounded-lg overflow-hidden mb-4">
                         <QrcodeStream @detect="onDetectQR" @init="onInitQR" />
                     </div>
                     <div class="text-caption font-weight-bold text-slate-400 text-center">
@@ -684,7 +686,7 @@ onMounted(async () => {
                     <v-card-text class="pa-8 opacity-60">
                         <div class="d-flex align-center mb-2">
                             <v-icon color="slate-400" size="20" class="mr-2">mdi-history</v-icon>
-                            <span class="text-caption font-weight-medium text-slate-500 uppercase tracking-wider">Hoạt
+                            <span class="text-caption font-weight-medium text-slate-500 text-uppercase tracking-wider">Hoạt
                                 động cuối</span>
                         </div>
                         <div class="text-body-2 font-weight-medium text-slate-400">Chưa ghi nhận hoạt động nào của nhân

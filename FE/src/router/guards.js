@@ -32,7 +32,7 @@ export function requireAuth(to, from, next) {
         // Chỉ bắt đăng nhập nếu cố tình truy cập vào vùng quản trị (admin)
         if (to.path.startsWith('/admin')) {
             // Tránh vòng lặp vô hạn khi đang truy cập trang đăng nhập admin
-            if (to.path === PATH.ADMIN_LOGIN || to.path === PATH.ADMIN_REGISTER || to.path === PATH.ADMIN_FORGOT_PASSWORD) {
+            if (to.path === PATH.ADMIN_LOGIN || to.path === PATH.ADMIN_REGISTER) {
                 next();
             } else {
                 next(PATH.ADMIN_LOGIN);

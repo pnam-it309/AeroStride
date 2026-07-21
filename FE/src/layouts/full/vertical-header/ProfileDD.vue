@@ -8,6 +8,7 @@ import defaultAvatar from '@/assets/images/profile/user-1.jpg';
 
 const router = useRouter();
 const profile = ref(null);
+const avatarError = ref(false);
 
 const roleLabels = {
     ROLE_QUAN_TRI_VIEN: 'Quản trị viên',
@@ -70,16 +71,18 @@ onMounted(async () => {
                         <div class="text-body-2 font-weight-bold text-slate-800" style="line-height:1.2;">{{ displayName }}</div>
                         <div class="text-caption" style="color:#1e257c; line-height:1.2;">{{ chucVu }}</div>
                     </div>
-                    <v-avatar size="38">
-                        <img :src="avatarUrl" height="38" alt="user" style="object-fit:cover;" />
+                    <v-avatar size="38" color="grey-lighten-3">
+                        <img v-if="!avatarError" :src="avatarUrl" height="38" width="38" alt="user" style="object-fit:cover;" @error="avatarError = true" />
+                        <v-icon v-else size="38" color="grey-darken-1">mdi-account-circle</v-icon>
                     </v-avatar>
                 </div>
             </v-btn>
         </template>
         <v-sheet rounded="md" width="230" elevation="10" class="mt-2">
             <div class="pa-4 d-flex align-center border-b">
-                <v-avatar size="40" class="mr-3">
-                    <img :src="avatarUrl" height="40" alt="user" style="object-fit:cover;" />
+                <v-avatar size="40" class="mr-3" color="grey-lighten-3">
+                    <img v-if="!avatarError" :src="avatarUrl" height="40" width="40" alt="user" style="object-fit:cover;" @error="avatarError = true" />
+                    <v-icon v-else size="40" color="grey-darken-1">mdi-account-circle</v-icon>
                 </v-avatar>
                 <div style="min-width:0;">
                     <div class="text-subtitle-2 font-weight-bold text-truncate">{{ displayName }}</div>
@@ -88,7 +91,7 @@ onMounted(async () => {
             </div>
             <v-list class="py-0" lines="one" density="compact">
                 <v-list-item v-for="(item, i) in profileDD" :key="i" :value="item" color="primary"
-                    class="py-2 px-4 shadow-none" @click="goTo(item)">
+                    class="py-2 px-4 elevation-0" @click="goTo(item)">
                     <template v-slot:prepend>
                         <v-icon :icon="item.avatar" size="20" class="mr-3"></v-icon>
                     </template>

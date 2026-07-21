@@ -82,23 +82,6 @@ public class EmailServiceImpl implements EmailService {
 
     @Async("mailExecutor")
     @Override
-    public void sendPasswordResetEmail(String to, String token) {
-        Map<String, Object> variables = new HashMap<>();
-        variables.put("token", token);
-        variables.put("title", "Password Reset Request");
-        
-        EmailRequest request = EmailRequest.builder()
-                .to(to)
-                .subject("AeroStride - Password Reset")
-                .templateName("password-reset")
-                .variables(variables)
-                .build();
-        
-        this.sendHtmlEmail(request);
-    }
-
-    @Async("mailExecutor")
-    @Override
     public void guiEmailTaiKhoanKhachHang(String to, String tenKhachHang,
                                           String tenTaiKhoan, String matKhau) {
         Map<String, Object> variables = new HashMap<>();

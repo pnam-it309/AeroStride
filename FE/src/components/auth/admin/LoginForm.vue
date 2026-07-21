@@ -82,12 +82,6 @@ const handleLogin = async () => {
                                 <span class="text-caption font-weight-bold">Duy trì đăng nhập</span>
                             </template>
                         </v-checkbox>
-                        <div class="ml-auto">
-                            <RouterLink :to="PATH.ADMIN_FORGOT_PASSWORD"
-                                class="text-primary text-decoration-none text-caption font-weight-black hover-underline">
-                                Quên mật khẩu?
-                            </RouterLink>
-                        </div>
                     </div>
                 </v-col>
                 <v-col cols="12" class="mt-6">

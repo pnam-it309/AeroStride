@@ -247,11 +247,11 @@ onMounted(async () => {
             <div v-else-if="order">
                 <!-- Order Header -->
                 <div class="order-header mb-8 pb-6" style="border-bottom: 2px solid #1e257c;">
-                    <div class="d-flex align-center justify-space-between flex-wrap gap-4">
+                    <div class="d-flex align-center justify-space-between flex-wrap ga-4">
                         <div>
                             <p class="text-overline mb-1 font-weight-bold" style="color: #1e257c;">MÃ ĐƠN HÀNG</p>
                             <h1 class="text-h4 font-weight-bold mb-2" style="color: #1e257c;">{{ order.maHoaDon || 'Đang tạo...' }}</h1>
-                            <div class="d-flex align-center flex-wrap gap-4">
+                            <div class="d-flex align-center flex-wrap ga-4">
                                 <div class="d-flex align-center">
                                     <v-icon size="16" class="mr-2" style="color: #1e257c;">mdi-calendar-clock</v-icon>
                                     <span class="text-body-2">Đặt lúc {{ formatDateFull(order.ngayTao) }}</span>
@@ -298,7 +298,7 @@ onMounted(async () => {
 
                 <v-row class="content-grid">
                     <!-- Left Column -->
-                    <v-col cols="12" lg="8" md="7" class="d-flex flex-column gap-6">
+                    <v-col cols="12" lg="8" md="7" class="d-flex flex-column ga-6">
                         <!-- Products -->
                         <div class="section-block pa-6">
                             <div class="d-flex align-center justify-space-between mb-6">
@@ -332,7 +332,7 @@ onMounted(async () => {
                                 </div>
                             </div>
                             <div v-for="(item, i) in order.items" :key="i"
-                                class="detail-product d-flex align-center gap-4 py-4"
+                                class="detail-product d-flex align-center ga-4 py-4"
                                 :class="{ 'border-top': i > 0 }">
                                 <div class="detail-thumb-wrapper">
                                     <v-img :src="item.hinhAnh || 'https://via.placeholder.com/150?text=Sản+Phẩm'"
@@ -340,7 +340,7 @@ onMounted(async () => {
                                 </div>
                                 <div class="flex-grow-1 min-w-0">
                                     <p class="text-body-1 font-weight-bold mb-1 text-truncate">{{ item.tenSanPham }}</p>
-                                    <div class="d-flex align-center flex-wrap gap-3">
+                                    <div class="d-flex align-center flex-wrap ga-3">
                                         <v-chip size="x-small" variant="tonal" class="font-weight-medium"
                                             style="color: #1e257c; background: #f0f4ff;">
                                             <v-icon size="12" class="mr-1">mdi-palette</v-icon>{{ item.tenMauSac }}
@@ -367,7 +367,7 @@ onMounted(async () => {
                                     </div>
                                     <p class="text-caption text-grey mt-1">{{ formatPrice(item.donGia) }} / sản phẩm</p>
                                     <div v-if="isPriceChanged(item)"
-                                        class="price-change-note d-flex align-center gap-2 mt-1 pa-2 rounded-lg"
+                                        class="price-change-note d-flex align-center ga-2 mt-1 pa-2 rounded-lg"
                                         style="background: #f5f7ff; border: 1px dashed #1e257c;">
                                         <v-icon size="14" style="color: #1e257c;">mdi-alert-outline</v-icon>
                                         <span class="text-caption" style="color: #1e257c;">
@@ -417,7 +417,7 @@ onMounted(async () => {
                     </v-col>
 
                     <!-- Right Column -->
-                    <v-col cols="12" lg="4" md="5" class="d-flex flex-column gap-6">
+                    <v-col cols="12" lg="4" md="5" class="d-flex flex-column ga-6">
                         <!-- Shipping Info -->
                         <div class="section-block pa-6">
                             <div class="d-flex align-center justify-space-between mb-6">
@@ -569,7 +569,7 @@ onMounted(async () => {
                     Đổi địa chỉ không làm thay đổi phí vận chuyển đã chốt của đơn.
                 </v-alert>
 
-                <div class="d-flex gap-3 mt-2">
+                <div class="d-flex ga-3 mt-2">
                     <v-btn variant="outlined" rounded="pill" class="font-weight-bold text-none flex-grow-1"
                         :disabled="editLoading" @click="showEditDialog = false">
                         Hủy
@@ -597,7 +597,7 @@ onMounted(async () => {
                         <br>Thao tác này không thể hoàn tác.
                     </p>
                 </div>
-                <div class="d-flex gap-3">
+                <div class="d-flex ga-3">
                     <v-btn variant="outlined" rounded="pill" class="font-weight-bold text-none flex-grow-1"
                         @click="showCancelDialog = false">
                         Giữ lại đơn hàng

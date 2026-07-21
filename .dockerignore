@@ -19,6 +19,14 @@
 # Docker
 .dockerignore
 
+# Env files - these hold secrets and a COPY bakes them into an image layer where
+# `docker history` can read them back. Build-time config reaches the image through
+# build args instead (see the VITE_* ARGs in FE.Dockerfile). The patterns are exact
+# so that .env.example templates are still copied.
+**/.env
+**/.env.local
+**/.env.*.local
+
 # Misc
 *.log
 tmp/

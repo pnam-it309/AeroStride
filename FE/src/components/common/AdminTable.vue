@@ -23,7 +23,7 @@ const emit = defineEmits(['add', 'export', 'import', 'downloadTemplate']);
 
 <template>
     <div v-bind="$attrs" class="admin-table-main-root">
-        <v-card class="admin-table-container shadow-none" elevation="0">
+        <v-card class="admin-table-container elevation-0" elevation="0">
             <!-- Toolbar Area -->
             <div v-if="!hideToolbar" class="table-toolbar d-flex align-center justify-space-between pa-3">
                 <div class="d-flex align-center">

@@ -43,7 +43,7 @@ onMounted(() => {
 
             <v-container>
                 <!-- Categories -->
-                <div class="d-flex justify-center flex-wrap gap-4 mb-10">
+                <div class="d-flex justify-center flex-wrap ga-4 mb-10">
                     <v-btn 
                         v-for="cat in categories" 
                         :key="cat"

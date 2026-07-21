@@ -844,7 +844,7 @@ const updateInvoicePaginationSize = (size) => {
                     <template v-else>
                         <!-- Tìm kiếm chung -->
                         <v-col cols="12" md="5" class="filter-cell">
-                            <div class="filter-field-label">Tìm kiếm chung (mã, tên, sdt, email)</div>
+                            <div class="filter-field-label">Tìm kiếm </div>
                             <v-text-field v-model="statsFilters.search" placeholder="Mã, tên, số điện thoại, email..."
                                 variant="outlined" bg-color="white" density="compact" hide-details class="compact-input"
                                 @input="handleLocalFilterChange" />
@@ -853,21 +853,15 @@ const updateInvoicePaginationSize = (size) => {
                         <!-- Khoảng thời gian mua -->
                         <v-col cols="12" md="3" class="filter-cell">
                             <div class="filter-field-label">Từ ngày</div>
-                            <AppDatePicker
-                                v-model="statsFilters.minNgayDonHang"
-                                @update:model-value="handleLocalFilterChange"
-                                placeholder="Từ ngày"
-                                :text-field-props="{ class: 'compact-input date-field' }"
-                            />
+                            <AppDatePicker v-model="statsFilters.minNgayDonHang"
+                                @update:model-value="handleLocalFilterChange" placeholder="Từ ngày"
+                                :text-field-props="{ class: 'compact-input date-field' }" />
                         </v-col>
                         <v-col cols="12" md="3" class="filter-cell">
                             <div class="filter-field-label">Đến ngày</div>
-                            <AppDatePicker
-                                v-model="statsFilters.maxNgayDonHang"
-                                @update:model-value="handleLocalFilterChange"
-                                placeholder="Đến ngày"
-                                :text-field-props="{ class: 'compact-input date-field' }"
-                            />
+                            <AppDatePicker v-model="statsFilters.maxNgayDonHang"
+                                @update:model-value="handleLocalFilterChange" placeholder="Đến ngày"
+                                :text-field-props="{ class: 'compact-input date-field' }" />
                         </v-col>
                     </template>
 
@@ -892,8 +886,7 @@ const updateInvoicePaginationSize = (size) => {
 
             <AdminTable title="Khách hàng" addButtonText="Tạo mới" show-export-button
                 :headers="activeTab === 'danh-sach' ? tableHeaders : statsTableHeaders" :items="allCustomers"
-                :total-count="pagination.totalElements" :loading="loading" @add="goToAdd"
-                @export="handleExport">
+                :total-count="pagination.totalElements" :loading="loading" @add="goToAdd" @export="handleExport">
                 <template #top>
                     <!-- Tabs navigation inside the table, no transition animation -->
                     <v-tabs v-model="activeTab" bg-color="transparent" color="primary" height="54" align-tabs="start"
@@ -1031,8 +1024,8 @@ const updateInvoicePaginationSize = (size) => {
         <div v-else-if="currentView === 'invoice-history'"
             class="invoice-history-container admin-table-main-root animate-fade-in font-body">
             <!-- Header: Back button, title -->
-            <div class="d-flex align-center gap-2 mb-3 mt-1">
-                <v-btn icon variant="flat" color="white" class="border shadow-sm rounded-lg" size="36"
+            <div class="d-flex align-center ga-2 mb-3 mt-1">
+                <v-btn icon variant="flat" color="white" class="border elevation-1 rounded-lg" size="36"
                     style="height: 36px !important; width: 36px !important; min-height: 36px !important"
                     @click="backToList">
                     <v-icon size="18" color="slate-700">mdi-arrow-left</v-icon>
@@ -1125,8 +1118,7 @@ const updateInvoicePaginationSize = (size) => {
 
                         <!-- Hành động -->
                         <td class="data-cell text-center" style="font-size: 13px">
-                            <v-btn icon variant="text" size="small" color="primary" 
-                                class="action-icon-btn" 
+                            <v-btn icon variant="text" size="small" color="primary" class="action-icon-btn"
                                 @click.stop="openInvoiceDetail(item)">
                                 <EyeIcon size="18" />
                                 <v-tooltip activator="parent" location="top">Chi tiết hóa đơn</v-tooltip>
@@ -1137,8 +1129,7 @@ const updateInvoicePaginationSize = (size) => {
 
                 <template #pagination>
                     <AdminPagination v-model="invoicesTab.pagination.value.page"
-                        :page-size="invoicesTab.pagination.value.size"
-                        @update:page-size="updateInvoicePaginationSize"
+                        :page-size="invoicesTab.pagination.value.size" @update:page-size="updateInvoicePaginationSize"
                         :total-pages="invoicesTab.pagination.value.totalPages"
                         :total-elements="invoicesTab.pagination.value.totalElements"
                         :current-size="invoicesTab.items.value.length" @change="invoicesTab.loadData" />
@@ -1178,7 +1169,7 @@ const updateInvoicePaginationSize = (size) => {
                         <!-- ── Cột trái: Danh sách địa chỉ ── -->
                         <v-col cols="12" md="6" class="pb-6 overflow-y-auto" style="max-height: calc(85vh - 80px)">
                             <div
-                                class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-10 position-relative">
+                                class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-index-10 position-relative">
                                 <span class="text-subtitle-2 font-weight-bold text-slate-800"
                                     style="font-size: 15px !important">Địa chỉ hiện tại</span>
                                 <v-progress-linear v-if="addrLoading && listDiaChi.length > 0" indeterminate
@@ -1191,14 +1182,14 @@ const updateInvoicePaginationSize = (size) => {
                             </div>
 
                             <div v-else-if="listDiaChi.length === 0"
-                                class="text-center py-16 px-8 mx-8 bg-slate-50/50 rounded-xl mt-4">
+                                class="text-center py-16 px-8 mx-8 bg-slate-50-50 rounded-xl mt-4">
                                 <v-icon size="48" color="slate-200" class="mb-4">mdi-map-marker-off</v-icon>
                                 <div class="text-slate-400 font-weight-medium">Chưa có địa chỉ nào được đăng ký</div>
                             </div>
 
                             <div v-else class="px-8">
                                 <div v-for="addr in listDiaChi" :key="addr.id"
-                                    class="pa-6 rounded-xl bg-white border border-slate-200 mb-6 hover-shadow-sm transition-all position-relative"
+                                    class="pa-6 rounded-xl bg-white border border-slate-200 mb-6 hover-elevation-1 transition-all position-relative"
                                     :class="{ 'border-s-4 border-s-success border-success-light': addr.laMacDinh }"
                                     style="
                                         margin-top: 15px;
@@ -1207,18 +1198,19 @@ const updateInvoicePaginationSize = (size) => {
                                             0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
                                     ">
                                     <!-- Dòng tên + badge mặc định -->
-                                    <div class="d-flex align-center gap-3 mb-3">
+                                    <div class="d-flex align-center ga-3 mb-3">
                                         <span class="text-subtitle-1 font-weight-medium text-slate-700"
                                             style="font-size: 13px !important">
                                             {{ addr.tenNguoiNhan }}
                                         </span>
                                         <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="flat"
-                                            class="font-weight-medium px-2" style="font-size: 11px !important; color: white !important">Mặc
+                                            class="font-weight-medium px-2"
+                                            style="font-size: 11px !important; color: white !important">Mặc
                                             định</v-chip>
                                     </div>
 
                                     <!-- SĐT -->
-                                    <div class="d-flex align-center gap-2 mb-2 text-slate-600">
+                                    <div class="d-flex align-center ga-2 mb-2 text-slate-600">
                                         <v-icon size="16" color="slate-400"
                                             style="font-size: 16px !important">mdi-phone-outline</v-icon>
                                         <span class="text-body-2 font-weight-medium"
@@ -1237,7 +1229,7 @@ const updateInvoicePaginationSize = (size) => {
                                     </div>
 
                                     <!-- Actions -->
-                                    <div class="d-flex align-center gap-1 mt-2">
+                                    <div class="d-flex align-center ga-1 mt-2">
                                         <v-btn variant="text" icon size="small" color="primary" class="action-icon-btn"
                                             @click="openEditAddrForm(addr)">
                                             <PencilIcon size="18" />
@@ -1262,7 +1254,7 @@ const updateInvoicePaginationSize = (size) => {
                         <v-col cols="12" md="6" class="pb-6 bg-white overflow-y-auto"
                             style="max-height: calc(85vh - 80px)">
                             <div
-                                class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-10">
+                                class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-index-10">
                                 <span class="text-subtitle-2 font-weight-bold text-slate-800"
                                     style="font-size: 15px !important">
                                     {{ showAddrForm ?
@@ -1308,14 +1300,14 @@ const updateInvoicePaginationSize = (size) => {
                                     <v-col cols="12" md="6">
                                         <div class="field-label">Tên người nhận</div>
                                         <v-text-field v-model="addrForm.tenNguoiNhan" placeholder="Ví dụ: Nguyễn Văn A"
-                                            :readonly="true" class="bg-slate-50"
-                                            variant="outlined" density="compact" hide-details />
+                                            :readonly="true" class="bg-slate-50" variant="outlined" density="compact"
+                                            hide-details />
                                     </v-col>
                                     <v-col cols="12" md="6">
                                         <div class="field-label">Số điện thoại</div>
                                         <v-text-field v-model="addrForm.sdtNguoiNhan" placeholder="09xx.xxx.xxx"
-                                            :readonly="true" class="bg-slate-50"
-                                            variant="outlined" density="compact" hide-details />
+                                            :readonly="true" class="bg-slate-50" variant="outlined" density="compact"
+                                            hide-details />
                                     </v-col>
                                     <v-col cols="12">
                                         <div class="field-label">Tỉnh / Thành phố</div>
@@ -1357,7 +1349,7 @@ const updateInvoicePaginationSize = (size) => {
                                     </v-col>
                                     <v-col cols="12" class="mt-6">
                                         <v-btn color="primary" variant="flat" block
-                                            class="text-none font-weight-bold rounded-xl shadow-sm hover-primary-btn"
+                                            class="text-none font-weight-bold rounded-xl elevation-1 hover-primary-btn"
                                             height="48" :loading="addrSaving" :disabled="!addrForm.tenNguoiNhan ||
                                                 !addrForm.sdtNguoiNhan ||
                                                 !addrForm.tinh ||

@@ -11,6 +11,11 @@ services:
     image: ${REDIS_IMAGE}
     container_name: aerostride-redis
     <<: *common
+    # Published so a backend running on the HOST can reach it. Redis is not just a
+    # cache here - TokenBlacklistService, RateLimiterAspect and the chat services
+    # use RedisTemplate directly, so logout and rate limiting break without it.
+    ports:
+      - "${REDIS_PORT_HOST}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -79,6 +84,13 @@ services:
       - be-gradle:/app/.gradle
       # Shield container from host BE/gradle.properties (may contain ${ENV} placeholders)
       - ${DOCKER_BE_GRADLE_PROPS}
+      # Shield container from host BE/env/.env. BeApplication.main scans "env"
+      # relative to WORKDIR (=/app, which is the BE bind mount) and force-writes
+      # every SPRING_*/JWT_* key it finds into System properties, overriding what
+      # compose passed in. A host .env aimed at localhost:3307 would therefore
+      # point the CONTAINER at itself instead of the mysql service. This empty
+      # volume hides that directory so the container always uses its real env.
+      - be-env-shield:/app/env
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:${SERVER_PORT}/actuator/health || exit 1"]
       interval: 15s
@@ -101,9 +113,7 @@ services:
       args:
         - VITE_API_URL=${VITE_API_URL}
         - VITE_WS_URL=${VITE_WS_URL}
-        - VITE_APP_NAME=${VITE_APP_NAME}
-        - VITE_APP_VERSION=${VITE_APP_VERSION}
-        - VITE_APP_ENV=${VITE_APP_ENV}
+        - VITE_APP_URL=${VITE_APP_URL}
         - FE_DEV_PORT=${FE_DEV_PORT}
         - NGINX_PORT=${NGINX_PORT}
     container_name: aerostride-fe
@@ -177,6 +187,7 @@ services:
           memory: ${MOBILE_MEMORY_RESERVATION}
 
   mcp-server:
+    image: ${MCP_SERVER_IMAGE}
     build:
       context: ../mcp-server
       dockerfile: Dockerfile
@@ -184,8 +195,12 @@ services:
     <<: *common
     env_file:
       - .env
+    environment:
+      # Set here rather than in .env: the shared env_file is loaded by every
+      # service, and a bare PORT would leak into all of them.
+      - PORT=${MCP_SERVER_PORT}
     ports:
-      - "3000:3000"
+      - "${MCP_SERVER_PORT_HOST}:${MCP_SERVER_PORT}"
     profiles:
       - full
     deploy:
@@ -194,28 +209,6 @@ services:
           memory: ${MCP_SERVER_MEMORY_LIMIT}
         reservations:
           memory: ${MCP_SERVER_MEMORY_RESERVATION}
-
-  phpmyadmin:
-    image: ${PHPMYADMIN_IMAGE}
-    container_name: aerostride-phpmyadmin
-    <<: *common
-    environment:
-      PMA_HOST: ${MYSQL_HOST}
-      PMA_PORT: ${MYSQL_PORT}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
-    ports:
-      - "${PHPMYADMIN_PORT_HOST}:${PHPMYADMIN_PORT_INTERNAL}"
-    depends_on:
-      mysql:
-        condition: service_healthy
-    profiles:
-      - full
-    deploy:
-      resources:
-        limits:
-          memory: ${PHPMYADMIN_MEMORY_LIMIT}
-        reservations:
-          memory: ${PHPMYADMIN_MEMORY_RESERVATION}
 
   nginx-proxy:
     image: ${NGINX_IMAGE}
@@ -247,6 +240,7 @@ networks:
 volumes:
   be-build:
   be-gradle:
+  be-env-shield:
   fe-node-modules:
   mobile-node-modules:
   mobile-metro-cache:

@@ -18,13 +18,6 @@ public interface EmailService {
     void sendWelcomeEmail(String to, String name);
 
     /**
-     * Sends a password reset email.
-     * @param to Recipient email address.
-     * @param token Reset token.
-     */
-    void sendPasswordResetEmail(String to, String token);
-
-    /**
      * Sends account credentials email to a newly created KhachHang.
      * @param to          Recipient email.
      * @param tenKhachHang Customer's display name.

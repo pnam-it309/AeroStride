@@ -181,9 +181,9 @@ const setMainImage = async (imgId) => {
         temporary width="450" class="variant-drawer">
         <div v-if="variant" class="d-flex flex-column h-100 bg-white">
             <!-- Header Area: High-end design -->
-            <div class="pa-6 border-b d-flex align-center justify-space-between bg-slate-50/50">
+            <div class="pa-6 border-b d-flex align-center justify-space-between bg-slate-50-50">
                 <div>
-                    <div class="d-flex align-center gap-2 mb-1">
+                    <div class="d-flex align-center ga-2 mb-1">
                         <v-icon icon="mdi-package-variant" size="18" color="primary" />
                         <h2 class="text-h6 text-slate-900 mb-0" style="font-size: 1.15rem !important">Quản lý hình ảnh
                         </h2>
@@ -201,7 +201,7 @@ const setMainImage = async (imgId) => {
         <!-- Main Scrollable Content -->
         <div class="flex-grow-1 overflow-y-auto pa-6 custom-scrollbar">
             <!-- Persistent Variant Summary Grid -->
-            <div class="variant-detail-grid mb-8 pa-4 rounded-lg border bg-slate-50/30">
+            <div class="variant-detail-grid mb-8 pa-4 rounded-lg border bg-slate-50-30">
                 <v-row dense>
                     <v-col cols="6">
                         <div class="info-group">
@@ -275,7 +275,7 @@ const setMainImage = async (imgId) => {
 
                             <!-- Labels & Actions -->
                             <div v-if="img.hinhAnhDaiDien" class="main-badge">CHÍNH</div>
-                            <v-btn icon size="24" color="rose-darken-1" variant="flat" class="delete-btn shadow-md"
+                            <v-btn icon size="24" color="rose-darken-1" variant="flat" class="delete-btn elevation-2"
                                 @click.stop="deleteImage(img.id)">
                                 <XIcon size="14" class="text-white" />
                                 <v-tooltip activator="parent" location="top" text="Xóa ảnh" />
@@ -285,7 +285,7 @@ const setMainImage = async (imgId) => {
                 </v-row>
 
                 <div v-else
-                    class="empty-gallery text-center py-12 rounded-xl border border-dashed border-slate-200 bg-slate-50/50">
+                    class="empty-gallery text-center py-12 rounded-xl border border-dashed border-slate-200 bg-slate-50-50">
                     <v-icon icon="mdi-image-plus-outline" size="48" color="slate-200" class="mb-2" />
                     <p class="text-slate-400" style="font-size: 13px !important">Biến thể chưa có hình ảnh nào</p>
                 </div>

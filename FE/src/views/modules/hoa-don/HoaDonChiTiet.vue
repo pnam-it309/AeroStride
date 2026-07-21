@@ -758,8 +758,10 @@ onMounted(() => {
         <v-card elevation="0" class="premium-card-detail mb-6 pa-6 bg-white">
             <div class="header-section">
                 <div class="header-left d-flex align-center">
-                    <v-btn icon variant="text" color="slate-600" class="mr-3 btn-back-header" @click="goBack">
-                        <ChevronLeftIcon size="28" />
+                    <v-btn icon variant="flat" color="white" class="mr-3 border elevation-1 rounded-lg" size="36"
+                        style="height: 36px !important; width: 36px !important; min-height: 36px !important"
+                        @click="goBack">
+                        <v-icon size="18" color="slate-700">mdi-arrow-left</v-icon>
                     </v-btn>
                     <div class="d-flex align-center flex-wrap ga-3">
                         <div v-if="loaded" class="text-body-2 text-slate-800 d-flex align-center">
@@ -854,7 +856,7 @@ onMounted(() => {
                             <!-- Image Column -->
                             <v-col cols="auto">
                                 <v-avatar size="150"
-                                    class="rounded-xl shadow-lg border-2 border-primary-lighten-4 bg-white">
+                                    class="rounded-xl elevation-4 border-md border-primary-subtle bg-white">
                                     <v-img :src="customerAvatarUrl" cover></v-img>
                                 </v-avatar>
                             </v-col>
@@ -864,7 +866,7 @@ onMounted(() => {
                                 <v-row class="w-100 h-100 py-1" dense>
                                     <!-- Left Info: Profile & Notes -->
                                     <v-col cols="12" md="6" class="py-0">
-                                        <div class="d-flex flex-column h-100 justify-center gap-3">
+                                        <div class="d-flex flex-column h-100 justify-center ga-3">
                                             <div class="info-item mb-3">
                                                 <div class="text-body-2 text-slate-500 mb-1">Họ và tên</div>
                                                 <div class="text-body-2 text-slate-900 d-flex align-center">
@@ -893,7 +895,7 @@ onMounted(() => {
                                         </div>
                                     </v-col>
                                     <v-col cols="12" md="6" class="py-0 ps-md-4">
-                                        <div class="d-flex flex-column h-100 justify-center gap-3">
+                                        <div class="d-flex flex-column h-100 justify-center ga-3">
                                             <div class="info-item mb-3">
                                                 <div class="text-body-2 text-slate-500 mb-1">Số điện thoại</div>
                                                 <div class="text-body-2 text-slate-800 d-flex align-center">
@@ -1243,15 +1245,14 @@ onMounted(() => {
 
             <AdminFilter title="Tìm kiếm sản phẩm" class="px-4 pt-4 border-b-0"
                 @refresh="() => { productSearch = ''; priceRange = [0, maxOrderPrice]; productColorFilter = null; productSizeFilter = null; productPagination.page = 1; }">
-                <v-row dense class="w-100 align-center">
-                    <v-col cols="12" md="3" class="pr-2">
+                    <v-col cols="12" md="4" class="pr-2">
                         <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Từ khóa
                         </div>
                         <v-text-field v-model="productSearch" placeholder="Tìm tên, mã..." variant="outlined"
                             density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
                             @input="productPagination.page = 1"></v-text-field>
                     </v-col>
-                    <v-col cols="12" md="2" class="px-2">
+                    <v-col cols="12" md="3" class="px-2">
                         <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Màu sắc
                         </div>
                         <v-select v-model="productColorFilter" :items="availableColors" placeholder="Tất cả"
@@ -1259,7 +1260,7 @@ onMounted(() => {
                             :menu-props="{ contentClass: 'product-select-menu' }"
                             @update:modelValue="productPagination.page = 1"></v-select>
                     </v-col>
-                    <v-col cols="12" md="2" class="px-2">
+                    <v-col cols="12" md="3" class="px-2">
                         <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Kích
                             thước</div>
                         <v-select v-model="productSizeFilter" :items="availableSizes" placeholder="Tất cả"
@@ -1267,23 +1268,22 @@ onMounted(() => {
                             :menu-props="{ contentClass: 'product-select-menu' }"
                             @update:modelValue="productPagination.page = 1"></v-select>
                     </v-col>
-                    <v-col cols="12" md="5" class="pa-0 d-flex align-center pl-2">
-                        <div class="d-flex flex-column w-100">
-                            <div class="d-flex align-center justify-space-between mb-1" style="height: 20px;">
-                                <div class="d-flex align-center gap-2">
-                                    <v-icon size="15" color="#3b82f6" class="mr-2">mdi-cash-multiple</v-icon>
-                                    <span class="text-caption font-weight-medium text-slate-700">Khoảng giá</span>
-                                </div>
-                                <span class="text-caption font-weight-medium text-slate-700">
-                                    {{ formatCurrency(priceRange[0]) }} – {{ formatCurrency(priceRange[1]) }}
-                                </span>
+                <template #after>
+                    <div class="mt-4 px-2">
+                        <div class="d-flex align-center justify-space-between mb-1" style="height: 20px;">
+                            <div class="d-flex align-center ga-2">
+                                <v-icon size="15" color="#3b82f6" class="mr-2">mdi-cash-multiple</v-icon>
+                                <span class="text-caption font-weight-medium text-slate-700">Khoảng giá</span>
                             </div>
-                            <v-range-slider v-model="priceRange" :min="0" :max="maxOrderPrice" :step="10000"
-                                hide-details color="primary" track-color="#e2e8f0" track-size="2" thumb-size="14"
-                                class="blue-range-slider" @update:modelValue="productPagination.page = 1" />
+                            <span class="text-caption font-weight-medium text-slate-700">
+                                {{ formatCurrency(priceRange[0]) }} – {{ formatCurrency(priceRange[1]) }}
+                            </span>
                         </div>
-                    </v-col>
-                </v-row>
+                        <v-range-slider v-model="priceRange" :min="0" :max="maxOrderPrice" :step="10000"
+                            hide-details color="primary" track-color="#e2e8f0" track-size="2" thumb-size="14"
+                            class="blue-range-slider" @update:modelValue="productPagination.page = 1" />
+                    </div>
+                </template>
             </AdminFilter>
 
             <AdminTable :headers="productColumns" :items="paginatedProducts" :showAddButton="false" hideToolbar
@@ -1291,7 +1291,7 @@ onMounted(() => {
                 <template #row="{ item }">
                     <tr class="hover-row" :class="{ 'price-changed-cell': isPriceChanged(item) }">
                         <td class="py-4">
-                            <v-avatar size="80" class="rounded-lg border bg-slate-50 shadow-sm">
+                            <v-avatar size="80" class="rounded-lg border bg-slate-50 elevation-1">
                                 <v-img :src="item.hinhAnh ||
                                     'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg'
                                     " cover></v-img>
@@ -1485,7 +1485,7 @@ onMounted(() => {
 
         <!-- Edit Order Dialog -->
         <v-dialog v-model="editOrderDialogOpen" max-width="650px" persistent>
-            <v-card class="rounded-xl overflow-hidden shadow-2xl">
+            <v-card class="rounded-xl overflow-hidden elevation-12">
                 <v-card-title class="pa-5 bg-slate-50 border-b d-flex justify-space-between align-center">
                     <span class="text-h6 font-weight-bold text-slate-800">Chỉnh sửa đơn hàng</span>
                     <v-btn icon variant="text" color="slate-400" @click="editOrderDialogOpen = false">

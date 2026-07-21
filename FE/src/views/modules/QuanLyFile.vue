@@ -147,9 +147,9 @@ onMounted(() => {
         <div class="header-section mb-6">
             <div>
                 <h1 class="text-h4 font-black text-dark mb-1">Quản lý Tài nguyên</h1>
-                <p class="text-subtitle-1 text-slate-500 font-bold">Lưu trữ và quản lý tệp tin hệ thống</p>
+                <p class="text-subtitle-1 text-slate-500 font-weight-bold">Lưu trữ và quản lý tệp tin hệ thống</p>
             </div>
-            <v-btn color="primary" size="large" class="font-bold rounded-lg px-6" @click="uploadDialog = true">
+            <v-btn color="primary" size="large" class="font-weight-bold rounded-lg px-6" @click="uploadDialog = true">
                 <v-icon start size="20">mdi-upload</v-icon>
                 Tải lên tài liệu
             </v-btn>
@@ -158,7 +158,7 @@ onMounted(() => {
         <!-- Upload Area -->
         <v-card
             class="premium-card mb-6 overflow-hidden"
-            :class="{ 'border-primary border-2': dragging }"
+            :class="{ 'border-md border-primary-emphasis': dragging }"
             @dragover="handleDragOver"
             @dragleave="handleDragLeave"
             @drop="handleDrop"
@@ -168,8 +168,8 @@ onMounted(() => {
                     <v-icon size="40" color="primary">mdi-cloud-upload</v-icon>
                 </div>
                 <h3 class="text-h5 font-black text-dark mb-2">Kéo & Thả tệp tin vào đây</h3>
-                <p class="text-body-1 text-slate-500 font-bold mb-6">Hệ thống tự động phân loại và lưu trữ an toàn</p>
-                <v-btn color="primary" variant="tonal" class="font-bold px-8" height="44" @click="uploadDialog = true">
+                <p class="text-body-1 text-slate-500 font-weight-bold mb-6">Hệ thống tự động phân loại và lưu trữ an toàn</p>
+                <v-btn color="primary" variant="tonal" class="font-weight-bold px-8" height="44" @click="uploadDialog = true">
                     <v-icon start size="18">mdi-folder-open</v-icon>
                     Duyệt từ máy tính
                 </v-btn>
@@ -179,7 +179,7 @@ onMounted(() => {
         <!-- Files Grid -->
         <v-card class="premium-card">
             <div class="card-title-bar">
-                <span class="font-bold text-dark text-uppercase" style="font-size: 13px; letter-spacing: 0.05em">Danh sách tệp tin</span>
+                <span class="font-weight-bold text-dark text-uppercase" style="font-size: 13px; letter-spacing: 0.05em">Danh sách tệp tin</span>
                 <v-icon color="slate-400">mdi-file-multiple</v-icon>
             </div>
             <v-card-text class="pa-6">
@@ -193,7 +193,7 @@ onMounted(() => {
                     <v-col cols="12" class="text-center py-12">
                         <v-icon size="64" color="slate-200" class="mb-4">mdi-folder-open</v-icon>
                         <h3 class="text-h5 font-black text-slate-300">Thư mục trống</h3>
-                        <p class="text-body-2 text-slate-400 font-bold">Bắt đầu bằng việc tải lên tệp tin mới</p>
+                        <p class="text-body-2 text-slate-400 font-weight-bold">Bắt đầu bằng việc tải lên tệp tin mới</p>
                     </v-col>
                 </v-row>
 
@@ -206,7 +206,7 @@ onMounted(() => {
                             <div class="text-subtitle-1 font-black text-dark text-truncate mb-1 px-2" :title="file.fileName">
                                 {{ file.fileName }}
                             </div>
-                            <div class="text-caption text-slate-400 font-bold mb-4">
+                            <div class="text-caption text-slate-400 font-weight-bold mb-4">
                                 {{ formatFileSize(file.fileSize) }}
                             </div>
                             <div class="d-flex justify-center action-controls">
@@ -261,7 +261,7 @@ onMounted(() => {
                         @change="handleFileUpload"
                     ></v-file-input>
                     <div class="bg-slate-50 pa-4 rounded-lg mt-4 border">
-                        <p class="text-caption text-slate-500 font-bold leading-relaxed">
+                        <p class="text-caption text-slate-500 font-weight-bold leading-relaxed">
                             <v-icon size="14" class="mr-1">mdi-information-outline</v-icon>
                             Hệ thống tối ưu cho PDF, Word, Excel, Hình ảnh (JPG, PNG) và các tệp nén (ZIP, RAR).
                         </p>
@@ -269,7 +269,7 @@ onMounted(() => {
                 </v-card-text>
                 <v-card-actions class="pa-6">
                     <v-spacer></v-spacer>
-                    <v-btn variant="text" class="font-bold px-6" @click="uploadDialog = false">Hủy bỏ</v-btn>
+                    <v-btn variant="text" class="font-weight-bold px-6" @click="uploadDialog = false">Hủy bỏ</v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
@@ -286,12 +286,12 @@ onMounted(() => {
                         <v-icon :icon="getFileIcon(selectedFile.fileName)" size="64" color="primary"></v-icon>
                     </div>
                     <p class="text-h6 font-black text-dark mb-1">{{ selectedFile.fileName }}</p>
-                    <p class="text-body-1 text-slate-400 font-bold mb-8">Dung lượng: {{ formatFileSize(selectedFile.fileSize) }}</p>
+                    <p class="text-body-1 text-slate-400 font-weight-bold mb-8">Dung lượng: {{ formatFileSize(selectedFile.fileSize) }}</p>
                     <v-btn
                         color="primary"
                         size="large"
                         block
-                        class="font-bold rounded-lg"
+                        class="font-weight-bold rounded-lg"
                         :href="dichVuFile.layUrlFile(selectedFile.filePath)"
                         target="_blank"
                     >
@@ -307,11 +307,5 @@ onMounted(() => {
 <style scoped>
 .bg-primary-light {
     background: #eff6ff;
-}
-.border-primary {
-    border-color: #3b82f6 !important;
-}
-.border-2 {
-    border-width: 2px !important;
 }
 </style>

@@ -150,23 +150,23 @@ onUnmounted(() => {
         <div class="top-utility-bar">
             <div class="container-custom d-flex align-center justify-space-between px-12 w-100">
                 <span class="u-text">📞 Hotline: 1900 6789</span>
-                <div class="d-flex align-center gap-4">
+                <div class="d-flex align-center ga-4">
                     <router-link to="/he-thong-cua-hang" class="u-link">Hệ thống cửa hàng</router-link>
                     <span class="divider">|</span>
                     <router-link to="/tro-giup" class="u-link">Trợ giúp</router-link>
                     <span class="divider">|</span>
-                    <router-link v-if="!authStore.isLoggedIn" :to="PATH.LOGIN" class="u-link d-flex align-center gap-1">
+                    <router-link v-if="!authStore.isLoggedIn" :to="PATH.LOGIN" class="u-link d-flex align-center ga-1">
                         <v-icon size="16">mdi-account-circle-outline</v-icon>
                         Đăng nhập
                     </router-link>
                     <v-menu v-else location="bottom end" offset="4" transition="slide-y-transition">
                         <template v-slot:activator="{ props: menuProps }">
-                            <div v-bind="menuProps" class="d-flex align-center gap-1 u-link cursor-pointer">
+                            <div v-bind="menuProps" class="d-flex align-center ga-1 u-link cursor-pointer">
                                 <v-icon size="16">mdi-account-circle-outline</v-icon>
                                 {{ authStore.user?.hoTen || authStore.user?.username || 'Thành viên' }}
                             </div>
                         </template>
-                        <v-list density="compact" width="180" class="rounded-lg mt-2 border shadow-sm">
+                        <v-list density="compact" width="180" class="rounded-lg mt-2 border elevation-1">
                             <v-list-item prepend-icon="mdi-account-outline" title="Tài khoản" :to="PATH.PROFILE"></v-list-item>
                             <v-list-item prepend-icon="mdi-package-variant-closed" title="Đơn mua" :to="PATH.ORDERS"></v-list-item>
                             <v-divider class="my-1"></v-divider>
@@ -199,7 +199,7 @@ onUnmounted(() => {
                 </nav>
 
                 <!-- Actions: search + favorites + cart -->
-                <div class="nav-actions d-flex align-center gap-4">
+                <div class="nav-actions d-flex align-center ga-4">
                     <!-- Search -->
                     <div class="search-wrap" :class="{ expanded: isSearchOpen }">
                         <v-icon size="20" class="search-icon" @click="isSearchOpen ? handleSearchSubmit() : openSearch()">

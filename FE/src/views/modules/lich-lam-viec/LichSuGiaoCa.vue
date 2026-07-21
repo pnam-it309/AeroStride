@@ -78,7 +78,7 @@ const getChenhLechColor = (val) => {
 
 <template>
     <v-container fluid class="pa-4">
-        <v-card class="rounded-lg shadow-sm mb-4 border">
+        <v-card class="rounded-lg elevation-1 mb-4 border">
             <v-card-title class="pa-4 border-b font-weight-bold d-flex align-center">
                 <v-icon color="primary" class="mr-2">mdi-history</v-icon>
                 Lịch Sử Giao Ca

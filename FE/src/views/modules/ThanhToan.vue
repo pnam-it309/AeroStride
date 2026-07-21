@@ -129,7 +129,7 @@ onMounted(() => {
         <!-- Header -->
         <div class="header-section mb-8">
             <div>
-                <h1 class="text-h4 font-bold text-dark mb-1">Quản lý thanh toán</h1>
+                <h1 class="text-h4 font-weight-bold text-dark mb-1">Quản lý thanh toán</h1>
                 <p class="text-subtitle-1 text-slate-500">Quản lý giao dịch và phương thức thanh toán hệ thống</p>
             </div>
         </div>
@@ -144,7 +144,7 @@ onMounted(() => {
                             </div>
                             <div>
                                 <p class="text-caption text-slate-500 text-uppercase mb-1">Tổng doanh thu</p>
-                                <p class="text-h5 font-bold text-dark">{{ formatCurrency(statistics.totalRevenue) }}</p>
+                                <p class="text-h5 font-weight-bold text-dark">{{ formatCurrency(statistics.totalRevenue) }}</p>
                             </div>
                         </v-card>
                     </v-col>
@@ -157,7 +157,7 @@ onMounted(() => {
                             </div>
                             <div>
                                 <p class="text-caption text-slate-500 text-uppercase mb-1">Doanh thu hôm nay</p>
-                                <p class="text-h5 font-bold text-dark">{{ formatCurrency(statistics.todayRevenue) }}</p>
+                                <p class="text-h5 font-weight-bold text-dark">{{ formatCurrency(statistics.todayRevenue) }}</p>
                             </div>
                         </v-card>
                     </v-col>
@@ -170,7 +170,7 @@ onMounted(() => {
                             </div>
                             <div>
                                 <p class="text-caption text-slate-500 text-uppercase mb-1">Thành công</p>
-                                <p class="text-h5 font-bold text-dark">{{ statistics.successfulPayments }} GD</p>
+                                <p class="text-h5 font-weight-bold text-dark">{{ statistics.successfulPayments }} GD</p>
                             </div>
                         </v-card>
                     </v-col>
@@ -183,7 +183,7 @@ onMounted(() => {
                             </div>
                             <div>
                                 <p class="text-caption text-slate-500 text-uppercase mb-1">Số tiền hoàn</p>
-                                <p class="text-h5 font-bold text-dark">{{ formatCurrency(statistics.refundAmount) }}</p>
+                                <p class="text-h5 font-weight-bold text-dark">{{ formatCurrency(statistics.refundAmount) }}</p>
                             </div>
                         </v-card>
                     </v-col>
@@ -293,7 +293,7 @@ onMounted(() => {
                                             {{ method.status === 'active' ? 'Hoạt động' : 'Đã tắt' }}
                                         </v-chip>
                                     </div>
-                                    <h3 class="text-h6 font-bold text-dark mb-1">{{ method.name }}</h3>
+                                    <h3 class="text-h6 font-weight-bold text-dark mb-1">{{ method.name }}</h3>
                                     <p class="text-body-2 text-slate-500 leading-relaxed">{{ method.description }}</p>
                                 </v-card>
                             </v-col>

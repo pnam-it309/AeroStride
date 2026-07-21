@@ -65,10 +65,6 @@ const handleLogin = async () => {
                     <div class="input-wrapper">
                         <div class="d-flex justify-space-between align-center mb-2">
                             <v-label class="font-weight-bold mb-0 text-subtitle-2 text-grey-darken-3">Mật khẩu</v-label>
-                            <RouterLink :to="PATH.FORGOT_PASSWORD"
-                                class="text-blue-darken-3 text-decoration-none text-caption font-weight-bold hover-underline transition-fast">
-                                Quên mật khẩu?
-                            </RouterLink>
                         </div>
                         <v-text-field v-model="loginForm.password" variant="outlined" class="modern-input"
                             type="password" hide-details color="blue-darken-3" placeholder="••••••••"
@@ -108,7 +104,7 @@ const handleLogin = async () => {
                     </div>
                 </v-col>
 
-                <v-col cols="12" class="d-flex justify-center gap-4 mt-2">
+                <v-col cols="12" class="d-flex justify-center ga-4 mt-2">
                     <v-btn icon variant="outlined" color="grey-lighten-1" class="social-btn" :disabled="loading">
                         <v-icon color="red">mdi-google</v-icon>
                     </v-btn>

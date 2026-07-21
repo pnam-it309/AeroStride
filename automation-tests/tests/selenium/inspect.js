@@ -1,6 +1,10 @@
 const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 
+// Same override the other selenium suites use, so this can be pointed at a local
+// stack instead of always hitting the deployed site.
+const BASE_URL = process.env.BASE_URL || 'https://aerostride.me';
+
 async function run() {
   const options = new chrome.Options();
   options.addArguments('--headless=new');
@@ -11,8 +15,8 @@ async function run() {
   const driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
 
   try {
-    console.log('Navigating to landing page...');
-    await driver.get('https://aerostride.me/');
+    console.log(`Navigating to landing page: ${BASE_URL}`);
+    await driver.get(BASE_URL);
     await driver.sleep(5000);
 
     console.log('Triggering client-side navigation to /admin/login via Vue Router...');

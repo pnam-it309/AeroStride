@@ -22,7 +22,7 @@ const getOrderItemCount = (order) =>
 </script>
 
 <template>
-    <div class="order-tabs d-flex align-center gap-2 pb-1">
+    <div class="order-tabs d-flex align-center ga-2 pb-1">
         <div
             v-for="(order, idx) in orders"
             :key="order.id"

@@ -17,7 +17,7 @@
                     trị viên.
                 </p>
 
-                <div class="d-flex justify-center gap-4">
+                <div class="d-flex justify-center ga-4">
                     <v-btn
                         variant="flat"
                         size="x-large"

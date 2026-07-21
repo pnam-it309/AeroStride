@@ -3,12 +3,12 @@
     <!-- Payment Card -->
     <v-card class="pos-card pa-4">
         <div class="d-flex justify-space-between align-center mb-3">
-            <h3 class="font-weight-semibold m-0" style="font-size: 14px !important; color: #2b2a2a !important;">Thanh toán</h3>
+            <h3 class="font-weight-semibold ma-0" style="font-size: 14px !important; color: #2b2a2a !important;">Thanh toán</h3>
         </div>
 
         <div class="d-flex align-center justify-space-between mb-4">
             <span class="text-slate-600" style="font-size: 13px !important">Hình thức thanh toán</span>
-            <div class="d-flex gap-2">
+            <div class="d-flex ga-2">
                 <button type="button" @click="emitMethodChange('CASH')"
                     :class="['px-4 d-flex align-center justify-center transition-all payment-btn',
                         paymentMethod === 'CASH' ? 'cash-active-btn' : 'payment-inactive-btn']">
@@ -39,7 +39,7 @@
         <!-- Unpaid / Refund Message Alert -->
         <div v-if="remainingBalance > 0"
             class="d-flex align-center justify-space-between pa-3 rounded-lg bg-red-50 text-red-800 border-red">
-            <div class="d-flex align-center gap-2">
+            <div class="d-flex align-center ga-2">
                 <v-icon color="error" size="18">mdi-alert-circle-outline</v-icon>
                 <span class="text-slate-600" style="font-size: 13px !important">Còn thiếu</span>
             </div>
@@ -49,7 +49,7 @@
         </div>
         <div v-else-if="changeAmount > 0"
             class="d-flex align-center justify-space-between pa-3 rounded-lg bg-blue-50 text-blue-800 border-blue">
-            <div class="d-flex align-center gap-2">
+            <div class="d-flex align-center ga-2">
                 <v-icon color="primary" size="18">mdi-cash-refund</v-icon>
                 <span class="text-slate-600" style="font-size: 13px !important">Tiền thừa trả khách</span>
             </div>
@@ -59,9 +59,9 @@
     </v-card>
 
     <!-- Checkout / Print Action Buttons at Bottom Right -->
-    <div class="d-flex gap-3 mt-4 w-100">
+    <div class="d-flex ga-3 mt-4 w-100">
         <v-btn color="#107c41" height="60"
-            class="font-weight-bold rounded-lg shadow-md text-white px-4 flex-grow-1"
+            class="font-weight-bold rounded-lg elevation-2 text-white px-4 flex-grow-1"
             style="font-size: 17px !important;" :disabled="!hasItems"
             @click="$emit('print-invoice')" elevation="0">
             <v-icon class="mr-1">mdi-printer</v-icon>
@@ -69,7 +69,7 @@
         </v-btn>
 
         <v-btn color="primary" height="60"
-            class="font-weight-bold rounded-lg btn-checkout shadow-md text-white px-4 flex-grow-1"
+            class="font-weight-bold rounded-lg btn-checkout elevation-2 text-white px-4 flex-grow-1"
             style="font-size: 17px !important;" :loading="isProcessing"
             :disabled="!hasItems" @click="$emit('checkout')" elevation="0">
             THANH TOÁN

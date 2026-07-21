@@ -509,8 +509,8 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 
 <template>
     <v-dialog v-model="dialogVisible" max-width="860" persistent transition="variant-modal-transition" scrollable>
-        <v-card class="rounded-xl border shadow-2xl p-0 variant-modal-card">
-            <v-card-title class="px-8 py-6 border-b d-flex align-center justify-space-between bg-slate-50/50">
+        <v-card class="rounded-xl border elevation-12 pa-0 variant-modal-card">
+            <v-card-title class="px-8 py-6 border-b d-flex align-center justify-space-between bg-slate-50-50">
                 <div>
                     <h3 class="text-h5 font-weight-bold text-slate-900 tracking-tight">
                         {{ headerTitle }}
@@ -529,7 +529,7 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                                 <div class="variant-image-panel pa-0 position-relative overflow-hidden">
                                     <div class="variant-image-panel__preview">
                                         <div
-                                            class="image-wrapper rounded-2xl cursor-pointer hover-lift transition-all w-100"
+                                            class="image-wrapper rounded-xl cursor-pointer hover-lift transition-all w-100"
                                             style="aspect-ratio: 1/1; position: relative; overflow: hidden; background-color: #f8fafc"
                                             @click="triggerFileInput"
                                         >
@@ -696,14 +696,14 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 
             <v-divider></v-divider>
 
-            <v-card-actions class="px-8 py-6 bg-slate-50 d-flex justify-end gap-3">
-                <v-btn variant="tonal" color="slate-500" class="px-6 font-weight-medium h-11" @click="emit('close')">
+            <v-card-actions class="px-8 py-6 bg-slate-50 d-flex justify-end ga-3">
+                <v-btn variant="tonal" color="slate-500" class="px-6 font-weight-medium" @click="emit('close')">
                     Hủy bỏ
                 </v-btn>
                 <v-btn
                     color="primary"
                     variant="flat"
-                    class="px-8 font-weight-medium h-11"
+                    class="px-8 font-weight-medium"
                     :loading="submitting"
                     @click="handleSubmit"
                 >
@@ -757,10 +757,6 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
 
 .h-1-5 {
     height: 6px;
-}
-
-.shadow-2xl {
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
 .gap-3 {

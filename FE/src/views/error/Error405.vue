@@ -12,7 +12,7 @@
                     Yêu cầu không được phép. Phương thức truy cập này không được hỗ trợ.
                 </h2>
 
-                <div class="d-flex justify-center gap-4">
+                <div class="d-flex justify-center ga-4">
                     <v-btn
                         variant="flat"
                         size="x-large"

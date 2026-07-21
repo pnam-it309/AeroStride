@@ -12,7 +12,7 @@
                     Bạn đang thực hiện quá nhiều yêu cầu. Vui lòng đợi một chút rồi thử lại.
                 </h2>
 
-                <div class="d-flex justify-center gap-4">
+                <div class="d-flex justify-center ga-4">
                     <v-btn
                         variant="flat"
                         size="x-large"

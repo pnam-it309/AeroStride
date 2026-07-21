@@ -62,7 +62,7 @@ onMounted(() => {
                                         v-show="currentShoeIndex === index"
                                         :key="shoe"
                                         :src="shoe"
-                                        class="mx-auto floating-shoe-premium drop-shadow-2xl rounded-xl absolute-shoe"
+                                        class="mx-auto floating-shoe-premium drop-elevation-12 rounded-xl absolute-shoe"
                                         width="100%"
                                         max-width="500"
                                         cover

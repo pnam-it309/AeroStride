@@ -1,1 +1,10 @@
 CHANGELOG.md merge=ours
+
+# These files are executed inside Linux containers. A CRLF shebang makes the
+# kernel look for an interpreter literally named "/bin/sh\r", and the container
+# dies with a confusing "no such file or directory". Pin them to LF so a Windows
+# checkout cannot reintroduce it. Scoped deliberately: a repo-wide `text=auto`
+# would renormalise every file and bury real changes in line-ending churn.
+*.sh text eol=lf
+gradlew text eol=lf
+.env* text eol=lf

@@ -10,7 +10,7 @@
                 <h1 class="text-h1 font-weight-black gradient-text mb-4">Opps!!!</h1>
                 <h2 class="text-h4 font-weight-bold text-slate-700 mb-8">Trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển.</h2>
 
-                <div class="d-flex justify-center gap-4">
+                <div class="d-flex justify-center ga-4">
                     <v-btn
                         variant="flat"
                         size="x-large"

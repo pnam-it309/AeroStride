@@ -184,7 +184,7 @@ onMounted(() => {
                                 <h2 class="text-h4 font-weight-black text-blue-darken-4 mb-2">Hồ sơ cá nhân</h2>
                                 <p class="text-body-1 text-grey-darken-1 mb-0">Quản lý thông tin bảo mật cho tài khoản của bạn</p>
                             </div>
-                            <div class="d-flex align-center gap-4">
+                            <div class="d-flex align-center ga-4">
                                 <v-btn v-if="!isEditing" color="blue-darken-4" size="x-large" rounded="pill" class="text-none font-weight-bold elevation-3" @click="isEditing = true">
                                     Cập nhật hồ sơ
                                 </v-btn>

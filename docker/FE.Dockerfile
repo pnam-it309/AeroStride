@@ -28,14 +28,13 @@ CMD ["sh", "-c", "npm run dev -- --host 0.0.0.0 --port ${FE_DEV_PORT}"]
 FROM build AS builder
 ARG VITE_API_URL
 ARG VITE_WS_URL
-ARG VITE_APP_NAME
-ARG VITE_APP_VERSION
-ARG VITE_APP_ENV
+# VITE_APP_URL is substituted into index.html's JSON-LD block as %VITE_APP_URL%.
+# Vite leaves the literal placeholder in the markup when it is undefined, so an
+# absent value ships broken canonical/logo URLs to search engines.
+ARG VITE_APP_URL
 ENV VITE_API_URL=${VITE_API_URL:-/api/v1}
 ENV VITE_WS_URL=${VITE_WS_URL:-/ws}
-ENV VITE_APP_NAME=${VITE_APP_NAME:-AeroStride}
-ENV VITE_APP_VERSION=${VITE_APP_VERSION:-1.0.0}
-ENV VITE_APP_ENV=${VITE_APP_ENV:-development}
+ENV VITE_APP_URL=${VITE_APP_URL:-https://aerostride.me}
 ENV NODE_OPTIONS=--max-old-space-size=4096
 RUN npm run build
 

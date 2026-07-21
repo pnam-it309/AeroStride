@@ -111,7 +111,7 @@ onUnmounted(() => {
                 </div>
             </div>
 
-            <v-container fluid class="fill-height px-16 relative z-10">
+            <v-container fluid class="fill-height px-16 position-relative z-index-10">
                 <v-row align="center" class="fill-height">
                     <v-col cols="12" md="3" class="tech-hud">
                         <div class="hud-box" :class="{ active: props.active }">
@@ -142,7 +142,7 @@ onUnmounted(() => {
                         </div>
                     </v-col>
 
-                    <v-col cols="12" md="6" class="viewer-area relative">
+                    <v-col cols="12" md="6" class="viewer-area position-relative">
                         <div class="main-hud-ring">
                             <div class="ring outer"></div>
                             <div class="ring inner"></div>
@@ -228,7 +228,7 @@ onUnmounted(() => {
                 <div class="bar-item">SPATIAL: ACTIVE</div>
                 <div class="bar-item">ASSET_ID: #AS-{{ currentIndex + 101 }}</div>
                 <div class="flex-grow-1"></div>
-                <div class="bar-item font-weight-black uppercase">AeroStride OS v3.4.2 // {{ activeProduct.category }}</div>
+                <div class="bar-item font-weight-black text-uppercase">AeroStride OS v3.4.2 // {{ activeProduct.category }}</div>
             </div>
         </template>
     </section>

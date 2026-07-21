@@ -101,7 +101,7 @@ const currentPromo = computed(() => promotions[activeIndex.value]);
                 </div>
             </div>
 
-        <v-container fluid class="fill-height relative z-10 px-0 py-0 d-flex flex-column">
+        <v-container fluid class="fill-height position-relative z-index-10 px-0 py-0 d-flex flex-column">
             <!-- Interactive Milestone Navigation (Bấm được) -->
             <div class="milestone-nav-top py-10 px-16">
                 <div class="nav-track">

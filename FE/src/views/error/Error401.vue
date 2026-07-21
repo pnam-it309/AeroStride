@@ -10,7 +10,7 @@
                 <h1 class="text-h1 font-weight-black gradient-text mb-4">Truy cập bị từ chối!</h1>
                 <h2 class="text-h4 font-weight-bold text-slate-700 mb-8">Bạn cần đăng nhập để truy cập vào nội dung này.</h2>
 
-                <div class="d-flex justify-center gap-4">
+                <div class="d-flex justify-center ga-4">
                     <v-btn
                         variant="flat"
                         size="x-large"

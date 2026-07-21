@@ -102,7 +102,7 @@ onMounted(() => {
             <v-card elevation="0" class="mb-6" style="border: 1px solid #e2e8f0; border-radius: 16px;">
                 <div class="pa-6 d-flex align-center flex-wrap ga-6"
                     style="background: linear-gradient(135deg, #1e257c 0%, #2d379e 100%); border-radius: 16px 16px 0 0;">
-                    <v-avatar size="96" class="border-4" style="border: 4px solid rgba(255,255,255,0.35);">
+                    <v-avatar size="96" style="border: 4px solid rgba(255,255,255,0.35);">
                         <v-img v-if="avatarUrl" :src="avatarUrl" cover />
                         <v-icon v-else size="56" color="white">mdi-account</v-icon>
                     </v-avatar>

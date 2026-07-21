@@ -120,7 +120,7 @@ const submit = async () => {
                     <div class="filter-field-label">Tiền mặt thực tế đếm được (VNĐ) <span class="text-error">*</span></div>
                     <v-text-field v-model.number="tienThucTe" type="number" variant="outlined" density="compact" />
                     
-                    <div class="d-flex justify-space-between align-center mb-4 p-3 rounded" :class="tienChenhLech < 0 ? 'bg-red-50' : (tienChenhLech > 0 ? 'bg-blue-50' : 'bg-green-50')">
+                    <div class="d-flex justify-space-between align-center mb-4 pa-3 rounded" :class="tienChenhLech < 0 ? 'bg-red-50' : (tienChenhLech > 0 ? 'bg-blue-50' : 'bg-green-50')">
                         <span class="font-weight-medium">Tiền chênh lệch:</span>
                         <span class="font-weight-bold" :class="tienChenhLech < 0 ? 'text-error' : (tienChenhLech > 0 ? 'text-info' : 'text-success')">
                             {{ tienChenhLech > 0 ? '+' : '' }}{{ tienChenhLech.toLocaleString() }} đ

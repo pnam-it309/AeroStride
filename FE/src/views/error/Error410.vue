@@ -12,7 +12,7 @@
                     Trang hoặc tài nguyên bạn đang tìm kiếm đã không còn khả dụng và đã bị xóa vĩnh viễn.
                 </h2>
 
-                <div class="d-flex justify-center gap-4">
+                <div class="d-flex justify-center ga-4">
                     <v-btn
                         variant="flat"
                         size="x-large"

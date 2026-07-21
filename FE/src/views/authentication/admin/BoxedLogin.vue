@@ -9,18 +9,18 @@ import { PATH } from '@/router/routePaths';
         <v-container fluid class="pa-0 h-100">
             <v-row no-gutters class="h-100 align-center justify-center">
                 <!-- Main Login Card -->
-                <v-col cols="11" sm="9" md="10" lg="10" xl="8" class="relative z-index-2">
+                <v-col cols="11" sm="9" md="10" lg="10" xl="8" class="position-relative z-index-2">
                     <v-card class="glass-container overflow-hidden elevation-24 mt-n12">
                         <v-row no-gutters>
                             <!-- Visual Branding Side -->
                             <v-col cols="12" lg="7"
-                                class="d-none d-lg-flex flex-column align-center justify-center visual-side pa-10 text-center relative overflow-hidden">
+                                class="d-none d-lg-flex flex-column align-center justify-center visual-side pa-10 text-center position-relative overflow-hidden">
                                 <div class="floating-elements">
                                     <div class="shape s1"></div>
                                     <div class="shape s2"></div>
                                 </div>
 
-                                <div class="content-up relative z-index-2 w-100">
+                                <div class="content-up position-relative z-index-2 w-100">
                                     <div class="mb-6 transform-zoom">
                                         <Logo class="mega-logo" />
                                     </div>
@@ -38,7 +38,7 @@ import { PATH } from '@/router/routePaths';
 
                             <!-- Auth Form Side -->
                             <v-col cols="12" lg="5"
-                                class="d-flex align-center justify-center bg-white-op-90 pa-sm-12 pa-6 relative">
+                                class="d-flex align-center justify-center bg-white-op-90 pa-sm-12 pa-6 position-relative">
                                 <div class="auth-form-wrap w-100" style="max-width: 420px">
                                     <div class="text-center mb-10 d-lg-none transform-zoom">
                                         <Logo class="mega-logo" />

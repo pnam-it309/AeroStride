@@ -1,0 +1,34 @@
+// =============================================================================
+// SLATE - the bits Vuetify does not generate
+//
+// The ramp itself now lives in theme/LightTheme.js, so Vuetify emits
+// `.text-slate-*` and `.bg-slate-*` natively. It emits no border-colour
+// utilities at all, and no hover variants, so those two families are defined
+// here against the same theme variables - no second source of truth.
+// =============================================================================
+
+$slate-shades: 50, 100, 200, 300, 400, 500, 600, 700, 800, 900;
+
+@each $shade in $slate-shades {
+    .border-slate-#{$shade} {
+        border-color: rgb(var(--v-theme-slate-#{$shade})) !important;
+        // Vuetify's `border` utility paints with
+        // rgba(var(--v-border-color), var(--v-border-opacity)) where the opacity
+        // is 0.12, which would wash this out to a barely visible tint.
+        --v-border-opacity: 1;
+    }
+
+    .hover-bg-slate-#{$shade}:hover {
+        background-color: rgb(var(--v-theme-slate-#{$shade})) !important;
+    }
+}
+
+// Tailwind's `bg-slate-50/30` alpha syntax has no CSS equivalent, so the few
+// translucent surfaces get explicit classes instead.
+// Alphas are written out rather than divided: `$a / 100` is the slash-as-division
+// syntax Dart Sass deprecated, and it would warn on every build.
+@each $name, $alpha in (30: 0.3, 50: 0.5, 80: 0.8) {
+    .bg-slate-50-#{$name} {
+        background-color: rgba(var(--v-theme-slate-50), $alpha) !important;
+    }
+}

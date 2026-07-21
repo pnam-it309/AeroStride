@@ -18,7 +18,8 @@ import {
     MessagesIcon,
     CalendarIcon,
     ClockIcon,
-    HistoryIcon
+    HistoryIcon,
+    StarIcon
 } from 'vue-tabler-icons';
 import { PATH } from '@/router/routePaths';
 import { APP_ROLES } from '@/constants/appConstants';
@@ -90,6 +91,13 @@ const sidebarItem = [
         icon: UsersIcon,
         BgColor: 'primary',
         to: PATH.KHACH_HANG,
+        roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF]
+    },
+    {
+        title: 'Quản lý đánh giá',
+        icon: StarIcon,
+        BgColor: 'warning',
+        to: PATH.DANH_GIA,
         roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF]
     },
     {

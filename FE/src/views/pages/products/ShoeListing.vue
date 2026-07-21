@@ -134,7 +134,7 @@ const translateGender = (gender) => {
         <div class="listing-subheader px-12 py-8 mt-0">
             <div class="d-flex align-center justify-space-between">
                 <h1 class="text-h4 font-weight-black">Tất cả sản phẩm ({{ totalElements }})</h1>
-                <div class="d-flex align-center gap-6">
+                <div class="d-flex align-center ga-6">
                     <v-btn variant="text" @click="isFilterVisible = !isFilterVisible" class="font-weight-bold">
                         {{ isFilterVisible ? 'Ẩn bộ lọc' : 'Hiện bộ lọc' }} <v-icon class="ml-2">mdi-filter-variant</v-icon>
                     </v-btn>

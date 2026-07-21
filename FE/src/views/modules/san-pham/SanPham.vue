@@ -537,7 +537,7 @@ onBeforeUnmount(() => {
                 <template #after>
                     <v-col cols="12" class="mt-4 pa-0">
                         <div class="d-flex align-center justify-space-between mb-2">
-                            <div class="d-flex align-center gap-2">
+                            <div class="d-flex align-center ga-2">
                                 <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
                                 <span class="filter-range-label">Khoảng giá</span>
                             </div>
@@ -574,8 +574,8 @@ onBeforeUnmount(() => {
             </template>
 
             <template #top>
-                <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
-                    <div class="d-flex align-center flex-wrap gap-2">
+                <div class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap ga-3">
+                    <div class="d-flex align-center flex-wrap ga-2">
                         <span class="text-caption font-weight-medium text-slate-500">
                             Đã chọn {{ selectedProductIds.length }} sản phẩm
                         </span>

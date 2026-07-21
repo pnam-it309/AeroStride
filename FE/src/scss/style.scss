@@ -1,10 +1,18 @@
 @use './variables';
 @use './animations';
+// Required. vite-plugin-vuetify's `styles: true` only pulls each COMPONENT's own
+// CSS; the utility layer (d-flex, pa-4, elevation-*, rounded-*, border-*, ga-*,
+// w-100 ...) lives only here. Dropping this line cuts the bundle by ~216 kB and
+// still builds cleanly, but every layout utility silently disappears.
 @use 'vuetify/styles';
 @use './override';
 @use './layout/container';
 @use './layout/sidebar';
 @use './layout/topbar';
+
+// Slate palette: defines the text-/bg-/border-slate-* utilities the templates
+// already use. Must come before the admin styles so those can rely on it.
+@use './slate';
 
 // Modularized Admin Styles
 @use './admin-utilities';

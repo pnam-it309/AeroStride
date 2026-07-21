@@ -5,6 +5,7 @@ import com.example.be.infrastructure.constants.RoutesConstant;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.repository.SanPhamRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,18 +23,29 @@ public class CustomerSitemapController {
 
     private final SanPhamRepository sanPhamRepository;
 
+    /**
+     * Origin of the public storefront - /product/{id} is a Vue route, so this is the
+     * frontend host, not the API host. Field injection rather than a constructor arg
+     * because @RequiredArgsConstructor would not carry the @Value onto the parameter.
+     */
+    @Value("${app.public_url}")
+    private String publicUrl;
+
     @GetMapping(value = "/products.xml", produces = MediaType.APPLICATION_XML_VALUE)
     public String getProductSitemap() {
         List<SanPham> products = sanPhamRepository.findAllByXoaMemFalseAndTrangThai(TrangThai.DANG_HOAT_DONG);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.of("UTC"));
 
+        // Trailing slashes would otherwise produce "https://host//product/1".
+        String origin = publicUrl.replaceAll("/+$", "");
+
         StringBuilder xml = new StringBuilder();
         xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         xml.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
 
         for (SanPham p : products) {
-            String url = "https://aerostride.me/product/" + p.getId();
+            String url = origin + "/product/" + p.getId();
             long timestamp = p.getNgayCapNhat() != null ? p.getNgayCapNhat() : (p.getNgayTao() != null ? p.getNgayTao() : System.currentTimeMillis());
             String lastMod = formatter.format(Instant.ofEpochMilli(timestamp));
             

@@ -65,7 +65,7 @@ onMounted(() => {
                                 Với cam kết <strong class="text-black">100% sản phẩm chính hãng</strong>, dịch vụ khách hàng vượt trội và không gian mua sắm hiện đại, AeroStride đang từng bước khẳng định vị thế dẫn đầu trong ngành bán lẻ đồ thể thao cao cấp.
                             </p>
                             
-                            <div class="d-flex align-center gap-4 mt-8">
+                            <div class="d-flex align-center ga-4 mt-8">
                                 <div class="founder-avatar">
                                     <v-img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=200" cover></v-img>
                                 </div>
@@ -121,19 +121,19 @@ onMounted(() => {
                         <v-col cols="12" sm="4">
                             <div class="stat-item hover-glow">
                                 <div class="text-h1 font-weight-black text-primary mb-2 stat-number">50+</div>
-                                <div class="text-subtitle-1 font-weight-bold text-grey-darken-2 uppercase tracking-wide">Chi Nhánh Toàn Quốc</div>
+                                <div class="text-subtitle-1 font-weight-bold text-grey-darken-2 text-uppercase tracking-wide">Chi Nhánh Toàn Quốc</div>
                             </div>
                         </v-col>
                         <v-col cols="12" sm="4">
                             <div class="stat-item hover-glow delay-1">
                                 <div class="text-h1 font-weight-black text-primary mb-2 stat-number">1M+</div>
-                                <div class="text-subtitle-1 font-weight-bold text-grey-darken-2 uppercase tracking-wide">Khách Hàng Tin Tưởng</div>
+                                <div class="text-subtitle-1 font-weight-bold text-grey-darken-2 text-uppercase tracking-wide">Khách Hàng Tin Tưởng</div>
                             </div>
                         </v-col>
                         <v-col cols="12" sm="4">
                             <div class="stat-item hover-glow delay-2">
                                 <div class="text-h1 font-weight-black text-primary mb-2 stat-number">100%</div>
-                                <div class="text-subtitle-1 font-weight-bold text-grey-darken-2 uppercase tracking-wide">Sản Phẩm Chính Hãng</div>
+                                <div class="text-subtitle-1 font-weight-bold text-grey-darken-2 text-uppercase tracking-wide">Sản Phẩm Chính Hãng</div>
                             </div>
                         </v-col>
                     </v-row>

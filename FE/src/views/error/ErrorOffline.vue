@@ -10,7 +10,7 @@
                 <h1 class="text-h1 font-weight-black gradient-text mb-4">Mất kết nối!</h1>
                 <h2 class="text-h4 font-weight-bold text-slate-700 mb-8">Vui lòng kiểm tra lại kết nối internet của bạn.</h2>
 
-                <div class="d-flex justify-center gap-4">
+                <div class="d-flex justify-center ga-4">
                     <v-btn
                         variant="flat"
                         size="x-large"

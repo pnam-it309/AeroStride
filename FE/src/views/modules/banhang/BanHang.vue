@@ -1807,7 +1807,7 @@ const formatDateTime = (dateStr) => {
         <div class="pos-shell">
             <!-- Header section containing title and tabs -->
             <header class="pos-header-row d-flex align-center justify-space-between">
-                <div class="d-flex align-center gap-4">
+                <div class="d-flex align-center ga-4">
                     <OrderTabs :orders="orders" :active-index="activeOrderIndex"
                         @select="(idx) => (activeOrderIndex = idx)" @create="createNewOrder" @close="closeOrder" />
                 </div>
@@ -1816,7 +1816,7 @@ const formatDateTime = (dateStr) => {
             <!-- Main Workspace Grid -->
             <v-row v-if="selectedOrder" class="pos-grid">
                 <!-- Left Column (8 cols out of 12) -->
-                <v-col cols="12" lg="8" class="h-100 d-flex flex-column gap-4 pr-lg-2" style="min-height: 0;">
+                <v-col cols="12" lg="8" class="h-100 d-flex flex-column ga-4 pr-lg-2" style="min-height: 0;">
                     <!-- Sản phẩm Card -->
                     <v-card class="pos-card pa-4 d-flex flex-column flex-grow-1"
                         style="overflow: visible !important; z-index: 15 !important; min-height: 0;">
@@ -1846,7 +1846,7 @@ const formatDateTime = (dateStr) => {
                 </v-col>
 
                 <!-- Right Column (4 cols out of 12) -->
-                <v-col cols="12" lg="4" class="h-100 d-flex flex-column gap-4 pl-lg-2 mt-4 mt-lg-0 overflow-y-auto"
+                <v-col cols="12" lg="4" class="h-100 d-flex flex-column ga-4 pl-lg-2 mt-4 mt-lg-0 overflow-y-auto"
                     style="min-height: 0;">
                     <!-- Khách hàng và Nhận hàng Card -->
                     <CustomerAndShippingPanel :order="selectedOrder" :is-giao-hang="isGiaoHang" class="flex-shrink-0"

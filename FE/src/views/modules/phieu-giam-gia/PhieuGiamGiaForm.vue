@@ -398,12 +398,14 @@ onMounted(init);
 
         <!-- Action Header -->
         <div class="d-flex align-center justify-space-between mb-8 mt-4">
-            <div class="d-flex align-center gap-4">
-                <v-btn icon variant="flat" @click="goBack" class="btn-back-header">
-                    <v-icon>mdi-arrow-left</v-icon>
+            <div class="d-flex align-center ga-4">
+                <v-btn icon variant="flat" color="white" class="mr-3 border elevation-1 rounded-lg" size="36"
+                    style="height: 36px !important; width: 36px !important; min-height: 36px !important"
+                    @click="goBack">
+                    <v-icon size="18" color="slate-700">mdi-arrow-left</v-icon>
                 </v-btn>
             </div>
-            <div class="d-flex gap-3">
+            <div class="d-flex ga-3">
                 <v-btn v-if="!isViewOnly" color="primary" variant="flat"
                     class="text-none px-8 voucher-submit-btn elevation-4" @click="handleSave" :loading="saving">
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
@@ -509,7 +511,7 @@ onMounted(init);
                                     <v-radio label="Cá nhân" value="CA_NHAN" color="primary"></v-radio>
                                 </v-radio-group>
                                 <div v-if="isEditMode"
-                                    class="text-caption text-medium-emphasis mt-2 d-flex align-center gap-1"
+                                    class="text-caption text-medium-emphasis mt-2 d-flex align-center ga-1"
                                     style="font-size: 11px !important; line-height: 1.2;">
                                     <v-icon size="14" color="info" class="mr-1">mdi-information</v-icon>
                                     Không thể đổi loại phiếu khi sửa
@@ -544,10 +546,13 @@ onMounted(init);
 
             <!-- FULL WIDTH: Customer Table (Only for Private Mode) -->
             <v-col cols="12" v-if="form.loaiHienThi === 'CA_NHAN'">
-                <v-card class="filter-card elevation-0 border-2 border-primary-lighten-4">
+                <!-- border-md, not border-2: Vuetify sizes borders by keyword
+                     (thin/sm/md/lg/xl), so `border-2` matched no rule and this card
+                     rendered with no border at all next to its bordered sibling. -->
+                <v-card class="filter-card elevation-0 border-md border-primary-emphasis">
                     <v-card-text class="pa-8">
                         <div class="section-header d-flex align-center mb-6">
-                            <div class="icon-blob bg-primary-lighten-5 mr-3">
+                            <div class="icon-blob bg-lightprimary mr-3">
                                 <UsersIcon class="text-primary" size="20" />
                             </div>
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách khách hàng chọn

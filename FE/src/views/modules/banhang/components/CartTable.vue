@@ -31,7 +31,7 @@ const handleDirectInput = (item, event) => {
 </script>
 
 <template>
-    <v-card class="cart-card shadow-none overflow-hidden h-full d-flex flex-column">
+    <v-card class="cart-card elevation-0 overflow-hidden h-100 d-flex flex-column">
         <v-table class="pos-table flex-grow-1" fixed-header height="100%">
             <thead>
                 <tr>
@@ -66,7 +66,7 @@ const handleDirectInput = (item, event) => {
                         {{ item.maChiTietSanPham || item.maSanPham || 'N/A' }}
                     </td>
                     <td>
-                        <div class="d-flex align-center py-1.5">
+                        <div class="d-flex align-center py-2">
                             <v-avatar color="grey-lighten-4" rounded="lg" size="38"
                                 class="mr-3 border position-relative overflow-visible">
                                 <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover />

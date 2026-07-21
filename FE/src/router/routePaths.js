@@ -21,16 +21,15 @@ export const PATH = {
     THUOC_TINH: '/admin/thuoc-tinh',
     THANH_TOAN: '/admin/thanh-toan',
     THONG_KE: '/admin/thong-ke',
+    DANH_GIA: '/admin/danh-gia',
     LANDING: '/',
     // Auth
     LOGIN: '/user/login',
     REGISTER: '/user/register',
-    FORGOT_PASSWORD: '/user/forgot-password',
 
     // Admin Auth
     ADMIN_LOGIN: '/admin/login',
     ADMIN_REGISTER: '/admin/register',
-    ADMIN_FORGOT_PASSWORD: '/admin/forgot-password',
 
     LOGOUT: '/auth/logout',
     SHOES: '/shoes',

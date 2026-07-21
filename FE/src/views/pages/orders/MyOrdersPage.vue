@@ -144,7 +144,7 @@ const goToDetail = (id) => {
         <div class="orders-header">
             <v-container style="max-width: 1000px">
                 <div class="pa-8">
-                    <div class="d-flex align-center justify-space-between flex-wrap gap-4">
+                    <div class="d-flex align-center justify-space-between flex-wrap ga-4">
                         <div class="d-flex align-center">
                             <div class="header-icon mr-4">
                                 <v-icon size="28" color="white">mdi-package-variant-closed</v-icon>
@@ -222,7 +222,7 @@ const goToDetail = (id) => {
         <v-container v-if="isLoggedIn" class="py-6" style="max-width: 1000px">
             <!-- Status Tabs and Search -->
             <div class="mb-6 pb-4" style="border-bottom: 1px solid #e0e0e0;">
-                <div class="d-flex align-center justify-space-between flex-wrap gap-4">
+                <div class="d-flex align-center justify-space-between flex-wrap ga-4">
                     <div class="order-tabs">
                         <v-chip-group v-model="activeTab" mandatory selected-class="active-tab" show-arrows>
                             <v-chip
@@ -272,7 +272,7 @@ const goToDetail = (id) => {
                         <div class="d-flex align-center">
                             <div class="order-status-dot mr-3" :style="{ background: statusColor(order.trangThai) }"></div>
                             <div>
-                                <div class="d-flex align-center gap-2 mb-1">
+                                <div class="d-flex align-center ga-2 mb-1">
                                     <span class="text-body-2 font-weight-bold">{{ order.maHoaDon || 'Đang tạo...' }}</span>
                                     <v-chip
                                         :color="statusColor(order.trangThai)"
@@ -297,7 +297,7 @@ const goToDetail = (id) => {
                     </div>
 
                     <!-- Products Preview -->
-                    <div class="product-preview d-flex gap-3 mb-3">
+                    <div class="product-preview d-flex ga-3 mb-3">
                         <div v-for="(item, i) in (order.items || []).slice(0, 3)" :key="i" class="preview-thumb-wrapper">
                             <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover width="52" height="52" class="rounded-lg"></v-img>
                             <div v-else class="thumb-placeholder rounded-lg">
@@ -323,7 +323,7 @@ const goToDetail = (id) => {
                     </div>
 
                     <!-- Actions -->
-                    <div class="d-flex justify-end mt-4 gap-2 border-t pt-3" style="border-top: 1px solid #f0f0f0;">
+                    <div class="d-flex justify-end mt-4 ga-2 border-t pt-3" style="border-top: 1px solid #f0f0f0;">
                         <v-btn 
                             v-if="order.trangThai === 'HOAN_THANH'" 
                             color="#1e257c" 

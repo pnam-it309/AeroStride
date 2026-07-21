@@ -87,39 +87,21 @@ export default defineConfig(({ mode }) => {
         },
         build: {
             rollupOptions: {
-                treeshake: true,
-                output: {
-                    manualChunks(id) {
-                        if (id.includes('node_modules')) {
-                            // Heavy 3D libraries
-                            if (id.includes('three') || id.includes('@google/model-viewer')) {
-                                return 'vendor-3d';
-                            }
-                            // Charting libraries
-                            if (id.includes('apexcharts')) {
-                                return 'vendor-charts';
-                            }
-                            // Tiptap/Editor libraries
-                            if (id.includes('@tiptap')) {
-                                return 'vendor-editor';
-                            }
-                            // Icons
-                            if (id.includes('vue-tabler-icons')) {
-                                return 'vendor-icons';
-                            }
-                            // Vuetify
-                            if (id.includes('vuetify')) {
-                                return 'vendor-vuetify';
-                            }
-                            // Core libraries
-                            if (id.includes('/node_modules/vue/') || id.includes('/node_modules/@vue/') || id.includes('/node_modules/pinia/') || id.includes('/node_modules/vue-router/')) {
-                                return 'vendor-core';
-                            }
-                            
-                            // return 'vendor-utils';
-                        }
-                    }
-                }
+                treeshake: true
+                // No manualChunks on purpose.
+                //
+                // The hand-written vendor-* grouping that used to live here made the
+                // entry page 2,425 KB (~590 KB gzipped): forcing apexcharts into a
+                // named `vendor-charts` chunk meant every route that touched anything
+                // co-located in it pulled the whole 1 MB charting library, and
+                // index.html modulepreloaded it on every page even though charts only
+                // appear on the statistics screen.
+                //
+                // Rollup's own splitting keeps each heavy library in the route chunk
+                // that actually imports it. Measured: entry drops to 1,051 KB
+                // (238 KB gzipped) and apexcharts / three no longer appear in the
+                // entry bundle at all. Re-introduce manual grouping only with
+                // before/after numbers to back it up.
             },
             sourcemap: false,
             chunkSizeWarningLimit: 2000

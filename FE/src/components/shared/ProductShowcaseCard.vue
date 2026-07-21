@@ -30,7 +30,7 @@ const highlights = computed(() => {
 </script>
 
 <template>
-    <div class="product-showcase-card shadow-lg">
+    <div class="product-showcase-card elevation-4">
         <div class="card-inner">
             <!-- Visual Section -->
             <div class="visual-section">
@@ -65,7 +65,7 @@ const highlights = computed(() => {
                 </div>
 
                 <!-- Feature Badges (Demo style) -->
-                <div class="d-flex gap-2 mb-4 flex-wrap">
+                <div class="d-flex ga-2 mb-4 flex-wrap">
                     <v-chip size="x-small" variant="tonal" color="black" class="font-weight-bold">Lightweight</v-chip>
                     <v-chip size="x-small" variant="tonal" color="black" class="font-weight-bold">Breathable</v-chip>
                     <v-chip size="x-small" variant="tonal" color="black" class="font-weight-bold">Pro-Grip</v-chip>

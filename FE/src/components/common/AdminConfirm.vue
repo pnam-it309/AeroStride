@@ -72,7 +72,7 @@ const handleCancel = () => {
                 </div>
             </v-card-text>
 
-            <v-card-actions class="pa-6 pt-2 d-flex justify-end gap-3">
+            <v-card-actions class="pa-6 pt-2 d-flex justify-end ga-3">
                 <v-btn variant="text" class="confirm-btn-cancel px-6" :disabled="loading" @click="handleCancel">
                     {{ cancelText }}
                 </v-btn>

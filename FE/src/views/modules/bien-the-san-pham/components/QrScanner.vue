@@ -68,7 +68,7 @@ onBeforeUnmount(() => {
     <v-dialog :model-value="show" @update:model-value="emit('update:show', $event)" max-width="500" transition="dialog-bottom-transition">
         <v-card class="rounded-xl overflow-hidden">
             <div class="px-6 py-4 bg-slate-900 text-white d-flex align-center justify-space-between">
-                <div class="d-flex align-center gap-2">
+                <div class="d-flex align-center ga-2">
                     <CameraIcon size="20" />
                     <h3 class="font-weight-bold">Quét mã QR sản phẩm</h3>
                 </div>

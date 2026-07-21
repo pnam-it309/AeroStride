@@ -69,11 +69,11 @@ const handlePrint = () => {
         <v-card class="receipt-dialog rounded-xl overflow-hidden">
             <!-- Header action bar (không in) -->
             <div class="receipt-actions d-flex justify-space-between align-center pa-4 no-print">
-                <span class="text-subtitle-1 font-weight-bold d-flex align-center gap-2">
+                <span class="text-subtitle-1 font-weight-bold d-flex align-center ga-2">
                     <CircleCheckIcon size="22" class="text-success" />
                     Thanh toán thành công
                 </span>
-                <div class="d-flex gap-2">
+                <div class="d-flex ga-2">
                     <v-btn color="primary" variant="flat" size="small" prepend-icon class="rounded-lg" @click="handlePrint">
                         <template #prepend><PrinterIcon size="16" /></template>
                         In hóa đơn

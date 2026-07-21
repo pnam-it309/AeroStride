@@ -596,7 +596,7 @@ onMounted(async () => {
                                 <!-- Product List -->
                                 <div class="product-list mb-6">
                                     <div v-for="item in cartStore.cartItems" :key="item.idChiTietSanPham"
-                                        class="product-item d-flex gap-4 py-4">
+                                        class="product-item d-flex ga-4 py-4">
                                         <div class="product-img-wrapper position-relative flex-shrink-0">
                                             <v-img :src="item.hinhAnh || 'https://via.placeholder.com/150?text=Sản+Phẩm'" cover width="72" height="72"
                                                 class="bg-grey-lighten-4"></v-img>
@@ -610,7 +610,7 @@ onMounted(async () => {
                                             <p class="text-caption text-grey-darken-1 mb-1">
                                                 {{ item.tenMauSac }} / {{ item.tenKichThuoc }}
                                             </p>
-                                            <div class="mt-auto d-flex flex-column gap-1">
+                                            <div class="mt-auto d-flex flex-column ga-1">
                                                 <div v-if="item.phanTramGiam > 0" class="text-caption text-error font-weight-medium mb-1">Đợt giảm giá: -{{ item.phanTramGiam }}%</div>
                                                 <div class="d-flex justify-space-between align-center">
                                                     <span class="text-caption text-grey">Đơn giá: {{ formatPrice(item.giaBan) }}</span>
@@ -627,7 +627,7 @@ onMounted(async () => {
                                 <div class="voucher-section mb-4">
                                     <div v-if="selectedVoucher"
                                         class="voucher-applied d-flex align-center justify-space-between pa-4 mb-3">
-                                        <div class="d-flex align-center gap-3">
+                                        <div class="d-flex align-center ga-3">
                                             <div class="voucher-icon-small">
                                                 <v-icon size="20" color="white">mdi-ticket-percent</v-icon>
                                             </div>
@@ -652,7 +652,7 @@ onMounted(async () => {
                                     <div v-if="bestVoucher && !isBestSelected && bestVoucherDiscount > 0"
                                         class="best-voucher-suggest d-flex align-center justify-space-between pa-3 mt-3"
                                         style="border: 1px dashed #1e257c; background: #f5f7ff;">
-                                        <div class="d-flex align-center gap-2">
+                                        <div class="d-flex align-center ga-2">
                                             <v-icon size="18" style="color: #1e257c;">mdi-lightbulb-on-outline</v-icon>
                                             <div>
                                                 <span class="text-caption font-weight-bold d-block" style="color: #1e257c;">

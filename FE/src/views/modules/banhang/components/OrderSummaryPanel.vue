@@ -2,13 +2,13 @@
   <v-card class="pos-card pa-4">
     <!-- Header: Title & Delivery Switch -->
     <div class="d-flex justify-space-between align-center border-b pb-2 mb-3">
-        <div class="d-flex align-center gap-2">
-            <div class="rounded-circle d-flex align-center justify-center bg-orange-lighten-5 pa-1.5" style="width: 28px; height: 28px;">
+        <div class="d-flex align-center ga-2">
+            <div class="rounded-circle d-flex align-center justify-center bg-orange-lighten-5 pa-2" style="width: 28px; height: 28px;">
                 <v-icon color="deep-orange" size="16">mdi-wallet-outline</v-icon>
             </div>
-            <h3 class="font-weight-semibold m-0" style="font-size: 14px !important; color: #2b2a2a !important;">Thông tin thanh toán</h3>
+            <h3 class="font-weight-semibold ma-0" style="font-size: 14px !important; color: #2b2a2a !important;">Thông tin thanh toán</h3>
         </div>
-        <div class="d-flex align-center gap-2">
+        <div class="d-flex align-center ga-2">
             <span class="text-slate-600 font-weight-medium" style="font-size: 12px !important">Giao hàng</span>
             <v-switch :model-value="isGiaoHang" @update:model-value="val => $emit('update:isGiaoHang', val)" color="primary" hide-details
                 density="compact" inset class="custom-switch-giao-hang"
@@ -17,7 +17,7 @@
     </div>
 
     <!-- Voucher Selection & Ticket Section -->
-    <div class="d-flex flex-column mb-3 gap-2">
+    <div class="d-flex flex-column mb-3 ga-2">
         <div class="d-flex align-center">
             <span class="font-weight-semibold" style="font-size: 11px !important; letter-spacing: 0.5px; color: #2b2a2a !important;">MÃ ƯU ĐÃI / GIẢM GIÁ</span>
         </div>
@@ -41,7 +41,7 @@
                     <div class="font-weight-bold text-slate-900 text-truncate" style="font-size: 13px;">
                         [{{ activeVoucher.ma || activeVoucher.maPhieu }}] {{ activeVoucher.tenPhieu || activeVoucher.ten }}
                     </div>
-                    <div class="text-slate-500 text-caption mt-0.5">
+                    <div class="text-slate-500 text-caption mt-1">
                         Đơn tối thiểu: <span class="font-weight-semibold">{{ formatCurrency(activeVoucher.donHangToiThieu) }}</span>
                     </div>
                     <div class="font-weight-bold mt-1" style="font-size: 13px; color: #d32f2f !important;">
@@ -52,7 +52,7 @@
 
             <!-- Suggestion Banner (Green/Blue Alert) - Merged inside Ticket -->
             <div v-if="voucherSuggestionText" 
-                class="d-flex align-center gap-2 border-t"
+                class="d-flex align-center ga-2 border-t"
                 style="background-color: #f0fdf4 !important; border-top-color: #dcfce7 !important; color: #1b7d3e !important; font-size: 12.5px !important; padding: 12px 14px !important; line-height: 1.4 !important; min-height: 44px !important;"
                 :class="{ 'cursor-pointer': canApplySuggestedVoucher }"
                 @click="() => { if (canApplySuggestedVoucher) $emit('apply-suggested-voucher') }">
@@ -68,7 +68,7 @@
 
         <!-- Standalone Suggestion Banner if NO activeVoucher is selected -->
         <div v-else-if="voucherSuggestionText" 
-            class="d-flex align-center gap-2 rounded-lg border mt-1"
+            class="d-flex align-center ga-2 rounded-lg border mt-1"
             style="background-color: #f0fdf4 !important; border-color: #dcfce7 !important; color: #1b7d3e !important; font-size: 12.5px !important; padding: 12px 14px !important; line-height: 1.4 !important; min-height: 44px !important;"
             :class="{ 'cursor-pointer': canApplySuggestedVoucher }"
             @click="() => { if (canApplySuggestedVoucher) $emit('apply-suggested-voucher') }">
@@ -83,7 +83,7 @@
 
         <!-- Standalone Upsell Banner (Amber Alert) - Always separated from ticket -->
         <div v-if="betterVoucherSuggestionText" 
-            class="d-flex align-start gap-2.5 rounded-lg border mt-1"
+            class="d-flex align-start ga-3 rounded-lg border mt-1"
             style="background-color: #f8faf0 !important; border-color: #e2e8f0 !important; padding: 10px 14px !important;">
             <v-icon size="18" style="color: #d97706 !important; margin-top: 2px;" class="animate-pulse flex-shrink-0">mdi-sparkles</v-icon>
             <div class="d-flex flex-column" style="line-height: 1.5 !important;">
@@ -134,7 +134,7 @@
         <!-- Shipping Fee -->
         <transition name="expand-shipping-fee">
             <div v-if="isGiaoHang" class="shipping-fee-wrapper">
-                <div class="d-flex flex-column gap-1">
+                <div class="d-flex flex-column ga-1">
                     <div class="d-flex align-center justify-space-between">
                         <span class="text-slate-600 d-flex align-center" style="font-size: 13px !important">
                             <span>Phí vận chuyển:</span>

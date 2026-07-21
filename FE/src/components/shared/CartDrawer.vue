@@ -139,7 +139,7 @@ const handleCheckout = () => {
                 <!-- Loading skeleton when syncing with backend -->
                 <div v-if="cartStore.isSyncing && !cartStore.cartItems[0]?.tenSanPham" class="px-4 py-2">
                     <div v-for="n in cartStore.cartCount" :key="n" class="cart-item px-4 py-4 mb-1">
-                        <div class="d-flex gap-4">
+                        <div class="d-flex ga-4">
                             <v-skeleton-loader type="image" width="90" height="90" class="rounded-xl"></v-skeleton-loader>
                             <div class="flex-grow-1">
                                 <v-skeleton-loader type="text" class="mb-2"></v-skeleton-loader>
@@ -151,7 +151,7 @@ const handleCheckout = () => {
                 </div>
                 <TransitionGroup v-else name="cart-item" tag="div">
                     <div v-for="item in cartStore.cartItems" :key="item.idChiTietSanPham" class="cart-item px-6 py-4">
-                        <div class="d-flex gap-4">
+                        <div class="d-flex ga-4">
                             <!-- Product Image -->
                             <div class="cart-item-image position-relative">
                                 <v-img v-if="item.hinhAnh" :src="resolveImg(item.hinhAnh)" cover class="rounded-xl" width="90" height="90" lazy-src="https://via.placeholder.com/90?text=..."></v-img>
@@ -202,7 +202,7 @@ const handleCheckout = () => {
                                                 <v-icon size="14">mdi-plus</v-icon>
                                             </v-btn>
                                         </div>
-                                        <div class="d-flex align-center gap-2">
+                                        <div class="d-flex align-center ga-2">
                                             <span class="text-body-2 font-weight-black text-black">{{ formatPrice(item.giaBan * item.soLuong) }}</span>
                                             <v-btn
                                                 icon
@@ -288,7 +288,7 @@ const handleCheckout = () => {
 
         <!-- Stock Alert Modal -->
         <v-dialog v-model="stockAlertModal.show" max-width="450">
-            <v-card class="rounded-2xl pa-4 text-center">
+            <v-card class="rounded-xl pa-4 text-center">
                 <div class="d-flex justify-center mt-2 mb-3">
                     <v-avatar color="amber-lighten-4" size="64">
                         <v-icon color="amber-darken-3" size="36">mdi-alert-circle-outline</v-icon>

@@ -17,17 +17,15 @@
     font-size: 16px !important;
 }
 
-.text-primary {
-    color: $brand-navy !important;
-}
+/* .text-primary removed: Vuetify generates it from the theme's `primary`, and a
+   hard-coded copy here meant a theme change would not reach it. */
 
 .gray-bg {
     background-color: $brand-gray !important;
 }
 
-.bg-slate-50 {
-    background-color: #f8fafc !important;
-}
+/* .bg-slate-50 removed: slate is a theme colour now, so Vuetify emits this class
+   itself (with the matching on-colour for text contrast). */
 
 .color-dot {
     width: 12px;
@@ -36,9 +34,8 @@
     display: inline-block;
 }
 
-.border-2 {
-    border-width: 2px !important;
-}
+/* .border-2 removed: it set border-width only, with no border-style, so it never
+   painted a border. Use Vuetify's border-md (width + style + colour). */
 
 .border-s-dashed {
     border-inline-start: 1px dashed #e2e8f0 !important;
@@ -56,9 +53,6 @@
     line-height: 1.625 !important;
 }
 
-.font-bold {
-    font-weight: 700 !important;
-}
 
 .font-black {
     font-weight: 900 !important;
@@ -84,12 +78,8 @@
     }
 }
 
-/* Gaps */
-@for $i from 1 through 6 {
-    .gap-#{$i} {
-        gap: #{$i * 4}px !important;
-    }
-}
+/* Gaps: use Vuetify's ga-N. The old .gap-N loop produced the same 4px scale but
+   duplicated it, and page stylesheets kept redefining .gap-2 on top of it. */
 
 /* Global Scrollbars */
 * {
@@ -113,4 +103,81 @@
     &:hover {
         background-color: rgba(156, 163, 175, 0.5);
     }
+}
+
+/* --------------------------------------------------------------------------
+   Border colour utilities
+
+   Vuetify 3 ships border *width* utilities (border-thin/sm/md/lg/xl) but no
+   border *colour* ones, so `border-primary` and friends matched nothing and
+   any card asking for a coloured outline rendered borderless. Pair these with
+   a width class: `class="border-md border-primary-emphasis"`.
+
+   Vuetify's `border` utility also sets --v-border-opacity: 0.12; these reset it
+   so the colour shows at full strength.
+   -------------------------------------------------------------------------- */
+.border-primary-emphasis {
+    border-color: rgb(var(--v-theme-primary)) !important;
+    --v-border-opacity: 1;
+}
+
+.border-primary-subtle {
+    border-color: rgb(var(--v-theme-lightprimary)) !important;
+    --v-border-opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Letter-spacing / line-height / transition helpers
+
+   Vuetify ships no utilities for these three, which is why the templates
+   reached for Tailwind names that resolved to nothing. Defined here so they
+   are project-owned rather than a dangling reference to a framework that was
+   never installed.
+   -------------------------------------------------------------------------- */
+.tracking-tight   { letter-spacing: -0.015em !important; }
+.tracking-wide    { letter-spacing: 0.025em !important; }
+.tracking-wider   { letter-spacing: 0.05em !important; }
+.tracking-widest  { letter-spacing: 0.1em !important; }
+
+
+.transition-all   { transition: all 0.2s ease !important; }
+
+/* z-index helpers. `.z-index-2` already existed in two page stylesheets; these
+   round out the scale so overlays do not fall back to inline styles. */
+/* .z-index-2 deliberately omitted: _auth-layout.scss and _sidebar.scss already
+   declare it, and a third copy here would win on !important alone. */
+.z-index-1  { z-index: 1 !important; }
+.z-index-10 { z-index: 10 !important; }
+
+/* Sizing / object-fit helpers Vuetify does not provide. Sibling one-offs such as
+   .min-h-0 and .max-w-800 already live in component styles; these are the ones
+   used from more than one place. */
+.min-w-0        { min-width: 0 !important; }
+.max-w-200      { max-width: 200px !important; }
+.object-contain { object-fit: contain !important; }
+.object-cover   { object-fit: cover !important; }
+
+/* --------------------------------------------------------------------------
+   .icon-blob - rounded tile that centres an icon.
+
+   Used 23 times across 8 screens but never defined, so the background colour
+   class sitting next to it (bg-primary-light, bg-slate-50, ...) painted an
+   auto-sized box with the icon jammed in the corner. Width/height are
+   deliberately NOT !important: several call sites override them inline
+   (style="width: 80px; height: 80px").
+   -------------------------------------------------------------------------- */
+.icon-blob {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+}
+
+/* Heading text colour, used 19 times and previously inheriting whatever the
+   ancestor happened to set. */
+.text-dark {
+    color: rgb(var(--v-theme-slate-900)) !important;
 }

@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { AdminFilter, AdminTable, AdminBreadcrumbs, AdminPagination, TableEmptyState } from '@/components/common';
 import AppDatePicker from '@/components/common/AppDatePicker.vue';
-import { CalendarIcon } from 'vue-tabler-icons';
+import { CalendarIcon, LayoutGridIcon } from 'vue-tabler-icons';
 import apiService from '@/services/apiService';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
@@ -808,82 +808,49 @@ onMounted(() => {
 
         <div class="mb-3"></div>
 
-
-        <!-- Filter & Actions Card -->
-        <v-card class="premium-card border border-slate-200 mb-4 bg-white rounded-xl flex-shrink-0" elevation="0">
-            <v-card-text class="pa-4">
-                <!-- Filter Header -->
-                <div class="d-flex align-center mb-4">
-                    <v-icon size="20" class="mr-2 text-slate-800" color="black">mdi-sliders-horizontal</v-icon>
-                    <span class="text-subtitle-1 font-weight-black text-slate-900">Bộ lọc</span>
-                </div>
-
-                <!-- Horizontal Inputs & Actions Layout -->
-                <div class="d-flex align-center flex-wrap gap-4 w-100 justify-space-between">
-                    <!-- Left Side: Inputs -->
-                    <div class="d-flex align-center flex-wrap gap-4">
-                        <!-- Filter 1: Nhân viên -->
-                        <div class="filter-item-wrap">
-                            <span class="filter-inline-label">Nhân viên</span>
-                            <v-text-field v-model="filters.search" placeholder="Tìm kiếm nhân viên..." variant="outlined"
-                                density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
-                                style="width: 200px;" @input="handleFilter" />
-                        </div>
-                        <!-- Filter 2: Ca làm -->
-                        <div class="filter-item-wrap">
-                            <span class="filter-inline-label">Ca làm:</span>
-                            <v-select v-model="filters.ca" :items="shiftOptions" variant="outlined" density="compact"
-                                hide-details class="compact-input" style="width: 140px;" @update:model-value="handleFilter" />
-                        </div>
-                        <!-- Filter 3: Ngày làm -->
-                        <div class="filter-item-wrap">
-                            <span class="filter-inline-label">Ngày làm:</span>
-                            <AppDatePicker :model-value="filters.ngay"
-                                @update:model-value="val => { filters.ngay = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : null; handleFilter(); }"
-                                placeholder="Chọn ngày" clearable style="width: 160px;" />
-                        </div>
-                        <!-- Refresh Button -->
-                        <v-btn icon variant="text" size="small" color="primary" :loading="isRefreshing" @click="handleRefresh" class="ml-1">
-                            <v-icon size="20">mdi-refresh</v-icon>
-                            <v-tooltip activator="parent" location="top">Làm mới bộ lọc</v-tooltip>
-                        </v-btn>
-                    </div>
-                    
-                    <!-- Right Side: Action Buttons -->
-                    <div class="d-flex align-center flex-wrap gap-2">
-                        <!-- Button: Xếp ca tự động -->
-                       
-                        <!-- Button: Tải template -->
-                        <v-btn prepend-icon="mdi-download" variant="flat" class="filter-action-btn btn-orange-theme"
-                            @click="handleDownloadTemplate">
-                            Tải Excel
-                        </v-btn>
-                        <!-- Button: Import Excel -->
-                        <v-btn prepend-icon="mdi-upload" variant="flat" class="filter-action-btn btn-green-theme"
-                            @click="handleImport">
-                            Nhập Excel
-                        </v-btn>
-                        <!-- Button: Thêm mới lịch làm việc -->
-                        <v-btn prepend-icon="mdi-plus" variant="flat" class="filter-action-btn btn-primary-theme"
-                            @click="handleAdd">
-                            Thêm mới lịch làm việc
-                        </v-btn>
-                    </div>
-                </div>
-            </v-card-text>
-        </v-card>
+        <AdminFilter title="Bộ lọc" :isRefreshing="isRefreshing" @refresh="handleRefresh" class="mb-4">
+            <v-col cols="12" md="4" class="px-2">
+                <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Nhân viên</div>
+                <v-text-field v-model="filters.search" placeholder="Tìm kiếm nhân viên..." variant="outlined"
+                    density="compact" hide-details prepend-inner-icon="mdi-magnify" class="compact-input"
+                    @input="handleFilter" />
+            </v-col>
+            <v-col cols="12" md="3" class="px-2">
+                <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Ca làm</div>
+                <v-select v-model="filters.ca" :items="shiftOptions" variant="outlined" density="compact"
+                    hide-details class="compact-input" @update:model-value="handleFilter" />
+            </v-col>
+            <v-col cols="12" md="3" class="px-2">
+                <div class="text-caption font-weight-medium text-slate-700 mb-1" style="height: 20px;">Ngày làm</div>
+                <AppDatePicker :model-value="filters.ngay"
+                    @update:model-value="val => { filters.ngay = val ? new Date(val.getTime() - val.getTimezoneOffset() * 60000).toISOString().substr(0, 10) : null; handleFilter(); }"
+                    placeholder="Chọn ngày" clearable />
+            </v-col>
+        </AdminFilter>
 
         <!-- Shared Wrapper for View Mode -->
-        <div class="flex-grow-1 overflow-hidden d-flex flex-column bg-white rounded-xl border">
+        <v-card class="admin-table-container elevation-0 flex-grow-1 overflow-hidden d-flex flex-column mb-0" elevation="0">
             <!-- Shared Toolbar -->
-            <div class="table-toolbar d-flex align-center justify-space-between pa-3 border-b flex-wrap gap-2">
+            <div class="table-toolbar d-flex align-center justify-space-between pa-3 border-b">
                 <div class="d-flex align-center">
-                    <v-icon color="primary" class="mr-3">mdi-calendar-month</v-icon>
+                    <LayoutGridIcon size="20" class="text-primary mr-3" />
                     <h3 class="text-h6 font-weight-bold text-black tracking-tight">Danh sách lịch làm việc</h3>
                 </div>
-                <div class="d-flex align-center flex-wrap justify-end gap-2 admin-toolbar-actions">
+                <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions ga-2">
+                    <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-export"
+                        @click="handleDownloadTemplate">
+                        Tải Excel
+                    </v-btn>
+                    <v-btn prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary"
+                        @click="handleImport">
+                        Nhập Excel
+                    </v-btn>
+                    <v-btn prepend-icon="mdi-plus" variant="flat" color="primary" class="add-btn-primary"
+                        @click="handleAdd">
+                        Thêm mới
+                    </v-btn>
                     <!-- Tab Bảng / Lịch -->
-                    <div class="main-view-tabs">
+                    <div class="main-view-tabs ml-2">
                         <button class="view-tab-btn" :class="{ 'view-tab-btn--active': mainTab === 'table' }"
                             @click="mainTab = 'table'">
                             <v-icon size="15" class="mr-1">mdi-table-large</v-icon>
@@ -900,7 +867,7 @@ onMounted(() => {
 
             <!-- Table View Mode Content -->
             <div v-if="mainTab === 'table'" class="flex-grow-1 overflow-hidden d-flex flex-column">
-                <AdminTable :hideToolbar="true" :headers="tableHeaders" :items="paginatedItems" :loading="loading">
+                <AdminTable :hideToolbar="true" :headers="tableHeaders" :items="paginatedItems" :loading="loading" class="elevation-0 border-0" style="border: none !important; box-shadow: none !important; margin-bottom: 0 !important;">
                     <template #row="{ item, index }">
                         <tr class="data-row">
                             <!-- STT -->
@@ -961,7 +928,7 @@ onMounted(() => {
                 <div class="d-flex align-center justify-space-between pa-3 border-b"
                     style="background-color: #ffffff !important; flex-wrap: wrap; gap: 8px;">
                     <!-- LEFT side: Navigation & Today -->
-                    <div class="d-flex align-center gap-3">
+                    <div class="d-flex align-center ga-3">
                         <div class="d-flex align-center border rounded-lg bg-white px-2 py-1" style="height: 38px;">
                             <v-btn icon="mdi-chevron-left" variant="text" size="x-small" color="slate-700" class="mr-2"
                                 @click="prevPeriod"></v-btn>
@@ -1090,7 +1057,7 @@ onMounted(() => {
 
                 </div>
             </div>
-        </div>
+        </v-card>
 
         <!-- Cell Details Dialog (Xem thêm) -->
         <v-dialog v-model="showCellDetailDialog" max-width="750">
@@ -1280,7 +1247,7 @@ onMounted(() => {
                                 <tr v-if="!importPreviewData || importPreviewData.length === 0">
                                     <td colspan="5" class="empty-state py-16 text-center">
                                         <div
-                                            class="d-flex flex-column align-center py-12 bg-slate-50/30 rounded-lg mx-4 my-2">
+                                            class="d-flex flex-column align-center py-12 bg-slate-50-30 rounded-lg mx-4 my-2">
                                             <v-icon icon="mdi-package-variant" size="48"
                                                 style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
                                             <span class="text-slate-500"

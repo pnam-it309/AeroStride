@@ -727,16 +727,17 @@ onBeforeUnmount(() => {
         ]" />
 
         <div class="d-flex align-center justify-space-between mb-4 mt-2">
-            <div class="d-flex align-center gap-4">
-                <v-btn icon variant="flat" @click="router.push(PATH.SAN_PHAM)"
-                    style="background-color: transparent !important; box-shadow: none !important;">
-                    <ArrowLeftIcon size="20" />
+            <div class="d-flex align-center ga-4">
+                <v-btn icon variant="flat" color="white" class="mr-3 border elevation-1 rounded-lg" size="36"
+                    style="height: 36px !important; width: 36px !important; min-height: 36px !important"
+                    @click="router.push(PATH.SAN_PHAM)">
+                    <v-icon size="18" color="slate-700">mdi-arrow-left</v-icon>
                     <v-tooltip activator="parent" location="top" text="Quay lại danh sách sản phẩm" />
                 </v-btn>
                 <div class="text-h6 font-weight-bold text-slate-800">{{ selectedProductSummary.title }}</div>
             </div>
 
-            <div class="d-flex gap-3">
+            <div class="d-flex ga-3">
                 <v-btn color="primary" variant="flat" class="text-none rounded-lg px-4 font-weight-bold shadow"
                     @click="openCreateVariantModal" v-if="selectedProductId !== 'ALL'">
                     <v-icon icon="mdi-plus" class="mr-2" size="20" />
@@ -788,7 +789,7 @@ onBeforeUnmount(() => {
                 <template #after>
                     <v-col cols="12" class="mt-4 pa-0">
                         <div class="d-flex align-center justify-space-between mb-2">
-                            <div class="d-flex align-center gap-2">
+                            <div class="d-flex align-center ga-2">
                                 <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
                                 <span class="filter-range-label">Khoảng giá</span>
                             </div>
@@ -853,8 +854,8 @@ onBeforeUnmount(() => {
 
             <template #top>
                 <div
-                    class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap gap-3">
-                    <div class="d-flex align-center flex-wrap gap-2">
+                    class="px-6 py-3 bg-slate-50 border-b d-flex align-center justify-space-between flex-wrap ga-3">
+                    <div class="d-flex align-center flex-wrap ga-2">
                         <span class="text-caption font-weight-medium text-slate-500">
                             Đã chọn {{ selectedVariantIds.length }} biến thể
                         </span>
@@ -879,7 +880,7 @@ onBeforeUnmount(() => {
                     </td>
                     <td class="data-cell text-center">
                         <div class="product-image-container d-inline-block position-relative">
-                            <v-avatar rounded="lg" size="44" class="border bg-slate-50 shadow-sm avatar-hover">
+                            <v-avatar rounded="lg" size="44" class="border bg-slate-50 elevation-1 avatar-hover">
                                 <SafeProductImage :src="getVariantThumbnail(item)" :fallback-src="logoPlaceholder"
                                     :alt="item.maChiTietSanPham || 'variant-image'" />
                             </v-avatar>
@@ -965,7 +966,7 @@ onBeforeUnmount(() => {
         <QrScanner v-model:show="showQrScanner" @scan="handleQrScan" />
 
         <v-dialog v-model="qrDialog.open" max-width="420" transition="variant-modal-transition">
-            <v-card class="rounded-xl shadow-lg border-0 overflow-hidden">
+            <v-card class="rounded-xl elevation-4 border-0 overflow-hidden">
                 <div class="px-6 pt-6 pb-4 d-flex justify-space-between align-start">
                     <div>
                         <div class="text-caption font-weight-bold text-slate-500 mb-1"
@@ -989,7 +990,7 @@ onBeforeUnmount(() => {
                 <div class="px-6 pb-6 bg-slate-50">
                     <div class="pt-6">
                         <div ref="qrCodeWrapper"
-                            class="d-flex flex-column align-center pa-6 rounded-xl bg-white border shadow-sm">
+                            class="d-flex flex-column align-center pa-6 rounded-xl bg-white border elevation-1">
                             <QrcodeVue :value="qrDialog.value" :size="240" level="H" render-as="canvas"
                                 class="qr-canvas-display" />
 
@@ -1000,7 +1001,7 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
 
-                    <div class="d-flex gap-3 mt-6">
+                    <div class="d-flex ga-3 mt-6">
                         <v-btn variant="flat" color="white"
                             class="text-none rounded-lg px-4 font-weight-bold border flex-grow-1"
                             @click="qrDialog.open = false">

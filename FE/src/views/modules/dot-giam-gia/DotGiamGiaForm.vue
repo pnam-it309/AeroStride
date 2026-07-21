@@ -541,12 +541,14 @@ onMounted(init);
 
         <!-- Action Header -->
         <div class="d-flex align-center justify-space-between mb-8 mt-4">
-            <div class="d-flex align-center gap-4">
-                <v-btn icon variant="flat" @click="goBack" class="btn-back-header">
-                    <v-icon>mdi-arrow-left</v-icon>
+            <div class="d-flex align-center ga-4">
+                <v-btn icon variant="flat" color="white" class="mr-3 border elevation-1 rounded-lg" size="36"
+                    style="height: 36px !important; width: 36px !important; min-height: 36px !important"
+                    @click="goBack">
+                    <v-icon size="18" color="slate-700">mdi-arrow-left</v-icon>
                 </v-btn>
             </div>
-            <div class="d-flex gap-3">
+            <div class="d-flex ga-3">
                 <v-btn v-if="!isDetailView" color="primary" variant="flat"
                     class="text-none px-8 campaign-submit-btn elevation-4" @click="handleSave" :loading="saving">
                     <v-icon size="18" class="mr-2">mdi-check-all</v-icon>
@@ -630,7 +632,7 @@ onMounted(init);
                             <span class="text-subtitle-1 font-weight-bold text-slate-800">Danh sách sản phẩm</span>
                         </div>
 
-                        <div class="d-flex align-center gap-3 mb-4 mt-2">
+                        <div class="d-flex align-center ga-3 mb-4 mt-2">
                             <span class="text-slate-800 text-no-wrap" style="font-size: 14px;">Tìm kiếm sản phẩm</span>
                             <v-text-field v-model="searchQuery" prepend-inner-icon="mdi-magnify"
                                 placeholder="Tìm theo tên hoặc mã SKU..." variant="outlined" density="compact"
@@ -674,7 +676,7 @@ onMounted(init);
                                                         :indeterminate="isProductIndeterminate(item.id)"
                                                         @update:model-value="toggleProductSelection(item.id)"
                                                         :readonly="isDetailView" color="primary" hide-details
-                                                        density="compact" class="d-inline-flex m-0 p-0"></v-checkbox-btn>
+                                                        density="compact" class="d-inline-flex ma-0 pa-0"></v-checkbox-btn>
                                                 </div>
                                             </td>
                                             <td
@@ -687,14 +689,14 @@ onMounted(init);
                                         </tr>
                                         <!-- Variant rows -->
                                         <tr v-if="expandedProductIds.includes(item.id)" v-for="variant in item.variants"
-                                            :key="variant.id" class="variant-row bg-slate-50/50">
+                                            :key="variant.id" class="variant-row bg-slate-50-50">
                                             <td class="data-cell text-right pr-3"></td>
                                             <td class="data-cell text-center">
                                                 <div class="d-flex align-center justify-center" style="height: 32px">
                                                     <v-checkbox-btn :model-value="selectedVariantsIds.includes(variant.id)"
                                                         @update:model-value="toggleVariantSelection(variant.id)"
                                                         :readonly="isDetailView" color="primary" hide-details
-                                                        density="compact" class="d-inline-flex m-0 p-0"></v-checkbox-btn>
+                                                        density="compact" class="d-inline-flex ma-0 pa-0"></v-checkbox-btn>
                                                 </div>
                                             </td>
                                             <td class="data-cell text-center text-slate-500 font-weight-medium">
@@ -708,7 +710,7 @@ onMounted(init);
                                 </tbody>
                             </table>
 
-                            <div v-if="filteredProductsToSelect.length === 0" class="d-flex flex-column align-center justify-center py-12 bg-slate-50/30 rounded-lg mx-4 my-2 border-t">
+                            <div v-if="filteredProductsToSelect.length === 0" class="d-flex flex-column align-center justify-center py-12 bg-slate-50-30 rounded-lg mx-4 my-2 border-t">
                                 <v-icon icon="mdi-package-variant" size="48" style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
                                 <span class="text-slate-500 text-center" style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block;">Không tìm thấy sản phẩm nào.</span>
                             </div>
@@ -786,7 +788,7 @@ onMounted(init);
                             <template #after>
                                 <v-col cols="12" class="mt-4 pa-0">
                                     <div class="d-flex align-center justify-space-between mb-2">
-                                        <div class="d-flex align-center gap-2">
+                                        <div class="d-flex align-center ga-2">
                                             <v-icon size="15" color="#3b82f6">mdi-cash-multiple</v-icon>
                                             <span class="text-caption font-weight-bold text-slate-600">Lọc theo giá sau
                                                 giảm</span>
@@ -871,7 +873,7 @@ onMounted(init);
                                             {{ item.kichCo }}
                                         </td>
                                         <td class="data-cell text-center">
-                                            <div class="d-flex align-center justify-center gap-2">
+                                            <div class="d-flex align-center justify-center ga-2">
                                                 <div class="color-dot" :style="{
                                                     backgroundColor:
                                                         item.color === 'Xanh dương'
@@ -889,7 +891,7 @@ onMounted(init);
                                 </tbody>
                             </table>
 
-                            <div v-if="filteredSelectedDetails.length === 0" class="d-flex flex-column align-center justify-center py-12 bg-slate-50/30 rounded-lg mx-4 my-2 border-t">
+                            <div v-if="filteredSelectedDetails.length === 0" class="d-flex flex-column align-center justify-center py-12 bg-slate-50-30 rounded-lg mx-4 my-2 border-t">
                                 <v-icon icon="mdi-package-variant" size="48" style="color: #94a3b8 !important; opacity: 0.6;" class="mb-3" />
                                 <span class="text-slate-500 text-center" style="font-size: 14px !important; font-weight: 400 !important; width: 100%; display: block;">Không tìm thấy sản phẩm nào phù hợp.</span>
                             </div>

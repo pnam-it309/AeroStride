@@ -129,7 +129,7 @@ const choiceMethod = computed({
                 <v-radio value="QR" label="Thanh toán qua quét mã QR" color="#2E4E8E"></v-radio>
                 <v-radio value="GATEWAY" label="Nhập mã thẻ qua cổng VNPay" color="#2E4E8E"></v-radio>
             </v-radio-group>
-            <div class="d-flex gap-3">
+            <div class="d-flex ga-3">
                 <v-btn class="flex-grow-1 rounded-lg font-weight-bold" variant="outlined" color="grey-darken-1"
                     height="44" @click="vnpayChoiceDialogState = false">
                     Hủy

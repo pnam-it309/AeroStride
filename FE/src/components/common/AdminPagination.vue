@@ -78,7 +78,7 @@ const handleJump = (e) => {
             Đang hiển thị <strong>{{ startItem }}-{{ endItem }}</strong> trong tổng số <strong>{{ totalElements }}</strong> kết quả
         </div>
 
-        <div v-if="shouldShowPagination" class="d-flex align-center flex-wrap justify-end gap-2">
+        <div v-if="shouldShowPagination" class="d-flex align-center flex-wrap justify-end ga-2">
             <div class="d-flex align-center mr-2">
                 <span class="pagination-label mr-2">Hiển thị</span>
                 <select v-model.number="size" class="page-size-select">

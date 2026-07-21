@@ -118,6 +118,11 @@ const MainRoutes = {
             component: () => import('@/views/modules/ThanhToan.vue')
         },
         {
+            name: 'DanhGia',
+            path: PATH.DANH_GIA,
+            component: () => import('@/views/modules/danh-gia/DanhGia.vue')
+        },
+        {
             name: 'QuanLyFile',
             path: '/quan-ly-file',
             component: () => import('@/views/modules/QuanLyFile.vue')

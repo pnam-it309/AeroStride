@@ -261,9 +261,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="d-flex flex-column gap-2 mb-3 bg-slate-50 pa-2 rounded-xl w-100">
+    <div class="d-flex flex-column ga-2 mb-3 bg-slate-50 pa-2 rounded-xl w-100">
         <!-- Hàng 1: Các Combobox lọc (CBO) lên trên -->
-        <div class="d-flex align-center gap-2 flex-wrap">
+        <div class="d-flex align-center ga-2 flex-wrap">
             <!-- Thương hiệu -->
             <div style="min-width: 130px; flex: 1 1 130px;">
                 <v-select v-model="store.filterThuongHieu" :items="store.filterBrands" item-title="title"
@@ -301,7 +301,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Hàng 2: Input tìm kiếm và các nút -->
-        <div class="d-flex align-center gap-2">
+        <div class="d-flex align-center ga-2">
             <!-- Custom Search Input with floating Dropdown -->
             <div class="position-relative flex-grow-1">
                 <v-text-field v-model="store.productSearchKeyword" placeholder="Nhập mã, tên sản phẩm"
@@ -312,7 +312,7 @@ onUnmounted(() => {
 
                 <!-- Search dropdown overlay -->
                 <v-card v-if="store.showProductAutocomplete && filteredProductSearchResults.length > 0"
-                    class="position-absolute mt-1 shadow-lg border rounded-lg overflow-y-auto product-dropdown-card"
+                    class="position-absolute mt-1 elevation-4 border rounded-lg overflow-y-auto product-dropdown-card"
                     style="max-height: 495px !important; z-index: 1000; width: 100%;">
                     <v-list class="pa-0">
                         <v-list-item v-for="variant in filteredProductSearchResults" :key="variant.id"
@@ -331,7 +331,7 @@ onUnmounted(() => {
                                             style="font-size: 13.5px !important; line-height: 1.3;">
                                             {{ variant.tenSanPham }}
                                         </div>
-                                        <div class="d-flex align-center gap-1.5 mt-0.5 flex-wrap">
+                                        <div class="d-flex align-center ga-2 mt-1 flex-wrap">
                                             <span class="sp-badge">Mã Sản phẩm: {{ variant.maSanPham ||
                                                 'SP0001' }}</span>
                                             <span
@@ -339,7 +339,7 @@ onUnmounted(() => {
                                             <span class="sku-badge">{{ variant.maChiTietSanPham
                                             }}</span>
                                         </div>
-                                        <div class="d-flex align-center mt-0.5 text-slate-600"
+                                        <div class="d-flex align-center mt-1 text-slate-600"
                                             style="font-size: 12px; flex-wrap: wrap;">
                                             <span>Màu sắc: <span class="text-slate-500">{{
                                                 variant.tenMauSac || 'Không màu' }}</span></span>
@@ -376,7 +376,7 @@ onUnmounted(() => {
                     </v-list>
                 </v-card>
                 <v-card v-else-if="store.showProductAutocomplete && !store.productSearchLoading"
-                    class="position-absolute w-100 mt-1 shadow-lg border rounded-lg pa-4 text-center text-grey"
+                    class="position-absolute w-100 mt-1 elevation-4 border rounded-lg pa-4 text-center text-grey"
                     style="z-index: 1000">
                     Không tìm thấy sản phẩm phù hợp.
                 </v-card>
