@@ -107,7 +107,7 @@ const handleCheckout = () => {
                 <h3 class="text-h6 font-weight-black d-flex align-center">
                     <v-icon class="mr-2" size="22" color="black">mdi-bag-outline</v-icon>
                     Giỏ hàng
-                    <v-chip size="small" color="black" variant="flat" class="ml-2 font-weight-bold">{{ cartStore.cartCount }}</v-chip>
+                    <span class="cart-badge-count ml-2">{{ cartStore.cartCount }}</span>
                 </h3>
                 <v-btn icon variant="text" size="small" @click="cartStore.closeDrawer()" class="close-btn">
                     <v-icon>mdi-close</v-icon>
@@ -117,15 +117,18 @@ const handleCheckout = () => {
             <v-divider />
 
             <!-- Free Shipping Progress -->
-            <div v-if="authStore.isLoggedIn && !cartStore.isEmpty && cartStore.cartTotal < FREE_SHIP_THRESHOLD" class="shipping-progress px-6 py-4">
+            <div v-if="authStore.isLoggedIn && !cartStore.isEmpty && cartStore.cartTotal < FREE_SHIP_THRESHOLD"
+                class="shipping-progress px-6 py-4">
                 <div class="d-flex align-center mb-2">
                     <v-icon size="16" color="orange-darken-2" class="mr-2">mdi-truck-fast-outline</v-icon>
                     <span class="text-caption font-weight-medium text-grey-darken-1">
-                        Mua thêm <strong class="text-orange-darken-3">{{ formatPrice(remainingForFreeShip) }}</strong> để được
+                        Mua thêm <strong class="text-orange-darken-3">{{ formatPrice(remainingForFreeShip) }}</strong>
+                        để được
                         <strong class="text-orange-darken-3">miễn phí vận chuyển</strong>
                     </span>
                 </div>
-                <v-progress-linear :model-value="shippingProgress" height="6" color="orange" rounded class="shipping-bar"></v-progress-linear>
+                <v-progress-linear :model-value="shippingProgress" height="6" color="orange" rounded
+                    class="shipping-bar"></v-progress-linear>
             </div>
             <div v-else-if="authStore.isLoggedIn && !cartStore.isEmpty" class="shipping-progress-free px-6 py-3">
                 <div class="d-flex align-center">
@@ -140,7 +143,8 @@ const handleCheckout = () => {
                 <div v-if="cartStore.isSyncing && !cartStore.cartItems[0]?.tenSanPham" class="px-4 py-2">
                     <div v-for="n in cartStore.cartCount" :key="n" class="cart-item px-4 py-4 mb-1">
                         <div class="d-flex ga-4">
-                            <v-skeleton-loader type="image" width="90" height="90" class="rounded-xl"></v-skeleton-loader>
+                            <v-skeleton-loader type="image" width="90" height="90"
+                                class="rounded-xl"></v-skeleton-loader>
                             <div class="flex-grow-1">
                                 <v-skeleton-loader type="text" class="mb-2"></v-skeleton-loader>
                                 <v-skeleton-loader type="text" width="60%" class="mb-2"></v-skeleton-loader>
@@ -154,7 +158,8 @@ const handleCheckout = () => {
                         <div class="d-flex ga-4">
                             <!-- Product Image -->
                             <div class="cart-item-image position-relative">
-                                <v-img v-if="item.hinhAnh" :src="resolveImg(item.hinhAnh)" cover class="rounded-xl" width="90" height="90" lazy-src="https://via.placeholder.com/90?text=..."></v-img>
+                                <v-img v-if="item.hinhAnh" :src="resolveImg(item.hinhAnh)" cover class="rounded-xl"
+                                    width="90" height="90" lazy-src="https://via.placeholder.com/90?text=..."></v-img>
                                 <div v-else class="image-placeholder rounded-xl">
                                     <v-icon size="36" color="grey-lighten-2">mdi-shoe-sneaker</v-icon>
                                 </div>
@@ -170,48 +175,33 @@ const handleCheckout = () => {
                                     <v-icon size="12" class="mr-1">mdi-ruler</v-icon>{{ item.tenKichThuoc }}
                                 </p>
                                 <div class="mt-auto">
-                                    <p class="cart-item-price text-body-1 font-weight-bold mb-2">{{ formatPrice(item.giaBan) }}</p>
+                                    <p class="cart-item-price text-body-1 font-weight-bold mb-2">{{
+                                        formatPrice(item.giaBan) }}</p>
 
                                     <!-- Quantity Controls -->
                                     <div class="d-flex align-center justify-space-between">
                                         <div class="quantity-controls d-flex align-center">
-                                            <v-btn
-                                                icon
-                                                variant="outlined"
-                                                size="x-small"
-                                                :disabled="item.soLuong <= 1"
+                                            <v-btn icon variant="outlined" size="x-small" :disabled="item.soLuong <= 1"
                                                 @click="handleQuantityChange(item.idChiTietSanPham, -1)"
-                                                class="qty-btn"
-                                            >
+                                                class="qty-btn">
                                                 <v-icon size="14">mdi-minus</v-icon>
                                             </v-btn>
-                                            <input
-                                                type="number"
+                                            <input type="number"
                                                 class="quantity-input text-center font-weight-bold text-body-2 mx-2"
                                                 :value="item.soLuong"
                                                 @change="handleQuantityInput(item, $event.target.value)"
-                                                @blur="handleQuantityInput(item, $event.target.value)"
-                                            />
-                                            <v-btn
-                                                icon
-                                                variant="outlined"
-                                                size="x-small"
-                                                @click="handleQuantityChange(item.idChiTietSanPham, 1)"
-                                                class="qty-btn"
-                                            >
+                                                @blur="handleQuantityInput(item, $event.target.value)" />
+                                            <v-btn icon variant="outlined" size="x-small"
+                                                @click="handleQuantityChange(item.idChiTietSanPham, 1)" class="qty-btn">
                                                 <v-icon size="14">mdi-plus</v-icon>
                                             </v-btn>
                                         </div>
-                                        <div class="d-flex align-center ga-2">
-                                            <span class="text-body-2 font-weight-black text-black">{{ formatPrice(item.giaBan * item.soLuong) }}</span>
-                                            <v-btn
-                                                icon
-                                                variant="text"
-                                                size="x-small"
-                                                color="grey-lighten-1"
+                                        <div class="d-flex align-center gap-2">
+                                            <span class="text-body-2 font-weight-black item-total-price">{{
+                                                formatPrice(item.giaBan * item.soLuong) }}</span>
+                                            <v-btn icon variant="text" size="x-small" color="grey-lighten-1"
                                                 @click="cartStore.removeFromCart(item.idChiTietSanPham)"
-                                                class="delete-btn"
-                                            >
+                                                class="delete-btn">
                                                 <v-icon size="18">mdi-trash-can-outline</v-icon>
                                             </v-btn>
                                         </div>
@@ -229,14 +219,10 @@ const handleCheckout = () => {
                     <v-icon size="72" color="grey-lighten-3">mdi-bag-outline</v-icon>
                 </div>
                 <h4 class="text-h6 font-weight-bold text-grey-darken-1 mb-2">Giỏ hàng trống</h4>
-                <p class="text-body-2 text-grey text-center mb-6">Hãy khám phá bộ sưu tập giày mới nhất của chúng tôi!</p>
-                <v-btn
-                    color="black"
-                    rounded="pill"
-                    size="large"
-                    class="font-weight-bold text-none px-8"
-                    @click="cartStore.closeDrawer(); router.push(PATH.SHOES)"
-                >
+                <p class="text-body-2 text-grey text-center mb-6">Hãy khám phá bộ sưu tập giày mới nhất của chúng tôi!
+                </p>
+                <v-btn color="black" rounded="pill" size="large" class="font-weight-bold text-none px-8"
+                    @click="cartStore.closeDrawer(); router.push(PATH.SHOES)">
                     <v-icon class="mr-2" size="20">mdi-shopping-outline</v-icon>
                     Khám phá sản phẩm
                 </v-btn>
@@ -248,38 +234,30 @@ const handleCheckout = () => {
                     <div class="price-summary mb-4">
                         <div class="d-flex justify-space-between align-center mb-2">
                             <span class="text-body-2 text-grey-darken-1">Tạm tính</span>
-                            <span class="text-body-1 font-weight-bold">{{ formatPrice(cartStore.cartTotal) }}</span>
+                            <span class="text-body-1 font-weight-bold total-summary-price">{{
+                                formatPrice(cartStore.cartTotal) }}</span>
                         </div>
-                        <div class="d-flex justify-space-between align-center mb-2" v-if="authStore.isLoggedIn && shippingFee === 0">
+                        <div class="d-flex justify-space-between align-center mb-2"
+                            v-if="authStore.isLoggedIn && shippingFee === 0">
                             <span class="text-body-2 text-grey-darken-1">Phí vận chuyển</span>
                             <span class="text-body-2 font-weight-medium text-green">Miễn phí</span>
                         </div>
                         <v-divider class="my-2" />
                         <div class="d-flex justify-space-between align-center">
                             <span class="text-body-1 font-weight-bold text-black">Tổng cộng</span>
-                            <span class="text-h6 font-weight-black text-black">{{ formatPrice(cartStore.cartTotal + (shippingFee || 0)) }}</span>
+                            <span class="text-h6 font-weight-black total-summary-price">{{
+                                formatPrice(cartStore.cartTotal + (shippingFee || 0)) }}</span>
                         </div>
                     </div>
 
-                    <v-btn
-                        block
-                        size="large"
-                        color="black"
-                        rounded="pill"
-                        class="font-weight-bold text-none checkout-btn elevation-2 mb-3"
-                        @click="handleCheckout"
-                    >
+                    <v-btn block size="large" variant="flat" rounded="pill"
+                        class="font-weight-bold text-none checkout-btn-custom mb-3" @click="handleCheckout">
                         <v-icon class="mr-2" size="20">mdi-lock-outline</v-icon>
                         Thanh toán ngay · {{ formatPrice(cartStore.cartTotal + (shippingFee || 0)) }}
                     </v-btn>
-                    <v-btn
-                        block
-                        size="large"
-                        variant="outlined"
-                        rounded="pill"
-                        class="font-weight-bold text-none"
-                        @click="cartStore.closeDrawer(); router.push(PATH.SHOES)"
-                    >
+                    <v-btn block size="large" variant="flat" rounded="pill"
+                        class="font-weight-bold text-none continue-btn-custom"
+                        @click="cartStore.closeDrawer(); router.push(PATH.SHOES)">
                         Tiếp tục mua sắm
                     </v-btn>
                 </div>
@@ -317,6 +295,21 @@ const handleCheckout = () => {
     }
 }
 
+.cart-badge-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ff1744;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    padding: 0 6px;
+    line-height: 1;
+}
+
 .cart-header {
     background: #fff;
     border-bottom: 1px solid #f5f5f5;
@@ -352,6 +345,7 @@ const handleCheckout = () => {
     &::-webkit-scrollbar {
         width: 4px;
     }
+
     &::-webkit-scrollbar-thumb {
         background: #e0e0e0;
         border-radius: 4px;
@@ -374,7 +368,7 @@ const handleCheckout = () => {
         position: absolute;
         top: -6px;
         right: -6px;
-        background: #000;
+        background: #d32f2f;
         color: #fff;
         font-size: 0.65rem;
         font-weight: 700;
@@ -410,6 +404,7 @@ const handleCheckout = () => {
     .qty-btn {
         border-color: #e0e0e0;
         background: #fff;
+
         &:hover {
             border-color: #000;
         }
@@ -425,11 +420,13 @@ const handleCheckout = () => {
     appearance: textfield;
     -moz-appearance: textfield;
     transition: all 0.2s ease;
+
     &:focus {
         border-color: #000;
         background: #f8f8f8;
     }
 }
+
 .quantity-input::-webkit-outer-spin-button,
 .quantity-input::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -458,16 +455,42 @@ const handleCheckout = () => {
     padding: 16px;
 }
 
-.checkout-btn {
-    letter-spacing: 0.3px;
-    font-size: 0.95rem;
+.checkout-btn-custom {
+    background-color: #e8f5e9 !important;
+    border: 1.5px solid #4caf50 !important;
+    color: #1b5e20 !important;
     height: 52px !important;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+        background-color: #c8e6c9 !important;
+        border-color: #388e3c !important;
+        color: #1b5e20 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(27, 94, 32, 0.15);
     }
+}
+
+.continue-btn-custom {
+    background-color: #f0f1ff !important;
+    border: 1.5px solid #1e257c !important;
+    color: #1e257c !important;
+    height: 52px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+        background-color: #e2e4ff !important;
+        border-color: #1a206a !important;
+        color: #1a206a !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(30, 37, 124, 0.15);
+    }
+}
+
+.cart-item-price,
+.item-total-price,
+.total-summary-price {
+    color: #1e257c !important;
 }
 
 .empty-icon-wrap {
@@ -485,17 +508,21 @@ const handleCheckout = () => {
 .cart-item-enter-active {
     transition: all 0.3s ease-out;
 }
+
 .cart-item-leave-active {
     transition: all 0.3s ease-in;
 }
+
 .cart-item-enter-from {
     opacity: 0;
     transform: translateX(30px);
 }
+
 .cart-item-leave-to {
     opacity: 0;
     transform: translateX(-30px);
 }
+
 .cart-item-move {
     transition: transform 0.3s ease;
 }

@@ -123,61 +123,65 @@ const parseImages = (hinhAnhStr) => {
         <div class="admin-table-container elevation-0 border flex-grow-1 d-flex flex-column" style="min-height: 0;">
             <AdminTable title="Danh sách đánh giá" :headers="tableHeaders" :items="reviews" :total-count="totalElements"
                 :loading="loading" :show-add-button="false">
-                <template #item.khachHang="{ item }">
-                    <div class="d-flex flex-column">
-                        <span class="font-weight-medium text-slate-800">{{ item.tenKhachHang || 'Khách vãng lai' }}</span>
-                        <span class="text-caption text-slate-500">{{ item.soDienThoai || 'N/A' }}</span>
-                    </div>
-                </template>
-                <template #item.sanPham="{ item }">
-                    <div class="d-flex align-center ga-3 my-2">
-                        <v-avatar size="45" rounded class="border bg-slate-50">
-                            <v-img v-if="item.hinhAnhSanPham" :src="item.hinhAnhSanPham" cover></v-img>
-                            <PhotoIcon v-else size="20" class="text-slate-400" />
-                        </v-avatar>
-                        <div class="d-flex flex-column text-truncate" style="max-width: 180px;">
-                            <span class="text-subtitle-2 font-weight-medium text-slate-800 text-truncate" :title="item.tenSanPham">{{ item.tenSanPham }}</span>
-                        </div>
-                    </div>
-                </template>
-                <template #item.danhGia="{ item }">
-                    <div class="d-flex flex-column py-2">
-                        <div class="d-flex align-center mb-1">
-                            <StarIcon v-for="i in 5" :key="i" size="14" :class="i <= item.diemDanhGia ? 'text-amber-500' : 'text-slate-200'" :fill="i <= item.diemDanhGia ? 'currentColor' : 'none'" />
-                        </div>
-                        <span class="text-body-2 text-slate-700" style="white-space: pre-wrap; line-height: 1.4;">{{ item.noiDung }}</span>
-                        <div v-if="parseImages(item.hinhAnhDanhGia).length > 0" class="d-flex ga-2 mt-2">
-                            <v-avatar v-for="(img, idx) in parseImages(item.hinhAnhDanhGia)" :key="idx" size="36" rounded class="border">
-                                <v-img :src="img" cover></v-img>
-                            </v-avatar>
-                        </div>
-                    </div>
-                </template>
-                <template #item.trangThai="{ item }">
-                    <v-chip size="small" variant="flat" :color="getStatusChip(item.trangThai).color" class="font-weight-medium px-3">{{ getStatusChip(item.trangThai).text }}</v-chip>
-                </template>
-                <template #item.ngayTao="{ item }">
-                    <div class="text-body-2 text-slate-600">{{ formatDate(item.ngayTao, 'DD/MM/YYYY HH:mm') }}</div>
-                </template>
-                <template #item.actions="{ item }">
-                    <div class="d-flex align-center justify-center ga-1">
-                        <v-btn v-if="item.trangThai === 'PENDING' || item.trangThai === 'REJECTED' || item.trangThai === 'SPAM'" icon variant="text" size="small" color="success" class="action-icon-btn" @click="openConfirm('Duyệt đánh giá', 'Bạn có chắc chắn muốn duyệt đánh giá này?', item.id, 'APPROVED')">
-                            <CheckIcon size="18" />
-                            <v-tooltip activator="parent" location="top">Duyệt</v-tooltip>
-                        </v-btn>
-                        <v-btn v-if="item.trangThai === 'PENDING' || item.trangThai === 'APPROVED'" icon variant="text" size="small" color="error" class="action-icon-btn" @click="openConfirm('Từ chối đánh giá', 'Bạn có chắc chắn muốn từ chối đánh giá này?', item.id, 'REJECTED')">
-                            <XIcon size="18" />
-                            <v-tooltip activator="parent" location="top">Từ chối</v-tooltip>
-                        </v-btn>
-                        <v-btn v-if="item.trangThai !== 'SPAM'" icon variant="text" size="small" color="warning" class="action-icon-btn" @click="openConfirm('Đánh dấu Spam', 'Bạn có chắc chắn muốn đánh dấu đánh giá này là SPAM?', item.id, 'SPAM')">
-                            <BanIcon size="18" />
-                            <v-tooltip activator="parent" location="top">Đánh dấu Spam</v-tooltip>
-                        </v-btn>
-                        <v-btn icon variant="text" size="small" color="error" class="action-icon-btn" @click="openConfirm('Xóa đánh giá', 'Bạn có chắc chắn muốn xóa vĩnh viễn đánh giá này?', item.id, 'DELETE')">
-                            <TrashIcon size="18" />
-                            <v-tooltip activator="parent" location="top">Xóa</v-tooltip>
-                        </v-btn>
-                    </div>
+                <template #row="{ item, index }">
+                    <tr class="data-row">
+                        <td class="data-cell">
+                            <div class="d-flex flex-column">
+                                <span class="font-weight-medium text-slate-800">{{ item.tenKhachHang || 'Khách vãng lai' }}</span>
+                                <span class="text-caption text-slate-500">{{ item.soDienThoai || 'N/A' }}</span>
+                            </div>
+                        </td>
+                        <td class="data-cell">
+                            <div class="d-flex align-center ga-3 my-2">
+                                <v-avatar size="45" rounded class="border bg-slate-50">
+                                    <v-img v-if="item.hinhAnhSanPham" :src="item.hinhAnhSanPham" cover></v-img>
+                                    <PhotoIcon v-else size="20" class="text-slate-400" />
+                                </v-avatar>
+                                <div class="d-flex flex-column text-truncate" style="max-width: 180px;">
+                                    <span class="text-subtitle-2 font-weight-medium text-slate-800 text-truncate" :title="item.tenSanPham">{{ item.tenSanPham }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="data-cell">
+                            <div class="d-flex flex-column py-2">
+                                <div class="d-flex align-center mb-1">
+                                    <StarIcon v-for="i in 5" :key="i" size="14" :class="i <= item.diemDanhGia ? 'text-amber-500' : 'text-slate-200'" :fill="i <= item.diemDanhGia ? 'currentColor' : 'none'" />
+                                </div>
+                                <span class="text-body-2 text-slate-700" style="white-space: pre-wrap; line-height: 1.4;">{{ item.noiDung }}</span>
+                                <div v-if="parseImages(item.hinhAnhDanhGia).length > 0" class="d-flex ga-2 mt-2">
+                                    <v-avatar v-for="(img, idx) in parseImages(item.hinhAnhDanhGia)" :key="idx" size="36" rounded class="border">
+                                        <v-img :src="img" cover></v-img>
+                                    </v-avatar>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="data-cell text-center">
+                            <v-chip size="small" variant="flat" :color="getStatusChip(item.trangThai).color" class="font-weight-medium px-3">{{ getStatusChip(item.trangThai).text }}</v-chip>
+                        </td>
+                        <td class="data-cell">
+                            <div class="text-body-2 text-slate-600">{{ formatDate(item.ngayTao, 'DD/MM/YYYY HH:mm') }}</div>
+                        </td>
+                        <td class="data-cell text-center">
+                            <div class="d-flex align-center justify-center ga-1">
+                                <v-btn v-if="item.trangThai === 'PENDING' || item.trangThai === 'REJECTED' || item.trangThai === 'SPAM'" icon variant="text" size="small" color="success" class="action-icon-btn" @click="openConfirm('Duyệt đánh giá', 'Bạn có chắc chắn muốn duyệt đánh giá này?', item.id, 'APPROVED')">
+                                    <CheckIcon size="18" />
+                                    <v-tooltip activator="parent" location="top">Duyệt</v-tooltip>
+                                </v-btn>
+                                <v-btn v-if="item.trangThai === 'PENDING' || item.trangThai === 'APPROVED'" icon variant="text" size="small" color="error" class="action-icon-btn" @click="openConfirm('Từ chối đánh giá', 'Bạn có chắc chắn muốn từ chối đánh giá này?', item.id, 'REJECTED')">
+                                    <XIcon size="18" />
+                                    <v-tooltip activator="parent" location="top">Từ chối</v-tooltip>
+                                </v-btn>
+                                <v-btn v-if="item.trangThai !== 'SPAM'" icon variant="text" size="small" color="warning" class="action-icon-btn" @click="openConfirm('Đánh dấu Spam', 'Bạn có chắc chắn muốn đánh dấu đánh giá này là SPAM?', item.id, 'SPAM')">
+                                    <BanIcon size="18" />
+                                    <v-tooltip activator="parent" location="top">Đánh dấu Spam</v-tooltip>
+                                </v-btn>
+                                <v-btn icon variant="text" size="small" color="error" class="action-icon-btn" @click="openConfirm('Xóa đánh giá', 'Bạn có chắc chắn muốn xóa vĩnh viễn đánh giá này?', item.id, 'DELETE')">
+                                    <TrashIcon size="18" />
+                                    <v-tooltip activator="parent" location="top">Xóa</v-tooltip>
+                                </v-btn>
+                            </div>
+                        </td>
+                    </tr>
                 </template>
                 
                 <template #pagination>

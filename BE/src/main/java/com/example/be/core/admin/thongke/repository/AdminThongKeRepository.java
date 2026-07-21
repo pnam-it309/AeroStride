@@ -15,17 +15,21 @@ public interface AdminThongKeRepository extends HoaDonRepository,
         JpaSpecificationExecutor<HoaDon>, AdminThongKeRepositoryCustom {
 
     @Query("""
-           SELECT 
-                COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 THEN hd.tongTien ELSE 0 END), 0),
-                COUNT(hd),
-                SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 THEN 1 ELSE 0 END),
-                SUM(CASE WHEN CAST(hd.trangThai AS int) = 0 THEN 1 ELSE 0 END),
-                SUM(CASE WHEN CAST(hd.trangThai AS int) = 3 THEN 1 ELSE 0 END),
-                SUM(CASE WHEN CAST(hd.trangThai AS int) = 5 THEN 1 ELSE 0 END)
-           FROM HoaDon hd
-           WHERE (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
-           AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
-           """)
+            SELECT 
+                 COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 THEN hd.tongTien ELSE 0 END), 0),
+                 COUNT(hd),
+                 SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 THEN 1 ELSE 0 END),
+                 SUM(CASE WHEN CAST(hd.trangThai AS int) = 0 THEN 1 ELSE 0 END),
+                 SUM(CASE WHEN CAST(hd.trangThai AS int) = 3 THEN 1 ELSE 0 END),
+                 SUM(CASE WHEN CAST(hd.trangThai AS int) = 5 THEN 1 ELSE 0 END),
+                 SUM(CASE WHEN CAST(hd.trangThai AS int) = 6 THEN 1 ELSE 0 END),
+                 COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 0 THEN hd.tongTien ELSE 0 END), 0),
+                 COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 3 THEN hd.tongTien ELSE 0 END), 0),
+                 COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 5 THEN hd.tongTien ELSE 0 END), 0)
+            FROM HoaDon hd
+            WHERE (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
+            AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
+            """)
     List<Object[]> getOverviewStats(@Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
     @Query("""
@@ -89,25 +93,51 @@ public interface AdminThongKeRepository extends HoaDonRepository,
     List<Object[]> getCategoryRevenueData(
             @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
-    @Query("""
+    @Query(value = """
+            SELECT 
+                COALESCE(kh.ten_nguoi_dung, hd.ten_nguoi_nhan, 'Khách lẻ') AS tenKhachHang,
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) AS tongChi,
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN (SELECT COALESCE(SUM(hdct.so_luong), 0) FROM hoa_don_chi_tiet hdct WHERE hdct.id_hoa_don = hd.id) ELSE 0 END), 0) AS tongSanPham,
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN 1 ELSE 0 END), 0) AS donThanhCong,
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 6 THEN 1 ELSE 0 END), 0) AS donHoan
+            FROM hoa_don hd
+            LEFT JOIN khach_hang kh ON hd.id_khach_hang = kh.id
+            WHERE (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
+              AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
+            GROUP BY kh.id, kh.ten_nguoi_dung, hd.ten_nguoi_nhan
+            HAVING COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) > 0
+            ORDER BY tongChi DESC
+            """, nativeQuery = true)
+    List<Object[]> getCustomerPurchaseStats(
+            @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
+
+    @Query(value = """
            SELECT sp.ma as ma,
                   sp.ten as ten,
                   th.ten as thuongHieu,
-                  COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 4
-                               AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
-                               AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
-                               THEN hdct.soLuong * hdct.donGia ELSE 0 END), 0) as doanhThu,
-                  COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 4
-                               AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
-                               AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
-                               THEN hdct.soLuong ELSE 0 END), 0) as soLuongBan
-           FROM SanPham sp
+                  SUM(hdct.soLuong * hdct.donGia) as doanhThu,
+                  SUM(hdct.soLuong) as soLuongBan
+           FROM HoaDonChiTiet hdct
+           JOIN hdct.chiTietSanPham ctsp
+           JOIN ctsp.sanPham sp
            LEFT JOIN sp.thuongHieu th
-           LEFT JOIN sp.chiTietSanPhams ctsp
-           LEFT JOIN HoaDonChiTiet hdct ON hdct.chiTietSanPham = ctsp
-           LEFT JOIN hdct.hoaDon hd
-           WHERE (:keyword IS NULL OR LOWER(sp.ma) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten) LIKE LOWER(CONCAT('%', :keyword, '%')))
+           JOIN hdct.hoaDon hd
+           WHERE CAST(hd.trangThai AS int) = 4
+             AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
+             AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
+             AND (:keyword IS NULL OR LOWER(sp.ma) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten) LIKE LOWER(CONCAT('%', :keyword, '%')))
            GROUP BY sp.id, sp.ma, sp.ten, th.ten
+           """,
+           countQuery = """
+           SELECT COUNT(DISTINCT sp.id)
+           FROM HoaDonChiTiet hdct
+           JOIN hdct.chiTietSanPham ctsp
+           JOIN ctsp.sanPham sp
+           JOIN hdct.hoaDon hd
+           WHERE CAST(hd.trangThai AS int) = 4
+             AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
+             AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
+             AND (:keyword IS NULL OR LOWER(sp.ma) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(sp.ten) LIKE LOWER(CONCAT('%', :keyword, '%')))
            """)
     org.springframework.data.domain.Page<Object[]> getProductStatistics(
             @Param("tuNgay") Long tuNgay,

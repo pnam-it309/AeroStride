@@ -57,10 +57,11 @@ const formatPrice = (v) => {
                         <div class="section-header reveal-container mb-8" :class="{ active: props.active }">
                             <div class="d-flex align-center justify-space-between">
                                 <div>
-                                    <span class="section-tag reveal-item delay-1">SẢN PHẨM ĐẶC SẮC</span>
+                                    <span class="section-tag reveal-item delay-1">Sản phẩm đặc sắc</span>
                                     <h2 class="section-title reveal-item delay-2">Nổi Bật Tháng Này</h2>
                                 </div>
-                                <v-btn variant="text" color="blue-darken-3" class="reveal-item delay-2 see-all-btn" to="/shoes">
+                                <v-btn variant="text" color="blue-darken-3" class="reveal-item delay-2 see-all-btn"
+                                    to="/shoes">
                                     Xem tất cả <v-icon>mdi-arrow-right</v-icon>
                                 </v-btn>
                             </div>
@@ -69,18 +70,10 @@ const formatPrice = (v) => {
                         <!-- Banners từ DB -->
                         <div class="banner-grid reveal-container" :class="{ active: props.active }">
                             <v-row>
-                                <v-col
-                                    v-for="(banner, index) in displayBanners"
-                                    :key="banner.id"
-                                    cols="12"
-                                    md="4"
-                                    class="banner-col"
-                                >
-                                    <router-link
-                                        :to="banner.link"
-                                        class="banner-card"
-                                        :style="{ background: banner.bg, '--accent': banner.accent, transitionDelay: `${0.1 * index}s` }"
-                                    >
+                                <v-col v-for="(banner, index) in displayBanners" :key="banner.id" cols="12" md="4"
+                                    class="banner-col">
+                                    <router-link :to="banner.link" class="banner-card"
+                                        :style="{ background: banner.bg, '--accent': banner.accent, transitionDelay: `${0.1 * index}s` }">
                                         <div class="banner-tag">{{ banner.tenThuongHieu }}</div>
                                         <div class="banner-image-wrap" v-if="banner.hinhAnh">
                                             <img :src="banner.hinhAnh" :alt="banner.tenSanPham" class="banner-img" />
@@ -89,15 +82,21 @@ const formatPrice = (v) => {
                                         <h3 class="banner-title">{{ banner.tenSanPham }}</h3>
                                         <div class="banner-meta d-flex align-center justify-space-between mt-2 mb-4">
                                             <div class="banner-price-box">
-                                                <span class="price-label text-caption d-block" style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">Giá từ</span>
-                                                <span class="banner-price font-weight-bold" style="font-size: 1.1rem; color: #fff;">
+                                                <span class="price-label text-caption d-block"
+                                                    style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">Giá
+                                                    từ</span>
+                                                <span class="banner-price font-weight-bold"
+                                                    style="font-size: 1.1rem; color: #fff;">
                                                     {{ banner.gia != null ? formatPrice(banner.gia) : 'Liên hệ' }}
                                                 </span>
                                             </div>
                                             <div class="banner-stock-box text-right">
-                                                <span class="stock-label text-caption d-block" style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">Số lượng tồn</span>
-                                                <span class="banner-stock px-2 py-1 rounded-pill text-caption font-weight-bold d-inline-block"
-                                                      :style="banner.soLuong > 0 ? 'background: rgba(46, 125, 50, 0.25); color: #81c784; border: 1px solid rgba(129, 199, 132, 0.4);' : 'background: rgba(198, 40, 40, 0.25); color: #e57373; border: 1px solid rgba(229, 115, 115, 0.4);'">
+                                                <span class="stock-label text-caption d-block"
+                                                    style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">Số lượng
+                                                    tồn</span>
+                                                <span
+                                                    class="banner-stock px-2 py-1 rounded-pill text-caption font-weight-bold d-inline-block"
+                                                    :style="banner.soLuong > 0 ? 'background: rgba(46, 125, 50, 0.25); color: #81c784; border: 1px solid rgba(129, 199, 132, 0.4);' : 'background: rgba(198, 40, 40, 0.25); color: #e57373; border: 1px solid rgba(229, 115, 115, 0.4);'">
                                                     {{ banner.soLuong > 0 ? `${banner.soLuong} sản phẩm` : 'Hết hàng' }}
                                                 </span>
                                             </div>
@@ -170,9 +169,17 @@ const formatPrice = (v) => {
         transform: translateY(-6px) scale(1.01);
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
 
-        .banner-glow { opacity: 1; }
-        .banner-cta { gap: 8px; }
-        .banner-img { transform: scale(1.05); }
+        .banner-glow {
+            opacity: 1;
+        }
+
+        .banner-cta {
+            gap: 8px;
+        }
+
+        .banner-img {
+            transform: scale(1.05);
+        }
     }
 }
 
@@ -195,7 +202,7 @@ const formatPrice = (v) => {
     overflow: hidden;
     border-radius: 10px;
     margin-bottom: 12px;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .banner-img {
@@ -214,10 +221,10 @@ const formatPrice = (v) => {
 
 .banner-title {
     font-size: 1.3rem;
-    font-weight: 950;
+    font-weight: 700;
     color: #ffffff;
     margin-bottom: 6px;
-    letter-spacing: -0.3px;
+    letter-spacing: normal;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -244,7 +251,7 @@ const formatPrice = (v) => {
 .banner-glow {
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.06) 0%, transparent 60%);
+    background: radial-gradient(ellipse at 80% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 60%);
     opacity: 0;
     transition: opacity 0.4s ease;
     pointer-events: none;
@@ -253,9 +260,21 @@ const formatPrice = (v) => {
 
 
 @media (max-width: 960px) {
-    .banner-card { min-height: 220px; padding: 20px 16px; }
-    .banner-title { font-size: 1.1rem; }
-    .section-title { font-size: 1.5rem; }
-    .banner-image-wrap { height: 90px; }
+    .banner-card {
+        min-height: 220px;
+        padding: 20px 16px;
+    }
+
+    .banner-title {
+        font-size: 1.1rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    .banner-image-wrap {
+        height: 90px;
+    }
 }
 </style>

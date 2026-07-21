@@ -21,24 +21,24 @@
 .section-header {
     text-align: center;
     margin-bottom: 2rem;
-    
+
     .section-tag {
         font-size: 0.75rem;
-        font-weight: 900;
+        font-weight: 600;
         color: #2962ff;
-        letter-spacing: 4px;
+        letter-spacing: 2px;
         display: block;
         margin-bottom: 8px;
         text-transform: uppercase;
     }
-    
+
     .section-title {
         font-size: 2.5rem;
-        font-weight: 950;
+        font-weight: 700;
         color: #1e293b;
-        letter-spacing: -1px;
+        letter-spacing: normal;
     }
-    
+
     .section-desc {
         font-size: 1rem;
         color: #64748b;
@@ -69,21 +69,32 @@
     transform: translateY(0);
 }
 
-.delay-1 { transition-delay: 0.1s; }
-.delay-2 { transition-delay: 0.2s; }
-.delay-3 { transition-delay: 0.3s; }
-.delay-4 { transition-delay: 0.5s; }
+.delay-1 {
+    transition-delay: 0.1s;
+}
+
+.delay-2 {
+    transition-delay: 0.2s;
+}
+
+.delay-3 {
+    transition-delay: 0.3s;
+}
+
+.delay-4 {
+    transition-delay: 0.5s;
+}
 
 /* RESPONSIVE */
 @media (max-width: 960px) {
     .section-header .section-title {
         font-size: 1.8rem;
     }
-    
+
     .section-title {
         font-size: 1.8rem;
     }
-    
+
     .product-col {
         padding: 4px !important;
     }
