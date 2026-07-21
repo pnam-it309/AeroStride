@@ -22,7 +22,7 @@
         "lodash": "^4.17.21",
         "marked": "^18.0.3",
         "maska": "^3.0.5",
-        "pinia": "^2.3.0",
+        "pinia": "^4.0.2",
         "qrcode.vue": "^3.4.1",
         "three": "^0.184.0",
         "vite-plugin-vuetify": "^2.0.4",
