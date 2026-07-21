@@ -1,0 +1,1 @@
+import{h as s}from"./index-CgkE5dea.js";const t="/admin/giao-ca",o={moCa:async a=>(await s.post(`${t}/mo-ca`,a)).data,getCaHienTai:async()=>(await s.get(`${t}/hien-tai`)).data,chotCa:async a=>(await s.put(`${t}/chot-ca`,a)).data,getAllLichSu:async()=>(await s.get(`${t}`)).data};export{o as d};

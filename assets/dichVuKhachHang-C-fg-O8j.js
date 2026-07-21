@@ -1,0 +1,1 @@
+import{h as t}from"./index-CgkE5dea.js";const e={layThongTinCaNhan:async()=>{try{return(await t.get("/customer/profile/me")).data}catch(r){throw r}},capNhatHoSo:async r=>{try{return(await t.put("/customer/profile/update",r)).data}catch(a){throw a}},doiMatKhau:async r=>{try{return(await t.put("/customer/profile/change-password",r)).data}catch(a){throw a}}};export{e as d};

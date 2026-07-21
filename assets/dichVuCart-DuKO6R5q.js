@@ -1,0 +1,1 @@
+import{h as n}from"./index-CgkE5dea.js";const i={async syncCart(s){var a;const o={items:s.map(t=>({idChiTietSanPham:t.idChiTietSanPham,soLuong:t.soLuong}))};return(a=(await n.post("/customer/cart/sync",o)).data)==null?void 0:a.data}};export{i as dichVuCart};

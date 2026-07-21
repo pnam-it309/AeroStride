@@ -1,0 +1,1 @@
+import{h as e}from"./index-CgkE5dea.js";const s={async createPaymentUrl(a){return(await e.post("/payment/create",a)).data.data},async verifyPaymentCallback(a){return(await e.get("/payment/vnpay-callback",{params:a})).data}};export{s as d};
