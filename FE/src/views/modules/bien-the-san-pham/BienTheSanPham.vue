@@ -584,12 +584,19 @@ const buildVariantStatusPayload = (variant, nextStatus) => ({
 
 // Thay đổi trạng thái biến thể phía Frontend (sau khi API báo thành công)
 const updateVariantStatusLocally = (variantId, nextStatus) => {
-    if (!selectedProduct.value?.variants?.length) return;
+    if (variants.value?.length) {
+        const item = variants.value.find((v) => v.id === variantId);
+        if (item) {
+            item.trangThai = nextStatus;
+        }
+    }
 
-    selectedProduct.value = {
-        ...selectedProduct.value,
-        variants: selectedProduct.value.variants.map((item) => (item.id === variantId ? { ...item, trangThai: nextStatus } : item))
-    };
+    if (selectedProduct.value?.variants?.length) {
+        selectedProduct.value = {
+            ...selectedProduct.value,
+            variants: selectedProduct.value.variants.map((item) => (item.id === variantId ? { ...item, trangThai: nextStatus } : item))
+        };
+    }
 };
 
 // Xác nhận thay đổi bật/tắt trạng thái 1 biến thể
@@ -607,6 +614,7 @@ const handleToggleVariantStatus = (variant) => {
                 updateVariantStatusLocally(variant.id, nextStatus);
                 addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật trạng thái biến thể', color: 'success' });
                 confirmDialog.value.show = false;
+                await fetchSelectedProduct();
             } catch (error) {
                 console.error(error);
                 addNotification({ title: 'Lỗi', subtitle: 'Không thể cập nhật trạng thái biến thể', color: 'error' });
