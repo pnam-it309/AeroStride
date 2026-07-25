@@ -434,21 +434,16 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                     .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KHACH_HANG_NOT_EXIST));
         }
 
+        if (hd.getKhachHang() != null) {
+            return hd.getKhachHang();
+        }
+
         String ten = normalizeBlank(request.getTenKhachHang());
         String sdt = normalizeBlank(request.getSdtKhachHang());
         String email = normalizeBlank(request.getEmailKhachHang());
 
         if (ten == null && sdt == null && email == null) {
-            return hd.getKhachHang();
-        }
-
-        if (ten == null || sdt == null) {
-            throw new BusinessException("Vui lòng nhập đầy đủ tên khách hàng và số điện thoại để thêm khách hàng mới.");
-        }
-
-        KhachHang existedByPhone = khachHangRepository.findFirstBySdt(sdt).orElse(null);
-        if (existedByPhone != null) {
-            return existedByPhone;
+            return null;
         }
 
         if (email != null) {
@@ -456,6 +451,19 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             if (existedByEmail != null) {
                 return existedByEmail;
             }
+        }
+
+        if (sdt != null) {
+            KhachHang existedByPhone = khachHangRepository.findFirstBySdt(sdt).orElse(null);
+            if (existedByPhone != null) {
+                return existedByPhone;
+            }
+        } else {
+            sdt = "09" + String.format("%08d", (int)(Math.random() * 100000000));
+        }
+
+        if (ten == null) {
+            ten = "Khách hàng mới";
         }
 
         KhachHang khachHang = new KhachHang();

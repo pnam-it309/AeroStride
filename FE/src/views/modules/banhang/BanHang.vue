@@ -1563,9 +1563,12 @@ const finalizeVnPayCheckout = async (tienChuyenKhoan, maGiaoDich, order = select
         sessionStorage.removeItem(VNPAY_PENDING_KEY);
         closeVnPayFlow();
     } catch (error) {
-        addNotification({ title: 'Không thể hoàn tất VNPay', subtitle: getErrorMessage(error, MESSAGES.ERROR.PAYMENT_FAILED), color: 'error' });
+        const errMsg = getErrorMessage(error, MESSAGES.ERROR.PAYMENT_FAILED);
+        addNotification({ title: 'Lỗi chốt đơn VNPay', subtitle: errMsg, color: 'error', timeout: 8000 });
         vnpayDialog.value.loading = false;
-        vnpayDialog.value.statusText = 'Giao dịch đã được xử lý nhưng hệ thống chưa thể chốt hóa đơn. Vui lòng kiểm tra lại đơn hàng.';
+        vnpayDialog.value.show = false;
+        vnpayDialog.value.statusText = '';
+        sessionStorage.removeItem(VNPAY_PENDING_KEY);
     }
 };
 
