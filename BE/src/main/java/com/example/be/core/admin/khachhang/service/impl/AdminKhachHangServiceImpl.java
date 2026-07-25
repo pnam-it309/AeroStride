@@ -76,8 +76,9 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
                 throw new DuplicateResourceException(MessageConstants.KHACH_HANG_MA_EXISTS);
             }
         }
-        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
-            if (adminKhachHangRepository.existsByEmail(request.getEmail().trim())) {
+        String inputEmail = request.getEmail() != null ? request.getEmail().trim() : "";
+        if (!inputEmail.isEmpty() && !inputEmail.endsWith("@aerostride.vn")) {
+            if (adminKhachHangRepository.existsByEmail(inputEmail)) {
                 throw new DuplicateResourceException(MessageConstants.KHACH_HANG_EMAIL_EXISTS);
             }
         } else {
@@ -85,7 +86,13 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
             if (phoneClean.isEmpty()) {
                 phoneClean = java.util.UUID.randomUUID().toString().substring(0, 8);
             }
-            request.setEmail("khach_" + phoneClean + "@aerostride.vn");
+            String baseEmail = "khach_" + phoneClean;
+            String generatedEmail = baseEmail + "@aerostride.vn";
+            int count = 1;
+            while (adminKhachHangRepository.existsByEmail(generatedEmail)) {
+                generatedEmail = baseEmail + "_" + count++ + "@aerostride.vn";
+            }
+            request.setEmail(generatedEmail);
         }
 
         if (request.getGioiTinh() == null) {
