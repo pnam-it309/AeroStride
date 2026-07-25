@@ -814,7 +814,16 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         hd.setTongTien(total);
 
-        BigDecimal discounted = total.subtract(calculateVoucherDiscount(total, hd.getPhieuGiamGia()));
+        // Tự động tìm và áp dụng phiếu giảm giá ưu đãi nhất (giảm nhiều tiền nhất) phù hợp với tổng tiền hàng hiện tại
+        PhieuGiamGia bestVoucher = getBestVoucher(hd.getId());
+        if (bestVoucher != null && calculateVoucherDiscount(total, bestVoucher).compareTo(BigDecimal.ZERO) > 0) {
+            hd.setPhieuGiamGia(bestVoucher);
+        } else {
+            hd.setPhieuGiamGia(null);
+        }
+
+        BigDecimal discountAmount = calculateVoucherDiscount(total, hd.getPhieuGiamGia());
+        BigDecimal discounted = total.subtract(discountAmount);
         if (discounted.compareTo(BigDecimal.ZERO) < 0) discounted = BigDecimal.ZERO;
         hd.setTongTienSauGiam(discounted);
         hoaDonRepository.save(hd);
@@ -936,13 +945,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             PhieuGiamGia bestVoucher = getBestVoucher(hd.getId());
             PhieuGiamGia appliedVoucher = hd.getPhieuGiamGia();
             
-            if (bestVoucher != null && appliedVoucher != null && bestVoucher.getId().equals(appliedVoucher.getId())) {
+            if (bestVoucher != null && calculateVoucherDiscount(tongTien, bestVoucher).compareTo(BigDecimal.ZERO) > 0) {
                 voucherSuggestionText = "Đã áp dụng mã giảm giá ưu đãi nhất: " + getVoucherCode(bestVoucher) + " (-" + formatCurrencyVND(getPotentialDiscount(bestVoucher, tongTien)) + ")";
                 bestVoucherId = bestVoucher.getId();
-            } else if (bestVoucher != null) {
-                voucherSuggestionText = "Bấm để áp dụng mã giảm giá ưu đãi nhất: " + getVoucherCode(bestVoucher) + " (-" + formatCurrencyVND(getPotentialDiscount(bestVoucher, tongTien)) + ")";
-                bestVoucherId = bestVoucher.getId();
-                canApplySuggestedVoucher = true;
+                canApplySuggestedVoucher = false;
             } else {
                 PhieuGiamGia nextBetterVoucher = getNextBetterVoucher(hd, null);
                 if (nextBetterVoucher == null) {
@@ -967,6 +973,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .tenKhachHang(hd.getKhachHang() != null ? hd.getKhachHang().getTen() : "Khách lẻ")
                 .sdtKhachHang(hd.getKhachHang() != null ? hd.getKhachHang().getSdt() : "")
                 .idPhieuGiamGia(hd.getPhieuGiamGia() != null ? hd.getPhieuGiamGia().getId() : null)
+                .phieuGiamGia(hd.getPhieuGiamGia())
                 .loaiDon(hd.getLoaiDon())
                 .tongTienHang(tongTienHang)
                 .tienGiamGiaSanPham(tienGiamGiaSanPham)

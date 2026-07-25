@@ -17,6 +17,7 @@ public class AdminBanHangHoaDonResponse {
     private String tenKhachHang;
     private String sdtKhachHang;
     private String idPhieuGiamGia;
+    private com.example.be.entity.PhieuGiamGia phieuGiamGia;
     private String loaiDon;
     private BigDecimal tongTienHang; // Tổng tiền hàng gốc
     private BigDecimal tienGiamGiaSanPham; // Tiền giảm do đợt giảm giá SP
