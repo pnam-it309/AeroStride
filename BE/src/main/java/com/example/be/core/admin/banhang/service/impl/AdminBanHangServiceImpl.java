@@ -442,6 +442,13 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         String sdt = normalizeBlank(request.getSdtKhachHang());
         String email = normalizeBlank(request.getEmailKhachHang());
 
+        if (ten == null) {
+            ten = normalizeBlank(request.getTenNguoiNhan());
+        }
+        if (sdt == null) {
+            sdt = normalizeBlank(request.getSdtNguoiNhan());
+        }
+
         if (ten == null && sdt == null && email == null) {
             return null;
         }
@@ -463,7 +470,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         }
 
         if (ten == null) {
-            ten = "Khách hàng mới";
+            ten = "Khách hàng";
         }
 
         KhachHang khachHang = new KhachHang();

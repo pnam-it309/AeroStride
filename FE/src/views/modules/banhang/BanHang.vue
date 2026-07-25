@@ -1392,8 +1392,8 @@ const buildCheckoutPayload = (order, overrides = {}) => {
 
     return {
         idKhachHang: order?.idKhachHang || null,
-        tenKhachHang: order?.tenKhachHang || null,
-        sdtKhachHang: order?.sdtKhachHang || null,
+        tenKhachHang: order?.tenKhachHang || (isGiaoHang.value ? (recipientName.value || null) : null),
+        sdtKhachHang: order?.sdtKhachHang || (isGiaoHang.value ? (recipientPhone.value || null) : null),
         emailKhachHang: order?.emailKhachHang || null,
         idPhieuGiamGia: order?.idPhieuGiamGia || null,
         tongTien: order?.tongTien || 0,
