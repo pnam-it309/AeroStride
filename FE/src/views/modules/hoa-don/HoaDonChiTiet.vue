@@ -1292,8 +1292,9 @@ onMounted(() => {
                 <template #row="{ item }">
                     <tr class="hover-row" :class="{ 'price-changed-cell': isPriceChanged(item) }">
                         <td class="py-4">
-                            <v-avatar size="80" class="rounded-lg border bg-slate-50 elevation-1 overflow-hidden">
-                                <SafeProductImage :src="item.hinhAnh" alt="product-image" fit="cover" />
+                            <v-avatar size="60" class="rounded-lg border bg-slate-50 elevation-1 overflow-hidden">
+                                <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover />
+                                <v-icon v-else size="32" color="grey-lighten-1">mdi-package-variant-closed</v-icon>
                             </v-avatar>
                         </td>
                         <td class="py-4">
