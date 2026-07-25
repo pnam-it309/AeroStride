@@ -1,3 +1,16 @@
+## [1.27.7](https://github.com/pnam-it309/AeroStride/compare/v1.27.6...v1.27.7) (2026-07-25)
+
+
+### Bug Fixes
+
+* **be:** automatically select and attach highest discount voucher on recalculateTotalAndDiscount ([4f784e6](https://github.com/pnam-it309/AeroStride/commit/4f784e6d9ad027e6363c12c0f5e7319cd4feeef7))
+* **be:** include full phieuGiamGia entity in POS invoice response to display exact minimum order value ([7b82280](https://github.com/pnam-it309/AeroStride/commit/7b82280b0557820375074a8816eadc236d1598f1))
+* **pos:** automatically apply highest discount voucher whenever cart total updates without manual click ([a46acf9](https://github.com/pnam-it309/AeroStride/commit/a46acf9377f2207291c1633135309dc461ae9201))
+* **pos:** dynamically recalculate and auto-apply best eligible voucher when cart items or quantities change ([6249ed0](https://github.com/pnam-it309/AeroStride/commit/6249ed006cb89d8233752223a9fa4845901e8d82))
+* **pos:** format voucher title cleanly without raw UUID string ([79e435e](https://github.com/pnam-it309/AeroStride/commit/79e435e0fcaac8473dff87fc653448612e3398b9))
+* **pos:** render voucher ticket card with stub above suggestion banner in OrderSummaryPanel ([1edeb4f](https://github.com/pnam-it309/AeroStride/commit/1edeb4ff8521bb72f7dc2d85506a92f90b4b69bc))
+* **pos:** resolve minimum order value display error by looking up donHangToiThieu from voucher list ([4268999](https://github.com/pnam-it309/AeroStride/commit/42689996d71326f7b51f5feb0d6d733ed99fc135))
+
 ## [1.27.6](https://github.com/pnam-it309/AeroStride/compare/v1.27.5...v1.27.6) (2026-07-25)
 
 
