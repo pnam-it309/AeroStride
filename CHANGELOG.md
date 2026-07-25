@@ -1,3 +1,23 @@
+## [1.27.6](https://github.com/pnam-it309/AeroStride/compare/v1.27.5...v1.27.6) (2026-07-25)
+
+
+### Bug Fixes
+
+* **ban-hang:** khac phuc loi 400 Bad Request khi tao nhanh khach hang tai quay ([0344614](https://github.com/pnam-it309/AeroStride/commit/03446147729fc85a54180f8fe49cb9ae875754e0))
+* **be:** add @Slf4j to AdminKhachHangServiceImpl to fix compilation error ([d119bbe](https://github.com/pnam-it309/AeroStride/commit/d119bbe880670ab6d1035c15e0704648d0a64117))
+* **be:** guarantee unique fallback email for quick customer creation to fix 409 Conflict ([8dff1d1](https://github.com/pnam-it309/AeroStride/commit/8dff1d1690de98f244e024e082ddc0324ca286e5))
+* **be:** handle IllegalArgumentException in GlobalExceptionHandler and clarify VNPay max amount limit error ([141b612](https://github.com/pnam-it309/AeroStride/commit/141b6129478c141cfa560e17e533406e5e18c44e))
+* **be:** resolve getAnhSanPhams compilation error in AdminHoaDonMapper ([fbe95dc](https://github.com/pnam-it309/AeroStride/commit/fbe95dc84759d3f2bf210a9261f6bc091d4ff294))
+* **bienthe:** update local variant status reactively upon switch toggle without requiring page refresh ([bf7f7ff](https://github.com/pnam-it309/AeroStride/commit/bf7f7ff6ba16b55b35e0338f44f3e31d6e13131e))
+* **fe:** convert address select inputs to autocomplete to allow search typing ([77b9300](https://github.com/pnam-it309/AeroStride/commit/77b9300d0211afb574d3b75c7938869c12f97ad4))
+* **fe:** extend error toast duration to 8s and display detailed server error messages for VNPay ([adee898](https://github.com/pnam-it309/AeroStride/commit/adee898116e05ac9d138b91f743442504b596d5f))
+* **hoadon:** resolve product thumbnail image mapping fallback and render with SafeProductImage ([ae113eb](https://github.com/pnam-it309/AeroStride/commit/ae113eb2be551a3cfbcb1fec81ed84105e9a4724))
+* **hoadon:** use v-img for product thumbnail rendering matching counter sales cart table ([e7c53cc](https://github.com/pnam-it309/AeroStride/commit/e7c53ccdb89291625bf69eb3e700afc1e992bbc8))
+* **pos:** auto pass shipping receiver info and set default address for customer upon checkout ([5b8cdaf](https://github.com/pnam-it309/AeroStride/commit/5b8cdaf4570e1159cc84b9e84959be29f6585e71))
+* **pos:** auto sync customer name and phone from shipping receiver when customer is not explicitly selected ([f92e893](https://github.com/pnam-it309/AeroStride/commit/f92e893bf2b2ff44166ca60db2461f7f97029962))
+* **pos:** handle fallback customer phone and auto reset VNPay modal on checkout error ([1f00c38](https://github.com/pnam-it309/AeroStride/commit/1f00c389f632360c3ad9df650b894db77bd2a88f))
+* **san-pham:** cap nhat logic validation trung ten, cau truc ma SKU va them quet QR camera ([77c5841](https://github.com/pnam-it309/AeroStride/commit/77c58416e6804b93c1c33ea5ea2b5a0ed37eac0e))
+
 ## [1.27.5](https://github.com/pnam-it309/AeroStride/compare/v1.27.4...v1.27.5) (2026-07-21)
 
 
