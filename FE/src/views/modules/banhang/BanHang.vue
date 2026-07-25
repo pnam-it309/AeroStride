@@ -1254,22 +1254,23 @@ const refreshBestVoucher = async (order = selectedOrder.value, autoApply = true)
         if (refreshSerial !== voucherRefreshSerial) return;
         vouchers.value = decorated;
 
-        // Backend đã tính sẵn `bestVoucherId` trong selectedOrder
-        // Nhưng nếu autoApply = true, chúng ta có thể gọi onApplyVoucher(order.bestVoucherId)
+        // Tự động áp dụng phiếu giảm giá ưu đãi nhất khi giá trị đơn hàng thay đổi
         if (autoApply) {
-            const shouldAutoApply = isVoucherAutoApplied.value[order.id] !== false;
-            if (shouldAutoApply) {
-                isVoucherAutoApplied.value[order.id] = true;
-                const bestId = order.bestVoucherId;
-                if (bestId) {
-                    if (String(order.idPhieuGiamGia) !== String(bestId)) {
-                        await onApplyVoucher(bestId, false, true);
-                    }
-                } else {
-                    if (order.idPhieuGiamGia) {
-                        await onApplyVoucher(null, false, true);
-                    }
+            let bestId = order.bestVoucherId;
+            if (!bestId && decorated.length) {
+                const validVouchers = decorated.filter(v => !v.disabled);
+                if (validVouchers.length) {
+                    validVouchers.sort((a, b) => (Number(b.soTienGiam || b.phanTramGiamGia || 0) - Number(a.soTienGiam || a.phanTramGiamGia || 0)));
+                    bestId = validVouchers[0].id || validVouchers[0].ma;
                 }
+            }
+
+            if (bestId) {
+                if (String(order.idPhieuGiamGia) !== String(bestId)) {
+                    await onApplyVoucher(bestId, false, true);
+                }
+            } else if (order.idPhieuGiamGia) {
+                await onApplyVoucher(null, false, true);
             }
         }
     } catch (e) {
@@ -1283,13 +1284,9 @@ const onApplyVoucher = async (voucherId, autoApply = false, isInternalCall = fal
     const order = selectedOrder.value;
     if (!order?.id) return;
     try {
-        if (!isInternalCall) {
-            isVoucherAutoApplied.value[order.id] = false;
-        }
         const updated = await dichVuDonHang.setVoucher(order.id, voucherId || null);
         updateOrderInList(updated);
-        // Khi người dùng tự chọn mã thì không tự động ghi đè lại
-        await refreshBestVoucher(updated, autoApply);
+        await refreshBestVoucher(updated, false);
     } catch (e) {
         order.suggestedVoucherId = null;
     }
