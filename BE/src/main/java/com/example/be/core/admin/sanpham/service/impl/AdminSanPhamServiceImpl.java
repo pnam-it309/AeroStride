@@ -335,19 +335,30 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         v.setXoaMem(false);
         
         if (v.getMaChiTietSanPham() == null || v.getMaChiTietSanPham().trim().isEmpty()) {
-            List<String> existingMas = adminChiTietSanPhamRepository.findBySanPhamIdAndXoaMemFalse(sp.getId()).stream()
-                    .map(ChiTietSanPham::getMaChiTietSanPham)
-                    .filter(Objects::nonNull)
-                    .toList();
-
             String baseMa = sp.getMa();
-            int suffix = 1;
-            String generatedMa;
-            do {
-                generatedMa = String.format("%s-%02d", baseMa, suffix++);
-            } while (existingMas.contains(generatedMa) || adminChiTietSanPhamRepository.existsByMaChiTietSanPhamIgnoreCaseAndXoaMemFalse(generatedMa));
+            String colorPart = "";
+            if (v.getMauSac() != null && v.getMauSac().getTen() != null) {
+                colorPart = cleanAttributeName(v.getMauSac().getTen());
+            }
+            String sizePart = "";
+            if (v.getKichThuoc() != null && v.getKichThuoc().getTen() != null) {
+                sizePart = cleanAttributeName(v.getKichThuoc().getTen());
+            }
 
-            v.setMaChiTietSanPham(generatedMa);
+            String generatedMa = baseMa;
+            if (!colorPart.isEmpty()) {
+                generatedMa += "-" + colorPart;
+            }
+            if (!sizePart.isEmpty()) {
+                generatedMa += "-" + sizePart;
+            }
+
+            String finalMa = generatedMa;
+            int suffix = 1;
+            while (adminChiTietSanPhamRepository.existsByMaChiTietSanPhamIgnoreCaseAndXoaMemFalse(finalMa)) {
+                finalMa = generatedMa + "-" + suffix++;
+            }
+            v.setMaChiTietSanPham(finalMa);
         }
         
         v = adminChiTietSanPhamRepository.save(v);
@@ -623,5 +634,33 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         return adminChiTietSanPhamRepository.findFirstByXoaMemFalseOrderByGiaBanDesc()
                 .map(ChiTietSanPham::getGiaBan)
                 .orElse(new java.math.BigDecimal("6500000"));
+    }
+
+    private String cleanAttributeName(String src) {
+        if (src == null) {
+            return "";
+        }
+        String normalized = java.text.Normalizer.normalize(src, java.text.Normalizer.Form.NFD);
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        String result = pattern.matcher(normalized).replaceAll("");
+        result = result.replace("đ", "d").replace("Đ", "D");
+        String cleanStr = result.toUpperCase().trim();
+
+        if (cleanStr.startsWith("SIZE ")) {
+            cleanStr = cleanStr.substring(5).trim();
+        } else if (cleanStr.startsWith("SIZE-")) {
+            cleanStr = cleanStr.substring(5).trim();
+        } else if (cleanStr.startsWith("SIZE")) {
+            cleanStr = cleanStr.substring(4).trim();
+        }
+
+        cleanStr = cleanStr.replaceAll("[^A-Z0-9]+", "-");
+        if (cleanStr.startsWith("-")) {
+            cleanStr = cleanStr.substring(1);
+        }
+        if (cleanStr.endsWith("-")) {
+            cleanStr = cleanStr.substring(0, cleanStr.length() - 1);
+        }
+        return cleanStr;
     }
 }

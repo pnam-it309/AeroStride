@@ -751,7 +751,10 @@ onBeforeUnmount(() => {
                 <v-col cols="12" md="3">
                     <div class="filter-field-label">Tìm kiếm nhanh</div>
                     <v-text-field v-model="filters.keyword" placeholder="Mã SKU, màu, size..."
-                        prepend-inner-icon="mdi-magnify" variant="outlined" density="compact" hide-details clearable
+                        prepend-inner-icon="mdi-magnify"
+                        append-inner-icon="mdi-qrcode"
+                        @click:append-inner="showQrScanner = true"
+                        variant="outlined" density="compact" hide-details clearable
                         class="compact-input" />
                 </v-col>
                 <v-col cols="12" md="2">
@@ -823,12 +826,16 @@ onBeforeUnmount(() => {
             @add="openCreateVariantModal" class="all-center-table">
 
             <template #extra-actions>
-                <v-btn prepend-icon="mdi-qrcode" variant="flat" class="admin-btn-secondary"
+                <v-btn prepend-icon="mdi-qrcode" variant="flat" class="admin-btn-secondary mr-2"
                     @click="handleExportVariantQrZip">
                     Tải mã QR
                     <v-tooltip activator="parent" location="top" text="Tải mã QR" />
                 </v-btn>
-
+                <v-btn prepend-icon="mdi-qrcode" variant="flat" class="admin-btn-secondary"
+                    @click="showQrScanner = true">
+                    Quét mã QR
+                    <v-tooltip activator="parent" location="top" text="Quét mã QR bằng Camera" />
+                </v-btn>
             </template>
 
             <template #headers>
@@ -891,8 +898,7 @@ onBeforeUnmount(() => {
                     </td>
                     <td class="data-cell text-center">
                         <div class="text-truncate" :title="item.maChiTietSanPham">
-                            <span class="text-truncate">{{ item.maChiTietSanPham ?
-                                item.maChiTietSanPham.split('-')[0] : '--' }}</span>
+                            <span class="text-truncate">{{ item.maChiTietSanPham || '--' }}</span>
                         </div>
                     </td>
                     <td class="data-cell text-center">

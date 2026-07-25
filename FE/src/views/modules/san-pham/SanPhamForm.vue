@@ -870,19 +870,65 @@ const mapVariantToFormState = (variant = {}) => ({
     urlAnh: getVariantThumbnail(variant) === logoPlaceholder ? '' : getVariantThumbnail(variant)
 });
 
+const cleanAttributeName = (src) => {
+    if (!src) return '';
+    let result = String(src)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .toUpperCase()
+        .trim();
+    
+    if (result.startsWith('SIZE ')) {
+        result = result.substring(5).trim();
+    } else if (result.startsWith('SIZE-')) {
+        result = result.substring(5).trim();
+    } else if (result.startsWith('SIZE')) {
+        result = result.substring(4).trim();
+    }
+    
+    result = result.replace(/[^A-Z0-9]+/g, '-');
+    if (result.startsWith('-')) result = result.substring(1);
+    if (result.endsWith('-')) result = result.substring(0, result.length - 1);
+    return result;
+};
+
+const generateSkuForDraft = (productCode, colorId, sizeId) => {
+    const code = String(productCode || '').trim().toUpperCase();
+    if (!code) return '';
+    
+    const colorLabel = getVariantColorLabel(colorId);
+    const sizeLabel = getVariantSizeLabel(sizeId);
+    
+    if (colorLabel && sizeLabel && colorLabel !== '--' && sizeLabel !== '--') {
+        const cleanColor = cleanAttributeName(colorLabel);
+        const cleanSize = cleanAttributeName(sizeLabel);
+        
+        let newSku = code;
+        if (cleanColor) newSku += '-' + cleanColor;
+        if (cleanSize) newSku += '-' + cleanSize;
+        return newSku;
+    }
+    return '';
+};
+
 // Tao bien the nhap lieu tu cap mau-size; giu lai gia/ton kho neu da co ban nhap cu.
-const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackImageUrl = '') => mapVariantToFormState({
-    ...existingVariant,
-    clientKey: existingVariant.clientKey || createDraftKey(),
-    idMauSac: colorId,
-    idKichThuoc: sizeId,
-    soLuong: Number(existingVariant.soLuong ?? 0),
-    giaNhap: Number(existingVariant.giaNhap ?? 0),
-    giaBan: Number(existingVariant.giaBan ?? 0),
-    trangThai: existingVariant.trangThai || defaultVariantStatus,
-    maChiTietSanPham: existingVariant.maChiTietSanPham || '',
-    urlAnh: normalizeUploadedFileUrl(existingVariant.urlAnh || fallbackImageUrl || '')
-});
+const createGeneratedVariant = (colorId, sizeId, existingVariant = {}, fallbackImageUrl = '') => {
+    const defaultSku = generateSkuForDraft(product.value?.maSanPham, colorId, sizeId);
+    return mapVariantToFormState({
+        ...existingVariant,
+        clientKey: existingVariant.clientKey || createDraftKey(),
+        idMauSac: colorId,
+        idKichThuoc: sizeId,
+        soLuong: Number(existingVariant.soLuong ?? 0),
+        giaNhap: Number(existingVariant.giaNhap ?? 0),
+        giaBan: Number(existingVariant.giaBan ?? 0),
+        trangThai: existingVariant.trangThai || defaultVariantStatus,
+        maChiTietSanPham: existingVariant.maChiTietSanPham || defaultSku,
+        urlAnh: normalizeUploadedFileUrl(existingVariant.urlAnh || fallbackImageUrl || '')
+    });
+};
 
 // Dong goi bien the theo schema ProductVariantRequest cua BE.
 const buildVariantPayload = (variant, includeImages = true) => {
@@ -1357,6 +1403,11 @@ const checkProductName = debounce(async (name) => {
         if (result && result.exists) {
             tenError.value = 'Tên sản phẩm đã tồn tại trong hệ thống!';
             existingProductId.value = result.productId;
+            addNotification({
+                title: 'Lỗi',
+                subtitle: 'Tên sản phẩm đã tồn tại trong hệ thống!',
+                color: 'error'
+            });
         } else {
             tenError.value = '';
             existingProductId.value = null;
@@ -1398,6 +1449,17 @@ watch(() => product.value.tenSanPham, (newVal) => {
     if (!isEditMode.value) {
         checkProductName(newVal);
     }
+});
+
+// Watch for product code changes to automatically update SKU for drafts
+watch(() => product.value.maSanPham, (newVal) => {
+    if (isEditMode.value) return;
+    const code = String(newVal || '').trim().toUpperCase();
+    variantItems.value.forEach(item => {
+        if (!item.id) {
+            item.maChiTietSanPham = generateSkuForDraft(code, item.idMauSac, item.idKichThuoc);
+        }
+    });
 });
 
 const loadProduct = async (id) => {
@@ -1494,7 +1556,7 @@ const rules = {
             return true;
         }
         const exists = existingProductNames.value.some(name => String(name).trim().toLowerCase() === valStr);
-        return !exists || 'Tên sản phẩm đã tồn tại. Vui lòng thêm hậu tố (tên đệm) để phân biệt.';
+        return !exists || 'Tên sản phẩm đã tồn tại trong hệ thống!';
     }
 };
 
@@ -1558,7 +1620,7 @@ const validateProduct = () => {
         if (exists) {
             addNotification({
                 title: 'Lỗi trùng tên',
-                subtitle: 'Tên sản phẩm đã tồn tại. Vui lòng nhập thêm tên đệm để phân biệt.',
+                subtitle: 'Tên sản phẩm đã tồn tại trong hệ thống!',
                 color: 'error'
             });
             return false;
@@ -1944,22 +2006,10 @@ const handleSave = async () => {
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="field-label">Tên sản phẩm <span class="text-error">*</span></div>
-                                <v-combobox v-model="product.tenSanPham" :items="existingProductNames"
+                                <v-text-field v-model="product.tenSanPham"
                                     placeholder="Ví dụ: Giày Nike Air..."
-                                    :rules="[rules.required, rules.noSpecialChar, rules.uniqueProductName]"
-                                    variant="outlined" density="comfortable" hide-details="auto" maxlength="250"
-                                    :return-object="false"
-                                    :menu-props="{ contentClass: 'product-select-menu' }"></v-combobox>
-                                <v-alert v-if="tenError" type="error" variant="tonal" density="compact"
-                                    class="mt-2 text-caption">
-                                    {{ tenError }}
-                                    <div class="mt-1" v-if="existingProductId">
-                                        <a href="#" @click.prevent="handleNavigateToUpdate"
-                                            class="text-decoration-underline font-weight-bold text-error">
-                                            Chuyển sang Cập nhật sản phẩm này
-                                        </a>
-                                    </div>
-                                </v-alert>
+                                    :rules="[rules.required, rules.noSpecialChar]"
+                                    variant="outlined" density="comfortable" hide-details="auto" maxlength="250"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="field-label">Thương hiệu <span class="text-error">*</span></div>

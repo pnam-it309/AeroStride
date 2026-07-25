@@ -425,6 +425,51 @@ watch(
     }
 );
 
+const cleanAttributeName = (src) => {
+    if (!src) return '';
+    let result = String(src)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'D')
+        .toUpperCase()
+        .trim();
+    
+    if (result.startsWith('SIZE ')) {
+        result = result.substring(5).trim();
+    } else if (result.startsWith('SIZE-')) {
+        result = result.substring(5).trim();
+    } else if (result.startsWith('SIZE')) {
+        result = result.substring(4).trim();
+    }
+    
+    result = result.replace(/[^A-Z0-9]+/g, '-');
+    if (result.startsWith('-')) result = result.substring(1);
+    if (result.endsWith('-')) result = result.substring(0, result.length - 1);
+    return result;
+};
+
+watch(
+    () => [formData.value.idMauSac, formData.value.idKichThuoc, props.productCode, props.open],
+    ([colorId, sizeId, prodCode, isOpen]) => {
+        if (!isOpen || props.mode !== 'create' || !prodCode) return;
+        
+        const colorLabel = getResolvedOptionLabel(props.options.mauSacs, colorId);
+        const sizeLabel = getResolvedOptionLabel(props.options.kichThuocs, sizeId);
+        
+        if (colorId && sizeId && colorLabel && sizeLabel && colorLabel !== '--' && sizeLabel !== '--') {
+            const cleanColor = cleanAttributeName(colorLabel);
+            const cleanSize = cleanAttributeName(sizeLabel);
+            
+            let newSku = prodCode;
+            if (cleanColor) newSku += '-' + cleanColor;
+            if (cleanSize) newSku += '-' + cleanSize;
+            
+            formData.value.maChiTietSanPham = newSku;
+        }
+    }
+);
+
 // Mở hộp thoại chọn tệp
 const triggerFileInput = () => {
     fileInput.value?.click();
