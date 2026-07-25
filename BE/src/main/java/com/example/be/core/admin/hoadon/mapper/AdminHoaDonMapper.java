@@ -59,18 +59,6 @@ public interface AdminHoaDonMapper {
                 }
             }
         }
-        if (ctsp.getSanPham() != null && ctsp.getSanPham().getAnhSanPhams() != null && !ctsp.getSanPham().getAnhSanPhams().isEmpty()) {
-            for (AnhSanPham img : ctsp.getSanPham().getAnhSanPhams()) {
-                if (Boolean.TRUE.equals(img.getHinhAnhDaiDien()) && !Boolean.TRUE.equals(img.getXoaMem()) && img.getDuongDanAnh() != null && !img.getDuongDanAnh().trim().isEmpty()) {
-                    return img.getDuongDanAnh();
-                }
-            }
-            for (AnhSanPham img : ctsp.getSanPham().getAnhSanPhams()) {
-                if (!Boolean.TRUE.equals(img.getXoaMem()) && img.getDuongDanAnh() != null && !img.getDuongDanAnh().trim().isEmpty()) {
-                    return img.getDuongDanAnh();
-                }
-            }
-        }
         return ctsp.getSanPham() != null ? ctsp.getSanPham().getHinhAnh() : null;
     }
 
