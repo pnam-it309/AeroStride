@@ -139,7 +139,7 @@ public class VnPayServiceImpl implements PaymentService {
         // VNPay maximum amount limit (1,000,000,000 VND)
         BigDecimal maxAmount = new BigDecimal("1000000000.00");
         if (request.getAmount().compareTo(maxAmount) > 0) {
-            throw new IllegalArgumentException("Amount exceeds maximum allowed limit of " + maxAmount);
+            throw new IllegalArgumentException("Tổng số tiền thanh toán (" + String.format("%,.0f", request.getAmount()) + " VNĐ) vượt quá giới hạn giao dịch tối đa của VNPay (1,000,000,000 VNĐ). Vui lòng thử sản phẩm có giá trị dưới 1 tỷ VNĐ.");
         }
         
         // Validate Order Info

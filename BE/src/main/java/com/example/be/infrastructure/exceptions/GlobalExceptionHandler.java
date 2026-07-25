@@ -20,6 +20,12 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Object>> handleIllegalArgumentException(IllegalArgumentException e, HttpServletRequest request) {
+        log.warn("Invalid argument at {}: {}", request.getRequestURI(), e.getMessage());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "ERR_INVALID_ARGUMENT", e.getMessage(), request.getRequestURI(), ErrorSeverity.RECOVERABLE);
+    }
+
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Object>> handleBusinessException(BusinessException e, HttpServletRequest request) {
         log.warn("Business Warning at {}: {}", request.getRequestURI(), e.getMessage());
