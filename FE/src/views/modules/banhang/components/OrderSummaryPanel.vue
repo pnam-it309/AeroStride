@@ -257,17 +257,8 @@ const emit = defineEmits([
 const isUuidString = (str) => typeof str === 'string' && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str);
 
 const activeVoucher = computed(() => {
-    if (props.appliedVoucher) return props.appliedVoucher;
-
+    let baseVoucher = props.appliedVoucher || null;
     const voucherIdOrCode = props.selectedVoucherId;
-    if (props.vouchers?.length && voucherIdOrCode) {
-        const found = props.vouchers.find(v => 
-            String(v.id) === String(voucherIdOrCode) || 
-            String(v.ma) === String(voucherIdOrCode) || 
-            String(v.maPhieu) === String(voucherIdOrCode)
-        );
-        if (found) return found;
-    }
 
     let code = voucherIdOrCode && !isUuidString(voucherIdOrCode) ? voucherIdOrCode : '';
     if (!code && props.voucherSuggestionText) {
@@ -279,14 +270,43 @@ const activeVoucher = computed(() => {
         if (match && !isUuidString(match[1])) code = match[1];
     }
 
+    // Ưu tiên tìm trong danh sách vouchers để lấy chuẩn thông tin donHangToiThieu và các trường khác
+    if (props.vouchers?.length) {
+        if (voucherIdOrCode) {
+            const found = props.vouchers.find(v => 
+                String(v.id) === String(voucherIdOrCode) || 
+                String(v.ma) === String(voucherIdOrCode) || 
+                String(v.maPhieu) === String(voucherIdOrCode)
+            );
+            if (found) return found;
+        }
+        if (code) {
+            const found = props.vouchers.find(v => 
+                String(v.ma) === String(code) || 
+                String(v.maPhieu) === String(code)
+            );
+            if (found) return found;
+        }
+    }
+
+    if (baseVoucher) {
+        const matched = props.vouchers?.find(v => String(v.id) === String(baseVoucher.id) || String(v.ma) === String(baseVoucher.ma));
+        if (matched) return matched;
+        return baseVoucher;
+    }
+
+    const matchedVoucher = props.vouchers?.find(v => String(v.ma || v.maPhieu || '') === String(code));
+    const minOrderVal = matchedVoucher ? (matchedVoucher.donHangToiThieu ?? matchedVoucher.dieuKienToiThieu ?? 0) : (baseVoucher?.donHangToiThieu ?? 0);
+
     if (code || props.totalDiscountAmount > 0) {
         return {
             id: voucherIdOrCode || code || 'VOUCHER',
-            ma: code || '',
-            ten: 'Phiếu giảm giá ưu đãi',
-            soTienGiam: props.totalDiscountAmount,
-            donHangToiThieu: 0,
-            loaiPhieu: 'SO_TIEN'
+            ma: code || matchedVoucher?.ma || matchedVoucher?.maPhieu || '',
+            ten: matchedVoucher?.tenPhieu || matchedVoucher?.ten || 'Phiếu giảm giá ưu đãi',
+            soTienGiam: props.totalDiscountAmount || matchedVoucher?.soTienGiam || 0,
+            phanTramGiamGia: matchedVoucher?.phanTramGiamGia || 0,
+            donHangToiThieu: minOrderVal,
+            loaiPhieu: matchedVoucher?.loaiPhieu || 'SO_TIEN'
         };
     }
 
