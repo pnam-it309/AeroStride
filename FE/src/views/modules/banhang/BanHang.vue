@@ -1363,33 +1363,52 @@ const isVnPayVerifySuccess = (verifyResult, params = {}) =>
 
 const buildCheckoutPayload = (order, overrides = {}) => {
     let compiledNote = checkoutData.value.note || '';
-    if (orderChannel.value === 'Trực tuyến') {
-        const p = provincesShip.value.find(x => x.code === recipientProvince.value);
-        const d = districtsShip.value.find(x => x.code === recipientDistrict.value);
-        const w = wardsShip.value.find(x => x.code === recipientWard.value);
 
-        const shippingDetails = [
-            `Người nhận: ${recipientName.value || ''}`,
-            `SĐT: ${recipientPhone.value || ''}`,
-            `Địa chỉ: ${recipientAddressDetail.value || ''}`,
-            w ? w.name : '',
-            d ? d.name : '',
-            p ? p.name : ''
-        ].filter(Boolean).join(', ');
+    const p = provincesShip.value.find(x => x.code === recipientProvince.value);
+    const d = districtsShip.value.find(x => x.code === recipientDistrict.value);
+    const w = wardsShip.value.find(x => x.code === recipientWard.value);
 
+    const shippingDetails = isGiaoHang.value ? [
+        `Người nhận: ${recipientName.value || ''}`,
+        `SĐT: ${recipientPhone.value || ''}`,
+        `Địa chỉ: ${recipientAddressDetail.value || ''}`,
+        w ? w.name : '',
+        d ? d.name : '',
+        p ? p.name : ''
+    ].filter(Boolean).join(', ') : '';
+
+    if (shippingDetails) {
         compiledNote = compiledNote
             ? `${compiledNote} | Ship: ${shippingDetails}`
             : `Ship: ${shippingDetails}`;
     }
 
+    const fullShippingAddressStr = isGiaoHang.value ? [
+        recipientAddressDetail.value || '',
+        w ? w.name : '',
+        d ? d.name : '',
+        p ? p.name : ''
+    ].filter(Boolean).join(', ') : null;
+
     return {
         idKhachHang: order?.idKhachHang || null,
+        tenKhachHang: order?.tenKhachHang || null,
+        sdtKhachHang: order?.sdtKhachHang || null,
+        emailKhachHang: order?.emailKhachHang || null,
         idPhieuGiamGia: order?.idPhieuGiamGia || null,
         tongTien: order?.tongTien || 0,
-        phiVanChuyen: shippingFee.value,
+        phiVanChuyen: isGiaoHang.value ? shippingFee.value : 0,
         tongTienSauGiam: finalCollectAmount.value,
         loaiDon: isGiaoHang.value ? 'ONLINE' : 'TAI_QUAY',
         ghiChu: compiledNote,
+        tenNguoiNhan: isGiaoHang.value ? (recipientName.value || order?.tenKhachHang || null) : null,
+        sdtNguoiNhan: isGiaoHang.value ? (recipientPhone.value || order?.sdtKhachHang || null) : null,
+        diaChiNguoiNhan: fullShippingAddressStr,
+        diaChiChiTiet: isGiaoHang.value ? (recipientAddressDetail.value || null) : null,
+        tinh: isGiaoHang.value ? (p ? p.name : null) : null,
+        thanhPho: isGiaoHang.value ? (d ? d.name : null) : null,
+        phuongXa: isGiaoHang.value ? (w ? w.name : null) : null,
+        luuDiaChiMacDinh: true,
         tienMat: 0,
         tienChuyenKhoan: 0,
         maGiaoDich: null,

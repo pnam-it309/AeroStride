@@ -364,8 +364,36 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         hd.setLoaiDon(loaiDon);
         hd.setOrderType(com.example.be.infrastructure.constants.OrderType.IN_STORE); // Luôn là IN_STORE cho POS
         hd.setPhiVanChuyen(phiVanChuyen);
-        hd.setDiaChiNguoiNhan(normalizeBlank(request.getDiaChiNguoiNhan()));
-        hd.setSoDienThoaiNguoiNhan(normalizeBlank(request.getSdtNguoiNhan()));
+        String tenNguoiNhan = normalizeBlank(request.getTenNguoiNhan());
+        String sdtNguoiNhan = normalizeBlank(request.getSdtNguoiNhan());
+        String diaChiNguoiNhan = normalizeBlank(request.getDiaChiNguoiNhan());
+
+        if (diaChiNguoiNhan == null) {
+            String detail = normalizeBlank(request.getDiaChiChiTiet());
+            String tinh = normalizeBlank(request.getTinh());
+            String thanhPho = normalizeBlank(request.getThanhPho());
+            String phuongXa = normalizeBlank(request.getPhuongXa());
+            List<String> parts = java.util.stream.Stream.of(detail, phuongXa, thanhPho, tinh)
+                    .filter(s -> s != null && !s.trim().isEmpty())
+                    .toList();
+            if (!parts.isEmpty()) {
+                diaChiNguoiNhan = String.join(", ", parts);
+            }
+        }
+
+        if (hd.getKhachHang() != null) {
+            if (tenNguoiNhan == null) tenNguoiNhan = hd.getKhachHang().getTen();
+            if (sdtNguoiNhan == null) sdtNguoiNhan = hd.getKhachHang().getSdt();
+        }
+
+        if (tenNguoiNhan == null) tenNguoiNhan = "Khách vãng lai";
+        if (sdtNguoiNhan == null) sdtNguoiNhan = "Chưa có SĐT";
+        if (diaChiNguoiNhan == null) diaChiNguoiNhan = isShippingOrder(loaiDon) ? "Chưa có địa chỉ" : "Tại cửa hàng";
+
+        hd.setTenNguoiNhan(tenNguoiNhan);
+        hd.setSoDienThoaiNguoiNhan(sdtNguoiNhan);
+        hd.setDiaChiNguoiNhan(diaChiNguoiNhan);
+
         hd.setTongTien(tongTienThucTe); // Lấy giá trị thực tế thay vì request
         hd.setTongTienSauGiam(tongTienCanThu);
         hd.setGhiChu(request.getGhiChu());
@@ -445,7 +473,11 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     }
 
     private void saveDefaultShippingAddressIfNeeded(HoaDon hd, AdminBanHangCheckoutRequest request) {
-        if (!Boolean.TRUE.equals(request.getLuuDiaChiMacDinh()) || hd.getKhachHang() == null) {
+        if (hd.getKhachHang() == null) {
+            return;
+        }
+
+        if (Boolean.FALSE.equals(request.getLuuDiaChiMacDinh())) {
             return;
         }
 
@@ -456,7 +488,18 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         String tenNguoiNhan = normalizeBlank(request.getTenNguoiNhan());
         String sdtNguoiNhan = normalizeBlank(request.getSdtNguoiNhan());
 
-        if (detail == null || tinh == null || thanhPho == null || phuongXa == null || tenNguoiNhan == null || sdtNguoiNhan == null) {
+        if (tenNguoiNhan == null) {
+            tenNguoiNhan = hd.getKhachHang().getTen() != null ? hd.getKhachHang().getTen() : "Khách hàng";
+        }
+        if (sdtNguoiNhan == null) {
+            sdtNguoiNhan = hd.getKhachHang().getSdt() != null ? hd.getKhachHang().getSdt() : "";
+        }
+
+        if (detail == null && request.getDiaChiNguoiNhan() != null) {
+            detail = request.getDiaChiNguoiNhan();
+        }
+
+        if (detail == null && tinh == null && phuongXa == null) {
             return;
         }
 
