@@ -1254,22 +1254,23 @@ const refreshBestVoucher = async (order = selectedOrder.value, autoApply = true)
         if (refreshSerial !== voucherRefreshSerial) return;
         vouchers.value = decorated;
 
-        // Tự động áp dụng phiếu giảm giá ưu đãi nhất khi giá trị đơn hàng thay đổi
+        // Tự động áp dụng phiếu giảm giá ưu đãi nhất khi giỏ hàng thay đổi
         if (autoApply) {
-            let bestId = order.bestVoucherId;
-            if (!bestId && decorated.length) {
-                const validVouchers = decorated.filter(v => !v.disabled);
-                if (validVouchers.length) {
-                    validVouchers.sort((a, b) => (Number(b.soTienGiam || b.phanTramGiamGia || 0) - Number(a.soTienGiam || a.phanTramGiamGia || 0)));
-                    bestId = validVouchers[0].id || validVouchers[0].ma;
-                }
+            const validVouchers = decorated.filter(v => !v.disabled && Number(v.soTienGiam || 0) > 0);
+            let bestVoucher = null;
+            if (validVouchers.length) {
+                validVouchers.sort((a, b) => (Number(b.soTienGiam || 0) - Number(a.soTienGiam || 0)));
+                bestVoucher = validVouchers[0];
             }
 
-            if (bestId) {
-                if (String(order.idPhieuGiamGia) !== String(bestId)) {
+            const bestId = bestVoucher?.id || order.bestVoucherId || null;
+            const currentDiscount = Number(order.tongTienGiam || order.tienGiamGia || 0);
+
+            if (bestVoucher && Number(bestVoucher.soTienGiam || 0) > 0) {
+                if (String(order.idPhieuGiamGia) !== String(bestId) || currentDiscount <= 0 || order.canApplySuggestedVoucher) {
                     await onApplyVoucher(bestId, false, true);
                 }
-            } else if (order.idPhieuGiamGia) {
+            } else if (order.idPhieuGiamGia && currentDiscount <= 0) {
                 await onApplyVoucher(null, false, true);
             }
         }
