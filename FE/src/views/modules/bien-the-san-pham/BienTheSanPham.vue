@@ -606,7 +606,7 @@ const handleToggleVariantStatus = (variant) => {
         show: true,
         title: 'Đổi trạng thái biến thể',
         message: `Bạn có chắc chắn muốn ${nextStatus === 'DANG_HOAT_DONG' ? 'bật' : 'tắt'} trạng thái cho biến thể này không?`,
-        color: 'warning',
+        color: 'primary',
         action: async () => {
             confirmDialog.value.loading = true;
             try {
