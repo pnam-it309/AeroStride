@@ -18,6 +18,7 @@ import com.example.be.utils.CodeUtils;
 import com.example.be.utils.ExcelUtils;
 import com.example.be.utils.SearchUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminKhachHangServiceImpl implements AdminKhachHangService {
