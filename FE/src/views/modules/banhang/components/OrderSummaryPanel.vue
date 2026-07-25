@@ -28,9 +28,11 @@
             <div class="d-flex">
                 <!-- Ticket Left Badge (Orange-red gradient) -->
                 <div class="ticket-left d-flex flex-column align-center justify-center pa-3 text-white text-center font-weight-bold flex-shrink-0"
-                    style="width: 80px; background: linear-gradient(135deg, #FF6B4A, #FA3E19); position: relative;">
+                    style="width: 85px; min-height: 75px; background: linear-gradient(135deg, #FF6B4A, #FA3E19); position: relative;">
                     <span style="font-size: 18px; color: #ffffff !important;">
-                        {{ activeVoucher.loaiPhieu === 'PHAN_TRAM' || activeVoucher.loaiPhieu === 'PERCENT' ? `${activeVoucher.phanTramGiamGia}%` : formatShortAmount(activeVoucher.soTienGiam) }}
+                        {{ (activeVoucher.loaiPhieu === 'PHAN_TRAM' || activeVoucher.loaiPhieu === 'PERCENT' || activeVoucher.loaiPhieu === 1) 
+                            ? `${activeVoucher.phanTramGiamGia || activeVoucher.giamGia}%` 
+                            : formatShortAmount(activeVoucher.soTienGiam || activeVoucher.giamGia || totalDiscountAmount) }}
                     </span>
                     <div class="ticket-dot ticket-dot-top"></div>
                     <div class="ticket-dot ticket-dot-bottom"></div>
@@ -39,13 +41,13 @@
                 <!-- Ticket Right Info -->
                 <div class="ticket-right flex-grow-1 pa-3 d-flex flex-column justify-center text-slate-800" style="position: relative; background-color: #ffffff !important;">
                     <div class="font-weight-bold text-slate-900 text-truncate" style="font-size: 13px;">
-                        [{{ activeVoucher.ma || activeVoucher.maPhieu }}] {{ activeVoucher.tenPhieu || activeVoucher.ten }}
+                        [{{ activeVoucher.ma || activeVoucher.maPhieu || activeVoucher.code || selectedVoucherId }}] {{ activeVoucher.tenPhieu || activeVoucher.ten || 'Phiếu giảm giá' }}
                     </div>
                     <div class="text-slate-500 text-caption mt-1">
-                        Đơn tối thiểu: <span class="font-weight-semibold">{{ formatCurrency(activeVoucher.donHangToiThieu) }}</span>
+                        Đơn tối thiểu: <span class="font-weight-semibold">{{ formatCurrency(activeVoucher.donHangToiThieu || 0) }}</span>
                     </div>
                     <div class="font-weight-bold mt-1" style="font-size: 13px; color: #d32f2f !important;">
-                        - {{ formatCurrency(totalDiscountAmount) }}
+                        - {{ formatCurrency(totalDiscountAmount || activeVoucher.soTienGiam || 0) }}
                     </div>
                 </div>
             </div>
@@ -225,6 +227,7 @@ const props = defineProps({
     isGiaoHang: { type: Boolean, default: false },
     vouchers: { type: Array, default: () => [] },
     selectedVoucherId: { type: String, default: null },
+    appliedVoucher: { type: Object, default: null },
     voucherSuggestionText: { type: String, default: '' },
     voucherSuggestionClass: { type: String, default: '' },
     canApplySuggestedVoucher: { type: Boolean, default: false },
@@ -252,8 +255,40 @@ const emit = defineEmits([
 ]);
 
 const activeVoucher = computed(() => {
-    if (!props.selectedVoucherId || !props.vouchers?.length) return null;
-    return props.vouchers.find(v => String(v.id) === String(props.selectedVoucherId)) || null;
+    if (props.appliedVoucher) return props.appliedVoucher;
+
+    const voucherIdOrCode = props.selectedVoucherId;
+    if (props.vouchers?.length && voucherIdOrCode) {
+        const found = props.vouchers.find(v => 
+            String(v.id) === String(voucherIdOrCode) || 
+            String(v.ma) === String(voucherIdOrCode) || 
+            String(v.maPhieu) === String(voucherIdOrCode)
+        );
+        if (found) return found;
+    }
+
+    let code = voucherIdOrCode || '';
+    if (!code && props.appliedDiscountSummary) {
+        const match = props.appliedDiscountSummary.match(/([A-Z0-9_-]+)/);
+        if (match) code = match[1];
+    }
+    if (!code && props.voucherSuggestionText) {
+        const match = props.voucherSuggestionText.match(/(?:mã|mã:)\s*([A-Z0-9_-]+)/i);
+        if (match) code = match[1];
+    }
+
+    if (code || props.totalDiscountAmount > 0) {
+        return {
+            id: code || 'VOUCHER',
+            ma: code || 'PGG',
+            ten: 'Phiếu giảm giá ưu đãi',
+            soTienGiam: props.totalDiscountAmount,
+            donHangToiThieu: 0,
+            loaiPhieu: 'SO_TIEN'
+        };
+    }
+
+    return null;
 });
 
 const parsedBetterVoucher = computed(() => {

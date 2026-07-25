@@ -1886,6 +1886,7 @@ const formatDateTime = (dateStr) => {
                     <!-- Pricing/Voucher Details (Moved from left column) -->
                     <OrderSummaryPanel v-model:isGiaoHang="isGiaoHang" :vouchers="vouchers" class="flex-shrink-0"
                         :selected-voucher-id="selectedOrder?.idPhieuGiamGia"
+                        :applied-voucher="selectedOrder?.phieuGiamGia"
                         :voucher-suggestion-text="voucherSuggestionText"
                         :voucher-suggestion-class="voucherSuggestionClass"
                         :can-apply-suggested-voucher="canApplySuggestedVoucher"
