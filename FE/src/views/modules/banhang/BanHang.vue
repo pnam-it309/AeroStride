@@ -1627,7 +1627,8 @@ const startVnPayFlow = async () => {
 
     } catch (error) {
         console.error('VNPay flow error:', error);
-        addNotification({ title: 'Lỗi VNPay', subtitle: getErrorMessage(error, 'Không thể khởi tạo giao dịch VNPay'), color: 'error' });
+        const errorMsg = getErrorMessage(error, 'Không thể khởi tạo giao dịch VNPay');
+        addNotification({ title: 'Lỗi khởi tạo VNPay', subtitle: errorMsg, color: 'error', timeout: 8000 });
     } finally {
         confirmDialog.value.loading = false;
     }

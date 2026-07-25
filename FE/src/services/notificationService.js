@@ -1,4 +1,4 @@
-﻿import { ref } from 'vue';
+import { ref } from 'vue';
 import { useToastStore } from '@/stores/toastStore';
 
 const notifications = ref([]);
@@ -20,13 +20,14 @@ export const useNotifications = () => {
 
     // Use the passed color or default to primary
     let displayColor = notif.color || 'primary';
+    const defaultTimeout = displayColor === 'error' ? 6000 : (displayColor === 'warning' ? 4000 : 2500);
 
-    // Show toast (snackbar) with 5s timeout
+    // Show toast (snackbar) with default timeout
     toast.showToast(
       notif.subtitle || notif.title || 'Thông báo mới',
       displayColor,
       notif.icon || (displayColor === 'error' ? 'mdi-alert-circle' : (displayColor === 'warning' ? 'mdi-alert' : 'mdi-check-circle')),
-      notif.timeout || 2000
+      notif.timeout || defaultTimeout
     );
   };
 
