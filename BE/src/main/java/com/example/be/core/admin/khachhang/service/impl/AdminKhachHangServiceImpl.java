@@ -74,8 +74,20 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
                 throw new DuplicateResourceException(MessageConstants.KHACH_HANG_MA_EXISTS);
             }
         }
-        if (adminKhachHangRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException(MessageConstants.KHACH_HANG_EMAIL_EXISTS);
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+            if (adminKhachHangRepository.existsByEmail(request.getEmail().trim())) {
+                throw new DuplicateResourceException(MessageConstants.KHACH_HANG_EMAIL_EXISTS);
+            }
+        } else {
+            String phoneClean = request.getSdt() != null ? request.getSdt().replaceAll("\\D", "") : "";
+            if (phoneClean.isEmpty()) {
+                phoneClean = java.util.UUID.randomUUID().toString().substring(0, 8);
+            }
+            request.setEmail("khach_" + phoneClean + "@aerostride.vn");
+        }
+
+        if (request.getGioiTinh() == null) {
+            request.setGioiTinh(true);
         }
 
         KhachHang kh = toEntity(request);
@@ -108,9 +120,15 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
             adminKhachHangRepository.save(kh);
         }
 
-        emailService.guiEmailTaiKhoanKhachHang(
-                request.getEmail(), request.getTen(), tenTaiKhoan, matKhauTam
-        );
+        if (request.getEmail() != null && request.getEmail().contains("@") && !request.getEmail().endsWith("@aerostride.vn")) {
+            try {
+                emailService.guiEmailTaiKhoanKhachHang(
+                        request.getEmail(), request.getTen(), tenTaiKhoan, matKhauTam
+                );
+            } catch (Exception e) {
+                log.warn("Không thể gửi email cho khách hàng: {}", e.getMessage());
+            }
+        }
 
         return this.detail(kh.getId());
     }

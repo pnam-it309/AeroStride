@@ -133,12 +133,15 @@ export function useCustomerSelect(selectedOrder, updateOrderInList, refreshBestV
             return existed.id;
         }
 
+        const phoneClean = String(sdt || '').replace(/\D/g, '');
+        const fallbackEmail = `khach_${phoneClean || Date.now()}@aerostride.vn`;
+
         const newCustomerPayload = {
-            ten,
-            sdt,
-            email,
-            gioiTinh: gt,
-            ngaySinh: ns
+            ten: String(ten || '').trim(),
+            sdt: String(sdt || '').trim(),
+            email: (email && String(email).trim()) ? String(email).trim() : fallbackEmail,
+            gioiTinh: gt ?? true,
+            ngaySinh: ns || null
         };
 
         const created = await dichVuKhachHang.taoKhachHang(newCustomerPayload);

@@ -17,13 +17,11 @@ public class AdminKhachHangRequest extends PageRequest {
     @NotBlank(message = "Tên khách hàng không được để trống")
     private String ten;
 
-    @NotBlank(message = "Email không được để trống")
     private String email;
 
     private String tenTaiKhoan;
     private String matKhau;
 
-    @NotNull(message = "Giới tính không được để trống")
     private Boolean gioiTinh;
 
     @NotBlank(message = "Số điện thoại không được để trống")

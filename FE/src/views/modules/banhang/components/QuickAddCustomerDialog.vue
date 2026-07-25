@@ -102,11 +102,14 @@ const submitQuickAdd = async () => {
             return;
         }
 
+        const phoneClean = String(phone || '').replace(/\D/g, '');
+        const fallbackEmail = `khach_${phoneClean || Date.now()}@aerostride.vn`;
+
         const newCustomerPayload = {
-            ten: name,
-            sdt: phone,
-            email: email,
-            gioiTinh: form.value.gioiTinh,
+            ten: String(name || '').trim(),
+            sdt: String(phone || '').trim(),
+            email: (email && String(email).trim()) ? String(email).trim() : fallbackEmail,
+            gioiTinh: form.value.gioiTinh ?? true,
             tenTaiKhoan: '',
             matKhau: '',
             trangThai: 'DANG_HOAT_DONG',
