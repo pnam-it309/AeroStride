@@ -973,6 +973,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .tenKhachHang(hd.getKhachHang() != null ? hd.getKhachHang().getTen() : "Khách lẻ")
                 .sdtKhachHang(hd.getKhachHang() != null ? hd.getKhachHang().getSdt() : "")
                 .idPhieuGiamGia(hd.getPhieuGiamGia() != null ? hd.getPhieuGiamGia().getId() : null)
+                .phieuGiamGia(hd.getPhieuGiamGia())
                 .loaiDon(hd.getLoaiDon())
                 .tongTienHang(tongTienHang)
                 .tienGiamGiaSanPham(tienGiamGiaSanPham)
