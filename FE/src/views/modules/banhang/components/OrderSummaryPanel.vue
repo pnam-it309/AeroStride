@@ -41,7 +41,7 @@
                 <!-- Ticket Right Info -->
                 <div class="ticket-right flex-grow-1 pa-3 d-flex flex-column justify-center text-slate-800" style="position: relative; background-color: #ffffff !important;">
                     <div class="font-weight-bold text-slate-900 text-truncate" style="font-size: 13px;">
-                        [{{ activeVoucher.ma || activeVoucher.maPhieu || activeVoucher.code || selectedVoucherId }}] {{ activeVoucher.tenPhieu || activeVoucher.ten || 'Phiếu giảm giá' }}
+                        {{ formattedVoucherTitle }}
                     </div>
                     <div class="text-slate-500 text-caption mt-1">
                         Đơn tối thiểu: <span class="font-weight-semibold">{{ formatCurrency(activeVoucher.donHangToiThieu || 0) }}</span>
@@ -254,6 +254,8 @@ const emit = defineEmits([
     'update:shippingFee'
 ]);
 
+const isUuidString = (str) => typeof str === 'string' && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str);
+
 const activeVoucher = computed(() => {
     if (props.appliedVoucher) return props.appliedVoucher;
 
@@ -267,20 +269,20 @@ const activeVoucher = computed(() => {
         if (found) return found;
     }
 
-    let code = voucherIdOrCode || '';
-    if (!code && props.appliedDiscountSummary) {
-        const match = props.appliedDiscountSummary.match(/([A-Z0-9_-]+)/);
-        if (match) code = match[1];
-    }
+    let code = voucherIdOrCode && !isUuidString(voucherIdOrCode) ? voucherIdOrCode : '';
     if (!code && props.voucherSuggestionText) {
-        const match = props.voucherSuggestionText.match(/(?:mã|mã:)\s*([A-Z0-9_-]+)/i);
-        if (match) code = match[1];
+        const match = props.voucherSuggestionText.match(/(?:mã|mã:|\s)([A-Z0-9]{4,20})(?:\s|\(|$)/i);
+        if (match && !isUuidString(match[1])) code = match[1];
+    }
+    if (!code && props.appliedDiscountSummary) {
+        const match = props.appliedDiscountSummary.match(/([A-Z0-9]{4,20})/);
+        if (match && !isUuidString(match[1])) code = match[1];
     }
 
     if (code || props.totalDiscountAmount > 0) {
         return {
-            id: code || 'VOUCHER',
-            ma: code || 'PGG',
+            id: voucherIdOrCode || code || 'VOUCHER',
+            ma: code || '',
             ten: 'Phiếu giảm giá ưu đãi',
             soTienGiam: props.totalDiscountAmount,
             donHangToiThieu: 0,
@@ -289,6 +291,28 @@ const activeVoucher = computed(() => {
     }
 
     return null;
+});
+
+const formattedVoucherTitle = computed(() => {
+    if (!activeVoucher.value) return '';
+
+    const v = activeVoucher.value;
+    let code = v.ma || v.maPhieu || v.code || '';
+    if (isUuidString(code)) {
+        code = '';
+    }
+
+    if (!code && props.voucherSuggestionText) {
+        const match = props.voucherSuggestionText.match(/(?:mã|mã:|\s)([A-Z0-9]{4,20})(?:\s|\(|$)/i);
+        if (match && !isUuidString(match[1])) code = match[1];
+    }
+
+    const name = v.tenPhieu || v.ten || 'Phiếu giảm giá';
+
+    if (code) {
+        return `[${code}] ${name}`;
+    }
+    return name;
 });
 
 const parsedBetterVoucher = computed(() => {
