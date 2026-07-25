@@ -464,25 +464,25 @@ onMounted(async () => {
                                         ]"></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="4">
-                                    <v-select v-model="shippingInfo.tinhThanh" :items="provinces" item-title="name" item-value="code" label="Tỉnh/Thành phố"
+                                    <v-autocomplete v-model="shippingInfo.tinhThanh" :items="provinces" item-title="name" item-value="code" label="Tỉnh/Thành phố"
                                         variant="outlined" hide-details="auto"
                                         prepend-inner-icon="mdi-map-marker-outline"
                                         :loading="loadingLocations.provinces"
-                                        :rules="[(v) => !!v || 'Vui lòng chọn Tỉnh/Thành']"></v-select>
+                                        :rules="[(v) => !!v || 'Vui lòng chọn Tỉnh/Thành']"></v-autocomplete>
                                 </v-col>
                                 <v-col cols="12" sm="4">
-                                    <v-select v-model="shippingInfo.quanHuyen" :items="districts" item-title="name" item-value="code" label="Quận/Huyện"
+                                    <v-autocomplete v-model="shippingInfo.quanHuyen" :items="districts" item-title="name" item-value="code" label="Quận/Huyện"
                                         variant="outlined" hide-details="auto"
                                         :disabled="!shippingInfo.tinhThanh"
                                         :loading="loadingLocations.districts"
-                                        :rules="[(v) => !!v || 'Vui lòng chọn Quận/Huyện']"></v-select>
+                                        :rules="[(v) => !!v || 'Vui lòng chọn Quận/Huyện']"></v-autocomplete>
                                 </v-col>
                                 <v-col cols="12" sm="4">
-                                    <v-select v-model="shippingInfo.phuongXa" :items="wards" item-title="name" item-value="code" label="Phường/Xã"
+                                    <v-autocomplete v-model="shippingInfo.phuongXa" :items="wards" item-title="name" item-value="code" label="Phường/Xã"
                                         variant="outlined" hide-details="auto"
                                         :disabled="!shippingInfo.quanHuyen"
                                         :loading="loadingLocations.wards"
-                                        :rules="[(v) => !!v || 'Vui lòng chọn Phường/Xã']"></v-select>
+                                        :rules="[(v) => !!v || 'Vui lòng chọn Phường/Xã']"></v-autocomplete>
                                 </v-col>
                                 <v-col cols="12">
                                     <v-text-field v-model="shippingInfo.diaChi" label="Địa chỉ chi tiết (số nhà, tên đường)"

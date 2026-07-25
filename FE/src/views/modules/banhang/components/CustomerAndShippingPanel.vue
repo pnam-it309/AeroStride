@@ -100,15 +100,15 @@
                         class="dim-input-field w-100" @input="emitShippingChange" />
 
                     <div class="d-flex ga-3">
-                        <v-select v-model="recipientProvince" :items="provincesShip" item-title="name"
+                        <v-autocomplete v-model="recipientProvince" :items="provincesShip" item-title="name"
                             item-value="code" placeholder="Tỉnh/Thành phố" density="compact"
                             variant="outlined" hide-details class="dim-select-field flex-grow-1"
                             style="width: 33.33%;" @update:modelValue="onProvinceChange" />
-                        <v-select v-model="recipientDistrict" :items="districtsShip" item-title="name"
+                        <v-autocomplete v-model="recipientDistrict" :items="districtsShip" item-title="name"
                             item-value="code" placeholder="Quận/Huyện" density="compact" variant="outlined"
                             hide-details :disabled="!recipientProvince" class="dim-select-field flex-grow-1"
                             style="width: 33.33%;" @update:modelValue="onDistrictChange" />
-                        <v-select v-model="recipientWard" :items="wardsShip" item-title="name"
+                        <v-autocomplete v-model="recipientWard" :items="wardsShip" item-title="name"
                             item-value="code" placeholder="Phường/Xã" density="compact" variant="outlined"
                             hide-details :disabled="!recipientDistrict" class="dim-select-field flex-grow-1"
                             style="width: 33.33%;" @update:modelValue="emitShippingChange" />
