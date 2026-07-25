@@ -44,10 +44,34 @@ public interface AdminHoaDonMapper {
 
     @Named("getThumbnail")
     default String getThumbnail(ChiTietSanPham ctsp) {
-        if (ctsp == null || ctsp.getAnhChiTietSanPhams() == null || ctsp.getAnhChiTietSanPhams().isEmpty()) {
+        if (ctsp == null) {
             return null;
         }
-        return ctsp.getAnhChiTietSanPhams().iterator().next().getDuongDanAnh();
+        if (ctsp.getAnhChiTietSanPhams() != null && !ctsp.getAnhChiTietSanPhams().isEmpty()) {
+            for (AnhChiTietSanPham img : ctsp.getAnhChiTietSanPhams()) {
+                if (Boolean.TRUE.equals(img.getHinhAnhDaiDien()) && !Boolean.TRUE.equals(img.getXoaMem()) && img.getDuongDanAnh() != null && !img.getDuongDanAnh().trim().isEmpty()) {
+                    return img.getDuongDanAnh();
+                }
+            }
+            for (AnhChiTietSanPham img : ctsp.getAnhChiTietSanPhams()) {
+                if (!Boolean.TRUE.equals(img.getXoaMem()) && img.getDuongDanAnh() != null && !img.getDuongDanAnh().trim().isEmpty()) {
+                    return img.getDuongDanAnh();
+                }
+            }
+        }
+        if (ctsp.getSanPham() != null && ctsp.getSanPham().getAnhSanPhams() != null && !ctsp.getSanPham().getAnhSanPhams().isEmpty()) {
+            for (AnhSanPham img : ctsp.getSanPham().getAnhSanPhams()) {
+                if (Boolean.TRUE.equals(img.getHinhAnhDaiDien()) && !Boolean.TRUE.equals(img.getXoaMem()) && img.getDuongDanAnh() != null && !img.getDuongDanAnh().trim().isEmpty()) {
+                    return img.getDuongDanAnh();
+                }
+            }
+            for (AnhSanPham img : ctsp.getSanPham().getAnhSanPhams()) {
+                if (!Boolean.TRUE.equals(img.getXoaMem()) && img.getDuongDanAnh() != null && !img.getDuongDanAnh().trim().isEmpty()) {
+                    return img.getDuongDanAnh();
+                }
+            }
+        }
+        return ctsp.getSanPham() != null ? ctsp.getSanPham().getHinhAnh() : null;
     }
 
     @Named("mapTrangThai")

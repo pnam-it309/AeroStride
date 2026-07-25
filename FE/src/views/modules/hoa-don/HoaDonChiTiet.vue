@@ -12,6 +12,7 @@ import {
     PlusIcon, LayoutListIcon, LayoutGridIcon
 } from "vue-tabler-icons";
 import { AdminConfirm, AdminBreadcrumbs, AdminTable, AdminPagination, AdminFilter } from "@/components/common";
+import SafeProductImage from '../san-pham/components/SafeProductImage.vue';
 import { getOrderStatusMeta, getOrderStatusOrdinal } from "@/utils/orderStatus";
 import { ORDER_STATUS_ORDINALS } from "@/constants/hoaDonConstants";
 
@@ -1291,10 +1292,8 @@ onMounted(() => {
                 <template #row="{ item }">
                     <tr class="hover-row" :class="{ 'price-changed-cell': isPriceChanged(item) }">
                         <td class="py-4">
-                            <v-avatar size="80" class="rounded-lg border bg-slate-50 elevation-1">
-                                <v-img :src="item.hinhAnh ||
-                                    'https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg'
-                                    " cover></v-img>
+                            <v-avatar size="80" class="rounded-lg border bg-slate-50 elevation-1 overflow-hidden">
+                                <SafeProductImage :src="item.hinhAnh" alt="product-image" fit="cover" />
                             </v-avatar>
                         </td>
                         <td class="py-4">
