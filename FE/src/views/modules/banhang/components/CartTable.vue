@@ -77,10 +77,17 @@ const handleDirectInput = (item, event) => {
                                         item.phanTramGiam }}%</span>
                                 </div>
                             </v-avatar>
-                            <span class="text-slate-700 text-body-2 font-weight-medium"
-                                style="font-size: 13px !important; line-height: 1.3;">
-                                {{ item.tenSanPham }}
-                            </span>
+                            <div class="d-flex flex-column">
+                                <span class="text-slate-700 text-body-2 font-weight-medium"
+                                    style="font-size: 13px !important; line-height: 1.3;">
+                                    {{ item.tenSanPham }}
+                                </span>
+                                <div v-if="item.giaCu && Number(item.giaCu) !== Number(item.donGia)"
+                                    class="price-change-notice-badge mt-1 px-2 py-0.5 rounded border font-weight-medium"
+                                    style="background-color: #fef2f2; border-color: #fca5a5; color: #dc2626; font-size: 11px; display: inline-block; max-width: max-content;">
+                                    Giá đổi từ {{ formatCurrency(item.giaCu) }} thành {{ formatCurrency(item.donGia) }}
+                                </div>
+                            </div>
                         </div>
                     </td>
                     <td class="text-left text-slate-600" style="font-size: 13px; white-space: nowrap !important;">

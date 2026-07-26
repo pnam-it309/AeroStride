@@ -168,28 +168,59 @@ watch(selectedColor, () => {
     selectedSize.value = null; // Reset size when color changes
 });
 
+const placeholderAngles = ['Ảnh chính', 'Mặt bên', 'Đế giày', 'Góc sau'];
+
 const allImages = computed(() => {
     const images = [];
 
     // Thêm ảnh đại diện của sản phẩm
     if (product.value?.hinhAnh) {
-        images.push({ duongDanAnh: product.value.hinhAnh });
+        images.push({ duongDanAnh: product.value.hinhAnh, label: 'Ảnh chính' });
     }
 
     // Thêm ảnh của các biến thể
     if (product.value?.variants) {
         product.value.variants.forEach((v) => {
-            if (v.images) {
+            if (v.images && v.images.length > 0) {
                 v.images.forEach((img) => {
-                    if (!images.find((i) => i.duongDanAnh === img.duongDanAnh)) {
-                        images.push({ duongDanAnh: img.duongDanAnh });
+                    const url = img.duongDanAnh || img.hinhAnh || img.url;
+                    if (url && !images.find((i) => i.duongDanAnh === url)) {
+                        images.push({ duongDanAnh: url, label: v.tenMauSac ? `Màu ${v.tenMauSac}` : 'Ảnh biến thể' });
                     }
                 });
+            }
+            if (v.hinhAnh) {
+                const url = v.hinhAnh;
+                if (url && !images.find((i) => i.duongDanAnh === url)) {
+                    images.push({ duongDanAnh: url, label: v.tenMauSac ? `Màu ${v.tenMauSac}` : 'Ảnh biến thể' });
+                }
             }
         });
     }
     return images;
 });
+
+const colorVariantPreviews = computed(() => {
+    if (!product.value?.variants) return [];
+    const map = new Map();
+    product.value.variants.forEach(v => {
+        if (v.tenMauSac && !map.has(v.tenMauSac)) {
+            const img = v.hinhAnh || (v.images && v.images.length > 0 ? (v.images[0].duongDanAnh || v.images[0].hinhAnh) : null);
+            map.set(v.tenMauSac, { color: v.tenMauSac, img });
+        }
+    });
+    return Array.from(map.values());
+});
+
+const onSelectColorPreview = (cv) => {
+    selectedColor.value = cv.color;
+    if (cv.img) {
+        const idx = allImages.value.findIndex(img => img.duongDanAnh === cv.img);
+        if (idx !== -1) {
+            activeSlide.value = idx;
+        }
+    }
+};
 
 watch(allImages, (newImages) => {
     if (newImages && newImages.length > 0) {
@@ -362,39 +393,90 @@ const toggleFavorite = () => {
             <v-row>
                 <!-- Left: Image Gallery -->
                 <v-col cols="12" md="6" lg="5" class="image-gallery">
-                    <div v-if="allImages.length > 0">
-                        <!-- Main Auto Slider -->
-                        <div class="rounded-lg bg-grey-lighten-4 mb-4"
-                            style="aspect-ratio: 1; max-height: 600px; overflow: hidden;">
-                            <v-carousel v-model="activeSlide" cycle interval="3000" hide-delimiters show-arrows="hover"
-                                height="100%">
-                                <v-carousel-item v-for="(img, i) in allImages" :key="i" :src="img.duongDanAnh"
-                                    cover></v-carousel-item>
-                            </v-carousel>
+                    <div class="product-gallery-wrapper">
+                        <!-- Main Image Box -->
+                        <div class="rounded-xl bg-grey-lighten-4 mb-4 elevation-1 position-relative overflow-hidden"
+                            style="aspect-ratio: 1; max-height: 480px; border: 1px solid #e2e8f0;">
+                            <template v-if="allImages.length > 0">
+                                <v-carousel v-model="activeSlide" cycle interval="4000" hide-delimiters show-arrows="hover" height="100%">
+                                    <v-carousel-item v-for="(img, i) in allImages" :key="i" :src="img.duongDanAnh" cover>
+                                        <template #placeholder>
+                                            <div class="d-flex align-center justify-center fill-height bg-grey-lighten-4">
+                                                <v-progress-circular indeterminate color="#1e257c"></v-progress-circular>
+                                            </div>
+                                        </template>
+                                    </v-carousel-item>
+                                </v-carousel>
+                            </template>
+
+                            <template v-else>
+                                <div class="d-flex flex-column align-center justify-center fill-height text-center pa-6">
+                                    <div class="mb-3 pa-4 rounded-circle" style="background: #f0f4ff;">
+                                        <v-icon size="48" style="color: #1e257c;">mdi-shoe-sneaker</v-icon>
+                                    </div>
+                                    <h4 class="text-subtitle-1 font-weight-bold mb-1" style="color: #1e257c;">{{ product.tenSanPham }}</h4>
+                                    <p class="text-caption text-grey">Chưa có hình ảnh trực quan</p>
+                                </div>
+                            </template>
                         </div>
 
-                        <!-- Thumbnail Strip -->
-                        <v-row class="g-2">
-                            <v-col v-for="(img, i) in allImages" :key="'img-' + i" cols="3" sm="2" class="mb-2">
-                                <v-card class="rounded-lg bg-grey-lighten-4 overflow-hidden"
-                                    :elevation="activeSlide === i ? 4 : 0"
-                                    :style="activeSlide === i ? 'border: 2px solid #e53935;' : 'border: 1px solid #eee; cursor: pointer;'"
-                                    @click="activeSlide = i">
-                                    <v-img :src="img.duongDanAnh" cover class="aspect-square"></v-img>
-                                </v-card>
-                            </v-col>
-                            <v-col v-for="i in Math.max(0, 4 - allImages.length)" :key="'empty-' + i" cols="3" sm="2"
-                                class="mb-2">
-                                <v-card
-                                    class="rounded-lg bg-grey-lighten-4 overflow-hidden d-flex align-center justify-center aspect-square"
-                                    style="border: 1px dashed #ccc; opacity: 0.6">
-                                    <v-icon color="grey-lighten-1" size="24">mdi-image-outline</v-icon>
-                                </v-card>
-                            </v-col>
-                        </v-row>
-                    </div>
-                    <div v-else class="image-placeholder-large">
-                        <v-icon size="64" color="grey-lighten-2">mdi-image-outline</v-icon>
+                        <!-- Multi-Slot Thumbnail Strip -->
+                        <div class="thumbnail-strip-section mb-4">
+                            <div class="d-flex align-center justify-space-between mb-2">
+                                <span class="text-caption font-weight-bold" style="color: #1e257c;">
+                                    <v-icon size="14" class="mr-1" style="color: #1e257c;">mdi-view-grid-outline</v-icon>
+                                    Bộ sưu tập hình ảnh ({{ allImages.length }} hình ảnh)
+                                </span>
+                            </div>
+
+                            <v-row class="g-2">
+                                <template v-if="allImages.length > 0">
+                                    <v-col v-for="(img, i) in allImages" :key="'img-' + i" cols="3" sm="2" class="mb-2">
+                                        <v-card class="rounded-lg overflow-hidden"
+                                            :elevation="activeSlide === i ? 4 : 0"
+                                            :style="activeSlide === i ? 'border: 2px solid #1e257c; box-shadow: 0 4px 10px rgba(30, 37, 124, 0.25);' : 'border: 1px solid #e2e8f0; cursor: pointer;'"
+                                            @click="activeSlide = i">
+                                            <v-img :src="img.duongDanAnh" cover class="aspect-square">
+                                                <template #placeholder>
+                                                    <div class="d-flex align-center justify-center fill-height bg-grey-lighten-4">
+                                                        <v-icon size="18" color="grey">mdi-image-outline</v-icon>
+                                                    </div>
+                                                </template>
+                                            </v-img>
+                                        </v-card>
+                                    </v-col>
+                                </template>
+
+                                <template v-if="allImages.length < 4">
+                                    <v-col v-for="(angleLabel, idx) in placeholderAngles.slice(allImages.length)" :key="'angle-' + idx" cols="3" sm="2" class="mb-2">
+                                        <v-card class="rounded-lg bg-grey-lighten-5 overflow-hidden d-flex flex-column align-center justify-center aspect-square text-center pa-1"
+                                            style="border: 1px dashed #cbd5e1; opacity: 0.85;">
+                                            <v-icon color="#1e257c" size="20" class="mb-1">mdi-camera-outline</v-icon>
+                                            <span style="font-size: 0.65rem; color: #64748b; font-weight: 600; line-height: 1;">{{ angleLabel }}</span>
+                                        </v-card>
+                                    </v-col>
+                                </template>
+                            </v-row>
+                        </div>
+
+                        <!-- Color Variant Previews -->
+                        <div v-if="colorVariantPreviews.length > 0" class="mt-2 pt-3" style="border-top: 1px solid #e2e8f0;">
+                            <span class="text-caption font-weight-bold d-block mb-2" style="color: #1e257c;">
+                                <v-icon size="14" class="mr-1" style="color: #1e257c;">mdi-palette-outline</v-icon>
+                                Xem ảnh theo màu sắc
+                            </span>
+                            <div class="d-flex flex-wrap ga-2">
+                                <v-chip v-for="cv in colorVariantPreviews" :key="cv.color"
+                                    size="small" variant="tonal" class="font-weight-medium px-3 py-1 cursor-pointer"
+                                    :style="selectedColor === cv.color ? 'background: #1e257c !important; color: white !important;' : 'background: #f0f4ff; color: #1e257c;'"
+                                    @click="onSelectColorPreview(cv)">
+                                    <v-avatar v-if="cv.img" start size="18" class="mr-1">
+                                        <v-img :src="cv.img" cover></v-img>
+                                    </v-avatar>
+                                    {{ cv.color }}
+                                </v-chip>
+                            </div>
+                        </div>
                     </div>
                 </v-col>
 

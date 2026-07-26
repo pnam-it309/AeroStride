@@ -34,8 +34,12 @@ public interface AdminBanHangChiTietSanPhamRepository extends ChiTietSanPhamRepo
 
     @Query("""
         SELECT ct FROM ChiTietSanPham ct
-        WHERE LOWER(ct.sanPham.ten) LIKE LOWER(CONCAT('%', :keyword, '%'))
-           OR LOWER(ct.maChiTietSanPham) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        WHERE (ct.xoaMem IS NULL OR ct.xoaMem = false)
+        AND (ct.trangThai IS NULL OR ct.trangThai = com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG)
+        AND (ct.sanPham.xoaMem IS NULL OR ct.sanPham.xoaMem = false)
+        AND (ct.sanPham.trangThai IS NULL OR ct.sanPham.trangThai = com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG)
+        AND (LOWER(ct.sanPham.ten) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           OR LOWER(ct.maChiTietSanPham) LIKE LOWER(CONCAT('%', :keyword, '%')))
         """)
     List<ChiTietSanPham> searchByKeyword(@Param("keyword") String keyword);
 
@@ -48,6 +52,9 @@ public interface AdminBanHangChiTietSanPhamRepository extends ChiTietSanPhamRepo
         LEFT JOIN FETCH ct.mauSac
         LEFT JOIN FETCH ct.kichThuoc
         WHERE (ct.xoaMem IS NULL OR ct.xoaMem = false)
+        AND (ct.trangThai IS NULL OR ct.trangThai = com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG)
+        AND (sp.xoaMem IS NULL OR sp.xoaMem = false)
+        AND (sp.trangThai IS NULL OR sp.trangThai = com.example.be.infrastructure.constants.TrangThai.DANG_HOAT_DONG)
         AND (:thuongHieu IS NULL OR sp.thuongHieu.ten = :thuongHieu)
         AND (:chatLieu IS NULL OR sp.chatLieu.ten = :chatLieu)
         AND (:xuatXu IS NULL OR sp.xuatXu.ten = :xuatXu)

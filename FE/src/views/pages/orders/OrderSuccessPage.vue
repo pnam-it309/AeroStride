@@ -41,7 +41,11 @@ onMounted(async () => {
                 console.warn('VNPay verification warning:', err);
             }
         }
-        order.value = await dichVuDatHang.layChiTietDonHang(route.params.id);
+        if (route.query && route.query.code && route.query.phone) {
+            order.value = await dichVuDatHang.traCuuDonHang(route.query.code, route.query.phone);
+        } else {
+            order.value = await dichVuDatHang.layChiTietDonHang(route.params.id);
+        }
     } catch (error) {
         console.error('Error fetching order:', error);
     } finally {

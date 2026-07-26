@@ -55,13 +55,38 @@ const closeVnPayDialog = () => {
     vnpayDialog.value.show = false;
 };
 
+const handlePayLater = () => {
+    const orderId = vnpayDialog.value.orderId;
+    const orderCode = vnpayDialog.value.orderCode;
+    const phone = vnpayDialog.value.phone || shippingInfo.value.soDienThoai;
+    closeVnPayDialog();
+    if (orderId) {
+        cartStore.clearCart();
+        const query = {};
+        if (orderCode) query.code = orderCode;
+        if (phone) query.phone = phone;
+        router.push({ path: `/my-orders/${orderId}`, query });
+    }
+};
+
 const checkOnlineOrderStatus = async (orderId) => {
     try {
-        const order = await dichVuDatHang.layChiTietDonHang(orderId);
+        const orderCode = vnpayDialog.value.orderCode;
+        const phone = vnpayDialog.value.phone || shippingInfo.value.soDienThoai;
+        let order = null;
+        if (orderCode && phone) {
+            order = await dichVuDatHang.traCuuDonHang(orderCode, phone);
+        } else {
+            order = await dichVuDatHang.layChiTietDonHang(orderId);
+        }
+
         if (order && (order.trangThai === 'XAC_NHAN' || order.trangThaiDisplay === 'Đã xác nhận')) {
             closeVnPayDialog();
             cartStore.clearCart();
-            router.push(`${PATH.ORDER_SUCCESS}/${orderId}`);
+            const query = {};
+            if (orderCode) query.code = orderCode;
+            if (phone) query.phone = phone;
+            router.push({ path: `${PATH.ORDER_SUCCESS}/${orderId}`, query });
         }
     } catch (e) {
         console.error('Poll order status error:', e);
@@ -123,6 +148,8 @@ const formatPrice = (price) => {
 const FREE_SHIP_THRESHOLD = ref(500000);
 const baseShippingFee = ref(30000);
 const calculatedShippingFee = ref(30000);
+const ghnShippingFee = ref(null);
+const shippingFeeLoading = ref(false);
 
 const fetchShippingConfig = async () => {
     try {
@@ -137,34 +164,66 @@ const fetchShippingConfig = async () => {
     }
 };
 
-const calculateDistanceFee = async () => {
-    // Mock distance based on province selection since no map API is used
-    let distance = 5; // Default < 5km (Nội thành Hà Nội)
-    if (shippingInfo.value.tinhThanh) {
-        const p = provinces.value.find(x => x.code === shippingInfo.value.tinhThanh);
-        if (p && !p.name.includes('Hà Nội')) {
-            distance = 25; // Mock Ngoại tỉnh
-        }
+const calculateGhnShippingFee = async () => {
+    if (!shippingInfo.value.quanHuyen || !shippingInfo.value.phuongXa) {
+        ghnShippingFee.value = null;
+        return;
     }
+
+    const selectedDistrict = districts.value.find(d => String(d.code) === String(shippingInfo.value.quanHuyen));
+    const selectedWard = wards.value.find(w => String(w.code) === String(shippingInfo.value.phuongXa));
+
+    if (selectedDistrict?.source === 'OPEN_API' || selectedWard?.source === 'OPEN_API') {
+        ghnShippingFee.value = baseShippingFee.value || 30000;
+        return;
+    }
+
+    shippingFeeLoading.value = true;
+    const totalItems = cartStore.cartItems.reduce((acc, item) => acc + (item.soLuong || 1), 0);
+    const weight = Math.max(200, 200 * totalItems);
+
     try {
-        const response = await apiService.get('/config/shipping/calculate', { params: { distance } });
-        if (response.data?.success) {
-            calculatedShippingFee.value = response.data.data.fee;
+        const res = await apiService.get('/admin/ghn/fee', {
+            params: {
+                toDistrictId: shippingInfo.value.quanHuyen,
+                toWardCode: shippingInfo.value.phuongXa,
+                weight
+            }
+        });
+        const total = Number(res?.data?.data?.total || res?.data?.total || res?.data?.data || 0);
+        if (total > 0) {
+            ghnShippingFee.value = total;
+            calculatedShippingFee.value = total;
+        } else {
+            ghnShippingFee.value = baseShippingFee.value || 30000;
         }
     } catch (e) {
-        console.error('Lỗi khi tính phí vận chuyển theo khoảng cách', e);
+        console.error('Lỗi khi tính phí vận chuyển GHN:', e);
+        ghnShippingFee.value = baseShippingFee.value || 30000;
+    } finally {
+        shippingFeeLoading.value = false;
     }
 };
 
-watch(() => shippingInfo.value.tinhThanh, () => {
-    calculateDistanceFee();
-});
+watch(
+    [() => shippingInfo.value.quanHuyen, () => shippingInfo.value.phuongXa],
+    async ([district, ward]) => {
+        if (district && ward) {
+            await calculateGhnShippingFee();
+        } else {
+            ghnShippingFee.value = null;
+        }
+    }
+);
 
 const shippingFee = computed(() => {
     if (!shippingInfo.value.tinhThanh || !shippingInfo.value.quanHuyen || !shippingInfo.value.phuongXa) {
         return null;
     }
-    return cartStore.cartTotal >= FREE_SHIP_THRESHOLD.value ? 0 : calculatedShippingFee.value;
+    if (cartStore.cartTotal >= FREE_SHIP_THRESHOLD.value) {
+        return 0;
+    }
+    return ghnShippingFee.value !== null ? ghnShippingFee.value : calculatedShippingFee.value;
 });
 
 
@@ -295,8 +354,29 @@ const selectVoucher = (voucher) => {
     showVoucherDialog.value = false;
 };
 
-const removeVoucher = () => {
-    selectedVoucher.value = null;
+const showConfirmDialog = ref(false);
+
+const fullAddressString = computed(() => {
+    const p = provinces.value.find(x => x.code === shippingInfo.value.tinhThanh);
+    const d = districts.value.find(x => x.code === shippingInfo.value.quanHuyen);
+    const w = wards.value.find(x => x.code === shippingInfo.value.phuongXa);
+    const pName = p ? p.name : shippingInfo.value.tinhThanh || '';
+    const dName = d ? d.name : shippingInfo.value.quanHuyen || '';
+    const wName = w ? w.name : shippingInfo.value.phuongXa || '';
+    return [shippingInfo.value.diaChi, wName, dName, pName].filter(Boolean).join(', ');
+});
+
+const openConfirmModal = () => {
+    if (!isShippingValid.value) {
+        alert('Vui lòng điền đầy đủ thông tin giao hàng trước khi tiếp tục.');
+        return;
+    }
+    showConfirmDialog.value = true;
+};
+
+const confirmAndExecuteCheckout = async () => {
+    showConfirmDialog.value = false;
+    await handleCheckout();
 };
 
 const handleCheckout = async () => {
@@ -381,6 +461,7 @@ const handleCheckout = async () => {
     } catch (error) {
         console.error('Checkout error:', error);
         alert(error.response?.data?.message || 'Đặt hàng thất bại. Vui lòng thử lại.');
+        await cartStore.syncWithBackend();
     } finally {
         loading.value = false;
     }
@@ -694,8 +775,12 @@ onMounted(async () => {
                                             </svg>
                                         </span>
                                         <span class="text-body-2 font-weight-medium"
-                                            :class="{ 'text-blue-darken-4': shippingFee === 0, 'text-grey-darken-1': shippingFee === null }">
-                                            <template v-if="shippingFee === null">
+                                            :class="{ 'text-blue-darken-4': shippingFee === 0, 'text-grey-darken-1': shippingFee === null || shippingFeeLoading }">
+                                            <template v-if="shippingFeeLoading">
+                                                <v-progress-circular indeterminate size="12" width="2" color="primary" class="mr-1"></v-progress-circular>
+                                                Đang tính phí GHN...
+                                            </template>
+                                            <template v-else-if="shippingFee === null">
                                                 Chưa tính
                                             </template>
                                             <template v-else>
@@ -732,7 +817,7 @@ onMounted(async () => {
                                 <v-btn style="background: #1e257c; color: white;" rounded="pill" size="x-large" block
                                     class="font-weight-bold text-none place-order-btn"
                                     :loading="loading" :disabled="!isShippingValid"
-                                    @click="handleCheckout">
+                                    @click="openConfirmModal">
                                     <v-icon class="mr-2">{{ paymentMethod === 'VNPAY' ? 'mdi-qrcode-scan' : 'mdi-lock-outline' }}</v-icon>
                                     {{ paymentMethod === 'VNPAY' ? 'Thanh toán bằng VNPay' : 'Hoàn tất đặt hàng' }}
                                 </v-btn>
@@ -742,6 +827,82 @@ onMounted(async () => {
                 </v-col>
             </v-row>
         </v-container>
+
+        <!-- Order Confirmation Modal -->
+        <v-dialog v-model="showConfirmDialog" max-width="520" class="confirm-order-dialog">
+            <div class="modal-content overflow-hidden rounded-xl bg-white elevation-10" style="border: 1px solid #e2e8f0;">
+                <div class="pa-5 text-white d-flex align-center justify-space-between" style="background: #1e257c;">
+                    <div class="d-flex align-center">
+                        <v-icon size="24" class="mr-3" color="white">mdi-clipboard-check-outline</v-icon>
+                        <h3 class="text-h6 font-weight-bold mb-0 text-white">Xác nhận thông tin đặt hàng</h3>
+                    </div>
+                    <v-btn icon variant="text" size="small" @click="showConfirmDialog = false" color="white">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </div>
+
+                <div class="pa-6 bg-white">
+                    <!-- Delivery Info Block -->
+                    <div class="mb-4 pa-4 rounded-lg" style="background: #f8fafc; border: 1px solid #f1f5f9;">
+                        <div class="d-flex align-center mb-2">
+                            <v-icon size="18" style="color: #1e257c;" class="mr-2">mdi-account-outline</v-icon>
+                            <span class="text-body-2 font-weight-bold" style="color: #1e257c;">Người nhận:</span>
+                            <span class="text-body-2 font-weight-bold ml-2 text-dark">{{ shippingInfo.tenNguoiNhan }} ({{ shippingInfo.soDienThoai }})</span>
+                        </div>
+                        <div class="d-flex align-start mb-2">
+                            <v-icon size="18" style="color: #1e257c;" class="mr-2 mt-1">mdi-map-marker-outline</v-icon>
+                            <div class="text-body-2 text-grey-darken-2">
+                                {{ fullAddressString }}
+                            </div>
+                        </div>
+                        <div class="d-flex align-center">
+                            <v-icon size="18" style="color: #1e257c;" class="mr-2">mdi-wallet-outline</v-icon>
+                            <span class="text-body-2 font-weight-medium text-grey-darken-2">Thanh toán:</span>
+                            <v-chip size="x-small" class="ml-2 font-weight-bold" style="background: #1e257c; color: white;">
+                                {{ paymentMethod === 'VNPAY' ? 'VNPay (Thanh toán trực tuyến)' : 'COD (Thanh toán khi nhận hàng)' }}
+                            </v-chip>
+                        </div>
+                    </div>
+
+                    <!-- Order Total Breakdown -->
+                    <div class="pa-4 rounded-lg border mb-6" style="border-color: #e2e8f0 !important;">
+                        <div class="d-flex justify-space-between text-body-2 mb-2 text-grey-darken-1">
+                            <span>Sản phẩm trong đơn:</span>
+                            <span class="font-weight-bold text-black">{{ cartStore.cartCount }} sản phẩm</span>
+                        </div>
+                        <div class="d-flex justify-space-between text-body-2 mb-2 text-grey-darken-1">
+                            <span>Tạm tính:</span>
+                            <span>{{ formatPrice(originalSubtotal) }}</span>
+                        </div>
+                        <div v-if="voucherDiscount > 0" class="d-flex justify-space-between text-body-2 mb-2 text-error font-weight-medium">
+                            <span>Giảm giá Voucher:</span>
+                            <span>-{{ formatPrice(voucherDiscount) }}</span>
+                        </div>
+                        <div class="d-flex justify-space-between text-body-2 mb-3 text-grey-darken-1">
+                            <span>Phí vận chuyển (GHN):</span>
+                            <span>{{ shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee) }}</span>
+                        </div>
+                        <v-divider class="mb-3"></v-divider>
+                        <div class="d-flex justify-space-between align-center">
+                            <span class="text-subtitle-1 font-weight-bold" style="color: #1e257c;">Tổng thanh toán:</span>
+                            <span class="text-h5 font-weight-bold" style="color: #1e257c;">{{ formatPrice(totalAmount) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex ga-3">
+                        <v-btn variant="outlined" color="grey-darken-1" rounded="pill" class="font-weight-bold text-none flex-grow-1" height="46"
+                            @click="showConfirmDialog = false">
+                            Quay lại sửa
+                        </v-btn>
+                        <v-btn style="background: #1e257c; color: white;" rounded="pill" class="font-weight-bold text-none flex-grow-1" height="46"
+                            :loading="loading" @click="confirmAndExecuteCheckout">
+                            Xác nhận đặt hàng
+                        </v-btn>
+                    </div>
+                </div>
+            </div>
+        </v-dialog>
 
         <!-- Voucher Dialog -->
         <v-dialog v-model="showVoucherDialog" max-width="520" class="voucher-dialog">
@@ -836,7 +997,7 @@ onMounted(async () => {
                         </v-btn>
 
                         <v-btn variant="text" color="grey-darken-1" block class="rounded-lg font-weight-medium" height="40"
-                            @click="closeVnPayDialog">
+                            @click="handlePayLater">
                             Đóng và thanh toán sau
                         </v-btn>
                     </div>

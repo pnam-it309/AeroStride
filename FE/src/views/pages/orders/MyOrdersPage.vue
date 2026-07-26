@@ -18,15 +18,21 @@ const trackingForm = ref({ maHoaDon: '', soDienThoai: '' });
 const trackingLoading = ref(false);
 
 const handleTrackOrder = async () => {
-    if (!trackingForm.value.maHoaDon || !trackingForm.value.soDienThoai) {
-        alert('Vui lòng nhập đầy đủ Mã đơn hàng và Số điện thoại');
+    const code = trackingForm.value.maHoaDon ? trackingForm.value.maHoaDon.trim() : '';
+    const phone = trackingForm.value.soDienThoai ? trackingForm.value.soDienThoai.trim() : '';
+
+    if (!code && !phone) {
+        alert('Vui lòng nhập Mã đơn hàng hoặc Số điện thoại để tra cứu');
         return;
     }
     trackingLoading.value = true;
     try {
-        const res = await dichVuDatHang.traCuuDonHang(trackingForm.value.maHoaDon.trim(), trackingForm.value.soDienThoai.trim());
+        const res = await dichVuDatHang.traCuuDonHang(code, phone);
         if (res && res.id) {
-            router.push(`/my-orders/${res.id}?code=${trackingForm.value.maHoaDon.trim()}&phone=${trackingForm.value.soDienThoai.trim()}`);
+            const query = {};
+            if (res.maHoaDon) query.code = res.maHoaDon;
+            if (res.soDienThoaiNguoiNhan) query.phone = res.soDienThoaiNguoiNhan;
+            router.push({ path: `/my-orders/${res.id}`, query });
         }
     } catch (error) {
         alert(error.response?.data?.message || 'Không tìm thấy đơn hàng hợp lệ');

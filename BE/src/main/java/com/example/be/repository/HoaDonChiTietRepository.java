@@ -12,4 +12,5 @@ import java.util.List;
 public interface HoaDonChiTietRepository extends JpaRepository<HoaDonChiTiet, String> {
     List<HoaDonChiTiet> findAllByHoaDon(HoaDon hoaDon);
     HoaDonChiTiet findByHoaDonAndChiTietSanPham(HoaDon hoaDon, ChiTietSanPham chiTietSanPham);
+    List<HoaDonChiTiet> findAllByHoaDonAndChiTietSanPham(HoaDon hoaDon, ChiTietSanPham chiTietSanPham);
 }

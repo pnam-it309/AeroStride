@@ -24,10 +24,13 @@ export const dichVuDatHang = {
         return response.data.data;
     },
 
-    // Tra cứu đơn hàng công khai (Khách vãng lai)
-    async traCuuDonHang(maHoaDon, soDienThoai) {
+    // Tra cứu đơn hàng công khai (Khách vãng lai) - Cho phép tra theo Mã đơn HOẶC SĐT
+    async traCuuDonHang(maHoaDon = '', soDienThoai = '') {
+        const params = {};
+        if (maHoaDon) params.maHoaDon = maHoaDon;
+        if (soDienThoai) params.soDienThoai = soDienThoai;
         const response = await api.get('/customer/order/track', {
-            params: { maHoaDon, soDienThoai },
+            params,
             bigOp: true,
             loadingMessage: 'Đang tra cứu đơn hàng...'
         });

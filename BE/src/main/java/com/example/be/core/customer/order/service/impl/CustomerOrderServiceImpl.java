@@ -8,6 +8,7 @@ import com.example.be.core.customer.order.service.CustomerOrderService;
 import com.example.be.core.customer.order.repository.*;
 import com.example.be.entity.*;
 import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.utils.CodeUtils;
 import com.example.be.utils.DiscountPriceUtils;
 import lombok.RequiredArgsConstructor;
@@ -69,6 +70,14 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         for (CustomerOrderCheckoutRequest.CartItem item : request.getItems()) {
             ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(item.getIdChiTietSanPham())
                     .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại: " + item.getIdChiTietSanPham()));
+
+            if (Boolean.TRUE.equals(ctsp.getXoaMem()) || (ctsp.getTrangThai() != null && ctsp.getTrangThai() != TrangThai.DANG_HOAT_DONG)) {
+                String tenSP = ctsp.getSanPham() != null ? ctsp.getSanPham().getTen() : ctsp.getMaChiTietSanPham();
+                throw new RuntimeException("Không thể đặt hàng vì sản phẩm '" + tenSP + "' đã ngừng hoạt động.");
+            }
+            if (ctsp.getSanPham() != null && (Boolean.TRUE.equals(ctsp.getSanPham().getXoaMem()) || (ctsp.getSanPham().getTrangThai() != null && ctsp.getSanPham().getTrangThai() != TrangThai.DANG_HOAT_DONG))) {
+                throw new RuntimeException("Không thể đặt hàng vì sản phẩm '" + ctsp.getSanPham().getTen() + "' đã ngừng hoạt động.");
+            }
 
             // Giá thực tế sau đợt giảm giá của biến thể
             BigDecimal giaHienThoi = DiscountPriceUtils.calculateDiscountedPrice(
@@ -296,22 +305,33 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         return mapToResponse(hoaDon, null);
     }
 
-    // Tra cứu đơn hàng công khai bằng mã đơn hàng và số điện thoại
+    // Tra cứu đơn hàng công khai bằng mã đơn hàng HOẶC số điện thoại (không bắt buộc cả hai)
     @Override
     @Transactional(readOnly = true)
     public CustomerOrderResponse trackOrder(String maHoaDon, String soDienThoai) {
-        if (maHoaDon == null || maHoaDon.isBlank()) {
-            throw new RuntimeException("Vui lòng nhập mã đơn hàng");
-        }
-        if (soDienThoai == null || soDienThoai.isBlank()) {
-            throw new RuntimeException("Vui lòng nhập số điện thoại");
+        boolean hasCode = maHoaDon != null && !maHoaDon.isBlank();
+        boolean hasPhone = soDienThoai != null && !soDienThoai.isBlank();
+
+        if (!hasCode && !hasPhone) {
+            throw new RuntimeException("Vui lòng nhập Mã đơn hàng hoặc Số điện thoại để tra cứu.");
         }
 
-        HoaDon hoaDon = hoaDonRepository.findByMaHoaDon(maHoaDon)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng: " + maHoaDon));
-
-        if (hoaDon.getSoDienThoaiNguoiNhan() == null || !hoaDon.getSoDienThoaiNguoiNhan().equals(soDienThoai)) {
-            throw new RuntimeException("Số điện thoại không khớp với thông tin đơn hàng");
+        HoaDon hoaDon = null;
+        if (hasCode && hasPhone) {
+            hoaDon = hoaDonRepository.findByMaHoaDon(maHoaDon.trim())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với mã: " + maHoaDon));
+            if (hoaDon.getSoDienThoaiNguoiNhan() == null || !hoaDon.getSoDienThoaiNguoiNhan().trim().equals(soDienThoai.trim())) {
+                throw new RuntimeException("Số điện thoại không khớp với thông tin đơn hàng này.");
+            }
+        } else if (hasCode) {
+            hoaDon = hoaDonRepository.findByMaHoaDon(maHoaDon.trim())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với mã: " + maHoaDon));
+        } else {
+            List<HoaDon> list = hoaDonRepository.findAllBySoDienThoaiNguoiNhanOrderByNgayTaoDesc(soDienThoai.trim());
+            if (list.isEmpty()) {
+                throw new RuntimeException("Không tìm thấy đơn hàng nào thuộc số điện thoại: " + soDienThoai);
+            }
+            hoaDon = list.get(0);
         }
 
         return mapToResponse(hoaDon, null);

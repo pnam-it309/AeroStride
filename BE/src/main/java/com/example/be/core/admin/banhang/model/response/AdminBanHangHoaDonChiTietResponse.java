@@ -24,4 +24,5 @@ public class AdminBanHangHoaDonChiTietResponse {
     private BigDecimal thanhTien;
     private Integer soLuongTon;
     private String hinhAnh;
+    private BigDecimal giaCu;
 }

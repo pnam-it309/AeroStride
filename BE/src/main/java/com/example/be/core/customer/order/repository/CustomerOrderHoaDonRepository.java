@@ -10,4 +10,5 @@ import java.util.List;
 public interface CustomerOrderHoaDonRepository extends HoaDonRepository {
     List<HoaDon> findByKhachHangId(String khachHangId);
     java.util.Optional<HoaDon> findByMaHoaDon(String maHoaDon);
+    List<HoaDon> findAllBySoDienThoaiNguoiNhanOrderByNgayTaoDesc(String soDienThoaiNguoiNhan);
 }

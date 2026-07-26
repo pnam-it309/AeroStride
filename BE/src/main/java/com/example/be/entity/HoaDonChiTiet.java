@@ -38,4 +38,9 @@ public class HoaDonChiTiet extends PrimaryEntity {
     @Column(name = "don_gia")
     private BigDecimal donGia;
 
+    @Column(name = "gia_goc")
+    private BigDecimal giaGoc;
+
+    @Column(name = "gia_cu")
+    private BigDecimal giaCu;
 }

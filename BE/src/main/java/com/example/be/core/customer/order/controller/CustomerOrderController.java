@@ -72,8 +72,8 @@ public class CustomerOrderController {
     // Tra cứu đơn hàng công khai (dành cho khách vãng lai)
     @GetMapping("/track")
     public ResponseEntity<ApiResponse<CustomerOrderResponse>> trackOrder(
-            @RequestParam String maHoaDon,
-            @RequestParam String soDienThoai
+            @RequestParam(required = false) String maHoaDon,
+            @RequestParam(required = false) String soDienThoai
     ) {
         log.info("Tracking order: maHoaDon={}, phone={}", maHoaDon, soDienThoai);
         CustomerOrderResponse response = customerOrderService.trackOrder(maHoaDon, soDienThoai);

@@ -51,6 +51,7 @@ import GiaoCaModal from '@/components/common/GiaoCaModal.vue';
 import VnPayDialogs from './components/VnPayDialogs.vue';
 import ScannerDialog from './components/ScannerDialog.vue';
 import QuickAddCustomerDialog from './components/QuickAddCustomerDialog.vue';
+import BetterVoucherModal from './components/BetterVoucherModal.vue';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 
 const { addNotification } = useNotifications();
@@ -1667,6 +1668,86 @@ const onConfirmVnPayManual = async () => {
     }
 };
 
+// Logic: Better Voucher Detection
+const betterVoucherDialog = ref({
+    show: false,
+    currentVoucher: null,
+    betterVoucher: null,
+    orderTotal: 0,
+    currentDiscount: 0,
+    betterDiscount: 0,
+    onProceed: null
+});
+
+const getVoucherDiscountValue = (voucher, total) => {
+    if (!voucher) return 0;
+    const type = String(voucher.loaiPhieu || voucher.loai || '').toUpperCase();
+    if (type === 'PHAN_TRAM' || type === 'PERCENT') {
+        const percent = Number(voucher.phanTramGiamGia || voucher.giamGia || 0);
+        let disc = total * (percent / 100);
+        const maxGiam = Number(voucher.giamToiDa || voucher.soTienGiamToiDa || 0);
+        if (maxGiam > 0 && disc > maxGiam) disc = maxGiam;
+        return disc;
+    } else {
+        return Number(voucher.soTienGiam || voucher.giamGia || 0);
+    }
+};
+
+const checkBetterVoucherBeforeCheckout = async () => {
+    const order = selectedOrder.value;
+    if (!order?.id) return null;
+
+    const total = Number(order.tongTien || 0);
+    if (total <= 0) return null;
+
+    try {
+        const availableVouchers = await dichVuDonHang.getVouchers(total);
+        if (!availableVouchers || !availableVouchers.length) return null;
+
+        const currentVoucherId = order.idPhieuGiamGia || null;
+        let currentDiscount = 0;
+        let currentVoucherObj = null;
+
+        if (currentVoucherId) {
+            currentVoucherObj = availableVouchers.find(v => String(v.id) === String(currentVoucherId)) || order.phieuGiamGia || null;
+            if (currentVoucherObj) {
+                currentDiscount = getVoucherDiscountValue(currentVoucherObj, total);
+            } else {
+                currentDiscount = Number(order.tienGiamGiaPhieu || order.tienGiamGia || 0);
+            }
+        }
+
+        let bestVoucher = null;
+        let maxDiscount = 0;
+
+        for (const v of availableVouchers) {
+            const minOrder = Number(v.donHangToiThieu || 0);
+            if (total < minOrder) continue;
+
+            const disc = getVoucherDiscountValue(v, total);
+            if (disc > maxDiscount) {
+                maxDiscount = disc;
+                bestVoucher = v;
+            }
+        }
+
+        if (bestVoucher && maxDiscount > currentDiscount + 1000) {
+            if (!currentVoucherId || String(bestVoucher.id) !== String(currentVoucherId)) {
+                return {
+                    currentVoucher: currentVoucherObj,
+                    betterVoucher: bestVoucher,
+                    currentDiscount,
+                    betterDiscount: maxDiscount,
+                    orderTotal: total
+                };
+            }
+        }
+    } catch (e) {
+        console.error('Lỗi kiểm tra voucher tốt hơn:', e);
+    }
+    return null;
+};
+
 // Logic: Thanh toán
 // Handler chính cho nút "Thanh toán"
 const onCheckout = async () => {
@@ -1680,6 +1761,31 @@ const onCheckout = async () => {
         return;
     }
 
+    // Kiểm tra xem có Voucher nào tốt hơn không
+    const betterVoucherInfo = await checkBetterVoucherBeforeCheckout();
+    if (betterVoucherInfo) {
+        betterVoucherDialog.value = {
+            show: true,
+            currentVoucher: betterVoucherInfo.currentVoucher,
+            betterVoucher: betterVoucherInfo.betterVoucher,
+            orderTotal: betterVoucherInfo.orderTotal,
+            currentDiscount: betterVoucherInfo.currentDiscount,
+            betterDiscount: betterVoucherInfo.betterDiscount,
+            onProceed: async (useNew) => {
+                betterVoucherDialog.value.show = false;
+                if (useNew && betterVoucherInfo.betterVoucher?.id) {
+                    await onApplyVoucher(betterVoucherInfo.betterVoucher.id);
+                }
+                await proceedActualCheckout();
+            }
+        };
+        return;
+    }
+
+    await proceedActualCheckout();
+};
+
+const proceedActualCheckout = async () => {
     // Ensure customer is saved/resolved first if they typed new name/phone
     isProcessing.value = true;
     try {
@@ -1939,6 +2045,19 @@ const formatDateTime = (dateStr) => {
         <!-- Hóa đơn sau thanh toán -->
         <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt"
             @print="onPrintReceiptInvoice" />
+
+        <!-- Modal thông báo Voucher tốt hơn -->
+        <BetterVoucherModal
+            :show="betterVoucherDialog.show"
+            :current-voucher="betterVoucherDialog.currentVoucher"
+            :better-voucher="betterVoucherDialog.betterVoucher"
+            :order-total="betterVoucherDialog.orderTotal"
+            :current-discount="betterVoucherDialog.currentDiscount"
+            :better-discount="betterVoucherDialog.betterDiscount"
+            @close="betterVoucherDialog.show = false"
+            @keep-old="betterVoucherDialog.onProceed && betterVoucherDialog.onProceed(false)"
+            @apply-new="betterVoucherDialog.onProceed && betterVoucherDialog.onProceed(true)"
+        />
 
         <!-- Giao Ca Modal --> <!-- Tạm thời ẩn chức năng giao ca
         <GiaoCaModal v-model="showGiaoCaModal" mode="open" @success="handleGiaoCaSuccess" /> 

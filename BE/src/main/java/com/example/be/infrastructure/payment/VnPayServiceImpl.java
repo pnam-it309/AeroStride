@@ -48,7 +48,7 @@ public class VnPayServiceImpl implements PaymentService {
         
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
-        String vnp_TmnCode = tmnCode;
+        String vnp_TmnCode = getEffectiveTmnCode();
         
         // POS frontend needs VNPay to return to the browser origin so it can verify
         // the callback and only then finalize the invoice.
@@ -70,7 +70,7 @@ public class VnPayServiceImpl implements PaymentService {
         vnp_Params.put("vnp_OrderType", "other");
         vnp_Params.put("vnp_Locale", "vn");
         vnp_Params.put("vnp_ReturnUrl", returnUrl);
-        vnp_Params.put("vnp_IpAddr", clientIp);
+        vnp_Params.put("vnp_IpAddr", clientIp != null && !clientIp.isBlank() ? clientIp : "127.0.0.1");
 
         Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -107,10 +107,10 @@ public class VnPayServiceImpl implements PaymentService {
         }
         
         String queryUrl = query.toString();
-        String vnp_SecureHash = hmacSHA512(hashSecret, hashData.toString());
+        String vnp_SecureHash = hmacSHA512(getEffectiveHashSecret(), hashData.toString());
         queryUrl += "&vnp_SecureHash=" + vnp_SecureHash;
         
-        return vnpUrl + "?" + queryUrl;
+        return getEffectiveVnpUrl() + "?" + queryUrl;
     }
     
     /**
@@ -189,7 +189,7 @@ public class VnPayServiceImpl implements PaymentService {
             }
         }
         
-        String checkSum = hmacSHA512(hashSecret, hashData.toString());
+        String checkSum = hmacSHA512(getEffectiveHashSecret(), hashData.toString());
         boolean isValid = checkSum.equalsIgnoreCase(vnp_SecureHash);
         
         if (!isValid) {
@@ -199,6 +199,27 @@ public class VnPayServiceImpl implements PaymentService {
         }
         
         return isValid;
+    }
+
+    private String getEffectiveTmnCode() {
+        if (tmnCode != null && !tmnCode.isBlank() && !tmnCode.contains("your_vnp_")) {
+            return tmnCode.trim();
+        }
+        return "CGXZLS0Z";
+    }
+
+    private String getEffectiveHashSecret() {
+        if (hashSecret != null && !hashSecret.isBlank() && !hashSecret.contains("your_vnp_")) {
+            return hashSecret.trim();
+        }
+        return "XBAIVFZIFUPHFPGMVKEYNJYHEXIPWWBM";
+    }
+
+    private String getEffectiveVnpUrl() {
+        if (vnpUrl != null && !vnpUrl.isBlank() && !vnpUrl.contains("your_vnp_")) {
+            return vnpUrl.trim();
+        }
+        return "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
     }
 
     private String hmacSHA512(final String key, final String data) {
