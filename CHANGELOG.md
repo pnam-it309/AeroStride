@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/pnam-it309/AeroStride/compare/v1.27.7...v1.28.0) (2026-07-26)
+
+
+### Features
+
+* **checkout:** enhance POS and online checkout flow with VNPay repay and product image gallery ([91ab4b9](https://github.com/pnam-it309/AeroStride/commit/91ab4b9419bec56169bfeabe15254ad5ee3e15e0))
+
 ## [1.27.7](https://github.com/pnam-it309/AeroStride/compare/v1.27.6...v1.27.7) (2026-07-25)
 
 
