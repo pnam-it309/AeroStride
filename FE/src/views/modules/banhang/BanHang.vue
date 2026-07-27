@@ -553,7 +553,7 @@ const openDatePicker = (event) => {
     }
 };
 
-// Removed ensureCustomerAndGetId
+// onRemoveCustomer is imported from useCustomerSelect
 
 
 // Chuẩn hóa định dạng danh sách đơn hàng trả về từ nhiều dạng API response khác nhau

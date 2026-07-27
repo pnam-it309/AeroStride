@@ -61,7 +61,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Transactional(readOnly = true)
     /** Lay danh sach hoa don POS dang cho xu ly de FE hien thi tab don hang. */
     public List<AdminBanHangHoaDonResponse> getHoaDonCho() {
-        return hoaDonRepository.findAllByTrangThaiAndLoaiDon(OrderStatus.CHO_XAC_NHAN, "TAI_QUAY")
+        return hoaDonRepository.findAllPendingPOSOrders(OrderStatus.CHO_XAC_NHAN)
                 .stream().map(this::mapToHoaDonResponse).collect(Collectors.toList());
     }
 
@@ -69,7 +69,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Transactional
     /** Tao hoa don tai quay moi, gioi han so don cho de tranh mo qua nhieu tab. */
     public AdminBanHangHoaDonResponse createHoaDon() {
-        if (hoaDonRepository.countByTrangThaiAndLoaiDon(OrderStatus.CHO_XAC_NHAN, "TAI_QUAY") >= 5) {
+        if (hoaDonRepository.countPendingPOSOrders(OrderStatus.CHO_XAC_NHAN) >= 5) {
             throw new BusinessException("Chỉ được tạo tối đa 5 hóa đơn chờ");
         }
         HoaDon hoaDon = new HoaDon();
