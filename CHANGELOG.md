@@ -1,3 +1,10 @@
+## [1.30.1](https://github.com/pnam-it309/AeroStride/compare/v1.30.0...v1.30.1) (2026-07-27)
+
+
+### Bug Fixes
+
+* **pos:** resolve missing active state in customer address modal by mapping GHN codes to names and binding default address ID ([c586479](https://github.com/pnam-it309/AeroStride/commit/c5864798f3d8b0a8295f5e27b897a5d5c0dbb00a))
+
 # [1.30.0](https://github.com/pnam-it309/AeroStride/compare/v1.29.1...v1.30.0) (2026-07-27)
 
 
