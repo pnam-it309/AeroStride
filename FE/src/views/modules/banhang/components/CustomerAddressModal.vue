@@ -18,6 +18,10 @@ const props = defineProps({
     selectedAddressId: {
         type: String,
         default: ''
+    },
+    currentShipping: {
+        type: Object,
+        default: null
     }
 });
 
@@ -31,6 +35,19 @@ const addresses = ref([]);
 const loading = ref(false);
 const showAddForm = ref(false);
 const submitting = ref(false);
+
+const isCurrentAddress = (addr) => {
+    if (!addr) return false;
+    if (props.selectedAddressId && String(props.selectedAddressId) === String(addr.id)) {
+        return true;
+    }
+    if (props.currentShipping) {
+        const matchDetail = props.currentShipping.detail && String(props.currentShipping.detail).trim() === String(addr.diaChiChiTiet || '').trim();
+        const matchName = props.currentShipping.name && String(props.currentShipping.name).trim() === String(addr.tenNguoiNhan || '').trim();
+        if (matchDetail && matchName) return true;
+    }
+    return false;
+};
 
 const newAddressForm = ref({
     tenNguoiNhan: '',
@@ -196,19 +213,27 @@ const close = () => {
                             <div v-else class="d-flex flex-column ga-3">
                                 <div v-for="addr in addresses" :key="addr.id"
                                     @click="handleSelectAddress(addr)"
-                                    class="address-card position-relative pa-4 rounded-xl border transition-all cursor-pointer"
+                                    class="address-card position-relative pa-4 rounded-xl border transition-all cursor-pointer mb-1"
                                     :class="{
-                                        'active-card border-primary bg-blue-50/30': selectedAddressId === addr.id,
-                                        'hover-card border-slate-200': selectedAddressId !== addr.id
+                                        'active-card border-primary bg-blue-50/50 shadow-sm': isCurrentAddress(addr),
+                                        'hover-card border-slate-200 bg-white': !isCurrentAddress(addr)
                                     }">
                                     
                                     <div class="d-flex justify-space-between align-start mb-2">
-                                        <div>
-                                            <span class="font-weight-bold text-slate-800 text-body-2 mr-2">{{ addr.tenNguoiNhan || customerName }}</span>
+                                        <div class="d-flex align-center flex-wrap ga-2">
+                                            <span class="font-weight-bold text-slate-800 text-body-2">{{ addr.tenNguoiNhan || customerName }}</span>
+                                            
+                                            <!-- Badge Đang áp dụng -->
+                                            <span v-if="isCurrentAddress(addr)" class="px-2 py-0-5 rounded-md text-caption font-weight-bold bg-primary text-white d-inline-flex align-center ga-1" style="font-size: 11px !important;">
+                                                <v-icon size="12" color="white">mdi-check-circle</v-icon> Đang áp dụng
+                                            </span>
+
+                                            <!-- Badge Mặc định -->
                                             <span v-if="addr.laMacDinh" class="default-badge px-2 py-0-5 rounded-md text-caption font-weight-bold bg-amber-100 text-amber-800">
                                                 Mặc định
                                             </span>
                                         </div>
+
                                         <div class="d-flex align-center ga-1" @click.stop>
                                             <v-tooltip v-if="!addr.laMacDinh" text="Đặt làm mặc định" location="top">
                                                 <template #activator="{ props }">
@@ -235,7 +260,7 @@ const close = () => {
                                         </span>
                                     </div>
 
-                                    <div v-if="selectedAddressId === addr.id" class="active-check-badge">
+                                    <div v-if="isCurrentAddress(addr)" class="active-check-badge">
                                         <v-icon size="14" color="white">mdi-check</v-icon>
                                     </div>
                                 </div>
