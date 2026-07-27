@@ -233,50 +233,55 @@ const fetchCustomerAddresses = async () => {
     }
 };
 
+const isApplyingAddressModal = ref(false);
+
 const applyAddressFromModal = async (addr) => {
     if (!addr) return;
-    selectedAddressId.value = addr.id || '';
-    recipientName.value = addr.tenNguoiNhan || customerForm.value.ten || '';
-    recipientPhone.value = addr.sdtNguoiNhan || customerForm.value.sdt || '';
-    recipientAddressDetail.value = addr.diaChiChiTiet || '';
+    isApplyingAddressModal.value = true;
+    try {
+        selectedAddressId.value = addr.id || '';
+        recipientName.value = addr.tenNguoiNhan || customerForm.value.ten || '';
+        recipientPhone.value = addr.sdtNguoiNhan || customerForm.value.sdt || '';
+        recipientAddressDetail.value = addr.diaChiChiTiet || '';
 
-    if (provincesShip.value.length === 0) {
-        await fetchProvincesShip();
-    }
+        if (provincesShip.value.length === 0) {
+            await fetchProvincesShip();
+        }
 
-    let matchedProvince = provincesShip.value.find(p => String(p.code) === String(addr.tinh)) ||
-                          matchLocation(provincesShip.value, addr.tinh);
+        let matchedProvince = provincesShip.value.find(p => String(p.code) === String(addr.tinh)) ||
+                              matchLocation(provincesShip.value, addr.tinh);
 
-    if (matchedProvince) {
-        recipientProvince.value = matchedProvince.code;
-        await fetchDistrictsShip(matchedProvince.code);
+        if (matchedProvince) {
+            recipientProvince.value = matchedProvince.code;
+            await fetchDistrictsShip(matchedProvince.code);
 
-        let matchedDistrict = districtsShip.value.find(d => String(d.code) === String(addr.thanhPho)) ||
-                              matchLocation(districtsShip.value, addr.thanhPho);
+            let matchedDistrict = districtsShip.value.find(d => String(d.code) === String(addr.thanhPho)) ||
+                                  matchLocation(districtsShip.value, addr.thanhPho);
 
-        if (matchedDistrict) {
-            recipientDistrict.value = matchedDistrict.code;
-            await fetchWardsShip(matchedDistrict.code);
+            if (matchedDistrict) {
+                recipientDistrict.value = matchedDistrict.code;
+                await fetchWardsShip(matchedDistrict.code);
 
-            let matchedWard = wardsShip.value.find(w => String(w.code) === String(addr.phuongXa)) ||
-                              matchLocation(wardsShip.value, addr.phuongXa);
+                let matchedWard = wardsShip.value.find(w => String(w.code) === String(addr.phuongXa)) ||
+                                  matchLocation(wardsShip.value, addr.phuongXa);
 
-            if (matchedWard) {
-                recipientWard.value = matchedWard.code;
+                recipientWard.value = matchedWard ? matchedWard.code : null;
             } else {
+                recipientDistrict.value = null;
                 recipientWard.value = null;
             }
         } else {
+            recipientProvince.value = null;
             recipientDistrict.value = null;
             recipientWard.value = null;
         }
-    } else {
-        recipientProvince.value = null;
-        recipientDistrict.value = null;
-        recipientWard.value = null;
-    }
 
-    emitShippingChange();
+        emitShippingChange();
+    } catch (err) {
+        console.error('Lỗi binding địa chỉ từ modal:', err);
+    } finally {
+        isApplyingAddressModal.value = false;
+    }
 };
 
 const autoFillDefaultAddressIfNeeded = async () => {
@@ -378,6 +383,7 @@ const emitShippingChange = () => {
 };
 
 const onProvinceChange = async () => {
+    if (isApplyingAddressModal.value) return;
     recipientDistrict.value = null;
     recipientWard.value = null;
     if (recipientProvince.value) {
@@ -387,6 +393,7 @@ const onProvinceChange = async () => {
 };
 
 const onDistrictChange = async () => {
+    if (isApplyingAddressModal.value) return;
     recipientWard.value = null;
     if (recipientDistrict.value) {
         await fetchWardsShip(recipientDistrict.value);
