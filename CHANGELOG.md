@@ -1,3 +1,10 @@
+## [1.29.1](https://github.com/pnam-it309/AeroStride/compare/v1.29.0...v1.29.1) (2026-07-27)
+
+
+### Bug Fixes
+
+* correct active state logic in address modal ([f2beeb2](https://github.com/pnam-it309/AeroStride/commit/f2beeb2cb720a072001f1f1eaca4f3e46e3b314d))
+
 # [1.29.0](https://github.com/pnam-it309/AeroStride/compare/v1.28.0...v1.29.0) (2026-07-27)
 
 
