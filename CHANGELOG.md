@@ -1,3 +1,18 @@
+# [1.29.0](https://github.com/pnam-it309/AeroStride/compare/v1.28.0...v1.29.0) (2026-07-27)
+
+
+### Bug Fixes
+
+* **pos:** fix cascaded address binding and auto trigger GHN shipping fee calculation ([b562914](https://github.com/pnam-it309/AeroStride/commit/b5629147a39b757cef145ca95817968d13e4ce94))
+* **pos:** fix duplicated active address status and remove star default icon in CustomerAddressModal ([2632ac2](https://github.com/pnam-it309/AeroStride/commit/2632ac258aa15be63c3c3622879fe27d753a4638))
+* **pos:** include customer primary address in list and highlight currently applied address in modal ([e38f247](https://github.com/pnam-it309/AeroStride/commit/e38f247d045a24c243990813db00788090db458a))
+* **pos:** resolve cascaded address dropdown binding and prevent legacy address set-default 404 error ([ae84181](https://github.com/pnam-it309/AeroStride/commit/ae841810c150e56b7a140abb08b356e14b72ac96))
+
+
+### Features
+
+* **pos:** implement customer address auto-fill and address book modal ([606d234](https://github.com/pnam-it309/AeroStride/commit/606d234951e603277f9d6b43edb7c182dd8419e7))
+
 # [1.28.0](https://github.com/pnam-it309/AeroStride/compare/v1.27.7...v1.28.0) (2026-07-26)
 
 
