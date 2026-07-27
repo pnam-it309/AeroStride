@@ -1,3 +1,10 @@
+## [1.30.2](https://github.com/pnam-it309/AeroStride/compare/v1.30.1...v1.30.2) (2026-07-27)
+
+
+### Bug Fixes
+
+* **pos:** ensure all pending pos orders are retrieved on reload and preserve cart/stock on customer removal ([00c475e](https://github.com/pnam-it309/AeroStride/commit/00c475ed5bd129681914e255e2196b342a91b040))
+
 ## [1.30.1](https://github.com/pnam-it309/AeroStride/compare/v1.30.0...v1.30.1) (2026-07-27)
 
 
