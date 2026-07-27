@@ -49,7 +49,8 @@ const fetchProductSearchResults = async (keyword) => {
             maxGia: maxGia
         };
         const res = await dichVuDonHang.searchSanPham(params);
-        store.productSearchResults = res || [];
+        const list = Array.isArray(res) ? res : [];
+        store.productSearchResults = list.filter(item => Number(item.soLuongTon ?? item.soLuong ?? 0) > 0);
     } catch (e) {
         console.error('Lỗi khi tải sản phẩm:', e);
     } finally {
