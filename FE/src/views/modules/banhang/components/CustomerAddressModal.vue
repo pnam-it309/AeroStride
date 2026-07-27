@@ -43,14 +43,25 @@ const isCurrentAddress = (addr) => {
         return String(props.selectedAddressId) === String(addr.id);
     }
 
-    // 2. Nếu chưa có selectedAddressId, so sánh theo toàn bộ thông tin nhận hàng trên form (Bao gồm Tỉnh/Huyện/Xã)
+    // 2. Nếu chưa có selectedAddressId, so sánh theo thông tin nhận hàng trên form (quy đổi mã GHN -> Tên địa phương)
     if (props.currentShipping && props.currentShipping.detail) {
         const currentDetail = String(props.currentShipping.detail || '').trim().toLowerCase();
         const currentName = String(props.currentShipping.name || '').trim().toLowerCase();
         const currentPhone = String(props.currentShipping.phone || '').replace(/\D/g, '');
-        const currentProvince = String(props.currentShipping.province || '').trim().toLowerCase();
-        const currentDistrict = String(props.currentShipping.district || '').trim().toLowerCase();
-        const currentWard = String(props.currentShipping.ward || '').trim().toLowerCase();
+
+        const rawProvince = String(props.currentShipping.province || '').trim();
+        const rawDistrict = String(props.currentShipping.district || '').trim();
+        const rawWard = String(props.currentShipping.ward || '').trim();
+
+        // Tìm tên Tỉnh/Huyện/Xã từ mã GHN nếu có
+        const provObj = provinces.value.find(p => String(p.code) === rawProvince);
+        const currentProvName = (provObj ? provObj.name : rawProvince).toLowerCase();
+
+        const distObj = districts.value.find(d => String(d.code) === rawDistrict);
+        const currentDistName = (distObj ? distObj.name : rawDistrict).toLowerCase();
+
+        const wardObj = wards.value.find(w => String(w.code) === rawWard);
+        const currentWardName = (wardObj ? wardObj.name : rawWard).toLowerCase();
 
         const addrDetail = String(addr.diaChiChiTiet || '').trim().toLowerCase();
         const addrName = String(addr.tenNguoiNhan || props.customer?.ten || '').trim().toLowerCase();
@@ -63,16 +74,18 @@ const isCurrentAddress = (addr) => {
         const matchName = currentName === '' || currentName === addrName;
         const matchPhone = currentPhone === '' || currentPhone === addrPhone;
 
-        // Đối soát các cấp Tỉnh, Huyện, Xã nếu form đã chọn
+        // Đối soát tên các cấp địa phương (Xóa tiền tố Huyện/Xã/Tỉnh nếu cần)
+        const cleanStr = (s) => String(s || '').toLowerCase().replace(/^(tỉnh|thành phố|quận|huyện|phường|xã|thị xã|thị trấn|tp\.?|t\.?|q\.?|h\.?|x\.?)\s+/gi, '').replace(/\s+/g, '').trim();
+
         let matchLocation = true;
-        if (currentProvince && addrProvince) {
-            matchLocation = matchLocation && (currentProvince === addrProvince || addrProvince.includes(currentProvince) || currentProvince.includes(addrProvince));
+        if (currentProvName && addrProvince) {
+            matchLocation = matchLocation && (cleanStr(currentProvName) === cleanStr(addrProvince) || cleanStr(addrProvince).includes(cleanStr(currentProvName)));
         }
-        if (currentDistrict && addrDistrict) {
-            matchLocation = matchLocation && (currentDistrict === addrDistrict || addrDistrict.includes(currentDistrict) || currentDistrict.includes(addrDistrict));
+        if (currentDistName && addrDistrict) {
+            matchLocation = matchLocation && (cleanStr(currentDistName) === cleanStr(addrDistrict) || cleanStr(addrDistrict).includes(cleanStr(currentDistName)));
         }
-        if (currentWard && addrWard) {
-            matchLocation = matchLocation && (currentWard === addrWard || addrWard.includes(currentWard) || currentWard.includes(addrWard));
+        if (currentWardName && addrWard) {
+            matchLocation = matchLocation && (cleanStr(currentWardName) === cleanStr(addrWard) || cleanStr(addrWard).includes(cleanStr(currentWardName)));
         }
 
         if (matchDetail && matchName && matchPhone && matchLocation) {

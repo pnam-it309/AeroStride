@@ -224,6 +224,13 @@ const fetchCustomerAddresses = async () => {
         const res = await dichVuKhachHang.layDanhSachDiaChi(khId);
         const list = res?.data || res || [];
         customerAddresses.value = Array.isArray(list) ? list : [];
+
+        if (!selectedAddressId.value && customerAddresses.value.length > 0) {
+            const defaultAddr = customerAddresses.value.find(a => a.laMacDinh) || customerAddresses.value[0];
+            if (defaultAddr) {
+                selectedAddressId.value = defaultAddr.id || '';
+            }
+        }
     } catch (e) {
         console.error('Lỗi lấy danh sách địa chỉ khách hàng:', e);
         customerAddresses.value = [];
