@@ -78,6 +78,15 @@ export function useCustomerSelect(selectedOrder, updateOrderInList, refreshBestV
             const updated = await dichVuDonHang.setKhachHang(selectedOrder.value.id, null);
             updateOrderInList(updated);
             refreshBestVoucher(updated);
+            customerForm.value = {
+                ten: '',
+                sdt: '',
+                email: '',
+                gioiTinh: 'Giới tính',
+                ngaySinh: '',
+                tongDonHang: 0
+            };
+            customerSearch.value = '';
             addNotification({ title: 'Thành công.', subtitle: 'Đã gỡ khách hàng khỏi hóa đơn.', color: 'success' });
         } catch (e) {
             addNotification({ title: 'Không thể gỡ khách hàng.', subtitle: 'Có lỗi xảy ra khi gỡ khách hàng.', color: 'error' });
