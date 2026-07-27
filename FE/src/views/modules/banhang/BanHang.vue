@@ -512,14 +512,32 @@ const isVoucherAutoApplied = ref({});
 // Removed searchCustomers, selectCustomer, onCustomerInput, onSelectSuggestedCustomer, onCustomerFormUpdate
 
 // Nhận dữ liệu địa chỉ giao hàng từ panel bên phải để watcher GHN ở màn chính tính lại phí ship.
-const onShippingPanelUpdate = (shipping) => {
+const onShippingPanelUpdate = async (shipping) => {
     const next = shipping || {};
-    recipientName.value = next.name || '';
-    recipientPhone.value = next.phone || '';
-    recipientAddressDetail.value = next.detail || '';
-    recipientProvince.value = next.province || null;
-    recipientDistrict.value = next.district || null;
-    recipientWard.value = next.ward || null;
+    syncingRecipientAddress.value = true;
+    try {
+        recipientName.value = next.name || '';
+        recipientPhone.value = next.phone || '';
+        recipientAddressDetail.value = next.detail || '';
+        recipientProvince.value = next.province || null;
+        recipientDistrict.value = next.district || null;
+        recipientWard.value = next.ward || null;
+
+        if (recipientProvince.value) {
+            await fetchDistrictsShip(recipientProvince.value);
+        }
+        if (recipientDistrict.value) {
+            await fetchWardsShip(recipientDistrict.value);
+        }
+    } catch (e) {
+        console.error('Lỗi đồng bộ địa chỉ từ shipping panel:', e);
+    } finally {
+        syncingRecipientAddress.value = false;
+    }
+
+    if (isGiaoHang.value && recipientDistrict.value && recipientWard.value) {
+        await calculateShippingFee();
+    }
 };
 
 const openDatePicker = (event) => {
@@ -1008,6 +1026,16 @@ watch(
     }
 );
 
+watch(
+    () => recipientWard.value,
+    async (newVal) => {
+        if (syncingRecipientAddress.value) return;
+        if (newVal && isGiaoHang.value && recipientDistrict.value) {
+            await calculateShippingFee();
+        }
+    }
+);
+
 const isGhnLocationCode = (list, code) => {
     const found = list.find((item) => String(item.code) === String(code));
     return !found || found.source === 'GHN';
@@ -1060,6 +1088,13 @@ async function calculateShippingFee() {
         shippingFeeLoading.value = false;
     }
 }
+
+// Tự động tính lại phí ship GHN khi số lượng sản phẩm trong giỏ thay đổi
+watch(selectedOrderItemCount, async () => {
+    if (isGiaoHang.value && recipientWard.value && recipientDistrict.value && !syncingRecipientAddress.value) {
+        await calculateShippingFee();
+    }
+});
 
 watch(
     () => recipientWard.value,
