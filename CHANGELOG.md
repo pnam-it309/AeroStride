@@ -1,3 +1,12 @@
+## [1.30.3](https://github.com/pnam-it309/AeroStride/compare/v1.30.2...v1.30.3) (2026-07-27)
+
+
+### Bug Fixes
+
+* **pos:** ensure all pending pos orders in CHO_XAC_NHAN are returned without loaiDon restrictions to preserve cart items on reload ([7278660](https://github.com/pnam-it309/AeroStride/commit/7278660ef4fd15e0ccfb45074ea7a714ecb9add9))
+* **pos:** hide zero-stock items in product search dropdown and reset customer form on removal without deleting order ([160ad01](https://github.com/pnam-it309/AeroStride/commit/160ad010a7c940d549a6963b283fced84e437141))
+* **pos:** update POS sales service and components to preserve pending orders and filter zero-stock products ([c70bad1](https://github.com/pnam-it309/AeroStride/commit/c70bad170e34f80ec247521090feecc07b3ebe56))
+
 ## [1.30.2](https://github.com/pnam-it309/AeroStride/compare/v1.30.1...v1.30.2) (2026-07-27)
 
 
