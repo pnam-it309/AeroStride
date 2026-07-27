@@ -47,62 +47,49 @@
                         Đơn tối thiểu: <span class="font-weight-semibold">{{ formatCurrency(activeVoucher.donHangToiThieu || 0) }}</span>
                     </div>
                     <div class="font-weight-bold mt-1" style="font-size: 13px; color: #d32f2f !important;">
-                        - {{ formatCurrency(totalDiscountAmount || activeVoucher.soTienGiam || 0) }}
+                        - {{ formatCurrency(voucherDiscountAmount || activeVoucher.soTienGiam || 0) }}
                     </div>
                 </div>
             </div>
 
-            <!-- Suggestion Banner (Green/Blue Alert) - Merged inside Ticket -->
-            <div v-if="voucherSuggestionText" 
-                class="d-flex align-center ga-2 border-t"
-                style="background-color: #f0fdf4 !important; border-top-color: #dcfce7 !important; color: #1b7d3e !important; font-size: 12.5px !important; padding: 12px 14px !important; line-height: 1.4 !important; min-height: 44px !important;"
-                :class="{ 'cursor-pointer': canApplySuggestedVoucher }"
-                @click="() => { if (canApplySuggestedVoucher) $emit('apply-suggested-voucher') }">
-                <v-icon size="16" style="color: #1b7d3e !important;">
-                    {{ canApplySuggestedVoucher ? 'mdi-gift' : 'mdi-check-circle' }}
-                </v-icon>
-                <span class="flex-grow-1 font-weight-medium">
-                    {{ voucherSuggestionText }}
-                </span>
-                <v-icon v-if="canApplySuggestedVoucher" size="14" style="color: #1b7d3e !important;">mdi-chevron-right</v-icon>
-            </div>
         </div>
 
-        <!-- Standalone Suggestion Banner if NO activeVoucher is selected -->
-        <div v-else-if="voucherSuggestionText" 
+        <!-- Hai trạng thái loại trừ: có voucher thì chỉ hiện ticket, không có mới hiện thông báo. -->
+        <div v-else
             class="d-flex align-center ga-2 rounded-lg border mt-1"
-            style="background-color: #f0fdf4 !important; border-color: #dcfce7 !important; color: #1b7d3e !important; font-size: 12.5px !important; padding: 12px 14px !important; line-height: 1.4 !important; min-height: 44px !important;"
-            :class="{ 'cursor-pointer': canApplySuggestedVoucher }"
-            @click="() => { if (canApplySuggestedVoucher) $emit('apply-suggested-voucher') }">
-            <v-icon size="16" style="color: #1b7d3e !important;">
-                {{ canApplySuggestedVoucher ? 'mdi-gift' : 'mdi-check-circle' }}
-            </v-icon>
+            style="background-color: #f8fafc !important; border-color: #e2e8f0 !important; color: #64748b !important; font-size: 12.5px !important; padding: 12px 14px !important; line-height: 1.4 !important; min-height: 44px !important;">
+            <v-icon size="16" color="blue-grey">mdi-ticket-percent-outline</v-icon>
             <span class="flex-grow-1 font-weight-medium">
-                {{ voucherSuggestionText }}
+                {{ noVoucherMessage }}
             </span>
-            <v-icon v-if="canApplySuggestedVoucher" size="14" style="color: #1b7d3e !important;">mdi-chevron-right</v-icon>
         </div>
 
-        <!-- Standalone Upsell Banner (Amber Alert) - Always separated from ticket -->
-        <div v-if="betterVoucherSuggestionText" 
+        <!-- Computed trực tiếp từ vouchers + tổng tiền, không gọi thêm API khi giỏ thay đổi. -->
+        <div v-if="upsellSuggestion || betterVoucherSuggestionText"
             class="d-flex align-start ga-3 rounded-lg border mt-1"
             style="background-color: #f8faf0 !important; border-color: #e2e8f0 !important; padding: 10px 14px !important;">
             <v-icon size="18" style="color: #d97706 !important; margin-top: 2px;" class="animate-pulse flex-shrink-0">mdi-sparkles</v-icon>
             <div class="d-flex flex-column" style="line-height: 1.5 !important;">
-                <template v-if="parsedBetterVoucher">
-                    <div style="font-size: 12.5px !important;">
-                        <span class="text-slate-800 font-weight-medium">Mua thêm </span>
-                        <span class="font-weight-bold" style="color: #d32f2f !important;">{{ parsedBetterVoucher.remainingAmount }}</span>
-                    </div>
-                    <div class="mt-1" style="font-size: 11.5px !important; color: #64748b !important;">
-                        Để nhận mã ưu đãi hơn: <span class="font-weight-bold" style="color: #d32f2f !important;">{{ parsedBetterVoucher.voucherCode }} ({{ parsedBetterVoucher.discountAmount }})</span>
-                    </div>
-                </template>
-                <template v-else>
-                    <span class="font-weight-medium text-slate-700" style="font-size: 12.5px !important;">
-                        {{ betterVoucherSuggestionText }}
+                <div v-if="upsellSuggestion" class="font-weight-medium text-slate-700"
+                    style="font-size: 12.5px !important;">
+                    Mua thêm
+                    <span class="font-weight-bold" style="color: #d97706 !important;">
+                        {{ formatCurrency(upsellSuggestion.remainingAmount) }}
                     </span>
-                </template>
+                    để được áp dụng mã
+                    <span class="font-weight-bold" style="color: #0c5c9e !important;">
+                        {{ upsellVoucherLabel }}
+                    </span>
+                    (giảm {{ formatCurrency(upsellSuggestion.discountAmount) }})
+                    <span v-if="activeVoucher && upsellSuggestion.extraDiscountAmount > 0"
+                        class="font-weight-semibold" style="color: #15803d !important;">
+                        — lợi hơn {{ formatCurrency(upsellSuggestion.extraDiscountAmount) }}
+                    </span>
+                </div>
+                <div v-else class="font-weight-medium text-slate-700"
+                    style="font-size: 12.5px !important;">
+                    {{ betterVoucherSuggestionText }}
+                </div>
             </div>
         </div>
     </div>
@@ -222,6 +209,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import { findBestVoucherUpsell } from '../voucherUpsell.js';
 
 const props = defineProps({
     isGiaoHang: { type: Boolean, default: false },
@@ -229,13 +217,12 @@ const props = defineProps({
     selectedVoucherId: { type: String, default: null },
     appliedVoucher: { type: Object, default: null },
     voucherSuggestionText: { type: String, default: '' },
-    voucherSuggestionClass: { type: String, default: '' },
-    canApplySuggestedVoucher: { type: Boolean, default: false },
     betterVoucherSuggestionText: { type: String, default: '' },
     
     totalRawAmount: { type: Number, default: 0 },
+    voucherBaseAmount: { type: Number, default: null },
     productDiscountAmount: { type: Number, default: 0 },
-    appliedDiscountSummary: { type: String, default: '' },
+    voucherDiscountAmount: { type: Number, default: 0 },
     
     totalDiscountAmount: { type: Number, default: 0 },
     finalCollectAmount: { type: Number, default: 0 },
@@ -250,40 +237,22 @@ const props = defineProps({
 const emit = defineEmits([
     'update:isGiaoHang',
     'apply-voucher',
-    'apply-suggested-voucher',
     'update:shippingFee'
 ]);
 
 const isUuidString = (str) => typeof str === 'string' && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str);
 
 const activeVoucher = computed(() => {
-    let baseVoucher = props.appliedVoucher || null;
+    const baseVoucher = props.appliedVoucher || null;
     const voucherIdOrCode = props.selectedVoucherId;
 
-    let code = voucherIdOrCode && !isUuidString(voucherIdOrCode) ? voucherIdOrCode : '';
-    if (!code && props.voucherSuggestionText) {
-        const match = props.voucherSuggestionText.match(/(?:mã|mã:|\s)([A-Z0-9]{4,20})(?:\s|\(|$)/i);
-        if (match && !isUuidString(match[1])) code = match[1];
-    }
-    if (!code && props.appliedDiscountSummary) {
-        const match = props.appliedDiscountSummary.match(/([A-Z0-9]{4,20})/);
-        if (match && !isUuidString(match[1])) code = match[1];
-    }
-
-    // Ưu tiên tìm trong danh sách vouchers để lấy chuẩn thông tin donHangToiThieu và các trường khác
+    // selectedVoucherId/appliedVoucher là nguồn trạng thái duy nhất; không suy diễn từ câu gợi ý.
     if (props.vouchers?.length) {
         if (voucherIdOrCode) {
             const found = props.vouchers.find(v => 
                 String(v.id) === String(voucherIdOrCode) || 
                 String(v.ma) === String(voucherIdOrCode) || 
                 String(v.maPhieu) === String(voucherIdOrCode)
-            );
-            if (found) return found;
-        }
-        if (code) {
-            const found = props.vouchers.find(v => 
-                String(v.ma) === String(code) || 
-                String(v.maPhieu) === String(code)
             );
             if (found) return found;
         }
@@ -295,18 +264,14 @@ const activeVoucher = computed(() => {
         return baseVoucher;
     }
 
-    const matchedVoucher = props.vouchers?.find(v => String(v.ma || v.maPhieu || '') === String(code));
-    const minOrderVal = matchedVoucher ? (matchedVoucher.donHangToiThieu ?? matchedVoucher.dieuKienToiThieu ?? 0) : (baseVoucher?.donHangToiThieu ?? 0);
-
-    if (code || props.totalDiscountAmount > 0) {
+    if (voucherIdOrCode) {
         return {
-            id: voucherIdOrCode || code || 'VOUCHER',
-            ma: code || matchedVoucher?.ma || matchedVoucher?.maPhieu || '',
-            ten: matchedVoucher?.tenPhieu || matchedVoucher?.ten || 'Phiếu giảm giá ưu đãi',
-            soTienGiam: props.totalDiscountAmount || matchedVoucher?.soTienGiam || 0,
-            phanTramGiamGia: matchedVoucher?.phanTramGiamGia || 0,
-            donHangToiThieu: minOrderVal,
-            loaiPhieu: matchedVoucher?.loaiPhieu || 'SO_TIEN'
+            id: voucherIdOrCode,
+            ma: isUuidString(voucherIdOrCode) ? '' : voucherIdOrCode,
+            ten: 'Phiếu giảm giá ưu đãi',
+            soTienGiam: props.totalDiscountAmount,
+            donHangToiThieu: 0,
+            loaiPhieu: 'SO_TIEN'
         };
     }
 
@@ -322,11 +287,6 @@ const formattedVoucherTitle = computed(() => {
         code = '';
     }
 
-    if (!code && props.voucherSuggestionText) {
-        const match = props.voucherSuggestionText.match(/(?:mã|mã:|\s)([A-Z0-9]{4,20})(?:\s|\(|$)/i);
-        if (match && !isUuidString(match[1])) code = match[1];
-    }
-
     const name = v.tenPhieu || v.ten || 'Phiếu giảm giá';
 
     if (code) {
@@ -335,27 +295,25 @@ const formattedVoucherTitle = computed(() => {
     return name;
 });
 
-const parsedBetterVoucher = computed(() => {
-    if (!props.betterVoucherSuggestionText) return null;
-    const regex = /Mua thêm (.*?) để nhận phiếu tốt hơn:\s*(.*?)\s*\((.*?)\)/i;
-    const match = props.betterVoucherSuggestionText.match(regex);
-    if (match) {
-        return {
-            remainingAmount: match[1].trim(),
-            voucherCode: match[2].trim(),
-            discountAmount: match[3].trim(),
-        };
-    }
-    const fallbackRegex = /Mua thêm (.*?)(?:\s+|$)/i;
-    const fallbackMatch = props.betterVoucherSuggestionText.match(fallbackRegex);
-    if (fallbackMatch) {
-        return {
-            remainingAmount: fallbackMatch[1].trim(),
-            voucherCode: '',
-            discountAmount: '',
-        };
-    }
-    return null;
+const noVoucherMessage = computed(() => {
+    const message = String(props.voucherSuggestionText || '').trim();
+    return message.toLowerCase().includes('chưa có')
+        ? message
+        : 'Chưa có phiếu giảm giá phù hợp với đơn hàng hiện tại.';
+});
+
+const upsellSuggestion = computed(() =>
+    findBestVoucherUpsell(
+        props.vouchers,
+        props.voucherBaseAmount ?? props.totalRawAmount,
+        Date.now(),
+        activeVoucher.value
+    )
+);
+
+const upsellVoucherLabel = computed(() => {
+    const voucher = upsellSuggestion.value?.voucher;
+    return voucher?.ma || voucher?.maPhieu || voucher?.tenPhieu || voucher?.ten || 'ưu đãi tốt hơn';
 });
 
 const formatShortAmount = (num) => {

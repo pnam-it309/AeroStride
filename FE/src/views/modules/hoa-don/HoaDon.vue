@@ -52,7 +52,7 @@ const {
         search: p.search || undefined,
         tuNgay: p.fromDate || undefined,
         denNgay: p.toDate || undefined,
-        loaiDon: p.loaiDon || undefined,
+        orderType: p.loaiDon || undefined,
         sortBy: 'ngayTao',
         sortDirection: p.sortDirection,
         ...(nTrangThai !== null ? { trangThai: nTrangThai } : {})
@@ -151,7 +151,7 @@ const handleExport = async () => {
             tuNgay: filters.value.fromDate || undefined,
             denNgay: filters.value.toDate || undefined,
             sortDirection: filters.value.sortDirection,
-            loaiDon: filters.value.loaiDon || undefined,
+            orderType: filters.value.loaiDon || undefined,
             ...(normalizedTrangThai !== null ? { trangThai: normalizedTrangThai } : {})
         };
         const blob = await dichVuHoaDon.xuatExcelHoaDon(params);
@@ -393,8 +393,8 @@ onMounted(() => loadOrders());
                     </td>
 
                     <td class="data-cell">
-                        <v-chip :class="['status-chip', getOrderTypeClass(item.loaiDon)]" variant="flat">
-                            {{ getOrderTypeLabel(item.loaiDon) }}
+                        <v-chip :class="['status-chip', getOrderTypeClass(item.orderType)]" variant="flat">
+                            {{ getOrderTypeLabel(item.orderType) }}
                         </v-chip>
                     </td>
 

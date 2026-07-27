@@ -11,6 +11,8 @@ import com.example.be.core.admin.banhang.service.AdminBanHangService;
 import com.example.be.core.admin.dotgiamgia.repository.AdminChiTietDotGiamGiaRepository;
 import com.example.be.entity.*;
 import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.infrastructure.constants.OrderType;
+import com.example.be.infrastructure.constants.DeliveryMethod;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.exceptions.BusinessException;
@@ -61,7 +63,8 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Transactional(readOnly = true)
     /** Lay danh sach hoa don POS dang cho xu ly de FE hien thi tab don hang. */
     public List<AdminBanHangHoaDonResponse> getHoaDonCho() {
-        return hoaDonRepository.findAllPendingPOSOrders(OrderStatus.CHO_XAC_NHAN)
+        String idNhanVien = getCurrentNhanVien().map(NhanVien::getId).orElse(null);
+        return hoaDonRepository.findAllPendingPOSOrders(OrderStatus.CHO_XAC_NHAN, OrderType.IN_STORE, idNhanVien)
                 .stream().map(this::mapToHoaDonResponse).collect(Collectors.toList());
     }
 
@@ -69,20 +72,22 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     @Transactional
     /** Tao hoa don tai quay moi, gioi han so don cho de tranh mo qua nhieu tab. */
     public AdminBanHangHoaDonResponse createHoaDon() {
-        if (hoaDonRepository.countPendingPOSOrders(OrderStatus.CHO_XAC_NHAN) >= 5) {
+        java.util.Optional<NhanVien> currentNhanVien = getCurrentNhanVien();
+        String idNhanVien = currentNhanVien.map(NhanVien::getId).orElse(null);
+        if (hoaDonRepository.countPendingPOSOrders(OrderStatus.CHO_XAC_NHAN, OrderType.IN_STORE, idNhanVien) >= 5) {
             throw new BusinessException("Chỉ được tạo tối đa 5 hóa đơn chờ");
         }
         HoaDon hoaDon = new HoaDon();
         hoaDon.setMaHoaDon(CodeUtils.generateRandom(HoaDon.class));
         hoaDon.setTrangThai(OrderStatus.CHO_XAC_NHAN);
         hoaDon.setLoaiDon("TAI_QUAY");
+        hoaDon.setOrderType(OrderType.IN_STORE);
+        hoaDon.setDeliveryMethod(DeliveryMethod.TAKEAWAY);
         hoaDon.setNgayTao(System.currentTimeMillis());
         hoaDon.setTongTien(BigDecimal.ZERO);
         hoaDon.setTongTienSauGiam(BigDecimal.ZERO);
 
-        NhanVien nv = SecurityUtils.getCurrentUserEmail()
-                .flatMap(identifier -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(identifier, identifier, identifier, identifier))
-                .orElse(null);
+        NhanVien nv = currentNhanVien.orElse(null);
         if (nv != null) {
             hoaDon.setNhanVien(nv);
             // Link to active GiaoCa (tạm thời comment theo yêu cầu không cần giao ca)
@@ -93,6 +98,13 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
         hoaDonRepository.save(hoaDon);
         return mapToHoaDonResponse(hoaDon);
+    }
+
+    /** Xác định nhân viên hiện tại để mỗi quầy chỉ khôi phục các tab thuộc phiên làm việc của mình. */
+    private java.util.Optional<NhanVien> getCurrentNhanVien() {
+        return SecurityUtils.getCurrentUserEmail()
+                .flatMap(identifier -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(
+                        identifier, identifier, identifier, identifier));
     }
 
     @Override
@@ -206,7 +218,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             hoaDonChiTietRepository.save(newHdct);
         }
 
-        updateHoaDonTotals(hoaDon);
+        updateHoaDonTotals(hoaDon, true);
         AdminBanHangHoaDonResponse response = mapToHoaDonResponse(hoaDon);
         response.setPriceChanged(priceChanged);
         response.setPriceChangeMessage(priceChangeMessage);
@@ -239,7 +251,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             hdct.setSoLuong(soLuong);
             hoaDonChiTietRepository.save(hdct);
         }
-        updateHoaDonTotals(getHoaDonOrThrow(idHoaDon));
+        updateHoaDonTotals(getHoaDonOrThrow(idHoaDon), true);
         return mapToHoaDonResponse(getHoaDonOrThrow(idHoaDon));
     }
 
@@ -259,7 +271,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
         // Cập nhật tổng tiền hóa đơn (có thể = 0 nếu giỏ trống, hóa đơn vẫn giữ trạng thái CHO_XAC_NHAN)
         HoaDon hd = getHoaDonOrThrow(idHoaDon);
-        updateHoaDonTotals(hd);
+        updateHoaDonTotals(hd, true);
     }
 
     @Override
@@ -271,7 +283,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             kh = khachHangRepository.findById(idKhachHang).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KHACH_HANG_NOT_EXIST));
         }
         hd.setKhachHang(kh);
-        hoaDonRepository.save(hd);
+        updateHoaDonTotals(hd, true);
         return mapToHoaDonResponse(hd);
     }
 
@@ -281,15 +293,18 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         HoaDon hd = hoaDonRepository.findById(idHoaDon)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
 
-        hd.setLoaiDon(request.getLoaiDon());
-        if ("ONLINE".equalsIgnoreCase(request.getLoaiDon()) || "GIAO_HANG".equalsIgnoreCase(request.getLoaiDon())) {
+        DeliveryMethod deliveryMethod = resolveDeliveryMethod(request.getDeliveryMethod(), request.getLoaiDon());
+        hd.setOrderType(OrderType.IN_STORE);
+        hd.setDeliveryMethod(deliveryMethod);
+        hd.setLoaiDon(toLegacyLoaiDon(deliveryMethod));
+        if (deliveryMethod == DeliveryMethod.SHIPPING) {
             hd.setPhiVanChuyen(request.getPhiVanChuyen());
         } else {
             hd.setPhiVanChuyen(BigDecimal.ZERO);
         }
 
         hoaDonRepository.save(hd);
-        updateHoaDonTotals(hd);
+        updateHoaDonTotals(hd, false);
 
         return mapToHoaDonResponse(hd);
     }
@@ -301,9 +316,13 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         PhieuGiamGia voucher = null;
         if (idPhieuGiamGia != null && !idPhieuGiamGia.isEmpty()) {
             voucher = phieuGiamGiaRepository.findById(idPhieuGiamGia).orElseThrow(() -> new ResourceNotFoundException(MessageConstants.VOUCHER_NOT_EXIST));
+            BigDecimal total = hd.getTongTien() != null ? hd.getTongTien() : BigDecimal.ZERO;
+            if (!isVoucherEligible(voucher, hd, total, System.currentTimeMillis())) {
+                throw new BusinessException("Phiếu giảm giá không còn phù hợp với hóa đơn hiện tại");
+            }
         }
         hd.setPhieuGiamGia(voucher);
-        updateHoaDonTotals(hd);
+        updateHoaDonTotals(hd, false);
         return mapToHoaDonResponse(hd);
     }
 
@@ -374,10 +393,11 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         // Chỉ cần cập nhật trạng thái hóa đơn.
 
         hd.setKhachHang(resolveCheckoutCustomer(hd, request));
-        String loaiDon = normalizeBlank(request.getLoaiDon());
-        OrderStatus finalStatus = isShippingOrder(loaiDon) ? OrderStatus.XAC_NHAN : OrderStatus.HOAN_THANH;
+        DeliveryMethod deliveryMethod = resolveDeliveryMethod(request.getDeliveryMethod(), request.getLoaiDon());
+        boolean shippingOrder = deliveryMethod == DeliveryMethod.SHIPPING;
+        OrderStatus finalStatus = shippingOrder ? OrderStatus.XAC_NHAN : OrderStatus.HOAN_THANH;
         hd.setTrangThai(finalStatus);
-        BigDecimal phiVanChuyen = isShippingOrder(loaiDon) ? normalizeMoney(request.getPhiVanChuyen()) : BigDecimal.ZERO;
+        BigDecimal phiVanChuyen = shippingOrder ? normalizeMoney(request.getPhiVanChuyen()) : BigDecimal.ZERO;
         BigDecimal tienGiamVoucher = calculateVoucherDiscount(tongTienThucTe, voucher);
         BigDecimal tongSauGiamHang = tongTienThucTe.subtract(tienGiamVoucher);
         if (tongSauGiamHang.compareTo(BigDecimal.ZERO) < 0) {
@@ -386,8 +406,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         // Cong thuc chot don POS: final = ship + ((tien sau dot giam) - phieu giam gia).
         BigDecimal tongTienCanThu = tongSauGiamHang.add(phiVanChuyen);
 
-        hd.setLoaiDon(loaiDon);
-        hd.setOrderType(com.example.be.infrastructure.constants.OrderType.IN_STORE); // Luôn là IN_STORE cho POS
+        hd.setLoaiDon(toLegacyLoaiDon(deliveryMethod));
+        // Nguon API la POS: khong tin orderType do client gui len.
+        hd.setOrderType(OrderType.IN_STORE);
+        hd.setDeliveryMethod(deliveryMethod);
         hd.setPhiVanChuyen(phiVanChuyen);
         String tenNguoiNhan = normalizeBlank(request.getTenNguoiNhan());
         String sdtNguoiNhan = normalizeBlank(request.getSdtNguoiNhan());
@@ -413,7 +435,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
         if (tenNguoiNhan == null) tenNguoiNhan = "Khách vãng lai";
         if (sdtNguoiNhan == null) sdtNguoiNhan = "Chưa có SĐT";
-        if (diaChiNguoiNhan == null) diaChiNguoiNhan = isShippingOrder(loaiDon) ? "Chưa có địa chỉ" : "Tại cửa hàng";
+        if (diaChiNguoiNhan == null) diaChiNguoiNhan = shippingOrder ? "Chưa có địa chỉ" : "Tại cửa hàng";
 
         hd.setTenNguoiNhan(tenNguoiNhan);
         hd.setSoDienThoaiNguoiNhan(sdtNguoiNhan);
@@ -445,7 +467,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .hoaDon(hd)
                 .trangThaiCu(OrderStatus.CHO_XAC_NHAN.ordinal())
                 .trangThaiMoi(finalStatus.ordinal())
-                .ghiChu(isShippingOrder(loaiDon) ? "Xác nhận đơn giao hàng tại quầy" : "Thanh toán tại quầy thành công")
+                .ghiChu(shippingOrder ? "Xác nhận đơn giao hàng tại quầy" : "Thanh toán tại quầy thành công")
                 .nguoiThucHien(nguoiThucHienName)
                 .build();
         history.setNgayTao(System.currentTimeMillis());
@@ -629,45 +651,9 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
         PhieuGiamGia bestVoucher = null;
         BigDecimal maxDiscount = BigDecimal.ZERO;
-        Integer maxPercent = 0;
-
         long currentTime = System.currentTimeMillis();
         for (PhieuGiamGia voucher : allVouchers) {
-            // Kiểm tra thời gian hiệu lực
-            Long start = voucher.getNgayBatDau();
-            Long end = voucher.getNgayKetThuc();
-            if ((start != null && currentTime < start) || (end != null && currentTime > end)) {
-                continue;
-            }
-
-            // Kiểm tra điều kiện đơn hàng tối thiểu
-            BigDecimal minOrder = voucher.getDonHangToiThieu() != null ? voucher.getDonHangToiThieu() : BigDecimal.ZERO;
-            if (total.compareTo(minOrder) < 0) {
-                continue;
-            }
-
-            // Kiểm tra loại phiếu: công khai hoặc cá nhân
-            String hinhThuc = voucher.getHinhThuc();
-            
-            // Nếu là phiếu cá nhân, chỉ áp dụng khi khách hàng có phiếu này
-            if ("CA_NHAN".equals(hinhThuc) || "Cá nhân".equalsIgnoreCase(hinhThuc)) {
-                if (hd.getKhachHang() == null) {
-                    continue; // Không có khách hàng, bỏ qua phiếu cá nhân
-                }
-                
-                // Kiểm tra khách hàng có phiếu này không
-                List<com.example.be.entity.PhieuGiamGiaCaNhan> personalVouchers = 
-                    phieuGiamGiaCaNhanRepository.findByKhachHangId(hd.getKhachHang().getId());
-                
-                boolean customerHasVoucher = personalVouchers.stream()
-                    .anyMatch(pv -> pv.getPhieuGiamGia() != null 
-                        && pv.getPhieuGiamGia().getId().equals(voucher.getId())
-                        && Boolean.FALSE.equals(pv.getDaSuDung()));
-                
-                if (!customerHasVoucher) {
-                    continue; // Khách hàng không có phiếu này hoặc đã dùng
-                }
-            }
+            if (!isVoucherEligible(voucher, hd, total, currentTime)) continue;
 
             BigDecimal discount = getPotentialDiscount(voucher, total);
             // Ưu tiên theo số tiền giảm lớn nhất
@@ -679,6 +665,34 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             }
         }
         return bestVoucher;
+    }
+
+    private boolean isVoucherEligible(PhieuGiamGia voucher, HoaDon hd, BigDecimal total, long currentTime) {
+        if (!isVoucherAvailableForOrder(voucher, hd, currentTime)) return false;
+
+        BigDecimal minOrder = voucher.getDonHangToiThieu() != null
+                ? voucher.getDonHangToiThieu()
+                : BigDecimal.ZERO;
+        return total.compareTo(minOrder) >= 0;
+    }
+
+    private boolean isVoucherAvailableForOrder(PhieuGiamGia voucher, HoaDon hd, long currentTime) {
+        if (voucher == null || !TrangThai.DANG_HOAT_DONG.equals(voucher.getTrangThai())) return false;
+        // Quy ước dữ liệu: -1 là phiếu vô hạn, 0 mới là đã hết lượt.
+        if (voucher.getSoLuong() != null && voucher.getSoLuong() == 0) return false;
+        if (voucher.getNgayBatDau() != null && currentTime < voucher.getNgayBatDau()) return false;
+        if (voucher.getNgayKetThuc() != null && currentTime > voucher.getNgayKetThuc()) return false;
+
+        String form = voucher.getHinhThuc() != null ? voucher.getHinhThuc().trim() : "";
+        boolean personal = "CA_NHAN".equalsIgnoreCase(form) || "CÁ NHÂN".equalsIgnoreCase(form);
+        if (!personal) return true;
+        if (hd.getKhachHang() == null) return false;
+
+        return phieuGiamGiaCaNhanRepository.findByKhachHangId(hd.getKhachHang().getId()).stream()
+                .anyMatch(assigned -> assigned.getPhieuGiamGia() != null
+                        && voucher.getId().equals(assigned.getPhieuGiamGia().getId())
+                        && !Boolean.TRUE.equals(assigned.getDaSuDung())
+                        && !Boolean.TRUE.equals(assigned.getXoaMem()));
     }
 
     private BigDecimal getPotentialDiscount(PhieuGiamGia v, BigDecimal baseAmount) {
@@ -715,8 +729,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         PhieuGiamGia nextBest = null;
         BigDecimal maxPotentialDiscount = eligibleDiscount;
         BigDecimal bestMinOrder = BigDecimal.valueOf(Long.MAX_VALUE);
+        long currentTime = System.currentTimeMillis();
 
         for (PhieuGiamGia v : allVouchers) {
+            if (!isVoucherAvailableForOrder(v, hd, currentTime)) continue;
             BigDecimal minOrder = v.getDonHangToiThieu() != null ? v.getDonHangToiThieu() : BigDecimal.ZERO;
             if (minOrder.compareTo(total) <= 0) continue; // Nếu đã đủ điều kiện rồi thì khuyến mãi đó sẽ nằm trong bestVoucher.
 
@@ -809,7 +825,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     }
 
     /** Cap nhat tong tien hoa don moi khi gio hang/voucher thay doi. */
-    private void updateHoaDonTotals(HoaDon hd) {
+    private void updateHoaDonTotals(HoaDon hd, boolean autoSelectBestVoucher) {
         List<HoaDonChiTiet> details = hoaDonChiTietRepository.findAllByHoaDon(hd);
         
         BigDecimal total = details.stream()
@@ -817,27 +833,15 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         hd.setTongTien(total);
 
-        // Kiểm tra phiếu giảm giá hiện tại có còn hiệu lực không
-        boolean voucherValid = false;
-        if (hd.getPhieuGiamGia() != null) {
-            PhieuGiamGia voucher = phieuGiamGiaRepository.findById(hd.getPhieuGiamGia().getId()).orElse(null);
-            long currentTime = System.currentTimeMillis();
-            if (voucher != null 
-                    && TrangThai.DANG_HOAT_DONG.equals(voucher.getTrangThai())
-                    && (voucher.getNgayBatDau() == null || currentTime >= voucher.getNgayBatDau())
-                    && (voucher.getNgayKetThuc() == null || currentTime <= voucher.getNgayKetThuc())
-                    && (voucher.getDonHangToiThieu() == null || total.compareTo(voucher.getDonHangToiThieu()) >= 0)) {
-                voucherValid = true;
-            }
-        }
-
-        if (!voucherValid) {
-            // Phiếu cũ không còn hiệu lực/ngừng hoạt động -> Tự động tìm phiếu tốt nhất khác còn hiệu lực
-            PhieuGiamGia bestVoucher = getBestVoucher(hd.getId());
-            if (bestVoucher != null && calculateVoucherDiscount(total, bestVoucher).compareTo(BigDecimal.ZERO) > 0) {
-                hd.setPhieuGiamGia(bestVoucher);
-            } else {
+        if (autoSelectBestVoucher) {
+            // Mỗi biến động giỏ hàng/khách hàng đều chọn lại voucher có mức giảm thực tế cao nhất.
+            hd.setPhieuGiamGia(getBestVoucher(hd.getId()));
+        } else if (hd.getPhieuGiamGia() != null) {
+            PhieuGiamGia currentVoucher = phieuGiamGiaRepository.findById(hd.getPhieuGiamGia().getId()).orElse(null);
+            if (!isVoucherEligible(currentVoucher, hd, total, System.currentTimeMillis())) {
                 hd.setPhieuGiamGia(null);
+            } else {
+                hd.setPhieuGiamGia(currentVoucher);
             }
         }
 
@@ -879,8 +883,17 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         return value != null && value.compareTo(BigDecimal.ZERO) > 0 ? value : BigDecimal.ZERO;
     }
 
-    private boolean isShippingOrder(String loaiDon) {
-        return "ONLINE".equalsIgnoreCase(loaiDon) || "GIAO_HANG".equalsIgnoreCase(loaiDon);
+    private DeliveryMethod resolveDeliveryMethod(DeliveryMethod deliveryMethod, String legacyLoaiDon) {
+        if (deliveryMethod != null) {
+            return deliveryMethod;
+        }
+        return "ONLINE".equalsIgnoreCase(legacyLoaiDon) || "GIAO_HANG".equalsIgnoreCase(legacyLoaiDon)
+                ? DeliveryMethod.SHIPPING
+                : DeliveryMethod.TAKEAWAY;
+    }
+
+    private String toLegacyLoaiDon(DeliveryMethod deliveryMethod) {
+        return deliveryMethod == DeliveryMethod.SHIPPING ? "GIAO_HANG" : "TAI_QUAY";
     }
 
     private void createGiaoDich(HoaDon hd, String maPTTT, BigDecimal soTien, String maGiaoDichNgoai) {
@@ -967,11 +980,17 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         
         if (!chiTietList.isEmpty()) {
             PhieuGiamGia bestVoucher = getBestVoucher(hd.getId());
-            
+
             if (bestVoucher != null && calculateVoucherDiscount(tongTien, bestVoucher).compareTo(BigDecimal.ZERO) > 0) {
-                voucherSuggestionText = "Đã áp dụng mã giảm giá ưu đãi nhất: " + getVoucherCode(bestVoucher) + " (-" + formatCurrencyVND(getPotentialDiscount(bestVoucher, tongTien)) + ")";
                 bestVoucherId = bestVoucher.getId();
-                canApplySuggestedVoucher = false;
+                boolean bestAlreadyApplied = appliedVoucher != null
+                        && bestVoucher.getId().equals(appliedVoucher.getId());
+                voucherSuggestionText = bestAlreadyApplied
+                        ? "Đã áp dụng mã giảm giá ưu đãi nhất: " + getVoucherCode(bestVoucher)
+                            + " (-" + formatCurrencyVND(getPotentialDiscount(bestVoucher, tongTien)) + ")"
+                        : "Có mã giảm giá tốt hơn: " + getVoucherCode(bestVoucher)
+                            + " (-" + formatCurrencyVND(getPotentialDiscount(bestVoucher, tongTien)) + ")";
+                canApplySuggestedVoucher = !bestAlreadyApplied;
             } else {
                 PhieuGiamGia nextBetterVoucher = getNextBetterVoucher(hd, null);
                 if (nextBetterVoucher == null) {
@@ -997,6 +1016,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
                 .sdtKhachHang(hd.getKhachHang() != null ? hd.getKhachHang().getSdt() : "")
                 .idPhieuGiamGia(appliedVoucher != null ? appliedVoucher.getId() : null)
                 .phieuGiamGia(appliedVoucher)
+                .orderType(hd.getOrderType() != null ? hd.getOrderType() : OrderType.IN_STORE)
+                .deliveryMethod(hd.getDeliveryMethod() != null
+                        ? hd.getDeliveryMethod()
+                        : resolveDeliveryMethod(null, hd.getLoaiDon()))
                 .loaiDon(hd.getLoaiDon())
                 .tongTienHang(tongTienHang)
                 .tienGiamGiaSanPham(tienGiamGiaSanPham)

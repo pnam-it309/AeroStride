@@ -8,6 +8,8 @@ import com.example.be.core.customer.order.service.CustomerOrderService;
 import com.example.be.core.customer.order.repository.*;
 import com.example.be.entity.*;
 import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.infrastructure.constants.OrderType;
+import com.example.be.infrastructure.constants.DeliveryMethod;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.utils.CodeUtils;
 import com.example.be.utils.DiscountPriceUtils;
@@ -127,7 +129,8 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             if (voucher.getNgayKetThuc() != null && now > voucher.getNgayKetThuc()) {
                 throw new RuntimeException("Voucher đã hết hạn");
             }
-            if (voucher.getSoLuong() != null && voucher.getSoLuong() <= 0) {
+            // Quy ước dữ liệu: -1 là phiếu vô hạn, 0 mới là đã hết lượt.
+            if (voucher.getSoLuong() != null && voucher.getSoLuong() == 0) {
                 throw new RuntimeException("Voucher đã hết lượt sử dụng");
             }
             if (voucher.getDonHangToiThieu() != null && tongTien.compareTo(voucher.getDonHangToiThieu()) < 0) {
@@ -146,7 +149,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             }
 
             // Trừ số lượng voucher
-            if (voucher.getSoLuong() != null) {
+            if (voucher.getSoLuong() != null && voucher.getSoLuong() > 0) {
                 voucher.setSoLuong(voucher.getSoLuong() - 1);
                 phieuGiamGiaRepository.save(voucher);
             }
@@ -174,6 +177,8 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .trangThai(OrderStatus.CHO_XAC_NHAN)
                 .khachHang(khachHang)
                 .loaiDon("ONLINE")
+                .orderType(OrderType.ONLINE)
+                .deliveryMethod(DeliveryMethod.SHIPPING)
                 .tongTien(tongTien)
                 .phiVanChuyen(phiVanChuyen)
                 .tongTienSauGiam(tongTienSauGiam)
@@ -255,7 +260,9 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
 
         List<HoaDon> hoaDons = hoaDonRepository.findAll().stream()
                 .filter(hd -> hd.getKhachHang() != null && hd.getKhachHang().getId().equals(khachHang.getId()))
-                .filter(hd -> "ONLINE".equals(hd.getLoaiDon()))
+                .filter(hd -> hd.getOrderType() == OrderType.ONLINE
+                        || (hd.getOrderType() == null && hd.getNhanVien() == null
+                                && "ONLINE".equalsIgnoreCase(hd.getLoaiDon())))
                 .filter(hd -> {
                     if (trangThai == null || trangThai.isBlank()) return true;
                     return hd.getTrangThai() != null && hd.getTrangThai().name().equals(trangThai);
@@ -360,7 +367,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         // Hoàn voucher
         if (hoaDon.getPhieuGiamGia() != null) {
             PhieuGiamGia voucher = hoaDon.getPhieuGiamGia();
-            if (voucher.getSoLuong() != null) {
+            if (voucher.getSoLuong() != null && voucher.getSoLuong() >= 0) {
                 voucher.setSoLuong(voucher.getSoLuong() + 1);
                 phieuGiamGiaRepository.save(voucher);
             }
@@ -757,6 +764,10 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
                 .tenNguoiNhan(tenNguoiNhan)
                 .ghiChu(hoaDon.getGhiChu())
                 .loaiDon(hoaDon.getLoaiDon())
+                .orderType(hoaDon.getOrderType() != null ? hoaDon.getOrderType() : OrderType.ONLINE)
+                .deliveryMethod(hoaDon.getDeliveryMethod() != null
+                        ? hoaDon.getDeliveryMethod()
+                        : DeliveryMethod.SHIPPING)
                 .phuongThucThanhToan(phuongThuc)
                 .ngayTao(hoaDon.getNgayTao())
                 .ngayCapNhat(hoaDon.getNgayCapNhat())

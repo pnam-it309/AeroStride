@@ -89,7 +89,7 @@ export const dichVuDonHang = {
 
     // Cập nhật phí vận chuyển và loại đơn hàng
     async updateShippingAndChannel(idHoaDon, payload) {
-        // payload: { loaiDon, phiVanChuyen }
+        // payload: { orderType: 'IN_STORE', deliveryMethod, phiVanChuyen }
         const response = await api.put(`${API_ADMIN.BAN_HANG}/${idHoaDon}/shipping`, payload);
         return response.data.data;
     },

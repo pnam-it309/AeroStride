@@ -52,6 +52,8 @@ const order = ref({
     tongTien: 0,
     tongTienSauGiam: 0,
     phiVanChuyen: 0,
+    orderType: "IN_STORE",
+    deliveryMethod: "TAKEAWAY",
     loaiDon: "OFFLINE",
     diaChiNguoiNhan: "",
     ghiChu: "",
@@ -363,7 +365,13 @@ const canUpdateStatus = computed(() => order.value && getOrderStatus() !== null 
 const isOrderEditable = computed(() => order.value.trangThai === 'CHO_XAC_NHAN' || getOrderStatus() < ORDER_STATUS_ORDINALS.CHO_GIAO);
 
 const customerName = computed(() => order.value.tenKhachHang || 'Khách vãng lai');
-const orderTypeLabel = computed(() => (order.value.loaiDon === 'TAI_QUAY' ? 'Nhận tại quầy' : 'Giao hàng tận nơi'));
+const orderTypeLabel = computed(() => order.value.orderType === 'ONLINE' ? 'Trực tuyến' : 'Cửa hàng');
+const deliveryMethodLabel = computed(() => {
+    const shipping = order.value.deliveryMethod
+        ? order.value.deliveryMethod === 'SHIPPING'
+        : ['ONLINE', 'GIAO_HANG'].includes(String(order.value.loaiDon || '').toUpperCase());
+    return shipping ? 'Giao hàng tận nơi' : 'Nhận tại quầy';
+});
 
 /**
  * Dịch tên người thực hiện sang tiếng Việt thân thiện:
@@ -444,7 +452,7 @@ const campaignDiscountPercent = computed(() => {
 
 const initialHistoryLog = computed(() => {
     let performer;
-    if (order.value.loaiDon === 'ONLINE') {
+    if (order.value.orderType === 'ONLINE') {
         // Đặt online: người tạo là khách hàng
         performer = order.value.tenKhachHang || 'Khách hàng';
     } else {
@@ -984,13 +992,21 @@ onMounted(() => {
                         <div class="info-group mb-3">
                             <v-row dense align="center">
                                 <v-col cols="4" class="text-body-2 text-slate-500 font-weight-medium">
-                                    Loại đơn hàng
+                                    Kênh bán
                                 </v-col>
                                 <v-col cols="8">
                                     <v-chip variant="flat" class="px-3"
                                         style="background-color: #eff6ff !important; color: #1e40af !important; font-weight: 500;">
                                         {{ orderTypeLabel }}
                                     </v-chip>
+                                </v-col>
+                            </v-row>
+                            <v-row dense align="center" class="mt-2">
+                                <v-col cols="4" class="text-body-2 text-slate-500 font-weight-medium">
+                                    Phương thức nhận
+                                </v-col>
+                                <v-col cols="8">
+                                    {{ deliveryMethodLabel }}
                                 </v-col>
                             </v-row>
                         </div>
@@ -1158,7 +1174,7 @@ onMounted(() => {
                                                 <v-icon color="primary" class="mr-2"
                                                     size="18">mdi-account-check-outline</v-icon>
                                                 <span><span class="font-weight-medium">Người xác nhận:</span> {{
-                                                    formatNguoi(pay.nguoiXacNhan || order.tenNhanVien, order.loaiDon === 'ONLINE') }}</span>
+                                                    formatNguoi(pay.nguoiXacNhan || order.tenNhanVien, order.orderType === 'ONLINE') }}</span>
                                             </div>
                                         </div>
                                         <div class="text-right d-flex flex-column align-end">
@@ -1425,7 +1441,7 @@ onMounted(() => {
                                     <!-- Column 3: Performer -->
                                     <div style="width: 150px;" class="text-center">
                                         <span class="text-body-2 text-slate-600">{{
-                                            formatNguoi(log.nguoiThucHien, order.loaiDon === 'ONLINE') }}</span>
+                                            formatNguoi(log.nguoiThucHien, order.orderType === 'ONLINE') }}</span>
                                     </div>
 
                                     <!-- Column 4: Time -->
@@ -1460,7 +1476,7 @@ onMounted(() => {
                                     <!-- Column 3: Performer -->
                                     <div style="width: 150px;" class="text-center">
                                         <span class="text-body-2 text-slate-600">{{
-                                            formatNguoi(initialHistoryLog.nguoiThucHien, order.loaiDon === 'ONLINE') }}</span>
+                                            formatNguoi(initialHistoryLog.nguoiThucHien, order.orderType === 'ONLINE') }}</span>
                                     </div>
 
                                     <!-- Column 4: Time -->

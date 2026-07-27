@@ -117,7 +117,8 @@ const priceRangeOptions = computed(() => {
 });
 
 const filteredProductSearchResults = computed(() => {
-    return store.productSearchResults || [];
+    const list = store.productSearchResults || [];
+    return list.filter(item => Number(item.soLuongTon ?? item.soLuong ?? 0) > 0);
 });
 
 const onFilterChange = () => {

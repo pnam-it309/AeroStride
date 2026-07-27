@@ -4,7 +4,9 @@ import com.example.be.core.common.base.AuditEntity;
 import com.example.be.core.common.base.IsIdentified;
 import com.example.be.infrastructure.annotations.CodePrefix;
 import com.example.be.infrastructure.constants.EntityProperties;
+import com.example.be.infrastructure.constants.DeliveryMethod;
 import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.infrastructure.constants.OrderType;
 import com.example.be.infrastructure.listener.PrimaryEntityListener;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -62,7 +64,11 @@ public class HoaDon extends AuditEntity implements IsIdentified {
 
     @Column(name = "order_type")
     @Enumerated(EnumType.STRING)
-    private com.example.be.infrastructure.constants.OrderType orderType;
+    private OrderType orderType;
+
+    @Column(name = "delivery_method")
+    @Enumerated(EnumType.STRING)
+    private DeliveryMethod deliveryMethod;
 
     @Column(name = "phi_van_chuyen")
     private BigDecimal phiVanChuyen;

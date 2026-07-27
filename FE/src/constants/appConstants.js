@@ -61,13 +61,19 @@ export const GIOI_TINH_FILTER_OPTIONS = [
 export const ORDER_TYPES = {
     ALL: null,
     ONLINE: 'ONLINE',
+    IN_STORE: 'IN_STORE',
     TAI_QUAY: 'TAI_QUAY',
     OFFLINE: 'OFFLINE'
+};
+
+export const DELIVERY_METHODS = {
+    TAKEAWAY: 'TAKEAWAY',
+    SHIPPING: 'SHIPPING'
 };
 
 export const ORDER_TYPE_OPTIONS = [
     { title: 'Tất cả', value: null },
     { title: 'Trực tuyến', value: ORDER_TYPES.ONLINE },
-    { title: 'Cửa hàng', value: ORDER_TYPES.TAI_QUAY }
+    { title: 'Cửa hàng', value: ORDER_TYPES.IN_STORE }
 ];
 

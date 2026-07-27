@@ -11,6 +11,7 @@ import com.example.be.entity.HoaDon;
 import com.example.be.entity.HoaDonChiTiet;
 import com.example.be.entity.LichSuTrangThaiHoaDon;
 import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.infrastructure.constants.OrderType;
 import com.example.be.infrastructure.constants.TrangThai;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +62,7 @@ public class PaymentOrderFinalizer {
         // Dùng UPDATE atomic có điều kiện soLuong >= qty để chống oversell khi nhiều đơn tranh nhau hàng cuối.
         // Đơn TAI_QUAY đã trừ lúc thêm vào giỏ hàng, nên bỏ qua bước này.
         StringBuilder thieuHangNote = new StringBuilder();
-        if (!"TAI_QUAY".equalsIgnoreCase(hoaDon.getLoaiDon())) {
+        if (isOnlineOrder(hoaDon)) {
             List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepository.findAllByHoaDon(hoaDon);
             for (HoaDonChiTiet ct : chiTiets) {
                 ChiTietSanPham ctsp = ct.getChiTietSanPham();
@@ -118,10 +119,17 @@ public class PaymentOrderFinalizer {
         String email = hoaDon.getEmailNguoiNhan() != null && !hoaDon.getEmailNguoiNhan().isBlank()
                 ? hoaDon.getEmailNguoiNhan().trim()
                 : (hoaDon.getKhachHang() != null && hoaDon.getKhachHang().getEmail() != null ? hoaDon.getKhachHang().getEmail().trim() : null);
-        if ("ONLINE".equalsIgnoreCase(hoaDon.getLoaiDon()) && email != null && !email.isBlank()) {
+        if (isOnlineOrder(hoaDon) && email != null && !email.isBlank()) {
             eventPublisher.publishEvent(new com.example.be.core.common.events.OrderPlacedEvent(
                     this, hoaDon.getId(), email, hoaDon.getTongTienSauGiam()));
             log.info("Published OrderPlacedEvent after VNPay payment for order {} to email {}", hoaDon.getId(), email);
         }
+    }
+
+    private boolean isOnlineOrder(HoaDon hoaDon) {
+        if (hoaDon.getOrderType() != null) {
+            return hoaDon.getOrderType() == OrderType.ONLINE;
+        }
+        return hoaDon.getNhanVien() == null && "ONLINE".equalsIgnoreCase(hoaDon.getLoaiDon());
     }
 }
