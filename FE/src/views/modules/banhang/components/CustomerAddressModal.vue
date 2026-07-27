@@ -4,7 +4,7 @@ import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { useLocation } from '@/composables/useLocation';
 import { useAddressMapping } from '@/composables/useAddressMapping';
 import { useNotifications } from '@/services/notificationService';
-import { MapPinIcon, PlusIcon, StarIcon, XIcon } from 'vue-tabler-icons';
+import { MapPinIcon, PlusIcon, XIcon } from 'vue-tabler-icons';
 
 const props = defineProps({
     modelValue: {
@@ -38,13 +38,26 @@ const submitting = ref(false);
 
 const isCurrentAddress = (addr) => {
     if (!addr) return false;
-    if (props.selectedAddressId && String(props.selectedAddressId) === String(addr.id)) {
-        return true;
+    // 1. Ưu tiên so sánh chính xác theo selectedAddressId nếu đã chọn
+    if (props.selectedAddressId) {
+        return String(props.selectedAddressId) === String(addr.id);
     }
-    if (props.currentShipping) {
-        const matchDetail = props.currentShipping.detail && String(props.currentShipping.detail).trim() === String(addr.diaChiChiTiet || '').trim();
-        const matchName = props.currentShipping.name && String(props.currentShipping.name).trim() === String(addr.tenNguoiNhan || '').trim();
-        if (matchDetail && matchName) return true;
+
+    // 2. Nếu chưa có selectedAddressId, so sánh theo thông tin nhận hàng hiện tại
+    if (props.currentShipping && props.currentShipping.detail) {
+        const currentDetail = String(props.currentShipping.detail || '').trim().toLowerCase();
+        const currentName = String(props.currentShipping.name || '').trim().toLowerCase();
+        const currentPhone = String(props.currentShipping.phone || '').replace(/\D/g, '');
+
+        const addrDetail = String(addr.diaChiChiTiet || '').trim().toLowerCase();
+        const addrName = String(addr.tenNguoiNhan || props.customer?.ten || '').trim().toLowerCase();
+        const addrPhone = String(addr.sdtNguoiNhan || props.customer?.sdt || '').replace(/\D/g, '');
+
+        const matchDetail = currentDetail !== '' && currentDetail === addrDetail;
+        const matchName = currentName === '' || currentName === addrName;
+        const matchPhone = currentPhone === '' || currentPhone === addrPhone;
+
+        if (matchDetail && matchName && matchPhone) return true;
     }
     return false;
 };
@@ -143,18 +156,6 @@ const handleSaveAddress = async () => {
     }
 };
 
-const handleSetDefault = async (addr, e) => {
-    e.stopPropagation();
-    try {
-        await dichVuKhachHang.datDiaChiMacDinh(addr.id);
-        addNotification({ title: 'Thành công', subtitle: 'Đã đặt địa chỉ mặc định.', color: 'success' });
-        await fetchCustomerAddresses();
-        emit('address-changed');
-    } catch (err) {
-        addNotification({ title: 'Lỗi', subtitle: 'Không thể cập nhật địa chỉ mặc định.', color: 'error' });
-    }
-};
-
 const close = () => {
     emit('update:modelValue', false);
 };
@@ -232,16 +233,6 @@ const close = () => {
                                             <span v-if="addr.laMacDinh" class="default-badge px-2 py-0-5 rounded-md text-caption font-weight-bold bg-amber-100 text-amber-800">
                                                 Mặc định
                                             </span>
-                                        </div>
-
-                                        <div class="d-flex align-center ga-1" @click.stop>
-                                            <v-tooltip v-if="!addr.laMacDinh" text="Đặt làm mặc định" location="top">
-                                                <template #activator="{ props }">
-                                                    <v-btn v-bind="props" icon size="x-small" variant="text" color="amber-darken-2" @click="handleSetDefault(addr, $event)">
-                                                        <StarIcon size="16" />
-                                                    </v-btn>
-                                                </template>
-                                            </v-tooltip>
                                         </div>
                                     </div>
 
