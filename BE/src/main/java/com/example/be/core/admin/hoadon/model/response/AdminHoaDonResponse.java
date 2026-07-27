@@ -1,5 +1,7 @@
 package com.example.be.core.admin.hoadon.model.response;
 
+import com.example.be.infrastructure.constants.DeliveryMethod;
+import com.example.be.infrastructure.constants.OrderType;
 import lombok.*;
 import java.math.BigDecimal;
 import java.util.List;
@@ -17,6 +19,9 @@ public class AdminHoaDonResponse {
     private String soDienThoai;
     private String maNhanVien;
     private String tenNhanVien;
+    private OrderType orderType;
+    private DeliveryMethod deliveryMethod;
+    @Deprecated
     private String loaiDon;
     private BigDecimal phiVanChuyen;
     private BigDecimal phiHoanHang;

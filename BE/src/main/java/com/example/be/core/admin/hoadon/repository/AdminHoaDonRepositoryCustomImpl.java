@@ -3,6 +3,7 @@ package com.example.be.core.admin.hoadon.repository;
 import com.example.be.core.admin.hoadon.model.request.AdminHoaDonRequest;
 import com.example.be.core.admin.hoadon.model.response.AdminHoaDonResponse;
 import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.infrastructure.constants.OrderType;
 import com.example.be.entity.QHoaDon;
 import com.example.be.entity.QKhachHang;
 import com.example.be.entity.QNhanVien;
@@ -82,11 +83,20 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
             }
         }
 
-        if (req.getLoaiDon() != null && !req.getLoaiDon().trim().isEmpty()) {
-            if ("TAI_QUAY".equalsIgnoreCase(req.getLoaiDon()) || "OFFLINE".equalsIgnoreCase(req.getLoaiDon())) {
-                builder.and(hd.loaiDon.in("TAI_QUAY", "OFFLINE"));
+        OrderType requestedType = req.getOrderType();
+        if (requestedType == null && req.getLoaiDon() != null && !req.getLoaiDon().trim().isEmpty()) {
+            requestedType = "ONLINE".equalsIgnoreCase(req.getLoaiDon())
+                    ? OrderType.ONLINE
+                    : OrderType.IN_STORE;
+        }
+        if (requestedType != null) {
+            if (requestedType == OrderType.IN_STORE) {
+                builder.and(hd.orderType.eq(OrderType.IN_STORE)
+                        .or(hd.orderType.isNull().and(hd.nhanVien.isNotNull()
+                                .or(hd.loaiDon.in("TAI_QUAY", "OFFLINE", "GIAO_HANG")))));
             } else {
-                builder.and(hd.loaiDon.eq(req.getLoaiDon()));
+                builder.and(hd.orderType.eq(OrderType.ONLINE)
+                        .or(hd.orderType.isNull().and(hd.nhanVien.isNull()).and(hd.loaiDon.eq("ONLINE"))));
             }
         }
 
@@ -121,7 +131,8 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                         hd.soDienThoaiNguoiNhan, hd.diaChiNguoiNhan,
                         khdc.diaChiChiTiet, khdc.phuongXa, khdc.thanhPho, khdc.tinh,
                         nv.ma, nv.ten,
-                        hd.loaiDon, hd.phiVanChuyen, hd.phiHoanHang, hd.tongTien, hd.tongTienSauGiam, hd.trangThai, hd.ghiChu
+                        hd.orderType, hd.deliveryMethod, hd.loaiDon, hd.phiVanChuyen, hd.phiHoanHang,
+                        hd.tongTien, hd.tongTienSauGiam, hd.trangThai, hd.ghiChu
                 )
                 .from(hd)
                 .leftJoin(hd.khachHang, kh)
@@ -205,6 +216,16 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                     .diaChiNguoiNhan(finalDiaChi)
                     .maNhanVien(finalMaNv)
                     .tenNhanVien(finalTenNv)
+                    .orderType(t.get(hd.orderType) != null
+                            ? t.get(hd.orderType)
+                            : (t.get(nv.ma) != null || !"ONLINE".equalsIgnoreCase(t.get(hd.loaiDon))
+                                    ? OrderType.IN_STORE : OrderType.ONLINE))
+                    .deliveryMethod(t.get(hd.deliveryMethod) != null
+                            ? t.get(hd.deliveryMethod)
+                            : (java.util.Set.of("ONLINE", "GIAO_HANG").contains(
+                                    String.valueOf(t.get(hd.loaiDon)).toUpperCase())
+                                    ? com.example.be.infrastructure.constants.DeliveryMethod.SHIPPING
+                                    : com.example.be.infrastructure.constants.DeliveryMethod.TAKEAWAY))
                     .loaiDon(t.get(hd.loaiDon))
                     .phiVanChuyen(t.get(hd.phiVanChuyen))
                     .phiHoanHang(t.get(hd.phiHoanHang))

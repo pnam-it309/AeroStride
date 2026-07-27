@@ -12,6 +12,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import QrcodeVue from 'qrcode.vue';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
 import { dichVuVnPay } from './composables/dichVuVnPay.js';
+import { initializePendingOrders } from './posInitialization.js';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { dichVuNhanVien } from '@/services/admin/dichVuNhanVien';
 import {
@@ -33,7 +34,7 @@ import { useBanHangStore } from '@/stores/banHangStore';
 import { useLocation } from '@/composables/useLocation';
 import { useAddressMapping } from '@/composables/useAddressMapping';
 import { useHoaDonPrinter } from '@/composables/useHoaDonPrinter';
-import { GIOI_TINH_OPTIONS } from '@/constants/appConstants';
+import { GIOI_TINH_OPTIONS, ORDER_TYPES, DELIVERY_METHODS } from '@/constants/appConstants';
 import { isActiveStatus } from '@/utils/statusUtils';
 
 import { useCustomerSelect } from './composables/useCustomerSelect';
@@ -60,6 +61,7 @@ const uiStore = useUIStore();
 const authStore = useAuthStore();
 const MAX_WAITING_ORDERS = 5;
 const VNPAY_PENDING_KEY = 'aerostride_pos_vnpay_pending';
+const POS_ACTIVE_ORDER_KEY = 'aerostride_pos_active_order_id';
 const BYPASS_PAYMENT_RECORD_INSERT = false;
 
 // Giao Ca State
@@ -272,6 +274,10 @@ const orderChannel = computed({
     set(newVal) {
         if (selectedOrder.value) {
             selectedOrder.value.isGiaoHangLocal = (newVal === 'Giao hàng' || newVal === 'Trực tuyến');
+            selectedOrder.value.orderType = ORDER_TYPES.IN_STORE;
+            selectedOrder.value.deliveryMethod = selectedOrder.value.isGiaoHangLocal
+                ? DELIVERY_METHODS.SHIPPING
+                : DELIVERY_METHODS.TAKEAWAY;
             selectedOrder.value.loaiDon = selectedOrder.value.isGiaoHangLocal ? 'GIAO_HANG' : 'TAI_QUAY';
         }
     }
@@ -285,6 +291,8 @@ const isGiaoHang = computed({
     set(val) {
         if (selectedOrder.value) {
             selectedOrder.value.isGiaoHangLocal = val;
+            selectedOrder.value.orderType = ORDER_TYPES.IN_STORE;
+            selectedOrder.value.deliveryMethod = val ? DELIVERY_METHODS.SHIPPING : DELIVERY_METHODS.TAKEAWAY;
             selectedOrder.value.loaiDon = val ? 'GIAO_HANG' : 'TAI_QUAY';
             if (!val) {
                 shippingFee.value = 0;
@@ -325,21 +333,6 @@ const discountAmount = computed(() => {
     return Number(selectedOrder.value?.tienGiamGiaPhieu || 0);
 });
 
-// Danh sách phần trăm giảm (duy nhất) của các sản phẩm trong đơn
-const appliedDiscountPercents = computed(() => {
-    const items = selectedOrder.value?.listsHoaDonChiTiet || [];
-    const percents = items
-        .map((item) => Number(item.phanTramGiam) || 0)
-        .filter((percent) => percent > 0);
-    return [...new Set(percents)].sort((a, b) => b - a);
-});
-
-const appliedDiscountSummary = computed(() =>
-    appliedDiscountPercents.value.length
-        ? appliedDiscountPercents.value.map((percent) => `${percent}%`).join(', ')
-        : 'Không có'
-);
-
 // Tiền sau khi áp dụng voucher
 const amountAfterAllDiscounts = computed(() => {
     return Number(selectedOrder.value?.tongTienSauGiam || 0);
@@ -365,14 +358,20 @@ const changeAmount = computed(() => {
     return Math.max(0, received - finalCollectAmount.value);
 });
 
-// Backend chỉ trả loaiDon, còn UI dùng isGiaoHangLocal cho công tắc giao hàng.
-// Chuẩn hóa tại một chỗ để mỗi lần refresh/cập nhật order không làm công tắc bị tắt sai.
-const isShippingOrderType = (loaiDon) => ['ONLINE', 'GIAO_HANG'].includes(String(loaiDon || '').toUpperCase());
+// deliveryMethod la nguon chinh; loaiDon chi dung de doc hoa don cu.
+// Chuan hoa tai mot cho de refresh/cap nhat order khong lam cong tac bi tat sai.
+const isShippingOrder = (order) => order?.deliveryMethod
+    ? order.deliveryMethod === DELIVERY_METHODS.SHIPPING
+    : ['ONLINE', 'GIAO_HANG'].includes(String(order?.loaiDon || '').toUpperCase());
 const normalizeSalesOrder = (order) => {
     if (!order) return order;
     return {
         ...order,
-        isGiaoHangLocal: order.isGiaoHangLocal ?? isShippingOrderType(order.loaiDon)
+        orderType: ORDER_TYPES.IN_STORE,
+        deliveryMethod: order.deliveryMethod || (isShippingOrder(order)
+            ? DELIVERY_METHODS.SHIPPING
+            : DELIVERY_METHODS.TAKEAWAY),
+        isGiaoHangLocal: order.isGiaoHangLocal ?? isShippingOrder(order)
     };
 };
 
@@ -390,9 +389,12 @@ const syncShippingAndChannel = () => {
             // Công tắc "Giao hàng" là nguồn trạng thái chính của loại đơn.
             // Không dùng biến phụ để tránh lúc vừa bật giao hàng bị sync nhầm về TẠI_QUẦY.
             const loaiDon = isGiaoHang.value ? 'GIAO_HANG' : 'TAI_QUAY';
-            const shipFee = loaiDon === 'GIAO_HANG' && !isFreeShip.value ? Number(shippingFee.value || 0) : 0;
+            const deliveryMethod = isGiaoHang.value ? DELIVERY_METHODS.SHIPPING : DELIVERY_METHODS.TAKEAWAY;
+            const shipFee = deliveryMethod === DELIVERY_METHODS.SHIPPING && !isFreeShip.value ? Number(shippingFee.value || 0) : 0;
 
             const updatedOrder = await dichVuDonHang.updateShippingAndChannel(selectedOrder.value.id, {
+                orderType: ORDER_TYPES.IN_STORE,
+                deliveryMethod,
                 loaiDon: loaiDon,
                 phiVanChuyen: shipFee
             });
@@ -420,15 +422,13 @@ watch(() => selectedOrder.value?.id, (id) => {
     if (id) {
         if (selectedOrder.value.phiVanChuyen !== undefined && selectedOrder.value.phiVanChuyen !== null) {
             shippingFee.value = Number(selectedOrder.value.phiVanChuyen);
-            isFreeShip.value = Number(selectedOrder.value.phiVanChuyen) === 0 && selectedOrder.value.loaiDon === 'ONLINE';
+            isFreeShip.value = Number(selectedOrder.value.phiVanChuyen) === 0 && isShippingOrder(selectedOrder.value);
         } else {
-            const channel = selectedOrder.value.loaiDon === 'ONLINE' ? 'Trực tuyến' : 'Tại quầy';
             shippingFee.value = 0;
             isFreeShip.value = false;
         }
 
-        const channel = selectedOrder.value.loaiDon === 'ONLINE' ? 'Trực tuyến' : 'Tại quầy';
-        onlyChargeIfReturned.value = channel === 'Tại quầy';
+        onlyChargeIfReturned.value = !isShippingOrder(selectedOrder.value);
     }
 });
 
@@ -449,7 +449,7 @@ watch([orderChannel, isFreeShip], ([channel, freeShip], oldVal) => {
         shippingFeeError.value = '';
         shippingFeeSource.value = '';
     } else {
-        if (channel === 'Trực tuyến' && (oldFreeShip === true || channel !== oldChannel)) {
+        if (channel === 'Giao hàng' && (oldFreeShip === true || channel !== oldChannel)) {
             void calculateShippingFee();
         } else if (channel !== oldChannel && oldChannel !== undefined) {
             shippingFee.value = 0;
@@ -473,10 +473,12 @@ watch(orderChannel, (channel) => {
     syncShippingAndChannel();
 });
 
-// Sync loaiDon when onlyChargeIfReturned changes manually
+// Dong bo phuong thuc nhan hang khi tuy chon thu tien thay doi.
 watch(onlyChargeIfReturned, (val) => {
     if (selectedOrder.value) {
-        selectedOrder.value.loaiDon = val ? 'TAI_QUAY' : 'ONLINE';
+        selectedOrder.value.orderType = ORDER_TYPES.IN_STORE;
+        selectedOrder.value.deliveryMethod = val ? DELIVERY_METHODS.TAKEAWAY : DELIVERY_METHODS.SHIPPING;
+        selectedOrder.value.loaiDon = val ? 'TAI_QUAY' : 'GIAO_HANG';
     }
     syncShippingAndChannel();
 });
@@ -494,18 +496,6 @@ watch(
 
 const voucherSuggestionText = computed(() => {
     return selectedOrder.value?.voucherSuggestionText || '';
-});
-
-const betterVoucherSuggestionText = computed(() => {
-    return selectedOrder.value?.betterVoucherSuggestionText || '';
-});
-
-const voucherSuggestionClass = computed(() =>
-    selectedOrder.value?.bestVoucherId ? 'text-success' : (selectedOrder.value?.betterVoucherSuggestionText ? 'text-deep-orange-darken-3' : 'text-grey-darken-1')
-);
-
-const canApplySuggestedVoucher = computed(() => {
-    return selectedOrder.value?.canApplySuggestedVoucher || false;
 });
 
 const isVoucherAutoApplied = ref({});
@@ -589,6 +579,27 @@ const setOrders = (payload, { preferOrderId = null } = {}) => {
 
     clampActiveOrderIndex();
 };
+
+// localStorage chỉ giữ ID tab đang mở; dữ liệu hóa đơn luôn được khôi phục từ backend.
+const getStoredActiveOrderId = () => {
+    try {
+        return localStorage.getItem(POS_ACTIVE_ORDER_KEY);
+    } catch (e) {
+        return null;
+    }
+};
+
+watch(
+    () => selectedOrder.value?.id,
+    (id) => {
+        try {
+            if (id) localStorage.setItem(POS_ACTIVE_ORDER_KEY, id);
+            else localStorage.removeItem(POS_ACTIVE_ORDER_KEY);
+        } catch (e) {
+            // Trình duyệt có thể chặn localStorage; việc khôi phục danh sách vẫn dựa vào backend.
+        }
+    }
+);
 
 // QR / Barcode Scanner Logic
 const showScanner = ref(false);
@@ -739,21 +750,20 @@ onMounted(async () => {
         await checkGiaoCa();
         fetchProvincesShip();
         await loadCurrentEmployeeDetails();
-        const data = await dichVuDonHang.layDonHangCho();
-        setOrders(data);
+        await initializePendingOrders({
+            fetchPendingOrders: () => dichVuDonHang.layDonHangCho(),
+            setPendingOrders: setOrders,
+            createEmptyOrder: () => createNewOrder({ force: true, silent: true }),
+            preferredOrderId: getStoredActiveOrderId()
+        });
 
-        // Tải danh sách phiếu giảm giá cho dropdown (BE là nguồn dữ liệu)
+        // Tải danh sách + voucher tốt nhất một lần khi khởi tạo.
         try {
-            const list = await dichVuDonHang.getVouchers(selectedOrder.value?.tongTien || 0);
-            vouchers.value = (list || []).map(v => decorateVoucher(v, selectedOrder.value));
             await refreshBestVoucher();
         } catch (e) {
             console.error('Lỗi khi tải phiếu giảm giá', e);
         }
 
-        if (orders.value.length === 0) {
-            await createNewOrder({ force: true, silent: true });
-        }
         await handleVnPayCallbackFromUrl();
     } catch (error) {
         addNotification({ title: 'Lỗi', subtitle: getErrorMessage(error, MESSAGES.ERROR.CONNECT_SERVER), color: 'error' });
@@ -921,15 +931,12 @@ watch(
     }
 );
 
-// Realtime PGG: mỗi lần đổi hóa đơn/khách hàng/tổng tiền/số lượng giỏ thì hỏi lại danh sách phiếu.
-// Không đưa idPhieuGiamGia vào key để tránh vòng lặp sau khi FE tự áp phiếu tốt nhất.
+// Chỉ tải lại danh sách voucher khi đổi hóa đơn/khách hàng.
+// Biến động tổng tiền được OrderSummaryPanel tính up-sale bằng computed từ danh sách đã có.
 const voucherRealtimeKey = computed(() => {
     const order = selectedOrder.value;
     if (!order?.id) return '';
-    const itemKey = (order.listsHoaDonChiTiet || [])
-        .map((item) => `${item.id}:${item.soLuong}`)
-        .join('|');
-    return `${order.id}|${order.idKhachHang || ''}|${order.tongTien || 0}|${itemKey}`;
+    return `${order.id}|${order.idKhachHang || ''}`;
 });
 
 watch(voucherRealtimeKey, async (key) => {
@@ -1183,7 +1190,6 @@ const onAddProduct = async (product) => {
             addNotification({ title: 'Thành công', subtitle: 'Đã thêm sản phẩm vào giỏ hàng', color: 'success' });
         }
 
-        refreshBestVoucher(updated);
     } catch (e) {
         addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.PRODUCT_OUT_OF_STOCK, color: 'error' });
     } finally {
@@ -1222,7 +1228,6 @@ const onUpdateQty = async (item, delta, inputEventTarget = null) => {
     try {
         const updated = await dichVuDonHang.updateSoLuong(selectedOrder.value.id, item.id, newQty);
         updateOrderInList(updated);
-        refreshBestVoucher(updated);
     } catch (e) {
         if (inputEventTarget) {
             inputEventTarget.value = item.soLuong;
@@ -1246,7 +1251,6 @@ const onRemoveItem = (item) => {
                 await dichVuDonHang.removeSanPham(currentOrderId, item.id);
                 const data = await dichVuDonHang.layDonHangCho();
                 setOrders(data, { preferOrderId: currentOrderId });
-                refreshBestVoucher();
                 confirmDialog.value.show = false;
             } catch (e) {
                 addNotification({ title: 'Lỗi', subtitle: MESSAGES.ERROR.DELETE_DATA, color: 'error' });
@@ -1278,35 +1282,28 @@ const decorateVoucher = (v, order = selectedOrder.value) => {
     return { ...v, customTitle: `${text} ${discount}`, disabled };
 };
 
-// Hỏi BE danh sách phiếu giảm giá để gợi ý; FE chọn phiếu tốt nhất theo tổng tiền giỏ hiện tại.
+// BE là nguồn quyết định voucher tốt nhất (đã xét %/tiền mặt, trần giảm, thời hạn và phiếu cá nhân).
 // Dùng serial để response cũ không ghi đè khi nhân viên thêm/xóa sản phẩm liên tục.
 let voucherRefreshSerial = 0;
 const refreshBestVoucher = async (order = selectedOrder.value, autoApply = true) => {
     if (!order?.id) return;
     const refreshSerial = ++voucherRefreshSerial;
     try {
-        const list = await dichVuDonHang.getVouchers(order.tongTien || 0);
+        const [list, backendBestVoucher] = await Promise.all([
+            dichVuDonHang.getVouchers(order.tongTien || 0),
+            dichVuDonHang.getBestVoucher(order.id)
+        ]);
         const decorated = (list || []).map(v => decorateVoucher(v, order));
         if (refreshSerial !== voucherRefreshSerial) return;
         vouchers.value = decorated;
 
-        // Tự động áp dụng phiếu giảm giá ưu đãi nhất khi giỏ hàng thay đổi
+        // Không tự tính/sort bằng soTienGiam ở FE vì voucher phần trăm có thể không có trường này.
         if (autoApply) {
-            const validVouchers = decorated.filter(v => !v.disabled && Number(v.soTienGiam || 0) > 0);
-            let bestVoucher = null;
-            if (validVouchers.length) {
-                validVouchers.sort((a, b) => (Number(b.soTienGiam || 0) - Number(a.soTienGiam || 0)));
-                bestVoucher = validVouchers[0];
-            }
-
-            const bestId = bestVoucher?.id || order.bestVoucherId || null;
-            const currentDiscount = Number(order.tongTienGiam || order.tienGiamGia || 0);
-
-            if (bestVoucher && Number(bestVoucher.soTienGiam || 0) > 0) {
-                if (String(order.idPhieuGiamGia) !== String(bestId) || currentDiscount <= 0 || order.canApplySuggestedVoucher) {
-                    await onApplyVoucher(bestId, false, true);
-                }
-            } else if (order.idPhieuGiamGia && currentDiscount <= 0) {
+            const bestId = backendBestVoucher?.id || null;
+            const currentId = order.idPhieuGiamGia || null;
+            if (bestId && String(currentId) !== String(bestId)) {
+                await onApplyVoucher(bestId, false, true);
+            } else if (!bestId && currentId) {
                 await onApplyVoucher(null, false, true);
             }
         }
@@ -1327,14 +1324,6 @@ const onApplyVoucher = async (voucherId, autoApply = false, isInternalCall = fal
     } catch (e) {
         order.suggestedVoucherId = null;
     }
-};
-
-// Cho phép bấm trực tiếp dòng gợi ý để áp PGG tốt nhất hiện tại.
-const applyBestVoucherFromSuggestion = async () => {
-    if (!canApplySuggestedVoucher.value) return;
-    const bestId = selectedOrder.value?.bestVoucherId;
-    if (!bestId) return;
-    await onApplyVoucher(bestId);
 };
 
 // Logic: Thanh toán VNPay
@@ -1433,7 +1422,9 @@ const buildCheckoutPayload = (order, overrides = {}) => {
         tongTien: order?.tongTien || 0,
         phiVanChuyen: isGiaoHang.value ? shippingFee.value : 0,
         tongTienSauGiam: finalCollectAmount.value,
-        loaiDon: isGiaoHang.value ? 'ONLINE' : 'TAI_QUAY',
+        orderType: ORDER_TYPES.IN_STORE,
+        deliveryMethod: isGiaoHang.value ? DELIVERY_METHODS.SHIPPING : DELIVERY_METHODS.TAKEAWAY,
+        loaiDon: isGiaoHang.value ? 'GIAO_HANG' : 'TAI_QUAY',
         ghiChu: compiledNote,
         tenNguoiNhan: isGiaoHang.value ? (recipientName.value || order?.tenKhachHang || null) : null,
         sdtNguoiNhan: isGiaoHang.value ? (recipientPhone.value || order?.sdtKhachHang || null) : null,
@@ -2027,15 +2018,15 @@ const formatDateTime = (dateStr) => {
                         :selected-voucher-id="selectedOrder?.idPhieuGiamGia"
                         :applied-voucher="selectedOrder?.phieuGiamGia"
                         :voucher-suggestion-text="voucherSuggestionText"
-                        :voucher-suggestion-class="voucherSuggestionClass"
-                        :can-apply-suggested-voucher="canApplySuggestedVoucher"
-                        :better-voucher-suggestion-text="betterVoucherSuggestionText" :total-raw-amount="totalRawAmount"
+                        :better-voucher-suggestion-text="selectedOrder?.betterVoucherSuggestionText || ''"
+                        :total-raw-amount="totalRawAmount" :voucher-base-amount="cartSubtotalAmount"
                         :product-discount-amount="productDiscountAmount"
-                        :applied-discount-summary="appliedDiscountSummary" :total-discount-amount="totalDiscountAmount"
+                        :voucher-discount-amount="discountAmount"
+                        :total-discount-amount="totalDiscountAmount"
                         :final-collect-amount="finalCollectAmount" v-model:shippingFee="shippingFee"
                         :shipping-fee-loading="shippingFeeLoading" :shipping-fee-source="shippingFeeSource"
                         :shipping-fee-error="shippingFeeError" :is-free-ship="isFreeShip"
-                        @apply-voucher="onApplyVoucher" @apply-suggested-voucher="applyBestVoucherFromSuggestion" />
+                        @apply-voucher="onApplyVoucher" />
 
                     <!-- Payment Card -->
                     <PaymentPanel v-model:paymentMethod="checkoutData.paymentMethod" class="flex-shrink-0"

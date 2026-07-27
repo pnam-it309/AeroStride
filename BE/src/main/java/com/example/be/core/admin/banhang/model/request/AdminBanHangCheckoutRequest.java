@@ -1,5 +1,7 @@
 package com.example.be.core.admin.banhang.model.request;
 
+import com.example.be.infrastructure.constants.DeliveryMethod;
+import com.example.be.infrastructure.constants.OrderType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,7 +29,10 @@ public class AdminBanHangCheckoutRequest {
     /** So tien cuoi cung can thu sau giam gia/phi van chuyen. */
     private BigDecimal tongTienSauGiam;
     /** Kenh nhan hang: TAI_QUAY hoac GIAO_HANG. */
-    private String loaiDon; // TAI_QUAY, GIAO_HANG
+    private OrderType orderType;
+    private DeliveryMethod deliveryMethod;
+    @Deprecated
+    private String loaiDon;
     private String ghiChu;
     /** Thong tin nguoi nhan cho don giao hang; voi tai quay co the de trong. */
     private String tenNguoiNhan;

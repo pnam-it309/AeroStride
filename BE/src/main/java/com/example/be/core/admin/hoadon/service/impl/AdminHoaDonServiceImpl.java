@@ -120,7 +120,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         }
 
         // Với đơn ONLINE: Trừ kho khi Admin xác nhận hóa đơn (từ Chờ xác nhận -> Đã xác nhận)
-        if (oldStatus == OrderStatus.CHO_XAC_NHAN && newStatus == OrderStatus.XAC_NHAN && "ONLINE".equalsIgnoreCase(hd.getLoaiDon())) {
+        if (oldStatus == OrderStatus.CHO_XAC_NHAN && newStatus == OrderStatus.XAC_NHAN && isOnlineOrder(hd)) {
             if (hd.getListsHoaDonChiTiet() != null) {
                 for (HoaDonChiTiet detail : hd.getListsHoaDonChiTiet()) {
                     ChiTietSanPham ct = detail.getChiTietSanPham();
@@ -163,7 +163,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 hd.setPhiHoanHang(hd.getPhiVanChuyen());
             }
             // Chỉ hoàn kho nếu kho ĐÃ TỪNG BỊ TRỪ (tức là không phải đơn ONLINE đang ở Chờ xác nhận)
-            boolean chuaTruKho = (oldStatus == OrderStatus.CHO_XAC_NHAN && "ONLINE".equalsIgnoreCase(hd.getLoaiDon()));
+            boolean chuaTruKho = oldStatus == OrderStatus.CHO_XAC_NHAN && isOnlineOrder(hd);
             if (!chuaTruKho) {
                 if (hd.getListsHoaDonChiTiet() != null) {
                     hd.getListsHoaDonChiTiet().forEach(detail -> {
@@ -277,7 +277,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             hdct.setNgayTao(System.currentTimeMillis());
         }
 
-        boolean chuaTruKho = (hd.getTrangThai() == OrderStatus.CHO_XAC_NHAN && "ONLINE".equalsIgnoreCase(hd.getLoaiDon()));
+        boolean chuaTruKho = hd.getTrangThai() == OrderStatus.CHO_XAC_NHAN && isOnlineOrder(hd);
         if (!chuaTruKho) {
             ctsp.setSoLuong(ctsp.getSoLuong() - delta);
             chiTietSanPhamRepository.saveAndFlush(ctsp);
@@ -302,7 +302,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         HoaDonChiTiet hdct = hoaDonChiTietRepository.findById(idHdct)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PRODUCT_DETAIL_NOT_FOUND));
         
-        boolean chuaTruKho = (hd.getTrangThai() == OrderStatus.CHO_XAC_NHAN && "ONLINE".equalsIgnoreCase(hd.getLoaiDon()));
+        boolean chuaTruKho = hd.getTrangThai() == OrderStatus.CHO_XAC_NHAN && isOnlineOrder(hd);
         ChiTietSanPham ct = hdct.getChiTietSanPham();
         if (ct != null && !chuaTruKho) {
             ct.setSoLuong(ct.getSoLuong() + hdct.getSoLuong());
@@ -397,7 +397,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 item.getMaHoaDon(),
                 item.getTenKhachHang() != null ? item.getTenKhachHang() : "Khách lẻ",
                 item.getSoDienThoai() != null ? item.getSoDienThoai() : "-",
-                item.getLoaiDon(),
+                item.getOrderType(),
                 item.getNgayTao(),
                 item.getTongTien(),
                 item.getTrangThai()
@@ -430,6 +430,13 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         context.setVariable("ngayIn", new Date());
 
         return templateEngine.process("email/invoice-print", context);
+    }
+
+    private boolean isOnlineOrder(HoaDon hoaDon) {
+        if (hoaDon.getOrderType() != null) {
+            return hoaDon.getOrderType() == com.example.be.infrastructure.constants.OrderType.ONLINE;
+        }
+        return hoaDon.getNhanVien() == null && "ONLINE".equalsIgnoreCase(hoaDon.getLoaiDon());
     }
 
     private String resolvePaymentMethodLabel(HoaDon hd) {

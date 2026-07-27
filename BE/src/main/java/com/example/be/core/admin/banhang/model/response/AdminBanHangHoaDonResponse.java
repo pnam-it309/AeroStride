@@ -1,5 +1,7 @@
 package com.example.be.core.admin.banhang.model.response;
 
+import com.example.be.infrastructure.constants.DeliveryMethod;
+import com.example.be.infrastructure.constants.OrderType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,6 +20,9 @@ public class AdminBanHangHoaDonResponse {
     private String sdtKhachHang;
     private String idPhieuGiamGia;
     private com.example.be.entity.PhieuGiamGia phieuGiamGia;
+    private OrderType orderType;
+    private DeliveryMethod deliveryMethod;
+    @Deprecated
     private String loaiDon;
     private BigDecimal tongTienHang; // Tổng tiền hàng gốc
     private BigDecimal tienGiamGiaSanPham; // Tiền giảm do đợt giảm giá SP

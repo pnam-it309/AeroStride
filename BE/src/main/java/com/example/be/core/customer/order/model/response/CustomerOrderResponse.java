@@ -1,5 +1,7 @@
 package com.example.be.core.customer.order.model.response;
 
+import com.example.be.infrastructure.constants.DeliveryMethod;
+import com.example.be.infrastructure.constants.OrderType;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -24,6 +26,9 @@ public class CustomerOrderResponse {
     private String soDienThoaiNguoiNhan;
     private String tenNguoiNhan;
     private String ghiChu;
+    private OrderType orderType;
+    private DeliveryMethod deliveryMethod;
+    @Deprecated
     private String loaiDon;
     private String phuongThucThanhToan;
     private Long ngayTao;

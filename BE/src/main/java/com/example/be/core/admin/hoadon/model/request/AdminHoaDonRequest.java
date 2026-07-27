@@ -1,6 +1,7 @@
 package com.example.be.core.admin.hoadon.model.request;
 
 import com.example.be.core.common.dto.PageRequest;
+import com.example.be.infrastructure.constants.OrderType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,7 +19,10 @@ public class AdminHoaDonRequest extends PageRequest {
 
     private Integer trangThai;    // Nhận giá trị 0, 1, 2, 3, 4 từ Select của FE
 
-    private String loaiDon;       // Nhận "TAI_QUAY" hoặc "ONLINE"
+    private OrderType orderType;
+
+    @Deprecated
+    private String loaiDon;
 
     private String ngayTao;       // Nhận chuỗi "yyyy-MM-dd" từ input type="date" của FE
 

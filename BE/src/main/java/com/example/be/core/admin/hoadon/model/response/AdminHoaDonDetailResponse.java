@@ -6,6 +6,8 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.util.List;
 import com.example.be.infrastructure.constants.OrderStatus;
+import com.example.be.infrastructure.constants.OrderType;
+import com.example.be.infrastructure.constants.DeliveryMethod;
 
 @Getter
 @Setter
@@ -14,6 +16,9 @@ public class AdminHoaDonDetailResponse {
     private String id;
     private String maHoaDon;
     private OrderStatus trangThai;
+    private OrderType orderType;
+    private DeliveryMethod deliveryMethod;
+    @Deprecated
     private String loaiDon;
     private BigDecimal phiVanChuyen;
     private BigDecimal phiHoanHang;

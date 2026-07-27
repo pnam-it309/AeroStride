@@ -34,10 +34,10 @@ public interface AdminThongKeRepository extends HoaDonRepository,
 
     @Query("""
            SELECT
-                COALESCE(SUM(CASE WHEN hd.loaiDon IN ('TAI_QUAY', 'OFFLINE') AND CAST(hd.trangThai AS int) = 4 THEN hd.tongTien ELSE 0 END), 0),
-                SUM(CASE WHEN hd.loaiDon IN ('TAI_QUAY', 'OFFLINE') AND CAST(hd.trangThai AS int) = 4 THEN 1 ELSE 0 END),
-                COALESCE(SUM(CASE WHEN hd.loaiDon = 'ONLINE' AND CAST(hd.trangThai AS int) = 4 THEN hd.tongTien ELSE 0 END), 0),
-                SUM(CASE WHEN hd.loaiDon = 'ONLINE' AND CAST(hd.trangThai AS int) = 4 THEN 1 ELSE 0 END)
+                COALESCE(SUM(CASE WHEN hd.orderType = com.example.be.infrastructure.constants.OrderType.IN_STORE AND CAST(hd.trangThai AS int) = 4 THEN hd.tongTien ELSE 0 END), 0),
+                SUM(CASE WHEN hd.orderType = com.example.be.infrastructure.constants.OrderType.IN_STORE AND CAST(hd.trangThai AS int) = 4 THEN 1 ELSE 0 END),
+                COALESCE(SUM(CASE WHEN hd.orderType = com.example.be.infrastructure.constants.OrderType.ONLINE AND CAST(hd.trangThai AS int) = 4 THEN hd.tongTien ELSE 0 END), 0),
+                SUM(CASE WHEN hd.orderType = com.example.be.infrastructure.constants.OrderType.ONLINE AND CAST(hd.trangThai AS int) = 4 THEN 1 ELSE 0 END)
            FROM HoaDon hd
            WHERE (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
            AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
@@ -47,7 +47,7 @@ public interface AdminThongKeRepository extends HoaDonRepository,
     // Đơn hàng gần đây
     @Query("""
             SELECT hd.id, hd.maHoaDon, kh.ten, hd.ngayTao, hd.tongTien,
-                   CAST(hd.trangThai AS int), hd.loaiDon
+                   CAST(hd.trangThai AS int), hd.orderType
             FROM HoaDon hd
             LEFT JOIN hd.khachHang kh
             ORDER BY hd.ngayTao DESC
