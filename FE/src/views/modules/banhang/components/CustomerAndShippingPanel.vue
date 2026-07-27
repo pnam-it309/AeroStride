@@ -87,9 +87,6 @@
                     <v-btn v-if="order?.idKhachHang" variant="tonal" color="primary" size="x-small" class="text-none font-weight-bold rounded-lg px-2" @click="showAddressModal = true">
                         <v-icon size="14" class="mr-1">mdi-book-location-outline</v-icon>
                         Chọn địa chỉ
-                        <v-chip v-if="customerAddresses.length > 0" size="x-small" color="primary" class="ml-1 px-1" style="height: 16px !important;">
-                            {{ customerAddresses.length }}
-                        </v-chip>
                     </v-btn>
                 </div>
                 <div class="d-flex flex-column ga-4">
