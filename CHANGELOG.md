@@ -1,3 +1,10 @@
+# [1.30.0](https://github.com/pnam-it309/AeroStride/compare/v1.29.1...v1.30.0) (2026-07-27)
+
+
+### Features
+
+* **pos:** filter out zero stock products from pos search list ([ab0b773](https://github.com/pnam-it309/AeroStride/commit/ab0b77378d008b1267cc87ed429c2b4791004b27))
+
 ## [1.29.1](https://github.com/pnam-it309/AeroStride/compare/v1.29.0...v1.29.1) (2026-07-27)
 
 
