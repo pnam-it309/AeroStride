@@ -132,7 +132,7 @@
         v-model="showAddressModal"
         :customer="currentCustomer"
         :selected-address-id="selectedAddressId"
-        :current-shipping="{ name: recipientName, phone: recipientPhone, detail: recipientAddressDetail }"
+        :current-shipping="{ name: recipientName, phone: recipientPhone, detail: recipientAddressDetail, province: recipientProvince, district: recipientDistrict, ward: recipientWard }"
         @select-address="applyAddressFromModal"
         @address-changed="fetchCustomerAddresses"
     />

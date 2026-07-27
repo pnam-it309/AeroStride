@@ -38,26 +38,46 @@ const submitting = ref(false);
 
 const isCurrentAddress = (addr) => {
     if (!addr) return false;
-    // 1. Ưu tiên so sánh chính xác theo selectedAddressId nếu đã chọn
+    // 1. Ưu tiên so sánh chính xác theo ID địa chỉ nếu đã chọn
     if (props.selectedAddressId) {
         return String(props.selectedAddressId) === String(addr.id);
     }
 
-    // 2. Nếu chưa có selectedAddressId, so sánh theo thông tin nhận hàng hiện tại
+    // 2. Nếu chưa có selectedAddressId, so sánh theo toàn bộ thông tin nhận hàng trên form (Bao gồm Tỉnh/Huyện/Xã)
     if (props.currentShipping && props.currentShipping.detail) {
         const currentDetail = String(props.currentShipping.detail || '').trim().toLowerCase();
         const currentName = String(props.currentShipping.name || '').trim().toLowerCase();
         const currentPhone = String(props.currentShipping.phone || '').replace(/\D/g, '');
+        const currentProvince = String(props.currentShipping.province || '').trim().toLowerCase();
+        const currentDistrict = String(props.currentShipping.district || '').trim().toLowerCase();
+        const currentWard = String(props.currentShipping.ward || '').trim().toLowerCase();
 
         const addrDetail = String(addr.diaChiChiTiet || '').trim().toLowerCase();
         const addrName = String(addr.tenNguoiNhan || props.customer?.ten || '').trim().toLowerCase();
         const addrPhone = String(addr.sdtNguoiNhan || props.customer?.sdt || '').replace(/\D/g, '');
+        const addrProvince = String(addr.tinh || '').trim().toLowerCase();
+        const addrDistrict = String(addr.thanhPho || '').trim().toLowerCase();
+        const addrWard = String(addr.phuongXa || '').trim().toLowerCase();
 
         const matchDetail = currentDetail !== '' && currentDetail === addrDetail;
         const matchName = currentName === '' || currentName === addrName;
         const matchPhone = currentPhone === '' || currentPhone === addrPhone;
 
-        if (matchDetail && matchName && matchPhone) return true;
+        // Đối soát các cấp Tỉnh, Huyện, Xã nếu form đã chọn
+        let matchLocation = true;
+        if (currentProvince && addrProvince) {
+            matchLocation = matchLocation && (currentProvince === addrProvince || addrProvince.includes(currentProvince) || currentProvince.includes(addrProvince));
+        }
+        if (currentDistrict && addrDistrict) {
+            matchLocation = matchLocation && (currentDistrict === addrDistrict || addrDistrict.includes(currentDistrict) || currentDistrict.includes(addrDistrict));
+        }
+        if (currentWard && addrWard) {
+            matchLocation = matchLocation && (currentWard === addrWard || addrWard.includes(currentWard) || currentWard.includes(addrWard));
+        }
+
+        if (matchDetail && matchName && matchPhone && matchLocation) {
+            return true;
+        }
     }
     return false;
 };
