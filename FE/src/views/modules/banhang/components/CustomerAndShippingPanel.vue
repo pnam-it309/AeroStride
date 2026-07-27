@@ -82,9 +82,18 @@
     <transition name="expand-shipping">
         <div v-if="isGiaoHang" class="shipping-wrapper">
             <v-card class="pos-card pa-4">
-                <div class="font-weight-bold text-slate-800 mb-3" style="font-size: 14px !important">Thông tin nhận hàng</div>
-                <div class="d-flex flex-column gap-4">
-                    <div class="d-flex gap-3">
+                <div class="d-flex justify-space-between align-center mb-3">
+                    <div class="font-weight-bold text-slate-800" style="font-size: 14px !important">Thông tin nhận hàng</div>
+                    <v-btn v-if="order?.idKhachHang" variant="tonal" color="primary" size="x-small" class="text-none font-weight-bold rounded-lg px-2" @click="showAddressModal = true">
+                        <v-icon size="14" class="mr-1">mdi-book-location-outline</v-icon>
+                        Chọn địa chỉ
+                        <v-chip v-if="customerAddresses.length > 0" size="x-small" color="primary" class="ml-1 px-1" style="height: 16px !important;">
+                            {{ customerAddresses.length }}
+                        </v-chip>
+                    </v-btn>
+                </div>
+                <div class="d-flex flex-column ga-4">
+                    <div class="d-flex ga-3">
                         <v-text-field v-model="recipientName" placeholder="Tên người nhận"
                             variant="outlined" density="compact" hide-details autocomplete="off"
                             class="dim-input-field flex-grow-1" @input="emitShippingChange" />
@@ -117,14 +126,25 @@
             </v-card>
         </div>
     </transition>
+
+    <!-- Modal chọn địa chỉ -->
+    <CustomerAddressModal
+        v-model="showAddressModal"
+        :customer="currentCustomer"
+        :selected-address-id="selectedAddressId"
+        :current-shipping="{ name: recipientName, phone: recipientPhone, detail: recipientAddressDetail }"
+        @select-address="applyAddressFromModal"
+        @address-changed="fetchCustomerAddresses"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
 import { useLocation } from '@/composables/useLocation';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
+import CustomerAddressModal from './CustomerAddressModal.vue';
 
 const props = defineProps({
     order: {
@@ -152,7 +172,7 @@ const customerSearch = ref('');
 const showCustomerSuggestions = ref(false);
 const customerResults = ref([]);
 
-// Shipping
+// Shipping & Address Management
 const recipientName = ref(props.initialShipping.name);
 const recipientPhone = ref(props.initialShipping.phone);
 const recipientAddressDetail = ref(props.initialShipping.detail);
@@ -160,13 +180,28 @@ const recipientProvince = ref(props.initialShipping.province);
 const recipientDistrict = ref(props.initialShipping.district);
 const recipientWard = ref(props.initialShipping.ward);
 
+const showAddressModal = ref(false);
+const customerAddresses = ref([]);
+const selectedAddressId = ref('');
+
+const currentCustomer = computed(() => {
+    return {
+        id: props.order?.idKhachHang,
+        hoTen: customerForm.value.ten,
+        ten: customerForm.value.ten,
+        sdt: customerForm.value.sdt,
+        email: customerForm.value.email
+    };
+});
+
 const {
     provinces: provincesShip,
     districts: districtsShip,
     wards: wardsShip,
     fetchProvinces: fetchProvincesShip,
     fetchDistricts: fetchDistrictsShip,
-    fetchWards: fetchWardsShip
+    fetchWards: fetchWardsShip,
+    matchLocation
 } = useLocation({ allowFallback: true });
 
 onMounted(async () => {
@@ -176,6 +211,108 @@ onMounted(async () => {
     }
     if (recipientDistrict.value) {
         await fetchWardsShip(recipientDistrict.value);
+    }
+    if (props.order?.idKhachHang) {
+        await fetchCustomerAddresses();
+    }
+});
+
+const fetchCustomerAddresses = async () => {
+    const khId = props.order?.idKhachHang;
+    if (!khId) {
+        customerAddresses.value = [];
+        return;
+    }
+    try {
+        const res = await dichVuKhachHang.layDanhSachDiaChi(khId);
+        const list = res?.data || res || [];
+        customerAddresses.value = Array.isArray(list) ? list : [];
+    } catch (e) {
+        console.error('Lỗi lấy danh sách địa chỉ khách hàng:', e);
+        customerAddresses.value = [];
+    }
+};
+
+const isApplyingAddressModal = ref(false);
+
+const applyAddressFromModal = async (addr) => {
+    if (!addr) return;
+    isApplyingAddressModal.value = true;
+    try {
+        selectedAddressId.value = addr.id || '';
+        recipientName.value = addr.tenNguoiNhan || customerForm.value.ten || '';
+        recipientPhone.value = addr.sdtNguoiNhan || customerForm.value.sdt || '';
+        recipientAddressDetail.value = addr.diaChiChiTiet || '';
+
+        if (provincesShip.value.length === 0) {
+            await fetchProvincesShip();
+        }
+
+        let matchedProvince = provincesShip.value.find(p => String(p.code) === String(addr.tinh)) ||
+                              matchLocation(provincesShip.value, addr.tinh);
+
+        if (matchedProvince) {
+            recipientProvince.value = matchedProvince.code;
+            await fetchDistrictsShip(matchedProvince.code);
+
+            let matchedDistrict = districtsShip.value.find(d => String(d.code) === String(addr.thanhPho)) ||
+                                  matchLocation(districtsShip.value, addr.thanhPho);
+
+            if (matchedDistrict) {
+                recipientDistrict.value = matchedDistrict.code;
+                await fetchWardsShip(matchedDistrict.code);
+
+                let matchedWard = wardsShip.value.find(w => String(w.code) === String(addr.phuongXa)) ||
+                                  matchLocation(wardsShip.value, addr.phuongXa);
+
+                recipientWard.value = matchedWard ? matchedWard.code : null;
+            } else {
+                recipientDistrict.value = null;
+                recipientWard.value = null;
+            }
+        } else {
+            recipientProvince.value = null;
+            recipientDistrict.value = null;
+            recipientWard.value = null;
+        }
+
+        emitShippingChange();
+    } catch (err) {
+        console.error('Lỗi binding địa chỉ từ modal:', err);
+    } finally {
+        isApplyingAddressModal.value = false;
+    }
+};
+
+const autoFillDefaultAddressIfNeeded = async () => {
+    if (!props.isGiaoHang || !props.order?.idKhachHang) return;
+    await fetchCustomerAddresses();
+    if (customerAddresses.value.length === 0) return;
+
+    // Tìm địa chỉ mặc định hoặc địa chỉ đầu tiên
+    const defaultAddr = customerAddresses.value.find(a => a.laMacDinh) || customerAddresses.value[0];
+    if (defaultAddr) {
+        await applyAddressFromModal(defaultAddr);
+    }
+};
+
+watch(() => props.order?.idKhachHang, async (newKhId) => {
+    if (newKhId) {
+        await fetchCustomerAddresses();
+        if (props.isGiaoHang) {
+            await autoFillDefaultAddressIfNeeded();
+        }
+    } else {
+        customerAddresses.value = [];
+        selectedAddressId.value = '';
+    }
+});
+
+watch(() => props.isGiaoHang, async (newVal) => {
+    if (newVal) {
+        if (!recipientName.value || !recipientPhone.value || !recipientProvince.value) {
+            await autoFillDefaultAddressIfNeeded();
+        }
     }
 });
 
@@ -246,6 +383,7 @@ const emitShippingChange = () => {
 };
 
 const onProvinceChange = async () => {
+    if (isApplyingAddressModal.value) return;
     recipientDistrict.value = null;
     recipientWard.value = null;
     if (recipientProvince.value) {
@@ -255,6 +393,7 @@ const onProvinceChange = async () => {
 };
 
 const onDistrictChange = async () => {
+    if (isApplyingAddressModal.value) return;
     recipientWard.value = null;
     if (recipientDistrict.value) {
         await fetchWardsShip(recipientDistrict.value);

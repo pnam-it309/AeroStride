@@ -574,9 +574,19 @@ const saveAddress = () => {
 };
 
 const handleSetDefault = async (addrId) => {
+    if (!addrId || isLegacyAddressId(addrId) || String(addrId).startsWith('root-') || String(addrId).startsWith('legacy-')) {
+        addNotification({
+            title: 'Thông báo',
+            subtitle: 'Địa chỉ này chưa được lưu chính thức trong cơ sở dữ liệu.',
+            color: 'warning'
+        });
+        return;
+    }
     try {
         await dichVuKhachHang.datDiaChiMacDinh(addrId);
-        await loadAddresses(selectedKH.value.id);
+        if (selectedKH.value?.id) {
+            await loadAddresses(selectedKH.value.id);
+        }
     } catch (e) {
         console.error('Error setting default address:', e);
         addNotification({

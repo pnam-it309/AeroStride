@@ -27,9 +27,15 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
     @Override
     @Transactional(readOnly = true)
     public List<AdminDiaChiResponse> getByKhachHangId(String khId) {
-        return repository.findByKhachHangId(khId).stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+        List<DiaChi> list = repository.findByKhachHangId(khId);
+        KhachHang kh = khachHangRepository.findById(khId).orElse(null);
+        if (kh != null && kh.getDiaChi() != null) {
+            boolean exists = list.stream().anyMatch(d -> d.getId().equals(kh.getDiaChi().getId()));
+            if (!exists) {
+                list.add(0, kh.getDiaChi());
+            }
+        }
+        return list.stream().map(this::toResponse).collect(Collectors.toList());
     }
 
     @Override
