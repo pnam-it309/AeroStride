@@ -7,6 +7,7 @@ import com.example.be.core.customer.sanpham.model.response.*;
 import com.example.be.core.customer.sanpham.repository.*;
 import com.example.be.core.customer.sanpham.service.CustomerSanPhamService;
 import com.example.be.entity.*;
+import com.example.be.repository.HoaDonChiTietRepository;
 import com.example.be.infrastructure.constants.GioiTinhKhachHang;
 import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.TrangThai;
@@ -33,6 +34,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
     private final CustomerSanPhamChiTietRepository customerSanPhamChiTietRepository;
     private final CustomerSanPhamAnhChiTietRepository customerSanPhamAnhChiTietRepository;
     private final CustomerSanPhamChiTietDotGiamGiaRepository customerSanPhamChiTietDotGiamGiaRepository;
+    private final HoaDonChiTietRepository hoaDonChiTietRepository;
 
     private final CustomerSanPhamThuongHieuRepository thuongHieuRepository;
     private final CustomerSanPhamXuatXuRepository xuatXuRepository;
@@ -201,6 +203,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 .availableSizesByColor(availableSizesByColor)
                 .totalStock(totalStock)
                 .stockByColor(stockByColor)
+                .daBan(hoaDonChiTietRepository.countSoldQuantityBySanPhamId(sp.getId()))
                 .build();
     }
 

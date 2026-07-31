@@ -24,14 +24,19 @@ const props = defineProps({
 const router = useRouter();
 let cartStore;
 try { cartStore = useCartStore(); } catch { cartStore = null; }
+const isAbsoluteUrl = (v) => 
+    typeof v !== 'string' || 
+    /^(https?:)?\/\//i.test(v) || 
+    v.startsWith('data:') || 
+    v.startsWith('blob:') || 
+    v.startsWith('/');
 
-const isAbsoluteUrl = (v) => /^(https?:)?\/\//i.test(v) || v?.startsWith('data:') || v?.startsWith('blob:');
 const resolveImg = (v) => {
     if (!v) return '';
+    if (typeof v !== 'string') return v;
     if (isAbsoluteUrl(v)) return v;
     return dichVuFile.layUrlFile(v.replace(/^\/+/, ''));
 };
-
 const formatPrice = (v) => {
     if (!v && v !== 0) return '';
     return new Intl.NumberFormat('vi-VN').format(v) + ' đ';

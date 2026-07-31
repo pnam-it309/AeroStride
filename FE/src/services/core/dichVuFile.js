@@ -78,7 +78,15 @@ export const dichVuFile = {
 
     // Lấy URL file
     layUrlFile(filePath) {
-        const apiBase = import.meta.env.VITE_API_URL || API_DEFAULTS.PREFIX;
-        return `${apiBase}${API_COMMON.STORAGE}/files/${filePath}`;
+        if (!filePath) return '';
+        if (typeof filePath !== 'string') return filePath;
+        if (/^(https?:)?\/\//i.test(filePath) || filePath.startsWith('data:') || filePath.startsWith('blob:')) {
+            return filePath;
+        }
+        let cleanPath = filePath.replace(/^\/+/, '');
+        if (cleanPath.startsWith('uploads/')) {
+            cleanPath = cleanPath.substring(8);
+        }
+        return `/uploads/${cleanPath}`;
     }
 };

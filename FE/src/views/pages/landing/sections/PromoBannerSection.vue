@@ -10,14 +10,19 @@ const props = defineProps({
         default: () => []
     }
 });
+const isAbsoluteUrl = (v) => 
+    typeof v !== 'string' || 
+    /^(https?:)?\/\//i.test(v) || 
+    v.startsWith('data:') || 
+    v.startsWith('blob:') || 
+    v.startsWith('/');
 
-const isAbsoluteUrl = (v) => /^(https?:)?\/\//i.test(v) || v?.startsWith('data:') || v?.startsWith('blob:');
 const resolveImg = (v) => {
     if (!v) return '';
+    if (typeof v !== 'string') return v;
     if (isAbsoluteUrl(v)) return v;
     return dichVuFile.layUrlFile(v.replace(/^\/+/, ''));
 };
-
 const GRADIENTS = [
     'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
     'linear-gradient(135deg, #7f0000 0%, #b71c1c 50%, #d50000 100%)',
