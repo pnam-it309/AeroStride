@@ -95,25 +95,24 @@ const choiceMethod = computed({
                         <div class="text-caption text-grey-darken-1 mb-6 px-4 text-center">
                             Vui lòng hoàn tất thanh toán trên VNPay.
                         </div>
-                        <v-btn color="#005BAA" class="mb-6 rounded-lg text-white font-weight-bold"
-                            @click="emit('openGateway')">
-                            Mở lại thanh toán
-                        </v-btn>
                     </template>
 
-                    <v-btn block color="#005BAA" class="mb-3 rounded-lg text-white font-weight-bold" height="48"
-                        @click="emit('confirmManual')">
-                        XÁC NHẬN ĐÃ NHẬN TIỀN
-                    </v-btn>
+                    <div class="w-100 px-2">
+                        <v-btn variant="outlined" color="#005BAA" block class="mb-3 rounded-lg font-weight-bold" height="44"
+                            @click="emit('openGateway')">
+                            Mở cổng thanh toán VNPay
+                        </v-btn>
 
-                    <v-btn v-if="vnpayMethod === 'QR'" block variant="outlined" color="grey-darken-1"
-                        class="rounded-lg font-weight-bold" height="48" @click="emit('retryQr')">
-                        TẠO LẠI MÃ QR
-                    </v-btn>
+                        <v-btn block color="#005BAA" class="mb-3 rounded-lg text-white font-weight-bold" height="48"
+                            @click="emit('confirmManual')">
+                            XÁC NHẬN ĐÃ THANH TOÁN
+                        </v-btn>
 
-                    <v-btn variant="text" color="error" class="mt-4" size="small" @click="emit('cancel')">
-                        Hủy giao dịch
-                    </v-btn>
+                        <v-btn variant="text" color="grey-darken-1" block class="rounded-lg font-weight-medium mt-1" height="36"
+                            @click="emit('cancel')">
+                            Đóng và thanh toán sau
+                        </v-btn>
+                    </div>
                 </div>
             </v-card-text>
         </v-card>
