@@ -42,6 +42,18 @@ public class PaymentOrderFinalizer {
         if (orderId == null || orderId.isBlank()) return;
 
         HoaDon hoaDon = hoaDonRepository.findById(orderId).orElse(null);
+        if (hoaDon == null && orderId.contains("_")) {
+            String realId = orderId.substring(0, orderId.indexOf("_"));
+            hoaDon = hoaDonRepository.findById(realId).orElse(null);
+        }
+        if (hoaDon == null) {
+            hoaDon = hoaDonRepository.findByMaHoaDon(orderId).orElse(null);
+        }
+        if (hoaDon == null && orderId.contains("_")) {
+            String realMa = orderId.substring(0, orderId.indexOf("_"));
+            hoaDon = hoaDonRepository.findByMaHoaDon(realMa).orElse(null);
+        }
+
         if (hoaDon == null) {
             log.warn("VNPay callback: không tìm thấy hóa đơn id={}", orderId);
             return;
@@ -55,8 +67,8 @@ public class PaymentOrderFinalizer {
             return;
         }
 
-        String vnpTxnNo = params.get("vnp_TransactionNo");
-        String vnpTxnRef = params.get("vnp_TxnRef");
+        String vnpTxnNo = params != null ? params.get("vnp_TransactionNo") : null;
+        String vnpTxnRef = params != null ? params.get("vnp_TxnRef") : null;
 
         // Trừ tồn kho tại thời điểm thanh toán thành công (đơn VNPay chưa trừ lúc đặt hàng).
         // Dùng UPDATE atomic có điều kiện soLuong >= qty để chống oversell khi nhiều đơn tranh nhau hàng cuối.
@@ -115,21 +127,10 @@ public class PaymentOrderFinalizer {
                     orderId, thieuHangNote.toString().trim());
         }
         log.info("VNPay callback: đã ghi nhận thanh toán cho hóa đơn id={}, vnpTxnNo={}", orderId, vnpTxnNo);
-
-        String email = hoaDon.getEmailNguoiNhan() != null && !hoaDon.getEmailNguoiNhan().isBlank()
-                ? hoaDon.getEmailNguoiNhan().trim()
-                : (hoaDon.getKhachHang() != null && hoaDon.getKhachHang().getEmail() != null ? hoaDon.getKhachHang().getEmail().trim() : null);
-        if (isOnlineOrder(hoaDon) && email != null && !email.isBlank()) {
-            eventPublisher.publishEvent(new com.example.be.core.common.events.OrderPlacedEvent(
-                    this, hoaDon.getId(), email, hoaDon.getTongTienSauGiam()));
-            log.info("Published OrderPlacedEvent after VNPay payment for order {} to email {}", hoaDon.getId(), email);
-        }
     }
 
     private boolean isOnlineOrder(HoaDon hoaDon) {
-        if (hoaDon.getOrderType() != null) {
-            return hoaDon.getOrderType() == OrderType.ONLINE;
-        }
-        return hoaDon.getNhanVien() == null && "ONLINE".equalsIgnoreCase(hoaDon.getLoaiDon());
+        return OrderType.ONLINE.name().equalsIgnoreCase(hoaDon.getLoaiDon())
+                || "GIAO_HANG".equalsIgnoreCase(hoaDon.getLoaiDon());
     }
 }
