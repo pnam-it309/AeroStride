@@ -1264,6 +1264,11 @@ const onRemoveItem = (item) => {
 // Removed onRemoveCustomer
 
 // Logic: Voucher
+const getVoucherBaseAmount = (order = selectedOrder.value) => {
+    if (!order) return 0;
+    return Number(order.tongTienSauGiam || order.tongTien || 0);
+};
+
 // Gắn nhãn hiển thị (customTitle) cho phiếu giảm giá trên dropdown. Chỉ phục vụ hiển thị,
 // mọi tính toán giảm giá đều do BE thực hiện. Vô hiệu hóa phiếu nếu đơn hàng chưa đạt giá trị tối thiểu.
 const decorateVoucher = (v, order = selectedOrder.value) => {
@@ -1360,6 +1365,14 @@ const closeVnPayFlow = () => {
     vnpayDialog.value.loading = false;
     vnpayDialog.value.verified = false;
     vnpayPopup = null;
+};
+
+const openVnPayGateway = () => {
+    if (vnpayDialog.value?.paymentUrl) {
+        vnpayPopup = window.open(vnpayDialog.value.paymentUrl, 'vnpay', 'width=800,height=600');
+    } else if (selectedOrder.value) {
+        startVnPayFlow();
+    }
 };
 
 const cancelVnPayFlow = () => {
@@ -2058,7 +2071,7 @@ const formatDateTime = (dateStr) => {
         <VnPayDialogs v-model:vnpayDialog="vnpayDialog" v-model:vnpayChoiceDialog="vnpayChoiceDialog"
             :vnpay-method="checkoutData.vnpayMethod" @proceed-choice="proceedVnPayChoice"
             @confirm-manual="onConfirmVnPayManual" @retry-qr="startVnPayFlow" @cancel="cancelVnPayFlow"
-            @open-gateway="() => { vnpayPopup = window.open(vnpayDialog.paymentUrl, 'vnpay', 'width=800,height=600'); }" />
+            @open-gateway="openVnPayGateway" />
 
         <!-- Scanner dialog -->
         <ScannerDialog v-model="showScanner" :scanner-element-id="scannerElementId" @stop="stopScanner" />
