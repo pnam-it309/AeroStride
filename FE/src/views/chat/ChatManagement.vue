@@ -175,7 +175,7 @@ const summarizeChat = async () => {
     isSummarizing.value = true;
     try {
         // API này phải match với API bên BE
-        const response = await api.get(`/api/v1/admin/chat/summarize/${activeChat.value.id}`);
+        const response = await api.get(`/admin/chat/summarize/${activeChat.value.id}`);
         if (response.data?.success) {
             chatSummary.value = response.data.data;
             showSummaryModal.value = true;

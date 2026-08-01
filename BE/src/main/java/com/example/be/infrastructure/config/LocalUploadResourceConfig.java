@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Configuration
-@Profile("local")
+@Profile({"local", "dev"})
 public class LocalUploadResourceConfig implements WebMvcConfigurer {
 
     @Value("${app.local-upload-dir}")

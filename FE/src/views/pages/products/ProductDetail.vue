@@ -13,6 +13,7 @@ import { useToastStore } from '@/stores/toastStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 import { PATH } from '@/router/routePaths';
+import { dichVuFile } from '@/services/core/dichVuFile';
 
 const route = useRoute();
 const router = useRouter();
@@ -66,7 +67,7 @@ const submitDirectReview = async () => {
             noiDung: newReview.value.comment
         };
 
-        const response = await api.post('/api/v1/customer/review/submit', payload);
+        const response = await api.post('/customer/review/submit', payload);
         if (response.data?.success || response.status === 200) {
             toastStore.showToast('Cảm ơn bạn đã đánh giá sản phẩm!', 'success');
             showReviewModal.value = false;
@@ -108,7 +109,7 @@ const fetchRecommendations = async () => {
 const fetchReviews = async () => {
     reviewsLoading.value = true;
     try {
-        const res = await api.get(`/api/v1/customer/review/product/${route.params.id}`);
+        const res = await api.get(`/customer/review/product/${route.params.id}`);
         if (res.data?.success && res.data.data) {
             reviews.value = res.data.data.content || [];
             totalReviews.value = res.data.data.totalElements || 0;
@@ -157,6 +158,20 @@ const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 };
 
+const isAbsoluteUrl = (v) => 
+    typeof v !== 'string' || 
+    /^(https?:)?\/\//i.test(v) || 
+    v.startsWith('data:') || 
+    v.startsWith('blob:') || 
+    v.startsWith('/');
+
+const resolveImg = (v) => {
+    if (!v) return '';
+    if (typeof v !== 'string') return v;
+    if (isAbsoluteUrl(v)) return v;
+    return dichVuFile.layUrlFile(v.replace(/^\/+/, ''));
+};
+
 const colors = computed(() => product.value?.availableColors || []);
 
 const sizes = computed(() => {
@@ -168,6 +183,122 @@ watch(selectedColor, () => {
     selectedSize.value = null; // Reset size when color changes
 });
 
+const colorHexMap = computed(() => {
+    const map = {};
+    if (product.value?.variants) {
+        product.value.variants.forEach(v => {
+            if (v.tenMauSac && v.maMauHex) {
+                map[v.tenMauSac] = v.maMauHex;
+            }
+        });
+    }
+    const defaultHex = {
+        'Đen': '#0B1329',
+        'Trắng': '#FFFFFF',
+        'Đỏ': '#E53935',
+        'Xanh dương': '#1976D2',
+        'Xanh lá': '#4CAF50',
+        'Vàng': '#FFEB3B',
+        'Xám': '#9E9E9E',
+        'Hồng': '#E91E63',
+        'Cam': '#FF9800'
+    };
+    return { ...defaultHex, ...map };
+});
+
+const discountPercent = computed(() => {
+    if (selectedVariant.value && selectedVariant.value.phanTramGiam) {
+        const val = Number(selectedVariant.value.phanTramGiam);
+        if (val > 0 && val < 100) return val;
+        if (val > 0 && selectedVariant.value.giaBan) {
+            return Math.round((val / selectedVariant.value.giaBan) * 100);
+        }
+    }
+    return 0;
+});
+
+const currentPrice = computed(() => {
+    if (selectedVariant.value) {
+        const basePrice = selectedVariant.value.giaBan || 0;
+        const discountAmt = Number(selectedVariant.value.phanTramGiam) || 0;
+        if (discountAmt > 0) {
+            if (discountAmt < 100) {
+                return basePrice * (1 - discountAmt / 100);
+            } else {
+                return basePrice - discountAmt;
+            }
+        }
+        return basePrice;
+    }
+    return product.value?.minPrice || 0;
+});
+
+const oldPrice = computed(() => {
+    if (selectedVariant.value && Number(selectedVariant.value.phanTramGiam) > 0) {
+        return selectedVariant.value.giaBan;
+    }
+    return null;
+});
+
+const formattedCurrentPrice = computed(() => formatPrice(currentPrice.value));
+const formattedOldPrice = computed(() => oldPrice.value ? formatPrice(oldPrice.value) : null);
+
+const deliveryDateText = computed(() => {
+    const today = new Date();
+    const fromDate = new Date(today);
+    fromDate.setDate(today.getDate() + 2);
+    const toDate = new Date(today);
+    toDate.setDate(today.getDate() + 4);
+    
+    const formatDayMonth = (date) => {
+        const d = String(date.getDate()).padStart(2, '0');
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        return `${d}/${m}`;
+    };
+    
+    return `Còn hàng — Giao dự kiến ${formatDayMonth(fromDate)}–${formatDayMonth(toDate)}`;
+});
+
+const buyNow = async () => {
+    if (!product.value) return;
+
+    if (!selectedColor.value) {
+        toastStore.showToast('Vui lòng chọn màu sắc', 'warning');
+        return;
+    }
+
+    if (!selectedSize.value) {
+        toastStore.showToast('Vui lòng chọn kích thước', 'warning');
+        return;
+    }
+
+    const variant = selectedVariant.value;
+    if (!variant || variant.soLuong <= 0) {
+        showStockAlert('Sản phẩm đã hết hàng', 'Phiên bản màu sắc và kích thước này hiện đã hết hàng trong kho. Vui lòng chọn phiên bản khác.');
+        return;
+    }
+
+    try {
+        const result = await cartStore.addToCart({
+            idChiTietSanPham: variant.id,
+            soLuong: selectedQuantity.value,
+            tenSanPham: product.value?.ten || product.value?.tenSanPham || '',
+            hinhAnh: variant.images?.[0]?.duongDanAnh || product.value?.hinhAnh || '',
+            tenMauSac: variant.tenMauSac || selectedColor.value || '',
+            tenKichThuoc: variant.tenKichThuoc || selectedSize.value || '',
+            giaBan: variant.giaBan || displayPrice.value || 0,
+            soLuongTonKho: variant.soLuong || 0
+        });
+        if (result?.success) {
+            router.push('/checkout');
+        } else {
+            toastStore.showToast(result?.message || 'Không thể tiến hành thanh toán', 'warning');
+        }
+    } catch (e) {
+        toastStore.showToast('Có lỗi xảy ra, vui lòng thử lại', 'error');
+    }
+};
+
 const placeholderAngles = ['Ảnh chính', 'Mặt bên', 'Đế giày', 'Góc sau'];
 
 const allImages = computed(() => {
@@ -175,7 +306,7 @@ const allImages = computed(() => {
 
     // Thêm ảnh đại diện của sản phẩm
     if (product.value?.hinhAnh) {
-        images.push({ duongDanAnh: product.value.hinhAnh, label: 'Ảnh chính' });
+        images.push({ duongDanAnh: resolveImg(product.value.hinhAnh), label: 'Ảnh chính' });
     }
 
     // Thêm ảnh của các biến thể
@@ -184,13 +315,16 @@ const allImages = computed(() => {
             if (v.images && v.images.length > 0) {
                 v.images.forEach((img) => {
                     const url = img.duongDanAnh || img.hinhAnh || img.url;
-                    if (url && !images.find((i) => i.duongDanAnh === url)) {
-                        images.push({ duongDanAnh: url, label: v.tenMauSac ? `Màu ${v.tenMauSac}` : 'Ảnh biến thể' });
+                    if (url) {
+                        const resolvedUrl = resolveImg(url);
+                        if (!images.find((i) => i.duongDanAnh === resolvedUrl)) {
+                            images.push({ duongDanAnh: resolvedUrl, label: v.tenMauSac ? `Màu ${v.tenMauSac}` : 'Ảnh biến thể' });
+                        }
                     }
                 });
             }
             if (v.hinhAnh) {
-                const url = v.hinhAnh;
+                const url = resolveImg(v.hinhAnh);
                 if (url && !images.find((i) => i.duongDanAnh === url)) {
                     images.push({ duongDanAnh: url, label: v.tenMauSac ? `Màu ${v.tenMauSac}` : 'Ảnh biến thể' });
                 }
@@ -206,7 +340,7 @@ const colorVariantPreviews = computed(() => {
     product.value.variants.forEach(v => {
         if (v.tenMauSac && !map.has(v.tenMauSac)) {
             const img = v.hinhAnh || (v.images && v.images.length > 0 ? (v.images[0].duongDanAnh || v.images[0].hinhAnh) : null);
-            map.set(v.tenMauSac, { color: v.tenMauSac, img });
+            map.set(v.tenMauSac, { color: v.tenMauSac, img: resolveImg(img) });
         }
     });
     return Array.from(map.values());
@@ -397,6 +531,19 @@ const toggleFavorite = () => {
                         <!-- Main Image Box -->
                         <div class="rounded-xl bg-grey-lighten-4 mb-4 elevation-1 position-relative overflow-hidden"
                             style="aspect-ratio: 1; max-height: 480px; border: 1px solid #e2e8f0;">
+                            <!-- Floating Favorite Button -->
+                            <v-btn
+                                icon
+                                variant="flat"
+                                color="white"
+                                class="position-absolute favorite-floating-btn"
+                                @click="toggleFavorite"
+                            >
+                                <v-icon :color="isFavorite ? 'red' : 'grey-darken-1'" size="20">
+                                    {{ isFavorite ? 'mdi-heart' : 'mdi-heart-outline' }}
+                                </v-icon>
+                            </v-btn>
+
                             <template v-if="allImages.length > 0">
                                 <v-carousel v-model="activeSlide" cycle interval="4000" hide-delimiters show-arrows="hover" height="100%">
                                     <v-carousel-item v-for="(img, i) in allImages" :key="i" :src="img.duongDanAnh" cover>
@@ -458,136 +605,159 @@ const toggleFavorite = () => {
                                 </template>
                             </v-row>
                         </div>
-
-                        <!-- Color Variant Previews -->
-                        <div v-if="colorVariantPreviews.length > 0" class="mt-2 pt-3" style="border-top: 1px solid #e2e8f0;">
-                            <span class="text-caption font-weight-bold d-block mb-2" style="color: #1e257c;">
-                                <v-icon size="14" class="mr-1" style="color: #1e257c;">mdi-palette-outline</v-icon>
-                                Xem ảnh theo màu sắc
-                            </span>
-                            <div class="d-flex flex-wrap ga-2">
-                                <v-chip v-for="cv in colorVariantPreviews" :key="cv.color"
-                                    size="small" variant="tonal" class="font-weight-medium px-3 py-1 cursor-pointer"
-                                    :style="selectedColor === cv.color ? 'background: #1e257c !important; color: white !important;' : 'background: #f0f4ff; color: #1e257c;'"
-                                    @click="onSelectColorPreview(cv)">
-                                    <v-avatar v-if="cv.img" start size="18" class="mr-1">
-                                        <v-img :src="cv.img" cover></v-img>
-                                    </v-avatar>
-                                    {{ cv.color }}
-                                </v-chip>
-                            </div>
-                        </div>
                     </div>
                 </v-col>
 
                 <!-- Right: Product Info -->
                 <v-col cols="12" md="6" lg="7">
                     <div class="sticky-info-panel px-md-8">
-                        <div class="header-info mb-8">
-                            <h1 class="product-title text-h4 font-weight-bold text-primary mb-1">{{ product.tenSanPham
-                                }}</h1>
-                            <p class="product-cat text-subtitle-1 font-weight-medium text-grey-darken-1">
-                                {{ product.tenThuongHieu }}
-                            </p>
-                            <div class="product-price mt-4 text-h5 font-weight-semibold text-primary">{{
-                                formattedDisplayPrice }}</div>
+                        <!-- Brand tag above the title -->
+                        <div class="product-brand-tag text-uppercase mb-2">
+                            {{ product.tenThuongHieu || 'AEROSTRIDE' }}
+                        </div>
+                        
+                        <!-- Product Title -->
+                        <h1 class="product-title-new mb-2">{{ product.tenSanPham }}</h1>
+                        
+                        <!-- Ratings, Review & Sold Count -->
+                        <div class="product-meta-row d-flex align-center gap-2 mb-6">
+                            <template v-if="totalReviews > 0">
+                                <div class="rating-stars-wrapper d-flex align-center">
+                                    <v-icon v-for="star in 5" :key="star" size="14" color="amber" class="mr-0.5">
+                                        {{ star <= Math.round(Number(averageRating)) ? 'mdi-star' : 'mdi-star-outline' }}
+                                    </v-icon>
+                                    <span class="rating-value-text ml-1">{{ averageRating }}</span>
+                                </div>
+                                <span class="meta-separator text-grey-lighten-1">|</span>
+                                <span class="reviews-count-text">({{ totalReviews }} đánh giá)</span>
+                            </template>
+                            <template v-else>
+                                <span class="no-reviews-text text-grey-darken-1">Chưa có đánh giá</span>
+                            </template>
+                            <span class="meta-separator text-grey-lighten-1">|</span>
+                            <span class="sold-count-text">Đã bán {{ product.daBan || 0 }}</span>
                         </div>
 
-                        <!-- Description Info moved to top -->
-                        <div class="product-description mb-8">
-                            <p class="desc-text text-body-1">{{ product.moTa }}</p>
-                            <div class="d-flex flex-wrap gap-4 mt-3">
-                                <v-chip size="small" variant="flat" color="lightprimary"
-                                    class="font-weight-medium text-primary product-badge-chip"><v-icon start size="14"
-                                        color="primary">mdi-domain</v-icon> {{
-                                            product.tenThuongHieu }}</v-chip>
-                                <v-chip size="small" variant="flat" color="lightprimary"
-                                    class="font-weight-medium text-primary product-badge-chip"><v-icon start size="14"
-                                        color="primary">mdi-earth</v-icon> Xuất xứ: {{
-                                            product.tenXuatXu }}</v-chip>
-                                <v-chip size="small" variant="flat" color="lightprimary"
-                                    class="font-weight-medium text-primary product-badge-chip"><v-icon start size="14"
-                                        color="primary">mdi-barcode</v-icon> Mã: {{
-                                            product.maSanPham }}</v-chip>
-                            </div>
+                        <!-- Price Section -->
+                        <div class="product-price-row d-flex align-center gap-4 mb-6">
+                            <span class="current-price-label-new">{{ formattedCurrentPrice }}</span>
+                            <span v-if="discountPercent > 0 && formattedOldPrice" class="old-price-label-new">
+                                {{ formattedOldPrice }}
+                            </span>
+                            <span v-if="discountPercent > 0" class="discount-badge-new">
+                                -{{ discountPercent }}%
+                            </span>
                         </div>
 
                         <!-- Color Selection -->
                         <div class="color-selection-section mb-6" v-if="colors.length > 0">
-                            <div class="d-flex justify-space-between align-center mb-4">
-                                <span class="font-weight-medium text-grey-darken-3">Chọn màu sắc</span>
+                            <div class="selection-label-row mb-3">
+                                <span class="label-title">Màu sắc:</span>
+                                <span class="label-selected-value font-weight-bold ml-1">
+                                    {{ selectedColor || 'Chưa chọn' }}
+                                </span>
                             </div>
-                            <v-row class="g-2">
-                                <v-col v-for="color in colors" :key="color" cols="4">
-                                    <div class="size-box" :class="{ active: selectedColor === color }"
-                                        @click="selectedColor = color">
-                                        {{ color }}
-                                    </div>
-                                </v-col>
-                            </v-row>
+                            <div class="d-flex flex-wrap ga-3">
+                                <div 
+                                    v-for="color in colors" 
+                                    :key="color" 
+                                    class="color-dot-wrapper"
+                                    :class="{ active: selectedColor === color }"
+                                    @click="selectedColor = color"
+                                >
+                                    <div 
+                                        class="color-dot-inner" 
+                                        :style="{ backgroundColor: colorHexMap[color] || '#CCCCCC' }"
+                                    ></div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Size Selection -->
-                        <div class="size-selection-section mb-10">
-                            <div class="d-flex justify-space-between align-center mb-4">
-                                <span class="font-weight-medium text-grey-darken-3">Chọn kích thước</span>
-                                <a href="#" class="size-guide">Bảng kích thước</a>
+                        <div class="size-selection-section mb-6">
+                            <div class="d-flex justify-space-between align-center mb-3">
+                                <div class="selection-label-row">
+                                    <span class="label-title">Chọn kích cỡ</span>
+                                    <span v-if="selectedSize" class="label-selected-value font-weight-bold ml-1">
+                                        {{ selectedSize.replace('Size ', '') }}
+                                    </span>
+                                </div>
                             </div>
-                            <v-row class="g-2" v-if="sizes.length > 0">
-                                <v-col v-for="size in sizes" :key="size" cols="4">
-                                    <div class="size-box" :class="{ active: selectedSize === size }"
-                                        @click="selectedSize = size">
-                                        {{ size.replace('Size ', '') }}
-                                    </div>
-                                </v-col>
-                            </v-row>
-                            <p v-else class="text-grey">Vui lòng chọn màu sắc để xem các kích thước.</p>
+                            
+                            <div class="d-flex flex-wrap ga-2" v-if="sizes.length > 0">
+                                <div 
+                                    v-for="size in sizes" 
+                                    :key="size" 
+                                    class="size-box-item" 
+                                    :class="{ active: selectedSize === size }"
+                                    @click="selectedSize = size"
+                                >
+                                    {{ size.replace('Size ', '') }}
+                                </div>
+                            </div>
+                            <p v-else class="text-caption text-grey-darken-1 bg-grey-lighten-4 pa-3 rounded-lg">
+                                <v-icon size="16" class="mr-1">mdi-information-outline</v-icon>
+                                Vui lòng chọn màu sắc để hiển thị các kích cỡ còn hàng.
+                            </p>
                         </div>
 
-                        <!-- Quantity Selection -->
-                        <div class="quantity-selection-section mb-10">
-                            <div class="d-flex align-center justify-space-between mb-4">
-                                <span class="font-weight-medium text-grey-darken-3">Số lượng</span>
-                                <span class="text-caption text-grey" v-if="maxQuantity > 0">
-                                    Còn lại: {{ maxQuantity }}
-                                </span>
-                            </div>
-                            <div class="d-flex align-center border rounded-lg py-1 px-3" style="width: 150px;">
-                                <v-btn icon="mdi-minus" variant="plain" density="compact"
-                                    :disabled="selectedQuantity <= 1" @click="selectedQuantity--"></v-btn>
-                                <input type="number"
-                                    class="quantity-input flex-grow-1 text-center font-weight-medium text-body-1"
-                                    :value="selectedQuantity" @change="handleQuantityInput($event.target.value)"
-                                    @blur="handleQuantityInput($event.target.value)" />
-                                <v-btn icon="mdi-plus" variant="plain" density="compact"
-                                    @click="handleIncrement"></v-btn>
-                            </div>
-                        </div>
+                        <!-- Action Buttons and Quantity -->
+                        <div class="actions-section-wrapper mb-6">
+                            <!-- Quantity + Add to Cart Row -->
+                            <div class="quantity-cart-row d-flex align-center gap-4 mb-4">
+                                <!-- Modern Rounded Quantity Selector -->
+                                <div class="quantity-selector-pill d-flex align-center">
+                                    <button 
+                                        class="qty-btn" 
+                                        :disabled="selectedQuantity <= 1" 
+                                        @click="selectedQuantity--"
+                                    >
+                                        <v-icon size="14">mdi-minus</v-icon>
+                                    </button>
+                                    <span class="qty-number">{{ selectedQuantity }}</span>
+                                    <button 
+                                        class="qty-btn" 
+                                        @click="handleIncrement"
+                                    >
+                                        <v-icon size="14">mdi-plus</v-icon>
+                                    </button>
+                                </div>
 
-                        <!-- Action Buttons -->
-                        <div class="action-buttons d-flex flex-column gap-4">
-                            <v-btn block size="x-large" color="primary" rounded="pill" class="font-weight-medium py-6"
-                                :loading="addingToCart" @click="addToCart">
-                                <v-icon class="mr-2">mdi-bag-plus-outline</v-icon>
-                                Thêm vào giỏ hàng
+                                <!-- Add to Cart Button -->
+                                <v-btn 
+                                    flat
+                                    color="#2962FF" 
+                                    class="add-to-cart-btn-new flex-grow-1" 
+                                    :loading="addingToCart" 
+                                    @click="addToCart"
+                                >
+                                    THÊM VÀO GIỎ HÀNG
+                                </v-btn>
+                            </div>
+
+                            <!-- Buy Now Button -->
+                            <v-btn 
+                                flat
+                                color="#0B1329" 
+                                class="buy-now-btn-new block w-100" 
+                                @click="buyNow"
+                            >
+                                MUA NGAY
                             </v-btn>
-                            <v-btn v-if="authStore.isLoggedIn" block size="x-large" variant="outlined" rounded="pill"
-                                class="font-weight-medium py-6" :class="isFavorite ? 'text-red' : ''"
-                                :color="isFavorite ? 'red' : 'primary'" @click="toggleFavorite">
-                                {{ isFavorite ? 'Đã yêu thích' : 'Yêu thích' }}
-                                <v-icon class="ml-2" :color="isFavorite ? 'red' : ''">{{ isFavorite ? 'mdi-heart' :
-                                    'mdi-heart-outline' }}</v-icon>
-                            </v-btn>
                         </div>
 
-                        <!-- Shipping & Returns Beautiful Alert -->
-                        <div class="shipping-returns mt-8">
-                            <v-alert border="start" icon="mdi-truck-fast-outline"
-                                class="rounded-lg shipping-returns-alert" elevation="0">
-                                <div class="font-weight-bold title-text mb-1">Giao hàng & Trả hàng</div>
-                                <div class="text-caption desc-text">Miễn phí giao hàng tiêu chuẩn cho đơn hàng
-                                    trên 5.000.000₫. Miễn phí đổi trả trong vòng 30 ngày.</div>
-                            </v-alert>
+                        <!-- Description Details Section -->
+                        <div class="product-desc-section mt-8 pt-6 border-top">
+                            <h3 class="desc-section-title mb-3">Mô tả sản phẩm</h3>
+                            <p class="desc-text-new">{{ product.moTa }}</p>
+                            <div class="d-flex flex-wrap gap-4 mt-4">
+                                <v-chip size="small" variant="flat" color="#F1F5F9" class="font-weight-medium text-grey-darken-3">
+                                    <v-icon start size="14" color="grey-darken-2">mdi-earth</v-icon> Xuất xứ: {{ product.tenXuatXu }}
+                                </v-chip>
+                                <v-chip size="small" variant="flat" color="#F1F5F9" class="font-weight-medium text-grey-darken-3">
+                                    <v-icon start size="14" color="grey-darken-2">mdi-barcode</v-icon> Mã: {{ product.maSanPham }}
+                                </v-chip>
+                            </div>
                         </div>
                     </div>
                 </v-col>
@@ -674,7 +844,7 @@ const toggleFavorite = () => {
                                     <div class="product-card-placeholder" @click="$router.push(`/product/${p.id}`)">
                                         <!-- Image Placeholder -->
                                         <div class="image-box-placeholder mb-4">
-                                            <v-img v-if="p.hinhAnh" :src="p.hinhAnh" cover class="fill-height"></v-img>
+                                            <v-img v-if="p.hinhAnh" :src="resolveImg(p.hinhAnh)" cover class="fill-height"></v-img>
                                             <v-icon v-else size="64" color="grey-lighten-2">mdi-image-outline</v-icon>
                                         </div>
 
@@ -740,7 +910,7 @@ const toggleFavorite = () => {
                 <v-card-text class="pa-4">
                     <div class="d-flex align-center mb-4 pa-2 bg-grey-lighten-4 rounded-lg pa-3" v-if="product">
                         <v-avatar rounded size="48" class="mr-3 bg-white elevation-1">
-                            <v-img :src="product.hinhAnh" cover></v-img>
+                            <v-img :src="resolveImg(product.hinhAnh)" cover></v-img>
                         </v-avatar>
                         <div>
                             <div class="font-weight-bold text-body-2 text-truncate" style="max-width: 300px;">{{
@@ -1004,5 +1174,277 @@ const toggleFavorite = () => {
         font-weight: 800;
         color: #1e257c;
     }
+}
+
+/* Modern Product Detail Design Overrides */
+.product-brand-tag {
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #2962FF;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.product-title-new {
+    font-family: 'Outfit', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.25;
+    color: #0A1329;
+}
+
+.product-meta-row {
+    font-size: 13px;
+    color: #64748B;
+    font-weight: 500;
+    
+    .rating-value-text {
+        font-weight: 700;
+        color: #0A1329;
+    }
+    
+    .reviews-count-text, .sold-count-text {
+        color: #64748B;
+    }
+    
+    .meta-separator {
+        margin: 0 4px;
+    }
+}
+
+.product-price-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    
+    .current-price-label-new {
+        font-size: 30px;
+        font-weight: 800;
+        color: #E53935;
+        font-family: 'Outfit', sans-serif;
+    }
+    
+    .old-price-label-new {
+        font-size: 18px;
+        font-weight: 500;
+        color: #94A3B8;
+        text-decoration: line-through;
+    }
+    
+    .discount-badge-new {
+        background-color: #FEE2E2;
+        color: #EF4444;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 4px 8px;
+        border-radius: 6px;
+    }
+}
+
+.selection-label-row {
+    font-size: 14px;
+    color: #0A1329;
+    
+    .label-title {
+        font-weight: 600;
+    }
+    
+    .label-selected-value {
+        color: #64748B;
+        font-weight: 500;
+    }
+}
+
+/* Color Dot Selectors */
+.color-dot-wrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    padding: 2px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+    .color-dot-inner {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        transition: transform 0.2s;
+    }
+    
+    &:hover {
+        transform: scale(1.05);
+        .color-dot-inner {
+            transform: scale(0.95);
+        }
+    }
+    
+    &.active {
+        border-color: #2962FF;
+        box-shadow: 0 4px 12px rgba(41, 98, 255, 0.25);
+    }
+}
+
+/* Size Box Selectors */
+.size-guide-link {
+    font-size: 13px;
+    color: #2962FF;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.2s;
+    
+    &:hover {
+        opacity: 0.8;
+        text-decoration: underline;
+    }
+}
+
+.size-box-item {
+    min-width: 48px;
+    height: 48px;
+    padding: 0 12px;
+    border-radius: 12px;
+    background-color: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    color: #0A1329;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &:hover {
+        border-color: #2962FF;
+        color: #2962FF;
+        background-color: #F0F4FF;
+    }
+    
+    &.active {
+        background-color: #2962FF !important;
+        border-color: #2962FF !important;
+        color: #FFFFFF !important;
+        box-shadow: 0 4px 12px rgba(41, 98, 255, 0.25);
+    }
+}
+
+/* Availability Status */
+.availability-status-row {
+    font-size: 14px;
+    font-weight: 600;
+    color: #10B981;
+}
+
+/* Action Section */
+.quantity-cart-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.quantity-selector-pill {
+    height: 48px;
+    background-color: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 130px;
+    
+    .qty-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        background: transparent;
+        color: #0A1329;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        
+        &:hover:not(:disabled) {
+            background-color: #E2E8F0;
+        }
+        
+        &:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+    }
+    
+    .qty-number {
+        font-size: 16px;
+        font-weight: 700;
+        color: #0A1329;
+        min-width: 24px;
+        text-align: center;
+    }
+}
+
+.add-to-cart-btn-new {
+    height: 48px !important;
+    border-radius: 999px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 4px 14px rgba(41, 98, 255, 0.25) !important;
+    color: #FFFFFF !important;
+    transition: transform 0.2s !important;
+    
+    &:hover {
+        transform: translateY(-2px);
+    }
+}
+
+.buy-now-btn-new {
+    height: 48px !important;
+    border-radius: 999px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 4px 14px rgba(11, 19, 41, 0.2) !important;
+    color: #FFFFFF !important;
+    transition: transform 0.2s !important;
+    
+    &:hover {
+        transform: translateY(-2px);
+    }
+}
+
+.favorite-floating-btn {
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    border-radius: 50% !important;
+    width: 44px !important;
+    height: 44px !important;
+    
+    &:hover {
+        transform: scale(1.05);
+    }
+}
+
+.desc-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0A1329;
+}
+
+.desc-text-new {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #475569;
 }
 </style>

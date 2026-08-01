@@ -38,7 +38,10 @@ export function useLandingCatalog(activeSectionRef) {
         }
     };
 
-    onMounted(loadInitialCatalog);
+    onMounted(() => {
+        loadInitialCatalog();
+        loadSecondaryCatalog();
+    });
 
     if (activeSectionRef) {
         watch(activeSectionRef, (sectionIndex) => {

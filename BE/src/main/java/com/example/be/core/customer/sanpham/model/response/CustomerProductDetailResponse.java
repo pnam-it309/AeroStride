@@ -52,4 +52,5 @@ public class CustomerProductDetailResponse {
     private Map<String, List<String>> availableSizesByColor;
     private Integer totalStock;
     private Map<String, Integer> stockByColor;
+    private Integer daBan;
 }

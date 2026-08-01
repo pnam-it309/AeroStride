@@ -48,7 +48,7 @@ const submitReview = async () => {
             comment: comment.value
         };
 
-        const response = await api.post('/api/v1/reviews/submit', payload);
+        const response = await api.post('/reviews/submit', payload);
         if (response.data?.success) {
             notification.showSuccess('Cảm ơn bạn đã đánh giá sản phẩm!');
             emit('review-success');

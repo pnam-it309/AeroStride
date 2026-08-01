@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue';
-import LogoClient from '@/layouts/full/logo/LogoClient.vue';
 import CartDrawer from '@/components/shared/CartDrawer.vue';
 import { PATH } from '@/router/routePaths';
 import { useAuthStore } from '@/stores/authStore';
@@ -55,7 +54,7 @@ const navLinks = [
     { label: 'GIỚI THIỆU', path: '/gioi-thieu' },
     { label: 'TIN TỨC', path: '/tin-tuc' },
     { label: 'LIÊN HỆ', path: '/lien-he' },
-    { label: 'TRA CỨU', path: PATH.ORDERS },
+    { label: 'TRA CỨU', path: PATH.ORDERS }
 ];
 
 // ─── Live search ──────────────────────────────────────────────────────────────
@@ -146,138 +145,124 @@ onUnmounted(() => {
         :class="{ scrolled: isScrolled, 'header-hidden': isHidden }"
         @mouseenter="handleMouseEnter"
     >
-        <!-- Top Utility Bar -->
-        <div class="top-utility-bar">
-            <div class="container-custom d-flex align-center justify-space-between px-12 w-100">
-                <span class="u-text">📞 Hotline: 1900 6789</span>
-                <div class="d-flex align-center ga-4">
-                    <router-link to="/he-thong-cua-hang" class="u-link">Hệ thống cửa hàng</router-link>
-                    <span class="divider">|</span>
-                    <router-link to="/tro-giup" class="u-link">Trợ giúp</router-link>
-                    <span class="divider">|</span>
-                    <router-link v-if="!authStore.isLoggedIn" :to="PATH.LOGIN" class="u-link d-flex align-center ga-1">
-                        <v-icon size="16">mdi-account-circle-outline</v-icon>
-                        Đăng nhập
-                    </router-link>
-                    <v-menu v-else location="bottom end" offset="4" transition="slide-y-transition">
-                        <template v-slot:activator="{ props: menuProps }">
-                            <div v-bind="menuProps" class="d-flex align-center ga-1 u-link cursor-pointer">
-                                <v-icon size="16">mdi-account-circle-outline</v-icon>
-                                {{ authStore.user?.hoTen || authStore.user?.username || 'Thành viên' }}
-                            </div>
-                        </template>
-                        <v-list density="compact" width="180" class="rounded-lg mt-2 border elevation-1">
-                            <v-list-item prepend-icon="mdi-account-outline" title="Tài khoản" :to="PATH.PROFILE"></v-list-item>
-                            <v-list-item prepend-icon="mdi-package-variant-closed" title="Đơn mua" :to="PATH.ORDERS"></v-list-item>
-                            <v-divider class="my-1"></v-divider>
-                            <v-list-item prepend-icon="mdi-logout" title="Đăng xuất" @click="handleLogout" color="error"></v-list-item>
-                        </v-list>
-                    </v-menu>
-                </div>
-            </div>
+        <!-- Top Announcement Bar (mockup requirement) -->
+        <div class="top-announcement-bar">
+            FREESHIP cho đơn từ 499K • Đổi trả miễn phí trong 30 ngày
         </div>
 
         <!-- Main Nav -->
-        <nav class="main-navbar px-12 py-2">
-            <div class="container-custom d-flex align-center justify-space-between w-100">
-                <!-- Logo -->
-                <div class="logo-wrap">
-                    <LogoClient />
-                </div>
+        <nav class="main-navbar">
+            <!-- Logo -->
+            <div class="logo-wrap">
+                <router-link to="/" class="text-logo-brand">AEROSTRIDE</router-link>
+            </div>
 
-                <!-- Nav Links -->
-                <nav class="nav-links">
-                    <router-link
-                        v-for="link in navLinks"
-                        :key="link.path"
-                        :to="link.path"
-                        class="nav-link"
-                        :class="{ active: $route.path === link.path || ($route.path.startsWith(link.path) && link.path !== '/') }"
+            <!-- Nav Links -->
+            <div class="nav-links">
+                <router-link
+                    v-for="link in navLinks"
+                    :key="link.label"
+                    :to="link.path"
+                    class="nav-link"
+                    :class="{ active: $route.path === link.path || ($route.path.startsWith(link.path) && link.path !== '/') }"
+                >
+                    {{ link.label }}
+                </router-link>
+            </div>
+
+            <!-- Actions (Search Box + Icons) -->
+            <div class="nav-actions">
+                <!-- Search Box (mockup layout: 230px, rounded-22, static style) -->
+                <div class="search-box-custom">
+                    <v-icon size="18" class="search-icon-custom">mdi-magnify</v-icon>
+                    <input
+                        type="text"
+                        placeholder="Tìm kiếm sản phẩm..."
+                        class="search-input-custom"
+                        v-model="searchQuery"
+                        @keyup.enter="handleSearchSubmit"
+                        @focus="openSearch"
+                        @blur="() => { window.setTimeout(closeSearch, 250) }"
+                    />
+                    <v-icon 
+                        v-if="searchQuery" 
+                        size="16" 
+                        class="clear-icon-custom" 
+                        color="grey-darken-1"
+                        @mousedown.prevent="clearSearch"
                     >
-                        {{ link.label }}
-                    </router-link>
-                </nav>
-
-                <!-- Actions: search + favorites + cart -->
-                <div class="nav-actions d-flex align-center ga-4">
-                    <!-- Search -->
-                    <div class="search-wrap" :class="{ expanded: isSearchOpen }">
-                        <v-icon size="20" class="search-icon" @click="isSearchOpen ? handleSearchSubmit() : openSearch()">
-                            mdi-magnify
-                        </v-icon>
-                        <input
-                            v-if="isSearchOpen"
-                            ref="searchInputRef"
-                            type="text"
-                            placeholder="Tìm kiếm sản phẩm..."
-                            class="search-input"
-                            v-model="searchQuery"
-                            @keyup.enter="handleSearchSubmit"
-                            @blur="() => { window.setTimeout(closeSearch, 200) }"
-                            autofocus
-                        />
-                        <v-icon 
-                            v-if="isSearchOpen && searchQuery" 
-                            size="18" 
-                            class="clear-icon ml-1" 
-                            color="grey-darken-1"
-                            @mousedown.prevent="clearSearch"
+                        mdi-close-circle
+                    </v-icon>
+                    <!-- Dropdown results -->
+                    <div v-if="isSearchOpen && (searchResults.length > 0 || isSearchLoading)" class="search-dropdown-custom">
+                        <div v-if="isSearchLoading" class="search-loading">
+                            <v-progress-circular size="16" width="2" indeterminate color="blue-darken-3"></v-progress-circular>
+                            <span>Đang tìm...</span>
+                        </div>
+                        <div
+                            v-for="item in searchResults"
+                            :key="item.id"
+                            class="search-result-item"
+                            @mousedown.prevent="handleResultClick(item)"
                         >
-                            mdi-close-circle
-                        </v-icon>
-                        <!-- Dropdown results -->
-                        <div v-if="isSearchOpen && (searchResults.length > 0 || isSearchLoading)" class="search-dropdown">
-                            <div v-if="isSearchLoading" class="search-loading">
-                                <v-progress-circular size="18" width="2" indeterminate color="blue-darken-3"></v-progress-circular>
-                                <span>Đang tìm...</span>
+                            <div class="result-img-wrap">
+                                <img v-if="item.hinhAnh" :src="item.hinhAnh" :alt="item.tenSanPham" class="result-img" />
+                                <v-icon v-else size="20" color="grey-lighten-1">mdi-shoe-sneaker</v-icon>
                             </div>
-                            <div
-                                v-for="item in searchResults"
-                                :key="item.id"
-                                class="search-result-item"
-                                @mousedown.prevent="handleResultClick(item)"
-                            >
-                                <div class="result-img-wrap">
-                                    <img v-if="item.hinhAnh" :src="item.hinhAnh" :alt="item.tenSanPham" class="result-img" />
-                                    <v-icon v-else size="24" color="grey-lighten-1">mdi-shoe-sneaker</v-icon>
+                            <div class="result-info">
+                                <div class="result-name">{{ item.tenSanPham }}</div>
+                                <div class="result-meta">
+                                    <span class="result-brand">{{ item.tenThuongHieu }}</span>
+                                    <span class="result-price" v-if="item.giaBanThapNhat">
+                                        {{ formatPrice(item.giaBanThapNhat) }}
+                                    </span>
                                 </div>
-                                <div class="result-info">
-                                    <div class="result-name">{{ item.tenSanPham }}</div>
-                                    <div class="result-meta">
-                                        <span class="result-brand">{{ item.tenThuongHieu }}</span>
-                                        <span class="result-price" v-if="item.giaBanThapNhat">
-                                            {{ formatPrice(item.giaBanThapNhat) }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="search-footer" v-if="searchResults.length > 0" @mousedown.prevent="handleSearchSubmit">
-                                Xem tất cả kết quả cho "{{ searchQuery }}"
-                                <v-icon size="14">mdi-arrow-right</v-icon>
                             </div>
                         </div>
+                        <div class="search-footer" v-if="searchResults.length > 0" @mousedown.prevent="handleSearchSubmit">
+                            Xem tất cả kết quả
+                            <v-icon size="12">mdi-arrow-right</v-icon>
+                        </div>
                     </div>
+                </div>
 
-                    <!-- Favorites -->
-                    <div class="cursor-pointer d-flex align-center" @click="handleFavoriteClick">
-                        <v-badge :content="favoriteCount" color="error" v-if="favoriteCount > 0" offset-x="2" offset-y="2">
-                            <v-icon size="22" class="action-icon">mdi-heart-outline</v-icon>
-                        </v-badge>
-                        <v-icon v-else size="22" class="action-icon">mdi-heart-outline</v-icon>
-                    </div>
+                <!-- Heart Icon (Favorites) -->
+                <div class="action-icon-btn cursor-pointer" @click="handleFavoriteClick">
+                    <v-badge :content="favoriteCount" color="primary" v-if="favoriteCount > 0" offset-x="2" offset-y="2">
+                        <v-icon size="26" class="action-icon">mdi-heart-outline</v-icon>
+                    </v-badge>
+                    <v-icon v-else size="26" class="action-icon">mdi-heart-outline</v-icon>
+                </div>
 
-                    <!-- Cart -->
-                    <div class="cursor-pointer d-flex align-center" @click="cartStore.openDrawer()">
-                        <v-badge :content="cartStore.cartCount" color="error" v-if="cartStore.cartCount > 0" offset-x="2" offset-y="2">
-                            <v-icon size="22" class="action-icon">mdi-shopping-outline</v-icon>
-                        </v-badge>
-                        <v-icon v-else size="22" class="action-icon">mdi-shopping-outline</v-icon>
-                    </div>
+                <!-- Account Icon (◯ representation with dynamic drop-down) -->
+                <v-menu v-if="authStore.isLoggedIn" location="bottom end" offset="4" transition="slide-y-transition">
+                    <template v-slot:activator="{ props: menuProps }">
+                        <div v-bind="menuProps" class="action-icon-btn cursor-pointer">
+                            <v-icon size="26" class="action-icon">mdi-account-outline</v-icon>
+                        </div>
+                    </template>
+                    <v-list density="compact" width="180" class="rounded-lg mt-2 border elevation-1">
+                        <v-list-item prepend-icon="mdi-account-outline" title="Tài khoản" :to="PATH.PROFILE"></v-list-item>
+                        <v-list-item prepend-icon="mdi-package-variant-closed" title="Đơn mua" :to="PATH.ORDERS"></v-list-item>
+                        <v-divider class="my-1"></v-divider>
+                        <v-list-item prepend-icon="mdi-logout" title="Đăng xuất" @click="handleLogout" color="error"></v-list-item>
+                    </v-list>
+                </v-menu>
+                <div v-else class="action-icon-btn cursor-pointer" @click="router.push(PATH.LOGIN)">
+                    <v-icon size="26" class="action-icon">mdi-account-outline</v-icon>
+                </div>
+
+                <!-- Cart Icon (🛒 representation) -->
+                <div class="action-icon-btn cursor-pointer" @click="cartStore.openDrawer()">
+                    <v-badge :content="cartStore.cartCount" color="primary" v-if="cartStore.cartCount > 0" offset-x="2" offset-y="2">
+                        <v-icon size="26" class="action-icon">mdi-shopping-outline</v-icon>
+                    </v-badge>
+                    <v-icon v-else size="26" class="action-icon">mdi-shopping-outline</v-icon>
                 </div>
             </div>
         </nav>
     </header>
-    <!-- Include Cart Drawer globally, outside of header to avoid backdrop-filter containing block issues -->
+    <!-- Include Cart Drawer globally -->
     <CartDrawer />
 </template>
 
@@ -288,16 +273,9 @@ onUnmounted(() => {
     left: 0;
     width: 100%;
     z-index: 1000;
-    background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-
-    &:hover {
-        background: #ffffff;
-        backdrop-filter: none;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    }
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 
     &.header-hidden {
         transform: translateY(-100%);
@@ -313,144 +291,158 @@ onUnmounted(() => {
     z-index: 1001;
 }
 
-/* Top Bar */
-.top-utility-bar {
-    height: 34px;
-    background: #f5f5f5;
-    border-bottom: 1px solid #ebebeb;
+/* Announcement Bar */
+.top-announcement-bar {
+    width: 100%;
+    height: 36px;
+    background: #0A1329;
+    color: #ffffff;
     display: flex;
     align-items: center;
-
-    .u-text {
-        font-size: 0.78rem;
-        color: #555;
-    }
-
-    .u-link {
-        font-size: 0.78rem;
-        color: #333;
-        text-decoration: none;
-        font-weight: 500;
-        cursor: pointer;
-        &:hover { color: #000; }
-    }
-
-    .divider {
-        color: #ccc;
-        font-size: 0.7rem;
-    }
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
-/* Main Nav */
+/* Main Navbar */
 .main-navbar {
-    background: #fff;
-    position: relative;
+    height: 84px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 72px;
+    background: #ffffff;
 }
 
-/* Nav Links */
+/* Brand Text Logo */
+.text-logo-brand {
+    font-family: 'Outfit', sans-serif;
+    font-size: 25px;
+    font-weight: 700;
+    color: #2962FF;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s ease;
+    
+    &:hover {
+        opacity: 0.85;
+    }
+}
+
+/* Navigation Menu */
 .nav-links {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 32px;
 }
 
 .nav-link {
-    position: relative;
-    padding: 8px 14px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    color: #333;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0A1329;
     text-decoration: none;
-    white-space: nowrap;
+    letter-spacing: 0.5px;
     transition: color 0.2s ease;
+    padding: 8px 0;
+    position: relative;
 
     &::after {
         content: '';
         position: absolute;
-        bottom: 2px;
-        left: 14px;
-        right: 14px;
+        bottom: 0;
+        left: 0;
+        width: 100%;
         height: 2px;
-        background: #111;
+        background: #2962FF;
         transform: scaleX(0);
         transition: transform 0.25s ease;
         transform-origin: center;
     }
 
     &:hover {
-        color: #111;
-        &::after { transform: scaleX(1); }
+        color: #2962FF;
+        &::after {
+            transform: scaleX(1);
+        }
     }
 
     &.active {
-        color: #111;
-        font-weight: 900;
-        &::after { transform: scaleX(1); }
+        color: #2962FF;
+        &::after {
+            transform: scaleX(1);
+        }
     }
 }
 
-/* Actions */
+/* Actions area */
 .nav-actions {
-    .action-icon {
-        cursor: pointer;
-        color: #111;
-        &:hover { opacity: 0.7; }
-    }
-}
-
-/* Search */
-.search-wrap {
-    position: relative;
     display: flex;
     align-items: center;
-    background: #f5f5f5;
-    border-radius: 100px;
-    padding: 6px 12px;
-    min-width: 36px;
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 20px;
+}
 
-    &.expanded {
-        width: 260px;
-        background: #ebebeb;
-    }
+/* Search Box Custom (mockup spec) */
+.search-box-custom {
+    position: relative;
+    width: 230px;
+    height: 44px;
+    background: #F5F7FA;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
 
-    .search-icon {
-        color: #666;
-        cursor: pointer;
-        flex-shrink: 0;
-    }
-
-    .search-input {
-        border: none;
-        background: transparent;
-        outline: none;
-        font-size: 0.88rem;
-        font-weight: 500;
-        width: 100%;
-        color: #111;
-        margin-left: 8px;
-    }
-    
-    .clear-icon {
-        cursor: pointer;
-        opacity: 0.6;
-        transition: opacity 0.2s;
-        flex-shrink: 0;
-        &:hover { opacity: 1; }
+    &:focus-within {
+        background: #ffffff;
+        border-color: #2962FF;
+        box-shadow: 0 4px 12px rgba(41, 98, 255, 0.08);
     }
 }
 
-.search-dropdown {
+.search-icon-custom {
+    color: #637085;
+}
+
+.search-input-custom {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    margin-left: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: #0A1329;
+
+    &::placeholder {
+        color: #637085;
+    }
+}
+
+.clear-icon-custom {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+    &:hover {
+        opacity: 1;
+    }
+}
+
+/* Search results dropdown */
+.search-dropdown-custom {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    left: 0;
     width: 340px;
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
-    border: 1px solid #f0f0f0;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
     overflow: hidden;
     z-index: 2000;
 }
@@ -468,18 +460,20 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 14px;
+    padding: 10px 16px;
     cursor: pointer;
     transition: background 0.15s;
 
-    &:hover { background: #f8fafc; }
+    &:hover {
+        background: #F8FAFC;
+    }
 }
 
 .result-img-wrap {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 8px;
-    background: #f5f5f5;
+    background: #F5F7FA;
     overflow: hidden;
     flex-shrink: 0;
     display: flex;
@@ -491,7 +485,7 @@ onUnmounted(() => {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    padding: 4px;
+    padding: 2px;
 }
 
 .result-info {
@@ -502,7 +496,7 @@ onUnmounted(() => {
 .result-name {
     font-size: 0.85rem;
     font-weight: 700;
-    color: #1e293b;
+    color: #0A1329;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -517,32 +511,70 @@ onUnmounted(() => {
 
 .result-brand {
     font-size: 0.72rem;
-    color: #94a3b8;
+    color: #637085;
     font-weight: 600;
 }
 
 .result-price {
     font-size: 0.78rem;
     font-weight: 800;
-    color: #d32f2f;
+    color: #2962FF;
 }
 
 .search-footer {
-    padding: 10px 14px;
+    padding: 12px 16px;
     font-size: 0.8rem;
     font-weight: 700;
-    color: #2962ff;
+    color: #2962FF;
     cursor: pointer;
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid #F5F7FA;
     display: flex;
     align-items: center;
-    gap: 4px;
+    justify-content: space-between;
 
-    &:hover { background: #f0f4ff; }
+    &:hover {
+        background: rgba(41, 98, 255, 0.04);
+    }
 }
 
-@media (max-width: 1200px) {
-    .top-utility-bar { display: none; }
-    .brand-tabs { display: none; }
+/* Icon Buttons */
+.action-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    color: #0A1329;
+    transition: background-color 0.2s ease, color 0.2s ease;
+
+    &:hover {
+        background-color: #F5F7FA;
+        color: #2962FF;
+    }
+}
+
+.action-icon {
+    font-size: 26px !important;
+    width: 26px !important;
+    height: 26px !important;
+}
+
+@media (max-width: 1024px) {
+    .main-navbar {
+        padding: 0 24px;
+    }
+    .nav-links {
+        gap: 16px;
+    }
+    .search-box-custom {
+        width: 180px;
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+    }
 }
 </style>
