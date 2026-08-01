@@ -1,3 +1,10 @@
+## [1.30.4](https://github.com/pnam-it309/AeroStride/compare/v1.30.3...v1.30.4) (2026-08-01)
+
+
+### Bug Fixes
+
+* update online cart and product data ([98ce14b](https://github.com/pnam-it309/AeroStride/commit/98ce14b536a7e5d4106e0a26702b7908ec254d8c))
+
 ## [1.30.3](https://github.com/pnam-it309/AeroStride/compare/v1.30.2...v1.30.3) (2026-07-27)
 
 
