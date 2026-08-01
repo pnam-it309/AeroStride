@@ -1276,7 +1276,7 @@ const decorateVoucher = (v, order = selectedOrder.value) => {
         : `(Giảm ${new Intl.NumberFormat('vi-VN').format(v.soTienGiam || 0)}đ)`;
 
     // Disable voucher if order total doesn't meet the minimum required amount
-    const baseAmount = getVoucherBaseAmount(order);
+    const baseAmount = Number(order?.tongTien || 0);
     const disabled = Number(v.donHangToiThieu || 0) > baseAmount;
 
     return { ...v, customTitle: `${text} ${discount}`, disabled };
