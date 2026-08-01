@@ -26,7 +26,7 @@ export const dichVuSanPhamPublic = {
 
     async timKiemNhanh(keyword, size = 6) {
         const response = await api.get('/customer/san-pham/hien-thi', {
-            params: { keyword, page: 1, size }
+            params: { keyword, page: 0, size }
         });
         const content = response.data?.data?.content || [];
         return content.map((p) => ({

@@ -61,7 +61,7 @@ const fetchProducts = async () => {
     try {
         const params = {
             ...searchParams.value,
-            page: currentPage.value,
+            page: currentPage.value - 1,
             size: pageSize.value
         };
         const response = await dichVuSanPhamPublic.layDanhSachSanPham(params);

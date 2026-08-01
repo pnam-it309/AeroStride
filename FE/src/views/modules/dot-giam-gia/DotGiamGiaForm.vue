@@ -362,7 +362,7 @@ const init = async () => {
         materials.value = (materialData?.content || materialData || []).map((m) => m.ten);
 
         const data = await dichVuDotGiamGia.layDanhSachSanPhamApDung();
-        products.value = (data || []).map((p, i) => ({
+        const mappedData = (data || []).map((p, i) => ({
             ...p,
             ma: p.maChiTietSanPham || p.ma || p.maSanPham || p.sanPhamMa || p.maSp,
             maSanPham: p.maSanPham || p.sanPhamMa || p.maSp || p.maChiTietSanPham || p.ma,
@@ -375,6 +375,23 @@ const init = async () => {
             chatLieu: p.sanPham?.chatLieu?.ten || p.tenChatLieu || p.chatLieu || '--',
             giaGoc: p.giaBan || 0
         }));
+
+        mappedData.sort((v1, v2) => {
+            const t1 = v1.ngayTao || 0;
+            const t2 = v2.ngayTao || 0;
+            if (t2 !== t1) {
+                return t2 - t1; // Descending (newest first)
+            }
+            const id1 = v1.idSanPham || '';
+            const id2 = v2.idSanPham || '';
+            if (id1 !== id2) {
+                return id1.localeCompare(id2);
+            }
+            const code1 = v1.ma || '';
+            const code2 = v2.ma || '';
+            return code1.localeCompare(code2);
+        });
+        products.value = mappedData;
 
         // Cập nhật giá lớn nhất thực tế từ danh sách sản phẩm đã load
         if (products.value.length > 0) {
@@ -872,15 +889,7 @@ onMounted(init);
                                         </td>
                                         <td class="data-cell text-center">
                                             <div class="d-flex align-center justify-center gap-2">
-                                                <div class="color-dot" :style="{
-                                                    backgroundColor:
-                                                        item.color === 'Xanh dương'
-                                                            ? '#3b82f6'
-                                                            : item.color === 'Xanh lá'
-                                                                ? '#22c55e'
-                                                                : item.color === 'Đen'
-                                                                    ? '#000'
-                                                                    : '#ccc'
+                                                 <div class="color-dot" :style="{ backgroundColor: item.maMauHex || '#ccc'
                                                 }"></div>
                                                 <span>{{ item.color }}</span>
                                             </div>

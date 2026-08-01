@@ -32,7 +32,7 @@ public class CustomerSanPhamController {
     @GetMapping("/hien-thi")
     public ResponseEntity<ApiResponse<PageResponse<CustomerProductResponse>>> getProducts(CustomerSearchProductRequest request) {
         request.setTrangThai(TrangThai.DANG_HOAT_DONG);
-        if (request.getPage() == null) request.setPage(1);
+        if (request.getPage() == null) request.setPage(0);
         if (request.getSize() == null) request.setSize(12);
         
         PageResponse<CustomerProductResponse> response = customerSanPhamService.getProducts(request);

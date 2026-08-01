@@ -47,7 +47,7 @@ const fetchProduct = async () => {
 
 const fetchRecommendations = async () => {
     try {
-        const data = await dichVuSanPhamPublic.layDanhSachSanPham({ page: 1, size: 4 });
+        const data = await dichVuSanPhamPublic.layDanhSachSanPham({ page: 0, size: 4 });
         recommendedProducts.value = data.content || [];
     } catch (error) {
         console.error('Error fetching recommendations:', error);

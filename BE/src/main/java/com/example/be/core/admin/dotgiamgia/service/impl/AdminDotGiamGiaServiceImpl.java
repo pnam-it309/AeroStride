@@ -11,6 +11,7 @@ import com.example.be.core.admin.sanpham.repository.AdminChiTietSanPhamRepositor
 import com.example.be.entity.ChiTietDotGiamGia;
 import com.example.be.entity.ChiTietSanPham;
 import com.example.be.entity.DotGiamGia;
+import com.example.be.entity.SanPham;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
@@ -177,6 +178,23 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     public List<ProductVariantResponse> getAvailableVariants() {
         return chiTietSanPhamRepo.findAllByXoaMemFalse()
                 .stream()
+                .sorted((v1, v2) -> {
+                    Long t1 = (v1.getSanPham() != null && v1.getSanPham().getNgayTao() != null) ? v1.getSanPham().getNgayTao() : 0L;
+                    Long t2 = (v2.getSanPham() != null && v2.getSanPham().getNgayTao() != null) ? v2.getSanPham().getNgayTao() : 0L;
+                    int comp = t2.compareTo(t1); // Descending (newest product first)
+                    if (comp != 0) {
+                        return comp;
+                    }
+                    String id1 = (v1.getSanPham() != null) ? v1.getSanPham().getId() : "";
+                    String id2 = (v2.getSanPham() != null) ? v2.getSanPham().getId() : "";
+                    comp = id1.compareTo(id2);
+                    if (comp != 0) {
+                        return comp;
+                    }
+                    String code1 = v1.getMaChiTietSanPham() != null ? v1.getMaChiTietSanPham() : "";
+                    String code2 = v2.getMaChiTietSanPham() != null ? v2.getMaChiTietSanPham() : "";
+                    return code1.compareTo(code2);
+                })
                 .map(v -> {
                     List<com.example.be.core.admin.sanpham.model.response.ProductVariantImageResponse> images =
                         v.getAnhChiTietSanPhams() == null ? List.of() :
@@ -194,7 +212,24 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
         return chiTietDotGiamGiaRepo.findByDotGiamGiaId(campaignId)
                 .stream()
                 .map(ChiTietDotGiamGia::getChiTietSanPham)
-                .filter(v -> !Boolean.TRUE.equals(v.getXoaMem()))
+                .filter(v -> v != null && !Boolean.TRUE.equals(v.getXoaMem()))
+                .sorted((v1, v2) -> {
+                    Long t1 = (v1.getSanPham() != null && v1.getSanPham().getNgayTao() != null) ? v1.getSanPham().getNgayTao() : 0L;
+                    Long t2 = (v2.getSanPham() != null && v2.getSanPham().getNgayTao() != null) ? v2.getSanPham().getNgayTao() : 0L;
+                    int comp = t2.compareTo(t1); // Descending (newest product first)
+                    if (comp != 0) {
+                        return comp;
+                    }
+                    String id1 = (v1.getSanPham() != null) ? v1.getSanPham().getId() : "";
+                    String id2 = (v2.getSanPham() != null) ? v2.getSanPham().getId() : "";
+                    comp = id1.compareTo(id2);
+                    if (comp != 0) {
+                        return comp;
+                    }
+                    String code1 = v1.getMaChiTietSanPham() != null ? v1.getMaChiTietSanPham() : "";
+                    String code2 = v2.getMaChiTietSanPham() != null ? v2.getMaChiTietSanPham() : "";
+                    return code1.compareTo(code2);
+                })
                 .map(v -> {
                     List<com.example.be.core.admin.sanpham.model.response.ProductVariantImageResponse> images =
                         v.getAnhChiTietSanPhams() == null ? List.of() :
