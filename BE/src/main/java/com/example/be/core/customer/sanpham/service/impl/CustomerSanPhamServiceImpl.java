@@ -64,8 +64,26 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                 customerSanPhamChiTietRepository.summarizeBySanPhamIds(ids).stream()
                         .collect(Collectors.toMap(CustomerProductVariantStats::getSanPhamId, s -> s));
 
+        Map<String, String> firstVariantImages = new java.util.HashMap<>();
+        if (!ids.isEmpty()) {
+            List<Object[]> variantImages = customerSanPhamAnhChiTietRepository.findFirstVariantImagesBySanPhamIds(ids);
+            for (Object[] row : variantImages) {
+                String spId = (String) row[0];
+                String imgUrl = (String) row[1];
+                if (spId != null && imgUrl != null && !imgUrl.trim().isEmpty()) {
+                    firstVariantImages.putIfAbsent(spId, imgUrl);
+                }
+            }
+        }
+
         return PageResponse.from(page.map(sp -> {
             CustomerProductVariantStats s = stats.get(sp.getId());
+            String varImg = firstVariantImages.get(sp.getId());
+            String finalImg = (varImg != null && !varImg.trim().isEmpty()) ? varImg : sp.getHinhAnh();
+            if (finalImg == null || finalImg.trim().isEmpty()) {
+                finalImg = "/assets/images/products/1.jpg";
+            }
+
             return CustomerProductResponse.builder()
                     .id(sp.getId())
                     .maSanPham(sp.getMa())
@@ -84,7 +102,7 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                     .tenDeGiay(sp.getDeGiay() != null ? sp.getDeGiay().getTen() : null)
                     .gioiTinhKhachHang(sp.getGioiTinhKhachHang())
                     .moTaNgan(sp.getMoTaChiTiet())
-                    .hinhAnh(sp.getHinhAnh())
+                    .hinhAnh(finalImg)
                     .trangThai(sp.getTrangThai())
                     .ngayTao(sp.getNgayTao())
                     .ngayCapNhat(sp.getNgayCapNhat())

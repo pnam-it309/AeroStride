@@ -70,10 +70,10 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                     .build());
         }
 
-        List<Object[]> categoryRows = thongKeRepository.getCategoryRevenueData(tuNgayMs, denNgayMs);
-        List<AdminThongKeResponse.TyTrongDanhMuc> categoryShares = new java.util.ArrayList<>();
-        for (Object[] row : categoryRows) {
-            categoryShares.add(AdminThongKeResponse.TyTrongDanhMuc.builder()
+        List<Object[]> brandRows = thongKeRepository.getBrandRevenueData(tuNgayMs, denNgayMs);
+        List<AdminThongKeResponse.TyTrongThuongHieu> brandShares = new java.util.ArrayList<>();
+        for (Object[] row : brandRows) {
+            brandShares.add(AdminThongKeResponse.TyTrongThuongHieu.builder()
                     .name(row[0] != null ? row[0].toString() : "Khác")
                     .revenue(row[1] != null ? new BigDecimal(row[1].toString()) : BigDecimal.ZERO)
                     .build());
@@ -98,9 +98,37 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                     .build());
         }
 
+        List<Object[]> empRows = thongKeRepository.getEmployeeRevenueStats(tuNgayMs, denNgayMs);
+        List<AdminThongKeResponse.NhanVienThongKe> topEmployees = new java.util.ArrayList<>();
+        for (Object[] row : empRows) {
+            BigDecimal empTongDoanhThu = row[2] != null ? new BigDecimal(row[2].toString()) : BigDecimal.ZERO;
+            Long empTongSanPham = row[3] != null ? Long.parseLong(row[3].toString()) : 0L;
+            Long empTongDonHang = row[4] != null ? Long.parseLong(row[4].toString()) : 0L;
+
+            topEmployees.add(AdminThongKeResponse.NhanVienThongKe.builder()
+                    .maNhanVien(row[0] != null ? row[0].toString() : "")
+                    .tenNhanVien(row[1] != null ? row[1].toString() : "")
+                    .tongChi(empTongDoanhThu)
+                    .tongSanPham(empTongSanPham)
+                    .tongDonHang(empTongDonHang)
+                    .build());
+        }
+
         BigDecimal giaTriTrungBinh = donHoanThanh > 0
                 ? tongDoanhThu.divide(BigDecimal.valueOf(donHoanThanh), 2, java.math.RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
+
+        // Chu kỳ doanh thu: Hôm nay, Tuần này, Tháng này, Năm này
+        LocalDate today = LocalDate.now();
+        LocalDate startOfWeek = today.with(java.time.DayOfWeek.MONDAY);
+        LocalDate startOfMonth = today.with(java.time.temporal.TemporalAdjusters.firstDayOfMonth());
+        LocalDate startOfYear = today.with(java.time.temporal.TemporalAdjusters.firstDayOfYear());
+
+        List<AdminThongKeResponse.ChuKyDoanhThu> chuKyList = new java.util.ArrayList<>();
+        chuKyList.add(getChuKyStats("Hôm nay", today, today));
+        chuKyList.add(getChuKyStats("Tuần này", startOfWeek, today));
+        chuKyList.add(getChuKyStats("Tháng này", startOfMonth, today));
+        chuKyList.add(getChuKyStats("Năm này", startOfYear, today));
 
         return AdminThongKeResponse.builder()
                 .tongDoanhThu(tongDoanhThu != null ? tongDoanhThu : BigDecimal.ZERO)
@@ -122,9 +150,36 @@ public class AdminThongKeServiceImpl implements AdminThongKeService {
                 .giaTriTrungBinh(giaTriTrungBinh)
                 .sanPhamSapHet(0L)
                 .topSanPhamBanChay(topProducts)
-                .tyTrongTheoDanhMuc(categoryShares)
+                .tyTrongTheoThuongHieu(brandShares)
                 .topKhachHang(topCustomers)
+                .topNhanVien(topEmployees)
+                .chuKyDoanhThu(chuKyList)
                 .build();
+    }
+
+    private AdminThongKeResponse.ChuKyDoanhThu getChuKyStats(String label, LocalDate start, LocalDate end) {
+        Long startMs = AccountUtils.parseDateToLong(start.toString(), false);
+        Long endMs = AccountUtils.parseDateToLong(end.toString(), true);
+        List<Object[]> result = thongKeRepository.getRevenueCycleStats(startMs, endMs);
+        
+        BigDecimal revenue = BigDecimal.ZERO;
+        Long count = 0L;
+        if (result != null && !result.isEmpty()) {
+            Object[] row = result.get(0);
+            revenue = row[0] != null ? new BigDecimal(row[0].toString()) : BigDecimal.ZERO;
+            count = row[1] != null ? Long.parseLong(row[1].toString()) : 0L;
+        }
+        
+        BigDecimal avg = count > 0 
+            ? revenue.divide(BigDecimal.valueOf(count), 2, java.math.RoundingMode.HALF_UP)
+            : BigDecimal.ZERO;
+            
+        return AdminThongKeResponse.ChuKyDoanhThu.builder()
+            .tenChuKy(label)
+            .doanhThu(revenue)
+            .soDon(count)
+            .trungBinhDon(avg)
+            .build();
     }
 
     @Override

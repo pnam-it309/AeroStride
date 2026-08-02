@@ -116,7 +116,34 @@ const fetchCustomerAddresses = async () => {
     try {
         const res = await dichVuKhachHang.layDanhSachDiaChi(props.customer.id);
         const list = res?.data || res || [];
-        addresses.value = Array.isArray(list) ? list : [];
+        const rawList = Array.isArray(list) ? list : [];
+
+        // Deduplicate addresses by content
+        const uniqueList = [];
+        const seenKeys = new Map();
+        for (const item of rawList) {
+            const key = [
+                String(item.tenNguoiNhan || '').trim().toLowerCase(),
+                String(item.sdtNguoiNhan || '').replace(/\D/g, ''),
+                String(item.diaChiChiTiet || '').trim().toLowerCase(),
+                String(item.phuongXa || '').trim().toLowerCase(),
+                String(item.thanhPho || '').trim().toLowerCase(),
+                String(item.tinh || '').trim().toLowerCase()
+            ].join('|');
+
+            if (!seenKeys.has(key)) {
+                seenKeys.set(key, item);
+                uniqueList.push(item);
+            } else {
+                const existing = seenKeys.get(key);
+                if (item.laMacDinh && !existing.laMacDinh) {
+                    const idx = uniqueList.indexOf(existing);
+                    if (idx !== -1) uniqueList[idx] = item;
+                    seenKeys.set(key, item);
+                }
+            }
+        }
+        addresses.value = uniqueList;
     } catch (err) {
         console.error('Lỗi lấy sổ địa chỉ:', err);
         addresses.value = [];

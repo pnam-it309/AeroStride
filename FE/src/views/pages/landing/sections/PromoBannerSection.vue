@@ -81,7 +81,7 @@ const formatPrice = (v) => {
                                         :style="{ background: banner.bg, '--accent': banner.accent, transitionDelay: `${0.1 * index}s` }">
                                         <div class="banner-tag">{{ banner.tenThuongHieu }}</div>
                                         <div class="banner-image-wrap" v-if="banner.hinhAnh">
-                                            <img :src="banner.hinhAnh" :alt="banner.tenSanPham" class="banner-img" />
+                                            <img :src="banner.hinhAnh" :alt="banner.tenSanPham" class="banner-img" referrerpolicy="no-referrer" />
                                         </div>
                                         <div class="banner-icon" v-else>👟</div>
                                         <h3 class="banner-title">{{ banner.tenSanPham }}</h3>

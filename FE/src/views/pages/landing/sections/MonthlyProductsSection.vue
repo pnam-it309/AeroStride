@@ -116,7 +116,7 @@ const addToCart = (e, product) => {
 
                                             <!-- Main Image -->
                                             <img v-if="product.hinhAnh" :src="product.hinhAnh" :alt="product.tenSanPham"
-                                                class="premium-img" />
+                                                class="premium-img" referrerpolicy="no-referrer" />
                                             <div v-else class="premium-placeholder"
                                                 :style="{ backgroundColor: product.maMauHex || '#e2e8f0' }"></div>
 

@@ -373,7 +373,7 @@ const init = async () => {
             kichCo: p.tenKichThuoc || p.kichCo || '--',
             thuongHieu: p.sanPham?.thuongHieu?.ten || p.tenThuongHieu || p.thuongHieu || '--',
             chatLieu: p.sanPham?.chatLieu?.ten || p.tenChatLieu || p.chatLieu || '--',
-            giaGoc: p.giaBan || 0
+            giaGoc: (p.giaGoc !== null && p.giaGoc !== undefined) ? p.giaGoc : (p.giaBan || 0)
         }));
 
         // Cập nhật giá lớn nhất thực tế từ danh sách sản phẩm đã load

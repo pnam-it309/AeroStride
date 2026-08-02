@@ -353,15 +353,15 @@ const { mapCodesToNames, isLegacyAddressId, createLegacyAddressId, parseAddressS
 
 const openAddrDialog = async (item) => {
     selectedKH.value = item;
-    showAddrForm.value = false;
+    showAddrForm.value = true;
     isEditAddr.value = false;
 
     // 1. Khởi tạo từ danh sách địa chỉ lồng nhau (nếu có)
     const existing = item.diaChis || item.listDiaChi || [];
-    let initialList = Array.isArray(existing) ? [...existing] : [];
+    let initialList = Array.isArray(existing) && existing.length > 0 ? [...existing] : [];
 
-    // 2. Fallback: Nếu không có danh sách, nhưng có thông tin địa chỉ phẳng ở Root
-    if (initialList.length === 0 && (item.tinh || item.thanhPho || item.diaChiChiTiet)) {
+    // 2. Fallback: Chỉ nếu không có danh sách địa chỉ thực, mới nạp thông tin địa chỉ phẳng ở Root
+    if (initialList.length === 0 && (item.tinh || item.thanhPho)) {
         initialList.push({
             id: createLegacyAddressId(item.id),
             tinh: item.tinh,
@@ -410,30 +410,53 @@ const loadAddresses = async (khId) => {
 
         // Luôn cập nhật nếu data là mảng (kể cả mảng rỗng)
         if (Array.isArray(data)) {
-            const newList = [...data];
+            const rawList = [...data];
 
-            // Bảo toàn địa chỉ "gốc" (legacy) từ bảng KhachHang nếu có
+            // CHỈ bảo toàn địa chỉ "gốc" (legacy) từ bảng KhachHang khi trong bảng dia_chi chưa có bản ghi nào (newList.length === 0)
             const item = selectedKH.value;
-            const hasLegacyInfo = item && (item.tinh || item.thanhPho || item.diaChiChiTiet);
+            const hasLegacyInfo = item && (item.tinh || item.thanhPho);
 
-            if (hasLegacyInfo) {
+            if (rawList.length === 0 && hasLegacyInfo) {
                 const legacyId = createLegacyAddressId(item.id);
-                // Chỉ thêm nếu trong data chưa có ID này (tránh bị loadAddress ghi đè mất)
-                if (!newList.some((addr) => addr.id === legacyId)) {
-                    newList.push({
-                        id: legacyId,
-                        tinh: item.tinh,
-                        thanhPho: item.thanhPho,
-                        phuongXa: item.phuongXa,
-                        diaChiChiTiet: item.diaChiChiTiet,
-                        tenNguoiNhan: item.ten,
-                        sdtNguoiNhan: item.sdt,
-                        laMacDinh: data.length === 0 // Chỉ mặc định nếu không có địa chỉ thực nào khác
-                    });
+                rawList.push({
+                    id: legacyId,
+                    tinh: item.tinh,
+                    thanhPho: item.thanhPho,
+                    phuongXa: item.phuongXa,
+                    diaChiChiTiet: item.diaChiChiTiet,
+                    tenNguoiNhan: item.ten,
+                    sdtNguoiNhan: item.sdt,
+                    laMacDinh: true
+                });
+            }
+
+            // Deduplicate addresses by content
+            const uniqueList = [];
+            const seenKeys = new Map();
+            for (const addrItem of rawList) {
+                const key = [
+                    String(addrItem.tenNguoiNhan || '').trim().toLowerCase(),
+                    String(addrItem.sdtNguoiNhan || '').replace(/\D/g, ''),
+                    String(addrItem.diaChiChiTiet || '').trim().toLowerCase(),
+                    String(addrItem.phuongXa || '').trim().toLowerCase(),
+                    String(addrItem.thanhPho || '').trim().toLowerCase(),
+                    String(addrItem.tinh || '').trim().toLowerCase()
+                ].join('|');
+
+                if (!seenKeys.has(key)) {
+                    seenKeys.set(key, addrItem);
+                    uniqueList.push(addrItem);
+                } else {
+                    const existing = seenKeys.get(key);
+                    if (addrItem.laMacDinh && !existing.laMacDinh) {
+                        const idx = uniqueList.indexOf(existing);
+                        if (idx !== -1) uniqueList[idx] = addrItem;
+                        seenKeys.set(key, addrItem);
+                    }
                 }
             }
 
-            listDiaChi.value = newList;
+            listDiaChi.value = uniqueList;
         }
     } catch (e) {
         console.error('Error loading addresses:', e);
@@ -1177,7 +1200,7 @@ const updateInvoicePaginationSize = (size) => {
                 <v-card-text class="pa-0" style="max-height: 85vh; overflow: hidden">
                     <v-row no-gutters style="height: 100%">
                         <!-- ── Cột trái: Danh sách địa chỉ ── -->
-                        <v-col cols="12" md="6" class="pb-6 overflow-y-auto" style="max-height: calc(85vh - 80px)">
+                        <v-col cols="12" md="6" class="pb-6 overflow-y-auto border-e border-slate-200" style="max-height: calc(85vh - 80px)">
                             <div
                                 class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-index-10 position-relative">
                                 <span class="text-subtitle-2 font-weight-bold text-slate-800"
@@ -1192,68 +1215,70 @@ const updateInvoicePaginationSize = (size) => {
                             </div>
 
                             <div v-else-if="listDiaChi.length === 0"
-                                class="text-center py-16 px-8 mx-8 bg-slate-50-50 rounded-xl mt-4">
-                                <v-icon size="48" color="slate-200" class="mb-4">mdi-map-marker-off</v-icon>
-                                <div class="text-slate-400 font-weight-medium">Chưa có địa chỉ nào được đăng ký</div>
+                                class="text-center py-16 px-8 mx-8 bg-slate-50-50 rounded-xl mt-4 border border-dashed border-slate-300">
+                                <v-icon size="48" color="slate-300" class="mb-4">mdi-map-marker-off</v-icon>
+                                <div class="text-slate-500 font-weight-medium mb-1">Chưa có địa chỉ nào được đăng ký</div>
+                                <div class="text-caption text-slate-400">Vui lòng điền thông tin bên phải để thêm địa chỉ đầu tiên.</div>
                             </div>
 
                             <div v-else class="px-8">
                                 <div v-for="addr in listDiaChi" :key="addr.id"
-                                    class="pa-6 rounded-xl bg-white border border-slate-200 mb-6 hover-elevation-1 transition-all position-relative"
-                                    :class="{ 'border-s-4 border-s-success border-success-light': addr.laMacDinh }"
+                                    class="pa-5 rounded-xl bg-white border border-slate-200 mb-4 hover-elevation-1 transition-all position-relative"
+                                    :class="{ 
+                                        'border-s-4 border-s-success border-success-light': addr.laMacDinh,
+                                        'border-primary bg-blue-50-20': isEditAddr && addrForm.id === addr.id
+                                    }"
                                     style="
-                                        margin-top: 15px;
+                                        margin-top: 10px;
                                         box-shadow:
                                             0 4px 6px -1px rgba(0, 0, 0, 0.05),
                                             0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
                                     ">
                                     <!-- Dòng tên + badge mặc định -->
-                                    <div class="d-flex align-center ga-3 mb-3">
-                                        <span class="text-subtitle-1 font-weight-medium text-slate-700"
-                                            style="font-size: 13px !important">
-                                            {{ addr.tenNguoiNhan }}
-                                        </span>
-                                        <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="flat"
-                                            class="font-weight-medium px-2"
-                                            style="font-size: 11px !important; color: white !important">Mặc
-                                            định</v-chip>
+                                    <div class="d-flex align-center justify-space-between mb-2">
+                                        <div class="d-flex align-center ga-2">
+                                            <span class="text-subtitle-1 font-weight-bold text-slate-800"
+                                                style="font-size: 14px !important">
+                                                {{ addr.tenNguoiNhan }}
+                                            </span>
+                                            <v-chip v-if="addr.laMacDinh" color="success" size="x-small" variant="flat"
+                                                class="font-weight-medium px-2"
+                                                style="font-size: 11px !important; color: white !important">Mặc định</v-chip>
+                                            <v-chip v-if="isEditAddr && addrForm.id === addr.id" color="primary" size="x-small" variant="tonal"
+                                                class="font-weight-medium px-2"
+                                                style="font-size: 11px !important">Đang sửa</v-chip>
+                                        </div>
                                     </div>
 
                                     <!-- SĐT -->
                                     <div class="d-flex align-center ga-2 mb-2 text-slate-600">
                                         <v-icon size="16" color="slate-400"
                                             style="font-size: 16px !important">mdi-phone-outline</v-icon>
-                                        <span class="text-body-2 font-weight-medium"
+                                        <span class="text-body-2 font-weight-medium text-slate-700"
                                             style="font-size: 13px !important">{{
                                                 addr.sdtNguoiNhan
                                             }}</span>
                                     </div>
 
                                     <!-- Địa chỉ đầy đủ -->
-                                    <div class="text-body-2 text-slate-500 mb-4 font-weight-medium line-height-1-6"
+                                    <div class="text-body-2 text-slate-500 mb-3 font-weight-medium line-height-1-6"
                                         style="font-size: 13px !important">
-
-                                        {{
-                                            [addr.diaChiChiTiet, addr.phuongXa, addr.thanhPho,
-                                            addr.tinh].filter(Boolean).join(',') }}
+                                        {{ [addr.diaChiChiTiet, addr.phuongXa, addr.thanhPho, addr.tinh].filter(Boolean).join(', ') }}
                                     </div>
 
                                     <!-- Actions -->
-                                    <div class="d-flex align-center ga-1 mt-2">
-                                        <v-btn variant="text" icon size="small" color="primary" class="action-icon-btn"
+                                    <div class="d-flex align-center ga-2 mt-2 pt-2 border-t border-slate-100">
+                                        <v-btn variant="tonal" size="x-small" color="primary" class="text-none font-weight-medium px-3"
                                             @click="openEditAddrForm(addr)">
-                                            <PencilIcon size="18" />
-                                            <v-tooltip activator="parent" location="top">Chỉnh sửa</v-tooltip>
+                                            <PencilIcon size="14" class="mr-1" /> Chỉnh sửa
                                         </v-btn>
-                                        <v-btn v-if="!addr.laMacDinh" variant="text" icon size="small" color="success"
-                                            class="action-icon-btn" @click="confirmSetDefaultAddr(addr)">
-                                            <StarIcon size="18" />
-                                            <v-tooltip activator="parent" location="top">Đặt mặc định</v-tooltip>
+                                        <v-btn v-if="!addr.laMacDinh" variant="tonal" size="x-small" color="success"
+                                            class="text-none font-weight-medium px-3" @click="confirmSetDefaultAddr(addr)">
+                                            <StarIcon size="14" class="mr-1" /> Đặt mặc định
                                         </v-btn>
-                                        <v-btn v-if="!addr.laMacDinh" variant="text" icon size="small" color="error"
-                                            class="action-icon-btn" @click="handleDeleteAddr(addr.id)">
-                                            <TrashIcon size="18" />
-                                            <v-tooltip activator="parent" location="top">Xóa địa chỉ</v-tooltip>
+                                        <v-btn v-if="!addr.laMacDinh" variant="tonal" size="x-small" color="error"
+                                            class="text-none font-weight-medium px-3" @click="handleDeleteAddr(addr.id)">
+                                            <TrashIcon size="14" class="mr-1" /> Xóa
                                         </v-btn>
                                     </div>
                                 </div>
@@ -1264,60 +1289,35 @@ const updateInvoicePaginationSize = (size) => {
                         <v-col cols="12" md="6" class="pb-6 bg-white overflow-y-auto"
                             style="max-height: calc(85vh - 80px)">
                             <div
-                                class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-index-10">
-                                <span class="text-subtitle-2 font-weight-bold text-slate-800"
-                                    style="font-size: 15px !important">
-                                    {{ showAddrForm ?
-                                        (isEditAddr ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới') : 'Thêm địa chỉ khác' }}
-                                </span>
-                                <v-btn v-if="!showAddrForm" variant="text" color="primary"
-                                    class="text-none font-weight-bold px-4 rounded-lg text-primary bg-blue-lighten-5"
-                                    style="
-                                        font-size: 13px !important;
-                                        height: 36px !important;
-                                        min-height: 36px !important;
-                                        box-shadow: none !important;
-                                    " @click="openNewAddrForm">
+                                class="px-8 pt-6 pb-4 d-flex align-center justify-space-between sticky-top bg-white z-index-10 border-b border-slate-100">
+                                <div>
+                                    <span class="text-subtitle-2 font-weight-bold text-slate-800"
+                                        style="font-size: 15px !important">
+                                        {{ showAddrForm ? (isEditAddr ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới') : 'Nhập địa chỉ mới' }}
+                                    </span>
+                                    <div class="text-caption text-slate-400" style="font-size: 12px !important">
+                                        {{ isEditAddr ? 'Chỉnh sửa thông tin địa chỉ đã chọn' : 'Thêm thông tin nhận hàng mới cho khách hàng' }}
+                                    </div>
+                                </div>
+                                <v-btn v-if="isEditAddr" variant="tonal" color="primary" size="small"
+                                    class="text-none font-weight-bold px-3 rounded-lg" @click="openNewAddrForm">
                                     <PlusIcon size="14" class="mr-1" />
-                                    <span style="
-                                            font-size: 13px !important;
-                                            font-weight: 600 !important;
-                                            color: rgb(var(--v-theme-primary)) !important;
-                                        ">Thêm địa chỉ mới</span>
+                                    Tạo mới
                                 </v-btn>
-                                <v-btn v-else variant="text" size="small" color="slate-400"
-                                    class="text-none font-weight-medium" @click="showAddrForm = false">
-                                    <v-icon start size="16">mdi-arrow-left</v-icon>Hủy bỏ
-                                </v-btn>
-                            </div>
-
-                            <!-- Placeholder khi chưa mở form -->
-                            <div v-if="!showAddrForm"
-                                class="d-flex flex-column align-center justify-center py-16 text-center"
-                                style="opacity: 0.8; height: 100%">
-                                <div class="icon-blob bg-slate-50 mb-4" style="width: 100px; height: 100px">
-                                    <v-icon size="64" color="slate-300"
-                                        style="font-size: 64px !important">mdi-map-marker-plus-outline</v-icon>
-                                </div>
-                                <div class="text-body-2 text-slate-400 font-weight-medium max-w-200 mx-auto px-8">
-                                    Nhấn "Thêm địa chỉ mới" để đăng ký địa chỉ nhận hàng mới.
-                                </div>
                             </div>
 
                             <!-- Form -->
-                            <v-form v-else class="px-8 pt-2 pb-6">
+                            <v-form class="px-8 pt-4 pb-6">
                                 <v-row dense>
                                     <v-col cols="12" md="6">
                                         <div class="field-label">Tên người nhận</div>
                                         <v-text-field v-model="addrForm.tenNguoiNhan" placeholder="Ví dụ: Nguyễn Văn A"
-                                            :readonly="true" class="bg-slate-50" variant="outlined" density="compact"
-                                            hide-details />
+                                            variant="outlined" density="compact" hide-details />
                                     </v-col>
                                     <v-col cols="12" md="6">
                                         <div class="field-label">Số điện thoại</div>
                                         <v-text-field v-model="addrForm.sdtNguoiNhan" placeholder="09xx.xxx.xxx"
-                                            :readonly="true" class="bg-slate-50" variant="outlined" density="compact"
-                                            hide-details />
+                                            variant="outlined" density="compact" hide-details />
                                     </v-col>
                                     <v-col cols="12">
                                         <div class="field-label">Tỉnh / Thành phố</div>
@@ -1346,7 +1346,7 @@ const updateInvoicePaginationSize = (size) => {
                                             hide-details />
                                     </v-col>
                                     <v-col cols="12" v-if="listDiaChi.length > 0">
-                                        <div class="pa-4 rounded-lg bg-slate-50">
+                                        <div class="pa-4 rounded-lg bg-slate-50 mt-2">
                                             <v-checkbox v-model="addrForm.laMacDinh" color="primary" hide-details
                                                 density="compact">
                                                 <template v-slot:label>

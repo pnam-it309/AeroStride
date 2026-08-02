@@ -420,13 +420,12 @@ watch(() => selectedOrder.value?.id, (id) => {
     checkoutData.value.note = selectedOrder.value?.ghiChu || '';
 
     if (id) {
-        if (selectedOrder.value.phiVanChuyen !== undefined && selectedOrder.value.phiVanChuyen !== null) {
+        if (selectedOrder.value.phiVanChuyen !== undefined && selectedOrder.value.phiVanChuyen !== null && Number(selectedOrder.value.phiVanChuyen) > 0) {
             shippingFee.value = Number(selectedOrder.value.phiVanChuyen);
-            isFreeShip.value = Number(selectedOrder.value.phiVanChuyen) === 0 && isShippingOrder(selectedOrder.value);
         } else {
             shippingFee.value = 0;
-            isFreeShip.value = false;
         }
+        isFreeShip.value = false;
 
         onlyChargeIfReturned.value = !isShippingOrder(selectedOrder.value);
     }
@@ -500,12 +499,25 @@ const voucherSuggestionText = computed(() => {
 
 const isVoucherAutoApplied = ref({});
 
-// Removed searchCustomers, selectCustomer, onCustomerInput, onSelectSuggestedCustomer, onCustomerFormUpdate
+const showQuickAddDialog = ref(false);
+const quickAddInitialData = ref({ ten: '', sdt: '', email: '' });
+
+const handleOpenQuickAdd = (data) => {
+    quickAddInitialData.value = data || { ten: '', sdt: '', email: '' };
+    showQuickAddDialog.value = true;
+};
+
+const onQuickAddSuccess = async (customer) => {
+    if (customer) {
+        await selectCustomer(customer);
+    }
+};
 
 // Nhận dữ liệu địa chỉ giao hàng từ panel bên phải để watcher GHN ở màn chính tính lại phí ship.
 const onShippingPanelUpdate = async (shipping) => {
     const next = shipping || {};
     syncingRecipientAddress.value = true;
+    shippingFeeError.value = '';
     try {
         recipientName.value = next.name || '';
         recipientPhone.value = next.phone || '';
@@ -862,6 +874,7 @@ const applyDefaultAddressToRecipient = async (address) => {
     if (!normalized) return;
 
     syncingRecipientAddress.value = true;
+    shippingFeeError.value = '';
     try {
         recipientAddressDetail.value = normalized.diaChiChiTiet || getAddressDetailValue(normalized) || '';
         await fetchProvincesShip();
@@ -870,7 +883,11 @@ const applyDefaultAddressToRecipient = async (address) => {
         recipientProvince.value = provinceMatch?.code || null;
         if (!provinceMatch) {
             shippingFee.value = 0;
-            shippingFeeError.value = 'Không khớp tỉnh/thành phố với GHN.';
+            if (normalized.tinh && normalized.tinh.trim()) {
+                shippingFeeError.value = 'Địa chỉ mặc định của khách hàng chưa khớp GHN. Vui lòng chọn lại Tỉnh/Thành.';
+            } else {
+                shippingFeeError.value = '';
+            }
             shippingFeeSource.value = '';
             return;
         }
@@ -880,7 +897,11 @@ const applyDefaultAddressToRecipient = async (address) => {
         recipientDistrict.value = districtMatch?.code || null;
         if (!districtMatch) {
             shippingFee.value = 0;
-            shippingFeeError.value = 'Không khớp quận/huyện với GHN.';
+            if (normalized.thanhPho && normalized.thanhPho.trim()) {
+                shippingFeeError.value = 'Quận/Huyện của khách chưa khớp GHN. Vui lòng chọn lại Quận/Huyện.';
+            } else {
+                shippingFeeError.value = '';
+            }
             shippingFeeSource.value = '';
             return;
         }
@@ -890,7 +911,11 @@ const applyDefaultAddressToRecipient = async (address) => {
         recipientWard.value = wardMatch?.code || null;
         if (!wardMatch) {
             shippingFee.value = 0;
-            shippingFeeError.value = 'Không khớp phường/xã với GHN.';
+            if (normalized.phuongXa && normalized.phuongXa.trim()) {
+                shippingFeeError.value = 'Phường/Xã của khách chưa khớp GHN. Vui lòng chọn lại Phường/Xã.';
+            } else {
+                shippingFeeError.value = '';
+            }
             shippingFeeSource.value = '';
             return;
         }
@@ -1045,6 +1070,8 @@ watch(
 );
 
 const isGhnLocationCode = (list, code) => {
+    if (!code) return false;
+    if (!list || list.length === 0) return true;
     const found = list.find((item) => String(item.code) === String(code));
     return !found || found.source === 'GHN';
 };
@@ -2011,6 +2038,7 @@ const formatDateTime = (dateStr) => {
                             district: recipientDistrict,
                             ward: recipientWard
                         }" @remove-customer="onRemoveCustomer" @set-customer="onSelectSuggestedCustomer"
+                        @open-quick-add="handleOpenQuickAdd"
                         @update:customer-form="onCustomerFormUpdate" @update:shipping="onShippingPanelUpdate" />
 
                     <!-- Pricing/Voucher Details (Moved from left column) -->
@@ -2083,6 +2111,13 @@ const formatDateTime = (dateStr) => {
             @close="betterVoucherDialog.show = false"
             @keep-old="betterVoucherDialog.onProceed && betterVoucherDialog.onProceed(false)"
             @apply-new="betterVoucherDialog.onProceed && betterVoucherDialog.onProceed(true)"
+        />
+
+        <!-- Modal Thêm Nhanh Khách Hàng -->
+        <QuickAddCustomerDialog
+            v-model="showQuickAddDialog"
+            :initial-data="quickAddInitialData"
+            @success="onQuickAddSuccess"
         />
 
         <!-- Giao Ca Modal --> <!-- Tạm thời ẩn chức năng giao ca
