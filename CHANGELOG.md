@@ -1,3 +1,11 @@
+## [1.30.5](https://github.com/pnam-it309/AeroStride/compare/v1.30.4...v1.30.5) (2026-08-02)
+
+
+### Bug Fixes
+
+* update KhachHangForm.vue ([a88b525](https://github.com/pnam-it309/AeroStride/commit/a88b525945bb02af0cec8e2bbea1f79092d0760d))
+* update source code and bug fixes on branch DUC_FIX ([ab2c38d](https://github.com/pnam-it309/AeroStride/commit/ab2c38d14eea6324182a563c32cf1f65b31b1289))
+
 ## [1.30.4](https://github.com/pnam-it309/AeroStride/compare/v1.30.3...v1.30.4) (2026-08-01)
 
 
