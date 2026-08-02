@@ -56,7 +56,7 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
         // (đây là các hóa đơn POS draft, dù có được đổi loaiDon thành ONLINE hay thêm sản phẩm thì vẫn là draft chưa thanh toán)
         builder.and(
             hd.trangThai.ne(OrderStatus.CHO_XAC_NHAN)
-            .or(hd.nhanVien.isNull())
+            .or(hd.loaiDon.notIn("TAI_QUAY", "GIAO_HANG"))
         );
 
         if (req.getSearch() != null && !req.getSearch().trim().isEmpty()) {
@@ -211,7 +211,7 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                     .id(t.get(hd.id))
                     .maHoaDon(t.get(hd.maHoaDon))
                     .ngayTao(t.get(hd.ngayTao))
-                    .tenKhachHang(t.get(kh.ten))
+                    .tenKhachHang(t.get(kh.ten) != null && !t.get(kh.ten).isBlank() ? t.get(kh.ten) : t.get(hd.tenNguoiNhan))
                     .soDienThoai(finalSdt)
                     .diaChiNguoiNhan(finalDiaChi)
                     .maNhanVien(finalMaNv)

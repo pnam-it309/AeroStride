@@ -334,7 +334,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             hoaDon = hoaDonRepository.findByMaHoaDon(maHoaDon.trim())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với mã: " + maHoaDon));
         } else {
-            List<HoaDon> list = hoaDonRepository.findAllBySoDienThoaiNguoiNhanOrderByNgayTaoDesc(soDienThoai.trim());
+            List<HoaDon> list = hoaDonRepository.findAllBySoDienThoaiOrderByNgayTaoDesc(soDienThoai.trim());
             if (list.isEmpty()) {
                 throw new RuntimeException("Không tìm thấy đơn hàng nào thuộc số điện thoại: " + soDienThoai);
             }

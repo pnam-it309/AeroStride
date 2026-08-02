@@ -4,6 +4,8 @@ import com.example.be.core.customer.voucher.model.response.CustomerVoucherRespon
 import com.example.be.core.customer.voucher.repository.CustomerVoucherRepository;
 import com.example.be.core.customer.voucher.service.CustomerVoucherService;
 import com.example.be.entity.PhieuGiamGia;
+import com.example.be.infrastructure.constants.HinhThucPhieuGiamGia;
+import com.example.be.infrastructure.constants.LoaiPhieuGiamGia;
 import com.example.be.infrastructure.constants.TrangThai;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,10 +24,7 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
         long now = System.currentTimeMillis();
         
         List<PhieuGiamGia> vouchers = voucherRepository.findAll().stream()
-                .filter(v -> "CONG_KHAI".equals(v.getHinhThuc()) 
-                        && v.getTrangThai() == TrangThai.DANG_HOAT_DONG
-                        && v.getNgayBatDau() <= now 
-                        && v.getNgayKetThuc() >= now
+                .filter(v -> HinhThucPhieuGiamGia.isCongKhai(v.getHinhThuc()) && v.getTrangThai() == TrangThai.DANG_HOAT_DONG && (v.getNgayBatDau() == null || v.getNgayBatDau() <= now) && (v.getNgayKetThuc() == null || v.getNgayKetThuc() >= now)
                         && (v.getSoLuong() == null || v.getSoLuong() > 0))
                 .collect(Collectors.toList());
 
@@ -58,10 +57,7 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
 
         long now = System.currentTimeMillis();
         List<PhieuGiamGia> validVouchers = voucherRepository.findAll().stream()
-                .filter(v -> "CONG_KHAI".equals(v.getHinhThuc())
-                        && v.getTrangThai() == TrangThai.DANG_HOAT_DONG
-                        && v.getNgayBatDau() <= now
-                        && v.getNgayKetThuc() >= now
+                .filter(v -> HinhThucPhieuGiamGia.isCongKhai(v.getHinhThuc()) && v.getTrangThai() == TrangThai.DANG_HOAT_DONG && (v.getNgayBatDau() == null || v.getNgayBatDau() <= now) && (v.getNgayKetThuc() == null || v.getNgayKetThuc() >= now)
                         && (v.getSoLuong() == null || v.getSoLuong() > 0)
                         && (v.getDonHangToiThieu() == null || orderValue.compareTo(v.getDonHangToiThieu()) >= 0))
                 .collect(Collectors.toList());
@@ -71,12 +67,12 @@ public class CustomerVoucherServiceImpl implements CustomerVoucherService {
 
         for (PhieuGiamGia v : validVouchers) {
             java.math.BigDecimal discount = java.math.BigDecimal.ZERO;
-            if ("PHAN_TRAM".equals(v.getLoaiPhieu()) && v.getPhanTramGiamGia() != null) {
+            if (LoaiPhieuGiamGia.isPhanTram(v.getLoaiPhieu()) && v.getPhanTramGiamGia() != null) {
                 discount = orderValue.multiply(new java.math.BigDecimal(v.getPhanTramGiamGia())).divide(new java.math.BigDecimal(100));
                 if (v.getGiamToiDa() != null && discount.compareTo(v.getGiamToiDa()) > 0) {
                     discount = v.getGiamToiDa();
                 }
-            } else if ("TIEN_MAT".equals(v.getLoaiPhieu()) && v.getSoTienGiam() != null) {
+            } else if (LoaiPhieuGiamGia.isTienMat(v.getLoaiPhieu()) && v.getSoTienGiam() != null) {
                 discount = v.getSoTienGiam();
             }
 

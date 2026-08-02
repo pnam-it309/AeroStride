@@ -22,4 +22,33 @@ class AdminBanHangHoaDonRepositoryTest {
                 null
         ).isEmpty());
     }
+
+    @Test
+    void pendingPosQueryShouldOnlyReturnPosOrdersWithTaiQuayOrGiaoHang() {
+        com.example.be.entity.HoaDon posOrder = new com.example.be.entity.HoaDon();
+        posOrder.setMaHoaDon("HD_POS_TEST");
+        posOrder.setTrangThai(OrderStatus.CHO_XAC_NHAN);
+        posOrder.setOrderType(OrderType.IN_STORE);
+        posOrder.setLoaiDon("TAI_QUAY");
+        posOrder.setNgayTao(System.currentTimeMillis());
+        repository.save(posOrder);
+
+        com.example.be.entity.HoaDon offlineOrder = new com.example.be.entity.HoaDon();
+        offlineOrder.setMaHoaDon("HD_OFFLINE_TEST");
+        offlineOrder.setTrangThai(OrderStatus.CHO_XAC_NHAN);
+        offlineOrder.setOrderType(OrderType.IN_STORE);
+        offlineOrder.setLoaiDon("OFFLINE");
+        offlineOrder.setNgayTao(System.currentTimeMillis());
+        repository.save(offlineOrder);
+
+        var pendingOrders = repository.findAllPendingPOSOrders(
+                OrderStatus.CHO_XAC_NHAN,
+                OrderType.IN_STORE,
+                null
+        );
+
+        org.junit.jupiter.api.Assertions.assertEquals(1, pendingOrders.size());
+        org.junit.jupiter.api.Assertions.assertEquals("HD_POS_TEST", pendingOrders.get(0).getMaHoaDon());
+    }
 }
+

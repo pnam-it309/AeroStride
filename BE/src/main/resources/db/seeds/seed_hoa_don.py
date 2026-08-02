@@ -24,7 +24,7 @@ addresses = [
     'Mua tại quầy'
 ]
 
-sql_template = "('{id}', NULL, NULL, '{kh}', '{nv}', '{ma}', '{type}', {phi}, {tong}, {sau_giam}, {tra}, '{addr}', '{sdt}', {du_kien}, {note}, {status}, {ngay_tao})"
+sql_template = "('{id}', NULL, NULL, '{kh}', '{nv}', '{ma}', '{type}', '{order_type}', '{delivery_method}', {phi}, {tong}, {sau_giam}, {tra}, '{addr}', '{sdt}', {du_kien}, {note}, {status}, {ngay_tao})"
 
 results = []
 counter = start_id
@@ -50,6 +50,8 @@ while len(results) < num_invoices:
         kh = random.choice(customers)
         nv = random.choice(employees)
         inv_type = random.choice(types)
+        order_type = 'ONLINE' if inv_type == 'ONLINE' else 'IN_STORE'
+        delivery_method = 'SHIPPING' if inv_type == 'ONLINE' else 'TAKEAWAY'
         status = random.choice(statuses)
         phi = 30000.0 if inv_type == 'ONLINE' else 0.0
         tong = random.randint(5, 50) * 100000.0
@@ -61,7 +63,8 @@ while len(results) < num_invoices:
         note = 'NULL'
         
         line = sql_template.format(
-            id=id_val, kh=kh, nv=nv, ma=ma_val, type=inv_type, 
+            id=id_val, kh=kh, nv=nv, ma=ma_val, type=inv_type,
+            order_type=order_type, delivery_method=delivery_method,
             phi=phi, tong=tong, sau_giam=sau_giam, tra=tra,
             addr=addr, sdt=sdt, du_kien=du_kien, note=note, 
             status=status, ngay_tao=ts
@@ -97,7 +100,7 @@ for res in results:
         detail_results.append(detail_line)
         detail_counter += 1
 
-output_sql = "INSERT IGNORE INTO hoa_don (id, id_phieu_giam_gia, id_phieu_giam_gia_ca_nhan, id_khach_hang, id_nhan_vien, ma_hoa_don, loai_don, phi_van_chuyen, tong_tien, tong_tien_sau_giam, tien_nguoi_mua, dia_chi_nguoi_nhan, so_dien_thoai_nguoi_nhan, ngay_du_kien_nhan, ghi_chu, trang_thai, ngay_tao) VALUES\n"
+output_sql = "INSERT IGNORE INTO hoa_don (id, id_phieu_giam_gia, id_phieu_giam_gia_ca_nhan, id_khach_hang, id_nhan_vien, ma_hoa_don, loai_don, order_type, delivery_method, phi_van_chuyen, tong_tien, tong_tien_sau_giam, tien_nguoi_mua, dia_chi_nguoi_nhan, so_dien_thoai_nguoi_nhan, ngay_du_kien_nhan, ghi_chu, trang_thai, ngay_tao) VALUES\n"
 output_sql += ",\n".join(results) + ";\n\n"
 
 output_sql += "INSERT IGNORE INTO hoa_don_chi_tiet (id, id_hoa_don, id_chi_tiet_san_pham, ma_hoa_don_chi_tiet, so_luong, don_gia, trang_thai, ngay_tao) VALUES\n"

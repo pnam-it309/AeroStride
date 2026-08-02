@@ -1,6 +1,7 @@
 package com.example.be.core.admin.phieugiamgia.repository;
 
 import com.example.be.entity.PhieuGiamGia;
+import com.example.be.infrastructure.constants.HinhThucPhieuGiamGia;
 import com.example.be.infrastructure.constants.TrangThai;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -29,12 +30,11 @@ public final class AdminPhieuGiamGiaSpecification {
     public static Specification<PhieuGiamGia> hasHinhThuc(String hinhThuc) {
         return (root, query, cb) -> {
             if (hinhThuc == null || hinhThuc.trim().isEmpty()) return null;
-            if ("CONG_KHAI".equals(hinhThuc)) {
-                // CONG_KHAI matches null, empty, or explicit CONG_KHAI
+            if (HinhThucPhieuGiamGia.isCongKhai(hinhThuc)) {
                 return cb.or(
                     cb.isNull(root.get("hinhThuc")),
                     cb.equal(root.get("hinhThuc"), ""),
-                    cb.equal(root.get("hinhThuc"), "CONG_KHAI")
+                    cb.equal(root.get("hinhThuc"), HinhThucPhieuGiamGia.CONG_KHAI.name())
                 );
             }
             return cb.equal(root.get("hinhThuc"), hinhThuc);

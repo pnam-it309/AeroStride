@@ -11,6 +11,8 @@ import com.example.be.entity.KhachHang;
 import com.example.be.entity.PhieuGiamGia;
 import com.example.be.entity.PhieuGiamGiaCaNhan;
 import com.example.be.infrastructure.constants.MessageConstants;
+import com.example.be.infrastructure.constants.HinhThucPhieuGiamGia;
+import com.example.be.infrastructure.constants.LoaiPhieuGiamGia;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.infrastructure.exceptions.SystemException;
@@ -53,7 +55,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         PhieuGiamGia p = repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.PHIEU_GIAM_GIA_NOT_FOUND_ID + id));
         List<String> listIdKhachHang = null;
-        if ("CA_NHAN".equals(p.getHinhThuc())) {
+        if (HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc())) {
             listIdKhachHang = phieuGiamGiaCaNhanRepository.findByPhieuGiamGiaId(p.getId()).stream()
                     .map(pgn -> pgn.getKhachHang())
                     .filter(kh -> kh != null)
@@ -127,14 +129,14 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
             p.setMa(com.example.be.utils.CodeUtils.generateRandom(PhieuGiamGia.class, repo::existsByMa));
         }
 
-        if ("CA_NHAN".equals(req.getHinhThuc()) && req.getListIdKhachHang() != null) {
+        if (HinhThucPhieuGiamGia.isCaNhan(req.getHinhThuc()) && req.getListIdKhachHang() != null) {
             p.setSoLuong(req.getListIdKhachHang().size());
         }
 
         repo.save(p);
 
         // Xử lý phiếu cá nhân
-        if ("CA_NHAN".equals(req.getHinhThuc()) && req.getListIdKhachHang() != null) {
+        if (HinhThucPhieuGiamGia.isCaNhan(req.getHinhThuc()) && req.getListIdKhachHang() != null) {
             for (String khId : req.getListIdKhachHang()) {
                 khachHangRepository.findById(khId).ifPresent(kh -> {
                     PhieuGiamGiaCaNhan pgn = PhieuGiamGiaCaNhan.builder()
@@ -162,7 +164,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         variables.put("voucherCode", p.getMa());
         variables.put("voucherName", p.getTen());
         variables.put("loaiPhieu", p.getLoaiPhieu()); // "PHAN_TRAM" hoặc "TIEN_MAT"
-        variables.put("isPhanTram", "PHAN_TRAM".equalsIgnoreCase(p.getLoaiPhieu()));
+        variables.put("isPhanTram", LoaiPhieuGiamGia.isPhanTram(p.getLoaiPhieu()));
         variables.put("discountPercent", p.getPhanTramGiamGia() != null ? p.getPhanTramGiamGia() : 0);
         variables.put("giamToiDa", p.getGiamToiDa() != null ? formatVnd(p.getGiamToiDa()) : null);
         variables.put("soTienGiam", p.getSoTienGiam() != null ? formatVnd(p.getSoTienGiam()) : "0");
@@ -193,7 +195,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         p.setId(id); // Ensure ID is preserved
         repo.save(p);
 
-        if ("CA_NHAN".equals(p.getHinhThuc()) && oldStatus != p.getTrangThai()) {
+        if (HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc()) && oldStatus != p.getTrangThai()) {
             String statusDesc = p.getTrangThai() == TrangThai.DANG_HOAT_DONG ? "được kích hoạt hoạt động" : "đã kết thúc";
             sendVoucherStatusEmail(p, statusDesc);
         }
@@ -211,7 +213,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         }
         repo.saveAndFlush(p);
 
-        if ("CA_NHAN".equals(p.getHinhThuc()) && oldStatus != status) {
+        if (HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc()) && oldStatus != status) {
             String statusDesc = status == TrangThai.DANG_HOAT_DONG ? "được kích hoạt hoạt động" : "đã kết thúc";
             sendVoucherStatusEmail(p, statusDesc);
         }
@@ -271,7 +273,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
                 p.setLoaiPhieu(ExcelUtils.getCellValueAsString(row.getCell(2)));
 
                 String valStr = ExcelUtils.getCellValueAsString(row.getCell(3));
-                if ("PHAN_TRAM".equalsIgnoreCase(p.getLoaiPhieu())) {
+                if (LoaiPhieuGiamGia.isPhanTram(p.getLoaiPhieu())) {
                     p.setPhanTramGiamGia(Integer.parseInt(valStr));
                 } else {
                     p.setSoTienGiam(new java.math.BigDecimal(valStr));
@@ -303,7 +305,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
         if (p == null) return null;
         
         List<String> listIdKhachHang = null;
-        if ("CA_NHAN".equals(p.getHinhThuc())) {
+        if (HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc())) {
             listIdKhachHang = phieuGiamGiaCaNhanRepository.findByPhieuGiamGiaId(p.getId()).stream()
                     .map(pgn -> pgn.getKhachHang())
                     .filter(kh -> kh != null)
@@ -338,7 +340,7 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
 
     private Map<String, List<String>> getVoucherCustomerMap(List<PhieuGiamGia> list) {
         List<String> personalVoucherIds = list.stream()
-                .filter(p -> "CA_NHAN".equals(p.getHinhThuc()))
+                .filter(p -> HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc()))
                 .map(PhieuGiamGia::getId)
                 .collect(Collectors.toList());
 
@@ -379,14 +381,14 @@ public class AdminPhieuGiamGiaServiceImpl implements AdminPhieuGiamGiaService {
             p.setTrangThai(TrangThai.NGUNG_HOAT_DONG);
             repo.save(p);
             
-            if ("CA_NHAN".equals(p.getHinhThuc())) {
+            if (HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc())) {
                 sendVoucherStatusEmail(p, "hết hạn sử dụng");
             }
         }
     }
 
     private void sendVoucherStatusEmail(PhieuGiamGia p, String statusDesc) {
-        if (!"CA_NHAN".equals(p.getHinhThuc())) {
+        if (!HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc())) {
             return;
         }
         

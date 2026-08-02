@@ -241,8 +241,10 @@ const campaignDiscountPercent = computed(() => {
 
 const calcVoucherDiscount = (v) => {
     if (!v) return 0;
-    if (v.loaiPhieu === 'PHAN_TRAM' && v.phanTramGiamGia) {
-        let discount = (cartStore.cartTotal * v.phanTramGiamGia) / 100;
+    const isPercentage = v.loaiPhieu === 'PHAN_TRAM' || v.loaiPhieu === 'PERCENTAGE';
+    if (isPercentage && (v.phanTramGiamGia || v.discountPercent)) {
+        const pct = v.phanTramGiamGia || v.discountPercent || 0;
+        let discount = (cartStore.cartTotal * pct) / 100;
         if (v.giamToiDa && discount > v.giamToiDa) discount = v.giamToiDa;
         return Math.floor(discount);
     }
@@ -349,9 +351,18 @@ const fetchVouchers = async () => {
     }
 };
 
+const openVoucherModal = () => {
+    showVoucherDialog.value = true;
+    fetchVouchers();
+};
+
 const selectVoucher = (voucher) => {
     selectedVoucher.value = voucher;
     showVoucherDialog.value = false;
+};
+
+const removeVoucher = () => {
+    selectedVoucher.value = null;
 };
 
 const showConfirmDialog = ref(false);
@@ -722,7 +733,7 @@ onMounted(async () => {
                                         </v-btn>
                                     </div>
                                     <v-btn v-else variant="outlined" block class="voucher-btn text-none"
-                                        color="#1e257c" @click="showVoucherDialog = true">
+                                        color="#1e257c" @click="openVoucherModal">
                                         <span class="font-weight-bold d-flex align-center flex-grow-1">
                                             <v-icon class="mr-2" size="20">mdi-ticket-percent-outline</v-icon>
                                             Chọn hoặc nhập mã giảm giá
@@ -945,8 +956,8 @@ onMounted(async () => {
                                     <div v-else class="unselected-radio"></div>
                                 </div>
                                 <p class="text-caption text-grey-darken-1 mb-1">
-                                    <span v-if="v.loaiPhieu === 'PHAN_TRAM'">
-                                        Giảm {{ v.phanTramGiamGia }}%
+                                    <span v-if="v.loaiPhieu === 'PHAN_TRAM' || v.loaiPhieu === 'PERCENTAGE'">
+                                        Giảm {{ v.phanTramGiamGia || v.discountPercent }}%
                                         <span v-if="v.giamToiDa" class="font-weight-medium" style="color: #ef4444;">(Tối đa {{ formatPrice(v.giamToiDa) }})</span>
                                     </span>
                                     <span v-else>Giảm {{ formatPrice(v.soTienGiam) }} trực tiếp</span>

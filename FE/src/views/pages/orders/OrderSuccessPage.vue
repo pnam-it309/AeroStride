@@ -41,8 +41,8 @@ onMounted(async () => {
                 console.warn('VNPay verification warning:', err);
             }
         }
-        if (route.query && route.query.code && route.query.phone) {
-            order.value = await dichVuDatHang.traCuuDonHang(route.query.code, route.query.phone);
+        if (route.query && (route.query.code || route.query.phone)) {
+            order.value = await dichVuDatHang.traCuuDonHang(route.query.code || '', route.query.phone || '');
         } else {
             order.value = await dichVuDatHang.layChiTietDonHang(route.params.id);
         }

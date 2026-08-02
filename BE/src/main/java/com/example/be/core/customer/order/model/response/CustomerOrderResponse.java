@@ -25,6 +25,7 @@ public class CustomerOrderResponse {
     private String diaChiNguoiNhan;
     private String soDienThoaiNguoiNhan;
     private String tenNguoiNhan;
+    private String emailNguoiNhan;
     private String ghiChu;
     private OrderType orderType;
     private DeliveryMethod deliveryMethod;

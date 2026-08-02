@@ -11,10 +11,10 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface AdminHoaDonMapper {
 
-    @Mapping(target = "tenKhachHang", source = "khachHang.ten")
+    @Mapping(target = "tenKhachHang", expression = "java(hoaDon.getKhachHang() != null && hoaDon.getKhachHang().getTen() != null && !hoaDon.getKhachHang().getTen().isBlank() ? hoaDon.getKhachHang().getTen() : hoaDon.getTenNguoiNhan())")
     @Mapping(target = "maKhachHang", source = "khachHang.ma")
-    @Mapping(target = "soDienThoaiKhachHang", source = "khachHang.sdt")
-    @Mapping(target = "emailKhachHang", source = "khachHang.email")
+    @Mapping(target = "soDienThoaiKhachHang", expression = "java(hoaDon.getKhachHang() != null && hoaDon.getKhachHang().getSdt() != null && !hoaDon.getKhachHang().getSdt().isBlank() ? hoaDon.getKhachHang().getSdt() : hoaDon.getSoDienThoaiNguoiNhan())")
+    @Mapping(target = "emailKhachHang", expression = "java(hoaDon.getKhachHang() != null && hoaDon.getKhachHang().getEmail() != null && !hoaDon.getKhachHang().getEmail().isBlank() ? hoaDon.getKhachHang().getEmail() : hoaDon.getEmailNguoiNhan())")
     @Mapping(target = "tenNhanVien", source = "nhanVien.ten")
     @Mapping(target = "maNhanVien", source = "nhanVien.ma")
     @Mapping(target = "listsHoaDonChiTiet", source = "listsHoaDonChiTiet")

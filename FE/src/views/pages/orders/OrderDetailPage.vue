@@ -122,8 +122,8 @@ const handleVnPayReturn = async () => {
 const fetchOrder = async () => {
     loading.value = true;
     try {
-        if (route.query.code && route.query.phone) {
-            order.value = await dichVuDatHang.traCuuDonHang(route.query.code, route.query.phone);
+        if (route.query.code || route.query.phone) {
+            order.value = await dichVuDatHang.traCuuDonHang(route.query.code || '', route.query.phone || '');
         } else {
             order.value = await dichVuDatHang.layChiTietDonHang(route.params.id);
         }

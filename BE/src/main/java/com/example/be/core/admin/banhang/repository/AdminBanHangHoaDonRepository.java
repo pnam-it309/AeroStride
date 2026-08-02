@@ -23,8 +23,9 @@ public interface AdminBanHangHoaDonRepository extends HoaDonRepository {
         WHERE h.trangThai = :trangThai
           AND (
               h.orderType = :orderType
-              OR (h.orderType IS NULL AND (h.nhanVien IS NOT NULL OR h.loaiDon = 'TAI_QUAY'))
+              OR (h.orderType IS NULL AND h.loaiDon = 'TAI_QUAY')
           )
+          AND (h.loaiDon IN ('TAI_QUAY', 'GIAO_HANG') OR h.loaiDon IS NULL)
           AND (:idNhanVien IS NULL OR h.nhanVien.id = :idNhanVien)
         ORDER BY h.ngayTao ASC
         """)
@@ -39,8 +40,9 @@ public interface AdminBanHangHoaDonRepository extends HoaDonRepository {
         WHERE h.trangThai = :trangThai
           AND (
               h.orderType = :orderType
-              OR (h.orderType IS NULL AND (h.nhanVien IS NOT NULL OR h.loaiDon = 'TAI_QUAY'))
+              OR (h.orderType IS NULL AND h.loaiDon = 'TAI_QUAY')
           )
+          AND (h.loaiDon IN ('TAI_QUAY', 'GIAO_HANG') OR h.loaiDon IS NULL)
           AND (:idNhanVien IS NULL OR h.nhanVien.id = :idNhanVien)
         """)
     long countPendingPOSOrders(
@@ -48,7 +50,6 @@ public interface AdminBanHangHoaDonRepository extends HoaDonRepository {
             @Param("orderType") OrderType orderType,
             @Param("idNhanVien") String idNhanVien
     );
-
     List<HoaDon> findAllByTrangThaiAndLoaiDon(OrderStatus trangThai, String loaiDon);
     long countByTrangThaiAndLoaiDon(OrderStatus trangThai, String loaiDon);
 }

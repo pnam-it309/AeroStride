@@ -119,11 +119,11 @@ ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- 12. Bảng Sản Phẩm (san_pham)
 INSERT INTO san_pham (id, id_thuong_hieu, id_xuat_xu, id_muc_dich_chay, id_chat_lieu, id_de_giay, id_co_giay, ma_san_pham, ten_san_pham, gioi_tinh_khach_hang, hinh_anh, mo_ta, mo_ta_chi_tiet, trang_thai, xoa_mem, ngay_tao) VALUES
-('sp1', 'th1', 'xx3', 'md3', 'cl1', 'dg1', 'cg1', 'SP001', 'Nike Air Max 2024', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Dòng giày chạy bộ cao cấp Nike Air Max 2024.', 'Mô tả chi tiết giày Nike SP1', 0, 0, 1711814400000),
-('sp2', 'th2', 'xx3', 'md1', 'cl2', 'dg2', 'cg2', 'SP002', 'Adidas UltraBoost', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Trải nghiệm đỉnh cao với Adidas UltraBoost.', 'Mô tả chi tiết giày Adidas SP2', 0, 0, 1711814400000),
-('sp3', 'th3', 'xx2', 'md2', 'cl3', 'dg3', 'cg3', 'SP003', 'Puma Speed', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Giày chạy tốc độ Puma Speed đầy mạnh mẽ.', 'Mô tả chi tiết giày Puma SP3', 0, 0, 1711814400000),
-('sp4', 'th4', 'xx2', 'md3', 'cl4', 'dg4', 'cg1', 'SP004', 'New Balance Classic', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Phong cách cổ điển New Balance Classic.', 'Mô tả chi tiết giày NB SP4', 0, 0, 1711814400000),
-('sp5', 'th5', 'xx1', 'md3', 'cl5', 'dg5', 'cg2', 'SP005', 'Converse All Star', 'UNISEX', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 'Biểu tượng giới trẻ Converse All Star.', 'Mô tả chi tiết giày Converse SP5', 0, 0, 1711814400000)
+('sp1', 'th1', 'xx3', 'md3', 'cl1', 'dg1', 'cg1', 'SP001', 'Nike Air Max 2024', 'UNISEX', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1000&auto=format&fit=crop', 'Dòng giày chạy bộ cao cấp Nike Air Max 2024.', 'Mô tả chi tiết giày Nike SP1', 0, 0, 1711814400000),
+('sp2', 'th2', 'xx3', 'md1', 'cl2', 'dg2', 'cg2', 'SP002', 'Adidas UltraBoost', 'UNISEX', 'https://images.unsplash.com/photo-1518002171953-a080ee817e1f?q=80&w=1000&auto=format&fit=crop', 'Trải nghiệm đỉnh cao với Adidas UltraBoost.', 'Mô tả chi tiết giày Adidas SP2', 0, 0, 1711814400000),
+('sp3', 'th3', 'xx2', 'md2', 'cl3', 'dg3', 'cg3', 'SP003', 'Puma Speed', 'UNISEX', 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?q=80&w=1000&auto=format&fit=crop', 'Giày chạy tốc độ Puma Speed đầy mạnh mẽ.', 'Mô tả chi tiết giày Puma SP3', 0, 0, 1711814400000),
+('sp4', 'th4', 'xx2', 'md3', 'cl4', 'dg4', 'cg1', 'SP004', 'New Balance Classic', 'UNISEX', 'https://images.unsplash.com/photo-1539185441755-769473a23570?q=80&w=1000&auto=format&fit=crop', 'Phong cách cổ điển New Balance Classic.', 'Mô tả chi tiết giày NB SP4', 0, 0, 1711814400000),
+('sp5', 'th5', 'xx1', 'md3', 'cl5', 'dg5', 'cg2', 'SP005', 'Converse All Star', 'UNISEX', 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?q=80&w=1000&auto=format&fit=crop', 'Biểu tượng giới trẻ Converse All Star.', 'Mô tả chi tiết giày Converse SP5', 0, 0, 1711814400000)
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- 13. Bảng Chi Tiết Sản Phẩm (chi_tiet_san_pham)
@@ -137,11 +137,11 @@ ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- 14. Bảng Ảnh Chi Tiết Sản Phẩm (anh_chi_tiet_san_pham)
 INSERT INTO anh_chi_tiet_san_pham (id, id_chi_tiet_san_pham, duong_dan_anh, hinh_anh_dai_dien, mo_ta, xoa_mem, trang_thai, ngay_tao) VALUES
-('a1', 'ct1', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 1, 'Ảnh mặt trước', 0, 0, 1711814400000),
-('a2', 'ct1', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 0, 'Ảnh mặt bên', 0, 0, 1711814400000),
-('a3', 'ct2', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 1, 'Ảnh đại diện ct2', 0, 0, 1711814400000),
-('a4', 'ct3', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 1, 'Ảnh đại diện ct3', 0, 0, 1711814400000),
-('a5', 'ct4', 'https://antien.vn/files/products/photos/2024/06/04/nike-renew-run-4-black-off-noir-black-1.png', 1, 'Ảnh đại diện ct4', 0, 0, 1711814400000)
+('a1', 'ct1', 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?q=80&w=1000&auto=format&fit=crop', 1, 'Ảnh mặt trước', 0, 0, 1711814400000),
+('a2', 'ct1', 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?q=80&w=1000&auto=format&fit=crop', 0, 'Ảnh mặt bên', 0, 0, 1711814400000),
+('a3', 'ct2', 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?q=80&w=1000&auto=format&fit=crop', 1, 'Ảnh đại diện ct2', 0, 0, 1711814400000),
+('a4', 'ct3', 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?q=80&w=1000&auto=format&fit=crop', 1, 'Ảnh đại diện ct3', 0, 0, 1711814400000),
+('a5', 'ct4', 'https://images.unsplash.com/photo-1525966222134-fcfa99b8ae77?q=80&w=1000&auto=format&fit=crop', 1, 'Ảnh đại diện ct4', 0, 0, 1711814400000)
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- 15. Bảng Đợt Giảm Giá (dot_giam_gia)
@@ -163,12 +163,12 @@ INSERT INTO chi_tiet_dot_giam_gia (id, id_dot_giam_gia, id_chi_tiet_san_pham, gi
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- 17. Bảng Phiếu Giảm Giá (phieu_giam_gia)
-INSERT INTO phieu_giam_gia (id, ma_phieu_giam_gia, ten_phieu, loai_phieu, phan_tram_giam_gia, so_tien_giam, so_luong, don_hang_toi_thieu, giam_toi_da, ngay_bat_dau, ngay_ket_thuc, ghi_chu, trang_thai, ngay_tao) VALUES
-('pgg1', 'PGG01', 'Voucher Chào Mừng', 'PERCENTAGE', 10, NULL, 100, 0.00, 50000.00, 1711814400000, 1714492800000, 'Tặng khách mới', 0, 1711814400000),
-('pgg2', 'PGG02', 'Giảm 50k Đơn 1 Triệu', 'FIXED_AMOUNT', NULL, 50000.00, 50, 1000000.00, 50000.00, 1711814400000, 1711900800000, NULL, 0, 1711814400000),
-('pgg3', 'PGG03', 'Voucher VIP', 'PERCENTAGE', 20, NULL, 20, 2000000.00, 200000.00, 1711814400000, 1717171200000, NULL, 0, 1711814400000),
-('pgg4', 'PGG04', 'Siêu Voucher', 'FIXED_AMOUNT', NULL, 500000.00, 10, 5000000.00, 500000.00, 1711814400000, 1711987200000, NULL, 0, 1711814400000),
-('pgg5', 'PGG05', 'Voucher Sinh Nhật', 'PERCENTAGE', 30, NULL, 100, 0.00, 100000.00, 1711814400000, 1743350400000, NULL, 0, 1711814400000)
+INSERT INTO phieu_giam_gia (id, ma_phieu_giam_gia, ten_phieu, loai_phieu, hinh_thuc, phan_tram_giam_gia, so_tien_giam, so_luong, don_hang_toi_thieu, giam_toi_da, ngay_bat_dau, ngay_ket_thuc, ghi_chu, trang_thai, ngay_tao) VALUES
+('pgg1', 'PGG01', 'Voucher Chào Mừng', 'PERCENTAGE', 'CONG_KHAI', 10, NULL, 100, 0.00, 50000.00, 1711814400000, 2524608000000, 'Tặng khách mới', 0, 1711814400000),
+('pgg2', 'PGG02', 'Giảm 50k Đơn 1 Triệu', 'FIXED_AMOUNT', 'CONG_KHAI', NULL, 50000.00, 50, 1000000.00, 50000.00, 1711814400000, 2524608000000, NULL, 0, 1711814400000),
+('pgg3', 'PGG03', 'Voucher VIP', 'PERCENTAGE', 'CONG_KHAI', 20, NULL, 20, 2000000.00, 200000.00, 1711814400000, 2524608000000, NULL, 0, 1711814400000),
+('pgg4', 'PGG04', 'Siêu Voucher', 'FIXED_AMOUNT', 'CONG_KHAI', NULL, 500000.00, 10, 5000000.00, 500000.00, 1711814400000, 2524608000000, NULL, 0, 1711814400000),
+('pgg5', 'PGG05', 'Voucher Sinh Nhật', 'PERCENTAGE', 'CONG_KHAI', 30, NULL, 100, 0.00, 100000.00, 1711814400000, 2524608000000, NULL, 0, 1711814400000)
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- 18. Bảng Phiếu Giảm Giá Cá Nhân (phieu_giam_gia_ca_nhan)
@@ -181,13 +181,13 @@ INSERT INTO phieu_giam_gia_ca_nhan (id, id_khach_hang, id_phieu_giam_gia, ma_phi
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- 19. Bảng Hóa Đơn (hoa_don)
-INSERT INTO hoa_don (id, id_phieu_giam_gia, id_phieu_giam_gia_ca_nhan, id_khach_hang, id_nhan_vien, ma_hoa_don, loai_don, phi_van_chuyen, tong_tien, tong_tien_sau_giam, tien_nguoi_mua, dia_chi_nguoi_nhan, so_dien_thoai_nguoi_nhan, ngay_du_kien_nhan, ghi_chu, trang_thai, ngay_tao) VALUES
-('hd1', 'pgg1', NULL, 'kh1', 'nv1', 'HD001', 'OFFLINE', 0.00, 3000000.00, 2900000.00, 2900000.00, 'Tại cửa hàng', '0901112222', NULL, NULL, 3, 1711814400000),
-('hd2', NULL, 'pcn2', 'kh2', 'nv2', 'HD002', 'ONLINE', 30000.00, 1800000.00, 1780000.00, 1780000.00, '45 Lê Lợi, Quận 1, TPHCM', '0902223333', 1712073600000, NULL, 1, 1711850000000),
-('hd3', NULL, NULL, 'kh3', 'nv1', 'HD003', 'OFFLINE', 0.00, 3400000.00, 3400000.00, 3400000.00, 'Tại cửa hàng', '0903334444', NULL, NULL, 3, 1711860000000),
-('hd4', 'pgg2', NULL, 'kh4', 'nv2', 'HD004', 'ONLINE', 0.00, 2200000.00, 2150000.00, 2150000.00, '90 Đinh Tiên Hoàng, Hải Phòng', '0904445555', 1712160000000, NULL, 0, 1711870000000),
-('hd5', NULL, NULL, NULL, 'nv1', 'HD005', 'OFFLINE', 0.00, 1500000.00, 1500000.00, 1500000.00, 'Khách lẻ', NULL, NULL, NULL, 3, 1711880000000),
-('hd6', NULL, NULL, 'kh5', 'nv3', 'HD006', 'ONLINE', 35000.00, 2700000.00, 2735000.00, 2735000.00, '12 Nguyễn Trãi, Ninh Kiều, Cần Thơ', '0905556666', 1712246400000, 'Giao giờ hành chính', 2, 1711890000000)
+INSERT INTO hoa_don (id, id_phieu_giam_gia, id_phieu_giam_gia_ca_nhan, id_khach_hang, id_nhan_vien, ma_hoa_don, loai_don, order_type, delivery_method, phi_van_chuyen, tong_tien, tong_tien_sau_giam, tien_nguoi_mua, dia_chi_nguoi_nhan, so_dien_thoai_nguoi_nhan, ngay_du_kien_nhan, ghi_chu, trang_thai, ngay_tao) VALUES
+('hd1', 'pgg1', NULL, 'kh1', 'nv1', 'HD001', 'OFFLINE', 'IN_STORE', 'TAKEAWAY', 0.00, 3000000.00, 2900000.00, 2900000.00, 'Tại cửa hàng', '0901112222', NULL, NULL, 3, 1711814400000),
+('hd2', NULL, 'pcn2', 'kh2', 'nv2', 'HD002', 'ONLINE', 'ONLINE', 'SHIPPING', 30000.00, 1800000.00, 1780000.00, 1780000.00, '45 Lê Lợi, Quận 1, TPHCM', '0902223333', 1712073600000, NULL, 1, 1711850000000),
+('hd3', NULL, NULL, 'kh3', 'nv1', 'HD003', 'OFFLINE', 'IN_STORE', 'TAKEAWAY', 0.00, 3400000.00, 3400000.00, 3400000.00, 'Tại cửa hàng', '0903334444', NULL, NULL, 3, 1711860000000),
+('hd4', 'pgg2', NULL, 'kh4', 'nv2', 'HD004', 'ONLINE', 'ONLINE', 'SHIPPING', 0.00, 2200000.00, 2150000.00, 2150000.00, '90 Đinh Tiên Hoàng, Hải Phòng', '0904445555', 1712160000000, NULL, 0, 1711870000000),
+('hd5', NULL, NULL, NULL, 'nv1', 'HD005', 'OFFLINE', 'IN_STORE', 'TAKEAWAY', 0.00, 1500000.00, 1500000.00, 1500000.00, 'Khách lẻ', NULL, NULL, NULL, 3, 1711880000000),
+('hd6', NULL, NULL, 'kh5', 'nv3', 'HD006', 'ONLINE', 'ONLINE', 'SHIPPING', 35000.00, 2700000.00, 2735000.00, 2735000.00, '12 Nguyễn Trãi, Ninh Kiều, Cần Thơ', '0905556666', 1712246400000, 'Giao giờ hành chính', 2, 1711890000000)
 ON DUPLICATE KEY UPDATE id = VALUES(id);
 
 -- 20. Bảng Hóa Đơn Chi Tiết (hoa_don_chi_tiet)

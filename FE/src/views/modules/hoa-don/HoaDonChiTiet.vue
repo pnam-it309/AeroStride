@@ -364,7 +364,7 @@ const showStatusChip = computed(() => loaded.value && getOrderStatusMeta(order.v
 const canUpdateStatus = computed(() => order.value && getOrderStatus() !== null && getOrderStatus() < ORDER_STATUS_ORDINALS.HOAN_THANH);
 const isOrderEditable = computed(() => order.value.trangThai === 'CHO_XAC_NHAN' || getOrderStatus() < ORDER_STATUS_ORDINALS.CHO_GIAO);
 
-const customerName = computed(() => order.value.tenKhachHang || 'Khách vãng lai');
+const customerName = computed(() => order.value.tenKhachHang || order.value.tenNguoiNhan || 'Khách vãng lai');
 const orderTypeLabel = computed(() => order.value.orderType === 'ONLINE' ? 'Trực tuyến' : 'Cửa hàng');
 const deliveryMethodLabel = computed(() => {
     const shipping = order.value.deliveryMethod
@@ -910,7 +910,7 @@ onMounted(() => {
                                                 <div class="text-body-2 text-slate-800 d-flex align-center">
                                                     <v-icon color="primary" class="mr-2"
                                                         size="18">mdi-phone-check</v-icon>
-                                                    <span>{{ order.soDienThoaiKhachHang || 'Chưa có' }}</span>
+                                                    <span>{{ order.soDienThoaiKhachHang || order.soDienThoaiNguoiNhan || 'Chưa có' }}</span>
                                                 </div>
                                             </div>
                                             <div class="info-item mb-3">
@@ -918,7 +918,7 @@ onMounted(() => {
                                                 <div class="text-body-2 text-slate-800 d-flex align-center">
                                                     <v-icon color="primary" class="mr-2"
                                                         size="18">mdi-email-check</v-icon>
-                                                    <span>{{ order.emailKhachHang || 'N/A' }}</span>
+                                                    <span>{{ order.emailKhachHang || order.emailNguoiNhan || 'N/A' }}</span>
                                                 </div>
                                             </div>
                                             <div class="info-item">

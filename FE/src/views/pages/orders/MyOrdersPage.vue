@@ -206,13 +206,15 @@ const goToDetail = (id) => {
                 <v-icon size="48" color="#1e257c" class="mb-4">mdi-magnify-scan</v-icon>
                 <h2 class="text-h5 font-weight-bold mb-2">Tra cứu đơn hàng</h2>
                 <p class="text-body-2 text-grey-darken-1 mb-8">
-                    Nhập mã đơn hàng và số điện thoại đã dùng để tra cứu trạng thái đơn hàng của bạn.
+                    Nhập mã đơn hàng hoặc số điện thoại (không nhất thiết phải cả hai) để tra cứu trạng thái đơn hàng của bạn.
                 </p>
                 <v-form @submit.prevent="handleTrackOrder" class="mx-auto" style="max-width: 500px;">
                     <v-text-field v-model="trackingForm.maHoaDon" label="Mã đơn hàng (VD: HD...)"
+                        placeholder="Nhập mã đơn hàng"
                         variant="outlined" density="comfortable" class="mb-4" hide-details="auto"
                         prepend-inner-icon="mdi-barcode" />
-                    <v-text-field v-model="trackingForm.soDienThoai" label="Số điện thoại"
+                    <v-text-field v-model="trackingForm.soDienThoai" label="Số điện thoại người nhận"
+                        placeholder="Nhập số điện thoại"
                         variant="outlined" density="comfortable" class="mb-6" hide-details="auto"
                         prepend-inner-icon="mdi-phone-outline" />
                     <v-btn type="submit" size="large" rounded="pill" block class="text-none font-weight-bold"

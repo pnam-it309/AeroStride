@@ -12,6 +12,7 @@ import com.example.be.entity.XuatXu;
 import com.example.be.entity.KichThuoc;
 import com.example.be.entity.MauSac;
 import com.example.be.entity.ChiTietDotGiamGia;
+import com.example.be.infrastructure.constants.HinhThucPhieuGiamGia;
 import com.example.be.infrastructure.constants.TrangThai;
 
 import com.example.be.repository.SanPhamRepository;
@@ -211,7 +212,7 @@ public class DataRetrievalLibrary {
 
             for (PhieuGiamGia p : vouchers) {
                 sb.append("🎫 **").append(p.getTen()).append("** (Mã nhập: **").append(p.getMa()).append("**)\n");
-                sb.append("   - *Loại phiếu:* ").append("CA_NHAN".equals(p.getHinhThuc()) ? "Voucher Cá Nhân đặc biệt" : "Voucher Công Khai toàn sàn").append("\n");
+                sb.append("   - *Loại phiếu:* ").append(HinhThucPhieuGiamGia.isCaNhan(p.getHinhThuc()) ? "Voucher Cá Nhân đặc biệt" : "Voucher Công Khai toàn sàn").append("\n");
                 if (p.getPhanTramGiamGia() != null && p.getPhanTramGiamGia() > 0) {
                     sb.append("   - *Mức giảm:* Giảm ").append(p.getPhanTramGiamGia()).append("%");
                     if (p.getGiamToiDa() != null && p.getGiamToiDa().compareTo(BigDecimal.ZERO) > 0) {

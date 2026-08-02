@@ -348,6 +348,8 @@ CREATE TABLE IF NOT EXISTS hoa_don (
     id_nhan_vien VARCHAR(36),
     ma_hoa_don VARCHAR(50) UNIQUE,
     loai_don VARCHAR(50),
+    order_type VARCHAR(20) NULL,
+    delivery_method VARCHAR(20) NULL,
     phi_van_chuyen DECIMAL(20,2),
     tong_tien DECIMAL(20,2),
     tong_tien_sau_giam DECIMAL(20,2),

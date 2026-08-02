@@ -13,6 +13,8 @@ import com.example.be.entity.*;
 import com.example.be.infrastructure.constants.OrderStatus;
 import com.example.be.infrastructure.constants.OrderType;
 import com.example.be.infrastructure.constants.DeliveryMethod;
+import com.example.be.infrastructure.constants.HinhThucPhieuGiamGia;
+import com.example.be.infrastructure.constants.LoaiPhieuGiamGia;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.exceptions.BusinessException;
@@ -683,8 +685,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         if (voucher.getNgayBatDau() != null && currentTime < voucher.getNgayBatDau()) return false;
         if (voucher.getNgayKetThuc() != null && currentTime > voucher.getNgayKetThuc()) return false;
 
-        String form = voucher.getHinhThuc() != null ? voucher.getHinhThuc().trim() : "";
-        boolean personal = "CA_NHAN".equalsIgnoreCase(form) || "CÁ NHÂN".equalsIgnoreCase(form);
+        boolean personal = HinhThucPhieuGiamGia.isCaNhan(voucher.getHinhThuc());
         if (!personal) return true;
         if (hd.getKhachHang() == null) return false;
 
@@ -698,8 +699,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
     private BigDecimal getPotentialDiscount(PhieuGiamGia v, BigDecimal baseAmount) {
         if (v == null) return BigDecimal.ZERO;
         BigDecimal amount = baseAmount.max(BigDecimal.ZERO);
-        String type = v.getLoaiPhieu() != null ? v.getLoaiPhieu().toUpperCase() : "";
-        if ("PHAN_TRAM".equals(type) || "PERCENT".equals(type)) {
+        if (LoaiPhieuGiamGia.isPhanTram(v.getLoaiPhieu())) {
             Integer percent = v.getPhanTramGiamGia() != null ? v.getPhanTramGiamGia() : 0;
             BigDecimal discount = amount.multiply(BigDecimal.valueOf(percent)).divide(BigDecimal.valueOf(100), java.math.RoundingMode.HALF_UP);
             if (v.getGiamToiDa() != null && v.getGiamToiDa().compareTo(BigDecimal.ZERO) > 0) {
@@ -865,7 +865,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         }
 
         BigDecimal discount;
-        if ("PHAN_TRAM".equalsIgnoreCase(voucher.getLoaiPhieu()) || "PERCENT".equalsIgnoreCase(voucher.getLoaiPhieu())) {
+        if (LoaiPhieuGiamGia.isPhanTram(voucher.getLoaiPhieu())) {
             Integer percent = voucher.getPhanTramGiamGia() != null ? voucher.getPhanTramGiamGia() : 0;
             discount = subtotal.multiply(BigDecimal.valueOf(percent)).divide(BigDecimal.valueOf(100));
             BigDecimal max = normalizeMoney(voucher.getGiamToiDa());
