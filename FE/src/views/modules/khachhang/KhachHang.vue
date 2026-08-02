@@ -361,7 +361,7 @@ const openAddrDialog = async (item) => {
     let initialList = Array.isArray(existing) && existing.length > 0 ? [...existing] : [];
 
     // 2. Fallback: Chỉ nếu không có danh sách địa chỉ thực, mới nạp thông tin địa chỉ phẳng ở Root
-    if (initialList.length === 0 && (item.tinh || item.thanhPho || item.diaChiChiTiet)) {
+    if (initialList.length === 0 && (item.tinh || item.thanhPho)) {
         initialList.push({
             id: createLegacyAddressId(item.id),
             tinh: item.tinh,
@@ -410,15 +410,15 @@ const loadAddresses = async (khId) => {
 
         // Luôn cập nhật nếu data là mảng (kể cả mảng rỗng)
         if (Array.isArray(data)) {
-            const newList = [...data];
+            const rawList = [...data];
 
             // CHỈ bảo toàn địa chỉ "gốc" (legacy) từ bảng KhachHang khi trong bảng dia_chi chưa có bản ghi nào (newList.length === 0)
             const item = selectedKH.value;
-            const hasLegacyInfo = item && (item.tinh || item.thanhPho || item.diaChiChiTiet);
+            const hasLegacyInfo = item && (item.tinh || item.thanhPho);
 
-            if (newList.length === 0 && hasLegacyInfo) {
+            if (rawList.length === 0 && hasLegacyInfo) {
                 const legacyId = createLegacyAddressId(item.id);
-                newList.push({
+                rawList.push({
                     id: legacyId,
                     tinh: item.tinh,
                     thanhPho: item.thanhPho,
@@ -430,7 +430,33 @@ const loadAddresses = async (khId) => {
                 });
             }
 
-            listDiaChi.value = newList;
+            // Deduplicate addresses by content
+            const uniqueList = [];
+            const seenKeys = new Map();
+            for (const addrItem of rawList) {
+                const key = [
+                    String(addrItem.tenNguoiNhan || '').trim().toLowerCase(),
+                    String(addrItem.sdtNguoiNhan || '').replace(/\D/g, ''),
+                    String(addrItem.diaChiChiTiet || '').trim().toLowerCase(),
+                    String(addrItem.phuongXa || '').trim().toLowerCase(),
+                    String(addrItem.thanhPho || '').trim().toLowerCase(),
+                    String(addrItem.tinh || '').trim().toLowerCase()
+                ].join('|');
+
+                if (!seenKeys.has(key)) {
+                    seenKeys.set(key, addrItem);
+                    uniqueList.push(addrItem);
+                } else {
+                    const existing = seenKeys.get(key);
+                    if (addrItem.laMacDinh && !existing.laMacDinh) {
+                        const idx = uniqueList.indexOf(existing);
+                        if (idx !== -1) uniqueList[idx] = addrItem;
+                        seenKeys.set(key, addrItem);
+                    }
+                }
+            }
+
+            listDiaChi.value = uniqueList;
         }
     } catch (e) {
         console.error('Error loading addresses:', e);

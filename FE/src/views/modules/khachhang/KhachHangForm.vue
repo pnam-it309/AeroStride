@@ -137,7 +137,7 @@ const loadCustomer = async (id) => {
             tinh: null,
             thanhPho: null,
             phuongXa: null,
-            diaChiChiTiet: defaultAddr ? defaultAddr.diaChiChiTiet : data.diaChiChiTiet || '',
+            diaChiChiTiet: defaultAddr ? defaultAddr.diaChiChiTiet : '',
             ma: data.ma || data.maKhachHang || '' // Đảm bảo luôn có trường 'ma' để dùng làm khóa tìm kiếm
         };
         isEditMode.value = true;
@@ -271,23 +271,7 @@ const handleSave = async () => {
 
                     addNotification({ title: 'Thành công', subtitle: 'Đã cập nhật thông tin khách hàng', color: 'success' });
                 } else {
-                    const created = await dichVuKhachHang.taoKhachHang(payload);
-                    if (created?.id && payload.tinh && payload.thanhPho && payload.phuongXa && payload.diaChiChiTiet) {
-                        try {
-                            await dichVuKhachHang.taoDiaChi({
-                                idKhachHang: created.id,
-                                tinh: payload.tinh,
-                                thanhPho: payload.thanhPho,
-                                phuongXa: payload.phuongXa,
-                                diaChiChiTiet: payload.diaChiChiTiet,
-                                tenNguoiNhan: payload.ten || customerForm.value.ten,
-                                sdtNguoiNhan: payload.sdt || customerForm.value.sdt,
-                                laMacDinh: true
-                            });
-                        } catch (e) {
-                            console.error('Lỗi tự động tạo địa chỉ cho khách hàng mới:', e);
-                        }
-                    }
+                    await dichVuKhachHang.taoKhachHang(payload);
                     addNotification({ title: 'Thành công', subtitle: 'Đã thêm khách hàng mới', color: 'success' });
                 }
                 router.push(PATH.KHACH_HANG);
@@ -373,34 +357,57 @@ const loadAddresses = async (khId) => {
         }
 
         if (Array.isArray(data)) {
-            const newList = [...data];
+            const rawList = [...data];
 
-            // Bảo toàn địa chỉ "gốc" (legacy) từ customerForm nếu có
+            // CHỈ bảo toàn địa chỉ "gốc" (legacy) từ customerForm khi chưa có địa chỉ thực nào từ DB (newList.length === 0)
             const hasLegacyInfo =
-                customerForm.value && (customerForm.value.tinh || customerForm.value.thanhPho || customerForm.value.diaChiChiTiet);
+                customerForm.value && (customerForm.value.tinh || customerForm.value.thanhPho);
 
-            if (hasLegacyInfo) {
+            if (rawList.length === 0 && hasLegacyInfo) {
                 const legacyId = createLegacyAddressId(customerForm.value.id || khId);
+                const p = provinces.value.find((x) => x.code === customerForm.value.tinh || x.name === customerForm.value.tinh);
+                const d = districts.value.find((x) => x.code === customerForm.value.thanhPho || x.name === customerForm.value.thanhPho);
+                const w = wards.value.find((x) => x.code === customerForm.value.phuongXa || x.name === customerForm.value.phuongXa);
 
-                // Chỉ thêm nếu trong data chưa có ID này (tránh trùng lặp)
-                if (!newList.some((addr) => addr.id === legacyId)) {
-                    const p = provinces.value.find((x) => x.code === customerForm.value.tinh || x.name === customerForm.value.tinh);
-                    const d = districts.value.find((x) => x.code === customerForm.value.thanhPho || x.name === customerForm.value.thanhPho);
-                    const w = wards.value.find((x) => x.code === customerForm.value.phuongXa || x.name === customerForm.value.phuongXa);
+                rawList.push({
+                    id: legacyId,
+                    tinh: p ? p.name : customerForm.value.tinh,
+                    thanhPho: d ? d.name : customerForm.value.thanhPho,
+                    phuongXa: w ? w.name : customerForm.value.phuongXa,
+                    diaChiChiTiet: customerForm.value.diaChiChiTiet,
+                    tenNguoiNhan: customerForm.value.ten,
+                    sdtNguoiNhan: customerForm.value.sdt,
+                    laMacDinh: true
+                });
+            }
 
-                    newList.push({
-                        id: legacyId,
-                        tinh: p ? p.name : customerForm.value.tinh,
-                        thanhPho: d ? d.name : customerForm.value.thanhPho,
-                        phuongXa: w ? w.name : customerForm.value.phuongXa,
-                        diaChiChiTiet: customerForm.value.diaChiChiTiet,
-                        tenNguoiNhan: customerForm.value.ten,
-                        sdtNguoiNhan: customerForm.value.sdt,
-                        laMacDinh: data.length === 0 // Chỉ mặc định nếu không có địa chỉ thực nào khác
-                    });
+            // Deduplicate addresses by content
+            const uniqueList = [];
+            const seenKeys = new Map();
+            for (const addrItem of rawList) {
+                const key = [
+                    String(addrItem.tenNguoiNhan || '').trim().toLowerCase(),
+                    String(addrItem.sdtNguoiNhan || '').replace(/\D/g, ''),
+                    String(addrItem.diaChiChiTiet || '').trim().toLowerCase(),
+                    String(addrItem.phuongXa || '').trim().toLowerCase(),
+                    String(addrItem.thanhPho || '').trim().toLowerCase(),
+                    String(addrItem.tinh || '').trim().toLowerCase()
+                ].join('|');
+
+                if (!seenKeys.has(key)) {
+                    seenKeys.set(key, addrItem);
+                    uniqueList.push(addrItem);
+                } else {
+                    const existing = seenKeys.get(key);
+                    if (addrItem.laMacDinh && !existing.laMacDinh) {
+                        const idx = uniqueList.indexOf(existing);
+                        if (idx !== -1) uniqueList[idx] = addrItem;
+                        seenKeys.set(key, addrItem);
+                    }
                 }
             }
-            listDiaChi.value = newList;
+
+            listDiaChi.value = uniqueList;
         }
     } catch (e) {
         console.error('Error loading addresses:', e);
@@ -410,6 +417,24 @@ const loadAddresses = async (khId) => {
             color: 'error'
         });
     }
+};
+
+const formatAddressFull = (addr) => {
+    if (!addr) return '';
+    const detail = (addr.diaChiChiTiet || '').trim();
+    const px = (addr.phuongXa || '').trim();
+    const tp = (addr.thanhPho || '').trim();
+    const tinh = (addr.tinh || '').trim();
+
+    // Nếu diaChiChiTiet đã chứa thông tin tỉnh/thành hoặc xã (do chuỗi phẳng), chỉ hiển thị detail
+    if (tinh && detail.toLowerCase().includes(tinh.toLowerCase())) {
+        return detail;
+    }
+    if (px && detail.toLowerCase().includes(px.toLowerCase())) {
+        return detail;
+    }
+
+    return [detail, px, tp, tinh].filter(Boolean).join(', ');
 };
 const openAddrDialog = (item = null) => {
     if (item) {
@@ -827,9 +852,7 @@ const dobRules = [
                                                 định</v-chip>
                                         </div>
                                         <div class="text-body-2 font-weight-bold text-slate-500">
-                                            {{ addr.diaChiChiTiet }}, {{ addr.phuongXa }}, {{ addr.thanhPho }}, {{
-                                                addr.tinh
-                                            }}
+                                            {{ formatAddressFull(addr) }}
                                         </div>
                                     </div>
                                     <div class="d-flex align-center ga-1" v-if="!isDetailView">

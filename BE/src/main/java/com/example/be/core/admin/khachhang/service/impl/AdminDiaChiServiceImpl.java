@@ -35,7 +35,33 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
                 list.add(0, kh.getDiaChi());
             }
         }
-        return list.stream().map(this::toResponse).collect(Collectors.toList());
+
+        // Deduplicate addresses by content
+        java.util.Map<String, DiaChi> uniqueMap = new java.util.LinkedHashMap<>();
+        for (DiaChi dc : list) {
+            String key = String.format("%s|%s|%s|%s|%s|%s",
+                    normalizeStr(dc.getTenNguoiNhan()),
+                    normalizePhone(dc.getSdtNguoiNhan()),
+                    normalizeStr(dc.getDiaChiChiTiet()),
+                    normalizeStr(dc.getPhuongXa()),
+                    normalizeStr(dc.getThanhPho()),
+                    normalizeStr(dc.getTinh())
+            );
+
+            if (!uniqueMap.containsKey(key) || Boolean.TRUE.equals(dc.getLaMacDinh())) {
+                uniqueMap.put(key, dc);
+            }
+        }
+
+        return uniqueMap.values().stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    private String normalizeStr(String str) {
+        return str == null ? "" : str.trim().toLowerCase();
+    }
+
+    private String normalizePhone(String phone) {
+        return phone == null ? "" : phone.replaceAll("\\D", "");
     }
 
     @Override
@@ -44,15 +70,17 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
         KhachHang kh = khachHangRepository.findById(request.getIdKhachHang())
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.KHACH_HANG_NOT_FOUND + request.getIdKhachHang()));
         
+        if (Boolean.TRUE.equals(request.getLaMacDinh())) {
+            unsetOldDefault(kh.getId());
+        }
+
         DiaChi dc = new DiaChi();
         BeanUtils.copyProperties(request, dc);
         dc.setKhachHang(kh);
         
-        // Save DiaChi first to ensure it has an ID before assigning to KhachHang
         dc = repository.save(dc);
         
         if (Boolean.TRUE.equals(request.getLaMacDinh())) {
-            unsetOldDefault(kh.getId());
             kh.setDiaChi(dc);
             khachHangRepository.save(kh);
         }
@@ -66,11 +94,14 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
         DiaChi dc = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DIA_CHI_NOT_FOUND));
         
+        if (Boolean.TRUE.equals(request.getLaMacDinh())) {
+            unsetOldDefaultExcluding(dc.getKhachHang().getId(), id);
+        }
+
         BeanUtils.copyProperties(request, dc, "id", "khachHang");
         dc = repository.save(dc);
         
         if (Boolean.TRUE.equals(request.getLaMacDinh())) {
-            unsetOldDefault(dc.getKhachHang().getId());
             KhachHang kh = dc.getKhachHang();
             kh.setDiaChi(dc);
             khachHangRepository.save(kh);
@@ -100,7 +131,7 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
     public void setDefault(String id) {
         DiaChi dc = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DIA_CHI_NOT_FOUND));
-        unsetOldDefault(dc.getKhachHang().getId());
+        unsetOldDefaultExcluding(dc.getKhachHang().getId(), id);
         dc.setLaMacDinh(true);
         repository.save(dc);
 
@@ -113,10 +144,18 @@ public class AdminDiaChiServiceImpl implements AdminDiaChiService {
     }
 
     private void unsetOldDefault(String khId) {
-        DiaChi oldDefault = repository.findByKhachHangIdAndLaMacDinhTrue(khId);
-        if (oldDefault != null) {
-            oldDefault.setLaMacDinh(false);
-            repository.save(oldDefault);
+        unsetOldDefaultExcluding(khId, null);
+    }
+
+    private void unsetOldDefaultExcluding(String khId, String excludeAddrId) {
+        List<DiaChi> list = repository.findByKhachHangId(khId);
+        for (DiaChi addr : list) {
+            if (excludeAddrId == null || !addr.getId().equals(excludeAddrId)) {
+                if (Boolean.TRUE.equals(addr.getLaMacDinh())) {
+                    addr.setLaMacDinh(false);
+                    repository.save(addr);
+                }
+            }
         }
     }
 

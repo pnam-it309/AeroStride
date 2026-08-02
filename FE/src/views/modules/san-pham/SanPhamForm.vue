@@ -866,6 +866,8 @@ const mapVariantToFormState = (variant = {}) => ({
     soLuong: Number(variant.soLuong ?? 0),
     giaNhap: Number(variant.giaNhap ?? 0),
     giaBan: Number(variant.giaBan ?? 0),
+    giaGoc: variant.giaGoc != null ? Number(variant.giaGoc) : null,
+    phanTramGiam: Number(variant.phanTramGiam ?? 0),
     trangThai: variant.trangThai || defaultVariantStatus,
     urlAnh: getVariantThumbnail(variant) === logoPlaceholder ? '' : getVariantThumbnail(variant)
 });
@@ -2661,12 +2663,17 @@ const handleSave = async () => {
                                     <td class="data-cell text-center text-slate-500 font-weight-medium">
                                         {{ (variantPage - 1) * variantPageSize + index + 1 }}
                                     </td>
-                                    <td class="data-cell">
-                                        <v-avatar rounded="lg" size="44"
-                                            class="border bg-slate-50 elevation-1 avatar-hover">
-                                            <SafeProductImage :src="getVariantThumbnail(variant)"
-                                                :fallback-src="logoPlaceholder" :alt="getVariantSkuLabel(variant)" />
-                                        </v-avatar>
+                                    <td class="data-cell text-center">
+                                        <div class="product-image-container d-inline-block position-relative">
+                                            <v-avatar rounded="lg" size="44"
+                                                class="border bg-slate-50 elevation-1 avatar-hover">
+                                                <SafeProductImage :src="getVariantThumbnail(variant)"
+                                                    :fallback-src="logoPlaceholder" :alt="getVariantSkuLabel(variant)" />
+                                            </v-avatar>
+                                            <div v-if="variant.phanTramGiam > 0" class="discount-badge">
+                                                -{{ Math.round(variant.phanTramGiam) }}%
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="data-cell font-weight-bold text-slate-700">
                                         <div class="text-truncate" :title="getOptionLabel(colors, variant.idMauSac)">
@@ -2687,7 +2694,13 @@ const handleSave = async () => {
                                         <span class="text-primary">{{ formatNumber(variant.soLuong) }}</span>
                                     </td>
                                     <td class="data-cell">
-                                        <span class="text-primary">{{ formatCurrency(variant.giaBan) }}</span>
+                                        <div v-if="variant.giaGoc && variant.giaGoc > variant.giaBan"
+                                            class="text-caption text-decoration-line-through text-slate-400">
+                                            {{ formatCurrency(variant.giaGoc) }}
+                                        </div>
+                                        <div class="text-primary text-truncate font-weight-bold" :title="formatCurrency(variant.giaBan)">
+                                            {{ formatCurrency(variant.giaBan) }}
+                                        </div>
                                     </td>
                                     <td class="data-cell text-center">
                                         <v-chip variant="flat"

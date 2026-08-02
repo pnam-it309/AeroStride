@@ -118,6 +118,11 @@ const submitQuickAdd = async () => {
         const phoneClean = String(phone || '').replace(/\D/g, '');
         const fallbackEmail = `khach_${phoneClean || Date.now()}@aerostride.vn`;
 
+        let addressPayload = {};
+        if (form.value.tinh && form.value.thanhPho && form.value.phuongXa && form.value.diaChiChiTiet) {
+            addressPayload = mapCodesToNames(form.value, provinces.value, districts.value, wards.value);
+        }
+
         const newCustomerPayload = {
             ten: String(name || '').trim(),
             sdt: String(phone || '').trim(),
@@ -126,28 +131,14 @@ const submitQuickAdd = async () => {
             tenTaiKhoan: '',
             matKhau: '',
             trangThai: 'DANG_HOAT_DONG',
-            ghiChu: 'Khách tạo nhanh tại quầy'
+            ghiChu: 'Khách tạo nhanh tại quầy',
+            tinh: addressPayload.tinh || null,
+            thanhPho: addressPayload.thanhPho || null,
+            phuongXa: addressPayload.phuongXa || null,
+            diaChiChiTiet: addressPayload.diaChiChiTiet || null
         };
 
         const createdCustomer = await dichVuKhachHang.taoKhachHang(newCustomerPayload);
-
-        if (createdCustomer?.id && form.value.tinh && form.value.thanhPho && form.value.phuongXa && form.value.diaChiChiTiet) {
-            try {
-                const addressPayload = mapCodesToNames(form.value, provinces.value, districts.value, wards.value);
-                await dichVuKhachHang.taoDiaChi({
-                    idKhachHang: createdCustomer.id,
-                    tinh: addressPayload.tinh,
-                    thanhPho: addressPayload.thanhPho,
-                    phuongXa: addressPayload.phuongXa,
-                    diaChiChiTiet: addressPayload.diaChiChiTiet,
-                    tenNguoiNhan: name,
-                    sdtNguoiNhan: phone,
-                    laMacDinh: true
-                });
-            } catch (err) {
-                console.error("Lỗi tạo địa chỉ", err);
-            }
-        }
 
         const targetCustomer = createdCustomer?.id ? createdCustomer : await findExistingCustomerByContact(phone, email);
         if (targetCustomer) {
