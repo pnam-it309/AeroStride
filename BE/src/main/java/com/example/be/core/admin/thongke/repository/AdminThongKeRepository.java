@@ -76,21 +76,21 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay, org.springframework.data.domain.Pageable pageable);
 
     @Query("""
-           SELECT COALESCE(md.ten, 'Khác'),
+           SELECT COALESCE(th.ten, 'Khác'),
                   COALESCE(SUM(hdct.soLuong * hdct.donGia), 0)
            FROM HoaDonChiTiet hdct
            JOIN hdct.chiTietSanPham ctsp
            JOIN ctsp.sanPham sp
-           LEFT JOIN sp.mucDichChay md
+           LEFT JOIN sp.thuongHieu th
            JOIN hdct.hoaDon hd
            WHERE CAST(hd.trangThai AS int) = 4
            AND (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
            AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
-           GROUP BY md.ten
+           GROUP BY th.ten
            HAVING COALESCE(SUM(hdct.soLuong * hdct.donGia), 0) > 0
            ORDER BY SUM(hdct.soLuong * hdct.donGia) DESC
            """)
-    List<Object[]> getCategoryRevenueData(
+    List<Object[]> getBrandRevenueData(
             @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
     @Query(value = """
@@ -110,6 +110,35 @@ public interface AdminThongKeRepository extends HoaDonRepository,
             """, nativeQuery = true)
     List<Object[]> getCustomerPurchaseStats(
             @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
+
+    @Query(value = """
+            SELECT 
+                nv.ma_nhan_vien AS maNhanVien,
+                nv.ten_nhan_vien AS tenNhanVien,
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN hd.tong_tien ELSE 0 END), 0) AS tongDoanhThu,
+                COALESCE(SUM(CASE WHEN hd.trang_thai = 4 THEN (SELECT COALESCE(SUM(hdct.so_luong), 0) FROM hoa_don_chi_tiet hdct WHERE hdct.id_hoa_don = hd.id) ELSE 0 END), 0) AS tongSanPham,
+                COALESCE(COUNT(hd.id), 0) AS tongDonHang
+            FROM nhan_vien nv
+            LEFT JOIN hoa_don hd ON hd.id_nhan_vien = nv.id
+              AND (:tuNgay IS NULL OR hd.ngay_tao >= :tuNgay)
+              AND (:denNgay IS NULL OR hd.ngay_tao <= :denNgay)
+            WHERE nv.xoa_mem = false OR nv.xoa_mem IS NULL
+            GROUP BY nv.id, nv.ma_nhan_vien, nv.ten_nhan_vien
+            ORDER BY tongDoanhThu DESC
+            """, nativeQuery = true)
+    List<Object[]> getEmployeeRevenueStats(
+            @Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
+
+    @Query(value = """
+            SELECT 
+                COALESCE(SUM(hd.tong_tien), 0) AS doanhThu,
+                COUNT(hd.id) AS soDon
+            FROM hoa_don hd
+            WHERE hd.trang_thai = 4
+              AND hd.ngay_tao >= :tuNgay
+              AND hd.ngay_tao <= :denNgay
+            """, nativeQuery = true)
+    List<Object[]> getRevenueCycleStats(@Param("tuNgay") Long tuNgay, @Param("denNgay") Long denNgay);
 
     @Query(value = """
            SELECT sp.ma as ma,
