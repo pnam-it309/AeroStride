@@ -39,9 +39,9 @@ public class AdminKhachHangController {
     }
 
     @PostMapping(RoutesConstant.ADD) // Compatibility Alias
-    public ResponseEntity<ApiResponse<Void>> add(@Valid @RequestBody AdminKhachHangRequest request) {
-        adminKhachHangService.add(request);
-        return ResponseEntity.ok(ApiResponse.success(null, MessageConstants.KHACH_HANG_ADD_SUCCESS));
+    public ResponseEntity<ApiResponse<AdminKhachHangResponse>> add(@Valid @RequestBody AdminKhachHangRequest request) {
+        AdminKhachHangResponse response = adminKhachHangService.add(request);
+        return ResponseEntity.ok(ApiResponse.success(response, MessageConstants.KHACH_HANG_ADD_SUCCESS));
     }
 
     @PutMapping(RoutesConstant.UPDATE) // Compatibility Alias

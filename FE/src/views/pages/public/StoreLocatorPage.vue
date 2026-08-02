@@ -63,7 +63,7 @@ onMounted(() => {
                             </div>
                             
                             <v-list class="overflow-y-auto flex-grow-1 store-list" max-height="600">
-                                <template v-for="(store, index) in filteredStores" :key="store.id">
+                                <template v-for="store in filteredStores" :key="store.id">
                                     <v-list-item class="pa-4 store-item border-b">
                                         <h4 class="text-subtitle-1 font-weight-bold text-primary mb-2">{{ store.name }}</h4>
                                         <div class="d-flex align-start mb-1 text-caption text-grey-darken-2">

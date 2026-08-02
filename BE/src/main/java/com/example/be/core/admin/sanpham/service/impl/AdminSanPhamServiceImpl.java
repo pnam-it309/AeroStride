@@ -378,13 +378,15 @@ public class AdminSanPhamServiceImpl implements AdminSanPhamService {
         // 1. Ảnh đầu tiên (index 0) sẽ được lưu làm ảnh đại diện cho Sản Phẩm gốc
         SanPham sanPham = variant.getSanPham();
         ProductVariantImageRequest firstImage = imageRequests.get(0);
-        sanPham.setHinhAnh(firstImage.getDuongDanAnh());
-        adminSanPhamRepository.save(sanPham);
+        if (sanPham != null && firstImage != null) {
+            sanPham.setHinhAnh(firstImage.getDuongDanAnh());
+            adminSanPhamRepository.save(sanPham);
+        }
 
-        // 2. Từ ảnh thứ 2 trở đi sẽ được lưu vào danh sách ảnh của Biến thể (Chi Tiết Sản Phẩm)
-        List<ProductVariantImageRequest> variantImageRequests = new ArrayList<>();
-        if (imageRequests.size() > 1) {
-            variantImageRequests = imageRequests.subList(1, imageRequests.size());
+        // 2. Tất cả ảnh của biến thể (bao gồm ảnh 0) sẽ được lưu vào danh sách ảnh Biến thể (Chi Tiết Sản Phẩm)
+        List<ProductVariantImageRequest> variantImageRequests = new ArrayList<>(imageRequests);
+        if (!variantImageRequests.isEmpty() && variantImageRequests.stream().noneMatch(img -> Boolean.TRUE.equals(img.getHinhAnhDaiDien()))) {
+            variantImageRequests.get(0).setHinhAnhDaiDien(true);
         }
 
         List<AnhChiTietSanPham> existingImages = adminAnhChiTietSanPhamRepository

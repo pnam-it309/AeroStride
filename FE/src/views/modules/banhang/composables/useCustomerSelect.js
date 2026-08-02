@@ -154,9 +154,10 @@ export function useCustomerSelect(selectedOrder, updateOrderInList, refreshBestV
         };
 
         const created = await dichVuKhachHang.taoKhachHang(newCustomerPayload);
-        if (created?.id) {
-            await selectCustomer(created);
-            return created.id;
+        const targetCustomer = created?.id ? created : await findExistingCustomerByContact(sdt, email);
+        if (targetCustomer?.id) {
+            await selectCustomer(targetCustomer);
+            return targetCustomer.id;
         }
         return null;
     };

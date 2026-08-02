@@ -9,13 +9,14 @@
  * Chức năng: Component dạng Drawer (ngăn kéo) cho phép người dùng xem, thêm, xóa và
  * đặt ảnh chính (ảnh đại diện) cho một biến thể sản phẩm cụ thể.
  */
-import { ref, watch, reactive } from 'vue';
+import { ref, watch, reactive, computed } from 'vue';
 import { XIcon, PhotoIcon, DeviceFloppyIcon, SettingsIcon, TrashIcon, InfoCircleIcon, PlusIcon, UploadIcon } from 'vue-tabler-icons';
 import { useNotifications } from '@/services/notificationService';
 import { dichVuBienThe } from '@/services/product/dichVuBienThe';
 import { dichVuFile } from '@/services/core/dichVuFile';
 import SafeProductImage from '../../san-pham/components/SafeProductImage.vue';
 import logoPlaceholder from '@/assets/images/logos/logo-light.svg';
+import QrcodeVue from 'qrcode.vue';
 
 const props = defineProps({
     show: Boolean,
@@ -40,6 +41,26 @@ const formData = reactive({
 });
 
 const images = ref([]);
+const qrCodeRef = ref(null);
+
+const qrValue = computed(() => {
+    return props.variant?.maChiTietSanPham || props.variant?.maSanPham || String(props.variant?.id || '');
+});
+
+const downloadQrCode = () => {
+    const canvas = qrCodeRef.value?.querySelector('canvas');
+    if (!canvas || !props.variant) {
+        addNotification({ title: 'Lỗi', subtitle: 'Không thể tạo mã QR để tải xuống', color: 'error' });
+        return;
+    }
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = `QR_${qrValue.value}.png`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    addNotification({ title: 'Thành công', subtitle: 'Đã tải mã QR sản phẩm', color: 'success' });
+};
 
 watch(
     () => props.variant,
@@ -185,11 +206,11 @@ const setMainImage = async (imgId) => {
                 <div>
                     <div class="d-flex align-center ga-2 mb-1">
                         <v-icon icon="mdi-package-variant" size="18" color="primary" />
-                        <h2 class="text-h6 text-slate-900 mb-0" style="font-size: 1.15rem !important">Quản lý hình ảnh
+                        <h2 class="text-h6 text-slate-900 mb-0" style="font-size: 1.15rem !important">Quản lý biến thể sản phẩm
                         </h2>
                     </div>
-                    <p class="text-primary" style="font-size: 13px !important">
-                        {{ variant.maChiTietSanPham ? variant.maChiTietSanPham.split('-')[0] : '--' }}
+                    <p class="text-primary font-weight-bold mb-0" style="font-size: 13px !important">
+                        {{ variant.maChiTietSanPham || '--' }}
                     </p>
                 </div>
                 <v-btn icon variant="tonal" density="comfortable" color="slate-400" @click="emit('update:show', false)"
@@ -201,7 +222,7 @@ const setMainImage = async (imgId) => {
         <!-- Main Scrollable Content -->
         <div class="flex-grow-1 overflow-y-auto pa-6 custom-scrollbar">
             <!-- Persistent Variant Summary Grid -->
-            <div class="variant-detail-grid mb-8 pa-4 rounded-lg border bg-slate-50-30">
+            <div class="variant-detail-grid mb-6 pa-4 rounded-lg border bg-slate-50-30">
                 <v-row dense>
                     <v-col cols="6">
                         <div class="info-group">
@@ -229,6 +250,27 @@ const setMainImage = async (imgId) => {
                         </div>
                     </v-col>
                 </v-row>
+            </div>
+
+            <!-- Mã QR Sản Phẩm -->
+            <div class="qr-section mb-6 pa-4 rounded-xl border bg-slate-50 text-center">
+                <div class="d-flex align-center justify-space-between mb-3 px-1">
+                    <div class="d-flex align-center ga-2">
+                        <v-icon icon="mdi-qrcode" size="18" color="primary" />
+                        <span class="text-subtitle-2 font-weight-bold text-slate-800">Mã QR sản phẩm</span>
+                    </div>
+                    <v-btn size="small" variant="flat" color="primary" class="text-none rounded-lg font-weight-bold px-3"
+                        @click="downloadQrCode">
+                        <v-icon size="16" class="mr-1">mdi-download</v-icon>
+                        Tải mã QR
+                    </v-btn>
+                </div>
+                <div ref="qrCodeRef" class="d-flex flex-column align-center justify-center pa-4 bg-white rounded-lg border elevation-1">
+                    <QrcodeVue :value="qrValue" :size="160" level="H" render-as="canvas" class="qr-canvas-display" />
+                    <div class="mt-3 px-3 py-1 rounded bg-slate-100 border text-slate-800 font-weight-bold text-caption monospace">
+                        {{ qrValue }}
+                    </div>
+                </div>
             </div>
 
         <!-- Custom Styled Tabs -->

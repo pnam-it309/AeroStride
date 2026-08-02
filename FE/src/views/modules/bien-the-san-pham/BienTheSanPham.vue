@@ -943,12 +943,7 @@ onBeforeUnmount(() => {
                             </v-btn>
                             <v-btn variant="text" class="action-icon-btn" @click="openImageModal(item)">
                                 <component :is="ADMIN_ICONS.ACTION.VIEW" size="15" />
-                                <v-tooltip activator="parent" location="top">Thư viện ảnh</v-tooltip>
-                            </v-btn>
-                            <v-btn variant="text" color="primary" class="action-icon-btn qr-action-btn"
-                                @click="openQrDialog(item)">
-                                <QrcodeIcon />
-                                <v-tooltip activator="parent" location="top">QR code</v-tooltip>
+                                <v-tooltip activator="parent" location="top">Quản lý biến thể sản phẩm</v-tooltip>
                             </v-btn>
                             <div class="switch-wrapper">
                                 <v-switch :model-value="isActiveStatus(item.trangThai)" color="primary" hide-details

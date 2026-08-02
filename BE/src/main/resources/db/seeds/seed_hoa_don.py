@@ -12,7 +12,7 @@ invoices_per_day_max = 7
 # Data pools
 customers = [f'kh{i}' for i in range(1, 26)]
 employees = ['nv1', 'nv2']
-statuses = [0, 1, 2, 3, 4] # 0: Pending, 1: Processed, 2: Shipping, 3: Completed, 4: Cancelled
+statuses = [1, 2, 3, 4] # 1: Processed, 2: Shipping, 3: Completed, 4: Cancelled
 types = ['ONLINE', 'OFFLINE']
 addresses = [
     'Số 123 Nguyễn Huệ, Quận 1, TP.HCM',

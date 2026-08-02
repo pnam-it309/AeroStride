@@ -106,18 +106,18 @@
                         class="dim-input-field w-100" @input="emitShippingChange" />
 
                     <div class="d-flex gap-3">
-                        <v-select v-model="recipientProvince" :items="provincesShip" item-title="name"
+                        <v-autocomplete v-model="recipientProvince" :items="provincesShip" item-title="name"
                             item-value="code" placeholder="Tỉnh/Thành phố" density="compact"
                             variant="outlined" hide-details class="dim-select-field flex-grow-1"
                             style="width: 33.33%;" @update:modelValue="onProvinceChange" />
-                        <v-select v-model="recipientDistrict" :items="districtsShip" item-title="name"
+                        <v-autocomplete v-model="recipientDistrict" :items="districtsShip" item-title="name"
                             item-value="code" placeholder="Quận/Huyện" density="compact" variant="outlined"
                             hide-details :disabled="!recipientProvince" class="dim-select-field flex-grow-1"
                             style="width: 33.33%;" @update:modelValue="onDistrictChange" />
-                        <v-select v-model="recipientWard" :items="wardsShip" item-title="name"
+                        <v-autocomplete v-model="recipientWard" :items="wardsShip" item-title="name"
                             item-value="code" placeholder="Phường/Xã" density="compact" variant="outlined"
                             hide-details :disabled="!recipientDistrict" class="dim-select-field flex-grow-1"
-                            style="width: 33.33%;" @update:modelValue="emitShippingChange" />
+                            style="width: 33.33%;" @update:modelValue="onWardChange" />
                     </div>
                 </div>
             </v-card>
@@ -162,7 +162,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['set-customer', 'remove-customer', 'update:customer-form', 'update:shipping']);
+const emit = defineEmits(['set-customer', 'remove-customer', 'open-quick-add', 'update:customer-form', 'update:shipping']);
 
 const customerForm = ref({ ...props.initialCustomerForm });
 const customerSearch = ref('');
@@ -345,30 +345,12 @@ const onSelectSuggestedCustomer = (c) => {
 
 const quickCreateCustomer = () => {
     const query = customerSearch.value.trim();
-    emit('remove-customer');
-    
     const isPhone = /^[0-9+]+$/.test(query);
-    if (isPhone) {
-        customerForm.value = {
-            ten: '',
-            sdt: query,
-            email: '',
-            gioiTinh: 'Giới tính',
-            tongDonHang: 0
-        };
-    } else {
-        customerForm.value = {
-            ten: query,
-            sdt: '',
-            email: '',
-            gioiTinh: 'Giới tính',
-            tongDonHang: 0
-        };
-    }
+    const initialData = isPhone ? { ten: '', sdt: query, email: '' } : { ten: query, sdt: '', email: '' };
     
     customerSearch.value = '';
     showCustomerSuggestions.value = false;
-    emitFormChange();
+    emit('open-quick-add', initialData);
 };
 
 const emitFormChange = () => {
@@ -386,8 +368,9 @@ const emitShippingChange = () => {
     });
 };
 
-const onProvinceChange = async () => {
+const onProvinceChange = async (val) => {
     if (isApplyingAddressModal.value) return;
+    if (val !== undefined) recipientProvince.value = val;
     recipientDistrict.value = null;
     recipientWard.value = null;
     if (recipientProvince.value) {
@@ -396,12 +379,19 @@ const onProvinceChange = async () => {
     emitShippingChange();
 };
 
-const onDistrictChange = async () => {
+const onDistrictChange = async (val) => {
     if (isApplyingAddressModal.value) return;
+    if (val !== undefined) recipientDistrict.value = val;
     recipientWard.value = null;
     if (recipientDistrict.value) {
         await fetchWardsShip(recipientDistrict.value);
     }
+    emitShippingChange();
+};
+
+const onWardChange = (val) => {
+    if (isApplyingAddressModal.value) return;
+    if (val !== undefined) recipientWard.value = val;
     emitShippingChange();
 };
 

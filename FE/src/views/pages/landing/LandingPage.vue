@@ -371,7 +371,7 @@ const noProductsMessage = computed(() => {
                         >
                             <!-- Image Box with Light Blue Background -->
                             <div class="card-image-box">
-                                <img v-if="product.hinhAnh" :src="product.hinhAnh" :alt="product.tenSanPham" class="product-card-img" />
+                                <img v-if="product.hinhAnh" :src="product.hinhAnh" :alt="product.tenSanPham" class="product-card-img" referrerpolicy="no-referrer" />
                                 <v-icon v-else size="48" color="grey-lighten-2">mdi-shoe-sneaker</v-icon>
 
                                 <!-- Sale percent badge -->

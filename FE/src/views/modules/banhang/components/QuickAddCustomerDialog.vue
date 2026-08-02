@@ -12,6 +12,10 @@ const props = defineProps({
     modelValue: {
         type: Boolean,
         default: false
+    },
+    initialData: {
+        type: Object,
+        default: () => ({ ten: '', sdt: '', email: '' })
     }
 });
 
@@ -35,7 +39,16 @@ const form = ref({
 
 watch(() => props.modelValue, async (newVal) => {
     if (newVal) {
-        form.value = { ten: '', sdt: '', email: '', gioiTinh: true, tinh: null, thanhPho: null, phuongXa: null, diaChiChiTiet: '' };
+        form.value = {
+            ten: props.initialData?.ten || '',
+            sdt: props.initialData?.sdt || '',
+            email: props.initialData?.email || '',
+            gioiTinh: true,
+            tinh: null,
+            thanhPho: null,
+            phuongXa: null,
+            diaChiChiTiet: ''
+        };
         if (provinces.value.length === 0) {
             await fetchProvinces();
         }
@@ -172,13 +185,13 @@ const close = () => {
 
                 <v-row dense>
                     <v-col cols="12" md="6">
-                        <v-text-field v-model="form.ten" label="Tên khách hàng" placeholder="Nhập tên..."
+                        <v-text-field v-model="form.ten" label="Tên khách hàng"
                             variant="outlined" density="comfortable" hide-details="auto" class="mb-3 text-body-2"
                             maxlength="100" />
                     </v-col>
                     <v-col cols="12" md="6">
                         <v-text-field v-model="form.sdt" label="Số điện thoại"
-                            placeholder="Ví dụ: 0912345678" variant="outlined" density="comfortable"
+                            variant="outlined" density="comfortable"
                             hide-details="auto" class="mb-3 text-body-2"
                             @input="form.sdt = String($event.target.value || '').replace(/[^0-9]/g, '')" />
                     </v-col>
@@ -188,7 +201,7 @@ const close = () => {
                     </v-col>
                     <v-col cols="12" md="6">
                         <v-text-field v-model="form.email" label="Email (Không bắt buộc)"
-                            placeholder="Ví dụ: abc@gmail.com" variant="outlined" density="comfortable"
+                            variant="outlined" density="comfortable"
                             hide-details="auto" class="mb-3 text-body-2" />
                     </v-col>
 
@@ -197,14 +210,14 @@ const close = () => {
                     </v-col>
                     <v-col cols="12" md="4">
                         <v-autocomplete v-model="form.tinh" :items="provinces" item-title="name"
-                            item-value="code" placeholder="Tỉnh / Thành phố" variant="outlined" bg-color="white"
+                            item-value="code" label="Tỉnh / Thành phố" variant="outlined" bg-color="white"
                             density="compact" hide-details :loading="loadingLocations.provinces"
                             @update:model-value="(val) => { form.thanhPho = null; form.phuongXa = null; if (val) fetchDistricts(val); }"
                             class="mb-3 text-body-2" />
                     </v-col>
                     <v-col cols="12" md="4">
                         <v-autocomplete v-model="form.thanhPho" :items="districts" item-title="name"
-                            item-value="code" placeholder="Quận / Huyện" variant="outlined" bg-color="white"
+                            item-value="code" label="Quận / Huyện" variant="outlined" bg-color="white"
                             density="compact" hide-details :loading="loadingLocations.districts"
                             :disabled="!form.tinh"
                             @update:model-value="(val) => { form.phuongXa = null; if (val) fetchWards(val); }"
@@ -212,13 +225,13 @@ const close = () => {
                     </v-col>
                     <v-col cols="12" md="4">
                         <v-autocomplete v-model="form.phuongXa" :items="wards" item-title="name"
-                            item-value="code" placeholder="Phường / Xã" variant="outlined" bg-color="white"
+                            item-value="code" label="Phường / Xã" variant="outlined" bg-color="white"
                             density="compact" hide-details :loading="loadingLocations.wards"
                             :disabled="!form.thanhPho" class="mb-3 text-body-2" />
                     </v-col>
                     <v-col cols="12">
-                        <v-text-field v-model="form.diaChiChiTiet"
-                            placeholder="Địa chỉ cụ thể (Số nhà, đường...)" variant="outlined" density="compact"
+                        <v-text-field v-model="form.diaChiChiTiet" label="Địa chỉ cụ thể (Số nhà, đường...)"
+                            variant="outlined" density="compact"
                             hide-details class="text-body-2" />
                     </v-col>
                 </v-row>

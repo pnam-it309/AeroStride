@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
@@ -290,7 +290,7 @@ const isShippingValid = computed(() => {
     );
 });
 
-const remainingForFreeShip = computed(() => Math.max(0, FREE_SHIP_THRESHOLD - cartStore.cartTotal));
+const remainingForFreeShip = computed(() => Math.max(0, FREE_SHIP_THRESHOLD.value - cartStore.cartTotal));
 
 const estimatedDelivery = computed(() => {
     if (!shippingInfo.value.tinhThanh || !shippingInfo.value.quanHuyen || !shippingInfo.value.phuongXa) {
@@ -477,6 +477,10 @@ onMounted(async () => {
     fetchShippingConfig();
     await fetchUserProfile();
     fetchVouchers();
+});
+
+onUnmounted(() => {
+    closeVnPayDialog();
 });
 </script>
 

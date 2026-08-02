@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useToastStore } from '@/stores/toastStore';
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 import MainHeader from '@/components/shared/MainHeader.vue';
+import CustomerChat from '@/components/shared/CustomerChat.vue';
 
 const router = useRouter();
 const toastStore = useToastStore();
@@ -116,7 +117,7 @@ const removeFavorite = (id, event) => {
             </div>
         </v-container>
 
-        <MainFooter class="mt-auto" />
+        <CustomerChat />
     </div>
 </template>
 

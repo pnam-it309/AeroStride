@@ -14,6 +14,9 @@ import { useAuthStore } from '@/stores/authStore';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 import { PATH } from '@/router/routePaths';
 import { dichVuFile } from '@/services/core/dichVuFile';
+import defaultShoeImg from '@/assets/images/products/s4.jpg';
+
+const DEFAULT_SHOE_IMAGE = defaultShoeImg;
 
 const route = useRoute();
 const router = useRouter();
@@ -144,6 +147,21 @@ onMounted(() => {
     fetchReviews();
 });
 
+watch(
+    () => route.params.id,
+    (newId) => {
+        if (newId) {
+            selectedColor.value = null;
+            selectedSize.value = null;
+            selectedQuantity.value = 1;
+            activeSlide.value = 0;
+            fetchProduct();
+            fetchRecommendations();
+            fetchReviews();
+        }
+    }
+);
+
 // Cập nhật SEO và trạng thái Yêu thích khi product data load xong
 watch(product, (newProduct) => {
     if (newProduct) {
@@ -165,11 +183,33 @@ const isAbsoluteUrl = (v) =>
     v.startsWith('blob:') || 
     v.startsWith('/');
 
+const isInvalidImage = (v) => {
+    if (!v || typeof v !== 'string') return true;
+    const lower = v.toLowerCase();
+    return (
+        lower.includes('via.placeholder.com') || 
+        lower.includes('placeholder.com') || 
+        lower.includes('dummyimage.com')
+    );
+};
+
 const resolveImg = (v) => {
-    if (!v) return '';
+    if (!v || isInvalidImage(v)) return '';
     if (typeof v !== 'string') return v;
     if (isAbsoluteUrl(v)) return v;
     return dichVuFile.layUrlFile(v.replace(/^\/+/, ''));
+};
+
+const getValidImgUrl = (raw) => {
+    const resolved = resolveImg(raw);
+    return (resolved && !isInvalidImage(resolved)) ? resolved : null;
+};
+
+const handleImgError = (e) => {
+    if (!e || !e.target) return;
+    if (e.target.getAttribute('data-fallback') === 'true') return;
+    e.target.setAttribute('data-fallback', 'true');
+    e.target.src = DEFAULT_SHOE_IMAGE;
 };
 
 const colors = computed(() => product.value?.availableColors || []);
@@ -305,8 +345,9 @@ const allImages = computed(() => {
     const images = [];
 
     // Thêm ảnh đại diện của sản phẩm
-    if (product.value?.hinhAnh) {
-        images.push({ duongDanAnh: resolveImg(product.value.hinhAnh), label: 'Ảnh chính' });
+    const mainImg = getValidImgUrl(product.value?.hinhAnh);
+    if (mainImg) {
+        images.push({ duongDanAnh: mainImg, label: 'Ảnh chính' });
     }
 
     // Thêm ảnh của các biến thể
@@ -314,22 +355,23 @@ const allImages = computed(() => {
         product.value.variants.forEach((v) => {
             if (v.images && v.images.length > 0) {
                 v.images.forEach((img) => {
-                    const url = img.duongDanAnh || img.hinhAnh || img.url;
-                    if (url) {
-                        const resolvedUrl = resolveImg(url);
-                        if (!images.find((i) => i.duongDanAnh === resolvedUrl)) {
-                            images.push({ duongDanAnh: resolvedUrl, label: v.tenMauSac ? `Màu ${v.tenMauSac}` : 'Ảnh biến thể' });
-                        }
+                    const url = getValidImgUrl(img.duongDanAnh || img.hinhAnh || img.url);
+                    if (url && !images.find((i) => i.duongDanAnh === url)) {
+                        images.push({ duongDanAnh: url, label: v.tenMauSac ? `Màu ${v.tenMauSac}` : 'Ảnh biến thể' });
                     }
                 });
             }
             if (v.hinhAnh) {
-                const url = resolveImg(v.hinhAnh);
+                const url = getValidImgUrl(v.hinhAnh);
                 if (url && !images.find((i) => i.duongDanAnh === url)) {
                     images.push({ duongDanAnh: url, label: v.tenMauSac ? `Màu ${v.tenMauSac}` : 'Ảnh biến thể' });
                 }
             }
         });
+    }
+
+    if (images.length === 0) {
+        images.push({ duongDanAnh: DEFAULT_SHOE_IMAGE, label: 'Ảnh chính' });
     }
     return images;
 });
@@ -339,8 +381,9 @@ const colorVariantPreviews = computed(() => {
     const map = new Map();
     product.value.variants.forEach(v => {
         if (v.tenMauSac && !map.has(v.tenMauSac)) {
-            const img = v.hinhAnh || (v.images && v.images.length > 0 ? (v.images[0].duongDanAnh || v.images[0].hinhAnh) : null);
-            map.set(v.tenMauSac, { color: v.tenMauSac, img: resolveImg(img) });
+            const rawImg = v.hinhAnh || (v.images && v.images.length > 0 ? (v.images[0].duongDanAnh || v.images[0].hinhAnh) : null);
+            const img = getValidImgUrl(rawImg) || DEFAULT_SHOE_IMAGE;
+            map.set(v.tenMauSac, { color: v.tenMauSac, img: img });
         }
     });
     return Array.from(map.values());
@@ -429,6 +472,30 @@ const handleQuantityInput = (val) => {
         return;
     }
     selectedQuantity.value = num;
+};
+
+const onlyNumbers = (e) => {
+    if (!/[0-9]/.test(e.key)) {
+        e.preventDefault();
+    }
+};
+
+const onQuantityInput = (e) => {
+    const val = e.target.value.replace(/\D/g, '');
+    e.target.value = val;
+    if (val !== '') {
+        handleQuantityInput(val);
+    }
+};
+
+const onQuantityBlur = (e) => {
+    const val = e.target.value.replace(/\D/g, '');
+    if (!val || parseInt(val, 10) < 1) {
+        selectedQuantity.value = 1;
+        e.target.value = '1';
+    } else {
+        handleQuantityInput(val);
+    }
 };
 
 const handleIncrement = () => {
@@ -714,7 +781,15 @@ const toggleFavorite = () => {
                                     >
                                         <v-icon size="14">mdi-minus</v-icon>
                                     </button>
-                                    <span class="qty-number">{{ selectedQuantity }}</span>
+                                    <input 
+                                        type="text" 
+                                        inputmode="numeric" 
+                                        class="qty-input" 
+                                        :value="selectedQuantity" 
+                                        @keypress="onlyNumbers" 
+                                        @input="onQuantityInput" 
+                                        @blur="onQuantityBlur"
+                                    />
                                     <button 
                                         class="qty-btn" 
                                         @click="handleIncrement"
@@ -844,8 +919,13 @@ const toggleFavorite = () => {
                                     <div class="product-card-placeholder" @click="$router.push(`/product/${p.id}`)">
                                         <!-- Image Placeholder -->
                                         <div class="image-box-placeholder mb-4">
-                                            <v-img v-if="p.hinhAnh" :src="resolveImg(p.hinhAnh)" cover class="fill-height"></v-img>
-                                            <v-icon v-else size="64" color="grey-lighten-2">mdi-image-outline</v-icon>
+                                            <img 
+                                                :src="getValidImgUrl(p.hinhAnh) || DEFAULT_SHOE_IMAGE" 
+                                                :alt="p.tenSanPham" 
+                                                style="width: 100%; height: 100%; object-fit: cover;"
+                                                referrerpolicy="no-referrer"
+                                                @error="(e) => e.target.src = DEFAULT_SHOE_IMAGE"
+                                            />
                                         </div>
 
                                         <!-- Content -->
@@ -910,7 +990,11 @@ const toggleFavorite = () => {
                 <v-card-text class="pa-4">
                     <div class="d-flex align-center mb-4 pa-2 bg-grey-lighten-4 rounded-lg pa-3" v-if="product">
                         <v-avatar rounded size="48" class="mr-3 bg-white elevation-1">
-                            <v-img :src="resolveImg(product.hinhAnh)" cover></v-img>
+                            <img 
+                                :src="getValidImgUrl(product.hinhAnh) || DEFAULT_SHOE_IMAGE" 
+                                style="width: 100%; height: 100%; object-fit: cover;"
+                                @error="handleImgError"
+                            />
                         </v-avatar>
                         <div>
                             <div class="font-weight-bold text-body-2 text-truncate" style="max-width: 300px;">{{
@@ -1383,12 +1467,24 @@ const toggleFavorite = () => {
         }
     }
     
-    .qty-number {
+    .qty-number,
+    .qty-input {
         font-size: 16px;
         font-weight: 700;
         color: #0A1329;
-        min-width: 24px;
+        width: 48px;
         text-align: center;
+        border: none;
+        outline: none;
+        background: transparent;
+        appearance: textfield;
+        -moz-appearance: textfield;
+    }
+    
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
     }
 }
 

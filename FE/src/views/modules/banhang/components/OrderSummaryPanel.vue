@@ -142,45 +142,14 @@
                                     letter-spacing="-0.5px">GHN</text>
                             </svg>
                         </span>
-                        <v-menu offset="4">
-                            <template v-slot:activator="{ props }">
-                                <v-text-field :model-value="formatNumberWithDots(shippingFee)"
-                                    @input="onShippingInput"
-                                    v-bind="props" variant="outlined" density="compact"
-                                    suffix="đ" hide-details
-                                    style="width: 140px !important; max-width: 140px !important; min-width: 140px !important; flex: none !important;"
-                                    class="text-right-input custom-value-input"
-                                    :loading="shippingFeeLoading"
-                                    :disabled="isFreeShip" />
-                            </template>
-                            <v-list class="pa-0 border rounded-lg elevation-2 bg-white"
-                                style="min-width: 140px;">
-                                <div>
-                                    <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
-                                        style="font-size: 11px;">Nội thành:</div>
-                                    <v-list-item @click="$emit('update:shippingFee', 30000)"
-                                        class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
-                                        30.000 <span class="text-decoration-underline">đ</span>
-                                    </v-list-item>
-                                </div>
-                                <div>
-                                    <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
-                                        style="font-size: 11px;">Ngoại thành:</div>
-                                    <v-list-item @click="$emit('update:shippingFee', 30000)"
-                                        class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
-                                        30.000 <span class="text-decoration-underline">đ</span>
-                                    </v-list-item>
-                                </div>
-                                <div>
-                                    <div class="bg-slate-100 text-slate-700 px-3 py-1 font-weight-bold"
-                                        style="font-size: 11px;">Ngoại tỉnh:</div>
-                                    <v-list-item @click="$emit('update:shippingFee', 30000)"
-                                        class="px-3 py-2 cursor-pointer hover-bg-slate-50 text-caption text-slate-800 font-weight-medium">
-                                        30.000 <span class="text-decoration-underline">đ</span>
-                                    </v-list-item>
-                                </div>
-                            </v-list>
-                        </v-menu>
+                        <v-text-field :model-value="formatNumberWithDots(shippingFee)"
+                            @input="onShippingInput"
+                            variant="outlined" density="compact"
+                            suffix="đ" hide-details
+                            style="width: 140px !important; max-width: 140px !important; min-width: 140px !important; flex: none !important;"
+                            class="text-right-input custom-value-input"
+                            :loading="shippingFeeLoading"
+                            :disabled="isFreeShip" />
                     </div>
                     <!-- Shipping fee status -->
                     <div v-if="shippingFeeSource === 'GHN'" class="text-caption text-success text-right" style="font-size: 11px !important;">

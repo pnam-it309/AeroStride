@@ -6,6 +6,7 @@ import CustomerChat from '@/components/shared/CustomerChat.vue';
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 import { dichVuFile } from '@/services/core/dichVuFile';
+import defaultShoeImg from '@/assets/images/products/s4.jpg';
 
 const router = useRouter();
 const route = useRoute();
@@ -13,9 +14,17 @@ const loading = ref(false);
 
 const filters = ref([]);
 const products = ref([]);
-const imageErrors = ref({});
-const handleImageError = (id) => {
-    imageErrors.value[id] = true;
+const DEFAULT_SHOE_IMAGE = defaultShoeImg || new URL('/src/assets/images/products/s4.jpg', import.meta.url).href;
+const imageFallbacks = ref({});
+
+const handleImageError = (id, event) => {
+    if (!event || !event.target) return;
+    if (event.target.getAttribute('data-fallback') === 'true') return;
+    event.target.setAttribute('data-fallback', 'true');
+    event.target.src = DEFAULT_SHOE_IMAGE;
+    if (id) {
+        imageFallbacks.value[id] = DEFAULT_SHOE_IMAGE;
+    }
 };
 const totalElements = ref(0);
 const currentPage = ref(1);
@@ -202,11 +211,44 @@ const isAbsoluteUrl = (v) =>
     v.startsWith('blob:') || 
     v.startsWith('/');
 
+const isInvalidImage = (v) => {
+    if (!v || typeof v !== 'string') return true;
+    const lower = v.toLowerCase();
+    return (
+        lower.includes('via.placeholder.com') || 
+        lower.includes('placeholder.com') || 
+        lower.includes('dummyimage.com')
+    );
+};
+
 const resolveImg = (v) => {
-    if (!v) return '';
+    if (!v || isInvalidImage(v)) return '';
     if (typeof v !== 'string') return v;
     if (isAbsoluteUrl(v)) return v;
     return dichVuFile.layUrlFile(v.replace(/^\/+/, ''));
+};
+
+const getImageUrl = (p) => {
+    if (!p) return defaultShoeImg;
+    let raw = null;
+    if (p.variants && p.variants.length > 0) {
+        const v = p.variants[0];
+        const vImg = v.hinhAnh || (v.images && v.images.length > 0 ? (v.images[0].duongDanAnh || v.images[0].hinhAnh) : null);
+        if (!isInvalidImage(vImg)) {
+            raw = vImg;
+        }
+    }
+    if (!raw && p.images && p.images.length > 0) {
+        const pImg = p.images[0].duongDanAnh || p.images[0].hinhAnh;
+        if (!isInvalidImage(pImg)) {
+            raw = pImg;
+        }
+    }
+    if (!raw && !isInvalidImage(p.hinhAnh)) {
+        raw = p.hinhAnh;
+    }
+    const resolved = resolveImg(raw);
+    return (resolved && !isInvalidImage(resolved)) ? resolved : defaultShoeImg;
 };
 
 const formatPrice = (price) => {
@@ -433,13 +475,11 @@ const activeSortLabel = computed(() => {
                                 <!-- Image box in card (286x238 layout specification, F2F7FC background, 14px border-radius) -->
                                 <div class="card-image-wrapper">
                                     <img 
-                                        v-if="p.hinhAnh && !imageErrors[p.id]" 
-                                        :src="resolveImg(p.hinhAnh)" 
+                                        :src="getImageUrl(p)" 
                                         :alt="p.tenSanPham" 
                                         class="card-shoe-img" 
-                                        @error="handleImageError(p.id)"
+                                        referrerpolicy="no-referrer"
                                     />
-                                    <v-icon v-else size="48" color="grey-lighten-2">mdi-shoe-sneaker</v-icon>
 
                                     <!-- Badges -->
                                     <div v-if="p.phanTramGiam > 0" class="badge-label-new">
@@ -764,11 +804,10 @@ const activeSortLabel = computed(() => {
 }
 
 .card-shoe-img {
-    width: 80%;
-    height: 80%;
-    object-fit: contain;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.08));
 }
 
 .badge-label-new {
