@@ -1,3 +1,10 @@
+## [1.30.6](https://github.com/pnam-it309/AeroStride/compare/v1.30.5...v1.30.6) (2026-08-02)
+
+
+### Bug Fixes
+
+* update address service, customer dialogs and product form styles on DUC_FIX ([37ed7bd](https://github.com/pnam-it309/AeroStride/commit/37ed7bd05c831cea68016e9f007c19c02a8d4651))
+
 ## [1.30.5](https://github.com/pnam-it309/AeroStride/compare/v1.30.4...v1.30.5) (2026-08-02)
 
 
