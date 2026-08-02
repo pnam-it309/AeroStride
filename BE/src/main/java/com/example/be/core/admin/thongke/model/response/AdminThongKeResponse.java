@@ -40,11 +40,17 @@ public class AdminThongKeResponse {
     // Top sản phẩm bán chạy
     private List<SanPhamBanChay> topSanPhamBanChay;
 
-    // Tỷ trọng doanh thu theo danh mục sản phẩm
-    private List<TyTrongDanhMuc> tyTrongTheoDanhMuc;
+    // Tỷ trọng doanh thu theo thương hiệu sản phẩm
+    private List<TyTrongThuongHieu> tyTrongTheoThuongHieu;
 
     // Top khách hàng mua hàng
     private List<KhachHangThongKe> topKhachHang;
+
+    // Top doanh thu nhân viên
+    private List<NhanVienThongKe> topNhanVien;
+
+    // Chu kỳ doanh thu tuần, tháng, năm, hôm nay
+    private List<ChuKyDoanhThu> chuKyDoanhThu;
 
 
     @Getter
@@ -92,7 +98,7 @@ public class AdminThongKeResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class TyTrongDanhMuc {
+    public static class TyTrongThuongHieu {
         private String name;
         private BigDecimal revenue;
     }
@@ -108,6 +114,31 @@ public class AdminThongKeResponse {
         private Long tongSanPham;
         private Long donThanhCong;
         private Long donHoan;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class NhanVienThongKe {
+        private String maNhanVien;
+        private String tenNhanVien;
+        private BigDecimal tongChi;
+        private Long tongSanPham;
+        private Long tongDonHang;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ChuKyDoanhThu {
+        private String tenChuKy;
+        private BigDecimal doanhThu;
+        private Long soDon;
+        private BigDecimal trungBinhDon;
     }
 
 }

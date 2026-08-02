@@ -402,6 +402,22 @@ const customerStatsTotals = computed(() => {
     return { tongChi, tongSanPham, donThanhCong, donHoan };
 });
 
+const employeePurchaseStats = ref([]);
+
+const employeeStatsTotals = computed(() => {
+    let tongChi = 0;
+    let tongSanPham = 0;
+    let tongDonHang = 0;
+    employeePurchaseStats.value.forEach(item => {
+        tongChi += item.tongChi;
+        tongSanPham += item.tongSanPham;
+        tongDonHang += item.tongDonHang;
+    });
+    return { tongChi, tongSanPham, tongDonHang };
+});
+
+const revenueCycles = ref([]);
+
 const getPercent = (value, total, symbol = '↑') => {
     if (!total || value <= 0) return '-';
     const pct = ((value / total) * 100).toFixed(2);
@@ -729,18 +745,18 @@ const loadStatistics = async () => {
                 topProducts.value = [];
             }
 
-            const categoryShares = Array.isArray(overview.tyTrongTheoDanhMuc)
-                ? overview.tyTrongTheoDanhMuc
+            const brandShares = Array.isArray(overview.tyTrongTheoThuongHieu)
+                ? overview.tyTrongTheoThuongHieu
                     .map((item) => ({
                         name: item.name || 'Khác',
                         revenue: Number(item.revenue || 0)
                     }))
                     .filter((item) => Number.isFinite(item.revenue) && item.revenue > 0)
                 : [];
-            donutChartSeries.value = categoryShares.map((item) => item.revenue);
+            donutChartSeries.value = brandShares.map((item) => item.revenue);
             donutChartOptions.value = {
                 ...donutChartOptions.value,
-                labels: categoryShares.map((item) => item.name)
+                labels: brandShares.map((item) => item.name)
             };
             donutChartKey.value += 1;
 
@@ -754,6 +770,29 @@ const loadStatistics = async () => {
                 }));
             } else {
                 customerPurchaseStats.value = [];
+            }
+
+            if (overview.topNhanVien && overview.topNhanVien.length > 0) {
+                employeePurchaseStats.value = overview.topNhanVien.map((item) => ({
+                    maNhanVien: item.maNhanVien || '',
+                    tenNhanVien: item.tenNhanVien || 'Hệ thống/Online',
+                    tongChi: Number(item.tongChi || 0),
+                    tongSanPham: Number(item.tongSanPham || 0),
+                    tongDonHang: Number(item.tongDonHang || 0)
+                }));
+            } else {
+                employeePurchaseStats.value = [];
+            }
+
+            if (overview.chuKyDoanhThu && overview.chuKyDoanhThu.length > 0) {
+                revenueCycles.value = overview.chuKyDoanhThu.map((item) => ({
+                    tenChuKy: item.tenChuKy,
+                    doanhThu: Number(item.doanhThu || 0),
+                    soDon: Number(item.soDon || 0),
+                    trungBinhDon: Number(item.trungBinhDon || 0)
+                }));
+            } else {
+                revenueCycles.value = [];
             }
         }
 
@@ -1247,7 +1286,76 @@ onMounted(() => {
                 </section>
             </div>
 
+            <!-- Donut Chart & Revenue Cycles Row -->
+            <div class="split-grid mb-4">
+                <!-- Brand Shares Donut Chart -->
+                <section class="stats-panel category-share-panel">
+                    <div class="simple-card-heading">
+                        <h2>Tỷ trọng theo thương hiệu giày</h2>
+                        <v-icon color="#0f172a" size="22">mdi-chart-donut</v-icon>
+                    </div>
+                    <div v-if="loading" class="panel-loader">
+                        <v-progress-circular indeterminate color="primary" />
+                    </div>
+                    <div v-else-if="!hasValidDonutData" class="empty-state">Không có dữ liệu trong thời gian này</div>
+                    <div v-else class="category-chart-body">
+                        <div class="category-donut-wrap">
+                            <apexchart :key="donutChartKey" type="donut" height="330" :options="donutChartOptions"
+                                :series="donutChartSeries" />
+                            <div class="category-donut-center">
+                                <span>Tổng doanh thu</span>
+                                <strong>{{ formatCurrency(donutTotalRevenue) }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Revenue Cycles Table -->
+                <section class="stats-panel monthly-detail-panel cycle-stats-panel">
+                    <div class="simple-card-heading">
+                        <h2>Chu kỳ doanh thu</h2>
+                        <v-icon color="#0f172a" size="22">mdi-calendar-clock</v-icon>
+                    </div>
+                    <div v-if="loading" class="panel-loader">
+                        <v-progress-circular indeterminate color="primary" />
+                    </div>
+                    <div v-else class="cust-stats-table-container">
+                        <div v-if="revenueCycles.length === 0" class="empty-state py-8 text-center text-grey">
+                            Không có dữ liệu chu kỳ doanh thu.
+                        </div>
+                        <table v-else class="cust-stats-table">
+                            <thead>
+                                <tr>
+                                    <th class="text-left" style="min-width: 120px;">Chu kỳ</th>
+                                    <th class="text-right">Doanh thu</th>
+                                    <th class="text-right">Số đơn</th>
+                                    <th class="text-right">Trung bình đơn</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(item, index) in revenueCycles" :key="index">
+                                    <td class="text-left font-weight-medium" style="color: #1e293b;">
+                                        {{ item.tenChuKy }}
+                                    </td>
+                                    <td class="text-right font-weight-semibold" style="color: #1e293b;">
+                                        {{ formatCurrency(item.doanhThu) }}
+                                    </td>
+                                    <td class="text-right" style="color: #1e293b;">
+                                        {{ formatNumber(item.soDon) }} đơn
+                                    </td>
+                                    <td class="text-right font-weight-semibold" style="color: #d97706;">
+                                        {{ formatCurrency(item.trungBinhDon) }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Tables Row (Customers & Employees) -->
             <div class="split-grid">
+                <!-- Customer Stats Table -->
                 <section class="stats-panel monthly-detail-panel">
                     <div class="simple-card-heading">
                         <h2>Tổng chi của khách hàng</h2>
@@ -1284,7 +1392,7 @@ onMounted(() => {
                                     </td>
                                     <td class="text-right">
                                         <div class="val-top" style="color: #1e293b;">{{ formatNumber(item.tongSanPham)
-                                            }}</div>
+                                             }}</div>
                                         <div class="val-sub text-emerald-600">
                                             {{ getPercent(item.tongSanPham, customerStatsTotals.tongSanPham) }}
                                         </div>
@@ -1309,25 +1417,64 @@ onMounted(() => {
                     </div>
                 </section>
 
-                <section class="stats-panel category-share-panel">
+                <!-- Employee Stats Table -->
+                <section class="stats-panel monthly-detail-panel">
                     <div class="simple-card-heading">
-                        <h2>Tỷ trọng theo danh mục thuộc tính</h2>
-                        <v-icon color="#0f172a" size="22">mdi-chart-donut</v-icon>
+                        <h2>Doanh thu của nhân viên trong tháng</h2>
+                        <v-icon color="#0f172a" size="22">mdi-account-tie-outline</v-icon>
                     </div>
                     <div v-if="loading" class="panel-loader">
                         <v-progress-circular indeterminate color="primary" />
                     </div>
-                    <div v-else-if="!hasValidDonutData" class="empty-state">Không có dữ liệu trong thời gian
-                        này</div>
-                    <div v-else class="category-chart-body">
-                        <div class="category-donut-wrap">
-                            <apexchart :key="donutChartKey" type="donut" height="330" :options="donutChartOptions"
-                                :series="donutChartSeries" />
-                            <div class="category-donut-center">
-                                <span>Tổng doanh thu</span>
-                                <strong>{{ formatCurrency(donutTotalRevenue) }}</strong>
-                            </div>
+                    <div v-else class="cust-stats-table-container">
+                        <div v-if="employeePurchaseStats.length === 0" class="empty-state py-8 text-center text-grey">
+                            Không có dữ liệu của nhân viên nào.
                         </div>
+                        <table v-else class="cust-stats-table">
+                            <thead>
+                                <tr>
+                                    <th class="text-left" style="min-width: 90px;">Mã NV</th>
+                                    <th class="text-left" style="min-width: 140px;">Tên nhân viên</th>
+                                    <th class="text-right">Tổng doanh thu</th>
+                                    <th class="text-right">Tổng sản phẩm</th>
+                                    <th class="text-right">Tổng đơn hàng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(item, index) in employeePurchaseStats" :key="index">
+                                    <td class="text-left font-weight-medium" style="color: #64748b;">
+                                        {{ item.maNhanVien }}
+                                    </td>
+                                    <td class="text-left font-weight-medium" style="color: #1e293b;">
+                                        {{ item.tenNhanVien }}
+                                    </td>
+                                    <td class="text-right">
+                                        <div class="val-top font-weight-semibold" style="color: #1e293b;">
+                                            {{ formatCurrency(item.tongChi) }}
+                                        </div>
+                                        <div class="val-sub text-emerald-600">
+                                            {{ getPercent(item.tongChi, employeeStatsTotals.tongChi) }}
+                                        </div>
+                                    </td>
+                                    <td class="text-right">
+                                        <div class="val-top" style="color: #1e293b;">
+                                            {{ formatNumber(item.tongSanPham) }}
+                                        </div>
+                                        <div class="val-sub text-emerald-600">
+                                            {{ getPercent(item.tongSanPham, employeeStatsTotals.tongSanPham) }}
+                                        </div>
+                                    </td>
+                                    <td class="text-right">
+                                        <div class="val-top font-weight-semibold" style="color: #1e293b;">
+                                            {{ formatNumber(item.tongDonHang) }}
+                                        </div>
+                                        <div class="val-sub text-emerald-600">
+                                            {{ getPercent(item.tongDonHang, employeeStatsTotals.tongDonHang) }}
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </section>
             </div>

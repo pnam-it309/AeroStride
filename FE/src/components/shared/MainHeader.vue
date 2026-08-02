@@ -147,7 +147,7 @@ onUnmounted(() => {
     >
         <!-- Top Announcement Bar (mockup requirement) -->
         <div class="top-announcement-bar">
-            FREESHIP cho đơn từ 499K • Đổi trả miễn phí trong 30 ngày
+            Hàng chính hãng 100% • Giao hàng miễn phí toàn quốc • Đổi trả trong vòng 30 ngày
         </div>
 
         <!-- Main Nav -->
