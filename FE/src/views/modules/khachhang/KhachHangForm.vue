@@ -561,17 +561,60 @@ const phoneRules = [
     (v) => /^(0|\+84)[0-9]{9}$/.test(v) || 'Số điện thoại phải hợp lệ (VD: 09xx hoặc +849xx)'
 ];
 
+// const dobRules = [
+//     (v) => {
+//         if (!v) return true;
+//         const bd = new Date(v);
+//         const now = new Date();
+//         if (bd.getTime() > now.getTime()) return 'Ngày sinh không thể ở trong tương lai';
+//         let age = now.getFullYear() - bd.getFullYear();
+//         const m = now.getMonth() - bd.getMonth();
+//         if (m < 0 || (m === 0 && now.getDate() < bd.getDate())) {
+//             age--;
+//         }
+//         return age >= 18 || 'Khách hàng phải từ 18 tuổi trở lên';
+//     }
+// ];
 const dobRules = [
     (v) => {
         if (!v) return true;
-        const bd = new Date(v);
+
+        // 1. Chuyển đổi định dạng DD/MM/YYYY sang YYYY-MM-DD
+        let formattedDate = v;
+        if (v.includes('/')) {
+            const parts = v.split('/');
+            // Đảm bảo tách đúng 3 phần (ngày, tháng, năm)
+            if (parts.length === 3) {
+                const day = parts[0];
+                const month = parts[1];
+                const year = parts[2];
+                formattedDate = `${year}-${month}-${day}`; 
+            }
+        }
+
+        // 2. Khởi tạo Date với chuỗi đã được chuẩn hóa
+        const bd = new Date(formattedDate);
+        
+        // 3. Kiểm tra tính hợp lệ
+        if (isNaN(bd.getTime())) return 'Định dạng ngày sinh không hợp lệ';
+
+        // 4. Đưa thời gian về 0h để so sánh
         const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        bd.setHours(0, 0, 0, 0);
+
+        // 5. Các validate nghiệp vụ khác
         if (bd.getTime() > now.getTime()) return 'Ngày sinh không thể ở trong tương lai';
+
         let age = now.getFullYear() - bd.getFullYear();
         const m = now.getMonth() - bd.getMonth();
+        
         if (m < 0 || (m === 0 && now.getDate() < bd.getDate())) {
             age--;
         }
+
+        if (age > 120) return 'Năm sinh không thực tế';
+
         return age >= 18 || 'Khách hàng phải từ 18 tuổi trở lên';
     }
 ];
