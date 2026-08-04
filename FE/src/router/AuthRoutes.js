@@ -41,6 +41,12 @@ const AuthRoutes = {
             component: () => import('@/views/authentication/client/ClientLogin.vue')
         },
         {
+            name: 'ClientRegister',
+            path: PATH.REGISTER,
+            beforeEnter: requireGuest,
+            component: () => import('@/views/authentication/client/ClientRegister.vue')
+        },
+        {
             name: 'Logout',
             path: PATH.LOGOUT,
             beforeEnter: async (to, from, next) => {
