@@ -1,3 +1,10 @@
+# [1.32.0](https://github.com/pnam-it309/AeroStride/compare/v1.31.2...v1.32.0) (2026-08-04)
+
+
+### Features
+
+* **fe:** add client registration UI and route ([1ae0e51](https://github.com/pnam-it309/AeroStride/commit/1ae0e51b61d67e5894f866c7cc16ddfbc5c7ace8))
+
 ## [1.31.2](https://github.com/pnam-it309/AeroStride/compare/v1.31.1...v1.31.2) (2026-08-04)
 
 
