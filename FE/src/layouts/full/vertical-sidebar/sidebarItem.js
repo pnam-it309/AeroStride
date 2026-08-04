@@ -50,10 +50,10 @@ const sidebarItem = [
         title: 'Quản lý sản phẩm',
         icon: PackageIcon,
         BgColor: 'info',
-        roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF],
+        roles: [APP_ROLES.ADMIN],
         children: [
-            { title: 'Sản phẩm', icon: PackageIcon, to: PATH.SAN_PHAM, BgColor: 'info', roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF] },
-            { title: 'Biến thể sản phẩm', icon: BoxIcon, to: PATH.BIEN_THE_SAN_PHAM, BgColor: 'success', roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF] }
+            { title: 'Sản phẩm', icon: PackageIcon, to: PATH.SAN_PHAM, BgColor: 'info', roles: [APP_ROLES.ADMIN] },
+            { title: 'Biến thể sản phẩm', icon: BoxIcon, to: PATH.BIEN_THE_SAN_PHAM, BgColor: 'success', roles: [APP_ROLES.ADMIN] }
         ]
     },
     {
@@ -121,9 +121,10 @@ const sidebarItem = [
         roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF],
         children: [
             { title: 'Lịch làm việc', icon: CalendarIcon, to: PATH.LICH_LAM_VIEC, BgColor: 'teal', roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF] },
-            { title: 'Lịch ca làm', icon: ClockIcon, to: PATH.LICH_CA_LAM, BgColor: 'teal', roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF] },
-            { title: 'Chấm công', icon: UserCheckIcon, to: PATH.CHAM_CONG, BgColor: 'teal', roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF] },
-            { title: 'Lịch sử hoạt động', icon: HistoryIcon, to: PATH.LICH_SU_HOAT_DONG, BgColor: 'teal', roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF] }
+            { title: 'Bàn giao ca', icon: ClockIcon, to: PATH.LICH_SU_GIAO_CA, BgColor: 'teal', roles: [APP_ROLES.ADMIN, APP_ROLES.STAFF] },
+            { title: 'Lịch ca làm', icon: ClockIcon, to: PATH.LICH_CA_LAM, BgColor: 'teal', roles: [APP_ROLES.ADMIN] },
+            { title: 'Chấm công', icon: UserCheckIcon, to: PATH.CHAM_CONG, BgColor: 'teal', roles: [APP_ROLES.ADMIN] },
+            { title: 'Lịch sử hoạt động', icon: HistoryIcon, to: PATH.LICH_SU_HOAT_DONG, BgColor: 'teal', roles: [APP_ROLES.ADMIN] }
         ]
     }
 ];

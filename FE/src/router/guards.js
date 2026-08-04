@@ -19,7 +19,17 @@ export function requireAuth(to, from, next) {
             }
         } else if (to.path.startsWith('/admin') && user && user.role === APP_ROLES.STAFF) {
             // Chặn nhân viên truy cập các trang chỉ dành cho admin
-            const adminOnlyPaths = ['/admin/thong-ke', '/admin/nhan-vien', '/admin/phieu-giam-gia', '/admin/dot-giam-gia', '/admin/thuoc-tinh'];
+            const adminOnlyPaths = [
+                '/admin/thong-ke',
+                '/admin/nhan-vien',
+                '/admin/phieu-giam-gia',
+                '/admin/dot-giam-gia',
+                '/admin/thuoc-tinh',
+                '/admin/san-pham',
+                '/admin/lich-ca-lam',
+                '/admin/lich-su-hoat-dong',
+                '/admin/cham-cong'
+            ];
             if (adminOnlyPaths.some((p) => to.path.startsWith(p))) {
                 next(PATH.BAN_HANG); // Chuyển hướng về trang bán hàng
             } else {

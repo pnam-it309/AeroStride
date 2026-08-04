@@ -9,3 +9,5 @@ node_modules/
 .codex-run/
 .env
 docker/.env
+BE/env/
+*.env*

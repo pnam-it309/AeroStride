@@ -7,6 +7,8 @@ import apiService from '@/services/apiService';
 import { API_LICH_LAM_VIEC } from '@/constants/apiPaths';
 import { ADMIN_ICONS } from '@/constants/adminIcons';
 import { useNotifications } from '@/services/notificationService';
+import { dichVuXacThuc } from '@/services/auth/dichVuXacThuc';
+import { APP_ROLES } from '@/constants/appConstants';
 
 const { addNotification } = useNotifications();
 
@@ -16,6 +18,19 @@ const items = ref([]);
 const shiftOptions = ref(['Tất cả']);
 const employeeOptions = ref([]);
 const rawShifts = ref([]);
+
+// Check logged in user role & staff info
+const isStaff = computed(() => dichVuXacThuc.laStaff());
+const currentUser = computed(() => dichVuXacThuc.layUserHienTai());
+
+const currentStaffInfo = computed(() => {
+    if (!currentUser.value) return null;
+    return employeeOptions.value.find(emp => 
+        (emp.tenTaiKhoan && emp.tenTaiKhoan === currentUser.value.username) ||
+        (emp.ma && emp.ma === currentUser.value.username) ||
+        (emp.ten && emp.ten === currentUser.value.username)
+    ) || null;
+});
 
 // Main and Sub-tab views
 const mainTab = ref('table'); // 'table', 'calendar'
@@ -73,7 +88,25 @@ const tableHeaders = [
 // Computed property for filtering schedules
 const filteredItems = computed(() => {
     if (!items.value) return [];
-    return [...items.value].sort((a, b) => {
+    let list = [...items.value];
+
+    // NẾU LÀ NHÂN VIÊN (STAFF): CHỈ GIỮ LẠI LỊCH LÀM VIỆC CỦA CHÍNH NHÂN VIÊN ĐÓ
+    if (isStaff.value && currentUser.value) {
+        const uName = currentUser.value.username;
+        const staff = currentStaffInfo.value;
+        list = list.filter(item => {
+            if (staff) {
+                return item.nhanVienId === staff.id ||
+                       item.maNhanVien === staff.ma ||
+                       item.nhanVien === staff.ten;
+            }
+            return (item.tenTaiKhoan && item.tenTaiKhoan === uName) ||
+                   (item.maNhanVien && item.maNhanVien === uName) ||
+                   (item.nhanVien && item.nhanVien.toLowerCase().includes(uName.toLowerCase()));
+        });
+    }
+
+    return list.sort((a, b) => {
         // Sort by date ascending (from 1st of month onwards)
         const dateCompare = a.ngay.localeCompare(b.ngay);
         if (dateCompare !== 0) return dateCompare;
@@ -404,8 +437,13 @@ const tableRows = computed(() => {
     const employeeMap = {};
     const searchFilter = filters.value.search ? filters.value.search.toLowerCase() : '';
 
+    let targetEmployees = employeeOptions.value;
+    if (isStaff.value && currentStaffInfo.value) {
+        targetEmployees = targetEmployees.filter(emp => emp.id === currentStaffInfo.value.id);
+    }
+
     // Add all active employees to the map first
-    employeeOptions.value.forEach(emp => {
+    targetEmployees.forEach(emp => {
         if (searchFilter && (!emp.ten || !emp.ten.toLowerCase().includes(searchFilter)) && (!emp.ma || !emp.ma.toLowerCase().includes(searchFilter))) {
             return;
         }
@@ -837,18 +875,20 @@ onMounted(() => {
                     <h3 class="text-h6 font-weight-bold text-black tracking-tight">Danh sách lịch làm việc</h3>
                 </div>
                 <div class="d-flex align-center flex-wrap justify-end admin-toolbar-actions ga-2">
-                    <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-export"
-                        @click="handleDownloadTemplate">
-                        Tải Excel
-                    </v-btn>
-                    <v-btn prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary"
-                        @click="handleImport">
-                        Nhập Excel
-                    </v-btn>
-                    <v-btn prepend-icon="mdi-plus" variant="flat" color="primary" class="add-btn-primary"
-                        @click="handleAdd">
-                        Thêm mới
-                    </v-btn>
+                    <template v-if="!isStaff">
+                        <v-btn prepend-icon="mdi-download" variant="flat" class="admin-btn-export"
+                            @click="handleDownloadTemplate">
+                            Tải Excel
+                        </v-btn>
+                        <v-btn prepend-icon="mdi-upload" variant="flat" class="admin-btn-secondary"
+                            @click="handleImport">
+                            Nhập Excel
+                        </v-btn>
+                        <v-btn prepend-icon="mdi-plus" variant="flat" color="primary" class="add-btn-primary"
+                            @click="handleAdd">
+                            Thêm mới
+                        </v-btn>
+                    </template>
                     <!-- Tab Bảng / Lịch -->
                     <div class="main-view-tabs ml-2">
                         <button class="view-tab-btn" :class="{ 'view-tab-btn--active': mainTab === 'table' }"
