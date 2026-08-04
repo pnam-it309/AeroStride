@@ -1,3 +1,10 @@
+## [1.31.2](https://github.com/pnam-it309/AeroStride/compare/v1.31.1...v1.31.2) (2026-08-04)
+
+
+### Performance Improvements
+
+* **be:** optimize background jobs schedule to off-peak daily maintenance and allow root health check ([f8cbb61](https://github.com/pnam-it309/AeroStride/commit/f8cbb61afc3d6d7bdb09a1bf2ca6236cefa4b619))
+
 ## [1.31.1](https://github.com/pnam-it309/AeroStride/compare/v1.31.0...v1.31.1) (2026-08-04)
 
 
