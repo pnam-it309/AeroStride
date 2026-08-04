@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/pnam-it309/AeroStride/compare/v1.30.6...v1.31.0) (2026-08-04)
+
+
+### Features
+
+* **lich-lam-viec:** add staff shift handover view, filter staff work schedule, and fix gradle build error ([88c7422](https://github.com/pnam-it309/AeroStride/commit/88c7422fe6653e5dea289deda877134f3a0c65f8))
+
 ## [1.30.6](https://github.com/pnam-it309/AeroStride/compare/v1.30.5...v1.30.6) (2026-08-02)
 
 
