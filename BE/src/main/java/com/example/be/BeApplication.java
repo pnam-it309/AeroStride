@@ -17,7 +17,7 @@ public class BeApplication {
         Dotenv dotenv = null;
         // Danh sách các đường dẫn và tên file tiềm năng để tìm cấu hình môi trường
         String[] locations = {"env", "BE/env", "docker/env", "../docker/env", ".", ".."};
-        String[] filenames = {".env.dev", ".env"};
+        String[] filenames = {".env.dev", "env.dev", ".env", "env"};
 
         for (String path : locations) {
             for (String filename : filenames) {
