@@ -34,7 +34,7 @@ public class GuestChatCleanupJob {
         this.messageRepository = messageRepository;
     }
 
-    @Scheduled(fixedDelayString = "${guest.chat.cleanup.interval-ms:300000}", initialDelay = 60000)
+    @Scheduled(cron = "0 0 3 * * ?") // Dọn dẹp lịch sử chat khách vãng lai lúc 3:00 AM hàng ngày, không chạy khi startup
     @Transactional
     public void execute() {
         long cutoff = System.currentTimeMillis() - thresholdMs;

@@ -23,6 +23,7 @@ public final class SecurityConstants {
         RoutesConstant.ADMIN + "/ghn/**",
         RoutesConstant.PAYMENT + "/**",
         "/actuator/**",
+        "/",
         "/error"
     };
 }

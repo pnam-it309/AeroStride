@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * VoucherExpirationJob
- * Quét định kỳ mỗi 5 phút để chuyển trạng thái các phiếu giảm giá đã hết hạn
+ * Quét bảo trì định kỳ 1 lần/ngày vào 2:15 AM để chuyển trạng thái phiếu giảm giá đã hết hạn
  * và tự động gửi email thông báo cho khách hàng sở hữu phiếu cá nhân đó.
  */
 @Component
@@ -18,7 +18,7 @@ public class VoucherExpirationJob {
 
     private final AdminPhieuGiamGiaService adminPhieuGiamGiaService;
 
-    @Scheduled(fixedDelay = 300000, initialDelay = 60000) // Chạy mỗi 5 phút, bắt đầu sau 1 phút khởi động để tránh quá tải
+    @Scheduled(cron = "0 15 2 * * ?") // Chạy bảo trì lúc 2:15 sáng hàng ngày, không chạy khi startup
     public void execute() {
         log.info("Cron Job [VoucherExpirationJob] - Bắt đầu quét phiếu giảm giá hết hạn");
         try {

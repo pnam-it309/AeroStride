@@ -31,6 +31,11 @@ function optimizeTablerIcons() {
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
+    const backendHost = env.BACKEND_HOST || 'localhost';
+    const backendPort = env.BACKEND_PORT || '8080';
+    const devPort = Number(env.FE_DEV_PORT) || 5173;
+    const backendTarget = `http://${backendHost}:${backendPort}`;
+
     return {
         plugins: [
             optimizeTablerIcons(),
@@ -88,20 +93,6 @@ export default defineConfig(({ mode }) => {
         build: {
             rollupOptions: {
                 treeshake: true
-                // No manualChunks on purpose.
-                //
-                // The hand-written vendor-* grouping that used to live here made the
-                // entry page 2,425 KB (~590 KB gzipped): forcing apexcharts into a
-                // named `vendor-charts` chunk meant every route that touched anything
-                // co-located in it pulled the whole 1 MB charting library, and
-                // index.html modulepreloaded it on every page even though charts only
-                // appear on the statistics screen.
-                //
-                // Rollup's own splitting keeps each heavy library in the route chunk
-                // that actually imports it. Measured: entry drops to 1,051 KB
-                // (238 KB gzipped) and apexcharts / three no longer appear in the
-                // entry bundle at all. Re-introduce manual grouping only with
-                // before/after numbers to back it up.
             },
             sourcemap: false,
             chunkSizeWarningLimit: 2000
@@ -117,23 +108,23 @@ export default defineConfig(({ mode }) => {
             },
             host: true,
             strictPort: true,
-            port: Number(env.FE_DEV_PORT),
+            port: devPort,
             hmr: {
-                clientPort: Number(env.FE_DEV_PORT),
+                clientPort: devPort,
             },
             proxy: {
                 '/api': {
-                    target: `http://${env.BACKEND_HOST}:${env.BACKEND_PORT}`,
+                    target: backendTarget,
                     changeOrigin: true,
                     secure: false,
                 },
                 '/uploads': {
-                    target: `http://${env.BACKEND_HOST}:${env.BACKEND_PORT}`,
+                    target: backendTarget,
                     changeOrigin: true,
                     secure: false,
                 },
                 '/ws': {
-                    target: `http://${env.BACKEND_HOST}:${env.BACKEND_PORT}`,
+                    target: backendTarget,
                     changeOrigin: true,
                     secure: false,
                     ws: true,
@@ -145,7 +136,7 @@ export default defineConfig(({ mode }) => {
                     }
                 },
                 '/ws-chat': {
-                    target: `http://${env.BACKEND_HOST}:${env.BACKEND_PORT}`,
+                    target: backendTarget,
                     changeOrigin: true,
                     secure: false,
                     ws: true,

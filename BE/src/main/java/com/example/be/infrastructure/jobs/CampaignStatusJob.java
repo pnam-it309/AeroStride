@@ -14,7 +14,8 @@ import java.util.List;
 
 /**
  * CampaignStatusJob
- * Quét định kỳ mỗi 5 phút để kích hoạt hoặc kết thúc các đợt giảm giá theo thời gian thực.
+ * Quét bảo trì định kỳ 1 lần/ngày vào lúc 2:00 AM để cập nhật trạng thái các đợt giảm giá trong DB.
+ * Kiểm tra hiệu lực thực tế đã được xử lý dynamic trong logic nghiệp vụ khi khách truy vấn.
  */
 @Component
 @RequiredArgsConstructor
@@ -23,7 +24,7 @@ public class CampaignStatusJob {
 
     private final DotGiamGiaRepository dotGiamGiaRepository;
 
-    @Scheduled(fixedDelay = 300000, initialDelay = 60000) // Chạy mỗi 5 phút, bắt đầu sau 1 phút khởi động để tránh quá tải
+    @Scheduled(cron = "0 0 2 * * ?") // Chạy bảo trì 2:00 sáng hàng ngày, không chạy khi startup
     @Transactional
     public void execute() {
         long now = System.currentTimeMillis();
