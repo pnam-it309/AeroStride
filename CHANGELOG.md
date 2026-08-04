@@ -1,3 +1,10 @@
+## [1.31.1](https://github.com/pnam-it309/AeroStride/compare/v1.31.0...v1.31.1) (2026-08-04)
+
+
+### Bug Fixes
+
+* **be:** add env.dev and env to dotenv search list to fix SERVER_PORT placeholder resolution ([dbb5258](https://github.com/pnam-it309/AeroStride/commit/dbb525810a1d04c78bab257656876d92d6875848))
+
 # [1.31.0](https://github.com/pnam-it309/AeroStride/compare/v1.30.6...v1.31.0) (2026-08-04)
 
 
