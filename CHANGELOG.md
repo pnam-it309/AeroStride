@@ -1,3 +1,10 @@
+# [1.33.0](https://github.com/pnam-it309/AeroStride/compare/v1.32.1...v1.33.0) (2026-08-05)
+
+
+### Features
+
+* **be:** add 14-min keep-alive cron job and public ping API endpoint ([e000cad](https://github.com/pnam-it309/AeroStride/commit/e000cad3f1153e86571065cf1b0fa873071bb374))
+
 ## [1.32.1](https://github.com/pnam-it309/AeroStride/compare/v1.32.0...v1.32.1) (2026-08-05)
 
 
