@@ -1,3 +1,15 @@
+# [1.35.0](https://github.com/pnam-it309/AeroStride/compare/v1.34.0...v1.35.0) (2026-08-05)
+
+
+### Bug Fixes
+
+* **fe:** resolve product image display issue and unsplash URLs ([6b47365](https://github.com/pnam-it309/AeroStride/commit/6b47365fc9f443f7706a615bc825b3b9f9741df3))
+
+
+### Features
+
+* complete order statuses, chat image upload, product reviews, checkout address picker, and fix module MIME type issue ([08330be](https://github.com/pnam-it309/AeroStride/commit/08330bef03dbd4cf2ed074fa19ae395dc4f785ea))
+
 # [1.34.0](https://github.com/pnam-it309/AeroStride/compare/v1.33.0...v1.34.0) (2026-08-05)
 
 
