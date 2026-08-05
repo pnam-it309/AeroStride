@@ -22,6 +22,7 @@ public final class SecurityConstants {
         RoutesConstant.CONFIG + "/**",
         RoutesConstant.ADMIN + "/ghn/**",
         RoutesConstant.PAYMENT + "/**",
+        RoutesConstant.CRON + "/**",
         "/actuator/**",
         "/",
         "/error"

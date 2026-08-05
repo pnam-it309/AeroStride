@@ -55,6 +55,7 @@ public final class RoutesConstant {
     public static final String CONFIG_SHIPPING = CONFIG + "/shipping";
     public static final String COMMON = API_PREFIX + "/common";
     public static final String COMMON_CCCD = COMMON + "/cccd";
+    public static final String CRON = API_PREFIX + "/cron";
 
     // Common Sub-paths (Compatibility)
     public static final String HIEN_THI = "/hien-thi";
