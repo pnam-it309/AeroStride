@@ -1,3 +1,10 @@
+# [1.34.0](https://github.com/pnam-it309/AeroStride/compare/v1.33.0...v1.34.0) (2026-08-05)
+
+
+### Features
+
+* **fe:** add vercel.json for SPA route rewrites ([bd17dea](https://github.com/pnam-it309/AeroStride/commit/bd17dea4389cbcf45dd67c11465ab2370caa57ee))
+
 # [1.33.0](https://github.com/pnam-it309/AeroStride/compare/v1.32.1...v1.33.0) (2026-08-05)
 
 
