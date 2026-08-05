@@ -116,14 +116,14 @@ const fetchFilters = async () => {
     try {
         const data = await dichVuSanPhamPublic.layBoLoc();
         filters.value = [
-            { title: 'Thương hiệu', key: 'thuongHieuId', items: data.thuongHieus },
-            { title: 'Chất liệu', key: 'chatLieuId', items: data.chatLieus },
-            { title: 'Xuất xứ', key: 'xuatXuId', items: data.xuatXus },
-            { title: 'Mục đích', key: 'mucDichChayId', items: data.mucDichChays },
+            { title: 'Thương hiệu', key: 'thuongHieuId', items: data?.thuongHieus || [] },
+            { title: 'Chất liệu', key: 'chatLieuId', items: data?.chatLieus || [] },
+            { title: 'Xuất xứ', key: 'xuatXuId', items: data?.xuatXus || [] },
+            { title: 'Mục đích', key: 'mucDichChayId', items: data?.mucDichChays || [] },
             { 
                 title: 'Giới tính', 
                 key: 'gioiTinhKhachHang', 
-                items: (data.gioiTinhKhachHangs || [])
+                items: (data?.gioiTinhKhachHangs || [])
                     .filter(g => g !== 'TRE_EM')
                     .map((g) => ({ id: g, ten: translateGender(g) })) 
             }
@@ -142,8 +142,8 @@ const fetchProducts = async () => {
             size: pageSize.value
         };
         const response = await dichVuSanPhamPublic.layDanhSachSanPham(params);
-        products.value = response.content;
-        totalElements.value = response.totalElements;
+        products.value = response?.content || [];
+        totalElements.value = response?.totalElements || 0;
     } catch (error) {
         console.error('Error fetching products:', error);
     } finally {

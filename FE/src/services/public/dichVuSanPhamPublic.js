@@ -11,24 +11,25 @@ const resolveImg = (v) => {
 export const dichVuSanPhamPublic = {
     async layDanhSachSanPham(params) {
         const response = await api.get('/customer/san-pham/hien-thi', { params });
-        return response.data.data;
+        return response.data?.data ?? response.data ?? {};
     },
 
     async layBoLoc() {
         const response = await api.get('/customer/san-pham/filters');
-        return response.data.data;
+        return response.data?.data ?? response.data ?? {};
     },
 
     async layChiTietSanPham(id) {
         const response = await api.get(`/customer/san-pham/detail/${id}`);
-        return response.data.data;
+        return response.data?.data ?? response.data ?? {};
     },
 
     async timKiemNhanh(keyword, size = 6) {
         const response = await api.get('/customer/san-pham/hien-thi', {
             params: { keyword, page: 1, size }
         });
-        const content = response.data?.data?.content || [];
+        const resData = response.data?.data ?? response.data;
+        const content = resData?.content || [];
         return content.map((p) => ({
             ...p,
             hinhAnh: resolveImg(p.hinhAnh)
