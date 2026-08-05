@@ -1375,7 +1375,6 @@ onMounted(() => {
                                     <th class="text-right">Tổng chi</th>
                                     <th class="text-right">Tổng sản phẩm</th>
                                     <th class="text-right">Đơn thành công</th>
-                                    <th class="text-right">Đơn hoàn</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1402,13 +1401,6 @@ onMounted(() => {
                                             formatNumber(item.donThanhCong) }}</div>
                                         <div class="val-sub text-emerald-600">
                                             {{ getPercent(item.donThanhCong, customerStatsTotals.donThanhCong) }}
-                                        </div>
-                                    </td>
-                                    <td class="text-right">
-                                        <div class="val-top font-weight-semibold" style="color: #1e293b;">{{
-                                            formatNumber(item.donHoan) }}</div>
-                                        <div class="val-sub text-red-500">
-                                            {{ getPercent(item.donHoan, customerStatsTotals.donHoan, '↓') }}
                                         </div>
                                     </td>
                                 </tr>

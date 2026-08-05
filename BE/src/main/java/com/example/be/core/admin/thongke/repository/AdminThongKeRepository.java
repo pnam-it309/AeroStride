@@ -21,11 +21,11 @@ public interface AdminThongKeRepository extends HoaDonRepository,
                  SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 THEN 1 ELSE 0 END),
                  SUM(CASE WHEN CAST(hd.trangThai AS int) = 0 THEN 1 ELSE 0 END),
                  SUM(CASE WHEN CAST(hd.trangThai AS int) = 3 THEN 1 ELSE 0 END),
-                 SUM(CASE WHEN CAST(hd.trangThai AS int) = 5 THEN 1 ELSE 0 END),
+                 SUM(CASE WHEN CAST(hd.trangThai AS int) = 5 AND (hd.orderType = com.example.be.infrastructure.constants.OrderType.ONLINE OR (hd.orderType IS NULL AND hd.nhanVien IS NULL AND (hd.loaiDon = 'ONLINE' OR hd.loaiDon IS NULL))) THEN 1 ELSE 0 END),
                  SUM(CASE WHEN CAST(hd.trangThai AS int) = 6 THEN 1 ELSE 0 END),
                  COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 0 THEN hd.tongTien ELSE 0 END), 0),
                  COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 3 THEN hd.tongTien ELSE 0 END), 0),
-                 COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 5 THEN hd.tongTien ELSE 0 END), 0)
+                 COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 5 AND (hd.orderType = com.example.be.infrastructure.constants.OrderType.ONLINE OR (hd.orderType IS NULL AND hd.nhanVien IS NULL AND (hd.loaiDon = 'ONLINE' OR hd.loaiDon IS NULL))) THEN hd.tongTien ELSE 0 END), 0)
             FROM HoaDon hd
             WHERE (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
             AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)
@@ -34,10 +34,26 @@ public interface AdminThongKeRepository extends HoaDonRepository,
 
     @Query("""
            SELECT
-                COALESCE(SUM(CASE WHEN hd.orderType = com.example.be.infrastructure.constants.OrderType.IN_STORE AND CAST(hd.trangThai AS int) = 4 THEN hd.tongTien ELSE 0 END), 0),
-                SUM(CASE WHEN hd.orderType = com.example.be.infrastructure.constants.OrderType.IN_STORE AND CAST(hd.trangThai AS int) = 4 THEN 1 ELSE 0 END),
-                COALESCE(SUM(CASE WHEN hd.orderType = com.example.be.infrastructure.constants.OrderType.ONLINE AND CAST(hd.trangThai AS int) = 4 THEN hd.tongTien ELSE 0 END), 0),
-                SUM(CASE WHEN hd.orderType = com.example.be.infrastructure.constants.OrderType.ONLINE AND CAST(hd.trangThai AS int) = 4 THEN 1 ELSE 0 END)
+                COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 AND (
+                    hd.orderType = com.example.be.infrastructure.constants.OrderType.IN_STORE
+                    OR (hd.orderType IS NULL AND hd.loaiDon IN ('TAI_QUAY', 'OFFLINE', 'GIAO_HANG'))
+                    OR (hd.orderType IS NULL AND hd.loaiDon IS NULL AND hd.nhanVien IS NOT NULL)
+                ) THEN hd.tongTien ELSE 0 END), 0),
+                SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 AND (
+                    hd.orderType = com.example.be.infrastructure.constants.OrderType.IN_STORE
+                    OR (hd.orderType IS NULL AND hd.loaiDon IN ('TAI_QUAY', 'OFFLINE', 'GIAO_HANG'))
+                    OR (hd.orderType IS NULL AND hd.loaiDon IS NULL AND hd.nhanVien IS NOT NULL)
+                ) THEN 1 ELSE 0 END),
+                COALESCE(SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 AND (
+                    hd.orderType = com.example.be.infrastructure.constants.OrderType.ONLINE
+                    OR (hd.orderType IS NULL AND hd.loaiDon = 'ONLINE')
+                    OR (hd.orderType IS NULL AND hd.loaiDon IS NULL AND hd.nhanVien IS NULL)
+                ) THEN hd.tongTien ELSE 0 END), 0),
+                SUM(CASE WHEN CAST(hd.trangThai AS int) = 4 AND (
+                    hd.orderType = com.example.be.infrastructure.constants.OrderType.ONLINE
+                    OR (hd.orderType IS NULL AND hd.loaiDon = 'ONLINE')
+                    OR (hd.orderType IS NULL AND hd.loaiDon IS NULL AND hd.nhanVien IS NULL)
+                ) THEN 1 ELSE 0 END)
            FROM HoaDon hd
            WHERE (:tuNgay IS NULL OR hd.ngayTao >= :tuNgay)
            AND (:denNgay IS NULL OR hd.ngayTao <= :denNgay)

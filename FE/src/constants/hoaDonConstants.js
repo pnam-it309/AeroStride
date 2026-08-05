@@ -70,5 +70,5 @@ export const ORDER_STATUS_FILTER_OPTIONS = [
     { title: 'Đang giao hàng', value: ORDER_STATUS.DANG_GIAO },
     { title: 'Hoàn thành', value: ORDER_STATUS.HOAN_THANH },
     { title: 'Đã hủy', value: ORDER_STATUS.DA_HUY },
-    { title: 'Hoàn đơn', value: ORDER_STATUS.HOAN_DON }
+    // { title: 'Hoàn đơn', value: ORDER_STATUS.HOAN_DON }
 ];

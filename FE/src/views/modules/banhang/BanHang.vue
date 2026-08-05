@@ -1814,27 +1814,6 @@ const onCheckout = async () => {
         return;
     }
 
-    // Kiểm tra xem có Voucher nào tốt hơn không
-    const betterVoucherInfo = await checkBetterVoucherBeforeCheckout();
-    if (betterVoucherInfo) {
-        betterVoucherDialog.value = {
-            show: true,
-            currentVoucher: betterVoucherInfo.currentVoucher,
-            betterVoucher: betterVoucherInfo.betterVoucher,
-            orderTotal: betterVoucherInfo.orderTotal,
-            currentDiscount: betterVoucherInfo.currentDiscount,
-            betterDiscount: betterVoucherInfo.betterDiscount,
-            onProceed: async (useNew) => {
-                betterVoucherDialog.value.show = false;
-                if (useNew && betterVoucherInfo.betterVoucher?.id) {
-                    await onApplyVoucher(betterVoucherInfo.betterVoucher.id);
-                }
-                await proceedActualCheckout();
-            }
-        };
-        return;
-    }
-
     await proceedActualCheckout();
 };
 
@@ -1995,8 +1974,8 @@ const formatDateTime = (dateStr) => {
 
             <!-- Main Workspace Grid -->
             <v-row v-if="selectedOrder" class="pos-grid">
-                <!-- Left Column (8 cols out of 12) -->
-                <v-col cols="12" lg="8" class="h-100 d-flex flex-column ga-4 pr-lg-2" style="min-height: 0;">
+                <!-- Left Column (8 cols out of 12 on large, 7 cols on medium) -->
+                <v-col cols="12" md="7" lg="8" class="h-100 d-flex flex-column ga-4 pr-md-2" style="min-height: 0;">
                     <!-- Sản phẩm Card -->
                     <v-card class="pos-card pa-4 d-flex flex-column flex-grow-1"
                         style="overflow: visible !important; z-index: 15 !important; min-height: 0;">
@@ -2025,8 +2004,8 @@ const formatDateTime = (dateStr) => {
                     </v-card>
                 </v-col>
 
-                <!-- Right Column (4 cols out of 12) -->
-                <v-col cols="12" lg="4" class="h-100 d-flex flex-column ga-4 pl-lg-2 mt-4 mt-lg-0 overflow-y-auto"
+                <!-- Right Column (4 cols out of 12 on large, 5 cols on medium) -->
+                <v-col cols="12" md="5" lg="4" class="h-100 d-flex flex-column ga-4 pl-md-2 mt-4 mt-md-0 overflow-y-auto"
                     style="min-height: 0;">
                     <!-- Khách hàng và Nhận hàng Card -->
                     <CustomerAndShippingPanel :order="selectedOrder" :is-giao-hang="isGiaoHang" class="flex-shrink-0"
@@ -2099,19 +2078,6 @@ const formatDateTime = (dateStr) => {
         <!-- Hóa đơn sau thanh toán -->
         <InvoiceReceiptDialog :show="receiptDialog.show" :receipt="receiptDialog" @close="onCloseReceipt"
             @print="onPrintReceiptInvoice" />
-
-        <!-- Modal thông báo Voucher tốt hơn -->
-        <BetterVoucherModal
-            :show="betterVoucherDialog.show"
-            :current-voucher="betterVoucherDialog.currentVoucher"
-            :better-voucher="betterVoucherDialog.betterVoucher"
-            :order-total="betterVoucherDialog.orderTotal"
-            :current-discount="betterVoucherDialog.currentDiscount"
-            :better-discount="betterVoucherDialog.betterDiscount"
-            @close="betterVoucherDialog.show = false"
-            @keep-old="betterVoucherDialog.onProceed && betterVoucherDialog.onProceed(false)"
-            @apply-new="betterVoucherDialog.onProceed && betterVoucherDialog.onProceed(true)"
-        />
 
         <!-- Modal Thêm Nhanh Khách Hàng -->
         <QuickAddCustomerDialog

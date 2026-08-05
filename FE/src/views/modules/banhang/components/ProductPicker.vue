@@ -263,7 +263,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="d-flex flex-column ga-2 mb-3 bg-slate-50 pa-2 rounded-xl w-100">
+    <div class="product-picker-panel d-flex flex-column ga-2 mb-3 bg-slate-50 pa-2 rounded-xl w-100">
         <!-- Hàng 1: Các Combobox lọc (CBO) lên trên -->
         <div class="d-flex align-center ga-2 flex-wrap">
             <!-- Thương hiệu -->
@@ -426,6 +426,26 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.product-picker-panel {
+    gap: 6px !important;
+    margin-bottom: 10px !important;
+    padding: 6px !important;
+}
+
+.product-picker-panel :deep(.v-field) {
+    --v-input-control-height: 28px !important;
+}
+
+.product-picker-panel :deep(.v-field__input) {
+    min-height: 28px !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+}
+
+.product-picker-panel :deep(.scanner-btn) {
+    height: 30px !important;
+}
+
 .hover-autocomplete-item:hover {
     background-color: #f8fafc;
 }

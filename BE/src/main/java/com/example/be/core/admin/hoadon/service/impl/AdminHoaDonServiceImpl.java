@@ -143,7 +143,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
 
         // Resolve display name for the person performing the action
         String nguoiThucHienName = com.example.be.utils.SecurityUtils.getCurrentUserEmail()
-                .map(email -> nhanVienRepository.findByEmail(email)
+                .map(email -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email)
                         .map(nv -> nv.getTen() != null ? nv.getTen() : email)
                         .orElse(email))
                 .orElse("Hệ thống");
@@ -343,7 +343,7 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
 
     private void logHistory(HoaDon hd, String note) {
         String nguoiThucHienName = com.example.be.utils.SecurityUtils.getCurrentUserEmail()
-                .map(email -> nhanVienRepository.findByEmail(email)
+                .map(email -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email)
                         .map(nv -> nv.getTen() != null ? nv.getTen() : email)
                         .orElse(email))
                 .orElse("Hệ thống");

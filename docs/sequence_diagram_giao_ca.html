@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sequence Diagram - Quản lý Giao ca (Shift Handover)</title>
+  <style>
+    :root {
+      --bg-color: #f4f4f4;
+      --card-bg: #ffffff;
+      --actor-bg: #d6e8ff;
+      --actor-border: #8ab4f8;
+      --text-dark: #000000;
+      --font-family: Arial, Helvetica, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-dark);
+      display: flex; flex-direction: column; align-items: center; padding: 24px 16px; min-height: 100vh;
+    }
+    .paper-container {
+      width: 100%; max-width: 980px; background: var(--card-bg); border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); padding: 30px 40px; position: relative;
+    }
+    .diagram-svg {
+      width: 100%; height: auto; overflow: visible;
+      background-image: linear-gradient(#e5e5e5 1px, transparent 1px), linear-gradient(90deg, #e5e5e5 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+    .actor-box {
+      fill: #d6e8ff; stroke: #8bb6e8; stroke-width: 1.2px; rx: 3px; ry: 3px;
+    }
+    .actor-text {
+      fill: #000000; font-weight: 700; font-size: 13px; text-anchor: middle; dominant-baseline: middle; font-family: var(--font-family);
+    }
+    .lifeline-line { stroke: #333333; stroke-width: 1.5; }
+    .activation-bar {
+      fill: #ffffff; stroke: #000000; stroke-width: 1.2px; rx: 4px; ry: 4px;
+    }
+    .msg-arrow { stroke: #000000; stroke-width: 1.5px; fill: none; }
+    .msg-arrow.dashed { stroke-dasharray: 4, 4; }
+    .msg-text {
+      font-size: 11px; font-weight: 500; fill: #000000; text-anchor: middle; font-family: var(--font-family);
+    }
+    .msg-bg { fill: rgba(255, 255, 255, 0.92); rx: 2px; ry: 2px; }
+    .diagram-caption {
+      text-align: center; margin-top: 24px; font-family: var(--font-family); font-size: 16px; font-weight: 700; color: #000000;
+    }
+  </style>
+</head>
+<body>
+  <div class="paper-container">
+    <svg class="diagram-svg" viewBox="0 0 960 920" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-solid-right" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+        </marker>
+        <marker id="arrow-open-left" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+        </marker>
+      </defs>
+
+      <!-- Lifelines -->
+      <line x1="120" y1="65" x2="120" y2="855" class="lifeline-line"/>
+      <line x1="360" y1="65" x2="360" y2="855" class="lifeline-line"/>
+      <line x1="600" y1="65" x2="600" y2="855" class="lifeline-line"/>
+      <line x1="840" y1="65" x2="840" y2="855" class="lifeline-line"/>
+
+      <!-- Activation Bars -->
+      <!-- Flow 1: Mở ca -->
+      <rect x="592" y="140" width="16" height="110" class="activation-bar"/>
+      <rect x="832" y="170" width="16" height="50"  class="activation-bar"/>
+
+      <!-- Flow 2: Tính toán doanh thu ca -->
+      <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+      <rect x="832" y="350" width="16" height="50"  class="activation-bar"/>
+
+      <!-- Flow 3: Xác nhận chốt & Giao ca -->
+      <rect x="592" y="500" width="16" height="130" class="activation-bar"/>
+      <rect x="832" y="530" width="16" height="70"  class="activation-bar"/>
+
+      <!-- Flow 4: In phiếu giao ca & Đăng xuất -->
+      <rect x="592" y="700" width="16" height="110" class="activation-bar"/>
+      <rect x="832" y="730" width="16" height="50"  class="activation-bar"/>
+
+      <!-- Top Actor Boxes -->
+      <g>
+        <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Nhân viên / Admin</text>
+        <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend (POS)</text>
+        <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend API</text>
+        <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+      </g>
+
+      <!-- Bottom Actor Boxes -->
+      <g>
+        <rect x="55" y="855" width="130" height="45" class="actor-box"/><text x="120" y="878" class="actor-text">Nhân viên / Admin</text>
+        <rect x="295" y="855" width="130" height="45" class="actor-box"/><text x="360" y="878" class="actor-text">Frontend (POS)</text>
+        <rect x="535" y="855" width="130" height="45" class="actor-box"/><text x="600" y="878" class="actor-text">Backend API</text>
+        <rect x="775" y="855" width="130" height="45" class="actor-box"/><text x="840" y="878" class="actor-text">Database</text>
+      </g>
+
+      <!-- Messages -->
+      <!-- Flow 1: Mở ca -->
+      <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right)"/>
+      <rect x="140" y="123" width="190" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Yêu cầu mở ca làm việc mới</text>
+
+      <line x1="360" y1="140" x2="590" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right)"/>
+      <rect x="385" y="123" width="190" height="15" class="msg-bg"/><text x="480" y="134" class="msg-text">POST /api/v1/giao-ca/mo-ca (tienBanDau)</text>
+
+      <line x1="608" y1="170" x2="830" y2="170" class="msg-arrow" marker-end="url(#arrow-solid-right)"/>
+      <rect x="630" y="153" width="180" height="15" class="msg-bg"/><text x="720" y="164" class="msg-text">INSERT GiaoCa (trangThai = DANG_LAM_VIEC)</text>
+
+      <line x1="830" y1="220" x2="608" y2="220" class="msg-arrow dashed" marker-end="url(#arrow-open-left)"/>
+      <rect x="640" y="203" width="160" height="15" class="msg-bg"/><text x="720" y="214" class="msg-text">Xác nhận tạo bản ghi GiaoCa</text>
+
+      <line x1="590" y1="250" x2="368" y2="250" class="msg-arrow dashed" marker-end="url(#arrow-open-left)"/>
+      <rect x="400" y="233" width="160" height="15" class="msg-bg"/><text x="480" y="244" class="msg-text">Mở ca làm việc thành công</text>
+
+      <line x1="350" y1="250" x2="120" y2="250" class="msg-arrow dashed" marker-end="url(#arrow-open-left)"/>
+      <rect x="145" y="233" width="180" height="15" class="msg-bg"/><text x="235" y="244" class="msg-text">Hiển thị giao diện bán hàng ca mới</text>
+
+      <!-- Flow 2: Yêu cầu chốt ca -->
+      <line x1="120" y1="320" x2="350" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right)"/>
+      <rect x="150" y="303" width="170" height="15" class="msg-bg"/><text x="235" y="314" class="msg-text">Bấm "Yêu cầu giao ca / Chốt ca"</text>
+
+      <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right)"/>
+      <rect x="385" y="303" width="190" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">GET /giao-ca/thong-tin-chot-ca/{caId}</text>
+
+      <line x1="608" y1="350" x2="830" y2="350" class="msg-arrow" marker-end="url(#arrow-solid-right)"/>
+      <rect x="625" y="333" width="190" height="15" class="msg-bg"/><text x="720" y="344" class="msg-text">SUM(tienMat), SUM(chuyenKhoan), HoaDon</text>
+
+      <line x1="830" y1="400" x2="608" y2="400" class="msg-arrow dashed" marker-end="url(#arrow-open-left)"/>
+      <rect x="635" y="383" width="170" height="15" class="msg-bg"/><text x="720" y="394" class="msg-text">Trả về tổng doanh thu ca dự kiến</text>
+
+      <line x1="590" y1="430" x2="368" y2="430" class="msg-arrow dashed" marker-end="url(#arrow-open-left)"/>
+      <rect x="390" y="413" width="180" height="15" class="msg-bg"/><text x="480" y="424" class="msg-text">Trả dữ liệu kết toán ca làm việc</text>
+
+      <line x1="350" y1="430" x2="120" y2="430" class="msg-arrow dashed" marker-end="url(#arrow-open-left)"/>
+      <rect x="140" y="413" width="190" height="15" class="msg-bg"/><text x="235" y="424" class="msg-text">Hiển thị Form kiểm đếm tiền mặt</text>
+
+      <!-- Flow 3: Xác nhận chốt & Giao ca -->
+      <line x1="120" y1="500" x2="350" y2="500" class="msg-arrow" marker-end="url(#arrow-solid-right)"/>
+      <rect x="135" y="483" width="200" height="15" class="msg-bg"/><text x="235" y="494" class="msg-text">Nhập số tiền thực tế & Ghi chú chênh lệch</text>
+
+      <line x1="360" y1="500" x2="590" y2="500" class="msg-arrow" marker-end="url(#arrow-solid-right)"/>
+      <rect x="380" y="483" width="200" height="15" class="msg-bg"/><text x="480" y="494" class="msg-text">POST /giao-ca/ket-thuc-ca (tienThucTe)</text>
+
+      <line x1="608" y1="530" x2="830" y2="530" class="msg-arrow" marker-end="url(#arrow-solid-right)"/>
+      <rect x="620" y="513" width="200" height="15" class="msg-bg"/><text x="720" y="524" class="msg-text">UPDATE GiaoCa (trangThai = DA_GIAO_CA)</text>
+
+      <line x1="830" y1="600" x2="608" y2="600" class="msg-arrow dashed" marker-end="url(#arrow-open-left)"/>
+      <rect x="640" y="583" width="160" height="15" class="msg-bg"/><text x="720" y="594" class="msg-text">Xác nhận cập nhật chốt ca thành công</text>
+
+      <line x1="590" y1="630" x2="368" y2="630" class="msg-arrow dashed" marker-end="url(#arrow-open-left)"/>
+      <rect x="390" y="613" width="180" height="15" class="msg-bg"/><text x="480" y="624" class="msg-text">Trả về thông báo giao ca thành công</text>
+
+      <line x1="350" y1="630" x2="120" y2="630" class="msg-arrow dashed" marker-end="url(#arrow-open-left)"/>
+      <rect x="140" y="613" width="190" height="15" class="msg-bg"/><text x="235" y="624" class="msg-text">Thông báo hoàn tất giao ca & Lệnh in</text>
+
+      <!-- Flow 4: In phiếu giao ca & Đăng xuất -->
+      <line x1="120" y1="700" x2="350" y2="700" class="msg-arrow" marker-end="url(#arrow-solid-right)"/>
+      <rect x="150" y="683" width="170" height="15" class="msg-bg"/><text x="235" y="694" class="msg-text">Xác nhận In biên lai giao ca</text>
+
+      <line x1="360" y1="700" x2="590" y2="700" class="msg-arrow" marker-end="url(#arrow-solid-right)"/>
+      <rect x="390" y="683" width="180" height="15" class="msg-bg"/><text x="480" y="694" class="msg-text">POST /api/v1/auth/logout</text>
+
+      <line x1="608" y1="730" x2="830" y2="730" class="msg-arrow" marker-end="url(#arrow-solid-right)"/>
+      <rect x="640" y="713" width="160" height="15" class="msg-bg"/><text x="720" y="724" class="msg-text">Hủy phiên Token đăng nhập (JWT)</text>
+
+      <line x1="830" y1="780" x2="608" y2="780" class="msg-arrow dashed" marker-end="url(#arrow-open-left)"/>
+      <rect x="650" y="763" width="140" height="15" class="msg-bg"/><text x="720" y="774" class="msg-text">Xác nhận đăng xuất an toàn</text>
+
+      <line x1="590" y1="810" x2="368" y2="810" class="msg-arrow dashed" marker-end="url(#arrow-open-left)"/>
+      <rect x="390" y="793" width="180" height="15" class="msg-bg"/><text x="480" y="804" class="msg-text">Chuyển hướng về màn hình Đăng nhập</text>
+
+      <line x1="350" y1="810" x2="120" y2="810" class="msg-arrow dashed" marker-end="url(#arrow-open-left)"/>
+      <rect x="140" y="793" width="190" height="15" class="msg-bg"/><text x="235" y="804" class="msg-text">Hiển thị Form Đăng nhập ca mới</text>
+    </svg>
+
+    <div class="diagram-caption">Hình 4.13: Sequence diagram quản lý giao ca (Shift Handover) - Dự án AeroStride.</div>
+  </div>
+</body>
+</html>

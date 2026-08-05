@@ -33,17 +33,28 @@ const handleDirectInput = (item, event) => {
 <template>
     <v-card class="cart-card shadow-none overflow-hidden h-full d-flex flex-column">
         <v-table class="pos-table flex-grow-1" fixed-header height="100%">
+            <colgroup>
+                <col class="col-index" />
+                <col class="col-code" />
+                <col class="col-name" />
+                <col class="col-color" />
+                <col class="col-size" />
+                <col class="col-quantity" />
+                <col class="col-price" />
+                <col class="col-total" />
+                <col class="col-action" />
+            </colgroup>
             <thead>
                 <tr>
-                    <th class="text-center py-2" style="width: 60px; white-space: nowrap !important;">STT</th>
-                    <th class="text-left py-2" style="width: 130px; white-space: nowrap !important;">Mã sản phẩm</th>
-                    <th class="text-left py-2">Tên sản phẩm</th>
-                    <th class="text-left py-2" style="width: 100px; white-space: nowrap !important;">Màu sắc</th>
-                    <th class="text-left py-2" style="width: 90px; white-space: nowrap !important;">Kích cỡ</th>
-                    <th class="text-center py-2" style="width: 130px; white-space: nowrap !important;">Số lượng</th>
-                    <th class="text-right py-2" style="width: 140px; white-space: nowrap !important;">Đơn giá</th>
-                    <th class="text-right py-2" style="width: 140px; white-space: nowrap !important;">Thành tiền</th>
-                    <th class="text-center py-2" style="width: 90px; white-space: nowrap !important;">Thao tác</th>
+                    <th class="text-center">STT</th>
+                    <th class="text-left">Mã sản phẩm</th>
+                    <th class="text-left">Tên sản phẩm</th>
+                    <th class="text-left">Màu sắc</th>
+                    <th class="text-left">Kích cỡ</th>
+                    <th class="text-center">Số lượng</th>
+                    <th class="text-right">Đơn giá</th>
+                    <th class="text-right">Thành tiền</th>
+                    <th class="text-center">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
@@ -58,17 +69,17 @@ const handleDirectInput = (item, event) => {
                 </tr>
                 <tr v-for="(item, idx) in items" :key="item.id" class="item-row">
                     <td class="text-center font-weight-medium text-slate-500"
-                        style="font-size: 13px; white-space: nowrap !important;">
+                        style="font-size: 12px; white-space: nowrap !important;">
                         {{ idx + 1 }}
                     </td>
                     <td class="text-left font-weight-medium text-slate-700"
-                        style="font-size: 13px; white-space: nowrap !important;">
+                        style="font-size: 12px; white-space: nowrap !important;">
                         {{ item.maChiTietSanPham || item.maSanPham || 'N/A' }}
                     </td>
                     <td>
                         <div class="d-flex align-center py-1.5">
-                            <v-avatar color="grey-lighten-4" rounded="lg" size="38"
-                                class="mr-3 border position-relative overflow-visible">
+                            <v-avatar color="grey-lighten-4" rounded="lg" size="34"
+                                class="cart-product-avatar border position-relative overflow-visible">
                                 <v-img v-if="item.hinhAnh" :src="item.hinhAnh" cover />
                                 <BoxIcon v-else size="18" class="text-grey" />
                                 <div v-if="item.phanTramGiam > 0"
@@ -79,7 +90,7 @@ const handleDirectInput = (item, event) => {
                             </v-avatar>
                             <div class="d-flex flex-column">
                                 <span class="text-slate-700 text-body-2 font-weight-medium"
-                                    style="font-size: 13px !important; line-height: 1.3;">
+                                    style="font-size: 12px !important; line-height: 1.3;">
                                     {{ item.tenSanPham }}
                                 </span>
                                 <div v-if="item.giaCu && Number(item.giaCu) !== Number(item.donGia)"
@@ -90,10 +101,10 @@ const handleDirectInput = (item, event) => {
                             </div>
                         </div>
                     </td>
-                    <td class="text-left text-slate-600" style="font-size: 13px; white-space: nowrap !important;">
+                    <td class="text-left text-slate-600" style="font-size: 12px; white-space: nowrap !important;">
                         {{ item.tenMauSac || 'Không màu' }}
                     </td>
-                    <td class="text-left text-slate-600" style="font-size: 13px; white-space: nowrap !important;">
+                    <td class="text-left text-slate-600" style="font-size: 12px; white-space: nowrap !important;">
                         {{ item.tenKichThuoc || 'N/A' }}
                     </td>
                     <td class="text-center" style="white-space: nowrap !important;">
@@ -109,7 +120,7 @@ const handleDirectInput = (item, event) => {
                         </div>
                     </td>
                     <td class="text-right font-weight-bold"
-                        style="font-size: 13px !important; white-space: nowrap !important;">
+                        style="font-size: 12px !important; white-space: nowrap !important;">
                         <template v-if="item.phanTramGiam > 0">
                             <span class="d-block font-weight-bold" style="color: #0c3866 !important;">
                                 {{ formatCurrency(item.donGia) }}
@@ -126,7 +137,7 @@ const handleDirectInput = (item, event) => {
                         </template>
                     </td>
                     <td class="text-right font-weight-bold text-body-2"
-                        style="white-space: nowrap !important; color: #0c3866 !important; font-size: 13px !important;">
+                        style="white-space: nowrap !important; color: #0c3866 !important; font-size: 12px !important;">
                         {{ formatCurrency(item.thanhTien) }}
                     </td>
                     <td class="text-center">
@@ -166,6 +177,7 @@ const handleDirectInput = (item, event) => {
 .pos-table :deep(.v-table__wrapper) {
     background: transparent !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 
 .pos-table :deep(.v-table__wrapper)::-webkit-scrollbar {
@@ -203,19 +215,34 @@ const handleDirectInput = (item, event) => {
 }
 
 .pos-table :deep(table) {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: fixed !important;
     border-collapse: separate !important;
-    border-spacing: 0 12px !important;
+    border-spacing: 0 10px !important;
     background: transparent !important;
     padding: 0 6px;
 }
 
+.pos-table :deep(.col-index) { width: 6%; }
+.pos-table :deep(.col-code) { width: 20%; }
+.pos-table :deep(.col-name) { width: 14%; }
+.pos-table :deep(.col-color) { width: 9.5%; }
+.pos-table :deep(.col-size) { width: 8.5%; }
+.pos-table :deep(.col-quantity) { width: 12%; }
+.pos-table :deep(.col-price) { width: 11%; }
+.pos-table :deep(.col-total) { width: 12%; }
+.pos-table :deep(.col-action) { width: 7%; }
+
 .pos-table :deep(thead th) {
     background-color: #f1f5f9 !important;
     color: #334155 !important;
-    font-size: 13px !important;
+    font-size: 11.5px !important;
     font-weight: 600 !important;
     border-bottom: none !important;
-    height: 40px !important;
+    height: 36px !important;
+    padding: 0 8px !important;
+    white-space: nowrap !important;
 }
 
 .pos-table :deep(thead th:first-child) {
@@ -246,10 +273,14 @@ const handleDirectInput = (item, event) => {
 .pos-table :deep(tbody td) {
     border-top: 1px solid #e2e8f0 !important;
     border-bottom: 1px solid #e2e8f0 !important;
-    padding-top: 20px !important;
-    padding-bottom: 20px !important;
+    padding: 14px 8px !important;
     background-color: #ffffff !important;
     transition: background-color 0.2s ease;
+}
+
+.cart-product-avatar {
+    margin-right: 8px !important;
+    flex: 0 0 auto;
 }
 
 .pos-table :deep(tbody td:first-child) {
@@ -273,7 +304,7 @@ const handleDirectInput = (item, event) => {
     outline: none;
     padding: 0;
     margin: 0;
-    font-size: 13px;
+    font-size: 12px;
     -moz-appearance: textfield;
 }
 

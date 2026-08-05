@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity Diagram - Luồng Bán Hàng Tại Quầy (POS)</title>
+  <style>
+    :root {
+      --bg-color: #f4f4f4;
+      --card-bg: #ffffff;
+      --node-stroke: #000000;
+      --node-fill: #ffffff;
+      --text-color: #000000;
+      --font-family: Arial, Helvetica, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-color);
+      display: flex; flex-direction: column; align-items: center; padding: 24px 16px; min-height: 100vh;
+    }
+    .paper-container {
+      width: 100%; max-width: 1060px; background: var(--card-bg); border-radius: 4px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); padding: 30px 40px; position: relative;
+    }
+    .diagram-svg {
+      width: 100%; height: auto; overflow: visible;
+      background-image: linear-gradient(#e5e5e5 1px, transparent 1px), linear-gradient(90deg, #e5e5e5 1px, transparent 1px);
+      background-size: 20px 20px; border: 1px solid #d1d5db; border-radius: 4px;
+    }
+    .start-node { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 2px; }
+    .end-node-outer { fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 2px; }
+    .end-node-inner { fill: var(--node-stroke); }
+    
+    .action-box {
+      fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1.5px; rx: 6px; ry: 6px;
+    }
+    .decision-diamond {
+      fill: var(--node-fill); stroke: var(--node-stroke); stroke-width: 1.5px;
+    }
+    
+    .text-label {
+      fill: var(--text-color); font-size: 11px; font-weight: 600; text-anchor: middle;
+      dominant-baseline: middle; font-family: var(--font-family);
+    }
+    .flow-line { stroke: var(--node-stroke); stroke-width: 1.5px; fill: none; }
+    .msg-bg { fill: rgba(255, 255, 255, 0.95); rx: 2px; ry: 2px; }
+
+    .diagram-caption {
+      text-align: center; margin-top: 24px; font-size: 17px; font-weight: 700; color: #000000;
+    }
+  </style>
+</head>
+<body>
+  <div class="paper-container">
+    <svg class="diagram-svg" viewBox="0 0 1020 680" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+        </marker>
+      </defs>
+
+      <!-- 1. START NODE -->
+      <circle cx="100" cy="40" r="18" class="start-node"/>
+      <text x="100" y="40" class="text-label" style="font-size: 10px;">Bắt đầu<tspan x="100" dy="11">mua hàng</tspan></text>
+
+      <!-- Arrow Start -> Connector A -->
+      <line x1="100" y1="58" x2="100" y2="120" class="flow-line" marker-end="url(#arrow-head)"/>
+
+      <!-- CONNECTOR A (Diamond Merge) -->
+      <polygon points="100,120 125,145 100,170 75,145" class="decision-diamond"/>
+      <text x="58" y="145" class="text-label" style="font-size: 14px; font-weight: bold;">A</text>
+
+      <!-- Arrow Connector A -> Decision 1 -->
+      <line x1="125" y1="145" x2="210" y2="145" class="flow-line" marker-end="url(#arrow-head)"/>
+
+      <!-- DECISION 1: Sản phẩm có tồn tại không? -->
+      <rect x="210" y="125" width="130" height="40" class="action-box"/>
+      <text x="275" y="145" class="text-label">Sản phẩm có tồn tại không?</text>
+
+      <!-- Arrow Action -> Diamond Check 1 -->
+      <line x1="340" y1="145" x2="380" y2="145" class="flow-line" marker-end="url(#arrow-head)"/>
+      <polygon points="380,145 405,170 380,195 355,170" class="decision-diamond"/>
+
+      <!-- Branch 1.1: Sản phẩm không tồn tại -> Action: Thông báo -> Loop to A -->
+      <path d="M 380,145 L 380,80 L 330,80" class="flow-line" marker-end="url(#arrow-head)"/>
+      <rect x="180" y="60" width="150" height="40" class="action-box"/>
+      <text x="255" y="80" class="text-label">Thông báo sản phẩm không tồn tại</text>
+      <rect x="345" y="68" width="105" height="15" class="msg-bg"/>
+      <text x="397" y="78" class="text-label" style="font-size: 10px;">Sản phẩm không tồn tại</text>
+      
+      <!-- Loop back to A -->
+      <path d="M 180,80 L 100,80 L 100,120" class="flow-line" marker-end="url(#arrow-head)"/>
+
+      <!-- Branch 1.2: Sản phẩm tồn tại -> Action: Chọn chi tiết sản phẩm -->
+      <line x1="405" y1="170" x2="490" y2="170" class="flow-line" marker-end="url(#arrow-head)"/>
+      <rect x="420" y="155" width="80" height="15" class="msg-bg"/>
+      <text x="460" y="165" class="text-label" style="font-size: 10px;">Sản phẩm tồn tại</text>
+
+      <rect x="490" y="150" width="130" height="40" class="action-box"/>
+      <text x="555" y="170" class="text-label">Chọn chi tiết sản phẩm</text>
+
+      <!-- Arrow -> Decision 2: Chi tiết sản phẩm hợp lệ -->
+      <line x1="555" y1="190" x2="555" y2="230" class="flow-line" marker-end="url(#arrow-head)"/>
+      <polygon points="555,230 580,255 555,280 530,255" class="decision-diamond"/>
+
+      <!-- Branch 2.1: Chi tiết sản phẩm hợp lệ -> Action: Thêm vào giỏ hàng thành công -->
+      <path d="M 580,255 L 670,255" class="flow-line" marker-end="url(#arrow-head)"/>
+      <rect x="585" y="240" width="85" height="15" class="msg-bg"/>
+      <text x="627" y="250" class="text-label" style="font-size: 10px;">Chi tiết SP hợp lệ</text>
+
+      <rect x="670" y="235" width="150" height="40" class="action-box"/>
+      <text x="745" y="255" class="text-label">Thêm vào giỏ hàng thành công</text>
+
+      <!-- Arrow -> Decision 3: Thanh toán & Giỏ hàng -->
+      <line x1="745" y1="275" x2="745" y2="330" class="flow-line" marker-end="url(#arrow-head)"/>
+      <rect x="705" y="295" width="60" height="15" class="msg-bg"/>
+      <text x="735" y="305" class="text-label" style="font-size: 10px;">Thanh toán</text>
+
+      <polygon points="745,330 770,355 745,380 720,355" class="decision-diamond"/>
+
+      <!-- Branch 3.1: Xem giỏ hàng -> Kiểm tra giỏ hàng -->
+      <path d="M 720,355 L 600,355" class="flow-line" marker-end="url(#arrow-head)"/>
+      <rect x="625" y="340" width="70" height="15" class="msg-bg"/>
+      <text x="660" y="350" class="text-label" style="font-size: 10px;">Xem giỏ hàng</text>
+
+      <rect x="470" y="335" width="130" height="40" class="action-box"/>
+      <text x="535" y="355" class="text-label">Kiểm tra giỏ hàng</text>
+
+      <line x1="535" y1="375" x2="535" y2="430" class="flow-line" marker-end="url(#arrow-head)"/>
+      <polygon points="535,430 560,455 535,480 510,455" class="decision-diamond"/>
+
+      <path d="M 560,455 L 700,455" class="flow-line" marker-end="url(#arrow-head)"/>
+      <rect x="580" y="440" width="60" height="15" class="msg-bg"/>
+      <text x="610" y="450" class="text-label" style="font-size: 10px;">Thanh toán</text>
+
+      <!-- Branch 3.2: Cập nhật giỏ hàng -->
+      <path d="M 770,355 L 830,355 L 830,300 L 760,300" class="flow-line" marker-end="url(#arrow-head)"/>
+      <rect x="760" y="280" width="110" height="35" class="action-box"/>
+      <text x="815" y="297" class="text-label">Cập nhật giỏ hàng</text>
+      <rect x="785" y="325" width="80" height="15" class="msg-bg"/>
+      <text x="825" y="335" class="text-label" style="font-size: 10px;">Cập nhật giỏ hàng</text>
+
+      <!-- Branch 3.3: Mua thêm sản phẩm -> Loop to A -->
+      <path d="M 745,380 L 745,550 L 100,550 L 100,170" class="flow-line" marker-end="url(#arrow-head)"/>
+      <rect x="380" y="535" width="110" height="18" class="msg-bg"/>
+      <text x="435" y="546" class="text-label" style="font-size: 11px; font-weight: bold;">Mua thêm sản phẩm (Về A)</text>
+
+      <!-- Branch 3.4: Tiến hành thanh toán -> Decision Xác nhận -> Action Thanh toán -->
+      <line x1="770" y1="455" x2="810" y2="455" class="flow-line" marker-end="url(#arrow-head)"/>
+      <rect x="705" y="440" width="95" height="15" class="msg-bg"/>
+      <text x="752" y="450" class="text-label" style="font-size: 10px;">Tiến hành thanh toán</text>
+
+      <polygon points="810,455 830,470 810,485 790,470" class="decision-diamond"/>
+
+      <line x1="830" y1="470" x2="865" y2="470" class="flow-line" marker-end="url(#arrow-head)"/>
+      <rect x="825" y="455" width="45" height="15" class="msg-bg"/>
+      <text x="847" y="465" class="text-label" style="font-size: 9px;">Xác nhận</text>
+
+      <polygon points="865,470 885,485 865,500 845,485" class="decision-diamond"/>
+
+      <line x1="885" y1="485" x2="930" y2="485" class="flow-line" marker-end="url(#arrow-head)"/>
+
+      <rect x="930" y="465" width="80" height="40" class="action-box"/>
+      <text x="970" y="485" class="text-label">Thanh toán</text>
+
+      <!-- Arrow Action -> End Node -->
+      <line x1="970" y1="505" x2="970" y2="570" class="flow-line" marker-end="url(#arrow-head)"/>
+
+      <!-- END NODE (Double Circle) -->
+      <circle cx="970" cy="585" r="15" class="end-node-outer"/>
+      <circle cx="970" cy="585" r="9"  class="end-node-inner"/>
+
+    </svg>
+
+    <div class="diagram-caption">Sơ đồ luồng bán hàng tại quầy (POS) - Dự án AeroStride</div>
+  </div>
+</body>
+</html>

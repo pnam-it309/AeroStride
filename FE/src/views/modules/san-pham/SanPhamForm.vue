@@ -1446,10 +1446,41 @@ const product = ref({
     hinhAnh: ''
 });
 
-// Watch for product name changes
+// Watch for product name changes to auto-trim leading spaces
 watch(() => product.value.tenSanPham, (newVal) => {
+    if (typeof newVal === 'string' && /^\s+/.test(newVal)) {
+        product.value.tenSanPham = newVal.trimStart();
+        return;
+    }
     if (!isEditMode.value) {
         checkProductName(newVal);
+    }
+});
+
+// Watch search queries for comboboxes to trim leading spaces in real-time
+watch(searchQueries, (newQueries) => {
+    for (const key in newQueries) {
+        if (typeof newQueries[key] === 'string' && /^\s+/.test(newQueries[key])) {
+            searchQueries[key] = newQueries[key].trimStart();
+        }
+    }
+}, { deep: true });
+
+watch(customSizeName, (newVal) => {
+    if (typeof newVal === 'string' && /^\s+/.test(newVal)) {
+        customSizeName.value = newVal.trimStart();
+    }
+});
+
+watch(colorSearch, (newVal) => {
+    if (typeof newVal === 'string' && /^\s+/.test(newVal)) {
+        colorSearch.value = newVal.trimStart();
+    }
+});
+
+watch(() => product.value.moTaChiTiet, (newVal) => {
+    if (typeof newVal === 'string' && /^\s+/.test(newVal)) {
+        product.value.moTaChiTiet = newVal.trimStart();
     }
 });
 
@@ -1546,7 +1577,11 @@ onMounted(() => {
 });
 
 const rules = {
-    required: value => !!value || 'Trường này là bắt buộc',
+    required: value => {
+        if (value === null || value === undefined || value === '') return 'Trường này là bắt buộc';
+        if (typeof value === 'string' && !value.trim()) return 'Trường này không được chỉ chứa khoảng trắng';
+        return true;
+    },
     noSpecialChar: value => {
         if (!value) return true;
         return /^[\p{L}0-9\s]+$/u.test(value) || 'Không được chứa ký tự đặc biệt';
@@ -1585,7 +1620,12 @@ const validateProduct = () => {
     ];
 
     const missing = requiredFields
-        .filter(([field]) => !product.value[field])
+        .filter(([field]) => {
+            const val = product.value[field];
+            if (val === null || val === undefined || val === '') return true;
+            if (typeof val === 'string' && !val.trim()) return true;
+            return false;
+        })
         .map(([, label]) => label);
 
     if (tenError.value) {

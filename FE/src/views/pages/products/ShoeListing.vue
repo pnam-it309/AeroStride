@@ -151,6 +151,11 @@ const fetchProducts = async () => {
     }
 };
 
+const onPageChange = () => {
+    fetchProducts();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
 const handleFilterChange = () => {
     currentPage.value = 1;
     fetchProducts();
@@ -217,7 +222,8 @@ const isInvalidImage = (v) => {
     return (
         lower.includes('via.placeholder.com') || 
         lower.includes('placeholder.com') || 
-        lower.includes('dummyimage.com')
+        lower.includes('dummyimage.com') ||
+        lower.includes('images.unsplash.com')
     );
 };
 
@@ -479,8 +485,8 @@ const activeSortLabel = computed(() => {
                                         :alt="p.tenSanPham" 
                                         class="card-shoe-img" 
                                         referrerpolicy="no-referrer"
+                                        @error="handleImageError"
                                     />
-
                                     <!-- Badges -->
                                     <div v-if="p.phanTramGiam > 0" class="badge-label-new">
                                         -{{ p.phanTramGiam }}%
@@ -527,7 +533,7 @@ const activeSortLabel = computed(() => {
                         <v-pagination
                             v-model="currentPage"
                             :length="Math.ceil(totalElements / pageSize)"
-                            @update:model-value="fetchProducts"
+                            @update:model-value="onPageChange"
                             color="#2962FF"
                             class="custom-nav-pagination"
                         ></v-pagination>
@@ -796,17 +802,17 @@ const activeSortLabel = computed(() => {
     border-radius: 14px;
     width: 100%;
     height: 211px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     position: relative;
     overflow: hidden;
+    display: block;
 }
 
 .card-shoe-img {
     width: 100%;
     height: 100%;
+    max-height: 211px;
     object-fit: cover;
+    display: block;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 

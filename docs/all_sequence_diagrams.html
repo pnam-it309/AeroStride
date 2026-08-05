@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tất cả Sequence Diagrams (1 Page) - AeroStride</title>
+  <style>
+    :root {
+      --bg-color: #eef2f6;
+      --card-bg: #ffffff;
+      --primary-blue: #2563eb;
+      --text-dark: #0f172a;
+      --font-family: Arial, Helvetica, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-dark);
+      display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh;
+    }
+    .header-nav {
+      position: sticky; top: 10px; z-index: 999;
+      width: 100%; max-width: 1020px; background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px); padding: 14px 20px; border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #cbd5e1;
+      margin-bottom: 24px; text-align: center;
+    }
+    .header-title { font-size: 18px; font-weight: 800; color: #1e293b; margin-bottom: 10px; }
+    .nav-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .nav-btn {
+      background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 6px 14px;
+      border-radius: 20px; font-size: 13px; font-weight: 600; text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .nav-btn:hover { background: var(--primary-blue); color: #ffffff; border-color: var(--primary-blue); }
+
+    .main-container {
+      width: 100%; max-width: 1020px; display: flex; flex-direction: column; gap: 40px;
+    }
+    .diagram-card {
+      background: var(--card-bg); border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08); padding: 30px; border: 1px solid #e2e8f0;
+      scroll-margin-top: 130px;
+    }
+    .section-title {
+      font-size: 20px; font-weight: 800; color: #1e293b; margin-bottom: 18px;
+      border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;
+    }
+    .diagram-svg {
+      width: 100%; height: auto; overflow: visible;
+      background-image: linear-gradient(#e5e5e5 1px, transparent 1px), linear-gradient(90deg, #e5e5e5 1px, transparent 1px);
+      background-size: 20px 20px; border: 1px solid #cbd5e1; border-radius: 6px;
+    }
+    .actor-box { fill: #d6e8ff; stroke: #8bb6e8; stroke-width: 1.2px; rx: 3px; ry: 3px; }
+    .actor-text { fill: #000000; font-weight: 700; font-size: 13px; text-anchor: middle; dominant-baseline: middle; }
+    .lifeline-line { stroke: #333333; stroke-width: 1.5; }
+    .activation-bar { fill: #ffffff; stroke: #000000; stroke-width: 1.2px; rx: 4px; ry: 4px; }
+    .msg-arrow { stroke: #000000; stroke-width: 1.5px; fill: none; }
+    .msg-arrow.dashed { stroke-dasharray: 4, 4; }
+    .msg-text { font-size: 11px; font-weight: 500; fill: #000000; text-anchor: middle; }
+    .msg-bg { fill: rgba(255, 255, 255, 0.9); rx: 2px; ry: 2px; }
+    .diagram-caption {
+      text-align: center; margin-top: 20px; font-size: 16px; font-weight: 700; color: #000000;
+    }
+  </style>
+</head>
+<body>
+  <div class="header-nav">
+    <div class="header-title">📐 TỔNG HỢP TẤT CẢ SEQUENCE DIAGRAMS (1 PAGE)</div>
+    <div class="nav-buttons"><a href="#sec-lich-su" class="nav-btn">Quản lý Lịch sử hoạt động (Activity Audit Log)</a><a href="#sec-them-ca" class="nav-btn">Thêm & Quản lý Ca làm việc (Add Shift)</a><a href="#sec-lich-lam-viec" class="nav-btn">Quản lý Lịch làm việc (Work Schedule)</a><a href="#sec-giao-ca" class="nav-btn">Quản lý Giao ca (Shift Handover)</a><a href="#sec-san-pham" class="nav-btn">Quản lý sản phẩm</a><a href="#sec-pos" class="nav-btn">Bán hàng tại quầy (POS)</a><a href="#sec-thuoc-tinh" class="nav-btn">Quản lý thuộc tính sản phẩm</a><a href="#sec-hoa-don" class="nav-btn">Quản lý hóa đơn</a><a href="#sec-phieu-giam-gia" class="nav-btn">Quản lý phiếu giảm giá</a><a href="#sec-dot-giam-gia" class="nav-btn">Quản lý đợt giảm giá</a><a href="#sec-nhan-vien" class="nav-btn">Quản lý nhân viên</a><a href="#sec-khach-hang" class="nav-btn">Quản lý khách hàng</a><a href="#sec-thong-ke" class="nav-btn">Thống kê</a><a href="#sec-dac-ta" class="nav-btn">Đặc tả chức năng</a></div>
+  </div>
+  <div class="main-container">
+    
+    <div id="sec-lich-su" class="diagram-card">
+      <h2 class="section-title">📌 Quản lý Lịch sử hoạt động (Activity Audit Log)</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-lich-su" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-lich-su" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-su)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Xem/Lọc danh sách lịch sử hoạt động</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-su)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">GET /api/v1/lich-su-hoat-dong (params)</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-su)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">SELECT * FROM LichSuHoatDong</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-lich-su)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Trả về danh sách bản ghi nhật ký</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-su)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Bấm xem chi tiết 1 bản ghi nhật ký</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-su)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">GET /api/v1/lich-su-hoat-dong/{id}</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-lich-su)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">SELECT Detail & JSON Diff log</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-lich-su)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Trả về chi tiết bản ghi & Diff log</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-su)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Bấm "Xuất file nhật ký Excel"</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-su)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">POST /lich-su-hoat-dong/export</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-lich-su)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">Truy vấn & Xuất file Excel (.xlsx)</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-lich-su)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Tải xuống file nhật ký hoạt động</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.16: Sequence diagram quản lý lịch sử hoạt động (Activity Audit Log).</div>
+    </div>
+  
+    <div id="sec-them-ca" class="diagram-card">
+      <h2 class="section-title">📌 Thêm & Quản lý Ca làm việc (Add Shift)</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-them-ca" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-them-ca" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-them-ca)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Xem danh sách ca làm việc</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-them-ca)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">GET /api/v1/ca-lam-viec</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-them-ca)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">SELECT * FROM CaLamViec</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-them-ca)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Trả về danh sách ca làm việc</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-them-ca)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Nhập tên ca, giờ bắt đầu & kết thúc</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-them-ca)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">POST /api/v1/ca-lam-viec (tenCa...)</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-them-ca)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">Check trùng & INSERT CaLamViec</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-them-ca)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Xác nhận lưu ca làm việc mới</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-them-ca)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Chỉnh sửa khung giờ ca làm việc</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-them-ca)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">PUT /api/v1/ca-lam-viec/{caId}</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-them-ca)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">UPDATE CaLamViec (gioBatDau...)</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-them-ca)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Xác nhận cập nhật ca thành công</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.15: Sequence diagram thêm & quản lý ca làm việc (Add Shift Management).</div>
+    </div>
+  
+    <div id="sec-lich-lam-viec" class="diagram-card">
+      <h2 class="section-title">📌 Quản lý Lịch làm việc (Work Schedule)</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-lich-lam-viec" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-lich-lam-viec" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-lam-viec)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Xem danh sách lịch làm việc nhân viên</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-lam-viec)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">Gửi khoảng thời gian (Từ ngày - Đến ngày)</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-lam-viec)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">Truy vấn lịch phân ca theo mốc thời gian</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-lich-lam-viec)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Trả về danh sách lịch phân ca nhân viên</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-lam-viec)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Chọn nhân viên, ca làm & ngày phân ca</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-lam-viec)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">Gửi thông tin phân ca làm việc</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-lich-lam-viec)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">Kiểm tra trùng lịch & Lưu phân ca mới</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-lich-lam-viec)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Trả về thông tin phân ca mới</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-lam-viec)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Yêu cầu tự động xếp ca cho nhân viên</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-lich-lam-viec)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">Tính toán thuật toán xếp ca & Lưu DB</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-lich-lam-viec)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">Xác nhận lưu danh sách xếp ca tự động</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-lich-lam-viec)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Tải lại & hiển thị toàn bộ lịch làm việc</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.14: Sequence diagram quản lý lịch làm việc (Work Schedule).</div>
+    </div>
+  
+    <div id="sec-giao-ca" class="diagram-card">
+      <h2 class="section-title">📌 Quản lý Giao ca (Shift Handover)</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-giao-ca" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-giao-ca" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-giao-ca)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Yêu cầu mở ca làm việc mới</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-giao-ca)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">POST /api/v1/giao-ca/mo-ca (tienBanDau)</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-giao-ca)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">INSERT GiaoCa (trangThai = DANG_LAM_VIEC)</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-giao-ca)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Xác nhận tạo bản ghi GiaoCa</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-giao-ca)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Yêu cầu chốt ca làm việc</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-giao-ca)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">GET /giao-ca/thong-tin-chot-ca/{caId}</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-giao-ca)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">SUM(tienMat), SUM(chuyenKhoan)</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-giao-ca)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Trả dữ liệu kết toán doanh thu ca</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-giao-ca)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Nhập tiền thực tế & Xác nhận giao ca</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-giao-ca)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">POST /giao-ca/ket-thuc-ca (tienThucTe)</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-giao-ca)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">UPDATE GiaoCa (trangThai = DA_GIAO_CA)</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-giao-ca)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Xác nhận giao ca thành công & In biên lai</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.13: Sequence diagram quản lý giao ca (Shift Handover).</div>
+    </div>
+  
+    <div id="sec-san-pham" class="diagram-card">
+      <h2 class="section-title">📌 Quản lý sản phẩm</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-san-pham" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-san-pham" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-san-pham)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Xem/lọc thông tin sản phẩm</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-san-pham)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">Tạo một sản phẩm</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-san-pham)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">Tạo một sản phẩm</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-san-pham)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Sản phẩm đã được tạo</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-san-pham)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Tìm sản phẩm</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-san-pham)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">Tìm sản phẩm</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-san-pham)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">Sản phẩm được tìm thấy</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-san-pham)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Sản phẩm được tìm thấy</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-san-pham)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Thực hiện cập nhật</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-san-pham)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">Thực hiện cập nhật</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-san-pham)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">Cập nhật đã được hoàn tất</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-san-pham)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Cập nhật đã được hoàn tất</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.3: Sequence diagram quản lý sản phẩm.</div>
+    </div>
+  
+    <div id="sec-pos" class="diagram-card">
+      <h2 class="section-title">📌 Bán hàng tại quầy (POS)</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-pos" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-pos" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-pos)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Xem/lọc thông tin sản phẩm</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-pos)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">Tạo một hóa đơn</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-pos)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">Tạo một hóa đơn</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-pos)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Hóa đơn đã được tạo</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-pos)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Tìm sản phẩm</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-pos)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">Tìm sản phẩm</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-pos)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">Sản phẩm được tìm thấy</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-pos)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Sản phẩm được tìm thấy</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-pos)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Thực hiện thanh toán</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-pos)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">Thực hiện thanh toán</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-pos)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">Thanh toán đã được thu</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-pos)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Thanh toán đã được thu</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.4: Sequence diagram bán hàng tại quầy.</div>
+    </div>
+  
+    <div id="sec-thuoc-tinh" class="diagram-card">
+      <h2 class="section-title">📌 Quản lý thuộc tính sản phẩm</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-thuoc-tinh" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-thuoc-tinh" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thuoc-tinh)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Xem/lọc thuộc tính sản phẩm</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thuoc-tinh)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">Tạo một thuộc tính</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thuoc-tinh)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">Tạo một thuộc tính</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-thuoc-tinh)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Thuộc tính đã được tạo</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thuoc-tinh)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Tìm thuộc tính</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thuoc-tinh)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">Tìm thuộc tính</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-thuoc-tinh)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">Thuộc tính được tìm thấy</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-thuoc-tinh)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Thuộc tính được tìm thấy</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thuoc-tinh)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Thực hiện cập nhật</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thuoc-tinh)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">Thực hiện cập nhật</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-thuoc-tinh)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">Cập nhật đã được hoàn tất</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-thuoc-tinh)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Cập nhật đã được hoàn tất</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.5: Sequence diagram quản lý thuộc tính sản phẩm.</div>
+    </div>
+  
+    <div id="sec-hoa-don" class="diagram-card">
+      <h2 class="section-title">📌 Quản lý hóa đơn</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-hoa-don" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-hoa-don" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-hoa-don)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Xem/lọc thông tin hóa đơn</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-hoa-don)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">Tạo một hóa đơn</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-hoa-don)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">Tạo một hóa đơn</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-hoa-don)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Hóa đơn đã được tạo</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-hoa-don)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Tìm hóa đơn / Chi tiết</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-hoa-don)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">Tìm hóa đơn / Chi tiết</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-hoa-don)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">Hóa đơn được tìm thấy</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-hoa-don)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Hóa đơn được tìm thấy</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-hoa-don)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Thực hiện cập nhật trạng thái</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-hoa-don)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">Thực hiện cập nhật trạng thái</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-hoa-don)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">Cập nhật đã được hoàn tất</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-hoa-don)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Cập nhật đã được hoàn tất</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.6: Sequence diagram quản lý hóa đơn.</div>
+    </div>
+  
+    <div id="sec-phieu-giam-gia" class="diagram-card">
+      <h2 class="section-title">📌 Quản lý phiếu giảm giá</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-phieu-giam-gia" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-phieu-giam-gia" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-phieu-giam-gia)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Xem/lọc phiếu giảm giá</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-phieu-giam-gia)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">Tạo phiếu giảm giá</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-phieu-giam-gia)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">Tạo phiếu giảm giá</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-phieu-giam-gia)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Phiếu giảm giá đã được tạo</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-phieu-giam-gia)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Tìm phiếu giảm giá</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-phieu-giam-gia)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">Tìm phiếu giảm giá</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-phieu-giam-gia)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">Phiếu giảm giá được tìm thấy</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-phieu-giam-gia)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Phiếu giảm giá được tìm thấy</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-phieu-giam-gia)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Áp dụng phiếu giảm giá</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-phieu-giam-gia)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">Áp dụng phiếu giảm giá</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-phieu-giam-gia)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">Phiếu giảm giá đã được áp dụng</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-phieu-giam-gia)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Phiếu giảm giá đã được áp dụng</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.7: Sequence diagram quản lý phiếu giảm giá.</div>
+    </div>
+  
+    <div id="sec-dot-giam-gia" class="diagram-card">
+      <h2 class="section-title">📌 Quản lý đợt giảm giá</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-dot-giam-gia" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-dot-giam-gia" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dot-giam-gia)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Xem/lọc đợt giảm giá</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dot-giam-gia)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">Tạo đợt giảm giá</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dot-giam-gia)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">Tạo đợt giảm giá</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-dot-giam-gia)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Đợt giảm giá đã được tạo</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dot-giam-gia)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Tìm sản phẩm đợt giảm giá</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dot-giam-gia)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">Tìm sản phẩm đợt giảm giá</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-dot-giam-gia)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">Sản phẩm được tìm thấy</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-dot-giam-gia)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Sản phẩm được tìm thấy</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dot-giam-gia)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Thực hiện kích hoạt</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dot-giam-gia)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">Thực hiện kích hoạt</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-dot-giam-gia)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">Kích hoạt đã được hoàn tất</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-dot-giam-gia)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Kích hoạt đã được hoàn tất</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.8: Sequence diagram quản lý đợt giảm giá.</div>
+    </div>
+  
+    <div id="sec-nhan-vien" class="diagram-card">
+      <h2 class="section-title">📌 Quản lý nhân viên</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-nhan-vien" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-nhan-vien" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-nhan-vien)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Xem/lọc thông tin nhân viên</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-nhan-vien)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">Tạo tài khoản nhân viên</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-nhan-vien)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">Tạo tài khoản nhân viên</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-nhan-vien)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Tài khoản nhân viên đã được tạo</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-nhan-vien)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Tìm nhân viên</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-nhan-vien)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">Tìm nhân viên</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-nhan-vien)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">Nhân viên được tìm thấy</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-nhan-vien)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Nhân viên được tìm thấy</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-nhan-vien)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Thực hiện cập nhật</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-nhan-vien)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">Thực hiện cập nhật</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-nhan-vien)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">Cập nhật đã được hoàn tất</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-nhan-vien)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Cập nhật đã được hoàn tất</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.9: Sequence diagram quản lý nhân viên.</div>
+    </div>
+  
+    <div id="sec-khach-hang" class="diagram-card">
+      <h2 class="section-title">📌 Quản lý khách hàng</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-khach-hang" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-khach-hang" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-khach-hang)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Xem/lọc thông tin khách hàng</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-khach-hang)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">Tạo tài khoản khách hàng</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-khach-hang)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">Tạo tài khoản khách hàng</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-khach-hang)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Khách hàng đã được tạo</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-khach-hang)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Tìm khách hàng</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-khach-hang)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">Tìm khách hàng</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-khach-hang)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">Khách hàng được tìm thấy</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-khach-hang)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Khách hàng được tìm thấy</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-khach-hang)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Thực hiện cập nhật</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-khach-hang)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">Thực hiện cập nhật</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-khach-hang)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">Cập nhật đã được hoàn tất</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-khach-hang)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Cập nhật đã được hoàn tất</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.10: Sequence diagram quản lý khách hàng.</div>
+    </div>
+  
+    <div id="sec-thong-ke" class="diagram-card">
+      <h2 class="section-title">📌 Thống kê</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-thong-ke" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-thong-ke" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thong-ke)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Xem/lọc thông tin thống kê</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thong-ke)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">Tạo báo cáo thống kê</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thong-ke)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">Tạo báo cáo thống kê</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-thong-ke)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Báo cáo đã được tạo</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thong-ke)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Tìm dữ liệu thống kê</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thong-ke)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">Tìm dữ liệu thống kê</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-thong-ke)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">Dữ liệu được tìm thấy</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-thong-ke)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Dữ liệu được tìm thấy</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thong-ke)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Thực hiện xuất báo cáo</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-thong-ke)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">Thực hiện xuất báo cáo</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-thong-ke)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">Báo cáo đã được xuất</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-thong-ke)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Báo cáo đã được xuất</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.11: Sequence diagram thống kê.</div>
+    </div>
+  
+    <div id="sec-dac-ta" class="diagram-card">
+      <h2 class="section-title">📌 Đặc tả chức năng</h2>
+      <svg class="diagram-svg" viewBox="0 0 960 760" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow-solid-right-sec-dac-ta" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000"/>
+          </marker>
+          <marker id="arrow-open-left-sec-dac-ta" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 10 1 L 0 5 L 10 9 z" fill="#000000"/>
+          </marker>
+        </defs>
+
+        <line x1="120" y1="65" x2="120" y2="695" class="lifeline-line"/>
+        <line x1="360" y1="65" x2="360" y2="695" class="lifeline-line"/>
+        <line x1="600" y1="65" x2="600" y2="695" class="lifeline-line"/>
+        <line x1="840" y1="65" x2="840" y2="695" class="lifeline-line"/>
+
+        <rect x="592" y="200" width="16" height="70" class="activation-bar"/>
+        <rect x="592" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="320" width="16" height="110" class="activation-bar"/>
+        <rect x="592" y="480" width="16" height="110" class="activation-bar"/>
+        <rect x="832" y="480" width="16" height="110" class="activation-bar"/>
+
+        <g>
+          <rect x="55" y="20" width="130" height="45" class="actor-box"/><text x="120" y="43" class="actor-text">Admin</text>
+          <rect x="295" y="20" width="130" height="45" class="actor-box"/><text x="360" y="43" class="actor-text">Frontend</text>
+          <rect x="535" y="20" width="130" height="45" class="actor-box"/><text x="600" y="43" class="actor-text">Backend</text>
+          <rect x="775" y="20" width="130" height="45" class="actor-box"/><text x="840" y="43" class="actor-text">Database</text>
+        </g>
+
+        <g>
+          <rect x="55" y="695" width="130" height="45" class="actor-box"/><text x="120" y="718" class="actor-text">Admin</text>
+          <rect x="295" y="695" width="130" height="45" class="actor-box"/><text x="360" y="718" class="actor-text">Frontend</text>
+          <rect x="535" y="695" width="130" height="45" class="actor-box"/><text x="600" y="718" class="actor-text">Backend</text>
+          <rect x="775" y="695" width="130" height="45" class="actor-box"/><text x="840" y="718" class="actor-text">Database</text>
+        </g>
+
+        <line x1="120" y1="140" x2="350" y2="140" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dac-ta)"/>
+        <rect x="150" y="123" width="170" height="15" class="msg-bg"/><text x="235" y="134" class="msg-text">Xem/lọc chức năng hệ thống</text>
+
+        <line x1="120" y1="200" x2="350" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dac-ta)"/>
+        <rect x="170" y="183" width="130" height="15" class="msg-bg"/><text x="235" y="194" class="msg-text">Khởi tạo cấu hình chức năng</text>
+
+        <line x1="360" y1="200" x2="590" y2="200" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dac-ta)"/>
+        <rect x="410" y="183" width="140" height="15" class="msg-bg"/><text x="480" y="194" class="msg-text">Khởi tạo cấu hình chức năng</text>
+
+        <line x1="590" y1="260" x2="368" y2="260" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-dac-ta)"/>
+        <rect x="410" y="243" width="140" height="15" class="msg-bg"/><text x="480" y="254" class="msg-text">Chức năng đã được khởi tạo</text>
+
+        <line x1="360" y1="320" x2="590" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dac-ta)"/>
+        <rect x="415" y="303" width="130" height="15" class="msg-bg"/><text x="480" y="314" class="msg-text">Tìm quyền chức năng</text>
+
+        <line x1="608" y1="320" x2="830" y2="320" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dac-ta)"/>
+        <rect x="655" y="303" width="130" height="15" class="msg-bg"/><text x="720" y="314" class="msg-text">Tìm quyền chức năng</text>
+
+        <line x1="830" y1="380" x2="608" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-dac-ta)"/>
+        <rect x="640" y="363" width="160" height="15" class="msg-bg"/><text x="720" y="374" class="msg-text">Quyền được tìm thấy</text>
+
+        <line x1="590" y1="380" x2="368" y2="380" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-dac-ta)"/>
+        <rect x="400" y="363" width="160" height="15" class="msg-bg"/><text x="480" y="374" class="msg-text">Quyền được tìm thấy</text>
+
+        <line x1="360" y1="480" x2="590" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dac-ta)"/>
+        <rect x="410" y="463" width="140" height="15" class="msg-bg"/><text x="480" y="474" class="msg-text">Thực hiện phân quyền</text>
+
+        <line x1="608" y1="480" x2="830" y2="480" class="msg-arrow" marker-end="url(#arrow-solid-right-sec-dac-ta)"/>
+        <rect x="650" y="463" width="140" height="15" class="msg-bg"/><text x="720" y="474" class="msg-text">Thực hiện phân quyền</text>
+
+        <line x1="830" y1="540" x2="608" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-dac-ta)"/>
+        <rect x="640" y="523" width="160" height="15" class="msg-bg"/><text x="720" y="534" class="msg-text">Phân quyền đã hoàn tất</text>
+
+        <line x1="590" y1="540" x2="368" y2="540" class="msg-arrow dashed" marker-end="url(#arrow-open-left-sec-dac-ta)"/>
+        <rect x="400" y="523" width="160" height="15" class="msg-bg"/><text x="480" y="534" class="msg-text">Phân quyền đã hoàn tất</text>
+      </svg>
+      <div class="diagram-caption">Hình 4.12: Sequence diagram đặc tả chức năng.</div>
+    </div>
+  
+  </div>
+</body>
+</html>

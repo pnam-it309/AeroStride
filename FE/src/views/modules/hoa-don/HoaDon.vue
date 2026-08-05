@@ -359,7 +359,7 @@ onMounted(() => loadOrders());
                         <v-icon start size="16">mdi-close-circle-outline</v-icon>
                         Hủy
                     </v-tab>
-                    <v-tab :value="6" class="text-none px-2 tab-item">
+                    <v-tab v-if="false" :value="6" class="text-none px-2 tab-item">
                         <v-icon start size="16">mdi-cash-refund</v-icon>
                         Hoàn đơn
                     </v-tab>

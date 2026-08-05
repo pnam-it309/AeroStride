@@ -48,7 +48,7 @@ const INVOICE_STATUS_FILTER_OPTIONS = [
     { title: 'Đang giao', value: 3 },
     { title: 'Đã hoàn thành', value: 4 },
     { title: 'Hủy', value: 5 },
-    { title: 'Hoàn đơn', value: 6 }
+    // { title: 'Hoàn đơn', value: 6 }
 ];
 
 const invoiceHistoryTableHeaders = [

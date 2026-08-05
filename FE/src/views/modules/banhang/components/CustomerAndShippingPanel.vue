@@ -14,9 +14,9 @@
             </div>
 
             <!-- Customer Search Field & Clear Button -->
-            <div class="position-relative flex-grow-1 d-flex align-center gap-2" style="max-width: 260px;">
+            <div class="position-relative d-flex align-center gap-1.5" style="max-width: 190px; width: 100%;">
                 <v-text-field v-model="customerSearch"
-                    placeholder="Tìm khách hàng (SĐT, Tên...)" variant="outlined"
+                    placeholder="Tìm khách (SĐT, Tên...)" variant="outlined"
                     density="compact" hide-details prepend-inner-icon="mdi-magnify"
                     class="dim-input-field bg-slate-50 flex-grow-1" @focus="showCustomerSuggestions = true"
                     autocomplete="off" />
@@ -29,8 +29,8 @@
                 </v-btn>
 
                 <div v-if="showCustomerSuggestions && customerSearch.length > 0"
-                    class="suggestion-popover overflow-y-auto w-100"
-                    style="max-height: 250px; z-index: 100; top: calc(100% + 4px);"
+                    class="suggestion-popover overflow-y-auto"
+                    style="max-height: 250px; z-index: 100; top: calc(100% + 4px); right: 0; min-width: 220px; max-width: 250px;"
                     v-click-outside="() => showCustomerSuggestions = false">
                     <div v-if="customerResults.length > 0" class="pa-1 d-flex flex-column gap-1">
                         <div v-for="c in customerResults" :key="c.id"

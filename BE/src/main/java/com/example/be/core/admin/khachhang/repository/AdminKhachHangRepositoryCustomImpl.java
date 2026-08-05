@@ -129,7 +129,7 @@ public class AdminKhachHangRepositoryCustomImpl implements AdminKhachHangReposit
         }
 
         // Build main query from shared fragments
-        String jpql = SELECT_CLAUSE + FROM_CLAUSE + where + GROUP_BY_CLAUSE + " ORDER BY kh.ngayTao DESC";
+        String jpql = SELECT_CLAUSE + FROM_CLAUSE + where + GROUP_BY_CLAUSE + " ORDER BY kh.ngayTao DESC, kh.id DESC";
 
         TypedQuery<AdminKhachHangResponse> query = entityManager.createQuery(jpql, AdminKhachHangResponse.class);
         TypedQuery<Long> countQuery = entityManager.createQuery(countJpql.toString(), Long.class);

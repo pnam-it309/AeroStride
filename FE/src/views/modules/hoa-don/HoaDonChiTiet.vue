@@ -482,7 +482,7 @@ const allowedStatuses = computed(() => {
         { title: 'Đang giao hàng', value: 'DANG_GIAO' },
         { title: 'Hoàn thành', value: 'HOAN_THANH' },
         { title: 'Đã hủy', value: 'DA_HUY' },
-        { title: 'Hoàn đơn', value: 'HOAN_DON' }
+        // { title: 'Hoàn đơn', value: 'HOAN_DON' }
     ];
 
     if (!current) return allItems;

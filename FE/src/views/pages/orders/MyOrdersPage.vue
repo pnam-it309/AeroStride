@@ -209,14 +209,24 @@ const goToDetail = (id) => {
                     Nhập mã đơn hàng hoặc số điện thoại (không nhất thiết phải cả hai) để tra cứu trạng thái đơn hàng của bạn.
                 </p>
                 <v-form @submit.prevent="handleTrackOrder" class="mx-auto" style="max-width: 500px;">
-                    <v-text-field v-model="trackingForm.maHoaDon" label="Mã đơn hàng (VD: HD...)"
-                        placeholder="Nhập mã đơn hàng"
-                        variant="outlined" density="comfortable" class="mb-4" hide-details="auto"
-                        prepend-inner-icon="mdi-barcode" />
-                    <v-text-field v-model="trackingForm.soDienThoai" label="Số điện thoại người nhận"
-                        placeholder="Nhập số điện thoại"
-                        variant="outlined" density="comfortable" class="mb-6" hide-details="auto"
-                        prepend-inner-icon="mdi-phone-outline" />
+                    <v-text-field 
+                        v-model="trackingForm.maHoaDon" 
+                        label="Mã đơn hàng (VD: HD...)"
+                        variant="outlined" 
+                        density="comfortable" 
+                        class="mb-4" 
+                        hide-details="auto"
+                        prepend-inner-icon="mdi-barcode" 
+                    />
+                    <v-text-field 
+                        v-model="trackingForm.soDienThoai" 
+                        label="Số điện thoại người nhận"
+                        variant="outlined" 
+                        density="comfortable" 
+                        class="mb-6" 
+                        hide-details="auto"
+                        prepend-inner-icon="mdi-phone-outline" 
+                    />
                     <v-btn type="submit" size="large" rounded="pill" block class="text-none font-weight-bold"
                         style="background: #1e257c; color: white !important;" :loading="trackingLoading">
                         <v-icon size="20" class="mr-2">mdi-magnify</v-icon>Tra cứu ngay

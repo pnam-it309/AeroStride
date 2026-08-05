@@ -133,7 +133,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
 
         // Ghi lịch sử hủy hóa đơn
         String nguoiThucHienName = SecurityUtils.getCurrentUserEmail()
-                .map(email -> nhanVienRepository.findByEmail(email)
+                .map(email -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email)
                         .map(nv -> nv.getTen() != null ? nv.getTen() : email)
                         .orElse(email))
                 .orElse("Hệ thống");
@@ -459,7 +459,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         }
 
         String nguoiThucHienName = SecurityUtils.getCurrentUserEmail()
-                .map(email -> nhanVienRepository.findByEmail(email)
+                .map(email -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email)
                         .map(nv -> nv.getTen() != null ? nv.getTen() : email)
                         .orElse(email))
                 .orElse("Hệ thống");

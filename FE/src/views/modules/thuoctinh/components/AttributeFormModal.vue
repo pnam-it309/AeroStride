@@ -18,7 +18,11 @@ import { getColorHexByName, getColorNameByHex } from '@/utils/colorDictionary';
 const closeModal = () => emit('update:show', false);
 const handleSave = () => emit('save');
 const updateFormField = (field, value) => {
-    const updatedForm = { ...props.form, [field]: value };
+    let val = value;
+    if (typeof val === 'string' && val.startsWith(' ')) {
+        val = val.trimStart();
+    }
+    const updatedForm = { ...props.form, [field]: val };
 
     // Tự động đồng bộ tên màu và mã hex khi quản lý màu sắc.
     if (props.selectedTab === 'colors') {

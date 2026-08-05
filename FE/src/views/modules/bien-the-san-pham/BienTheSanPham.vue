@@ -744,14 +744,6 @@ onBeforeUnmount(() => {
                 </v-btn>
                 <div class="text-h6 font-weight-bold text-slate-800">{{ selectedProductSummary.title }}</div>
             </div>
-
-            <div class="d-flex ga-3">
-                <v-btn color="primary" variant="flat" class="text-none rounded-lg px-4 font-weight-bold shadow"
-                    @click="openCreateVariantModal" v-if="selectedProductId !== 'ALL'">
-                    <v-icon icon="mdi-plus" class="mr-2" size="20" />
-                    Thêm biến thể mới
-                </v-btn>
-            </div>
         </div>
 
         <div class="filter-shell">

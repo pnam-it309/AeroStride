@@ -314,10 +314,18 @@ const autoCreateAttribute = async (val, field, service, type, label) => {
     }
 };
 
-const hasValue = (value) => value !== null && value !== undefined && value !== '';
+const hasValue = (value) => {
+    if (value === null || value === undefined || value === '') return false;
+    if (typeof value === 'string' && !value.trim()) return false;
+    return true;
+};
 
 const rules = {
-    required: (v) => hasValue(v) || 'Trường này là bắt buộc',
+    required: (v) => {
+        if (v === null || v === undefined || v === '') return 'Trường này là bắt buộc';
+        if (typeof v === 'string' && !v.trim()) return 'Trường này không được chỉ chứa khoảng trắng';
+        return hasValue(v) || 'Trường này là bắt buộc';
+    },
     min0: (v) => Number(v) >= 0 || 'Giá trị phải >= 0'
 };
 
