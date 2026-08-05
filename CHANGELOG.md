@@ -1,3 +1,11 @@
+## [1.32.1](https://github.com/pnam-it309/AeroStride/compare/v1.32.0...v1.32.1) (2026-08-05)
+
+
+### Bug Fixes
+
+* update BE/FE modules, statistics date range and documentation on DUC_FIX ([8ebc891](https://github.com/pnam-it309/AeroStride/commit/8ebc8914955ef3a08106f6cee9339632ee18917e))
+* update invoice details mapper, response and product form on DUC_FIX ([18fdab0](https://github.com/pnam-it309/AeroStride/commit/18fdab0b2dec98a9c675d00cf3bfba01b623953a))
+
 # [1.32.0](https://github.com/pnam-it309/AeroStride/compare/v1.31.2...v1.32.0) (2026-08-04)
 
 
