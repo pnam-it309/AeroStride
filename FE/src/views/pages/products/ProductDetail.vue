@@ -39,6 +39,11 @@ const reviewsLoading = ref(false);
 const ratingCounts = ref({ 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 });
 const selectedFilter = ref('all');
 
+const filteredReviews = computed(() => {
+    if (selectedFilter.value === 'all') return reviews.value;
+    return reviews.value.filter(r => Math.floor(r.diemDanhGia || r.rating || 5) === Number(selectedFilter.value));
+});
+
 // State cho modal đánh giá trực tiếp
 const showReviewModal = ref(false);
 const newReview = ref({ rating: 5, comment: '' });
@@ -65,7 +70,7 @@ const submitDirectReview = async () => {
         const payload = {
             idHoaDon: null,
             idSanPham: product.value.id,
-            idKhachHang: authStore.user?.id,
+            idKhachHang: authStore.user?.id || null,
             diemDanhGia: newReview.value.rating,
             noiDung: newReview.value.comment
         };
@@ -113,22 +118,27 @@ const fetchReviews = async () => {
     reviewsLoading.value = true;
     try {
         const res = await api.get(`/customer/review/product/${route.params.id}`);
-        if (res.data?.success && res.data.data) {
-            reviews.value = res.data.data.content || [];
-            totalReviews.value = res.data.data.totalElements || 0;
+        const data = res.data?.data || res.data;
+        if (data) {
+            const list = data.content || (Array.isArray(data) ? data : []);
+            reviews.value = list;
+            totalReviews.value = data.totalElements ?? list.length;
 
             // Tính toán breakdown
             const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
             let sum = 0;
 
-            if (reviews.value.length > 0) {
-                reviews.value.forEach(r => {
-                    if (r.rating >= 1 && r.rating <= 5) {
-                        counts[Math.floor(r.rating)]++;
+            if (list.length > 0) {
+                list.forEach(r => {
+                    const score = Number(r.diemDanhGia || r.rating || 5);
+                    if (score >= 1 && score <= 5) {
+                        counts[Math.floor(score)] = (counts[Math.floor(score)] || 0) + 1;
                     }
-                    sum += r.rating;
+                    sum += score;
                 });
-                averageRating.value = (sum / reviews.value.length).toFixed(1);
+                averageRating.value = (sum / list.length).toFixed(1);
+            } else {
+                averageRating.value = 0;
             }
             ratingCounts.value = counts;
         }
@@ -138,6 +148,7 @@ const fetchReviews = async () => {
         reviewsLoading.value = false;
     }
 };
+
 
 const { setProductSeo } = useSeoMeta();
 
@@ -878,22 +889,38 @@ const toggleFavorite = () => {
                     </v-card>
 
                     <v-row>
-                        <v-col v-for="review in reviews" :key="review.id" cols="12" md="6">
-                            <v-card variant="outlined" class="pa-4 rounded-xl border-grey-lighten-2 h-100">
+                        <v-col v-for="review in filteredReviews" :key="review.id" cols="12" md="6">
+                            <v-card variant="outlined" class="pa-4 rounded-xl border-grey-lighten-2 h-100 bg-white elevation-1">
                                 <div class="d-flex align-center mb-3">
-                                    <v-avatar color="grey-lighten-3" size="40" class="mr-3 border border-grey-lighten-2">
-                                        <v-img :src="review.avatarKhachHang || 'https://i.pinimg.com/736x/c0/74/9b/c0749b7cc401421662ae901ec8f9f660.jpg'" alt="avatar" cover></v-img>
+                                    <v-avatar color="grey-lighten-3" size="44" class="mr-3 border border-grey-lighten-2">
+                                        <v-img :src="review.khachHang?.anhDaiDien || review.avatarKhachHang || 'https://i.pinimg.com/736x/c0/74/9b/c0749b7cc401421662ae901ec8f9f660.jpg'" alt="avatar" cover></v-img>
                                     </v-avatar>
-                                    <div>
-                                        <div class="font-weight-medium text-grey-darken-4">{{
-                                            review.tenKhachHang || 'Khách hàng ẩn danh' }}</div>
-                                        <div class="text-caption text-grey">{{ new
-                                            Date(review.ngayTao).toLocaleDateString('vi-VN') }}</div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-center justify-space-between mb-1">
+                                            <div class="font-weight-bold text-slate-900">
+                                                {{ review.khachHang?.ten || review.tenKhachHang || 'Khách hàng AeroStride' }}
+                                            </div>
+                                            <span class="text-caption text-grey-darken-1 font-weight-medium">
+                                                {{ review.ngayTao ? new Date(review.ngayTao).toLocaleDateString('vi-VN') : '' }}
+                                            </span>
+                                        </div>
+                                        <v-rating
+                                            :model-value="Number(review.diemDanhGia || review.rating || 5)"
+                                            color="amber-darken-2"
+                                            active-color="amber-darken-2"
+                                            density="compact"
+                                            size="small"
+                                            readonly
+                                        ></v-rating>
                                     </div>
+                                </div>
+                                <div class="text-body-2 text-grey-darken-3 mt-2 px-1 font-weight-medium" style="line-height: 1.6;">
+                                    {{ review.noiDung || review.comment || 'Khách hàng không để lại bình luận chi tiết.' }}
                                 </div>
                             </v-card>
                         </v-col>
                     </v-row>
+
                 </div>
 
                 <div v-else

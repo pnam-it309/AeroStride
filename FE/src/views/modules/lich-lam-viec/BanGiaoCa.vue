@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
+import { AdminTable } from '@/components/common';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/ui';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
@@ -241,16 +242,16 @@ const handleChotCa = async () => {
 
 // Table headers for history
 const historyHeaders = [
-    { title: 'Mã Ca', key: 'id', align: 'center' },
-    { title: 'Nhân viên mở', key: 'nhanVienTen' },
-    { title: 'Thời gian mở ca', key: 'thoiGianMoCa' },
-    { title: 'Thời gian chốt ca', key: 'thoiGianChotCa' },
-    { title: 'Tiền đầu ca', key: 'tienBanDau', align: 'end' },
-    { title: 'Doanh thu', key: 'tongDoanhThu', align: 'end' },
-    { title: 'Tiền chốt thực tế', key: 'tienThucTe', align: 'end' },
-    { title: 'Chênh lệch', key: 'chenhLech', align: 'end' },
-    { title: 'Nhân viên nhận ca', key: 'nhanVienNhanCaTen' },
-    { title: 'Trạng thái', key: 'trangThai', align: 'center' }
+    { text: 'Mã Ca', align: 'center', width: '80px' },
+    { text: 'Nhân viên mở', align: 'start' },
+    { text: 'Thời gian mở ca', align: 'center' },
+    { text: 'Thời gian chốt ca', align: 'center' },
+    { text: 'Tiền đầu ca', align: 'end' },
+    { text: 'Doanh thu', align: 'end' },
+    { text: 'Tiền chốt thực tế', align: 'end' },
+    { text: 'Chênh lệch', align: 'end' },
+    { text: 'Nhân viên nhận ca', align: 'start' },
+    { text: 'Trạng thái', align: 'center' }
 ];
 
 const getStatusBadge = (status) => {
@@ -584,50 +585,41 @@ const getStatusBadge = (status) => {
         </v-row>
 
         <!-- LỊCH SỬ BÀN GIAO CA -->
-        <v-card class="rounded-xl border elevation-2 bg-white">
-            <v-card-title class="pa-4 border-b font-weight-bold d-flex align-center justify-space-between">
-                <div class="d-flex align-center">
-                    <HistoryIcon class="text-primary mr-2" size="24" />
-                    <span>Lịch Sử Bàn Giao Ca Gần Đây</span>
-                </div>
+        <AdminTable
+            title="Lịch Sử Bàn Giao Ca Gần Đây"
+            :headers="historyHeaders"
+            :items="listGiaoCaHistory"
+            :loading="loading"
+            :show-add-button="false"
+            class="rounded-xl border elevation-2 bg-white"
+        >
+            <template #extra-actions>
                 <v-btn color="primary" variant="tonal" size="small" prepend-icon="mdi-refresh" @click="fetchHistory">Tải lại</v-btn>
-            </card-title>
+            </template>
+            <template #row="{ item }">
+                <tr class="data-row">
+                    <td class="data-cell text-center">#{{ item.id }}</td>
+                    <td class="data-cell font-weight-medium">{{ item.nhanVienTen || 'N/A' }}</td>
+                    <td class="data-cell text-center text-slate-500">{{ formatDateTime(item.thoiGianMoCa) }}</td>
+                    <td class="data-cell text-center text-slate-500">{{ formatDateTime(item.thoiGianChotCa) }}</td>
+                    <td class="data-cell text-right">{{ formatCurrency(item.tienBanDau) }}</td>
+                    <td class="data-cell text-right text-success font-weight-bold">{{ formatCurrency(item.tongDoanhThu) }}</td>
+                    <td class="data-cell text-right">{{ formatCurrency(item.tienThucTe) }}</td>
+                    <td class="data-cell text-right">
+                        <span :class="['font-weight-bold', (item.tienThucTe - (item.tienBanDau + item.tongDoanhThu)) < 0 ? 'text-error' : 'text-success']">
+                            {{ formatCurrency(item.tienThucTe - (item.tienBanDau + item.tongDoanhThu)) }}
+                        </span>
+                    </td>
+                    <td class="data-cell font-weight-medium">{{ item.nhanVienNhanCaTen || 'Chưa bàn giao' }}</td>
+                    <td class="data-cell text-center">
+                        <v-chip size="small" :color="getStatusBadge(item.trangThai).color" class="font-weight-bold" variant="flat">
+                            {{ getStatusBadge(item.trangThai).label }}
+                        </v-chip>
+                    </td>
+                </tr>
+            </template>
+        </AdminTable>
 
-            <v-data-table
-                :headers="historyHeaders"
-                :items="listGiaoCaHistory"
-                :loading="loading"
-                class="elevation-0 custom-table"
-                hover
-                density="comfortable"
-            >
-                <template v-slot:item.thoiGianMoCa="{ item }">
-                    {{ formatDateTime(item.thoiGianMoCa) }}
-                </template>
-                <template v-slot:item.thoiGianChotCa="{ item }">
-                    {{ formatDateTime(item.thoiGianChotCa) }}
-                </template>
-                <template v-slot:item.tienBanDau="{ item }">
-                    {{ formatCurrency(item.tienBanDau) }}
-                </template>
-                <template v-slot:item.tongDoanhThu="{ item }">
-                    <span class="text-success font-weight-bold">{{ formatCurrency(item.tongDoanhThu) }}</span>
-                </template>
-                <template v-slot:item.tienThucTe="{ item }">
-                    {{ formatCurrency(item.tienThucTe) }}
-                </template>
-                <template v-slot:item.chenhLech="{ item }">
-                    <span :class="['font-weight-bold', (item.tienThucTe - (item.tienBanDau + item.tongDoanhThu)) < 0 ? 'text-error' : 'text-success']">
-                        {{ formatCurrency(item.tienThucTe - (item.tienBanDau + item.tongDoanhThu)) }}
-                    </span>
-                </template>
-                <template v-slot:item.trangThai="{ item }">
-                    <v-chip size="small" :color="getStatusBadge(item.trangThai).color" class="font-weight-bold" variant="flat">
-                        {{ getStatusBadge(item.trangThai).label }}
-                    </v-chip>
-                </template>
-            </v-data-table>
-        </v-card>
 
         <!-- MODAL ĐẾM TIỀN MỆNH GIÁ -->
         <v-dialog v-model="showCashCounterModal" max-width="600" persistent>

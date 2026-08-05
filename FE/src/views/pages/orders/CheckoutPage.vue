@@ -478,6 +478,120 @@ const handleCheckout = async () => {
     }
 };
 
+const userAddresses = ref([]);
+const showAddressSelectorModal = ref(false);
+const showNewAddressModal = ref(false);
+const newAddressLoading = ref(false);
+
+const newAddressForm = ref({
+    tenNguoiNhan: '',
+    sdtNguoiNhan: '',
+    tinhThanh: null,
+    quanHuyen: null,
+    phuongXa: null,
+    diaChiChiTiet: '',
+    laMacDinh: false
+});
+
+const fetchUserAddresses = async () => {
+    if (authStore.isLoggedIn) {
+        try {
+            const res = await dichVuKhachHang.layDanhSachDiaChi();
+            const list = res.data || res;
+            if (Array.isArray(list)) {
+                userAddresses.value = list;
+            }
+        } catch (e) {
+            console.error('Không thể lấy sổ địa chỉ:', e);
+        }
+    }
+};
+
+const formatFullAddressString = (addr) => {
+    if (!addr) return '';
+    const parts = [addr.diaChiChiTiet, addr.phuongXa, addr.thanhPho, addr.tinh].filter(Boolean);
+    return parts.join(', ');
+};
+
+const applySavedAddress = async (addr) => {
+    shippingInfo.value.isInitializing = true;
+    shippingInfo.value.tenNguoiNhan = addr.tenNguoiNhan || shippingInfo.value.tenNguoiNhan;
+    shippingInfo.value.soDienThoai = addr.sdtNguoiNhan || shippingInfo.value.soDienThoai;
+    shippingInfo.value.diaChi = addr.diaChiChiTiet || '';
+
+    if (addr.tinh) {
+        await fetchProvinces();
+        const p = provinces.value.find(x => cleanName(x.name) === cleanName(addr.tinh) || String(x.code) === String(addr.tinh));
+        if (p) {
+            shippingInfo.value.tinhThanh = p.code;
+            await fetchDistricts(p.code);
+            const d = districts.value.find(x => cleanName(x.name) === cleanName(addr.thanhPho) || String(x.code) === String(addr.thanhPho));
+            if (d) {
+                shippingInfo.value.quanHuyen = d.code;
+                await fetchWards(d.code);
+                const w = wards.value.find(x => cleanName(x.name) === cleanName(addr.phuongXa) || String(x.code) === String(addr.phuongXa));
+                if (w) {
+                    shippingInfo.value.phuongXa = w.code;
+                }
+            }
+        }
+    }
+    setTimeout(() => { shippingInfo.value.isInitializing = false; }, 400);
+    showAddressSelectorModal.value = false;
+};
+
+const openAddAddressModal = () => {
+    newAddressForm.value = {
+        tenNguoiNhan: shippingInfo.value.tenNguoiNhan || '',
+        sdtNguoiNhan: shippingInfo.value.soDienThoai || '',
+        tinhThanh: null,
+        quanHuyen: null,
+        phuongXa: null,
+        diaChiChiTiet: '',
+        laMacDinh: false
+    };
+    showNewAddressModal.value = true;
+};
+
+const handleSaveNewAddress = async () => {
+    if (!newAddressForm.value.tenNguoiNhan || !newAddressForm.value.sdtNguoiNhan || 
+        !newAddressForm.value.tinhThanh || !newAddressForm.value.quanHuyen || 
+        !newAddressForm.value.phuongXa || !newAddressForm.value.diaChiChiTiet) {
+        alert('Vui lòng điền đầy đủ thông tin địa chỉ mới');
+        return;
+    }
+
+    const p = provinces.value.find(x => String(x.code) === String(newAddressForm.value.tinhThanh));
+    const d = districts.value.find(x => String(x.code) === String(newAddressForm.value.quanHuyen));
+    const w = wards.value.find(x => String(x.code) === String(newAddressForm.value.phuongXa));
+
+    newAddressLoading.value = true;
+    try {
+        const payload = {
+            tenNguoiNhan: newAddressForm.value.tenNguoiNhan,
+            sdtNguoiNhan: newAddressForm.value.sdtNguoiNhan,
+            tinh: p ? p.name : '',
+            thanhPho: d ? d.name : '',
+            phuongXa: w ? w.name : '',
+            diaChiChiTiet: newAddressForm.value.diaChiChiTiet,
+            laMacDinh: newAddressForm.value.laMacDinh
+        };
+
+        const res = await dichVuKhachHang.themDiaChiMoi(payload);
+        const newAddr = res.data || res;
+        if (newAddr) {
+            await fetchUserAddresses();
+            await applySavedAddress(newAddr);
+            showNewAddressModal.value = false;
+        }
+    } catch (e) {
+        console.error('Lỗi khi thêm địa chỉ:', e);
+        alert(e.response?.data?.message || 'Không thể thêm địa chỉ mới');
+    } finally {
+        newAddressLoading.value = false;
+    }
+};
+
 onMounted(async () => {
     if (cartStore.isEmpty) {
         router.push(PATH.SHOES);
@@ -487,8 +601,10 @@ onMounted(async () => {
     fetchProvinces();
     fetchShippingConfig();
     await fetchUserProfile();
+    await fetchUserAddresses();
     fetchVouchers();
 });
+
 
 onUnmounted(() => {
     closeVnPayDialog();
@@ -527,15 +643,41 @@ onUnmounted(() => {
                     <!-- Shipping Info -->
                     <div class="section-block mb-6">
                         <div class="pa-8">
-                            <div class="d-flex align-center mb-6">
-                                <div class="step-number mr-4 font-weight-bold">
-                                    <v-icon color="white">mdi-map-marker-outline</v-icon>
+                            <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-6">
+                                <div class="d-flex align-center">
+                                    <div class="step-number mr-4 font-weight-bold">
+                                        <v-icon color="white">mdi-map-marker-outline</v-icon>
+                                    </div>
+                                    <div>
+                                        <h2 class="text-h5 font-weight-bold mb-1">Thông tin giao hàng</h2>
+                                        <p class="text-caption text-grey mb-0">Nhập địa chỉ nơi bạn muốn nhận hàng</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h2 class="text-h5 font-weight-bold mb-1">Thông tin giao hàng</h2>
-                                    <p class="text-caption text-grey mb-0">Nhập địa chỉ nơi bạn muốn nhận hàng</p>
+                                <div v-if="authStore.isLoggedIn" class="d-flex flex-wrap ga-2">
+                                    <v-btn
+                                        v-if="userAddresses.length > 0"
+                                        variant="tonal"
+                                        size="small"
+                                        color="#1e257c"
+                                        class="rounded-pill text-none font-weight-bold"
+                                        @click="showAddressSelectorModal = true"
+                                    >
+                                        <v-icon class="mr-1" size="16">mdi-book-account-outline</v-icon>
+                                        Chọn từ sổ địa chỉ ({{ userAddresses.length }})
+                                    </v-btn>
+                                    <v-btn
+                                        variant="outlined"
+                                        size="small"
+                                        color="#1e257c"
+                                        class="rounded-pill text-none font-weight-bold"
+                                        @click="openAddAddressModal"
+                                    >
+                                        <v-icon class="mr-1" size="16">mdi-plus-circle-outline</v-icon>
+                                        + Thêm địa chỉ mới
+                                    </v-btn>
                                 </div>
                             </div>
+
 
                             <v-row>
                                 <v-col cols="12" sm="6">
@@ -1020,9 +1162,172 @@ onUnmounted(() => {
             </v-card>
         </v-dialog>
 
+        <!-- Address Selector Modal -->
+        <v-dialog v-model="showAddressSelectorModal" max-width="650">
+            <v-card class="rounded-xl overflow-hidden">
+                <v-card-title class="d-flex align-center py-4 px-6 bg-indigo-darken-4 text-white" style="background: #1e257c;">
+                    <v-icon icon="mdi-book-account-outline" class="mr-3" color="white"></v-icon>
+                    Sổ địa chỉ đã lưu
+                    <v-spacer></v-spacer>
+                    <v-btn icon="mdi-close" variant="text" color="white" density="compact" @click="showAddressSelectorModal = false"></v-btn>
+                </v-card-title>
+
+                <v-card-text class="pa-6">
+                    <div v-if="userAddresses.length === 0" class="text-center py-8">
+                        <v-icon size="48" color="grey">mdi-map-marker-off-outline</v-icon>
+                        <p class="text-body-1 text-grey mt-2">Bạn chưa lưu địa chỉ nào trong sổ địa chỉ</p>
+                        <v-btn style="background: #1e257c; color: white;" class="rounded-pill mt-2 font-weight-bold" @click="showAddressSelectorModal = false; openAddAddressModal();">
+                            + Thêm địa chỉ mới ngay
+                        </v-btn>
+                    </div>
+                    <div v-else class="d-flex flex-column ga-3">
+                        <v-card
+                            v-for="addr in userAddresses"
+                            :key="addr.id"
+                            variant="outlined"
+                            class="pa-4 rounded-lg cursor-pointer"
+                            style="border: 1.5px solid #e2e8f0; transition: all 0.2s ease;"
+                            @click="applySavedAddress(addr)"
+                        >
+                            <div class="d-flex align-center justify-space-between mb-1">
+                                <div class="d-flex align-center">
+                                    <span class="font-weight-bold text-subtitle-1 text-slate-900 mr-2">{{ addr.tenNguoiNhan }}</span>
+                                    <span class="text-body-2 text-grey-darken-1">({{ addr.sdtNguoiNhan }})</span>
+                                </div>
+                                <v-chip v-if="addr.laMacDinh" color="amber-darken-3" size="x-small" variant="flat" class="font-weight-bold">
+                                    Mặc định
+                                </v-chip>
+                            </div>
+                            <p class="text-body-2 text-grey-darken-3 mb-0">
+                                <v-icon size="16" color="#1e257c" class="mr-1">mdi-map-marker</v-icon>
+                                {{ formatFullAddressString(addr) }}
+                            </p>
+                        </v-card>
+                    </div>
+                </v-card-text>
+
+                <v-card-actions class="pa-4 bg-grey-lighten-4 d-flex justify-space-between">
+                    <v-btn variant="text" class="text-none font-weight-bold" style="color: #1e257c;" @click="showAddressSelectorModal = false; openAddAddressModal();">
+                        + Thêm địa chỉ mới
+                    </v-btn>
+                    <v-btn variant="outlined" class="text-none font-weight-bold rounded-pill" @click="showAddressSelectorModal = false">
+                        Đóng
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
+        <!-- Quick Add Address Modal -->
+        <v-dialog v-model="showNewAddressModal" max-width="600" persistent>
+            <v-card class="rounded-xl overflow-hidden">
+                <v-card-title class="d-flex align-center py-4 px-6 text-white" style="background: #1e257c;">
+                    <v-icon icon="mdi-map-marker-plus-outline" class="mr-3" color="white"></v-icon>
+                    Thêm nhanh địa chỉ giao hàng mới
+                    <v-spacer></v-spacer>
+                    <v-btn icon="mdi-close" variant="text" color="white" density="compact" :disabled="newAddressLoading" @click="showNewAddressModal = false"></v-btn>
+                </v-card-title>
+
+                <v-card-text class="pa-6">
+                    <v-row dense>
+                        <v-col cols="12" sm="6">
+                            <v-text-field
+                                v-model="newAddressForm.tenNguoiNhan"
+                                label="Tên người nhận *"
+                                variant="outlined"
+                                density="comfortable"
+                                prepend-inner-icon="mdi-account-outline"
+                            ></v-text-field>
+                        </v-col>
+                        <v-col cols="12" sm="6">
+                            <v-text-field
+                                v-model="newAddressForm.sdtNguoiNhan"
+                                label="Số điện thoại *"
+                                variant="outlined"
+                                density="comfortable"
+                                prepend-inner-icon="mdi-phone-outline"
+                            ></v-text-field>
+                        </v-col>
+
+                        <v-col cols="12" sm="4">
+                            <v-autocomplete
+                                v-model="newAddressForm.tinhThanh"
+                                :items="provinces"
+                                item-title="name"
+                                item-value="code"
+                                label="Tỉnh/Thành phố *"
+                                variant="outlined"
+                                density="comfortable"
+                                @update:model-value="val => { newAddressForm.quanHuyen = null; newAddressForm.phuongXa = null; if(val) fetchDistricts(val); }"
+                            ></v-autocomplete>
+                        </v-col>
+                        <v-col cols="12" sm="4">
+                            <v-autocomplete
+                                v-model="newAddressForm.quanHuyen"
+                                :items="districts"
+                                item-title="name"
+                                item-value="code"
+                                label="Quận/Huyện *"
+                                variant="outlined"
+                                density="comfortable"
+                                :disabled="!newAddressForm.tinhThanh"
+                                @update:model-value="val => { newAddressForm.phuongXa = null; if(val) fetchWards(val); }"
+                            ></v-autocomplete>
+                        </v-col>
+                        <v-col cols="12" sm="4">
+                            <v-autocomplete
+                                v-model="newAddressForm.phuongXa"
+                                :items="wards"
+                                item-title="name"
+                                item-value="code"
+                                label="Phường/Xã *"
+                                variant="outlined"
+                                density="comfortable"
+                                :disabled="!newAddressForm.quanHuyen"
+                            ></v-autocomplete>
+                        </v-col>
+
+                        <v-col cols="12">
+                            <v-text-field
+                                v-model="newAddressForm.diaChiChiTiet"
+                                label="Địa chỉ chi tiết (Số nhà, đường...) *"
+                                variant="outlined"
+                                density="comfortable"
+                                prepend-inner-icon="mdi-home-city-outline"
+                            ></v-text-field>
+                        </v-col>
+
+                        <v-col cols="12">
+                            <v-checkbox
+                                v-model="newAddressForm.laMacDinh"
+                                label="Đặt làm địa chỉ mặc định"
+                                color="#1e257c"
+                                hide-details
+                            ></v-checkbox>
+                        </v-col>
+                    </v-row>
+                </v-card-text>
+
+                <v-card-actions class="pa-4 bg-grey-lighten-4 d-flex justify-end ga-2">
+                    <v-btn variant="text" class="text-none font-weight-bold" :disabled="newAddressLoading" @click="showNewAddressModal = false">
+                        Hủy
+                    </v-btn>
+                    <v-btn
+                        style="background: #1e257c; color: white;"
+                        variant="flat"
+                        class="text-none font-weight-bold px-6 rounded-pill"
+                        :loading="newAddressLoading"
+                        @click="handleSaveNewAddress"
+                    >
+                        Lưu & Áp dụng
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
+
         <CustomerChat />
     </div>
 </template>
+
 
 <style scoped>
 :deep(.v-field) {

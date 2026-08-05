@@ -117,4 +117,59 @@ public class CustomerProfileController {
         khachHangRepository.save(khachHang);
         return ResponseEntity.ok(ApiResponse.success("Đổi mật khẩu thành công"));
     }
+
+    @GetMapping("/addresses")
+    @PreAuthorize("hasRole('KHACH_HANG')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<ApiResponse<java.util.List<DiaChi>>> getMyAddresses(Authentication authentication) {
+        String username = authentication.getName();
+        KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin khách hàng"));
+
+        java.util.List<DiaChi> diaChis = diaChiRepository.findByKhachHangId(khachHang.getId());
+        return ResponseEntity.ok(ApiResponse.success(diaChis));
+    }
+
+    @PostMapping("/addresses")
+    @PreAuthorize("hasRole('KHACH_HANG')")
+    @Transactional
+    public ResponseEntity<ApiResponse<DiaChi>> addAddress(
+            @RequestBody com.example.be.core.customer.profile.model.request.CustomerAddressRequest request,
+            Authentication authentication) {
+        String username = authentication.getName();
+        KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin khách hàng"));
+
+        java.util.List<DiaChi> existingList = diaChiRepository.findByKhachHangId(khachHang.getId());
+        boolean makeDefault = Boolean.TRUE.equals(request.getLaMacDinh()) || existingList.isEmpty();
+
+        if (makeDefault) {
+            existingList.forEach(dc -> {
+                dc.setLaMacDinh(false);
+                diaChiRepository.save(dc);
+            });
+        }
+
+        DiaChi newAddress = DiaChi.builder()
+                .maDiaChi("DC" + System.currentTimeMillis())
+                .tenNguoiNhan(request.getTenNguoiNhan())
+                .sdtNguoiNhan(request.getSdtNguoiNhan())
+                .tinh(request.getTinh())
+                .thanhPho(request.getThanhPho())
+                .phuongXa(request.getPhuongXa())
+                .diaChiChiTiet(request.getDiaChiChiTiet())
+                .khachHang(khachHang)
+                .laMacDinh(makeDefault)
+                .build();
+
+        DiaChi saved = diaChiRepository.save(newAddress);
+
+        if (makeDefault) {
+            khachHang.setDiaChi(saved);
+            khachHangRepository.save(khachHang);
+        }
+
+        return ResponseEntity.ok(ApiResponse.success(saved));
+    }
 }
+

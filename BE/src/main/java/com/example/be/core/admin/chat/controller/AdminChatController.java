@@ -75,8 +75,8 @@ public class AdminChatController {
     }
 
     @PostMapping(RoutesConstant.SEND)
-    public ResponseEntity<ApiResponse<Void>> sendMessage(@Valid @RequestBody SendMessageRequest request) {
-        chatService.sendMessage(request.getConversationId(), request.getText(), request.getSender(), null);
+    public ResponseEntity<ApiResponse<Void>> sendMessage(@RequestBody SendMessageRequest request) {
+        chatService.sendMessage(request.getConversationId(), request.getText(), request.getSender(), null, request.getImageBase64());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 

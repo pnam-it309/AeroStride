@@ -6,11 +6,11 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ReviewRequest {
-    private Long idHoaDon;
-    private Long idSanPham;
-    private Long idKhachHang; // Có thể lấy từ token nhưng tạm truyền từ client
+    private String idHoaDon;
+    private String idSanPham;
+    private String idKhachHang;
     private Integer diemDanhGia;
     private String noiDung;
-    private String hinhAnh; // JSON array string
+    private String hinhAnh;
     private String video;
 }

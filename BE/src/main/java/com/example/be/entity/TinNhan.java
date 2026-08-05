@@ -29,4 +29,7 @@ public class TinNhan extends PrimaryEntity {
     @Column(name = "noi_dung", columnDefinition = "TEXT")
     private String noiDung;
 
+    @Column(name = "hinh_anh", columnDefinition = "TEXT")
+    private String hinhAnh; // URL ảnh đã lưu trên server (sau khi upload từ base64)
+
 }

@@ -26,7 +26,7 @@ public class ReviewController {
 
     @GetMapping("/product/{idSanPham}")
     public ResponseEntity<ApiResponse<Page<DanhGiaSanPham>>> getReviews(
-            @PathVariable Long idSanPham,
+            @PathVariable String idSanPham,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Page<DanhGiaSanPham> reviews = reviewService.getReviewsByProduct(idSanPham, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "ngayTao")));
@@ -35,9 +35,9 @@ public class ReviewController {
 
     @GetMapping("/check-eligibility")
     public ResponseEntity<ApiResponse<Boolean>> checkEligibility(
-            @RequestParam Long idHoaDon,
-            @RequestParam Long idSanPham,
-            @RequestParam Long idKhachHang) {
+            @RequestParam String idHoaDon,
+            @RequestParam String idSanPham,
+            @RequestParam String idKhachHang) {
         boolean eligible = reviewService.checkEligibility(idHoaDon, idSanPham, idKhachHang);
         return ResponseEntity.ok(ApiResponse.success(eligible));
     }

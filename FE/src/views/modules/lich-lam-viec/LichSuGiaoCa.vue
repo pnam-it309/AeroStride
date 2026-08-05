@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
+import { AdminTable } from '@/components/common';
 import { dichVuGiaoCa } from '@/services/admin/dichVuGiaoCa';
 import { useNotifications } from '@/services/notificationService';
 import { useUIStore } from '@/stores/ui';
@@ -12,16 +13,16 @@ const listGiaoCa = ref([]);
 const loading = ref(false);
 
 const headers = [
-    { title: 'Nhân viên', key: 'nhanVienTen' },
-    { title: 'Mã ca', key: 'id' },
-    { title: 'Trạng thái', key: 'trangThai' },
-    { title: 'Thời gian mở', key: 'thoiGianMoCa' },
-    { title: 'Thời gian chốt', key: 'thoiGianChotCa' },
-    { title: 'Tiền mặt đầu ca', key: 'tienBanDau', align: 'end' },
-    { title: 'Doanh thu ca', key: 'tongDoanhThu', align: 'end' },
-    { title: 'Tiền mặt chốt ca', key: 'tienThucTe', align: 'end' },
-    { title: 'Lệch', key: 'chenhLech', align: 'end' },
-    { title: 'Người nhận ca', key: 'nhanVienNhanCaTen' },
+    { text: 'Mã ca', align: 'center', width: '80px' },
+    { text: 'Nhân viên mở', align: 'start' },
+    { text: 'Trạng thái', align: 'center' },
+    { text: 'Thời gian mở', align: 'center' },
+    { text: 'Thời gian chốt', align: 'center' },
+    { text: 'Tiền mặt đầu ca', align: 'end' },
+    { text: 'Doanh thu ca', align: 'end' },
+    { text: 'Tiền mặt chốt ca', align: 'end' },
+    { text: 'Chênh lệch', align: 'end' },
+    { text: 'Người nhận ca', align: 'start' }
 ];
 
 const fetchListGiaoCa = async () => {
@@ -78,70 +79,41 @@ const getChenhLechColor = (val) => {
 
 <template>
     <v-container fluid class="pa-4">
-        <v-card class="rounded-lg elevation-1 mb-4 border">
-            <v-card-title class="pa-4 border-b font-weight-bold d-flex align-center">
-                <v-icon color="primary" class="mr-2">mdi-history</v-icon>
-                Lịch Sử Giao Ca
-                <v-spacer></v-spacer>
-                <v-btn color="primary" variant="tonal" prepend-icon="mdi-refresh" @click="fetchListGiaoCa" :loading="loading">Làm mới</v-btn>
-            </v-card-title>
-
-            <v-data-table
-                :headers="headers"
-                :items="listGiaoCa"
-                :loading="loading"
-                class="elevation-0 rounded-lg custom-table"
-                hover
-                density="comfortable"
-            >
-                <template v-slot:item.trangThai="{ item }">
-                    <v-chip size="small" :color="getStatusColor(item.trangThai)" class="font-weight-bold" variant="flat">
-                        {{ getStatusLabel(item.trangThai) }}
-                    </v-chip>
-                </template>
-                <template v-slot:item.thoiGianMoCa="{ item }">
-                    {{ formatDate(item.thoiGianMoCa) }}
-                </template>
-                <template v-slot:item.thoiGianChotCa="{ item }">
-                    {{ formatDate(item.thoiGianChotCa) }}
-                </template>
-                <template v-slot:item.tienBanDau="{ item }">
-                    {{ formatCurrency(item.tienBanDau) }}
-                </template>
-                <template v-slot:item.tongDoanhThu="{ item }">
-                    <span class="text-success font-weight-bold">{{ formatCurrency(item.tongDoanhThu) }}</span>
-                </template>
-                <template v-slot:item.tienThucTe="{ item }">
-                    {{ formatCurrency(item.tienThucTe) }}
-                </template>
-                <template v-slot:item.chenhLech="{ item }">
-                    <span :class="['font-weight-bold', getChenhLechColor(getChenhLech(item))]">
-                        {{ getChenhLech(item) > 0 ? '+' : '' }}{{ formatCurrency(getChenhLech(item)) }}
-                    </span>
-                </template>
-                <template v-slot:item.nhanVienNhanCaTen="{ item }">
-                    {{ item.nhanVienNhanCaTen || '--' }}
-                </template>
-                
-                <template v-slot:no-data>
-                    <div class="pa-5 text-center">
-                        <v-icon size="48" color="grey-lighten-2" class="mb-3">mdi-inbox-outline</v-icon>
-                        <div class="text-grey-darken-1">Không có dữ liệu giao ca</div>
-                    </div>
-                </template>
-            </v-data-table>
-        </v-card>
+        <AdminTable
+            title="Lịch Sử Giao Ca"
+            :headers="headers"
+            :items="listGiaoCa"
+            :loading="loading"
+            :show-add-button="false"
+            class="rounded-lg border elevation-1"
+        >
+            <template #extra-actions>
+                <v-btn color="primary" variant="tonal" prepend-icon="mdi-refresh" @click="fetchListGiaoCa" :loading="loading">
+                    Làm mới
+                </v-btn>
+            </template>
+            <template #row="{ item }">
+                <tr class="data-row">
+                    <td class="data-cell text-center">#{{ item.id }}</td>
+                    <td class="data-cell font-weight-medium">{{ item.nhanVienTen || 'N/A' }}</td>
+                    <td class="data-cell text-center">
+                        <v-chip size="small" :color="getStatusColor(item.trangThai)" class="font-weight-bold" variant="flat">
+                            {{ getStatusLabel(item.trangThai) }}
+                        </v-chip>
+                    </td>
+                    <td class="data-cell text-center text-slate-500">{{ formatDate(item.thoiGianMoCa) }}</td>
+                    <td class="data-cell text-center text-slate-500">{{ formatDate(item.thoiGianChotCa) }}</td>
+                    <td class="data-cell text-right">{{ formatCurrency(item.tienBanDau) }}</td>
+                    <td class="data-cell text-right text-success font-weight-bold">{{ formatCurrency(item.tongDoanhThu) }}</td>
+                    <td class="data-cell text-right">{{ formatCurrency(item.tienThucTe) }}</td>
+                    <td class="data-cell text-right">
+                        <span :class="['font-weight-bold', getChenhLechColor(getChenhLech(item))]">
+                            {{ getChenhLech(item) > 0 ? '+' : '' }}{{ formatCurrency(getChenhLech(item)) }}
+                        </span>
+                    </td>
+                    <td class="data-cell font-weight-medium">{{ item.nhanVienNhanCaTen || '--' }}</td>
+                </tr>
+            </template>
+        </AdminTable>
     </v-container>
 </template>
-
-<style scoped>
-.custom-table :deep(th) {
-    background-color: #f8fafc !important;
-    font-weight: 600 !important;
-    color: #334155 !important;
-    white-space: nowrap;
-}
-.custom-table :deep(td) {
-    border-bottom: 1px solid #f1f5f9;
-}
-</style>

@@ -460,6 +460,11 @@ const submitRating = async () => {
 const skipRating = () => {
     showRatingForm.value = false;
 };
+
+/** Mở ảnh trong tab mới khi click */
+const openChatImage = (url) => {
+    if (url) window.open(url, '_blank');
+};
 </script>
 
 <template>
@@ -556,8 +561,9 @@ const skipRating = () => {
                                 <div v-if="msg.sender === 'staff' && msg.idNhanVien" class="staff-name-label">
                                     {{ msg.idNhanVien }}
                                 </div>
-                                <div v-if="msg.image" class="message-image">
-                                    <img :src="msg.image" alt="Uploaded Image" style="max-width: 100%; border-radius: 8px; margin-bottom: 8px;" />
+                                <!-- Ảnh gửi trực tiếp (local base64 preview) hoặc từ history (imageUrl từ server) -->
+                                <div v-if="msg.image || msg.imageUrl" class="message-image">
+                                    <img :src="msg.image || msg.imageUrl" alt="Uploaded Image" style="max-width: 100%; border-radius: 8px; margin-bottom: 8px; cursor: pointer;" @click="openChatImage(msg.image || msg.imageUrl)" />
                                 </div>
                                 <div v-if="msg.text" class="message-bubble" v-html="marked(msg.text)"></div>
 

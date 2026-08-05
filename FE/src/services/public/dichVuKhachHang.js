@@ -29,5 +29,25 @@ export const dichVuKhachHang = {
         } catch (error) {
             throw error;
         }
+    },
+
+    // Lấy sổ địa chỉ của khách hàng
+    layDanhSachDiaChi: async () => {
+        try {
+            const response = await apiService.get('/customer/profile/addresses');
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    // Thêm nhanh địa chỉ mới
+    themDiaChiMoi: async (data) => {
+        try {
+            const response = await apiService.post('/customer/profile/addresses', data);
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
     }
 };

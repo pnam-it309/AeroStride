@@ -14,7 +14,23 @@ const loading = ref(true);
 const cancelLoading = ref(false);
 const showCancelDialog = ref(false);
 
+import ReviewModal from '@/components/shared/ReviewModal.vue';
+const showReviewModal = ref(false);
+
+const openReviewModal = () => {
+    showReviewModal.value = true;
+};
+
+const handleReviewSuccess = () => {
+    if (typeof fetchOrderDetail === 'function') {
+        fetchOrderDetail();
+    } else {
+        window.location.reload();
+    }
+};
+
 const showEditDialog = ref(false);
+
 const editLoading = ref(false);
 const editForm = ref({ tenNguoiNhan: '', soDienThoaiNguoiNhan: '', diaChiNguoiNhan: '', ghiChu: '' });
 
@@ -262,7 +278,7 @@ onMounted(async () => {
                                 </div>
                             </div>
                         </div>
-                        <div class="text-right">
+                        <div class="text-right d-flex flex-column align-end ga-2">
                             <v-chip
                                 style="background: #1e257c; color: white;"
                                 variant="flat"
@@ -272,7 +288,20 @@ onMounted(async () => {
                                 <v-icon :icon="statusIcon(order.trangThai)" class="mr-2" size="22"></v-icon>
                                 {{ statusLabel(order.trangThai) }}
                             </v-chip>
+                            <v-btn
+                                v-if="order.trangThai === 'HOAN_THANH'"
+                                color="#1e257c"
+                                variant="flat"
+                                size="small"
+                                rounded="pill"
+                                class="font-weight-bold text-none mt-1 shadow-sm"
+                                @click="openReviewModal"
+                            >
+                                <v-icon size="16" class="mr-1">mdi-star-outline</v-icon>
+                                Đánh giá sản phẩm
+                            </v-btn>
                         </div>
+
                     </div>
                 </div>
 
@@ -613,6 +642,12 @@ onMounted(async () => {
 
         
         <CustomerChat />
+
+        <ReviewModal
+            v-model:show="showReviewModal"
+            :order="order"
+            @review-success="handleReviewSuccess"
+        />
     </div>
 </template>
 

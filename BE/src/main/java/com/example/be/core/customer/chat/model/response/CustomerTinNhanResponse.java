@@ -35,4 +35,7 @@ public class CustomerTinNhanResponse {
     
     @JsonProperty("secondStaffId")
     private String idNhanVienNhan;
+
+    @JsonProperty("imageUrl")
+    private String hinhAnh; // URL ảnh đã được lưu (null nếu tin nhắn thường)
 }

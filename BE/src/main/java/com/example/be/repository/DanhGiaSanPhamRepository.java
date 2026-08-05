@@ -11,6 +11,8 @@ import java.util.List;
 @Repository
 public interface DanhGiaSanPhamRepository extends JpaRepository<DanhGiaSanPham, String> {
     
+    Page<DanhGiaSanPham> findBySanPham_Id(String idSanPham, Pageable pageable);
+
     Page<DanhGiaSanPham> findBySanPham_IdAndTrangThai(String idSanPham, DanhGiaSanPham.TrangThaiDanhGia trangThai, Pageable pageable);
     
     List<DanhGiaSanPham> findByKhachHang_Id(String idKhachHang);
@@ -19,4 +21,3 @@ public interface DanhGiaSanPhamRepository extends JpaRepository<DanhGiaSanPham, 
     
     Page<DanhGiaSanPham> findAll(Pageable pageable);
 }
-

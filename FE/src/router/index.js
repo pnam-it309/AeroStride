@@ -178,3 +178,21 @@ router.beforeEach((to, from, next) => {
         next();
     }
 });
+
+// Auto-recovery for dynamic module load / chunk MIME type errors
+router.onError((error, to) => {
+    if (
+        error.message?.includes('Failed to fetch dynamically imported module') ||
+        error.message?.includes('Importing a module script failed') ||
+        error.message?.includes('Expected a JavaScript-or-Wasm module script') ||
+        error.message?.includes('MIME type')
+    ) {
+        console.warn('Lỗi nạp module JS, tự động tái nạp trang:', error);
+        if (to?.fullPath) {
+            window.location.href = to.fullPath;
+        } else {
+            window.location.reload();
+        }
+    }
+});
+

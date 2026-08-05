@@ -31,4 +31,7 @@ public class TinNhanResponse {
     
     @JsonProperty("time")
     private String thoiGian;
+
+    @JsonProperty("imageUrl")
+    private String hinhAnh; // URL ảnh đã được lưu trên server (null nếu tin nhắn thường)
 }

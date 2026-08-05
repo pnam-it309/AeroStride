@@ -473,6 +473,17 @@ const sortedHistoryLogs = computed(() => {
     return logs;
 });
 
+const allHistoryLogs = computed(() => {
+    const logs = Array.isArray(order.value?.listsLichSuHoaDon) ? [...order.value.listsLichSuHoaDon] : [];
+    logs.sort((a, b) => new Date(b.ngayTao || 0) - new Date(a.ngayTao || 0));
+
+    const hasInitial = logs.some(l => l.trangThaiMoi === 'CHO_XAC_NHAN' || l.trangThaiMoi === 0 || l.trangThaiMoi === '0');
+    if (!hasInitial && initialHistoryLog.value) {
+        logs.push(initialHistoryLog.value);
+    }
+    return logs;
+});
+
 const allowedStatuses = computed(() => {
     const current = order.value.trangThai;
     const allItems = [
@@ -481,8 +492,10 @@ const allowedStatuses = computed(() => {
         { title: 'Chờ giao hàng', value: 'CHO_GIAO' },
         { title: 'Đang giao hàng', value: 'DANG_GIAO' },
         { title: 'Hoàn thành', value: 'HOAN_THANH' },
+        { title: 'Giao thất bại', value: 'GIAO_THAT_BAI' },
+        { title: 'Khách không nhận', value: 'KHACH_KHONG_NHAN' },
         { title: 'Đã hủy', value: 'DA_HUY' },
-        // { title: 'Hoàn đơn', value: 'HOAN_DON' }
+        { title: 'Hoàn đơn', value: 'HOAN_DON' }
     ];
 
     if (!current) return allItems;
@@ -498,7 +511,10 @@ const allowedStatuses = computed(() => {
             case 'CHO_GIAO':
                 return item.value === 'DANG_GIAO' || item.value === 'DA_HUY';
             case 'DANG_GIAO':
-                return item.value === 'HOAN_THANH' || item.value === 'HOAN_DON';
+                return item.value === 'HOAN_THANH' || item.value === 'GIAO_THAT_BAI' || item.value === 'KHACH_KHONG_NHAN' || item.value === 'HOAN_DON';
+            case 'GIAO_THAT_BAI':
+            case 'KHACH_KHONG_NHAN':
+                return item.value === 'HOAN_DON' || item.value === 'HOAN_THANH';
             case 'HOAN_THANH':
                 return item.value === 'HOAN_DON';
             case 'DA_HUY':
@@ -508,6 +524,7 @@ const allowedStatuses = computed(() => {
         }
     });
 });
+
 
 // --- Navigation ---
 const goBack = () => {
@@ -609,15 +626,17 @@ const timelineSteps = computed(() => {
     // Exception steps
     const exceptionSteps = [
         { key: 5, label: 'Đã hủy', icon: CircleXIcon, note: 'Đơn hàng bị hủy' },
-        { key: 6, label: 'Hoàn đơn', icon: CircleXIcon, note: 'Đơn hàng đã hoàn trả' }
+        { key: 6, label: 'Hoàn đơn', icon: CircleXIcon, note: 'Đơn hàng đã hoàn trả' },
+        { key: 7, label: 'Giao thất bại', icon: AlertCircleIcon, note: 'Giao hàng không thành công' },
+        { key: 8, label: 'Khách không nhận', icon: CircleXIcon, note: 'Khách từ chối nhận hàng' }
     ];
 
     let steps = [...coreSteps];
     const tsMap = getStatusTimestampMap.value;
     const statusOrdinal = status === null ? -1 : status;
 
-    // Nếu trạng thái hiện tại là Hủy hoặc Hoàn đơn, chúng ta sẽ hiển thị nó là bước cuối cùng hoặc thay thế bước tương ứng
-    if (status === 5 || status === 6) {
+    // Nếu trạng thái hiện tại là Hủy, Hoàn đơn, Giao thất bại, hoặc Khách không nhận
+    if (status >= 5 && status <= 8) {
         const exc = exceptionSteps.find((s) => s.key === status);
         if (exc) {
             steps = [...coreSteps.slice(0, 4), exc]; // Giữ 4 bước đầu, bước 5 là trạng thái đặc biệt
@@ -631,7 +650,7 @@ const timelineSteps = computed(() => {
         .map((step, index) => {
             let state = 'pending';
 
-            if (status === 5 || status === 6) {
+            if (status >= 5 && status <= 8) {
                 if (index < currentActiveIndex) state = 'done';
                 else if (index === currentActiveIndex) state = 'active';
                 else state = 'disabled';
@@ -648,6 +667,7 @@ const timelineSteps = computed(() => {
                 tone: getStatusTone(step.key)
             };
         });
+
 });
 
 const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val || 0);
@@ -1183,11 +1203,7 @@ onMounted(() => {
                                                 class="px-3 rounded-lg font-weight-bold mb-2">
                                                 {{ getPaymentStatusText(pay) }}
                                             </v-chip>
-                                            <div
-                                                class="text-caption text-slate-600 d-flex align-center bg-slate-50 px-2 py-1 rounded">
-                                                <v-icon size="14" class="mr-1">mdi-barcode-scan</v-icon>
-                                                Mã GD: {{ pay.maGiaoDichNgoai || 'Nội bộ' }}
-                                            </div>
+
                                         </div>
                                     </div>
                                 </div>
@@ -1366,23 +1382,7 @@ onMounted(() => {
                             </div>
                         </td>
                     </tr>
-                    <!-- Dòng vàng: cảnh báo đổi giá -->
-                    <tr v-if="isPriceChanged(item)" class="price-warning-row">
-                        <td :colspan="productColumns.length" class="py-2 px-4">
-                            <div class="d-flex align-center justify-space-between flex-wrap ga-2">
-                                <div class="d-flex align-center ga-2 text-amber-darken-4">
-                                    <v-icon size="18" color="amber-darken-3">mdi-alert-outline</v-icon>
-                                    <span>Giá sản phẩm đã thay đổi: từ <b>{{ formatCurrency(item.donGia) }}</b> thành
-                                        <b>{{
-                                            formatCurrency(item.giaHienTai) }}</b></span>
-                                </div>
-                                <v-btn v-if="isOrderEditable" size="x-small" variant="flat" color="amber-darken-2"
-                                    class="rounded-lg text-none font-weight-bold" @click="applyNewPrice(item)">
-                                    Áp dụng giá mới
-                                </v-btn>
-                            </div>
-                        </td>
-                    </tr>
+
                 </template>
                 <template #pagination>
                     <AdminPagination v-model="productPagination.page" :page-size="productPagination.size"
@@ -1396,94 +1396,93 @@ onMounted(() => {
             <div class="mt-4 text-slate-500">Đang tải thông tin hóa đơn...</div>
         </div>
 
-        <!-- History Modal -->
-        <v-dialog v-model="showHistoryModal" max-width="1000">
-            <v-card class="rounded-lg overflow-hidden premium-card mb-0 d-flex flex-column bg-white">
-                <div class="card-title pa-4 border-b d-flex align-center justify-space-between bg-slate-50">
-                    <div class="d-flex align-center">
-                        <v-icon color="primary" class="mr-3">mdi-history</v-icon>
-                        <span class="text-slate-800 font-weight-bold text-h6">Lịch sử đơn hàng</span>
+        <!-- History Modal (Lịch sử biến động đơn hàng) -->
+        <v-dialog v-model="showHistoryModal" max-width="850">
+            <v-card class="rounded-xl overflow-hidden shadow-2xl border-0 bg-white d-flex flex-column">
+                <!-- Header gradient đẳng cấp -->
+                <div class="history-dialog-header px-6 py-5 d-flex align-center justify-space-between text-white">
+                    <div class="d-flex align-center ga-3">
+                        <div class="history-header-icon-wrap">
+                            <v-icon size="24" color="white">mdi-history</v-icon>
+                        </div>
+                        <div>
+                            <h3 class="text-h6 font-weight-bold mb-0 text-white leading-tight">Lịch sử biến động đơn hàng</h3>
+                            <div class="text-caption text-slate-300 opacity-90 mt-1">
+                                Mã đơn: <span class="font-weight-bold text-amber-300">#{{ order.maHoaDon }}</span>
+                                <span class="mx-2">•</span>
+                                <span>{{ allHistoryLogs.length }} lượt ghi nhận</span>
+                            </div>
+                        </div>
                     </div>
-                    <v-btn icon="mdi-close" variant="text" density="comfortable"
+                    <v-btn icon="mdi-close" variant="tonal" color="white" size="small" class="rounded-circle"
                         @click="showHistoryModal = false"></v-btn>
                 </div>
-                <v-card-text class="pa-0 d-flex flex-column flex-grow-1 overflow-hidden">
-                    <!-- Table-style Headers for Timeline -->
-                    <div class="d-flex align-center w-100 px-4 py-2 bg-slate-800 border-b text-body-2 text-white">
-                        <div class="text-center" style="width: 42px;"></div> <!-- Space for timeline dots -->
-                        <div class="text-center" style="width: 110px;">Trạng thái</div>
-                        <div class="text-center flex-grow-1">Mô tả</div>
-                        <div class="text-center" style="width: 150px;">Người thực hiện</div>
-                        <div class="text-center" style="width: 180px;">Thời gian</div>
+
+                <v-card-text class="pa-6 bg-slate-50 history-modal-body">
+                    <div v-if="allHistoryLogs.length === 0" class="text-center py-12 text-slate-400">
+                        <v-icon size="48" color="slate-300" class="mb-2">mdi-text-box-remove-outline</v-icon>
+                        <div class="text-body-1 font-weight-medium">Chưa có dữ liệu lịch sử cho đơn hàng này</div>
                     </div>
 
-                    <div class="history-scroll-container pa-3 flex-grow-1">
-                        <v-timeline side="end" density="compact" line-color="slate-200" class="custom-history-timeline">
-                            <!-- Actual logs from DB -->
-                            <v-timeline-item v-for="(log, idx) in sortedHistoryLogs" :key="log.id || idx"
-                                :dot-color="getStatusInfo(log.trangThaiMoi).color" size="small">
-                                <div class="d-flex align-center w-100 py-0">
-                                    <!-- Column 1: Status -->
-                                    <div style="width: 110px;" class="text-center">
-                                        <v-chip variant="flat"
-                                            :class="['status-chip', getStatusInfo(log.trangThaiMoi).chipClass]">
-                                            {{ getStatusInfo(log.trangThaiMoi).text }}
-                                        </v-chip>
-                                    </div>
-
-                                    <!-- Column 2: Description -->
-                                    <div class="flex-grow-1 text-center">
-                                        <div class="text-body-2 text-slate-700">
-                                            {{ log.ghiChu || 'Cập nhật trạng thái từ hệ thống' }}
-                                        </div>
-                                    </div>
-
-                                    <!-- Column 3: Performer -->
-                                    <div style="width: 150px;" class="text-center">
-                                        <span class="text-body-2 text-slate-600">{{
-                                            formatNguoi(log.nguoiThucHien, order.orderType === 'ONLINE') }}</span>
-                                    </div>
-
-                                    <!-- Column 4: Time -->
-                                    <div style="width: 180px;" class="text-center">
-                                        <span class="text-body-2 text-slate-400" style="white-space: nowrap;">
-                                            {{ formatDate(log.ngayTao) }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </v-timeline-item>
-
-                            <!-- Always show creation as the final step (at bottom) -->
+                    <div v-else class="history-scroll-container">
+                        <v-timeline side="end" density="comfortable" line-color="slate-300" class="enhanced-history-timeline">
                             <v-timeline-item
-                                v-if="!sortedHistoryLogs.some(l => l.trangThaiMoi === 'CHO_XAC_NHAN' || l.trangThaiMoi === 0)"
-                                :dot-color="getStatusInfo(initialHistoryLog.trangThaiMoi).color" size="small">
-                                <div class="d-flex align-center w-100 py-0">
-                                    <!-- Column 1: Status -->
-                                    <div style="width: 110px;" class="text-center">
-                                        <v-chip variant="flat"
-                                            :class="['status-chip', getStatusInfo(initialHistoryLog.trangThaiMoi).chipClass]">
-                                            {{ getStatusInfo(initialHistoryLog.trangThaiMoi).text }}
-                                        </v-chip>
-                                    </div>
+                                v-for="(log, idx) in allHistoryLogs"
+                                :key="log.id || idx"
+                                :dot-color="getStatusTone(log.trangThaiMoi)"
+                                fill-dot
+                                size="small"
+                                class="history-timeline-node"
+                                :style="{ '--delay-idx': idx }"
+                            >
+                                <template #icon>
+                                    <v-icon size="14" color="white">{{ getStatusInfo(log.trangThaiMoi).icon || 'mdi-circle' }}</v-icon>
+                                </template>
 
-                                    <!-- Column 2: Description -->
-                                    <div class="flex-grow-1 text-center">
-                                        <div class="text-body-2 text-slate-700">
-                                            {{ initialHistoryLog.ghiChu }}
+                                <div class="history-item-card pa-4 rounded-xl border bg-white shadow-2xs hover-lift">
+                                    <!-- Card Header: Status Chip & Timestamp -->
+                                    <div class="d-flex align-center justify-space-between flex-wrap ga-2 mb-2">
+                                        <div class="d-flex align-center ga-2">
+                                            <v-chip
+                                                size="small"
+                                                variant="flat"
+                                                :class="['font-weight-bold px-3 shadow-2xs', getStatusInfo(log.trangThaiMoi).chipClass]"
+                                            >
+                                                <v-icon size="14" class="mr-1">{{ getStatusInfo(log.trangThaiMoi).icon || 'mdi-information-outline' }}</v-icon>
+                                                {{ getStatusInfo(log.trangThaiMoi).text }}
+                                            </v-chip>
+                                            <v-chip v-if="idx === 0" size="x-small" color="primary" variant="flat" class="font-weight-bold rounded-pill pulse-badge">
+                                                Mới nhất
+                                            </v-chip>
+                                        </div>
+
+                                        <div class="d-flex align-center text-caption text-slate-500 font-weight-medium bg-slate-100 px-3 py-1 rounded-pill">
+                                            <v-icon size="14" color="slate-400" class="mr-1">mdi-clock-outline</v-icon>
+                                            {{ formatDate(log.ngayTao) }}
                                         </div>
                                     </div>
 
-                                    <!-- Column 3: Performer -->
-                                    <div style="width: 150px;" class="text-center">
-                                        <span class="text-body-2 text-slate-600">{{
-                                            formatNguoi(initialHistoryLog.nguoiThucHien, order.orderType === 'ONLINE') }}</span>
+                                    <!-- Card Body: Description Note -->
+                                    <div class="history-note-box pa-3 rounded-lg bg-slate-50 border-l-4 my-2" :style="{ borderLeftColor: getStatusTone(log.trangThaiMoi) }">
+                                        <div class="text-body-2 text-slate-700 font-weight-medium">
+                                            {{ log.ghiChu || 'Cập nhật trạng thái hệ thống' }}
+                                        </div>
                                     </div>
 
-                                    <!-- Column 4: Time -->
-                                    <div style="width: 180px;" class="text-center">
-                                        <span class="text-body-2 text-slate-400" style="white-space: nowrap;">
-                                            {{ formatDate(initialHistoryLog.ngayTao) }}
-                                        </span>
+                                    <!-- Card Footer: Performer & Optional status transition -->
+                                    <div class="d-flex align-center justify-space-between text-caption text-slate-500 pt-1 flex-wrap ga-2">
+                                        <div class="d-flex align-center ga-2">
+                                            <v-avatar size="22" color="slate-200">
+                                                <v-icon size="14" color="slate-600">mdi-account</v-icon>
+                                            </v-avatar>
+                                            <span>Thực hiện bởi: <strong class="text-slate-700 font-weight-bold">{{ formatNguoi(log.nguoiThucHien, order.orderType === 'ONLINE') }}</strong></span>
+                                        </div>
+
+                                        <div v-if="log.trangThaiCu" class="d-flex align-center ga-1 text-slate-400 bg-slate-100 px-2 py-1 rounded">
+                                            <span>{{ getStatusInfo(log.trangThaiCu).text }}</span>
+                                            <v-icon size="12">mdi-arrow-right</v-icon>
+                                            <span class="font-weight-bold text-slate-700">{{ getStatusInfo(log.trangThaiMoi).text }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </v-timeline-item>
@@ -1492,6 +1491,7 @@ onMounted(() => {
                 </v-card-text>
             </v-card>
         </v-dialog>
+
 
         <!-- Confirmation Dialog -->
         <AdminConfirm v-model:show="confirmDialog.show" :title="confirmDialog.title" :message="confirmDialog.message"
@@ -1932,4 +1932,98 @@ onMounted(() => {
 :global(.product-select-menu .v-list-item) {
     font-size: 13px !important;
 }
+
+/* ==========================================================================
+   ENHANCED ORDER HISTORY TIMELINE STYLES & ANIMATIONS
+   ========================================================================== */
+.history-dialog-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #1e257c 100%);
+    position: relative;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.2);
+}
+
+.history-header-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.history-scroll-container {
+    max-height: 540px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.history-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.history-scroll-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.history-timeline-node {
+    animation: historyCardSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--delay-idx, 0) * 60ms);
+}
+
+@keyframes historyCardSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(16px) scale(0.97);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.history-item-card {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-color: #e2e8f0 !important;
+}
+
+.history-item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -4px rgba(30, 37, 124, 0.12) !important;
+    border-color: #cbd5e1 !important;
+}
+
+.history-note-box {
+    background-color: #f8fafc;
+    transition: background-color 0.2s ease;
+}
+
+.history-item-card:hover .history-note-box {
+    background-color: #f1f5f9;
+}
+
+.pulse-badge {
+    animation: pulseBadgeGlow 2s infinite ease-in-out;
+}
+
+@keyframes pulseBadgeGlow {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(30, 37, 124, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(30, 37, 124, 0);
+    }
+}
+
+:deep(.enhanced-history-timeline .v-timeline-item__body) {
+    padding-inline-start: 16px !important;
+}
+
+:deep(.enhanced-history-timeline .v-timeline-divider__dot) {
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9);
+}
 </style>
+

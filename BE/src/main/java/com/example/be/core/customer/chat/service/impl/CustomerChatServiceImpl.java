@@ -9,18 +9,26 @@ import com.example.be.entity.TinNhan;
 import com.example.be.infrastructure.constants.ChatConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -33,6 +41,12 @@ public class CustomerChatServiceImpl implements CustomerChatService {
     private final SimpMessagingTemplate messagingTemplate;
     private final RedisTemplate<String, Object> redisTemplate;
     private final com.example.be.core.admin.chat.service.AiChatService aiChatService;
+
+    @Value("${app.local-upload-dir}")
+    private String localUploadDir;
+
+    @Value("${app.base_url}")
+    private String appBaseUrl;
 
     private String formatTime(Long timestamp) {
         if (timestamp == null) return "Vừa xong";
@@ -51,9 +65,32 @@ public class CustomerChatServiceImpl implements CustomerChatService {
                         .maPhien(m.getCuocHoiThoai().getMaPhien())
                         .nguoiGui(m.getLoaiNguoiGui())
                         .noiDung(m.getNoiDung())
+                        .hinhAnh(m.getHinhAnh())
                         .thoiGian(formatTime(m.getNgayTao()))
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    /** Lưu ảnh base64 xuống disk và trả về URL. Trả null nếu rỗng hoặc lỗi. */
+    private String saveBase64ToFile(String base64Data) {
+        if (!StringUtils.hasText(base64Data)) return null;
+        try {
+            String pureBase64 = base64Data.contains(",") ? base64Data.split(",", 2)[1] : base64Data;
+            byte[] imageBytes = Base64.getDecoder().decode(pureBase64);
+            String folder = "chat";
+            String fileName = UUID.randomUUID() + ".jpg";
+            Path rootPath = Paths.get(localUploadDir).toAbsolutePath().normalize();
+            Path targetDir = rootPath.resolve(folder).normalize();
+            Files.createDirectories(targetDir);
+            Path targetFile = targetDir.resolve(fileName).normalize();
+            if (!targetFile.startsWith(rootPath)) return null;
+            Files.write(targetFile, imageBytes);
+            String baseUrl = StringUtils.trimTrailingCharacter(appBaseUrl, '/');
+            return baseUrl + "/uploads/" + folder + "/" + fileName;
+        } catch (IOException | IllegalArgumentException e) {
+            log.error("Lỗi lưu ảnh chat: {}", e.getMessage());
+            return null;
+        }
     }
 
     @Override
@@ -100,10 +137,14 @@ public class CustomerChatServiceImpl implements CustomerChatService {
             throw new RuntimeException(ChatConstants.ERR_CONVERSATION_NOT_ACCEPTED);
         }
 
+        // Xử lý ảnh base64: lưu file và lấy URL
+        String imageUrl = saveBase64ToFile(imageBase64);
+
         TinNhan message = TinNhan.builder()
                 .cuocHoiThoai(conversation)
                 .loaiNguoiGui(senderType)
                 .noiDung(text)
+                .hinhAnh(imageUrl)
                 .build();
 
         TinNhan savedMessage = messageRepository.save(message);
@@ -116,6 +157,7 @@ public class CustomerChatServiceImpl implements CustomerChatService {
                 .idNhanVienNhan(conversation.getNhanVienNhan() != null ? conversation.getNhanVienNhan().getTenTaiKhoan() : null)
                 .nguoiGui(senderType)
                 .noiDung(text)
+                .hinhAnh(imageUrl)
                 .thoiGian(formatTime(savedMessage.getNgayTao()))
                 .build();
 

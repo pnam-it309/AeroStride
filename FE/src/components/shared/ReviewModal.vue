@@ -29,6 +29,10 @@ watch(() => props.show, (newVal) => {
     }
 });
 
+import { useAuthStore } from '@/stores/authStore';
+
+const authStore = useAuthStore();
+
 const submitReview = async () => {
     if (!selectedItem.value) {
         notification.showError('Vui lòng chọn sản phẩm để đánh giá');
@@ -42,14 +46,15 @@ const submitReview = async () => {
     isSubmitting.value = true;
     try {
         const payload = {
-            idHoaDon: props.order.id,
-            idChiTietSanPham: selectedItem.value.idChiTietSanPham,
-            rating: rating.value,
-            comment: comment.value
+            idHoaDon: props.order?.id || null,
+            idSanPham: selectedItem.value?.idSanPham || selectedItem.value?.sanPhamId || selectedItem.value?.id || null,
+            idKhachHang: authStore.user?.id || props.order?.idKhachHang || null,
+            diemDanhGia: rating.value,
+            noiDung: comment.value
         };
 
-        const response = await api.post('/reviews/submit', payload);
-        if (response.data?.success) {
+        const response = await api.post('/customer/review/submit', payload);
+        if (response.data?.success || response.status === 200) {
             notification.showSuccess('Cảm ơn bạn đã đánh giá sản phẩm!');
             emit('review-success');
             showModal.value = false;
@@ -63,6 +68,7 @@ const submitReview = async () => {
         isSubmitting.value = false;
     }
 };
+
 </script>
 
 <template>

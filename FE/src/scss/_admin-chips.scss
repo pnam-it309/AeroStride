@@ -72,8 +72,12 @@
 .status-inactive, .status-error, .status-expired,
 .status-chip-inactive, .status-chip-expired { @include chip-tone(red); }
 
-/* Cam: riêng tư */
-.status-chip-private { @include chip-tone(orange); }
+/* Cam: riêng tư / giao thất bại */
+.status-chip-private, .status-chip-failed { @include chip-tone(orange); }
+
+/* Khách không nhận */
+.status-chip-refused { @include chip-tone(red); }
+
 
 /* Slate: không xác định / mặc định */
 .status-chip-unknown, .status-default, .status-chip-default { @include chip-tone(slate); }

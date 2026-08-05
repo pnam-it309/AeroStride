@@ -30,44 +30,44 @@ public class ReviewServiceImpl implements ReviewService {
     private final HoaDonRepository hoaDonRepository;
     private final SanPhamRepository sanPhamRepository;
     private final KhachHangRepository khachHangRepository;
-    private final com.example.be.core.admin.chat.service.AiChatService aiChatService;
 
     @Override
     @Transactional
     public void submitReview(ReviewRequest request) {
-        // Cho phép tất cả người dùng đăng nhập bình luận (không cần check hóa đơn)
-        
         HoaDon hoaDon = null;
-        if (request.getIdHoaDon() != null) {
-            hoaDon = hoaDonRepository.findById(String.valueOf(request.getIdHoaDon())).orElse(null);
+        if (request.getIdHoaDon() != null && !request.getIdHoaDon().isBlank()) {
+            hoaDon = hoaDonRepository.findById(request.getIdHoaDon()).orElse(null);
         }
         
-        SanPham sanPham = sanPhamRepository.findById(String.valueOf(request.getIdSanPham()))
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm."));
-        KhachHang khachHang = khachHangRepository.findById(String.valueOf(request.getIdKhachHang()))
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng."));
-
-        DanhGiaSanPham.TrangThaiDanhGia status = DanhGiaSanPham.TrangThaiDanhGia.PENDING;
-
-        // Use AI to check for spam/inappropriate content
-        if (request.getNoiDung() != null && !request.getNoiDung().isBlank()) {
-            try {
-                // Here we could call aiChatService or a dedicated AI method to validate content
-                // For now, if no bad words, we set PENDING.
-                // Alternatively, automatically approve if it's 5 stars and no bad words.
-                if (request.getDiemDanhGia() >= 4) {
-                    status = DanhGiaSanPham.TrangThaiDanhGia.APPROVED;
-                }
-            } catch (Exception e) {
-                log.warn("Lỗi khi dùng AI kiểm tra đánh giá: {}", e.getMessage());
-            }
+        SanPham sanPham = null;
+        if (request.getIdSanPham() != null && !request.getIdSanPham().isBlank()) {
+            sanPham = sanPhamRepository.findById(request.getIdSanPham()).orElse(null);
         }
+
+        // Fallback: Nếu không truyền idSanPham trực tiếp nhưng có idHoaDon, lấy sản phẩm từ chi tiết hóa đơn
+        if (sanPham == null && hoaDon != null && hoaDon.getListsHoaDonChiTiet() != null && !hoaDon.getListsHoaDonChiTiet().isEmpty()) {
+            sanPham = hoaDon.getListsHoaDonChiTiet().get(0).getChiTietSanPham() != null 
+                    ? hoaDon.getListsHoaDonChiTiet().get(0).getChiTietSanPham().getSanPham() 
+                    : null;
+        }
+
+        if (sanPham == null) {
+            throw new RuntimeException("Không tìm thấy sản phẩm cần đánh giá.");
+        }
+
+        KhachHang khachHang = null;
+        if (request.getIdKhachHang() != null && !request.getIdKhachHang().isBlank()) {
+            khachHang = khachHangRepository.findById(request.getIdKhachHang()).orElse(null);
+        }
+
+        // Đơn đánh giá trực tiếp được tự động duyệt APPROVED để hiển thị trên chi tiết sản phẩm
+        DanhGiaSanPham.TrangThaiDanhGia status = DanhGiaSanPham.TrangThaiDanhGia.APPROVED;
 
         DanhGiaSanPham review = DanhGiaSanPham.builder()
                 .hoaDon(hoaDon)
                 .sanPham(sanPham)
                 .khachHang(khachHang)
-                .diemDanhGia(request.getDiemDanhGia())
+                .diemDanhGia(request.getDiemDanhGia() != null ? request.getDiemDanhGia() : 5)
                 .noiDung(request.getNoiDung())
                 .hinhAnh(request.getHinhAnh())
                 .video(request.getVideo())
@@ -79,29 +79,27 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<DanhGiaSanPham> getReviewsByProduct(Long idSanPham, Pageable pageable) {
-        return danhGiaSanPhamRepository.findBySanPham_IdAndTrangThai(String.valueOf(idSanPham), DanhGiaSanPham.TrangThaiDanhGia.APPROVED, pageable);
+    public Page<DanhGiaSanPham> getReviewsByProduct(String idSanPham, Pageable pageable) {
+        // Trả về đánh giá của sản phẩm (bao gồm APPROVED và PENDING)
+        return danhGiaSanPhamRepository.findBySanPham_Id(idSanPham, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public boolean checkEligibility(Long idHoaDon, Long idSanPham, Long idKhachHang) {
-        // 1. Check if already reviewed
-        if (danhGiaSanPhamRepository.existsByHoaDon_IdAndSanPham_Id(String.valueOf(idHoaDon), String.valueOf(idSanPham))) {
+    public boolean checkEligibility(String idHoaDon, String idSanPham, String idKhachHang) {
+        if (danhGiaSanPhamRepository.existsByHoaDon_IdAndSanPham_Id(idHoaDon, idSanPham)) {
             return false;
         }
 
-        // 2. Check if HoaDon is COMPLETED and belongs to KhachHang
-        HoaDon hoaDon = hoaDonRepository.findById(String.valueOf(idHoaDon)).orElse(null);
+        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon).orElse(null);
         if (hoaDon == null || hoaDon.getTrangThai() != OrderStatus.HOAN_THANH) {
             return false;
         }
         
-        if (hoaDon.getKhachHang() == null || !hoaDon.getKhachHang().getId().equals(String.valueOf(idKhachHang))) {
+        if (hoaDon.getKhachHang() == null || !hoaDon.getKhachHang().getId().equals(idKhachHang)) {
             return false;
         }
 
-        // 3. Check time limit (e.g., within 30 days)
         Long completionTime = hoaDon.getNgayCapNhat() != null ? hoaDon.getNgayCapNhat() : hoaDon.getNgayTao();
         if (completionTime != null) {
             long daysSinceCompletion = ChronoUnit.DAYS.between(Instant.ofEpochMilli(completionTime), Instant.now());

@@ -171,6 +171,33 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                         .orElse(email))
                 .orElse("Hệ thống");
         LichSuTrangThaiHoaDon history = LichSuTrangThaiHoaDon.builder()
+            if (hd.getListsHoaDonChiTiet() != null) {
+                for (HoaDonChiTiet detail : hd.getListsHoaDonChiTiet()) {
+                    ChiTietSanPham ct = detail.getChiTietSanPham();
+                    if (ct != null && detail.getSoLuong() != null) {
+                        int currentStock = ct.getSoLuong() != null ? ct.getSoLuong() : 0;
+                        if (currentStock < detail.getSoLuong()) {
+                            String tenSP = ct.getSanPham() != null ? ct.getSanPham().getTen() : ct.getMaChiTietSanPham();
+                            throw new BusinessException("Sản phẩm '" + tenSP + "' hiện không đủ số lượng trong kho (" + currentStock + ") để xác nhận đơn hàng.");
+                        }
+                        ct.setSoLuong(currentStock - detail.getSoLuong());
+                        chiTietSanPhamRepository.saveAndFlush(ct);
+                    }
+                }
+            }
+        }
+
+        hd.setTrangThai(newStatus);
+        hd.setNgayCapNhat(System.currentTimeMillis());
+        repository.save(hd);
+
+        // Resolve display name for the person performing the action
+        String nguoiThucHienName = com.example.be.utils.SecurityUtils.getCurrentUserEmail()
+                .map(email -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email)
+                        .map(nv -> nv.getTen() != null ? nv.getTen() : email)
+                        .orElse(email))
+                .orElse("Hệ thống");
+        LichSuTrangThaiHoaDon history = LichSuTrangThaiHoaDon.builder()
                 .hoaDon(hd)
                 .trangThaiCu(oldStatus != null ? oldStatus.ordinal() : null)
                 .trangThaiMoi(newStatus.ordinal())
@@ -180,8 +207,10 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
         history.setNgayTao(System.currentTimeMillis());
         lichSuTrangThaiHoaDonRepository.save(history);
 
-        if (newStatus == OrderStatus.DA_HUY || newStatus == OrderStatus.HOAN_DON) {
-            if (newStatus == OrderStatus.HOAN_DON && hd.getPhiVanChuyen() != null) {
+        if (newStatus == OrderStatus.DA_HUY || newStatus == OrderStatus.HOAN_DON 
+                || newStatus == OrderStatus.GIAO_THAT_BAI || newStatus == OrderStatus.KHACH_KHONG_NHAN) {
+            if ((newStatus == OrderStatus.HOAN_DON || newStatus == OrderStatus.GIAO_THAT_BAI || newStatus == OrderStatus.KHACH_KHONG_NHAN) 
+                    && hd.getPhiVanChuyen() != null) {
                 // GHN return fee is typically equal to forward fee
                 hd.setPhiHoanHang(hd.getPhiVanChuyen());
             }
@@ -236,8 +265,11 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             case HOAN_THANH -> "Hoàn thành";
             case DA_HUY -> "Đã hủy";
             case HOAN_DON -> "Hoàn đơn";
+            case GIAO_THAT_BAI -> "Giao hàng thất bại";
+            case KHACH_KHONG_NHAN -> "Khách không nhận";
         };
     }
+
 
     @Override
     @Transactional

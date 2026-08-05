@@ -17,9 +17,12 @@ public class SendMessageRequest {
     @NotBlank(message = "Conversation ID không được để trống")
     private String conversationId;
 
-    @NotBlank(message = "Nội dung tin nhắn không được để trống")
+    // text hoặc imageBase64 phải có ít nhất 1 cái (validation thủ công trong service)
     private String text;
 
     @NotBlank(message = "Sender không được để trống")
     private String sender;
+
+    // Ảnh dưới dạng base64 (tùy chọn, có thể null nếu chỉ gửi text)
+    private String imageBase64;
 }

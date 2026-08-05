@@ -21,7 +21,7 @@ public interface AdminChatService {
 
     boolean deleteConversation(String id);
 
-    void sendMessage(String conversationId, String text, String senderType, String sessionId);
+    void sendMessage(String conversationId, String text, String senderType, String sessionId, String imageBase64);
 
     String summarizeConversation(String id);
 

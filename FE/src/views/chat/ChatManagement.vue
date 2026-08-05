@@ -27,6 +27,44 @@ const isLoading = ref(false);
 const isMessagesLoading = ref(false);
 const messagesContainer = ref(null);
 
+// State quản lý upload ảnh
+const imageFile = ref(null);
+const imagePreview = ref(null);
+const fileInput = ref(null);
+const isSendingImage = ref(false);
+
+const triggerImageUpload = () => {
+    if (fileInput.value) fileInput.value.click();
+};
+
+const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        alert('Vui lòng chọn file hình ảnh.');
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Kích thước ảnh không được vượt quá 5MB.');
+        return;
+    }
+    imageFile.value = file;
+    const reader = new FileReader();
+    reader.onload = (e) => { imagePreview.value = e.target.result; };
+    reader.readAsDataURL(file);
+};
+
+const clearImage = () => {
+    imageFile.value = null;
+    imagePreview.value = null;
+    if (fileInput.value) fileInput.value.value = '';
+};
+
+/** Mở ảnh trong tab mới khi click */
+const openImage = (url) => {
+    if (url) window.open(url, '_blank');
+};
+
 // Filters
 const chatType = ref(CHAT_TYPES.CUSTOMER);
 const chatStatus = ref(CHAT_STATUS.ACTIVE);
@@ -109,23 +147,35 @@ const fetchMessages = async (conversationId) => {
 };
 
 const sendMessage = async () => {
-    if (!newMessage.value.trim() || !activeChat.value) return;
+    if (!newMessage.value.trim() && !imagePreview.value) return;
+    if (!activeChat.value) return;
     // Phiên đã đóng thì khóa chat, không cho gửi
     if (activeChat.value.status === 'CLOSED') return;
 
+    // Chuẩn bị payload: base64 thuần (bỏ header "data:image/...;base64," nếu có)
+    let base64Image = null;
+    if (imagePreview.value) {
+        base64Image = imagePreview.value.includes(',') ? imagePreview.value.split(',')[1] : imagePreview.value;
+    }
+
     const messageData = {
         conversationId: activeChat.value.id,
-        text: newMessage.value,
-        sender: authStore.user?.username || 'STAFF'
+        text: newMessage.value || null,
+        sender: authStore.user?.username || 'STAFF',
+        imageBase64: base64Image
     };
 
+    isSendingImage.value = !!base64Image;
     try {
         await api.post(API_CHAT.SEND, messageData);
         newMessage.value = '';
+        clearImage();
         scrollToBottom();
         fetchConversations(true);
     } catch (error) {
         console.error('Lỗi khi gửi tin nhắn:', error);
+    } finally {
+        isSendingImage.value = false;
     }
 };
 
@@ -440,7 +490,11 @@ onMounted(() => {
                                 :class="(m.sender === authStore.user?.username || m.sender === 'bot' || m.sender === 'SYSTEM') ? 'is-mine' : 'is-other'"
                             >
                                 <div class="msg-bubble" :class="(m.sender === authStore.user?.username || m.sender === 'bot' || m.sender === 'SYSTEM') ? 'bubble-mine' : 'bubble-other'">
-                                    <div class="bubble-text">{{ m.text }}</div>
+                                    <!-- Hiển thị ảnh nếu tin nhắn có ảnh -->
+                                    <div v-if="m.imageUrl" class="bubble-image-wrap mb-1">
+                                        <img :src="m.imageUrl" class="bubble-image" @click="openImage(m.imageUrl)" />
+                                    </div>
+                                    <div v-if="m.text" class="bubble-text">{{ m.text }}</div>
                                     <div class="bubble-meta">
                                         <span class="bubble-time">{{ m.time }}</span>
                                         <v-icon
@@ -471,7 +525,22 @@ onMounted(() => {
                         </div>
 
                         <v-row no-gutters align="center" :class="{ 'input-blur': activeChat.status === 'PENDING' || activeChat.status === 'CLOSED' }">
+                            <!-- Input ẩn để chọn file ảnh -->
+                            <input
+                                ref="fileInput"
+                                type="file"
+                                accept="image/*"
+                                style="display: none"
+                                @change="handleImageUpload"
+                            />
+
                             <v-col>
+                                <!-- Preview ảnh trước khi gửi -->
+                                <div v-if="imagePreview" class="image-preview-bar d-flex align-center ga-2 mb-2 pa-2 rounded-lg" style="background: #e8f0fe;">
+                                    <img :src="imagePreview" style="height: 56px; width: 56px; object-fit: cover; border-radius: 8px;" />
+                                    <span style="font-size: 12px; color: #3b5bdb;">{{ imageFile?.name }}</span>
+                                    <v-btn icon="mdi-close" size="x-small" variant="text" color="error" @click="clearImage" class="ml-auto"></v-btn>
+                                </div>
                                 <v-textarea
                                     v-model="newMessage"
                                     placeholder="Nhập tin nhắn..."
@@ -487,14 +556,27 @@ onMounted(() => {
                                     :disabled="activeChat.status === 'PENDING' || activeChat.status === 'CLOSED'"
                                 ></v-textarea>
                             </v-col>
+
+                            <!-- Nút upload ảnh -->
+                            <v-btn
+                                icon="mdi-image-plus"
+                                variant="text"
+                                color="#1a56db"
+                                class="ml-2"
+                                @click="triggerImageUpload"
+                                :disabled="activeChat.status === 'PENDING' || activeChat.status === 'CLOSED'"
+                                title="Gửi ảnh"
+                            ></v-btn>
+
                             <v-btn
                                 icon="mdi-send"
                                 color="#1a56db"
                                 variant="flat"
                                 elevation="0"
-                                class="ml-3 rounded-xl"
+                                class="ml-2 rounded-xl"
                                 @click="sendMessage"
-                                :disabled="!newMessage.trim() || activeChat.status === 'PENDING' || activeChat.status === 'CLOSED'"
+                                :loading="isSendingImage"
+                                :disabled="(!newMessage.trim() && !imagePreview) || activeChat.status === 'PENDING' || activeChat.status === 'CLOSED'"
                             ></v-btn>
                         </v-row>
                     </div>
@@ -872,5 +954,23 @@ $blue-bg: #f0f4f8;
     font-size: 0.9rem;
     color: #94a3b8;
     margin-top: 4px;
+}
+
+/* ========== IMAGE IN BUBBLE ========== */
+.bubble-image-wrap {
+    display: block;
+}
+
+.bubble-image {
+    max-width: 240px;
+    max-height: 200px;
+    border-radius: 10px;
+    object-fit: cover;
+    display: block;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    &:hover {
+        opacity: 0.88;
+    }
 }
 </style>
