@@ -926,7 +926,7 @@ onMounted(() => {
                                                 <div class="text-body-2 text-slate-600 d-flex align-center">
                                                     <v-icon color="primary" class="mr-2"
                                                         size="18">mdi-calendar-range</v-icon>
-                                                    <span>{{ formatDate(order.khachHang?.ngayTao) }}</span>
+                                                    <span>{{ formatDate(order.ngayTaoKhachHang) }}</span>
                                                 </div>
                                             </div>
                                         </div>

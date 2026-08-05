@@ -1484,6 +1484,56 @@ watch(() => product.value.moTaChiTiet, (newVal) => {
     }
 });
 
+// Function to handle native input event for text fields to strip leading spaces in real-time
+const handleTextInput = (field, event) => {
+    const target = event?.target;
+    if (!target) return;
+    if (typeof target.value === 'string' && /^\s+/.test(target.value)) {
+        target.value = target.value.trimStart();
+        product.value[field] = target.value;
+    }
+};
+
+// Function to handle blur event for text fields to trim both ends
+const handleTextBlur = (field, event) => {
+    const target = event?.target;
+    if (target && typeof target.value === 'string') {
+        target.value = target.value.trim();
+        product.value[field] = target.value;
+    } else if (typeof product.value[field] === 'string') {
+        product.value[field] = product.value[field].trim();
+    }
+};
+
+// Function to handle combobox search update to strip leading space
+const handleComboboxSearchUpdate = (field, val) => {
+    if (typeof val === 'string' && /^\s+/.test(val)) {
+        const trimmed = val.trimStart();
+        searchQueries[field] = trimmed;
+        nextTick(() => {
+            const activeEl = document.activeElement;
+            if (activeEl && activeEl.tagName === 'INPUT' && typeof activeEl.value === 'string' && /^\s+/.test(activeEl.value)) {
+                activeEl.value = activeEl.value.trimStart();
+            }
+        });
+    } else if (typeof val === 'string') {
+        searchQueries[field] = val;
+    }
+};
+
+// Function to handle combobox blur to trim search & input value
+const handleComboboxBlur = (field, event) => {
+    if (event?.target && typeof event.target.value === 'string') {
+        event.target.value = event.target.value.trim();
+    }
+    if (typeof searchQueries[field] === 'string') {
+        searchQueries[field] = searchQueries[field].trim();
+    }
+    if (typeof product.value[field] === 'string') {
+        product.value[field] = product.value[field].trim();
+    }
+};
+
 // Watch for product code changes to automatically update SKU for drafts
 watch(() => product.value.maSanPham, (newVal) => {
     if (isEditMode.value) return;
@@ -2051,7 +2101,9 @@ const handleSave = async () => {
                                 <v-text-field v-model="product.tenSanPham"
                                     placeholder="Ví dụ: Giày Nike Air..."
                                     :rules="[rules.required, rules.noSpecialChar]"
-                                    variant="outlined" density="comfortable" hide-details="auto" maxlength="250"></v-text-field>
+                                    variant="outlined" density="comfortable" hide-details="auto" maxlength="250"
+                                    @input="(e) => handleTextInput('tenSanPham', e)"
+                                    @blur="(e) => handleTextBlur('tenSanPham', e)"></v-text-field>
                             </v-col>
                             <v-col cols="12" md="3">
                                 <div class="field-label">Thương hiệu <span class="text-error">*</span></div>
@@ -2060,6 +2112,8 @@ const handleSave = async () => {
                                     item-title="ten" item-value="id" :rules="[rules.required]"
                                     placeholder="Thương hiệu..." variant="outlined" density="comfortable"
                                     :return-object="false" @keyup.enter="(e) => onKeyUpEnter(e, 'idThuongHieu')"
+                                    @update:search="(val) => handleComboboxSearchUpdate('idThuongHieu', val)"
+                                    @blur="(e) => handleComboboxBlur('idThuongHieu', e)"
                                     @update:model-value="(val) => handleAttributeChange('idThuongHieu', val)"
                                     :menu-props="{ contentClass: 'product-select-menu' }">
                                     <template #item="{ props, item }">
@@ -2082,6 +2136,8 @@ const handleSave = async () => {
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Xuất xứ"
                                     variant="outlined" density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idXuatXu')"
+                                    @update:search="(val) => handleComboboxSearchUpdate('idXuatXu', val)"
+                                    @blur="(e) => handleComboboxBlur('idXuatXu', e)"
                                     @update:model-value="(val) => handleAttributeChange('idXuatXu', val)"
                                     :menu-props="{ contentClass: 'product-select-menu' }">
                                     <template #item="{ props, item }">
@@ -2101,6 +2157,8 @@ const handleSave = async () => {
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Chất liệu"
                                     variant="outlined" density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idChatLieu')"
+                                    @update:search="(val) => handleComboboxSearchUpdate('idChatLieu', val)"
+                                    @blur="(e) => handleComboboxBlur('idChatLieu', e)"
                                     @update:model-value="(val) => handleAttributeChange('idChatLieu', val)"
                                     :menu-props="{ contentClass: 'product-select-menu' }">
                                     <template #item="{ props, item }">
@@ -2128,6 +2186,8 @@ const handleSave = async () => {
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Mục đích"
                                     variant="outlined" density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idMucDichChay')"
+                                    @update:search="(val) => handleComboboxSearchUpdate('idMucDichChay', val)"
+                                    @blur="(e) => handleComboboxBlur('idMucDichChay', e)"
                                     @update:model-value="(val) => handleAttributeChange('idMucDichChay', val)"
                                     :menu-props="{ contentClass: 'product-select-menu' }">
                                     <template #item="{ props, item }">
@@ -2149,6 +2209,8 @@ const handleSave = async () => {
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Loại đế"
                                     variant="outlined" density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idDeGiay')"
+                                    @update:search="(val) => handleComboboxSearchUpdate('idDeGiay', val)"
+                                    @blur="(e) => handleComboboxBlur('idDeGiay', e)"
                                     @update:model-value="(val) => handleAttributeChange('idDeGiay', val)"
                                     :menu-props="{ contentClass: 'product-select-menu' }">
                                     <template #item="{ props, item }">
@@ -2168,6 +2230,8 @@ const handleSave = async () => {
                                     item-title="ten" item-value="id" :rules="[rules.required]" placeholder="Loại cổ"
                                     variant="outlined" density="comfortable" :return-object="false"
                                     @keyup.enter="(e) => onKeyUpEnter(e, 'idCoGiay')"
+                                    @update:search="(val) => handleComboboxSearchUpdate('idCoGiay', val)"
+                                    @blur="(e) => handleComboboxBlur('idCoGiay', e)"
                                     @update:model-value="(val) => handleAttributeChange('idCoGiay', val)"
                                     :menu-props="{ contentClass: 'product-select-menu' }">
                                     <template #item="{ props, item }">
@@ -2184,6 +2248,8 @@ const handleSave = async () => {
                                 <div class="field-label">Mô tả chi tiết</div>
                                 <v-textarea v-model="product.moTaChiTiet" variant="outlined" rows="3" auto-grow
                                     placeholder="Mô tả chi tiết sản phẩm..." hide-details
+                                    @input="(e) => handleTextInput('moTaChiTiet', e)"
+                                    @blur="(e) => handleTextBlur('moTaChiTiet', e)"
                                     class="custom-textarea"></v-textarea>
                             </v-col>
                         </v-row>

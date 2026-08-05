@@ -93,7 +93,30 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
                 if (gd.getPhuongThucThanhToan() != null) gd.getPhuongThucThanhToan().getTen();
             });
         }
-        return hoaDonMapper.toDetailResponse(hd);
+        AdminHoaDonDetailResponse response = hoaDonMapper.toDetailResponse(hd);
+        resolvePerformerNames(response);
+        return response;
+    }
+
+    private void resolvePerformerNames(AdminHoaDonDetailResponse response) {
+        if (response.getListsGiaoDichThanhToan() != null) {
+            response.getListsGiaoDichThanhToan().forEach(gd -> {
+                if (gd.getNguoiXacNhan() != null) {
+                    String creator = gd.getNguoiXacNhan();
+                    nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(creator, creator, creator, creator)
+                            .ifPresent(nv -> gd.setNguoiXacNhan(nv.getTen() != null ? nv.getTen() : creator));
+                }
+            });
+        }
+        if (response.getListsLichSuHoaDon() != null) {
+            response.getListsLichSuHoaDon().forEach(log -> {
+                if (log.getNguoiThucHien() != null) {
+                    String performer = log.getNguoiThucHien();
+                    nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(performer, performer, performer, performer)
+                            .ifPresent(nv -> log.setNguoiThucHien(nv.getTen() != null ? nv.getTen() : performer));
+                }
+            });
+        }
     }
 
     @Override

@@ -15,6 +15,7 @@ public interface AdminHoaDonMapper {
     @Mapping(target = "maKhachHang", source = "khachHang.ma")
     @Mapping(target = "soDienThoaiKhachHang", expression = "java(hoaDon.getKhachHang() != null && hoaDon.getKhachHang().getSdt() != null && !hoaDon.getKhachHang().getSdt().isBlank() ? hoaDon.getKhachHang().getSdt() : hoaDon.getSoDienThoaiNguoiNhan())")
     @Mapping(target = "emailKhachHang", expression = "java(hoaDon.getKhachHang() != null && hoaDon.getKhachHang().getEmail() != null && !hoaDon.getKhachHang().getEmail().isBlank() ? hoaDon.getKhachHang().getEmail() : hoaDon.getEmailNguoiNhan())")
+    @Mapping(target = "ngayTaoKhachHang", source = "khachHang.ngayTao")
     @Mapping(target = "tenNhanVien", source = "nhanVien.ten")
     @Mapping(target = "maNhanVien", source = "nhanVien.ma")
     @Mapping(target = "listsHoaDonChiTiet", source = "listsHoaDonChiTiet")

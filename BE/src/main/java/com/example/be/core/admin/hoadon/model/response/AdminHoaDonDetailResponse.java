@@ -44,6 +44,7 @@ public class AdminHoaDonDetailResponse {
     private String maKhachHang;
     private String soDienThoaiKhachHang;
     private String emailKhachHang;
+    private Long ngayTaoKhachHang;
 
     private String tenNhanVien;
     private String maNhanVien;
