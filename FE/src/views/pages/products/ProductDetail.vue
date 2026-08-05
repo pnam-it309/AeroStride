@@ -181,7 +181,7 @@ const isAbsoluteUrl = (v) =>
     /^(https?:)?\/\//i.test(v) || 
     v.startsWith('data:') || 
     v.startsWith('blob:') || 
-    v.startsWith('/');
+    (v.startsWith('/') && !v.startsWith('/uploads/'));
 
 const isInvalidImage = (v) => {
     if (!v || typeof v !== 'string') return true;
@@ -197,7 +197,7 @@ const resolveImg = (v) => {
     if (!v || isInvalidImage(v)) return '';
     if (typeof v !== 'string') return v;
     if (isAbsoluteUrl(v)) return v;
-    return dichVuFile.layUrlFile(v.replace(/^\/+/, ''));
+    return dichVuFile.layUrlFile(v);
 };
 
 const getValidImgUrl = (raw) => {
