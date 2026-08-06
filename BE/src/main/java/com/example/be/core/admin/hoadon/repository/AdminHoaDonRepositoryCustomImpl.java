@@ -140,7 +140,6 @@ public class AdminHoaDonRepositoryCustomImpl implements AdminHoaDonRepositoryCus
                 .leftJoin(hd.nhanVien, nv)
                 .where(conditions)
                 .orderBy(
-                        "asc".equalsIgnoreCase(req.getSortDirection()) ? hd.ngayCapNhat.coalesce(hd.ngayTao).asc() : hd.ngayCapNhat.coalesce(hd.ngayTao).desc(),
                         "asc".equalsIgnoreCase(req.getSortDirection()) ? hd.ngayTao.asc() : hd.ngayTao.desc(),
                         "asc".equalsIgnoreCase(req.getSortDirection()) ? hd.id.asc() : hd.id.desc()
                 )

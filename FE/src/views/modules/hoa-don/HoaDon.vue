@@ -71,7 +71,7 @@ const {
     loaiDon: null,
     fromDate: getTodayDate(),
     toDate: getTodayDate(),
-    sortDirection: 'DESC'
+    sortDirection: 'ASC'
 });
 
 const sortOptions = [

@@ -62,6 +62,7 @@ public class CustomerOrderResponse {
     public static class OrderItemResponse {
         private String id;
         private String idChiTietSanPham;
+        private String idSanPham;
         private String tenSanPham;
         private String hinhAnh;
         private String tenMauSac;

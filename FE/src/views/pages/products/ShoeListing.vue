@@ -3,6 +3,7 @@ import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import MainHeader from '@/components/shared/MainHeader.vue';
 import CustomerChat from '@/components/shared/CustomerChat.vue';
+import AiRecommendQuiz from '@/components/shared/AiRecommendQuiz.vue';
 import { dichVuSanPhamPublic } from '@/services/public/dichVuSanPhamPublic';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 import { dichVuFile } from '@/services/core/dichVuFile';
@@ -543,6 +544,7 @@ const activeSortLabel = computed(() => {
 
         <!-- Customer Chat Overlay -->
         <CustomerChat />
+        <AiRecommendQuiz />
     </div>
 </template>
 

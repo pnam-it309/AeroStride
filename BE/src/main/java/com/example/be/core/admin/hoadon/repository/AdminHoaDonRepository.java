@@ -34,8 +34,8 @@ public interface AdminHoaDonRepository extends HoaDonRepository, JpaSpecificatio
     @Query("SELECT h FROM HoaDon h WHERE h.loaiDon = :loaiDon AND h.ngayTao >= :startDate AND h.ngayTao <= :endDate ORDER BY h.ngayTao DESC")
     List<HoaDon> findByLoaiDonAndNgayTaoBetween(String loaiDon, Long startDate, Long endDate);
 
-    @Query("SELECT SUM(h.tongTien) FROM HoaDon h WHERE h.giaoCa.id = :giaoCaId AND (h.trangThai = 4 OR h.trangThai = 5)") // 4: Đã giao, 5: Hoàn thành
-    BigDecimal calculateDoanhThuByGiaoCaId(String giaoCaId);
+    @Query("SELECT COALESCE(SUM(h.tongTienSauGiam), 0) FROM HoaDon h WHERE h.giaoCa.id = :giaoCaId AND h.trangThai = com.example.be.infrastructure.constants.OrderStatus.HOAN_THANH")
+    BigDecimal calculateDoanhThuByGiaoCaId(@Param("giaoCaId") String giaoCaId);
 
     /**
      * Lấy thông tin hóa đơn tối ưu cho việc in ấn (Invoice Print)

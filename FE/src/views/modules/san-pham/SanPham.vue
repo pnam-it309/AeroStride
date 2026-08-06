@@ -450,8 +450,8 @@ const toggleSelectAllProducts = async (checked) => {
             // Lấy tất cả danh sách sản phẩm theo bộ lọc hiện tại thay vì chỉ lấy ID trên trang hiện tại
             const response = await dichVuSanPham.layDanhSachSanPham({
                 ...buildProductFilterParams(),
-                page: 1,
-                size: 10000 // Tối đa để lấy đủ toàn bộ ID
+                page: 0,
+                size: Math.max(totalElements.value, 1) // Tránh truyền size 10000 quá lớn bị Cloudflare/WAF chặn hoặc lỗi Render timeout
             });
             const allIds = response?.content?.map(item => item.id) || [];
             selectedProductIds.value = allIds;

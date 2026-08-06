@@ -80,9 +80,7 @@ const findExistingCustomerByContact = async (phone, email) => {
             console.error(e);
         }
     }
-    const allCustomers = await dichVuKhachHang.layTatCaKhachHang();
-    const content = allCustomers?.content || [];
-    return findExactCustomer(content, phone, email) || null;
+    return null;
 };
 
 const submitQuickAdd = async () => {

@@ -1,9 +1,11 @@
 package com.example.be.core.customer.sanpham.controller;
 
 import com.example.be.core.customer.sanpham.model.request.CustomerSearchProductRequest;
+import com.example.be.core.customer.sanpham.model.request.RecommendQuizRequest;
 import com.example.be.core.customer.sanpham.model.response.CustomerProductDetailResponse;
 import com.example.be.core.customer.sanpham.model.response.CustomerProductFormOptionsResponse;
 import com.example.be.core.customer.sanpham.model.response.CustomerProductResponse;
+import com.example.be.core.customer.sanpham.model.response.RecommendQuizResponse;
 import com.example.be.core.customer.sanpham.service.CustomerSanPhamService;
 import com.example.be.core.common.dto.ApiResponse;
 import com.example.be.core.common.dto.PageResponse;
@@ -11,10 +13,7 @@ import com.example.be.infrastructure.constants.RoutesConstant;
 import com.example.be.infrastructure.constants.TrangThai;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Module: Sản phẩm (Customer)
@@ -49,6 +48,12 @@ public class CustomerSanPhamController {
     @GetMapping("/detail/{id}")
     public ResponseEntity<ApiResponse<CustomerProductDetailResponse>> getProductDetail(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success(customerSanPhamService.getProductDetail(id), "Lay chi tiet san pham thanh cong"));
+    }
+
+    // Câu hỏi trắc nghiệm thông minh gợi ý sản phẩm
+    @PostMapping("/recommend-quiz")
+    public ResponseEntity<ApiResponse<RecommendQuizResponse>> getRecommendQuiz(@RequestBody RecommendQuizRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(customerSanPhamService.getRecommendQuiz(request), "Lay cau hoi goi y thanh cong"));
     }
 }
 

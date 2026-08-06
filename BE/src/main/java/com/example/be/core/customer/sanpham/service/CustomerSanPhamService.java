@@ -6,8 +6,12 @@ import com.example.be.core.customer.sanpham.model.response.CustomerProductDetail
 import com.example.be.core.customer.sanpham.model.response.CustomerProductFormOptionsResponse;
 import com.example.be.core.customer.sanpham.model.response.CustomerProductResponse;
 
+import com.example.be.core.customer.sanpham.model.request.RecommendQuizRequest;
+import com.example.be.core.customer.sanpham.model.response.RecommendQuizResponse;
+
 public interface CustomerSanPhamService {
     PageResponse<CustomerProductResponse> getProducts(CustomerSearchProductRequest request);
     CustomerProductFormOptionsResponse getFormOptions();
     CustomerProductDetailResponse getProductDetail(String id);
+    RecommendQuizResponse getRecommendQuiz(RecommendQuizRequest request);
 }

@@ -684,6 +684,7 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
             return CustomerOrderResponse.OrderItemResponse.builder()
                     .id(hdct.getId())
                     .idChiTietSanPham(ctsp != null ? ctsp.getId() : null)
+                    .idSanPham(ctsp != null && ctsp.getSanPham() != null ? ctsp.getSanPham().getId() : null)
                     .giaHienTai(ctsp != null ? ctsp.getGiaBan() : null)
                     .tenSanPham(tenSanPham)
                     .hinhAnh(hinhAnh)

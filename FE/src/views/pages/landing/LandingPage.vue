@@ -4,6 +4,7 @@
     import { PATH } from '@/router/routePaths';
     import Preloader from '@/components/common/Preloader.vue';
     import CustomerChat from '@/components/shared/CustomerChat.vue';
+    import AiRecommendQuiz from '@/components/shared/AiRecommendQuiz.vue';
     import MainHeader from '@/components/shared/MainHeader.vue';
     import { useLandingPage } from '@/composables/useLandingPage';
     import { useLandingCatalog } from '@/composables/useLandingCatalog';
@@ -419,6 +420,7 @@ const noProductsMessage = computed(() => {
 
             <!-- Customer Chat Overlay -->
             <CustomerChat v-if="!isLoading" />
+            <AiRecommendQuiz v-if="!isLoading" />
         </div>
     </template>
 

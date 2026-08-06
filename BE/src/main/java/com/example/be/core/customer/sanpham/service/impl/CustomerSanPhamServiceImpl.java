@@ -3,6 +3,7 @@ package com.example.be.core.customer.sanpham.service.impl;
 import com.example.be.core.common.base.BaseCodeNameEntity;
 import com.example.be.core.common.dto.PageResponse;
 import com.example.be.core.customer.sanpham.model.request.CustomerSearchProductRequest;
+import com.example.be.core.customer.sanpham.model.request.RecommendQuizRequest;
 import com.example.be.core.customer.sanpham.model.response.*;
 import com.example.be.core.customer.sanpham.repository.*;
 import com.example.be.core.customer.sanpham.service.CustomerSanPhamService;
@@ -13,6 +14,7 @@ import com.example.be.infrastructure.constants.MessageConstants;
 import com.example.be.infrastructure.constants.TrangThai;
 import com.example.be.infrastructure.exceptions.ResourceNotFoundException;
 import com.example.be.utils.SearchUtils;
+import com.example.be.utils.CodeUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -350,5 +352,170 @@ public class CustomerSanPhamServiceImpl implements CustomerSanPhamService {
                     .images(imgs)
                     .build();
         }).toList();
+    }
+
+    @Override
+    public RecommendQuizResponse getRecommendQuiz(RecommendQuizRequest request) {
+        Map<String, String> answers = request.getAnswers();
+        if (answers == null) {
+            answers = new HashMap<>();
+        }
+
+        // Bước 1: Hỏi giới tính
+        String gioiTinh = answers.get("gioiTinh");
+        if (gioiTinh == null || gioiTinh.isBlank()) {
+            return RecommendQuizResponse.builder()
+                    .nextQuestion(RecommendQuizQuestion.builder()
+                            .key("gioiTinh")
+                            .questionText("Bạn đang tìm giày dành cho đối tượng nào?")
+                            .options(List.of(
+                                    new RecommendQuizOption("Nam", "NAM"),
+                                    new RecommendQuizOption("Nữ", "NU"),
+                                    new RecommendQuizOption("Unisex (Cả nam và nữ)", "UNISEX")
+                            ))
+                            .build())
+                    .build();
+        }
+
+        // Bước 2: Hỏi mục đích sử dụng
+        String mucDichChay = answers.get("mucDichChay");
+        if (mucDichChay == null || mucDichChay.isBlank()) {
+            List<RecommendQuizOption> purposeOptions = mucDichChayRepository.findAll().stream()
+                    .filter(x -> x.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+                    .map(x -> new RecommendQuizOption(x.getTen(), x.getId()))
+                    .collect(Collectors.toList());
+
+            return RecommendQuizResponse.builder()
+                    .nextQuestion(RecommendQuizQuestion.builder()
+                            .key("mucDichChay")
+                            .questionText("Mục đích sử dụng chính của đôi giày này là gì?")
+                            .options(purposeOptions)
+                            .build())
+                    .build();
+        }
+
+        // Bước 3: Hỏi thương hiệu
+        String thuongHieu = answers.get("thuongHieu");
+        if (thuongHieu == null || thuongHieu.isBlank()) {
+            List<RecommendQuizOption> brandOptions = thuongHieuRepository.findAll().stream()
+                    .filter(x -> x.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+                    .map(x -> new RecommendQuizOption(x.getTen(), x.getId()))
+                    .collect(Collectors.toList());
+            brandOptions.add(0, new RecommendQuizOption("Tất cả thương hiệu / Không quan trọng", "ALL"));
+
+            return RecommendQuizResponse.builder()
+                    .nextQuestion(RecommendQuizQuestion.builder()
+                            .key("thuongHieu")
+                            .questionText("Bạn yêu thích hoặc đang hướng tới thương hiệu nào?")
+                            .options(brandOptions)
+                            .build())
+                    .build();
+        }
+
+        // Bước 4: Hỏi kích cỡ
+        String kichThuoc = answers.get("kichThuoc");
+        if (kichThuoc == null || kichThuoc.isBlank()) {
+            List<RecommendQuizOption> sizeOptions = kichThuocRepository.findAll().stream()
+                    .filter(x -> x.getTrangThai() == TrangThai.DANG_HOAT_DONG)
+                    .sorted((a, b) -> {
+                        try {
+                            double valA = Double.parseDouble(a.getTen());
+                            double valB = Double.parseDouble(b.getTen());
+                            return Double.compare(valA, valB);
+                        } catch (Exception e) {
+                            return a.getTen().compareTo(b.getTen());
+                        }
+                    })
+                    .map(x -> new RecommendQuizOption("Size " + x.getTen(), x.getId()))
+                    .collect(Collectors.toList());
+
+            return RecommendQuizResponse.builder()
+                    .nextQuestion(RecommendQuizQuestion.builder()
+                            .key("kichThuoc")
+                            .questionText("Kích cỡ giày của bạn là bao nhiêu (Size EU)?")
+                            .options(sizeOptions)
+                            .build())
+                    .build();
+        }
+
+        // Bước 5: Hỏi khoảng giá mong muốn
+        String khoangGia = answers.get("khoangGia");
+        if (khoangGia == null || khoangGia.isBlank()) {
+            return RecommendQuizResponse.builder()
+                    .nextQuestion(RecommendQuizQuestion.builder()
+                            .key("khoangGia")
+                            .questionText("Mức giá mong muốn cho đôi giày của bạn?")
+                            .options(List.of(
+                                    new RecommendQuizOption("Dưới 1 triệu VNĐ", "UNDER_1M"),
+                                    new RecommendQuizOption("Từ 1 - 2 triệu VNĐ", "1M_TO_2M"),
+                                    new RecommendQuizOption("Trên 2 triệu VNĐ", "OVER_2M"),
+                                    new RecommendQuizOption("Bất kỳ mức giá nào", "ALL")
+                            ))
+                            .build())
+                    .build();
+        }
+
+        // Hoàn thành quiz -> Trả về danh sách sản phẩm gợi ý
+        CustomerSearchProductRequest searchReq = new CustomerSearchProductRequest();
+        searchReq.setPage(1);
+        searchReq.setSize(100);
+        searchReq.setTrangThai(TrangThai.DANG_HOAT_DONG);
+
+        if (!"UNISEX".equalsIgnoreCase(gioiTinh)) {
+            searchReq.setGioiTinhKhachHang(gioiTinh);
+        }
+        if (!"ALL".equalsIgnoreCase(thuongHieu)) {
+            searchReq.setThuongHieuId(thuongHieu);
+        }
+        searchReq.setMucDichChayId(mucDichChay);
+
+        PageResponse<CustomerProductResponse> baseProductsPage = getProducts(searchReq);
+        List<CustomerProductResponse> baseProducts = baseProductsPage.getContent();
+
+        List<CustomerProductResponse> recommended = baseProducts.stream()
+                .filter(sp -> {
+                    List<ChiTietSanPham> variants = customerSanPhamChiTietRepository
+                            .findBySanPhamIdAndXoaMemFalse(sp.getId());
+
+                    if (variants == null || variants.isEmpty()) {
+                        return false;
+                    }
+
+                    boolean matchSize = variants.stream()
+                            .anyMatch(v -> v.getKichThuoc() != null 
+                                    && v.getKichThuoc().getId().equals(kichThuoc)
+                                    && TrangThai.DANG_HOAT_DONG.equals(v.getTrangThai())
+                                    && v.getSoLuong() > 0);
+
+                    if (!matchSize) {
+                        return false;
+                    }
+
+                    if ("ALL".equalsIgnoreCase(khoangGia)) {
+                        return true;
+                    }
+
+                    return variants.stream().anyMatch(v -> {
+                        if (!TrangThai.DANG_HOAT_DONG.equals(v.getTrangThai()) || v.getSoLuong() <= 0) {
+                            return false;
+                        }
+                        BigDecimal price = v.getGiaBan() != null ? v.getGiaBan() : BigDecimal.ZERO;
+                        double val = price.doubleValue();
+                        if ("UNDER_1M".equalsIgnoreCase(khoangGia)) {
+                            return val < 1000000.0;
+                        } else if ("1M_TO_2M".equalsIgnoreCase(khoangGia)) {
+                            return val >= 1000000.0 && val <= 2000000.0;
+                        } else if ("OVER_2M".equalsIgnoreCase(khoangGia)) {
+                            return val > 2000000.0;
+                        }
+                        return false;
+                    });
+                })
+                .collect(Collectors.toList());
+
+        return RecommendQuizResponse.builder()
+                .nextQuestion(null)
+                .recommendedProducts(recommended)
+                .build();
     }
 }

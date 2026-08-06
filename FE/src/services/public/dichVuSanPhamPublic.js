@@ -34,5 +34,10 @@ export const dichVuSanPhamPublic = {
             ...p,
             hinhAnh: resolveImg(p.hinhAnh)
         }));
+    },
+
+    async layGoiYQuiz(answers) {
+        const response = await api.post('/customer/san-pham/recommend-quiz', { answers });
+        return response.data?.data ?? response.data ?? {};
     }
 };

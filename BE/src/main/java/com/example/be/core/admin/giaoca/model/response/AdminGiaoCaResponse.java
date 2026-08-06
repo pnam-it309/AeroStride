@@ -23,4 +23,20 @@ public class AdminGiaoCaResponse {
     private BigDecimal tienChenhLech;
     private String ghiChu;
     private String trangThai;
+
+    public Long getThoiGianMoCa() {
+        return thoiGianVaoCa;
+    }
+
+    public Long getThoiGianChotCa() {
+        return thoiGianRaCa;
+    }
+
+    public String getNhanVienTen() {
+        return tenNhanVienTrongCa;
+    }
+
+    public String getNhanVienNhanCaTen() {
+        return tenNhanVienNhanCa;
+    }
 }

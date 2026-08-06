@@ -92,10 +92,10 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
         NhanVien nv = currentNhanVien.orElse(null);
         if (nv != null) {
             hoaDon.setNhanVien(nv);
-            // Link to active GiaoCa (tạm thời comment theo yêu cầu không cần giao ca)
-            // com.example.be.entity.GiaoCa activeGiaoCa = giaoCaRepository.findGiaoCaHienTai(nv.getId())
-            //         .orElseThrow(() -> new BusinessException("Bạn phải Mở Ca làm việc trước khi tạo hóa đơn!"));
-            // hoaDon.setGiaoCa(activeGiaoCa);
+            // Link to active GiaoCa
+            com.example.be.entity.GiaoCa activeGiaoCa = giaoCaRepository.findGiaoCaHienTai(nv.getId())
+                    .orElseThrow(() -> new BusinessException("Bạn phải Mở Ca làm việc trước khi tạo hóa đơn!"));
+            hoaDon.setGiaoCa(activeGiaoCa);
         }
 
         hoaDonRepository.save(hoaDon);
@@ -502,6 +502,7 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             return null;
         }
 
+        // Kiểm tra xem khách hàng có tồn tại dựa trên email/SĐT trước khi tạo mới để tránh trùng lặp
         if (email != null) {
             KhachHang existedByEmail = khachHangRepository.findFirstByEmail(email).orElse(null);
             if (existedByEmail != null) {
@@ -516,8 +517,22 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             }
         }
 
-        // Không tự động tạo khách hàng mới khi thanh toán tại quầy.
-        // Chỉ dùng khách hàng đã chọn sẵn trên hóa đơn hoặc tìm theo SĐT/email.
+        // Tự động tạo khách hàng mới ở cuối nếu có ĐẦY ĐỦ thông tin (Tên + Số điện thoại)
+        if (ten != null && sdt != null) {
+            KhachHang newKh = new KhachHang();
+            newKh.setMa(CodeUtils.generateRandom(KhachHang.class, khachHangRepository::existsByMa));
+            newKh.setTen(ten);
+            newKh.setSdt(sdt);
+            newKh.setEmail(email != null ? email : String.format("khach_%s@aerostride.vn", sdt.replaceAll("\\D", "")));
+            newKh.setGioiTinh(request.getGioiTinhKhachHang() != null ? request.getGioiTinhKhachHang() : true);
+            newKh.setNgaySinh(request.getNgaySinhKhachHang());
+            newKh.setGhiChu("Khách tạo tự động từ bán hàng tại quầy");
+            newKh.setTrangThai(TrangThai.DANG_HOAT_DONG);
+            newKh.setXoaMem(false);
+            newKh.setNgayTao(System.currentTimeMillis());
+            return khachHangRepository.save(newKh);
+        }
+
         return null;
     }
 

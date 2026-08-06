@@ -60,59 +60,20 @@ public class AiChatServiceImpl implements AiChatService {
     private final AiLocalService aiLocalService;
     private final ChatClient chatClient;
 
-    @Value("${google.gemini.api-key}")
-    private String geminiApiKeyString;
-
-    private List<String> apiKeysList = new ArrayList<>();
-    private final AtomicInteger keyIndex = new AtomicInteger(0);
-
     @Value("${openai.api-key:}")
     private String openAiApiKeyString;
 
     private List<String> openAiApiKeysList = new ArrayList<>();
     private final AtomicInteger openAiKeyIndex = new AtomicInteger(0);
 
-    @Value("${claude.api-key:}")
-    private String claudeApiKeyString;
-
-    private List<String> claudeApiKeysList = new ArrayList<>();
-    private final AtomicInteger claudeKeyIndex = new AtomicInteger(0);
-
-    @Value("${deepseek.api-key:}")
-    private String deepseekApiKeyString;
-
-    private List<String> deepseekApiKeysList = new ArrayList<>();
-    private final AtomicInteger deepseekKeyIndex = new AtomicInteger(0);
-
     @PostConstruct
     public void initApiKeys() {
-        if (geminiApiKeyString != null && !geminiApiKeyString.isBlank()) {
-            apiKeysList = Arrays.stream(geminiApiKeyString.split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
-            log.info("Đã nạp thành công {} API Keys cho Gemini.", apiKeysList.size());
-        }
         if (openAiApiKeyString != null && !openAiApiKeyString.isBlank()) {
             openAiApiKeysList = Arrays.stream(openAiApiKeyString.split(","))
                     .map(String::trim)
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.toList());
             log.info("Đã nạp thành công {} API Keys cho OpenAI.", openAiApiKeysList.size());
-        }
-        if (claudeApiKeyString != null && !claudeApiKeyString.isBlank()) {
-            claudeApiKeysList = Arrays.stream(claudeApiKeyString.split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
-            log.info("Đã nạp thành công {} API Keys cho Claude.", claudeApiKeysList.size());
-        }
-        if (deepseekApiKeyString != null && !deepseekApiKeyString.isBlank()) {
-            deepseekApiKeysList = Arrays.stream(deepseekApiKeyString.split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
-            log.info("Đã nạp thành công {} API Keys cho DeepSeek.", deepseekApiKeysList.size());
         }
 
         // Khởi động luồng chạy ngầm tải trước (warm-up) cache danh sách sản phẩm để tránh trễ ở request đầu tiên
@@ -128,15 +89,6 @@ public class AiChatServiceImpl implements AiChatService {
         }).start();
     }
 
-    private String getApiKey() {
-        if (apiKeysList.isEmpty()) {
-            return geminiApiKeyString;
-        }
-        int idx = keyIndex.getAndIncrement() % apiKeysList.size();
-        if (idx < 0) idx = 0;
-        return apiKeysList.get(idx);
-    }
-
     private String getOpenAiApiKey() {
         if (openAiApiKeysList.isEmpty()) {
             return openAiApiKeyString;
@@ -146,47 +98,11 @@ public class AiChatServiceImpl implements AiChatService {
         return openAiApiKeysList.get(idx);
     }
 
-    private String getClaudeApiKey() {
-        if (claudeApiKeysList.isEmpty()) {
-            return claudeApiKeyString;
-        }
-        int idx = claudeKeyIndex.getAndIncrement() % claudeApiKeysList.size();
-        if (idx < 0) idx = 0;
-        return claudeApiKeysList.get(idx);
-    }
-
-    private String getDeepSeekApiKey() {
-        if (deepseekApiKeysList.isEmpty()) {
-            return deepseekApiKeyString;
-        }
-        int idx = deepseekKeyIndex.getAndIncrement() % deepseekApiKeysList.size();
-        if (idx < 0) idx = 0;
-        return deepseekApiKeysList.get(idx);
-    }
-
-    @Value("${google.gemini.model:gemini-2.0-flash}")
-    private String geminiModel;
-
-    @Value("${google.gemini.base-url:https://generativelanguage.googleapis.com/v1beta}")
-    private String geminiBaseUrl;
-
     @Value("${openai.model:gpt-4o-mini}")
     private String openAiModel;
 
     @Value("${openai.base-url:https://api.openai.com/v1}")
     private String openAiBaseUrl;
-
-    @Value("${claude.model:claude-3-5-sonnet-20241022}")
-    private String claudeModel;
-
-    @Value("${claude.base-url:https://api.anthropic.com/v1}")
-    private String claudeBaseUrl;
-
-    @Value("${deepseek.model:deepseek-chat}")
-    private String deepseekModel;
-
-    @Value("${deepseek.base-url:https://api.deepseek.com}")
-    private String deepseekBaseUrl;
 
     private static final DateTimeFormatter TIME_FORMATTER =
             DateTimeFormatter.ofPattern("HH:mm");
@@ -299,88 +215,25 @@ public class AiChatServiceImpl implements AiChatService {
         String chatHistory = buildChatHistory(conversation.getId());
         String prompt = buildPrompt(chatHistory, customerText, conversation);
 
-        // --- Cố gắng gọi OPENAI CHATGPT (Primary Model có hỗ trợ Tool/Function) ---
+        // --- Cố gắng gọi OpenAI / Ollama Local (Primary Model) ---
         String activeOpenAiKey = getOpenAiApiKey();
         boolean hasOpenAiKey = activeOpenAiKey != null && !activeOpenAiKey.isBlank() && !"your_openai_api_key_here".equals(activeOpenAiKey);
 
         if (hasOpenAiKey && isModelHealthy("OPENAI")) {
             try {
-                log.info("Khởi động gọi OpenAI ChatGPT API (với Spring AI)...");
+                log.info("Khởi động gọi OpenAI / Ollama API...");
                 String apiUrl = String.format("%s/chat/completions", openAiBaseUrl);
                 String botResponseText = callOpenAiApi(apiUrl, prompt);
                 saveAndBroadcast(conversation, botResponseText);
-                log.info("OpenAI ChatGPT phản hồi thành công.");
+                log.info("OpenAI / Ollama phản hồi thành công.");
                 return; // Xử lý xong, kết thúc!
             } catch (Exception e) {
-                log.warn("OpenAI ChatGPT API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
+                log.warn("OpenAI / Ollama API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
                 markModelUnhealthy("OPENAI");
             }
-        } else {
-            log.info("OpenAI ChatGPT API Key chưa cấu hình hoặc không khỏe mạnh. Bỏ qua OpenAI.");
         }
 
-        // --- Cố gắng gọi GOOGLE GEMINI (Fallback thứ nhất) ---
-        String activeGeminiKey = getApiKey();
-        boolean hasGeminiKey = activeGeminiKey != null && !activeGeminiKey.isBlank() && !"your_gemini_api_key_here".equals(activeGeminiKey);
-        
-        if (hasGeminiKey && isModelHealthy("GEMINI")) {
-            try {
-                log.info("Tự động chuyển đổi: Khởi động gọi Google Gemini API...");
-                String apiUrl = String.format("%s/models/%s:generateContent?key=%s",
-                        geminiBaseUrl, geminiModel, activeGeminiKey);
-                String botResponseText = callGeminiApi(apiUrl, prompt, imageBase64);
-                saveAndBroadcast(conversation, botResponseText);
-                log.info("Google Gemini phản hồi thành công.");
-                return; // Xử lý xong, kết thúc!
-            } catch (Exception e) {
-                log.warn("Google Gemini API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
-                markModelUnhealthy("GEMINI");
-            }
-        } else {
-            log.info("Google Gemini API Key chưa cấu hình hoặc không khỏe mạnh. Bỏ qua Gemini.");
-        }
-
-        // --- Cố gắng gọi ANTHROPIC CLAUDE (Fallback thứ hai) ---
-        String activeClaudeKey = getClaudeApiKey();
-        boolean hasClaudeKey = activeClaudeKey != null && !activeClaudeKey.isBlank() && !"your_claude_api_key_here".equals(activeClaudeKey);
-
-        if (hasClaudeKey && isModelHealthy("CLAUDE")) {
-            try {
-                log.info("Tự động chuyển đổi: Khởi động gọi Anthropic Claude API...");
-                String apiUrl = String.format("%s/messages", claudeBaseUrl);
-                String botResponseText = callClaudeApi(apiUrl, prompt);
-                saveAndBroadcast(conversation, botResponseText);
-                log.info("Anthropic Claude phản hồi thành công.");
-                return; // Xử lý xong, kết thúc!
-            } catch (Exception e) {
-                log.warn("Anthropic Claude API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
-                markModelUnhealthy("CLAUDE");
-            }
-        } else {
-            log.info("Anthropic Claude API Key chưa cấu hình hoặc không khỏe mạnh. Bỏ qua Claude.");
-        }
-
-        // --- Cố gắng gọi DEEPSEEK (Fallback thứ ba) ---
-        String activeDeepSeekKey = getDeepSeekApiKey();
-        boolean hasDeepSeekKey = activeDeepSeekKey != null && !activeDeepSeekKey.isBlank() && !"your_deepseek_api_key_here".equals(activeDeepSeekKey);
-
-        if (hasDeepSeekKey && isModelHealthy("DEEPSEEK")) {
-            try {
-                log.info("Tự động chuyển đổi: Khởi động gọi DeepSeek API...");
-                String apiUrl = String.format("%s/chat/completions", deepseekBaseUrl);
-                String botResponseText = callDeepSeekApi(apiUrl, prompt);
-                saveAndBroadcast(conversation, botResponseText);
-                log.info("DeepSeek phản hồi thành công.");
-                return; // Xử lý xong, kết thúc!
-            } catch (Exception e) {
-                log.warn("DeepSeek API gặp sự cố. Nguyên nhân chi tiết: {}", e.getMessage());
-                markModelUnhealthy("DEEPSEEK");
-            }
-        } else {
-            log.info("DeepSeek API Key chưa cấu hình hoặc không khỏe mạnh. Bỏ qua DeepSeek.");
-        }
-
-        // --- Cố gắng gọi LOCAL AI (Fallback thứ tư - Tuyệt đối không treo luồng) ---
+        // --- Cố gắng gọi LOCAL AI (Fallback) ---
         log.info("Tự động chuyển đổi: Kích hoạt AI nội bộ cục bộ làm dự phòng...");
         try {
             String localResponse = aiLocalService.generateResponse(customerText, conversation.getId());
@@ -703,49 +556,7 @@ public class AiChatServiceImpl implements AiChatService {
         );
     }
 
-    /**
-     * Gọi Gemini API và trích xuất kết quả.
-     */
-    private String callGeminiApi(String apiUrl, String prompt) {
-        return callGeminiApi(apiUrl, prompt, null);
-    }
 
-    @SuppressWarnings("unchecked")
-    private String callGeminiApi(String apiUrl, String prompt, String imageBase64) {
-        Map<String, Object> requestBody = new HashMap<>();
-        Map<String, Object> content = new HashMap<>();
-        
-        List<Map<String, Object>> parts = new ArrayList<>();
-        
-        Map<String, Object> textPart = new HashMap<>();
-        textPart.put("text", prompt);
-        parts.add(textPart);
-
-        if (imageBase64 != null && !imageBase64.trim().isEmpty()) {
-            Map<String, Object> inlineData = new HashMap<>();
-            inlineData.put("mimeType", "image/jpeg");
-            // Bỏ đi tiền tố "data:image/jpeg;base64," nếu có
-            String base64Data = imageBase64;
-            if (base64Data.contains(",")) {
-                base64Data = base64Data.split(",")[1];
-            }
-            inlineData.put("data", base64Data);
-
-            Map<String, Object> imagePart = new HashMap<>();
-            imagePart.put("inlineData", inlineData);
-            parts.add(imagePart);
-        }
-
-        content.put("parts", parts);
-        requestBody.put("contents", List.of(content));
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-        Map<String, Object> response = restTemplate.postForObject(apiUrl, entity, Map.class);
-        return extractTextFromGeminiResponse(response);
-    }
 
     /**
      * Lưu tin nhắn bot vào CSDL và broadcast qua WebSocket.
@@ -776,13 +587,13 @@ public class AiChatServiceImpl implements AiChatService {
         String chatHistory = buildChatHistory(conversation.getId());
         String prompt = "Dựa trên lịch sử hội thoại sau, hãy tóm tắt nội dung chính (khoảng 3-4 dòng) và đánh dấu xem có cần nhân viên chú ý đặc biệt không (ví dụ: đòi hoàn tiền, khiếu nại, ...):\n\n" + chatHistory;
         
-        String activeGeminiKey = getApiKey();
-        if (activeGeminiKey != null && !activeGeminiKey.isBlank() && !"your_gemini_api_key_here".equals(activeGeminiKey)) {
+        String activeOpenAiKey = getOpenAiApiKey();
+        if (activeOpenAiKey != null && !activeOpenAiKey.isBlank() && !"your_openai_api_key_here".equals(activeOpenAiKey)) {
             try {
-                String apiUrl = String.format("%s/models/%s:generateContent?key=%s", geminiBaseUrl, geminiModel, activeGeminiKey);
-                return callGeminiApi(apiUrl, prompt, null);
+                String apiUrl = String.format("%s/chat/completions", openAiBaseUrl);
+                return callOpenAiApi(apiUrl, prompt);
             } catch (Exception e) {
-                log.error("Lỗi tóm tắt bằng Gemini: {}", e.getMessage());
+                log.error("Lỗi tóm tắt bằng OpenAI/Ollama: {}", e.getMessage());
             }
         }
         return "Không thể tóm tắt hội thoại lúc này do lỗi kết nối AI.";
@@ -798,26 +609,7 @@ public class AiChatServiceImpl implements AiChatService {
                 .format(TIME_FORMATTER);
     }
 
-    /**
-     * Trích xuất text phản hồi từ JSON response của Gemini API.
-     */
-    @SuppressWarnings("unchecked")
-    private String extractTextFromGeminiResponse(Map<String, Object> response) {
-        try {
-            List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
-            Map<String, Object> firstCandidate = candidates.get(0);
-            Map<String, Object> content = (Map<String, Object>) firstCandidate.get("content");
-            List<Map<String, String>> parts = (List<Map<String, String>>) content.get("parts");
-            String responseText = parts.get(0).get("text");
-            if (responseText == null || responseText.isBlank()) {
-                throw new RuntimeException("Phản hồi từ Gemini trống.");
-            }
-            return responseText;
-        } catch (Exception e) {
-            log.warn("Không thể parse Gemini response: {}", e.getMessage());
-            throw new RuntimeException("Lỗi phân tích cú pháp phản hồi từ Gemini", e);
-        }
-    }
+
 
     /**
      * Gọi OpenAI ChatGPT API và trích xuất kết quả.
@@ -870,91 +662,9 @@ public class AiChatServiceImpl implements AiChatService {
         }
     }
 
-    /**
-     * Gọi Anthropic Claude API và trích xuất kết quả.
-     */
-    @SuppressWarnings("unchecked")
-    private String callClaudeApi(String apiUrl, String prompt) {
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", claudeModel);
-        requestBody.put("max_tokens", 1024);
 
-        Map<String, String> message = new HashMap<>();
-        message.put("role", "user");
-        message.put("content", prompt);
-        requestBody.put("messages", List.of(message));
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("x-api-key", getClaudeApiKey());
-        headers.set("anthropic-version", "2023-06-01");
-        
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-        Map<String, Object> response = restTemplate.postForObject(apiUrl, entity, Map.class);
-        return extractTextFromClaudeResponse(response);
-    }
-
-    /**
-     * Trích xuất text phản hồi từ JSON response của Claude API.
-     */
-    @SuppressWarnings("unchecked")
-    private String extractTextFromClaudeResponse(Map<String, Object> response) {
-        try {
-            List<Map<String, Object>> contentList = (List<Map<String, Object>>) response.get("content");
-            Map<String, Object> firstContent = contentList.get(0);
-            String responseText = (String) firstContent.get("text");
-            if (responseText == null || responseText.isBlank()) {
-                throw new RuntimeException("Phản hồi từ Claude trống.");
-            }
-            return responseText;
-        } catch (Exception e) {
-            log.warn("Không thể parse Claude response: {}", e.getMessage());
-            throw new RuntimeException("Lỗi phân tích cú pháp phản hồi từ Claude", e);
-        }
-    }
-
-    /**
-     * Gọi DeepSeek API và trích xuất kết quả.
-     */
-    @SuppressWarnings("unchecked")
-    private String callDeepSeekApi(String apiUrl, String prompt) {
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", deepseekModel);
-
-        Map<String, String> message = new HashMap<>();
-        message.put("role", "user");
-        message.put("content", prompt);
-        requestBody.put("messages", List.of(message));
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(getDeepSeekApiKey());
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-        Map<String, Object> response = restTemplate.postForObject(apiUrl, entity, Map.class);
-        return extractTextFromDeepSeekResponse(response);
-    }
-
-    /**
-     * Trích xuất text phản hồi từ JSON response của DeepSeek API.
-     */
-    @SuppressWarnings("unchecked")
-    private String extractTextFromDeepSeekResponse(Map<String, Object> response) {
-        try {
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
-            Map<String, Object> firstChoice = choices.get(0);
-            Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
-            String responseText = (String) message.get("content");
-            if (responseText == null || responseText.isBlank()) {
-                throw new RuntimeException("Phản hồi từ DeepSeek trống.");
-            }
-            return responseText;
-        } catch (Exception e) {
-            log.warn("Không thể parse DeepSeek response: {}", e.getMessage());
-            throw new RuntimeException("Lỗi phân tích cú pháp phản hồi từ DeepSeek", e);
-        }
-    }
 
     /**
      * [Tính năng nâng cao] Chatbot quy tắc (Rule-based) dự phòng khi Gemini bị lỗi 429 hoặc quá tải.
@@ -1265,62 +975,16 @@ public class AiChatServiceImpl implements AiChatService {
 
         String jsonResult = null;
 
-        // --- Cố gắng gọi GOOGLE GEMINI ---
-        String activeGeminiKey = getApiKey();
-        boolean hasGeminiKey = activeGeminiKey != null && !activeGeminiKey.isBlank() && !"your_gemini_api_key_here".equals(activeGeminiKey);
-        if (hasGeminiKey && isModelHealthy("GEMINI")) {
+        // --- Cố gắng gọi OpenAI / Ollama Local ---
+        String activeOpenAiKey = getOpenAiApiKey();
+        boolean hasOpenAiKey = activeOpenAiKey != null && !activeOpenAiKey.isBlank() && !"your_openai_api_key_here".equals(activeOpenAiKey);
+        if (hasOpenAiKey && isModelHealthy("OPENAI")) {
             try {
-                String apiUrl = String.format("%s/models/%s:generateContent?key=%s",
-                        geminiBaseUrl, geminiModel, activeGeminiKey);
-                jsonResult = callGeminiApi(apiUrl, prompt);
+                String apiUrl = String.format("%s/chat/completions", openAiBaseUrl);
+                jsonResult = callOpenAiApi(apiUrl, prompt);
             } catch (Exception e) {
-                log.warn("Gemini không thể sinh gợi ý chào mừng: {}", e.getMessage());
-                markModelUnhealthy("GEMINI");
-            }
-        }
-
-        // --- Cố gắng gọi OPENAI CHATGPT (Fallback thứ nhất) ---
-        if (jsonResult == null) {
-            String activeOpenAiKey = getOpenAiApiKey();
-            boolean hasOpenAiKey = activeOpenAiKey != null && !activeOpenAiKey.isBlank() && !"your_openai_api_key_here".equals(activeOpenAiKey);
-            if (hasOpenAiKey && isModelHealthy("OPENAI")) {
-                try {
-                    String apiUrl = String.format("%s/chat/completions", openAiBaseUrl);
-                    jsonResult = callOpenAiApi(apiUrl, prompt);
-                } catch (Exception e) {
-                    log.warn("OpenAI không thể sinh gợi ý chào mừng: {}", e.getMessage());
-                    markModelUnhealthy("OPENAI");
-                }
-            }
-        }
-
-        // --- Cố gắng gọi ANTHROPIC CLAUDE (Fallback thứ hai) ---
-        if (jsonResult == null) {
-            String activeClaudeKey = getClaudeApiKey();
-            boolean hasClaudeKey = activeClaudeKey != null && !activeClaudeKey.isBlank() && !"your_claude_api_key_here".equals(activeClaudeKey);
-            if (hasClaudeKey && isModelHealthy("CLAUDE")) {
-                try {
-                    String apiUrl = String.format("%s/messages", claudeBaseUrl);
-                    jsonResult = callClaudeApi(apiUrl, prompt);
-                } catch (Exception e) {
-                    log.warn("Claude không thể sinh gợi ý chào mừng: {}", e.getMessage());
-                    markModelUnhealthy("CLAUDE");
-                }
-            }
-        }
-
-        // --- Cố gắng gọi DEEPSEEK (Fallback thứ ba) ---
-        if (jsonResult == null) {
-            String activeDeepSeekKey = getDeepSeekApiKey();
-            boolean hasDeepSeekKey = activeDeepSeekKey != null && !activeDeepSeekKey.isBlank() && !"your_deepseek_api_key_here".equals(activeDeepSeekKey);
-            if (hasDeepSeekKey && isModelHealthy("DEEPSEEK")) {
-                try {
-                    String apiUrl = String.format("%s/chat/completions", deepseekBaseUrl);
-                    jsonResult = callDeepSeekApi(apiUrl, prompt);
-                } catch (Exception e) {
-                    log.warn("DeepSeek không thể sinh gợi ý chào mừng: {}", e.getMessage());
-                    markModelUnhealthy("DEEPSEEK");
-                }
+                log.warn("OpenAI / Ollama không thể sinh gợi ý chào mừng: {}", e.getMessage());
+                markModelUnhealthy("OPENAI");
             }
         }
 
@@ -1388,8 +1052,16 @@ public class AiChatServiceImpl implements AiChatService {
     @Override
     public String getDashboardInsights(int pendingOrders, int lowStockItems) {
         String prompt = "Phân tích nhanh cho trang chủ Admin: Hiện có " + pendingOrders + " đơn hàng chờ xác nhận và " + lowStockItems + " sản phẩm sắp hết hàng (số lượng < 5). Viết 1-2 câu tư vấn ngắn gọn cho Admin.";
-        String apiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=" + getApiKey();
-        return callGeminiApi(apiUrl, prompt);
+        String activeOpenAiKey = getOpenAiApiKey();
+        if (activeOpenAiKey != null && !activeOpenAiKey.isBlank() && !"your_openai_api_key_here".equals(activeOpenAiKey)) {
+            try {
+                String apiUrl = String.format("%s/chat/completions", openAiBaseUrl);
+                return callOpenAiApi(apiUrl, prompt);
+            } catch (Exception e) {
+                log.error("Lỗi phân tích nhanh Admin dashboard bằng OpenAI/Ollama: {}", e.getMessage());
+            }
+        }
+        return "Hãy tập trung xác nhận các đơn hàng chờ và kiểm tra hàng tồn kho để bổ sung kịp thời.";
     }
 }
 
