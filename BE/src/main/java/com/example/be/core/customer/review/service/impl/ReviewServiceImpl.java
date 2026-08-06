@@ -46,8 +46,9 @@ public class ReviewServiceImpl implements ReviewService {
 
         // Fallback: Nếu không truyền idSanPham trực tiếp nhưng có idHoaDon, lấy sản phẩm từ chi tiết hóa đơn
         if (sanPham == null && hoaDon != null && hoaDon.getListsHoaDonChiTiet() != null && !hoaDon.getListsHoaDonChiTiet().isEmpty()) {
-            sanPham = hoaDon.getListsHoaDonChiTiet().get(0).getChiTietSanPham() != null 
-                    ? hoaDon.getListsHoaDonChiTiet().get(0).getChiTietSanPham().getSanPham() 
+            com.example.be.entity.HoaDonChiTiet firstHdct = hoaDon.getListsHoaDonChiTiet().iterator().next();
+            sanPham = (firstHdct != null && firstHdct.getChiTietSanPham() != null) 
+                    ? firstHdct.getChiTietSanPham().getSanPham() 
                     : null;
         }
 

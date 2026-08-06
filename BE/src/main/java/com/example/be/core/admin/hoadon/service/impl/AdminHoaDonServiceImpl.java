@@ -160,32 +160,6 @@ public class AdminHoaDonServiceImpl implements AdminHoaDonService {
             }
         }
 
-        hd.setTrangThai(newStatus);
-        hd.setNgayCapNhat(System.currentTimeMillis());
-        repository.save(hd);
-
-        // Resolve display name for the person performing the action
-        String nguoiThucHienName = com.example.be.utils.SecurityUtils.getCurrentUserEmail()
-                .map(email -> nhanVienRepository.findByTenTaiKhoanOrEmailOrSdtOrMa(email, email, email, email)
-                        .map(nv -> nv.getTen() != null ? nv.getTen() : email)
-                        .orElse(email))
-                .orElse("Hệ thống");
-        LichSuTrangThaiHoaDon history = LichSuTrangThaiHoaDon.builder()
-            if (hd.getListsHoaDonChiTiet() != null) {
-                for (HoaDonChiTiet detail : hd.getListsHoaDonChiTiet()) {
-                    ChiTietSanPham ct = detail.getChiTietSanPham();
-                    if (ct != null && detail.getSoLuong() != null) {
-                        int currentStock = ct.getSoLuong() != null ? ct.getSoLuong() : 0;
-                        if (currentStock < detail.getSoLuong()) {
-                            String tenSP = ct.getSanPham() != null ? ct.getSanPham().getTen() : ct.getMaChiTietSanPham();
-                            throw new BusinessException("Sản phẩm '" + tenSP + "' hiện không đủ số lượng trong kho (" + currentStock + ") để xác nhận đơn hàng.");
-                        }
-                        ct.setSoLuong(currentStock - detail.getSoLuong());
-                        chiTietSanPhamRepository.saveAndFlush(ct);
-                    }
-                }
-            }
-        }
 
         hd.setTrangThai(newStatus);
         hd.setNgayCapNhat(System.currentTimeMillis());
