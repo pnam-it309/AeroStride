@@ -9,7 +9,7 @@ import {
     ChevronLeftIcon, PrinterIcon, EditIcon, CalendarIcon,
     PackageIcon, UserIcon, MapPinIcon, CreditCardIcon, TruckIcon,
     CircleCheckIcon, CircleXIcon, CheckIcon, TrashIcon,
-    PlusIcon, LayoutListIcon, LayoutGridIcon
+    PlusIcon, LayoutListIcon, LayoutGridIcon, AlertCircleIcon
 } from "vue-tabler-icons";
 import { AdminConfirm, AdminBreadcrumbs, AdminTable, AdminPagination, AdminFilter } from "@/components/common";
 import SafeProductImage from '../san-pham/components/SafeProductImage.vue';
@@ -373,6 +373,13 @@ const deliveryMethodLabel = computed(() => {
     return shipping ? 'Giao hàng tận nơi' : 'Nhận tại quầy';
 });
 
+const isCounterOrder = computed(() => {
+    const dm = String(order.value.deliveryMethod || '').toUpperCase();
+    if (dm) return dm !== 'SHIPPING';
+    const loai = String(order.value.loaiDon || '').toUpperCase();
+    return !['ONLINE', 'GIAO_HANG'].includes(loai);
+});
+
 /**
  * Dịch tên người thực hiện sang tiếng Việt thân thiện:
  * - "GUEST"  → "Khách vãng lai"
@@ -635,11 +642,20 @@ const timelineSteps = computed(() => {
     const tsMap = getStatusTimestampMap.value;
     const statusOrdinal = status === null ? -1 : status;
 
+    // Đơn mua tại quầy: bỏ qua các bước giao hàng trung gian, chỉ hiện Chờ xác nhận -> Hoàn thành
+    if (isCounterOrder.value) {
+        steps = steps.filter((s) => s.key === 0 || s.key === 4);
+    }
+
     // Nếu trạng thái hiện tại là Hủy, Hoàn đơn, Giao thất bại, hoặc Khách không nhận
     if (status >= 5 && status <= 8) {
         const exc = exceptionSteps.find((s) => s.key === status);
         if (exc) {
-            steps = [...coreSteps.slice(0, 4), exc]; // Giữ 4 bước đầu, bước 5 là trạng thái đặc biệt
+            if (isCounterOrder.value) {
+                steps = [coreSteps[0], exc];
+            } else {
+                steps = [...coreSteps.slice(0, 4), exc]; // Giữ 4 bước đầu, bước 5 là trạng thái đặc biệt
+            }
         }
     }
 

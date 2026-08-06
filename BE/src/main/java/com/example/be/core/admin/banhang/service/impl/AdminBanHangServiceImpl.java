@@ -514,26 +514,11 @@ public class AdminBanHangServiceImpl implements AdminBanHangService {
             if (existedByPhone != null) {
                 return existedByPhone;
             }
-        } else {
-            sdt = "09" + String.format("%08d", (int)(Math.random() * 100000000));
         }
 
-        if (ten == null) {
-            ten = "Khách hàng";
-        }
-
-        KhachHang khachHang = new KhachHang();
-        khachHang.setMa(CodeUtils.generateRandom(KhachHang.class, khachHangRepository::existsByMa));
-        khachHang.setTen(ten);
-        khachHang.setSdt(sdt);
-        khachHang.setEmail(email);
-        khachHang.setGioiTinh(request.getGioiTinhKhachHang());
-        khachHang.setNgaySinh(request.getNgaySinhKhachHang());
-        khachHang.setGhiChu("Khách tạo từ bán hàng tại quầy");
-        khachHang.setTrangThai(TrangThai.DANG_HOAT_DONG);
-        khachHang.setXoaMem(false);
-        khachHang.setNgayTao(System.currentTimeMillis());
-        return khachHangRepository.save(khachHang);
+        // Không tự động tạo khách hàng mới khi thanh toán tại quầy.
+        // Chỉ dùng khách hàng đã chọn sẵn trên hóa đơn hoặc tìm theo SĐT/email.
+        return null;
     }
 
     private void saveDefaultShippingAddressIfNeeded(HoaDon hd, AdminBanHangCheckoutRequest request) {

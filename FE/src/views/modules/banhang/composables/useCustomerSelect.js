@@ -1,8 +1,5 @@
 import { ref, watch } from 'vue';
 import { dichVuDonHang } from '@/services/sales/dichVuDonHang';
-import { dichVuKhachHang } from '@/services/admin/dichVuKhachHang';
-import api from '@/services/apiService';
-import { API_ADMIN } from '@/constants/apiPaths';
 
 export function useCustomerSelect(selectedOrder, updateOrderInList, refreshBestVoucher, addNotification) {
     const customerSearch = ref('');
@@ -125,15 +122,9 @@ export function useCustomerSelect(selectedOrder, updateOrderInList, refreshBestV
         const ten = customerForm.value.ten?.trim();
         const sdt = customerForm.value.sdt?.trim();
         const email = customerForm.value.email?.trim() || null;
-        const ns = customerForm.value.ngaySinh?.trim() || null;
-        const gt = customerForm.value.gioiTinh === 'Nam' ? true : customerForm.value.gioiTinh === 'Nữ' ? false : null;
 
         if (!ten && !sdt) {
             return null;
-        }
-
-        if (!ten || !sdt) {
-            throw new Error('Vui lòng điền đầy đủ Tên khách hàng và SĐT để thêm khách hàng mới.');
         }
 
         const existed = await findExistingCustomerByContact(sdt, email);
@@ -142,23 +133,7 @@ export function useCustomerSelect(selectedOrder, updateOrderInList, refreshBestV
             return existed.id;
         }
 
-        const phoneClean = String(sdt || '').replace(/\D/g, '');
-        const fallbackEmail = `khach_${phoneClean || Date.now()}@aerostride.vn`;
-
-        const newCustomerPayload = {
-            ten: String(ten || '').trim(),
-            sdt: String(sdt || '').trim(),
-            email: (email && String(email).trim()) ? String(email).trim() : fallbackEmail,
-            gioiTinh: gt ?? true,
-            ngaySinh: ns || null
-        };
-
-        const created = await dichVuKhachHang.taoKhachHang(newCustomerPayload);
-        const targetCustomer = created?.id ? created : await findExistingCustomerByContact(sdt, email);
-        if (targetCustomer?.id) {
-            await selectCustomer(targetCustomer);
-            return targetCustomer.id;
-        }
+        // Không tự động tạo khách hàng mới khi thanh toán. Nhân viên cần chọn khách hàng có sẵn.
         return null;
     };
 
