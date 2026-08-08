@@ -252,6 +252,23 @@ const withCurrentOption = (items, currentValue, currentLabel) => {
 };
 
 // Bắt sự kiện khi user Enter trong combobox (nếu là chữ mới, gọi auto create)
+const handleComboboxSearchUpdate = (val) => {
+    if (typeof val === 'string' && /^\s+/.test(val)) {
+        nextTick(() => {
+            const activeEl = document.activeElement;
+            if (activeEl && activeEl.tagName === 'INPUT' && typeof activeEl.value === 'string' && /^\s+/.test(activeEl.value)) {
+                activeEl.value = activeEl.value.trimStart();
+            }
+        });
+    }
+};
+
+const handleComboboxBlur = (event) => {
+    if (event?.target && typeof event.target.value === 'string') {
+        event.target.value = event.target.value.trim();
+    }
+};
+
 const onKeyUpEnter = (event, field, service, type, label) => {
     const val = event.target.value?.trim();
     if (!val) return;
@@ -629,6 +646,8 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                                             :return-object="false"
                                             class="modern-select"
                                             :rules="[rules.required]"
+                                            @update:search="handleComboboxSearchUpdate"
+                                            @blur="handleComboboxBlur"
                                             @keyup.enter="(e) => onKeyUpEnter(e, 'idMauSac', dichVuMauSac, 'MAU_SAC', 'màu sắc')"
                                         ></v-combobox>
                                     </div>
@@ -667,6 +686,8 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                                             :return-object="false"
                                             class="modern-select"
                                             :rules="[rules.required]"
+                                            @update:search="handleComboboxSearchUpdate"
+                                            @blur="handleComboboxBlur"
                                             @keyup.enter="
                                                 (e) => onKeyUpEnter(e, 'idKichThuoc', dichVuKichThuoc, 'KICH_THUOC', 'kích thước')
                                             "
@@ -701,6 +722,7 @@ const headerTitle = computed(() => (props.mode === 'create' ? 'Thêm biến th�
                                             density="comfortable"
                                             readonly
                                             hide-details="auto"
+                                            maxlength="100"
                                             class="modern-input bg-slate-50"
                                         ></v-text-field>
                                     </div>

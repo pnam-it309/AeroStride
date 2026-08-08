@@ -15,8 +15,13 @@ const form = ref({
 
 const isSubmitting = ref(false);
 const showSuccess = ref(false);
+const contactFormRef = ref(null);
 
-const submitForm = () => {
+const submitForm = async () => {
+    if (contactFormRef.value) {
+        const { valid } = await contactFormRef.value.validate();
+        if (!valid) return;
+    }
     isSubmitting.value = true;
     // Mock API call
     setTimeout(() => {
@@ -89,26 +94,30 @@ onMounted(() => {
                                 Cảm ơn bạn! Tin nhắn đã được gửi thành công. Chúng tôi sẽ phản hồi sớm nhất có thể.
                             </v-alert>
 
-                            <v-form @submit.prevent="submitForm">
+                            <v-form ref="contactFormRef" @submit.prevent="submitForm">
                                 <v-row>
                                     <v-col cols="12" sm="6">
                                         <v-text-field
                                             v-model="form.name"
-                                            label="Họ và tên"
+                                            label="Họ và tên *"
                                             variant="outlined"
-                                            required
                                             hide-details="auto"
                                             class="modern-input"
+                                            maxlength="100"
+                                            counter="100"
+                                            :rules="[(v) => !!v?.trim() || 'Vui lòng nhập họ và tên', (v) => (v && v.trim().length >= 2) || 'Họ tên tối thiểu 2 ký tự']"
                                         ></v-text-field>
                                     </v-col>
                                     <v-col cols="12" sm="6">
                                         <v-text-field
                                             v-model="form.phone"
-                                            label="Số điện thoại"
+                                            label="Số điện thoại *"
                                             variant="outlined"
-                                            required
                                             hide-details="auto"
                                             class="modern-input"
+                                            maxlength="10"
+                                            counter="10"
+                                            :rules="[(v) => !!v?.trim() || 'Vui lòng nhập số điện thoại', (v) => /^0[3|5|7|8|9][0-9]{8}$/.test(v?.trim() || '') || 'Số điện thoại 10 số không hợp lệ']"
                                         ></v-text-field>
                                     </v-col>
                                     <v-col cols="12">
@@ -119,17 +128,21 @@ onMounted(() => {
                                             type="email"
                                             hide-details="auto"
                                             class="modern-input"
+                                            maxlength="100"
+                                            :rules="[(v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v?.trim() || '') || 'Email không hợp lệ']"
                                         ></v-text-field>
                                     </v-col>
                                     <v-col cols="12">
                                         <v-textarea
                                             v-model="form.message"
-                                            label="Nội dung cần hỗ trợ..."
+                                            label="Nội dung cần hỗ trợ *"
                                             variant="outlined"
-                                            required
                                             rows="4"
                                             hide-details="auto"
                                             class="modern-input"
+                                            maxlength="1000"
+                                            counter="1000"
+                                            :rules="[(v) => !!v?.trim() || 'Vui lòng nhập nội dung cần hỗ trợ', (v) => (v && v.trim().length >= 10) || 'Nội dung tối thiểu 10 ký tự']"
                                         ></v-textarea>
                                     </v-col>
                                     <v-col cols="12">

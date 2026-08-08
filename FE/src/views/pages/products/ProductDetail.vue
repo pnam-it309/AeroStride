@@ -808,6 +808,7 @@ const toggleFavorite = () => {
                                         inputmode="numeric"
                                         class="qty-input"
                                         :value="selectedQuantity"
+                                        maxlength="3"
                                         @keypress="onlyNumbers"
                                         @input="onQuantityInput"
                                         @blur="onQuantityBlur"
@@ -1066,13 +1067,16 @@ const toggleFavorite = () => {
 
                     <v-textarea
                         v-model="newReview.comment"
-                        label="Nhận xét của bạn"
-                        placeholder="Hãy chia sẻ cảm nhận của bạn về sản phẩm này nhé..."
+                        label="Nhận xét của bạn *"
+                        placeholder="Hãy chia sẻ cảm nhận của bạn về sản phẩm này nhé (tối thiểu 5 ký tự)..."
                         variant="outlined"
                         rows="4"
                         auto-grow
                         hide-details="auto"
                         bg-color="grey-lighten-5"
+                        maxlength="1000"
+                        counter="1000"
+                        :rules="[(v) => !!v?.trim() || 'Vui lòng nhập nhận xét', (v) => (v && v.trim().length >= 5) || 'Nhận xét tối thiểu 5 ký tự']"
                     ></v-textarea>
                 </v-card-text>
 

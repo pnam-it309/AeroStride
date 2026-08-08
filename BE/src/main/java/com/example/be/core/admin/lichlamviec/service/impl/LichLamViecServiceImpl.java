@@ -541,17 +541,48 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         return "Cập nhật chấm công thành công!";
     }
 
+    // Private helper for character & string validation
+    private String validateAndTrimString(String input, String fieldName, int maxLength, boolean allowEmpty) {
+        if (input == null || input.trim().isEmpty()) {
+            if (!allowEmpty) {
+                throw new RuntimeException(fieldName + " không được để trống!");
+            }
+            return null;
+        }
+        String trimmed = input.trim();
+        if (trimmed.length() > maxLength) {
+            throw new RuntimeException(fieldName + " không được vượt quá " + maxLength + " ký tự!");
+        }
+        if (trimmed.contains("<") || trimmed.contains(">") || trimmed.toLowerCase().contains("script")) {
+            throw new RuntimeException(fieldName + " chứa ký tự không hợp lệ!");
+        }
+        return trimmed;
+    }
+
     // Shift (Ca Lam) CRUD implementations
     @Override
     @Transactional
     public String createShift(CaLamRequest request) {
-        String tenCa = request.getTenCa();
+        String tenCa = validateAndTrimString(request.getTenCa(), "Tên ca làm việc", 50, false);
+        String moTa = validateAndTrimString(request.getMoTa(), "Mô tả ca làm việc", 255, true);
+
         String gioBatDauStr = request.getGioBatDau();
         String gioKetThucStr = request.getGioKetThuc();
-        String moTa = request.getMoTa();
 
-        if (tenCa == null || tenCa.trim().isEmpty()) {
-            throw new RuntimeException("Tên ca làm việc không được để trống!");
+        if (gioBatDauStr == null || gioBatDauStr.trim().isEmpty()) {
+            throw new RuntimeException("Giờ bắt đầu không được để trống!");
+        }
+        if (gioKetThucStr == null || gioKetThucStr.trim().isEmpty()) {
+            throw new RuntimeException("Giờ kết thúc không được để trống!");
+        }
+
+        LocalTime gioBatDau;
+        LocalTime gioKetThuc;
+        try {
+            gioBatDau = LocalTime.parse(gioBatDauStr.trim(), timeFormatter);
+            gioKetThuc = LocalTime.parse(gioKetThucStr.trim(), timeFormatter);
+        } catch (Exception e) {
+            throw new RuntimeException("Định dạng giờ không hợp lệ (định dạng chuẩn HH:mm)!");
         }
 
         boolean exists = caLamRepository.findByXoaMemFalse().stream()
@@ -562,8 +593,8 @@ public class LichLamViecServiceImpl implements LichLamViecService {
 
         CaLam caLam = CaLam.builder()
                 .tenCa(tenCa)
-                .gioBatDau(LocalTime.parse(gioBatDauStr, timeFormatter))
-                .gioKetThuc(LocalTime.parse(gioKetThucStr, timeFormatter))
+                .gioBatDau(gioBatDau)
+                .gioKetThuc(gioKetThuc)
                 .moTa(moTa)
                 .xoaMem(false)
                 .build();
@@ -585,13 +616,26 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         CaLam caLam = caLamRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy ca làm việc với ID: " + id));
 
-        String tenCa = request.getTenCa();
+        String tenCa = validateAndTrimString(request.getTenCa(), "Tên ca làm việc", 50, false);
+        String moTa = validateAndTrimString(request.getMoTa(), "Mô tả ca làm việc", 255, true);
+
         String gioBatDauStr = request.getGioBatDau();
         String gioKetThucStr = request.getGioKetThuc();
-        String moTa = request.getMoTa();
 
-        if (tenCa == null || tenCa.trim().isEmpty()) {
-            throw new RuntimeException("Tên ca làm việc không được để trống!");
+        if (gioBatDauStr == null || gioBatDauStr.trim().isEmpty()) {
+            throw new RuntimeException("Giờ bắt đầu không được để trống!");
+        }
+        if (gioKetThucStr == null || gioKetThucStr.trim().isEmpty()) {
+            throw new RuntimeException("Giờ kết thúc không được để trống!");
+        }
+
+        LocalTime gioBatDau;
+        LocalTime gioKetThuc;
+        try {
+            gioBatDau = LocalTime.parse(gioBatDauStr.trim(), timeFormatter);
+            gioKetThuc = LocalTime.parse(gioKetThucStr.trim(), timeFormatter);
+        } catch (Exception e) {
+            throw new RuntimeException("Định dạng giờ không hợp lệ (định dạng chuẩn HH:mm)!");
         }
 
         boolean exists = caLamRepository.findByXoaMemFalse().stream()
@@ -601,8 +645,8 @@ public class LichLamViecServiceImpl implements LichLamViecService {
         }
 
         caLam.setTenCa(tenCa);
-        caLam.setGioBatDau(LocalTime.parse(gioBatDauStr, timeFormatter));
-        caLam.setGioKetThuc(LocalTime.parse(gioKetThucStr, timeFormatter));
+        caLam.setGioBatDau(gioBatDau);
+        caLam.setGioKetThuc(gioKetThuc);
         caLam.setMoTa(moTa);
 
         caLamRepository.save(caLam);

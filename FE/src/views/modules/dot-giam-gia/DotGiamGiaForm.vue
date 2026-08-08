@@ -620,6 +620,8 @@ onMounted(init);
                                     placeholder="Nhập tên đợt giảm giá"
                                     variant="outlined"
                                     density="compact"
+                                    maxlength="255"
+                                    counter="255"
                                     hide-details="auto"
                                 ></v-text-field>
                             </div>
@@ -640,6 +642,8 @@ onMounted(init);
                                     placeholder="0"
                                     variant="outlined"
                                     density="compact"
+                                    min="1"
+                                    max="100"
                                     hide-details
                                 ></v-text-field>
                             </div>
@@ -654,7 +658,7 @@ onMounted(init);
                                 />
                             </div>
 
-                            <div class="mb-6">
+                            <div class="mb-5">
                                 <div class="field-label">Ngày kết thúc <span class="text-error">*</span></div>
                                 <AppDatePicker
                                     v-model="form.ngayKetThuc"
@@ -662,6 +666,21 @@ onMounted(init);
                                     enable-time-picker
                                     placeholder="Chọn ngày kết thúc"
                                 />
+                            </div>
+
+                            <div class="mb-5">
+                                <div class="field-label">Mô tả</div>
+                                <v-textarea
+                                    v-model="form.moTa"
+                                    :readonly="isDetailView"
+                                    placeholder="Nhập mô tả đợt giảm giá (không bắt buộc)..."
+                                    variant="outlined"
+                                    density="compact"
+                                    rows="2"
+                                    maxlength="1000"
+                                    counter="1000"
+                                    hide-details="auto"
+                                ></v-textarea>
                             </div>
                         </div>
                     </v-card-text>
@@ -686,6 +705,7 @@ onMounted(init);
                                 placeholder="Tìm theo tên hoặc mã SKU..."
                                 variant="outlined"
                                 density="compact"
+                                maxlength="255"
                                 hide-details
                                 class="compact-input flex-grow-1"
                             ></v-text-field>

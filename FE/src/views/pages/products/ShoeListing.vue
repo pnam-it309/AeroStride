@@ -17,18 +17,26 @@ const products = ref([]);
 const DEFAULT_SHOE_IMAGE = defaultShoeImg || new URL('/src/assets/images/products/s4.jpg', import.meta.url).href;
 const imageFallbacks = ref({});
 
-const handleImageError = (id, event) => {
-    if (!event || !event.target) return;
-    if (event.target.getAttribute('data-fallback') === 'true') return;
-    event.target.setAttribute('data-fallback', 'true');
-    event.target.src = DEFAULT_SHOE_IMAGE;
-    if (id) {
-        imageFallbacks.value[id] = DEFAULT_SHOE_IMAGE;
+const handleImageError = (e, productId) => {
+    const target = e?.target || (e && e.tagName ? e : null);
+    if (!target) return;
+    if (target.getAttribute('data-fallback') === 'true') return;
+    target.setAttribute('data-fallback', 'true');
+    target.src = DEFAULT_SHOE_IMAGE;
+    if (productId) {
+        imageFallbacks.value[productId] = DEFAULT_SHOE_IMAGE;
     }
 };
 const totalElements = ref(0);
 const currentPage = ref(1);
 const pageSize = ref(12);
+
+const cleanSearchValue = (v) => {
+    if (v === null || v === undefined || v === '' || v === 'null' || v === 'undefined') {
+        return null;
+    }
+    return v;
+};
 
 const searchParams = ref({
     keyword: route.query.keyword || '',
@@ -135,10 +143,17 @@ const fetchProducts = async () => {
     loading.value = true;
     try {
         const params = {
-            ...searchParams.value,
             page: currentPage.value,
             size: pageSize.value
         };
+
+        Object.keys(searchParams.value).forEach((key) => {
+            const cleanVal = cleanSearchValue(searchParams.value[key]);
+            if (cleanVal !== null) {
+                params[key] = cleanVal;
+            }
+        });
+
         const response = await dichVuSanPhamPublic.layDanhSachSanPham(params);
         products.value = response?.content || [];
         totalElements.value = response?.totalElements || 0;
@@ -174,7 +189,9 @@ const resetFilters = () => {
     };
     priceRange.value = null;
     selectedSize.value = null;
-    handleFilterChange();
+    currentPage.value = 1;
+    router.replace({ path: route.path, query: {} });
+    fetchProducts();
 };
 
 // SEO Setup
@@ -196,6 +213,10 @@ onMounted(() => {
 
 onUnmounted(() => {
     window.removeEventListener('favorites-updated', updateFavoriteIds);
+});
+
+watch(totalElements, () => {
+    updateSeo();
 });
 
 watch(
@@ -228,26 +249,34 @@ const resolveImg = (v) => {
 };
 
 const getImageUrl = (p) => {
-    if (!p) return defaultShoeImg;
+    if (!p) return DEFAULT_SHOE_IMAGE;
+    if (p.id && imageFallbacks.value[p.id]) {
+        return imageFallbacks.value[p.id];
+    }
     let raw = null;
-    if (p.variants && p.variants.length > 0) {
-        const v = p.variants[0];
-        const vImg = v.hinhAnh || (v.images && v.images.length > 0 ? v.images[0].duongDanAnh || v.images[0].hinhAnh : null);
-        if (!isInvalidImage(vImg)) {
-            raw = vImg;
+    if (p.hinhAnh && !isInvalidImage(p.hinhAnh)) {
+        raw = p.hinhAnh;
+    }
+    if (!raw && p.variants && p.variants.length > 0) {
+        for (const v of p.variants) {
+            const vImg = v.hinhAnh || (v.images && v.images.length > 0 ? v.images[0].duongDanAnh || v.images[0].hinhAnh : null);
+            if (vImg && !isInvalidImage(vImg)) {
+                raw = vImg;
+                break;
+            }
         }
     }
     if (!raw && p.images && p.images.length > 0) {
-        const pImg = p.images[0].duongDanAnh || p.images[0].hinhAnh;
-        if (!isInvalidImage(pImg)) {
-            raw = pImg;
+        for (const img of p.images) {
+            const pImg = img.duongDanAnh || img.hinhAnh;
+            if (pImg && !isInvalidImage(pImg)) {
+                raw = pImg;
+                break;
+            }
         }
     }
-    if (!raw && !isInvalidImage(p.hinhAnh)) {
-        raw = p.hinhAnh;
-    }
     const resolved = resolveImg(raw);
-    return resolved && !isInvalidImage(resolved) ? resolved : defaultShoeImg;
+    return resolved && !isInvalidImage(resolved) ? resolved : DEFAULT_SHOE_IMAGE;
 };
 
 const formatPrice = (price) => {
@@ -467,7 +496,7 @@ const activeSortLabel = computed(() => {
                                         :alt="p.tenSanPham"
                                         class="card-shoe-img"
                                         referrerpolicy="no-referrer"
-                                        @error="handleImageError"
+                                        @error="(e) => handleImageError(e, p.id)"
                                     />
                                     <!-- Badges -->
                                     <div v-if="p.phanTramGiam > 0" class="badge-label-new">-{{ p.phanTramGiam }}%</div>
@@ -508,6 +537,7 @@ const activeSortLabel = computed(() => {
                         <v-pagination
                             v-model="currentPage"
                             :length="Math.ceil(totalElements / pageSize)"
+                            :total-visible="7"
                             @update:model-value="onPageChange"
                             color="#2962FF"
                             class="custom-nav-pagination"
@@ -782,12 +812,15 @@ const activeSortLabel = computed(() => {
     position: relative;
     overflow: hidden;
     display: block;
+    padding-top: 0 !important;
 }
 
 .card-shoe-img {
-    width: 100%;
-    height: 100%;
-    max-height: 211px;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
     object-fit: cover;
     display: block;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);

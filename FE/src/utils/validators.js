@@ -8,6 +8,13 @@ export const noSpecialChar = (value) => {
     return /^[\p{L}0-9\s]+$/u.test(value) || 'Không được chứa ký tự đặc biệt';
 };
 
+// Kiểm tra độ dài từ 2 đến 255 ký tự
+export const lengthBetween2And255 = (value) => {
+    if (!value) return true;
+    const len = String(value).trim().length;
+    return (len >= 2 && len <= 255) || 'Độ dài phải từ 2 đến 255 ký tự';
+};
+
 // Kiểm tra độ dài từ 3 đến 255 ký tự
 export const lengthBetween3And255 = (value) => {
     if (!value) return true;
@@ -36,5 +43,5 @@ export const required =
         return true;
     };
 
-// Tổ hợp các rule chuẩn cho tên (bắt buộc, không khoảng trắng 2 đầu, 3-255 ký tự, không ký tự đặc biệt)
-export const getNameRules = (fieldName = 'Trường này') => [required(fieldName), noOuterWhitespace, lengthBetween3And255, noSpecialChar];
+// Tổ hợp các rule chuẩn cho tên (bắt buộc, không khoảng trắng 2 đầu, 2-255 ký tự, không ký tự đặc biệt)
+export const getNameRules = (fieldName = 'Trường này') => [required(fieldName), noOuterWhitespace, lengthBetween2And255, noSpecialChar];

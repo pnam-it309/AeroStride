@@ -9,7 +9,20 @@ import { useLandingPage } from '@/composables/useLandingPage';
 import { useLandingCatalog } from '@/composables/useLandingCatalog';
 import { useSeoMeta } from '@/composables/useSeoMeta';
 import { useToastStore } from '@/stores/toastStore';
-import { dichVuFile } from '@/services/core/dichVuFile';
+import shoe1Img from '@/assets/images/products/cat_running.jpg';
+import shoe2Img from '@/assets/images/products/cat_training.jpg';
+import shoe3Img from '@/assets/images/products/cat_speed.jpg';
+import defaultShoeImg from '@/assets/images/products/cat_running.jpg';
+
+const DEFAULT_SHOE_IMAGE = defaultShoeImg || new URL('/src/assets/images/products/cat_running.jpg', import.meta.url).href;
+
+const handleImageError = (e) => {
+    const target = e?.target || (e && e.tagName ? e : null);
+    if (!target) return;
+    if (target.getAttribute('data-fallback') === 'true') return;
+    target.setAttribute('data-fallback', 'true');
+    target.src = DEFAULT_SHOE_IMAGE;
+};
 
 const router = useRouter();
 const toastStore = useToastStore();
@@ -85,6 +98,20 @@ const isFavorite = (productId) => favoriteIds.value.includes(productId);
 const isAbsoluteUrl = (v) =>
     typeof v !== 'string' || /^(https?:)?\/\//i.test(v) || v.startsWith('data:') || v.startsWith('blob:') || v.startsWith('/');
 
+const isNonShoeImage = (v, itemName = '') => {
+    if (!v || typeof v !== 'string') return true;
+    const lowerStr = (v + ' ' + itemName).toLowerCase();
+    
+    // Danh sách từ khóa rác không phải giày thể thao cần lọc bỏ
+    const nonShoeKeywords = [
+        'placeholder', 'dummy', 'headphones', 'headphone', 'teddy', 'bear',
+        'dress', 'fashion', 'bag', 'watch', 'shirt', 'pants', 'dam',
+        'vay', 'thu-bong', 'tai-nghe', 'mock', 'sample', 'case'
+    ];
+    
+    return nonShoeKeywords.some((kw) => lowerStr.includes(kw));
+};
+
 const resolveImg = (v) => {
     if (!v) return '';
     if (typeof v !== 'string') return v;
@@ -100,20 +127,6 @@ const formatPrice = (v) => {
 // ─── Products Tab selection & Mock fallbacks ──────────────────────────────────
 const activeTab = ref('MỚI NHẤT');
 
-const mapToCard = (item) => ({
-    id: item.idSanPham ?? item.sanPhamId ?? item.id,
-
-    tenSanPham: item.tenSanPham ?? item.title ?? item.sanPham?.tenSanPham ?? item.tenBienThe ?? 'Sản phẩm',
-
-    tenThuongHieu: item.tenThuongHieu ?? item.subtitle ?? item.sanPham?.tenThuongHieu ?? item.thuongHieu?.ten ?? 'AeroStride',
-
-    hinhAnh: resolveImg(item.hinhAnh ?? item.imageUrl ?? item.hinhAnhDaiDien ?? item.urlHinhAnh ?? item.sanPham?.hinhAnh),
-
-    giaBanThapNhat: item.giaBanThapNhat ?? item.giaBan ?? item.gia ?? 0,
-
-    phanTramGiam: Number(item.phanTramGiam ?? item.giamGia ?? 0)
-});
-
 const newestProducts = computed(() => {
     if (landingProducts.value?.length) {
         return landingProducts.value;
@@ -121,6 +134,65 @@ const newestProducts = computed(() => {
 
     return featuredVariants.value || [];
 });
+
+const categoryCardImages = computed(() => {
+    const list = landingProducts.value || featuredVariants.value || [];
+
+    const getValidShoeImg = (item, defaultImg) => {
+        if (!item) return defaultImg;
+        const title = item.tenSanPham || item.ten || '';
+        let raw = item.hinhAnh ?? item.imageUrl ?? item.hinhAnhDaiDien ?? item.urlHinhAnh ?? item.sanPham?.hinhAnh;
+        if (!raw && item.variants && item.variants.length > 0) {
+            const v = item.variants[0];
+            raw = v.hinhAnh || (v.images && v.images.length > 0 ? v.images[0].duongDanAnh || v.images[0].hinhAnh : null);
+        }
+        const resolved = resolveImg(raw);
+        if (resolved && !isNonShoeImage(resolved, title)) {
+            return resolved;
+        }
+        return defaultImg;
+    };
+
+    const runningShoe = list.find((p) => {
+        const purpose = (p.tenMucDichChay || p.mucDichChay?.ten || '').toLowerCase();
+        const title = (p.tenSanPham || p.ten || '').toLowerCase();
+        return (purpose.includes('chạy') || purpose.includes('đường dài') || purpose.includes('chay')) && !isNonShoeImage(p.hinhAnh, title);
+    });
+
+    const trainingShoe = list.find((p) => {
+        const purpose = (p.tenMucDichChay || p.mucDichChay?.ten || '').toLowerCase();
+        const title = (p.tenSanPham || p.ten || '').toLowerCase();
+        return (purpose.includes('tập') || purpose.includes('luyện') || purpose.includes('tap')) && !isNonShoeImage(p.hinhAnh, title);
+    });
+
+    const speedShoe = list.find((p) => {
+        const purpose = (p.tenMucDichChay || p.mucDichChay?.ten || '').toLowerCase();
+        const title = (p.tenSanPham || p.ten || '').toLowerCase();
+        return (purpose.includes('tốc độ') || purpose.includes('toc do') || purpose.includes('speed')) && !isNonShoeImage(p.hinhAnh, title);
+    });
+
+    return {
+        running: getValidShoeImg(runningShoe, shoe1Img),
+        training: getValidShoeImg(trainingShoe, shoe2Img),
+        speed: getValidShoeImg(speedShoe, shoe3Img)
+    };
+});
+
+const mapToCard = (item) => {
+    let raw = item.hinhAnh ?? item.imageUrl ?? item.hinhAnhDaiDien ?? item.urlHinhAnh ?? item.sanPham?.hinhAnh;
+    let resolved = resolveImg(raw);
+    if (!resolved || isNonShoeImage(resolved, item.tenSanPham || item.ten || '')) {
+        resolved = DEFAULT_SHOE_IMAGE;
+    }
+    return {
+        id: item.idSanPham ?? item.sanPhamId ?? item.id,
+        tenSanPham: item.tenSanPham ?? item.title ?? item.sanPham?.tenSanPham ?? item.tenBienThe ?? 'Sản phẩm',
+        tenThuongHieu: item.tenThuongHieu ?? item.subtitle ?? item.sanPham?.tenThuongHieu ?? item.thuongHieu?.ten ?? 'AeroStride',
+        hinhAnh: resolved,
+        giaBanThapNhat: item.giaBanThapNhat ?? item.giaBan ?? item.gia ?? 0,
+        phanTramGiam: Number(item.phanTramGiam ?? item.giamGia ?? 0)
+    };
+};
 
 const displayedProducts = computed(() => {
     let source = [];
@@ -256,6 +328,7 @@ const scrollToCategories = () => {
                 <div class="categories-grid-row">
                     <!-- Category 1: CHẠY BỘ -->
                     <div class="category-card card-running" @click="router.push({ path: PATH.SHOES, query: { mucDichChayId: 'md1' } })">
+                        <img :src="shoe1Img" alt="Chạy bộ" class="category-shoe-img" />
                         <div class="category-info">
                             <h3 class="category-title">CHẠY BỘ</h3>
                             <span class="category-desc">Hiệu suất tối đa</span>
@@ -265,6 +338,7 @@ const scrollToCategories = () => {
 
                     <!-- Category 2: TẬP LUYỆN -->
                     <div class="category-card card-training" @click="router.push({ path: PATH.SHOES, query: { mucDichChayId: 'md3' } })">
+                        <img :src="shoe2Img" alt="Tập luyện" class="category-shoe-img" />
                         <div class="category-info">
                             <h3 class="category-title">TẬP LUYỆN</h3>
                             <span class="category-desc">Ổn định từng chuyển động</span>
@@ -274,6 +348,7 @@ const scrollToCategories = () => {
 
                     <!-- Category 3: CHẠY TỐC ĐỘ -->
                     <div class="category-card card-speed" @click="router.push({ path: PATH.SHOES, query: { mucDichChayId: 'md2' } })">
+                        <img :src="shoe3Img" alt="Chạy tốc độ" class="category-shoe-img" />
                         <div class="category-info">
                             <h3 class="category-title">CHẠY TỐC ĐỘ</h3>
                             <span class="category-desc">Bứt phá giới hạn</span>
@@ -314,13 +389,12 @@ const scrollToCategories = () => {
                         <!-- Image Box with Light Blue Background -->
                         <div class="card-image-box">
                             <img
-                                v-if="product.hinhAnh"
-                                :src="product.hinhAnh"
+                                :src="product.hinhAnh || DEFAULT_SHOE_IMAGE"
                                 :alt="product.tenSanPham"
                                 class="product-card-img"
                                 referrerpolicy="no-referrer"
+                                @error="handleImageError"
                             />
-                            <v-icon v-else size="48" color="grey-lighten-2">mdi-shoe-sneaker</v-icon>
 
                             <!-- Sale percent badge -->
                             <div v-if="product.phanTramGiam > 0" class="sale-tag-badge">-{{ product.phanTramGiam }}%</div>
@@ -659,9 +733,30 @@ const scrollToCategories = () => {
         transition: opacity 0.3s;
     }
 
+    .category-shoe-img {
+        position: absolute;
+        top: -15px;
+        right: -25px;
+        width: 220px;
+        height: 175px;
+        object-fit: cover;
+        border-radius: 20px;
+        transform: rotate(-12deg) scale(0.95);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+        filter: drop-shadow(0 12px 25px rgba(0, 0, 0, 0.3));
+        z-index: 1;
+        opacity: 0.92;
+    }
+
     &:hover {
         transform: translateY(-8px);
         box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+
+        .category-shoe-img {
+            transform: rotate(-5deg) scale(1.08) translateY(-6px);
+            opacity: 1;
+            filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.4));
+        }
 
         .category-glow {
             background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, rgba(255, 255, 255, 0.05) 100%);

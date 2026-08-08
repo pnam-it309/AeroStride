@@ -23,8 +23,14 @@ public final class CustomerSanPhamSpecification {
         );
     }
 
+    private static boolean isValidParam(String param) {
+        if (!StringUtils.hasText(param)) return false;
+        String trimmed = param.trim();
+        return !"null".equalsIgnoreCase(trimmed) && !"undefined".equalsIgnoreCase(trimmed);
+    }
+
     public static Specification<SanPham> hasKeyword(String keyword) {
-        if (!StringUtils.hasText(keyword)) {
+        if (!isValidParam(keyword)) {
             return null;
         }
         String normalizedKeyword = "%" + keyword.trim().toLowerCase() + "%";
@@ -35,7 +41,7 @@ public final class CustomerSanPhamSpecification {
     }
 
     public static Specification<SanPham> hasThuongHieu(String thuongHieuId) {
-        if (!StringUtils.hasText(thuongHieuId)) {
+        if (!isValidParam(thuongHieuId)) {
             return null;
         }
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("thuongHieu").get("id"), thuongHieuId.trim());
@@ -49,28 +55,28 @@ public final class CustomerSanPhamSpecification {
     }
 
     public static Specification<SanPham> hasGioiTinhKhachHang(String gioiTinh) {
-        if (!StringUtils.hasText(gioiTinh)) {
+        if (!isValidParam(gioiTinh)) {
             return null;
         }
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("gioiTinhKhachHang"), gioiTinh.trim());
     }
 
     public static Specification<SanPham> hasXuatXu(String xuatXuId) {
-        if (!StringUtils.hasText(xuatXuId)) {
+        if (!isValidParam(xuatXuId)) {
             return null;
         }
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("xuatXu").get("id"), xuatXuId.trim());
     }
 
     public static Specification<SanPham> hasMucDichChay(String mucDichChayId) {
-        if (!StringUtils.hasText(mucDichChayId)) {
+        if (!isValidParam(mucDichChayId)) {
             return null;
         }
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("mucDichChay").get("id"), mucDichChayId.trim());
     }
 
     public static Specification<SanPham> hasChatLieu(String chatLieuId) {
-        if (!StringUtils.hasText(chatLieuId)) {
+        if (!isValidParam(chatLieuId)) {
             return null;
         }
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("chatLieu").get("id"), chatLieuId.trim());

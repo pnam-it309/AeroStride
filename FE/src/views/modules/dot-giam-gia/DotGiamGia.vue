@@ -207,6 +207,7 @@ onMounted(() => loadCampaigns());
                         placeholder="Mã hoặc tên đợt..."
                         variant="outlined"
                         density="compact"
+                        maxlength="255"
                         hide-details
                         prepend-inner-icon="mdi-magnify"
                         class="compact-input"

@@ -75,6 +75,7 @@ onMounted(() => {
                         class="search-input mx-auto"
                         bg-color="white"
                         color="primary"
+                        maxlength="100"
                     ></v-text-field>
                 </v-container>
             </div>

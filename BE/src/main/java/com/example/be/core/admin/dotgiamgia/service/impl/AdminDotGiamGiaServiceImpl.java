@@ -79,6 +79,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     @Override
     @Transactional
     public void add(AdminDotGiamGiaRequest req) {
+        validateRequest(req);
         DotGiamGia d = new DotGiamGia();
         BeanUtils.copyProperties(req, d);
         if (d.getMa() == null || d.getMa().trim().isEmpty()) {
@@ -92,6 +93,7 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
     @Override
     @Transactional
     public void update(AdminDotGiamGiaRequest req, String id) {
+        validateRequest(req);
         DotGiamGia d = repo.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException(MessageConstants.DOT_GIAM_GIA_NOT_FOUND_ID + id));
         BeanUtils.copyProperties(req, d);
@@ -100,6 +102,17 @@ public class AdminDotGiamGiaServiceImpl implements AdminDotGiamGiaService {
 
         chiTietDotGiamGiaRepo.deleteByDotGiamGiaId(id);
         saveProducts(d, req.getListIdChiTietSanPham());
+    }
+
+    private void validateRequest(AdminDotGiamGiaRequest req) {
+        if (req.getTen() != null) {
+            req.setTen(req.getTen().trim());
+        }
+        if (req.getNgayBatDau() != null && req.getNgayKetThuc() != null) {
+            if (req.getNgayBatDau() >= req.getNgayKetThuc()) {
+                throw new SystemException("Ngày kết thúc phải sau ngày bắt đầu");
+            }
+        }
     }
 
     private void saveProducts(DotGiamGia d, List<String> variantIds) {

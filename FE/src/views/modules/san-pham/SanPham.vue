@@ -5,7 +5,7 @@
  * Chức năng: Màn hình danh sách sản phẩm. Cho phép lọc, tìm kiếm, xem khoảng giá,
  *            đổi trạng thái (đơn lẻ hoặc hàng loạt), xuất/nhập Excel, và quét mã QR.
  */
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { isActiveStatus, getStatusLabel, getStatusColor } from '@/utils/statusUtils';
 import { SYSTEM_STATUS, STATUS_OPTIONS } from '@/constants/statusConstants';
@@ -75,7 +75,38 @@ const filters = reactive({
     chatLieu: null
 });
 
+watch(() => filters.search, (newVal) => {
+    if (typeof newVal === 'string' && /^\s+/.test(newVal)) {
+        filters.search = newVal.trimStart();
+    }
+});
+
 let priceSearchTimer = null;
+let searchTimer = null;
+
+const scheduleSearch = () => {
+    if (searchTimer) window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(() => {
+        clearProductSelection();
+        reloadProducts();
+    }, 300);
+};
+
+const handleSearchInput = (val) => {
+    if (typeof val === 'string' && /^\s+/.test(val)) {
+        filters.search = val.trimStart();
+    }
+    scheduleSearch();
+};
+
+const handleSearchBlur = (event) => {
+    if (event?.target && typeof event.target.value === 'string') {
+        event.target.value = event.target.value.trim();
+    }
+    if (typeof filters.search === 'string') {
+        filters.search = filters.search.trim();
+    }
+};
 
 // Chuyển đổi một giá trị sang số hợp lệ, nếu lỗi trả về giá trị mặc định
 const toNumber = (value, fallback = 0) => {
@@ -522,8 +553,11 @@ onBeforeUnmount(() => {
                         density="compact"
                         hide-details
                         clearable
+                        maxlength="100"
                         class="compact-input"
-                        @update:model-value="handleSearch"
+                        @update:model-value="handleSearchInput"
+                        @blur="handleSearchBlur"
+                        @keyup.enter="handleSearch"
                     />
                 </v-col>
 

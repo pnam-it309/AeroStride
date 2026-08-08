@@ -41,6 +41,8 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     private final CustomerOrderPhuongThucThanhToanRepository phuongThucRepository;
     private final com.example.be.core.payment.PaymentService paymentService;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final com.example.be.repository.DiaChiRepository diaChiRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     private static final BigDecimal PHI_VAN_CHUYEN = new BigDecimal("30000");
     private static final BigDecimal FREE_SHIP_THRESHOLD = new BigDecimal("500000");
@@ -49,11 +51,58 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
     @Override
     @Transactional
     public CustomerOrderResponse checkout(CustomerOrderCheckoutRequest request, String username) {
-        // 1. Tìm khách hàng (Cho phép null nếu là khách vãng lai)
+        // 1. Tìm hoặc Tự động tạo/lưu Khách Hàng dựa trên thông tin giao hàng (Tránh để "Khách vãng lai")
         KhachHang khachHang = null;
         if (username != null && !username.isBlank() && !"anonymousUser".equals(username)) {
             khachHang = khachHangRepository.findByTenTaiKhoan(username)
                     .orElse(null);
+        }
+
+        String sdtInput = request.getSoDienThoai() != null ? request.getSoDienThoai().trim() : null;
+        String emailInput = request.getEmail() != null ? request.getEmail().trim() : null;
+        String tenInput = request.getTenNguoiNhan() != null ? request.getTenNguoiNhan().trim() : null;
+
+        if (khachHang == null) {
+            // Tra cứu xem thông tin SĐT hoặc Email này đã tồn tại trong DB chưa
+            if (sdtInput != null && !sdtInput.isEmpty()) {
+                khachHang = khachHangRepository.findFirstBySdt(sdtInput).orElse(null);
+            }
+            if (khachHang == null && emailInput != null && !emailInput.isEmpty()) {
+                khachHang = khachHangRepository.findFirstByEmail(emailInput).orElse(null);
+            }
+
+            // Nếu là khách hàng mới -> Tự động tạo bản ghi KhachHang trong DB
+            if (khachHang == null && tenInput != null && !tenInput.isEmpty()) {
+                String maKH = CodeUtils.generateRandom(KhachHang.class);
+                String defaultAccount = (sdtInput != null && !sdtInput.isEmpty()) ? sdtInput : (emailInput != null && !emailInput.isEmpty() ? emailInput : maKH);
+
+                khachHang = new KhachHang();
+                khachHang.setMa(maKH);
+                khachHang.setTen(tenInput);
+                khachHang.setSdt(sdtInput);
+                khachHang.setEmail(emailInput);
+                khachHang.setTenTaiKhoan(defaultAccount);
+                khachHang.setMatKhau(passwordEncoder != null ? passwordEncoder.encode("123456") : "123456");
+                khachHang.setXoaMem(false);
+                khachHang = khachHangRepository.save(khachHang);
+
+                // Tạo địa chỉ mặc định cho Khách Hàng mới
+                DiaChi diaChi = DiaChi.builder()
+                        .maDiaChi(CodeUtils.generateRandom(DiaChi.class))
+                        .khachHang(khachHang)
+                        .tenNguoiNhan(tenInput)
+                        .sdtNguoiNhan(sdtInput)
+                        .tinh(request.getTinhThanh())
+                        .thanhPho(request.getQuanHuyen())
+                        .phuongXa(request.getPhuongXa())
+                        .diaChiChiTiet(request.getDiaChi())
+                        .laMacDinh(true)
+                        .build();
+                diaChiRepository.save(diaChi);
+
+                khachHang.setDiaChi(diaChi);
+                khachHang = khachHangRepository.save(khachHang);
+            }
         }
 
         // 2. Validate và lấy chi tiết sản phẩm
@@ -298,14 +347,11 @@ public class CustomerOrderServiceImpl implements CustomerOrderService {
         HoaDon hoaDon = hoaDonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
-        if (hoaDon.getKhachHang() != null) {
-            if (username == null || "anonymousUser".equals(username)) {
-                throw new RuntimeException("Bạn không có quyền xem đơn hàng này");
-            }
-            KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin khách hàng"));
-
-            if (!hoaDon.getKhachHang().getId().equals(khachHang.getId())) {
+        // Nếu người dùng đã đăng nhập, kiểm tra quyền sở hữu đơn hàng
+        if (username != null && !username.isBlank() && !"anonymousUser".equals(username)) {
+            KhachHang khachHang = khachHangRepository.findByTenTaiKhoan(username).orElse(null);
+            if (khachHang != null && hoaDon.getKhachHang() != null 
+                    && !hoaDon.getKhachHang().getId().equals(khachHang.getId())) {
                 throw new RuntimeException("Bạn không có quyền xem đơn hàng này");
             }
         }

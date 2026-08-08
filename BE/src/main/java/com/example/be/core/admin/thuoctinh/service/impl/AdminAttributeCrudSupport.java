@@ -78,7 +78,11 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
                     }
 
                     if (StringUtils.hasText(keyword)) {
-                        String pattern = "%" + keyword.trim().toLowerCase() + "%";
+                        String cleanKeyword = keyword.trim();
+                        if (cleanKeyword.length() > 100) {
+                            cleanKeyword = cleanKeyword.substring(0, 100);
+                        }
+                        String pattern = "%" + cleanKeyword.toLowerCase() + "%";
                         predicates.add(criteriaBuilder.or(
                                 criteriaBuilder.like(criteriaBuilder.lower(root.get("ma")), pattern),
                                 criteriaBuilder.like(criteriaBuilder.lower(root.get("ten")), pattern)
@@ -138,7 +142,12 @@ public abstract class AdminAttributeCrudSupport<E extends BaseCodeNameEntity> im
         entity.setMa(ma);
         entity.setTen(requireText(request.getTen(), "Ten " + entityDisplayName + " khong duoc de trong"));
         entity.setTrangThai(Optional.ofNullable(parseTrangThai(request.getTrangThai())).orElse(TrangThai.DANG_HOAT_DONG));
-        entity.setMoTa(normalize(request.getMoTa()));
+        
+        String moTa = normalize(request.getMoTa());
+        if (StringUtils.hasText(moTa) && moTa.length() > 255) {
+            throw new BusinessException("Mo ta " + entityDisplayName + " khong duoc vuot qua 255 ky tu");
+        }
+        entity.setMoTa(moTa);
         extraValueSetter.accept(entity, normalize(extraValueExtractor.apply(request)));
         deletedSetter.accept(entity, false);
     }

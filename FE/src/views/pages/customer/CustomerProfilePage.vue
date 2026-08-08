@@ -31,7 +31,22 @@ const passwordData = ref({
 });
 
 const defaultAvatarUrl = 'https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg';
-const defaultAddress = ref(null);
+const phoneRegex = /^0[3|5|7|8|9][0-9]{8}$/;
+const profileFormRef = ref(null);
+
+const nameRules = [
+    (v) => !isEditing.value || !!v?.trim() || 'Vui lòng nhập họ và tên',
+    (v) => !isEditing.value || (v && v.trim().length >= 2 && v.trim().length <= 100) || 'Họ và tên từ 2 đến 100 ký tự'
+];
+const phoneRules = [
+    (v) => !isEditing.value || !!v?.trim() || 'Vui lòng nhập số điện thoại',
+    (v) => !isEditing.value || phoneRegex.test(v?.trim() || '') || 'Số điện thoại 10 số không hợp lệ (VD: 0912345678)'
+];
+const passwordRules = [
+    (v) => !!v || 'Vui lòng nhập mật khẩu',
+    (v) => (v && v.length >= 6) || 'Mật khẩu phải chứa ít nhất 6 ký tự',
+    (v) => (v && v.length <= 50) || 'Mật khẩu tối đa 50 ký tự'
+];
 
 const fetchProfile = async () => {
     if (!authStore.isLoggedIn) {
@@ -77,11 +92,16 @@ const fullAddress = () => {
 };
 
 const submitUpdateProfile = async () => {
+    if (profileFormRef.value) {
+        const { valid } = await profileFormRef.value.validate();
+        if (!valid) return;
+    }
+
     try {
         uiStore.showLoading('Đang cập nhật...');
         await dichVuKhachHang.capNhatHoSo({
-            ten: profileInfo.value.ten,
-            sdt: profileInfo.value.sdt,
+            ten: profileInfo.value.ten?.trim(),
+            sdt: profileInfo.value.sdt?.trim(),
             hinhAnh: profileInfo.value.hinhAnh
         });
         uiStore.showSnackbar('Cập nhật hồ sơ thành công', 'success');
@@ -226,7 +246,7 @@ onMounted(() => {
                             <v-progress-circular indeterminate color="blue-darken-4" size="48"></v-progress-circular>
                         </div>
 
-                        <v-form v-else class="mt-8" :readonly="!isEditing">
+                        <v-form ref="profileFormRef" v-else class="mt-8" :readonly="!isEditing">
                             <v-row class="ma-n3">
                                 <v-col cols="12" sm="6" class="pa-3">
                                     <label class="text-body-1 font-weight-bold text-blue-darken-4 mb-2 d-block">Tên đăng nhập</label>
@@ -237,6 +257,7 @@ onMounted(() => {
                                         hide-details="auto"
                                         class="profile-input"
                                         readonly
+                                        maxlength="50"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="6" class="pa-3">
@@ -248,6 +269,9 @@ onMounted(() => {
                                         color="blue-darken-4"
                                         hide-details="auto"
                                         class="profile-input"
+                                        maxlength="100"
+                                        counter="100"
+                                        :rules="nameRules"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="6" class="pa-3">
@@ -259,6 +283,7 @@ onMounted(() => {
                                         hide-details="auto"
                                         class="profile-input"
                                         readonly
+                                        maxlength="100"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="6" class="pa-3">
@@ -270,6 +295,9 @@ onMounted(() => {
                                         color="blue-darken-4"
                                         hide-details="auto"
                                         class="profile-input"
+                                        maxlength="10"
+                                        counter="10"
+                                        :rules="phoneRules"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12" class="pa-3">
@@ -284,6 +312,7 @@ onMounted(() => {
                                         auto-grow
                                         class="profile-input"
                                         readonly
+                                        maxlength="255"
                                     ></v-textarea>
                                 </v-col>
                             </v-row>
@@ -306,7 +335,8 @@ onMounted(() => {
                             variant="outlined"
                             density="comfortable"
                             color="blue-darken-4"
-                            :rules="[(v) => !!v || 'Vui lòng nhập mật khẩu cũ']"
+                            maxlength="50"
+                            :rules="passwordRules"
                         ></v-text-field>
 
                         <label class="text-body-2 font-weight-bold mb-2 d-block">Mật khẩu mới</label>
@@ -316,7 +346,8 @@ onMounted(() => {
                             variant="outlined"
                             density="comfortable"
                             color="blue-darken-4"
-                            :rules="[(v) => !!v || 'Vui lòng nhập mật khẩu mới']"
+                            maxlength="50"
+                            :rules="passwordRules"
                         ></v-text-field>
 
                         <label class="text-body-2 font-weight-bold mb-2 d-block">Xác nhận mật khẩu mới</label>
@@ -326,6 +357,7 @@ onMounted(() => {
                             variant="outlined"
                             density="comfortable"
                             color="blue-darken-4"
+                            maxlength="50"
                             :rules="[
                                 (v) => !!v || 'Vui lòng xác nhận mật khẩu mới',
                                 (v) => v === passwordData.matKhauMoi || 'Xác nhận mật khẩu không khớp'

@@ -18,7 +18,11 @@ import { getNameRules } from '@/utils/validators';
 
 const nameRules = computed(() => {
     if (props.selectedTab === 'sizes') {
-        return [(v) => !!v || 'Vui lòng nhập kích thước', (v) => /^[0-9]+$/.test(v) || 'Kích thước phải là số nguyên'];
+        return [
+            (v) => !!v || 'Vui lòng nhập kích thước',
+            (v) => /^[0-9]+$/.test(v) || 'Kích thước phải là số nguyên',
+            (v) => (Number(v) > 0 && Number(v) < 100) || 'Kích thước phải từ 1 đến 99'
+        ];
     }
     return getNameRules(props.title);
 });
@@ -49,7 +53,7 @@ const updateFormField = (field, value) => {
 
     // Kích thước có 2 trường tên và giá trị số; nhập ô nào cũng đồng bộ về cùng một số.
     if (props.selectedTab === 'sizes' && (field === 'ten' || field === 'giaTriKichThuoc')) {
-        const numericSize = String(value || '').replace(/[^0-9]/g, '');
+        const numericSize = String(value || '').replace(/[^0-9]/g, '').slice(0, 3);
         updatedForm.ten = numericSize;
         updatedForm.giaTriKichThuoc = numericSize;
     }
@@ -85,7 +89,7 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                                     variant="outlined"
                                     density="compact"
                                     hide-details
-                                    maxlength="250"
+                                    maxlength="50"
                                     class="modern-input bg-slate-50"
                                 ></v-text-field>
                             </div>
@@ -97,7 +101,7 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                                     @update:model-value="
                                         updateFormField(
                                             'ten',
-                                            selectedTab === 'sizes' ? String($event || '').replace(/[^0-9]/g, '') : $event
+                                            selectedTab === 'sizes' ? String($event || '').replace(/[^0-9]/g, '').slice(0, 3) : $event
                                         )
                                     "
                                     placeholder="Nhập tên..."
@@ -106,10 +110,10 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                                     density="compact"
                                     hide-details="auto"
                                     autofocus
-                                    maxlength="250"
+                                    maxlength="255"
+                                    counter="255"
                                     class="modern-input"
                                     type="text"
-                                    min="0"
                                 ></v-text-field>
                             </div>
 
@@ -122,9 +126,11 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                                         @update:model-value="updateFormField('maMauHex', $event)"
                                         variant="outlined"
                                         density="compact"
-                                        hide-details
+                                        hide-details="auto"
                                         class="modern-input flex-grow-1"
-                                        maxlength="250"
+                                        maxlength="7"
+                                        counter="7"
+                                        placeholder="#000000"
                                     ></v-text-field>
                                     <div class="color-preview-wrapper elevation-1">
                                         <input
@@ -143,14 +149,15 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                                 <label class="popover-label">Giá trị (Số)</label>
                                 <v-text-field
                                     :model-value="form.giaTriKichThuoc"
-                                    @update:model-value="updateFormField('giaTriKichThuoc', String($event || '').replace(/[^0-9]/g, ''))"
+                                    @update:model-value="updateFormField('giaTriKichThuoc', String($event || '').replace(/[^0-9]/g, '').slice(0, 3))"
                                     type="number"
                                     placeholder="Ví dụ: 42"
                                     variant="outlined"
                                     density="compact"
-                                    hide-details
-                                    min="0"
-                                    maxlength="250"
+                                    hide-details="auto"
+                                    min="1"
+                                    max="99"
+                                    maxlength="3"
                                     class="modern-input"
                                 ></v-text-field>
                             </div>
@@ -165,7 +172,9 @@ const headerTitle = computed(() => (props.isEditMode ? 'Cập nhật' : 'Thêm m
                                     rows="2"
                                     density="compact"
                                     class="modern-input"
-                                    hide-details
+                                    maxlength="255"
+                                    counter="255"
+                                    hide-details="auto"
                                 ></v-textarea>
                             </div>
                         </v-col>

@@ -202,10 +202,24 @@ onMounted(() => {
 
 // Actions: Mo Ca, Chot Ca, Xac Nhan
 const handleMoCa = async () => {
-    if (openShiftForm.value.tienBanDau < 0) {
-        addNotification({ title: 'Lỗi', subtitle: 'Số tiền ban đầu không hợp lệ', color: 'error' });
+    const tienBanDau = Number(openShiftForm.value.tienBanDau) || 0;
+    const ghiChu = (openShiftForm.value.ghiChuMoCa || '').trim();
+
+    if (tienBanDau < 0 || tienBanDau > 1000000000) {
+        addNotification({ title: 'Lỗi', subtitle: 'Số tiền ban đầu phải từ 0đ đến 1,000,000,000đ', color: 'error' });
         return;
     }
+
+    if (ghiChu.length > 500) {
+        addNotification({ title: 'Lỗi', subtitle: 'Ghi chú mở ca không được vượt quá 500 ký tự!', color: 'error' });
+        return;
+    }
+
+    if (/[<>]|script/i.test(ghiChu)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Ghi chú chứa ký tự không hợp lệ!', color: 'error' });
+        return;
+    }
+
     submitting.value = true;
     try {
         const currentUsername = authStore.user?.username;
@@ -213,8 +227,8 @@ const handleMoCa = async () => {
 
         await dichVuGiaoCa.moCa({
             nhanVienId: me ? me.id : null,
-            tienBanDau: openShiftForm.value.tienBanDau,
-            ghiChu: openShiftForm.value.ghiChuMoCa
+            tienBanDau: tienBanDau,
+            ghiChu: ghiChu
         });
         addNotification({ title: 'Thành công', subtitle: 'Đã mở ca làm việc thành công', color: 'success' });
         fetchCurrentShift();
@@ -227,12 +241,30 @@ const handleMoCa = async () => {
 };
 
 const handleChotCa = async () => {
+    const tienThucTe = Number(closeShiftForm.value.tienThucTe) || 0;
+    const ghiChu = (closeShiftForm.value.ghiChuChotCa || '').trim();
+
+    if (tienThucTe < 0 || tienThucTe > 1000000000) {
+        addNotification({ title: 'Lỗi', subtitle: 'Số tiền thực tế phải từ 0đ đến 1,000,000,000đ', color: 'error' });
+        return;
+    }
+
+    if (ghiChu.length > 500) {
+        addNotification({ title: 'Lỗi', subtitle: 'Ghi chú chốt ca không được vượt quá 500 ký tự!', color: 'error' });
+        return;
+    }
+
+    if (/[<>]|script/i.test(ghiChu)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Ghi chú chứa ký tự không hợp lệ!', color: 'error' });
+        return;
+    }
+
     submitting.value = true;
     try {
         await dichVuGiaoCa.chotCa({
             nhanVienNhanCaId: closeShiftForm.value.nhanVienNhanCaId,
-            tienThucTe: closeShiftForm.value.tienThucTe,
-            ghiChu: closeShiftForm.value.ghiChuChotCa
+            tienThucTe: tienThucTe,
+            ghiChu: ghiChu
         });
         addNotification({ title: 'Thành công', subtitle: 'Đã chốt ca làm việc và gửi bàn giao', color: 'success' });
         fetchCurrentShift();

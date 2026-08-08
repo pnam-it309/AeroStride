@@ -26,6 +26,8 @@ const handleSearch = () => emit('search');
                     variant="outlined"
                     density="compact"
                     hide-details
+                    maxlength="100"
+                    clearable
                     prepend-inner-icon="mdi-magnify"
                     class="compact-input"
                     @keyup.enter="handleSearch"

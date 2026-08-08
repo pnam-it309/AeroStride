@@ -2,6 +2,9 @@ package com.example.be.core.admin.banhang.model.request;
 
 import com.example.be.infrastructure.constants.DeliveryMethod;
 import com.example.be.infrastructure.constants.OrderType;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,8 +18,13 @@ public class AdminBanHangCheckoutRequest {
     /** Id khach hang da co; null khi khach le hoac khach moi nhap tai man ban hang. */
     private String idKhachHang;
     /** Thong tin khach moi/khach le, duoc gan vao hoa don khi thanh toan thanh cong. */
+    @Size(max = 100, message = "Tên khách hàng không được vượt quá 100 ký tự.")
     private String tenKhachHang;
+    @Pattern(regexp = "^$|^0[0-9]{9}$", message = "Số điện thoại không hợp lệ (gồm 10 số bắt đầu bằng số 0).")
+    @Size(max = 15, message = "Số điện thoại không được vượt quá 15 ký tự.")
     private String sdtKhachHang;
+    @Email(message = "Email không đúng định dạng.")
+    @Size(max = 100, message = "Email không được vượt quá 100 ký tự.")
     private String emailKhachHang;
     private Boolean gioiTinhKhachHang;
     private LocalDate ngaySinhKhachHang;
@@ -33,14 +41,19 @@ public class AdminBanHangCheckoutRequest {
     private DeliveryMethod deliveryMethod;
     @Deprecated
     private String loaiDon;
+    @Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự.")
     private String ghiChu;
     /** Thong tin nguoi nhan cho don giao hang; voi tai quay co the de trong. */
+    @Size(max = 100, message = "Tên người nhận không được vượt quá 100 ký tự.")
     private String tenNguoiNhan;
+    @Pattern(regexp = "^$|^0[0-9]{9}$", message = "Số điện thoại người nhận không hợp lệ (gồm 10 số bắt đầu bằng số 0).")
+    @Size(max = 15, message = "Số điện thoại người nhận không được vượt quá 15 ký tự.")
     private String sdtNguoiNhan;
     private String diaChiNguoiNhan;
     private String tinh;
     private String thanhPho;
     private String phuongXa;
+    @Size(max = 255, message = "Địa chỉ chi tiết không được vượt quá 255 ký tự.")
     private String diaChiChiTiet;
     /** Neu true thi luu dia chi nhan hang hien tai thanh dia chi mac dinh cua khach hang. */
     private Boolean luuDiaChiMacDinh;

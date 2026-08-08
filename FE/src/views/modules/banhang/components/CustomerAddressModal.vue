@@ -219,21 +219,42 @@ const openAddForm = () => {
 };
 
 const handleSaveAddress = async () => {
-    if (!newAddressForm.value.tenNguoiNhan || !newAddressForm.value.sdtNguoiNhan) {
+    const name = String(newAddressForm.value.tenNguoiNhan || '').trim();
+    const phone = String(newAddressForm.value.sdtNguoiNhan || '').trim();
+    const detail = String(newAddressForm.value.diaChiChiTiet || '').trim();
+
+    if (!name || !phone) {
         addNotification({ title: 'Thiếu thông tin', subtitle: 'Vui lòng nhập Tên và SĐT người nhận.', color: 'warning' });
         return;
     }
+
+    if (name.length < 2 || name.length > 100) {
+        addNotification({ title: 'Tên không hợp lệ', subtitle: 'Tên người nhận phải từ 2 đến 100 ký tự.', color: 'warning' });
+        return;
+    }
+
+    const phoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/;
+    if (!phoneRegex.test(phone)) {
+        addNotification({ title: 'SĐT không hợp lệ', subtitle: 'Số điện thoại phải có 10 chữ số và bắt đầu bằng 03, 05, 07, 08, hoặc 09.', color: 'warning' });
+        return;
+    }
+
     if (
         !newAddressForm.value.tinh ||
         !newAddressForm.value.thanhPho ||
         !newAddressForm.value.phuongXa ||
-        !newAddressForm.value.diaChiChiTiet
+        !detail
     ) {
         addNotification({
             title: 'Thiếu địa chỉ',
             subtitle: 'Vui lòng chọn đầy đủ Tỉnh/Thành, Quận/Huyện, Phường/Xã và Địa chỉ chi tiết.',
             color: 'warning'
         });
+        return;
+    }
+
+    if (detail.length > 255) {
+        addNotification({ title: 'Địa chỉ quá dài', subtitle: 'Địa chỉ chi tiết không được vượt quá 255 ký tự.', color: 'warning' });
         return;
     }
 

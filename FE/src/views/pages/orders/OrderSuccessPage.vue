@@ -96,6 +96,25 @@ onMounted(async () => {
                     Quay về trang chủ
                 </v-btn>
             </div>
+
+            <div v-else class="success-block">
+                <div class="check-circle">
+                    <v-icon size="40" color="white">mdi-check</v-icon>
+                </div>
+
+                <h1 class="success-title">Đặt hàng thành công!</h1>
+                <p class="order-desc">Đơn hàng của bạn đã được ghi nhận vào hệ thống. Cảm ơn bạn đã tin tưởng và mua sắm tại AeroStride!</p>
+
+                <v-btn
+                    style="background: #1e257c; color: white"
+                    rounded="pill"
+                    size="large"
+                    class="font-weight-bold text-none px-8 mt-2"
+                    @click="router.push('/')"
+                >
+                    Quay về trang chủ
+                </v-btn>
+            </div>
         </div>
 
         <CustomerChat />

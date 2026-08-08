@@ -127,10 +127,31 @@ const openEditDialog = (item) => {
 };
 
 const confirmSaveShift = () => {
-    if (!form.value.tenCa || !form.value.gioBatDau || !form.value.gioKetThuc) {
+    const tenCaTrim = (form.value.tenCa || '').trim();
+    const moTaTrim = (form.value.moTa || '').trim();
+
+    if (!tenCaTrim || !form.value.gioBatDau || !form.value.gioKetThuc) {
         addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập đầy đủ thông tin ca làm!', color: 'error' });
         return;
     }
+
+    if (tenCaTrim.length > 50) {
+        addNotification({ title: 'Lỗi', subtitle: 'Tên ca làm không được vượt quá 50 ký tự!', color: 'error' });
+        return;
+    }
+
+    if (moTaTrim.length > 255) {
+        addNotification({ title: 'Lỗi', subtitle: 'Mô tả không được vượt quá 255 ký tự!', color: 'error' });
+        return;
+    }
+
+    if (/[<>]|script/i.test(tenCaTrim) || /[<>]|script/i.test(moTaTrim)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Dữ liệu nhập vào chứa ký tự không hợp lệ!', color: 'error' });
+        return;
+    }
+
+    form.value.tenCa = tenCaTrim;
+    form.value.moTa = moTaTrim;
 
     const modeText = isEdit.value ? 'cập nhật' : 'tạo mới';
     setConfirm({
@@ -285,6 +306,7 @@ onMounted(() => {
                                 placeholder="Nhập tên ca (VD: Ca Sáng)"
                                 variant="outlined"
                                 density="compact"
+                                maxlength="50"
                                 hide-details
                             />
                         </v-col>
@@ -304,6 +326,7 @@ onMounted(() => {
                                 variant="outlined"
                                 density="compact"
                                 rows="3"
+                                maxlength="255"
                                 hide-details
                             />
                         </v-col>

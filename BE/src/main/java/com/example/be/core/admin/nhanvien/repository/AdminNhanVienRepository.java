@@ -18,9 +18,11 @@ public interface AdminNhanVienRepository extends JpaRepository<NhanVien, String>
     boolean existsByEmail(String email);
     boolean existsByTenTaiKhoan(String tenTaiKhoan);
     boolean existsByMa(String ma);
+    boolean existsBySdt(String sdt);
     boolean existsByEmailAndIdNot(String email, String id);
     boolean existsByTenTaiKhoanAndIdNot(String tenTaiKhoan, String id);
     boolean existsByMaAndIdNot(String ma, String id);
+    boolean existsBySdtAndIdNot(String sdt, String id);
 
     @Query("SELECT nv.ma FROM NhanVien nv")
     List<String> findAllMa();

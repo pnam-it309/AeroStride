@@ -104,6 +104,11 @@ const closeSearch = () => {
     isSearchOpen.value = false;
     searchResults.value = [];
 };
+const onSearchBlur = () => {
+    setTimeout(() => {
+        closeSearch();
+    }, 250);
+};
 
 const handleSearchSubmit = () => {
     if (searchQuery.value.trim()) {
@@ -181,11 +186,7 @@ onUnmounted(() => {
                         v-model="searchQuery"
                         @keyup.enter="handleSearchSubmit"
                         @focus="openSearch"
-                        @blur="
-                            () => {
-                                window.setTimeout(closeSearch, 250);
-                            }
-                        "
+                        @blur="onSearchBlur"
                     />
                     <v-icon v-if="searchQuery" size="16" class="clear-icon-custom" color="grey-darken-1" @mousedown.prevent="clearSearch">
                         mdi-close-circle

@@ -245,9 +245,21 @@ const saveSchedule = async () => {
             (Array.isArray(addForm.value.ca) && !addForm.value.ca.length) ||
             !addForm.value.ngay
         ) {
-            alert('Vui lòng nhập đầy đủ thông tin!');
+            addNotification({ title: 'Lỗi', subtitle: 'Vui lòng chọn đầy đủ nhân viên, ca làm và ngày!', color: 'error' });
             return;
         }
+
+        if (addForm.value.tangCa) {
+            if (!addForm.value.gioBatDauTangCa || !addForm.value.gioKetThucTangCa) {
+                addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập đầy đủ thời gian bắt đầu và kết thúc tăng ca!', color: 'error' });
+                return;
+            }
+            if (addForm.value.gioBatDauTangCa >= addForm.value.gioKetThucTangCa) {
+                addNotification({ title: 'Lỗi', subtitle: 'Giờ bắt đầu tăng ca phải nhỏ hơn giờ kết thúc tăng ca!', color: 'error' });
+                return;
+            }
+        }
+
         loading.value = true;
         let res;
 
@@ -264,12 +276,17 @@ const saveSchedule = async () => {
         }
 
         if (res.data.success) {
-            alert(isEditSchedule.value ? 'Cập nhật lịch thành công!' : 'Thêm lịch thành công!');
+            addNotification({
+                title: 'Thành công',
+                subtitle: isEditSchedule.value ? 'Cập nhật lịch thành công!' : 'Thêm lịch thành công!',
+                color: 'success'
+            });
             showAddDialog.value = false;
             loadData();
         }
     } catch (error) {
         console.error('Save error:', error);
+        addNotification({ title: 'Lỗi', subtitle: error.response?.data?.message || 'Lỗi khi lưu lịch làm việc!', color: 'error' });
     } finally {
         loading.value = false;
     }

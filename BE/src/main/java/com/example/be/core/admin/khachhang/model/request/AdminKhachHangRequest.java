@@ -15,8 +15,14 @@ public class AdminKhachHangRequest extends PageRequest {
     private String ma;
 
     @NotBlank(message = "Tên khách hàng không được để trống")
+    @jakarta.validation.constraints.Size(min = 2, max = 100, message = "Tên khách hàng phải từ 2 đến 100 ký tự")
+    @jakarta.validation.constraints.Pattern(
+        regexp = "^[a-zA-ZàáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠÂẦẤẨẪẬĂẰẮẲẴẶÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ\\s]+$",
+        message = "Tên khách hàng chỉ được chứa chữ cái và khoảng trắng"
+    )
     private String ten;
 
+    @jakarta.validation.constraints.Size(max = 100, message = "Email không được vượt quá 100 ký tự")
     private String email;
 
     private String tenTaiKhoan;
@@ -25,15 +31,23 @@ public class AdminKhachHangRequest extends PageRequest {
     private Boolean gioiTinh;
 
     @NotBlank(message = "Số điện thoại không được để trống")
+    @jakarta.validation.constraints.Pattern(
+        regexp = "^(0[3|5|7|8|9])[0-9]{8}$",
+        message = "Số điện thoại không hợp lệ (phải bắt đầu bằng 03, 05, 07, 08, 09 và gồm 10 chữ số)"
+    )
     private String sdt;
 
     private LocalDate ngaySinh;
     private String hinhAnh;
+
+    @jakarta.validation.constraints.Size(max = 500, message = "Ghi chú không được vượt quá 500 ký tự")
     private String ghiChu;
 
     private String tinh;
     private String thanhPho;
     private String phuongXa;
+
+    @jakarta.validation.constraints.Size(max = 255, message = "Địa chỉ chi tiết không được vượt quá 255 ký tự")
     private String diaChiChiTiet;
 
     private String idDiaChi;

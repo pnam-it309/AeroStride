@@ -59,6 +59,12 @@ const filters = reactive({
     khoangGia: [MIN_VARIANT_PRICE, MAX_VARIANT_PRICE]
 });
 
+watch(() => filters.keyword, (newVal) => {
+    if (typeof newVal === 'string' && /^\s+/.test(newVal)) {
+        filters.keyword = newVal.trimStart();
+    }
+});
+
 // Phân trang + tải dữ liệu server-side (composable dùng chung với SanPham)
 const {
     items: variants,
@@ -768,7 +774,10 @@ onBeforeUnmount(() => {
                         density="compact"
                         hide-details
                         clearable
+                        maxlength="100"
                         class="compact-input"
+                        @input="(e) => { if (e?.target?.value && /^\s+/.test(e.target.value)) { e.target.value = e.target.value.trimStart(); filters.keyword = e.target.value; } }"
+                        @blur="(e) => { if (e?.target?.value) { e.target.value = e.target.value.trim(); filters.keyword = e.target.value; } }"
                     />
                 </v-col>
                 <v-col cols="12" md="2">

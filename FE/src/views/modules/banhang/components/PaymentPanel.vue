@@ -46,6 +46,7 @@
                     density="compact"
                     suffix="đ"
                     hide-details
+                    maxlength="15"
                     style="width: 200px !important; max-width: 200px !important; min-width: 200px !important; flex: none !important"
                     class="text-right-input"
                 />

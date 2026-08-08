@@ -247,8 +247,8 @@ const handleSave = () => {
         addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập họ và tên nhân viên', color: 'error' });
         return;
     }
-    if (String(rawName).trim().length > 255) {
-        addNotification({ title: 'Lỗi', subtitle: 'Họ và tên không được vượt quá 255 ký tự', color: 'error' });
+    if (String(rawName).trim().length > 100) {
+        addNotification({ title: 'Lỗi', subtitle: 'Họ và tên không được vượt quá 100 ký tự', color: 'error' });
         return;
     }
     if (!/^[\p{L}0-9\s]+$/u.test(rawName)) {
@@ -265,6 +265,10 @@ const handleSave = () => {
         addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập email', color: 'error' });
         return;
     }
+    if (String(email).trim().length > 100) {
+        addNotification({ title: 'Lỗi', subtitle: 'Email không được vượt quá 100 ký tự', color: 'error' });
+        return;
+    }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         addNotification({ title: 'Lỗi', subtitle: 'Email không đúng định dạng', color: 'error' });
@@ -276,9 +280,14 @@ const handleSave = () => {
         addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập số điện thoại', color: 'error' });
         return;
     }
-    const phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
-    if (!phoneRegex.test(phone) || String(phone).length < 10 || String(phone).length > 11) {
-        addNotification({ title: 'Lỗi', subtitle: 'Số điện thoại không hợp lệ', color: 'error' });
+    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+    if (!phoneRegex.test(phone) || String(phone).length !== 10) {
+        addNotification({ title: 'Lỗi', subtitle: 'Số điện thoại không hợp lệ (gồm 10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09)', color: 'error' });
+        return;
+    }
+
+    if (!employeeForm.value.idPhanQuyen) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng chọn vai trò/phân quyền cho nhân viên', color: 'error' });
         return;
     }
 
@@ -298,10 +307,23 @@ const handleSave = () => {
             addNotification({ title: 'Lỗi', subtitle: 'Nhân viên phải từ 18 tuổi trở lên', color: 'error' });
             return;
         }
+        if (age > 100) {
+            addNotification({ title: 'Lỗi', subtitle: 'Ngày sinh không hợp lệ (không vượt quá 100 tuổi)', color: 'error' });
+            return;
+        }
     }
 
-    if (!employeeForm.value.tinh || !employeeForm.value.thanhPho || !employeeForm.value.phuongXa || !employeeForm.value.diaChiChiTiet) {
-        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng điền đầy đủ địa chỉ thường trú', color: 'error' });
+    if (!employeeForm.value.tinh || !employeeForm.value.thanhPho || !employeeForm.value.phuongXa) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng chọn đầy đủ Tỉnh/Thành phố, Quận/Huyện và Phường/Xã', color: 'error' });
+        return;
+    }
+
+    if (!employeeForm.value.diaChiChiTiet || !String(employeeForm.value.diaChiChiTiet).trim()) {
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập địa chỉ chi tiết', color: 'error' });
+        return;
+    }
+    if (String(employeeForm.value.diaChiChiTiet).trim().length > 255) {
+        addNotification({ title: 'Lỗi', subtitle: 'Địa chỉ chi tiết không được vượt quá 255 ký tự', color: 'error' });
         return;
     }
 
@@ -330,17 +352,17 @@ const handleSave = () => {
 
                 const payload = {
                     ma: employeeForm.value.ma,
-                    ten: employeeForm.value.ten,
-                    email: employeeForm.value.email,
-                    sdt: employeeForm.value.sdt,
-                    tenTaiKhoan: employeeForm.value.tenTaiKhoan,
+                    ten: employeeForm.value.ten ? employeeForm.value.ten.trim() : '',
+                    email: employeeForm.value.email ? employeeForm.value.email.trim() : '',
+                    sdt: employeeForm.value.sdt ? employeeForm.value.sdt.trim() : '',
+                    tenTaiKhoan: employeeForm.value.tenTaiKhoan ? employeeForm.value.tenTaiKhoan.trim() : '',
                     ngaySinh: employeeForm.value.ngaySinh,
                     gioiTinh: employeeForm.value.gioiTinh,
                     trangThai: employeeForm.value.trangThai,
                     tinh: provinceName || null,
                     thanhPho: districtName || null,
                     phuongXa: wardName || null,
-                    diaChiChiTiet: employeeForm.value.diaChiChiTiet || null,
+                    diaChiChiTiet: employeeForm.value.diaChiChiTiet ? employeeForm.value.diaChiChiTiet.trim() : null,
                     hinhAnh: employeeForm.value.hinhAnh,
                     idPhanQuyen: employeeForm.value.idPhanQuyen
                 };
@@ -412,13 +434,30 @@ const handlePhoneUpdate = (val) => {
     employeeForm.value.sdt = val.replace(/\D/g, '');
 };
 
-const nameRules = getNameRules('Họ và tên');
+const nameRules = [
+    (v) => !!v || 'Vui lòng nhập Họ và tên',
+    (v) => (v && v.length <= 100) || 'Họ và tên không được vượt quá 100 ký tự',
+    (v) => /^[\p{L}0-9\s]+$/u.test(v) || 'Họ và tên không được chứa ký tự đặc biệt'
+];
 
-const emailRules = [(v) => !!v || 'Vui lòng nhập Email', (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Email không hợp lệ'];
+const emailRules = [
+    (v) => !!v || 'Vui lòng nhập Email',
+    (v) => (v && v.length <= 100) || 'Email không được vượt quá 100 ký tự',
+    (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Email không hợp lệ'
+];
 
 const phoneRules = [
     (v) => !!v || 'Vui lòng nhập số điện thoại',
-    (v) => /^0[0-9]{9}$/.test(v) || 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng số 0'
+    (v) => /^(0[3|5|7|8|9])+([0-9]{8})$/.test(v) || 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 03, 05, 07, 08, 09'
+];
+
+const roleRules = [
+    (v) => !!v || 'Vui lòng chọn vai trò/phân quyền'
+];
+
+const detailAddressRules = [
+    (v) => !!v || 'Vui lòng nhập địa chỉ chi tiết',
+    (v) => (v && v.length <= 255) || 'Địa chỉ chi tiết không được vượt quá 255 ký tự'
 ];
 
 const dobRules = [
@@ -430,7 +469,9 @@ const dobRules = [
         let age = today.getFullYear() - dob.getFullYear();
         const m = today.getMonth() - dob.getMonth();
         if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-        return age >= 18 || 'Nhân viên phải từ 18 tuổi trở lên';
+        if (age < 18) return 'Nhân viên phải từ 18 tuổi trở lên';
+        if (age > 100) return 'Ngày sinh không hợp lệ (không vượt quá 100 tuổi)';
+        return true;
     }
 ];
 
@@ -576,6 +617,7 @@ onMounted(async () => {
                                     variant="outlined"
                                     density="compact"
                                     hide-details="auto"
+                                    maxlength="100"
                                 ></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
@@ -588,6 +630,7 @@ onMounted(async () => {
                                     variant="outlined"
                                     density="compact"
                                     hide-details="auto"
+                                    maxlength="100"
                                 ></v-text-field>
                             </v-col>
                             <v-col cols="12" md="6">
@@ -614,6 +657,7 @@ onMounted(async () => {
                                     bg-color="white"
                                     density="compact"
                                     hide-details="auto"
+                                    maxlength="50"
                                 ></v-text-field>
                             </v-col>
 
@@ -641,13 +685,14 @@ onMounted(async () => {
                                 ></v-select>
                             </v-col>
                             <v-col cols="12" md="6">
-                                <div class="field-label">Vai trò</div>
+                                <div class="field-label">Vai trò <span class="text-error">*</span></div>
                                 <v-select
                                     v-model="employeeForm.idPhanQuyen"
                                     :readonly="isDetailView"
                                     :items="roles"
                                     item-title="title"
                                     item-value="value"
+                                    :rules="roleRules"
                                     variant="outlined"
                                     density="compact"
                                     hide-details="auto"
@@ -705,11 +750,13 @@ onMounted(async () => {
                                 <v-textarea
                                     v-model="employeeForm.diaChiChiTiet"
                                     :readonly="isDetailView"
+                                    :rules="detailAddressRules"
                                     placeholder="Số nhà, tên đường..."
                                     variant="outlined"
                                     density="compact"
                                     rows="2"
                                     hide-details="auto"
+                                    maxlength="255"
                                 ></v-textarea>
                             </v-col>
                         </v-row>

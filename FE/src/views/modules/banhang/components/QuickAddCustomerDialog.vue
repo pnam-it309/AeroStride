@@ -100,11 +100,57 @@ const submitQuickAdd = async () => {
         return;
     }
 
+    if (name.length < 2) {
+        addNotification({ title: 'Tên quá ngắn', subtitle: 'Tên khách hàng phải có ít nhất 2 ký tự.', color: 'warning' });
+        return;
+    }
+
+    if (name.length > 100) {
+        addNotification({ title: 'Tên quá dài', subtitle: 'Tên khách hàng không được vượt quá 100 ký tự.', color: 'warning' });
+        return;
+    }
+
+    const nameRegex = /^[a-zA-ZàáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠÂẦẤẨẪẬĂẰẮẲẴẶÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ\s]+$/;
+    if (!nameRegex.test(name)) {
+        addNotification({ title: 'Tên không hợp lệ', subtitle: 'Tên khách hàng chỉ được chứa chữ cái và khoảng trắng.', color: 'warning' });
+        return;
+    }
+
     const phoneRegex = /^(0[3|5|7|8|9])[0-9]{8}$/;
     if (!phoneRegex.test(phone)) {
         addNotification({
             title: 'SĐT không hợp lệ',
             subtitle: 'Số điện thoại phải có 10 số và bắt đầu bằng 03, 05, 07, 08, hoặc 09.',
+            color: 'warning'
+        });
+        return;
+    }
+
+    if (email) {
+        if (email.length > 100) {
+            addNotification({ title: 'Email quá dài', subtitle: 'Email không được vượt quá 100 ký tự.', color: 'warning' });
+            return;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            addNotification({
+                title: 'Email không hợp lệ',
+                subtitle: 'Địa chỉ email không đúng định dạng (ví dụ: example@domain.com).',
+                color: 'warning'
+            });
+            return;
+        }
+    }
+
+    if (form.value.diaChiChiTiet && form.value.diaChiChiTiet.length > 255) {
+        addNotification({ title: 'Địa chỉ quá dài', subtitle: 'Địa chỉ chi tiết không được vượt quá 255 ký tự.', color: 'warning' });
+        return;
+    }
+
+    if ((form.value.tinh || form.value.thanhPho || form.value.phuongXa) && (!form.value.tinh || !form.value.thanhPho || !form.value.phuongXa)) {
+        addNotification({
+            title: 'Địa chỉ chưa đầy đủ',
+            subtitle: 'Nếu chọn địa chỉ, vui lòng chọn đủ Tỉnh/Thành phố, Quận/Huyện và Phường/Xã.',
             color: 'warning'
         });
         return;
@@ -209,7 +255,8 @@ const close = () => {
                             density="comfortable"
                             hide-details="auto"
                             class="mb-3 text-body-2"
-                            @input="form.sdt = String($event.target.value || '').replace(/[^0-9]/g, '')"
+                            maxlength="10"
+                            @input="form.sdt = String($event.target.value || '').replace(/[^0-9]/g, '').slice(0, 10)"
                         />
                     </v-col>
                     <v-col cols="12" md="6">
@@ -230,6 +277,7 @@ const close = () => {
                             variant="outlined"
                             density="comfortable"
                             hide-details="auto"
+                            maxlength="100"
                             class="mb-3 text-body-2"
                         />
                     </v-col>
@@ -304,6 +352,7 @@ const close = () => {
                             variant="outlined"
                             density="compact"
                             hide-details
+                            maxlength="255"
                             class="text-body-2"
                         />
                     </v-col>

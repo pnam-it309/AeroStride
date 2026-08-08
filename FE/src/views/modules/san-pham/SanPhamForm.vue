@@ -2290,7 +2290,9 @@ const handleSave = async () => {
                                     rows="3"
                                     auto-grow
                                     placeholder="Mô tả chi tiết sản phẩm..."
-                                    hide-details
+                                    hide-details="auto"
+                                    maxlength="2000"
+                                    :counter="2000"
                                     @input="(e) => handleTextInput('moTaChiTiet', e)"
                                     @blur="(e) => handleTextBlur('moTaChiTiet', e)"
                                     class="custom-textarea"
@@ -2354,6 +2356,7 @@ const handleSave = async () => {
                                             variant="outlined"
                                             density="compact"
                                             hide-details
+                                            maxlength="100"
                                             class="mb-4 bg-slate-50"
                                         ></v-text-field>
 
@@ -2410,7 +2413,7 @@ const handleSave = async () => {
                                                     variant="outlined"
                                                     density="compact"
                                                     hide-details
-                                                    maxlength="250"
+                                                    maxlength="50"
                                                     class="mb-3 bg-slate-50"
                                                 ></v-text-field>
                                                 <div class="text-caption mb-1">MÃ MÀU (HEX)</div>
@@ -2419,7 +2422,7 @@ const handleSave = async () => {
                                                     variant="outlined"
                                                     density="compact"
                                                     hide-details
-                                                    maxlength="250"
+                                                    maxlength="7"
                                                     class="bg-slate-50 mb-2"
                                                 ></v-text-field>
                                                 <div class="d-flex align-center ga-2 px-3 py-1 bg-slate-50 rounded-lg">

@@ -696,31 +696,36 @@ onUnmounted(() => {
                                 <v-col cols="12" sm="6">
                                     <v-text-field
                                         v-model="shippingInfo.tenNguoiNhan"
-                                        label="Tên người nhận"
+                                        label="Tên người nhận *"
                                         variant="outlined"
                                         hide-details="auto"
                                         prepend-inner-icon="mdi-account-outline"
-                                        :rules="[(v) => !!v || 'Vui lòng nhập tên']"
+                                        maxlength="100"
+                                        counter="100"
+                                        :rules="[(v) => !!v?.trim() || 'Vui lòng nhập tên người nhận', (v) => (v && v.trim().length >= 2) || 'Tên tối thiểu 2 ký tự']"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="6">
                                     <v-text-field
                                         v-model="shippingInfo.soDienThoai"
-                                        label="Số điện thoại"
+                                        label="Số điện thoại *"
                                         variant="outlined"
                                         hide-details="auto"
                                         prepend-inner-icon="mdi-phone-outline"
-                                        :rules="[(v) => !!v || 'Vui lòng nhập SĐT']"
+                                        maxlength="10"
+                                        counter="10"
+                                        :rules="[(v) => !!v?.trim() || 'Vui lòng nhập SĐT', (v) => /^0[3|5|7|8|9][0-9]{8}$/.test(v?.trim() || '') || 'SĐT 10 số không hợp lệ']"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12">
                                     <v-text-field
                                         v-model="shippingInfo.email"
-                                        label="Email nhận thông báo đơn hàng"
+                                        label="Email nhận thông báo đơn hàng *"
                                         variant="outlined"
                                         hide-details="auto"
                                         prepend-inner-icon="mdi-email-outline"
-                                        :rules="[(v) => !!v || 'Vui lòng nhập Email', (v) => /.+@.+\..+/.test(v) || 'Email không hợp lệ']"
+                                        maxlength="100"
+                                        :rules="[(v) => !!v?.trim() || 'Vui lòng nhập Email', (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v?.trim() || '') || 'Email không hợp lệ']"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12" sm="4">
@@ -729,7 +734,7 @@ onUnmounted(() => {
                                         :items="provinces"
                                         item-title="name"
                                         item-value="code"
-                                        label="Tỉnh/Thành phố"
+                                        label="Tỉnh/Thành phố *"
                                         variant="outlined"
                                         hide-details="auto"
                                         prepend-inner-icon="mdi-map-marker-outline"
@@ -743,7 +748,7 @@ onUnmounted(() => {
                                         :items="districts"
                                         item-title="name"
                                         item-value="code"
-                                        label="Quận/Huyện"
+                                        label="Quận/Huyện *"
                                         variant="outlined"
                                         hide-details="auto"
                                         :disabled="!shippingInfo.tinhThanh"
@@ -757,7 +762,7 @@ onUnmounted(() => {
                                         :items="wards"
                                         item-title="name"
                                         item-value="code"
-                                        label="Phường/Xã"
+                                        label="Phường/Xã *"
                                         variant="outlined"
                                         hide-details="auto"
                                         :disabled="!shippingInfo.quanHuyen"
@@ -768,11 +773,13 @@ onUnmounted(() => {
                                 <v-col cols="12">
                                     <v-text-field
                                         v-model="shippingInfo.diaChi"
-                                        label="Địa chỉ chi tiết (số nhà, tên đường)"
+                                        label="Địa chỉ chi tiết (số nhà, tên đường) *"
                                         variant="outlined"
                                         hide-details="auto"
                                         prepend-inner-icon="mdi-home-outline"
-                                        :rules="[(v) => !!v || 'Vui lòng nhập địa chỉ']"
+                                        maxlength="255"
+                                        counter="255"
+                                        :rules="[(v) => !!v?.trim() || 'Vui lòng nhập địa chỉ', (v) => (v && v.trim().length >= 5) || 'Địa chỉ tối thiểu 5 ký tự']"
                                     ></v-text-field>
                                 </v-col>
                                 <v-col cols="12">
@@ -782,7 +789,9 @@ onUnmounted(() => {
                                         variant="outlined"
                                         density="comfortable"
                                         rows="2"
-                                        hide-details
+                                        hide-details="auto"
+                                        maxlength="500"
+                                        counter="500"
                                         prepend-inner-icon="mdi-note-text-outline"
                                     ></v-textarea>
                                 </v-col>
@@ -1451,6 +1460,9 @@ onUnmounted(() => {
                                 variant="outlined"
                                 density="comfortable"
                                 prepend-inner-icon="mdi-account-outline"
+                                maxlength="100"
+                                counter="100"
+                                :rules="[(v) => !!v?.trim() || 'Vui lòng nhập tên người nhận', (v) => (v && v.trim().length >= 2) || 'Tên tối thiểu 2 ký tự']"
                             ></v-text-field>
                         </v-col>
                         <v-col cols="12" sm="6">
@@ -1460,6 +1472,9 @@ onUnmounted(() => {
                                 variant="outlined"
                                 density="comfortable"
                                 prepend-inner-icon="mdi-phone-outline"
+                                maxlength="10"
+                                counter="10"
+                                :rules="[(v) => !!v?.trim() || 'Vui lòng nhập SĐT', (v) => /^0[3|5|7|8|9][0-9]{8}$/.test(v?.trim() || '') || 'SĐT 10 số không hợp lệ']"
                             ></v-text-field>
                         </v-col>
 
@@ -1472,6 +1487,7 @@ onUnmounted(() => {
                                 label="Tỉnh/Thành phố *"
                                 variant="outlined"
                                 density="comfortable"
+                                :rules="[(v) => !!v || 'Vui lòng chọn Tỉnh/Thành']"
                                 @update:model-value="
                                     (val) => {
                                         newAddressForm.quanHuyen = null;
@@ -1491,6 +1507,7 @@ onUnmounted(() => {
                                 variant="outlined"
                                 density="comfortable"
                                 :disabled="!newAddressForm.tinhThanh"
+                                :rules="[(v) => !!v || 'Vui lòng chọn Quận/Huyện']"
                                 @update:model-value="
                                     (val) => {
                                         newAddressForm.phuongXa = null;
@@ -1509,6 +1526,7 @@ onUnmounted(() => {
                                 variant="outlined"
                                 density="comfortable"
                                 :disabled="!newAddressForm.quanHuyen"
+                                :rules="[(v) => !!v || 'Vui lòng chọn Phường/Xã']"
                             ></v-autocomplete>
                         </v-col>
 
@@ -1519,6 +1537,9 @@ onUnmounted(() => {
                                 variant="outlined"
                                 density="comfortable"
                                 prepend-inner-icon="mdi-home-city-outline"
+                                maxlength="255"
+                                counter="255"
+                                :rules="[(v) => !!v?.trim() || 'Vui lòng nhập địa chỉ', (v) => (v && v.trim().length >= 5) || 'Địa chỉ tối thiểu 5 ký tự']"
                             ></v-text-field>
                         </v-col>
 

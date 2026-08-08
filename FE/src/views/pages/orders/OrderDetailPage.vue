@@ -666,25 +666,31 @@ onMounted(async () => {
 
                 <v-text-field
                     v-model="editForm.tenNguoiNhan"
-                    label="Tên người nhận"
+                    label="Tên người nhận *"
                     variant="outlined"
                     density="comfortable"
                     class="mb-3"
                     hide-details="auto"
                     prepend-inner-icon="mdi-account-outline"
+                    maxlength="100"
+                    counter="100"
+                    :rules="[(v) => !!v?.trim() || 'Vui lòng nhập tên người nhận', (v) => (v && v.trim().length >= 2) || 'Tên từ 2 đến 100 ký tự']"
                 />
                 <v-text-field
                     v-model="editForm.soDienThoaiNguoiNhan"
-                    label="Số điện thoại người nhận"
+                    label="Số điện thoại người nhận *"
                     variant="outlined"
                     density="comfortable"
                     class="mb-3"
                     hide-details="auto"
                     prepend-inner-icon="mdi-phone-outline"
+                    maxlength="10"
+                    counter="10"
+                    :rules="[(v) => !!v?.trim() || 'Vui lòng nhập SĐT', (v) => /^0[3|5|7|8|9][0-9]{8}$/.test(v?.trim() || '') || 'SĐT 10 số không hợp lệ']"
                 />
                 <v-textarea
                     v-model="editForm.diaChiNguoiNhan"
-                    label="Địa chỉ nhận hàng"
+                    label="Địa chỉ nhận hàng *"
                     variant="outlined"
                     density="comfortable"
                     rows="2"
@@ -692,6 +698,9 @@ onMounted(async () => {
                     class="mb-3"
                     hide-details="auto"
                     prepend-inner-icon="mdi-map-marker-outline"
+                    maxlength="255"
+                    counter="255"
+                    :rules="[(v) => !!v?.trim() || 'Vui lòng nhập địa chỉ', (v) => (v && v.trim().length >= 5) || 'Địa chỉ tối thiểu 5 ký tự']"
                 />
                 <v-textarea
                     v-model="editForm.ghiChu"
@@ -703,6 +712,8 @@ onMounted(async () => {
                     class="mb-2"
                     hide-details="auto"
                     prepend-inner-icon="mdi-note-text-outline"
+                    maxlength="500"
+                    counter="500"
                 />
 
                 <v-alert

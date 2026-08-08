@@ -580,13 +580,35 @@ const handlePhoneInput = () => {
     customerForm.value.sdt = customerForm.value.sdt ? customerForm.value.sdt.replace(/[^\d+]/g, '') : '';
 };
 
-const nameRules = getNameRules('Họ và tên');
+const nameRules = [
+    (v) => !!v || 'Vui lòng nhập Họ và tên',
+    (v) => (v && v.trim().length >= 2) || 'Họ và tên phải có ít nhất 2 ký tự',
+    (v) => (v && v.length <= 100) || 'Họ và tên không được vượt quá 100 ký tự',
+    (v) =>
+        (v &&
+            /^[a-zA-ZàáảãạâầấẩẫậăằắẳẵặèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđÀÁẢÃẠÂẦẤẨẪẬĂẰẮẲẴẶÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴĐ\s]+$/.test(
+                v.trim()
+            )) ||
+        'Họ và tên chỉ được chứa chữ cái và khoảng trắng'
+];
 
-const emailRules = [(v) => !!v || 'Vui lòng nhập email', (v) => /.+@.+\..+/.test(v) || 'Email không hợp lệ'];
+const emailRules = [
+    (v) => !v || v.length <= 100 || 'Email không được vượt quá 100 ký tự',
+    (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Email không hợp lệ (ví dụ: example@domain.com)'
+];
 
 const phoneRules = [
     (v) => !!v || 'Vui lòng nhập số điện thoại',
-    (v) => /^(0|\+84)[0-9]{9}$/.test(v) || 'Số điện thoại phải hợp lệ (VD: 09xx hoặc +849xx)'
+    (v) =>
+        /^(0[3|5|7|8|9])[0-9]{8}$/.test(v) ||
+        'Số điện thoại không hợp lệ (phải bắt đầu bằng 03, 05, 07, 08, 09 và gồm 10 chữ số)'
+];
+
+const noteRules = [(v) => !v || v.length <= 500 || 'Ghi chú không được vượt quá 500 ký tự'];
+
+const addressDetailRules = [
+    (v) => !!v || 'Vui lòng nhập địa chỉ cụ thể',
+    (v) => (v && v.length <= 255) || 'Địa chỉ cụ thể không được vượt quá 255 ký tự'
 ];
 
 // const dobRules = [
@@ -919,6 +941,7 @@ const dobRules = [
                                         <v-textarea
                                             v-model="customerForm.diaChiChiTiet"
                                             placeholder="Nhập địa chỉ cụ thể"
+                                            :rules="addressDetailRules"
                                             variant="outlined"
                                             bg-color="white"
                                             rows="2"
@@ -1017,6 +1040,7 @@ const dobRules = [
                             <v-textarea
                                 v-model="customerForm.ghiChu"
                                 placeholder="Ghi chú về khách hàng (Sở thích, lưu ý giao hàng...)"
+                                :rules="noteRules"
                                 variant="outlined"
                                 bg-color="white"
                                 rows="3"
@@ -1272,7 +1296,7 @@ const dobRules = [
                                 <v-textarea
                                     v-model="addrForm.diaChiChiTiet"
                                     placeholder="Số nhà, đường..."
-                                    :rules="[(v) => !!v || 'Vui lòng nhập địa chỉ cụ thể']"
+                                    :rules="addressDetailRules"
                                     variant="outlined"
                                     bg-color="white"
                                     rows="2"

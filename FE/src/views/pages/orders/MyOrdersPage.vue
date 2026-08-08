@@ -228,6 +228,8 @@ const goToDetail = (id) => {
                         class="mb-4"
                         hide-details="auto"
                         prepend-inner-icon="mdi-barcode"
+                        maxlength="30"
+                        counter="30"
                     />
                     <v-text-field
                         v-model="trackingForm.soDienThoai"
@@ -237,6 +239,9 @@ const goToDetail = (id) => {
                         class="mb-6"
                         hide-details="auto"
                         prepend-inner-icon="mdi-phone-outline"
+                        maxlength="10"
+                        counter="10"
+                        :rules="[(v) => !v || /^0[3|5|7|8|9][0-9]{8}$/.test(v.trim()) || 'SĐT 10 số không hợp lệ (VD: 0912345678)']"
                     />
                     <v-btn
                         type="submit"
@@ -283,8 +288,9 @@ const goToDetail = (id) => {
                             label="Mã đơn hàng, mã/tên sản phẩm"
                             variant="outlined"
                             density="compact"
-                            hide-details
+                            hide-details="auto"
                             prepend-inner-icon="mdi-magnify"
+                            maxlength="100"
                             clearable
                             @click:clear="handleSearch"
                             @keyup.enter="handleSearch"

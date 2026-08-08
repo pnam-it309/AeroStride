@@ -69,14 +69,37 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
     @Override
     @Transactional
     public AdminNhanVienResponse add(AdminNhanVienRequest request) {
+        // Trim khoảng trắng các trường văn bản
+        if (request.getTen() != null) request.setTen(request.getTen().trim());
+        if (request.getEmail() != null) request.setEmail(request.getEmail().trim());
+        if (request.getSdt() != null) request.setSdt(request.getSdt().trim());
+        if (request.getDiaChiChiTiet() != null) request.setDiaChiChiTiet(request.getDiaChiChiTiet().trim());
+
         // Kiểm tra mã nếu được cung cấp
         if (request.getMa() != null && !request.getMa().trim().isEmpty()) {
-            if (adminNhanVienRepository.existsByMa(request.getMa())) {
+            if (adminNhanVienRepository.existsByMa(request.getMa().trim())) {
                 throw new DuplicateResourceException("Mã nhân viên này đã tồn tại.");
             }
         }
         if (adminNhanVienRepository.existsByEmail(request.getEmail())) {
             throw new DuplicateResourceException("Email này đã được sử dụng bởi một nhân viên khác.");
+        }
+        if (adminNhanVienRepository.existsBySdt(request.getSdt())) {
+            throw new DuplicateResourceException("Số điện thoại này đã được sử dụng bởi một nhân viên khác.");
+        }
+
+        // Validate độ tuổi (nếu có ngày sinh)
+        if (request.getNgaySinh() != null) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            if (request.getNgaySinh().isAfter(today)) {
+                throw new com.example.be.infrastructure.exceptions.ValidationException("Ngày sinh không thể ở trong tương lai.");
+            }
+            if (request.getNgaySinh().isAfter(today.minusYears(18))) {
+                throw new com.example.be.infrastructure.exceptions.ValidationException("Nhân viên phải từ 18 tuổi trở lên.");
+            }
+            if (request.getNgaySinh().isBefore(today.minusYears(100))) {
+                throw new com.example.be.infrastructure.exceptions.ValidationException("Ngày sinh không hợp lệ (không quá 100 tuổi).");
+            }
         }
 
         NhanVien nv = toEntity(request);
@@ -139,14 +162,37 @@ public class AdminNhanVienServiceImpl implements AdminNhanVienService {
         NhanVien nv = adminNhanVienRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy nhân viên với id: " + id));
 
+        // Trim khoảng trắng các trường văn bản
+        if (request.getTen() != null) request.setTen(request.getTen().trim());
+        if (request.getEmail() != null) request.setEmail(request.getEmail().trim());
+        if (request.getSdt() != null) request.setSdt(request.getSdt().trim());
+        if (request.getDiaChiChiTiet() != null) request.setDiaChiChiTiet(request.getDiaChiChiTiet().trim());
+
         if (adminNhanVienRepository.existsByMaAndIdNot(request.getMa(), id)) {
             throw new DuplicateResourceException("Mã nhân viên đã tồn tại");
         }
         if (adminNhanVienRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
             throw new DuplicateResourceException("Email đã được sử dụng");
         }
+        if (adminNhanVienRepository.existsBySdtAndIdNot(request.getSdt(), id)) {
+            throw new DuplicateResourceException("Số điện thoại đã được sử dụng");
+        }
         if (adminNhanVienRepository.existsByTenTaiKhoanAndIdNot(request.getTenTaiKhoan(), id)) {
             throw new DuplicateResourceException("Tên tài khoản đã được sử dụng");
+        }
+
+        // Validate độ tuổi (nếu có ngày sinh)
+        if (request.getNgaySinh() != null) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            if (request.getNgaySinh().isAfter(today)) {
+                throw new com.example.be.infrastructure.exceptions.ValidationException("Ngày sinh không thể ở trong tương lai.");
+            }
+            if (request.getNgaySinh().isAfter(today.minusYears(18))) {
+                throw new com.example.be.infrastructure.exceptions.ValidationException("Nhân viên phải từ 18 tuổi trở lên.");
+            }
+            if (request.getNgaySinh().isBefore(today.minusYears(100))) {
+                throw new com.example.be.infrastructure.exceptions.ValidationException("Ngày sinh không hợp lệ (không quá 100 tuổi).");
+            }
         }
 
         applyEntityFields(nv, request);

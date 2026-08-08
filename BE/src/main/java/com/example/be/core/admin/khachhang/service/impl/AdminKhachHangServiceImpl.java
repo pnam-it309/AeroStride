@@ -76,6 +76,11 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
                 throw new DuplicateResourceException(MessageConstants.KHACH_HANG_MA_EXISTS);
             }
         }
+        if (request.getSdt() != null && !request.getSdt().trim().isEmpty()) {
+            if (adminKhachHangRepository.existsBySdt(request.getSdt().trim())) {
+                throw new DuplicateResourceException("Số điện thoại đã tồn tại trên hệ thống");
+            }
+        }
         String inputEmail = request.getEmail() != null ? request.getEmail().trim() : "";
         if (!inputEmail.isEmpty() && !inputEmail.endsWith("@aerostride.vn")) {
             if (adminKhachHangRepository.existsByEmail(inputEmail)) {
@@ -151,6 +156,9 @@ public class AdminKhachHangServiceImpl implements AdminKhachHangService {
 
         if (adminKhachHangRepository.existsByMaAndIdNot(req.getMa(), id)) {
             throw new DuplicateResourceException(MessageConstants.DUPLICATE_MA);
+        }
+        if (req.getSdt() != null && !req.getSdt().trim().isEmpty() && adminKhachHangRepository.existsBySdtAndIdNot(req.getSdt().trim(), id)) {
+            throw new DuplicateResourceException("Số điện thoại đã tồn tại trên hệ thống");
         }
         if (adminKhachHangRepository.existsByEmailAndIdNot(req.getEmail(), id)) {
             throw new DuplicateResourceException(MessageConstants.DUPLICATE_EMAIL);

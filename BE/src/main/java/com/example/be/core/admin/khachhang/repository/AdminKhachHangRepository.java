@@ -19,9 +19,11 @@ public interface AdminKhachHangRepository extends KhachHangRepository, JpaSpecif
     List<KhachHang> findByDiaChiId(String diaChiId);
 
     boolean existsByEmail(String email);
+    boolean existsBySdt(String sdt);
     boolean existsByTenTaiKhoan(String tenTaiKhoan);
     boolean existsByMa(String ma);
     boolean existsByEmailAndIdNot(String email, String id);
+    boolean existsBySdtAndIdNot(String sdt, String id);
     boolean existsByTenTaiKhoanAndIdNot(String tenTaiKhoan, String id);
     boolean existsByMaAndIdNot(String ma, String id);
 

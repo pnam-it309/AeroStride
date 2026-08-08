@@ -31,7 +31,9 @@ public final class SearchUtils {
      * Public helper to build Pageable from DTO.
      */
     public static Pageable buildPageable(PageRequest req) {
-        int page = (req.getPage() == null || req.getPage() < 0) ? 0 : req.getPage();
+        int rawPage = (req.getPage() == null || req.getPage() < 0) ? 0 : req.getPage();
+        // Chuyển đổi 1-based index (từ Frontend) sang 0-based index (cho Spring Data JPA)
+        int page = rawPage > 0 ? rawPage - 1 : 0;
         int size = (req.getSize() == null || req.getSize() <= 0) ? DEFAULT_SIZE : req.getSize();
         
         String sortBy = StringUtils.hasText(req.getSortBy()) ? req.getSortBy() : DEFAULT_SORT;

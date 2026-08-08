@@ -359,10 +359,30 @@ const openEditDialog = (row) => {
 };
 
 const confirmSaveChamCong = () => {
+    const ghiChuTrim = (form.value.ghiChu || '').trim();
+
     if (!form.value.nhanVienId || !form.value.ngay || !form.value.gioVao) {
-        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập đầy đủ thông tin!', color: 'error' });
+        addNotification({ title: 'Lỗi', subtitle: 'Vui lòng nhập đầy đủ nhân viên, ngày và giờ vào!', color: 'error' });
         return;
     }
+
+    if (form.value.gioRa && form.value.gioVao > form.value.gioRa) {
+        addNotification({ title: 'Lỗi', subtitle: 'Giờ vào không được lớn hơn giờ ra!', color: 'error' });
+        return;
+    }
+
+    if (ghiChuTrim.length > 255) {
+        addNotification({ title: 'Lỗi', subtitle: 'Ghi chú không được vượt quá 255 ký tự!', color: 'error' });
+        return;
+    }
+
+    if (/[<>]|script/i.test(ghiChuTrim)) {
+        addNotification({ title: 'Lỗi', subtitle: 'Ghi chú chứa ký tự không hợp lệ!', color: 'error' });
+        return;
+    }
+
+    form.value.ghiChu = ghiChuTrim;
+
     const modeText = isEdit.value ? 'cập nhật' : 'thêm';
     setConfirm({
         title: `Xác nhận ${modeText} chấm công`,

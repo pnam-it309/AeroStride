@@ -11,6 +11,10 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, String> {
 
     Optional<KhachHang> findByTenTaiKhoan(String tenTaiKhoan);
 
+    Optional<KhachHang> findFirstBySdt(String sdt);
+
+    Optional<KhachHang> findFirstByEmail(String email);
+
     Optional<KhachHang> findByTenTaiKhoanOrEmailOrSdtOrMa(String tenTaiKhoan, String email, String sdt, String ma);
 
     boolean existsByEmail(String email);

@@ -41,8 +41,13 @@ const submitReview = async () => {
         notification.showError('Vui lòng chọn sản phẩm để đánh giá');
         return;
     }
-    if (!comment.value.trim()) {
+    const trimmedComment = comment.value.trim();
+    if (!trimmedComment) {
         notification.showError('Vui lòng nhập nội dung đánh giá');
+        return;
+    }
+    if (trimmedComment.length < 5) {
+        notification.showError('Nội dung đánh giá phải từ 5 đến 1000 ký tự');
         return;
     }
 
@@ -133,12 +138,15 @@ const submitReview = async () => {
 
                 <v-textarea
                     v-model="comment"
-                    label="Nhận xét của bạn"
+                    label="Nhận xét của bạn *"
                     placeholder="Hãy chia sẻ cảm nhận của bạn về sản phẩm này nhé (chất liệu, màu sắc, form dáng...)"
                     variant="outlined"
                     rows="4"
                     auto-grow
                     hide-details="auto"
+                    maxlength="1000"
+                    counter="1000"
+                    :rules="[(v) => !!v?.trim() || 'Vui lòng nhập nhận xét', (v) => (v && v.trim().length >= 5) || 'Nhận xét tối thiểu 5 ký tự']"
                 ></v-textarea>
 
                 <!-- TODO: Add image upload for review if needed -->

@@ -17,7 +17,7 @@ import { isActiveStatus } from '@/utils/statusUtils';
 import { SYSTEM_STATUS } from '@/constants/statusConstants';
 import { generateRandomCode } from '@/utils/codeGenerator';
 import AdminBreadcrumbs from '@/components/common/AdminBreadcrumbs.vue';
-import { noSpecialChar, lengthBetween3And255 } from '@/utils/validators';
+import { noSpecialChar, lengthBetween2And255 } from '@/utils/validators';
 
 // REUSABLE COMPONENTS
 import AdminConfirm from '@/components/common/AdminConfirm.vue';
@@ -214,7 +214,7 @@ const loadItems = async () => {
         const params = {
             page: pagination.value.page > 0 ? pagination.value.page - 1 : 0,
             size: pagination.value.size,
-            keyword: searchQuery.value || null,
+            keyword: searchQuery.value ? searchQuery.value.trim().slice(0, 100) : null,
             trangThai: statusFilter.value !== null ? statusFilter.value : null
         };
 
@@ -268,7 +268,7 @@ const confirmSaveItem = () => {
             return;
         }
 
-        const lengthRes = lengthBetween3And255(trimmed);
+        const lengthRes = lengthBetween2And255(trimmed);
         if (lengthRes !== true) {
             addNotification({ title: 'Lỗi', subtitle: `Tên ${getCurrentTabTitle().toLowerCase()}: ${lengthRes}`, color: 'error' });
             return;
@@ -281,9 +281,17 @@ const confirmSaveItem = () => {
         }
     }
 
+    if (itemForm.value.moTa) {
+        const moTaTrimmed = String(itemForm.value.moTa).trim();
+        if (moTaTrimmed.length > 255) {
+            addNotification({ title: 'Lỗi', subtitle: 'Mô tả không được vượt quá 255 ký tự', color: 'error' });
+            return;
+        }
+    }
+
     if (selectedTab.value === 'colors') {
         const hex = itemForm.value.maMauHex;
-        if (!hex || !/^#[0-9A-Fa-f]{3,6}$/i.test(hex)) {
+        if (!hex || !/^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/i.test(hex)) {
             addNotification({ title: 'Lỗi', subtitle: 'Mã màu Hex không hợp lệ (VD: #FFFFFF)', color: 'error' });
             return;
         }

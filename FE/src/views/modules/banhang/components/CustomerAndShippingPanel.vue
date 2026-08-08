@@ -26,6 +26,7 @@
                         variant="outlined"
                         density="compact"
                         hide-details
+                        maxlength="100"
                         prepend-inner-icon="mdi-magnify"
                         class="dim-input-field bg-slate-50 flex-grow-1"
                         @focus="showCustomerSuggestions = true"
@@ -90,6 +91,7 @@
                     variant="outlined"
                     density="compact"
                     hide-details
+                    maxlength="100"
                     autocomplete="off"
                     class="dim-input-field w-100"
                     @input="emitFormChange"
@@ -103,9 +105,10 @@
                         variant="outlined"
                         density="compact"
                         hide-details
+                        maxlength="10"
                         autocomplete="off"
                         class="dim-input-field flex-grow-1"
-                        @input="emitFormChange"
+                        @input="(e) => { customerForm.sdt = String(e.target.value || '').replace(/\D/g, '').slice(0, 10); emitFormChange(); }"
                     />
                     <v-text-field
                         v-model="customerForm.email"
@@ -113,6 +116,7 @@
                         variant="outlined"
                         density="compact"
                         hide-details
+                        maxlength="100"
                         autocomplete="off"
                         class="dim-input-field flex-grow-1"
                         @input="emitFormChange"
@@ -147,6 +151,7 @@
                                 variant="outlined"
                                 density="compact"
                                 hide-details
+                                maxlength="100"
                                 autocomplete="off"
                                 class="dim-input-field flex-grow-1"
                                 @input="emitShippingChange"
@@ -158,9 +163,10 @@
                                     variant="outlined"
                                     density="compact"
                                     hide-details
+                                    maxlength="10"
                                     autocomplete="off"
                                     class="dim-input-field"
-                                    @input="emitShippingChange"
+                                    @input="(e) => { recipientPhone = String(e.target.value || '').replace(/\D/g, '').slice(0, 10); emitShippingChange(); }"
                                 />
                             </div>
                         </div>
@@ -171,6 +177,7 @@
                             variant="outlined"
                             density="compact"
                             hide-details
+                            maxlength="255"
                             autocomplete="off"
                             class="dim-input-field w-100"
                             @input="emitShippingChange"
